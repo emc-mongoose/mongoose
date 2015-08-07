@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.GenericContainer;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

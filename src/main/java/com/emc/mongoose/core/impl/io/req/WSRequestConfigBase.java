@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.io.req.conf;
+package com.emc.mongoose.core.impl.io.req;
 // mongoose-common
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -8,19 +8,15 @@ import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
-import com.emc.mongoose.common.net.http.content.InputChannel;
-import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataSource;
 // mongoose-core-impl
 import static com.emc.mongoose.core.impl.data.RangeLayerData.getRangeOffset;
-import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -38,6 +34,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
@@ -51,8 +48,6 @@ import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 //
-import org.apache.http.nio.ContentDecoder;
-import org.apache.http.nio.IOControl;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
 import org.apache.http.nio.pool.NIOConnFactory;
@@ -76,7 +71,6 @@ import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
-import java.nio.channels.ClosedChannelException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -109,22 +103,16 @@ implements WSRequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public static WSRequestConfigBase newInstanceFor(final String api) {
-		WSRequestConfigBase reqConf = null;
+		final WSRequestConfigBase reqConf;
 		final String apiImplClsFQN = PACKAGE_IMPL_BASE + "." + api.toLowerCase() + "." + ADAPTER_CLS;
 		try {
 			final Class apiImplCls = Class.forName(apiImplClsFQN);
 			final Constructor<WSRequestConfigBase>
 				constructor = (Constructor<WSRequestConfigBase>) apiImplCls.getConstructors()[0];
 			reqConf = constructor.newInstance();
-		} catch(final ClassNotFoundException e) {
-			LogUtil.exception(LOG, Level.FATAL, e, "API implementation \"{}\" is not found", api);
-		} catch(final ClassCastException e) {
-			LogUtil.exception(
-				LOG, Level.FATAL, e,
-				"Class \"{}\" is not valid API implementation for \"{}\"", apiImplClsFQN, api
-			);
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.FATAL, e, "WS API config instantiation failure");
+			e.printStackTrace(System.out);
+			throw new RuntimeException(e);
 		}
 		return reqConf;
 	}
@@ -154,7 +142,7 @@ implements WSRequestConfig<T> {
 			)
 		);
 		try {
-			if(reqConf2Clone!=null) {
+			if(reqConf2Clone != null) {
 				this.setSecret(reqConf2Clone.getSecret()).setScheme(reqConf2Clone.getScheme());
 				this.setFileAccessEnabled(reqConf2Clone.getFileAccessEnabled());
 			}
@@ -240,25 +228,49 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final MutableWSRequest createRequest() {
-		return new BasicWSRequest(getHTTPMethod(), null, null);
+	public HttpEntityEnclosingRequest createGenericRequest(final String method, final String uri) {
+		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(method, uri);
+		applyHeadersFinally(request);
+		return request;
 	}
 	//
 	@Override
-	public MutableWSRequest.HTTPMethod getHTTPMethod() {
-		MutableWSRequest.HTTPMethod method;
+	public HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
+	throws URISyntaxException {
+		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
+			getHttpMethod(), getUriPath(obj)
+		);
+		try {
+			applyHostHeader(request, nodeAddr);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
+		}
 		switch(loadType) {
+			case UPDATE:
+			case APPEND:
+				applyRangesHeaders(request, obj);
+			case CREATE:
+				applyPayLoad(request, obj);
+				break;
 			case READ:
-				method = MutableWSRequest.HTTPMethod.GET;
-				break;
 			case DELETE:
-				method = MutableWSRequest.HTTPMethod.DELETE;
-				break;
-			default:
-				method = MutableWSRequest.HTTPMethod.PUT;
+				applyPayLoad(request, null);
 				break;
 		}
-		return method;
+		applyHeadersFinally(request);
+		return request;
+	}
+	//
+	@Override
+	public String getHttpMethod() {
+		switch(loadType) {
+			case READ:
+				return METHOD_GET;
+			case DELETE:
+				return METHOD_DELETE;
+			default:
+				return METHOD_PUT;
+		}
 	}
 	//
 	@Override
@@ -346,11 +358,6 @@ implements WSRequestConfig<T> {
 		return sharedHeaders;
 	}
 	//
-	@Override
-	public final String getUserAgent() {
-		return userAgent;
-	}
-	//
 	private final static ThreadLocal<Map<String, HttpHost>>
 		THREAD_CACHED_NODE_MAP = new ThreadLocal<>();
 	//
@@ -402,40 +409,26 @@ implements WSRequestConfig<T> {
 		out.writeObject(getFileAccessEnabled());
 	}
 	//
-	protected void applyObjectId(final T dataItem, final HttpResponse httpResponse) {
+	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {
 		dataItem.setId(Long.toString(dataItem.getOffset(), DataObject.ID_RADIX));
 	}
 	//
 	@Override
-	public void applyDataItem(final MutableWSRequest httpRequest, final T dataItem)
-	throws IllegalStateException, URISyntaxException {
-		applyObjectId(dataItem, null);
-		applyURI(httpRequest, dataItem);
-		switch(loadType) {
-			case UPDATE:
-			case APPEND:
-				applyRangesHeaders(httpRequest, dataItem);
-			case CREATE:
-				applyPayLoad(httpRequest, dataItem);
-				break;
-			case READ:
-			case DELETE:
-				applyPayLoad(httpRequest, null);
-				break;
-		}
-	}
-	//
-	@Override
-	public void applyHeadersFinally(final MutableWSRequest httpRequest) {
+	public void applyHeadersFinally(final HttpEntityEnclosingRequest httpRequest) {
 		try {
 			applyDateHeader(httpRequest);
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply date header");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a date header");
+		}
+		try {
+			applyMetaDataHeaders(httpRequest);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a metadata headers");
 		}
 		try {
 			applyAuthHeader(httpRequest);
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply auth header");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply an auth header");
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			final StringBuilder msgBuff = new StringBuilder("built request: ")
@@ -459,10 +452,10 @@ implements WSRequestConfig<T> {
 		}
 	}
 	//
-	protected abstract void applyURI(final MutableWSRequest httpRequest, final T dataItem)
+	protected abstract String getUriPath(final T dataItem)
 	throws IllegalArgumentException, URISyntaxException;
 	//
-	protected final String getPathFor(final T dataItem) {
+	protected final String getFilePathFor(final T dataItem) {
 		if(fsAccess && idPrefix != null && !idPrefix.isEmpty()) {
 			return "/" + idPrefix + "/" + dataItem.getId();
 		} else {
@@ -471,14 +464,14 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected final void applyPayLoad(
-		final MutableWSRequest httpRequest, final HttpEntity httpEntity
+		final HttpEntityEnclosingRequest httpRequest, final HttpEntity httpEntity
 	) {
 		httpRequest.setEntity(httpEntity);
 	}
 	//
 	private final static ThreadLocal<StringBuilder> THRLOC_SB = new ThreadLocal<>();
 	// merge subsequent updated ranges functionality is here
-	protected final void applyRangesHeaders(final MutableWSRequest httpRequest, final T dataItem) {
+	protected final void applyRangesHeaders(final HttpRequest httpRequest, final T dataItem) {
 		httpRequest.removeHeaders(HttpHeaders.RANGE); // cleanup
 		//
 		final int prefixLen = VALUE_RANGE_PREFIX.length();
@@ -529,7 +522,7 @@ implements WSRequestConfig<T> {
 		{ setTimeZone(Main.TZ_UTC); }
 	};*/
 	//
-	protected void applyDateHeader(final MutableWSRequest httpRequest) {
+	protected void applyDateHeader(final HttpRequest httpRequest) {
 		httpRequest.setHeader(HttpHeaders.DATE, LowPrecisionDateGenerator.getDateText());
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
@@ -539,7 +532,14 @@ implements WSRequestConfig<T> {
 		}
 	}
 	//
-	protected abstract void applyAuthHeader(final MutableWSRequest httpRequest);
+	protected void applyHostHeader(final HttpRequest httpRequest, final String nodeAddr) {
+		httpRequest.setHeader(HttpHeaders.HOST, getNodeHost(nodeAddr).toHostString());
+	}
+	//
+	protected void applyMetaDataHeaders(final HttpEntityEnclosingRequest httpRequest) {
+	}
+	//
+	protected abstract void applyAuthHeader(final HttpRequest httpRequest);
 	//
 	//@Override
 	//public final int hashCode() {
@@ -555,19 +555,17 @@ implements WSRequestConfig<T> {
 				mac = Mac.getInstance(signMethod);
 				mac.init(secretKey);
 			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-				LogUtil.exception(LOG, Level.FATAL, e, "Failed to calculate the signature");
+				e.printStackTrace(System.out);
 				throw new IllegalStateException("Failed to init MAC cypher instance");
 			}
 			THRLOC_MAC.set(mac);
-		} else {
-			mac.reset();
 		}
 		sigData = mac.doFinal(canonicalForm.getBytes());
 		return Base64.encodeBase64String(sigData);
 	}
 	//
 	@Override
-	public void receiveResponse(final HttpResponse response, final T dataItem) {
+	public void applySuccResponseToObject(final HttpResponse response, final T dataItem) {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Got response with {} bytes of payload data",
@@ -575,58 +573,6 @@ implements WSRequestConfig<T> {
 			);
 		}
 		// may invoke applyObjectId in some implementations
-	}
-	//
-	private final static ThreadLocal<InputChannel>
-		THRLOC_CHAN_IN = new ThreadLocal<>();
-	@Override
-	public final boolean consumeContent(
-		final ContentDecoder in, final IOControl ioCtl, T dataItem
-	) {
-		boolean verifyPass = true;
-		try {
-			if(dataItem != null) {
-				if(loadType == IOTask.Type.READ) { // read
-					if(verifyContentFlag) { // read and do verify
-						InputChannel chanIn = THRLOC_CHAN_IN.get();
-						if(chanIn == null) {
-							chanIn = new InputChannel();
-							THRLOC_CHAN_IN.set(chanIn);
-						}
-						chanIn.setContentDecoder(in);
-						try{
-							verifyPass = dataItem.readAndVerifyFully(chanIn);
-						} finally {
-							chanIn.close();
-						}
-					} else {
-						final long
-							dataSize = dataItem.getSize(),
-							actualSize = IOUtils.consumeQuietly(in/*, dataSize*/);
-						if(dataSize != actualSize) {
-							LOG.debug(
-								Markers.ERR, "Consumed data size is not equal to {}: {}",
-								SizeUtil.formatSize(dataSize), SizeUtil.formatSize(actualSize)
-							);
-						}
-					}
-				}
-			}
-		} catch(final ClosedChannelException e) { // probably a manual interruption
-			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
-		} catch(final IOException e) {
-			verifyPass = false;
-			if(isClosed()) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to read the content after closing");
-			} else {
-				LogUtil.exception(LOG, Level.WARN, e, "Content reading failure");
-			}
-		} finally {
-			if(!in.isCompleted()) {
-				IOUtils.consumeQuietly(in);
-			}
-		}
-		return verifyPass;
 	}
 	//
 	@Override

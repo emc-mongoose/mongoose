@@ -379,6 +379,7 @@ dependencies {
 		library.commons_collections4,
 		library.commons_configuration,
 		library.httpcore_plus_nio,
+		library.jackson_databind,
 		library.log4j_api,
 		library.metrics_core,
 	)
@@ -1023,7 +1024,7 @@ task integTest(type: Test) {
 	dependsOn dist
 	//Be able to run only test suit
 	include '**/CoreTestSuite.class'
-	//include '**/DistributedLoadTestSuite.class'
+	include '**/DistributedLoadTestSuite.class'
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath

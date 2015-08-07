@@ -10,7 +10,6 @@ import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -20,7 +19,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+import com.emc.mongoose.core.api.io.req.RequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
@@ -31,7 +30,6 @@ import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
-import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptClientOnMaxCountTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.DataItemsFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
@@ -47,12 +45,9 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 //
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -405,7 +400,7 @@ implements LoadClient<T> {
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "Interrupted while feeding the consumer");
 						break;
-					} catch(final RemoteException e) {
+					} catch(final RejectedExecutionException | RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e, "Failed to feed the data item to consumer"
 						);
@@ -653,26 +648,41 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final AtomicInteger rrc = new AtomicInteger(0);
 	//
+	private final class RemoteSubmitTask
+	implements Runnable {
+		//
+		private final T dataItem;
+		//
+		private RemoteSubmitTask(final T dataItem) {
+			this.dataItem = dataItem;
+		}
+		//
+		@Override
+		public final void run() {
+			String loadSvcAddr;
+			for(int tryCount = 0; tryCount < Short.MAX_VALUE && !isShutdown(); tryCount ++) {
+				try {
+					loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
+					remoteLoadMap.get(loadSvcAddr).submit(dataItem);
+					rrc.incrementAndGet();
+					break;
+				} catch(final RejectedExecutionException | RemoteException e) {
+					try {
+						Thread.sleep(tryCount);
+					} catch(final InterruptedException ee) {
+						break;
+					}
+				} catch(final InterruptedException e) {
+					break;
+				}
+			}
+		}
+	}
+	//
 	@Override
 	public final void submit(final T dataItem)
 	throws RejectedExecutionException, InterruptedException {
-		Future remoteSubmFuture = null;
-		String nextLoadSvcAddr;
-		for(
-			int tryCount = 0;
-			tryCount < Short.MAX_VALUE && remoteSubmFuture == null && !isShutdown();
-			tryCount ++
-		) {
-			try {
-				nextLoadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
-				remoteSubmFuture = submit(
-					RemoteSubmitTask.getInstance(remoteLoadMap.get(nextLoadSvcAddr), dataItem)
-				);
-				rrc.incrementAndGet();
-			} catch(final RejectedExecutionException e) {
-				Thread.sleep(tryCount);
-			}
-		}
+		submit(new RemoteSubmitTask(dataItem));
 	}
 	//
 	private void forceFetchAndAggregation() {
@@ -736,8 +746,8 @@ implements LoadClient<T> {
 			if(!remoteLoadMap.isEmpty()) {
 				saveLastLatencyValues();
 				LOG.debug(Markers.MSG, "{}: do performing close", getName());
-				interrupt();
 				forceFetchAndAggregation();
+				interrupt();
 				logMetrics(Markers.PERF_SUM);
 				LOG.debug(
 					Markers.MSG, "{}: dropped {} remote tasks",

@@ -17,16 +17,18 @@ extends DataItem {
 	//
 	boolean isNextLayerRangeUpdating(final int i);
 	//
-	void updateRandomRange();
+	void updateRandomRange()
+	throws IllegalStateException;
 	//
-	void updateRandomRanges(final int count);
+	void updateRandomRanges(final int count)
+	throws IllegalArgumentException, IllegalStateException;
 	//
 	int getCountRangesTotal();
 	//
 	long getPendingRangesSize();
 	//
-	void writeUpdatedRangesFully(final WritableByteChannel chanOut)
+	long writeUpdatedRangesFully(final WritableByteChannel chanOut)
 	throws IOException;
 	//
-	public long getRangeSize(final int i);
+	long getRangeSize(final int i);
 }

@@ -1,0 +1,117 @@
+package com.emc.mongoose.integ.core.api.atmos;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.data.model.DataItemOutput;
+import com.emc.mongoose.core.impl.data.model.ListItemOutput;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.storage.adapter.atmos.SubTenant;
+import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
+import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
+import com.emc.mongoose.util.client.api.StorageClient;
+import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+/**
+ Created by kurila on 03.08.15.
+ */
+public class AtmosSingleRangeUpdateTest {
+	//
+	private final static int COUNT_TO_WRITE = 10000;
+	private final static List<WSObject>
+		BUFF_WRITE = new ArrayList<>(COUNT_TO_WRITE),
+		BUFF_UPDATE = new ArrayList<>(COUNT_TO_WRITE);
+	//
+	private static long COUNT_WRITTEN, COUNT_UPDATED, COUNT_READ;
+	//
+	@BeforeClass
+	public static void setUpClass()
+	throws Exception {
+		//
+		RunTimeConfig.resetContext();
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, AtmosSingleRangeUpdateTest.class.getCanonicalName()
+		);
+		//
+		try(
+			final StorageClient<WSObject>
+				client = new BasicWSClientBuilder<>()
+				.setLimitTime(0, TimeUnit.SECONDS)
+				.setLimitCount(COUNT_TO_WRITE)
+				.setAPI("atmos")
+				.build()
+		) {
+			final DataItemOutput<WSObject> writeOutput = new ListItemOutput<>(BUFF_WRITE);
+			COUNT_WRITTEN = client.write(
+				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("1KB")
+			);
+			final DataItemOutput<WSObject> updateOutput = new ListItemOutput<>(BUFF_UPDATE);
+			if(COUNT_WRITTEN > 0) {
+				COUNT_UPDATED = client.update(
+					writeOutput.getInput(), updateOutput, COUNT_WRITTEN, 10, 1
+				);
+			} else {
+				throw new IllegalStateException("Failed to write");
+			}
+			if(COUNT_UPDATED > 0) {
+				COUNT_READ = client.read(updateOutput.getInput(), null, COUNT_UPDATED, 10, true);
+			} else {
+				throw new IllegalStateException("Failed to update");
+			}
+		}
+	}
+	//
+	@AfterClass
+	public static void tearDownClass()
+	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final SubTenant st = new WSSubTenantImpl(
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("atmos").setProperties(rtConfig),
+			rtConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
+		);
+		st.delete(rtConfig.getStorageAddrs()[0]);
+	}
+	//
+	private final static Pattern PATTERN_OBJ_METAINFO = Pattern.compile(
+		"(?<id>[\\da-z]{8,64}),(?<offset>[\\da-f]+),(?<size>\\d+),(?<layer>[\\da-f]+)/(?<mask>[\\da-f]+)"
+	);
+	//
+	@Test
+	public void checkUpdatedItems()
+		throws Exception {
+		int layer, mask, size;
+		String s;
+		Matcher m;
+		for(final WSObject obj : BUFF_UPDATE) {
+			s = obj.toString();
+			m = PATTERN_OBJ_METAINFO.matcher(s);
+			if(m.find()) {
+				layer = Integer.parseInt(m.group("layer"), 0x10);
+				if(layer != 0) {
+					Assert.fail("Invalid layer value: " + s);
+					break;
+				}
+				mask = Integer.parseInt(m.group("mask"), 0x10);
+				if(mask == 0) {
+					Assert.fail("Invalid mask value: " + s);
+					break;
+				}
+				size = Integer.parseInt(m.group("size"));
+				if(size != 1024) {
+					Assert.fail("Invalid size value: " + s);
+					break;
+				}
+			} else {
+				Assert.fail("Invalid metainfo line: " + s);
+			}
+		}
+	}
+}

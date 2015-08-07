@@ -26,19 +26,19 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "ThresholdFilter",
-								"level": "DEBUG",
+								"level": "debug",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
 							}
 						]
 					}
 				}, {
-				"name": "async",
-				"type": "Async",
-				"blocking": "false",
-				"bufferSize": "200000",
-				"AppenderRef": { "ref": "stdout" }
-			  }
+					"name": "async",
+					"type": "Async",
+					"blocking": "false",
+					"bufferSize": "200000",
+					"AppenderRef": { "ref": "stdout" }
+				}
 			]
 		},
 		"loggers": {

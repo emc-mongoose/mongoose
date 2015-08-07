@@ -5,9 +5,13 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.storage.adapter.s3.Bucket;
+import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
+import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
 import com.emc.mongoose.util.scenario.Chain;
 import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
@@ -55,9 +59,11 @@ public class SequentialLoadTest {
 		//  remove log dir w/ previous logs
 		LogParser.removeLogDirectory(RUN_ID);
 		LOG = LogManager.getLogger();
+		RunTimeConfig.resetContext();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
+		rtConfig.set(RunTimeConfig.KEY_API_NAME, "s3");
 		FILE_LOG_PERF_SUM = LogParser.getPerfSumFile(RUN_ID);
 		if(FILE_LOG_PERF_SUM.exists()) {
 			FILE_LOG_PERF_SUM.delete();
@@ -81,6 +87,12 @@ public class SequentialLoadTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final Bucket bucket = new WSBucketImpl(
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
+			rtConfig.getString(RunTimeConfig.KEY_API_S3_BUCKET), false
+		);
+		bucket.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	@Test

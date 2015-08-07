@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common.jar
-import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -11,9 +10,6 @@ import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
-import java.util.HashMap;
-import java.util.Map;
 /**
  Created by kurila on 23.12.14.
  */
@@ -23,39 +19,10 @@ implements DataObjectIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicObjectIOTask(final ObjectLoadExecutor<T> loadExecutor) {
-		super(loadExecutor);
-	}
-	//
-	public final static Map<ObjectLoadExecutor, InstancePool<BasicObjectIOTask>>
-		INSTANCE_POOL_MAP = new HashMap<>();
-	//
-	public static BasicObjectIOTask getInstance(
-		final ObjectLoadExecutor loadExecutor, DataObject dataItem, final String nodeAddr
+	public BasicObjectIOTask(
+		final ObjectLoadExecutor<T> loadExecutor, final T dataObject, final String nodeAddr
 	) {
-		InstancePool<BasicObjectIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
-		if(instPool == null) {
-			try {
-				instPool = new InstancePool<>(
-					BasicObjectIOTask.class.getConstructor(ObjectLoadExecutor.class), loadExecutor
-				);
-				INSTANCE_POOL_MAP.put(loadExecutor, instPool);
-			} catch(final NoSuchMethodException e) {
-				throw new IllegalStateException(e);
-			}
-		}
-		//
-		return instPool.take(dataItem, nodeAddr);
-	}
-	//
-	@Override
-	public void release() {
-		final InstancePool<BasicObjectIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
-		if(instPool == null) {
-			throw new IllegalStateException("No pool found to release back");
-		} else {
-			instPool.release(this);
-		}
+		super(loadExecutor, dataObject, nodeAddr);
 	}
 	//
 	@Override
@@ -107,13 +74,6 @@ implements DataObjectIOTask<T> {
 			);
 		}
 		//
-		try {
-			loadExecutor.handleResult(this);
-		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
-			e.printStackTrace(System.err);
-		}
-		//
 		final int reqSleepMilliSec = reqConf.getReqSleepMilliSec();
 		if(reqSleepMilliSec > 0) {
 			try {
@@ -121,6 +81,13 @@ implements DataObjectIOTask<T> {
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
 			}
+		}
+		//
+		try {
+			loadExecutor.handleResult(this);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
+			e.printStackTrace(System.err);
 		}
 	}
 }

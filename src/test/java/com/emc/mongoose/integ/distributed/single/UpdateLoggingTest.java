@@ -10,6 +10,10 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.storage.adapter.swift.Container;
+import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
+import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
@@ -58,9 +62,8 @@ public class UpdateLoggingTest {
 		//  remove log dir w/ previous logs
 		LogParser.removeLogDirectory(RUN_ID);
 		// reinit run id and the log path
-		RunTimeConfig
-			.getContext()
-			.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		RunTimeConfig.resetContext();
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		LoggingTestSuite.setUpClass();
 		//
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
@@ -69,6 +72,7 @@ public class UpdateLoggingTest {
 			.setLimitTime(0, TimeUnit.SECONDS)
 			.setLimitCount(COUNT_LIMIT)
 			.setClientMode(new String[] {ServiceUtils.getHostAddr()})
+			.setAPI("swift")
 			.build();
 		final BufferingOutputStream
 			stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream();
@@ -83,7 +87,9 @@ public class UpdateLoggingTest {
 		);
 		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
 		stdOutInterceptorStream.reset(); // clear before using
-		COUNT_UPDATED = CLIENT.update(itemsQueue, null, COUNT_LIMIT, 10, 10);
+		if(COUNT_WRITTEN > 0) {
+			COUNT_UPDATED = CLIENT.update(itemsQueue, null, COUNT_WRITTEN, 10, 10);
+		}
 		TimeUnit.SECONDS.sleep(1);
 		STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 		LOG = LogManager.getLogger();
@@ -96,6 +102,12 @@ public class UpdateLoggingTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final Container container = new WSContainerImpl(
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(rtConfig),
+			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
+		);
+		container.delete(rtConfig.getStorageAddrs()[0]);
 		StdOutInterceptorTestSuite.reset();
 		CLIENT.close();
 	}

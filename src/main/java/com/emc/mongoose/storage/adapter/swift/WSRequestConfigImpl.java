@@ -5,14 +5,14 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
-//
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
+//
 import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 import org.apache.http.message.BasicHeader;
 //
 import org.apache.logging.log4j.Level;
@@ -224,7 +224,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final MutableWSRequest httpRequest, final T dataItem)
+	protected final String getUriPath(final T dataItem)
 	throws IllegalArgumentException {
 		if(uriSvcBaseContainerPath == null) {
 			LOG.warn(Markers.ERR, "Illegal URI template: <null>");
@@ -232,13 +232,14 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		httpRequest.setUriPath(uriSvcBaseContainerPath + getPathFor(dataItem));
+		applyObjectId(dataItem, null);
+		return uriSvcBaseContainerPath + getFilePathFor(dataItem);
 	}
 	//
 	private Header headerAuthToken = null;
 	//
 	@Override
-	protected final void applyAuthHeader(final MutableWSRequest httpRequest) {
+	protected final void applyAuthHeader(final HttpRequest httpRequest) {
 		final String authTokenValue = authToken == null ? null : authToken.getValue();
 		if(authTokenValue != null) {
 			if(!httpRequest.containsHeader(KEY_X_AUTH_TOKEN)) {
@@ -251,8 +252,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final String getCanonical(final MutableWSRequest httpRequest) {
-		return "";
+	public final String getCanonical(final HttpRequest httpRequest) {
+		return null;
 	}
 	//
 	@Override

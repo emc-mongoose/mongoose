@@ -1,13 +1,13 @@
 package com.emc.mongoose.storage.mock.impl.base;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
-//
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+//
 import com.emc.mongoose.core.api.data.DataItem;
 //
 import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
-import com.emc.mongoose.storage.mock.api.IOStats;
+//
+import com.emc.mongoose.storage.mock.api.StorageIOStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 //
 import org.apache.logging.log4j.Level;
@@ -27,20 +27,21 @@ implements StorageMock<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final RunTimeConfig rtConfig;
-	protected final IOStats ioStats;
-	protected final int portStart;
+	protected final String dataSrcPath;
+	protected final StorageIOStats ioStats;
 	protected final Class<T> itemCls;
 	//
-	protected StorageMockBase(final RunTimeConfig rtConfig, final Class<T> itemCls) {
-		this.rtConfig = rtConfig;
+	protected StorageMockBase(
+		final Class<T> itemCls, final String dataSrcPath, final int metricsPeriodSec,
+		final boolean jmxServeFlag
+	) {
+		this.dataSrcPath = dataSrcPath;
 		this.itemCls = itemCls;
-		ioStats = new BasicStorageIOStats(rtConfig, this);
-		portStart = rtConfig.getApiTypePort(rtConfig.getApiName());
+		ioStats = new BasicStorageIOStats(this, metricsPeriodSec, jmxServeFlag);
 	}
 	//
 	@Override
-	public IOStats getStats() {
+	public StorageIOStats getStats() {
 		return ioStats;
 	}
 	//
@@ -62,7 +63,6 @@ implements StorageMock<T> {
 	}
 	//
 	protected void start() {
-		startAsyncConsuming();
 		loadPersistedDataItems();
 		ioStats.start();
 		startListening();
@@ -74,11 +74,9 @@ implements StorageMock<T> {
 		ioStats.close();
 	}
 	//
-	protected abstract void startAsyncConsuming();
-	//
 	protected void loadPersistedDataItems() {
 		// if there is data src file path
-		final Path dataFilePath = Paths.get(rtConfig.getDataSrcFPath());
+		final Path dataFilePath = Paths.get(dataSrcPath);
 		//final int dataSizeRadix = rtConfig.getDataRadixSize();
 		if(null != dataFilePath && !Files.isDirectory(dataFilePath) && Files.exists(dataFilePath)) {
 			long count = 0;
@@ -92,7 +90,7 @@ implements StorageMock<T> {
 					//if(dataSizeRadix == 0x10) {
 					//	nextItem.setSize(Long.valueOf(String.valueOf(nextItem.getSize()), 0x10));
 					//}
-					create(nextItem);
+					putIntoDefaultContainer(nextItem);
 					count ++;
 					nextItem = csvFileItemInput.read();
 				}

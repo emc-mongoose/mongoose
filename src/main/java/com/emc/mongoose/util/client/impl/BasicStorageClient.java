@@ -2,6 +2,7 @@ package com.emc.mongoose.util.client.impl;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
@@ -15,6 +16,7 @@ import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 import com.emc.mongoose.core.impl.load.model.DataItemOutputConsumer;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
+import org.apache.logging.log4j.LogManager;
 //
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -72,7 +74,7 @@ implements StorageClient<T> {
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long maxCount, final int threadCount, final long size
 	) throws IllegalArgumentException, InterruptedException, IOException {
-		return write(itemsInput, itemsOutput, maxCount, THREAD_COUNT_DEFAULT, size, size, 0);
+		return write(itemsInput, itemsOutput, maxCount, threadCount, size, size, 0);
 	}
 	//
 	@Override
@@ -87,7 +89,7 @@ implements StorageClient<T> {
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput)
+				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -121,7 +123,7 @@ implements StorageClient<T> {
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput)
+				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -151,7 +153,7 @@ implements StorageClient<T> {
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput)
+				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -181,7 +183,7 @@ implements StorageClient<T> {
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput)
+				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -221,7 +223,7 @@ implements StorageClient<T> {
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput)
+				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder

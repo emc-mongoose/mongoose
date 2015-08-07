@@ -44,6 +44,6 @@ extends ReadableByteChannel, Externalizable {
 		final ReadableByteChannel chanSrc, final long relOffset, final long len
 	) throws DataSizeException, DataCorruptionException, IOException;
 	//
-	boolean readAndVerifyFully(final ReadableByteChannel chanSrc)
-	throws IOException;
+	long readAndVerifyFully(final ReadableByteChannel chanSrc)
+	throws DataSizeException, DataCorruptionException, IOException;
 }

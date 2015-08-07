@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+import com.emc.mongoose.core.api.io.req.RequestConfig;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;

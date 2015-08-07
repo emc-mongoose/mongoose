@@ -66,6 +66,12 @@ implements DataItemOutput<T> {
 
 	//
 	@Override
+	public String toString() {
+		return "listItemOutput<" + items.hashCode() + ">";
+	}
+
+	//
+	@Override
 	protected void finalize()
 	throws Throwable {
 		items.clear();

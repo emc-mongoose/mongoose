@@ -11,7 +11,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
@@ -23,13 +23,13 @@ import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
 import org.apache.http.protocol.RequestUserAgent;
 //
+import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
@@ -49,9 +49,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-//import java.util.HashMap;
-//import java.util.Map;
-//import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -170,6 +167,11 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
+	protected WSIOTask<T> getIOTask(final T dataObject, final String nodeAddr) {
+		return new BasicWSIOTask<>(this, dataObject, nodeAddr);
+	}
+	//
+	@Override
 	public void start() {
 		if(clientDaemon == null) {
 			LOG.debug(Markers.ERR, "Not starting web load client due to initialization failures");
@@ -187,36 +189,30 @@ implements WSLoadExecutor<T> {
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Closing failure");
 		} finally {
-			try {
-				clientDaemon.interrupt();
-				LOG.debug(
-					Markers.MSG, "Web storage client daemon \"{}\" interrupted", clientDaemon
-				);
-				if(connPool != null) {
-					connPool.closeExpired();
-					LOG.debug(Markers.MSG, "Closed expired (if any) connections in the pool");
+			clientDaemon.interrupt();
+			LOG.debug(
+				Markers.MSG, "Web storage client daemon \"{}\" interrupted", clientDaemon
+			);
+			if(connPool != null) {
+				connPool.closeExpired();
+				LOG.debug(Markers.MSG, "Closed expired (if any) connections in the pool");
+				try {
+					connPool.closeIdle(1, TimeUnit.MILLISECONDS);
+					LOG.debug(Markers.MSG, "Closed idle connections (if any) in the pool");
+				} finally {
 					try {
-						connPool.closeIdle(1, TimeUnit.MILLISECONDS);
-						LOG.debug(Markers.MSG, "Closed idle connections (if any) in the pool");
-					} finally {
-						try {
-							connPool.shutdown(1);
-							LOG.debug(Markers.MSG, "Connection pool has been shut down");
-						} catch(final IOException e) {
-							LogUtil.exception(
-								LOG, Level.WARN, e, "Connection pool shutdown failure"
-							);
-						}
+						connPool.shutdown(1);
+						LOG.debug(Markers.MSG, "Connection pool has been shut down");
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Connection pool shutdown failure"
+						);
 					}
 				}
-				//
-				ioReactor.shutdown(1);
-				LOG.debug(Markers.MSG, "I/O reactor has been shut down");
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "I/O reactor shutdown failure");
-			} finally {
-				BasicWSIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose the I/O tasks pool
 			}
+			//
+			ioReactor.shutdown(1);
+			LOG.debug(Markers.MSG, "I/O reactor has been shut down");
 		}
 	}
 	//
@@ -234,19 +230,13 @@ implements WSLoadExecutor<T> {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, wsTask);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					Markers.MSG, "I/O task #{} has been submitted for execution: {}1",
-					wsTask.hashCode(), futureResult
+					Markers.MSG, "I/O task #{} has been submitted for execution", wsTask.hashCode()
 				);
 			}
 		} catch(final Exception e) {
 			throw new RejectedExecutionException(e);
 		}
 		return futureResult;
-	}
-	//
-	@Override @SuppressWarnings("unchecked")
-	protected BasicWSIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
-		return BasicWSIOTask.getInstance(this, dataItem, nextNodeAddr);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing based on the connection pool stats

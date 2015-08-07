@@ -204,6 +204,10 @@
 				"headCount": 1,
 				"ioThreadsPerSocket": 100,
 				"capacity": 10000000,
+				"container": {
+					"capacity": 10000000,
+					"countLimit": 10000000
+				},
 				"fault": {
 					"minConnLifeMilliSec": 0,
 					"maxConnLifeMilliSec": 0

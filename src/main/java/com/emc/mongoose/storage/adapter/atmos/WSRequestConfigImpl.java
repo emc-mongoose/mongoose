@@ -1,11 +1,11 @@
 package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
@@ -13,10 +13,15 @@ import com.emc.mongoose.common.log.Markers;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -80,23 +85,47 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public MutableWSRequest.HTTPMethod getHTTPMethod() {
-		MutableWSRequest.HTTPMethod method;
+	public final HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
+	throws URISyntaxException {
+		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
+			getHttpMethod(), getUriPath(obj)
+		);
+		try {
+			applyHostHeader(request, nodeAddr);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
+		}
+		if(fsAccess) {
+			super.applyObjectId(obj, null);
+		}
 		switch(loadType) {
+			case UPDATE:
+			case APPEND:
+				applyRangesHeaders(request, obj);
 			case CREATE:
-				method = MutableWSRequest.HTTPMethod.POST;
+				applyPayLoad(request, obj);
 				break;
 			case READ:
-				method = MutableWSRequest.HTTPMethod.GET;
-				break;
 			case DELETE:
-				method = MutableWSRequest.HTTPMethod.DELETE;
-				break;
-			default: // UPDATE, APPEND
-				method = MutableWSRequest.HTTPMethod.PUT;
+				applyPayLoad(request, null);
 				break;
 		}
-		return method;
+		applyHeadersFinally(request);
+		return request;
+	}
+	//
+	@Override
+	public String getHttpMethod() {
+		switch(loadType) {
+			case CREATE:
+				return METHOD_POST;
+			case READ:
+				return METHOD_GET;
+			case DELETE:
+				return METHOD_DELETE;
+			default: // UPDATE, APPEND
+				return METHOD_PUT;
+		}
 	}
 	//
 	public final WSSubTenantImpl<T> getSubTenant() {
@@ -221,23 +250,51 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final MutableWSRequest httpRequest, final T dataItem) {
-		if(httpRequest == null) {
-			throw new IllegalArgumentException(MSG_NO_REQ);
-		}
+	protected final String getUriPath(final T dataItem) {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !IOTask.Type.CREATE.equals(loadType)) {
-			httpRequest.setUriPath(uriBasePath + getPathFor(dataItem));
-		} else if(!uriBasePath.equals(httpRequest.getUriPath())) { // "/rest/objects"
-			httpRequest.setUriPath(uriBasePath);
-		} // else do nothing, uri is "/rest/objects" already
-
+			return uriBasePath + getFilePathFor(dataItem);
+		} else { // "/rest/objects"
+			return uriBasePath;
+		}
+	}
+	//
+	private final static ThreadLocal<StringBuilder>
+		THR_LOC_METADATA_STR_BUILDER = new ThreadLocal<>();
+	//
+	@Override
+	protected final void applyMetaDataHeaders(final HttpEntityEnclosingRequest request) {
+		//
+		StringBuilder md = THR_LOC_METADATA_STR_BUILDER.get();
+		if(md == null) {
+			md = new StringBuilder();
+			THR_LOC_METADATA_STR_BUILDER.set(md);
+		} else {
+			md.setLength(0); // reset/clear
+		}
+		//
+		if(subTenant != null) {
+			md.append("subtenant=").append(subTenant.getValue());
+		}
+		if(IOTask.Type.CREATE.equals(loadType)) {
+			final HttpEntity entity = request.getEntity();
+			if(entity != null && WSObject.class.isInstance(entity)) {
+				if(md.length() > 0) {
+					md.append(',');
+				}
+				md.append("offset=").append(((T) request.getEntity()).getOffset());
+			}
+		}
+		//
+		if(md.length() > 0) {
+			request.setHeader(KEY_EMC_TAGS, md.toString());
+		}
 	}
 	//
 	@Override
-	protected final void applyAuthHeader(final MutableWSRequest httpRequest) {
+	protected final void applyAuthHeader(final HttpRequest httpRequest) {
 		httpRequest.setHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
 	}
 	//
@@ -245,33 +302,45 @@ extends WSRequestConfigBase<T> {
 		HttpHeaders.CONTENT_TYPE, HttpHeaders.RANGE, HttpHeaders.DATE
 	};
 	//
+	private final static ThreadLocal<StringBuilder>
+		THR_LOC_CANONICAL_STR_BUILDER = new ThreadLocal<>();
+	//
 	@Override
-	public final String getCanonical(final MutableWSRequest httpRequest) {
-		final StringBuilder buffer = new StringBuilder(httpRequest.getRequestLine().getMethod());
-		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
+	public final String getCanonical(final HttpRequest httpRequest) {
+		//
+		StringBuilder canonical = THR_LOC_CANONICAL_STR_BUILDER.get();
+		if(canonical == null) {
+			canonical = new StringBuilder();
+			THR_LOC_CANONICAL_STR_BUILDER.set(canonical);
+		} else {
+			canonical.setLength(0); // reset/clear
+		}
+		canonical.append(httpRequest.getRequestLine().getMethod());
+		//
 		for(final String headerName : HEADERS4CANONICAL) {
 			// support for multiple non-unique header keys
 			if(sharedHeaders.containsHeader(headerName)) {
-				buffer.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
+				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
 			} else if(httpRequest.containsHeader(headerName)) {
 				for(final Header header: httpRequest.getHeaders(headerName)) {
-					buffer.append('\n').append(header.getValue());
+					canonical.append('\n').append(header.getValue());
 				}
 			} else {
-				buffer.append('\n');
+				canonical.append('\n');
 			}
 		}
 		//
-		buffer.append('\n').append(httpRequest.getUriPath());
+		final String uri = httpRequest.getRequestLine().getUri();
+		canonical.append('\n').append(uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri);
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
 			if(sharedHeaders.containsHeader(emcHeaderName)) {
-				buffer
+				canonical
 					.append('\n').append(emcHeaderName.toLowerCase())
 					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
 			} else {
 				for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
-					buffer.append('\n').append(emcHeaderName.toLowerCase()).append(':').append(
+					canonical.append('\n').append(emcHeaderName.toLowerCase()).append(':').append(
 						emcHeader.getValue()
 					);
 				}
@@ -279,18 +348,17 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Canonical request form:\n{}", buffer.toString());
+			LOG.trace(Markers.MSG, "Canonical request form:\n{}", canonical.toString());
 		}
 		//
-		return buffer.toString();
+		return canonical.toString();
 	}
 	//
 	@Override
 	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
-		if(
-			IOTask.Type.CREATE.equals(loadType) &&
-			httpResponse.containsHeader(HttpHeaders.LOCATION)
-		) {
+		final Header locationHeader = httpResponse == null ?
+			null : httpResponse.getFirstHeader(HttpHeaders.LOCATION);
+		if(locationHeader != null && IOTask.Type.CREATE.equals(loadType)) {
 			final String valueLocation = httpResponse
 				.getFirstHeader(HttpHeaders.LOCATION)
 				.getValue();
@@ -299,9 +367,9 @@ extends WSRequestConfigBase<T> {
 				valueLocation.startsWith(uriBasePath) &&
 				valueLocation.length() - uriBasePath.length() > 1
 			) {
-				final String id = valueLocation.substring(uriBasePath.length() + 1);
-				if(id.length() > 0) {
-					dataObject.setId(id);
+				final String oid = valueLocation.substring(uriBasePath.length() + 1);
+				if(oid.length() > 0) {
+					dataObject.setId(oid);
 				} else {
 					LOG.trace(Markers.ERR, "Got empty object id");
 				}
@@ -318,27 +386,6 @@ extends WSRequestConfigBase<T> {
 				Long.toHexString(dataObject.getOffset()), dataObject.getId(),
 				httpResponse.getFirstHeader(HttpHeaders.LOCATION)
 			);
-		}
-	}
-	//
-	@Override
-	public final void applyDataItem(final MutableWSRequest httpRequest, final T dataItem)
-	throws IllegalStateException, URISyntaxException {
-		if(fsAccess) {
-			super.applyObjectId(dataItem, null);
-		}
-		applyURI(httpRequest, dataItem);
-		switch(loadType) {
-			case UPDATE:
-			case APPEND:
-				applyRangesHeaders(httpRequest, dataItem);
-			case CREATE:
-				applyPayLoad(httpRequest, dataItem);
-				break;
-			case READ:
-			case DELETE:
-				applyPayLoad(httpRequest, null);
-				break;
 		}
 	}
 	//
@@ -396,8 +443,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public void receiveResponse(final HttpResponse response, final T dataItem) {
-		super.receiveResponse(response, dataItem);
+	public void applySuccResponseToObject(final HttpResponse response, final T dataItem) {
+		super.applySuccResponseToObject(response, dataItem);
 		applyObjectId(dataItem, response);
 	}
 }

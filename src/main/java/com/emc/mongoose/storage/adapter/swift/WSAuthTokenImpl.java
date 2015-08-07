@@ -3,10 +3,11 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -48,7 +49,7 @@ implements AuthToken<T> {
 	public final void create(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.GET);
+			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_GET);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -89,15 +90,16 @@ implements AuthToken<T> {
 	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	private HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
+	private HttpResponse execute(final String addr, final String method)
 	throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
 		//
-		final MutableWSRequest httpReq = reqConf
-			.createRequest().setMethod(method).setUriPath("/auth/v1.0");
+		final HttpEntityEnclosingRequest httpReq = reqConf.createGenericRequest(
+			method, "/auth/v1.0"
+		);
 		//
 		httpReq.setHeader(WSRequestConfigImpl.KEY_X_AUTH_USER, reqConf.getUserName());
 		httpReq.setHeader(WSRequestConfigImpl.KEY_X_AUTH_KEY, reqConf.getSecret());

@@ -44,4 +44,9 @@ extends BinItemOutput<T> {
 	throws IOException {
 		return new BinFileItemInput<>(itemsDstPath);
 	}
+	//
+	@Override
+	public String toString() {
+		return "binFileItemOutput<" + itemsDstPath.getFileName() + ">";
+	}
 }

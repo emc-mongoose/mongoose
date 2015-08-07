@@ -55,7 +55,7 @@ public class Read10KBItemsTest {
 		LogParser.removeLogDirectory(CREATE_RUN_ID);
 		LogParser.removeLogDirectory(READ_RUN_ID);
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
+		RunTimeConfig.setContext(RunTimeConfig.getDefault());
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, CREATE_RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);

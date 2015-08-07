@@ -3,13 +3,13 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.core.impl.data.model.GenericWSContainerBase;
 //
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -44,7 +44,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr,  MutableWSRequest.HTTPMethod.HEAD, null, batchSize
+				addr, WSRequestConfig.METHOD_HEAD, null, batchSize
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -85,7 +85,7 @@ implements Container<T> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, MutableWSRequest.HTTPMethod.PUT, null, batchSize
+				addr, WSRequestConfig.METHOD_PUT, null, batchSize
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -125,7 +125,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, MutableWSRequest.HTTPMethod.DELETE, null, batchSize
+				addr, WSRequestConfig.METHOD_DELETE, null, batchSize
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -162,34 +162,39 @@ implements Container<T> {
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
 	final HttpResponse execute(
-		final String addr, final MutableWSRequest.HTTPMethod method, final String markerSwiftContainer,
-		final long container_limit
+		final String addr, final String method, final String nextMarker,
+		final long maxCount
 	) throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
 		//
-		final MutableWSRequest httpReq = reqConf
-			.createRequest()
-			.setMethod(method)
-			.setUriPath(
-				"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() +
-				"/" + reqConf.getNameSpace() + "/" + name
-			);
+		final HttpEntityEnclosingRequest httpReq;
 		//
 		switch(method) {
-			case GET:
-				// if method is get add json format parameter to uri path
-				httpReq.setUriPath(httpReq.getUriPath() + "?format=json");
-				// set container limit to get container's list with fix size.
-				httpReq.setUriPath(httpReq.getUriPath() + "&limit=" + container_limit);
-				// if it is possible to get next container's list marker must be in URI request.
-				if (markerSwiftContainer != null) {
-					httpReq.setUriPath(httpReq.getUriPath() + "&marker=" + markerSwiftContainer);
+			case WSRequestConfig.METHOD_GET:
+				if(nextMarker == null) {
+					httpReq = reqConf.createGenericRequest(
+						method,
+						"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
+							reqConf.getNameSpace() + "/" + name + "?format=json&limit=" + maxCount
+					);
+				} else {
+					httpReq = reqConf.createGenericRequest(
+						method,
+						"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
+							reqConf.getNameSpace() + "/" + name + "?format=json&limit=" + maxCount +
+							"&marker=" + nextMarker
+					);
 				}
 				break;
-			case PUT:
+			case WSRequestConfig.METHOD_PUT:
+				httpReq = reqConf.createGenericRequest(
+					method,
+					"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
+						reqConf.getNameSpace() + "/" + name
+				);
 				httpReq.setHeader(
 					new BasicHeader(
 						WSRequestConfig.KEY_EMC_FS_ACCESS,
@@ -197,6 +202,12 @@ implements Container<T> {
 					)
 				);
 				break;
+			default:
+				httpReq = reqConf.createGenericRequest(
+					method,
+					"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
+						reqConf.getNameSpace() + "/" + name
+				);
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);

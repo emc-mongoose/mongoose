@@ -1,19 +1,19 @@
-package com.emc.mongoose.core.api.io.req.conf;
+package com.emc.mongoose.core.api.io.req;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.model.DataSource;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.IOControl;
-//
+
 import java.net.URISyntaxException;
 /**
  Created by kurila on 29.09.14.
@@ -26,9 +26,12 @@ extends ObjectRequestConfig<T> {
 		KEY_EMC_ACCEPT = "x-emc-accept",
 		KEY_EMC_FS_ACCESS = "x-emc-file-system-access-enabled",
 		KEY_EMC_DATE = "x-emc-date",
+		KEY_EMC_LIMIT = "x-emc-limit",
 		KEY_EMC_NS = "x-emc-namespace",
 		KEY_EMC_RANGE = "x-emc-range",
 		KEY_EMC_SIG = "x-emc-signature",
+		KEY_EMC_TAGS = "x-emc-tags",
+		KEY_EMC_TOKEN = "x-emc-token",
 		KEY_EMC_UID = "x-emc-uid",
 		//
 		VALUE_KEEP_ALIVE = "keep-alive",
@@ -44,9 +47,20 @@ extends ObjectRequestConfig<T> {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_FS_ACCESS, /*KEY_EMC_NS, */KEY_EMC_SIG, KEY_EMC_UID
 		};
 	//
-	MutableWSRequest createRequest();
+	String
+		METHOD_PUT = "PUT",
+		METHOD_GET = "GET",
+		METHOD_POST = "POST",
+		METHOD_HEAD = "HEAD",
+		METHOD_DELETE = "DELETE",
+		METHOD_TRACE = "TRACE";
 	//
-	MutableWSRequest.HTTPMethod getHTTPMethod();
+	HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
+	throws URISyntaxException;
+	//
+	HttpEntityEnclosingRequest createGenericRequest(final String method, final String uri);
+	//
+	String getHttpMethod();
 	//
 	@Override
 	WSRequestConfig<T> setAPI(final String api);
@@ -76,20 +90,13 @@ extends ObjectRequestConfig<T> {
 	//
 	HttpHost getNodeHost(final String nodeAddr);
 	//
-	String getUserAgent();
+	void applyHeadersFinally(final HttpEntityEnclosingRequest httpRequest);
 	//
-	void applyDataItem(final MutableWSRequest httpRequest, T dataItem)
-	throws URISyntaxException;
-	//
-	void applyHeadersFinally(final MutableWSRequest httpRequest);
-	//
-	String getCanonical(final MutableWSRequest httpRequest);
+	String getCanonical(final HttpRequest httpRequest);
 	//
 	String getSignature(final String canonicalForm);
 	//
-	void receiveResponse(final HttpResponse response, final T dataItem);
+	void applySuccResponseToObject(final HttpResponse response, final T dataItem);
 	//
 	HttpResponse execute(final String addr, final HttpRequest request);
-	//
-	boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem);
 }

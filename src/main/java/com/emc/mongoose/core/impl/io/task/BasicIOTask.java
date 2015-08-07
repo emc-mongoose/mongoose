@@ -1,14 +1,11 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common.jar
-import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
-import com.emc.mongoose.core.api.data.AppendableDataItem;
-import com.emc.mongoose.core.api.data.UpdatableDataItem;
+import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import org.apache.logging.log4j.Level;
@@ -16,8 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
-import java.util.HashMap;
-import java.util.Map;
 /**
  Created by andrey on 12.10.14.
  */
@@ -25,7 +20,6 @@ public class BasicIOTask<T extends DataItem>
 implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
 	protected final static ThreadLocal<StringBuilder> THRLOC_SB = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {
@@ -33,69 +27,26 @@ implements IOTask<T> {
 		}
 	};
 	//
-	protected final LoadExecutor<T> loadExecutor;
 	protected final RequestConfig<T> reqConf;
+	protected final LoadExecutor<T> loadExecutor;
+	protected final T dataItem;
+	protected final String nodeAddr;
 	//
-	protected volatile String nodeAddr = null;
-	protected volatile T dataItem = null;
 	protected volatile Status status = Status.FAIL_UNKNOWN;
+	protected volatile long
+		reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0, transferSize = 0;
 	//
-	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
-	protected volatile long transferSize = 0;
-	//
-	public BasicIOTask(final LoadExecutor<T> loadExecutor) {
-		this.loadExecutor = loadExecutor;
+	public BasicIOTask(
+		final LoadExecutor<T> loadExecutor, final T dataItem, final String nodeAddr
+	) {
 		try {
 			this.reqConf = loadExecutor.getRequestConfig();
 		} catch(final RemoteException e) {
-			throw new IllegalStateException(e);
+			throw new RuntimeException(e);
 		}
-	}
-	//
-	public final static Map<LoadExecutor, InstancePool<BasicIOTask>>
-		INSTANCE_POOL_MAP = new HashMap<>();
-	//
-	public static BasicIOTask getInstance(
-		final LoadExecutor loadExecutor, DataItem dataItem, final String nodeAddr
-	) {
-		InstancePool<BasicIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
-		if(instPool == null) {
-			try {
-				instPool = new InstancePool<>(
-					BasicIOTask.class.getConstructor(LoadExecutor.class), loadExecutor
-				);
-				INSTANCE_POOL_MAP.put(loadExecutor, instPool);
-			} catch(final NoSuchMethodException e) {
-				throw new IllegalStateException(e);
-			}
-		}
-		//
-		return instPool.take(dataItem, nodeAddr);
-	}
-	//
-	@Override @SuppressWarnings("unchecked")
-	public final BasicIOTask<T> reuse(final Object... args) {
-		if(args == null) {
-			throw new IllegalArgumentException("No args for reusing");
-		} else {
-			if(args.length > 0) {
-				setDataItem((T) args[0]);
-			}
-			if(args.length > 1) {
-				setNodeAddr(String.class.cast(args[1]));
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public void release() {
-		final InstancePool<BasicIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
-		if(instPool == null) {
-			throw new IllegalStateException("No pool found to release back");
-		} else {
-			instPool.release(this);
-		}
+		this.loadExecutor = loadExecutor;
+		this.dataItem = dataItem;
+		this.nodeAddr = nodeAddr;
 	}
 	//
 	@Override
@@ -164,41 +115,18 @@ implements IOTask<T> {
 	}
 	//
 	@Override
-	public IOTask<T> setNodeAddr(final String nodeAddr) {
-		this.nodeAddr = nodeAddr;
-		return this;
-	}
-	//
-	@Override
 	public final String getNodeAddr() {
 		return nodeAddr;
 	}
 	//
 	@Override
-	public IOTask<T> setDataItem(final T dataItem) {
-		this.dataItem = dataItem;
-		final Type loadType = reqConf.getLoadType();
-		switch(loadType) {
-			case APPEND:
-				transferSize = AppendableDataItem.class.cast(dataItem).getPendingAugmentSize();
-				break;
-			case UPDATE:
-				transferSize = UpdatableDataItem.class.cast(dataItem).getPendingRangesSize();
-				break;
-			default:
-				transferSize = dataItem.getSize();
-		}
-		return this;
+	public final long getTransferSize() {
+		return transferSize;
 	}
 	//
 	@Override
 	public final T getDataItem() {
 		return dataItem;
-	}
-	//
-	@Override
-	public final long getTransferSize() {
-		return transferSize;
 	}
 	//
 	@Override

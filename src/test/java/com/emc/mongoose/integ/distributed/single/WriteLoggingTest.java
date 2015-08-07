@@ -7,12 +7,16 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import static com.emc.mongoose.integ.tools.LogPatterns.*;
 
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
+import com.emc.mongoose.storage.adapter.swift.Container;
+import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
+import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
@@ -52,9 +56,8 @@ public class WriteLoggingTest {
 		LogParser.removeLogDirectory(RUN_ID);
 		TimeUnit.SECONDS.sleep(5);
 		// reinit run id and the log path
-		RunTimeConfig
-			.getContext()
-			.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		RunTimeConfig.resetContext();
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		LoggingTestSuite.setUpClass();
 		//
 		try(
@@ -63,6 +66,7 @@ public class WriteLoggingTest {
 					.setLimitTime(0, TimeUnit.SECONDS)
 					.setLimitCount(COUNT_LIMIT)
 					.setClientMode(new String[] {ServiceUtils.getHostAddr()})
+					.setAPI("swift")
 					.build()
 		) {
 			try(
@@ -79,6 +83,12 @@ public class WriteLoggingTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final Container container = new WSContainerImpl(
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(rtConfig),
+			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
+		);
+		container.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	@Test

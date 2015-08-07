@@ -1,22 +1,35 @@
 package com.emc.mongoose.storage.mock.api;
 //
-import com.emc.mongoose.core.api.data.DataObject;
-
-import java.util.concurrent.ExecutionException;
+import java.util.Collection;
 /**
  Created by kurila on 03.07.15.
  */
-public interface ObjectStorageMock<T extends DataObject>
+public interface ObjectStorageMock<T extends DataObjectMock>
 extends StorageMock<T> {
 	//
-	T create(final String id, final long offset, final long size);
+	boolean createContainer(final String name)
+	throws StorageMockCapacityLimitReachedException;
 	//
-	T update(final String id, final long offset, final long size);
+	ObjectContainerMock<T> getContainer(final String name);
 	//
-	T append(final String id, final long offset, final long size);
+	boolean deleteContainer(final String name);
 	//
-	T read(final String id, final long offset, final long size);
+	void createObject(final String container, final String id, final long offset, final long size)
+	throws ContainerMockNotFoundException, StorageMockCapacityLimitReachedException;
 	//
-	T delete(final String id);
+	T getObject(final String container, final String id, final long offset, final long size)
+	throws ContainerMockException;
 	//
+	void deleteObject(final String container, final String id, final long offset, final long size)
+	throws ContainerMockNotFoundException;
+	//
+	void updateObject(final String container, final String id, final long offset, final long size)
+	throws ContainerMockException, ObjectMockNotFoundException;
+	//
+	void appendObject(final String container, final String id, final long offset, final long size)
+	throws ContainerMockException, ObjectMockNotFoundException;
+	//
+	T listObjects(
+		final String container, final String marker, final Collection<T> buffDst, final int maxCount
+	) throws ContainerMockException;
 }

@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.mock.impl.web.request;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.storage.mock.api.ReqURIMatchingHandler;
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
@@ -21,9 +22,9 @@ implements HttpAsyncRequestHandlerMapper {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
-	private final AtmosRequestHandler<T> reqHandlerAtmos;
-	private final S3RequestHandler<T> reqHandlerS3;
-	private final SwiftRequestHandler<T> reqHandlerSwift;
+	private final ReqURIMatchingHandler<T> reqHandlerAtmos;
+	private final ReqURIMatchingHandler<T> reqHandlerS3;
+	private final ReqURIMatchingHandler<T> reqHandlerSwift;
 	//
 	public APIRequestHandlerMapper(
 		final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage
@@ -35,10 +36,9 @@ implements HttpAsyncRequestHandlerMapper {
 	//
 	@Override
 	public final HttpAsyncRequestHandler<HttpRequest> lookup(final HttpRequest httpRequest) {
-		final String requestURI = httpRequest.getRequestLine().getUri();
-		if(reqHandlerAtmos.matches(requestURI)) {
+		if(reqHandlerAtmos.matches(httpRequest)) {
 			return reqHandlerAtmos;
-		} else if(reqHandlerSwift.matches(requestURI)) {
+		} else if(reqHandlerSwift.matches(httpRequest)) {
 			return reqHandlerSwift;
 		} else {
 			return reqHandlerS3;

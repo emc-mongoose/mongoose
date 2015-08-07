@@ -18,6 +18,6 @@ extends DataItem {
 	//
 	long getPendingAugmentSize();
 	//
-	void writeAugmentFully(final WritableByteChannel chanOut)
+	long writeAugmentFully(final WritableByteChannel chanOut)
 	throws IOException;
 }

@@ -83,4 +83,8 @@ implements DataItemInput<T> {
 	public final void close() {
 	}
 	//
+	@Override
+	public final String toString() {
+		return "newDataItemInput<" + dataConstructor.getDeclaringClass().getSimpleName() + ">";
+	}
 }

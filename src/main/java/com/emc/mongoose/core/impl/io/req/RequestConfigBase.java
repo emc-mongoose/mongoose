@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.io.req.conf;
+package com.emc.mongoose.core.impl.io.req;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+import com.emc.mongoose.core.api.io.req.RequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 //
@@ -38,7 +38,7 @@ implements RequestConfig<T> {
 	protected volatile boolean
 		verifyContentFlag, anyDataProducerEnabled;
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
-	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
+	protected volatile RunTimeConfig runTimeConfig;
 	protected volatile String
 		/*addr, */nameSpace, scheme/*, uriTemplate*/;
 	protected volatile int
@@ -48,6 +48,7 @@ implements RequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
+		runTimeConfig = RunTimeConfig.getContext();
 		api = runTimeConfig.getApiName();
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();

@@ -45,10 +45,7 @@ implements AccumulatorProducer<T> {
 	public PersistentAccumulatorProducer(
 		final Class<T> itemCls, final RunTimeConfig rtConfig, final long maxCount
 	) {
-		super(
-			maxCount, rtConfig.getLoadLimitTimeUnit().toMillis(rtConfig.getLoadLimitTimeValue()),
-			rtConfig.getTasksMaxQueueSize()
-		);
+		super(maxCount, rtConfig.getTasksMaxQueueSize());
 		//
 		this.dataCls = itemCls;
 		final Path tmpFilePath = Paths.get(

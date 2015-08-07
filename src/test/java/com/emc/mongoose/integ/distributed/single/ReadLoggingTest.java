@@ -10,6 +10,10 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.storage.adapter.atmos.SubTenant;
+import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
+import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
@@ -58,9 +62,8 @@ public class ReadLoggingTest {
 		// reinit run id and the log path
 		//  remove log dir w/ previous logs
 		LogParser.removeLogDirectory(RUN_ID);
-		RunTimeConfig
-			.getContext()
-			.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		RunTimeConfig.resetContext();
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		LoggingTestSuite.setUpClass();
 		//
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
@@ -69,6 +72,7 @@ public class ReadLoggingTest {
 			.setLimitTime(0, TimeUnit.SECONDS)
 			.setLimitCount(COUNT_LIMIT)
 			.setClientMode(new String[] {ServiceUtils.getHostAddr()})
+			.setAPI("atmos")
 			.build();
 		final BufferingOutputStream
 			stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream();
@@ -83,7 +87,11 @@ public class ReadLoggingTest {
 		);
 		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
 		stdOutInterceptorStream.reset(); // clear before using
-		COUNT_READ = CLIENT.read(itemsQueue, null, COUNT_LIMIT, 10, true);
+		if(COUNT_WRITTEN > 0) {
+			COUNT_READ = CLIENT.read(itemsQueue, null, COUNT_WRITTEN, 10, true);
+		} else {
+			throw new IllegalStateException("Failed to write");
+		}
 		TimeUnit.SECONDS.sleep(1);
 		STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 		LOG = LogManager.getLogger();
@@ -96,6 +104,12 @@ public class ReadLoggingTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final SubTenant st = new WSSubTenantImpl(
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("atmos").setProperties(rtConfig),
+			rtConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
+		);
+		st.delete(rtConfig.getStorageAddrs()[0]);
 		StdOutInterceptorTestSuite.reset();
 		CLIENT.close();
 	}

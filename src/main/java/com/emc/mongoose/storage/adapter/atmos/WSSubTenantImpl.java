@@ -3,11 +3,11 @@ package com.emc.mongoose.storage.adapter.atmos;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -28,7 +28,6 @@ implements SubTenant<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static String KEY_SUBTENANT_ID = "subtenantID";
 	@SuppressWarnings("FieldCanBeLocal")
 	private final WSRequestConfigImpl<T> reqConf;
 	private String value = null;
@@ -52,16 +51,18 @@ implements SubTenant<T> {
 		MSG_INVALID_METHOD = "<NULL> is invalid HTTP method",
 		SUBTENANT = "subtenant";
 	//
-	final HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
+	final HttpResponse execute(final String addr, final String method)
 	throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
-		final MutableWSRequest httpReq = reqConf.createRequest().setMethod(method);
 		//
-		if(MutableWSRequest.HTTPMethod.PUT.equals(method)) {
-			httpReq.setUriPath(WSRequestConfigImpl.PREFIX_URI + SUBTENANT);
+		final HttpEntityEnclosingRequest httpReq;
+		if(WSRequestConfig.METHOD_PUT.equals(method)) {
+			httpReq = reqConf.createGenericRequest(
+				method, WSRequestConfigImpl.PREFIX_URI + SUBTENANT
+			);
 			httpReq.setHeader(
 				new BasicHeader(
 					WSRequestConfig.KEY_EMC_FS_ACCESS,
@@ -69,7 +70,9 @@ implements SubTenant<T> {
 				)
 			);
 		} else {
-			httpReq.setUriPath(WSRequestConfigImpl.PREFIX_URI + SUBTENANT + "/" + value);
+			httpReq = reqConf.createGenericRequest(
+				method, WSRequestConfigImpl.PREFIX_URI + SUBTENANT + "/" + value
+			);
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
@@ -81,9 +84,9 @@ implements SubTenant<T> {
 	throws IllegalStateException {
 		boolean flagExists = false;
 		//
-		if(value!= null && value.length() > 0) {
+		if(value != null && value.length() > 0) {
 			try {
-				final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.HEAD);
+				final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_HEAD);
 				if(httpResp != null) {
 					final HttpEntity httpEntity = httpResp.getEntity();
 					final StatusLine statusLine = httpResp.getStatusLine();
@@ -123,7 +126,7 @@ implements SubTenant<T> {
 	public final void create(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.PUT);
+			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_PUT);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -165,7 +168,7 @@ implements SubTenant<T> {
 	public final void delete(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.DELETE);
+			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_DELETE);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();

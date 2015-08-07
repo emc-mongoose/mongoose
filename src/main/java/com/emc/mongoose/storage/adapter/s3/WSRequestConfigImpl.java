@@ -5,16 +5,16 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-//
 import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 //
+import org.apache.http.HttpRequest;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -122,22 +122,20 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final MutableWSRequest httpRequest, final T dataItem)
+	protected final String getUriPath(final T dataItem)
 	throws IllegalStateException, URISyntaxException {
-		if(httpRequest == null) {
-			throw new IllegalArgumentException(MSG_NO_REQ);
-		}
 		if(bucket == null) {
 			throw new IllegalArgumentException(MSG_NO_BUCKET);
 		}
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest.setUriPath("/" + bucket + getPathFor(dataItem));
+		applyObjectId(dataItem, null);
+		return "/" + bucket + getFilePathFor(dataItem);
 	}
 	//
 	@Override
-	protected final void applyAuthHeader(final MutableWSRequest httpRequest) {
+	protected final void applyAuthHeader(final HttpRequest httpRequest) {
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
 			authPrefixValue + userName + ":" + getSignature(getCanonical(httpRequest))
@@ -148,43 +146,55 @@ extends WSRequestConfigBase<T> {
 		HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE
 	};
 	//
+	private final static ThreadLocal<StringBuilder>
+		THR_LOC_CANONICAL_STR_BUILDER = new ThreadLocal<>();
+	//
 	@Override
-	public final String getCanonical(final MutableWSRequest httpRequest) {
-		final StringBuffer buffer = new StringBuffer(httpRequest.getRequestLine().getMethod());
+	public final String getCanonical(final HttpRequest httpRequest) {
+		//
+		StringBuilder canonical = THR_LOC_CANONICAL_STR_BUILDER.get();
+		if(canonical == null) {
+			canonical = new StringBuilder();
+			THR_LOC_CANONICAL_STR_BUILDER.set(canonical);
+		} else {
+			canonical.setLength(0); // reset/clear
+		}
+		canonical.append(httpRequest.getRequestLine().getMethod());
 		//
 		for(final String headerName : HEADERS4CANONICAL) {
 			if(sharedHeaders.containsHeader(headerName)) {
-				buffer.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
+				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
 			} else if(httpRequest.containsHeader(headerName)) {
 				for(final Header header: httpRequest.getHeaders(headerName)) {
-					buffer.append('\n').append(header.getValue());
+					canonical.append('\n').append(header.getValue());
 				}
 			} else {
-				buffer.append('\n');
+				canonical.append('\n');
 			}
 		}
 		//
 		for(final String emcHeaderName : HEADERS_EMC) {
 			if(sharedHeaders.containsHeader(emcHeaderName)) {
-				buffer
+				canonical
 					.append('\n').append(emcHeaderName.toLowerCase())
 					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
 			} else {
 				for(final Header emcHeader : httpRequest.getHeaders(emcHeaderName)) {
-					buffer
+					canonical
 						.append('\n').append(emcHeaderName.toLowerCase())
 						.append(':').append(emcHeader.getValue());
 				}
 			}
 		}
 		//
-		buffer.append('\n').append(httpRequest.getUriPath());
+		final String uri = httpRequest.getRequestLine().getUri();
+		canonical.append('\n').append(uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri);
 		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffer);
+			LOG.trace(Markers.MSG, "Canonical representation:\n{}", canonical);
 		}
 		//
-		return buffer.toString();
+		return canonical.toString();
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

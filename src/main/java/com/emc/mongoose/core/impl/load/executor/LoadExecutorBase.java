@@ -15,7 +15,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.load.model.Consumer;
@@ -48,8 +48,6 @@ import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -78,6 +76,7 @@ implements LoadExecutor<T> {
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
+	//protected InstancePool<IOTask<T>> ioTaskPool;
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
 	protected volatile PersistentAccumulatorProducer<T> itemsBuff = null;
@@ -94,7 +93,6 @@ implements LoadExecutor<T> {
 	protected final JmxReporter jmxReporter;
 	//
 	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
-	private final BlockingQueue<IOTask<T>> ioTaskSpentQueue;
 	//
 	private LoadState currState = null;
 	private ResumableClock resumableClock = new ResumableClock();
@@ -130,38 +128,24 @@ implements LoadExecutor<T> {
 			//
 			@Override
 			public final void run() {
-				IOTask<T> spentIOTask;
-				try {
-					while(!isClosed.get()) {
-						// 1st check for done condition
-						if(isDoneAllSubm() || isDoneMaxCount()) {
-							if(lock.tryLock(RELEASE_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS)) {
-								try {
-									condProducerDone.signalAll();
-									LOG.trace(
-										Markers.MSG, "{}: done/interrupted signal emitted",
-										getName()
-									);
-								} finally {
-									lock.unlock();
-								}
-							} else {
-								LOG.warn(
-									Markers.ERR, "{}: failed to acquire the lock in close method",
-									getName()
-								);
-							}
-						}
-						// try to get a task for releasing into the pool
-						spentIOTask = ioTaskSpentQueue.poll(
-							RELEASE_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
-						);
-						// release the next task if necessary
-						if(spentIOTask != null) {
-							spentIOTask.release();
+				while(!isClosed.get()) {
+					try {
+						TimeUnit.MILLISECONDS.sleep(10);
+					} catch(final InterruptedException e) {
+						break;
+					}
+					if(isDoneAllSubm() || isDoneMaxCount()) {
+						lock.lock();
+						try {
+							condProducerDone.signalAll();
+							LOG.trace(
+								Markers.MSG, "{}: done/interrupted signal emitted",
+								getName()
+							);
+						} finally {
+							lock.unlock();
 						}
 					}
-				} catch(final InterruptedException ignored) {
 				}
 			}
 		};
@@ -181,10 +165,7 @@ implements LoadExecutor<T> {
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
-		super(
-			maxCount, rtConfig.getLoadLimitTimeUnit().toMillis(rtConfig.getLoadLimitTimeValue()),
-			rtConfig.getTasksMaxQueueSize()
-		);
+		super(maxCount, rtConfig.getTasksMaxQueueSize());
 		//
 		this.dataCls = dataCls;
 		this.rtConfig = rtConfig;
@@ -244,7 +225,6 @@ implements LoadExecutor<T> {
 		for(final String addr : storageNodeAddrs) {
 			activeTasksStats.put(addr, new AtomicInteger(0));
 		}
-		ioTaskSpentQueue = new ArrayBlockingQueue<>(maxQueueSize);
 		dataSrc = reqConfig.getDataSource();
 		//
 		if(listFile != null && listFile.length() > 0) {
@@ -536,7 +516,8 @@ implements LoadExecutor<T> {
 						);
 						itemsBuff.setConsumer(this);
 						LOG.debug(
-							Markers.MSG, "{}: not started yet, consuming into the temporary file"
+							Markers.MSG, "{}: not started yet, consuming into the temporary file",
+							getName()
 						);
 					}
 				} finally {
@@ -587,9 +568,8 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	@SuppressWarnings("unchecked")
-	protected BasicIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
-		return BasicIOTask.getInstance(this, dataItem, nextNodeAddr);
+	protected IOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
+		return new BasicIOTask<>(this, dataItem, nextNodeAddr);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing implementation
@@ -779,8 +759,6 @@ implements LoadExecutor<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
 				releaseDaemon.interrupt();
-				ioTaskSpentQueue.clear();
-				BasicIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose I/O tasks pool
 				if(jmxReporter != null) {
 					jmxReporter.close();
 				}

@@ -10,11 +10,10 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.storage.mock.api.StorageMock;
-import com.emc.mongoose.storage.mock.api.IOStats;
+import com.emc.mongoose.storage.mock.api.StorageIOStats;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -27,70 +26,55 @@ import java.util.concurrent.TimeUnit;
  */
 public final class BasicStorageIOStats
 extends Thread
-implements IOStats {
+implements StorageIOStats {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final MetricRegistry metricRegistry = new MetricRegistry();
 	private final JmxReporter jmxReporter;
 	private final Counter
-		countSuccCreate = metricRegistry.counter(
+		countFailWrite = metricRegistry.counter(
 			MetricRegistry.name(
-				StorageMock.class, String.valueOf(IOTask.Type.CREATE), METRIC_COUNT,
-				LoadExecutor.METRIC_NAME_SUCC
-			)
-		),
-		countSuccRead = metricRegistry.counter(
-			MetricRegistry.name(
-				StorageMock.class, String.valueOf(IOTask.Type.READ), METRIC_COUNT,
-				LoadExecutor.METRIC_NAME_SUCC
-			)
-		),
-		countSuccDelete = metricRegistry.counter(
-			MetricRegistry.name(
-				StorageMock.class, String.valueOf(IOTask.Type.DELETE), METRIC_COUNT,
-				LoadExecutor.METRIC_NAME_SUCC
-			)
-		),
-		countFailCreate = metricRegistry.counter(
-			MetricRegistry.name(
-				StorageMock.class, String.valueOf(IOTask.Type.CREATE), METRIC_COUNT,
-				LoadExecutor.METRIC_NAME_FAIL
+				StorageMock.class, IOType.WRITE.name(), LoadExecutor.METRIC_NAME_FAIL
 			)
 		),
 		countFailRead = metricRegistry.counter(
 			MetricRegistry.name(
-				StorageMock.class, String.valueOf(IOTask.Type.READ), METRIC_COUNT,
-				LoadExecutor.METRIC_NAME_FAIL
+				StorageMock.class, IOType.READ.name(), LoadExecutor.METRIC_NAME_FAIL
 			)
+		),
+		countFailDelete = metricRegistry.counter(
+			MetricRegistry.name(
+				StorageMock.class, IOType.DELETE.name(), LoadExecutor.METRIC_NAME_FAIL
+			)
+		),
+		countContainers = metricRegistry.counter(
+			MetricRegistry.name(StorageMock.class, METRIC_NAME_CONTAINERS)
 		);
 	private final Meter
-		bwAll = metricRegistry.meter(
-			MetricRegistry.name(StorageMock.class, ALL_METHODS, LoadExecutor.METRIC_NAME_BW)
-		),
-		bwCreate = metricRegistry.meter(
+		tpWrite = metricRegistry.meter(
 			MetricRegistry.name(
-				StorageMock.class, String.valueOf(IOTask.Type.CREATE), LoadExecutor.METRIC_NAME_BW
-			)
-		),
-		bwRead = metricRegistry.meter(
-			MetricRegistry.name(
-				StorageMock.class, String.valueOf(IOTask.Type.READ), LoadExecutor.METRIC_NAME_BW
-			)
-		),
-		tpAll = metricRegistry.meter(
-			MetricRegistry.name(
-				StorageMock.class, ALL_METHODS, LoadExecutor.METRIC_NAME_TP
-			)
-		),
-		tpCreate = metricRegistry.meter(
-			MetricRegistry.name(
-				StorageMock.class, String.valueOf(IOTask.Type.CREATE), LoadExecutor.METRIC_NAME_TP
+				StorageMock.class, IOType.WRITE.name(), LoadExecutor.METRIC_NAME_TP
 			)
 		),
 		tpRead = metricRegistry.meter(
 			MetricRegistry.name(
-				StorageMock.class, String.valueOf(IOTask.Type.READ), LoadExecutor.METRIC_NAME_TP
+				StorageMock.class, IOType.READ.name(), LoadExecutor.METRIC_NAME_TP
+			)
+		),
+		tpDelete = metricRegistry.meter(
+			MetricRegistry.name(
+				StorageMock.class, IOType.DELETE.name(), LoadExecutor.METRIC_NAME_TP
+			)
+		),
+		bwWrite = metricRegistry.meter(
+			MetricRegistry.name(
+				StorageMock.class, IOType.WRITE.name(), LoadExecutor.METRIC_NAME_BW
+			)
+		),
+		bwRead = metricRegistry.meter(
+			MetricRegistry.name(
+				StorageMock.class, IOType.READ.name(), LoadExecutor.METRIC_NAME_BW
 			)
 		);
 	//
@@ -98,15 +82,14 @@ implements IOStats {
 	private final StorageMock storage;
 	//
 	public BasicStorageIOStats(
-		final RunTimeConfig runTimeConfig, final StorageMock storage
+		final StorageMock storage, final int metricsPeriodSec, final boolean jmxServeFlag
 	) {
 		super(BasicStorageIOStats.class.getSimpleName());
 		setDaemon(true);
-		updateMilliPeriod = TimeUnit.SECONDS.toMillis(runTimeConfig.getLoadMetricsPeriodSec());
+		updateMilliPeriod = TimeUnit.SECONDS.toMillis(metricsPeriodSec);
 		this.storage = storage;
 		//
-		final boolean flagServeIfNotLoadServer = runTimeConfig.getFlagServeIfNotLoadServer();
-		if(flagServeIfNotLoadServer) {
+		if(jmxServeFlag) {
 			final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
 				RunTimeConfig.getContext().getRemotePortExport()
 			);
@@ -121,28 +104,30 @@ implements IOStats {
 	}
 	//
 	private final static String
-		MSG_FMT_METRICS = "count=(used=%.1f%%, succ=(%d/%d/%d); fail=(%d/%d)); " +
-			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
+		MSG_FMT_METRICS = "Capacity used: %.1f%%, containers count: %d\n" +
+			"\tOperation |Count       |Failed      |TP[/s]avg   |TP[/s]1min  |BW[MB/s]avg |BW[MB/s]1min\n" +
+			"\t----------|------------|------------|------------|------------|------------|------------\n" +
+			"\tWrite     |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
+			"\tRead      |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
+			"\tDelete    |%12d|%12d|%12.3f|%12.3f|            |";
 	//
 	@Override
 	public final String toString() {
 		return String.format(
 			LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 			//
-			100.0 * storage.getSize() / storage.getCapacity(),
+			100.0 * storage.getSize() / storage.getCapacity(), countContainers.getCount(),
 			//
-			countSuccCreate.getCount(), countSuccRead.getCount(), countSuccDelete.getCount(),
-			countFailCreate.getCount(), countFailRead.getCount(),
+			tpWrite.getCount(), countFailWrite.getCount(),
+			tpWrite.getMeanRate(), tpWrite.getOneMinuteRate(),
+			bwWrite.getMeanRate() / 1048576, bwWrite.getOneMinuteRate() / 1048576,
 			//
-			tpAll.getMeanRate(),
-			tpAll.getOneMinuteRate(),
-			tpAll.getFiveMinuteRate(),
-			tpAll.getFifteenMinuteRate(),
+			tpRead.getCount(), countFailRead.getCount(),
+			tpRead.getMeanRate(), tpRead.getOneMinuteRate(),
+			bwRead.getMeanRate() / 1048576, bwRead.getOneMinuteRate() / 1048576,
 			//
-			bwAll.getMeanRate() / LoadExecutor.MIB,
-			bwAll.getOneMinuteRate() / LoadExecutor.MIB,
-			bwAll.getFiveMinuteRate() / LoadExecutor.MIB,
-			bwAll.getFifteenMinuteRate() / LoadExecutor.MIB
+			tpDelete.getCount(), countFailDelete.getCount(),
+			tpDelete.getMeanRate(), tpDelete.getOneMinuteRate()
 		);
 	}
 	//
@@ -187,61 +172,53 @@ implements IOStats {
 	}
 	//
 	@Override
-	public final void markCreate(final long size) {
-		if(size < 0) {
-			countFailCreate.inc();
+	public final void markWrite(final boolean succ, final long size) {
+		if(succ) {
+			tpWrite.mark();
+			bwWrite.mark(size);
 		} else {
-			countSuccCreate.inc();
-			tpCreate.mark();
-			bwCreate.mark(size);
-			tpAll.mark();
-			bwAll.mark(size);
+			countFailWrite.inc();
 		}
 	}
 	//
 	@Override
-	public final void markRead(final long size) {
-		if(size < 0) {
-			countFailRead.inc();
-		} else {
-			countSuccRead.inc();
+	public final void markRead(final boolean succ, final long size) {
+		if(succ) {
 			tpRead.mark();
 			bwRead.mark(size);
-			tpAll.mark();
-			bwAll.mark(size);
+		} else {
+			countFailRead.inc();
 		}
 	}
 	//
 	@Override
-	public final void markDelete() {
-		countSuccDelete.inc();
-		tpAll.mark();
+	public final void markDelete(final boolean succ) {
+		if(succ) {
+			tpDelete.mark();
+		} else {
+			countFailDelete.inc();
+		}
+	}
+	//
+	@Override
+	public final void containerCreate() {
+		countContainers.inc();
+	}
+	//
+	@Override
+	public final void containerDelete() {
+		countContainers.dec();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// methods necessary for throttling, perf adaptation, etc
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final double getMeanRate() {
-		return tpAll.getOneMinuteRate();
+	public final double getRate() {
+		return tpWrite.getOneMinuteRate() + tpRead.getOneMinuteRate() + tpDelete.getOneMinuteRate();
 	}
 	//
 	@Override
-	public final double getWriteRate() {
-		return tpCreate.getOneMinuteRate();
-	}
-	//
-	@Override
-	public final double getReadRate() {
-		return tpRead.getOneMinuteRate();
-	}
-	//
-	@Override
-	public final double getWriteRateBytes() {
-		return bwCreate.getOneMinuteRate();
-	}
-	//
-	@Override
-	public final double getReadRateBytes() {
-		return bwRead.getOneMinuteRate();
+	public final double getRateBytes() {
+		return bwWrite.getOneMinuteRate() + bwRead.getOneMinuteRate();
 	}
 }

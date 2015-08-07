@@ -1,14 +1,13 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
+import com.emc.mongoose.core.api.io.req.ObjectRequestConfig;
 import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.task.BasicObjectIOTask;
-//
-import java.io.IOException;
 //
 //import org.apache.log.log4j.LogManager;
 //import org.apache.log.log4j.Logger;
@@ -27,7 +26,7 @@ implements ObjectLoadExecutor<T> {
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
 		final int countUpdPerReq
-	) throws ClassCastException {
+	) {
 		super(
 			dataCls,
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount, sizeMin, sizeMax,
@@ -35,18 +34,8 @@ implements ObjectLoadExecutor<T> {
 		);
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	protected BasicObjectIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
-		return BasicObjectIOTask.getInstance(this, dataItem, nextNodeAddr);
-	}
-	//
 	@Override
-	public void close()
-	throws IOException {
-		try {
-			super.close();
-		} finally {
-			BasicObjectIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose the I/O tasks pool
-		}
+	protected DataObjectIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
+		return new BasicObjectIOTask<>(this, dataItem, nextNodeAddr);
 	}
 }

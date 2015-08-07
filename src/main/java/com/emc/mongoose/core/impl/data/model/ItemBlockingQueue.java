@@ -105,4 +105,9 @@ implements DataItemOutput<T>, DataItemInput<T> {
 	public void close()
 	throws IOException {
 	}
+	//
+	@Override
+	public final String toString() {
+		return "itemsQueue<" + queue.toString() + ">";
+	}
 }

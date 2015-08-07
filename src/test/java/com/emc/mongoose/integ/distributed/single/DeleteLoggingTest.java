@@ -10,6 +10,10 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.storage.adapter.s3.Bucket;
+import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
+import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
@@ -58,14 +62,14 @@ public class DeleteLoggingTest {
 		//  remove log dir w/ previous logs
 		LogParser.removeLogDirectory(RUN_ID);
 		// reinit run id and the log path
-		RunTimeConfig
-			.getContext()
-			.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		RunTimeConfig.resetContext();
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		LoggingTestSuite.setUpClass();
 		//
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
 			clientBuilder = new BasicWSClientBuilder<>();
 		CLIENT = clientBuilder
+			.setAPI("s3")
 			.setLimitTime(0, TimeUnit.SECONDS)
 			.setLimitCount(COUNT_LIMIT)
 			.setClientMode(new String[] {ServiceUtils.getHostAddr()})
@@ -83,7 +87,11 @@ public class DeleteLoggingTest {
 		);
 		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
 		stdOutInterceptorStream.reset(); // clear before using
-		COUNT_DELETED = CLIENT.delete(itemsQueue, null, COUNT_LIMIT, 10);
+		if(COUNT_WRITTEN > 0) {
+			COUNT_DELETED = CLIENT.delete(itemsQueue, null, COUNT_WRITTEN, 10);
+		} else {
+			throw new IllegalStateException("Failed to write");
+		}
 		TimeUnit.SECONDS.sleep(1);
 		STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 		LOG = LogManager.getLogger();
@@ -96,6 +104,12 @@ public class DeleteLoggingTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final Bucket bucket = new WSBucketImpl(
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
+			rtConfig.getString(RunTimeConfig.KEY_API_S3_BUCKET), false
+		);
+		bucket.delete(rtConfig.getStorageAddrs()[0]);
 		StdOutInterceptorTestSuite.reset();
 		CLIENT.close();
 	}

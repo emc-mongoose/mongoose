@@ -6,7 +6,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.api.IOStats;
+import com.emc.mongoose.storage.mock.api.StorageIOStats;
 //
 import org.apache.http.impl.nio.DefaultHttpServerIODispatch;
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
@@ -40,14 +40,14 @@ implements Runnable {
 	private final ListeningIOReactor ioReactor;
 	private final InetSocketAddress socketAddress;
 	private final IOReactorConfig ioReactorConf;
-	private final IOStats ioStats;
+	private final StorageIOStats ioStats;
 	private final Thread executor;
 	//
 	public BasicSocketEventDispatcher(
 		final RunTimeConfig runTimeConfig,
 		final HttpAsyncService protocolHandler, final int port,
 		final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory,
-		final IOStats ioStats
+		final StorageIOStats ioStats
 	) throws IOReactorException {
 		super(protocolHandler, connFactory);
 		socketAddress = new InetSocketAddress(port);

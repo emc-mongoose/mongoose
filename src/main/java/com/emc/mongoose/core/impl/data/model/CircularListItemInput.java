@@ -27,4 +27,9 @@ extends ListItemInput<T> {
 		}
 		return items.get(i ++);
 	}
+
+	@Override
+	public String toString() {
+		return "circularListItemInput<" + items.hashCode() + ">";
+	}
 }

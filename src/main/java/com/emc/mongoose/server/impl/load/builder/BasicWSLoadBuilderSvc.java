@@ -10,7 +10,7 @@ import com.emc.mongoose.common.net.ServiceUtils;
 //mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;

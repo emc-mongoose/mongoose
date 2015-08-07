@@ -30,4 +30,9 @@ extends BinItemInput<T> {
 		);
 		this.itemsSrcPath = itemsSrcPath;
 	}
+	//
+	@Override
+	public String toString() {
+		return "binFileItemInput<" + itemsSrcPath.getFileName() + ">";
+	}
 }

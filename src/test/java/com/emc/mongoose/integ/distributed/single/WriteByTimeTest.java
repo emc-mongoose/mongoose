@@ -1,13 +1,17 @@
 package com.emc.mongoose.integ.distributed.single;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.storage.adapter.atmos.SubTenant;
+import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
+import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
-import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
 import org.junit.Assert;
@@ -27,15 +31,20 @@ public final class WriteByTimeTest {
 	//
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
-		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
-			clientBuilder = new BasicWSClientBuilder<>();
+	throws Exception {
+		//
+		RunTimeConfig.resetContext();
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, WriteByTimeTest.class.getCanonicalName()
+		);
+		//
 		try(
 			final StorageClient<WSObject>
 				client = new BasicWSClientBuilder<>()
 					.setLimitTime(TIME_TO_WRITE_SEC, TimeUnit.SECONDS)
 					.setLimitCount(0)
 					.setClientMode(new String[] {ServiceUtils.getHostAddr()})
+					.setAPI("atmos")
 					.build()
 		) {
 			TIME_ACTUAL_SEC = System.currentTimeMillis() / 1000;
@@ -47,6 +56,12 @@ public final class WriteByTimeTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final SubTenant st = new WSSubTenantImpl(
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("atmos").setProperties(rtConfig),
+			rtConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
+		);
+		st.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	@Test

@@ -26,10 +26,10 @@ implements AsyncConsumer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	// configuration params
-	private final long maxCount, submTimeOutMilliSec;
+	protected final long maxCount;
 	protected final int maxQueueSize;
 	// states
-	private final AtomicLong counterPreSubm = new AtomicLong(0);
+	protected final AtomicLong counterPreSubm = new AtomicLong(0);
 	protected final AtomicBoolean
 		isStarted = new AtomicBoolean(false),
 		isShutdown = new AtomicBoolean(false),
@@ -37,11 +37,9 @@ implements AsyncConsumer<T> {
 	// volatile
 	private final BlockingQueue<T> transientQueue;
 	//
-	public AsyncConsumerBase(
-		final long maxCount, final long submTimeOutMilliSec, final int maxQueueSize
-	) throws IllegalArgumentException {
+	public AsyncConsumerBase(final long maxCount, final int maxQueueSize)
+	throws IllegalArgumentException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		this.submTimeOutMilliSec = submTimeOutMilliSec > 0 ? submTimeOutMilliSec : Long.MAX_VALUE;
 		if(maxQueueSize > 0) {
 			this.maxQueueSize = (int) Math.min(this.maxCount, maxQueueSize);
 		} else {
@@ -78,11 +76,8 @@ implements AsyncConsumer<T> {
 			if(isShutdown.get()) {
 				throw new InterruptedException("Shut down already");
 			}
-			if(transientQueue.offer(item, submTimeOutMilliSec, TimeUnit.MILLISECONDS)) {
-				counterPreSubm.incrementAndGet();
-			} else {
-				throw new RejectedExecutionException("Submit queue timeout");
-			}
+			transientQueue.put(item);
+			counterPreSubm.incrementAndGet();
 		} else {
 			throw new RejectedExecutionException("Consuming is not started yet");
 		}
@@ -96,10 +91,14 @@ implements AsyncConsumer<T> {
 		);
 		T nextItem;
 		try {
-			while(transientQueue.size() > 0 || !isShutdown.get()) {
-				nextItem = transientQueue.poll(1, TimeUnit.SECONDS);
+			for(long i = 0; i < maxCount;) {
+				if(transientQueue.size() == 0 && isShutdown.get()) {
+					break;
+				}
+				nextItem = transientQueue.poll(POLL_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS);
 				if(nextItem != null) {
 					submitSync(nextItem);
+					i ++;
 				}
 			}
 			LOG.debug(Markers.MSG, "{}: consuming finished", getName());

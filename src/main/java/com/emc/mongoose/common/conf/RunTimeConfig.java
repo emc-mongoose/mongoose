@@ -94,6 +94,8 @@ implements Externalizable {
 		KEY_STORAGE_NAMESPACE = "storage.namespace",
 		//
 		KEY_STORAGE_MOCK_CAPACITY = "storage.mock.capacity",
+		KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT = "storage.mock.container.countLimit",
+		KEY_STORAGE_MOCK_CONTAINER_CAPACITY = "storage.mock.container.capacity",
 		KEY_STORAGE_MOCK_HEAD_COUNT = "storage.mock.headCount",
 		KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET = "storage.mock.ioThreadsPerSocket",
 		//
@@ -122,14 +124,14 @@ implements Externalizable {
 		CONTEXT_CONFIG = new InheritableThreadLocal<>();
 	private static final List<String>
 		IMMUTABLE_PARAMS = new ArrayList<>();
-	private static RunTimeConfig DEFAULT_CFG;
+	private static RunTimeConfig DEFAULT_INSTANCE;
 	//
 	public static void initContext() {
 		RunTimeConfig instance = RunTimeConfig.getContext();
 		if(instance == null) {
 			instance = new RunTimeConfig();
 			instance.loadProperties();
-			DEFAULT_CFG = instance;
+			DEFAULT_INSTANCE = instance;
 			final String
 				runId = System.getProperty(KEY_RUN_ID),
 				runMode = System.getProperty(KEY_RUN_MODE);
@@ -143,8 +145,12 @@ implements Externalizable {
 		}
 	}
 	//
-	public static RunTimeConfig getDefaultCfg() {
-		return DEFAULT_CFG.clone();
+	public static RunTimeConfig getDefault() {
+		return DEFAULT_INSTANCE.clone();
+	}
+	//
+	public static void resetContext() {
+		setContext(DEFAULT_INSTANCE.clone());
 	}
 	//
 	public void loadProperties() {
@@ -466,6 +472,14 @@ implements Externalizable {
 	//
 	public final String getRunMode() {
 		return getString(KEY_RUN_MODE);
+	}
+	//
+	public final int getStorageMockContainerCapacity() {
+		return getInt(KEY_STORAGE_MOCK_CONTAINER_CAPACITY);
+	}
+	//
+	public final int getStorageMockContainerCountLimit() {
+		return getInt(KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT);
 	}
 	//
 	public final int getStorageMockCapacity() {

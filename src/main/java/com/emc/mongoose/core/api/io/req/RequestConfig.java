@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.io.req.conf;
+package com.emc.mongoose.core.api.io.req;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataSource;

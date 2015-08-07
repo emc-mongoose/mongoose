@@ -32,6 +32,7 @@ implements Producer<T> {
 	public DataItemInputProducer(final DataItemInput<T> itemIn) {
 		this.itemIn = itemIn;
 		setDaemon(true);
+		setName("dataItemInputProducer<" + itemIn.toString() + ">");
 	}
 	//
 	@Override
@@ -84,9 +85,12 @@ implements Producer<T> {
 							LOG, Level.WARN, e, "Failed to submit remotely the next data item"
 						);
 					} catch(final RejectedExecutionException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Consumer \"{}\" rejected the data item", consumer
-						);
+						if(LOG.isTraceEnabled(Markers.ERR)) {
+							LogUtil.exception(
+								LOG, Level.TRACE, e, "Consumer \"{}\" rejected the data item",
+								consumer
+							);
+						}
 					}
 				}
 			} while(true);

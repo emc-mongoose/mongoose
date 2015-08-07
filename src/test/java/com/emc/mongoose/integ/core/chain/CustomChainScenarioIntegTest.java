@@ -60,7 +60,7 @@ public class CustomChainScenarioIntegTest {
 		//  remove log dir w/ previous logs
 		LogParser.removeLogDirectory(RUN_ID);
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
+		RunTimeConfig.setContext(RunTimeConfig.getDefault());
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
@@ -90,7 +90,7 @@ public class CustomChainScenarioIntegTest {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptRunner().run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(10);
+			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
 	}

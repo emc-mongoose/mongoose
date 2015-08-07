@@ -35,6 +35,7 @@ public class InfiniteWriteTest {
 	public static void before()
 	throws Exception {
 		//
+		RunTimeConfig.setContext(RunTimeConfig.getDefault());
 		LogParser.removeLogDirectory(RUN_ID);
 		//
 		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
