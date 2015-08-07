@@ -38,7 +38,7 @@ public class InfiniteWriteTest {
 		RunTimeConfig.setContext(RunTimeConfig.getDefault());
 		LogParser.removeLogDirectory(RUN_ID);
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
+		RunTimeConfig.setContext(RunTimeConfig.getDefault());
 		final String runName = RunTimeConfig.getContext().getRunName();
 		final String runVersion = RunTimeConfig.getContext().getRunVersion();
 
