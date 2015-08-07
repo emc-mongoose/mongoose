@@ -46,12 +46,9 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 //
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -404,7 +401,7 @@ implements LoadClient<T> {
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "Interrupted while feeding the consumer");
 						break;
-					} catch(final RemoteException e) {
+					} catch(final RejectedExecutionException | RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e, "Failed to feed the data item to consumer"
 						);
@@ -750,8 +747,8 @@ implements LoadClient<T> {
 			if(!remoteLoadMap.isEmpty()) {
 				saveLastLatencyValues();
 				LOG.debug(Markers.MSG, "{}: do performing close", getName());
-				interrupt();
 				forceFetchAndAggregation();
+				interrupt();
 				logMetrics(Markers.PERF_SUM);
 				LOG.debug(
 					Markers.MSG, "{}: dropped {} remote tasks",

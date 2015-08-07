@@ -30,6 +30,6 @@ extends ListItemInput<T> {
 
 	@Override
 	public String toString() {
-		return "circularListItemInput<" + items.toString() + ">";
+		return "circularListItemInput<" + items.hashCode() + ">";
 	}
 }

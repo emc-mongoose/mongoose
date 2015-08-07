@@ -1020,7 +1020,7 @@ test {
 }
 
 task integTest(type: Test) {
-	include '**/CoreTestSuite.class'
+	//include '**/CoreTestSuite.class'
 	include '**/DistributedLoadTestSuite.class'
 
 	testClassesDir = sourceSets.integTest.output.classesDir

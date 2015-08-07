@@ -67,7 +67,7 @@ implements DataItemOutput<T> {
 	//
 	@Override
 	public String toString() {
-		return "itemOutput<" + items + ">";
+		return "listItemOutput<" + items.hashCode() + ">";
 	}
 
 	//

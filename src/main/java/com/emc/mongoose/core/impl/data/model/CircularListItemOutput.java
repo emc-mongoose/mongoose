@@ -83,6 +83,6 @@ extends ListItemOutput<T> {
 	//
 	@Override
 	public final String toString() {
-		return "circularItemOutput<" + items + ">";
+		return "circularItemOutput<" + items.hashCode() + ">";
 	}
 }

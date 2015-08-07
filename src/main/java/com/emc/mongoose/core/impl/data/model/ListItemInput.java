@@ -77,6 +77,6 @@ implements DataItemInput<T> {
 
 	@Override
 	public String toString() {
-		return "listItemInput<" + items.toString() + ">";
+		return "listItemInput<" + items.hashCode() + ">";
 	}
 }
