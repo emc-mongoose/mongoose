@@ -10,6 +10,9 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 //
+import com.emc.mongoose.storage.adapter.s3.Bucket;
+import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
+import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
@@ -20,6 +23,7 @@ import static com.emc.mongoose.integ.tools.LogPatterns.*;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
+import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -64,6 +68,7 @@ public class DeleteLoggingTest {
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
 			clientBuilder = new BasicWSClientBuilder<>();
 		CLIENT = clientBuilder
+			.setAPI("s3")
 			.setLimitTime(0, TimeUnit.SECONDS)
 			.setLimitCount(COUNT_LIMIT)
 			.setClientMode(new String[] {ServiceUtils.getHostAddr()})
@@ -94,6 +99,12 @@ public class DeleteLoggingTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final Bucket bucket = new WSBucketImpl(
+			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			rtConfig.getString(RunTimeConfig.KEY_API_S3_BUCKET), false
+		);
+		bucket.delete(rtConfig.getStorageAddrs()[0]);
 		StdOutInterceptorTestSuite.reset();
 		CLIENT.close();
 	}

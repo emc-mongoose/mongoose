@@ -7,7 +7,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 //
 import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
 //
-import com.emc.mongoose.storage.mock.api.IOStats;
+import com.emc.mongoose.storage.mock.api.StorageIOStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 //
 import org.apache.logging.log4j.Level;
@@ -28,7 +28,7 @@ implements StorageMock<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final String dataSrcPath;
-	protected final IOStats ioStats;
+	protected final StorageIOStats ioStats;
 	protected final Class<T> itemCls;
 	//
 	protected StorageMockBase(
@@ -41,7 +41,7 @@ implements StorageMock<T> {
 	}
 	//
 	@Override
-	public IOStats getStats() {
+	public StorageIOStats getStats() {
 		return ioStats;
 	}
 	//

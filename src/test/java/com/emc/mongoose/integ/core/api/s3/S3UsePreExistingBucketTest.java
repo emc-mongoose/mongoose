@@ -57,7 +57,7 @@ public final class S3UsePreExistingBucketTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		BUCKET.delete("127.0.0.1");
+		BUCKET.delete(RunTimeConfig.getContext().getStorageAddrs()[0]);
 	}
 	//
 	@Test

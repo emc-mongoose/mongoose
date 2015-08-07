@@ -10,6 +10,9 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 //
+import com.emc.mongoose.storage.adapter.swift.Container;
+import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
+import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
@@ -20,6 +23,7 @@ import static com.emc.mongoose.integ.tools.LogPatterns.*;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
+import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -67,6 +71,7 @@ public class UpdateLoggingTest {
 			.setLimitTime(0, TimeUnit.SECONDS)
 			.setLimitCount(COUNT_LIMIT)
 			.setClientMode(new String[] {ServiceUtils.getHostAddr()})
+			.setAPI("swift")
 			.build();
 		final BufferingOutputStream
 			stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream();
@@ -94,6 +99,12 @@ public class UpdateLoggingTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final Container container = new WSContainerImpl(
+			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
+		);
+		container.delete(rtConfig.getStorageAddrs()[0]);
 		StdOutInterceptorTestSuite.reset();
 		CLIENT.close();
 	}

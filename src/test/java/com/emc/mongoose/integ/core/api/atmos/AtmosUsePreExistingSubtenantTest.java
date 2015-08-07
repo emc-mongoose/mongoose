@@ -8,6 +8,7 @@ import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 import com.emc.mongoose.storage.mock.impl.web.request.AtmosRequestHandler;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
+import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -26,9 +27,11 @@ public class AtmosUsePreExistingSubtenantTest {
 	//
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
+	throws Exception {
 		//
-		final WSRequestConfigImpl reqConf = new WSRequestConfigImpl();
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSLoadBuilderFactory
+			.getInstance(rtConfig).getRequestConfig();
 		reqConf.setProperties(RunTimeConfig.getContext());
 		SUBTENANT = new WSSubTenantImpl(
 			reqConf, AtmosRequestHandler.generateSubtenant()
@@ -52,8 +55,8 @@ public class AtmosUsePreExistingSubtenantTest {
 	//
 	@AfterClass
 	public static void tearDownClass()
-		throws Exception {
-		SUBTENANT.delete("127.0.0.1");
+	throws Exception {
+		SUBTENANT.delete(RunTimeConfig.getContext().getStorageAddrs()[0]);
 	}
 	//
 	@Test

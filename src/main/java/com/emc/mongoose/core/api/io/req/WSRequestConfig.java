@@ -96,9 +96,7 @@ extends ObjectRequestConfig<T> {
 	//
 	String getSignature(final String canonicalForm);
 	//
-	void receiveResponse(final HttpResponse response, final T dataItem);
+	void applySuccResponseToObject(final HttpResponse response, final T dataItem);
 	//
 	HttpResponse execute(final String addr, final HttpRequest request);
-	//
-	boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem);
 }

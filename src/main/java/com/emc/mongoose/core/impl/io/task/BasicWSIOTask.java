@@ -2,9 +2,13 @@ package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.http.IOUtils;
+import com.emc.mongoose.common.net.http.content.InputChannel;
 import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
+import com.emc.mongoose.core.api.data.DataCorruptionException;
+import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -12,6 +16,7 @@ import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
@@ -26,6 +31,7 @@ import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
 //
+import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -72,7 +78,7 @@ implements WSIOTask<T> {
 	throws IOException, HttpException {
 		final HttpEntityEnclosingRequest httpRequest;
 		try {
-			 httpRequest = ((WSRequestConfig<T>)reqConf).createDataRequest(dataItem, nodeAddr);
+			 httpRequest = ((WSRequestConfig<T>) reqConf).createDataRequest(dataItem, nodeAddr);
 		} catch(final URISyntaxException e) {
 			throw new HttpException("Failed to generate the request", e);
 		}
@@ -100,24 +106,7 @@ implements WSIOTask<T> {
 		try {
 			switch(reqConf.getLoadType()) {
 				case CREATE:
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						final long
-							t = System.nanoTime(),
-							writtenCount = dataItem.writeFully(chanOut),
-							rate = 1000000000 * writtenCount / (System.nanoTime() - t);
-						if(dataItem.getSize() != writtenCount) {
-							LOG.trace(
-								Markers.ERR, "{}: written {} bytes instead of {}",
-								this, writtenCount, dataItem.getSize()
-							);
-						} else {
-							LOG.trace(
-								Markers.MSG, "{}: write rate {}/s", this, SizeUtil.formatSize(rate)
-							);
-						}
-					} else {
-						dataItem.writeFully(chanOut);
-					}
+					transferSize += dataItem.writeFully(chanOut);
 					break;
 				case READ:
 					// TODO there's a probability to specify some content in this case
@@ -126,10 +115,10 @@ implements WSIOTask<T> {
 					// TODO there's a probability to specify some content in this case
 					break;
 				case UPDATE:
-					dataItem.writeUpdatedRangesFully(chanOut);
+					transferSize += dataItem.writeUpdatedRangesFully(chanOut);
 					break;
 				case APPEND:
-					dataItem.writeAugmentFully(chanOut);
+					transferSize += dataItem.writeAugmentFully(chanOut);
 					break;
 			}
 		} catch(final ClosedChannelException e) { // probably a manual interruption
@@ -166,6 +155,7 @@ implements WSIOTask<T> {
 	@Override
 	public final void resetRequest() {
 		respStatusCode = -1;
+		transferSize = 0;
 		status = Status.FAIL_UNKNOWN;
 		exception = null;
 	}
@@ -183,6 +173,7 @@ implements WSIOTask<T> {
 		//
 		respTimeStart = System.nanoTime() / 1000;
 		final StatusLine status = response.getStatusLine();
+		final HttpEntity entity = response.getEntity();
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "I/O task #{}: got response \"{}\"", hashCode(), status);
 		}
@@ -199,24 +190,47 @@ implements WSIOTask<T> {
 					break;
 				case HttpStatus.SC_BAD_REQUEST:
 					this.status = Status.RESP_FAIL_CLIENT;
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					break;
 				case HttpStatus.SC_UNAUTHORIZED:
 				case HttpStatus.SC_FORBIDDEN:
 					this.status = Status.RESP_FAIL_AUTH;
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					break;
 				case HttpStatus.SC_NOT_FOUND:
 					this.status = Status.RESP_FAIL_NOT_FOUND;
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					break;
 				case HttpStatus.SC_METHOD_NOT_ALLOWED:
 					this.status = Status.RESP_FAIL_CLIENT;
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					break;
 				case HttpStatus.SC_CONFLICT:
 					this.status = Status.RESP_FAIL_CLIENT;
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					break;
 				case HttpStatus.SC_LENGTH_REQUIRED:
-					msgBuff
-						.append("Content length is required\n");
 					this.status = Status.RESP_FAIL_CLIENT;
+					msgBuff.append("Content length is required\n");
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					break;
 				case HttpStatus.SC_REQUEST_TOO_LONG:
 					msgBuff
@@ -226,22 +240,42 @@ implements WSIOTask<T> {
 					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_REQUEST_URI_TOO_LONG:
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE:
 					msgBuff.append("Unsupported media type\n");
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_REQUESTED_RANGE_NOT_SATISFIABLE:
 					msgBuff.append("Incorrect range\n");
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case 429:
 					msgBuff.append("Storage prays about a mercy\n");
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_INTERNAL_SERVER_ERROR:
 					msgBuff.append("Storage internal failure\n");
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_NOT_IMPLEMENTED:
@@ -254,6 +288,10 @@ implements WSIOTask<T> {
 					break;
 				case HttpStatus.SC_SERVICE_UNAVAILABLE:
 					msgBuff.append("Storage prays about a mercy\n");
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_GATEWAY_TIMEOUT:
@@ -266,34 +304,45 @@ implements WSIOTask<T> {
 					break;
 				case HttpStatus.SC_INSUFFICIENT_STORAGE:
 					msgBuff.append("Not enough space is left on the storage\n");
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					this.status = Status.RESP_FAIL_SPACE;
 					break;
 				default:
 					msgBuff
 						.append("Unsupported response code: ").append(respStatusCode)
 						.append('\n');
+					if(entity != null) {
+						msgBuff.append(EntityUtils.toString(response.getEntity()));
+						msgBuff.append('\n');
+					}
 					this.status = Status.FAIL_UNKNOWN;
 					break;
 			}
 			//
 			if(LOG.isDebugEnabled(Markers.ERR)) {
 				LOG.debug(
-					Markers.ERR, "Task #{}: {}{}/{}",
-					hashCode(), msgBuff, respStatusCode, status.getReasonPhrase()
+					Markers.ERR, "Task #{}: {}/{}, ",
+					hashCode(), respStatusCode, status.getReasonPhrase(), msgBuff
 				);
 			}
 		} else {
 			this.status = Status.SUCC;
-			((WSRequestConfig<T>) reqConf).receiveResponse(response, dataItem);
+			((WSRequestConfig<T>) reqConf).applySuccResponseToObject(response, dataItem);
 		}
 	}
 	//
+	private final static ThreadLocal<InputChannel>
+		THRLOC_CHAN_IN = new ThreadLocal<>();
+	//
 	@Override
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl) {
-		if(respStatusCode < 200 || respStatusCode >= 300) { // failure, no big data is expected
-			final StringBuilder msgBuilder = new StringBuilder();
-			final ByteBuffer bbuff = ByteBuffer.allocate(0x1000);
-			try {
+		try {
+			if(respStatusCode < 200 || respStatusCode >= 300) { // failure, no user data is expected
+				final StringBuilder msgBuilder = new StringBuilder();
+				final ByteBuffer bbuff = ByteBuffer.allocate(0x1000);
 				while(in.read(bbuff) >= 0) {
 					msgBuilder.append(bbuff.asCharBuffer().toString());
 					bbuff.clear();
@@ -301,18 +350,51 @@ implements WSIOTask<T> {
 				if(LOG.isTraceEnabled(Markers.ERR)) {
 					LOG.trace(Markers.ERR, msgBuilder);
 				}
-			} catch(final ClosedChannelException e) { // probably a manual interruption
-				status = Status.CANCELLED;
-				LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
-			} catch(final IOException e) {
-				if(!reqConf.isClosed()) {
-					LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during content consuming");
+			} else {
+				// check for the content corruption
+				if(dataItem != null && Type.READ.equals(reqConf.getLoadType())) {
+					if(reqConf.getVerifyContentFlag()) { // should verify the content
+						InputChannel chanIn = THRLOC_CHAN_IN.get();
+						if(chanIn == null) {
+							chanIn = new InputChannel();
+							THRLOC_CHAN_IN.set(chanIn);
+						}
+						chanIn.setContentDecoder(in);
+						try {
+							transferSize += dataItem.readAndVerifyFully(chanIn);
+						} catch(final DataSizeException e) {
+							LOG.warn(
+								Markers.MSG,
+								"{}: content size mismatch, expected: {}, actual: {}",
+								dataItem.getId(), dataItem.getSize(), e.offset
+							);
+							status = Status.RESP_FAIL_CORRUPT;
+						} catch(final DataCorruptionException e) {
+							LOG.warn(
+								Markers.MSG,
+								"{}: content mismatch @ offset {}, expected: {}, actual: {}",
+								dataItem.getId(), e.offset,
+								String.format(
+									"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
+								)
+							);
+							status = Status.RESP_FAIL_CORRUPT;
+						} finally {
+							chanIn.close();
+						}
+					} else { // consume quietly
+						transferSize += IOUtils.consumeQuietly(in);
+					}
+				} else {
+					IOUtils.consumeQuietly(in);
 				}
 			}
-		} else {
-			// check for the content corruption
-			if(!((WSRequestConfig<T>) reqConf).consumeContent(in, ioCtl, dataItem)) {
-				status = Status.RESP_FAIL_CORRUPT;
+		} catch(final ClosedChannelException e) {
+			status = Status.CANCELLED;
+			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
+		} catch(final IOException e) {
+			if(!reqConf.isClosed()) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during content consuming");
 			}
 		}
 	}

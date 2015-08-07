@@ -25,7 +25,7 @@ public class SwiftUsePreExistingContainerTest {
 	//
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
+	throws Exception {
 		//
 		final WSRequestConfigImpl reqConf = new WSRequestConfigImpl();
 		reqConf.setProperties(RunTimeConfig.getContext());

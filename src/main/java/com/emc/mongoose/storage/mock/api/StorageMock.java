@@ -11,7 +11,7 @@ extends Runnable, Closeable {
 	//
 	long getSize();
 	long getCapacity();
-	IOStats getStats();
+	StorageIOStats getStats();
 	//
 	void putIntoDefaultContainer(final T dataItem);
 }

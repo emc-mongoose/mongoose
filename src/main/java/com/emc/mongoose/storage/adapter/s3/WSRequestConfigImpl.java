@@ -130,6 +130,7 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
+		applyObjectId(dataItem, null);
 		return "/" + bucket + getFilePathFor(dataItem);
 	}
 	//

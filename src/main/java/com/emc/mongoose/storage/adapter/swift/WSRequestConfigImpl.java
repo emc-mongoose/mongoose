@@ -232,6 +232,7 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
+		applyObjectId(dataItem, null);
 		return uriSvcBaseContainerPath + getFilePathFor(dataItem);
 	}
 	//

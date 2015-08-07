@@ -249,7 +249,6 @@ implements WSRequestConfig<T> {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
 			getHttpMethod(), getUriPath(obj)
 		);
-		applyObjectId(obj, null);
 		switch(loadType) {
 			case UPDATE:
 			case APPEND:
@@ -414,7 +413,7 @@ implements WSRequestConfig<T> {
 		out.writeObject(getFileAccessEnabled());
 	}
 	//
-	protected void applyObjectId(final T dataItem, final HttpResponse httpResponse) {
+	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {
 		dataItem.setId(Long.toString(dataItem.getOffset(), DataObject.ID_RADIX));
 	}
 	//
@@ -566,7 +565,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public void receiveResponse(final HttpResponse response, final T dataItem) {
+	public void applySuccResponseToObject(final HttpResponse response, final T dataItem) {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Got response with {} bytes of payload data",
@@ -574,58 +573,6 @@ implements WSRequestConfig<T> {
 			);
 		}
 		// may invoke applyObjectId in some implementations
-	}
-	//
-	private final static ThreadLocal<InputChannel>
-		THRLOC_CHAN_IN = new ThreadLocal<>();
-	@Override
-	public final boolean consumeContent(
-		final ContentDecoder in, final IOControl ioCtl, T dataItem
-	) {
-		boolean verifyPass = true;
-		try {
-			if(dataItem != null) {
-				if(loadType == IOTask.Type.READ) { // read
-					if(verifyContentFlag) { // read and do verify
-						InputChannel chanIn = THRLOC_CHAN_IN.get();
-						if(chanIn == null) {
-							chanIn = new InputChannel();
-							THRLOC_CHAN_IN.set(chanIn);
-						}
-						chanIn.setContentDecoder(in);
-						try{
-							verifyPass = dataItem.readAndVerifyFully(chanIn);
-						} finally {
-							chanIn.close();
-						}
-					} else {
-						final long
-							dataSize = dataItem.getSize(),
-							actualSize = IOUtils.consumeQuietly(in/*, dataSize*/);
-						if(dataSize != actualSize) {
-							LOG.debug(
-								Markers.ERR, "Consumed data size is not equal to {}: {}",
-								SizeUtil.formatSize(dataSize), SizeUtil.formatSize(actualSize)
-							);
-						}
-					}
-				}
-			}
-		} catch(final ClosedChannelException e) { // probably a manual interruption
-			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
-		} catch(final IOException e) {
-			verifyPass = false;
-			if(isClosed()) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to read the content after closing");
-			} else {
-				LogUtil.exception(LOG, Level.WARN, e, "Content reading failure");
-			}
-		} finally {
-			if(!in.isCompleted()) {
-				IOUtils.consumeQuietly(in);
-			}
-		}
-		return verifyPass;
 	}
 	//
 	@Override

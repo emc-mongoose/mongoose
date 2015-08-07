@@ -1,9 +1,14 @@
 package com.emc.mongoose.integ.core.api.s3;
 
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.data.model.ListItemOutput;
+import com.emc.mongoose.storage.adapter.s3.Bucket;
+import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
+import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
+import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -45,7 +50,13 @@ public class S3ReadZeroSizedItemsFromBucket {
 	//
 	@AfterClass
 	public static void tearDownClass()
-		throws Exception {
+	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final Bucket bucket = new WSBucketImpl(
+			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			BUCKET_NAME, false
+		);
+		bucket.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	@Test

@@ -10,7 +10,7 @@ import static com.emc.mongoose.core.api.io.req.WSRequestConfig.VALUE_RANGE_CONCA
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
-import com.emc.mongoose.storage.mock.api.IOStats;
+import com.emc.mongoose.storage.mock.api.StorageIOStats;
 import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.ReqURIMatchingHandler;
 import com.emc.mongoose.storage.mock.api.StorageMockCapacityLimitReachedException;
@@ -49,7 +49,7 @@ implements ReqURIMatchingHandler<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final IOStats ioStats;
+	private final StorageIOStats ioStats;
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 	//

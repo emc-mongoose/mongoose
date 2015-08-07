@@ -8,6 +8,9 @@ import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.storage.adapter.atmos.SubTenant;
+import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
+import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 import com.emc.mongoose.util.scenario.Chain;
 import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
@@ -53,6 +56,7 @@ public class SimultaneousLoadTest {
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
+		rtConfig.set(RunTimeConfig.KEY_API_NAME, "atmos");
 		FILE_LOG_PERF_SUM = LogParser.getPerfSumFile(RUN_ID);
 		if(FILE_LOG_PERF_SUM.exists()) {
 			FILE_LOG_PERF_SUM.delete();
@@ -76,6 +80,12 @@ public class SimultaneousLoadTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final SubTenant st = new WSSubTenantImpl(
+			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			rtConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
+		);
+		st.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	@Test

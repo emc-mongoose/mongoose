@@ -349,10 +349,9 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
-		if(
-			IOTask.Type.CREATE.equals(loadType) &&
-			httpResponse.containsHeader(HttpHeaders.LOCATION)
-		) {
+		final Header locationHeader = httpResponse == null ?
+			null : httpResponse.getFirstHeader(HttpHeaders.LOCATION);
+		if(locationHeader != null && IOTask.Type.CREATE.equals(loadType)) {
 			final String valueLocation = httpResponse
 				.getFirstHeader(HttpHeaders.LOCATION)
 				.getValue();
@@ -361,9 +360,9 @@ extends WSRequestConfigBase<T> {
 				valueLocation.startsWith(uriBasePath) &&
 				valueLocation.length() - uriBasePath.length() > 1
 			) {
-				final String id = valueLocation.substring(uriBasePath.length() + 1);
-				if(id.length() > 0) {
-					dataObject.setId(id);
+				final String oid = valueLocation.substring(uriBasePath.length() + 1);
+				if(oid.length() > 0) {
+					dataObject.setId(oid);
 				} else {
 					LOG.trace(Markers.ERR, "Got empty object id");
 				}
@@ -437,8 +436,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public void receiveResponse(final HttpResponse response, final T dataItem) {
-		super.receiveResponse(response, dataItem);
+	public void applySuccResponseToObject(final HttpResponse response, final T dataItem) {
+		super.applySuccResponseToObject(response, dataItem);
 		applyObjectId(dataItem, response);
 	}
 }

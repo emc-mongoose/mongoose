@@ -3,10 +3,13 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.storage.adapter.swift.AuthToken;
+import com.emc.mongoose.storage.adapter.swift.Container;
 import com.emc.mongoose.storage.adapter.swift.WSAuthTokenImpl;
+import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
+import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -47,7 +50,14 @@ public class SwiftUsePreExistingAuthTokenTest {
 	}
 	//
 	@AfterClass
-	public static void tearDownClass() {
+	public static void tearDownClass()
+	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final Container container = new WSContainerImpl(
+			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
+		);
+		container.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	@Test

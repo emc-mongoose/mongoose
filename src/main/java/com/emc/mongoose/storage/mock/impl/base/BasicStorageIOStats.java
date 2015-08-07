@@ -13,7 +13,7 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.storage.mock.api.StorageMock;
-import com.emc.mongoose.storage.mock.api.IOStats;
+import com.emc.mongoose.storage.mock.api.StorageIOStats;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class BasicStorageIOStats
 extends Thread
-implements IOStats {
+implements StorageIOStats {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -47,6 +47,9 @@ implements IOStats {
 			MetricRegistry.name(
 				StorageMock.class, IOType.DELETE.name(), LoadExecutor.METRIC_NAME_FAIL
 			)
+		),
+		countContainers = metricRegistry.counter(
+			MetricRegistry.name(StorageMock.class, METRIC_NAME_CONTAINERS)
 		);
 	private final Meter
 		tpWrite = metricRegistry.meter(
@@ -101,7 +104,7 @@ implements IOStats {
 	}
 	//
 	private final static String
-		MSG_FMT_METRICS = "Capacity used: %.1f%%\n" +
+		MSG_FMT_METRICS = "Capacity used: %.1f%%, containers count: %d\n" +
 			"\tOperation |Count       |Failed      |TP[/s]avg   |TP[/s]1min  |BW[MB/s]avg |BW[MB/s]1min\n" +
 			"\t----------|------------|------------|------------|------------|------------|------------\n" +
 			"\tWrite     |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
@@ -113,7 +116,7 @@ implements IOStats {
 		return String.format(
 			LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 			//
-			100.0 * storage.getSize() / storage.getCapacity(),
+			100.0 * storage.getSize() / storage.getCapacity(), countContainers.getCount(),
 			//
 			tpWrite.getCount(), countFailWrite.getCount(),
 			tpWrite.getMeanRate(), tpWrite.getOneMinuteRate(),
@@ -195,6 +198,16 @@ implements IOStats {
 		} else {
 			countFailDelete.inc();
 		}
+	}
+	//
+	@Override
+	public final void containerCreate() {
+		countContainers.inc();
+	}
+	//
+	@Override
+	public final void containerDelete() {
+		countContainers.dec();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// methods necessary for throttling, perf adaptation, etc

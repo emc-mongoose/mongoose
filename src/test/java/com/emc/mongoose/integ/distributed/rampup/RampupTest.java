@@ -8,6 +8,9 @@ import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.storage.adapter.swift.Container;
+import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
+import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.scenario.Rampup;
 import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
@@ -61,6 +64,7 @@ public class RampupTest {
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
+		rtConfig.set(RunTimeConfig.KEY_API_NAME, "swift");
 		FILE_LOG_PERF_SUM = LogParser.getPerfSumFile(RUN_ID);
 		if(FILE_LOG_PERF_SUM.exists()) {
 			FILE_LOG_PERF_SUM.delete();
@@ -86,6 +90,12 @@ public class RampupTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final Container container = new WSContainerImpl(
+			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
+		);
+		container.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	@Test

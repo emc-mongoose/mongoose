@@ -6,8 +6,6 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
-import com.emc.mongoose.core.api.data.AppendableDataItem;
-import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import org.apache.logging.log4j.Level;
@@ -35,7 +33,8 @@ implements IOTask<T> {
 	protected final String nodeAddr;
 	//
 	protected volatile Status status = Status.FAIL_UNKNOWN;
-	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
+	protected volatile long
+		reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0, transferSize = 0;
 	//
 	public BasicIOTask(
 		final LoadExecutor<T> loadExecutor, final T dataItem, final String nodeAddr
@@ -70,7 +69,7 @@ implements IOTask<T> {
 				strBuilder
 					.append(nodeAddr).append(',')
 					.append(dataItemId).append(',')
-					.append(getTransferSize()).append(',')
+					.append(transferSize).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
 					.append(respTimeStart - reqTimeDone).append(',')
@@ -89,7 +88,7 @@ implements IOTask<T> {
 					.append("Invalid trace: ")
 					.append(nodeAddr).append(',')
 					.append(dataItemId).append(',')
-					.append(getTransferSize()).append(',')
+					.append(transferSize).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
 					.append(reqTimeDone).append(',')
@@ -122,14 +121,7 @@ implements IOTask<T> {
 	//
 	@Override
 	public final long getTransferSize() {
-		switch(reqConf.getLoadType()) {
-			case APPEND:
-				return AppendableDataItem.class.<T>cast(dataItem).getPendingAugmentSize();
-			case UPDATE:
-				return UpdatableDataItem.class.<T>cast(dataItem).getPendingRangesSize();
-			default:
-				return dataItem.getSize();
-		}
+		return transferSize;
 	}
 	//
 	@Override

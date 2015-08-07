@@ -7,7 +7,6 @@ import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.model.DataSource;
 // mongoose-core-impl.jar
@@ -225,25 +224,9 @@ implements DataItem {
 	}
 	//
 	@Override
-	public boolean readAndVerifyFully(final ReadableByteChannel chanSrc)
-	throws IOException {
-		try {
-			readAndVerifyRange(chanSrc, 0, size);
-			return true;
-		} catch(final DataSizeException e) {
-			LOG.warn(
-				Markers.MSG, "{}: content size mismatch, expected: {}, actual: {}",
-				Long.toString(offset, DataObject.ID_RADIX), size, e.offset
-			);
-			return false;
-		} catch(final DataCorruptionException e) {
-			LOG.warn(
-				Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {}",
-				Long.toString(offset, DataObject.ID_RADIX), e.offset,
-				String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual)
-			);
-			return false;
-		}
+	public long readAndVerifyFully(final ReadableByteChannel chanSrc)
+	throws DataSizeException, DataCorruptionException, IOException {
+		return readAndVerifyRange(chanSrc, 0, size);
 	}
 	// checks that data read from input equals the specified range
 	@Override

@@ -13,9 +13,13 @@ import static com.emc.mongoose.integ.tools.LogPatterns.*;
 
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
+import com.emc.mongoose.storage.adapter.swift.Container;
+import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
+import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
+import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Logger;
@@ -61,6 +65,7 @@ public class WriteLoggingTest {
 					.setLimitTime(0, TimeUnit.SECONDS)
 					.setLimitCount(COUNT_LIMIT)
 					.setClientMode(new String[] {ServiceUtils.getHostAddr()})
+					.setAPI("swift")
 					.build()
 		) {
 			try(
@@ -77,6 +82,12 @@ public class WriteLoggingTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final Container container = new WSContainerImpl(
+			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
+		);
+		container.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	@Test
