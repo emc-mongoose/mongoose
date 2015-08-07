@@ -31,7 +31,7 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	/*DefaultWriteTest.class,
+	DefaultWriteTest.class,
 	Read10BItemsTest.class,
 	Read10KBItemsTest.class,
 	Read10MBItemsTest.class,
@@ -42,14 +42,14 @@ import org.junit.runners.Suite;
 	WriteByCountTest.class,
 	WriteRandomSizedItemsTest.class,
 	WriteUsing10ConnTest.class,
-	WriteUsing100ConnTest.class,*/
-	/*CRUDSequentialScenarioIntegTest.class,
-	CRUDSimultaneousScenarioIntegTest.class,*/
+	WriteUsing100ConnTest.class,
+	CRUDSequentialScenarioIntegTest.class,
+	CRUDSimultaneousScenarioIntegTest.class,
 	CustomChainScenarioIntegTest.class,
-	/*DefaultChainScenarioIntegTest.class,*/
-	/*CustomRampupTest.class,
-	DefaultRampupTest.class,*/
-	//InfiniteWriteTest.class
+	DefaultChainScenarioIntegTest.class,
+	CustomRampupTest.class,
+	DefaultRampupTest.class,
+	InfiniteWriteTest.class
 })
 public class CoreTestSuite {
 	@BeforeClass
