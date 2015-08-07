@@ -56,6 +56,7 @@ public class WriteLoggingTest {
 		LogParser.removeLogDirectory(RUN_ID);
 		TimeUnit.SECONDS.sleep(5);
 		// reinit run id and the log path
+		RunTimeConfig.resetContext();
 		RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		LoggingTestSuite.setUpClass();
 		//

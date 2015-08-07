@@ -62,6 +62,7 @@ public class ReadLoggingTest {
 		// reinit run id and the log path
 		//  remove log dir w/ previous logs
 		LogParser.removeLogDirectory(RUN_ID);
+		RunTimeConfig.resetContext();
 		RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		LoggingTestSuite.setUpClass();
 		//
