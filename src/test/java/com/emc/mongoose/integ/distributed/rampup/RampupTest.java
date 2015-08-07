@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
@@ -58,7 +59,6 @@ public class RampupTest {
 	public static void setUpClass()
 	throws Exception {
 		LOG = LogManager.getLogger();
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
@@ -93,7 +93,7 @@ public class RampupTest {
 	throws Exception {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final Container container = new WSContainerImpl(
-			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(rtConfig),
 			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
 		);
 		container.delete(rtConfig.getStorageAddrs()[0]);

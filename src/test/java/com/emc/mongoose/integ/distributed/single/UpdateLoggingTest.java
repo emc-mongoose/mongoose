@@ -10,6 +10,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.storage.adapter.swift.Container;
 import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
@@ -106,7 +107,7 @@ public class UpdateLoggingTest {
 	throws Exception {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final Container container = new WSContainerImpl(
-			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(rtConfig),
 			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
 		);
 		container.delete(rtConfig.getStorageAddrs()[0]);

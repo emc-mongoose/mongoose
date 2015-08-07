@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.storage.adapter.s3.Bucket;
 import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
 import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
@@ -31,13 +32,13 @@ public final class S3UsePreExistingBucketTest {
 	public static void setUpClass()
 	throws Exception {
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, S3UsePreExistingBucketTest.class.getCanonicalName()
 		);
-		RunTimeConfig.getContext().set(RunTimeConfig.KEY_API_NAME, "s3");
 		//
-		final WSRequestConfigImpl reqConf = new WSRequestConfigImpl();
+		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
+			.newInstanceFor("s3")
+			.setProperties(RunTimeConfig.getContext());
 		reqConf.setProperties(RunTimeConfig.getContext());
 		BUCKET = new WSBucketImpl(
 			reqConf, S3UsePreExistingBucketTest.class.getSimpleName(), false
@@ -52,6 +53,7 @@ public final class S3UsePreExistingBucketTest {
 				client = new BasicWSClientBuilder<>()
 					.setLimitTime(0, TimeUnit.SECONDS)
 					.setLimitCount(COUNT_TO_WRITE)
+					.setAPI("s3")
 					.setS3Bucket(BUCKET.getName())
 					.build()
 		) {

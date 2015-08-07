@@ -2,12 +2,12 @@ package com.emc.mongoose.integ.core.api.swift;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.storage.adapter.swift.Container;
 import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -29,17 +29,16 @@ public class SwiftReadUsingContainerListingTest {
 	public static void setUpClass()
 	throws Exception {
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, SwiftReadUsingContainerListingTest.class.getCanonicalName()
 		);
-		RunTimeConfig.getContext().set(RunTimeConfig.KEY_API_NAME, "swift");
 		//
 		try(
 			final StorageClient<WSObject>
 				client = new BasicWSClientBuilder<>()
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
+				.setAPI("s3")
 				.setS3Bucket(CONTAINER_NAME)
 				.build()
 		) {
@@ -57,7 +56,7 @@ public class SwiftReadUsingContainerListingTest {
 	throws Exception {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final Container container = new WSContainerImpl(
-			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(rtConfig),
 			CONTAINER_NAME, false
 		);
 		container.delete(rtConfig.getStorageAddrs()[0]);

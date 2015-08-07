@@ -2,6 +2,7 @@ package com.emc.mongoose.integ.core.api.swift;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.storage.adapter.swift.AuthToken;
 import com.emc.mongoose.storage.adapter.swift.Container;
 import com.emc.mongoose.storage.adapter.swift.WSAuthTokenImpl;
@@ -9,7 +10,6 @@ import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -30,13 +30,12 @@ public class SwiftUsePreExistingAuthTokenTest {
 	public static void setUpClass()
 	throws Exception {
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, SwiftUsePreExistingAuthTokenTest.class.getCanonicalName()
 		);
-		RunTimeConfig.getContext().set(RunTimeConfig.KEY_API_NAME, "swift");
 		//
-		final WSRequestConfigImpl reqConf = new WSRequestConfigImpl();
+		final WSRequestConfigImpl
+			reqConf = (WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift");
 		reqConf.setProperties(RunTimeConfig.getContext());
 		AUTH_TOKEN = new WSAuthTokenImpl(
 			reqConf, SwiftUsePreExistingContainerTest.class.getSimpleName()
@@ -47,6 +46,7 @@ public class SwiftUsePreExistingAuthTokenTest {
 			final StorageClient<WSObject> client = new BasicWSClientBuilder<>()
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
+				.setAPI("swift")
 				.setSwiftAuthToken(AUTH_TOKEN.getValue())
 				.build()
 		) {
@@ -59,7 +59,7 @@ public class SwiftUsePreExistingAuthTokenTest {
 	throws Exception {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final Container container = new WSContainerImpl(
-			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(rtConfig),
 			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
 		);
 		container.delete(rtConfig.getStorageAddrs()[0]);

@@ -10,6 +10,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.storage.adapter.s3.Bucket;
 import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
 import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
@@ -108,7 +109,7 @@ public class DeleteLoggingTest {
 	throws Exception {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final Bucket bucket = new WSBucketImpl(
-			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
 			rtConfig.getString(RunTimeConfig.KEY_API_S3_BUCKET), false
 		);
 		bucket.delete(rtConfig.getStorageAddrs()[0]);

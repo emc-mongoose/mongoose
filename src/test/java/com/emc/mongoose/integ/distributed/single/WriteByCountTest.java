@@ -6,13 +6,13 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.storage.adapter.s3.Bucket;
 import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
 import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.junit.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -31,7 +31,6 @@ public final class WriteByCountTest {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, WriteByCountTest.class.getCanonicalName()
 		);
@@ -53,7 +52,7 @@ public final class WriteByCountTest {
 	throws Exception {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final Bucket bucket = new WSBucketImpl(
-			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
 			rtConfig.getString(RunTimeConfig.KEY_API_S3_BUCKET), false
 		);
 		bucket.delete(rtConfig.getStorageAddrs()[0]);

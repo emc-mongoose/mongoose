@@ -2,6 +2,7 @@ package com.emc.mongoose.integ.core.api.swift;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.storage.adapter.swift.Container;
 import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
@@ -27,14 +28,13 @@ public class SwiftUsePreExistingContainerTest {
 	public static void setUpClass()
 	throws Exception {
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, SwiftUsePreExistingContainerTest.class.getCanonicalName()
 		);
-		RunTimeConfig.getContext().set(RunTimeConfig.KEY_API_NAME, "swift");
 		//
-		final WSRequestConfigImpl reqConf = new WSRequestConfigImpl();
-		reqConf.setProperties(RunTimeConfig.getContext());
+		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
+			.newInstanceFor("swift")
+			.setProperties(RunTimeConfig.getContext());
 		CONTAINER = new WSContainerImpl(
 			reqConf, SwiftUsePreExistingContainerTest.class.getSimpleName(), false
 		);
@@ -58,7 +58,7 @@ public class SwiftUsePreExistingContainerTest {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		CONTAINER.delete("127.0.0.1");
+		CONTAINER.delete(RunTimeConfig.getContext().getStorageAddrs()[0]);
 	}
 	//
 	@Test

@@ -7,14 +7,13 @@ import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
-import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.junit.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -34,13 +33,10 @@ public final class WriteByTimeTest {
 	public static void setUpClass()
 	throws Exception {
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, WriteByTimeTest.class.getCanonicalName()
 		);
 		//
-		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
-			clientBuilder = new BasicWSClientBuilder<>();
 		try(
 			final StorageClient<WSObject>
 				client = new BasicWSClientBuilder<>()
@@ -61,7 +57,7 @@ public final class WriteByTimeTest {
 	throws Exception {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final SubTenant st = new WSSubTenantImpl(
-			(WSRequestConfigImpl) WSLoadBuilderFactory.getInstance(rtConfig).getRequestConfig(),
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("atmos").setProperties(rtConfig),
 			rtConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
 		);
 		st.delete(rtConfig.getStorageAddrs()[0]);
