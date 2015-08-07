@@ -2,15 +2,17 @@ package com.emc.mongoose.integ.core.rampup;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.integ.suite.LoggingTestSuite;
+import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -19,16 +21,12 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Calendar;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
-import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by olga on 22.07.15.
@@ -36,58 +34,50 @@ import java.util.TimeZone;
  */
 public class CustomRampupTest {
 	//
-	private static BufferingOutputStream savedOutputStream;
+	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	//
-	private static String rampupRunID;
+	private static String RUN_ID = CustomRampupTest.class.getCanonicalName();
 	private static final String
 		LIMIT_TIME = "60.seconds",
 		RAMPUP_SIZES = "10KB,1MB,10MB",
 		RAMPUP_THREAD_COUNTS = "10,50,100";
 	private static final int COUNT_STEPS = 9;
 
+	private static Logger LOG;
+
 	@BeforeClass
 	public static void before()
-		throws Exception {
-		// Set new saved console output stream
-		savedOutputStream = new BufferingOutputStream(System.out);
-		System.setOut(new PrintStream(savedOutputStream));
-		//Create run ID
-		rampupRunID = TestConstants.SCENARIO_RAMPUP + ":" + TestConstants.FMT_DT.format(
-			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
-		);
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, rampupRunID);
-		// If tests run from the IDEA full logging file must be set
-		final String fullLogConfFile = Paths
-			.get(System.getProperty(TestConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, TestConstants.LOG_FILE_NAME)
-			.toString();
-		System.setProperty(TestConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
-		LogUtil.init();
-		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
-		//Reload default properties
-		final RunTimeConfig runTimeConfig = new RunTimeConfig();
-		runTimeConfig.loadProperties();
-		RunTimeConfig.setContext(runTimeConfig);
-		//run mongoose default scenario in standalone mode
-		final Thread writeScenarioMongoose = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, rampupRunID);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, RAMPUP_SIZES);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS, RAMPUP_THREAD_COUNTS);
-				// For correct work of verification option
-				UniformDataSource.DEFAULT = new UniformDataSource();
-				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
-				new ScriptRunner().run();
-			}
-		}, "writeScenarioMongoose");
-		writeScenarioMongoose.start();
-		writeScenarioMongoose.join();
-		writeScenarioMongoose.interrupt();
-		// Wait logger's output from console
-		Thread.sleep(3000);
-		savedOutputStream.close();
+	throws Exception {
+		//  remove log dir w/ previous logs
+		LogParser.removeLogDirectory(RUN_ID);
+		//
+		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, RAMPUP_SIZES);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS, RAMPUP_THREAD_COUNTS);
+		LoggingTestSuite.setUpClass();
+
+		LOG = LogManager.getLogger();
+		//  write
+		executeLoadJob(rtConfig);
+		STD_OUTPUT_STREAM.close();
+	}
+
+	private static void executeLoadJob(final RunTimeConfig rtConfig)
+	throws Exception {
+		LOG.info(Markers.MSG, rtConfig.toString());
+		UniformDataSource.DEFAULT = new UniformDataSource();
+		try (final BufferingOutputStream stdOutStream =
+			     StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
+			//  Run mongoose default scenario in standalone mode
+			new ScriptRunner().run();
+			//  Wait for "Scenario end" message
+			TimeUnit.SECONDS.sleep(5);
+			STD_OUTPUT_STREAM = stdOutStream;
+		}
 	}
 
 	@Test
@@ -95,27 +85,27 @@ public class CustomRampupTest {
 		throws Exception {
 		Assert.assertTrue(
 			"Should report information about end of scenario run from console",
-			savedOutputStream.toString().contains(TestConstants.SCENARIO_END_INDICATOR)
+			STD_OUTPUT_STREAM.toString().contains(TestConstants.SCENARIO_END_INDICATOR)
 		);
 	}
 
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 		throws Exception {
-		Path expectedFile = LogParser.getMessageFile(rampupRunID).toPath();
+		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
 		Assert.assertTrue("messages.log file must be contained", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfSumFile(rampupRunID).toPath();
+		expectedFile = LogParser.getPerfSumFile(RUN_ID).toPath();
 		Assert.assertTrue("perf.sum.csv file must be contained", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfTraceFile(rampupRunID).toPath();
+		expectedFile = LogParser.getPerfTraceFile(RUN_ID).toPath();
 		Assert.assertTrue("perf.trace.csv file must be contained", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getDataItemsFile(rampupRunID).toPath();
+		expectedFile = LogParser.getDataItemsFile(RUN_ID).toPath();
 		Assert.assertTrue("data.items.csv file must be contained", Files.exists(expectedFile));
 
 		/*
-		expectedFile = LogParser.getErrorsFile(rampupRunID).toPath();
+		expectedFile = LogParser.getErrorsFile(RUN_ID).toPath();
 		Assert.assertFalse("errors.log file must not be contained", Files.exists(expectedFile));
 		*/
 	}
@@ -144,10 +134,11 @@ public class CustomRampupTest {
 				);
 			}
 			if (confParam.contains(RunTimeConfig.KEY_RUN_ID)) {
-				Assert.assertTrue(
-					"Information about run ID must be correct in configuration table",
-					confParam.contains(rampupRunID)
-				);
+				if (RUN_ID.length() >= 64) {
+					Assert.assertTrue(confParam.contains(RUN_ID.substring(0, 63).trim()));
+				} else {
+					Assert.assertTrue(confParam.contains(RUN_ID));
+				}
 			}
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
 				Assert.assertTrue(
@@ -168,29 +159,31 @@ public class CustomRampupTest {
 	public void shouldReportScenarioEndToMessageLogFile()
 		throws Exception {
 		//Read message file and search "Scenario End"
-		final File messageFile = LogParser.getMessageFile(rampupRunID);
+		final File messageFile = LogParser.getMessageFile(RUN_ID);
 		Assert.assertTrue("message.log file must be exist", messageFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
-		// Search line in file which contains "Scenario end" string.
-		// Get out from the loop when line with "Scenario end" if found else returned line = null
-		String line;
-		do {
-			line = bufferedReader.readLine();
-		} while ((!line.contains(TestConstants.SCENARIO_END_INDICATOR)) && line != null);
-
-		//Check the message file contain report about scenario end. If not line = null.
-		Assert.assertTrue(
-			"message.log file must contains information about scenario end",
-			line.contains(TestConstants.SCENARIO_END_INDICATOR)
-		);
+		try (final BufferedReader bufferedReader =
+			     new BufferedReader(new FileReader(messageFile))) {
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
+					break;
+				}
+			}
+			Assert.assertNotNull(line);
+			//Check the message file contain report about scenario end. If not line = null.
+			Assert.assertTrue(
+				"message.log file must contains information about scenario end",
+				line.contains(TestConstants.SCENARIO_END_INDICATOR)
+			);
+		}
 	}
 
 	@Test
 	public void shouldCreateCorrectPerfSumFile()
 		throws Exception {
 		// Get perf.sum.csv file
-		final File perfSumFile = LogParser.getPerfSumFile(rampupRunID);
+		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file must be exist", perfSumFile.exists());
 		//
 		try(
@@ -205,7 +198,7 @@ public class CustomRampupTest {
 	public void shouldCreateCorrectDataItemsFile()
 		throws Exception {
 		// Get data.items.csv file
-		final File dataItemFile = LogParser.getDataItemsFile(rampupRunID);
+		final File dataItemFile = LogParser.getDataItemsFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file must be exist", dataItemFile.exists());
 		//
 		try(
@@ -220,7 +213,7 @@ public class CustomRampupTest {
 	public void shouldCreateCorrectPerfTraceFile()
 		throws Exception {
 		// Get perf.trace.csv file
-		final File perfTraceFile = LogParser.getPerfTraceFile(rampupRunID);
+		final File perfTraceFile = LogParser.getPerfTraceFile(RUN_ID);
 		Assert.assertTrue("perf.trace.csv file doesn't exist",perfTraceFile.exists());
 		//
 		try(
@@ -234,7 +227,7 @@ public class CustomRampupTest {
 	@Test
 	public void shouldContainedInformationAboutAllLoadsByStep()
 		throws Exception {
-		final File perfSumFile = LogParser.getPerfSumFile(rampupRunID);
+		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file must be exist", perfSumFile.exists());
 		//
 		try(

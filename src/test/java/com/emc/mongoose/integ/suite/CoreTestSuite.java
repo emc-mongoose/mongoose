@@ -43,13 +43,13 @@ import org.junit.runners.Suite;
 	WriteRandomSizedItemsTest.class,
 	WriteUsing10ConnTest.class,
 	WriteUsing100ConnTest.class,*/
-	/*CRUDSequentialScenarioIntegTest.class,*/
-	CRUDSimultaneousScenarioIntegTest.class,
-	/*CustomChainScenarioIntegTest.class,*/
-	/*DefaultChainScenarioIntegTest.class,
-	CustomRampupTest.class,
+	/*CRUDSequentialScenarioIntegTest.class,
+	CRUDSimultaneousScenarioIntegTest.class,*/
+	CustomChainScenarioIntegTest.class,
+	/*DefaultChainScenarioIntegTest.class,*/
+	/*CustomRampupTest.class,
 	DefaultRampupTest.class,*/
-	InfiniteWriteTest.class
+	//InfiniteWriteTest.class
 })
 public class CoreTestSuite {
 	@BeforeClass

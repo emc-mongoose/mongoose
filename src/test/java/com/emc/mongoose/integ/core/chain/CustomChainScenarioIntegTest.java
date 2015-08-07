@@ -2,7 +2,6 @@ package com.emc.mongoose.integ.core.chain;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
@@ -20,20 +19,18 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
@@ -93,7 +90,7 @@ public class CustomChainScenarioIntegTest {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptRunner().run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(10);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
 	}
@@ -151,7 +148,11 @@ public class CustomChainScenarioIntegTest {
 				Assert.assertTrue(confParam.contains(Constants.RUN_MODE_STANDALONE));
 			}
 			if (confParam.contains(RunTimeConfig.KEY_RUN_ID)) {
-				Assert.assertTrue(confParam.contains(RUN_ID));
+				if (RUN_ID.length() >= 64) {
+					Assert.assertTrue(confParam.contains(RUN_ID.substring(0, 63).trim()));
+				} else {
+					Assert.assertTrue(confParam.contains(RUN_ID));
+				}
 			}
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_TIME)) {
 				Assert.assertTrue(confParam.contains(LIMIT_TIME));
@@ -392,15 +393,29 @@ public class CustomChainScenarioIntegTest {
 		try (final BufferedReader bufferedReader =
 			     new BufferedReader(new FileReader(perfAvgFile))) {
 			final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
-			Matcher matcher;
+			Matcher matcherDate, matcherLoadType;
 			//
 			bufferedReader.readLine();
 			String line;
-			final List<Date> listTimeOfReports = new ArrayList<>();
+			String loadType, date;
+			// map by load type
+			final Map<String, ArrayList<Date>> mapReports = new HashMap<>(4);
 			while ((line = bufferedReader.readLine()) != null) {
-				matcher = TestConstants.TIME_PATTERN.matcher(line);
-				if (matcher.find()) {
-					listTimeOfReports.add(format.parse(matcher.group()));
+				matcherDate = TestConstants.TIME_PATTERN.matcher(line);
+				matcherLoadType = TestConstants.LOAD_NAME_PATTERN.matcher(line);
+				if (matcherDate.find() && matcherLoadType.find()) {
+					loadType = matcherLoadType.group();
+					date = matcherDate.group();
+					if (mapReports.containsKey(loadType)) {
+						final List<Date> listReports = mapReports.get(loadType);
+						listReports.add(format.parse(date));
+						mapReports.put(loadType, (ArrayList<Date>) listReports);
+					} else {
+						mapReports.put(loadType, new ArrayList<>(
+								Arrays.asList(format.parse(date))
+							)
+						);
+					}
 				}
 			}
 			// Check period of reports is correct
@@ -410,10 +425,12 @@ public class CustomChainScenarioIntegTest {
 			// period must be equal 10 seconds = 10000 milliseconds
 			Assert.assertEquals(10, period);
 			//
-			for (int i = 0; i < listTimeOfReports.size() - 1; i++) {
-				firstTime = listTimeOfReports.get(i).getTime();
-				nextTime = listTimeOfReports.get(i + 1).getTime();
-				if (firstTime != nextTime) {
+			for (final String mapLoadType : mapReports.keySet()) {
+				final List<Date> listReports = mapReports.get(mapLoadType);
+				for (int i = 0; i < listReports.size() - 1; i++) {
+					firstTime = listReports.get(i).getTime();
+					nextTime = listReports.get(i + 1).getTime();
+					// period must be equal 10 seconds = 10000 milliseconds
 					Assert.assertTrue(
 						10000 - precisionMillis < (nextTime - firstTime) &&
 						10000 + precisionMillis > (nextTime - firstTime)

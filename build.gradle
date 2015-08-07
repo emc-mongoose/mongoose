@@ -483,7 +483,7 @@ configurations {
 	testRuntime.extendsFrom(
 		runtime,
 	)
-	
+
 	integTestCompile.extendsFrom(
 		compile,
 	)
@@ -1019,6 +1019,8 @@ test {
 }
 
 task integTest(type: Test) {
+
+	dependsOn dist
 	//Be able to run only test suit
 	include '**/CoreTestSuite.class'
 	//include '**/DistributedLoadTestSuite.class'
