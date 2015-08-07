@@ -64,6 +64,7 @@ implements ObjectStorageMock<T> {
 			countContainers.decrementAndGet();
 			throw new StorageMockCapacityLimitReachedException();
 		}
+		ioStats.containerCreate();
 		return null == containersIndex
 			.putIfAbsent(name, new BasicObjectContainerMock<T>(name, containerCapacity));
 	}
@@ -78,6 +79,7 @@ implements ObjectStorageMock<T> {
 		final ObjectContainerMock<T> c = containersIndex.remove(name);
 		if(c != null) {
 			countContainers.decrementAndGet();
+			ioStats.containerDelete();
 			return true;
 		} else {
 			return false;
