@@ -36,6 +36,6 @@ public abstract class LoggingTestSuite {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		LogUtil.shutdown();
+		//LogUtil.shutdown();
 	}
 }
