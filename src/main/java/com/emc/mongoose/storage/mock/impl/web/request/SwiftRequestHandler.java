@@ -5,6 +5,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-adapter-swift.jar
 import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
@@ -72,7 +73,7 @@ extends WSRequestHandlerBase<T> {
 		final String method, final String requestURI
 	) {
 		if(requestURI.startsWith(AUTH, 1)) { // auth token
-			if(METHOD_GET.equals(method)) { // create
+			if(WSRequestConfig.METHOD_GET.equals(method)) { // create
 				final String authToken = randomString(0x10);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, "Created auth token: {}", authToken);
@@ -93,7 +94,7 @@ extends WSRequestHandlerBase<T> {
 						oid = m.group(KEY_OID);
 					if(oid != null) {
 						final long offset;
-						if(METHOD_PUT.equals(method) || METHOD_POST.equals(method)) {
+						if(WSRequestConfig.METHOD_PUT.equals(method) || WSRequestConfig.METHOD_POST.equals(method)) {
 							offset = Long.parseLong(oid, DataObject.ID_RADIX);
 						} else {
 							offset = -1;

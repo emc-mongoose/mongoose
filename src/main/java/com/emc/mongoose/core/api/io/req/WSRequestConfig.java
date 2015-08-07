@@ -1,8 +1,6 @@
-package com.emc.mongoose.core.api.io.req.conf;
+package com.emc.mongoose.core.api.io.req;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.model.DataSource;
-import com.emc.mongoose.core.api.io.req.HTTPMethod;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-common.jar
@@ -15,7 +13,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.IOControl;
-//
+
 import java.net.URISyntaxException;
 /**
  Created by kurila on 29.09.14.
@@ -49,9 +47,20 @@ extends ObjectRequestConfig<T> {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_FS_ACCESS, /*KEY_EMC_NS, */KEY_EMC_SIG, KEY_EMC_UID
 		};
 	//
-	MutableWSRequest createRequest();
+	String
+		METHOD_PUT = "put",
+		METHOD_GET = "get",
+		METHOD_POST = "post",
+		METHOD_HEAD = "head",
+		METHOD_DELETE = "delete",
+		METHOD_TRACE = "trace";
 	//
-	HTTPMethod getHTTPMethod();
+	HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
+	throws URISyntaxException;
+	//
+	HttpEntityEnclosingRequest createGenericRequest(final String method, final String uri);
+	//
+	String getHttpMethod();
 	//
 	@Override
 	WSRequestConfig<T> setAPI(final String api);
@@ -80,11 +89,6 @@ extends ObjectRequestConfig<T> {
 	HeaderGroup getSharedHeaders();
 	//
 	HttpHost getNodeHost(final String nodeAddr);
-	//
-	String getUserAgent();
-	//
-	void applyDataItem(final MutableWSRequest httpRequest, T dataItem)
-	throws URISyntaxException;
 	//
 	void applyHeadersFinally(final HttpEntityEnclosingRequest httpRequest);
 	//

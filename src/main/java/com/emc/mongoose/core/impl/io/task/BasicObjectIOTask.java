@@ -19,16 +19,10 @@ implements DataObjectIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicObjectIOTask(final ObjectLoadExecutor<T> loadExecutor) {
-		super(loadExecutor);
-	}
-	//
 	public BasicObjectIOTask(
 		final ObjectLoadExecutor<T> loadExecutor, final T dataObject, final String nodeAddr
 	) {
-		this(loadExecutor);
-		setDataItem(dataObject);
-		setNodeAddr(nodeAddr);
+		super(loadExecutor, dataObject, nodeAddr);
 	}
 	//
 	@Override
@@ -51,7 +45,7 @@ implements DataObjectIOTask<T> {
 				strBuilder
 					.append(nodeAddr).append(',')
 					.append(dataItemId).append(',')
-					.append(transferSize).append(',')
+					.append(getTransferSize()).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
 					.append(respTimeStart - reqTimeDone).append(',')
@@ -70,7 +64,7 @@ implements DataObjectIOTask<T> {
 					.append("Invalid trace: ")
 					.append(nodeAddr).append(',')
 					.append(dataItemId).append(',')
-					.append(transferSize).append(',')
+					.append(getTransferSize()).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
 					.append(reqTimeDone).append(',')

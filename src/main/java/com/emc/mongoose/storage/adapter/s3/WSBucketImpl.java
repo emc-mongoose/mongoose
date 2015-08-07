@@ -3,18 +3,16 @@ package com.emc.mongoose.storage.adapter.s3;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.io.req.HTTPMethod;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
 import com.emc.mongoose.core.impl.data.model.GenericWSContainerBase;
 //
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 //
@@ -40,56 +38,63 @@ implements Bucket<T> {
 	}
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	HttpResponse execute(final String addr, final HTTPMethod method)
+	HttpResponse execute(final String addr, final String method)
 	throws IOException {
 		return execute(addr, method, false);
 	}
 	//
 	HttpResponse execute(
-		final String addr, final HTTPMethod method, final boolean versioning
+		final String addr, final String method, final boolean versioning
 	) throws IOException {
 		return execute(addr, method, versioning, null, batchSize);
 	}
 	//
 	HttpResponse execute(
-		final String addr, final HTTPMethod method,
+		final String addr, final String method,
 		final boolean versioning, final String bucketListingMarker, final long bucketMaxKeys
 	) throws IOException {
 		//
 		if (method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
-		final MutableWSRequest httpReq = reqConf
-			.createRequest().setMethod(method).setUriPath("/" + name);
 		//
-		switch(method) {
-			case PUT:
-				if (reqConf.getFileAccessEnabled()) {
-					httpReq.setHeader(
-						new BasicHeader(
-							WSRequestConfigImpl.KEY_EMC_FS_ACCESS, Boolean.toString(true)
-						)
+		final HttpEntityEnclosingRequest httpReq;
+		if(WSRequestConfig.METHOD_PUT.equals(method)) {
+			//
+			if(versioning) {
+				httpReq = reqConf
+					.createGenericRequest(
+						method, "/" + name + VERSIONING_URL_PART
 					);
-				}
-				if (versioning) {
-					httpReq.setUriPath(httpReq.getUriPath() + VERSIONING_URL_PART);
-					httpReq.setEntity(
-						new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
-					);
-				}
-				break;
-		}
-		//
-		reqConf.applyHeadersFinally(httpReq);
-		// this must not be in canonical request.
-		// set max-keys value when get new bucket's list.
-		if (HTTPMethod.GET.equals(method)) {
-			httpReq.setUriPath(httpReq.getUriPath() + "?" + URL_ARG_MAX_KEYS + "=" + bucketMaxKeys);
-			// if it is possible to get next bucket's list bucketListingMarker must be in URI request.
-			if (bucketListingMarker != null) {
-				httpReq.setUriPath(httpReq.getUriPath() + "&" + URL_ARG_MARKER + "=" + bucketListingMarker);
+			} else {
+				httpReq = reqConf
+					.createGenericRequest(method, "/" + name);
 			}
+			//
+			if(reqConf.getFileAccessEnabled()) {
+				httpReq.setHeader(
+					new BasicHeader(
+						WSRequestConfigImpl.KEY_EMC_FS_ACCESS, Boolean.toString(true)
+					)
+				);
+			}
+		} else if(WSRequestConfig.METHOD_GET.equals(method)) {
+			if(bucketListingMarker == null) {
+				httpReq = reqConf.createGenericRequest(
+					method, "/" + name + "?" + URL_ARG_MAX_KEYS + "=" + bucketMaxKeys
+				);
+			} else {
+				httpReq = reqConf.createGenericRequest(
+					method,
+					"/" + name + "?" + URL_ARG_MAX_KEYS + "=" + bucketMaxKeys + "&" +
+						URL_ARG_MARKER + "=" + bucketListingMarker
+				);
+			}
+		} else {
+			httpReq = reqConf
+				.createGenericRequest(method, "/" + name);
 		}
+		//
 		return reqConf.execute(addr, httpReq);
 	}
 	//
@@ -99,7 +104,7 @@ implements Bucket<T> {
 		boolean flagExists = false;
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, HTTPMethod.HEAD);
+			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_HEAD);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -133,14 +138,14 @@ implements Bucket<T> {
 			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
-		if (flagExists && versioningEnabled){
-			enableVersioning(addr, HTTPMethod.PUT);
+		if(flagExists && versioningEnabled){
+			enableVersioning(addr, WSRequestConfig.METHOD_PUT);
 		}
 		//
 		return flagExists;
 	}
 	//
-	private void enableVersioning(final String addr, HTTPMethod method) {
+	private void enableVersioning(final String addr, final String method) {
 		try {
 			final HttpResponse httpResp = execute(addr, method, true);
 			if(httpResp != null) {
@@ -182,7 +187,7 @@ implements Bucket<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, HTTPMethod.PUT);
+			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_PUT);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -222,7 +227,7 @@ implements Bucket<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, HTTPMethod.DELETE);
+			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_DELETE);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();

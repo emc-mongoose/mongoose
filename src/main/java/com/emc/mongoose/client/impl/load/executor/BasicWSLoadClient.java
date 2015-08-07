@@ -3,7 +3,7 @@ package com.emc.mongoose.client.impl.load.executor;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;

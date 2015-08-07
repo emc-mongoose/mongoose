@@ -1,13 +1,10 @@
 package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.io.req.HTTPMethod;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
@@ -21,6 +18,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -85,23 +83,42 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public HTTPMethod getHTTPMethod() {
-		HTTPMethod method;
+	public final HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
+	throws URISyntaxException {
+		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
+			getHttpMethod(), getUriPath(obj)
+		);
+		if(fsAccess) {
+			super.applyObjectId(obj, null);
+		}
 		switch(loadType) {
+			case UPDATE:
+			case APPEND:
+				applyRangesHeaders(request, obj);
 			case CREATE:
-				method = HTTPMethod.POST;
+				applyPayLoad(request, obj);
 				break;
 			case READ:
-				method = HTTPMethod.GET;
-				break;
 			case DELETE:
-				method = HTTPMethod.DELETE;
-				break;
-			default: // UPDATE, APPEND
-				method = HTTPMethod.PUT;
+				applyPayLoad(request, null);
 				break;
 		}
-		return method;
+		applyHeadersFinally(request);
+		return request;
+	}
+	//
+	@Override
+	public String getHttpMethod() {
+		switch(loadType) {
+			case CREATE:
+				return METHOD_POST;
+			case READ:
+				return METHOD_GET;
+			case DELETE:
+				return METHOD_DELETE;
+			default: // UPDATE, APPEND
+				return METHOD_PUT;
+		}
 	}
 	//
 	public final WSSubTenantImpl<T> getSubTenant() {
@@ -226,19 +243,15 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final MutableWSRequest httpRequest, final T dataItem) {
-		if(httpRequest == null) {
-			throw new IllegalArgumentException(MSG_NO_REQ);
-		}
+	protected final String getUriPath(final T dataItem) {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !IOTask.Type.CREATE.equals(loadType)) {
-			httpRequest.setUriPath(uriBasePath + getPathFor(dataItem));
-		} else if(!uriBasePath.equals(httpRequest.getUriPath())) { // "/rest/objects"
-			httpRequest.setUriPath(uriBasePath);
-		} // else do nothing, uri is "/rest/objects" already
-
+			return uriBasePath + getFilePathFor(dataItem);
+		} else { // "/rest/objects"
+			return uriBasePath;
+		}
 	}
 	//
 	private final static ThreadLocal<StringBuilder>
@@ -310,7 +323,8 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		canonical.append('\n').append(httpRequest.getRequestLine().getUri());
+		final String uri = httpRequest.getRequestLine().getUri();
+		canonical.append('\n').append(uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri);
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
 			if(sharedHeaders.containsHeader(emcHeaderName)) {
@@ -366,27 +380,6 @@ extends WSRequestConfigBase<T> {
 				Long.toHexString(dataObject.getOffset()), dataObject.getId(),
 				httpResponse.getFirstHeader(HttpHeaders.LOCATION)
 			);
-		}
-	}
-	//
-	@Override
-	public final void applyDataItem(final MutableWSRequest httpRequest, final T dataItem)
-	throws IllegalStateException, URISyntaxException {
-		if(fsAccess) {
-			super.applyObjectId(dataItem, null);
-		}
-		applyURI(httpRequest, dataItem);
-		switch(loadType) {
-			case UPDATE:
-			case APPEND:
-				applyRangesHeaders(httpRequest, dataItem);
-			case CREATE:
-				applyPayLoad(httpRequest, dataItem);
-				break;
-			case READ:
-			case DELETE:
-				applyPayLoad(httpRequest, null);
-				break;
 		}
 	}
 	//

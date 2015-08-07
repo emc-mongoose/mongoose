@@ -15,7 +15,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.load.model.Consumer;
@@ -568,7 +568,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected IOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
-		return new BasicIOTask<>(this).setDataItem(dataItem).setNodeAddr(nextNodeAddr);
+		return new BasicIOTask<>(this, dataItem, nextNodeAddr);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing implementation
