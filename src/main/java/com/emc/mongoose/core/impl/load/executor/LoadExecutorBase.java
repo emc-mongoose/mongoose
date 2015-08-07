@@ -516,7 +516,8 @@ implements LoadExecutor<T> {
 						);
 						itemsBuff.setConsumer(this);
 						LOG.debug(
-							Markers.MSG, "{}: not started yet, consuming into the temporary file"
+							Markers.MSG, "{}: not started yet, consuming into the temporary file",
+							getName()
 						);
 					}
 				} finally {

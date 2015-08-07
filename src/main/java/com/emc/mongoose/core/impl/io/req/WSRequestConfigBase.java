@@ -50,8 +50,6 @@ import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 //
-import org.apache.http.nio.ContentDecoder;
-import org.apache.http.nio.IOControl;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
 import org.apache.http.nio.pool.NIOConnFactory;
@@ -75,7 +73,6 @@ import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
-import java.nio.channels.ClosedChannelException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -240,7 +237,9 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public HttpEntityEnclosingRequest createGenericRequest(final String method, final String uri) {
-		return new BasicHttpEntityEnclosingRequest(method, uri);
+		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(method, uri);
+		applyHeadersFinally(request);
+		return request;
 	}
 	//
 	@Override
