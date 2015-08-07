@@ -113,6 +113,7 @@ implements WSRequestConfig<T> {
 				constructor = (Constructor<WSRequestConfigBase>) apiImplCls.getConstructors()[0];
 			reqConf = constructor.newInstance();
 		} catch(final Exception e) {
+			e.printStackTrace(System.out);
 			throw new RuntimeException(e);
 		}
 		return reqConf;
@@ -143,7 +144,7 @@ implements WSRequestConfig<T> {
 			)
 		);
 		try {
-			if(reqConf2Clone!=null) {
+			if(reqConf2Clone != null) {
 				this.setSecret(reqConf2Clone.getSecret()).setScheme(reqConf2Clone.getScheme());
 				this.setFileAccessEnabled(reqConf2Clone.getFileAccessEnabled());
 			}
