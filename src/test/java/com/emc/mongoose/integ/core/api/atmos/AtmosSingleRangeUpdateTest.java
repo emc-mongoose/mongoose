@@ -36,6 +36,7 @@ public class AtmosSingleRangeUpdateTest {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.resetContext();
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, AtmosSingleRangeUpdateTest.class.getCanonicalName()
 		);

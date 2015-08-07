@@ -20,7 +20,6 @@ import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Logger;
@@ -56,11 +55,8 @@ public class WriteLoggingTest {
 		//  remove log dir w/ previous logs
 		LogParser.removeLogDirectory(RUN_ID);
 		TimeUnit.SECONDS.sleep(5);
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		// reinit run id and the log path
-		RunTimeConfig
-			.getContext()
-			.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		LoggingTestSuite.setUpClass();
 		//
 		try(

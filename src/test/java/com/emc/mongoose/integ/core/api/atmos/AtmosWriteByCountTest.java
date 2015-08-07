@@ -32,6 +32,7 @@ public class AtmosWriteByCountTest {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.resetContext();
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, AtmosWriteByCountTest.class.getCanonicalName()
 		);

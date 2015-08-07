@@ -30,6 +30,7 @@ public class AtmosReadUsingCSVInputTest {
 	public static <T extends BasicWSObject> void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.resetContext();
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, AtmosReadUsingCSVInputTest.class.getCanonicalName()
 		);

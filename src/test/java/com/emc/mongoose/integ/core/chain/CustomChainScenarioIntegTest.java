@@ -2,7 +2,6 @@ package com.emc.mongoose.integ.core.chain;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
@@ -20,20 +19,15 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
@@ -63,7 +57,7 @@ public class CustomChainScenarioIntegTest {
 		//  remove log dir w/ previous logs
 		LogParser.removeLogDirectory(RUN_ID);
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
+		RunTimeConfig.setContext(RunTimeConfig.getDefault());
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);

@@ -24,7 +24,6 @@ import static com.emc.mongoose.integ.tools.LogPatterns.*;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -63,10 +62,7 @@ public class DeleteLoggingTest {
 		//  remove log dir w/ previous logs
 		LogParser.removeLogDirectory(RUN_ID);
 		// reinit run id and the log path
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
-		RunTimeConfig
-			.getContext()
-			.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		LoggingTestSuite.setUpClass();
 		//
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>

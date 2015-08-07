@@ -29,6 +29,7 @@ public class SwiftReadRandomSizedItemsFromContainer {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.resetContext();
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, SwiftReadRandomSizedItemsFromContainer.class.getCanonicalName()
 		);
@@ -38,8 +39,8 @@ public class SwiftReadRandomSizedItemsFromContainer {
 				client = new BasicWSClientBuilder<>()
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
-				.setAPI("s3")
-				.setS3Bucket(CONTAINER_NAME)
+				.setAPI("swift")
+				.setSwiftContainer(CONTAINER_NAME)
 				.build()
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, 0, 123456, 3);

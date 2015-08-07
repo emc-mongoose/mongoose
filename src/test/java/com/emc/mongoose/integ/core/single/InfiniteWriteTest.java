@@ -29,7 +29,7 @@ public class InfiniteWriteTest {
 	public static void before()
 	throws Exception {
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
+		RunTimeConfig.setContext(RunTimeConfig.getDefault());
 		final String runName = RunTimeConfig.getContext().getRunName();
 		final String runVersion = RunTimeConfig.getContext().getRunVersion();
 

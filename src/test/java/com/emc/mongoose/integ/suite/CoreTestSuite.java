@@ -80,10 +80,12 @@ extends WSMockTestSuite {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		WSMockTestSuite.setUpClass();
 	}
 
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		WSMockTestSuite.tearDownClass();
 	}
 }

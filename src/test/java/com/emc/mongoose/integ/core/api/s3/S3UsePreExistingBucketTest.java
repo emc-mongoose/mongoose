@@ -32,6 +32,7 @@ public final class S3UsePreExistingBucketTest {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.resetContext();
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, S3UsePreExistingBucketTest.class.getCanonicalName()
 		);

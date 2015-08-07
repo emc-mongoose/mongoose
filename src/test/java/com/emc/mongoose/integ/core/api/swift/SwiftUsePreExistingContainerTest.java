@@ -28,6 +28,7 @@ public class SwiftUsePreExistingContainerTest {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.resetContext();
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, SwiftUsePreExistingContainerTest.class.getCanonicalName()
 		);

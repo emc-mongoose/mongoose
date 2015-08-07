@@ -124,14 +124,14 @@ implements Externalizable {
 		CONTEXT_CONFIG = new InheritableThreadLocal<>();
 	private static final List<String>
 		IMMUTABLE_PARAMS = new ArrayList<>();
-	private static RunTimeConfig DEFAULT_CFG;
+	private static RunTimeConfig DEFAULT_INSTANCE;
 	//
 	public static void initContext() {
 		RunTimeConfig instance = RunTimeConfig.getContext();
 		if(instance == null) {
 			instance = new RunTimeConfig();
 			instance.loadProperties();
-			DEFAULT_CFG = instance;
+			DEFAULT_INSTANCE = instance;
 			final String
 				runId = System.getProperty(KEY_RUN_ID),
 				runMode = System.getProperty(KEY_RUN_MODE);
@@ -145,8 +145,12 @@ implements Externalizable {
 		}
 	}
 	//
-	public static RunTimeConfig getDefaultCfg() {
-		return DEFAULT_CFG.clone();
+	public static RunTimeConfig getDefault() {
+		return DEFAULT_INSTANCE.clone();
+	}
+	//
+	public static void resetContext() {
+		setContext(DEFAULT_INSTANCE.clone());
 	}
 	//
 	public void loadProperties() {

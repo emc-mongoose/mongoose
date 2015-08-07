@@ -66,7 +66,7 @@ public class CRUDSequentialScenarioIntegTest {
 		//  remove log dir w/ previous logs
 		LogParser.removeLogDirectory(RUN_ID);
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
+		RunTimeConfig.setContext(RunTimeConfig.getDefault());
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);

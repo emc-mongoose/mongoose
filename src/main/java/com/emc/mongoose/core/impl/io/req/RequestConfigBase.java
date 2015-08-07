@@ -38,7 +38,7 @@ implements RequestConfig<T> {
 	protected volatile boolean
 		verifyContentFlag, anyDataProducerEnabled;
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
-	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
+	protected volatile RunTimeConfig runTimeConfig;
 	protected volatile String
 		/*addr, */nameSpace, scheme/*, uriTemplate*/;
 	protected volatile int
@@ -48,6 +48,7 @@ implements RequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
+		runTimeConfig = RunTimeConfig.getContext();
 		api = runTimeConfig.getApiName();
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();
