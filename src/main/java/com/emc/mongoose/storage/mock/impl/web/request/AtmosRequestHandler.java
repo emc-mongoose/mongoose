@@ -99,7 +99,7 @@ extends WSRequestHandlerBase<T> {
 				String oid = m.group(KEY_OID);
 				long offset = -1;
 				if(oid == null) {
-					if(WSRequestConfig.METHOD_POST.equals(method)) {
+					if(WSRequestConfig.METHOD_POST.equalsIgnoreCase(method)) {
 						oid = generateId();
 						if(metaDataList != null) {
 							String keyValuePair[];
@@ -125,7 +125,7 @@ extends WSRequestHandlerBase<T> {
 						if(300 > httpResponse.getStatusLine().getStatusCode()) {
 							httpResponse.setHeader(HttpHeaders.LOCATION, OBJ_PATH + '/' + oid);
 						}
-					} else if(WSRequestConfig.METHOD_GET.equals(method)) {
+					} else if(WSRequestConfig.METHOD_GET.equalsIgnoreCase(method)) {
 						String subtenant = null;
 						if(metaDataList != null) {
 							String keyValuePair[];
@@ -156,11 +156,13 @@ extends WSRequestHandlerBase<T> {
 		} else if(requestURI.startsWith(AT_PATH)) {
 			httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
 		} else if(requestURI.startsWith(ST_PATH)) {
-			final String subtenant = WSRequestConfig.METHOD_PUT.equals(method) ?
+			final String subtenant = WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ?
 				generateSubtenant() : getSubtenant(httpRequest);
 			handleGenericContainerReq(
 				httpRequest, httpResponse, method,
-				WSRequestConfig.METHOD_PUT.equals(method) ? generateSubtenant() : subtenant, null
+				WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ?
+					generateSubtenant() : subtenant,
+				null
 			);
 		} else {
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);

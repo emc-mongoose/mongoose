@@ -48,12 +48,12 @@ extends ObjectRequestConfig<T> {
 		};
 	//
 	String
-		METHOD_PUT = "put",
-		METHOD_GET = "get",
-		METHOD_POST = "post",
-		METHOD_HEAD = "head",
-		METHOD_DELETE = "delete",
-		METHOD_TRACE = "trace";
+		METHOD_PUT = "PUT",
+		METHOD_GET = "GET",
+		METHOD_POST = "POST",
+		METHOD_HEAD = "HEAD",
+		METHOD_DELETE = "DELETE",
+		METHOD_TRACE = "TRACE";
 	//
 	HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException;

@@ -547,6 +547,7 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public String getSignature(final String canonicalForm) {
+		LOG.info(canonicalForm);
 		final byte sigData[];
 		Mac mac = THRLOC_MAC.get();
 		if(mac == null) {

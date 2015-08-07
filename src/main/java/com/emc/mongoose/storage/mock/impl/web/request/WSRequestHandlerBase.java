@@ -139,7 +139,7 @@ implements ReqURIMatchingHandler<T> {
 		if(container == null) {
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 		} else {
-			switch(method) {
+			switch(method.toUpperCase()) {
 				case WSRequestConfig.METHOD_POST:
 					handleWrite(httpRequest, httpResponse, container, oid, offset);
 					break;
@@ -292,7 +292,7 @@ implements ReqURIMatchingHandler<T> {
 		final HttpRequest httpRequest, final HttpResponse httpResponse,
 		final String method, final String container, final String dataId
 	) {
-		switch(method) {
+		switch(method.toUpperCase()) {
 			case WSRequestConfig.METHOD_POST:
 				httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
 				break;

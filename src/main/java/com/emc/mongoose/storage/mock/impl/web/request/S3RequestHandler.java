@@ -89,7 +89,10 @@ extends WSRequestHandlerBase<T> {
 						handleGenericContainerReq(httpRequest, httpResponse, method, bucket, null);
 					} else {
 						final long offset;
-						if(WSRequestConfig.METHOD_PUT.equals(method) || WSRequestConfig.METHOD_POST.equals(method)) {
+						if(
+							WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ||
+							WSRequestConfig.METHOD_POST.equalsIgnoreCase(method)
+						) {
 							offset = Long.parseLong(objId, DataObject.ID_RADIX);
 						} else {
 							offset = -1;

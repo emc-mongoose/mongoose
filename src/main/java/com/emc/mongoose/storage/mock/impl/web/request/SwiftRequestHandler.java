@@ -73,7 +73,7 @@ extends WSRequestHandlerBase<T> {
 		final String method, final String requestURI
 	) {
 		if(requestURI.startsWith(AUTH, 1)) { // auth token
-			if(WSRequestConfig.METHOD_GET.equals(method)) { // create
+			if(WSRequestConfig.METHOD_GET.equalsIgnoreCase(method)) { // create
 				final String authToken = randomString(0x10);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, "Created auth token: {}", authToken);
@@ -94,7 +94,10 @@ extends WSRequestHandlerBase<T> {
 						oid = m.group(KEY_OID);
 					if(oid != null) {
 						final long offset;
-						if(WSRequestConfig.METHOD_PUT.equals(method) || WSRequestConfig.METHOD_POST.equals(method)) {
+						if(
+							WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ||
+							WSRequestConfig.METHOD_POST.equalsIgnoreCase(method)
+						) {
 							offset = Long.parseLong(oid, DataObject.ID_RADIX);
 						} else {
 							offset = -1;

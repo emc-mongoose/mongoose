@@ -190,45 +190,45 @@ implements WSIOTask<T> {
 					break;
 				case HttpStatus.SC_BAD_REQUEST:
 					this.status = Status.RESP_FAIL_CLIENT;
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					break;
 				case HttpStatus.SC_UNAUTHORIZED:
 				case HttpStatus.SC_FORBIDDEN:
 					this.status = Status.RESP_FAIL_AUTH;
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					break;
 				case HttpStatus.SC_NOT_FOUND:
 					this.status = Status.RESP_FAIL_NOT_FOUND;
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					break;
 				case HttpStatus.SC_METHOD_NOT_ALLOWED:
 					this.status = Status.RESP_FAIL_CLIENT;
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					break;
 				case HttpStatus.SC_CONFLICT:
 					this.status = Status.RESP_FAIL_CLIENT;
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					break;
 				case HttpStatus.SC_LENGTH_REQUIRED:
 					this.status = Status.RESP_FAIL_CLIENT;
 					msgBuff.append("Content length is required\n");
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					break;
@@ -240,40 +240,40 @@ implements WSIOTask<T> {
 					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_REQUEST_URI_TOO_LONG:
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE:
 					msgBuff.append("Unsupported media type\n");
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_REQUESTED_RANGE_NOT_SATISFIABLE:
 					msgBuff.append("Incorrect range\n");
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case 429:
 					msgBuff.append("Storage prays about a mercy\n");
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_INTERNAL_SERVER_ERROR:
 					msgBuff.append("Storage internal failure\n");
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					this.status = Status.RESP_FAIL_SVC;
@@ -288,8 +288,8 @@ implements WSIOTask<T> {
 					break;
 				case HttpStatus.SC_SERVICE_UNAVAILABLE:
 					msgBuff.append("Storage prays about a mercy\n");
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					this.status = Status.RESP_FAIL_SVC;
@@ -304,8 +304,8 @@ implements WSIOTask<T> {
 					break;
 				case HttpStatus.SC_INSUFFICIENT_STORAGE:
 					msgBuff.append("Not enough space is left on the storage\n");
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					this.status = Status.RESP_FAIL_SPACE;
@@ -314,8 +314,8 @@ implements WSIOTask<T> {
 					msgBuff
 						.append("Unsupported response code: ").append(respStatusCode)
 						.append('\n');
-					if(entity != null) {
-						msgBuff.append(EntityUtils.toString(response.getEntity()));
+					if(entity != null && entity.getContentLength() > 0) {
+						msgBuff.append(EntityUtils.toString(entity));
 						msgBuff.append('\n');
 					}
 					this.status = Status.FAIL_UNKNOWN;
