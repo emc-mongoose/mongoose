@@ -29,6 +29,10 @@ public class AtmosUsePreExistingSubtenantTest {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, AtmosUsePreExistingSubtenantTest.class.getCanonicalName()
+		);
+		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSLoadBuilderFactory
 			.getInstance(rtConfig).getRequestConfig();

@@ -28,7 +28,11 @@ public class SwiftUsePreExistingAuthTokenTest {
 	//
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
+	throws Exception {
+		//
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, SwiftUsePreExistingAuthTokenTest.class.getCanonicalName()
+		);
 		//
 		final WSRequestConfigImpl reqConf = new WSRequestConfigImpl();
 		reqConf.setProperties(RunTimeConfig.getContext());

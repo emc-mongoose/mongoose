@@ -86,7 +86,11 @@ public class ReadLoggingTest {
 		);
 		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
 		stdOutInterceptorStream.reset(); // clear before using
-		COUNT_READ = CLIENT.read(itemsQueue, null, COUNT_LIMIT, 10, true);
+		if(COUNT_WRITTEN > 0) {
+			COUNT_READ = CLIENT.read(itemsQueue, null, COUNT_WRITTEN, 10, true);
+		} else {
+			throw new IllegalStateException("Failed to write");
+		}
 		TimeUnit.SECONDS.sleep(1);
 		STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 		LOG = LogManager.getLogger();

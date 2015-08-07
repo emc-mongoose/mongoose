@@ -30,7 +30,12 @@ public class S3ReadZeroSizedItemsFromBucket {
 	//
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
+	throws Exception {
+		//
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, S3ReadZeroSizedItemsFromBucket.class.getCanonicalName()
+		);
+
 		//
 		try(
 			final StorageClient<WSObject>
@@ -42,9 +47,13 @@ public class S3ReadZeroSizedItemsFromBucket {
 				.build()
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, 0);
-			COUNT_READ = client.read(
-				null, new ListItemOutput<>(BUFF_READ), COUNT_WRITTEN, 10, true
-			);
+			if(COUNT_WRITTEN > 0) {
+				COUNT_READ = client.read(
+					null, new ListItemOutput<>(BUFF_READ), COUNT_WRITTEN, 10, true
+				);
+			} else {
+				throw new IllegalStateException("Failed to write");
+			}
 		}
 	}
 	//

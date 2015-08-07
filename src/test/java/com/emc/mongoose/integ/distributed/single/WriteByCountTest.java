@@ -31,6 +31,9 @@ public final class WriteByCountTest {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, WriteByCountTest.class.getCanonicalName()
+		);
 		try(
 			final StorageClient<WSObject>
 				client = new BasicWSClientBuilder<>()

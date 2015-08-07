@@ -31,6 +31,11 @@ public final class S3UsePreExistingBucketTest {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, S3UsePreExistingBucketTest.class.getCanonicalName()
+		);
+
+		//
 		final WSRequestConfigImpl reqConf = new WSRequestConfigImpl();
 		reqConf.setProperties(RunTimeConfig.getContext());
 		BUCKET = new WSBucketImpl(

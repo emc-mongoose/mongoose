@@ -86,7 +86,9 @@ public class UpdateLoggingTest {
 		);
 		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
 		stdOutInterceptorStream.reset(); // clear before using
-		COUNT_UPDATED = CLIENT.update(itemsQueue, null, COUNT_LIMIT, 10, 10);
+		if(COUNT_WRITTEN > 0) {
+			COUNT_UPDATED = CLIENT.update(itemsQueue, null, COUNT_WRITTEN, 10, 10);
+		}
 		TimeUnit.SECONDS.sleep(1);
 		STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 		LOG = LogManager.getLogger();

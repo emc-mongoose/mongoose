@@ -27,6 +27,10 @@ public class SwiftUsePreExistingContainerTest {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, SwiftUsePreExistingContainerTest.class.getCanonicalName()
+		);
+		//
 		final WSRequestConfigImpl reqConf = new WSRequestConfigImpl();
 		reqConf.setProperties(RunTimeConfig.getContext());
 		CONTAINER = new WSContainerImpl(

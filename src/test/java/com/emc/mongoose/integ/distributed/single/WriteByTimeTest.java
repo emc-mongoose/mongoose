@@ -32,7 +32,12 @@ public final class WriteByTimeTest {
 	//
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
+	throws Exception {
+		//
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, WriteByTimeTest.class.getCanonicalName()
+		);
+		//
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
 			clientBuilder = new BasicWSClientBuilder<>();
 		try(

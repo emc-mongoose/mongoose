@@ -1,4 +1,5 @@
 package com.emc.mongoose.integ.core.api.atmos;
+//
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
@@ -27,7 +28,11 @@ public class AtmosReadUsingCSVInputTest {
 	//
 	@BeforeClass
 	public static <T extends BasicWSObject> void setUpClass()
-		throws Exception {
+	throws Exception {
+		//
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, AtmosReadUsingCSVInputTest.class.getCanonicalName()
+		);
 		//
 		try(
 			final StorageClient<T> client = new BasicWSClientBuilder<T, StorageClient<T>>()
@@ -42,7 +47,11 @@ public class AtmosReadUsingCSVInputTest {
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("10MB")
 			);
-			COUNT_READ = client.read(writeOutput.getInput());
+			if(COUNT_WRITTEN > 0) {
+				COUNT_READ = client.read(writeOutput.getInput(), null, COUNT_WRITTEN, 10, true);
+			} else {
+				throw new IllegalStateException("Failed to write");
+			}
 		}
 	}
 	//

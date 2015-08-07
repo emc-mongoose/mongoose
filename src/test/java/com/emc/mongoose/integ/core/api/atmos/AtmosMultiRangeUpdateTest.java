@@ -43,6 +43,10 @@ public final class AtmosMultiRangeUpdateTest {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, AtmosMultiRangeUpdateTest.class.getCanonicalName()
+		);
+		//
 		try(
 			final StorageClient<WSObject>
 				client = new BasicWSClientBuilder<>()
@@ -56,15 +60,27 @@ public final class AtmosMultiRangeUpdateTest {
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB")
 			);
 			final DataItemOutput<WSObject> updateOutput0 = new ListItemOutput<>(BUFF_UPDATE0);
-			COUNT_UPDATED0 = client.update(
-				writeOutput.getInput(), updateOutput0, COUNT_TO_WRITE, 10, 10
-			);
-			COUNT_READ0 = client.read(updateOutput0.getInput(), null, COUNT_UPDATED0, 10, true);
+			if(COUNT_WRITTEN > 0) {
+				COUNT_UPDATED0 = client.update(
+					writeOutput.getInput(), updateOutput0, COUNT_UPDATED0, 10, 10
+				);
+			} else {
+				throw new IllegalStateException("Failed to write");
+			}
+			if(COUNT_UPDATED0 > 0) {
+				COUNT_READ0 = client.read(updateOutput0.getInput(), null, COUNT_UPDATED0, 10, true);
+			} else {
+				throw new IllegalStateException("Failed to update the 1st time");
+			}
 			final DataItemOutput<WSObject> updateOutput1 = new ListItemOutput<>(BUFF_UPDATE0);
 			COUNT_UPDATED1 = client.update(
-				writeOutput.getInput(), updateOutput1, COUNT_TO_WRITE, 10, 10
+				writeOutput.getInput(), updateOutput1, COUNT_UPDATED0, 10, 10
 			);
-			COUNT_READ1 = client.read(updateOutput1.getInput(), null, COUNT_UPDATED1, 10, true);
+			if(COUNT_UPDATED1 > 0) {
+				COUNT_READ1 = client.read(updateOutput1.getInput(), null, COUNT_UPDATED1, 10, true);
+			} else {
+				throw new IllegalStateException("Failed to update the 2nd time");
+			}
 		}
 	}
 	//

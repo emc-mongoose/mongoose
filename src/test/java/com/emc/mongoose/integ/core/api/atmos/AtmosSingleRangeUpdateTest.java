@@ -34,7 +34,11 @@ public class AtmosSingleRangeUpdateTest {
 	//
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
+	throws Exception {
+		//
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, AtmosSingleRangeUpdateTest.class.getCanonicalName()
+		);
 		//
 		try(
 			final StorageClient<WSObject>
@@ -49,10 +53,18 @@ public class AtmosSingleRangeUpdateTest {
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("1KB")
 			);
 			final DataItemOutput<WSObject> updateOutput = new ListItemOutput<>(BUFF_UPDATE);
-			COUNT_UPDATED = client.update(
-				writeOutput.getInput(), updateOutput, COUNT_TO_WRITE, 10, 1
-			);
-			COUNT_READ = client.read(updateOutput.getInput(), null, COUNT_UPDATED, 10, true);
+			if(COUNT_WRITTEN > 0) {
+				COUNT_UPDATED = client.update(
+					writeOutput.getInput(), updateOutput, COUNT_WRITTEN, 10, 1
+				);
+			} else {
+				throw new IllegalStateException("Failed to write");
+			}
+			if(COUNT_UPDATED > 0) {
+				COUNT_READ = client.read(updateOutput.getInput(), null, COUNT_UPDATED, 10, true);
+			} else {
+				throw new IllegalStateException("Failed to update");
+			}
 		}
 	}
 	//

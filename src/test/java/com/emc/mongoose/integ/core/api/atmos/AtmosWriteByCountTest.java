@@ -30,7 +30,11 @@ public class AtmosWriteByCountTest {
 	//
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
+	throws Exception {
+		//
+		RunTimeConfig.getContext().set(
+			RunTimeConfig.KEY_RUN_ID, AtmosWriteByCountTest.class.getCanonicalName()
+		);
 		//
 		try(
 			final StorageClient<WSObject> client = new BasicWSClientBuilder<>()
