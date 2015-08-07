@@ -17,7 +17,9 @@ import com.emc.mongoose.core.impl.io.req.conf.ObjectRequestConfigBase;
 import com.emc.mongoose.core.impl.io.req.conf.RequestConfigBase;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
+import com.emc.mongoose.core.impl.load.executor.BasicObjectLoadExecutor;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.ObjectLoadExecutorBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -83,7 +85,7 @@ public class BasicObjectLoadBuilder<T extends DataObject, U extends ObjectLoadEx
             throw new IllegalStateException("Should specify request builder instance");
         }
         //
-        final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(reqConf);
+        final ObjectRequestConfig ObjectReqConf = ObjectRequestConfig.class.cast(reqConf);
         final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
         if(minObjSize > maxObjSize) {
             throw new IllegalStateException(
@@ -96,9 +98,9 @@ public class BasicObjectLoadBuilder<T extends DataObject, U extends ObjectLoadEx
         //
 
         //
-        return (U) new BasicObjectLoadBuilder<>(
-               localRunTimeConfig)//, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
-               //listFile, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem)
+        return (U) new BasicObjectLoadExecutor<>(
+               localRunTimeConfig, ObjectReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
+               listFile, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem)
         ;
     }
 }
