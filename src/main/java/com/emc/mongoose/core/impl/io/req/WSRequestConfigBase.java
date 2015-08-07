@@ -248,6 +248,11 @@ implements WSRequestConfig<T> {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
 			getHttpMethod(), getUriPath(obj)
 		);
+		try {
+			applyHostHeader(request, nodeAddr);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
+		}
 		switch(loadType) {
 			case UPDATE:
 			case APPEND:
@@ -533,6 +538,10 @@ implements WSRequestConfig<T> {
 				httpRequest.getLastHeader(HttpHeaders.DATE), httpRequest
 			);
 		}
+	}
+	//
+	protected void applyHostHeader(final HttpRequest httpRequest, final String nodeAddr) {
+		httpRequest.setHeader(HttpHeaders.HOST, getNodeHost(nodeAddr).toHostString());
 	}
 	//
 	protected void applyMetaDataHeaders(final HttpEntityEnclosingRequest httpRequest) {

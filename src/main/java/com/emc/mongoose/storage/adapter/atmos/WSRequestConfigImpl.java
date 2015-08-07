@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -20,6 +21,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -88,6 +90,11 @@ extends WSRequestConfigBase<T> {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
 			getHttpMethod(), getUriPath(obj)
 		);
+		try {
+			applyHostHeader(request, nodeAddr);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
+		}
 		if(fsAccess) {
 			super.applyObjectId(obj, null);
 		}

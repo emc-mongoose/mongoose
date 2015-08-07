@@ -34,15 +34,18 @@ implements HttpRequestInterceptor {
 		}
 		//
 		if(!req.containsHeader(HTTP.TARGET_HOST)) {
+			final HttpHost tgtHost;
 			if(HttpCoreContext.class.isInstance(ctx)) {
-				final HttpHost tgtHost = HttpCoreContext.class.cast(ctx).getTargetHost();
+				tgtHost = ((HttpCoreContext) ctx).getTargetHost();
 				if(tgtHost == null) {
 					throw new ProtocolException(
-						"No target host is in HTTP context #" + ctx.hashCode()
+						"No target host is in the HTTP context #" + ctx.hashCode()
 					);
 				} else {
 					req.setHeader(HTTP.TARGET_HOST, tgtHost.toHostString());
 				}
+			} else {
+				throw new ProtocolException("Unable to obtain the target host for the request");
 			}
 		}
 	}
