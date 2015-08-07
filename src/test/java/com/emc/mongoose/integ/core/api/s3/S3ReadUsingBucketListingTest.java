@@ -32,10 +32,10 @@ public final class S3ReadUsingBucketListingTest {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, S3ReadZeroSizedItemsFromBucket.class.getCanonicalName()
 		);
-
 		//
 		try(
 			final StorageClient<WSObject>

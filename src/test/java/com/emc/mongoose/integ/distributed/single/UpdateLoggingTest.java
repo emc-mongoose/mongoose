@@ -49,7 +49,7 @@ import java.util.regex.Matcher;
 public class UpdateLoggingTest {
 	//
 	private final static int COUNT_LIMIT = 1000;
-	private final static String RUN_ID = DeleteLoggingTest.class.getCanonicalName();
+	private final static String RUN_ID = UpdateLoggingTest.class.getCanonicalName();
 	//
 	private static StorageClient<WSObject> CLIENT;
 	private static long COUNT_WRITTEN, COUNT_UPDATED;
@@ -59,6 +59,9 @@ public class UpdateLoggingTest {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		//  remove log dir w/ previous logs
+		LogParser.removeLogDirectory(RUN_ID);
+		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		// reinit run id and the log path
 		RunTimeConfig
 			.getContext()

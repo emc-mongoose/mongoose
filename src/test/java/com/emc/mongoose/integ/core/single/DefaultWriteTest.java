@@ -3,20 +3,20 @@ package com.emc.mongoose.integ.core.single;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 //
+import com.emc.mongoose.integ.suite.LoggingTestSuite;
+import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
+import com.emc.mongoose.integ.tools.ContentGetter;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 //
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
-import com.emc.mongoose.integ.tools.ContentGetter;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
 import org.apache.commons.codec.digest.DigestUtils;
-//
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import org.junit.Assert;
@@ -27,16 +27,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Calendar;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
-import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 //
 /**
  * Created by olga on 30.06.15.
@@ -44,95 +40,90 @@ import java.util.TimeZone;
  * HLUC: 1.1.1.1, 1.1.2.1, 1.3.1.1, 1.4.1.1, 1.5.3.1(1)
  */
 public final class DefaultWriteTest {
-	//
-	private static BufferingOutputStream savedOutputStream;
-	//
+	private static BufferingOutputStream STD_OUTPUT_STREAM;
+
 	private static final int LIMIT_COUNT = 10;
-	private static String createRunId = TestConstants.LOAD_CREATE;
+	private static String RUN_ID = DefaultWriteTest.class.getCanonicalName();
 	private static final String DATA_SIZE = "1MB";
+
+	private static Logger LOG;
 
 	@BeforeClass
 	public static void before()
 	throws Exception {
-		// Set new saved console output stream
-		savedOutputStream = new BufferingOutputStream(System.out);
-		System.setOut(new PrintStream(savedOutputStream));
-		//Create run ID
-		createRunId += "Def:" + DATA_SIZE + ":" + TestConstants.FMT_DT.format(
-			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
-		);
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);
-		// If tests run from the IDEA full logging file must be set
-		final String fullLogConfFile = Paths
-			.get(System.getProperty(TestConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, TestConstants.LOG_FILE_NAME)
-			.toString();
-		System.setProperty(TestConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
-		LogUtil.init();
-		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
-		//Reload default properties
-		final RunTimeConfig runTimeConfig = new RunTimeConfig();
-		runTimeConfig.loadProperties();
-		RunTimeConfig.setContext(runTimeConfig);
-		//run mongoose default scenario in standalone mode
-		final Thread writeScenarioMongoose = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
-				// For correct work of verification option
-				UniformDataSource.DEFAULT = new UniformDataSource();
-				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
-				new ScriptRunner().run();
-			}
-		}, "writeScenarioMongoose");
-		writeScenarioMongoose.start();
-		writeScenarioMongoose.join();
-		writeScenarioMongoose.interrupt();
-		// Wait logger's output from console
-		Thread.sleep(3000);
-		savedOutputStream.close();
+		//  remove log dir w/ previous logs
+		LogParser.removeLogDirectory(RUN_ID);
+		//
+		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
+		LoggingTestSuite.setUpClass();
+
+		LOG = LogManager.getLogger();
+		LOG.info(Markers.MSG, rtConfig.toString());
+
+		try (final BufferingOutputStream stdOutStream =
+				StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
+			//  Run mongoose default scenario in standalone mode
+			new ScriptRunner().run();
+			//  Wait for "Scenario end" message
+			TimeUnit.SECONDS.sleep(5);
+			STD_OUTPUT_STREAM = stdOutStream;
+		}
+		STD_OUTPUT_STREAM.close();
 	}
 
 	@Test
-	public void shouldReportInformationAboutSummaryMetricsFromConsole()
+	public void shouldReportInformationAboutSummaryMetricsToConsole()
 	throws Exception {
-		Assert.assertTrue(savedOutputStream.toString().contains(TestConstants.SUMMARY_INDICATOR));
-		Assert.assertTrue(savedOutputStream.toString().contains(TestConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
+				.contains(TestConstants.SUMMARY_INDICATOR));
+		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
+				.contains(TestConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 	throws Exception {
-		Path expectedFile = LogParser.getMessageFile(createRunId).toPath();
-		//Check that messages.log file is contained
+		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
+		//  Check that messages.log exists
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfAvgFile(createRunId).toPath();
-		//Check that perf.avg.csv file is contained
+		expectedFile = LogParser.getPerfAvgFile(RUN_ID).toPath();
+		//  Check that perf.avg.csv file exists
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfSumFile(createRunId).toPath();
-		//Check that perf.sum.csv file is contained
+		expectedFile = LogParser.getPerfSumFile(RUN_ID).toPath();
+		//  Check that perf.sum.csv file exists
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfTraceFile(createRunId).toPath();
-		//Check that perf.trace.csv file is contained
+		expectedFile = LogParser.getPerfTraceFile(RUN_ID).toPath();
+		//  Check that perf.trace.csv file exists
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogParser.getDataItemsFile(createRunId).toPath();
-		//Check that data.items.csv file is contained
+		expectedFile = LogParser.getDataItemsFile(RUN_ID).toPath();
+		//  Check that data.items.csv file exists
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogParser.getErrorsFile(createRunId).toPath();
-		//Check that errors.log file is not created
+		expectedFile = LogParser.getErrorsFile(RUN_ID).toPath();
+		//  Check that errors.log file exists
 		Assert.assertFalse(Files.exists(expectedFile));
 	}
 
 	@Test
 	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
 		throws Exception {
-		final String[] runtimeConfCustomParam = RunTimeConfig.getContext().toString().split("\n");
-		for (final String confParam : runtimeConfCustomParam) {
+		final String configTable = RunTimeConfig.getContext().toString();
+		final Set<String> params = new HashSet<>();
+		//  skip table header
+		int start = 126;
+		int lineOffset = 100;
+		while (start + lineOffset < configTable.length()) {
+			params.add(configTable.substring(start, start + lineOffset));
+			start += lineOffset;
+		}
+		for (final String confParam : params) {
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
 				Assert.assertTrue(confParam.contains(String.valueOf(LIMIT_COUNT)));
 			}
@@ -143,7 +134,7 @@ public final class DefaultWriteTest {
 				Assert.assertTrue(confParam.contains(Constants.RUN_MODE_STANDALONE));
 			}
 			if (confParam.contains(RunTimeConfig.KEY_RUN_ID)) {
-				Assert.assertTrue(confParam.contains(createRunId));
+				Assert.assertTrue(confParam.contains(RUN_ID));
 			}
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_TIME)) {
 				Assert.assertTrue(confParam.contains("0"));
@@ -157,113 +148,118 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
-		//Read message file and search "Scenario End"
-		final File messageFile = LogParser.getMessageFile(createRunId);
+		//  Read the message file and search for "Scenario end"
+		final File messageFile = LogParser.getMessageFile(RUN_ID);
 		Assert.assertTrue(messageFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
-		// Search line in file which contains "Scenario end" string.
-		// Get out from the loop when line with "Scenario end" if found else returned line = null
-		String line;
-		do {
-			line = bufferedReader.readLine();
-		} while ((!line.contains(TestConstants.SCENARIO_END_INDICATOR)) && line != null);
-
-		//Check the message file contain report about scenario end. If not line = null.
-		Assert.assertTrue(line.contains(TestConstants.SCENARIO_END_INDICATOR));
+		try (final BufferedReader bufferedReader =
+		        new BufferedReader(new FileReader(messageFile))) {
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
+					break;
+				}
+			}
+			Assert.assertNotNull(line);
+			Assert.assertTrue(line.contains(TestConstants.SCENARIO_END_INDICATOR));
+		}
 	}
 
 	@Test
 	public void shouldReportCorrectWrittenCountToSummaryLogFile()
 	throws Exception {
-		//Read perf.summary file
-		final File perfSumFile = LogParser.getPerfSumFile(createRunId);
+		//  Read perf.summary file
+		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
 
-		//Check that file exists
+		//  Check that file exists
 		Assert.assertTrue(perfSumFile.exists());
 
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
-		bufferedReader.readLine();
+		try (final BufferedReader bufferedReader =
+			    new BufferedReader(new FileReader(perfSumFile))) {
+			//  read header from csv file
+			bufferedReader.readLine();
 
-		// Get value of "CountSucc" column
-		final int actualCountSucc = Integer.valueOf(
-			bufferedReader.readLine().split(",")[TestConstants.COUNT_SUCC_COLUMN_INDEX]
-		);
-		Assert.assertEquals(LIMIT_COUNT, actualCountSucc);
+			// Get value of "CountSucc" column
+			final int actualCountSucc = Integer.valueOf(
+				bufferedReader.readLine().split(",")[TestConstants.COUNT_SUCC_COLUMN_INDEX]
+			);
+			Assert.assertEquals(LIMIT_COUNT, actualCountSucc);
+		}
 	}
 
 	@Test
 	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
-		//Read data.items.csv file
-		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
+		//  Read data.items.csv file
+		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
 		Assert.assertTrue(dataItemsFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
-
-		int dataSize, countDataItems = 0;
-		String line = bufferedReader.readLine();
-
-		while (line != null){
-			// Get dataSize from each line
-			dataSize = Integer.valueOf(line.split(",")[TestConstants.DATA_SIZE_COLUMN_INDEX]);
-			Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), dataSize);
-			countDataItems++;
-			line = bufferedReader.readLine();
+		try (final BufferedReader bufferedReader =
+		        new BufferedReader(new FileReader(dataItemsFile))) {
+			int dataSize, countDataItems = 0;
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				//  Get dataSize from each line
+				dataSize = Integer.valueOf(line.split(",")[TestConstants.DATA_SIZE_COLUMN_INDEX]);
+				Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), dataSize);
+				countDataItems++;
+			}
+			//  Check that there are 10 lines in data.items.csv file
+			Assert.assertEquals(LIMIT_COUNT, countDataItems);
 		}
-		//Check that there are 10 lines in data.items.csv file
-		Assert.assertEquals(LIMIT_COUNT, countDataItems);
 	}
 
 	@Test
 	public void shouldGetDifferentObjectsFromServer()
 	throws Exception {
-		//Read data.items.csv file
-		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
+		//  Read data.items.csv file
+		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
 		Assert.assertTrue(dataItemsFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
+		try (final BufferedReader bufferedReader =
+		        new BufferedReader(new FileReader(dataItemsFile))) {
+			String line, dataID;
+			final Set<String> setOfChecksum = new HashSet<>();
 
-		String line = bufferedReader.readLine(), dataID;
-		final Set setOfChecksum = new HashSet();
-
-		while (line != null){
-			dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
-			// Add each data checksum from set
-			try (final InputStream inputStream = ContentGetter.getStream(dataID)) {
-				setOfChecksum.add(DigestUtils.md2Hex(inputStream));
+			while ((line = bufferedReader.readLine()) != null) {
+				dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
+				//  Add each data checksum from set
+				try (final InputStream inputStream = ContentGetter.getStream(dataID)) {
+					setOfChecksum.add(DigestUtils.md2Hex(inputStream));
+				}
 			}
-			line = bufferedReader.readLine();
+			//  If size of set with checksums is less then dataCount
+			//  it's mean that some checksums are equals
+			Assert.assertEquals("Did not read different objects from server mock",
+				LIMIT_COUNT, setOfChecksum.size());
 		}
-		// If size of set with checksums is less then dataCount it's mean that some checksums are equals
-		Assert.assertEquals("Did not read different objects from server mock",LIMIT_COUNT, setOfChecksum.size());
 	}
 
 	@Test
 	public void shouldGetAllObjectsFromServerAndDataSizeIsDefault()
 	throws Exception {
-		//Read data.items.csv file
-		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
+		//  Read data.items.csv file
+		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
 		Assert.assertTrue(dataItemsFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
+		try (final BufferedReader bufferedReader =
+			     new BufferedReader(new FileReader(dataItemsFile))) {
+			String line, dataID;
+			int actualDataSize;
 
-		String line = bufferedReader.readLine(), dataID;
-		int actualDataSize;
-
-		while (line != null){
-			dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
-			actualDataSize = ContentGetter.getDataSize(dataID);
-			Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), actualDataSize);
-			line = bufferedReader.readLine();
+			while ((line = bufferedReader.readLine()) != null) {
+				dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
+				actualDataSize = ContentGetter.getDataSize(dataID);
+				Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), actualDataSize);
+			}
 		}
 	}
 
 	@Test
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
-		// Get data.items.csv file
-		final File dataItemFile = LogParser.getDataItemsFile(createRunId);
+		//  Get data.items.csv file
+		final File dataItemFile = LogParser.getDataItemsFile(RUN_ID);
 		Assert.assertTrue(dataItemFile.exists());
 		//
 		try(
@@ -277,8 +273,8 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldCreateCorrectPerfSumFile()
 	throws Exception {
-		// Get perf.sum.csv file
-		final File perfSumFile = LogParser.getPerfSumFile(createRunId);
+		//  Get perf.sum.csv file
+		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
 		Assert.assertTrue(perfSumFile.exists());
 		//
 		try(
@@ -292,8 +288,8 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldCreateCorrectPerfAvgFile()
 	throws Exception {
-		// Get perf.avg.csv file
-		final File perfAvgFile = LogParser.getPerfAvgFile(createRunId);
+		//  Get perf.avg.csv file
+		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		//
 		try(
@@ -307,9 +303,9 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldCreateCorrectPerfTraceFile()
 	throws Exception {
-		// Get perf.trace.csv file
-		final File perfTraceFile = LogParser.getPerfTraceFile(createRunId);
-		Assert.assertTrue("perf.trace.csv file doesn't exist",perfTraceFile.exists());
+		//  Get perf.trace.csv file
+		final File perfTraceFile = LogParser.getPerfTraceFile(RUN_ID);
+		Assert.assertTrue("perf.trace.csv file doesn't exist", perfTraceFile.exists());
 		//
 		try(
 			final BufferedReader

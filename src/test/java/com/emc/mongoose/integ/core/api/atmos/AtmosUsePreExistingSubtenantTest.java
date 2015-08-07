@@ -29,6 +29,7 @@ public class AtmosUsePreExistingSubtenantTest {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, AtmosUsePreExistingSubtenantTest.class.getCanonicalName()
 		);

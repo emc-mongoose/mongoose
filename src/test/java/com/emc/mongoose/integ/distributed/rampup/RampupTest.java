@@ -58,6 +58,7 @@ public class RampupTest {
 	public static void setUpClass()
 	throws Exception {
 		LOG = LogManager.getLogger();
+		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);

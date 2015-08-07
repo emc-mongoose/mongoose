@@ -29,10 +29,10 @@ public class SwiftReadUsingContainerListingTest {
 	public static void setUpClass()
 	throws Exception {
 		//
+		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, SwiftReadUsingContainerListingTest.class.getCanonicalName()
 		);
-
 		//
 		try(
 			final StorageClient<WSObject>

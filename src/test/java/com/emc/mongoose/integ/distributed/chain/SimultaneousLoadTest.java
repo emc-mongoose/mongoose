@@ -52,6 +52,7 @@ public class SimultaneousLoadTest {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);
