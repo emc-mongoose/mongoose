@@ -21,6 +21,7 @@ extends LoggingTestSuite {
 	throws Exception {
 		LoggingTestSuite.setUpClass();
 		RunTimeConfig.initContext();
+		RunTimeConfig.resetContext();
 		LogManager.getLogger().info(Markers.MSG, "Shared runtime configuration has been initialized");
 	}
 	//

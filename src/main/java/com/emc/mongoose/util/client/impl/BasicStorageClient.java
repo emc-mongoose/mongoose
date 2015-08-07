@@ -84,7 +84,6 @@ implements StorageClient<T> {
 		final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		//
-		LogManager.getLogger().fatal(Markers.MSG, "{}, {}", loadBuilder.getClass(), loadBuilder.getRequestConfig());
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
