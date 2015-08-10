@@ -2,6 +2,8 @@ package com.emc.mongoose.common.net.http;
 //
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
+//
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -13,15 +15,15 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
+//import java.util.HashMap;
+//import java.util.Map;
 /**
  Created by kurila on 17.03.15.
  */
 public final class IOUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
+	/*
 	private final static ThreadLocal<Map<Integer, ByteBuffer>>
 		THRLOC_BUFF_SIZE_MAP = new ThreadLocal<>();
 	//
@@ -90,6 +92,85 @@ public final class IOUtils {
 		}
 		//
 		return doneByteCount;
+	}*/
+	//
+	private final static ThreadLocal<ByteBuffer[]> THRLOC_BUFF_SEQ = new ThreadLocal<>();
+	private final static int
+		BUFF_COUNT = (int) (Math.log(BUFF_SIZE_HI / BUFF_SIZE_LO) / Math.log(4) + 1);
+	//
+	public static long consumeQuietly(final ContentDecoder in) {
+		//
+		ByteBuffer[] buffs = THRLOC_BUFF_SEQ.get();
+		if(buffs == null) {
+			buffs = new ByteBuffer[BUFF_COUNT];
+			THRLOC_BUFF_SEQ.set(buffs);
+		}
+		//
+		int i = 0, nextSize = BUFF_SIZE_LO, doneSize;
+		long doneSizeSum = 0;
+		ByteBuffer buff;
+		//
+		try {
+			while(!in.isCompleted()) {
+				// obtain the buffer
+				buff = buffs[i];
+				if(buff == null) {
+					buff = ByteBuffer.allocateDirect(nextSize);
+					buffs[i] = buff;
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						final StringBuilder sb = new StringBuilder(Thread.currentThread().getName())
+							.append(": ");
+						for(final ByteBuffer bb : buffs) {
+							if(bb != null) {
+								sb.append(SizeUtil.formatSize(bb.capacity())).append(", ");
+							}
+						}
+						LOG.trace(Markers.MSG, sb.toString());
+					}
+				} else {
+					buff.clear();
+				}
+				// read
+				doneSize = in.read(buff);
+				// analyze
+				if(doneSize < 0) {
+					break;
+				} else if(i > 0 && doneSize < nextSize / 4) {
+					// doneSize < 0.25 * nextSize -> decrease buff size
+					i --;
+					if(i == 0) {
+						nextSize /= 3;
+					} else {
+						nextSize /= 4;
+					}
+				} else if(i < BUFF_COUNT - 1 && 4 * doneSize > 3 * nextSize) {
+					// doneSize > 0.75 * nextSize -> increase buff size
+					i ++;
+					if(i == 1) {
+						nextSize *= 3;
+					} else {
+						nextSize *= 4;
+					}
+				} // else keep buff size the same
+				// increment the read bytes count
+				doneSizeSum += doneSize;
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Content reading failure");
+		}
+		//
+		return doneSizeSum;
 	}
 	//
+	public static void releaseUsedDirectMemory() {
+		final ByteBuffer buffSeq[] = THRLOC_BUFF_SEQ.get();
+		if(buffSeq != null) {
+			for(int i = 0; i < buffSeq.length; i ++) {
+				if(buffSeq[i] != null) {
+					buffSeq[i].clear();
+					buffSeq[i] = null;
+				}
+			}
+		}
+	}
 }

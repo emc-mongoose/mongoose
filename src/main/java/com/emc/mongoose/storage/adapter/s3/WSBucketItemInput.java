@@ -164,10 +164,10 @@ extends GenericContainerItemInputBase<T> {
 		final HttpResponse resp = WSBucketImpl.class.cast(container).execute(
 			nodeAddr, WSRequestConfig.METHOD_GET, false, lastOid, container.getBatchSize()
 		);
-		// response validation
 		if(resp == null) {
-			throw new IOException("No HTTP response is returned");
+			throw new IOException("No HTTP response");
 		}
+		// response validation
 		final StatusLine status = resp.getStatusLine();
 		if(status == null) {
 			throw new IOException("Invalid HTTP response: " + resp);
@@ -199,7 +199,8 @@ extends GenericContainerItemInputBase<T> {
 			}
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					"Listed {} items the last time, last oid: {}", pageContentHandler.count, lastOid
+					"Listed {} items the last time, response code: {}, last oid: {}",
+					pageContentHandler.count, statusCode, lastOid
 				);
 			}
 		} catch(final SAXException e) {

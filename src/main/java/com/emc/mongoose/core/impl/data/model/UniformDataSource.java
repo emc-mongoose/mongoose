@@ -59,6 +59,7 @@ implements DataSource {
 			//LOG.info(Markers.MSG, "Default data source: {}", DEFAULT.toString());
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create default data source");
+			throw new RuntimeException(e);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -182,7 +183,6 @@ implements DataSource {
 			return zeroByteLayer;
 		}
 		// else
-		final int ringSize = zeroByteLayer.capacity();
 		long nextSeed;
 		ByteBuffer nextLayer = zeroByteLayer;
 		for(int i = byteLayers.size(); i <= layerIndex; i ++) {
@@ -190,7 +190,7 @@ implements DataSource {
 				if(byteLayers.size() > i) {
 					nextLayer = byteLayers.get(i);
 				} else {
-					nextLayer = ByteBuffer.allocateDirect(ringSize);
+					nextLayer = ByteBuffer.allocateDirect(size);
 					nextSeed = Long.reverse(
 						nextWord(
 							Long.reverseBytes(

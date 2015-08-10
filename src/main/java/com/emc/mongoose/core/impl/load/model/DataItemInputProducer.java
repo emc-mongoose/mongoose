@@ -62,6 +62,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		T nextItem = null;
+		long count = 0;
 		if(consumer == null) {
 			LOG.warn(Markers.ERR, "Have no consumer set, exiting");
 			return;
@@ -80,6 +81,7 @@ implements Producer<T> {
 				} else {
 					try {
 						consumer.submit(nextItem);
+						count ++;
 					} catch(final RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e, "Failed to submit remotely the next data item"
@@ -97,8 +99,8 @@ implements Producer<T> {
 		} catch(final InterruptedException ignore) {
 		} finally {
 			LOG.debug(
-				Markers.MSG, "{}: producing done, shutting down the consumer \"{}\"",
-				itemIn, consumer
+				Markers.MSG, "{}: produced {} items, shutting down the consumer \"{}\"",
+				itemIn, count, consumer
 			);
 			try {
 				consumer.shutdown();

@@ -1,7 +1,6 @@
 package com.emc.mongoose.common.concurrent;
 //
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.log.Markers;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -31,9 +30,6 @@ implements ThreadFactory {
 	//
 	@Override
 	public Thread newThread(final Runnable task) {
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Handling new task \"{}\"", task.toString());
-		}
 		return new Thread(task, getName() + "#" + threadNumber.incrementAndGet());
 	}
 	//

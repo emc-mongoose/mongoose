@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.mock.impl.web.net;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.io.DirectMemIOWorkerFactory;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
@@ -74,7 +75,7 @@ implements Runnable {
 			.build();
 		// create the server-side I/O reactor
 		ioReactor = new DefaultListeningIOReactor(
-			ioReactorConf, new GroupThreadFactory("ioReactor")
+			ioReactorConf, new DirectMemIOWorkerFactory("ioReactor")
 		);
 		this.ioStats = ioStats;
 		executor = THREAD_GROUP.newThread(this);
