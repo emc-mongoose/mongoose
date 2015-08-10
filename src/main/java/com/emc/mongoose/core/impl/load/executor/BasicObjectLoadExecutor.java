@@ -56,6 +56,7 @@ import java.io.IOException;
 //import java.util.HashMap;
 //import java.util.Map;
 //import java.util.Set;
+import java.rmi.RemoteException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -112,7 +113,12 @@ public class BasicObjectLoadExecutor<T extends DataObject>
                 BasicObjectIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose the I/O tasks pool
             }
         }
+
+    @Override
+    public Future<IOTask.Status> submit(IOTask<T> request) throws RemoteException, RejectedExecutionException {
+        return null;
     }
+}
 
 
 
