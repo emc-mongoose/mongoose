@@ -99,9 +99,11 @@ public final class DefaultWriteTest {
 	public void shouldReportInformationAboutSummaryMetricsToConsole()
 	throws Exception {
 		Assert.assertTrue("Console doesn't contain information about summary metrics",
-			STD_OUTPUT_STREAM.toString().contains(TestConstants.SUMMARY_INDICATOR));
+			STD_OUTPUT_STREAM.toString().contains(TestConstants.SUMMARY_INDICATOR)
+		);
 		Assert.assertTrue("Console doesn't contain information about end of scenario",
-			STD_OUTPUT_STREAM.toString().contains(TestConstants.SCENARIO_END_INDICATOR));
+			STD_OUTPUT_STREAM.toString().contains(TestConstants.SCENARIO_END_INDICATOR)
+		);
 	}
 
 	@Test
@@ -142,26 +144,47 @@ public final class DefaultWriteTest {
 		}
 		for (final String confParam : params) {
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
-				Assert.assertTrue(confParam.contains(String.valueOf(LIMIT_COUNT)));
+				Assert.assertTrue(
+					"There aren't information about limit count in configuration table",
+					confParam.contains(String.valueOf(LIMIT_COUNT))
+				);
 			}
 			if (confParam.contains(RunTimeConfig.KEY_STORAGE_ADDRS)) {
-				Assert.assertTrue(confParam.contains("127.0.0.1"));
+				Assert.assertTrue(
+					"There aren't information about storage address in configuration table",
+					confParam.contains("127.0.0.1")
+				);
 			}
 			if (confParam.contains(RunTimeConfig.KEY_RUN_MODE)) {
-				Assert.assertTrue(confParam.contains(Constants.RUN_MODE_STANDALONE));
+				Assert.assertTrue(
+					"There aren't information about run mode in configuration table",
+					confParam.contains(Constants.RUN_MODE_STANDALONE)
+				);
 			}
 			if (confParam.contains(RunTimeConfig.KEY_RUN_ID)) {
 				if (RUN_ID.length() >= 64) {
-					Assert.assertTrue(confParam.contains(RUN_ID.substring(0, 63).trim()));
+					Assert.assertTrue(
+						"There aren't information about run id in configuration table",
+						confParam.contains(RUN_ID.substring(0, 63).trim())
+					);
 				} else {
-					Assert.assertTrue(confParam.contains(RUN_ID));
+					Assert.assertTrue(
+						"There aren't information about run id in configuration table",
+						confParam.contains(RUN_ID)
+					);
 				}
 			}
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_TIME)) {
-				Assert.assertTrue(confParam.contains("0"));
+				Assert.assertTrue(
+					"There aren't information about limit time in configuration table",
+					confParam.contains("0")
+				);
 			}
 			if (confParam.contains(RunTimeConfig.KEY_SCENARIO_NAME)) {
-				Assert.assertTrue(confParam.contains(TestConstants.SCENARIO_SINGLE));
+				Assert.assertTrue(
+					"There aren't information about scenario name in configuration table",
+					confParam.contains(TestConstants.SCENARIO_SINGLE)
+				);
 			}
 		}
 	}
@@ -171,7 +194,10 @@ public final class DefaultWriteTest {
 	throws Exception {
 		//  Read the message file and search for "Scenario end"
 		final File messageFile = LogParser.getMessageFile(RUN_ID);
-		Assert.assertTrue(messageFile.exists());
+		Assert.assertTrue(
+			"messages.log file doesn't exist",
+			messageFile.exists()
+		);
 		//
 		try (final BufferedReader bufferedReader =
 		        new BufferedReader(new FileReader(messageFile))) {
@@ -181,8 +207,13 @@ public final class DefaultWriteTest {
 					break;
 				}
 			}
-			Assert.assertNotNull(line);
-			Assert.assertTrue(line.contains(TestConstants.SCENARIO_END_INDICATOR));
+			Assert.assertNotNull(
+				"Line with information about end of scenario must not be equal null ", line
+			);
+			Assert.assertTrue(
+				"Information about end of scenario doesn't contain in message.log file",
+				line.contains(TestConstants.SCENARIO_END_INDICATOR)
+			);
 		}
 	}
 
@@ -193,7 +224,7 @@ public final class DefaultWriteTest {
 		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
 
 		//  Check that file exists
-		Assert.assertTrue(perfSumFile.exists());
+		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 
 		try (final BufferedReader bufferedReader =
 			    new BufferedReader(new FileReader(perfSumFile))) {
@@ -204,7 +235,9 @@ public final class DefaultWriteTest {
 			final int actualCountSucc = Integer.valueOf(
 				bufferedReader.readLine().split(",")[TestConstants.COUNT_SUCC_COLUMN_INDEX]
 			);
-			Assert.assertEquals(LIMIT_COUNT, actualCountSucc);
+			Assert.assertEquals(
+				"Not correct information about created data items", LIMIT_COUNT, actualCountSucc
+			);
 		}
 	}
 
@@ -213,7 +246,7 @@ public final class DefaultWriteTest {
 	throws Exception {
 		//  Read data.items.csv file
 		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
-		Assert.assertTrue(dataItemsFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try (final BufferedReader bufferedReader =
 		        new BufferedReader(new FileReader(dataItemsFile))) {
@@ -222,11 +255,13 @@ public final class DefaultWriteTest {
 			while ((line = bufferedReader.readLine()) != null) {
 				//  Get dataSize from each line
 				dataSize = Integer.valueOf(line.split(",")[TestConstants.DATA_SIZE_COLUMN_INDEX]);
-				Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), dataSize);
+				Assert.assertEquals("Not correct size of data item", SizeUtil.toSize(DATA_SIZE), dataSize);
 				countDataItems++;
 			}
 			//  Check that there are 10 lines in data.items.csv file
-			Assert.assertEquals(LIMIT_COUNT, countDataItems);
+			Assert.assertEquals(
+				"Not correct information about created data items", LIMIT_COUNT, countDataItems
+			);
 		}
 	}
 
@@ -235,7 +270,7 @@ public final class DefaultWriteTest {
 	throws Exception {
 		//  Read data.items.csv file
 		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
-		Assert.assertTrue(dataItemsFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try (final BufferedReader bufferedReader =
 		        new BufferedReader(new FileReader(dataItemsFile))) {
@@ -261,7 +296,7 @@ public final class DefaultWriteTest {
 	throws Exception {
 		//  Read data.items.csv file
 		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
-		Assert.assertTrue(dataItemsFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try (final BufferedReader bufferedReader =
 			     new BufferedReader(new FileReader(dataItemsFile))) {
@@ -271,7 +306,7 @@ public final class DefaultWriteTest {
 			while ((line = bufferedReader.readLine()) != null) {
 				dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
 				actualDataSize = ContentGetter.getDataSize(dataID, TestConstants.BUCKET_NAME);
-				Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), actualDataSize);
+				Assert.assertEquals("Not correct size of data item", SizeUtil.toSize(DATA_SIZE), actualDataSize);
 			}
 		}
 	}
@@ -281,7 +316,7 @@ public final class DefaultWriteTest {
 	throws Exception {
 		//  Get data.items.csv file
 		final File dataItemFile = LogParser.getDataItemsFile(RUN_ID);
-		Assert.assertTrue(dataItemFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
 		//
 		try(
 			final BufferedReader
@@ -296,7 +331,7 @@ public final class DefaultWriteTest {
 	throws Exception {
 		//  Get perf.sum.csv file
 		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
-		Assert.assertTrue(perfSumFile.exists());
+		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 		//
 		try(
 			final BufferedReader

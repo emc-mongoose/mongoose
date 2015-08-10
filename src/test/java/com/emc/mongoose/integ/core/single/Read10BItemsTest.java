@@ -112,10 +112,14 @@ public final class Read10BItemsTest {
 	@Test
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
-		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
-			.contains(TestConstants.SUMMARY_INDICATOR));
-		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
-			.contains(TestConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(
+			"Console doesn't contain information about summary metrics",
+			STD_OUTPUT_STREAM.toString().contains(TestConstants.SUMMARY_INDICATOR)
+		);
+		Assert.assertTrue(
+			"Console doesn't contain information about end of scenario",
+			STD_OUTPUT_STREAM.toString().contains(TestConstants.SCENARIO_END_INDICATOR)
+		);
 	}
 
 	@Test
@@ -146,7 +150,7 @@ public final class Read10BItemsTest {
 	throws Exception {
 		//  Read data.items.csv file of create scenario run
 		final File dataItemsFile = LogParser.getDataItemsFile(CREATE_RUN_ID);
-		Assert.assertTrue(dataItemsFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try (final BufferedReader bufferedReader =
 			     new BufferedReader(new FileReader(dataItemsFile))) {
@@ -156,7 +160,9 @@ public final class Read10BItemsTest {
 			while ((line = bufferedReader.readLine()) != null) {
 				dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
 				actualDataSize = ContentGetter.getDataSize(dataID, TestConstants.BUCKET_NAME);
-				Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), actualDataSize);
+				Assert.assertEquals(
+					"Not correct size of data item", SizeUtil.toSize(DATA_SIZE), actualDataSize
+				);
 			}
 		}
 	}
@@ -176,8 +182,13 @@ public final class Read10BItemsTest {
 					break;
 				}
 			}
-			Assert.assertNotNull(line);
-			Assert.assertTrue(line.contains(TestConstants.SCENARIO_END_INDICATOR));
+			Assert.assertNotNull(
+				"Line with information about end of scenario must not be equal null ", line
+			);
+			Assert.assertTrue(
+				"Information about end of scenario doesn't contain in message.log file",
+				line.contains(TestConstants.SCENARIO_END_INDICATOR)
+			);
 		}
 	}
 
@@ -234,7 +245,7 @@ public final class Read10BItemsTest {
 	throws Exception {
 		//  Get data.items.csv file of read scenario run
 		final File readDataItemFile = LogParser.getDataItemsFile(READ_RUN_ID);
-		Assert.assertTrue(readDataItemFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", readDataItemFile.exists());
 		//
 		try(
 			final BufferedReader
@@ -249,7 +260,7 @@ public final class Read10BItemsTest {
 	throws Exception {
 		// Get perf.sum.csv file of read scenario run
 		final File readPerfSumFile = LogParser.getPerfSumFile(READ_RUN_ID);
-		Assert.assertTrue(readPerfSumFile.exists());
+		Assert.assertTrue("perf.sum.csv file doesn't exist", readPerfSumFile.exists());
 		//
 		try(
 			final BufferedReader
@@ -294,7 +305,7 @@ public final class Read10BItemsTest {
 	throws Exception {
 		//  Get data.items.csv file of write scenario run
 		final File writeDataItemFile = LogParser.getDataItemsFile(CREATE_RUN_ID);
-		Assert.assertTrue(writeDataItemFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", writeDataItemFile.exists());
 
 		//  Check correct data size in data.items.csv file
 		try (final BufferedReader bufferedReader =
@@ -324,7 +335,7 @@ public final class Read10BItemsTest {
 	throws Exception {
 		//  Read data.items.csv file and search check log's level of summary message
 		final File dataItemsFile = LogParser.getDataItemsFile(CREATE_RUN_ID);
-		Assert.assertTrue(dataItemsFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		try (final BufferedReader bufferedReader =
 			     new BufferedReader(new FileReader(dataItemsFile))) {
 			String line, dataID;
@@ -344,7 +355,7 @@ public final class Read10BItemsTest {
 		//  Read perf.summary file of read single scenario
 		final File perfSumFile = LogParser.getPerfSumFile(READ_RUN_ID);
 		//  Check that file exists
-		Assert.assertTrue(perfSumFile.exists());
+		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 
 		try (final BufferedReader bufferedReader =
 			     new BufferedReader(new FileReader(perfSumFile))) {
@@ -364,7 +375,7 @@ public final class Read10BItemsTest {
 	throws Exception {
 		//  Get data.items.csv file of create run
 		final File dataItemsFileWrite = LogParser.getDataItemsFile(CREATE_RUN_ID);
-		Assert.assertTrue(dataItemsFileWrite.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFileWrite.exists());
 		//
 		final byte[] bytesDataItemsFileWrite = Files.readAllBytes(dataItemsFileWrite.toPath());
 		//  Get data.items.csv file of read run

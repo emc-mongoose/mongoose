@@ -110,7 +110,7 @@ public class ReadVerificationTest {
 	throws Exception {
 		// Get perf.sum.csv file of read scenario
 		final File perfSumFile = LogParser.getPerfSumFile(READ_RUN_ID);
-		Assert.assertTrue(perfSumFile.exists());
+		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 		//
 		try (final BufferedReader bufferedReader =
 			     new BufferedReader(new FileReader(perfSumFile))) {
@@ -119,7 +119,7 @@ public class ReadVerificationTest {
 			int countFail = Integer.valueOf(
 				bufferedReader.readLine().split(",")[TestConstants.COUNT_FAIL_COLUMN_INDEX]
 			);
-			Assert.assertEquals(LIMIT_COUNT, countFail);
+			Assert.assertEquals("Not all data items are failed", LIMIT_COUNT, countFail);
 		}
 	}
 
@@ -128,7 +128,7 @@ public class ReadVerificationTest {
 	throws Exception {
 		// Get data.items.csv file of write scenario
 		final File dataItemsFile = LogParser.getDataItemsFile(CREATE_RUN_ID);
-		Assert.assertTrue(dataItemsFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try (final BufferedReader bufferedReader =
 			     new BufferedReader(new FileReader(dataItemsFile))) {
@@ -136,6 +136,7 @@ public class ReadVerificationTest {
 			while ((line = bufferedReader.readLine()) != null) {
 				dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
 				Assert.assertTrue(
+					"Console doesn't produce information about errors",
 					STD_OUTPUT_STREAM.toString()
 						.contains(dataID + TestConstants.CONTENT_MISMATCH_INDICATOR)
 				);
@@ -148,7 +149,7 @@ public class ReadVerificationTest {
 	throws Exception {
 		// Get data.items.csv file of write scenario
 		final File dataItemsFile = LogParser.getDataItemsFile(CREATE_RUN_ID);
-		Assert.assertTrue(dataItemsFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try (final BufferedReader bufferedDataItemsReader =
 			     new BufferedReader(new FileReader(dataItemsFile))) {
@@ -160,6 +161,7 @@ public class ReadVerificationTest {
 			while ((line = bufferedDataItemsReader.readLine()) != null) {
 				dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
 				Assert.assertTrue(
+					"There isn't information about errors in message.log file",
 					contentMessageFile.contains(dataID + TestConstants.CONTENT_MISMATCH_INDICATOR)
 				);
 			}
