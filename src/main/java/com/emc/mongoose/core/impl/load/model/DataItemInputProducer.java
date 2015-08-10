@@ -98,7 +98,7 @@ implements Producer<T> {
 			} while(true);
 		} catch(final InterruptedException ignore) {
 		} finally {
-			LOG.info(
+			LOG.debug(
 				Markers.MSG, "{}: produced {} items, shutting down the consumer \"{}\"",
 				itemIn, count, consumer
 			);
