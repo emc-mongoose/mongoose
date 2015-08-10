@@ -999,7 +999,9 @@ idea {
 		iml{
 			beforeMerged { module ->
 				//if you want skip merging exclude dirs
-				module.excludeFolders.clear()
+				//module.excludeFolders.clear()
+				def imlFile = project.projectDir.absolutePath +"${File.separator}" + project.name + '.iml'
+				if (file(imlFile).exists()) file(imlFile).delete()
 			}
 		}
 	}

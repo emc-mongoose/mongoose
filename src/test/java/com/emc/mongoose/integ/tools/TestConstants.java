@@ -67,4 +67,5 @@ public interface TestConstants {
 	Pattern TIME_PATTERN = Pattern.compile("[0-9]{2}:[0-9]{2}:[0-9]{2}");
 	Pattern LOAD_NAME_PATTERN = Pattern.compile("(Create|Read|Update|Append|Delete)");
 
+	String BUCKET_NAME = "bucketTest";
 }

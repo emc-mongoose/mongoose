@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.ContentGetter;
@@ -11,9 +12,12 @@ import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.storage.adapter.s3.Bucket;
+import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -46,6 +50,8 @@ public class WriteRandomSizedItemsTest {
 
 	private static Logger LOG;
 
+	private static RunTimeConfig rtConfig;
+
 	@BeforeClass
 	public static void before()
 	throws Exception {
@@ -53,11 +59,12 @@ public class WriteRandomSizedItemsTest {
 		LogParser.removeLogDirectory(RUN_ID);
 		//
 		RunTimeConfig.setContext(RunTimeConfig.getDefault());
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE_MAX);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE_MIN);
+		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		LoggingTestSuite.setUpClass();
 
 		LOG = LogManager.getLogger();
@@ -78,6 +85,16 @@ public class WriteRandomSizedItemsTest {
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
+	}
+
+	@AfterClass
+	public static void after()
+		throws Exception {
+		final Bucket bucket = new WSBucketImpl(
+			(com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
+			TestConstants.BUCKET_NAME, false
+		);
+		bucket.delete(rtConfig.getStorageAddrs()[0]);
 	}
 
 	@Test
@@ -113,28 +130,24 @@ public class WriteRandomSizedItemsTest {
 	public void shouldCreateAllFilesWithLogs()
 	throws Exception {
 		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
-		//Check that messages.log file is contained
-		Assert.assertTrue(Files.exists(expectedFile));
+		//  Check that messages.log exists
+		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
 
 		expectedFile = LogParser.getPerfAvgFile(RUN_ID).toPath();
-		//Check that perf.avg.csv file is contained
-		Assert.assertTrue(Files.exists(expectedFile));
+		//  Check that perf.avg.csv file exists
+		Assert.assertTrue("perf.avg.csv file doesn't exist", Files.exists(expectedFile));
 
 		expectedFile = LogParser.getPerfSumFile(RUN_ID).toPath();
-		//Check that perf.sum.csv file is contained
-		Assert.assertTrue(Files.exists(expectedFile));
+		//  Check that perf.sum.csv file exists
+		Assert.assertTrue("perf.sum.csv file doesn't exist", Files.exists(expectedFile));
 
 		expectedFile = LogParser.getPerfTraceFile(RUN_ID).toPath();
-		//Check that perf.trace.csv file is contained
-		Assert.assertTrue(Files.exists(expectedFile));
+		//  Check that perf.trace.csv file exists
+		Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
 
 		expectedFile = LogParser.getDataItemsFile(RUN_ID).toPath();
-		//Check that data.items.csv file is contained
-		Assert.assertTrue(Files.exists(expectedFile));
-
-		expectedFile = LogParser.getErrorsFile(RUN_ID).toPath();
-		//Check that errors.log file is not created
-		Assert.assertFalse(Files.exists(expectedFile));
+		//  Check that data.items.csv file exists
+		Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
 	}
 
 	@Test
@@ -270,7 +283,7 @@ public class WriteRandomSizedItemsTest {
 			while ((line = bufferedReader.readLine()) != null) {
 				dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
 				// Add each data checksum from set
-				try (final InputStream inputStream = ContentGetter.getStream(dataID)) {
+				try (final InputStream inputStream = ContentGetter.getStream(dataID, TestConstants.BUCKET_NAME)) {
 					setOfChecksum.add(DigestUtils.md2Hex(inputStream));
 				}
 			}
@@ -299,7 +312,7 @@ public class WriteRandomSizedItemsTest {
 				expectedDataSize = Integer.valueOf(
 						dataItemInfo[TestConstants.DATA_SIZE_COLUMN_INDEX]
 				);
-				actualDataSize = ContentGetter.getDataSize(dataID);
+				actualDataSize = ContentGetter.getDataSize(dataID, TestConstants.BUCKET_NAME);
 				Assert.assertEquals(expectedDataSize, actualDataSize);
 			}
 		}

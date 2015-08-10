@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.TestConstants;
@@ -11,6 +12,11 @@ import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.PortListener;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.storage.adapter.atmos.SubTenant;
+import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
+import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
+import com.emc.mongoose.storage.adapter.s3.Bucket;
+import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -50,6 +56,8 @@ public class WriteUsing100ConnTest {
 
 	private static Logger LOG;
 
+	private static RunTimeConfig rtConfig;
+
 	@BeforeClass
 	public static void before()
 	throws Exception {
@@ -57,12 +65,13 @@ public class WriteUsing100ConnTest {
 		LogParser.removeLogDirectory(RUN_ID);
 		//
 		RunTimeConfig.setContext(RunTimeConfig.getDefault());
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, LOAD_THREADS);
+		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		LoggingTestSuite.setUpClass();
 
 		LOG = LogManager.getLogger();
@@ -105,24 +114,20 @@ public class WriteUsing100ConnTest {
 		Thread.sleep(3000);
 		//
 		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
-		//Check that messages.log file is contained
-		Assert.assertTrue(Files.exists(expectedFile));
+		//  Check that messages.log exists
+		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
 
 		expectedFile = LogParser.getPerfAvgFile(RUN_ID).toPath();
-		//Check that perf.avg.csv file is contained
-		Assert.assertTrue(Files.exists(expectedFile));
+		//  Check that perf.avg.csv file exists
+		Assert.assertTrue("perf.avg.csv file doesn't exist", Files.exists(expectedFile));
 
 		expectedFile = LogParser.getPerfTraceFile(RUN_ID).toPath();
-		//Check that perf.trace.csv file is contained
-		Assert.assertTrue(Files.exists(expectedFile));
+		//  Check that perf.trace.csv file exists
+		Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
 
 		expectedFile = LogParser.getDataItemsFile(RUN_ID).toPath();
-		//Check that data.items.csv file is contained
-		Assert.assertTrue(Files.exists(expectedFile));
-
-		expectedFile = LogParser.getErrorsFile(RUN_ID).toPath();
-		//Check that errors.log file is not created
-		Assert.assertFalse(Files.exists(expectedFile));
+		//  Check that data.items.csv file exists
+		Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
 		//
 		shouldCreateDataItemsFileWithInformationAboutAllObjects();
 
@@ -134,6 +139,12 @@ public class WriteUsing100ConnTest {
 		shouldReportScenarioEndToMessageLogFile();
 
 		STD_OUTPUT_STREAM.close();
+
+		final Bucket bucket = new WSBucketImpl(
+			(com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
+			TestConstants.BUCKET_NAME, false
+		);
+		bucket.delete(rtConfig.getStorageAddrs()[0]);
 	}
 
 	public static void shouldCreateDataItemsFileWithInformationAboutAllObjects()
@@ -181,9 +192,9 @@ public class WriteUsing100ConnTest {
 		for (int i = 0; i < 3; i++) {
 			int countConnections = PortListener
 				.getCountConnectionsOnPort(TestConstants.PORT_INDICATOR);
-			// Check that actual connection count = (LOAD_THREADS * 2 + 1)
+			// Check that actual connection count = (LOAD_THREADS * 2 + 5)
 			// because cinderella is run local
-			Assert.assertEquals((LOAD_THREADS * 2 + 1), countConnections);
+			Assert.assertEquals((LOAD_THREADS * 2 + 5), countConnections);
 		}
 	}
 

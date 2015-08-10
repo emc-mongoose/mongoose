@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.TestConstants;
@@ -12,8 +13,11 @@ import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
 import com.emc.mongoose.run.scenario.ScriptRunner;
 //
+import com.emc.mongoose.storage.adapter.s3.Bucket;
+import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -44,6 +48,8 @@ public class ReadVerificationTest {
 
 	private static Logger LOG;
 
+	private static RunTimeConfig rtConfig;
+
 	@BeforeClass
 	public static void before()
 	throws Exception{
@@ -52,11 +58,12 @@ public class ReadVerificationTest {
 		LogParser.removeLogDirectory(READ_RUN_ID);
 		//
 		RunTimeConfig.setContext(RunTimeConfig.getDefault());
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, CREATE_RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
+		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		LoggingTestSuite.setUpClass();
 
 		LOG = LogManager.getLogger();
@@ -79,13 +86,23 @@ public class ReadVerificationTest {
 		LOG.info(Markers.MSG, rtConfig.toString());
 		UniformDataSource.DEFAULT = new UniformDataSource();
 		try (final BufferingOutputStream stdOutStream =
-		        StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
+		    StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
+	}
+
+	@AfterClass
+	public static void after()
+		throws Exception {
+		final Bucket bucket = new WSBucketImpl(
+			(com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
+			TestConstants.BUCKET_NAME, false
+		);
+		bucket.delete(rtConfig.getStorageAddrs()[0]);
 	}
 
 	@Test

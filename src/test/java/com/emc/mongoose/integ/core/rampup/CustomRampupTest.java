@@ -4,16 +4,20 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.storage.adapter.s3.Bucket;
+import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -45,6 +49,8 @@ public class CustomRampupTest {
 
 	private static Logger LOG;
 
+	private static RunTimeConfig rtConfig;
+
 	@BeforeClass
 	public static void before()
 	throws Exception {
@@ -52,12 +58,13 @@ public class CustomRampupTest {
 		LogParser.removeLogDirectory(RUN_ID);
 		//
 		RunTimeConfig.setContext(RunTimeConfig.getDefault());
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, RAMPUP_SIZES);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS, RAMPUP_THREAD_COUNTS);
+		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, "");
 		LoggingTestSuite.setUpClass();
 
 		LOG = LogManager.getLogger();
@@ -78,6 +85,16 @@ public class CustomRampupTest {
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
+	}
+
+	@AfterClass
+	public static void after()
+		throws Exception {
+		final Bucket bucket = new WSBucketImpl(
+			(com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
+			TestConstants.BUCKET_NAME, false
+		);
+		bucket.delete(rtConfig.getStorageAddrs()[0]);
 	}
 
 	@Test
@@ -257,8 +274,6 @@ public class CustomRampupTest {
 					} else {
 						iterationCount++;
 					}
-					//
-					System.out.println(nextRec.get(3) + " " + loadsSet.size());
 					Assert.assertTrue("This load isn't exist in this step", loadsSet.contains(nextRec.get(3)));
 					loadsSet.remove(nextRec.get(3));
 					Assert.assertNotEquals("Count of success equals 0 ", 0, nextRec.get(7));

@@ -8,6 +8,7 @@ import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.LogPatterns;
 //
 //
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -64,6 +65,12 @@ public class InfiniteWriteTest {
 		final int processID = getPid(PROCESS);
 		Thread.sleep(EXPECTED_RUN_TIME);
 		Runtime.getRuntime().exec(String.format("kill -SIGINT %d", processID));
+	}
+
+	@AfterClass
+	public static void after()
+	throws Exception {
+
 	}
 
 	@Test

@@ -4,14 +4,18 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.storage.adapter.s3.Bucket;
+import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -51,6 +55,8 @@ public class DefaultChainScenarioIntegTest {
 
 	private static Logger LOG;
 
+	private static RunTimeConfig rtConfig;
+
 	@BeforeClass
 	public static void before()
 	throws Exception {
@@ -58,10 +64,11 @@ public class DefaultChainScenarioIntegTest {
 		LogParser.removeLogDirectory(RUN_ID);
 		//
 		RunTimeConfig.setContext(RunTimeConfig.getDefault());
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, SCENARIO_NAME);
+		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		LoggingTestSuite.setUpClass();
 
 		LOG = LogManager.getLogger();
@@ -82,6 +89,16 @@ public class DefaultChainScenarioIntegTest {
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
+	}
+
+	@AfterClass
+	public static void after()
+		throws Exception {
+		final Bucket bucket = new WSBucketImpl(
+			(com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
+			TestConstants.BUCKET_NAME, false
+		);
+		bucket.delete(rtConfig.getStorageAddrs()[0]);
 	}
 
 	@Test
@@ -168,11 +185,6 @@ public class DefaultChainScenarioIntegTest {
 		expectedFile = LogParser.getDataItemsFile(RUN_ID).toPath();
 		//Check that data.items.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
-		//
-		//expectedFile = LogParser.getErrorsFile(RUN_ID).toPath();
-		//Check that errors.lod file isn't contained
-		//Assert.assertFalse(Files.exists(expectedFile));
-
 	}
 
 	@Test
