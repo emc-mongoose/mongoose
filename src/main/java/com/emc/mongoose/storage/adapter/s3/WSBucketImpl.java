@@ -54,7 +54,7 @@ implements Bucket<T> {
 		final boolean versioning, final String bucketListingMarker, final long bucketMaxKeys
 	) throws IOException {
 		//
-		if (method == null) {
+		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
 		//

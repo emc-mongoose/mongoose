@@ -2,9 +2,13 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.GenericContainer;
+//
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.EOFException;
 import java.io.IOException;
@@ -17,6 +21,8 @@ import java.util.List;
 public abstract class GenericContainerItemInputBase<T extends DataItem>
 extends ListItemInput<T>
 implements DataItemInput<T> {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final GenericContainer<T> container;
 	protected final String nodeAddr;
@@ -48,6 +54,7 @@ implements DataItemInput<T> {
 	protected void loadNewPageIfNecessary()
 	throws EOFException, IOException {
 		if(i == items.size() || 0 == items.size()) {
+			items.clear();
 			loadNextPage();
 			i = 0;
 		}
@@ -73,7 +80,6 @@ implements DataItemInput<T> {
 	@Override
 	public void reset()
 	throws IOException {
-		items.clear();
 		i = 0;
 	}
 	/**
