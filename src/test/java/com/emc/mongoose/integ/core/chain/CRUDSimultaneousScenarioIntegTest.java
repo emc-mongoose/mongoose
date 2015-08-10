@@ -24,9 +24,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -174,7 +177,11 @@ public class CRUDSimultaneousScenarioIntegTest {
 				Assert.assertTrue(confParam.contains(Constants.RUN_MODE_STANDALONE));
 			}
 			if (confParam.contains(RunTimeConfig.KEY_RUN_ID)) {
-				Assert.assertTrue(confParam.contains(RUN_ID.substring(0, 63)));
+				if (RUN_ID.length() >= 64) {
+					Assert.assertTrue(confParam.contains(RUN_ID.substring(0, 63).trim()));
+				} else {
+					Assert.assertTrue(confParam.contains(RUN_ID));
+				}
 			}
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_TIME)) {
 				Assert.assertTrue(confParam.contains(LIMIT_TIME));
@@ -413,38 +420,54 @@ public class CRUDSimultaneousScenarioIntegTest {
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue(perfAvgFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
-
-		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
-		Matcher matcher;
-		//
-		bufferedReader.readLine();
-		String line = bufferedReader.readLine();
-		final List<Date> listTimeOfReports = new ArrayList<>();
-		while (line != null) {
-			matcher = TestConstants.TIME_PATTERN.matcher(line);
-			if (matcher.find()) {
-				listTimeOfReports.add(format.parse(matcher.group()));
+		try (final BufferedReader bufferedReader =
+			     new BufferedReader(new FileReader(perfAvgFile))) {
+			final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+			Matcher matcherDate, matcherLoadType;
+			//
+			bufferedReader.readLine();
+			String line;
+			String loadType, date;
+			// map by load type
+			final Map<String, ArrayList<Date>> mapReports = new HashMap<>(4);
+			while ((line = bufferedReader.readLine()) != null) {
+				matcherDate = TestConstants.TIME_PATTERN.matcher(line);
+				matcherLoadType = TestConstants.LOAD_NAME_PATTERN.matcher(line);
+				if (matcherDate.find() && matcherLoadType.find()) {
+					loadType = matcherLoadType.group();
+					date = matcherDate.group();
+					if (mapReports.containsKey(loadType)) {
+						final List<Date> listReports = mapReports.get(loadType);
+						listReports.add(format.parse(date));
+						mapReports.put(loadType, (ArrayList<Date>) listReports);
+					} else {
+						mapReports.put(loadType, new ArrayList<>(
+								Arrays.asList(format.parse(date))
+							)
+						);
+					}
+				}
 			}
-			line = bufferedReader.readLine();
-		}
-		// Check period of reports is correct
-		long firstTime, nextTime;
-		// Period must be equal 10 sec
-		final int period = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
-		// period must be equal 10 seconds = 10000 milliseconds
-		Assert.assertEquals(10, period);
-		//
-		for (int i = 0; i < listTimeOfReports.size() - LOADS_COUNT; i += LOADS_COUNT) {
-			firstTime = listTimeOfReports.get(i).getTime();
-			nextTime = listTimeOfReports.get(i + LOADS_COUNT).getTime();
+			// Check period of reports is correct
+			long firstTime, nextTime;
+			// Period must be equal 10 sec
+			final int period = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
 			// period must be equal 10 seconds = 10000 milliseconds
-			Assert.assertTrue(
-				10000 - precisionMillis < (nextTime - firstTime) &&
-				10000 + precisionMillis > (nextTime - firstTime)
-			);
+			Assert.assertEquals(10, period);
+			//
+			for (final String mapLoadType : mapReports.keySet()) {
+				final List<Date> listReports = mapReports.get(mapLoadType);
+				for (int i = 0; i < listReports.size() - 1; i++) {
+					firstTime = listReports.get(i).getTime();
+					nextTime = listReports.get(i + 1).getTime();
+					// period must be equal 10 seconds = 10000 milliseconds
+					Assert.assertTrue(
+						10000 - precisionMillis < (nextTime - firstTime) &&
+						10000 + precisionMillis > (nextTime - firstTime)
+					);
+				}
+			}
 		}
-		bufferedReader.close();
 	}
 
 	@Test

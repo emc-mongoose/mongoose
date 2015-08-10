@@ -54,7 +54,7 @@ import org.junit.runners.Suite;
 	SwiftReadUsingContainerListingTest.class,
 	SwiftUsePreExistingAuthTokenTest.class,
 	SwiftUsePreExistingContainerTest.class,
-	/*DefaultWriteTest.class,
+	DefaultWriteTest.class,
 	WriteRandomSizedItemsTest.class,
 	ReadZeroSizeItemsTest.class,
 	Read10BItemsTest.class,
@@ -72,7 +72,7 @@ import org.junit.runners.Suite;
 	DefaultChainScenarioIntegTest.class,
 	CustomRampupTest.class,
 	DefaultRampupTest.class,
-	InfiniteWriteTest.class*/
+	InfiniteWriteTest.class
 })
 public class CoreTestSuite
 extends WSMockTestSuite {

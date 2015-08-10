@@ -134,7 +134,11 @@ public final class DefaultWriteTest {
 				Assert.assertTrue(confParam.contains(Constants.RUN_MODE_STANDALONE));
 			}
 			if (confParam.contains(RunTimeConfig.KEY_RUN_ID)) {
-				Assert.assertTrue(confParam.contains(RUN_ID));
+				if (RUN_ID.length() >= 64) {
+					Assert.assertTrue(confParam.contains(RUN_ID.substring(0, 63).trim()));
+				} else {
+					Assert.assertTrue(confParam.contains(RUN_ID));
+				}
 			}
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_TIME)) {
 				Assert.assertTrue(confParam.contains("0"));

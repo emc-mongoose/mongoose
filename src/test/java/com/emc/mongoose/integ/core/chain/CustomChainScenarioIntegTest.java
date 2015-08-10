@@ -24,9 +24,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -145,7 +148,11 @@ public class CustomChainScenarioIntegTest {
 				Assert.assertTrue(confParam.contains(Constants.RUN_MODE_STANDALONE));
 			}
 			if (confParam.contains(RunTimeConfig.KEY_RUN_ID)) {
-				Assert.assertTrue(confParam.contains(RUN_ID));
+				if (RUN_ID.length() >= 64) {
+					Assert.assertTrue(confParam.contains(RUN_ID.substring(0, 63).trim()));
+				} else {
+					Assert.assertTrue(confParam.contains(RUN_ID));
+				}
 			}
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_TIME)) {
 				Assert.assertTrue(confParam.contains(LIMIT_TIME));
@@ -386,15 +393,29 @@ public class CustomChainScenarioIntegTest {
 		try (final BufferedReader bufferedReader =
 			     new BufferedReader(new FileReader(perfAvgFile))) {
 			final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
-			Matcher matcher;
+			Matcher matcherDate, matcherLoadType;
 			//
 			bufferedReader.readLine();
 			String line;
-			final List<Date> listTimeOfReports = new ArrayList<>();
+			String loadType, date;
+			// map by load type
+			final Map<String, ArrayList<Date>> mapReports = new HashMap<>(4);
 			while ((line = bufferedReader.readLine()) != null) {
-				matcher = TestConstants.TIME_PATTERN.matcher(line);
-				if (matcher.find()) {
-					listTimeOfReports.add(format.parse(matcher.group()));
+				matcherDate = TestConstants.TIME_PATTERN.matcher(line);
+				matcherLoadType = TestConstants.LOAD_NAME_PATTERN.matcher(line);
+				if (matcherDate.find() && matcherLoadType.find()) {
+					loadType = matcherLoadType.group();
+					date = matcherDate.group();
+					if (mapReports.containsKey(loadType)) {
+						final List<Date> listReports = mapReports.get(loadType);
+						listReports.add(format.parse(date));
+						mapReports.put(loadType, (ArrayList<Date>) listReports);
+					} else {
+						mapReports.put(loadType, new ArrayList<>(
+								Arrays.asList(format.parse(date))
+							)
+						);
+					}
 				}
 			}
 			// Check period of reports is correct
@@ -404,10 +425,12 @@ public class CustomChainScenarioIntegTest {
 			// period must be equal 10 seconds = 10000 milliseconds
 			Assert.assertEquals(10, period);
 			//
-			for (int i = 0; i < listTimeOfReports.size() - 1; i++) {
-				firstTime = listTimeOfReports.get(i).getTime();
-				nextTime = listTimeOfReports.get(i + 1).getTime();
-				if (firstTime != nextTime) {
+			for (final String mapLoadType : mapReports.keySet()) {
+				final List<Date> listReports = mapReports.get(mapLoadType);
+				for (int i = 0; i < listReports.size() - 1; i++) {
+					firstTime = listReports.get(i).getTime();
+					nextTime = listReports.get(i + 1).getTime();
+					// period must be equal 10 seconds = 10000 milliseconds
 					Assert.assertTrue(
 						10000 - precisionMillis < (nextTime - firstTime) &&
 						10000 + precisionMillis > (nextTime - firstTime)

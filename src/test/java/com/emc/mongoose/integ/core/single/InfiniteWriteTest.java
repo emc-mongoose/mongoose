@@ -1,8 +1,10 @@
 package com.emc.mongoose.integ.core.single;
 
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 //
+import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.LogPatterns;
 //
 //
@@ -12,8 +14,10 @@ import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.regex.Matcher;
 
@@ -25,14 +29,32 @@ public class InfiniteWriteTest {
 	private static final long EXPECTED_RUN_TIME = 10000;
 	private static Process PROCESS;
 
+	private static final String RUN_ID = InfiniteWriteTest.class.getCanonicalName();
+
 	@BeforeClass
 	public static void before()
 	throws Exception {
 		//
 		RunTimeConfig.setContext(RunTimeConfig.getDefault());
+		LogParser.removeLogDirectory(RUN_ID);
+		//
+		RunTimeConfig.setContext(RunTimeConfig.getDefault());
 		final String runName = RunTimeConfig.getContext().getRunName();
 		final String runVersion = RunTimeConfig.getContext().getRunVersion();
 
+		final String mongooseTgzPath = Paths.get(new File(RunTimeConfig.DIR_ROOT).getParent(),
+				Constants.DIR_DIST).resolve(runName + "-" + runVersion + ".tgz").toString();
+
+		if (!new File(mongooseTgzPath).exists()) {
+			throw new FileNotFoundException();
+		}
+
+		final ProcessBuilder builder = new ProcessBuilder();
+		builder.command("tar", "xvf", mongooseTgzPath);
+		builder.directory(new File(System.getProperty("user.dir")));
+		PROCESS = builder.start();
+		PROCESS.waitFor();
+		//
 		final ProcessBuilder processBuilder = new ProcessBuilder(
 			"java", "-jar", runName + "-" + runVersion +
 			File.separator + runName + ".jar"
