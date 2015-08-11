@@ -10,10 +10,12 @@ import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.UniformReservoir;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.FileDataItemOutput;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
@@ -24,10 +26,8 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
-import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
@@ -43,9 +43,7 @@ import org.apache.logging.log4j.Marker;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
@@ -162,8 +160,7 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final Class<T> dataCls,
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final String listFile, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias
+		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount
 	) {
 		super(maxCount, rtConfig.getTasksMaxQueueSize());
 		//
@@ -226,7 +223,7 @@ implements LoadExecutor<T> {
 			activeTasksStats.put(addr, new AtomicInteger(0));
 		}
 		dataSrc = reqConfig.getDataSource();
-		//
+		/*
 		if(listFile != null && listFile.length() > 0) {
 			final Path dataItemsListPath = Paths.get(listFile);
 			if(!Files.exists(dataItemsListPath)) {
@@ -269,11 +266,11 @@ implements LoadExecutor<T> {
 				);
 			}
 		} else {
-			producer = reqConfig.getAnyDataProducer(maxCount, addrs[0]);
+			producer = reqConfig.getContainerListInput(maxCount, addrs[0]);
 			LOG.debug(Markers.MSG, "{} will use {} as data items producer", getName(), producer);
-		}
-		//
-		if(producer != null) {
+		}*/
+		if(itemSrc != null) {
+			producer = new DataItemInputProducer<>(itemSrc);
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -411,6 +408,11 @@ implements LoadExecutor<T> {
 			try {
 				if(itemsFileBuff != null) {
 					itemsFileBuff.close();
+					final Path itemsFilePath = itemsFileBuff.getFilePath();
+					LOG.debug(
+						Markers.MSG, "{}: accumulated for input {} of data items metadata in the temporary file \"{}\"",
+						getName(), SizeUtil.formatSize(itemsFilePath.toFile().length()), itemsFilePath
+					);
 					isShutdown.compareAndSet(true, false); // cancel if shut down before start
 					producer = new DataItemInputProducer<>(itemsFileBuff.getInput());
 				}
@@ -425,6 +427,7 @@ implements LoadExecutor<T> {
 			} else {
 				//
 				try {
+					producer.setConsumer(this);
 					producer.start();
 					LOG.debug(Markers.MSG, "Started object producer {}", producer);
 				} catch(final IOException e) {
@@ -516,8 +519,9 @@ implements LoadExecutor<T> {
 					if(itemsFileBuff == null) {
 						itemsFileBuff = new CSVFileItemOutput<>(dataCls);
 						LOG.debug(
-							Markers.MSG, "{}: not started yet, consuming into the temporary file",
-							getName()
+							Markers.MSG,
+							"{}: not started yet, consuming into the temporary file @ {}",
+							getName(), itemsFileBuff.getFilePath()
 						);
 					}
 				} catch(final IOException | NoSuchMethodException e) {
@@ -739,13 +743,7 @@ implements LoadExecutor<T> {
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to stop the producer: {}", producer);
 		} finally {
-			try {
-				if(itemsFileBuff != null) {
-					itemsFileBuff.getFilePath().toFile().delete();
-				}
-			} finally {
-				super.shutdown();
-			}
+			super.shutdown();
 		}
 	}
 	//
@@ -755,6 +753,9 @@ implements LoadExecutor<T> {
 		// interrupt the producing
 		if(isClosed.compareAndSet(false, true)) {
 			LOG.debug(Markers.MSG, "Invoked close for {}", getName());
+			if(itemsFileBuff != null) {
+				itemsFileBuff.getFilePath().toFile().delete();
+			}
 			interrupt();
 			try {
 				LOG.debug(Markers.MSG, "Forcing the shutdown");

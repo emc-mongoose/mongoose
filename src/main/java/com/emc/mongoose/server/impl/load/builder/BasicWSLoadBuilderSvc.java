@@ -8,11 +8,13 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //mongoose-server-api.jar
+import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-core-impl.jar
@@ -110,9 +112,14 @@ implements WSLoadBuilderSvc<T, U> {
 			);
 		}
 		//
+		final DataItemInput<T> itemSrc = buildItemInput(
+			BasicWSObject.class, wsReqConf, dataNodeAddrs, listFile, maxCount,
+			minObjSize, maxObjSize, objSizeBias
+		);
+		//
 		return (U) new BasicWSLoadSvc<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs,
-			threadsPerNodeMap.get(reqConf.getLoadType()), listFile,
+			threadsPerNodeMap.get(reqConf.getLoadType()), itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}

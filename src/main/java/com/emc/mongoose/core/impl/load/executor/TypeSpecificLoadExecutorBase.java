@@ -7,13 +7,12 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.FileDataItemInput;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
-//
-// mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.model.FileProducer;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -38,21 +37,21 @@ extends LimitedRateLoadExecutorBase<T> {
 	protected TypeSpecificLoadExecutorBase(
 		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final String listFile, final long maxCount,
+		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final float rateLimit, final int countUpdPerReq
 	) throws ClassCastException {
 		super(
-			dataCls,
-			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
-			sizeMin, sizeMax, sizeBias, rateLimit
+			dataCls, runTimeConfig, reqConfig, addrs, connCountPerNode, itemSrc, maxCount, rateLimit
 		);
 		//
 		this.loadType = reqConfig.getLoadType();
 		// TODO
 		int buffSize;
-		if(producer != null && FileProducer.class.isInstance(producer)) {
-			final long approxDataItemSize = ((FileProducer) producer).getApproxDataItemsSize();
+		if(itemSrc != null && FileDataItemInput.class.isInstance(itemSrc)) {
+			final long approxDataItemSize = ((FileDataItemInput) itemSrc).getApproxDataItemsSize(
+				runTimeConfig.getBatchSize()
+			);
 			if(approxDataItemSize < Constants.BUFF_SIZE_LO) {
 				buffSize = Constants.BUFF_SIZE_LO;
 			} else if(approxDataItemSize > Constants.BUFF_SIZE_HI) {
@@ -134,6 +133,10 @@ extends LimitedRateLoadExecutorBase<T> {
 					try {
 						dataItem.append(nextSize);
 					} catch(final IllegalArgumentException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e,
+							"Failed to schedule the append operation for the data item"
+						);
 					}
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(

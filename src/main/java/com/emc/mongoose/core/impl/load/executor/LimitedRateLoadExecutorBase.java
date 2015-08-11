@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 //
 import org.apache.logging.log4j.LogManager;
@@ -28,15 +29,10 @@ extends LoadExecutorBase<T> {
 	protected LimitedRateLoadExecutorBase(
 		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final String listFile, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias,
+		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount,
 		final float rateLimit
 	) throws ClassCastException {
-		super(
-			dataCls,
-			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
-			sizeMin, sizeMax, sizeBias
-		);
+		super(dataCls, runTimeConfig, reqConfig, addrs, connCountPerNode, itemSrc, maxCount);
 		//
 		if(rateLimit < 0) {
 			throw new IllegalArgumentException("Frequency rate limit shouldn't be a negative value");

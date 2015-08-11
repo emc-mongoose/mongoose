@@ -5,12 +5,16 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.impl.data.BasicWSObject;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
+import com.emc.mongoose.core.impl.data.model.NewDataItemInput;
 import org.apache.commons.configuration.ConversionException;
 //
 import org.apache.logging.log4j.Level;
@@ -18,6 +22,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
@@ -338,6 +345,37 @@ implements LoadBuilder<T, U> {
 		lb.dataNodeAddrs = dataNodeAddrs;
 		lb.listFile = listFile;
 		return lb;
+	}
+	//
+	public static <T extends DataItem> DataItemInput<T> buildItemInput(
+		final Class<T> dataCls, final RequestConfig<T> reqConf,
+		final String nodeAddrs[], final String listFile, final long maxCount,
+	    final long minObjSize, final long maxObjSize, final float objSizeBias
+	) {
+		DataItemInput<T> itemSrc = null;
+		if(listFile != null && !listFile.isEmpty()) {
+			final Path listFilePath = Paths.get(listFile);
+			if(!Files.exists(listFilePath)) {
+				LOG.warn(Markers.ERR, "Specified input file \"{}\" doesn't exists", listFilePath);
+			} else if(!Files.isReadable(listFilePath)) {
+				LOG.warn(Markers.ERR, "Specified input file \"{}\" isn't readable", listFilePath);
+			} else {
+				try {
+					itemSrc = new CSVFileItemInput<>(Paths.get(listFile), dataCls);
+				} catch(final IOException | NoSuchMethodException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
+				}
+			}
+		} else if(reqConf.isContainerListingEnabled()) {
+			itemSrc = reqConf.getContainerListInput(maxCount, nodeAddrs[0]);
+		} else if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
+			try {
+				itemSrc = new NewDataItemInput<>(dataCls, minObjSize, maxObjSize, objSizeBias);
+			} catch(final NoSuchMethodException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use new data input");
+			}
+		}
+		return itemSrc;
 	}
 	//
 	@Override

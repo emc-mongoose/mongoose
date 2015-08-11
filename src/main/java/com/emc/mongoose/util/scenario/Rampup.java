@@ -63,7 +63,9 @@ implements Runnable {
 						.setMinObjSize(nextSize)
 						.setMaxObjSize(nextSize)
 						.setThreadsPerNodeDefault(Integer.parseInt(nextThreadCountStr));
-					nextLoadSeq = new Chain(loadBuilder, timeOut, timeUnit, loadTypeSeq, false);
+					nextLoadSeq = new Chain(
+						loadBuilder, timeOut, timeUnit, loadTypeSeq, false, true
+					);
 					LOG.info(Markers.PERF_SUM, "---- Step {} start ----", nextStepName);
 					nextLoadSeq.run();
 				} catch(final RemoteException e) {

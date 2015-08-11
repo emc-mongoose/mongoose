@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
@@ -58,10 +59,11 @@ public class RampupTest {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		LOG = LogManager.getLogger();
 		RunTimeConfig.resetContext();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		LoggingTestSuite.setUpClass();
+		LOG = LogManager.getLogger();
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);

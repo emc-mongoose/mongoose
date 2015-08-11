@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 15.12.14.
  */
+@Deprecated
 public final class BasicDataItemGenerator<T extends DataItem>
 extends Thread
 implements Producer<T> {

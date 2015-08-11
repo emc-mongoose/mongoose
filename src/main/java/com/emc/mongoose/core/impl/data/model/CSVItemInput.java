@@ -1,7 +1,5 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
-//
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 //
@@ -30,8 +28,17 @@ implements DataItemInput<T> {
 	 */
 	public CSVItemInput(final InputStream in, final Class<? extends T> itemCls)
 	throws IOException, NoSuchMethodException {
-		itemsSrc = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-		itemConstructor = itemCls.getConstructor(String.class);
+		this(
+			new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)),
+			itemCls.getConstructor(String.class)
+		);
+	}
+	//
+	protected CSVItemInput(
+		final BufferedReader itemsSrc, final Constructor<? extends T> itemConstructor
+	) {
+		this.itemsSrc = itemsSrc;
+		this.itemConstructor = itemConstructor;
 	}
 	//
 	@Override
@@ -45,6 +52,8 @@ implements DataItemInput<T> {
 			} catch(
 				final InstantiationException | IllegalAccessException | InvocationTargetException e
 			) {
+				System.out.println(nextLine);
+				e.printStackTrace(System.out);
 				throw new IOException(e);
 			}
 		}

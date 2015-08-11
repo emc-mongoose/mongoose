@@ -1,21 +1,18 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.load.model.Producer;
+import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
-//
 import org.apache.http.HttpRequest;
-import org.apache.logging.log4j.Level;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -198,23 +195,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final Producer<T> getAnyDataProducer(final long maxCount, final String addr) {
-		Producer<T> producer = null;
-		if(anyDataProducerEnabled) {
-			try {
-				producer = new DataItemInputProducer<>(
-					new WSBucketItemInput<>(bucket, addr, (Class<T>) BasicWSObject.class)
-				);
-			} catch(final Exception e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
-			}
-		} else {
-			LOG.debug(
-				Markers.MSG, "req conf {}: using of bucket listing data producer is suppressed",
-				hashCode()
-			);
-		}
-		return producer;
+	public final DataItemInput<T> getContainerListInput(final long maxCount, final String addr) {
+		return new WSBucketItemInput<>(bucket, addr, (Class<T>) BasicWSObject.class);
 	}
 	//
 	@Override
