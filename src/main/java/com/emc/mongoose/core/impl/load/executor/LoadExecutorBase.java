@@ -729,17 +729,25 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void shutdown() {
-		try {
-			if(producer != null) {
-				producer.interrupt(); // stop the producing right now
-				LOG.debug(
-					Markers.MSG, "Stopped the producer \"{}\" for \"{}\"", producer, getName()
-				);
+		if(isStarted.get()) {
+			try {
+				if(producer != null) {
+					producer.interrupt(); // stop the producing right now
+					LOG.debug(
+						Markers.MSG, "Stopped the producer \"{}\" for \"{}\"", producer, getName()
+					);
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to stop the producer: {}", producer);
+			} finally {
+				super.shutdown();
 			}
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to stop the producer: {}", producer);
-		} finally {
-			super.shutdown();
+		} else {
+			LOG.debug(
+				Markers.MSG,
+				"{}: ignoring the shutdown invocation because has not been started yet",
+				getName()
+			);
 		}
 	}
 	//
