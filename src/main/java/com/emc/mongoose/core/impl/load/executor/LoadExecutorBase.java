@@ -192,6 +192,8 @@ implements LoadExecutor<T> {
 		}
 		loadType = reqConfig.getLoadType();
 		//
+		counterSubm = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_SUBM));
+		counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
 		final String runMode = rtConfig.getRunMode();
 		final boolean flagServeRemoteIfStandalone = rtConfig.getFlagServeIfNotLoadServer();
 		if(Constants.RUN_MODE_STANDALONE.equals(runMode) && !flagServeRemoteIfStandalone) {
@@ -365,9 +367,7 @@ implements LoadExecutor<T> {
 	public void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(Markers.MSG, "Starting {}", getName());
-			// init metrics
-			counterSubm = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_SUBM));
-			counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
+			// init remaining (load exec time dependent) metrics
 			counterReqFail = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_FAIL));
 			throughPut = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(resumableClock));
