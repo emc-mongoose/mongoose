@@ -65,7 +65,7 @@ public class SimultaneousLoadTest {
 		}
 		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig)) {
 			final Chain chainScenario = new Chain(
-				loadBuilder, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS, LOAD_SEQ, true
+				loadBuilder, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS, LOAD_SEQ, true, false
 			);
 			try(
 				final BufferingOutputStream

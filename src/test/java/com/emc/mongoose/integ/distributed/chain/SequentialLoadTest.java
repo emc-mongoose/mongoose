@@ -70,7 +70,7 @@ public class SequentialLoadTest {
 		}
 		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig)) {
 			final Chain chainScenario = new Chain(
-				loadBuilder, LOAD_JOB_TIME_LIMIT_SEC, TimeUnit.SECONDS, LOAD_SEQ, false
+				loadBuilder, LOAD_JOB_TIME_LIMIT_SEC, TimeUnit.SECONDS, LOAD_SEQ, false, true
 			);
 			try(
 				final BufferingOutputStream
