@@ -44,7 +44,7 @@ public class AtmosUsePreExistingSubtenantTest {
 		);
 		SUBTENANT.create("127.0.0.1");
 		if(!SUBTENANT.exists("127.0.0.1")) {
-			Assert.fail("Failed to pre-create the bucket for test");
+			Assert.fail("Failed to pre-create the subtenant for test");
 		}
 		//
 		try(

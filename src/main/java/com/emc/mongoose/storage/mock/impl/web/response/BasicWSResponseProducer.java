@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.web.response;
 // mongoose-common.jar
-//import com.emc.mongoose.common.collections.InstancePool;
-//import com.emc.mongoose.common.collections.Reusable;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-storage-mock.jar
@@ -31,10 +30,22 @@ implements HttpAsyncResponseProducer {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile HttpResponse response = null;
+	private DataObjectMock contentDataObject = null;
+	private NByteArrayEntity contentBytes = null;
+	private long byteCount = 0, contentSize = 0;
 	private final OutputChannel chanOut = new OutputChannel();
 	//
 	public final void setResponse(final HttpResponse response) {
 		this.response = response;
+		final HttpEntity contentEntity = response.getEntity();
+		if(contentEntity != null) {
+			if(DataObjectMock.class.isInstance(contentEntity)) {
+				contentDataObject = (DataObjectMock) contentEntity;
+				contentSize = contentEntity.getContentLength();
+			} else if(NByteArrayEntity.class.isInstance(contentEntity)) {
+				contentBytes = (NByteArrayEntity) contentEntity;
+			}
+		}
 	}
 	//
 	@Override
@@ -45,14 +56,10 @@ implements HttpAsyncResponseProducer {
 	@Override
 	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-		final HttpEntity respEntity = response.getEntity();
-		if(DataObjectMock.class.isInstance(respEntity)) {
+		if(contentDataObject != null) {
 			chanOut.setContentEncoder(encoder);
 			try {
-				final DataObjectMock dataItem = DataObjectMock.class.cast(response.getEntity());
-				if(dataItem != null) {
-					dataItem.writeFully(chanOut);
-				}
+				contentDataObject.writeFully(chanOut);
 			} catch(final Exception e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");
 			} finally {
@@ -64,8 +71,14 @@ implements HttpAsyncResponseProducer {
 					chanOut.close();
 				}
 			}
-		} else if(NByteArrayEntity.class.isInstance(respEntity)) {
-			((NByteArrayEntity) respEntity).produceContent(encoder, ioctrl);
+		} else if(contentBytes != null) {
+			contentBytes.produceContent(encoder, ioctrl);
+		} else {
+			final HttpEntity contentEntity = response.getEntity();
+			if(contentEntity != null) {
+				LOG.warn(Markers.ERR, "Unsupported content type: " + contentEntity.getClass());
+			}
+			encoder.complete();
 		}
 	}
 	//

@@ -14,6 +14,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.FileDataItemOutput;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -24,10 +25,10 @@ import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
-import com.emc.mongoose.core.impl.load.model.PersistentAccumulatorProducer;
 import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
@@ -64,7 +65,6 @@ extends AsyncConsumerBase<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static int RELEASE_TIMEOUT_MILLISEC = 100;
 	//
 	protected final int instanceNum, connCountPerNode, storageNodeCount;
 	protected final String storageNodeAddrs[];
@@ -79,7 +79,7 @@ implements LoadExecutor<T> {
 	//protected InstancePool<IOTask<T>> ioTaskPool;
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
-	protected volatile PersistentAccumulatorProducer<T> itemsBuff = null;
+	protected volatile FileDataItemOutput<T> itemsFileBuff = null;
 	//
 	private final long maxCount;
 	private final int totalConnCount;
@@ -392,7 +392,7 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
-			if (isLoadFinished.get()) {
+			if(isLoadFinished.get()) {
 				try {
 					close();
 				} catch (final IOException e) {
@@ -407,18 +407,21 @@ implements LoadExecutor<T> {
 			//
 			super.start();
 			//
+			itemsFileLock.lock();
+			try {
+				if(itemsFileBuff != null) {
+					itemsFileBuff.close();
+					isShutdown.compareAndSet(true, false); // cancel if shut down before start
+					producer = new DataItemInputProducer<>(itemsFileBuff.getInput());
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
+			} finally {
+				itemsFileLock.unlock();
+			}
+			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
-				itemsBuffLock.lock();
-				if(itemsBuff != null) {
-					try {
-						itemsBuff.close();
-					} catch(final IOException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
-					}
-					isShutdown.compareAndSet(true, false); // cancel if shut down before start
-					itemsBuff.start();
-				}
 			} else {
 				//
 				try {
@@ -499,7 +502,7 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final Lock itemsBuffLock = new ReentrantLock();
+	private final Lock itemsFileLock = new ReentrantLock();
 	//
 	@Override
 	public void submit(final T dataItem)
@@ -508,22 +511,25 @@ implements LoadExecutor<T> {
 			if(isStarted.get()) {
 				super.submit(dataItem);
 			} else { // accumulate until started
-				itemsBuffLock.lock();
+				itemsFileLock.lock();
 				try {
-					if(itemsBuff == null) {
-						itemsBuff = new PersistentAccumulatorProducer<>(
-							dataCls, rtConfig, this.maxCount
-						);
-						itemsBuff.setConsumer(this);
+					if(itemsFileBuff == null) {
+						itemsFileBuff = new CSVFileItemOutput<>(dataCls);
 						LOG.debug(
 							Markers.MSG, "{}: not started yet, consuming into the temporary file",
 							getName()
 						);
 					}
+				} catch(final IOException | NoSuchMethodException e) {
+					throw new RejectedExecutionException(e);
 				} finally {
-					itemsBuffLock.unlock();
+					itemsFileLock.unlock();
 				}
-				itemsBuff.submit(dataItem);
+				try {
+					itemsFileBuff.write(dataItem);
+				} catch(final IOException e) {
+					throw new RejectedExecutionException(e);
+				}
 			}
 		} catch(final RejectedExecutionException e) {
 			counterRej.inc();
@@ -730,13 +736,16 @@ implements LoadExecutor<T> {
 					Markers.MSG, "Stopped the producer \"{}\" for \"{}\"", producer, getName()
 				);
 			}
-			if(itemsBuff != null) {
-				itemsBuff.interrupt();
-			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to stop the producer: {}", producer);
 		} finally {
-			super.shutdown();
+			try {
+				if(itemsFileBuff != null) {
+					itemsFileBuff.getFilePath().toFile().delete();
+				}
+			} finally {
+				super.shutdown();
+			}
 		}
 	}
 	//

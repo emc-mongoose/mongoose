@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 16.06.15.
  */
+@Deprecated
 public class PersistentAccumulatorProducer<T extends DataItem>
 extends AsyncConsumerBase<T>
 implements AccumulatorProducer<T> {
