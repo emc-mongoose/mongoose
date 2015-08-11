@@ -366,14 +366,14 @@ implements LoadBuilder<T, U> {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
 				}
 			}
-		} else if(reqConf.isContainerListingEnabled()) {
-			itemSrc = reqConf.getContainerListInput(maxCount, nodeAddrs[0]);
 		} else if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
 			try {
 				itemSrc = new NewDataItemInput<>(dataCls, minObjSize, maxObjSize, objSizeBias);
 			} catch(final NoSuchMethodException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use new data input");
 			}
+		} else if(reqConf.isContainerListingEnabled()) {
+			itemSrc = reqConf.getContainerListInput(maxCount, nodeAddrs[0]);
 		}
 		return itemSrc;
 	}

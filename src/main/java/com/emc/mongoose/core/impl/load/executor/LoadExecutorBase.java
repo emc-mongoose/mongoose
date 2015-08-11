@@ -524,15 +524,11 @@ implements LoadExecutor<T> {
 							getName(), itemsFileBuff.getFilePath()
 						);
 					}
+					itemsFileBuff.write(dataItem);
 				} catch(final IOException | NoSuchMethodException e) {
 					throw new RejectedExecutionException(e);
 				} finally {
 					itemsFileLock.unlock();
-				}
-				try {
-					itemsFileBuff.write(dataItem);
-				} catch(final IOException e) {
-					throw new RejectedExecutionException(e);
 				}
 			}
 		} catch(final RejectedExecutionException e) {

@@ -52,8 +52,6 @@ implements DataItemInput<T> {
 			} catch(
 				final InstantiationException | IllegalAccessException | InvocationTargetException e
 			) {
-				System.out.println(nextLine);
-				e.printStackTrace(System.out);
 				throw new IOException(e);
 			}
 		}

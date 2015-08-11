@@ -104,7 +104,7 @@ public final class StartServlet extends CommonServlet {
 			WSLoadBuilderSvc loadBuilderSvc;
 			RunTimeConfig localRunTimeConfig;
 			@Override
-			 public void run() {
+			public void run() {
 				localRunTimeConfig = runTimeConfig;
 				RunTimeConfig.setContext(localRunTimeConfig);
 				//
@@ -115,6 +115,7 @@ public final class StartServlet extends CommonServlet {
 				try {
 					loadBuilderSvc.setProperties(runTimeConfig);
 					loadBuilderSvc.start();
+					setName("run<" + runTimeConfig.getRunId() + ">");
 				} catch (final RemoteException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to start load builder service");
 				}
@@ -151,6 +152,7 @@ public final class StartServlet extends CommonServlet {
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);
+				setName("run<" + runTimeConfig.getRunId() + ">");
 				new ScriptRunner().run();
 			}
 			//
@@ -173,6 +175,7 @@ public final class StartServlet extends CommonServlet {
 				//
 				LOG.debug(Markers.MSG, message);
 				try {
+					setName("run<" + runTimeConfig.getRunId() + ">");
 					new Cinderella(runTimeConfig).run();
 				} catch (final IOException e) {
 					LogUtil.exception(LOG, Level.FATAL, e, "Failed run Cinderella");
