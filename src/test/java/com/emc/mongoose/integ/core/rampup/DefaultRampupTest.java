@@ -46,7 +46,7 @@ public class DefaultRampupTest {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	//
-	private static String RUN_ID;
+	private static String RUN_ID = DefaultRampupTest.class.getCanonicalName();
 	private static final String	LIMIT_TIME = "30.seconds";
 	private static final int COUNT_STEPS = 70;
 
