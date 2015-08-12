@@ -197,7 +197,7 @@ implements DataItem {
 	//
 	@Override
 	public final int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
-	throws DataSizeException, DataCorruptionException, IOException {
+	throws DataCorruptionException, IOException {
 		//
 		enforceCircularity();
 		int n = ringBuff.remaining();
@@ -207,9 +207,7 @@ implements DataItem {
 		//
 		n = chanSrc.read(buff);
 		//
-		if(n < 0) { // premature end of stream
-			throw new DataSizeException();
-		} else if(n > 0) {
+		if(n > 0) {
 			byte bs, bi;
 			buff.flip();
 			for(int m = 0; m < n; m ++) {
@@ -239,17 +237,16 @@ implements DataItem {
 		int n;
 		long doneByteCount = 0;
 		try {
-			while(doneByteCount < len) {
+			do {
 				n = readAndVerify(chanSrc, buff);
 				if(n > 0) {
 					doneByteCount += n;
 					buff.position(0)
 						.limit((int) Math.min(len - doneByteCount, buff.capacity()));
+				} else if (n < 0 && len != 0) { // premature end of stream
+					throw new DataSizeException();
 				}
-			}
-			if (len == 0) {
-				chanSrc.read(buff);
-			}
+			} while (doneByteCount < len);
 		} catch(final DataSizeException e) {
 			e.offset = relOffset + doneByteCount;
 			throw e;
