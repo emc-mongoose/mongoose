@@ -728,7 +728,7 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void shutdown() {
-		if(isStarted.get()) {
+		if(isStarted.get() && !isShutdown.get()) {
 			try {
 				if(producer != null) {
 					producer.interrupt(); // stop the producing right now

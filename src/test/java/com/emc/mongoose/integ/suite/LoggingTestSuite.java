@@ -30,7 +30,6 @@ public abstract class LoggingTestSuite {
 			System.setProperty(LOG_CONF_PROPERTY_KEY, fullLogConfFile);
 		}
 		LogUtil.init();
-
 	}
 	//
 	@AfterClass

@@ -8,6 +8,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import static com.emc.mongoose.integ.tools.LogPatterns.*;
@@ -22,10 +23,11 @@ import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.Logger;
 //
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -40,55 +42,45 @@ import java.util.regex.Matcher;
 /**
  Created by kurila on 16.07.15.
  */
-public class WriteLoggingTest {
+public class WriteLoggingTest
+extends DistributedClientTestBase {
 	//
 	private final static long COUNT_LIMIT = 1000;
-	private final static String RUN_ID = WriteLoggingTest.class.getCanonicalName();
 	//
-	private static long COUNT_WRITTEN;
-	private static Logger LOG;
-	private static byte STD_OUT_CONTENT[];
+	private long countWritten;
+	private byte stdOutContent[];
 	//
-	@BeforeClass
-	public static void setUpClass()
+	@Before
+	public void setUp()
 	throws Exception {
-		//  remove log dir w/ previous logs
-		LogParser.removeLogDirectory(RUN_ID);
-		TimeUnit.SECONDS.sleep(5);
-		// reinit run id and the log path
-		RunTimeConfig.resetContext();
-		RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		LoggingTestSuite.setUpClass();
-		//
+		super.setUp();
 		try(
-			final StorageClient<WSObject>
-				client = new BasicWSClientBuilder<>()
-					.setLimitTime(0, TimeUnit.SECONDS)
-					.setLimitCount(COUNT_LIMIT)
-					.setClientMode(new String[] {ServiceUtils.getHostAddr()})
-					.setAPI("swift")
-					.build()
+			final StorageClient<WSObject> client = clientBuilder
+				.setLimitTime(0, TimeUnit.SECONDS)
+				.setLimitCount(COUNT_LIMIT)
+				.setAPI("swift")
+				.build()
 		) {
 			try(
 				final BufferingOutputStream
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
-				COUNT_WRITTEN = client.write(null, null, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
+				countWritten = client.write(null, null, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
 				TimeUnit.SECONDS.sleep(1);
-				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
+				stdOutContent = stdOutInterceptorStream.toByteArray();
 			}
 		}
 	}
 	//
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public void tearDown()
 	throws Exception {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final Container container = new WSContainerImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(rtConfig),
-			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(RT_CONFIG),
+			RT_CONFIG.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
 		);
-		container.delete(rtConfig.getStorageAddrs()[0]);
+		container.delete(RT_CONFIG.getStorageAddrs()[0]);
+		super.tearDown();
 	}
 	//
 	@Test
@@ -98,7 +90,7 @@ public class WriteLoggingTest {
 		long lastSuccCount = 0;
 		try(
 			final BufferedReader in = new BufferedReader(
-				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
+				new InputStreamReader(new ByteArrayInputStream(stdOutContent))
 			)
 		) {
 			String nextStdOutLine;
@@ -143,7 +135,7 @@ public class WriteLoggingTest {
 		boolean passed = false;
 		try(
 			final BufferedReader in = new BufferedReader(
-				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
+				new InputStreamReader(new ByteArrayInputStream(stdOutContent))
 			)
 		) {
 			String nextStdOutLine;
@@ -186,11 +178,10 @@ public class WriteLoggingTest {
 	public void checkFileAvgMetricsLogging()
 	throws Exception {
 		boolean firstRow = true, secondRow = false;
-		final File logPerfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue("Performance avg metrics log file doesn't exist", logPerfAvgFile.exists());
+		Assert.assertTrue("Performance avg metrics log file doesn't exist", fileLogPerfAvg.exists());
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(logPerfAvgFile.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(fileLogPerfAvg.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
@@ -234,11 +225,10 @@ public class WriteLoggingTest {
 	public void checkFileSumMetricsLogging()
 	throws Exception {
 		boolean firstRow = true, secondRow = false;
-		final File logPerfSumFile = LogParser.getPerfSumFile(RUN_ID);
-		Assert.assertTrue("Performance sum metrics log file doesn't exist", logPerfSumFile.exists());
+		Assert.assertTrue("Performance sum metrics log file doesn't exist", fileLogPerfSum.exists());
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(logPerfSumFile.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(fileLogPerfSum.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {

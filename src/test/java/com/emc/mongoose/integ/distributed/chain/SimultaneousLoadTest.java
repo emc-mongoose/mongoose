@@ -1,30 +1,26 @@
 package com.emc.mongoose.integ.distributed.chain;
 //
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.load.builder.LoadBuilder;
-//
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 import com.emc.mongoose.util.scenario.Chain;
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 //
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -36,58 +32,53 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIEN
 /**
  Created by kurila on 17.07.15.
  */
-public class SimultaneousLoadTest {
+public class SimultaneousLoadTest
+extends DistributedLoadBuilderTestBase {
 	//
 	private final static String
-		RUN_ID = SimultaneousLoadTest.class.getCanonicalName(),
 		LOAD_SEQ[] = { "create", "read", "update", "append", "delete" };
 	private final static int
 		LOAD_LIMIT_TIME_SEC = 100,
 		PRECISION_SEC = 10,
 		COUNT_STEPS = LOAD_SEQ.length;
 	//
-	private static long DURATION_TOTAL_SEC = -1;
-	private static byte STD_OUT_CONTENT[] = null;
-	private static File FILE_LOG_PERF_SUM;
+	private long durationTotalSec = -1;
+	private byte stdOutContent[] = null;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		RunTimeConfig.resetContext();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
-		rtConfig.set(RunTimeConfig.KEY_API_NAME, "atmos");
-		FILE_LOG_PERF_SUM = LogParser.getPerfSumFile(RUN_ID);
-		if(FILE_LOG_PERF_SUM.exists()) {
-			FILE_LOG_PERF_SUM.delete();
-		}
-		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig)) {
-			final Chain chainScenario = new Chain(
-				loadBuilder, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS, LOAD_SEQ, true, false
-			);
-			try(
-				final BufferingOutputStream
-					stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
-			) {
-				DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000;
-				chainScenario.run();
-				DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEC;
-				STD_OUT_CONTENT = stdOutBuffer.toByteArray();
-			}
+		System.setProperty(RunTimeConfig.KEY_API_NAME, "atmos");
+		DistributedLoadBuilderTestBase.setUpClass();
+	}
+	//
+	@Before
+	public void setUp()
+	throws Exception {
+		super.setUp();
+		final Chain chainScenario = new Chain(
+			loadBuilderClient, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS, LOAD_SEQ, true, false
+		);
+		try(
+			final BufferingOutputStream
+				stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		) {
+			durationTotalSec = System.currentTimeMillis() / 1000;
+			chainScenario.run();
+			durationTotalSec = System.currentTimeMillis() / 1000 - durationTotalSec;
+			stdOutContent = stdOutBuffer.toByteArray();
 		}
 	}
 	//
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public void tearDown()
 	throws Exception {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final SubTenant st = new WSSubTenantImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("atmos").setProperties(rtConfig),
-			rtConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("atmos").setProperties(RT_CONFIG),
+			RT_CONFIG.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
 		);
-		st.delete(rtConfig.getStorageAddrs()[0]);
+		st.delete(RT_CONFIG.getStorageAddrs()[0]);
+		super.tearDown();
 	}
 	//
 	@Test
@@ -95,7 +86,7 @@ public class SimultaneousLoadTest {
 	throws Exception {
 		Assert.assertEquals(
 			"Actual duration is not equal to the expected",
-			LOAD_LIMIT_TIME_SEC, DURATION_TOTAL_SEC, PRECISION_SEC
+			LOAD_LIMIT_TIME_SEC, durationTotalSec, PRECISION_SEC
 		);
 	}
 	//
@@ -105,7 +96,7 @@ public class SimultaneousLoadTest {
 		int countSummaries = 0;
 		try(
 			final BufferedReader in = new BufferedReader(
-				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
+				new InputStreamReader(new ByteArrayInputStream(stdOutContent))
 			)
 		) {
 			String nextStdOutLine;
@@ -132,10 +123,10 @@ public class SimultaneousLoadTest {
 		throws Exception {
 		boolean firstRow = true;
 		int countSummaries = 0;
-		Assert.assertTrue("Performance sum metrics file doesn't exist", FILE_LOG_PERF_SUM.exists());
+		Assert.assertTrue("Performance sum metrics file doesn't exist", fileLogPerfSum.exists());
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(FILE_LOG_PERF_SUM.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(fileLogPerfSum.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {

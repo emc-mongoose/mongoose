@@ -3,32 +3,27 @@ package com.emc.mongoose.integ.distributed.rampup;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
-import com.emc.mongoose.integ.suite.LoggingTestSuite;
+import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.storage.adapter.swift.Container;
 import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.scenario.Rampup;
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 //
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 //
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -39,10 +34,10 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIEN
 /**
  Created by andrey on 17.07.15.
  */
-public class RampupTest {
+public class RampupTest
+extends DistributedLoadBuilderTestBase {
 	//
 	private final static String
-		RUN_ID = RampupTest.class.getCanonicalName(),
 		LOAD_SEQ[] = {"create", "read", "delete"},
 		SIZE_SEQ[] = {"1KB", "10KB", "100KB"},
 		THREAD_COUNT_SEQ[] = {"1", "10", "100"};
@@ -51,64 +46,60 @@ public class RampupTest {
 		PRECISION_SEC = 10,
 		COUNT_STEPS = LOAD_SEQ.length * SIZE_SEQ.length * THREAD_COUNT_SEQ.length;
 	//
-	private static Logger LOG;
-	private static long DURATION_TOTAL_SEC = -1;
-	private static byte STD_OUT_CONTENT[] = null;
-	private static File FILE_LOG_PERF_SUM;
+	private long durationTotalSec = -1;
+	private byte stdOutContent[] = null;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		RunTimeConfig.resetContext();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		LoggingTestSuite.setUpClass();
-		LOG = LogManager.getLogger();
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
-		rtConfig.set(RunTimeConfig.KEY_API_NAME, "swift");
-		FILE_LOG_PERF_SUM = LogParser.getPerfSumFile(RUN_ID);
-		if(FILE_LOG_PERF_SUM.exists()) {
-			FILE_LOG_PERF_SUM.delete();
-		}
-		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig)) {
-			final Rampup rampupScenario = new Rampup(
-				loadBuilder, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS,
-				LOAD_SEQ, SIZE_SEQ, THREAD_COUNT_SEQ
-			);
-			//
-			try(
-				final BufferingOutputStream
-					stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
-			) {
-				DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000;
-				rampupScenario.run();
-				DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEC;
-				STD_OUT_CONTENT = stdOutBuffer.toByteArray();
-			}
+		System.setProperty(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, "false");
+		System.setProperty(
+			RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s"
+		);
+		System.setProperty(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, "0");
+		System.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
+		System.setProperty(RunTimeConfig.KEY_API_NAME, "swift");
+		DistributedLoadBuilderTestBase.setUpClass();
+	}
+	//
+	@Before
+	public void setUp()
+	throws Exception {
+		super.setUp();
+		final Rampup rampupScenario = new Rampup(
+			loadBuilderClient, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS,
+			LOAD_SEQ, SIZE_SEQ, THREAD_COUNT_SEQ
+		);
+		//
+		try(
+			final BufferingOutputStream
+				stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		) {
+			durationTotalSec = System.currentTimeMillis() / 1000;
+			rampupScenario.run();
+			durationTotalSec = System.currentTimeMillis() / 1000 - durationTotalSec;
+			stdOutContent = stdOutBuffer.toByteArray();
 		}
 	}
 	//
-	@AfterClass
-	public static void tearDownClass()
+	@After
+	public void tearDown()
 	throws Exception {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final Container container = new WSContainerImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(rtConfig),
-			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
+			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(RT_CONFIG),
+			RT_CONFIG.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
 		);
-		container.delete(rtConfig.getStorageAddrs()[0]);
+		container.delete(RT_CONFIG.getStorageAddrs()[0]);
+		super.tearDown();
 	}
 	//
 	@Test
 	public void checkTotalDuration()
 	throws Exception {
 		Assert.assertTrue(
-			"Actual duration (" + DURATION_TOTAL_SEC + "[s]) is much more than expected (" +
+			"Actual duration (" + durationTotalSec + "[s]) is much more than expected (" +
 			COUNT_STEPS * LOAD_LIMIT_TIME_SEC + "[s])",
-			DURATION_TOTAL_SEC <= PRECISION_SEC + COUNT_STEPS * LOAD_LIMIT_TIME_SEC
+			durationTotalSec <= PRECISION_SEC + COUNT_STEPS * LOAD_LIMIT_TIME_SEC
 		);
 	}
 	//
@@ -118,7 +109,7 @@ public class RampupTest {
 		int countSummaries = 0;
 		try(
 			final BufferedReader in = new BufferedReader(
-				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
+				new InputStreamReader(new ByteArrayInputStream(stdOutContent))
 			)
 		) {
 			String nextStdOutLine;
@@ -145,10 +136,10 @@ public class RampupTest {
 	throws Exception {
 		boolean firstRow = true;
 		int countSummaries = 0;
-		Assert.assertTrue("Performance sum metrics file doesn't exist", FILE_LOG_PERF_SUM.exists());
+		Assert.assertTrue("Performance sum metrics file doesn't exist", fileLogPerfSum.exists());
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(FILE_LOG_PERF_SUM.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(fileLogPerfSum.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
