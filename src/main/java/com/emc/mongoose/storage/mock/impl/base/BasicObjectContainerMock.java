@@ -64,7 +64,7 @@ implements ObjectContainerMock<T> {
 			}
 			buffDst.add(nextEntry.getValue());
 		}
-		LOG.info(
+		LOG.debug(
 			Markers.MSG, "Container \"{}\": listed {} objects beginning after oid \"{}\"",
 			name, buffDst.size(), afterOid
 		);
