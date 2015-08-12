@@ -247,6 +247,9 @@ implements DataItem {
 						.limit((int) Math.min(len - doneByteCount, buff.capacity()));
 				}
 			}
+			if (len == 0) {
+				chanSrc.read(buff);
+			}
 		} catch(final DataSizeException e) {
 			e.offset = relOffset + doneByteCount;
 			throw e;
