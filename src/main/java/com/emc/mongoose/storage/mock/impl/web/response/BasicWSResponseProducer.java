@@ -39,11 +39,13 @@ implements HttpAsyncResponseProducer {
 		this.response = response;
 		final HttpEntity contentEntity = response.getEntity();
 		if(contentEntity != null) {
+			contentSize = contentEntity.getContentLength();
 			if(DataObjectMock.class.isInstance(contentEntity)) {
 				contentDataObject = (DataObjectMock) contentEntity;
-				contentSize = contentEntity.getContentLength();
+				contentBytes = null;
 			} else if(NByteArrayEntity.class.isInstance(contentEntity)) {
 				contentBytes = (NByteArrayEntity) contentEntity;
+				contentDataObject = null;
 			}
 		}
 	}

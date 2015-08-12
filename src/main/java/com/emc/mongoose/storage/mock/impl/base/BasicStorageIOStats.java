@@ -104,7 +104,7 @@ implements StorageIOStats {
 	}
 	//
 	private final static String
-		MSG_FMT_METRICS = "Capacity used: %.1f%%, containers count: %d\n" +
+		MSG_FMT_METRICS = "Capacity used: %d (%.1f%%), containers count: %d\n" +
 			"\tOperation |Count       |Failed      |TP[/s]avg   |TP[/s]1min  |BW[MB/s]avg |BW[MB/s]1min\n" +
 			"\t----------|------------|------------|------------|------------|------------|------------\n" +
 			"\tWrite     |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
@@ -113,10 +113,11 @@ implements StorageIOStats {
 	//
 	@Override
 	public final String toString() {
+		final long countTotal = storage.getSize();
 		return String.format(
 			LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 			//
-			100.0 * storage.getSize() / storage.getCapacity(), countContainers.getCount(),
+			countTotal, 100.0 * countTotal / storage.getCapacity(), countContainers.getCount(),
 			//
 			tpWrite.getCount(), countFailWrite.getCount(),
 			tpWrite.getMeanRate(), tpWrite.getOneMinuteRate(),

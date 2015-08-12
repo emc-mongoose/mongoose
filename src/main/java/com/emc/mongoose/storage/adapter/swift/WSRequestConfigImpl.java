@@ -294,7 +294,7 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public final DataItemInput<T> getContainerListInput(final long maxCount, final String addr) {
-		return new WSContainerItemInput<>(container, addr, (Class<T>) BasicWSObject.class);
+		return new WSContainerItemInput<>(container, addr, (Class<T>) BasicWSObject.class, maxCount);
 	}
 	//
 }

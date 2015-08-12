@@ -25,8 +25,7 @@ implements DataItemInput<T> {
 	private final ThreadLocalRandom thrLocalRnd = ThreadLocalRandom.current();
 	//
 	public NewDataItemInput(
-		final Class<T> dataCls,
-		final long minObjSize, final long maxObjSize, final float objSizeBias
+		final Class<T> dataCls, final long minObjSize, final long maxObjSize, final float objSizeBias
 	) throws NoSuchMethodException, IllegalArgumentException {
 		this.dataConstructor = dataCls.getConstructor(Long.class);
 		this.minObjSize = minObjSize;

@@ -196,7 +196,7 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final DataItemInput<T> getContainerListInput(final long maxCount, final String addr) {
-		return new WSBucketItemInput<>(bucket, addr, (Class<T>) BasicWSObject.class);
+		return new WSBucketItemInput<>(bucket, addr, (Class<T>) BasicWSObject.class, maxCount);
 	}
 	//
 	@Override

@@ -3,11 +3,16 @@ package com.emc.mongoose.storage.mock.impl.base;
 import com.emc.mongoose.common.concurrent.Sequencer;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.storage.mock.api.DataObjectMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
 //
 import org.apache.commons.collections4.map.LRUMap;
+//
 import org.apache.http.concurrent.BasicFuture;
+//
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.util.Collection;
 import java.util.concurrent.Future;
@@ -18,6 +23,8 @@ import java.util.concurrent.RunnableFuture;
 public final class BasicObjectContainerMock<T extends DataObjectMock>
 extends LRUMap<String, T>
 implements ObjectContainerMock<T> {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final String name;
 	private final Sequencer seqWorker;
@@ -39,6 +46,12 @@ implements ObjectContainerMock<T> {
 	}
 	//
 	@Override
+	protected final void moveToMRU(final LinkEntry<String, T> entry) {
+		// disable entry moving to MRU in case of access
+		// it's required to make list method (right below) working (keeping the linked list order)
+	}
+	//
+	@Override
 	public final T list(final String afterOid, final Collection<T> buffDst, final int limit) {
 		if(isEmpty()) {
 			return null;
@@ -46,12 +59,16 @@ implements ObjectContainerMock<T> {
 		LinkEntry<String, T> nextEntry = getEntry(afterOid);
 		for(int i = 0; i < limit; i++) {
 			nextEntry = nextEntry == null ? getEntry(firstKey()) : entryAfter(nextEntry);
-			if(nextEntry == null) {
+			if(nextEntry == null || nextEntry.getKey() == null) {
 				break;
 			}
 			buffDst.add(nextEntry.getValue());
 		}
-		return nextEntry == null ? null : nextEntry.getValue();
+		LOG.info(
+			Markers.MSG, "Container \"{}\": listed {} objects beginning after oid \"{}\"",
+			name, buffDst.size(), afterOid
+		);
+		return (nextEntry == null || nextEntry.getKey() == null) ? null : nextEntry.getValue();
 	}
 	//
 	@Override

@@ -383,10 +383,10 @@ implements WSIOTask<T> {
 							chanIn.close();
 						}
 					} else { // consume quietly
-						transferSize += IOUtils.consumeQuietly(in);
+						transferSize += IOUtils.consumeQuietlyBIO(in);
 					}
 				} else {
-					IOUtils.consumeQuietly(in);
+					IOUtils.consumeQuietlyBIO(in);
 				}
 			}
 		} catch(final ClosedChannelException e) {

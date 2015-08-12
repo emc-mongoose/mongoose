@@ -29,7 +29,7 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
-import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableClock;
+import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 //
@@ -74,7 +74,6 @@ implements LoadExecutor<T> {
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
-	//protected InstancePool<IOTask<T>> ioTaskPool;
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
 	protected volatile FileDataItemOutput<T> itemsFileBuff = null;
@@ -93,7 +92,7 @@ implements LoadExecutor<T> {
 	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
 	//
 	private LoadState currState = null;
-	private ResumableClock resumableClock = new ResumableClock();
+	private ResumableUserTimeClock clock = new ResumableUserTimeClock();
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	//
 	private final Thread
@@ -370,9 +369,9 @@ implements LoadExecutor<T> {
 			// init remaining (load exec time dependent) metrics
 			counterReqFail = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_FAIL));
 			throughPut = metrics.register(MetricRegistry.name(getName(),
-				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(resumableClock));
+				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(clock));
 			reqBytes = metrics.register(MetricRegistry.name(getName(),
-				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(resumableClock));
+				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(clock));
 			respLatency = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
 			//

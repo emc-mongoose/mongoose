@@ -3,10 +3,10 @@ package com.emc.mongoose.storage.mock.impl.web.net;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.io.DirectMemIOWorkerFactory;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
+import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
 //
 import org.apache.http.impl.nio.DefaultHttpServerIODispatch;
@@ -16,7 +16,6 @@ import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpConnectionFactory;
 import org.apache.http.nio.protocol.HttpAsyncService;
 import org.apache.http.nio.reactor.IOReactorException;
-//import org.apache.http.nio.reactor.ListenerEndpoint;
 import org.apache.http.nio.reactor.ListeningIOReactor;
 //
 import org.apache.logging.log4j.Level;
@@ -75,7 +74,7 @@ implements Runnable {
 			.build();
 		// create the server-side I/O reactor
 		ioReactor = new DefaultListeningIOReactor(
-			ioReactorConf, new DirectMemIOWorkerFactory("ioReactor")
+			ioReactorConf, new IOUtils.IOWorkerFactory("ioReactor")
 		);
 		this.ioStats = ioStats;
 		executor = THREAD_GROUP.newThread(this);
