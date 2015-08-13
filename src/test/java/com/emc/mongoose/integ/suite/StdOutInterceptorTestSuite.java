@@ -17,6 +17,7 @@ public abstract class StdOutInterceptorTestSuite {
 	private final static PrintStream defaultStdOut = System.out;
 	//
 	public static BufferingOutputStream getStdOutBufferingStream() {
+		defaultStdOut.flush();
 		final BufferingOutputStream stdOutBufferingStream = new BufferingOutputStream(defaultStdOut);
 		System.setOut(new PrintStream(stdOutBufferingStream));
 		return stdOutBufferingStream;

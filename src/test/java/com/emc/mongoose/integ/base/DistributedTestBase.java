@@ -40,6 +40,7 @@ extends WSMockTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		LOAD_BUILDER_SVC.close();
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_STANDALONE);
 		WSMockTestBase.tearDownClass();
 	}
 }

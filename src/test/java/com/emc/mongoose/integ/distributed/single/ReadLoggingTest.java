@@ -63,6 +63,7 @@ extends DistributedClientTestBase {
 				new ArrayBlockingQueue<WSObject>(COUNT_LIMIT)
 			);
 			countWritten = client.write(null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
+			TimeUnit.SECONDS.sleep(1);
 			try(
 				final BufferingOutputStream
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()

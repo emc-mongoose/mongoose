@@ -44,7 +44,7 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	AtmosMultiRangeUpdateTest.class,
+	/*AtmosMultiRangeUpdateTest.class,
 	AtmosReadUsingCSVInputTest.class,
 	AtmosSingleRangeUpdateTest.class,
 	AtmosUsePreExistingSubtenantTest.class,
@@ -53,7 +53,7 @@ import org.junit.runners.Suite;
 	S3ReadUsingBucketListingTest.class,
 	SwiftReadUsingContainerListingTest.class,
 	SwiftUsePreExistingAuthTokenTest.class,
-	SwiftUsePreExistingContainerTest.class,
+	SwiftUsePreExistingContainerTest.class,*/
 	DefaultWriteTest.class,
 	WriteRandomSizedItemsTest.class,
 	ReadZeroSizeItemsTest.class,
