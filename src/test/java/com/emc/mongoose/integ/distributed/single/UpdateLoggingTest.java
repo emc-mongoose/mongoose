@@ -3,42 +3,30 @@ package com.emc.mongoose.integ.distributed.single;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 //
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
-import com.emc.mongoose.storage.adapter.swift.Container;
-import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
-import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
-import com.emc.mongoose.util.client.api.StorageClientBuilder;
-import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
-import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import static com.emc.mongoose.integ.tools.LogPatterns.*;
-import com.emc.mongoose.integ.tools.LogParser;
+
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.LogManager;
 //
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+//
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -53,57 +41,56 @@ extends DistributedClientTestBase {
 	//
 	private final static int COUNT_LIMIT = 1000;
 	//
-	private StorageClient<WSObject> client;
-	private long countWritten, countUpdated;
-	private byte stdOutContent[];
+	private static long countWritten, countUpdated;
+	private static byte stdOutContent[];
 	//
-	@Before
-	public void setUp()
+	@BeforeClass
+	public static void setUpClass()
 	throws Exception {
-		super.setUp();
-		client = clientBuilder
-			.setLimitTime(0, TimeUnit.SECONDS)
-			.setLimitCount(COUNT_LIMIT)
-			.setAPI("swift")
-			.build();
-		final BufferingOutputStream
-			stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream();
-		if(stdOutInterceptorStream == null) {
-			throw new IllegalStateException(
-				"Looks like the test case is not included in the \"" +
-					StdOutInterceptorTestSuite.class.getSimpleName() + "\" test suite, cannot run"
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, UpdateLoggingTest.class.getCanonicalName());
+		DistributedClientTestBase.setUpClass();
+		try(
+			final StorageClient<WSObject> client = CLIENT_BUILDER
+				.setLimitTime(0, TimeUnit.SECONDS)
+				.setLimitCount(COUNT_LIMIT)
+				.setAPI("swift")
+				.build()
+		) {
+			final ItemBlockingQueue<WSObject> itemsQueue = new ItemBlockingQueue<>(
+				new ArrayBlockingQueue<WSObject>(COUNT_LIMIT)
 			);
+			countWritten = client.write(null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
+			try(
+				final BufferingOutputStream
+					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+			) {
+				if(stdOutInterceptorStream == null) {
+					throw new IllegalStateException(
+						"Looks like the test case is not included in the \"" +
+							StdOutInterceptorTestSuite.class.getSimpleName() + "\" test suite, cannot run"
+					);
+				}
+				stdOutInterceptorStream.reset(); // clear before using
+				if(countWritten > 0) {
+					countUpdated = client.update(itemsQueue, null, countWritten, 10, 10);
+				}
+				TimeUnit.SECONDS.sleep(1);
+				stdOutContent = stdOutInterceptorStream.toByteArray();
+			}
 		}
-		final ItemBlockingQueue<WSObject> itemsQueue = new ItemBlockingQueue<>(
-			new ArrayBlockingQueue<WSObject>(COUNT_LIMIT)
-		);
-		countWritten = client.write(null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
-		stdOutInterceptorStream.reset(); // clear before using
-		if(countWritten > 0) {
-			countUpdated = client.update(itemsQueue, null, countWritten, 10, 10);
-		}
-		TimeUnit.SECONDS.sleep(1);
-		stdOutContent = stdOutInterceptorStream.toByteArray();
 		LOG.info(
 			Markers.MSG, "Deleted {} items, captured {} bytes from stdout", countUpdated, stdOutContent.length
 		);
 	}
 	//
-	@After
-	public void tearDown()
+	@AfterClass
+	public static void tearDownClass()
 	throws Exception {
-		final Container container = new WSContainerImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(RT_CONFIG),
-			RT_CONFIG.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
-		);
-		container.delete(RT_CONFIG.getStorageAddrs()[0]);
 		StdOutInterceptorTestSuite.reset();
-		client.close();
-		super.tearDown();
+		DistributedClientTestBase.tearDownClass();
 	}
 	//
-	@Test
-	public void checkConsoleAvgMetricsLogging()
+	@Test public void checkConsoleAvgMetricsLogging()
 	throws Exception {
 		boolean passed = false;
 		long lastSuccCount = 0;
@@ -123,7 +110,7 @@ extends DistributedClientTestBase {
 					if(m.find()) {
 						loadType = m.group("typeLoad");
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.UPDATE.name() + ": " + loadType,
+							"Invalid load type int the line:\n" + nextStdOutLine,
 							IOTask.Type.UPDATE.name().toLowerCase().equals(loadType.toLowerCase())
 						);
 						long
@@ -146,8 +133,7 @@ extends DistributedClientTestBase {
 		);
 	}
 	//
-	@Test
-	public void checkConsoleSumMetricsLogging()
+	@Test public void checkConsoleSumMetricsLogging()
 	throws Exception {
 		boolean passed = false;
 		try(
@@ -166,7 +152,7 @@ extends DistributedClientTestBase {
 					if(m.find()) {
 						loadType = m.group("typeLoad");
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.UPDATE.name() + ": " + loadType,
+							"Invalid load type in the line: \n" + nextStdOutLine,
 							IOTask.Type.UPDATE.name().toLowerCase().equals(loadType.toLowerCase())
 						);
 						long
@@ -190,14 +176,16 @@ extends DistributedClientTestBase {
 		);
 	}
 	//
-	@Test
-	public void checkFileAvgMetricsLogging()
+	@Test public void checkFileAvgMetricsLogging()
 		throws Exception {
 		boolean firstRow = true, secondRow = false;
-		Assert.assertTrue("Performance avg metrics log file doesn't exist", fileLogPerfAvg.exists());
+		Assert.assertTrue(
+			"Performance avg metrics log file \"" + FILE_LOG_PERF_AVG + "\" doesn't exist",
+			FILE_LOG_PERF_AVG.exists()
+		);
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(fileLogPerfAvg.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(FILE_LOG_PERF_AVG.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
@@ -234,14 +222,13 @@ extends DistributedClientTestBase {
 		Assert.assertTrue("Average metrics record was not found in the log file", secondRow);
 	}
 	//
-	@Test
-	public void checkFileSumMetricsLogging()
+	@Test public void checkFileSumMetricsLogging()
 		throws Exception {
 		boolean firstRow = true, secondRow = false;
-		Assert.assertTrue("Performance sum metrics log file doesn't exist", fileLogPerfSum.exists());
+		Assert.assertTrue("Performance sum metrics log file doesn't exist", FILE_LOG_PERF_SUM.exists());
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(fileLogPerfSum.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(FILE_LOG_PERF_SUM.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {

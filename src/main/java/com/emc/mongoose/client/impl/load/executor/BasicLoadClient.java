@@ -197,13 +197,19 @@ implements LoadClient<T> {
 		this.remoteJMXConnMap = remoteJMXConnMap;
 		////////////////////////////////////////////////////////////////////////////////////////////
 		mBeanSrvConnMap = new HashMap<>();
+		JMXConnector jmxConnector;
 		for(final String addr: loadSvcAddrs) {
-			try {
-				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to obtain MBean server connection for {}", addr
-				);
+			jmxConnector = remoteJMXConnMap.get(addr);
+			if(jmxConnector != null) {
+				try {
+					mBeanSrvConnMap.put(addr, jmxConnector.getMBeanServerConnection());
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "Failed to obtain MBean server connection for {}", addr
+					);
+				}
+			} else {
+				LOG.warn(Markers.ERR, "No JMX connection to {}", addr);
 			}
 		}
 		////////////////////////////////////////////////////////////////////////////////////////////

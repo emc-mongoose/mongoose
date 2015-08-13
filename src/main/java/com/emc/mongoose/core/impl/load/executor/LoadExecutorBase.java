@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.ThreadContext;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
@@ -102,6 +103,7 @@ implements LoadExecutor<T> {
 			//
 			@Override
 			public final void run() {
+				RunTimeConfig.setContext(rtConfig); // required for int tests passing
 				final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
 					rtConfig.getLoadMetricsPeriodSec()
 				);
@@ -319,45 +321,52 @@ implements LoadExecutor<T> {
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
 		final Snapshot respLatencySnapshot = respLatency.getSnapshot();
 		//
-		final String message = Markers.PERF_SUM.equals(logMarker) ?
-			String.format(
-				LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
-				//
-				getName(),
-				countReqSucc,
-				countReqFail == 0 ?
-					Long.toString(countReqFail) :
-					(float) countReqSucc / countReqFail > 100 ?
-						String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
-						String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
-				//
-				(int) respLatencySnapshot.getMean(),
-				(int) respLatencySnapshot.getMin(),
-				(int) respLatencySnapshot.getMedian(),
-				(int) respLatencySnapshot.getMax(),
-				//
-				meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
-				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
-			) :
-			String.format(
-				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
-				//
-				countReqSucc, counterSubm.getCount() - counterResults.get(),
-				countReqFail == 0 ?
-					Long.toString(countReqFail) :
-					(float) countReqSucc / countReqFail > 100 ?
-						String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
-						String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
-				//
-				(int) respLatencySnapshot.getMean(),
-				(int) respLatencySnapshot.getMin(),
-				(int) respLatencySnapshot.getMedian(),
-				(int) respLatencySnapshot.getMax(),
-				//
-				meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
-				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+		if(Markers.PERF_SUM.equals(logMarker)) {
+			LOG.info(
+				logMarker,
+				String.format(
+					LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
+					//
+					getName(),
+					countReqSucc,
+					countReqFail == 0 ?
+						Long.toString(countReqFail) :
+						(float) countReqSucc / countReqFail > 100 ?
+							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
+							String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
+					//
+					(int) respLatencySnapshot.getMean(),
+					(int) respLatencySnapshot.getMin(),
+					(int) respLatencySnapshot.getMedian(),
+					(int) respLatencySnapshot.getMax(),
+					//
+					meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
+					meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+				)
 			);
-		LOG.info(logMarker, message);
+		} else if(Markers.PERF_AVG.equals(logMarker)) {
+			LOG.info(
+				logMarker,
+				String.format(
+					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
+					//
+					countReqSucc, counterSubm.getCount() - counterResults.get(),
+					countReqFail == 0 ?
+						Long.toString(countReqFail) :
+						(float) countReqSucc / countReqFail > 100 ?
+							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
+							String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
+					//
+					(int) respLatencySnapshot.getMean(),
+					(int) respLatencySnapshot.getMin(),
+					(int) respLatencySnapshot.getMedian(),
+					(int) respLatencySnapshot.getMax(),
+					//
+					meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
+					meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+				)
+			);
+		}
 	}
 	//
 	private final AtomicLong tsStart = new AtomicLong(-1);

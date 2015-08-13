@@ -3,7 +3,7 @@ package com.emc.mongoose.integ.distributed.rampup;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-//
+import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -16,9 +16,7 @@ import com.emc.mongoose.util.scenario.Rampup;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 //
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 //
@@ -46,28 +44,21 @@ extends DistributedLoadBuilderTestBase {
 		PRECISION_SEC = 10,
 		COUNT_STEPS = LOAD_SEQ.length * SIZE_SEQ.length * THREAD_COUNT_SEQ.length;
 	//
-	private long durationTotalSec = -1;
-	private byte stdOutContent[] = null;
+	private static long DURATION_TOTAL_SEQ = -1;
+	private static byte STD_OUT_CONTENT[] = null;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RampupTest.class.getCanonicalName());
 		System.setProperty(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, "false");
-		System.setProperty(
-			RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s"
-		);
+		System.setProperty(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s");
 		System.setProperty(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, "0");
 		System.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
 		System.setProperty(RunTimeConfig.KEY_API_NAME, "swift");
 		DistributedLoadBuilderTestBase.setUpClass();
-	}
-	//
-	@Before
-	public void setUp()
-	throws Exception {
-		super.setUp();
 		final Rampup rampupScenario = new Rampup(
-			loadBuilderClient, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS,
+			LOAD_BUILDER_CLIENT, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS,
 			LOAD_SEQ, SIZE_SEQ, THREAD_COUNT_SEQ
 		);
 		//
@@ -75,41 +66,28 @@ extends DistributedLoadBuilderTestBase {
 			final BufferingOutputStream
 				stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
-			durationTotalSec = System.currentTimeMillis() / 1000;
+			DURATION_TOTAL_SEQ = System.currentTimeMillis() / 1000;
 			rampupScenario.run();
-			durationTotalSec = System.currentTimeMillis() / 1000 - durationTotalSec;
-			stdOutContent = stdOutBuffer.toByteArray();
+			DURATION_TOTAL_SEQ = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEQ;
+			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
 		}
 	}
 	//
-	@After
-	public void tearDown()
-	throws Exception {
-		final Container container = new WSContainerImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(RT_CONFIG),
-			RT_CONFIG.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
-		);
-		container.delete(RT_CONFIG.getStorageAddrs()[0]);
-		super.tearDown();
-	}
-	//
-	@Test
-	public void checkTotalDuration()
+	@Test public void checkTotalDuration()
 	throws Exception {
 		Assert.assertTrue(
-			"Actual duration (" + durationTotalSec + "[s]) is much more than expected (" +
+			"Actual duration (" + DURATION_TOTAL_SEQ + "[s]) is much more than expected (" +
 			COUNT_STEPS * LOAD_LIMIT_TIME_SEC + "[s])",
-			durationTotalSec <= PRECISION_SEC + COUNT_STEPS * LOAD_LIMIT_TIME_SEC
+			DURATION_TOTAL_SEQ <= PRECISION_SEC + COUNT_STEPS * LOAD_LIMIT_TIME_SEC
 		);
 	}
 	//
-	@Test
-	public void checkLogStdOutSummariesCount()
+	@Test public void checkLogStdOutSummariesCount()
 	throws Exception {
 		int countSummaries = 0;
 		try(
 			final BufferedReader in = new BufferedReader(
-				new InputStreamReader(new ByteArrayInputStream(stdOutContent))
+				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
 			)
 		) {
 			String nextStdOutLine;
@@ -131,15 +109,14 @@ extends DistributedLoadBuilderTestBase {
 		);
 	}
 	//
-	@Test
-	public void checkLogFileSummariesCount()
+	@Test public void checkLogFileSummariesCount()
 	throws Exception {
 		boolean firstRow = true;
 		int countSummaries = 0;
-		Assert.assertTrue("Performance sum metrics file doesn't exist", fileLogPerfSum.exists());
+		Assert.assertTrue("Performance sum metrics file doesn't exist", FILE_LOG_PERF_SUM.exists());
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(fileLogPerfSum.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(FILE_LOG_PERF_SUM.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {

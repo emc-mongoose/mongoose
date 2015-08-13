@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -61,14 +62,10 @@ implements WSLoadBuilderSvc<T, U> {
 	public final String buildRemotely()
 	throws RemoteException {
 		final WSLoadSvc<T> loadSvc = (WSLoadSvc<T>) build();
-		try {
-			ServiceUtils.create(loadSvc);
-			if (configTable != null) {
-				LOG.info(Markers.MSG, configTable);
-				configTable = null;
-			}
-		} catch (final DuplicateSvcNameException e) {
-			throw new DuplicateSvcNameException();
+		ServiceUtils.create(loadSvc);
+		if(configTable != null) {
+			LOG.info(Markers.MSG, configTable);
+			configTable = null;
 		}
 		return loadSvc.getName();
 	}
@@ -135,6 +132,12 @@ implements WSLoadBuilderSvc<T, U> {
 			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");
 		}
 		LOG.info(Markers.MSG, "Server started and waiting for the requests");
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		ServiceUtils.close(this);
 	}
 	//
 	@Override

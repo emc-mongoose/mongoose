@@ -408,7 +408,7 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final void close()
+	public void close()
 	throws IOException {
 		reqConf.close();
 	}

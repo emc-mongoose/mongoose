@@ -5,11 +5,11 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
 import com.emc.mongoose.core.impl.data.model.ListItemOutput;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
-import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -21,7 +21,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.08.15.
  */
-public class AtmosWriteByCountTest {
+public class AtmosWriteByCountTest
+extends StandaloneClientTestBase {
 	//
 	private final static int COUNT_TO_WRITE = 12345;
 	private final static List<WSObject> BUFF_WRITE = new ArrayList<>(COUNT_TO_WRITE);
@@ -32,13 +33,13 @@ public class AtmosWriteByCountTest {
 	public static void setUpClass()
 	throws Exception {
 		//
-		RunTimeConfig.resetContext();
-		RunTimeConfig.getContext().set(
+		System.setProperty(
 			RunTimeConfig.KEY_RUN_ID, AtmosWriteByCountTest.class.getCanonicalName()
 		);
+		StandaloneClientTestBase.setUpClass();
 		//
 		try(
-			final StorageClient<WSObject> client = new BasicWSClientBuilder<>()
+			final StorageClient<WSObject> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("atmos")
@@ -49,17 +50,6 @@ public class AtmosWriteByCountTest {
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("8KB")
 			);
 		}
-	}
-	//
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		final SubTenant st = new WSSubTenantImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("atmos").setProperties(rtConfig),
-			rtConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
-		);
-		st.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	@Test

@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.s3.Bucket;
 import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
 import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
@@ -21,7 +22,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.08.15.
  */
-public final class S3UsePreExistingBucketTest {
+public final class S3UsePreExistingBucketTest
+extends StandaloneClientTestBase {
 	//
 	private final static long COUNT_TO_WRITE = 10000;
 	//
@@ -32,10 +34,10 @@ public final class S3UsePreExistingBucketTest {
 	public static void setUpClass()
 	throws Exception {
 		//
-		RunTimeConfig.resetContext();
-		RunTimeConfig.getContext().set(
+		System.setProperty(
 			RunTimeConfig.KEY_RUN_ID, S3UsePreExistingBucketTest.class.getCanonicalName()
 		);
+		StandaloneClientTestBase.setUpClass();
 		//
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
 			.newInstanceFor("s3")
@@ -50,13 +52,12 @@ public final class S3UsePreExistingBucketTest {
 		}
 		//
 		try(
-			final StorageClient<WSObject>
-				client = new BasicWSClientBuilder<>()
-					.setLimitTime(0, TimeUnit.SECONDS)
-					.setLimitCount(COUNT_TO_WRITE)
-					.setAPI("s3")
-					.setS3Bucket(BUCKET.getName())
-					.build()
+			final StorageClient<WSObject> client = CLIENT_BUILDER
+				.setLimitTime(0, TimeUnit.SECONDS)
+				.setLimitCount(COUNT_TO_WRITE)
+				.setAPI("s3")
+				.setS3Bucket(BUCKET.getName())
+				.build()
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
 		}
@@ -66,6 +67,7 @@ public final class S3UsePreExistingBucketTest {
 	public static void tearDownClass()
 	throws Exception {
 		BUCKET.delete(RunTimeConfig.getContext().getStorageAddrs()[0]);
+		StandaloneClientTestBase.tearDownClass();
 	}
 	//
 	@Test

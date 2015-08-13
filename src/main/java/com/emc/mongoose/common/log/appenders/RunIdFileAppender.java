@@ -2,13 +2,14 @@ package com.emc.mongoose.common.log.appenders;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.Markers;
+import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.ThreadContext;
 //
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
-import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  Created by andrey on 13.03.15.
@@ -142,36 +144,32 @@ extends AbstractAppender {
 		);
 	}
 	//
-	private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
-	private final Lock readLock = rwLock.readLock();
+	private final Lock lock = new ReentrantLock();
 	private final static String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
 	//
 	@Override
 	public final void append(final LogEvent event) {
-		readLock.lock();
-		try {
-			final String currRunId;
-			final Map<String, String> evtCtxMap = event.getContextMap();
-			//
-			if(evtCtxMap.containsKey(KEY_RUN_ID)) {
-				currRunId = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
-			} else if(ThreadContext.containsKey(KEY_RUN_ID)) {
-				currRunId = ThreadContext.get(RunTimeConfig.KEY_RUN_ID);
-			} else {
-				currRunId = null;
-			}
-			final byte[] buff = getLayout().toByteArray(event);
-			if(buff.length > 0) {
+		final String currRunId;
+		final Map<String, String> evtCtxMap = event.getContextMap();
+		//
+		if(evtCtxMap.containsKey(KEY_RUN_ID)) {
+			currRunId = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
+		} else if(ThreadContext.containsKey(KEY_RUN_ID)) {
+			currRunId = ThreadContext.get(RunTimeConfig.KEY_RUN_ID);
+		} else {
+			currRunId = null;
+		}
+		final byte[] buff = getLayout().toByteArray(event);
+		if(buff.length > 0) {
+			lock.lock();
+			try {
 				manager.write(currRunId, buff);
 				if(flagFlush || event.isEndOfBatch()) {
 					manager.flush();
 				}
+			} finally {
+				lock.unlock();
 			}
-		} catch(final AppenderLoggingException ex) {
-			error("Unable to write to stream " + manager.getName() + " for appender " + getName());
-			throw ex;
-		} finally {
-			readLock.unlock();
 		}
 	}
 }

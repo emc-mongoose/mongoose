@@ -271,6 +271,7 @@ implements ObjectStorageMock<T> {
 		}
 		containersIndex.clear();
 		storageCapacityMonitorThread.interrupt();
+		super.close();
 	}
 	//
 	protected abstract T newDataObject(final String id, final long offset, final long size);

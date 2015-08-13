@@ -7,52 +7,42 @@ import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
+
+import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 13.08.15.
  */
 public abstract class WSMockTestBase
 extends LoggingTestBase {
 	//
-	private StorageMock<WSObjectMock> wsMock;
-	private Thread wsMockThread;
+	private static StorageMock<WSObjectMock> WS_MOCK;
+	private static Thread WS_MOCK_THREAD;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		LoggingTestBase.setUpClass();
-		RT_CONFIG.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, 1000000);
-		RT_CONFIG.set(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, 1000000);
-		RT_CONFIG.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
-		RT_CONFIG.set(RunTimeConfig.KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET, 5);
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, 1000000);
+		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, 1000000);
+		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
+		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET, 5);
+		WS_MOCK = new Cinderella<>(rtConfig);
+		WS_MOCK_THREAD = new Thread(WS_MOCK, "wsMock");
+		WS_MOCK_THREAD.setDaemon(true);
+		WS_MOCK_THREAD.start();
+		TimeUnit.SECONDS.sleep(1);
+		LOG.info(Markers.MSG, "Cinderella started");
 	}
 	//
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		LoggingTestBase.tearDownClass();
-	}
-	//
-	@Before
-	public void setUp()
-	throws Exception {
-		super.setUp();
-		wsMock = new Cinderella<>(RT_CONFIG);
-		wsMockThread = new Thread(wsMock, "wsMock");
-		wsMockThread.setDaemon(true);
-		wsMockThread.start();
-		LOG.info(Markers.MSG, "Cinderella started");
-	}
-	//
-	@After
-	public void tearDown()
-	throws Exception {
-		wsMockThread.interrupt();
-		wsMock.close();
+		WS_MOCK_THREAD.interrupt();
+		WS_MOCK.close();
 		LOG.info(Markers.MSG, "Cinderella stopped");
-		super.tearDown();
+		LoggingTestBase.tearDownClass();
 	}
 }

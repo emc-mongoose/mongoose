@@ -9,6 +9,7 @@ import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 //
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 19.06.15.
@@ -24,12 +25,13 @@ implements StorageClientBuilder<T, U> {
 		if(null == api || 0 == api.length()) {
 			throw new IllegalArgumentException("Empty/null storage API specified");
 		}
-		if(null == Package.getPackage(RequestConfig.PACKAGE_IMPL_BASE + "." + api)) {
+		/*if(null == Package.getPackage(RequestConfig.PACKAGE_IMPL_BASE + "." + api)) {
 			throw new IllegalArgumentException(
 				"Package \"" + RequestConfig.PACKAGE_IMPL_BASE + "\" doesn't contain a \"" + api +
-				"\" storage API implementation sub-package"
+				"\" storage API implementation sub-package, the package list is: " +
+				Arrays.toString(Package.getPackages())
 			);
-		}
+		}*/
 		rtConfig.set(RunTimeConfig.KEY_API_NAME, api);
 		return this;
 	}

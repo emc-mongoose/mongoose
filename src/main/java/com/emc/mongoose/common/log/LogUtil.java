@@ -75,13 +75,15 @@ public final class LogUtil {
 		//
 		PATH_LOG_DIR = String.format("%s%slog", RunTimeConfig.DIR_ROOT, File.separator);
 	//
-	private final static AtomicReference<LoggerContext> LOG_CTX = new AtomicReference<>(null);
+	private static LoggerContext LOG_CTX = null;
+	private final static Lock LOG_CTX_LOCK = new ReentrantLock();
 	static {
 		init();
 	}
 	public static void init() {
-		synchronized(LOG_CTX) {
-			if(LOG_CTX.get() == null) {
+		LOG_CTX_LOCK.lock();
+		try {
+			if(LOG_CTX == null) {
 				System.setProperty(KEY_THREAD_CTX_INHERIT, VALUE_THREAD_CTX_INHERIT);
 				// make all used loggers asynchronous
 				System.setProperty(KEY_LOG4J_CTX_SELECTOR, VALUE_LOG4J_CTX_ASYNC_SELECTOR);
@@ -103,19 +105,19 @@ public final class LogUtil {
 				);
 				//
 				try {
-					if (Files.exists(logConfPath)) {
-						LOG_CTX.set(Configurator.initialize(MONGOOSE, logConfPath.toUri().toString()));
-					} else if (System.getProperty("log4j.configurationFile") == null) {
+					if(Files.exists(logConfPath)) {
+						LOG_CTX = Configurator.initialize(MONGOOSE, logConfPath.toUri().toString());
+					} else if(System.getProperty("log4j.configurationFile") == null) {
 						final ClassLoader classloader = LogUtil.class.getClassLoader();
 						final URL bundleLogConfURL = classloader.getResource(FNAME_LOG_CONF);
-						if (bundleLogConfURL != null) {
-							LOG_CTX.set(Configurator.initialize(MONGOOSE, classloader, bundleLogConfURL.toURI()));
+						if(bundleLogConfURL != null) {
+							LOG_CTX = Configurator.initialize(MONGOOSE, classloader, bundleLogConfURL.toURI());
 						}
 					} else {
-						LOG_CTX.set(Configurator.initialize(MONGOOSE, System.getProperty("log4j.configurationFile")));
+						LOG_CTX = Configurator.initialize(MONGOOSE, System.getProperty("log4j.configurationFile"));
 					}
 					//
-					if(LOG_CTX.get() == null) {
+					if(LOG_CTX == null) {
 						System.err.println("Logging configuration failed");
 					} else {
 						LogManager.getLogger().info(
@@ -139,6 +141,8 @@ public final class LogUtil {
 					e.printStackTrace(System.err);
 				}
 			}
+		} finally {
+			LOG_CTX_LOCK.unlock();
 		}
 	}
 	//
@@ -147,9 +151,9 @@ public final class LogUtil {
 		try {
 			if(LOAD_HOOKS_COUNT.get() != 0) {
 				LOG.debug(Markers.MSG, "Not all loads are closed, blocking the logging subsystem shutdown");
-				if (HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
+				if(HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
 					try {
-						if (HOOKS_COND.await(10, TimeUnit.SECONDS)) {
+						if(HOOKS_COND.await(10, TimeUnit.SECONDS)) {
 							LOG.debug(Markers.MSG, "All load executors are closed");
 						} else {
 							LOG.debug(Markers.ERR, "Timeout while waiting the load executors to be closed");
@@ -166,11 +170,13 @@ public final class LogUtil {
 		} catch (final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Shutdown method was interrupted");
 		} finally {
-			synchronized(LOG_CTX) {
-				final LoggerContext logCtx = LOG_CTX.get();
-				if (logCtx != null && !logCtx.isStopped()) {
-					logCtx.stop();
+			LOG_CTX_LOCK.lock();
+			try {
+				if(LOG_CTX != null && !LOG_CTX.isStopped()) {
+					LOG_CTX.stop();
 				}
+			} finally {
+				LOG_CTX_LOCK.unlock();
 			}
 		}
 	}

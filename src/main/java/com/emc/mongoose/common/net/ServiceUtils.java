@@ -360,35 +360,6 @@ public final class ServiceUtils {
 		for(final Service svc : SVC_MAP.values()) {
 			close(svc);
 		}
-		/*
-		try {
-			for(final Service svc : SVC_MAP.values()) {
-				close(svc);
-			}
-			//
-			final Registry registry = LocateRegistry.getRegistry(PORT_RMI_CONTROL);
-			final String names[] = registry.list();
-			if(names.length > 0) {
-				LOG.debug(LogUtil.MSG, "Not closed services: {}", Arrays.toString(names));
-				for(final String name : names) {
-					try{
-						registry.unbind(name);
-					} catch(final NotBoundException e) {
-						LogUtil.failure(
-							LOG, Level.DEBUG, e,
-							String.format("Service \"%s\" is not bound", name)
-						);
-					}
-				}
-			}
-			//
-		} catch(final RemoteException e) {
-			LogUtil.failure(
-				LOG, Level.WARN, e,
-				String.format("Failed to get a registry for port #%d", PORT_RMI_CONTROL)
-			);
-		}
-		*/
 		//
 		for(final JMXConnectorServer jmxConnectorServer : JMX_CONNECTOR_SERVERS) {
 			if(jmxConnectorServer.isActive()) {

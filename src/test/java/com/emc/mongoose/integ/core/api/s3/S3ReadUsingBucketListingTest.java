@@ -5,14 +5,9 @@ import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 //
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
-import com.emc.mongoose.storage.adapter.s3.Bucket;
-import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
-import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
+import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
-import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -21,10 +16,11 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.08.15.
  */
-public final class S3ReadUsingBucketListingTest {
+public final class S3ReadUsingBucketListingTest
+extends StandaloneClientTestBase {
 	//
 	private final static long COUNT_TO_WRITE = 10000;
-	private final static String BUCKET_NAME = S3ReadUsingBucketListingTest.class.getSimpleName();
+	private final static String RUN_ID = S3ReadUsingBucketListingTest.class.getSimpleName();
 	//
 	private static long COUNT_WRITTEN, COUNT_READ;
 	//
@@ -32,19 +28,16 @@ public final class S3ReadUsingBucketListingTest {
 	public static void setUpClass()
 	throws Exception {
 		//
-		RunTimeConfig.resetContext();
-		RunTimeConfig.getContext().set(
-			RunTimeConfig.KEY_RUN_ID, S3ReadZeroSizedItemsFromBucket.class.getCanonicalName()
-		);
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		StandaloneClientTestBase.setUpClass();
 		//
 		try(
-			final StorageClient<WSObject>
-				client = new BasicWSClientBuilder<>()
-					.setLimitTime(0, TimeUnit.SECONDS)
-					.setLimitCount(COUNT_TO_WRITE)
-					.setAPI("s3")
-					.setS3Bucket(BUCKET_NAME)
-					.build()
+			final StorageClient<WSObject> client = CLIENT_BUILDER
+				.setLimitTime(0, TimeUnit.SECONDS)
+				.setLimitCount(COUNT_TO_WRITE)
+				.setAPI("s3")
+				.setS3Bucket(RUN_ID)
+				.build()
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
 			if(COUNT_WRITTEN > 0) {
@@ -53,17 +46,6 @@ public final class S3ReadUsingBucketListingTest {
 				throw new IllegalStateException("Failed to write");
 			}
 		}
-	}
-	//
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		final Bucket bucket = new WSBucketImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
-			BUCKET_NAME, false
-		);
-		bucket.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	@Test

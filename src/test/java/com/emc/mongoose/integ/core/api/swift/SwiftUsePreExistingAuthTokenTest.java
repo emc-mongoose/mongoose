@@ -3,6 +3,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.swift.AuthToken;
 import com.emc.mongoose.storage.adapter.swift.Container;
 import com.emc.mongoose.storage.adapter.swift.WSAuthTokenImpl;
@@ -19,7 +20,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.08.15.
  */
-public class SwiftUsePreExistingAuthTokenTest {
+public class SwiftUsePreExistingAuthTokenTest
+extends StandaloneClientTestBase {
 	//
 	private final static long COUNT_TO_WRITE = 10000;
 	//
@@ -30,10 +32,10 @@ public class SwiftUsePreExistingAuthTokenTest {
 	public static void setUpClass()
 	throws Exception {
 		//
-		RunTimeConfig.resetContext();
-		RunTimeConfig.getContext().set(
+		System.setProperty(
 			RunTimeConfig.KEY_RUN_ID, SwiftUsePreExistingAuthTokenTest.class.getCanonicalName()
 		);
+		StandaloneClientTestBase.setUpClass();
 		//
 		final WSRequestConfigImpl
 			reqConf = (WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift");
@@ -44,7 +46,7 @@ public class SwiftUsePreExistingAuthTokenTest {
 		AUTH_TOKEN.create("127.0.0.1");
 		//
 		try(
-			final StorageClient<WSObject> client = new BasicWSClientBuilder<>()
+			final StorageClient<WSObject> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("swift")
@@ -53,17 +55,6 @@ public class SwiftUsePreExistingAuthTokenTest {
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
 		}
-	}
-	//
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		final Container container = new WSContainerImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift").setProperties(rtConfig),
-			rtConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER), false
-		);
-		container.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	@Test

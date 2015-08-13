@@ -40,7 +40,7 @@ import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 /**
- * Created by olga on 03.07.15.
+ * Created by olga on 03.07.15.B
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({

@@ -2,21 +2,15 @@ package com.emc.mongoose.integ.distributed.chain;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.storage.adapter.s3.Bucket;
-import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
-import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
 import com.emc.mongoose.util.scenario.Chain;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 //
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 //
@@ -43,62 +37,44 @@ extends DistributedLoadBuilderTestBase {
 		PRECISION_SEC = 10,
 		COUNT_STEPS = LOAD_SEQ.length;
 	//
-	private long durationTotalSec = -1;
-	private byte stdOutContent[] = null;
+	private static long DURATION_TOTAL_SEC = -1;
+	private static byte STD_OUT_CONTENT[] = null;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(RunTimeConfig.KEY_API_NAME, "s3");
 		DistributedLoadBuilderTestBase.setUpClass();
-	}
-	//
-	@Before
-	public void setUp()
-	throws Exception {
-		super.setUp();
 		final Chain chainScenario = new Chain(
-			loadBuilderClient, LOAD_JOB_TIME_LIMIT_SEC, TimeUnit.SECONDS, LOAD_SEQ, false, true
+			LOAD_BUILDER_CLIENT, LOAD_JOB_TIME_LIMIT_SEC, TimeUnit.SECONDS, LOAD_SEQ, false, true
 		);
 		try(
 			final BufferingOutputStream
 				stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
-			durationTotalSec = System.currentTimeMillis() / 1000;
+			DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000;
 			chainScenario.run();
-			durationTotalSec = System.currentTimeMillis() / 1000 - durationTotalSec;
-			stdOutContent = stdOutBuffer.toByteArray();
+			DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEC;
+			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
 		}
 	}
 	//
-	@After
-	public void tearDown()
-	throws Exception {
-		final Bucket bucket = new WSBucketImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(RT_CONFIG),
-			RT_CONFIG.getString(RunTimeConfig.KEY_API_S3_BUCKET), false
-		);
-		bucket.delete(RT_CONFIG.getStorageAddrs()[0]);
-		super.tearDown();
-	}
-	//
-	@Test
-	public void checkTotalDuration()
+	@Test public void checkTotalDuration()
 	throws Exception {
 		Assert.assertTrue(
-			"Actual duration (" + durationTotalSec + "[s]) is much more than expected (" +
+			"Actual duration (" + DURATION_TOTAL_SEC + "[s]) is much more than expected (" +
 			COUNT_STEPS * LOAD_JOB_TIME_LIMIT_SEC + "[s])",
-			durationTotalSec <= PRECISION_SEC + COUNT_STEPS * LOAD_JOB_TIME_LIMIT_SEC
+			DURATION_TOTAL_SEC <= PRECISION_SEC + COUNT_STEPS * LOAD_JOB_TIME_LIMIT_SEC
 		);
 	}
 	//
-	@Test
-	public void checkLogStdOutSummariesCount()
+	protected void checkLogStdOutSummariesCount()
 		throws Exception {
 		int countSummaries = 0;
 		try(
 			final BufferedReader in = new BufferedReader(
-				new InputStreamReader(new ByteArrayInputStream(stdOutContent))
+				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
 			)
 		) {
 			String nextStdOutLine;
@@ -120,15 +96,14 @@ extends DistributedLoadBuilderTestBase {
 		);
 	}
 	//
-	@Test
-	public void checkLogFileSummariesCount()
+	protected void checkLogFileSummariesCount()
 	throws Exception {
 		boolean firstRow = true;
 		int countSummaries = 0;
-		Assert.assertTrue("Performance sum metrics file doesn't exist", fileLogPerfSum.exists());
+		Assert.assertTrue("Performance sum metrics file doesn't exist", FILE_LOG_PERF_SUM.exists());
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(fileLogPerfSum.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(FILE_LOG_PERF_SUM.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
