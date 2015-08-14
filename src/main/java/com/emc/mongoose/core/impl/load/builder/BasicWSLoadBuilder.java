@@ -10,7 +10,6 @@ import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.builder.ObjectLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.WSLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
@@ -35,11 +34,11 @@ implements WSLoadBuilder<T, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected WSRequestConfig<T> getDefaultRequestConfig() {
-		return (WSRequestConfig<T>) WSRequestConfigBase.getInstance();
+		return WSRequestConfigBase.<T>getInstance();
 	}
 	//
 	@Override
-	public ObjectLoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig) {
+	public BasicWSLoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig) {
 		//
 		super.setProperties(runTimeConfig);
 		//

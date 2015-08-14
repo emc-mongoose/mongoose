@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.core.api.s3;
+package com.emc.mongoose.integ.storage.adapter.s3;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;

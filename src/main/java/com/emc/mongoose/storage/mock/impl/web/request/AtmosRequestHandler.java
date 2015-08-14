@@ -8,6 +8,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 //
+import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
@@ -62,15 +63,16 @@ extends WSRequestHandlerBase<T> {
 		NS_PATH = URI_BASE_PATH + "/namespace",
 		AT_PATH = URI_BASE_PATH + "/accesstokens",
 		ST_PATH = URI_BASE_PATH + "/subtenant",
+		STS_PATH = ST_PATH + "s/",
 		KEY_OID = "oid",
 		KEY_VERSIONING = "versioning",
 		KEY_DIR = "dir",
 		KEY_FNAME = "fName";
 	private final static Pattern
 		PATTERN_REQ_URI_OBJ = Pattern.compile(
-		OBJ_PATH + "/?(?<" + KEY_OID + ">[a-f\\d]{44})?\\??(?<" + KEY_VERSIONING +
-			">versions)?"
-	),
+			OBJ_PATH + "/?(?<" + KEY_OID + ">[a-f\\d]{44})?\\??(?<" + KEY_VERSIONING +
+				">versions)?"
+		),
 		PATTERN_REQ_URI_NS = Pattern.compile(
 			NS_PATH + "/?(?<" + KEY_DIR + ">[\\w]+/)*(?<" + KEY_FNAME + ">[^\\?])\\??(?<" +
 				KEY_VERSIONING + ">versions)?"
@@ -255,15 +257,22 @@ extends WSRequestHandlerBase<T> {
 	}
 	//
 	private String getSubtenant(final HttpRequest httpRequest) {
-		if(httpRequest.containsHeader(WSRequestConfig.KEY_EMC_UID)) {
-			final String uid[] = httpRequest
-				.getLastHeader(WSRequestConfig.KEY_EMC_UID)
-				.getValue()
-				.split("/");
-			return uid.length < 1 ? null : uid[0];
-		} else {
-			return null;
+		final String reqURI = httpRequest.getRequestLine().getUri();
+		if(reqURI.startsWith(STS_PATH) && reqURI.length() > STS_PATH.length()) {
+			return reqURI.substring(STS_PATH.length());
 		}
+		if(httpRequest.containsHeader(WSRequestConfig.KEY_EMC_UID)) {
+			final String uidHeaderValue = httpRequest
+				.getFirstHeader(WSRequestConfig.KEY_EMC_UID)
+				.getValue();
+			if(uidHeaderValue.contains("/")) {
+				return uidHeaderValue.split("/")[0];
+			}
+		}
+		if(httpRequest.containsHeader(SubTenant.KEY_SUBTENANT_ID)) {
+			return httpRequest.getFirstHeader(SubTenant.KEY_SUBTENANT_ID).getValue();
+		}
+		return null;
 	}
 	//
 	private String generateId() {

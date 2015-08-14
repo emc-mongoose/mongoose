@@ -71,7 +71,7 @@ implements SubTenant<T> {
 			);
 		} else {
 			httpReq = reqConf.createGenericRequest(
-				method, WSRequestConfigImpl.PREFIX_URI + SUBTENANT + "/" + value
+				method, WSRequestConfigImpl.PREFIX_URI + SUBTENANT + "s/" + value
 			);
 		}
 		//

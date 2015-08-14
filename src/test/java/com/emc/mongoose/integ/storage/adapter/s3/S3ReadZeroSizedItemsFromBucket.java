@@ -1,16 +1,10 @@
-package com.emc.mongoose.integ.core.api.s3;
+package com.emc.mongoose.integ.storage.adapter.s3;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.data.model.ListItemOutput;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
-import com.emc.mongoose.storage.adapter.s3.Bucket;
-import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
-import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
-import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

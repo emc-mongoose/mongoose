@@ -20,7 +20,8 @@ extends WSMockTestBase {
 	public static void setUpClass()
 	throws Exception {
 		WSMockTestBase.setUpClass();
-		CLIENT_BUILDER = new BasicWSClientBuilder<>();
+		CLIENT_BUILDER = new BasicWSClientBuilder<>()
+			.setClientMode(null);
 	}
 	//
 	@AfterClass

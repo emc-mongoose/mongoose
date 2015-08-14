@@ -10,7 +10,6 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 //
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
-import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -62,7 +61,7 @@ extends DistributedClientTestBase {
 			COUNT_WRITTEN = client.write(
 				null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB")
 			);
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(10);
 			try(
 				final BufferingOutputStream
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
