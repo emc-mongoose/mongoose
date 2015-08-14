@@ -47,7 +47,7 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
+	public final BasicWSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
 		super.setProperties(clientConfig);
 		final String runMode = clientConfig.getRunMode();
 		if (!runMode.equals(Constants.RUN_MODE_SERVER)
