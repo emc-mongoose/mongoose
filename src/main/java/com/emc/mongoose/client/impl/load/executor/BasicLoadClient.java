@@ -327,7 +327,7 @@ implements LoadClient<T> {
 		metricFetchTasks.add(taskGetLatencyAvg);
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			remoteLoadMap.size() + fetchItemsBuffTasks.size(),
+			remoteLoadMap.size() + metricFetchTasks.size() + 2,
 			new GroupThreadFactory(String.format("%s-aggregator", name), true)
 		);
 		//

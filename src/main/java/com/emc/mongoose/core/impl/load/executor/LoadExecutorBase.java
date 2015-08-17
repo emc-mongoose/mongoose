@@ -55,6 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 15.10.14.
@@ -565,7 +566,7 @@ implements LoadExecutor<T> {
 			!isAllSubm.get() && !isInterrupted.get() &&
 			counterSubm.getCount() - counterResults.get() >= maxQueueSize
 		) {
-			Thread.sleep(1);
+			LockSupport.parkNanos(1);
 		}
 		//
 		try {

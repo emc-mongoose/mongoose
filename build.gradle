@@ -1024,7 +1024,7 @@ test {
 task integTest(type: Test) {
 
 	//Be able to run only test suit
-	//include '**/CoreTestSuite.class'
+	include '**/CoreTestSuite.class'
 	include '**/StorageAdapterTestSuite.class'
 	include '**/DistributedLoadTestSuite.class'
 

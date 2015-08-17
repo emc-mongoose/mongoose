@@ -416,7 +416,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final boolean isDone() {
-		return respTimeDone != 0;
+		return respTimeDone != 0 || exception != null || status.equals(Status.CANCELLED);
 	}
 	//
 	@Override

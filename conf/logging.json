@@ -236,7 +236,7 @@
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
-					"bufferSize": "200000",
+					"bufferSize": "100000",
 					"AppenderRef": [
 						{ "ref": "stdout" },
 						{ "ref": "msgFile" },

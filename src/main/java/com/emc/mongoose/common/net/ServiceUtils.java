@@ -27,6 +27,7 @@ import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.rmi.Naming;
 import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
@@ -40,6 +41,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 05.05.14.
  */
@@ -47,6 +50,7 @@ public final class ServiceUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private static Registry REGISTRY = null;
+	private final static Lock REGISTRY_LOCK = new ReentrantLock();
 	private final static Map<String, Service> SVC_MAP = new ConcurrentHashMap<>();
 	private final static Map<Integer, MBeanServer> MBEAN_SERVERS = new ConcurrentHashMap<>();
 	private final static Collection<JMXConnectorServer>
@@ -83,18 +87,23 @@ public final class ServiceUtils {
 	//
 	private static void rmiRegistryInit() {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		if(REGISTRY == null) {
-			try {
-				REGISTRY = LocateRegistry.createRegistry(rtConfig.getRemotePortControl());
-				LOG.debug(Markers.MSG, "RMI registry created");
-			} catch(final RemoteException e) {
+		REGISTRY_LOCK.lock();
+		try {
+			if(REGISTRY == null) {
 				try {
-					REGISTRY = LocateRegistry.getRegistry(rtConfig.getRemotePortControl());
-					LOG.info(Markers.MSG, "Reusing already existing RMI registry");
-				} catch(final RemoteException ee) {
-					LOG.fatal(Markers.ERR, "Failed to obtain RMI registry", ee);
+					REGISTRY = LocateRegistry.createRegistry(rtConfig.getRemotePortControl());
+					LOG.debug(Markers.MSG, "RMI registry created");
+				} catch(final RemoteException e) {
+					try {
+						REGISTRY = LocateRegistry.getRegistry(rtConfig.getRemotePortControl());
+						LOG.info(Markers.MSG, "Reusing already existing RMI registry");
+					} catch(final RemoteException ee) {
+						LOG.fatal(Markers.ERR, "Failed to obtain a RMI registry", ee);
+					}
 				}
 			}
+		} finally {
+			REGISTRY_LOCK.unlock();
 		}
 	}
 	//
@@ -173,10 +182,10 @@ public final class ServiceUtils {
 		}
 		//
 		if(stub != null) {
+			final String svcName = getLocalSvcName(svc.getName());
 			try {
-				final String svcName = getLocalSvcName(svc.getName());
 				if (!SVC_MAP.containsKey(svcName)) {
-					REGISTRY.rebind(svcName, svc);
+					Naming.rebind(svcName, svc);
 					SVC_MAP.put(svcName, svc);
 					LOG.info(Markers.MSG, "New service bound: {}", svcName);
 				} else {
@@ -184,6 +193,8 @@ public final class ServiceUtils {
 				}
 			} catch(final RemoteException e) {
 				LOG.error(Markers.ERR, "Failed to rebind the service", e);
+			} catch(final MalformedURLException e) {
+				LOG.error(Markers.ERR, "Invailid service URL: \"{}\"", svcName);
 			}
 		}
 		//
@@ -213,7 +224,7 @@ public final class ServiceUtils {
 		Remote remote = null;
 		Service remoteSvc = null;
 		try {
-			remote = REGISTRY.lookup(url);
+			remote = Naming.lookup(url);
 			remoteSvc = Service.class.cast(remote);
 		} catch(final ClassCastException e) {
 			if(remote == null) {
@@ -227,11 +238,14 @@ public final class ServiceUtils {
 			LOG.error(Markers.ERR, "No service bound with url \"{}\"", url);
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Looks like network failure");
+		} catch(final MalformedURLException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Invalid service URL: {}", url);
 		}
 		return remoteSvc;
 	}
 	//
-	public static void close(final Service svc) {
+	public static void close(final Service svc)
+	throws RemoteException {
 		try {
             UnicastRemoteObject.unexportObject(svc, true);
 			LOG.debug(Markers.MSG, "Unexported service object");
@@ -239,15 +253,15 @@ public final class ServiceUtils {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to unexport service object");
 		}
 		//
+		final String svcName = getLocalSvcName(svc.getName());
 		try {
-			final String svcName = getLocalSvcName(svc.getName());
-			REGISTRY.unbind(svcName);
+			Naming.unbind(svcName);
 			SVC_MAP.remove(svcName);
 			LOG.info(Markers.MSG, "Removed service: {}", svcName);
 		} catch(final NotBoundException e) {
 			LOG.debug(Markers.ERR, "Service not bound");
-		} catch(final RemoteException e) {
-			LOG.warn(Markers.ERR, "Possible connection failure", e);
+		} catch(final MalformedURLException e) {
+			LOG.warn(Markers.ERR, "Invalid service URL: \"{}\"", svcName);
 		}
 	}
 	//
@@ -358,7 +372,11 @@ public final class ServiceUtils {
 	public static void shutdown() {
 		//
 		for(final Service svc : SVC_MAP.values()) {
-			close(svc);
+			try {
+				close(svc);
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Networking failure");
+			}
 		}
 		//
 		for(final JMXConnectorServer jmxConnectorServer : JMX_CONNECTOR_SERVERS) {

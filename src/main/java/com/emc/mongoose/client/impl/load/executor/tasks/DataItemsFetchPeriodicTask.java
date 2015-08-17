@@ -28,8 +28,7 @@ implements PeriodicTask<Collection<T>> {
 	private final LoadSvc<T> loadSvc;
 	private final AtomicReference<Collection<T>> result = new AtomicReference<>();
 	//
-	public
-	DataItemsFetchPeriodicTask(final LoadSvc<T> loadSvc) {
+	public DataItemsFetchPeriodicTask(final LoadSvc<T> loadSvc) {
 		this.loadSvc = loadSvc;
 	}
 	//

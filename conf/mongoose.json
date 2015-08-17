@@ -171,7 +171,7 @@
 				"reqSleepMilliSec": 0
 			},
 			"tasks": {
-				"maxQueueSize": 32768,
+				"maxQueueSize": 16384,
 				"batchSize": 1024
 			},
 			"servers": "127.0.0.1",
