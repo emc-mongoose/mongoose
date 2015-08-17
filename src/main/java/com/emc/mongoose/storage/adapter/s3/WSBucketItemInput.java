@@ -41,11 +41,13 @@ extends GenericContainerItemInputBase<T> {
 	//
 	private String lastOid = null;
 	private boolean eof = false;
+	private long doneCount = 0;
 	//
 	public WSBucketItemInput(
-		final WSBucketImpl<T> bucket, final String nodeAddr, final Class<T> itemCls
+		final WSBucketImpl<T> bucket, final String nodeAddr, final Class<T> itemCls,
+		final long maxCount
 	) throws IllegalStateException {
-		super(bucket, nodeAddr, itemCls);
+		super(bucket, nodeAddr, itemCls, maxCount);
 		try {
 			parser = SAXParserFactory.newInstance().newSAXParser();
 		} catch(final ParserConfigurationException | SAXException e) {
@@ -71,7 +73,7 @@ extends GenericContainerItemInputBase<T> {
 			itIsItemSize = false,
 			itIsTruncateFlag = false,
 			isTruncated = false;
-		private String lastOid = null, strSize = null;
+		private String oid = null, strSize = null;
 		private T nextItem;
 		//
 		private PageContentHandler(
@@ -120,20 +122,20 @@ extends GenericContainerItemInputBase<T> {
 					LOG.trace(Markers.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
 				}
 				//
-				if(lastOid != null && lastOid.length() > 0 && size > -1) {
+				if(oid != null && oid.length() > 0 && size > -1) {
 					try {
-						nextItem = container.buildItem(itemConstructor, lastOid, size);
+						nextItem = container.buildItem(itemConstructor, oid, size);
 						if(nextItem != null) {
 							itemsBuffer.add(nextItem);
 							count ++;
 						}
 					} catch(final NumberFormatException e) {
-						LOG.debug(Markers.ERR, "Invalid id: {}", lastOid);
+						LOG.debug(Markers.ERR, "Invalid id: {}", oid);
 					} catch(final Exception e) {
 						LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 					}
 				} else {
-					LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", lastOid, strSize);
+					LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", oid, strSize);
 				}
 			}
 			//
@@ -144,7 +146,7 @@ extends GenericContainerItemInputBase<T> {
 		public final void characters(final char buff[], final int start, final int length)
 		throws SAXException {
 			if(itIsItemId) {
-				lastOid = new String(buff, start, length);
+				oid = new String(buff, start, length);
 			} else if(itIsItemSize) {
 				strSize = new String(buff, start, length);
 			} else if(itIsTruncateFlag) {
@@ -157,12 +159,13 @@ extends GenericContainerItemInputBase<T> {
 	@Override
 	protected final void loadNextPage()
 	throws EOFException, IOException {
-		if(eof) {
+		final int countLimit = (int) Math.min(container.getBatchSize(), maxCount - doneCount);
+		if(eof || countLimit == 0) {
 			throw new EOFException();
 		}
 		// execute the request
 		final HttpResponse resp = WSBucketImpl.class.cast(container).execute(
-			nodeAddr, WSRequestConfig.METHOD_GET, false, lastOid, container.getBatchSize()
+			nodeAddr, WSRequestConfig.METHOD_GET, false, lastOid, countLimit
 		);
 		if(resp == null) {
 			throw new IOException("No HTTP response");
@@ -193,17 +196,17 @@ extends GenericContainerItemInputBase<T> {
 				items, itemConstructor, container
 			);
 			parser.parse(in, pageContentHandler);
-			lastOid = pageContentHandler.lastOid;
+			lastOid = pageContentHandler.oid;
 			if(!pageContentHandler.isTruncated || lastOid == null) {
 				eof = true; // end of bucket list
 			}
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-					"Listed {} items the last time, response code: {}, last oid: {}",
-					pageContentHandler.count, statusCode, lastOid
-				);
-			}
+			doneCount += pageContentHandler.count;
+			LOG.debug(
+				Markers.MSG, "Listed {} items the last time, response code: {}, last oid: {}",
+				pageContentHandler.count, statusCode, lastOid
+			);
 		} catch(final SAXException e) {
+			e.printStackTrace(System.out);
 			throw new IOException(e);
 		}
 	}

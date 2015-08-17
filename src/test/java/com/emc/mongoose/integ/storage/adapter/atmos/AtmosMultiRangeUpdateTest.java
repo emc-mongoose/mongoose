@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.core.api.atmos;
+package com.emc.mongoose.integ.storage.adapter.atmos;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
@@ -8,15 +8,10 @@ import com.emc.mongoose.core.api.data.model.DataItemOutput;
 //
 import com.emc.mongoose.core.impl.data.model.ListItemOutput;
 //
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
-import com.emc.mongoose.storage.adapter.atmos.SubTenant;
-import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
-import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
+import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
-import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -29,7 +24,8 @@ import java.util.regex.Pattern;
 /**
  Created by kurila on 03.08.15.
  */
-public final class AtmosMultiRangeUpdateTest {
+public final class AtmosMultiRangeUpdateTest
+extends StandaloneClientTestBase {
 	//
 	private final static int COUNT_TO_WRITE = 1000;
 	private final static List<WSObject>
@@ -43,14 +39,14 @@ public final class AtmosMultiRangeUpdateTest {
 	public static void setUpClass()
 	throws Exception {
 		//
-		RunTimeConfig.resetContext();
-		RunTimeConfig.getContext().set(
+		System.setProperty(
 			RunTimeConfig.KEY_RUN_ID, AtmosMultiRangeUpdateTest.class.getCanonicalName()
 		);
+		StandaloneClientTestBase.setUpClass();
 		//
 		try(
 			final StorageClient<WSObject>
-				client = new BasicWSClientBuilder<>()
+				client = CLIENT_BUILDER
 					.setLimitTime(0, TimeUnit.SECONDS)
 					.setLimitCount(COUNT_TO_WRITE)
 					.setAPI("atmos")
@@ -83,17 +79,6 @@ public final class AtmosMultiRangeUpdateTest {
 				throw new IllegalStateException("Failed to update the 2nd time");
 			}
 		}
-	}
-	//
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		final SubTenant st = new WSSubTenantImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("atmos").setProperties(rtConfig),
-			rtConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
-		);
-		st.delete(rtConfig.getStorageAddrs()[0]);
 	}
 	//
 	private final static Pattern PATTERN_OBJ_METAINFO = Pattern.compile(

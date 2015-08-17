@@ -4,11 +4,12 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.builder.ObjectLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.WSLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
@@ -33,11 +34,11 @@ implements WSLoadBuilder<T, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected WSRequestConfig<T> getDefaultRequestConfig() {
-		return (WSRequestConfig<T>) WSRequestConfigBase.getInstance();
+		return WSRequestConfigBase.<T>getInstance();
 	}
 	//
 	@Override
-	public ObjectLoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig) {
+	public BasicWSLoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig) {
 		//
 		super.setProperties(runTimeConfig);
 		//
@@ -84,9 +85,14 @@ implements WSLoadBuilder<T, U> {
 			);
 		}
 		//
+		final DataItemInput<T> itemSrc = buildItemInput(
+			BasicWSObject.class, wsReqConf, dataNodeAddrs, listFile, maxCount,
+			minObjSize, maxObjSize, objSizeBias
+		);
+		//
 		return (U) new BasicWSLoadExecutor<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs,
-			threadsPerNodeMap.get(reqConf.getLoadType()), listFile,
+			threadsPerNodeMap.get(reqConf.getLoadType()), itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}

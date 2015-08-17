@@ -17,12 +17,9 @@ from java.util.concurrent import Executors
 LOG = LogManager.getLogger()
 #
 def build(
-	loadBuilder, loadTypesChain, flagUseItemsBuffer=True,
+	loadBuilder, loadTypesChain, flagConcurrent=True, flagUseLocalItemList=True,
 	dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0
 ):
-	#
-	if flagUseItemsBuffer:
-		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(False)
 	#
 	chain = list()
 	prevLoad = None
@@ -45,7 +42,10 @@ def build(
 			else:
 				LOG.error(Markers.ERR, "No load executor instanced")
 			if prevLoad is None:
-				loadBuilder.setInputFile(None) # prevent the file list producer creation for next loads
+				# prevent any item source creation for next loads
+				loadBuilder.setInputFile(None)
+				if flagConcurrent or flagUseLocalItemList:
+					loadBuilder.getRequestConfig().setContainerInputEnabled(False)
 			prevLoad = load
 		except IllegalArgumentException as e:
 			LogUtil.exception(
@@ -136,21 +136,20 @@ if __name__ == "__builtin__":
 	except:
 		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
 	#
-	flagConcurrent, flagItemsBuffer = True, True
+	flagConcurrent, flagUseLocalItemList = True, True
 	try:
 		flagConcurrent = runTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT)
 	except:
 		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT)
 	try:
-		flagItemsBuffer = runTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
+		flagUseLocalItemList = runTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
 	except:
 		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
 	#
 	loadBuilder = loadBuilderInit()
-	loadBuilder.getRequestConfig().setAnyDataProducerEnabled(False)
 	#
 	chain = build(
-		loadBuilder, loadTypesChain, flagItemsBuffer,
+		loadBuilder, loadTypesChain, flagConcurrent, flagUseLocalItemList,
 		dataItemSizeMin if dataItemSize == 0 else dataItemSize,
 		dataItemSizeMax if dataItemSize == 0 else dataItemSize,
 		threadsPerNode

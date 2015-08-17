@@ -28,6 +28,7 @@ def execute(loadBuilder, rampupParams=((),(),())):
 	loadTypesChain = rampupParams[0]
 	listSizes = rampupParams[1]
 	listThreadCounts = rampupParams[2]
+	flagConcurrent = False
 	for index, dataItemSizeStr in enumerate(listSizes):
 		dataItemSize = Long(SizeUtil.toSize(dataItemSizeStr))
 		for threadCountStr in listThreadCounts:
@@ -37,9 +38,10 @@ def execute(loadBuilder, rampupParams=((),(),())):
 				ThreadContext.put("currentSize", dataItemSizeStr + "-" + str(index))
 				ThreadContext.put("currentThreadCount", str(threadCount))
 				nextChain = chainBuild(
-					loadBuilder, loadTypesChain, True, dataItemSize, dataItemSize, threadCount
+					loadBuilder, loadTypesChain, flagConcurrent, True, dataItemSize, dataItemSize,
+					threadCount
 				)
-				chainExecute(nextChain, False)
+				chainExecute(nextChain, flagConcurrent)
 				LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
 			except InterruptedException as e:
 				raise e

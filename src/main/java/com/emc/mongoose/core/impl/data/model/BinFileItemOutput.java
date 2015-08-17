@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.FileDataItemOutput;
 //
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -8,11 +9,13 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 /**
  An item input implementation serializing the data items to the specified file.
  */
 public class BinFileItemOutput<T extends DataItem>
-extends BinItemOutput<T> {
+extends BinItemOutput<T>
+implements FileDataItemOutput<T> {
 	//
 	protected final Path itemsDstPath;
 	/**
@@ -38,6 +41,13 @@ extends BinItemOutput<T> {
 		this(Files.createTempFile(null, ".bin"));
 		this.itemsDstPath.toFile().deleteOnExit();
 	}
+	@Override
+	public void write(final DataItem dataItem) throws IOException {
+	}
+	@Override
+	public int write(final List buffer) throws IOException {
+		return 0;
+	}
 	//
 	@Override
 	public BinFileItemInput<T> getInput()
@@ -48,5 +58,10 @@ extends BinItemOutput<T> {
 	@Override
 	public String toString() {
 		return "binFileItemOutput<" + itemsDstPath.getFileName() + ">";
+	}
+	//
+	@Override
+	public final Path getFilePath() {
+		return itemsDstPath;
 	}
 }

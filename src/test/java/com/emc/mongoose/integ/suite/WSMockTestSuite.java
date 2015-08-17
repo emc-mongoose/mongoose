@@ -24,6 +24,7 @@ extends ConfiguredTestSuite {
 	throws Exception {
 		ConfiguredTestSuite.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_API_NAME, "s3");
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, 1000000);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, 1000000);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024

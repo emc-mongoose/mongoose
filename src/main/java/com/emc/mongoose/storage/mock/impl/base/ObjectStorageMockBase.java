@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.mock.impl.base;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.storage.mock.api.StorageMockCapacityLimitReachedException;
@@ -52,7 +51,11 @@ implements ObjectStorageMock<T> {
 		defaultContainer = new BasicObjectContainerMock<>(
 			ObjectContainerMock.DEFAULT_NAME, containerCapacity
 		);
-		containersIndex.put(ObjectContainerMock.DEFAULT_NAME, defaultContainer);
+		try {
+			createContainer(ObjectContainerMock.DEFAULT_NAME);
+		} catch(final StorageMockCapacityLimitReachedException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Container methods
@@ -250,8 +253,8 @@ implements ObjectStorageMock<T> {
 	@Override
 	public final void putIntoDefaultContainer(final T dataItem) {
 		try {
-			defaultContainer.submitPut(dataItem.getId(), dataItem).get();
-		} catch(final InterruptedException | ExecutionException e) {
+			defaultContainer.submitPut(dataItem.getId(), dataItem);
+		} catch(final InterruptedException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e,
 				"Failed to put the object \"{}\" into the default container \"{}\"",
@@ -268,6 +271,7 @@ implements ObjectStorageMock<T> {
 		}
 		containersIndex.clear();
 		storageCapacityMonitorThread.interrupt();
+		super.close();
 	}
 	//
 	protected abstract T newDataObject(final String id, final long offset, final long size);

@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.GenericContainer;
@@ -27,13 +26,16 @@ implements DataItemInput<T> {
 	protected final GenericContainer<T> container;
 	protected final String nodeAddr;
 	protected final Constructor<T> itemConstructor;
+	protected final long maxCount;
 	//
 	protected GenericContainerItemInputBase(
-		final GenericContainer<T> container, final String nodeAddr, final Class<T> itemCls
+		final GenericContainer<T> container, final String nodeAddr, final Class<T> itemCls,
+	    final long maxCount
 	) throws IllegalStateException {
 		super(new ArrayList<T>(RunTimeConfig.getContext().getBatchSize()));
 		this.container = container;
 		this.nodeAddr = nodeAddr;
+		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		try {
 			this.itemConstructor = itemCls.getConstructor(
 				String.class, Long.class, Long.class

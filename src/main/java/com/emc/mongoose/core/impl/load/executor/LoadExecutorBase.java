@@ -10,10 +10,13 @@ import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.UniformReservoir;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.FileDataItemOutput;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -23,12 +26,10 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
-import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
-import com.emc.mongoose.core.impl.load.model.PersistentAccumulatorProducer;
-import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableClock;
+import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 //
@@ -39,12 +40,11 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.ThreadContext;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
@@ -64,7 +64,6 @@ extends AsyncConsumerBase<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static int RELEASE_TIMEOUT_MILLISEC = 100;
 	//
 	protected final int instanceNum, connCountPerNode, storageNodeCount;
 	protected final String storageNodeAddrs[];
@@ -76,10 +75,9 @@ implements LoadExecutor<T> {
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
-	//protected InstancePool<IOTask<T>> ioTaskPool;
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
-	protected volatile PersistentAccumulatorProducer<T> itemsBuff = null;
+	protected volatile FileDataItemOutput<T> itemsFileBuff = null;
 	//
 	private final long maxCount;
 	private final int totalConnCount;
@@ -95,7 +93,7 @@ implements LoadExecutor<T> {
 	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
 	//
 	private LoadState currState = null;
-	private ResumableClock resumableClock = new ResumableClock();
+	private ResumableUserTimeClock clock = new ResumableUserTimeClock();
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	//
 	private final Thread
@@ -105,6 +103,7 @@ implements LoadExecutor<T> {
 			//
 			@Override
 			public final void run() {
+				RunTimeConfig.setContext(rtConfig); // required for int tests passing
 				final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
 					rtConfig.getLoadMetricsPeriodSec()
 				);
@@ -162,8 +161,7 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final Class<T> dataCls,
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final String listFile, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias
+		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount
 	) {
 		super(maxCount, rtConfig.getTasksMaxQueueSize());
 		//
@@ -195,6 +193,8 @@ implements LoadExecutor<T> {
 		}
 		loadType = reqConfig.getLoadType();
 		//
+		counterSubm = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_SUBM));
+		counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
 		final String runMode = rtConfig.getRunMode();
 		final boolean flagServeRemoteIfStandalone = rtConfig.getFlagServeIfNotLoadServer();
 		if(Constants.RUN_MODE_STANDALONE.equals(runMode) && !flagServeRemoteIfStandalone) {
@@ -226,7 +226,7 @@ implements LoadExecutor<T> {
 			activeTasksStats.put(addr, new AtomicInteger(0));
 		}
 		dataSrc = reqConfig.getDataSource();
-		//
+		/*
 		if(listFile != null && listFile.length() > 0) {
 			final Path dataItemsListPath = Paths.get(listFile);
 			if(!Files.exists(dataItemsListPath)) {
@@ -269,11 +269,11 @@ implements LoadExecutor<T> {
 				);
 			}
 		} else {
-			producer = reqConfig.getAnyDataProducer(maxCount, addrs[0]);
+			producer = reqConfig.getContainerListInput(maxCount, addrs[0]);
 			LOG.debug(Markers.MSG, "{} will use {} as data items producer", getName(), producer);
-		}
-		//
-		if(producer != null) {
+		}*/
+		if(itemSrc != null) {
+			producer = new DataItemInputProducer<>(itemSrc);
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -321,45 +321,52 @@ implements LoadExecutor<T> {
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
 		final Snapshot respLatencySnapshot = respLatency.getSnapshot();
 		//
-		final String message = Markers.PERF_SUM.equals(logMarker) ?
-			String.format(
-				LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
-				//
-				getName(),
-				countReqSucc,
-				countReqFail == 0 ?
-					Long.toString(countReqFail) :
-					(float) countReqSucc / countReqFail > 100 ?
-						String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
-						String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
-				//
-				(int) respLatencySnapshot.getMean(),
-				(int) respLatencySnapshot.getMin(),
-				(int) respLatencySnapshot.getMedian(),
-				(int) respLatencySnapshot.getMax(),
-				//
-				meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
-				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
-			) :
-			String.format(
-				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
-				//
-				countReqSucc, counterSubm.getCount() - counterResults.get(),
-				countReqFail == 0 ?
-					Long.toString(countReqFail) :
-					(float) countReqSucc / countReqFail > 100 ?
-						String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
-						String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
-				//
-				(int) respLatencySnapshot.getMean(),
-				(int) respLatencySnapshot.getMin(),
-				(int) respLatencySnapshot.getMedian(),
-				(int) respLatencySnapshot.getMax(),
-				//
-				meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
-				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+		if(Markers.PERF_SUM.equals(logMarker)) {
+			LOG.info(
+				logMarker,
+				String.format(
+					LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
+					//
+					getName(),
+					countReqSucc,
+					countReqFail == 0 ?
+						Long.toString(countReqFail) :
+						(float) countReqSucc / countReqFail > 100 ?
+							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
+							String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
+					//
+					(int) respLatencySnapshot.getMean(),
+					(int) respLatencySnapshot.getMin(),
+					(int) respLatencySnapshot.getMedian(),
+					(int) respLatencySnapshot.getMax(),
+					//
+					meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
+					meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+				)
 			);
-		LOG.info(logMarker, message);
+		} else if(Markers.PERF_AVG.equals(logMarker)) {
+			LOG.info(
+				logMarker,
+				String.format(
+					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
+					//
+					countReqSucc, counterSubm.getCount() - counterResults.get(),
+					countReqFail == 0 ?
+						Long.toString(countReqFail) :
+						(float) countReqSucc / countReqFail > 100 ?
+							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
+							String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
+					//
+					(int) respLatencySnapshot.getMean(),
+					(int) respLatencySnapshot.getMin(),
+					(int) respLatencySnapshot.getMedian(),
+					(int) respLatencySnapshot.getMax(),
+					//
+					meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
+					meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+				)
+			);
+		}
 	}
 	//
 	private final AtomicLong tsStart = new AtomicLong(-1);
@@ -368,14 +375,12 @@ implements LoadExecutor<T> {
 	public void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(Markers.MSG, "Starting {}", getName());
-			// init metrics
-			counterSubm = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_SUBM));
-			counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
+			// init remaining (load exec time dependent) metrics
 			counterReqFail = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_FAIL));
 			throughPut = metrics.register(MetricRegistry.name(getName(),
-				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(resumableClock));
+				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(clock));
 			reqBytes = metrics.register(MetricRegistry.name(getName(),
-				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(resumableClock));
+				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(clock));
 			respLatency = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
 			//
@@ -392,7 +397,7 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
-			if (isLoadFinished.get()) {
+			if(isLoadFinished.get()) {
 				try {
 					close();
 				} catch (final IOException e) {
@@ -407,21 +412,30 @@ implements LoadExecutor<T> {
 			//
 			super.start();
 			//
+			itemsFileLock.lock();
+			try {
+				if(itemsFileBuff != null) {
+					itemsFileBuff.close();
+					final Path itemsFilePath = itemsFileBuff.getFilePath();
+					LOG.debug(
+						Markers.MSG, "{}: accumulated for input {} of data items metadata in the temporary file \"{}\"",
+						getName(), SizeUtil.formatSize(itemsFilePath.toFile().length()), itemsFilePath
+					);
+					isShutdown.compareAndSet(true, false); // cancel if shut down before start
+					producer = new DataItemInputProducer<>(itemsFileBuff.getInput());
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
+			} finally {
+				itemsFileLock.unlock();
+			}
+			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
-				itemsBuffLock.lock();
-				if(itemsBuff != null) {
-					try {
-						itemsBuff.close();
-					} catch(final IOException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
-					}
-					isShutdown.compareAndSet(true, false); // cancel if shut down before start
-					itemsBuff.start();
-				}
 			} else {
 				//
 				try {
+					producer.setConsumer(this);
 					producer.start();
 					LOG.debug(Markers.MSG, "Started object producer {}", producer);
 				} catch(final IOException e) {
@@ -499,7 +513,7 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final Lock itemsBuffLock = new ReentrantLock();
+	private final Lock itemsFileLock = new ReentrantLock();
 	//
 	@Override
 	public void submit(final T dataItem)
@@ -508,22 +522,22 @@ implements LoadExecutor<T> {
 			if(isStarted.get()) {
 				super.submit(dataItem);
 			} else { // accumulate until started
-				itemsBuffLock.lock();
+				itemsFileLock.lock();
 				try {
-					if(itemsBuff == null) {
-						itemsBuff = new PersistentAccumulatorProducer<>(
-							dataCls, rtConfig, this.maxCount
-						);
-						itemsBuff.setConsumer(this);
+					if(itemsFileBuff == null) {
+						itemsFileBuff = new CSVFileItemOutput<>(dataCls);
 						LOG.debug(
-							Markers.MSG, "{}: not started yet, consuming into the temporary file",
-							getName()
+							Markers.MSG,
+							"{}: not started yet, consuming into the temporary file @ {}",
+							getName(), itemsFileBuff.getFilePath()
 						);
 					}
+					itemsFileBuff.write(dataItem);
+				} catch(final IOException | NoSuchMethodException e) {
+					throw new RejectedExecutionException(e);
 				} finally {
-					itemsBuffLock.unlock();
+					itemsFileLock.unlock();
 				}
-				itemsBuff.submit(dataItem);
 			}
 		} catch(final RejectedExecutionException e) {
 			counterRej.inc();
@@ -723,20 +737,25 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void shutdown() {
-		try {
-			if(producer != null) {
-				producer.interrupt(); // stop the producing right now
-				LOG.debug(
-					Markers.MSG, "Stopped the producer \"{}\" for \"{}\"", producer, getName()
-				);
+		if(isStarted.get() && !isShutdown.get()) {
+			try {
+				if(producer != null) {
+					producer.interrupt(); // stop the producing right now
+					LOG.debug(
+						Markers.MSG, "Stopped the producer \"{}\" for \"{}\"", producer, getName()
+					);
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to stop the producer: {}", producer);
+			} finally {
+				super.shutdown();
 			}
-			if(itemsBuff != null) {
-				itemsBuff.interrupt();
-			}
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to stop the producer: {}", producer);
-		} finally {
-			super.shutdown();
+		} else {
+			LOG.debug(
+				Markers.MSG,
+				"{}: ignoring the shutdown invocation because has not been started yet",
+				getName()
+			);
 		}
 	}
 	//
@@ -746,6 +765,9 @@ implements LoadExecutor<T> {
 		// interrupt the producing
 		if(isClosed.compareAndSet(false, true)) {
 			LOG.debug(Markers.MSG, "Invoked close for {}", getName());
+			if(itemsFileBuff != null) {
+				itemsFileBuff.getFilePath().toFile().delete();
+			}
 			interrupt();
 			try {
 				LOG.debug(Markers.MSG, "Forcing the shutdown");

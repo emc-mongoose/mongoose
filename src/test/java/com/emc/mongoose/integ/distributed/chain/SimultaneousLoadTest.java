@@ -1,30 +1,20 @@
 package com.emc.mongoose.integ.distributed.chain;
 //
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.load.builder.LoadBuilder;
-//
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.integ.tools.LogParser;
-import com.emc.mongoose.storage.adapter.atmos.SubTenant;
-import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
-import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 import com.emc.mongoose.util.scenario.Chain;
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 //
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -36,10 +26,10 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIEN
 /**
  Created by kurila on 17.07.15.
  */
-public class SimultaneousLoadTest {
+public class SimultaneousLoadTest
+extends DistributedLoadBuilderTestBase {
 	//
 	private final static String
-		RUN_ID = SimultaneousLoadTest.class.getCanonicalName(),
 		LOAD_SEQ[] = { "create", "read", "update", "append", "delete" };
 	private final static int
 		LOAD_LIMIT_TIME_SEC = 100,
@@ -48,50 +38,28 @@ public class SimultaneousLoadTest {
 	//
 	private static long DURATION_TOTAL_SEC = -1;
 	private static byte STD_OUT_CONTENT[] = null;
-	private static File FILE_LOG_PERF_SUM;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		RunTimeConfig.resetContext();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
-		rtConfig.set(RunTimeConfig.KEY_API_NAME, "atmos");
-		FILE_LOG_PERF_SUM = LogParser.getPerfSumFile(RUN_ID);
-		if(FILE_LOG_PERF_SUM.exists()) {
-			FILE_LOG_PERF_SUM.delete();
-		}
-		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig)) {
-			final Chain chainScenario = new Chain(
-				loadBuilder, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS, LOAD_SEQ, true
-			);
-			try(
-				final BufferingOutputStream
-					stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
-			) {
-				DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000;
-				chainScenario.run();
-				DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEC;
-				STD_OUT_CONTENT = stdOutBuffer.toByteArray();
-			}
-		}
-	}
-	//
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		final SubTenant st = new WSSubTenantImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("atmos").setProperties(rtConfig),
-			rtConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, SimultaneousLoadTest.class.getCanonicalName());
+		System.setProperty(RunTimeConfig.KEY_API_NAME, "atmos");
+		DistributedLoadBuilderTestBase.setUpClass();
+		final Chain chainScenario = new Chain(
+			LOAD_BUILDER_CLIENT, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS, LOAD_SEQ, true, false
 		);
-		st.delete(rtConfig.getStorageAddrs()[0]);
+		try(
+			final BufferingOutputStream
+				stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		) {
+			DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000;
+			chainScenario.run();
+			DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEC;
+			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
+		}
 	}
 	//
-	@Test
-	public void checkTotalDuration()
+	@Test public void checkTotalDuration()
 	throws Exception {
 		Assert.assertEquals(
 			"Actual duration is not equal to the expected",
@@ -99,8 +67,7 @@ public class SimultaneousLoadTest {
 		);
 	}
 	//
-	@Test
-	public void checkLogStdOutSummariesCount()
+	@Test public void checkLogStdOutSummariesCount()
 		throws Exception {
 		int countSummaries = 0;
 		try(
@@ -127,8 +94,7 @@ public class SimultaneousLoadTest {
 		);
 	}
 	//
-	@Test
-	public void checkLogFileSummariesCount()
+	@Test public void checkLogFileSummariesCount()
 		throws Exception {
 		boolean firstRow = true;
 		int countSummaries = 0;

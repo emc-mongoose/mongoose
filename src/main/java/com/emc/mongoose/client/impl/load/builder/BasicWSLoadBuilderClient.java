@@ -1,8 +1,12 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.FileDataItemInput;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
+import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
@@ -15,7 +19,6 @@ import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-client.jar
 import com.emc.mongoose.client.impl.load.executor.BasicWSLoadClient;
@@ -31,6 +34,7 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,14 +85,15 @@ implements WSLoadBuilderClient<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final BasicWSLoadBuilderClient<T, U> setInputFile(final String listFile)
 	throws RemoteException {
+		this.listFile = listFile;
 		if(listFile != null) {
 			try {
-				srcProducer = (FileProducer<T>) new FileProducer<>(
-					getMaxCount(), listFile, BasicWSObject.class
+				final FileDataItemInput<T> fileInput = new CSVFileItemInput<>(
+					Paths.get(listFile), (Class<T>) BasicWSObject.class
 				);
-				LOG.info(Markers.MSG, "Local data items will be read from file @ \"{}\"", listFile);
-				// adjusting the buffer size for the expected data items size
-				final long approxDataItemsSize = srcProducer.getApproxDataItemsSize();
+				final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
+					runTimeConfig.getBatchSize()
+				);
 				reqConf.setBuffSize(
 					approxDataItemsSize < Constants.BUFF_SIZE_LO ?
 						Constants.BUFF_SIZE_LO :
@@ -111,8 +116,6 @@ implements WSLoadBuilderClient<T, U> {
 	@Override  @SuppressWarnings("unchecked")
 	protected final U buildActually()
 	throws RemoteException {
-		//
-		WSLoadClient newLoadClient;
 		//
 		final Map<String, LoadSvc<T>> remoteLoadMap = new ConcurrentHashMap<>();
 		final Map<String, JMXConnector> remoteJMXConnMap = new ConcurrentHashMap<>();
@@ -162,20 +165,14 @@ implements WSLoadBuilderClient<T, U> {
 			//
 		}
 		//
-		newLoadClient = new BasicWSLoadClient<>(
-			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
-			runTimeConfig.getLoadLimitCount(), srcProducer
+		final DataItemInput<T> itemSrc = LoadBuilderBase.buildItemInput(
+			(Class<T>) BasicWSObject.class, reqConf, dataNodeAddrs, listFile, maxCount,
+			minObjSize, maxObjSize, objSizeBias
 		);
-		if(srcProducer != null && srcProducer.getConsumer() == null) {
-			LOG.debug(
-				Markers.MSG, "Append consumer {} for producer {}",
-				newLoadClient.getName(), srcProducer.getName()
-			);
-			srcProducer.setConsumer(newLoadClient);
-		}
-		srcProducer = null;
-		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		//
-		return (U) newLoadClient;
+		return (U) new BasicWSLoadClient<>(
+			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
+			runTimeConfig.getLoadLimitCount(), itemSrc
+		);
 	}
 }

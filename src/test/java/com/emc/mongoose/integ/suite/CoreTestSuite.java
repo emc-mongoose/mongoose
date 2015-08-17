@@ -1,18 +1,5 @@
 package com.emc.mongoose.integ.suite;
 //
-import com.emc.mongoose.integ.core.api.atmos.AtmosMultiRangeUpdateTest;
-import com.emc.mongoose.integ.core.api.atmos.AtmosReadUsingCSVInputTest;
-import com.emc.mongoose.integ.core.api.atmos.AtmosSingleRangeUpdateTest;
-import com.emc.mongoose.integ.core.api.atmos.AtmosUsePreExistingSubtenantTest;
-import com.emc.mongoose.integ.core.api.atmos.AtmosWriteByCountTest;
-//
-import com.emc.mongoose.integ.core.api.s3.S3ReadUsingBucketListingTest;
-import com.emc.mongoose.integ.core.api.s3.S3UsePreExistingBucketTest;
-//
-import com.emc.mongoose.integ.core.api.swift.SwiftReadUsingContainerListingTest;
-import com.emc.mongoose.integ.core.api.swift.SwiftUsePreExistingAuthTokenTest;
-import com.emc.mongoose.integ.core.api.swift.SwiftUsePreExistingContainerTest;
-//
 import com.emc.mongoose.integ.core.rampup.CustomRampupTest;
 import com.emc.mongoose.integ.core.rampup.DefaultRampupTest;
 //
@@ -40,20 +27,10 @@ import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 /**
- * Created by olga on 03.07.15.
+ * Created by olga on 03.07.15.B
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	AtmosMultiRangeUpdateTest.class,
-	AtmosReadUsingCSVInputTest.class,
-	AtmosSingleRangeUpdateTest.class,
-	AtmosUsePreExistingSubtenantTest.class,
-	AtmosWriteByCountTest.class,
-	S3UsePreExistingBucketTest.class,
-	S3ReadUsingBucketListingTest.class,
-	SwiftReadUsingContainerListingTest.class,
-	SwiftUsePreExistingAuthTokenTest.class,
-	SwiftUsePreExistingContainerTest.class,
 	DefaultWriteTest.class,
 	WriteRandomSizedItemsTest.class,
 	ReadZeroSizeItemsTest.class,

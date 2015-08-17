@@ -129,19 +129,7 @@ implements Externalizable {
 	public static void initContext() {
 		RunTimeConfig instance = RunTimeConfig.getContext();
 		if(instance == null) {
-			instance = new RunTimeConfig();
-			instance.loadProperties();
-			DEFAULT_INSTANCE = instance;
-			final String
-				runId = System.getProperty(KEY_RUN_ID),
-				runMode = System.getProperty(KEY_RUN_MODE);
-			if(runId != null && runId.length() > 0) {
-				instance.set(KEY_RUN_ID, runId);
-			}
-			if(runMode != null && runMode.length() > 0) {
-				instance.set(KEY_RUN_MODE, runMode);
-			}
-			setContext(instance);
+			resetContext();
 		}
 	}
 	//
@@ -150,7 +138,19 @@ implements Externalizable {
 	}
 	//
 	public static void resetContext() {
-		setContext(DEFAULT_INSTANCE.clone());
+		final RunTimeConfig instance = new RunTimeConfig();
+		instance.loadProperties();
+		DEFAULT_INSTANCE = instance;
+		final String
+			runId = System.getProperty(KEY_RUN_ID),
+			runMode = System.getProperty(KEY_RUN_MODE);
+		if(runId != null && runId.length() > 0) {
+			instance.set(KEY_RUN_ID, runId);
+		}
+		if(runMode != null && runMode.length() > 0) {
+			instance.set(KEY_RUN_MODE, runMode);
+		}
+		setContext(instance);
 	}
 	//
 	public void loadProperties() {

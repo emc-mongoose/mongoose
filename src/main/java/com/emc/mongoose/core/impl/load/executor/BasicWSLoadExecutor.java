@@ -1,15 +1,15 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.io.DirectMemIOWorkerFactory;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
@@ -73,13 +73,13 @@ implements WSLoadExecutor<T> {
 	@SuppressWarnings("unchecked")
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final String listFile, final long maxCount,
+		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
 		final int countUpdPerReq
 	) {
 		super(
 			(Class<T>) BasicWSObject.class,
-			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
+			runTimeConfig, reqConfig, addrs, connCountPerNode, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
 		wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
@@ -143,7 +143,7 @@ implements WSLoadExecutor<T> {
 		//
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
-				ioReactorConfigBuilder.build(), new DirectMemIOWorkerFactory(getName())
+				ioReactorConfigBuilder.build(), new IOUtils.IOWorkerFactory(getName())
 			);
 		} catch(final IOReactorException e) {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);

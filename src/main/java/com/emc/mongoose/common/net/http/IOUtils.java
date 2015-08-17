@@ -3,6 +3,7 @@ package com.emc.mongoose.common.net.http;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 //
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -15,96 +16,71 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
-//import java.util.HashMap;
-//import java.util.Map;
 /**
  Created by kurila on 17.03.15.
  */
 public final class IOUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	/*
-	private final static ThreadLocal<Map<Integer, ByteBuffer>>
-		THRLOC_BUFF_SIZE_MAP = new ThreadLocal<>();
-	//
-	public static long consumeQuietly(final ContentDecoder in) {
-		long doneByteCount = 0;
-		//
-		Map<Integer, ByteBuffer> buffSizeMap = THRLOC_BUFF_SIZE_MAP.get();
-		if(buffSizeMap == null) {
-			buffSizeMap = new HashMap<>();
-			THRLOC_BUFF_SIZE_MAP.set(buffSizeMap);
-		}
-		//
-		int lastByteCount, nextByteCount = BUFF_SIZE_LO;
-		ByteBuffer buff;
-		//
-		try {
-			while(!in.isCompleted()) {
-				//
-				buff = buffSizeMap.get(nextByteCount);
-				if(buff == null) {
-					buff = ByteBuffer.allocateDirect(nextByteCount);
-					buffSizeMap.put(nextByteCount, buff);
-					LOG.debug(
-						Markers.MSG,
-						"Thread local direct memory buffer map changed: count: {}, sizes: {}",
-						buffSizeMap.size(), buffSizeMap.keySet()
-					);
-				} else {
-					buff.clear();
-				}
-				//
-				lastByteCount = in.read(buff);
-				// try to adapt the direct buffer size
-				if(lastByteCount > 0) {
-					doneByteCount += lastByteCount;
-					if(lastByteCount >= buff.capacity()) { // increase buffer size
-						if(nextByteCount == BUFF_SIZE_LO) {
-							nextByteCount *= 3;
-						} else if(nextByteCount < BUFF_SIZE_HI) {
-							nextByteCount *= 4;
-						} // else keep this buffer size
-					} else if(lastByteCount < buff.capacity() / 2) { // decrease buffer size
-						if(nextByteCount / 3 > BUFF_SIZE_LO) {
-							nextByteCount /= 4;
-						} else if(nextByteCount > BUFF_SIZE_LO) {
-							nextByteCount /= 3;
-						} // else keep this buffer size
-					} // else keep this buffer size
-				} else if(lastByteCount < 0) {
-					break;
-				} else { // decrease buffer size
-					if(nextByteCount / 3 > BUFF_SIZE_LO) {
-						nextByteCount /= 4;
-					} else if(nextByteCount > BUFF_SIZE_LO) {
-						nextByteCount /= 3;
-					} // else keep this buffer size
-				}
-				//
-				LOG.trace(
-					Markers.MSG, "Byte count: done {}, last {}, next {}",
-					doneByteCount, lastByteCount, nextByteCount
-				);
-			}
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Content reading failure");
-		}
-		//
-		return doneByteCount;
-	}*/
-	//
-	private final static ThreadLocal<ByteBuffer[]> THRLOC_BUFF_SEQ = new ThreadLocal<>();
 	private final static int
 		BUFF_COUNT = (int) (Math.log(BUFF_SIZE_HI / BUFF_SIZE_LO) / Math.log(4) + 1);
 	//
-	public static long consumeQuietly(final ContentDecoder in) {
+	private static class IOWorker
+	extends Thread {
 		//
-		ByteBuffer[] buffs = THRLOC_BUFF_SEQ.get();
-		if(buffs == null) {
-			buffs = new ByteBuffer[BUFF_COUNT];
-			THRLOC_BUFF_SEQ.set(buffs);
+		private final ByteBuffer[] ioBuffSeq = new ByteBuffer[BUFF_COUNT];
+		//
+		protected IOWorker(final Runnable task, final String name) {
+			super(task, name);
 		}
+		//
+		@Override
+		public void run() {
+			try {
+				super.run();
+			} finally {
+				releaseMem();
+			}
+		}
+		//
+		private void releaseMem() {
+			ByteBuffer bbuff;
+			for(int i = 0; i < ioBuffSeq.length; i++) {
+				bbuff = ioBuffSeq[i];
+				if(bbuff != null) {
+					bbuff.clear();
+					LOG.debug(
+						Markers.MSG, "{}: release {} bytes of direct memory",
+						getName(), bbuff.capacity()
+					);
+					ioBuffSeq[i] = null;
+				}
+			}
+			bbuff = null;
+		}
+	}
+	//
+	public final static class IOWorkerFactory
+	extends GroupThreadFactory {
+		//
+		public IOWorkerFactory(final String threadNamePrefix) {
+			super(threadNamePrefix);
+		}
+		//
+		@Override
+		public Thread newThread(final Runnable task) {
+			return new IOWorker(task, getName() + "#" + threadNumber.incrementAndGet());
+		}
+	}
+	//
+	public static long consumeQuietlyBIO(final ContentDecoder in)
+	throws IllegalStateException {
+		//
+		final Thread currThread = Thread.currentThread();
+		if(!IOWorker.class.isInstance(currThread)) {
+			throw new IllegalStateException();
+		}
+		final ByteBuffer ioBuffSeq[] = ((IOWorker) currThread).ioBuffSeq;
 		//
 		int i = 0, nextSize = BUFF_SIZE_LO, doneSize;
 		long doneSizeSum = 0;
@@ -113,14 +89,15 @@ public final class IOUtils {
 		try {
 			while(!in.isCompleted()) {
 				// obtain the buffer
-				buff = buffs[i];
+				buff = ioBuffSeq[i];
 				if(buff == null) {
 					buff = ByteBuffer.allocateDirect(nextSize);
-					buffs[i] = buff;
+					LOG.debug(Markers.MSG, "allocated {} bytes of direct memory", nextSize);
+					ioBuffSeq[i] = buff;
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						final StringBuilder sb = new StringBuilder(Thread.currentThread().getName())
 							.append(": ");
-						for(final ByteBuffer bb : buffs) {
+						for(final ByteBuffer bb : ioBuffSeq) {
 							if(bb != null) {
 								sb.append(SizeUtil.formatSize(bb.capacity())).append(", ");
 							}
@@ -160,17 +137,5 @@ public final class IOUtils {
 		}
 		//
 		return doneSizeSum;
-	}
-	//
-	public static void releaseUsedDirectMemory() {
-		final ByteBuffer buffSeq[] = THRLOC_BUFF_SEQ.get();
-		if(buffSeq != null) {
-			for(int i = 0; i < buffSeq.length; i ++) {
-				if(buffSeq[i] != null) {
-					buffSeq[i].clear();
-					buffSeq[i] = null;
-				}
-			}
-		}
 	}
 }

@@ -10,10 +10,8 @@ import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.nio.ContentDecoder;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.nio.IOControl;
-
+//
 import java.net.URISyntaxException;
 /**
  Created by kurila on 29.09.14.

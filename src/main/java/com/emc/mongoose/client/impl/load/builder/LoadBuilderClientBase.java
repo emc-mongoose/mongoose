@@ -9,8 +9,6 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
-// mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.model.FileProducer;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 // mongoose-server-api.jar
@@ -37,10 +35,11 @@ implements LoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected FileProducer<T> srcProducer = null;
-	protected String[] dataNodeAddrs = null;
+	protected String listFile = null, dataNodeAddrs[] = null;
 	protected volatile RunTimeConfig runTimeConfig;
 	protected volatile RequestConfig<T> reqConf = getDefaultRequestConfig();
+	protected long maxCount = 0, minObjSize, maxObjSize;
+	protected float objSizeBias;
 	//
 	public LoadBuilderClientBase()
 	throws IOException {
@@ -100,11 +99,15 @@ implements LoadBuilderClient<T, U> {
 			dataNodeAddrs = newAddrs;
 		}
 		//
-		String dataMetaInfoFile = null;
+		setMaxCount(runTimeConfig.getLoadLimitCount());
+		setMinObjSize(runTimeConfig.getDataSizeMin());
+		setMaxObjSize(runTimeConfig.getDataSizeMax());
+		setObjSizeBias(runTimeConfig.getDataSizeBias());
+		//
 		try {
-			dataMetaInfoFile = this.runTimeConfig.getDataSrcFPath();
-			if(dataMetaInfoFile!=null && dataMetaInfoFile.length() > 0) {
-				final Path dataItemsListPath = Paths.get(dataMetaInfoFile);
+			final String listFile = this.runTimeConfig.getDataSrcFPath();
+			if(listFile != null && listFile.length() > 0) {
+				final Path dataItemsListPath = Paths.get(listFile);
 				if(!Files.exists(dataItemsListPath)) {
 					LOG.warn(
 						Markers.ERR, "Data items source file \"{}\" doesn't exist",
@@ -116,9 +119,9 @@ implements LoadBuilderClient<T, U> {
 						dataItemsListPath
 					);
 				} else {
-					setInputFile(dataMetaInfoFile);
+					setInputFile(listFile);
 					// disable API-specific producers
-					reqConf.setAnyDataProducerEnabled(false);
+					reqConf.setContainerInputEnabled(false);
 					// disable file-based producers on the load servers side
 					for(final LoadBuilderSvc<T, U> nextLoadBuilder : values()) {
 						nextLoadBuilder.setInputFile(null);
@@ -128,7 +131,7 @@ implements LoadBuilderClient<T, U> {
 		} catch(final NoSuchElementException e) {
 			LOG.warn(Markers.ERR, "No \"data.src.fpath\" property available");
 		} catch(final InvalidPathException e) {
-			LOG.warn(Markers.ERR, "Invalid data metainfo src file path: {}", dataMetaInfoFile);
+			LOG.warn(Markers.ERR, "Invalid data metainfo src file path: {}", listFile);
 		} catch(final SecurityException e) {
 			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
@@ -173,6 +176,7 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public final LoadBuilderClient<T, U> setMaxCount(final long maxCount)
 	throws IllegalArgumentException, RemoteException {
+		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
@@ -184,6 +188,7 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public final LoadBuilderClient<T, U> setMinObjSize(final long minObjSize)
 	throws IllegalArgumentException, RemoteException {
+		this.minObjSize = minObjSize;
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
@@ -194,7 +199,8 @@ implements LoadBuilderClient<T, U> {
 	//
 	@Override
 	public final LoadBuilderClient<T, U> setObjSizeBias(final float objSizeBias)
-		throws IllegalArgumentException, RemoteException {
+	throws IllegalArgumentException, RemoteException {
+		this.objSizeBias = objSizeBias;
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
@@ -206,6 +212,7 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public final LoadBuilderClient<T, U> setMaxObjSize(final long maxObjSize)
 	throws IllegalArgumentException, RemoteException {
+		this.maxObjSize = maxObjSize;
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);

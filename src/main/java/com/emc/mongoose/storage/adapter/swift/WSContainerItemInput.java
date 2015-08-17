@@ -36,23 +36,25 @@ extends GenericContainerItemInputBase<T> {
 	//
 	private boolean isInsideObjectToken = false, eof = false;
 	private String lastId = null;
-	private long lastSize = -1, count = 0;
+	private long lastSize = -1, doneCount = 0;
 	//
 	public WSContainerItemInput(
-		final WSContainerImpl<T> container, final String nodeAddr, final Class<T> itemCls
+		final WSContainerImpl<T> container, final String nodeAddr, final Class<T> itemCls,
+	    final long maxCount
 	) throws IllegalStateException {
-		super(container, nodeAddr, itemCls);
+		super(container, nodeAddr, itemCls, maxCount);
 	}
 	//
 	@Override
 	protected final void loadNextPage()
 	throws EOFException, IOException {
-		if(eof) {
+		final int countLimit = (int) Math.min(container.getBatchSize(), maxCount - doneCount);
+		if(eof || countLimit == 0) {
 			throw new EOFException();
 		}
 		// execute the request
 		final HttpResponse resp = WSContainerImpl.class.cast(container).execute(
-			nodeAddr, WSRequestConfig.METHOD_GET, lastId, container.getBatchSize()
+			nodeAddr, WSRequestConfig.METHOD_GET, lastId, countLimit
 		);
 		// response validation
 		if(resp == null) {
@@ -83,14 +85,15 @@ extends GenericContainerItemInputBase<T> {
 		}
 		// parse the response content
 		try(final InputStream in = respEntity.getContent()) {
-			final long lastTimeCount = count;
+			final long lastTimeCount = doneCount;
 			handleJsonInputStream(in);
-			if(lastTimeCount - count == 0) {
+			if(lastTimeCount - doneCount == 0) {
 				throw new EOFException();
 			}
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.info("Listed {} items the last time", count - lastTimeCount);
-			}
+			LOG.debug(
+				Markers.MSG, "Listed {} items the last time, last oid is ",
+				doneCount - lastTimeCount, lastId
+			);
 		}
 	}
 	//
@@ -127,7 +130,7 @@ extends GenericContainerItemInputBase<T> {
 										);
 										if(nextItem != null) {
 											items.add(nextItem);
-											count ++;
+											doneCount ++;
 											isEmptyArray = false;
 										}
 									} catch(final IllegalStateException e) {

@@ -1,9 +1,9 @@
 package com.emc.mongoose.core.api.io.req;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.model.Producer;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
@@ -62,9 +62,9 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	RequestConfig<T> setAnyDataProducerEnabled(final boolean enabled);
-	boolean getAnyDataProducerEnabled();
-	Producer<T> getAnyDataProducer(final long maxCount, final String addr);
+	RequestConfig<T> setContainerInputEnabled(final boolean enabled);
+	boolean isContainerListingEnabled();
+	DataItemInput<T> getContainerListInput(final long maxCount, final String addr);
 	//
 	void configureStorage(final String storageAddrs[])
 	throws IllegalStateException;

@@ -8,11 +8,13 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //mongoose-server-api.jar
+import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-core-impl.jar
@@ -24,6 +26,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,7 +47,7 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
+	public final BasicWSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
 		super.setProperties(clientConfig);
 		final String runMode = clientConfig.getRunMode();
 		if (!runMode.equals(Constants.RUN_MODE_SERVER)
@@ -59,14 +62,10 @@ implements WSLoadBuilderSvc<T, U> {
 	public final String buildRemotely()
 	throws RemoteException {
 		final WSLoadSvc<T> loadSvc = (WSLoadSvc<T>) build();
-		try {
-			ServiceUtils.create(loadSvc);
-			if (configTable != null) {
-				LOG.info(Markers.MSG, configTable);
-				configTable = null;
-			}
-		} catch (final DuplicateSvcNameException e) {
-			throw new DuplicateSvcNameException();
+		ServiceUtils.create(loadSvc);
+		if(configTable != null) {
+			LOG.info(Markers.MSG, configTable);
+			configTable = null;
 		}
 		return loadSvc.getName();
 	}
@@ -110,9 +109,14 @@ implements WSLoadBuilderSvc<T, U> {
 			);
 		}
 		//
+		final DataItemInput<T> itemSrc = buildItemInput(
+			BasicWSObject.class, wsReqConf, dataNodeAddrs, listFile, maxCount,
+			minObjSize, maxObjSize, objSizeBias
+		);
+		//
 		return (U) new BasicWSLoadSvc<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs,
-			threadsPerNodeMap.get(reqConf.getLoadType()), listFile,
+			threadsPerNodeMap.get(reqConf.getLoadType()), itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}
@@ -128,6 +132,12 @@ implements WSLoadBuilderSvc<T, U> {
 			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");
 		}
 		LOG.info(Markers.MSG, "Server started and waiting for the requests");
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		ServiceUtils.close(this);
 	}
 	//
 	@Override

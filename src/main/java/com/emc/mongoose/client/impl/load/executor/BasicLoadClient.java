@@ -16,6 +16,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -23,6 +24,7 @@ import com.emc.mongoose.core.api.io.req.RequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
+import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 // mongoose-server-api.jar
@@ -120,7 +122,7 @@ implements LoadClient<T> {
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap, final RequestConfig<T> reqConfig,
-		final long maxCount, final Producer<T> producer
+		final long maxCount, final DataItemInput<T> itemSrc
 	) {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
@@ -166,7 +168,15 @@ implements LoadClient<T> {
 			throw new IllegalStateException("Failed to clone the request config");
 		}
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		this.producer = producer;
+		//
+		if(itemSrc != null) {
+			producer = new DataItemInputProducer<>(itemSrc);
+			try {
+				producer.setConsumer(this);
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
+			}
+		}
 		//
 		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
 		//
@@ -187,13 +197,19 @@ implements LoadClient<T> {
 		this.remoteJMXConnMap = remoteJMXConnMap;
 		////////////////////////////////////////////////////////////////////////////////////////////
 		mBeanSrvConnMap = new HashMap<>();
+		JMXConnector jmxConnector;
 		for(final String addr: loadSvcAddrs) {
-			try {
-				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to obtain MBean server connection for {}", addr
-				);
+			jmxConnector = remoteJMXConnMap.get(addr);
+			if(jmxConnector != null) {
+				try {
+					mBeanSrvConnMap.put(addr, jmxConnector.getMBeanServerConnection());
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "Failed to obtain MBean server connection for {}", addr
+					);
+				}
+			} else {
+				LOG.warn(Markers.ERR, "No JMX connection to {}", addr);
 			}
 		}
 		////////////////////////////////////////////////////////////////////////////////////////////

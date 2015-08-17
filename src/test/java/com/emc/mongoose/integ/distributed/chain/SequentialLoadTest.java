@@ -1,33 +1,21 @@
 package com.emc.mongoose.integ.distributed.chain;
 //
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.load.builder.LoadBuilder;
-//
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.integ.tools.LogParser;
-import com.emc.mongoose.storage.adapter.s3.Bucket;
-import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
-import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
 import com.emc.mongoose.util.scenario.Chain;
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 //
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+//
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -38,7 +26,8 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIEN
 /**
  Created by kurila on 17.07.15.
  */
-public class SequentialLoadTest {
+public class SequentialLoadTest
+extends DistributedLoadBuilderTestBase {
 	//
 	private final static String
 		RUN_ID = SequentialLoadTest.class.getCanonicalName(),
@@ -48,55 +37,30 @@ public class SequentialLoadTest {
 		PRECISION_SEC = 10,
 		COUNT_STEPS = LOAD_SEQ.length;
 	//
-	private static Logger LOG;
 	private static long DURATION_TOTAL_SEC = -1;
 	private static byte STD_OUT_CONTENT[] = null;
-	private static File FILE_LOG_PERF_SUM;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		//  remove log dir w/ previous logs
-		LogParser.removeLogDirectory(RUN_ID);
-		LOG = LogManager.getLogger();
-		RunTimeConfig.resetContext();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
-		rtConfig.set(RunTimeConfig.KEY_API_NAME, "s3");
-		FILE_LOG_PERF_SUM = LogParser.getPerfSumFile(RUN_ID);
-		if(FILE_LOG_PERF_SUM.exists()) {
-			FILE_LOG_PERF_SUM.delete();
-		}
-		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig)) {
-			final Chain chainScenario = new Chain(
-				loadBuilder, LOAD_JOB_TIME_LIMIT_SEC, TimeUnit.SECONDS, LOAD_SEQ, false
-			);
-			try(
-				final BufferingOutputStream
-					stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
-			) {
-				DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000;
-				chainScenario.run();
-				DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEC;
-				STD_OUT_CONTENT = stdOutBuffer.toByteArray();
-			}
-		}
-	}
-	//
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		final Bucket bucket = new WSBucketImpl(
-			(WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
-			rtConfig.getString(RunTimeConfig.KEY_API_S3_BUCKET), false
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_API_NAME, "s3");
+		DistributedLoadBuilderTestBase.setUpClass();
+		final Chain chainScenario = new Chain(
+			LOAD_BUILDER_CLIENT, LOAD_JOB_TIME_LIMIT_SEC, TimeUnit.SECONDS, LOAD_SEQ, false, true
 		);
-		bucket.delete(rtConfig.getStorageAddrs()[0]);
+		try(
+			final BufferingOutputStream
+				stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		) {
+			DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000;
+			chainScenario.run();
+			DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEC;
+			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
+		}
 	}
 	//
-	@Test
-	public void checkTotalDuration()
+	@Test public void checkTotalDuration()
 	throws Exception {
 		Assert.assertTrue(
 			"Actual duration (" + DURATION_TOTAL_SEC + "[s]) is much more than expected (" +
@@ -105,8 +69,7 @@ public class SequentialLoadTest {
 		);
 	}
 	//
-	@Test
-	public void checkLogStdOutSummariesCount()
+	protected void checkLogStdOutSummariesCount()
 		throws Exception {
 		int countSummaries = 0;
 		try(
@@ -133,8 +96,7 @@ public class SequentialLoadTest {
 		);
 	}
 	//
-	@Test
-	public void checkLogFileSummariesCount()
+	protected void checkLogFileSummariesCount()
 	throws Exception {
 		boolean firstRow = true;
 		int countSummaries = 0;

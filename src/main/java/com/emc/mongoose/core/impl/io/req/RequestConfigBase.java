@@ -68,7 +68,7 @@ implements RequestConfig<T> {
 		if(reqConf2Clone != null) {
 			setDataSource(reqConf2Clone.getDataSource());
 			setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
-			setAnyDataProducerEnabled(reqConf2Clone.getAnyDataProducerEnabled());
+			setContainerInputEnabled(reqConf2Clone.isContainerListingEnabled());
 			setAPI(reqConf2Clone.getAPI());
 			setUserName(reqConf2Clone.getUserName());
 			setPort(reqConf2Clone.getPort());
@@ -91,7 +91,7 @@ implements RequestConfig<T> {
 		requestConfigBranch
 			.setDataSource(dataSrc)
 			.setVerifyContentFlag(verifyContentFlag)
-			.setAnyDataProducerEnabled(anyDataProducerEnabled)
+			.setContainerInputEnabled(anyDataProducerEnabled)
 			.setAPI(api)
 			.setUserName(userName)
 			.setPort(port)
@@ -235,12 +235,12 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final boolean getAnyDataProducerEnabled() {
+	public final boolean isContainerListingEnabled() {
 		return anyDataProducerEnabled;
 	}
 	//
 	@Override
-	public final RequestConfigBase<T> setAnyDataProducerEnabled(final boolean enabledFlag) {
+	public final RequestConfigBase<T> setContainerInputEnabled(final boolean enabledFlag) {
 		this.anyDataProducerEnabled = enabledFlag;
 		return this;
 	}
@@ -296,7 +296,7 @@ implements RequestConfig<T> {
 		out.writeObject(getSecret());
 		out.writeObject(getNameSpace());
 		out.writeObject(getDataSource());
-		out.writeBoolean(getAnyDataProducerEnabled());
+		out.writeBoolean(isContainerListingEnabled());
 		out.writeBoolean(getVerifyContentFlag());
 		out.writeInt(getReqSleepMilliSec());
 	}
@@ -320,7 +320,7 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got namespace {}", secret);
 		setDataSource(DataSource.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
-		setAnyDataProducerEnabled(Boolean.class.cast(in.readBoolean()));
+		setContainerInputEnabled(Boolean.class.cast(in.readBoolean()));
 		LOG.trace(Markers.MSG, "Got any producer enabled flag {}", anyDataProducerEnabled);
 		setVerifyContentFlag(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got verify content flag {}", verifyContentFlag);

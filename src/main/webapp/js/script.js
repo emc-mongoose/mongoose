@@ -789,25 +789,22 @@ function charts(chartsArray) {
 	//
 	var CRITICAL_DOTS_COUNT = 996;
 	//
-	var colorsList18 = [
-		"#0000CD",
-		"#006400",
-		"#8B0000",
-		"#8B008B",
-		"#008B8B",
-		"#808000",
-		"#FF8C00",
-		"#556B2F",
-		"#8A2BE2",
-		"#00FA9A",
-		"#C71585",
-		"#8B4513",
-		"#00CED1",
-		"#191970",
-		"#2F4F4F",
-		"#FF00FF",
-		"#BDB76B",
-		"#BC8F8F"
+	var predefinedColors = [
+		// primary
+		"#0000ff", // b
+		"#007f00", // g
+		"#c00000", // r
+		// secondary
+		"#00c0c0", // c
+		"#c000c0", // m
+		"#c0c000", // y
+		// tertiary
+		"#00c07f", // spring green
+		"#7fc000", // chartreuse
+		"#c07f00", // orange
+		"#c0007f", // rose
+		"#7f00c0", // violet
+		"#007fc0" // azure
 	];
 	var CHART_MODES = [AVG, MIN_1, MIN_5, MIN_15];
     //
@@ -1050,9 +1047,9 @@ function charts(chartsArray) {
 			])
 			.range([height, 0]);
 		//
-		var color = d3.scale.ordinal().
-			range(colorsList18);
-		color.domain(data.map(function(d) { return d.name.id; }));
+		var color = d3.scale.ordinal()
+			.domain(data.map(function(d) { return d.name.id; }))
+			.range(predefinedColors);
 		//
 		var xAxis = d3.svg.axis()
 			.scale(x)
@@ -1723,8 +1720,9 @@ function charts(chartsArray) {
 					])
 					.range([height, 0]);
 				//
-				var color = d3.scale.ordinal().range(colorsList18);
-				color.domain(data.map(function(d) { return d.loadType; }));
+				var color = d3.scale.ordinal()
+					.domain(data.map(function(d) { return d.loadType; }))
+					.range(predefinedColors);
 				//
 				var xAxis = d3.svg.axis()
 					.scale(x)
@@ -2486,8 +2484,8 @@ function charts(chartsArray) {
 						}
 					});
 					var color = d3.scale.ordinal()
-						.range(colorsList18);
-					color.domain(loadRampupSizesArray.map(function(d) { return d; }));
+						.domain(loadRampupSizesArray.map(function(d) { return d; }))
+						.range(predefinedColors);
 					//
 					var xAxis = d3.svg.axis()
 						.scale(x)

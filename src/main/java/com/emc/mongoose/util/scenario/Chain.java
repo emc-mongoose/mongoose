@@ -41,23 +41,16 @@ implements Runnable {
 	private final List<LoadExecutor> loadJobSeq = new LinkedList<>();
 	private final long timeOut;
 	private final TimeUnit timeUnit;
-	private final boolean isConcurrent;
+	private final boolean flagConcurrent;
 	//
 	public Chain(
 		final LoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
-		final String[] loadTypesSeq, final boolean isConcurrent
+		final String[] loadTypesSeq,
+		final boolean flagConcurrent, final boolean flagUseLocalItemList
 	) {
 		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
 		this.timeUnit = timeOut > 0 ? timeUnit : TimeUnit.DAYS;
-		this.isConcurrent = isConcurrent;
-		//
-		if(!isConcurrent) {
-			try {
-				loadBuilder.getRequestConfig().setAnyDataProducerEnabled(false);
-			} catch(final RemoteException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to disable *any* data producer");
-			}
-		}
+		this.flagConcurrent = flagConcurrent;
 		//
 		LoadExecutor prevLoadJob = null, nextLoadJob;
 		for(final String loadTypeStr : loadTypesSeq) {
@@ -66,9 +59,11 @@ implements Runnable {
 				loadBuilder.setLoadType(IOTask.Type.valueOf(loadTypeStr.toUpperCase()));
 				nextLoadJob = loadBuilder.build();
 				if(prevLoadJob == null) {
-					// prevent the producer creation for next load jobs
+					// prevent any external item source creation for the subsequent load jobs
 					loadBuilder.setInputFile(null);
-					loadBuilder.getRequestConfig().setAnyDataProducerEnabled(false);
+					if(flagConcurrent || flagUseLocalItemList) {
+						loadBuilder.getRequestConfig().setContainerInputEnabled(false);
+					}
 				} else {
 					prevLoadJob.setConsumer(nextLoadJob);
 				}
@@ -84,7 +79,7 @@ implements Runnable {
 	//
 	@Override
 	public final void run() {
-		if(isConcurrent) {
+		if(flagConcurrent) {
 			LOG.info(Markers.MSG, "Execute load jobs in parallel");
 			for(int i = loadJobSeq.size() - 1; i >= 0; i --) {
 				try {
@@ -184,9 +179,12 @@ implements Runnable {
 			//
 			final String[] loadTypeSeq = runTimeConfig.getScenarioChainLoad();
 			final boolean isConcurrent = runTimeConfig.getScenarioChainConcurrentFlag();
+			final boolean useLocalItemList = runTimeConfig.getBoolean(
+				RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER
+			);
 			//
 			final Chain chainScenario = new Chain(
-				loadBuilder, timeOut, timeUnit, loadTypeSeq, isConcurrent
+				loadBuilder, timeOut, timeUnit, loadTypeSeq, isConcurrent, useLocalItemList
 			);
 			chainScenario.run();
 		} catch(final Exception e) {

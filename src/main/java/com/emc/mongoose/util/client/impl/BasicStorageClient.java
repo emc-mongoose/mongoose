@@ -2,7 +2,6 @@ package com.emc.mongoose.util.client.impl;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
@@ -16,7 +15,6 @@ import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 import com.emc.mongoose.core.impl.load.model.DataItemOutputConsumer;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
-import org.apache.logging.log4j.LogManager;
 //
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -84,7 +82,7 @@ implements StorageClient<T> {
 		final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		//
-		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
+		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
@@ -118,7 +116,7 @@ implements StorageClient<T> {
 		final long maxCount, final int threadCount, final boolean verifyContentFlag
 	) throws IllegalStateException, InterruptedException, IOException {
 		loadBuilder.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
-		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
+		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
@@ -148,7 +146,7 @@ implements StorageClient<T> {
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long maxCount, final int threadCount
 	) throws IllegalStateException, InterruptedException, IOException {
-		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
+		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
@@ -178,7 +176,7 @@ implements StorageClient<T> {
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long maxCount, final int threadCount, final int countPerTime
 	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
-		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
+		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
@@ -218,7 +216,7 @@ implements StorageClient<T> {
 		final long maxCount, final int threadCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
-		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
+		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
 		try(

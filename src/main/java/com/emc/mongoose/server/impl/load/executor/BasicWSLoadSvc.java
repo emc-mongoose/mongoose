@@ -6,6 +6,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -36,12 +38,12 @@ implements WSLoadSvc<T> {
 	//
 	public BasicWSLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
-		final int threadsPerNode, final String listFile, final long maxCount,
+		final int threadsPerNode, final DataItemInput<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
 		final int countUpdPerReq
 	) {
 		super(
-			runTimeConfig, reqConfig, addrs, threadsPerNode, listFile, maxCount,
+			runTimeConfig, reqConfig, addrs, threadsPerNode, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
 		// by default, may be overriden later externally:

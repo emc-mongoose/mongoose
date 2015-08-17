@@ -1,14 +1,14 @@
-package com.emc.mongoose.integ.core.api.atmos;
+package com.emc.mongoose.integ.storage.adapter.atmos;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 import com.emc.mongoose.storage.mock.impl.web.request.AtmosRequestHandler;
 import com.emc.mongoose.util.client.api.StorageClient;
-import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -18,7 +18,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.08.15.
  */
-public class AtmosUsePreExistingSubtenantTest {
+public class AtmosUsePreExistingSubtenantTest
+extends StandaloneClientTestBase {
 	//
 	private final static long COUNT_TO_WRITE = 10000;
 	//
@@ -29,10 +30,10 @@ public class AtmosUsePreExistingSubtenantTest {
 	public static void setUpClass()
 	throws Exception {
 		//
-		RunTimeConfig.resetContext();
-		RunTimeConfig.getContext().set(
+		System.setProperty(
 			RunTimeConfig.KEY_RUN_ID, AtmosUsePreExistingSubtenantTest.class.getCanonicalName()
 		);
+		StandaloneClientTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
@@ -44,11 +45,11 @@ public class AtmosUsePreExistingSubtenantTest {
 		);
 		SUBTENANT.create("127.0.0.1");
 		if(!SUBTENANT.exists("127.0.0.1")) {
-			Assert.fail("Failed to pre-create the bucket for test");
+			Assert.fail("Failed to pre-create the subtenant for test");
 		}
 		//
 		try(
-			final StorageClient<WSObject> client = new BasicWSClientBuilder<>()
+			final StorageClient<WSObject> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("atmos")
@@ -63,6 +64,7 @@ public class AtmosUsePreExistingSubtenantTest {
 	public static void tearDownClass()
 	throws Exception {
 		SUBTENANT.delete(RunTimeConfig.getContext().getStorageAddrs()[0]);
+		StandaloneClientTestBase.tearDownClass();
 	}
 	//
 	@Test

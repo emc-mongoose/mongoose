@@ -2,6 +2,8 @@ package com.emc.mongoose.common.log.appenders;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.Markers;
+import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.ThreadContext;
 //
 import org.apache.logging.log4j.core.Filter;
@@ -24,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  Created by andrey on 13.03.15.
@@ -84,7 +87,7 @@ extends AbstractAppender {
 		return fName;
 	}
 	//
-	private final static int DEFAULT_SIZE_BUFF = 0x300000; // 3MB
+	private final static int DEFAULT_SIZE_BUFF = 0x400000; // 3MB
 	private final static long DEFAULT_SIZE_TO_ROTATE = 0x1000000; // 16MB
 	//
 	@PluginFactory
@@ -146,27 +149,27 @@ extends AbstractAppender {
 	//
 	@Override
 	public final void append(final LogEvent event) {
-		try {
-			final String currRunId;
-			final Map<String, String> evtCtxMap = event.getContextMap();
-			//
-			if(evtCtxMap.containsKey(KEY_RUN_ID)) {
-				currRunId = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
-			} else if(ThreadContext.containsKey(KEY_RUN_ID)) {
-				currRunId = ThreadContext.get(RunTimeConfig.KEY_RUN_ID);
-			} else {
-				currRunId = null;
-			}
-			final byte[] buff = getLayout().toByteArray(event);
-			if(buff.length > 0) {
+		final String currRunId;
+		final Map<String, String> evtCtxMap = event.getContextMap();
+		//
+		if(evtCtxMap.containsKey(KEY_RUN_ID)) {
+			currRunId = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
+		} else if(ThreadContext.containsKey(KEY_RUN_ID)) {
+			currRunId = ThreadContext.get(RunTimeConfig.KEY_RUN_ID);
+		} else {
+			currRunId = null;
+		}
+		final byte[] buff = getLayout().toByteArray(event);
+		if(buff.length > 0) {
+			try {
 				manager.write(currRunId, buff);
-				if(flagFlush || event.isEndOfBatch()) {
+				if (flagFlush || event.isEndOfBatch()) {
 					manager.flush();
 				}
+			}catch(final AppenderLoggingException ex) {
+				error("Unable to write to stream " + manager.getName() + " for appender " + getName());
+				throw ex;
 			}
-		} catch(final AppenderLoggingException ex) {
-			error("Unable to write to stream " + manager.getName() + " for appender " + getName());
-			throw ex;
 		}
 	}
 }

@@ -8,14 +8,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Created by gusakk on 02.07.15.
  */
-public class ResumableClock extends Clock {
+public class ResumableUserTimeClock
+extends Clock.UserTimeClock {
 	//
 	//  these parameters are necessary for pause/resume Mongoose w/ SIGSTOP and SIGCONT signals
 	private long lastTimeBeforeTermination;
 	private long elapsedTimeInPause;
 	private static final long TICK_INTERVAL = TimeUnit.SECONDS.toNanos(1);
 	//
-	public ResumableClock() {
+	public ResumableUserTimeClock() {
 		lastTimeBeforeTermination = 0;
 		elapsedTimeInPause = 0;
 	}
@@ -35,6 +36,6 @@ public class ResumableClock extends Clock {
 		}
 		lastTimeBeforeTermination = currTime;
 		return currTime - elapsedTimeInPause;*/
-		return System.nanoTime();
+		return super.getTick();
 	}
 }
