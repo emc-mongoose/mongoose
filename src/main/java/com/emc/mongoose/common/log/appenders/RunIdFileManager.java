@@ -13,11 +13,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 /** Created by andrey on 13.03.15. */
 public final class RunIdFileManager
 extends AbstractManager {
+	//
+	public static final List<RunIdFileManager> LIST_MANAGERS = new ArrayList<>();
 	//
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
@@ -37,6 +41,7 @@ extends AbstractManager {
 		this.uriAdvertise = uriAdvertise;
 		this.layout = layout;
 		this.buffSize = buffSize;
+		LIST_MANAGERS.add(this);
 	}
 	/** Factory Data */
 	private static class FactoryData {
@@ -199,5 +204,9 @@ extends AbstractManager {
 				e.printStackTrace(System.err);
 			}
 		}
+	}
+	//
+	public final Map<String, OutputStream> getOutStreamsMap(){
+		return outStreamsMap;
 	}
 }
