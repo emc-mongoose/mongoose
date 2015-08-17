@@ -84,7 +84,7 @@ extends AbstractAppender {
 		return fName;
 	}
 	//
-	private final static int DEFAULT_SIZE_BUFF = 0x2000; // 8KB
+	private final static int DEFAULT_SIZE_BUFF = 0x300000; // 3MB
 	private final static long DEFAULT_SIZE_TO_ROTATE = 0x1000000; // 16MB
 	//
 	@PluginFactory
