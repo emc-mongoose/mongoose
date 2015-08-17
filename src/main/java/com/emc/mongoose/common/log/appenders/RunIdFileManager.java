@@ -161,7 +161,6 @@ extends AbstractManager {
 				final byte header[] = layout.getHeader();
 				if(header != null) {
 					newOutPutStream.write(layout.getHeader());
-					newOutPutStream.flush();
 				}
 			}
 		} catch(final IOException e) {
