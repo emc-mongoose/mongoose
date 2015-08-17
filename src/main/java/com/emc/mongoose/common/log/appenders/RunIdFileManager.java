@@ -1,7 +1,6 @@
 package com.emc.mongoose.common.log.appenders;
 //
 //
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.appender.AbstractManager;
@@ -122,7 +121,7 @@ extends AbstractManager {
 		return buffSize;
 	}
 	//
-	protected final /*synchronized*/ void write(
+	protected final void write(
 		final String currRunId, final byte[] buff, final int offset, final int len
 	) {
 		final OutputStream outStream = getOutputStream(currRunId);
@@ -179,7 +178,7 @@ extends AbstractManager {
 		return currentOutPutStream;
 	}
 	//
-	protected final /*synchronized*/ void close() {
+	protected final void close() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
 				if(layout != null) {
@@ -192,7 +191,7 @@ extends AbstractManager {
 		}
 	}
 	/** Flushes all available output streams */
-	public final /*synchronized*/ void flush() {
+	public final void flush() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
 				outStream.flush();
