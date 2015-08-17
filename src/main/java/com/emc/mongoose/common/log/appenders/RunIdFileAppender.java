@@ -106,7 +106,7 @@ extends AbstractAppender {
 		final boolean
 			ignoreExceptions = Booleans.parseBoolean(ignore, true),
 			isAdvertise = Boolean.parseBoolean(advertise),
-			flagFlush = Booleans.parseBoolean(immediateFlush, true),
+			flagFlush = Booleans.parseBoolean(immediateFlush, false),
 			isAppend = true,
 			isLocking = false,
 			isBuffering = true;
