@@ -142,13 +142,15 @@ extends AbstractAppender {
 		);
 	}
 	//
+	/*
 	private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 	private final Lock readLock = rwLock.readLock();
+	*/
 	private final static String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
 	//
 	@Override
 	public final void append(final LogEvent event) {
-		readLock.lock();
+		//readLock.lock();
 		try {
 			final String currRunId;
 			final Map<String, String> evtCtxMap = event.getContextMap();
@@ -170,8 +172,8 @@ extends AbstractAppender {
 		} catch(final AppenderLoggingException ex) {
 			error("Unable to write to stream " + manager.getName() + " for appender " + getName());
 			throw ex;
-		} finally {
+		} /*finally {
 			readLock.unlock();
-		}
+		}*/
 	}
 }

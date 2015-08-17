@@ -1,12 +1,14 @@
 package com.emc.mongoose.common.log.appenders;
 //
 //
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.appender.AbstractManager;
 import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.apache.logging.log4j.core.appender.ManagerFactory;
 //
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -120,7 +122,7 @@ extends AbstractManager {
 		return buffSize;
 	}
 	//
-	protected final synchronized void write(
+	protected final /*synchronized*/ void write(
 		final String currRunId, final byte[] buff, final int offset, final int len
 	) {
 		final OutputStream outStream = getOutputStream(currRunId);
@@ -152,8 +154,8 @@ extends AbstractManager {
 		}
 		//
 		try {
-			newOutPutStream = new FileOutputStream(
-				outPutFile.getPath(), flagAppend
+			newOutPutStream = new BufferedOutputStream(
+				new FileOutputStream(outPutFile.getPath(), flagAppend), this.buffSize
 			);
 			outStreamsMap.put(currRunId, newOutPutStream);
 			if(layout != null && (!flagAppend || !existedBefore)) {
@@ -177,7 +179,7 @@ extends AbstractManager {
 		return currentOutPutStream;
 	}
 	//
-	protected final synchronized void close() {
+	protected final /*synchronized*/ void close() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
 				if(layout != null) {
@@ -190,7 +192,7 @@ extends AbstractManager {
 		}
 	}
 	/** Flushes all available output streams */
-	public final synchronized void flush() {
+	public final /*synchronized*/ void flush() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
 				outStream.flush();
