@@ -3,20 +3,18 @@ package com.emc.mongoose.integ.core.single;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
-import com.emc.mongoose.integ.suite.LoggingTestSuite;
+import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
+import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.PortListener;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
-import com.emc.mongoose.storage.adapter.atmos.SubTenant;
-import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
-import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
-import com.emc.mongoose.storage.adapter.s3.Bucket;
-import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -37,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by olga on 08.07.15.
@@ -44,42 +43,45 @@ import java.util.regex.Matcher;
  * in Mongoose Core Functional Testing
  * HLUC: 1.3.2.2
  */
-public class WriteUsing100ConnTest {
+public class WriteUsing100ConnTest
+extends WSMockTestBase {
 
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static final int LIMIT_COUNT = 1000000, LOAD_THREADS = 100;
 	private static String RUN_ID = WriteUsing100ConnTest.class.getCanonicalName();
 	private static final String DATA_SIZE = "0B";
+	private static final int LIMIT_COUNT = 1000000, LOAD_THREADS = 100;
 
 	private static Thread SCENARIO_THREAD;
 
-	private static Logger LOG;
-
-	private static RunTimeConfig rtConfig;
-
 	@BeforeClass
-	public static void before()
-	throws Exception {
-		//  remove log dir w/ previous logs
-		LogParser.removeLogDirectory(RUN_ID);
+	public static void setUpClass()
+		throws Exception {
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
+		System.setProperty(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
+		System.setProperty(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
+		System.setProperty(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, String.valueOf(LOAD_THREADS));
+		System.setProperty(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
+		WSMockTestBase.setUpClass();
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefault());
-		rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
-		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, LOAD_THREADS);
-		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
-		LoggingTestSuite.setUpClass();
-
-		LOG = LogManager.getLogger();
+		final Logger logger = LogManager.getLogger();
+		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		//  write
 		SCENARIO_THREAD = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					executeLoadJob(rtConfig);
+					try (final BufferingOutputStream
+							 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
+					) {
+						UniformDataSource.DEFAULT = new UniformDataSource();
+						//  Run mongoose default scenario in standalone mode
+						new ScriptRunner().run();
+						TimeUnit.SECONDS.sleep(3);
+						STD_OUTPUT_STREAM = stdOutStream;
+						RunIdFileManager.flushAll();
+					}
 				} catch (final Exception e) {
 					Assert.fail("Failed to execute load job");
 				}
@@ -89,29 +91,13 @@ public class WriteUsing100ConnTest {
 		SCENARIO_THREAD.join(30000);
 	}
 
-	private static void executeLoadJob(final RunTimeConfig rtConfig)
-	throws Exception {
-		LOG.info(Markers.MSG, rtConfig.toString());
-		UniformDataSource.DEFAULT = new UniformDataSource();
-		try (final BufferingOutputStream stdOutStream =
-			     StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
-			//  Run mongoose default scenario in standalone mode
-			new ScriptRunner().run();
-			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
-			STD_OUTPUT_STREAM = stdOutStream;
-		}
-	}
-
 	@AfterClass
-	public static void after()
-	throws Exception {
+	public  static void tearDownClass()
+		throws Exception {
 		if (!SCENARIO_THREAD.isInterrupted()) {
 			SCENARIO_THREAD.join();
 			SCENARIO_THREAD.interrupt();
 		}
-		// Wait logger's output from console
-		Thread.sleep(3000);
 		//
 		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
 		//  Check that messages.log exists
@@ -130,97 +116,109 @@ public class WriteUsing100ConnTest {
 		Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
 		//
 		shouldCreateDataItemsFileWithInformationAboutAllObjects();
-
-		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
-			.contains(TestConstants.SCENARIO_END_INDICATOR));
-		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
-			.contains(TestConstants.SUMMARY_INDICATOR));
+		//
+		Assert.assertTrue("Console doesn't contain information about summary metrics",
+			STD_OUTPUT_STREAM.toString().contains(TestConstants.SUMMARY_INDICATOR)
+		);
+		Assert.assertTrue("Console doesn't contain information about end of scenario",
+			STD_OUTPUT_STREAM.toString().contains(TestConstants.SCENARIO_END_INDICATOR)
+		);
 
 		shouldReportScenarioEndToMessageLogFile();
 
 		STD_OUTPUT_STREAM.close();
-
-		final Bucket bucket = new WSBucketImpl(
-			(com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
-			TestConstants.BUCKET_NAME, false
-		);
-		bucket.delete(rtConfig.getStorageAddrs()[0]);
+		//
+		WSMockTestBase.tearDownClass();
 	}
 
 	public static void shouldCreateDataItemsFileWithInformationAboutAllObjects()
-	throws Exception {
-		//Read data.items.csv file of create scenario run
+		throws Exception {
+		//  Read data.items.csv file
 		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
-		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(dataItemsFile))) {
-			int dataSize, countDataItems = 0;
-			String line;
-
-			while ((line = bufferedReader.readLine()) != null) {
-				// Get dataSize from each line
-				dataSize = Integer.valueOf(line.split(",")[TestConstants.DATA_SIZE_COLUMN_INDEX]);
-				Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), dataSize);
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			//
+			int countDataItems = 0;
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			for(final CSVRecord nextRec : recIter) {
+				Assert.assertEquals(
+					"Size of data item isn't correct",
+					Long.toString(SizeUtil.toSize(DATA_SIZE)), nextRec.get(2)
+				);
 				countDataItems++;
 			}
-			//Check that there are 10 lines in data.items.csv file
-			Assert.assertEquals(LIMIT_COUNT, countDataItems);
+			//  Check that there are 10 lines in data.items.csv file
+			Assert.assertEquals(
+				"Not correct information about created data items", LIMIT_COUNT, countDataItems
+			);
 		}
 	}
 
 	public static void shouldReportScenarioEndToMessageLogFile()
-	throws Exception {
-		//Read message file and search "Scenario End"
+		throws Exception {
+		//  Read the message file and search for "Scenario end"
 		final File messageFile = LogParser.getMessageFile(RUN_ID);
+		Assert.assertTrue(
+			"messages.log file doesn't exist",
+			messageFile.exists()
+		);
+		//
 		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(messageFile))) {
+				 new BufferedReader(new FileReader(messageFile))) {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
 				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
 					break;
 				}
 			}
-			Assert.assertNotNull(line);
-			//Check the message file contain report about scenario end. If not line = null.
-			Assert.assertTrue(line.contains(TestConstants.SCENARIO_END_INDICATOR));
+			Assert.assertNotNull(
+				"Line with information about end of scenario must not be equal null ", line
+			);
+			Assert.assertTrue(
+				"Information about end of scenario doesn't contain in message.log file",
+				line.contains(TestConstants.SCENARIO_END_INDICATOR)
+			);
 		}
 	}
 
 	@Test
 	public void shouldBeActiveAllConnections()
-	throws Exception {
+		throws Exception {
 		for (int i = 0; i < 3; i++) {
 			int countConnections = PortListener
 				.getCountConnectionsOnPort(TestConstants.PORT_INDICATOR);
-			// Check that actual connection count = (LOAD_THREADS * 2 + 5)
-			// because cinderella is run local
-			Assert.assertEquals((LOAD_THREADS * 2 + 5), countConnections);
+			// Check that actual connection count = (LOAD_THREADS * 2 + 5) because cinderella is run local
+			Assert.assertEquals("Connection count is wrong", (LOAD_THREADS * 2 + 5), countConnections);
 		}
 	}
 
 	@Test
 	public void shouldAllThreadsProduceWorkload()
-	throws Exception {
+		throws Exception {
 		Matcher matcher;
 		String threadName;
 		int countProduceWorkloadThreads = 0;
 		final Map<Thread, StackTraceElement[]> stackTraceElementMap = Thread.getAllStackTraces();
 		for (final Thread thread : stackTraceElementMap.keySet()) {
 			threadName = thread.getName();
-			matcher = TestConstants.LOAD_THRED_NAME_PATTERN.matcher(threadName);
+			matcher = Pattern.compile(LogPatterns.CONSOLE_FULL_LOAD_NAME.pattern() + "\\#[\\d]").matcher(threadName);
 			if (matcher.find()) {
 				countProduceWorkloadThreads++;
 			}
 		}
-		Assert.assertEquals(LOAD_THREADS, countProduceWorkloadThreads);
+		Assert.assertEquals("Wrong count of load threads", LOAD_THREADS, countProduceWorkloadThreads);
 	}
 
 	@Test
 	public void shouldCreateCorrectDataItemsFiles()
-	throws Exception {
+		throws Exception {
 		// Get data.items.csv file of write scenario run
 		final File dataItemFile = LogParser.getDataItemsFile(RUN_ID);
-		Assert.assertTrue(dataItemFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
 		//
 		try(
 			final BufferedReader
@@ -232,7 +230,7 @@ public class WriteUsing100ConnTest {
 
 	@Test
 	public void shouldCreateCorrectPerfAvgFiles()
-	throws Exception {
+		throws Exception {
 		// Get perf.avg.csv file of write scenario run
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
@@ -247,39 +245,38 @@ public class WriteUsing100ConnTest {
 
 	@Test
 	public void shouldCreateCorrectInformationAboutLoad()
-	throws Exception {
+		throws Exception {
 		// Get perf.avg.csv file of write scenario run
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue(perfAvgFile.exists());
+		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		//
-		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(perfAvgFile))) {
-			String line;
-			Matcher matcher;
-			String loadType, actualLoadType, apiName;
-			String[] loadInfo;
-			int threadsPerNode, countNode;
-			//  read header of csv file
-			bufferedReader.readLine();
-			while ((line = bufferedReader.readLine()) != null) {
-				//
-				matcher = TestConstants.LOAD_PATTERN.matcher(line);
-				if (matcher.find()) {
-					loadInfo = matcher.group().split("(-|x)");
-					//Check api name is correct
-					apiName = loadInfo[1].toLowerCase();
-					Assert.assertEquals(TestConstants.API_S3, apiName);
-					// Check load type and load limit count values are correct
-					loadType = RunTimeConfig.getContext().getScenarioSingleLoad()
-						.toLowerCase() + String.valueOf(LIMIT_COUNT);
-					actualLoadType = loadInfo[2].toLowerCase();
-					Assert.assertEquals(loadType, actualLoadType);
-					// Check "threads per node" value is correct
-					threadsPerNode = Integer.valueOf(loadInfo[3]);
-					Assert.assertEquals(LOAD_THREADS, threadsPerNode);
-					//Check node count is correct
-					countNode = Integer.valueOf(loadInfo[4]);
-					Assert.assertEquals(1, countNode);
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			boolean firstRow = true;
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			int actualNodesCount, actualConnectionsCount;
+			for(final CSVRecord nextRec : recIter) {
+				if (firstRow) {
+					firstRow = false;
+				} else {
+					Assert.assertEquals(
+						"Storage API is wrong", TestConstants.API_S3, nextRec.get(2).toLowerCase()
+					);
+					Assert.assertEquals(
+						"Type load is wrong",
+						RunTimeConfig.getContext().getScenarioSingleLoad().toLowerCase(),
+						nextRec.get(3).toLowerCase()
+					);
+					actualConnectionsCount = Integer.valueOf(nextRec.get(4));
+					Assert.assertEquals(
+						"Count of connections is wrong", LOAD_THREADS, actualConnectionsCount
+					);
+					actualNodesCount = Integer.valueOf(nextRec.get(5));
+					Assert.assertEquals(
+						"Count of nodes is wrong", 1, actualNodesCount
+					);
 				}
 			}
 		}
@@ -287,24 +284,32 @@ public class WriteUsing100ConnTest {
 
 	@Test
 	public void shouldGeneralStatusOfTheRunIsRegularlyReports()
-	throws Exception {
+		throws Exception {
 		final int precisionMillis = 3000;
 		// Get perf.avg.csv file
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue(perfAvgFile.exists());
+		Assert.assertTrue("perf.avg.csv file doesn't exist", perfAvgFile.exists());
 		//
-		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(perfAvgFile))) {
-			final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			boolean firstRow = true;
 			Matcher matcher;
-			//  read header of csv file
-			bufferedReader.readLine();
-			String line;
 			final List<Date> listTimeOfReports = new ArrayList<>();
-			while ((line = bufferedReader.readLine()) != null) {
-				matcher = TestConstants.TIME_PATTERN.matcher(line);
-				if (matcher.find()) {
-					listTimeOfReports.add(format.parse(matcher.group()));
+			final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+			//
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			for (final CSVRecord nextRec : recIter) {
+				if (firstRow) {
+					firstRow = false;
+				} else {
+					matcher = LogPatterns.DATE_TIME_ISO8601.matcher(nextRec.get(0));
+					if (matcher.find()) {
+						listTimeOfReports.add(format.parse(matcher.group("time")));
+					} else {
+						Assert.fail("Data and time record in line has got wrong format");
+					}
 				}
 			}
 			// Check period of reports is correct
@@ -312,15 +317,14 @@ public class WriteUsing100ConnTest {
 			// Period must be equal 10 sec
 			final int period = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
 			// period must be equal 10 seconds = 10000 milliseconds
-			Assert.assertEquals(10, period);
-			//
+			Assert.assertEquals("Wrong load.metrics.periodSec in configuration", 10, period);
+
 			for (int i = 0; i < listTimeOfReports.size() - 1; i++) {
 				firstTime = listTimeOfReports.get(i).getTime();
 				nextTime = listTimeOfReports.get(i + 1).getTime();
 				// period must be equal 10 seconds = 10000 milliseconds
-				Assert.assertTrue(
-					10000 - precisionMillis < (nextTime - firstTime) &&
-					10000 + precisionMillis > (nextTime - firstTime)
+				Assert.assertEquals(
+					"Load metrics period is wrong", 10000, nextTime - firstTime, precisionMillis
 				);
 			}
 		}

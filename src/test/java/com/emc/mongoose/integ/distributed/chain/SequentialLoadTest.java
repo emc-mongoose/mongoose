@@ -72,7 +72,7 @@ extends DistributedLoadBuilderTestBase {
 		);
 	}
 	//
-	protected void checkLogStdOutSummariesCount()
+	@Test protected void checkLogStdOutSummariesCount()
 		throws Exception {
 		int countSummaries = 0;
 		try(
@@ -99,7 +99,7 @@ extends DistributedLoadBuilderTestBase {
 		);
 	}
 	//
-	protected void checkLogFileSummariesCount()
+	@Test protected void checkLogFileSummariesCount()
 	throws Exception {
 		boolean firstRow = true;
 		int countSummaries = 0;

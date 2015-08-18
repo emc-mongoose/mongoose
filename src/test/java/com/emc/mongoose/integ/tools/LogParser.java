@@ -74,6 +74,7 @@ public final class LogParser {
 		//
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
+			Assert.assertEquals("Count of column is wrong", 21, nextRec.size());
 			if (firstRow) {
 				Assert.assertEquals("DateTimeISO8601", nextRec.get(0));
 				Assert.assertEquals("LoadId", nextRec.get(1));
@@ -173,6 +174,7 @@ public final class LogParser {
 
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
+			Assert.assertEquals("Count of column is wrong", 22, nextRec.size());
 			if(firstRow) {
 				Assert.assertEquals("DateTimeISO8601", nextRec.get(0));
 				Assert.assertEquals("LoadId", nextRec.get(1));
@@ -275,6 +277,7 @@ public final class LogParser {
 		//
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
+			Assert.assertEquals("Count of column is wrong", 4, nextRec.size());
 			Assert.assertTrue(
 				"Data ID format is not correct", nextRec.get(0).matches(LogPatterns.DATA_ID.pattern())
 			);
@@ -298,6 +301,7 @@ public final class LogParser {
 		//
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
+			Assert.assertEquals("Count of column is wrong", 8, nextRec.size());
 			if (firstRow) {
 				Assert.assertEquals("Thread", nextRec.get(0));
 				Assert.assertEquals("TargetNode", nextRec.get(1));

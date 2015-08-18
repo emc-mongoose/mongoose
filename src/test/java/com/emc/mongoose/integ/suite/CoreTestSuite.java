@@ -3,7 +3,7 @@ package com.emc.mongoose.integ.suite;
 import com.emc.mongoose.integ.core.rampup.CustomRampupTest;
 import com.emc.mongoose.integ.core.rampup.DefaultRampupTest;
 //
-import com.emc.mongoose.integ.core.chain.CRUDSequentialScenarioIntegTest;
+import com.emc.mongoose.integ.core.chain.CRUDSequentialScenarioTest;
 import com.emc.mongoose.integ.core.chain.CRUDSimultaneousScenarioIntegTest;
 import com.emc.mongoose.integ.core.chain.CustomChainScenarioIntegTest;
 import com.emc.mongoose.integ.core.chain.DefaultChainScenarioIntegTest;
@@ -44,7 +44,7 @@ import org.junit.runners.Suite;
 	ReadVerificationTest.class,
 	WriteByCountTest.class,
 	CustomChainScenarioIntegTest.class,
-	CRUDSequentialScenarioIntegTest.class,
+	CRUDSequentialScenarioTest.class,
 	CRUDSimultaneousScenarioIntegTest.class,
 	DefaultChainScenarioIntegTest.class,
 	CustomRampupTest.class,
