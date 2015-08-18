@@ -10,6 +10,7 @@ import com.emc.mongoose.core.impl.data.model.ListItemOutput;
 //
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 //
+import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import org.junit.Assert;
@@ -78,6 +79,8 @@ extends StandaloneClientTestBase {
 			} else {
 				throw new IllegalStateException("Failed to update the 2nd time");
 			}
+			//
+			LogParser.flushAllLogs();
 		}
 	}
 	//

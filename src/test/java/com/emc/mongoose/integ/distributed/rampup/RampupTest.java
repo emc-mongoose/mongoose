@@ -10,6 +10,7 @@ import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
+import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.storage.adapter.swift.Container;
 import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
@@ -75,11 +76,7 @@ extends DistributedLoadBuilderTestBase {
 			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
 		}
 		//
-		for(final RunIdFileManager manager: RunIdFileManager.LIST_MANAGERS) {
-			for (final OutputStream out: manager.getOutStreamsMap().values()){
-				out.flush();
-			}
-		}
+		LogParser.flushAllLogs();
 	}
 	//
 	@Test public void checkTotalDuration()

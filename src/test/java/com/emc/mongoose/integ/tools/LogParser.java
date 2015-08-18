@@ -2,6 +2,7 @@ package com.emc.mongoose.integ.tools;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.Assert;
@@ -9,6 +10,7 @@ import org.junit.Assert;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,6 +19,15 @@ import java.nio.file.Paths;
  * Created by olga on 03.07.15.
  */
 public final class LogParser {
+
+	public static void flushAllLogs()
+	throws IOException {
+		for(final RunIdFileManager manager: RunIdFileManager.INSTANCES) {
+			for (final OutputStream out: manager.getOutStreamsMap().values()){
+				out.flush();
+			}
+		}
+	}
 
 	public static void removeLogDirectory(final String runID)
 	throws Exception {

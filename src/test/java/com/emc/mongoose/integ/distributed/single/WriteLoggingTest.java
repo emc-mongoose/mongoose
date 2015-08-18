@@ -11,6 +11,7 @@ import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import static com.emc.mongoose.integ.tools.LogPatterns.*;
 //
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
+import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import org.apache.commons.csv.CSVFormat;
@@ -58,6 +59,8 @@ extends DistributedClientTestBase {
 				TimeUnit.SECONDS.sleep(1);
 				stdOutContent = stdOutInterceptorStream.toByteArray();
 			}
+			//
+			LogParser.flushAllLogs();
 		}
 	}
 	//

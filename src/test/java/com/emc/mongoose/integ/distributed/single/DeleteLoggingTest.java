@@ -10,6 +10,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 //
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
+import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -87,6 +88,8 @@ extends DistributedClientTestBase {
 			Markers.MSG, "Deleted {} items, captured {} bytes from stdout",
 			COUNT_DELETED, STD_OUT_CONTENT.length
 		);
+		//
+		LogParser.flushAllLogs();
 	}
 	//
 	@AfterClass

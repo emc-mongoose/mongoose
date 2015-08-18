@@ -21,7 +21,7 @@ import java.util.Map;
 public final class RunIdFileManager
 extends AbstractManager {
 	//
-	public static final List<RunIdFileManager> LIST_MANAGERS = new ArrayList<>();
+	public static final List<RunIdFileManager> INSTANCES = new ArrayList<>();
 	//
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
@@ -41,7 +41,7 @@ extends AbstractManager {
 		this.uriAdvertise = uriAdvertise;
 		this.layout = layout;
 		this.buffSize = buffSize;
-		LIST_MANAGERS.add(this);
+		INSTANCES.add(this);
 	}
 	/** Factory Data */
 	private static class FactoryData {

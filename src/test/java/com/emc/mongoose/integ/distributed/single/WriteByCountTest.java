@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
+import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import org.junit.Assert;
@@ -36,6 +37,8 @@ extends DistributedClientTestBase {
 				.build()
 		) {
 			countWritten = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
+			//
+			LogParser.flushAllLogs();
 		}
 	}
 	//
