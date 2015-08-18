@@ -20,15 +20,6 @@ import java.nio.file.Paths;
  */
 public final class LogParser {
 
-	public static void flushAllLogs()
-	throws IOException {
-		for(final RunIdFileManager manager: RunIdFileManager.INSTANCES) {
-			for (final OutputStream out: manager.getOutStreamsMap().values()){
-				out.flush();
-			}
-		}
-	}
-
 	public static void removeLogDirectory(final String runID)
 	throws Exception {
 		final Path logDir = Paths.get(RunTimeConfig.DIR_ROOT,

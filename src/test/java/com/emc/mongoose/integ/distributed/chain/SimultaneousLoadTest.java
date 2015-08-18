@@ -2,10 +2,10 @@ package com.emc.mongoose.integ.distributed.chain;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.util.scenario.Chain;
 //
 import org.apache.commons.csv.CSVFormat;
@@ -59,7 +59,7 @@ extends DistributedLoadBuilderTestBase {
 			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
 		}
 		//
-		LogParser.flushAllLogs();
+		RunIdFileManager.flushAll();
 	}
 	//
 	@Test public void checkTotalDuration()

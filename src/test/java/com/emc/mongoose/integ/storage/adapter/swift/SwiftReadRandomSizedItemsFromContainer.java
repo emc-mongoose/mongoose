@@ -1,9 +1,9 @@
 package com.emc.mongoose.integ.storage.adapter.swift;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
-import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -43,7 +43,7 @@ extends StandaloneClientTestBase {
 				throw new IllegalStateException("Failed to write");
 			}
 			//
-			LogParser.flushAllLogs();
+			RunIdFileManager.flushAll();
 		}
 	}
 	//

@@ -43,6 +43,7 @@ extends AbstractManager {
 		this.buffSize = buffSize;
 		INSTANCES.add(this);
 	}
+
 	/** Factory Data */
 	private static class FactoryData {
 		//
@@ -206,7 +207,12 @@ extends AbstractManager {
 		}
 	}
 	//
-	public final Map<String, OutputStream> getOutStreamsMap(){
-		return outStreamsMap;
+	public static void flushAll()
+	throws IOException {
+		for(final RunIdFileManager manager: INSTANCES) {
+			for (final OutputStream out: manager.outStreamsMap.values()){
+				out.flush();
+			}
+		}
 	}
 }

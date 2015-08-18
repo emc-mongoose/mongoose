@@ -1,11 +1,11 @@
 package com.emc.mongoose.integ.storage.adapter.atmos;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
 import com.emc.mongoose.core.impl.data.model.ListItemOutput;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
-import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -46,7 +46,7 @@ extends StandaloneClientTestBase {
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("8KB")
 			);
 			//
-			LogParser.flushAllLogs();
+			RunIdFileManager.flushAll();
 		}
 	}
 	//

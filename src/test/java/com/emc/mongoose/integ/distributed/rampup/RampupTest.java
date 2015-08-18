@@ -3,17 +3,10 @@ package com.emc.mongoose.integ.distributed.rampup;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.common.conf.TimeUtil;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.integ.tools.LogParser;
-import com.emc.mongoose.storage.adapter.swift.Container;
-import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
-import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.scenario.Rampup;
 //
 import org.apache.commons.csv.CSVFormat;
@@ -26,7 +19,6 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.concurrent.TimeUnit;
@@ -76,7 +68,7 @@ extends DistributedLoadBuilderTestBase {
 			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
 		}
 		//
-		LogParser.flushAllLogs();
+		RunIdFileManager.flushAll();
 	}
 	//
 	@Test public void checkTotalDuration()

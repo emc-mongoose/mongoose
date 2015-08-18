@@ -1,10 +1,10 @@
 package com.emc.mongoose.integ.storage.adapter.atmos;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
-import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
@@ -59,7 +59,7 @@ extends StandaloneClientTestBase {
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
 			//
-			LogParser.flushAllLogs();
+			RunIdFileManager.flushAll();
 		}
 	}
 	//

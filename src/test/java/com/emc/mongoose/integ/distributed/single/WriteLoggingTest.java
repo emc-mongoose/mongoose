@@ -3,6 +3,7 @@ package com.emc.mongoose.integ.distributed.single;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 //
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -11,7 +12,6 @@ import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import static com.emc.mongoose.integ.tools.LogPatterns.*;
 //
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import org.apache.commons.csv.CSVFormat;
@@ -60,7 +60,7 @@ extends DistributedClientTestBase {
 				stdOutContent = stdOutInterceptorStream.toByteArray();
 			}
 			//
-			LogParser.flushAllLogs();
+			RunIdFileManager.flushAll();
 		}
 	}
 	//

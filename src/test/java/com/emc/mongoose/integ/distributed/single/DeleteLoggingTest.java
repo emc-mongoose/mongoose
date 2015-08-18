@@ -4,13 +4,13 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 //
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
-import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -89,7 +89,7 @@ extends DistributedClientTestBase {
 			COUNT_DELETED, STD_OUT_CONTENT.length
 		);
 		//
-		LogParser.flushAllLogs();
+		RunIdFileManager.flushAll();
 	}
 	//
 	@AfterClass
