@@ -10,6 +10,7 @@ import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
@@ -86,7 +87,7 @@ extends AbstractAppender {
 		return fName;
 	}
 	//
-	private final static int DEFAULT_SIZE_BUFF = 0x2000; // 8KB
+	private final static int DEFAULT_SIZE_BUFF = 0x400000; // 4MB
 	private final static long DEFAULT_SIZE_TO_ROTATE = 0x1000000; // 16MB
 	//
 	@PluginFactory
@@ -144,7 +145,6 @@ extends AbstractAppender {
 		);
 	}
 	//
-	private final Lock lock = new ReentrantLock();
 	private final static String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
 	//
 	@Override
@@ -161,14 +161,14 @@ extends AbstractAppender {
 		}
 		final byte[] buff = getLayout().toByteArray(event);
 		if(buff.length > 0) {
-			lock.lock();
 			try {
 				manager.write(currRunId, buff);
-				if(flagFlush || event.isEndOfBatch()) {
+				if (flagFlush || event.isEndOfBatch()) {
 					manager.flush();
 				}
-			} finally {
-				lock.unlock();
+			}catch(final AppenderLoggingException ex) {
+				error("Unable to write to stream " + manager.getName() + " for appender " + getName());
+				throw ex;
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package com.emc.mongoose.integ.distributed.chain;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -58,6 +59,8 @@ extends DistributedLoadBuilderTestBase {
 			DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEC;
 			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
 		}
+		//
+		RunIdFileManager.flushAll();
 	}
 	//
 	@Test public void checkTotalDuration()

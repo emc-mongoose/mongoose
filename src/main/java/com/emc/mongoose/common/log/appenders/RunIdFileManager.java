@@ -7,16 +7,21 @@ import org.apache.logging.log4j.core.appender.AbstractManager;
 import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.apache.logging.log4j.core.appender.ManagerFactory;
 //
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 /** Created by andrey on 13.03.15. */
 public final class RunIdFileManager
 extends AbstractManager {
+	//
+	public static final List<RunIdFileManager> INSTANCES = new ArrayList<>();
 	//
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
@@ -36,7 +41,9 @@ extends AbstractManager {
 		this.uriAdvertise = uriAdvertise;
 		this.layout = layout;
 		this.buffSize = buffSize;
+		INSTANCES.add(this);
 	}
+
 	/** Factory Data */
 	private static class FactoryData {
 		//
@@ -120,7 +127,7 @@ extends AbstractManager {
 		return buffSize;
 	}
 	//
-	protected final synchronized void write(
+	protected final void write(
 		final String currRunId, final byte[] buff, final int offset, final int len
 	) {
 		final OutputStream outStream = getOutputStream(currRunId);
@@ -152,8 +159,8 @@ extends AbstractManager {
 		}
 		//
 		try {
-			newOutPutStream = new FileOutputStream(
-				outPutFile.getPath(), flagAppend
+			newOutPutStream = new BufferedOutputStream(
+				new FileOutputStream(outPutFile.getPath(), flagAppend), this.buffSize
 			);
 			outStreamsMap.put(currRunId, newOutPutStream);
 			if(layout != null && (!flagAppend || !existedBefore)) {
@@ -177,7 +184,7 @@ extends AbstractManager {
 		return currentOutPutStream;
 	}
 	//
-	protected final synchronized void close() {
+	protected final void close() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
 				if(layout != null) {
@@ -190,12 +197,21 @@ extends AbstractManager {
 		}
 	}
 	/** Flushes all available output streams */
-	public final synchronized void flush() {
+	public final void flush() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
 				outStream.flush();
 			} catch(final IOException e) {
 				e.printStackTrace(System.err);
+			}
+		}
+	}
+	//
+	public static void flushAll()
+	throws IOException {
+		for(final RunIdFileManager manager: INSTANCES) {
+			for (final OutputStream out: manager.outStreamsMap.values()){
+				out.flush();
 			}
 		}
 	}

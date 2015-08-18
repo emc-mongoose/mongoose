@@ -1,6 +1,7 @@
 package com.emc.mongoose.integ.storage.adapter.s3;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.data.model.ListItemOutput;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
@@ -49,6 +50,8 @@ extends StandaloneClientTestBase {
 			} else {
 				throw new IllegalStateException("Failed to write");
 			}
+			//
+			RunIdFileManager.flushAll();
 		}
 	}
 	//

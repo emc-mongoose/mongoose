@@ -3,14 +3,10 @@ package com.emc.mongoose.integ.distributed.rampup;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.common.conf.TimeUtil;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.storage.adapter.swift.Container;
-import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
-import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.scenario.Rampup;
 //
 import org.apache.commons.csv.CSVFormat;
@@ -71,6 +67,8 @@ extends DistributedLoadBuilderTestBase {
 			DURATION_TOTAL_SEQ = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEQ;
 			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
 		}
+		//
+		RunIdFileManager.flushAll();
 	}
 	//
 	@Test public void checkTotalDuration()

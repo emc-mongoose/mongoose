@@ -1,6 +1,7 @@
 package com.emc.mongoose.integ.storage.adapter.atmos;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
 import com.emc.mongoose.core.impl.data.model.ListItemOutput;
@@ -44,6 +45,8 @@ extends StandaloneClientTestBase {
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("8KB")
 			);
+			//
+			RunIdFileManager.flushAll();
 		}
 	}
 	//

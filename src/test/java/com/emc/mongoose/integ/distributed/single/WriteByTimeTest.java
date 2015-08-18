@@ -3,6 +3,7 @@ package com.emc.mongoose.integ.distributed.single;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 //
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
@@ -39,6 +40,8 @@ extends DistributedClientTestBase {
 			timeActualSec = System.currentTimeMillis() / 1000;
 			countWritten = client.write(null, null, 0, 10, SizeUtil.toSize("10KB"));
 			timeActualSec = System.currentTimeMillis() / 1000 - timeActualSec;
+			//
+			RunIdFileManager.flushAll();
 		}
 	}
 	//

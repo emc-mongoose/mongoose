@@ -3,6 +3,7 @@ package com.emc.mongoose.integ.distributed.single;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 //
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -58,6 +59,8 @@ extends DistributedClientTestBase {
 				TimeUnit.SECONDS.sleep(1);
 				stdOutContent = stdOutInterceptorStream.toByteArray();
 			}
+			//
+			RunIdFileManager.flushAll();
 		}
 	}
 	//

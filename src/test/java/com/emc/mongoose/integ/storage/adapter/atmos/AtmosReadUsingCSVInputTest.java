@@ -2,6 +2,7 @@ package com.emc.mongoose.integ.storage.adapter.atmos;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
@@ -49,6 +50,8 @@ extends StandaloneClientTestBase {
 			} else {
 				throw new IllegalStateException("Failed to write");
 			}
+			//
+			RunIdFileManager.flushAll();
 		}
 	}
 	//

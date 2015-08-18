@@ -3,6 +3,7 @@ package com.emc.mongoose.integ.storage.adapter.s3;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 //
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
@@ -59,6 +60,8 @@ extends StandaloneClientTestBase {
 				.build()
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
+			//
+			RunIdFileManager.flushAll();
 		}
 	}
 	//
