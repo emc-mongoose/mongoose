@@ -139,7 +139,7 @@ extends WSRequestConfigBase<T> {
 		);
 	}
 	//
-	private static String HEADERS4CANONICAL[] = {
+	private static String HEADERS_CANONICAL[] = {
 		HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE
 	};
 	//
@@ -158,7 +158,7 @@ extends WSRequestConfigBase<T> {
 		}
 		canonical.append(httpRequest.getRequestLine().getMethod());
 		//
-		for(final String headerName : HEADERS4CANONICAL) {
+		for(final String headerName : HEADERS_CANONICAL) {
 			if(sharedHeaders.containsHeader(headerName)) {
 				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
 			} else if(httpRequest.containsHeader(headerName)) {
@@ -170,7 +170,7 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		for(final String emcHeaderName : HEADERS_EMC) {
+		for(final String emcHeaderName : HEADERS_CANONICAL_EMC) {
 			if(sharedHeaders.containsHeader(emcHeaderName)) {
 				canonical
 					.append('\n').append(emcHeaderName.toLowerCase())

@@ -229,9 +229,7 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public HttpEntityEnclosingRequest createGenericRequest(final String method, final String uri) {
-		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(method, uri);
-		applyHeadersFinally(request);
-		return request;
+		return new BasicHttpEntityEnclosingRequest(method, uri);
 	}
 	//
 	@Override

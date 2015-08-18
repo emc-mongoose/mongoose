@@ -94,6 +94,7 @@ implements Bucket<T> {
 			httpReq = reqConf
 				.createGenericRequest(method, "/" + name);
 		}
+		reqConf.applyHeadersFinally(httpReq);
 		//
 		return reqConf.execute(addr, httpReq);
 	}

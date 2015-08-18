@@ -238,7 +238,7 @@ extends WSRequestConfigBase<T> {
 	@Override
 	protected final void applyAuthHeader(final HttpRequest httpRequest) {
 		final String authTokenValue = authToken == null ? null : authToken.getValue();
-		if(authTokenValue != null) {
+		if(authTokenValue != null && authTokenValue.length() > 0) {
 			if(!httpRequest.containsHeader(KEY_X_AUTH_TOKEN)) {
 				if(headerAuthToken == null || headerAuthToken.getValue() != authTokenValue) {
 					headerAuthToken = new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue);

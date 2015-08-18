@@ -3,7 +3,6 @@ package com.emc.mongoose.storage.adapter.atmos;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
@@ -156,7 +155,7 @@ extends WSRequestConfigBase<T> {
 		} else {
 			super.setUserName(userName);
 			if(sharedHeaders != null) {
-				if(subTenant==null || subTenant.getValue().length() < 1) {
+				if(subTenant == null || subTenant.getValue().length() < 1) {
 					sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_UID, userName));
 				} else {
 					sharedHeaders.updateHeader(
@@ -277,7 +276,10 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		if(subTenant != null) {
-			md.append("subtenant=").append(subTenant.getValue());
+			final String subtenantId = subTenant.getValue();
+			if(subtenantId != null && subtenantId.length() > 0) {
+				md.append("subtenant=").append(subTenant.getValue());
+			}
 		}
 		if(IOTask.Type.CREATE.equals(loadType)) {
 			final HttpEntity entity = request.getEntity();
@@ -299,7 +301,7 @@ extends WSRequestConfigBase<T> {
 		httpRequest.setHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
 	}
 	//
-	private final static String HEADERS4CANONICAL[] = {
+	private final static String HEADERS_CANONICAL[] = {
 		HttpHeaders.CONTENT_TYPE, HttpHeaders.RANGE, HttpHeaders.DATE
 	};
 	//
@@ -318,7 +320,7 @@ extends WSRequestConfigBase<T> {
 		}
 		canonical.append(httpRequest.getRequestLine().getMethod());
 		//
-		for(final String headerName : HEADERS4CANONICAL) {
+		for(final String headerName : HEADERS_CANONICAL) {
 			// support for multiple non-unique header keys
 			if(sharedHeaders.containsHeader(headerName)) {
 				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
@@ -334,7 +336,7 @@ extends WSRequestConfigBase<T> {
 		final String uri = httpRequest.getRequestLine().getUri();
 		canonical.append('\n').append(uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri);
 		//
-		for(final String emcHeaderName: HEADERS_EMC) {
+		for(final String emcHeaderName: HEADERS_CANONICAL_EMC) {
 			if(sharedHeaders.containsHeader(emcHeaderName)) {
 				canonical
 					.append('\n').append(emcHeaderName.toLowerCase())

@@ -40,9 +40,16 @@ extends ObjectRequestConfig<T> {
 		MSG_NO_REQ = "No request specified to apply to",
 		//
 		ADAPTER_CLS = "WSRequestConfigImpl",
-		//
-		HEADERS_EMC[] = {
-			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_FS_ACCESS, /*KEY_EMC_NS, */KEY_EMC_SIG, KEY_EMC_UID
+		// canonicalized EMC headers, should be in alphabetical order
+		HEADERS_CANONICAL_EMC[] = {
+			KEY_EMC_ACCEPT,
+			KEY_EMC_DATE,
+			KEY_EMC_FS_ACCESS,
+			KEY_EMC_LIMIT,
+			KEY_EMC_RANGE,
+			KEY_EMC_TAGS,
+			KEY_EMC_TOKEN,
+			KEY_EMC_UID
 		};
 	//
 	String
