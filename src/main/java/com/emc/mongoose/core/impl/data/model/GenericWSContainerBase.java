@@ -25,7 +25,7 @@ implements GenericContainer<T> {
 	protected final WSRequestConfig<T> reqConf;
 	protected final String name, idPrefix;
 	protected final int idPrefixLen, batchSize;
-	protected final boolean fsAccess, verifyContent, versioningEnabled;
+	protected final boolean fsAccess, verifyContent;
 	//
 	protected GenericWSContainerBase(
 		final WSRequestConfig<T> reqConf, final String name, final boolean versioningEnabled
@@ -42,7 +42,6 @@ implements GenericContainer<T> {
 		idPrefixLen = idPrefix == null ? 0 : idPrefix.length();
 		batchSize = RunTimeConfig.getContext().getBatchSize();
 		this.verifyContent = reqConf.getVerifyContentFlag();
-		this.versioningEnabled = versioningEnabled;
 	}
 	//
 	@Override

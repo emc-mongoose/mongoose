@@ -159,12 +159,12 @@ extends WSRequestConfigBase<T> {
 		canonical.append(httpRequest.getRequestLine().getMethod());
 		//
 		for(final String headerName : HEADERS_CANONICAL) {
-			if(sharedHeaders.containsHeader(headerName)) {
-				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
-			} else if(httpRequest.containsHeader(headerName)) {
+			if(httpRequest.containsHeader(headerName)) {
 				for(final Header header: httpRequest.getHeaders(headerName)) {
 					canonical.append('\n').append(header.getValue());
 				}
+			} else if(sharedHeaders.containsHeader(headerName)) {
+				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
 			} else {
 				canonical.append('\n');
 			}
@@ -221,5 +221,6 @@ extends WSRequestConfigBase<T> {
 				);
 			}
 		}
+		bucket.setVersioning(storageNodeAddrs[0], versioning);
 	}
 }

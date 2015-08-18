@@ -88,6 +88,9 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setFileAccessEnabled(final boolean fsAccessFlag);
 	boolean getFileAccessEnabled();
 	//
+	WSRequestConfig<T> setVersioning(final boolean enabledFlag);
+	boolean getVersioning();
+	//
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//

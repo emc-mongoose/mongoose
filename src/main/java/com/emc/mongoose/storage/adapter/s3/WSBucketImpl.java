@@ -10,10 +10,13 @@ import com.emc.mongoose.core.impl.data.model.GenericWSContainerBase;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
+import org.apache.http.entity.ContentType;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.nio.entity.NByteArrayEntity;
 import org.apache.http.util.EntityUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -22,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 /**
  Created by kurila on 02.10.14.
  */
@@ -30,6 +34,15 @@ extends GenericWSContainerBase<T>
 implements Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static byte
+		CONTENT_VER_CONF_ENABLED[] = (
+				"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
+				"<Status>Enabled</Status></VersioningConfiguration>"
+			).getBytes(StandardCharsets.UTF_8),
+		CONTENT_VER_CONF_DISABLED[] = (
+				"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
+				"<Status>Suspended</Status></VersioningConfiguration>"
+			).getBytes(StandardCharsets.UTF_8);
 	//
 	public WSBucketImpl(
 		final WSRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
@@ -40,18 +53,32 @@ implements Bucket<T> {
 	//
 	HttpResponse execute(final String addr, final String method)
 	throws IOException {
-		return execute(addr, method, false);
+		return execute(addr, method, null, batchSize);
 	}
 	//
 	HttpResponse execute(
 		final String addr, final String method, final boolean versioning
 	) throws IOException {
-		return execute(addr, method, versioning, null, batchSize);
+		final HttpEntityEnclosingRequest
+			httpReq = reqConf.createGenericRequest(method, "/" + name + "?" + URL_ARG_VERSIONING);
+		//
+		httpReq.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_XML.getMimeType());
+		if(versioning) {
+			httpReq.setEntity(
+				new NByteArrayEntity(CONTENT_VER_CONF_ENABLED, ContentType.APPLICATION_XML)
+			);
+		} else {
+			httpReq.setEntity(
+				new NByteArrayEntity(CONTENT_VER_CONF_DISABLED, ContentType.APPLICATION_XML)
+			);
+		}
+		reqConf.applyHeadersFinally(httpReq);
+		//
+		return reqConf.execute(addr, httpReq);
 	}
 	//
 	HttpResponse execute(
-		final String addr, final String method,
-		final boolean versioning, final String bucketListingMarker, final long bucketMaxKeys
+		final String addr, final String method,  final String marker, final long limit
 	) throws IOException {
 		//
 		if(method == null) {
@@ -60,17 +87,7 @@ implements Bucket<T> {
 		//
 		final HttpEntityEnclosingRequest httpReq;
 		if(WSRequestConfig.METHOD_PUT.equals(method)) {
-			//
-			if(versioning) {
-				httpReq = reqConf
-					.createGenericRequest(
-						method, "/" + name + VERSIONING_URL_PART
-					);
-			} else {
-				httpReq = reqConf
-					.createGenericRequest(method, "/" + name);
-			}
-			//
+			httpReq = reqConf.createGenericRequest(method, "/" + name);
 			if(reqConf.getFileAccessEnabled()) {
 				httpReq.setHeader(
 					new BasicHeader(
@@ -79,20 +96,19 @@ implements Bucket<T> {
 				);
 			}
 		} else if(WSRequestConfig.METHOD_GET.equals(method)) {
-			if(bucketListingMarker == null) {
+			if(marker == null) {
 				httpReq = reqConf.createGenericRequest(
-					method, "/" + name + "?" + URL_ARG_MAX_KEYS + "=" + bucketMaxKeys
+					method, "/" + name + "?" + URL_ARG_MAX_KEYS + "=" + limit
 				);
 			} else {
 				httpReq = reqConf.createGenericRequest(
 					method,
-					"/" + name + "?" + URL_ARG_MAX_KEYS + "=" + bucketMaxKeys + "&" +
-						URL_ARG_MARKER + "=" + bucketListingMarker
+					"/" + name + "?" + URL_ARG_MAX_KEYS + "=" + limit + "&" +
+						URL_ARG_MARKER + "=" + marker
 				);
 			}
 		} else {
-			httpReq = reqConf
-				.createGenericRequest(method, "/" + name);
+			httpReq = reqConf.createGenericRequest(method, "/" + name);
 		}
 		reqConf.applyHeadersFinally(httpReq);
 		//
@@ -138,17 +154,12 @@ implements Bucket<T> {
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
-		//
-		if(flagExists && versioningEnabled){
-			enableVersioning(addr, WSRequestConfig.METHOD_PUT);
-		}
-		//
 		return flagExists;
 	}
 	//
-	private void enableVersioning(final String addr, final String method) {
+	public void setVersioning(final String addr, final boolean enabledFlag) {
 		try {
-			final HttpResponse httpResp = execute(addr, method, true);
+			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_PUT, enabledFlag);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -160,8 +171,8 @@ implements Bucket<T> {
 						LOG.info(Markers.MSG, "Bucket \"{}\" versioning enabled", name);
 					} else {
 						final StringBuilder msg = new StringBuilder("Bucket versioning \"")
-								.append(name).append("\" failure: ")
-								.append(statusLine.getReasonPhrase());
+							.append(name).append("\" failure: ")
+							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
@@ -170,9 +181,9 @@ implements Bucket<T> {
 								// ignore
 							}
 						}
-						LOG.warn(
-								Markers.ERR, "Bucket versioning \"{}\" response ({}): {}",
-								name, statusCode, msg.toString()
+						LOG.debug(
+							Markers.ERR, "Bucket versioning \"{}\" response ({}): {}",
+							name, statusCode, msg.toString()
 						);
 					}
 				}

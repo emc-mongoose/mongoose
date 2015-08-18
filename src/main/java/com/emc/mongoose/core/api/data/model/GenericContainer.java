@@ -21,6 +21,9 @@ public interface GenericContainer<T extends DataItem> {
 	void delete(final String addr)
 	throws IllegalStateException;
 	//
+	void setVersioning(final String addr, final boolean enabledFlag)
+	throws IllegalStateException;
+	//
 	T buildItem(final Constructor<T> itemConstructor, String rawId, final long size)
 	throws IllegalStateException;
 	//

@@ -159,6 +159,44 @@ implements Container<T> {
 		}
 	}
 	//
+	@Override
+	public final void setVersioning(final String addr, final boolean enabledFlag) {
+		try {
+			final HttpResponse httpResp = execute(
+				addr, WSRequestConfig.METHOD_POST, null, batchSize
+			);
+			if(httpResp != null) {
+				final HttpEntity httpEntity = httpResp.getEntity();
+				final StatusLine statusLine = httpResp.getStatusLine();
+				if(statusLine == null) {
+					LOG.warn(Markers.MSG, "No response status");
+				} else {
+					final int statusCode = statusLine.getStatusCode();
+					if(statusCode >= 200 && statusCode < 300) {
+						LOG.info(Markers.MSG, "Container \"{}\" created", name);
+					} else {
+						final StringBuilder msg = new StringBuilder("Create container \"")
+							.append(name).append("\" failure: ")
+							.append(statusLine.getReasonPhrase());
+						if(httpEntity != null) {
+							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
+								httpEntity.writeTo(buff);
+								msg.append('\n').append(buff.toString());
+							}
+						}
+						LOG.warn(
+							Markers.ERR, "Create container \"{}\" response ({}): {}",
+							name, statusCode, msg.toString()
+						);
+					}
+				}
+				EntityUtils.consumeQuietly(httpEntity);
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
+		}
+	}
+	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
 	final HttpResponse execute(
@@ -201,6 +239,23 @@ implements Container<T> {
 						Boolean.toString(reqConf.getFileAccessEnabled())
 					)
 				);
+				break;
+			case WSRequestConfig.METHOD_POST:
+				httpReq = reqConf.createGenericRequest(
+					method,
+					"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
+						reqConf.getNameSpace() + "/" + name
+				);
+				if(reqConf.getVersioning()) {
+					httpReq.setHeader(
+						new BasicHeader(
+							WSRequestConfigImpl.KEY_X_VERSIONING,
+							WSRequestConfigImpl.DEFAULT_VERSIONS_CONTAINER
+						)
+					);
+				} else {
+					httpReq.setHeader(new BasicHeader(WSRequestConfigImpl.KEY_X_VERSIONING, ""));
+				}
 				break;
 			default:
 				httpReq = reqConf.createGenericRequest(

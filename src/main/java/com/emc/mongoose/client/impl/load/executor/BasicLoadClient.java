@@ -78,6 +78,7 @@ extends ThreadPoolExecutor
 implements LoadClient<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static int SUBMIT_RETRY_COUNT_LIMIT = 100;
 	//
 	protected final Map<String, LoadSvc<T>> remoteLoadMap;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -411,15 +412,22 @@ implements LoadClient<T> {
 				} else {
 					try {
 						for(final T nextDataItem : nextDataItemsBuff) {
-							consumer.submit(nextDataItem);
+							for(int i = 0; i < SUBMIT_RETRY_COUNT_LIMIT; i ++) {
+								TimeUnit.MILLISECONDS.sleep(i);
+								try {
+									consumer.submit(nextDataItem);
+									break;
+								} catch(final RejectedExecutionException | RemoteException e) {
+									LogUtil.exception(
+										LOG, Level.DEBUG, e,
+										"Failed to feed the data item to consumer {} times", i + 1
+									);
+								}
+							}
 						}
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "Interrupted while feeding the consumer");
 						break;
-					} catch(final RejectedExecutionException | RemoteException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to feed the data item to consumer"
-						);
 					}
 				}
 			}

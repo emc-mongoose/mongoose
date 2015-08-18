@@ -89,7 +89,7 @@ implements WSRequestConfig<T> {
 	//
 	public final static long serialVersionUID = 42L;
 	protected final String userAgent, signMethod;
-	protected boolean fsAccess;
+	protected boolean fsAccess, versioning;
 	protected SecretKeySpec secretKey;
 	//
 	private final HttpAsyncRequester client;
@@ -313,6 +313,17 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
+	public WSRequestConfigBase<T> setVersioning(final boolean flag) {
+		this.versioning = flag;
+		return this;
+	}
+	//
+	@Override
+	public final boolean getVersioning() {
+		return versioning;
+	}
+	//
+	@Override
 	public WSRequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
 		//
 		try {
@@ -331,6 +342,12 @@ implements WSRequestConfig<T> {
 		//
 		try {
 			setFileAccessEnabled(runTimeConfig.getDataFileAccessEnabled());
+		} catch(final NoSuchElementException e) {
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_DATA_FS_ACCESS);
+		}
+		//
+		try {
+			setVersioning(runTimeConfig.getDataVersioningEnabled());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_DATA_FS_ACCESS);
 		}
@@ -396,6 +413,7 @@ implements WSRequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
 		setNameSpace(String.class.cast(in.readObject()));
 		setFileAccessEnabled(Boolean.class.cast(in.readObject()));
+		setVersioning(Boolean.class.cast(in.readObject()));
 	}
 	//
 	@Override
@@ -405,6 +423,7 @@ implements WSRequestConfig<T> {
 		out.writeObject(sharedHeaders);
 		out.writeObject(getNameSpace());
 		out.writeObject(getFileAccessEnabled());
+		out.writeObject(getVersioning());
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {
