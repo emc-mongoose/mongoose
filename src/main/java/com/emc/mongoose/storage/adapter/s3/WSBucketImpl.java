@@ -168,7 +168,10 @@ implements Bucket<T> {
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Bucket \"{}\" versioning enabled", name);
+						LOG.info(
+							Markers.MSG, "Bucket \"{}\" versioning {}",
+							name, enabledFlag ? "enabled" : "disabled"
+						);
 					} else {
 						final StringBuilder msg = new StringBuilder("Bucket versioning \"")
 							.append(name).append("\" failure: ")
@@ -181,7 +184,7 @@ implements Bucket<T> {
 								// ignore
 							}
 						}
-						LOG.debug(
+						LOG.warn(
 							Markers.ERR, "Bucket versioning \"{}\" response ({}): {}",
 							name, statusCode, msg.toString()
 						);

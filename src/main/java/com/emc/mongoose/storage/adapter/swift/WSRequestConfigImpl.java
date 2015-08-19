@@ -274,7 +274,9 @@ extends WSRequestConfigBase<T> {
 				);
 			}
 		}
-		container.setVersioning(storageNodeAddrs[0], versioning);
+		if(versioning) {
+			container.setVersioning(storageNodeAddrs[0], true);
+		}
 
 	}
 	//

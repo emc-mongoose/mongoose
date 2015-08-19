@@ -185,7 +185,12 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		final String uri = httpRequest.getRequestLine().getUri();
-		canonical.append('\n').append(uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri);
+		canonical.append('\n');
+		if(uri.contains("?") && !uri.endsWith("?" + Bucket.URL_ARG_VERSIONING)) {
+			canonical.append(uri.substring(0, uri.indexOf("?")));
+		} else {
+			canonical.append(uri);
+		}
 		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Canonical representation:\n{}", canonical);
@@ -221,6 +226,8 @@ extends WSRequestConfigBase<T> {
 				);
 			}
 		}
-		bucket.setVersioning(storageNodeAddrs[0], versioning);
+		if(versioning) {
+			bucket.setVersioning(storageNodeAddrs[0], true);
+		}
 	}
 }
