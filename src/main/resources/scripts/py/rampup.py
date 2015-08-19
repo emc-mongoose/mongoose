@@ -1,8 +1,10 @@
 from loadbuilder import init as loadBuilderInit
+from timeout import init as timeOutInit
 from chain import build as chainBuild
 from chain import execute as chainExecute
 #
 from java.lang import Long, Integer, Throwable, NumberFormatException, InterruptedException
+from java.util.concurrent import TimeUnit
 #
 from org.apache.logging.log4j import Level, LogManager, ThreadContext
 #
@@ -24,7 +26,7 @@ def init():
 	LOG.info(Markers.MSG, "Thread counts: {}", listThreadCounts)
 	return loadTypesChain, listSizes, listThreadCounts
 #
-def execute(loadBuilder, rampupParams=((),(),())):
+def execute(loadBuilder, rampupParams=((),(),()), timeOut=Long.MAX_VALUE, timeUnit=TimeUnit.DAYS):
 	loadTypesChain = rampupParams[0]
 	listSizes = rampupParams[1]
 	listThreadCounts = rampupParams[2]
@@ -41,7 +43,7 @@ def execute(loadBuilder, rampupParams=((),(),())):
 					loadBuilder, loadTypesChain, flagConcurrent, True, dataItemSize, dataItemSize,
 					threadCount
 				)
-				chainExecute(nextChain, flagConcurrent)
+				chainExecute(nextChain, flagConcurrent, timeOut, timeUnit)
 				LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
 			except InterruptedException as e:
 				raise e
@@ -50,8 +52,9 @@ def execute(loadBuilder, rampupParams=((),(),())):
 #
 if __name__ == "__builtin__":
 	loadBuilder = loadBuilderInit()
+	stepTime = timeOutInit()
 	try:
-		execute(loadBuilder=loadBuilder, rampupParams=init())
+		execute(loadBuilder=loadBuilder, rampupParams=init(), timeOut=stepTime[0], timeUnit=stepTime[1])
 	except InterruptedException as e:
 		LOG.debug(Markers.MSG, "Rampup was interrupted")
 	except Throwable as e:

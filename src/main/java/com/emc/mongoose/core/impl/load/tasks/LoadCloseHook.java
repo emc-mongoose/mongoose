@@ -29,11 +29,11 @@ public final class LoadCloseHook
 implements Runnable {
 	//
 	private static final Logger LOG = LogManager.getLogger();
-	private static final Map<String, Map<LoadExecutor, Thread>> HOOKS_MAP
-		= new ConcurrentHashMap<>();
+	private static final Map<String, Map<LoadExecutor, Thread>>
+		HOOKS_MAP = new ConcurrentHashMap<>();
 	//
-	public static final Map<String, Queue<LoadState>> LOAD_STATES
-		= new ConcurrentHashMap<>();
+	public static final Map<String, Queue<LoadState>>
+		LOAD_STATES = new ConcurrentHashMap<>();
 	//
 	private final LoadExecutor loadExecutor;
 	private final String loadName;
@@ -84,65 +84,73 @@ implements Runnable {
 			currRunId = RunTimeConfig.getContext().getRunId();
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 		}
-		if (LoadCloseHook.class.isInstance(Thread.currentThread())) {
+		if(LoadCloseHook.class.isInstance(Thread.currentThread())) {
 			LOG.debug(Markers.MSG, "Won't remove the shutdown hook which is in progress");
-		} else if (HOOKS_MAP.get(currRunId).containsKey(loadExecutor)) {
-			try {
-				Runtime.getRuntime().removeShutdownHook(HOOKS_MAP.get(currRunId).get(loadExecutor));
-				LOG.debug(Markers.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
-			} catch (final IllegalStateException e) {
-				LogUtil.exception(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
-			} catch (final SecurityException | IllegalArgumentException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
-			} finally {
-				HOOKS_MAP.get(currRunId).remove(loadExecutor);
-				if (LogUtil.LOAD_HOOKS_COUNT.get() > 1) {
-					LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
-				}
-				//
+		} else {
+			final Map<LoadExecutor, Thread> hook = HOOKS_MAP.get(currRunId);
+			if(hook != null && hook.containsKey(loadExecutor)) {
 				try {
-					final LoadState currState = loadExecutor.getLoadState();
-					if (LOAD_STATES.containsKey(currRunId)) {
-						LOAD_STATES.get(currRunId).add(currState);
-					} else {
-						final Queue<LoadState> loadStates = new ConcurrentLinkedQueue<>();
-						loadStates.add(currState);
-						LOAD_STATES.put(currRunId, loadStates);
+					Runtime
+						.getRuntime()
+						.removeShutdownHook(hook.get(loadExecutor));
+					LOG.debug(Markers.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
+				} catch (final IllegalStateException e) {
+					LogUtil.exception(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
+				} catch (final SecurityException | IllegalArgumentException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
+				} finally {
+					HOOKS_MAP.get(currRunId).remove(loadExecutor);
+					if (LogUtil.LOAD_HOOKS_COUNT.get() > 1) {
+						LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
 					}
 					//
-					if (HOOKS_MAP.get(currRunId).isEmpty()) {
-						final RunTimeConfig rtConfig = currState.getRunTimeConfig();
-						if (rtConfig.isRunResumeEnabled()) {
-							if (!BasicLoadState.isScenarioFinished(rtConfig) &&
+					try {
+						final LoadState currState = loadExecutor.getLoadState();
+						if(LOAD_STATES.containsKey(currRunId)) {
+							LOAD_STATES.get(currRunId).add(currState);
+						} else {
+							final Queue<LoadState> loadStates = new ConcurrentLinkedQueue<>();
+							loadStates.add(currState);
+							LOAD_STATES.put(currRunId, loadStates);
+						}
+						//
+						if(HOOKS_MAP.get(currRunId).isEmpty()) {
+							final RunTimeConfig rtConfig = currState.getRunTimeConfig();
+							if (rtConfig.isRunResumeEnabled()) {
+								if (!BasicLoadState.isScenarioFinished(rtConfig) &&
 									rtConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)
 									&& LOAD_STATES.get(currRunId).size() == 1) {
-								BasicLoadState.saveScenarioState(rtConfig);
-							}
-						}
-						HOOKS_MAP.remove(currRunId);
-						if (HOOKS_MAP.isEmpty()) {
-							try {
-								if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
-									try {
-										LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
-										LogUtil.HOOKS_COND.signalAll();
-									} finally {
-										LogUtil.HOOKS_LOCK.unlock();
-									}
-								} else {
-									LOG.debug(Markers.ERR, "Failed to acquire the lock for the del method");
+									BasicLoadState.saveScenarioState(rtConfig);
 								}
-							} catch (final InterruptedException e) {
-								LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
+							}
+							HOOKS_MAP.remove(currRunId);
+							if (HOOKS_MAP.isEmpty()) {
+								try {
+									if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
+										try {
+											LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
+											LogUtil.HOOKS_COND.signalAll();
+										} finally {
+											LogUtil.HOOKS_LOCK.unlock();
+										}
+									} else {
+										LOG.debug(
+											Markers.ERR,
+											"Failed to acquire the lock for the del method"
+										);
+									}
+								} catch (final InterruptedException e) {
+									LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
+								}
 							}
 						}
+					} catch (final RemoteException e) {
+						LogUtil.exception(LOG, Level.ERROR, e, "Failed to add load state to queue");
 					}
-				} catch (final RemoteException e) {
-					LogUtil.exception(LOG, Level.ERROR, e, "Failed to add load state to queue");
 				}
+			} else {
+				LOG.trace(Markers.ERR, "No shutdown hook registered for \"{}\"", loadExecutor);
 			}
-		} else {
-			LOG.trace(Markers.ERR, "No shutdown hook registered for \"{}\"", loadExecutor);
 		}
 	}
 	//

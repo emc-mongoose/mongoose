@@ -6,6 +6,7 @@ import com.emc.mongoose.core.api.data.model.DataItemOutput;
 //
 import java.io.Closeable;
 import java.io.IOException;
+import java.rmi.RemoteException;
 /**
  Created by kurila on 15.06.15.
  The client class supporting the following storage I/O methods: write, read, delete, update, append.
@@ -32,7 +33,7 @@ extends Closeable {
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(final long size)
-	throws IllegalArgumentException, InterruptedException, IOException;
+	throws IllegalArgumentException, RemoteException, IOException;
 
 	/**
 	 (Over|Re)Write the data items in a customized way using fixed data items sizes.
@@ -46,7 +47,7 @@ extends Closeable {
 	long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long maxCount, final int threadCount, final long size
-	) throws IllegalArgumentException, InterruptedException, IOException;
+	) throws IllegalArgumentException, RemoteException, IOException;
 
 	/**
 	 Write the data items in a customized way using specific data items sizes distribution.
@@ -65,7 +66,7 @@ extends Closeable {
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long maxCount, final int threadCount,
 		final long minSize, final long maxSize, final float sizeBias
-	) throws IllegalArgumentException, InterruptedException, IOException;
+	) throws IllegalArgumentException, RemoteException, IOException;
 
 	/**
 	 Read the data items using the specified data items source, do not store the output data items info.
@@ -73,7 +74,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long read(final DataItemInput<T> itemsInput)
-	throws IllegalStateException, InterruptedException, IOException;
+	throws IllegalStateException, RemoteException, IOException;
 
 	/**
 	 Read the data items in a customized way.
@@ -87,7 +88,7 @@ extends Closeable {
 	long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long maxCount, final int threadCount, final boolean verifyContentFlag
-	) throws IllegalStateException, InterruptedException, IOException;
+	) throws IllegalStateException, RemoteException, IOException;
 
 	/**
 	 Delete the data items using the specified data items source, do not store the output data items info.
@@ -95,7 +96,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long delete(final DataItemInput<T> itemsInput)
-	throws IllegalStateException, InterruptedException, IOException;
+	throws IllegalStateException, RemoteException, IOException;
 
 	/**
 	 Delete the data items in a customized way.
@@ -108,7 +109,7 @@ extends Closeable {
 	long delete(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long maxCount, final int threadCount
-	) throws IllegalStateException, InterruptedException, IOException;
+	) throws IllegalStateException, RemoteException, IOException;
 
 	/**
 	 Update the data items using the specified data items source, do not store the output data items info.
@@ -116,7 +117,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long update(final DataItemInput<T> itemsInput)
-	throws IllegalStateException, InterruptedException, IOException;
+	throws IllegalStateException, RemoteException, IOException;
 
 	/**
 	 Update the data items in a customized way.
@@ -131,7 +132,7 @@ extends Closeable {
 	long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long maxCount, final int threadCount, final int countPerTime
-	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;
+	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException;
 
 	/**
 	 Append the data items using the specified data items source and the specified fixed augment size, do not store the output data items info.
@@ -140,7 +141,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long append(final DataItemInput<T> itemsInput, final long size)
-	throws IllegalStateException, InterruptedException, IOException;
+	throws IllegalStateException, RemoteException, IOException;
 
 	/**
 	 Append the data items using the specified data items source and the specified fixed augment size.
@@ -154,7 +155,7 @@ extends Closeable {
 	long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long maxCount, final int threadCount, final long size
-	) throws IllegalStateException, InterruptedException, IOException;
+	) throws IllegalStateException, RemoteException, IOException;
 
 	/**
 	 Append the data items in a customized way using the specified distribution of the augment size.
@@ -173,5 +174,5 @@ extends Closeable {
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long maxCount, final int threadCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
-	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;
+	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException;
 }

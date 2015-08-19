@@ -132,9 +132,7 @@ implements LoadClient<T> {
 					(int) maxCount : runTimeConfig.getTasksMaxQueueSize()
 			)
 		);
-		setCorePoolSize(
-			10 * Math.max(Runtime.getRuntime().availableProcessors(), remoteLoadMap.size())
-		);
+		setCorePoolSize(10 * remoteLoadMap.size());
 		setMaximumPoolSize(getCorePoolSize());
 		//
 		String t = null;
@@ -328,8 +326,7 @@ implements LoadClient<T> {
 		metricFetchTasks.add(taskGetLatencyAvg);
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			remoteLoadMap.size() + metricFetchTasks.size() + 2,
-			new GroupThreadFactory(String.format("%s-aggregator", name), true)
+			10, new GroupThreadFactory(String.format("%s-aggregator", name), true)
 		);
 		//
 		LoadCloseHook.add(this);
@@ -499,21 +496,27 @@ implements LoadClient<T> {
 	//
 	private void schedulePeriodicMgmtTasks() {
 		LoadSvc<T> nextLoadSvc;
-		final int periodSec = metricsPeriodSec > 0 ? metricsPeriodSec : 10;
+		final int periodMilliSec = metricsPeriodSec > 0 ? 1000 * metricsPeriodSec : 1000;
 		//
-		for(final String loadSvcAddr : loadSvcAddrs) {
-			nextLoadSvc = remoteLoadMap.get(loadSvcAddr);
+		//
+		for(int i = 0; i < loadSvcAddrs.length; i ++) {
+			nextLoadSvc = remoteLoadMap.get(loadSvcAddrs[i]);
 			final PeriodicTask<Collection<T>> nextFrameFetchTask = new DataItemsFetchPeriodicTask<>(
 				nextLoadSvc
 			);
 			fetchItemsBuffTasks.add(nextFrameFetchTask);
 			mgmtConnExecutor.scheduleAtFixedRate(
-				nextFrameFetchTask, 0, periodSec, TimeUnit.SECONDS
+				nextFrameFetchTask, i, periodMilliSec, TimeUnit.MILLISECONDS
 			);
 		}
 		//
-		for(final PeriodicTask metricTask : metricFetchTasks) {
-			mgmtConnExecutor.scheduleAtFixedRate(metricTask, 0, periodSec, TimeUnit.SECONDS);
+		final int
+			metricFetchTasksCount = metricFetchTasks.size(),
+			delayStep = periodMilliSec / metricFetchTasksCount;
+		for(int i = 0; i < metricFetchTasksCount; i ++) {
+			mgmtConnExecutor.scheduleAtFixedRate(
+				metricFetchTasks.get(i), delayStep * i, periodMilliSec, TimeUnit.MILLISECONDS
+			);
 		}
 		//
 		mgmtConnExecutor.scheduleAtFixedRate(
@@ -522,13 +525,13 @@ implements LoadClient<T> {
 				public final void run() {
 					postProcessDataItems();
 				}
-			}, 0, periodSec, TimeUnit.SECONDS
+			}, 123, periodMilliSec, TimeUnit.MILLISECONDS
 		);
 		mgmtConnExecutor.scheduleAtFixedRate(
 			new InterruptClientOnMaxCountTask(
 				this, maxCount,
 				new PeriodicTask[] {taskGetCountSucc, taskGetCountFail, taskGetCountRej}
-			), 0, periodSec, TimeUnit.SECONDS
+			), 456, 1000, TimeUnit.MILLISECONDS
 		);
 		//
 		if(metricsPeriodSec > 0) {
@@ -623,6 +626,13 @@ implements LoadClient<T> {
 				);
 			}
 		}
+		//
+		LOG.debug(
+			Markers.MSG, "{}: dropped {} remote tasks",
+			getName(), shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
+		);
+		loadLastLatencyValues();
+		forceFetchAndAggregation();
 	}
 	//
 	@Override
@@ -633,8 +643,7 @@ implements LoadClient<T> {
 	@Override
 	public final void setConsumer(final Consumer<T> consumer)
 	throws RemoteException {
-		this.consumer = consumer;
-		/*if(LoadClient.class.isInstance(consumer)) {
+		if(LoadClient.class.isInstance(consumer)) {
 			LOG.debug(Markers.MSG, "Consumer is a LoadClient instance");
 			// consumer is client which has the map of consumers
 			// this is necessary for the distributed chain/rampup scenarios
@@ -644,10 +653,6 @@ implements LoadClient<T> {
 			for(final String addr : consumeMap.keySet()) {
 				remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
 			}
-		} else if(DataItemOutputConsumer.class.isInstance(consumer)) {
-			// high-level API is used
-			LOG.debug(Markers.MSG, "Consumer is data item output");
-			this.consumer = consumer;
 		} else if(LoadSvc.class.isInstance(consumer)) {
 			// single consumer for all these producers
 			final LoadSvc<T> loadSvc = (LoadSvc<T>) consumer;
@@ -656,11 +661,8 @@ implements LoadClient<T> {
 				remoteLoadMap.get(addr).setConsumer(loadSvc);
 			}
 		} else {
-			LOG.error(
-				Markers.ERR, "Unexpected consumer type: {}",
-				consumer == null ? null : consumer.getClass()
-			);
-		}*/
+			this.consumer = consumer;
+		}
 	}
 	//
 	@Override
@@ -711,8 +713,7 @@ implements LoadClient<T> {
 	//
 	private void forceFetchAndAggregation() {
 		final ExecutorService forcedAggregator = Executors.newFixedThreadPool(
-			fetchItemsBuffTasks.size() + metricFetchTasks.size(),
-			new GroupThreadFactory("forcedAggregator")
+			10, new GroupThreadFactory("forcedAggregator")
 		);
 		//
 		for(final PeriodicTask<Collection<T>> frameFetchTask : fetchItemsBuffTasks) {
@@ -768,15 +769,8 @@ implements LoadClient<T> {
 		LOG.debug(Markers.MSG, "{}: trying to close", getName());
 		synchronized(remoteLoadMap) {
 			if(!remoteLoadMap.isEmpty()) {
-				saveLastLatencyValues();
-				LOG.debug(Markers.MSG, "{}: do performing close", getName());
-				forceFetchAndAggregation();
 				interrupt();
 				logMetrics(Markers.PERF_SUM);
-				LOG.debug(
-					Markers.MSG, "{}: dropped {} remote tasks",
-					getName(), shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
-				);
 				if(metricsReporter != null) {
 					metricsReporter.close();
 				}
@@ -834,9 +828,9 @@ implements LoadClient<T> {
 		}
 	}
 	//
-	private void saveLastLatencyValues() {
+	private void loadLastLatencyValues() {
 		try {
-			for (final LoadSvc<T> loadSvc : remoteLoadMap.values()) {
+			for(final LoadSvc<T> loadSvc : remoteLoadMap.values()) {
 				latencyValues.addAll(
 					Arrays.asList(
 						ArrayUtils.toObject(loadSvc.getLoadState().getLatencyValues())
@@ -844,7 +838,7 @@ implements LoadClient<T> {
 				);
 			}
 		} catch (final RemoteException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Unexpected failure");
 		}
 	}
 	//

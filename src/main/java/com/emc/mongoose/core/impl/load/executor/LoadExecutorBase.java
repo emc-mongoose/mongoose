@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.ThreadContext;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
@@ -103,7 +104,9 @@ implements LoadExecutor<T> {
 			//
 			@Override
 			public final void run() {
-				RunTimeConfig.setContext(rtConfig); // required for int tests passing
+				// required for int tests passing
+				ThreadContext.put(RunTimeConfig.KEY_RUN_ID, rtConfig.getRunId());
+				//
 				final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
 					rtConfig.getLoadMetricsPeriodSec()
 				);

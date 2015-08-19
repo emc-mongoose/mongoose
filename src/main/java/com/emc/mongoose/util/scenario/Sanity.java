@@ -7,14 +7,11 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
 //
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.model.BinFileItemOutput;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
-import com.emc.mongoose.core.impl.data.model.CircularListItemInput;
-import com.emc.mongoose.core.impl.data.model.CircularListItemOutput;
 //
 import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 import com.emc.mongoose.core.impl.data.model.ListItemOutput;
@@ -45,8 +42,8 @@ import java.util.concurrent.TimeUnit;
 public class Sanity
 implements Runnable {
 	//
-	private final static short DEFAULT_NODE_COUNT = 5, DEFAULT_CONN_PER_NODE = 5;
-	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("256KB");
+	private final static short DEFAULT_NODE_COUNT = 2, DEFAULT_CONN_PER_NODE = 50;
+	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("1MB");
 	private final static int DEFAULT_DATA_COUNT_MAX = 1000000;
 	public final static Logger LOG;
 	static {
@@ -75,13 +72,13 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Start updating");
 			final DataItemOutput<WSObject> dataDstU = new BinFileItemOutput<>();
 			final long nUpdated = client.update(
-				dataDstW.getInput(), dataDstU, 0, DEFAULT_CONN_PER_NODE, 10
+				dataDstW.getInput(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
 			final DataItemOutput dataDstR = new CSVFileItemOutput<>(BasicWSObject.class);
 			final long nRead = client.read(
-				dataDstU.getInput(), dataDstR, 0, DEFAULT_CONN_PER_NODE, true
+				dataDstU.getInput(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead);
 			// variable-sized appending of the verified data items
@@ -89,7 +86,7 @@ implements Runnable {
 				new ArrayBlockingQueue<WSObject>(DEFAULT_DATA_COUNT_MAX)
 			);
 			final long nAppended = client.append(
-				dataDstR.getInput(), dataDstA, 0, DEFAULT_CONN_PER_NODE,
+				dataDstR.getInput(), dataDstA, nRead, DEFAULT_CONN_PER_NODE,
 				DEFAULT_DATA_SIZE, 3 * DEFAULT_DATA_SIZE, 1
 			);
 			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
@@ -99,26 +96,28 @@ implements Runnable {
 				tmpItemsFilePath, BasicWSObject.class
 			);
 			final long nUpdated2 = client.update(
-				dataDstA.getInput(), dataDstU2, 0, DEFAULT_CONN_PER_NODE, 10
+				dataDstA.getInput(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
 			// read and verify the updated items again
 			final long nRead2 = client.read(
-				dataDstU2.getInput(), null, 0, DEFAULT_CONN_PER_NODE, true
+				dataDstU2.getInput(), null, nUpdated2, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
-			/* recreate the items
+			// recreate the items
 			final long nReWritten = client.write(
-				dataDstW.getInput(), null, 0, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
+				dataDstW.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
 			// read and verify the rewritten data items
 			final long nRead3 = client.read(
-				dataDstW.getInput(), null, 0, DEFAULT_CONN_PER_NODE, true
+				dataDstW.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, true
 			);
-			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);*/
+			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
 			// delete all created data items
-			final long nDeleted = client.delete(dataDstW.getInput(), null, 0, DEFAULT_CONN_PER_NODE);
+			final long nDeleted = client.delete(
+				dataDstW.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE
+			);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
 		} catch(final Exception e) {
 			e.printStackTrace(System.err);
@@ -156,13 +155,13 @@ implements Runnable {
 			.setLimitTime(100, TimeUnit.SECONDS)
 			.setLimitRate(10000);
 		// standalone
-		try(final StorageClient<WSObject> client = clientBuilder.build()) {
+		/*try(final StorageClient<WSObject> client = clientBuilder.build()) {
 			final Thread sanityThread1 = new Thread(new Sanity(client), "sanityStandalone");
 			sanityThread1.start();
 			LOG.info(Markers.MSG, "Standalone sanity started");
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
-		}
+		}*/
 		// distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
 		ServiceUtils.init();

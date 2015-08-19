@@ -12,7 +12,7 @@ from com.emc.mongoose.core.api.io.task import IOTask
 from com.emc.mongoose.core.impl.load.tasks import AwaitLoadJobTask
 #
 from java.lang import Long, String, Throwable, IllegalArgumentException, InterruptedException
-from java.util.concurrent import Executors
+from java.util.concurrent import Executors, TimeUnit
 #
 LOG = LogManager.getLogger()
 #
@@ -55,8 +55,7 @@ def build(
 			LogUtil.exception(LOG, Level.FATAL, e, "Unexpected failure")
 	return chain
 	#
-def execute(chain=(), flagConcurrent=True):
-	runTimeOut = timeOutInit()
+def execute(chain=(), flagConcurrent=True, timeOut=Long.MAX_VALUE, timeUnit=TimeUnit.DAYS):
 	try:
 		if flagConcurrent:
 			LOG.info(Markers.MSG, "Execute load jobs in parallel")
@@ -67,11 +66,11 @@ def execute(chain=(), flagConcurrent=True):
 			)
 			for load in chain:
 				chainWaitExecSvc.submit(
-					AwaitLoadJobTask(load, runTimeOut[0], runTimeOut[1])
+					AwaitLoadJobTask(load, timeOut, timeUnit)
 				)
 			chainWaitExecSvc.shutdown()
 			try:
-				if chainWaitExecSvc.awaitTermination(runTimeOut[0], runTimeOut[1]):
+				if chainWaitExecSvc.awaitTermination(timeOut, timeUnit):
 					LOG.debug(Markers.MSG, "Load jobs are finished in time")
 			finally:
 				LOG.debug(
@@ -91,9 +90,9 @@ def execute(chain=(), flagConcurrent=True):
 						try:
 							LOG.debug(
 								Markers.MSG, "Execute \"{}\" for up to {}[{}]",
-								nextLoad, runTimeOut[0], runTimeOut[1]
+								nextLoad, timeOut, timeUnit
 							)
-							nextLoad.await(runTimeOut[0], runTimeOut[1])
+							nextLoad.await(timeOut, timeUnit)
 						except InterruptedException as e:
 							LOG.debug("{}: interrupted", nextLoad)
 							interrupted = True
@@ -147,6 +146,7 @@ if __name__ == "__builtin__":
 		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
 	#
 	loadBuilder = loadBuilderInit()
+	runTime = timeOutInit()
 	#
 	chain = build(
 		loadBuilder, loadTypesChain, flagConcurrent, flagUseLocalItemList,
@@ -158,7 +158,7 @@ if __name__ == "__builtin__":
 		LOG.error(Markers.ERR, "Empty chain has been build, nothing to do")
 	else:
 		try:
-			execute(chain, flagConcurrent)
+			execute(chain, flagConcurrent, runTime[0], runTime[1])
 		except InterruptedException as e:
 			LOG.debug(Markers.MSG, "Chain was interrupted")
 		except Throwable as e:

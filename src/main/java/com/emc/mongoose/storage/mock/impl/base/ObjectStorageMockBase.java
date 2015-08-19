@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 03.07.15.
@@ -217,7 +218,7 @@ implements ObjectStorageMock<T> {
 			long currObjCount;
 			try {
 				while(true) {
-					Thread.sleep(500);
+					TimeUnit.SECONDS.sleep(1);
 					currObjCount = getSize();
 					if(!isCapacityExhausted && currObjCount > storageCapacity) {
 						isCapacityExhausted = true;

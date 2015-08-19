@@ -504,15 +504,17 @@ implements WSRequestConfig<T> {
 			sb.append(dataItem.getSize()).append(VALUE_RANGE_CONCAT);
 		} else if(dataItem.hasAnyUpdatedRanges()) {
 			final int rangeCount = dataItem.getCountRangesTotal();
+			long nextRangeOffset;
 			for(int i = 0; i < rangeCount; i ++) {
 				if(dataItem.isCurrLayerRangeUpdating(i)) {
 					if(sb.length() > prefixLen) {
 						sb.append(RunTimeConfig.LIST_SEP);
 					}
+					nextRangeOffset = getRangeOffset(i);
 					sb
-						.append(getRangeOffset(i))
+						.append(nextRangeOffset)
 						.append(VALUE_RANGE_CONCAT)
-						.append(getRangeOffset(i + 1) - 1);
+						.append(nextRangeOffset + dataItem.getRangeSize(i) - 1);
 				}
 			}
 			for(int i = 0; i < rangeCount; i ++) {
@@ -520,10 +522,11 @@ implements WSRequestConfig<T> {
 					if(sb.length() > prefixLen) {
 						sb.append(RunTimeConfig.LIST_SEP);
 					}
+					nextRangeOffset = getRangeOffset(i);
 					sb
-						.append(getRangeOffset(i))
+						.append(nextRangeOffset)
 						.append(VALUE_RANGE_CONCAT)
-						.append(getRangeOffset(i + 1) - 1);
+						.append(nextRangeOffset + dataItem.getRangeSize(i) - 1);
 				}
 			}
 		} else {
