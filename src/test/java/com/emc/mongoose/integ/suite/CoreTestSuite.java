@@ -5,6 +5,8 @@ import com.emc.mongoose.integ.core.chain.CRUDSimultaneousScenarioTest;
 import com.emc.mongoose.integ.core.chain.CustomChainScenarioTest;
 import com.emc.mongoose.integ.core.chain.DefaultChainScenarioTest;
 //
+import com.emc.mongoose.integ.core.rampup.CustomRampupTest;
+import com.emc.mongoose.integ.core.rampup.DefaultRampupTest;
 import com.emc.mongoose.integ.core.single.DefaultWriteTest;
 import com.emc.mongoose.integ.core.single.InfiniteWriteTest;
 import com.emc.mongoose.integ.core.single.Read10BItemsTest;
@@ -42,8 +44,8 @@ import org.junit.runners.Suite;
 	CRUDSequentialScenarioTest.class,
 	CRUDSimultaneousScenarioTest.class,
 	DefaultChainScenarioTest.class,
-	//CustomRampupTest.class,
-	//DefaultRampupTest.class,
+	CustomRampupTest.class,
+	DefaultRampupTest.class,
 	InfiniteWriteTest.class
 })
 public class CoreTestSuite {}
