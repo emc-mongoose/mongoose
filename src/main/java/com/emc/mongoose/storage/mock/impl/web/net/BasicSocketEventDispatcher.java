@@ -74,7 +74,7 @@ implements Runnable {
 			.build();
 		// create the server-side I/O reactor
 		ioReactor = new DefaultListeningIOReactor(
-			ioReactorConf, new IOUtils.IOWorkerFactory("ioReactor")
+			ioReactorConf, new IOUtils.IOWorkerFactory("ioReactor", runTimeConfig)
 		);
 		this.ioStats = ioStats;
 		executor = THREAD_GROUP.newThread(this);

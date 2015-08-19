@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 //
-import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.tools.LogPatterns;
 //
 //
@@ -25,21 +25,18 @@ import java.util.regex.Matcher;
 /**
  * Created by olga on 23.07.15.
  */
-public class InfiniteWriteTest {
+public class InfiniteWriteTest
+extends WSMockTestBase {
 	//
 	private static final long EXPECTED_RUN_TIME = 10000;
 	private static Process PROCESS;
 
-	private static final String RUN_ID = InfiniteWriteTest.class.getCanonicalName();
-
 	@BeforeClass
-	public static void before()
+	public static void setUpClass()
 	throws Exception {
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, InfiniteWriteTest.class.getCanonicalName());
+		WSMockTestBase.setUpClass();
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefault());
-		LogParser.removeLogDirectory(RUN_ID);
-		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefault());
 		final String runName = RunTimeConfig.getContext().getRunName();
 		final String runVersion = RunTimeConfig.getContext().getRunVersion();
 
@@ -68,9 +65,9 @@ public class InfiniteWriteTest {
 	}
 
 	@AfterClass
-	public static void after()
+	public static void tearDownClass()
 	throws Exception {
-
+		WSMockTestBase.tearDownClass();
 	}
 
 	@Test
@@ -94,8 +91,10 @@ public class InfiniteWriteTest {
 				}
 			}
 			final long actualRunTime = finishTime - startTime;
-			Assert.assertEquals("Mongoose run time is not equal expected time",
-				EXPECTED_RUN_TIME, actualRunTime, 5500);
+			Assert.assertEquals(
+				"Mongoose run time is not equal expected time",
+				EXPECTED_RUN_TIME, actualRunTime, 5500
+			);
 		}
 	}
 

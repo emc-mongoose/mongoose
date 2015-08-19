@@ -2,18 +2,15 @@ package com.emc.mongoose.integ.core.rampup;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
-import com.emc.mongoose.integ.suite.LoggingTestSuite;
+import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.ScriptRunner;
-import com.emc.mongoose.storage.adapter.s3.Bucket;
-import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -26,23 +23,19 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Calendar;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by olga on 22.07.15.
  * HLUC: 1.5.3.1
  */
-public class DefaultRampupTest {
+public class DefaultRampupTest
+extends WSMockTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	//
@@ -50,52 +43,39 @@ public class DefaultRampupTest {
 	private static final String	LIMIT_TIME = "30.seconds";
 	private static final int COUNT_STEPS = 70;
 
-	private static Logger LOG;
-
-	private static RunTimeConfig rtConfig;
-
 	@BeforeClass
-	public static void before()
+	public static void setUpClass()
 	throws Exception {
-		//  remove log dir w/ previous logs
-		LogParser.removeLogDirectory(RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		WSMockTestBase.setUpClass();
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefault());
-		rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
-		LoggingTestSuite.setUpClass();
-
-		LOG = LogManager.getLogger();
-		//  write
-		executeLoadJob(rtConfig);
-		STD_OUTPUT_STREAM.close();
-	}
-
-	private static void executeLoadJob(final RunTimeConfig rtConfig)
-	throws Exception {
-		LOG.info(Markers.MSG, rtConfig.toString());
-		UniformDataSource.DEFAULT = new UniformDataSource();
-		try (final BufferingOutputStream stdOutStream =
-			     StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
+		RunTimeConfig.setContext(rtConfig);
+		//
+		final Logger logger = LogManager.getLogger();
+		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		//
+		try (final BufferingOutputStream
+				 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		) {
+			UniformDataSource.DEFAULT = new UniformDataSource();
 			//  Run mongoose default scenario in standalone mode
 			new ScriptRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
+		//
+		RunIdFileManager.flushAll();
 	}
 
 	@AfterClass
-	public static void after()
-		throws Exception {
-		final Bucket bucket = new WSBucketImpl(
-			(com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
-			TestConstants.BUCKET_NAME, false
-		);
-		bucket.delete(rtConfig.getStorageAddrs()[0]);
+	public  static void tearDownClass()
+	throws Exception {
+		WSMockTestBase.tearDownClass();
 	}
 
 	@Test
@@ -121,11 +101,6 @@ public class DefaultRampupTest {
 
 		expectedFile = LogParser.getDataItemsFile(RUN_ID).toPath();
 		Assert.assertTrue("data.items.csv file must be contained", Files.exists(expectedFile));
-
-		/*
-		expectedFile = LogParser.getErrorsFile(RUN_ID).toPath();
-		Assert.assertFalse("errors.log file must not be contained", Files.exists(expectedFile));
-		*/
 	}
 
 	@Test
@@ -180,17 +155,21 @@ public class DefaultRampupTest {
 		final File messageFile = LogParser.getMessageFile(RUN_ID);
 		Assert.assertTrue("message.log file must be exist", messageFile.exists());
 		//
-		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(messageFile))) {
+		try (final BufferedReader
+			 bufferedReader = new BufferedReader(new FileReader(messageFile))
+		) {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
 				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
 					break;
 				}
 			}
-			Assert.assertNotNull(line);
+			Assert.assertNotNull(
+				"message.log file doesn't contain information about scenario end",
+				line
+			);
 			Assert.assertTrue(
-				"message.log file must contains information about scenario end",
+				"message.log file doesn't contain information about scenario end",
 				line.contains(TestConstants.SCENARIO_END_INDICATOR)
 			);
 		}
@@ -263,7 +242,9 @@ public class DefaultRampupTest {
 						iterationCount = 0;
 						stepsCount++;
 						//
-						Assert.assertTrue("There are not all load types in this step", loadsSet.isEmpty());
+						Assert.assertTrue(
+							"There are not all load types in this step", loadsSet.isEmpty()
+						);
 						loadsSet.clear();
 						loadsSet.add(TestConstants.LOAD_CREATE);
 						loadsSet.add(TestConstants.LOAD_READ);
@@ -274,12 +255,18 @@ public class DefaultRampupTest {
 						iterationCount++;
 					}
 					//
-					Assert.assertTrue("This load already exist in this step", loadsSet.contains(nextRec.get(3)));
+					Assert.assertTrue(
+						"This load already exist in this step", loadsSet.contains(nextRec.get(3))
+					);
 					loadsSet.remove(nextRec.get(3));
-					Assert.assertNotEquals("Count of success equals 0 ", 0, nextRec.get(7));
+					Assert.assertNotEquals(
+						"Count of success equals 0 ", 0, nextRec.get(7)
+					);
 				}
 			}
-			Assert.assertEquals("Steps counts must be equal" + COUNT_STEPS, COUNT_STEPS, stepsCount);
+			Assert.assertEquals(
+				"Steps counts must be equal" + COUNT_STEPS, COUNT_STEPS, stepsCount
+			);
 		}
 	}
 }

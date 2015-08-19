@@ -4,6 +4,7 @@ import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -29,13 +30,17 @@ public final class IOUtils {
 	extends Thread {
 		//
 		private final ByteBuffer[] ioBuffSeq = new ByteBuffer[BUFF_COUNT];
+		private final RunTimeConfig rtConfig;
 		//
-		protected IOWorker(final Runnable task, final String name) {
+		protected IOWorker(final Runnable task, final String name, final RunTimeConfig rtConfig) {
 			super(task, name);
+			this.rtConfig = rtConfig;
 		}
 		//
 		@Override
 		public void run() {
+			RunTimeConfig.setContext(rtConfig); // for integ tests
+			//
 			try {
 				super.run();
 			} finally {
@@ -63,13 +68,16 @@ public final class IOUtils {
 	public final static class IOWorkerFactory
 	extends GroupThreadFactory {
 		//
-		public IOWorkerFactory(final String threadNamePrefix) {
+		private final RunTimeConfig rtConfig;
+		//
+		public IOWorkerFactory(final String threadNamePrefix, final RunTimeConfig rtConfig) {
 			super(threadNamePrefix);
+			this.rtConfig = rtConfig;
 		}
 		//
 		@Override
 		public Thread newThread(final Runnable task) {
-			return new IOWorker(task, getName() + "#" + threadNumber.incrementAndGet());
+			return new IOWorker(task, getName() + "#" + threadNumber.incrementAndGet(), rtConfig);
 		}
 	}
 	//
