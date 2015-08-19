@@ -93,7 +93,7 @@ extends WSMockTestBase {
 
 	@AfterClass
 	public static void tearDownClass()
-		throws Exception {
+	throws Exception {
 		WSMockTestBase.tearDownClass();
 	}
 

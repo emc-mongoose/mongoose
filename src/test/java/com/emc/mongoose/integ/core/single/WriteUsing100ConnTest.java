@@ -56,7 +56,7 @@ extends WSMockTestBase {
 
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
+	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
 		System.setProperty(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
@@ -93,7 +93,7 @@ extends WSMockTestBase {
 
 	@AfterClass
 	public  static void tearDownClass()
-		throws Exception {
+	throws Exception {
 		if (!SCENARIO_THREAD.isInterrupted()) {
 			SCENARIO_THREAD.join();
 			SCENARIO_THREAD.interrupt();
@@ -132,7 +132,7 @@ extends WSMockTestBase {
 	}
 
 	public static void shouldCreateDataItemsFileWithInformationAboutAllObjects()
-		throws Exception {
+	throws Exception {
 		//  Read data.items.csv file
 		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
@@ -159,7 +159,7 @@ extends WSMockTestBase {
 	}
 
 	public static void shouldReportScenarioEndToMessageLogFile()
-		throws Exception {
+	throws Exception {
 		//  Read the message file and search for "Scenario end"
 		final File messageFile = LogParser.getMessageFile(RUN_ID);
 		Assert.assertTrue(
@@ -187,7 +187,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldBeActiveAllConnections()
-		throws Exception {
+	throws Exception {
 		for (int i = 0; i < 3; i++) {
 			int countConnections = PortListener
 				.getCountConnectionsOnPort(TestConstants.PORT_INDICATOR);
@@ -198,7 +198,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldAllThreadsProduceWorkload()
-		throws Exception {
+	throws Exception {
 		Matcher matcher;
 		String threadName;
 		int countProduceWorkloadThreads = 0;
@@ -215,7 +215,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldCreateCorrectDataItemsFiles()
-		throws Exception {
+	throws Exception {
 		// Get data.items.csv file of write scenario run
 		final File dataItemFile = LogParser.getDataItemsFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
@@ -230,7 +230,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldCreateCorrectPerfAvgFiles()
-		throws Exception {
+	throws Exception {
 		// Get perf.avg.csv file of write scenario run
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
@@ -245,7 +245,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldCreateCorrectInformationAboutLoad()
-		throws Exception {
+	throws Exception {
 		// Get perf.avg.csv file of write scenario run
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
@@ -284,7 +284,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldGeneralStatusOfTheRunIsRegularlyReports()
-		throws Exception {
+	throws Exception {
 		final int precisionMillis = 3000;
 		// Get perf.avg.csv file
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);

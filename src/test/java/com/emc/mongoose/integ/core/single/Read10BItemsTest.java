@@ -333,7 +333,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldReportCorrectCountOfReadObjectToSummaryLogFile()
-		throws Exception {
+	throws Exception {
 		//  Read perf.summary file
 		final File perfSumFile = LogParser.getPerfSumFile(READ_RUN_ID);
 

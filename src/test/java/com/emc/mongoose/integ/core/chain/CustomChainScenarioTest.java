@@ -9,8 +9,8 @@ import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
-import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
+import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -41,30 +41,37 @@ import java.util.regex.Matcher;
 
 /**
  * Created by olga on 10.07.15.
- * Covers TC #10 (name: "Launch the chain scenario w/ default configuration.", steps: all)
- * HLUC: 1.4.2.1, 1.5.3.1
+ * Covers TC #9 (name: "Custom load chain", steps: all)
+ * HLUC: 1.4.2.1, 1.5.3.3
  */
-public class DefaultChainScenarioIntegTest
+public class CustomChainScenarioTest
 extends WSMockTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	//
-	private static final String RUN_ID = DefaultChainScenarioIntegTest.class.getCanonicalName();
+	private static String RUN_ID = CustomChainScenarioTest.class.getCanonicalName();
 	private static final String
+		DATA_SIZE = "10KB",
 		LIMIT_TIME = "1.minutes",
 		SCENARIO_NAME = "chain";
+	private static final int LOAD_THREADS = 10;
+	private static final boolean VERIFY_CONTENT = false;
 	private static final int LOADS_COUNT = 5;
-
-	private static Logger LOG;
-
-	private static RunTimeConfig rtConfig;
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
+		System.setProperty(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 		System.setProperty(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
 		System.setProperty(RunTimeConfig.KEY_SCENARIO_NAME, SCENARIO_NAME);
+		System.setProperty(TestConstants.KEY_VERIFY_CONTENT, String.valueOf(VERIFY_CONTENT));
+		System.setProperty(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, String.valueOf(LOAD_THREADS));
+		System.setProperty(RunTimeConfig.KEY_LOAD_TYPE_READ_THREADS, String.valueOf(LOAD_THREADS));
+		System.setProperty(RunTimeConfig.KEY_LOAD_TYPE_UPDATE_THREADS, String.valueOf(LOAD_THREADS));
+		System.setProperty(RunTimeConfig.KEY_LOAD_TYPE_DELETE_THREADS, String.valueOf(LOAD_THREADS));
+		System.setProperty(RunTimeConfig.KEY_LOAD_TYPE_APPEND_THREADS, String.valueOf(LOAD_THREADS));
 		System.setProperty(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		WSMockTestBase.setUpClass();
 		//
@@ -134,7 +141,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
-	throws Exception {
+		throws Exception {
 		final String configTable = RunTimeConfig.getContext().toString();
 		final Set<String> params = new HashSet<>();
 		//  skip table header
@@ -188,6 +195,12 @@ extends WSMockTestBase {
 					confParam.contains(TestConstants.SCENARIO_CHAIN)
 				);
 			}
+			if (confParam.contains(RunTimeConfig.KEY_LOAD_THREADS)) {
+				Assert.assertTrue(
+					"Information about load threads name in configuration table is wrong",
+					confParam.contains(String.valueOf(LOAD_THREADS))
+				);
+			}
 		}
 	}
 
@@ -216,6 +229,36 @@ extends WSMockTestBase {
 	}
 
 	@Test
+	public void shouldCreateCorrectDataItemsFiles()
+	throws Exception {
+		// Get data.items.csv file
+		final File dataItemFile = LogParser.getDataItemsFile(RUN_ID);
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
+		//
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectDataItemsCSV(in);
+		}
+	}
+
+	@Test
+	public void shouldCreateCorrectPerfTraceFile()
+	throws Exception {
+		// Get perf.trace.csv file
+		final File perfTraceFile = LogParser.getPerfTraceFile(RUN_ID);
+		Assert.assertTrue("perf.trace.csv file doesn't exist",perfTraceFile.exists());
+		//
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfTraceFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectPerfTraceCSV(in);
+		}
+	}
+
+	@Test
 	public void shouldCreateCorrectPerfAvgFile()
 	throws Exception {
 		// Get perf.avg.csv file
@@ -235,7 +278,7 @@ extends WSMockTestBase {
 	throws Exception {
 		// Get perf.sum.csv file
 		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
-		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
+		Assert.assertTrue(perfSumFile.exists());
 		//
 		try(
 			final BufferedReader
@@ -246,90 +289,31 @@ extends WSMockTestBase {
 	}
 
 	@Test
-	public void shouldCreateCorrectPerfTraceFiles()
+	public void shouldLoadsSwitchOperationsAsynchronously()
 	throws Exception {
-		// Get perf.trace.csv file
-		final File perfTraceFile = LogParser.getPerfTraceFile(RUN_ID);
-		Assert.assertTrue("perf.trace.csv file doesn't exist",perfTraceFile.exists());
-		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfTraceFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			LogParser.assertCorrectPerfTraceCSV(in);
-		}
-	}
-
-	@Test
-	public void shouldCreateCorrectDataItemsFile()
-	throws Exception {
-		// Get data.items.csv file
-		final File dataItemFile = LogParser.getDataItemsFile(RUN_ID);
-		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			LogParser.assertCorrectDataItemsCSV(in);
-		}
-	}
-
-	@Test
-	public void shouldDataItemsMasksAreUpdate()
-	throws Exception {
-		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
-		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
-
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			final int firstMaskVal = 0;
-			int maskVal;
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for (final CSVRecord nextRec : recIter) {
-				maskVal = Integer.valueOf(nextRec.get(3).split("\\/")[1]);
-				Assert.assertTrue(maskVal != firstMaskVal);
-			}
-		}
-	}
-
-	@Test
-	public void shouldCreateCorrectInformationAboutLoad()
-	throws Exception {
-		// Get perf.avg.csv file of write scenario run
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
+		Assert.assertTrue("perfAvg.csv file doesn't exist", Files.exists(perfAvgFile.toPath()));
 		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
+		try (final BufferedReader
+				 bufferedReader = new BufferedReader(new FileReader(perfAvgFile))
 		) {
-			boolean firstRow = true;
 			Matcher matcher;
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			int actualNodesCount, actualConnectionsCount;
-			for(final CSVRecord nextRec : recIter) {
-				if (firstRow) {
-					firstRow = false;
+			int counterSwitch = 1;
+			String
+				line,
+				prevLoadType = TestConstants.LOAD_CREATE;
+			while ((line = bufferedReader.readLine()) != null) {
+				matcher = LogPatterns.TYPE_LOAD.matcher(line);
+				if (matcher.find()){
+					if (!prevLoadType.equals(matcher.group())) {
+						counterSwitch++;
+						prevLoadType = matcher.group();
+					}
 				} else {
-					Assert.assertEquals(
-						"Storage API is wrong", TestConstants.API_S3, nextRec.get(2).toLowerCase()
-					);
-					matcher = LogPatterns.TYPE_LOAD.matcher(nextRec.get(3));
-					Assert.assertTrue(
-						"Type load is wrong", matcher.find()
-					);
-					actualConnectionsCount = Integer.valueOf(nextRec.get(4));
-					Assert.assertEquals(
-						"Count of connections is wrong", 1, actualConnectionsCount
-					);
-					actualNodesCount = Integer.valueOf(nextRec.get(5));
-					Assert.assertEquals(
-						"Count of nodes is wrong", 1, actualNodesCount
-					);
+					Assert.fail("Load type isn't correct");
 				}
 			}
+			Assert.assertTrue("Loads switch synchronously", counterSwitch > LOADS_COUNT);
 		}
 	}
 
@@ -383,35 +367,6 @@ extends WSMockTestBase {
 			Assert.assertEquals(
 				"Count of loads is wrong", LOADS_COUNT, countLinesOfSumInfo
 			);
-		}
-	}
-
-	@Test
-	public void shouldLoadsSwitchOperationsAsynchronously()
-	throws Exception {
-		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue("perfAvg.csv file doesn't exist", Files.exists(perfAvgFile.toPath()));
-		//
-		try (final BufferedReader
-				 bufferedReader = new BufferedReader(new FileReader(perfAvgFile))
-		) {
-			Matcher matcher;
-			int counterSwitch = 1;
-			String
-				line,
-				prevLoadType = TestConstants.LOAD_CREATE;
-			while ((line = bufferedReader.readLine()) != null) {
-				matcher = LogPatterns.TYPE_LOAD.matcher(line);
-				if (matcher.find()){
-					if (!prevLoadType.equals(matcher.group())) {
-						counterSwitch++;
-						prevLoadType = matcher.group();
-					}
-				} else {
-					Assert.fail("Load type isn't correct");
-				}
-			}
-			Assert.assertTrue("Loads switch synchronously", counterSwitch > LOADS_COUNT);
 		}
 	}
 
@@ -548,6 +503,65 @@ extends WSMockTestBase {
 					"General status isn't reported regularly", 10000,
 					(nextTime - firstTime), precisionMillis
 				);
+			}
+		}
+	}
+
+	@Test
+	public void shouldCreateCorrectInformationAboutLoad()
+	throws Exception {
+		// Get perf.avg.csv file of write scenario run
+		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
+		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
+		//
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			boolean firstRow = true;
+			Matcher matcher;
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			int actualNodesCount, actualConnectionsCount;
+			for(final CSVRecord nextRec : recIter) {
+				if (firstRow) {
+					firstRow = false;
+				} else {
+					Assert.assertEquals(
+						"Storage API is wrong", TestConstants.API_S3, nextRec.get(2).toLowerCase()
+					);
+					matcher = LogPatterns.TYPE_LOAD.matcher(nextRec.get(3));
+					Assert.assertTrue(
+						"Type load is wrong", matcher.find()
+					);
+					actualConnectionsCount = Integer.valueOf(nextRec.get(4));
+					Assert.assertEquals(
+						"Count of connections is wrong", LOAD_THREADS , actualConnectionsCount
+					);
+					actualNodesCount = Integer.valueOf(nextRec.get(5));
+					Assert.assertEquals(
+						"Count of nodes is wrong", 1, actualNodesCount
+					);
+				}
+			}
+		}
+	}
+
+	@Test
+	public void shouldDataItemsMasksAreUpdate()
+		throws Exception {
+		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
+
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			final int firstMaskVal = 0;
+			int maskVal;
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			for (final CSVRecord nextRec : recIter) {
+				maskVal = Integer.valueOf(nextRec.get(3).split("\\/")[1]);
+				Assert.assertTrue(maskVal != firstMaskVal);
 			}
 		}
 	}

@@ -44,12 +44,12 @@ import java.util.regex.Matcher;
  * TC #13 (name: "CRUD - simultaneous chain scenario", steps: all) in Mongoose Core Functional Testing
  * HLUC: 1.4.3.1, 1.5.6.3
  */
-public class CRUDSimultaneousScenarioIntegTest
+public class CRUDSimultaneousScenarioTest
 extends WSMockTestBase {
 
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static final String RUN_ID = CRUDSimultaneousScenarioIntegTest.class.getCanonicalName();
+	private static final String RUN_ID = CRUDSimultaneousScenarioTest.class.getCanonicalName();
 	private static final String
 		DATA_SIZE = "10MB",
 		LIMIT_TIME = "1.minutes",

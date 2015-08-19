@@ -236,7 +236,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
-		throws Exception {
+	throws Exception {
 		//  Read data.items.csv file
 		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
@@ -268,7 +268,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldGetAllObjectsFromServerAndDataSizeIsCorrect()
-		throws Exception {
+	throws Exception {
 		//  Read data.items.csv file
 		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
