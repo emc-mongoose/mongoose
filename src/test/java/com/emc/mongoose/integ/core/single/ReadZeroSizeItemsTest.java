@@ -54,11 +54,14 @@ extends WSMockTestBase {
 	public static void setUpClass()
 	throws Exception{
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, CREATE_RUN_ID);
-		System.setProperty(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
-		System.setProperty(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
-		System.setProperty(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
-		System.setProperty(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		WSMockTestBase.setUpClass();
+		//
+		RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
+		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
+		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
+		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
+		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
@@ -69,11 +72,15 @@ extends WSMockTestBase {
 		RunIdFileManager.flushAll();
 		//
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, READ_RUN_ID);
-		System.setProperty(RunTimeConfig.KEY_DATA_SRC_FPATH,
-			LogParser.getDataItemsFile(CREATE_RUN_ID).getPath());
-		System.setProperty(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
-		System.setProperty(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LIMIT_TIME_SEC) + "s");
 		LoggingTestBase.setUpClass();
+		//
+		rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH,
+			LogParser.getDataItemsFile(CREATE_RUN_ID).getPath());
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LIMIT_TIME_SEC) + "s");
+		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
+		RunTimeConfig.setContext(rtConfig);
 		//
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  read
@@ -86,7 +93,6 @@ extends WSMockTestBase {
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
-		STD_OUTPUT_STREAM.close();
 		//
 		RunIdFileManager.flushAll();
 	}

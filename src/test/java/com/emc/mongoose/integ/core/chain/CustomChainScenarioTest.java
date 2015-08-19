@@ -62,18 +62,21 @@ extends WSMockTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		System.setProperty(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
-		System.setProperty(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
-		System.setProperty(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
-		System.setProperty(RunTimeConfig.KEY_SCENARIO_NAME, SCENARIO_NAME);
-		System.setProperty(TestConstants.KEY_VERIFY_CONTENT, String.valueOf(VERIFY_CONTENT));
-		System.setProperty(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, String.valueOf(LOAD_THREADS));
-		System.setProperty(RunTimeConfig.KEY_LOAD_TYPE_READ_THREADS, String.valueOf(LOAD_THREADS));
-		System.setProperty(RunTimeConfig.KEY_LOAD_TYPE_UPDATE_THREADS, String.valueOf(LOAD_THREADS));
-		System.setProperty(RunTimeConfig.KEY_LOAD_TYPE_DELETE_THREADS, String.valueOf(LOAD_THREADS));
-		System.setProperty(RunTimeConfig.KEY_LOAD_TYPE_APPEND_THREADS, String.valueOf(LOAD_THREADS));
-		System.setProperty(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		WSMockTestBase.setUpClass();
+		//
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
+		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, SCENARIO_NAME);
+		rtConfig.set(TestConstants.KEY_VERIFY_CONTENT, String.valueOf(VERIFY_CONTENT));
+		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, String.valueOf(LOAD_THREADS));
+		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_READ_THREADS, String.valueOf(LOAD_THREADS));
+		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_UPDATE_THREADS, String.valueOf(LOAD_THREADS));
+		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_DELETE_THREADS, String.valueOf(LOAD_THREADS));
+		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_APPEND_THREADS, String.valueOf(LOAD_THREADS));
+		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
+		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
@@ -88,7 +91,6 @@ extends WSMockTestBase {
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
-		STD_OUTPUT_STREAM.close();
 		//
 		RunIdFileManager.flushAll();
 	}

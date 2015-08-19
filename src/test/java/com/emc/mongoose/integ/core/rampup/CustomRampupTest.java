@@ -5,16 +5,12 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
-import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.ScriptRunner;
-import com.emc.mongoose.storage.adapter.s3.Bucket;
-import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -54,18 +50,21 @@ extends WSMockTestBase{
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		System.setProperty(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
-		System.setProperty(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
-		System.setProperty(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, RAMPUP_SIZES);
-		System.setProperty(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS, RAMPUP_THREAD_COUNTS);
-		System.setProperty(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		WSMockTestBase.setUpClass();
+		//
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, RAMPUP_SIZES);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS, RAMPUP_THREAD_COUNTS);
+		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
+		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
 		try (final BufferingOutputStream
-				 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
+			stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
 			UniformDataSource.DEFAULT = new UniformDataSource();
 			//  Run mongoose default scenario in standalone mode
@@ -74,7 +73,6 @@ extends WSMockTestBase{
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
-		STD_OUTPUT_STREAM.close();
 		//
 		RunIdFileManager.flushAll();
 	}
