@@ -154,7 +154,12 @@ implements LoadExecutor<T> {
 							"than success rate for at least 1 minute. Exiting in order to avoid " +
 							"the memory exhaustion."
 						);
-						LoadExecutorBase.this.interrupt();
+						try {
+							LoadExecutorBase.this.close();
+						} catch(final IOException e) {
+							LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
+						}
+						break;
 					}
 				}
 			}
