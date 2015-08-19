@@ -130,7 +130,8 @@ extends WSMockTestBase {
 		);
 		//
 		try (final BufferedReader bufferedReader =
-				 new BufferedReader(new FileReader(messageFile))) {
+			new BufferedReader(new FileReader(messageFile))
+		) {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
 				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
@@ -149,7 +150,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
-		throws Exception {
+	throws Exception {
 		final String configTable = RunTimeConfig.getContext().toString();
 		final Set<String> params = new HashSet<>();
 		//  skip table header
@@ -298,12 +299,13 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldContainedInformationAboutAllLoads()
-		throws Exception {
+	throws Exception {
 		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 		//
-		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(perfSumFile))) {
+		try (final BufferedReader
+			bufferedReader = new BufferedReader(new FileReader(perfSumFile))
+		) {
 			//  read header of csv file
 			bufferedReader.readLine();
 
@@ -345,7 +347,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldCreateCorrectInformationAboutLoad()
-		throws Exception {
+	throws Exception {
 		// Get perf.avg.csv file of write scenario run
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
@@ -414,7 +416,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldGeneralStatusOfTheRunIsRegularlyReports()
-		throws Exception {
+	throws Exception {
 		final int precisionMillis = 3000;
 		// Get perf.avg.csv file
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
@@ -477,10 +479,10 @@ extends WSMockTestBase {
 	@Test
 	public void shouldCreateLoadMustRunFor60Seconds()
 	throws Exception {
-		Date startTimeLoad = null, finishTimeLoad = null;
+		Date startTimeLoad = null,	finishTimeLoad = null;
 		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 		Matcher matcher;
-		// Get start time of loads
+		// Get start times of loads
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		try(
@@ -493,23 +495,19 @@ extends WSMockTestBase {
 			for (final CSVRecord nextRec : recIter) {
 				if (firstRow) {
 					firstRow = false;
-				} else {
+				} else if (TestConstants.LOAD_CREATE.toLowerCase().equals(nextRec.get(3).toLowerCase())) {
 					matcher = LogPatterns.DATE_TIME_ISO8601.matcher(nextRec.get(0));
 					if (matcher.find()) {
-						if (nextRec.get(3).toLowerCase().equals(TestConstants.LOAD_CREATE.toLowerCase())) {
-							startTimeLoad = format.parse(matcher.group("time"));
-							break;
-						} else {
-							Assert.fail("Information about create load isn't contained in perfAvg.csv file");
-						}
+						startTimeLoad = format.parse(matcher.group("time"));
 					} else {
 						Assert.fail("Data and time record in line has got wrong format");
 					}
+					break;
 				}
 			}
 		}
 
-		// Get finish time of loads
+		// Get finish times of loads
 		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 		try(
@@ -522,27 +520,27 @@ extends WSMockTestBase {
 			for (final CSVRecord nextRec : recIter) {
 				if (firstRow) {
 					firstRow = false;
-				} else {
+				} else if (TestConstants.LOAD_CREATE.toLowerCase().equals(nextRec.get(3).toLowerCase())) {
 					matcher = LogPatterns.DATE_TIME_ISO8601.matcher(nextRec.get(0));
 					if (matcher.find()) {
-						if (nextRec.get(3).toLowerCase().equals(TestConstants.LOAD_CREATE.toLowerCase())) {
-							finishTimeLoad = format.parse(matcher.group("time"));
-							break;
-						} else {
-							Assert.fail("Information about create load isn't contained in perfAvg.csv file");
-						}
+						finishTimeLoad = format.parse(matcher.group("time"));
 					} else {
 						Assert.fail("Data and time record in line has got wrong format");
 					}
+					break;
 				}
 			}
 		}
 
+		Assert.assertNotNull("There isn't load with type create", startTimeLoad);
+		Assert.assertNotNull("There isn't load with type create", finishTimeLoad);
+		// Check time limitation
 		// 1.minutes = 60000.milliseconds
-		final int precisionMillis = 3000, loadLimitTimeMillis = 60000;
+		final int precisionMillis = 5000, loadLimitTimeMillis = 60000;
 		long differenceTime = finishTimeLoad.getTime() - startTimeLoad.getTime();
 		Assert.assertEquals(
-			"Time limitation is wrong", loadLimitTimeMillis, differenceTime, precisionMillis
+			"Time load limitation is wrong", loadLimitTimeMillis,
+			differenceTime, precisionMillis
 		);
 	}
 
