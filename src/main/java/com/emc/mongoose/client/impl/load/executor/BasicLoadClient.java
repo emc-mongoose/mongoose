@@ -23,6 +23,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.load.model.LoadState;
+import com.emc.mongoose.core.impl.data.model.NewDataItemInput;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
@@ -132,7 +133,9 @@ implements LoadClient<T> {
 					(int) maxCount : runTimeConfig.getTasksMaxQueueSize()
 			)
 		);
-		setCorePoolSize(10 * remoteLoadMap.size());
+		setCorePoolSize(
+			remoteLoadMap.size() * Math.max(1, Runtime.getRuntime().availableProcessors())
+		);
 		setMaximumPoolSize(getCorePoolSize());
 		//
 		String t = null;
@@ -168,7 +171,7 @@ implements LoadClient<T> {
 		}
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
-		if(itemSrc != null) {
+		if(itemSrc != null && !NewDataItemInput.class.isInstance(itemSrc)) {
 			producer = new DataItemInputProducer<>(itemSrc);
 			try {
 				producer.setConsumer(this);
@@ -498,7 +501,6 @@ implements LoadClient<T> {
 		LoadSvc<T> nextLoadSvc;
 		final int periodMilliSec = metricsPeriodSec > 0 ? 1000 * metricsPeriodSec : 1000;
 		//
-		//
 		for(int i = 0; i < loadSvcAddrs.length; i ++) {
 			nextLoadSvc = remoteLoadMap.get(loadSvcAddrs[i]);
 			final PeriodicTask<Collection<T>> nextFrameFetchTask = new DataItemsFetchPeriodicTask<>(
@@ -510,12 +512,10 @@ implements LoadClient<T> {
 			);
 		}
 		//
-		final int
-			metricFetchTasksCount = metricFetchTasks.size(),
-			delayStep = periodMilliSec / metricFetchTasksCount;
+		final int metricFetchTasksCount = metricFetchTasks.size();
 		for(int i = 0; i < metricFetchTasksCount; i ++) {
 			mgmtConnExecutor.scheduleAtFixedRate(
-				metricFetchTasks.get(i), delayStep * i, periodMilliSec, TimeUnit.MILLISECONDS
+				metricFetchTasks.get(i), i, periodMilliSec, TimeUnit.MILLISECONDS
 			);
 		}
 		//
@@ -541,7 +541,7 @@ implements LoadClient<T> {
 					public final void run() {
 						logMetrics(Markers.PERF_AVG);
 					}
-				}, 0, metricsPeriodSec, TimeUnit.SECONDS
+				}, 789, metricsPeriodSec, TimeUnit.SECONDS
 			);
 		}
 	}
