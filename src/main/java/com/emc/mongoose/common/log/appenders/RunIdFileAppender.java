@@ -78,6 +78,7 @@ extends AbstractAppender {
 	public void stop() {
 		super.stop();
 		manager.release();
+		manager.close();
 		if (advertiser != null) {
 			advertiser.unadvertise(advertisement);
 		}
@@ -106,7 +107,7 @@ extends AbstractAppender {
 		final boolean
 			ignoreExceptions = Booleans.parseBoolean(ignore, true),
 			isAdvertise = Boolean.parseBoolean(advertise),
-			flagFlush = Booleans.parseBoolean(immediateFlush, false),
+			flagFlush = Booleans.parseBoolean(immediateFlush, true),
 			isAppend = true,
 			isLocking = false,
 			isBuffering = true;
