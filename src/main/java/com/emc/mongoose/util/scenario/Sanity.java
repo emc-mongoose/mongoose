@@ -104,7 +104,7 @@ implements Runnable {
 				dataDstU2.getInput(), null, nUpdated2, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
-			// recreate the items
+			/* recreate the items
 			final long nReWritten = client.write(
 				dataDstW.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
 			);
@@ -113,7 +113,7 @@ implements Runnable {
 			final long nRead3 = client.read(
 				dataDstW.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, true
 			);
-			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
+			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);*/
 			// delete all created data items
 			final long nDeleted = client.delete(
 				dataDstW.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE

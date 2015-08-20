@@ -1023,9 +1023,9 @@ test {
 
 task integTest(type: Test) {
 
-	include '**/CoreTestSuite.class'
-	include '**/StorageAdapterTestSuite.class'
-	//include '**/DistributedLoadTestSuite.class'
+	//include '**/CoreTestSuite.class'
+	//include '**/StorageAdapterTestSuite.class'
+	include '**/DistributedLoadTestSuite.class'
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath

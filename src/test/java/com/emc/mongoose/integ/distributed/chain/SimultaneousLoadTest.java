@@ -33,7 +33,7 @@ extends DistributedLoadBuilderTestBase {
 	private final static String
 		LOAD_SEQ[] = { "create", "read", "update", "append", "delete" };
 	private final static int
-		LOAD_LIMIT_TIME_SEC = 100,
+		LOAD_LIMIT_TIME_SEC = 60,
 		PRECISION_SEC = 10,
 		COUNT_STEPS = LOAD_SEQ.length;
 	//

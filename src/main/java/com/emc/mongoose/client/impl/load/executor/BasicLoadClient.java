@@ -329,7 +329,8 @@ implements LoadClient<T> {
 		metricFetchTasks.add(taskGetLatencyAvg);
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			10, new GroupThreadFactory(String.format("%s-aggregator", name), true)
+			loadSvcAddrs.length + metricFetchTasks.size() + 3,
+			new GroupThreadFactory(String.format("%s-aggregator", name), true)
 		);
 		//
 		LoadCloseHook.add(this);
@@ -412,22 +413,17 @@ implements LoadClient<T> {
 				} else {
 					try {
 						for(final T nextDataItem : nextDataItemsBuff) {
-							for(int i = 0; i < SUBMIT_RETRY_COUNT_LIMIT; i ++) {
-								TimeUnit.MILLISECONDS.sleep(i);
-								try {
-									consumer.submit(nextDataItem);
-									break;
-								} catch(final RejectedExecutionException | RemoteException e) {
-									LogUtil.exception(
-										LOG, Level.DEBUG, e,
-										"Failed to feed the data item to consumer {} times", i + 1
-									);
-								}
-							}
+							consumer.submit(nextDataItem);
 						}
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "Interrupted while feeding the consumer");
 						break;
+					} catch(final RemoteException | RejectedExecutionException e) {
+						LogUtil.exception(
+							LOG, Level.DEBUG, e,
+							"Failed to submit all {} data items to the consumer {}",
+							nextDataItemsBuff.size(), consumer
+						);
 					}
 				}
 			}
@@ -501,21 +497,20 @@ implements LoadClient<T> {
 		LoadSvc<T> nextLoadSvc;
 		final int periodMilliSec = metricsPeriodSec > 0 ? 1000 * metricsPeriodSec : 1000;
 		//
-		for(int i = 0; i < loadSvcAddrs.length; i ++) {
-			nextLoadSvc = remoteLoadMap.get(loadSvcAddrs[i]);
+		for(final String loadSvcAddr : loadSvcAddrs) {
+			nextLoadSvc = remoteLoadMap.get(loadSvcAddr);
 			final PeriodicTask<Collection<T>> nextFrameFetchTask = new DataItemsFetchPeriodicTask<>(
 				nextLoadSvc
 			);
 			fetchItemsBuffTasks.add(nextFrameFetchTask);
 			mgmtConnExecutor.scheduleAtFixedRate(
-				nextFrameFetchTask, i, periodMilliSec, TimeUnit.MILLISECONDS
+				nextFrameFetchTask, 0, periodMilliSec, TimeUnit.MILLISECONDS
 			);
 		}
 		//
-		final int metricFetchTasksCount = metricFetchTasks.size();
-		for(int i = 0; i < metricFetchTasksCount; i ++) {
+		for(final PeriodicTask metricTask : metricFetchTasks) {
 			mgmtConnExecutor.scheduleAtFixedRate(
-				metricFetchTasks.get(i), i, periodMilliSec, TimeUnit.MILLISECONDS
+				metricTask, 0, periodMilliSec, TimeUnit.MILLISECONDS
 			);
 		}
 		//
@@ -541,7 +536,7 @@ implements LoadClient<T> {
 					public final void run() {
 						logMetrics(Markers.PERF_AVG);
 					}
-				}, 789, metricsPeriodSec, TimeUnit.SECONDS
+				}, 0, metricsPeriodSec, TimeUnit.SECONDS
 			);
 		}
 	}

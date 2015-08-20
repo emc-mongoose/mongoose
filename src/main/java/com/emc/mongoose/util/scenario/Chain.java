@@ -99,7 +99,9 @@ implements Runnable {
 			chainWaitExecSvc.shutdown();
 			try {
 				if(chainWaitExecSvc.awaitTermination(timeOut, timeUnit)) {
-					LOG.debug(Markers.MSG, "Load jobs are finished in time");
+					LOG.info(Markers.MSG, "Load jobs are finished in time");
+				} else {
+					LOG.info(Markers.MSG, "Load jobs timeout, closing");
 				}
 			} catch(final InterruptedException e) {
 				Thread.currentThread().interrupt(); // ???
@@ -108,6 +110,15 @@ implements Runnable {
 					Markers.MSG, "{} load jobs are not finished in time",
 					chainWaitExecSvc.shutdownNow().size()
 				);
+				for(final LoadExecutor nextLoadJob : loadJobSeq) {
+					try {
+						nextLoadJob.interrupt();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to interruptthe load job \"{}\"", nextLoadJob
+						);
+					}
+				}
 				for(final LoadExecutor nextLoadJob : loadJobSeq) {
 					try {
 						nextLoadJob.close();

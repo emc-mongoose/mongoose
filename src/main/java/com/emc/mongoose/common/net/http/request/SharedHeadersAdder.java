@@ -16,15 +16,13 @@ implements HttpRequestInterceptor {
 	//
 	private final HeaderGroup sharedHeaders;
 	//
-	public
-	SharedHeadersAdder(final HeaderGroup sharedHeaders) {
+	public SharedHeadersAdder(final HeaderGroup sharedHeaders) {
 		this.sharedHeaders = sharedHeaders;
 	}
 	//
 	@Override
-	public final void process(
-		final HttpRequest request, final HttpContext context
-	) throws HttpException, IOException {
+	public final void process(final HttpRequest request, final HttpContext context)
+	throws HttpException, IOException {
 		for(final Header nextHeader : sharedHeaders.getAllHeaders()) {
 			if(!request.containsHeader(nextHeader.getName())) {
 				request.setHeader(nextHeader);
