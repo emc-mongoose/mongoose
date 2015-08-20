@@ -190,9 +190,12 @@ extends AbstractManager {
 				if(layout != null) {
 					outStream.write(layout.getFooter());
 				}
+				outStream.flush();
 				outStream.close();
 			} catch(final IOException e) {
 				e.printStackTrace(System.err);
+			} catch (final Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}
