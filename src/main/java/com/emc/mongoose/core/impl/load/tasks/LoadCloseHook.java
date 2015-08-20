@@ -116,12 +116,12 @@ implements Runnable {
 						//
 						if(HOOKS_MAP.get(currRunId).isEmpty()) {
 							final RunTimeConfig rtConfig = currState.getRunTimeConfig();
-							if (rtConfig.isRunResumeEnabled()) {
-								if (!BasicLoadState.isScenarioFinished(rtConfig) &&
-									rtConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)
-									&& LOAD_STATES.get(currRunId).size() == 1) {
-									BasicLoadState.saveScenarioState(rtConfig);
-								}
+							if(
+								!BasicLoadState.isScenarioFinished(rtConfig) &&
+								rtConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE) &&
+								LOAD_STATES.get(currRunId).size() == 1
+							) {
+								BasicLoadState.saveScenarioState(rtConfig);
 							}
 							HOOKS_MAP.remove(currRunId);
 							if (HOOKS_MAP.isEmpty()) {
