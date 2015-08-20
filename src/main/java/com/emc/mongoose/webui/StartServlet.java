@@ -123,8 +123,11 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			public void interrupt() {
 				RunTimeConfig.setContext(localRunTimeConfig);
-				//
-				ServiceUtils.close(loadBuilderSvc);
+				try {
+					ServiceUtils.close(loadBuilderSvc);
+				} catch(final RemoteException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Networking failure");
+				}
 				super.interrupt();
 			}
 		};

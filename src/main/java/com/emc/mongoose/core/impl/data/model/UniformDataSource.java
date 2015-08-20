@@ -184,31 +184,26 @@ implements DataSource {
 		}
 		// else
 		long nextSeed;
-		ByteBuffer nextLayer = zeroByteLayer;
-		for(int i = byteLayers.size(); i <= layerIndex; i ++) {
-			synchronized(byteLayers) {
-				if(byteLayers.size() > i) {
-					nextLayer = byteLayers.get(i);
-				} else {
-					nextLayer = ByteBuffer.allocateDirect(size);
-					nextSeed = Long.reverse(
-						nextWord(
-							Long.reverseBytes(
-								byteLayers.get(i - 1).getLong(0)
-							)
+		synchronized(byteLayers) {
+			for (int i = byteLayers.size(); i <= layerIndex; i++) {
+				ByteBuffer nextLayer = ByteBuffer.allocateDirect(size);
+				nextSeed = Long.reverse(
+					nextWord(
+						Long.reverseBytes(
+							byteLayers.get(i - 1).getLong(0)
 						)
-					);
-					LOG.debug(
-						Markers.MSG,
-						"Generate new byte layer #{} using the seed: \"{}\"",
-						i, Long.toHexString(nextSeed)
-					);
-					generateData(nextLayer, nextSeed);
-					byteLayers.add(nextLayer);
-				}
+					)
+				);
+				LOG.debug(
+					Markers.MSG,
+					"Generate new byte layer #{} using the seed: \"{}\"",
+					i, Long.toHexString(nextSeed)
+				);
+				generateData(nextLayer, nextSeed);
+				byteLayers.add(nextLayer);
 			}
 		}
-		return nextLayer;
+		return byteLayers.get(layerIndex);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

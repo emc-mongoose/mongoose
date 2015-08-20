@@ -139,7 +139,7 @@ extends WSRequestConfigBase<T> {
 		);
 	}
 	//
-	private static String HEADERS4CANONICAL[] = {
+	private static String HEADERS_CANONICAL[] = {
 		HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE
 	};
 	//
@@ -158,19 +158,19 @@ extends WSRequestConfigBase<T> {
 		}
 		canonical.append(httpRequest.getRequestLine().getMethod());
 		//
-		for(final String headerName : HEADERS4CANONICAL) {
-			if(sharedHeaders.containsHeader(headerName)) {
-				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
-			} else if(httpRequest.containsHeader(headerName)) {
+		for(final String headerName : HEADERS_CANONICAL) {
+			if(httpRequest.containsHeader(headerName)) {
 				for(final Header header: httpRequest.getHeaders(headerName)) {
 					canonical.append('\n').append(header.getValue());
 				}
+			} else if(sharedHeaders.containsHeader(headerName)) {
+				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
 			} else {
 				canonical.append('\n');
 			}
 		}
 		//
-		for(final String emcHeaderName : HEADERS_EMC) {
+		for(final String emcHeaderName : HEADERS_CANONICAL_EMC) {
 			if(sharedHeaders.containsHeader(emcHeaderName)) {
 				canonical
 					.append('\n').append(emcHeaderName.toLowerCase())
@@ -185,7 +185,12 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		final String uri = httpRequest.getRequestLine().getUri();
-		canonical.append('\n').append(uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri);
+		canonical.append('\n');
+		if(uri.contains("?") && !uri.endsWith("?" + Bucket.URL_ARG_VERSIONING)) {
+			canonical.append(uri.substring(0, uri.indexOf("?")));
+		} else {
+			canonical.append(uri);
+		}
 		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Canonical representation:\n{}", canonical);
@@ -220,6 +225,9 @@ extends WSRequestConfigBase<T> {
 					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, bucketName)
 				);
 			}
+		}
+		if(versioning) {
+			bucket.setVersioning(storageNodeAddrs[0], true);
 		}
 	}
 }

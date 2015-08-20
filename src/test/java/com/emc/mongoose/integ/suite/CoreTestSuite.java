@@ -1,13 +1,12 @@
 package com.emc.mongoose.integ.suite;
 //
+import com.emc.mongoose.integ.core.chain.CRUDSequentialScenarioTest;
+import com.emc.mongoose.integ.core.chain.CRUDSimultaneousScenarioTest;
+import com.emc.mongoose.integ.core.chain.CustomChainScenarioTest;
+import com.emc.mongoose.integ.core.chain.DefaultChainScenarioTest;
+//
 import com.emc.mongoose.integ.core.rampup.CustomRampupTest;
 import com.emc.mongoose.integ.core.rampup.DefaultRampupTest;
-//
-import com.emc.mongoose.integ.core.chain.CRUDSequentialScenarioIntegTest;
-import com.emc.mongoose.integ.core.chain.CRUDSimultaneousScenarioIntegTest;
-import com.emc.mongoose.integ.core.chain.CustomChainScenarioIntegTest;
-import com.emc.mongoose.integ.core.chain.DefaultChainScenarioIntegTest;
-//
 import com.emc.mongoose.integ.core.single.DefaultWriteTest;
 import com.emc.mongoose.integ.core.single.InfiniteWriteTest;
 import com.emc.mongoose.integ.core.single.Read10BItemsTest;
@@ -22,8 +21,6 @@ import com.emc.mongoose.integ.core.single.WriteRandomSizedItemsTest;
 import com.emc.mongoose.integ.core.single.WriteUsing100ConnTest;
 import com.emc.mongoose.integ.core.single.WriteUsing10ConnTest;
 //
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 /**
@@ -43,26 +40,12 @@ import org.junit.runners.Suite;
 	WriteByTimeTest.class,
 	ReadVerificationTest.class,
 	WriteByCountTest.class,
-	CustomChainScenarioIntegTest.class,
-	CRUDSequentialScenarioIntegTest.class,
-	CRUDSimultaneousScenarioIntegTest.class,
-	DefaultChainScenarioIntegTest.class,
+	CustomChainScenarioTest.class,
+	CRUDSequentialScenarioTest.class,
+	CRUDSimultaneousScenarioTest.class,
+	DefaultChainScenarioTest.class,
 	CustomRampupTest.class,
 	DefaultRampupTest.class,
 	InfiniteWriteTest.class
 })
-public class CoreTestSuite
-extends WSMockTestSuite {
-
-	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
-		WSMockTestSuite.setUpClass();
-	}
-
-	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		WSMockTestSuite.tearDownClass();
-	}
-}
+public class CoreTestSuite {}

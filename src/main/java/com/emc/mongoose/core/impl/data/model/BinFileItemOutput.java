@@ -9,7 +9,6 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.List;
 /**
  An item input implementation serializing the data items to the specified file.
  */
@@ -40,13 +39,6 @@ implements FileDataItemOutput<T> {
 	throws IOException {
 		this(Files.createTempFile(null, ".bin"));
 		this.itemsDstPath.toFile().deleteOnExit();
-	}
-	@Override
-	public void write(final DataItem dataItem) throws IOException {
-	}
-	@Override
-	public int write(final List buffer) throws IOException {
-		return 0;
 	}
 	//
 	@Override

@@ -13,9 +13,11 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.rmi.ConnectIOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 /**
  Created by kurila on 17.12.14.
@@ -24,19 +26,27 @@ public final class DataItemsFetchPeriodicTask<T extends DataItem>
 implements PeriodicTask<Collection<T>> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
+	private static final int MAX_TRY_COUNT = 100;
 	//
 	private final LoadSvc<T> loadSvc;
 	private final AtomicReference<Collection<T>> result = new AtomicReference<>();
 	//
-	public
-	DataItemsFetchPeriodicTask(final LoadSvc<T> loadSvc) {
+	public DataItemsFetchPeriodicTask(final LoadSvc<T> loadSvc) {
 		this.loadSvc = loadSvc;
 	}
 	//
 	@Override
 	public final void run() {
 		try {
-			final Collection<T> nextFrame = loadSvc.takeFrame();
+			Collection<T> nextFrame = null;
+			for(int i = 0; i < MAX_TRY_COUNT; i ++) {
+				try {
+					nextFrame = loadSvc.takeFrame();
+					break;
+				} catch(final ConnectIOException e) {
+					TimeUnit.MILLISECONDS.sleep(i);
+				}
+			}
 			if(nextFrame != null) {
 				result.set(nextFrame);
 				if(LOG.isTraceEnabled(Markers.MSG)) {

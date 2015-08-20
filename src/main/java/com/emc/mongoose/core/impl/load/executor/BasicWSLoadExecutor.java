@@ -143,7 +143,7 @@ implements WSLoadExecutor<T> {
 		//
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
-				ioReactorConfigBuilder.build(), new IOUtils.IOWorkerFactory(getName())
+				ioReactorConfigBuilder.build(), new IOUtils.IOWorkerFactory(getName(), runTimeConfig)
 			);
 		} catch(final IOReactorException e) {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);

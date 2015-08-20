@@ -66,7 +66,9 @@ implements Gauge<Long> {
 						Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
 						attrName, objectName.getCanonicalName(), addr
 					);
-				} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
+				} catch(
+					final IOException|MBeanException|InstanceNotFoundException|ReflectionException e
+				) {
 					LogUtil.exception(
 						LOG, Level.DEBUG, e, LoadClient.FMT_MSG_FAIL_FETCH_VALUE,
 						objectName.getCanonicalName() + "." + attrName, addr

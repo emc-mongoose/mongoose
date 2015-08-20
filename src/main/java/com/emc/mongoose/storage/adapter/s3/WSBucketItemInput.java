@@ -165,7 +165,7 @@ extends GenericContainerItemInputBase<T> {
 		}
 		// execute the request
 		final HttpResponse resp = WSBucketImpl.class.cast(container).execute(
-			nodeAddr, WSRequestConfig.METHOD_GET, false, lastOid, countLimit
+			nodeAddr, WSRequestConfig.METHOD_GET, lastOid, countLimit
 		);
 		if(resp == null) {
 			throw new IOException("No HTTP response");

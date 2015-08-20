@@ -105,6 +105,8 @@ implements AuthToken<T> {
 		httpReq.setHeader(WSRequestConfigImpl.KEY_X_AUTH_KEY, reqConf.getSecret());
 		httpReq.setHeader(HttpHeaders.ACCEPT, "*/*");
 		//
+		reqConf.applyHeadersFinally(httpReq);
+		//
 		return reqConf.execute(addr, httpReq);
 	}
 }

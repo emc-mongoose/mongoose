@@ -51,6 +51,11 @@ implements IOTask<T> {
 	//
 	@Override
 	public void complete() {
+		//
+		if(reqTimeDone == 0) {
+			respTimeDone = System.nanoTime() / 1000;
+		}
+		//
 		final String dataItemId = Long.toHexString(dataItem.getOffset());
 		StringBuilder strBuilder = THRLOC_SB.get();
 		if(strBuilder == null) {

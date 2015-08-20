@@ -55,6 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 15.10.14.
@@ -83,8 +84,8 @@ implements LoadExecutor<T> {
 	private final int totalConnCount;
 	// METRICS section
 	protected final MetricRegistry metrics = new MetricRegistry();
-	protected Counter counterSubm, counterRej, counterReqFail;
-	protected Meter throughPut, reqBytes;
+	protected Counter counterSubm, counterRej;
+	protected Meter throughPutSucc, throughPutFail, reqBytes;
 	protected Histogram respLatency;
 	//
 	protected final MBeanServer mBeanServer;
@@ -103,7 +104,9 @@ implements LoadExecutor<T> {
 			//
 			@Override
 			public final void run() {
-				RunTimeConfig.setContext(rtConfig); // required for int tests passing
+				// required for int tests passing
+				ThreadContext.put(RunTimeConfig.KEY_RUN_ID, rtConfig.getRunId());
+				//
 				final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
 					rtConfig.getLoadMetricsPeriodSec()
 				);
@@ -128,11 +131,8 @@ implements LoadExecutor<T> {
 			@Override
 			public final void run() {
 				while(!isClosed.get()) {
-					try {
-						TimeUnit.MILLISECONDS.sleep(10);
-					} catch(final InterruptedException e) {
-						break;
-					}
+					//
+					LockSupport.parkNanos(1);
 					if(isDoneAllSubm() || isDoneMaxCount()) {
 						lock.lock();
 						try {
@@ -144,6 +144,25 @@ implements LoadExecutor<T> {
 						} finally {
 							lock.unlock();
 						}
+					}
+					//
+					LockSupport.parkNanos(1);
+					if(
+						throughPutFail.getCount() > 1000000 &&
+						throughPutSucc.getOneMinuteRate() < throughPutFail.getOneMinuteRate()
+					) {
+						LOG.fatal(
+							Markers.ERR,
+							"There's a more than 1M of failures and the failure rate is higher " +
+							"than success rate for at least 1 minute. Exiting in order to avoid " +
+							"the memory exhaustion."
+						);
+						try {
+							LoadExecutorBase.this.close();
+						} catch(final IOException e) {
+							LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
+						}
+						break;
 					}
 				}
 			}
@@ -301,8 +320,8 @@ implements LoadExecutor<T> {
 			: (System.nanoTime() - tsStart.get());
 		//
 		final long
-			countReqSucc = throughPut.getCount(),
-			countReqFail = counterReqFail.getCount();
+			countReqSucc = throughPutSucc.getCount(),
+			countReqFail = throughPutFail.getCount();
 		final double
 			//  If Mongoose's run was paused w/ SIGSTOP signal then calculate meanTP and meanBW w/
 			//  values from Meter's library implementation after resumption.
@@ -312,9 +331,9 @@ implements LoadExecutor<T> {
 			//  Only average values in TP and BW will be calculated correctly.
 			//  Other values will be gradually recovered.
 			meanTP = countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
-			oneMinTP = throughPut.getOneMinuteRate(),
-			fiveMinTP = throughPut.getFiveMinuteRate(),
-			fifteenMinTP = throughPut.getFifteenMinuteRate(),
+			oneMinTP = throughPutSucc.getOneMinuteRate(),
+			fiveMinTP = throughPutSucc.getFiveMinuteRate(),
+			fifteenMinTP = throughPutSucc.getFifteenMinuteRate(),
 			meanBW = reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1),
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
@@ -376,18 +395,26 @@ implements LoadExecutor<T> {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(Markers.MSG, "Starting {}", getName());
 			// init remaining (load exec time dependent) metrics
-			counterReqFail = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_FAIL));
-			throughPut = metrics.register(MetricRegistry.name(getName(),
-				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(clock));
-			reqBytes = metrics.register(MetricRegistry.name(getName(),
-				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(clock));
-			respLatency = metrics.register(MetricRegistry.name(getName(),
-				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
+			throughPutSucc = metrics.register(
+				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP),
+				new Meter(clock)
+			);
+			throughPutFail = metrics.register(
+				MetricRegistry.name(getName(), METRIC_NAME_FAIL),
+				new Meter(clock)
+			);
+			reqBytes = metrics.register(
+				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW),
+				new Meter(clock)
+			);
+			respLatency = metrics.register(
+				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT),
+				new Histogram(new UniformReservoir()));
 			//
-			if (rtConfig.isRunResumeEnabled()) {
+			if(rtConfig.isRunResumeEnabled()) {
 				if (rtConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
 					try {
-						if (!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+						if(!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
 							BasicLoadState.restoreScenarioState(rtConfig);
 						}
 						setLoadState(BasicLoadState.findStateByLoadNumber(instanceNum, rtConfig));
@@ -454,8 +481,9 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void interrupt() {
-		if (isLoadFinished.get())
+		if(isLoadFinished.get()) {
 			return;
+		}
 		if(isInterrupted.compareAndSet(false, true)) {
 			metricsDaemon.interrupt();
 			shutdown();
@@ -565,7 +593,7 @@ implements LoadExecutor<T> {
 			!isAllSubm.get() && !isInterrupted.get() &&
 			counterSubm.getCount() - counterResults.get() >= maxQueueSize
 		) {
-			Thread.sleep(1);
+			LockSupport.parkNanos(1);
 		}
 		//
 		try {
@@ -623,7 +651,7 @@ implements LoadExecutor<T> {
 		final int latency = ioTask.getLatency();
 		if(status == IOTask.Status.SUCC) {
 			// update the metrics with success
-			throughPut.mark();
+			throughPutSucc.mark();
 			if(latency > 0) {
 				respLatency.update(latency);
 			}
@@ -632,7 +660,7 @@ implements LoadExecutor<T> {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Task #{}: successful, {}/{}",
-					ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
+					ioTask.hashCode(), throughPutSucc.getCount(), ioTask.getTransferSize()
 				);
 			}
 			// feed the data item to the consumer and finally check for the finish state
@@ -671,7 +699,7 @@ implements LoadExecutor<T> {
 				}
 			}
 		} else {
-			counterReqFail.inc();
+			throughPutFail.mark();
 		}
 		//
 		counterResults.incrementAndGet();
@@ -688,8 +716,8 @@ implements LoadExecutor<T> {
 			//  apply parameters from loadState to current load executor
 			counterSubm.inc(state.getCountSucc() + state.getCountFail());
 			counterResults.set(state.getCountSucc() + state.getCountFail());
-			counterReqFail.inc(state.getCountFail());
-			throughPut.mark(state.getCountSucc());
+			throughPutFail.mark(state.getCountFail());
+			throughPutSucc.mark(state.getCountSucc());
 			reqBytes.mark(state.getCountBytes());
 			for (int i = 0; i < state.getLatencyValues().length; i++) {
 				respLatency.update(state.getLatencyValues()[i]);
@@ -706,8 +734,8 @@ implements LoadExecutor<T> {
 		final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(rtConfig)
-			.setCountSucc(throughPut == null ? 0 : throughPut.getCount())
-			.setCountFail(counterReqFail == null ? 0 : counterReqFail.getCount())
+			.setCountSucc(throughPutSucc == null ? 0 : throughPutSucc.getCount())
+			.setCountFail(throughPutFail == null ? 0 : throughPutFail.getCount())
 			.setCountBytes(reqBytes == null ? 0 : reqBytes.getCount())
 			.setCountSubm(counterSubm == null ? 0 : counterSubm.getCount())
 			.setLoadElapsedTimeValue(

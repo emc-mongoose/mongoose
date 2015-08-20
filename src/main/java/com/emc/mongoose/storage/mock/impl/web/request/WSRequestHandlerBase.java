@@ -294,7 +294,7 @@ implements ReqURIMatchingHandler<T> {
 	) {
 		switch(method.toUpperCase()) {
 			case WSRequestConfig.METHOD_POST:
-				httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
+				// probably it's swift container versioning request, ignore
 				break;
 			case WSRequestConfig.METHOD_PUT:
 				handleContainerCreate(httpRequest, httpResponse, container);

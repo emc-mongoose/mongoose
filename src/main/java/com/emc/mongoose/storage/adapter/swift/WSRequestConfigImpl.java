@@ -55,11 +55,6 @@ extends WSRequestConfigBase<T> {
 			if(reqConf2Clone.uriSvcBaseContainerPath != null) {
 				uriSvcBaseContainerPath = reqConf2Clone.uriSvcBaseContainerPath;
 			}
-			if(reqConf2Clone.sharedHeaders.containsHeader(KEY_X_VERSIONING)) {
-				sharedHeaders.updateHeader(
-					reqConf2Clone.sharedHeaders.getFirstHeader(KEY_X_VERSIONING)
-				);
-			}
 			setAuthToken(reqConf2Clone.getAuthToken());
 			setContainer(reqConf2Clone.getContainer());
 		}
@@ -174,16 +169,6 @@ extends WSRequestConfigBase<T> {
 			LOG.error(Markers.ERR, "Swift container is not specified");
 		}
 		//
-		if(runTimeConfig.getDataVersioningEnabled()) {
-			sharedHeaders.updateHeader(
-				new BasicHeader(KEY_X_VERSIONING, DEFAULT_VERSIONS_CONTAINER)
-			);
-		} else if(sharedHeaders.containsHeader(KEY_X_VERSIONING)) {
-			for(final Header header2remove : sharedHeaders.getHeaders(KEY_X_VERSIONING)) {
-				sharedHeaders.removeHeader(header2remove);
-			}
-		}
-		//
 		refreshContainerPath();
 		return this;
 	}
@@ -238,7 +223,7 @@ extends WSRequestConfigBase<T> {
 	@Override
 	protected final void applyAuthHeader(final HttpRequest httpRequest) {
 		final String authTokenValue = authToken == null ? null : authToken.getValue();
-		if(authTokenValue != null) {
+		if(authTokenValue != null && authTokenValue.length() > 0) {
 			if(!httpRequest.containsHeader(KEY_X_AUTH_TOKEN)) {
 				if(headerAuthToken == null || headerAuthToken.getValue() != authTokenValue) {
 					headerAuthToken = new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue);
@@ -288,6 +273,9 @@ extends WSRequestConfigBase<T> {
 					String.format("Container \"%s\" still doesn't exist", containerName)
 				);
 			}
+		}
+		if(versioning) {
+			container.setVersioning(storageNodeAddrs[0], true);
 		}
 
 	}

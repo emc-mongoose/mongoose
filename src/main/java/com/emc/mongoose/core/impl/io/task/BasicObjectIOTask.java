@@ -27,6 +27,11 @@ implements DataObjectIOTask<T> {
 	//
 	@Override
 	public final void complete() {
+		//
+		if(respTimeDone == 0) {
+			reqTimeDone = System.nanoTime() / 1000;
+		}
+		//
 		final String dataItemId = dataItem.getId();
 		StringBuilder strBuilder = THRLOC_SB.get();
 		if(strBuilder == null) {

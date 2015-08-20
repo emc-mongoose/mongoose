@@ -3,8 +3,10 @@ package com.emc.mongoose.integ.core.single;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.TestConstants;
@@ -13,6 +15,8 @@ import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import com.emc.mongoose.storage.adapter.s3.Bucket;
 import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -34,91 +38,90 @@ import java.util.concurrent.TimeUnit;
  * steps: all, dominant limit: count) in Mongoose Core Functional Testing
  * HLUC: 1.1.5.2, 1.1.5.5
  */
-public class WriteByCountTest {
+public class WriteByCountTest
+extends WSMockTestBase {
+
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
 	private static final String RUN_ID = WriteByCountTest.class.getCanonicalName();
 	private static final String DATA_SIZE = "1B", LIMIT_TIME = "365.days";
 	private static final int LIMIT_COUNT = 100000, LOAD_THREADS = 10;
-	private static Logger LOG;
-
-	private static RunTimeConfig rtConfig;
 
 	@BeforeClass
-	public static void before()
+	public static void setUpClass()
 	throws Exception {
-		//  remove log dir w/ previous logs
-		LogParser.removeLogDirectory(RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		WSMockTestBase.setUpClass();
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefault());
-		rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, LOAD_THREADS);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, Integer.toString(LOAD_THREADS));
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
-		LoggingTestSuite.setUpClass();
-
-		LOG = LogManager.getLogger();
-		//  write
-		executeLoadJob(rtConfig);
-		STD_OUTPUT_STREAM.close();
-	}
-
-	private static void executeLoadJob(final RunTimeConfig rtConfig)
-	throws Exception {
-		LOG.info(Markers.MSG, rtConfig.toString());
-		UniformDataSource.DEFAULT = new UniformDataSource();
-		try (final BufferingOutputStream stdOutStream =
-			     StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
+		RunTimeConfig.setContext(rtConfig);
+		//
+		final Logger logger = LogManager.getLogger();
+		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		//
+		try (final BufferingOutputStream
+				 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		) {
+			UniformDataSource.DEFAULT = new UniformDataSource();
 			//  Run mongoose default scenario in standalone mode
 			new ScriptRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
+		//
+		RunIdFileManager.flushAll();
 	}
 
 	@AfterClass
-	public static void after()
-		throws Exception {
-		final Bucket bucket = new WSBucketImpl(
-			(com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
-			TestConstants.BUCKET_NAME, false
-		);
-		bucket.delete(rtConfig.getStorageAddrs()[0]);
+	public  static void tearDownClass()
+	throws Exception {
+		WSMockTestBase.tearDownClass();
 	}
 
 	@Test
-	public void shouldReportInformationAboutSummaryMetricsFromConsole()
+	public void shouldReportInformationAboutSummaryMetricsToConsole()
 	throws Exception {
-		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
-			.contains(TestConstants.SUMMARY_INDICATOR));
-		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
-			.contains(TestConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue("Console doesn't contain information about summary metrics",
+			STD_OUTPUT_STREAM.toString().contains(TestConstants.SUMMARY_INDICATOR)
+		);
+		Assert.assertTrue("Console doesn't contain information about end of scenario",
+			STD_OUTPUT_STREAM.toString().contains(TestConstants.SCENARIO_END_INDICATOR)
+		);
 	}
 
 	@Test
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
-		//Read message file and search "Scenario End"
+		//  Read the message file and search for "Scenario end"
 		final File messageFile = LogParser.getMessageFile(RUN_ID);
-		Assert.assertTrue(messageFile.exists());
+		Assert.assertTrue(
+			"messages.log file doesn't exist",
+			messageFile.exists()
+		);
 		//
 		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(messageFile))) {
+				 new BufferedReader(new FileReader(messageFile))) {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
 				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
 					break;
 				}
 			}
-			Assert.assertNotNull(line);
-			//Check the message file contain report about scenario end. If not line = null.
-			Assert.assertTrue(line.contains(TestConstants.SCENARIO_END_INDICATOR));
- 		}
+			Assert.assertNotNull(
+				"Line with information about end of scenario must not be equal null ", line
+			);
+			Assert.assertTrue(
+				"Information about end of scenario doesn't contain in message.log file",
+				line.contains(TestConstants.SCENARIO_END_INDICATOR)
+			);
+		}
 	}
 
 	@Test
@@ -148,31 +151,37 @@ public class WriteByCountTest {
 	@Test
 	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
-		//Read data.items.csv file of create scenario run
+		//  Read data.items.csv file
 		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
-		Assert.assertTrue(dataItemsFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
-		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(dataItemsFile))) {
-			int dataSize, countDataItems = 0;
-			String line;
-
-			while ((line = bufferedReader.readLine()) != null) {
-				// Get dataSize from each line
-				dataSize = Integer.valueOf(line.split(",")[TestConstants.DATA_SIZE_COLUMN_INDEX]);
-				Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), dataSize);
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			//
+			int countDataItems = 0;
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			for(final CSVRecord nextRec : recIter) {
+				Assert.assertEquals(
+					"Size of data item isn't correct",
+					Long.toString(SizeUtil.toSize(DATA_SIZE)), nextRec.get(2)
+				);
 				countDataItems++;
 			}
-			//Check that there are 10 lines in data.items.csv file
-			Assert.assertEquals(LIMIT_COUNT, countDataItems);
+			//  Check that there are 10 lines in data.items.csv file
+			Assert.assertEquals(
+				"Not correct information about created data items", LIMIT_COUNT, countDataItems
+			);
 		}
 	}
+
 	@Test
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario run
 		final File dataItemFile = LogParser.getDataItemsFile(RUN_ID);
-		Assert.assertTrue(dataItemFile.exists());
+		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
 		//
 		try(
 			final BufferedReader
@@ -187,7 +196,7 @@ public class WriteByCountTest {
 	throws Exception {
 		// Get perf.sum.csv file of write scenario run
 		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
-		Assert.assertTrue(perfSumFile.exists());
+		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 		//
 		try(
 			final BufferedReader
@@ -200,23 +209,31 @@ public class WriteByCountTest {
 	@Test
 	public void shouldReportCorrectWrittenCountToSummaryLogFile()
 	throws Exception {
-		//Read perf.summary file of create scenario run
+		//  Read perf.summary file
 		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
-		Assert.assertTrue(perfSumFile.exists());
 
-		//Check that file exists
-		Assert.assertTrue(perfSumFile.exists());
+		//  Check that file exists
+		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 
-		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(perfSumFile))) {
-			//  read header of csv file
-			bufferedReader.readLine();
-
-			// Get value of "CountSucc" column
-			final int actualCountSucc = Integer.valueOf(
-				bufferedReader.readLine().split(",")[TestConstants.COUNT_SUCC_COLUMN_INDEX]
-			);
-			Assert.assertEquals(LIMIT_COUNT, actualCountSucc);
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			boolean firstRow = true;
+			//
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			for(final CSVRecord nextRec : recIter) {
+				if (firstRow) {
+					firstRow = false;
+				} else if (nextRec.size() == 21) {
+					Assert.assertTrue(
+						"Count of success is not integer", LogParser.isInteger(nextRec.get(7))
+					);
+					Assert.assertEquals(
+						"Count of success isn't correct", Integer.toString(LIMIT_COUNT), nextRec.get(7)
+					);
+				}
+			}
 		}
 	}
 }

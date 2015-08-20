@@ -3,16 +3,17 @@ package com.emc.mongoose.integ.core.single;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
-import com.emc.mongoose.integ.suite.LoggingTestSuite;
+import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
+import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
-import com.emc.mongoose.storage.adapter.s3.Bucket;
-import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -23,6 +24,7 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -38,48 +40,39 @@ import java.util.regex.Matcher;
  * steps: all, dominant limit: time) in Mongoose Core Functional Testing
  * HLUC: 1.1.6.2, 1.1.6.4
  */
-public class WriteByTimeTest {
+public class WriteByTimeTest
+extends WSMockTestBase {
+
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
 	private static final String RUN_ID = WriteByTimeTest.class.getCanonicalName();
 	private static final String DATA_SIZE = "1B", LIMIT_TIME = "1.minutes";
 	private static final int LIMIT_COUNT = 1000000000, LOAD_THREADS = 10;
-
-	private static Logger LOG;
-
+	//
 	private static long TIME_ACTUAL_SEC;
 
-	private static RunTimeConfig rtConfig;
-
 	@BeforeClass
-	public static void before()
+	public static void setUpClass()
 	throws Exception {
-		//  remove log dir w/ previous logs
-		LogParser.removeLogDirectory(RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		WSMockTestBase.setUpClass();
 		//
-		RunTimeConfig.setContext(RunTimeConfig.getDefault());
-		rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, LOAD_THREADS);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, Integer.toString(LOAD_THREADS));
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
-		LoggingTestSuite.setUpClass();
-
-		LOG = LogManager.getLogger();
-		//  write
-		executeLoadJob(rtConfig);
-		STD_OUTPUT_STREAM.close();
-	}
-
-	private static void executeLoadJob(final RunTimeConfig rtConfig)
-	throws Exception {
-		LOG.info(Markers.MSG, rtConfig.toString());
-		UniformDataSource.DEFAULT = new UniformDataSource();
-		try (final BufferingOutputStream stdOutStream =
-			     StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
+		RunTimeConfig.setContext(rtConfig);
+		//
+		final Logger logger = LogManager.getLogger();
+		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		//
+		try (final BufferingOutputStream
+				 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		) {
+			UniformDataSource.DEFAULT = new UniformDataSource();
 			//  Run mongoose default scenario in standalone mode
 			TIME_ACTUAL_SEC = System.currentTimeMillis();
 			new ScriptRunner().run();
@@ -88,45 +81,52 @@ public class WriteByTimeTest {
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
+		//
+		RunIdFileManager.flushAll();
 	}
 
 	@AfterClass
-	public static void after()
-		throws Exception {
-		final Bucket bucket = new WSBucketImpl(
-			(com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("s3").setProperties(rtConfig),
-			TestConstants.BUCKET_NAME, false
-		);
-		bucket.delete(rtConfig.getStorageAddrs()[0]);
+	public  static void tearDownClass()
+	throws Exception {
+		WSMockTestBase.tearDownClass();
 	}
 
 	@Test
-	public void shouldReportInformationAboutSummaryMetricsFromConsole()
+	public void shouldReportInformationAboutSummaryMetricsToConsole()
 	throws Exception {
-		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
-			.contains(TestConstants.SUMMARY_INDICATOR));
-		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
-			.contains(TestConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue("Console doesn't contain information about summary metrics",
+			STD_OUTPUT_STREAM.toString().contains(TestConstants.SUMMARY_INDICATOR)
+		);
+		Assert.assertTrue("Console doesn't contain information about end of scenario",
+			STD_OUTPUT_STREAM.toString().contains(TestConstants.SCENARIO_END_INDICATOR)
+		);
 	}
 
 	@Test
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
-		//Read message file and search "Scenario End"
+		//  Read the message file and search for "Scenario end"
 		final File messageFile = LogParser.getMessageFile(RUN_ID);
-		Assert.assertTrue(messageFile.exists());
+		Assert.assertTrue(
+			"messages.log file doesn't exist",
+			messageFile.exists()
+		);
 		//
 		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(messageFile))) {
+				 new BufferedReader(new FileReader(messageFile))) {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
 				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
 					break;
 				}
 			}
-			Assert.assertNotNull(line);
-			//Check the message file contain report about scenario end. If not line = null.
-			Assert.assertTrue(line.contains(TestConstants.SCENARIO_END_INDICATOR));
+			Assert.assertNotNull(
+				"Line with information about end of scenario must not be equal null ", line
+			);
+			Assert.assertTrue(
+				"Information about end of scenario doesn't contain in message.log file",
+				line.contains(TestConstants.SCENARIO_END_INDICATOR)
+			);
 		}
 	}
 
@@ -136,44 +136,50 @@ public class WriteByTimeTest {
 		final int precisionMillis = 5000;
 		//1.minutes = 60000.milliseconds
 		final long loadLimitTimeMillis = TimeUtil.getTimeValue(LIMIT_TIME) * 60000;
-		Assert.assertTrue(
-			(TIME_ACTUAL_SEC >= loadLimitTimeMillis) &&
-			(TIME_ACTUAL_SEC <= loadLimitTimeMillis + precisionMillis)
+		Assert.assertEquals(
+			"Actual time limitation is wrong",
+			loadLimitTimeMillis, TIME_ACTUAL_SEC, precisionMillis
 		);
 		//
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue(perfAvgFile.exists());
-		//
+		Assert.assertTrue("perf.avg.csv file doesn't exist", perfAvgFile.exists());
+
+		// Get start time of load: read the first metric of load from perf.avg.csv file
 		BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
-		//
 		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 		Date startTime = null, finishTime = null;
-		// Get start time of load
+		// Read the head of file
 		bufferedReader.readLine();
 		String line = bufferedReader.readLine();
-		Matcher matcher = TestConstants.TIME_PATTERN.matcher(line);
+		Matcher matcher = LogPatterns.DATE_TIME_ISO8601.matcher(line);
+		// Find the time in line of perf.avg.csv file
 		if (matcher.find()) {
-			startTime = format.parse(matcher.group());
+			startTime = format.parse(matcher.group("time"));
+		} else {
+			Assert.fail("Time doesn't exist in the line from perf.avg.csv file or has wrong format");
 		}
-		// Get finish time of load
+
+		// Get finish time of load: read the summary metric from perf.sum.csv file
 		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
-		Assert.assertTrue(perfSumFile.exists());
-		//
+		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 		bufferedReader = new BufferedReader(new FileReader(perfSumFile));
+		// Read the head of file
 		bufferedReader.readLine();
 		line = bufferedReader.readLine();
-		matcher = TestConstants.TIME_PATTERN.matcher(line);
+		matcher = LogPatterns.DATE_TIME_ISO8601.matcher(line);
+		// Find the time in line of perf.sum.csv file
 		if (matcher.find()) {
-			finishTime = format.parse(matcher.group());
+			finishTime = format.parse(matcher.group("time"));
+		} else {
+			Assert.fail("Time doesn't exist in the line from perf.sum.csv file or has wrong format");
 		}
-		//
-		Assert.assertNotNull(startTime);
-		Assert.assertNotNull(finishTime);
+
 		final long differenceTime = finishTime.getTime() - startTime.getTime();
-		Assert.assertTrue(
-			differenceTime >= loadLimitTimeMillis - precisionMillis &&
-			differenceTime < loadLimitTimeMillis + precisionMillis
+		Assert.assertEquals(
+			"Actual time limitation is wrong", loadLimitTimeMillis,
+			differenceTime, precisionMillis
 		);
+		//
 		bufferedReader.close();
 	}
 
@@ -207,37 +213,43 @@ public class WriteByTimeTest {
 		final int precisionMillis = 3000;
 		// Get perf.avg.csv file
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue(perfAvgFile.exists());
+		Assert.assertTrue("perf.avg.csv file doesn't exist", perfAvgFile.exists());
 		//
-		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(perfAvgFile))) {
-			final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			boolean firstRow = true;
 			Matcher matcher;
-			//
-			bufferedReader.readLine();
-			String line = bufferedReader.readLine();
 			final List<Date> listTimeOfReports = new ArrayList<>();
-			while (line != null) {
-				matcher = TestConstants.TIME_PATTERN.matcher(line);
-				if (matcher.find()) {
-					listTimeOfReports.add(format.parse(matcher.group()));
+			final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+			//
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			for (final CSVRecord nextRec : recIter) {
+				if (firstRow) {
+					firstRow = false;
+				} else {
+					matcher = LogPatterns.DATE_TIME_ISO8601.matcher(nextRec.get(0));
+					if (matcher.find()) {
+						listTimeOfReports.add(format.parse(matcher.group("time")));
+					} else {
+						Assert.fail("Data and time record in line has got wrong format");
+					}
 				}
-				line = bufferedReader.readLine();
 			}
 			// Check period of reports is correct
 			long firstTime, nextTime;
 			// Period must be equal 10 sec
 			final int period = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
 			// period must be equal 10 seconds = 10000 milliseconds
-			Assert.assertEquals(10, period);
-			//
+			Assert.assertEquals("Wrong load.metrics.periodSec in configuration", 10, period);
+
 			for (int i = 0; i < listTimeOfReports.size() - 1; i++) {
 				firstTime = listTimeOfReports.get(i).getTime();
 				nextTime = listTimeOfReports.get(i + 1).getTime();
 				// period must be equal 10 seconds = 10000 milliseconds
-				Assert.assertTrue(
-					10000 - precisionMillis < (nextTime - firstTime) &&
-					10000 + precisionMillis > (nextTime - firstTime)
+				Assert.assertEquals(
+					"Load metrics period is wrong", 10000, nextTime - firstTime, precisionMillis
 				);
 			}
 		}
