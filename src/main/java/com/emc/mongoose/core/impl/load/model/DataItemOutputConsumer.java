@@ -28,7 +28,8 @@ implements Consumer<T> {
 	public DataItemOutputConsumer(final DataItemOutput<T> itemOut, final long maxCount) {
 		super(
 			maxCount > 0 ? maxCount : Long.MAX_VALUE,
-			RunTimeConfig.getContext().getTasksMaxQueueSize()
+			RunTimeConfig.getContext().getTasksMaxQueueSize(),
+			RunTimeConfig.getContext().isShuffleItemsEnabled()
 		);
 		setName("consume" + (maxCount > 0 ? maxCount : "") + "<" + itemOut + ">");
 		this.itemOut = itemOut;

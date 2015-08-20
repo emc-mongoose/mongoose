@@ -172,7 +172,8 @@
 			},
 			"tasks": {
 				"maxQueueSize": 16384,
-				"batchSize": 1024
+				"batchSize": 1024,
+				"shuffle": false
 			},
 			"servers": "127.0.0.1",
 			"metricsPeriodSec": 10

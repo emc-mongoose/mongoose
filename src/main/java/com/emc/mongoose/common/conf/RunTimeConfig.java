@@ -69,6 +69,7 @@ implements Externalizable {
 		KEY_LOAD_TYPE_DELETE_THREADS = "load.type.delete.threads",
 		KEY_LOAD_TYPE_APPEND_THREADS = "load.type.append.threads",
 		KEY_LOAD_TASKS_BATCH_SIZE = "load.tasks.batchSize",
+		KEY_LOAD_TASKS_SHUFFLE = "load.tasks.shuffle",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
 		KEY_RUN_ID = "run.id",
@@ -559,8 +560,7 @@ implements Externalizable {
 		return getString("remote.webui.wsTimeOut.unit");
 	}
 	//
-	public final boolean isEnabledDataRandom() {return  getBoolean("data.src.random.enabled");}
-	public final int getDataRandomBatchSize() {return getInt("data.src.random.batchSize");}
+	public final boolean isShuffleItemsEnabled() {return  getBoolean(KEY_LOAD_TASKS_SHUFFLE);}
 	//
 	public final boolean isRunResumeEnabled() {
 		return getBoolean("run.resume.enabled");

@@ -11,6 +11,9 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -36,8 +39,10 @@ implements AsyncConsumer<T> {
 		isAllSubm = new AtomicBoolean(false);
 	// volatile
 	private final BlockingQueue<T> transientQueue;
+	private final List<T> buff;
+	private final boolean shuffle;
 	//
-	public AsyncConsumerBase(final long maxCount, final int maxQueueSize)
+	public AsyncConsumerBase(final long maxCount, final int maxQueueSize, final boolean shuffle)
 	throws IllegalArgumentException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		if(maxQueueSize > 0) {
@@ -46,6 +51,8 @@ implements AsyncConsumer<T> {
 			throw new IllegalArgumentException("Invalid max queue size: " + maxQueueSize);
 		}
 		transientQueue = new ArrayBlockingQueue<>(maxQueueSize);
+		buff = new ArrayList<>(maxQueueSize);
+		this.shuffle = shuffle;
 	}
 	//
 	@Override
@@ -90,15 +97,27 @@ implements AsyncConsumer<T> {
 			transientQueue.remainingCapacity(), getName()
 		);
 		T nextItem;
+		int availItemCount;
 		try {
 			for(long i = 0; i < maxCount;) {
-				if(transientQueue.size() == 0 && isShutdown.get()) {
+				availItemCount = transientQueue.size();
+				if(availItemCount == 0 && isShutdown.get()) {
 					break;
-				}
-				nextItem = transientQueue.poll(POLL_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS);
-				if(nextItem != null) {
-					submitSync(nextItem);
-					i ++;
+				} else if(availItemCount > 1) {
+					availItemCount = transientQueue.drainTo(buff);
+					if(shuffle) {
+						Collections.shuffle(buff);
+					}
+					for(int j = 0; j < availItemCount && i < maxCount; j ++) {
+						submitSync(buff.get(j));
+						i ++;
+					}
+				} else {
+					nextItem = transientQueue.poll(POLL_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS);
+					if(nextItem != null) {
+						submitSync(nextItem);
+						i ++;
+					}
 				}
 			}
 			LOG.debug(Markers.MSG, "{}: consuming finished", getName());

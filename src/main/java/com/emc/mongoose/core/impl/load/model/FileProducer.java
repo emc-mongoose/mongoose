@@ -139,8 +139,8 @@ implements Producer<T> {
 		final Charset charset =  StandardCharsets.UTF_8;
 		final CharsetDecoder decoder = charset.newDecoder();
 		//
-		if(RunTimeConfig.getContext().isEnabledDataRandom()) {
-			batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
+		if(RunTimeConfig.getContext().isShuffleItemsEnabled()) {
+			batchSize = RunTimeConfig.getContext().getBatchSize();
 		}
 		//
 		try(
