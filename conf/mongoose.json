@@ -35,6 +35,8 @@
 			"storage.socket.interest.op.queued": "remote.socket.interestOpQueued",
 			"storage.socket.select.interval": "remote.socket.selectInterval",
 
+			"data.src.random.enabled": "load.tasks.shuffle",
+			"data.src.random.batchSize": "load.tasks.batchSize",
 			"data.page.size": "data.buffer.size",
 			"data.ring.seed": "data.buffer.ring.seed",
 			"data.ring.size": "data.buffer.ring.size",
@@ -119,11 +121,7 @@
 			},
 			"src": {
 				"fpath": "",
-				"separator": ",",
-			  	"random": {
-				  	"enabled": false,
-				  	"batchSize": 1000
-				}
+				"separator": ","
 			},
 			"buffer": {
 				"size": "4KB",
