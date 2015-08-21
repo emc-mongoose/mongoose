@@ -29,7 +29,8 @@ implements Consumer<T> {
 		super(
 			maxCount > 0 ? maxCount : Long.MAX_VALUE,
 			RunTimeConfig.getContext().getTasksMaxQueueSize(),
-			RunTimeConfig.getContext().isShuffleItemsEnabled()
+			RunTimeConfig.getContext().isShuffleItemsEnabled(),
+			RunTimeConfig.getContext().getBatchSize()
 		);
 		setName("consume" + (maxCount > 0 ? maxCount : "") + "<" + itemOut + ">");
 		this.itemOut = itemOut;

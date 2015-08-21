@@ -182,7 +182,10 @@ implements LoadExecutor<T> {
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount
 	) {
-		super(maxCount, rtConfig.getTasksMaxQueueSize(), rtConfig.isShuffleItemsEnabled());
+		super(
+			maxCount, rtConfig.getTasksMaxQueueSize(),
+			rtConfig.isShuffleItemsEnabled(), rtConfig.getBatchSize()
+		);
 		//
 		this.dataCls = dataCls;
 		this.rtConfig = rtConfig;

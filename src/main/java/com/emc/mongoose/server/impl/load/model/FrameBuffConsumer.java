@@ -31,7 +31,10 @@ implements RecordFrameBuffer<T> {
 	public FrameBuffConsumer(
 		final Class<T> dataCls, final RunTimeConfig rtConfig, final long maxCount
 	) {
-		super(maxCount, rtConfig.getTasksMaxQueueSize(), rtConfig.isShuffleItemsEnabled());
+		super(
+			maxCount, rtConfig.getTasksMaxQueueSize(),
+			rtConfig.isShuffleItemsEnabled(), rtConfig.getBatchSize()
+		);
 		setName(Thread.currentThread().getName() + "-" + getClass().getSimpleName());
 		start();
 	}

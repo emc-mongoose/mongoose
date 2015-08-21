@@ -41,8 +41,9 @@ implements AsyncConsumer<T> {
 	private final BlockingQueue<T> transientQueue;
 	private final List<T> buff;
 	private final boolean shuffle;
+	private final int butchSize;
 	//
-	public AsyncConsumerBase(final long maxCount, final int maxQueueSize, final boolean shuffle)
+	public AsyncConsumerBase(final long maxCount, final int maxQueueSize, final boolean shuffle, final int butchSize)
 	throws IllegalArgumentException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		if(maxQueueSize > 0) {
@@ -51,8 +52,9 @@ implements AsyncConsumer<T> {
 			throw new IllegalArgumentException("Invalid max queue size: " + maxQueueSize);
 		}
 		transientQueue = new ArrayBlockingQueue<>(maxQueueSize);
-		buff = new ArrayList<>(maxQueueSize);
+		buff = shuffle ? new ArrayList<T>(butchSize) : new ArrayList<T>(maxQueueSize);
 		this.shuffle = shuffle;
+		this.butchSize = butchSize;
 	}
 	//
 	@Override
@@ -104,14 +106,18 @@ implements AsyncConsumer<T> {
 				if(availItemCount == 0 && isShutdown.get()) {
 					break;
 				} else if(availItemCount > 1) {
-					availItemCount = transientQueue.drainTo(buff);
 					if(shuffle) {
+						availItemCount = transientQueue.drainTo(buff, butchSize);
 						Collections.shuffle(buff);
+					} else {
+						availItemCount = transientQueue.drainTo(buff);
 					}
 					for(int j = 0; j < availItemCount && i < maxCount; j ++) {
 						submitSync(buff.get(j));
 						i ++;
 					}
+					// Do buff.clear() because hasn't to submit the old data item the second time
+					buff.clear();
 				} else {
 					nextItem = transientQueue.poll(POLL_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS);
 					if(nextItem != null) {
