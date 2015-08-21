@@ -35,8 +35,8 @@
 				}, {
 					"name": "async",
 					"type": "Async",
-					"blocking": "false",
-					"bufferSize": "200000",
+					"blocking": "true",
+					"bufferSize": "100000",
 					"AppenderRef": { "ref": "stdout" }
 				}
 			]
