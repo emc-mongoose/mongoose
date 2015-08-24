@@ -187,15 +187,10 @@ extends AbstractManager {
 	protected final void close() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
-				if(layout != null) {
-					outStream.write(layout.getFooter());
-				}
 				outStream.flush();
 				outStream.close();
 			} catch(final IOException e) {
 				e.printStackTrace(System.err);
-			} catch (final Exception e) {
-				e.printStackTrace();
 			}
 		}
 	}

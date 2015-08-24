@@ -24,7 +24,6 @@ import org.apache.logging.log4j.core.util.Booleans;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -80,7 +79,6 @@ extends AbstractAppender {
 		super.stop();
 		manager.release();
 		manager.close();
-		System.out.println(count);
 		if (advertiser != null) {
 			advertiser.unadvertise(advertisement);
 		}
@@ -109,7 +107,7 @@ extends AbstractAppender {
 		final boolean
 			ignoreExceptions = Booleans.parseBoolean(ignore, true),
 			isAdvertise = Boolean.parseBoolean(advertise),
-			flagFlush = Booleans.parseBoolean(immediateFlush, true),
+			flagFlush = Booleans.parseBoolean(immediateFlush, false),
 			isAppend = true,
 			isLocking = false,
 			isBuffering = true;
@@ -149,7 +147,6 @@ extends AbstractAppender {
 	}
 	//
 	private final static String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
-	public AtomicInteger count = new AtomicInteger(0);
 	//
 	@Override
 	public final void append(final LogEvent event) {
@@ -166,9 +163,6 @@ extends AbstractAppender {
 		final byte[] buff = getLayout().toByteArray(event);
 		if(buff.length > 0) {
 			try {
-				if (event.getMarker().equals(Markers.DATA_LIST)) {
-					count.incrementAndGet();
-				}
 				manager.write(currRunId, buff);
 				if (flagFlush || event.isEndOfBatch()) {
 					manager.flush();
