@@ -187,9 +187,13 @@ extends AbstractManager {
 	protected final void close() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
-				if(layout != null) {
-					outStream.write(layout.getFooter());
+				if (layout != null) {
+					byte[] footer = layout.getFooter();
+					if (footer != null) {
+						outStream.write(footer);
+					}
 				}
+				outStream.flush();
 				outStream.close();
 			} catch(final IOException e) {
 				e.printStackTrace(System.err);

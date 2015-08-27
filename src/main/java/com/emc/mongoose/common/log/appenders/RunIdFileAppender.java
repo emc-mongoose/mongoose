@@ -78,6 +78,7 @@ extends AbstractAppender {
 	public void stop() {
 		super.stop();
 		manager.release();
+		manager.close();
 		if (advertiser != null) {
 			advertiser.unadvertise(advertisement);
 		}
