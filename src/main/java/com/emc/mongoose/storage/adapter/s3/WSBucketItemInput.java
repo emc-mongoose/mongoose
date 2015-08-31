@@ -39,7 +39,6 @@ extends GenericContainerItemInputBase<T> {
 	//
 	private final SAXParser parser;
 	//
-	private String lastOid = null;
 	private boolean eof = false;
 	private long doneCount = 0;
 	//
@@ -165,7 +164,7 @@ extends GenericContainerItemInputBase<T> {
 		}
 		// execute the request
 		final HttpResponse resp = WSBucketImpl.class.cast(container).execute(
-			nodeAddr, WSRequestConfig.METHOD_GET, lastOid, countLimit
+			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit
 		);
 		if(resp == null) {
 			throw new IOException("No HTTP response");
@@ -196,14 +195,14 @@ extends GenericContainerItemInputBase<T> {
 				items, itemConstructor, container
 			);
 			parser.parse(in, pageContentHandler);
-			lastOid = pageContentHandler.oid;
-			if(!pageContentHandler.isTruncated || lastOid == null) {
+			lastItemId = pageContentHandler.oid;
+			if(!pageContentHandler.isTruncated || lastItemId == null) {
 				eof = true; // end of bucket list
 			}
 			doneCount += pageContentHandler.count;
 			LOG.debug(
 				Markers.MSG, "Listed {} items the last time, response code: {}, last oid: {}",
-				pageContentHandler.count, statusCode, lastOid
+				pageContentHandler.count, statusCode, lastItemId
 			);
 		} catch(final SAXException e) {
 			e.printStackTrace(System.out);
@@ -219,6 +218,6 @@ extends GenericContainerItemInputBase<T> {
 	public final void reset()
 	throws IOException {
 		super.reset();
-		lastOid = null;
+		lastItemId = null;
 	}
 }
