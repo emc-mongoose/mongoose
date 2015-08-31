@@ -48,26 +48,15 @@ public final class StartServlet extends CommonServlet {
 	//
 	@Override
 	public final void doPost(final HttpServletRequest request, final HttpServletResponse response) {
-		//
-		if (!isRunIdFree(request.getParameter(RunTimeConfig.KEY_RUN_ID))) {
-			String resultString;
-			if (threadsMap.get(request.getParameter(RunTimeConfig.KEY_RUN_ID)) != null) {
-				if (threadsMap.get(request.getParameter(RunTimeConfig.KEY_RUN_ID)).isAlive()) {
-					resultString = "Mongoose with this run.id is running at the moment";
-				} else {
-					resultString = "Tab with the same run.id will be closed";
-				}
-				try {
-					response.getWriter().write(resultString);
-				} catch (final IOException e) {
-					LogUtil.exception(LOG, Level.DEBUG, e, "Failed to write in servlet response");
-				}
+		final String runId = request.getParameter(RunTimeConfig.KEY_RUN_ID);
+		if (!isRunIdFree(runId)) {
+			try {
+				response.getWriter().write("Scenario with this id will " +
+					"be interrupted if it's running");
+			} catch (final IOException e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to write in servlet response");
 			}
 			return;
-		}
-		//
-		if (!stoppedRunModes.isEmpty()) {
-			stoppedRunModes.remove(request.getParameter(RunTimeConfig.KEY_RUN_ID));
 		}
 		//
 		runTimeConfig = runTimeConfig.clone();
