@@ -23,6 +23,8 @@ public interface LoadState extends Serializable {
 	//
 	long[] getLatencyValues();
 	//
+	String getLastItemId();
+	//
 	long getLoadElapsedTimeValue();
 	//
 	TimeUnit getLoadElapsedTimeUnit();
@@ -46,6 +48,8 @@ public interface LoadState extends Serializable {
 		Builder<T> setLatencyValues(final long[] latencyValues);
 		//
 		Builder<T> setLoadElapsedTimeValue(final long timeValue);
+		//
+		Builder<T> setLastItemId(final String lastItemId);
 		//
 		Builder<T> setLoadElapsedTimeUnit(final TimeUnit timeUnit);
 		//

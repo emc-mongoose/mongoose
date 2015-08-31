@@ -38,8 +38,9 @@ public class BasicLoadState implements LoadState {
 	private final long countBytes;
 	private final long countSubm;
 	private final long timeValue;
+	private final String lastItemId;
 	private final TimeUnit timeUnit;
-	private long[] latencyValues;
+	private final long[] latencyValues;
 	//
 	@Override
 	public int getLoadNumber() {
@@ -77,6 +78,11 @@ public class BasicLoadState implements LoadState {
 	}
 	//
 	@Override
+	public String getLastItemId() {
+		return lastItemId;
+	}
+	//
+	@Override
 	public TimeUnit getLoadElapsedTimeUnit() {
 		return timeUnit;
 	}
@@ -109,6 +115,7 @@ public class BasicLoadState implements LoadState {
 		private long countSucc;
 		private long countFail;
 		private long countBytes;
+		private String lastItemId;
 		private long countSubm;
 		private long timeValue;
 		private TimeUnit timeUnit;
@@ -151,6 +158,12 @@ public class BasicLoadState implements LoadState {
 		}
 		//
 		@Override
+		public Builder setLastItemId(final String lastItemId) {
+			this.lastItemId = lastItemId;
+			return this;
+		}
+		//
+		@Override
 		public Builder setLoadElapsedTimeValue(final long timeValue) {
 			this.timeValue = timeValue;
 			return this;
@@ -185,6 +198,7 @@ public class BasicLoadState implements LoadState {
 		this.timeValue = builder.timeValue;
 		this.timeUnit = builder.timeUnit;
 		this.latencyValues = builder.latencyValues;
+		this.lastItemId = builder.lastItemId;
 	}
 	//
 	private static final Logger LOG = LogManager.getLogger();
