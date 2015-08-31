@@ -681,21 +681,25 @@ implements LoadClient<T> {
 		@Override
 		public final void run() {
 			String loadSvcAddr;
-			for(int tryCount = 0; tryCount < Short.MAX_VALUE && !isShutdown(); tryCount ++) {
-				try {
-					loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
-					remoteLoadMap.get(loadSvcAddr).submit(dataItem);
-					rrc.incrementAndGet();
-					break;
-				} catch(final RejectedExecutionException | RemoteException e) {
+			try {
+				for(int tryCount = 0; tryCount < Short.MAX_VALUE && !isShutdown(); tryCount++) {
 					try {
-						Thread.sleep(tryCount);
-					} catch(final InterruptedException ee) {
+						loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
+						remoteLoadMap.get(loadSvcAddr).submit(dataItem);
+						rrc.incrementAndGet();
+						break;
+					} catch(final RejectedExecutionException | RemoteException e) {
+						try {
+							Thread.sleep(tryCount);
+						} catch(final InterruptedException ee) {
+							break;
+						}
+					} catch(final InterruptedException e) {
 						break;
 					}
-				} catch(final InterruptedException e) {
-					break;
 				}
+			} catch(final Throwable e) {
+				e.printStackTrace(System.out);
 			}
 		}
 	}
@@ -871,10 +875,18 @@ implements LoadClient<T> {
 		super.shutdown();
 		LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 		try {
-			awaitTermination(metricsPeriodSec, TimeUnit.SECONDS);
+			if(!awaitTermination(metricsPeriodSec, TimeUnit.SECONDS)) {
+				LOG.debug(
+					Markers.ERR,
+					"Timeout while submitting all the remaining data items to the load servers"
+				);
+			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 		} finally {
+			LOG.debug(
+				Markers.MSG, "Submitted {} items to the load servers", getCompletedTaskCount()
+			);
 			for(final String addr : remoteLoadMap.keySet()) {
 				try {
 					remoteLoadMap.get(addr).shutdown();
