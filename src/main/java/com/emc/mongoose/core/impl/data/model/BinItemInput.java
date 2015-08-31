@@ -1,20 +1,26 @@
 package com.emc.mongoose.core.impl.data.model;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.List;
+
 /**
  The data item input implementation deserializing the data items from the specified stream
  */
 public class BinItemInput<T extends DataItem>
 implements DataItemInput<T> {
 	//
+	private static final Logger LOG = LogManager.getLogger();
+	//
 	protected final ObjectInputStream itemsSrc;
 	protected List<T> remainingItems = null;
+	protected String lastItemId = null;
 	//
 	public BinItemInput(final ObjectInputStream itemsSrc) {
 		this.itemsSrc = itemsSrc;
@@ -28,6 +34,16 @@ implements DataItemInput<T> {
 		} catch(final ClassNotFoundException e) {
 			throw new IOException(e);
 		}
+	}
+	//
+	@Override
+	public void setLastItemId(final String lastItemId) {
+		this.lastItemId = lastItemId;
+	}
+	//
+	@Override
+	public String getLastItemId() {
+		return lastItemId;
 	}
 	//
 	@Override
@@ -78,6 +94,20 @@ implements DataItemInput<T> {
 	public void reset()
 	throws IOException {
 		itemsSrc.reset();
+	}
+	//
+	@Override
+	public void skip(final long countOfItems)
+	throws IOException {
+		LOG.info(Markers.MSG, "Attempt to skip processed data items. Wait for some time");
+		for (int i = 0; i < countOfItems; i++) {
+			try {
+				itemsSrc.readUnshared();
+			} catch (final ClassNotFoundException e) {
+				throw new IOException(e);
+			}
+		}
+		LOG.info(Markers.MSG, "Items were skipped successfully");
 	}
 	//
 	@Override

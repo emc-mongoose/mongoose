@@ -6,12 +6,24 @@ import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
+
 /**
  Created by kurila on 17.06.15.
  */
 public interface DataItemInput<T extends DataItem>
 extends Closeable {
 
+	/**
+	 * Set id of last processed data item.
+	 * @param lastItemId if of last processed data item
+	 */
+	void setLastItemId(final String lastItemId);
+
+	/**
+	 * Get id of last processed data item.
+	 * @return id of last processed data item
+	 */
+	String getLastItemId();
 	/**
 	 Get next data item
 	 @return next data item or null if no data item available
@@ -36,5 +48,13 @@ extends Closeable {
 	 Reset this input making this readable from the beginning
 	 */
 	void reset()
+	throws IOException;
+
+	/**
+	 * Skip some data items.
+	 * @param countOfItems count of items which should be skipped from the beginning
+	 * @throws IOException if failed to skip such amount of data items
+	 */
+	void skip(final long countOfItems)
 	throws IOException;
 }

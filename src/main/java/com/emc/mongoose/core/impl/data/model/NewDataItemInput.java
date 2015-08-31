@@ -24,6 +24,8 @@ implements DataItemInput<T> {
 	private final float objSizeBias;
 	private final ThreadLocalRandom thrLocalRnd = ThreadLocalRandom.current();
 	//
+	private String lastItemId = null;
+	//
 	public NewDataItemInput(
 		final Class<T> dataCls, final long minObjSize, final long maxObjSize, final float objSizeBias
 	) throws NoSuchMethodException, IllegalArgumentException {
@@ -72,6 +74,25 @@ implements DataItemInput<T> {
 			throw new IOException(e);
 		}
 		return maxCount;
+	}
+	//
+
+	public void setLastItemId(final String lastItemId) {
+		this.lastItemId = lastItemId;
+	}
+
+	public String getLastItemId() {
+		return lastItemId;
+	}
+
+	/**
+	 * Does nothing
+	 * @param countOfItems count of items which should be skipped from the beginning
+	 * @throws IOException doesn't throw
+	 */
+	@Override
+	public void skip(final long countOfItems)
+	throws IOException {
 	}
 	//
 	@Override

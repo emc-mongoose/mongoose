@@ -7,6 +7,7 @@ import com.emc.mongoose.core.api.data.model.DataItemInput;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
+
 /**
  Readable collection of the data items.
  */
@@ -14,7 +15,8 @@ public class ListItemInput<T extends DataItem>
 implements DataItemInput<T> {
 	//
 	protected final List<T> items;
-	protected int i = 0;
+	protected volatile int i = 0;
+	protected String lastItemId = null;
 	//
 	public ListItemInput(final List<T> items) {
 		this.items = items;
@@ -29,7 +31,7 @@ implements DataItemInput<T> {
 	public T read()
 	throws IOException {
 		if(i < items.size()) {
-			return items.get(i ++);
+			return items.get(i++);
 		} else {
 			throw new EOFException();
 		}
@@ -64,6 +66,26 @@ implements DataItemInput<T> {
 	public void reset()
 	throws IOException {
 		i = 0;
+	}
+
+	@Override
+	public void setLastItemId(final String lastItemId) {
+		this.lastItemId = lastItemId;
+	}
+
+	@Override
+	public String getLastItemId() {
+		return lastItemId;
+	}
+
+	/**
+	 * Does nothing
+	 * @param countOfItems count of items which should be skipped from the beginning
+	 * @throws IOException doesn't throw
+	 */
+	@Override
+	public void skip(final long countOfItems)
+	throws IOException {
 	}
 
 	/**

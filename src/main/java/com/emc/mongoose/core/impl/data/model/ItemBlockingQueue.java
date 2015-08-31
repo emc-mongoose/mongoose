@@ -1,8 +1,11 @@
 package com.emc.mongoose.core.impl.data.model;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -15,7 +18,10 @@ import java.util.concurrent.BlockingQueue;
 public class ItemBlockingQueue<T extends DataItem>
 implements DataItemOutput<T>, DataItemInput<T> {
 	//
+	private static final Logger LOG = LogManager.getLogger();
+	//
 	protected final BlockingQueue<T> queue;
+	protected String lastItemId = null;
 	//
 	public ItemBlockingQueue(final BlockingQueue<T> queue) {
 		this.queue = queue;
@@ -88,6 +94,27 @@ implements DataItemOutput<T>, DataItemInput<T> {
 		} catch(final UnsupportedOperationException | IllegalArgumentException e) {
 			throw new IOException(e);
 		}
+	}
+	@Override
+	public void skip(final long countOfItems)
+	throws IOException {
+		LOG.info(Markers.MSG, "Attempt to skip processed data items. Wait for some time");
+		for (int i = 0; i < countOfItems; i++) {
+			try {
+				queue.take();
+			} catch (final InterruptedException e) {
+				throw new InterruptedIOException();
+			}
+		}
+		LOG.info(Markers.MSG, "Data items were successfully skipped");
+	}
+	@Override
+	public void setLastItemId(final String lastItemId) {
+		this.lastItemId = lastItemId;
+	}
+	@Override
+	public String getLastItemId() {
+		return lastItemId;
 	}
 	/**
 	 Does nothing
