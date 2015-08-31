@@ -24,7 +24,8 @@ public final class IOUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int
-		BUFF_COUNT = (int) (Math.log(BUFF_SIZE_HI / BUFF_SIZE_LO) / Math.log(4) + 1);
+		//BUFF_COUNT = (int) (Math.log(BUFF_SIZE_HI / BUFF_SIZE_LO) / Math.log(4) + 1);
+		BUFF_COUNT = (int) (Math.log(BUFF_SIZE_HI / BUFF_SIZE_LO) / Math.log(2));
 	//
 	private static class IOWorker
 	extends Thread {
@@ -40,7 +41,6 @@ public final class IOUtils {
 		@Override
 		public void run() {
 			RunTimeConfig.setContext(rtConfig); // for integ tests
-			//
 			try {
 				super.run();
 			} finally {
@@ -80,7 +80,7 @@ public final class IOUtils {
 			return new IOWorker(task, getName() + "#" + threadNumber.incrementAndGet(), rtConfig);
 		}
 	}
-	//
+	/*
 	public static long consumeQuietlyBIO(final ContentDecoder in)
 	throws IllegalStateException {
 		//
@@ -90,7 +90,7 @@ public final class IOUtils {
 		}
 		final ByteBuffer ioBuffSeq[] = ((IOWorker) currThread).ioBuffSeq;
 		//
-		int i = 0, nextSize = BUFF_SIZE_LO, doneSize;
+		int i = 0, nextBuffSize = BUFF_SIZE_LO, doneSize;
 		long doneSizeSum = 0;
 		ByteBuffer buff;
 		//
@@ -99,8 +99,8 @@ public final class IOUtils {
 				// obtain the buffer
 				buff = ioBuffSeq[i];
 				if(buff == null) {
-					buff = ByteBuffer.allocateDirect(nextSize);
-					LOG.debug(Markers.MSG, "allocated {} bytes of direct memory", nextSize);
+					buff = ByteBuffer.allocateDirect(nextBuffSize);
+					LOG.debug(Markers.MSG, "allocated {} bytes of direct memory", nextBuffSize);
 					ioBuffSeq[i] = buff;
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						final StringBuilder sb = new StringBuilder(Thread.currentThread().getName())
@@ -120,21 +120,21 @@ public final class IOUtils {
 				// analyze
 				if(doneSize < 0) {
 					break;
-				} else if(i > 0 && doneSize < nextSize / 4) {
+				} else if(i > 0 && doneSize < nextBuffSize / 4) {
 					// doneSize < 0.25 * nextSize -> decrease buff size
 					i --;
 					if(i == 0) {
-						nextSize /= 3;
+						nextBuffSize /= 3;
 					} else {
-						nextSize /= 4;
+						nextBuffSize /= 4;
 					}
-				} else if(i < BUFF_COUNT - 1 && 4 * doneSize > 3 * nextSize) {
+				} else if(i < BUFF_COUNT - 1 && 4 * doneSize > 3 * nextBuffSize) {
 					// doneSize > 0.75 * nextSize -> increase buff size
 					i ++;
 					if(i == 1) {
-						nextSize *= 3;
+						nextBuffSize *= 3;
 					} else {
-						nextSize *= 4;
+						nextBuffSize *= 4;
 					}
 				} // else keep buff size the same
 				// increment the read bytes count
@@ -145,5 +145,38 @@ public final class IOUtils {
 		}
 		//
 		return doneSizeSum;
+	}*/
+	//
+	public static int consumeQuietlyNIO(final ContentDecoder in, final long expectedByteCount) {
+		//
+		final Thread currThread = Thread.currentThread();
+		if(!IOWorker.class.isInstance(currThread)) {
+			throw new IllegalStateException();
+		}
+		final ByteBuffer ioBuffSeq[] = ((IOWorker) currThread).ioBuffSeq;
+		//
+		int doneByteCount = 0;
+		try {
+			if(!in.isCompleted()) {
+				//
+				int i, currBuffSize = BUFF_SIZE_LO;
+				for(i = 0; i < ioBuffSeq.length && currBuffSize < expectedByteCount; i ++) {
+					currBuffSize *= 2;
+				}
+				//
+				ByteBuffer buff = ioBuffSeq[i];
+				if(buff == null) {
+					buff = ByteBuffer.allocateDirect(currBuffSize);
+					ioBuffSeq[i] = buff;
+				} else {
+					buff.clear();
+				}
+				//
+				doneByteCount = in.read(buff);
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Content reading failure");
+		}
+		return doneByteCount;
 	}
 }

@@ -39,7 +39,7 @@ public class BasicLoadState implements LoadState {
 	private final long countSubm;
 	private final long timeValue;
 	private final TimeUnit timeUnit;
-	private long[] latencyValues;
+	private final long latencyValues[];
 	//
 	@Override
 	public int getLoadNumber() {

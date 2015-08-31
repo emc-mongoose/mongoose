@@ -292,7 +292,7 @@ implements WSIOTask<T> {
 							chanIn.close();
 						}
 					} else { // consume quietly
-						transferSize += IOUtils.consumeQuietlyBIO(in);
+						transferSize += IOUtils.consumeQuietlyNIO(in, dataItem.getSize());
 					}
 				}
 			}
@@ -304,7 +304,9 @@ implements WSIOTask<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during content consuming");
 			}
 		} finally {
-			IOUtils.consumeQuietlyBIO(in);
+			while(!in.isCompleted()) {
+				IOUtils.consumeQuietlyNIO(in, Constants.BUFF_SIZE_LO);
+			}
 		}
 	}
 	//

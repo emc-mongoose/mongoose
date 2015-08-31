@@ -3,6 +3,7 @@ package com.emc.mongoose.common.net.http.content;
 //import com.emc.mongoose.common.collections.InstancePool;
 //import com.emc.mongoose.common.collections.Reusable;
 //
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 import org.apache.http.nio.ContentEncoder;
 //

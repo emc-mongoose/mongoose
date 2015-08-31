@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.data;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
@@ -185,7 +186,7 @@ implements DataItem {
 		int n;
 		setRelativeOffset(relOffset);
 		while(writtenCount < len) {
-			n = write(chanDst, len-writtenCount);
+			n = write(chanDst, len - writtenCount);
 			if(n < 0) {
 				LOG.warn(Markers.ERR, "Channel returned {} as written byte count", n);
 			} else if(n > 0) {
