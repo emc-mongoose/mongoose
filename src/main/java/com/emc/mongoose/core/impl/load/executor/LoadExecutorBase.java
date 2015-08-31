@@ -26,6 +26,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
@@ -96,6 +97,8 @@ implements LoadExecutor<T> {
 	private LoadState currState = null;
 	private ResumableUserTimeClock clock = new ResumableUserTimeClock();
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
+	//
+	private String lastItemId;
 	//
 	private final Thread
 		metricsDaemon = new Thread() {
@@ -463,9 +466,14 @@ implements LoadExecutor<T> {
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
 			} else {
-				//
 				try {
 					producer.setConsumer(this);
+					if ((producer instanceof DataItemInputProducer)
+						&& (counterResults.get() > 0)) {
+						((DataItemInputProducer) producer).setInStreamOffset(counterResults.get());
+						((DataItemInputProducer) producer).setLastItemId(currState.getLastItemId());
+
+					}
 					producer.start();
 					LOG.debug(Markers.MSG, "Started object producer {}", producer);
 				} catch(final IOException e) {
@@ -653,6 +661,9 @@ implements LoadExecutor<T> {
 		final T dataItem = ioTask.getDataItem();
 		final int latency = ioTask.getLatency();
 		if(status == IOTask.Status.SUCC) {
+			if (dataItem instanceof BasicWSObject) {
+				lastItemId = ((BasicWSObject) dataItem).getId();
+			}
 			// update the metrics with success
 			throughPutSucc.mark();
 			if(latency > 0) {
@@ -742,12 +753,13 @@ implements LoadExecutor<T> {
 			.setCountBytes(reqBytes == null ? 0 : reqBytes.getCount())
 			.setCountSubm(counterSubm == null ? 0 : counterSubm.getCount())
 			.setLoadElapsedTimeValue(
-				tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
+					tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
 			)
 			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
 			.setLatencyValues(
-				respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
-			);
+					respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
+			)
+			.setLastItemId(lastItemId);
 		//
 		return stateBuilder.build();
 	}
