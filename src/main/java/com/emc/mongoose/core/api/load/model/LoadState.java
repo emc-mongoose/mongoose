@@ -21,7 +21,9 @@ public interface LoadState extends Serializable {
 	//
 	long getCountSubm();
 	//
-	long[] getLatencyValues();
+	long [] getLatencyValues();
+	//
+	long [] getDurationValues();
 	//
 	long getLoadElapsedTimeValue();
 	//
@@ -43,7 +45,9 @@ public interface LoadState extends Serializable {
 		//
 		Builder<T> setCountSubm(final long countSubm);
 		//
-		Builder<T> setLatencyValues(final long[] latencyValues);
+		Builder<T> setLatencyValues(final long latencyValues[]);
+		//
+		Builder<T> setDurationValues(final long durationValues[]);
 		//
 		Builder<T> setLoadElapsedTimeValue(final long timeValue);
 		//

@@ -27,6 +27,7 @@ extends DistributedTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		CLIENT_BUILDER.setClientMode(null);
 		DistributedTestBase.tearDownClass();
 	}
 }

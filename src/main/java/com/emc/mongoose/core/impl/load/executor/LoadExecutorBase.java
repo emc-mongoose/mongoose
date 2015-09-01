@@ -86,7 +86,7 @@ implements LoadExecutor<T> {
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected Counter counterSubm, counterRej;
 	protected Meter throughPutSucc, throughPutFail, reqBytes;
-	protected Histogram respLatency;
+	protected Histogram reqDuration, respLatency;
 	//
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter jmxReporter;
@@ -133,6 +133,7 @@ implements LoadExecutor<T> {
 				while(!isClosed.get()) {
 					//
 					LockSupport.parkNanos(1);
+					//
 					if(isDoneAllSubm() || isDoneMaxCount()) {
 						lock.lock();
 						try {
@@ -147,6 +148,7 @@ implements LoadExecutor<T> {
 					}
 					//
 					LockSupport.parkNanos(1);
+					//
 					if(
 						throughPutFail.getCount() > 1000000 &&
 						throughPutSucc.getOneMinuteRate() < throughPutFail.getOneMinuteRate()
@@ -164,6 +166,9 @@ implements LoadExecutor<T> {
 						}
 						break;
 					}
+					//
+					LockSupport.parkNanos(1);
+					//
 				}
 			}
 		};
@@ -341,7 +346,9 @@ implements LoadExecutor<T> {
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
-		final Snapshot respLatencySnapshot = respLatency.getSnapshot();
+		final Snapshot
+			reqDurationSnapshot = reqDuration.getSnapshot(),
+			respLatencySnapshot = respLatency.getSnapshot();
 		//
 		if(Markers.PERF_SUM.equals(logMarker)) {
 			LOG.info(
@@ -412,7 +419,12 @@ implements LoadExecutor<T> {
 			);
 			respLatency = metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT),
-				new Histogram(new UniformReservoir()));
+				new Histogram(new UniformReservoir())
+			);
+			reqDuration = metrics.register(
+				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_DUR),
+				new Histogram(new UniformReservoir())
+			);
 			//
 			if(rtConfig.isRunResumeEnabled()) {
 				if (rtConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
@@ -651,14 +663,17 @@ implements LoadExecutor<T> {
 		activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 		final IOTask.Status status = ioTask.getStatus();
 		final T dataItem = ioTask.getDataItem();
-		final int latency = ioTask.getLatency();
+		final int duration = ioTask.getDuration(), latency = ioTask.getLatency();
 		if(status == IOTask.Status.SUCC) {
 			// update the metrics with success
 			throughPutSucc.mark();
 			if(latency > 0) {
 				respLatency.update(latency);
 			}
-			durTasksSum.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
+			if(duration > 0) {
+				reqDuration.update(duration);
+				durTasksSum.addAndGet(duration);
+			}
 			reqBytes.mark(ioTask.getTransferSize());
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
@@ -722,8 +737,11 @@ implements LoadExecutor<T> {
 			throughPutFail.mark(state.getCountFail());
 			throughPutSucc.mark(state.getCountSucc());
 			reqBytes.mark(state.getCountBytes());
-			for (int i = 0; i < state.getLatencyValues().length; i++) {
-				respLatency.update(state.getLatencyValues()[i]);
+			for(final long durationValue : state.getDurationValues()) {
+				respLatency.update(durationValue);
+			}
+			for(final long latencyValue : state.getLatencyValues()) {
+				respLatency.update(latencyValue);
 			}
 			currState = state;
 		}
@@ -745,6 +763,9 @@ implements LoadExecutor<T> {
 				tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
 			)
 			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
+			.setDurationValues(
+				reqDuration == null ? new long[]{} : reqDuration.getSnapshot().getValues()
+			)
 			.setLatencyValues(
 				respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
 			);
