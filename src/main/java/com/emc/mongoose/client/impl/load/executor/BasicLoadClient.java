@@ -61,6 +61,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -71,6 +72,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 20.10.14.
  */
@@ -681,25 +683,22 @@ implements LoadClient<T> {
 		@Override
 		public final void run() {
 			String loadSvcAddr;
-			try {
-				for(int tryCount = 0; tryCount < Short.MAX_VALUE && !isShutdown(); tryCount++) {
+			for(int tryCount = 0; tryCount < Short.MAX_VALUE && !isTerminated(); tryCount ++) {
+				try {
+					loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
+					remoteLoadMap.get(loadSvcAddr).submit(dataItem);
+					rrc.incrementAndGet();
+					break;
+				} catch(final RejectedExecutionException | RemoteException e) {
 					try {
-						loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
-						remoteLoadMap.get(loadSvcAddr).submit(dataItem);
-						rrc.incrementAndGet();
-						break;
-					} catch(final RejectedExecutionException | RemoteException e) {
-						try {
-							Thread.sleep(tryCount);
-						} catch(final InterruptedException ee) {
-							break;
-						}
-					} catch(final InterruptedException e) {
+						Thread.sleep(tryCount);
+					} catch(final InterruptedException ee) {
 						break;
 					}
+				} catch(final InterruptedException e) {
+					e.printStackTrace(System.out);
+					break;
 				}
-			} catch(final Throwable e) {
-				e.printStackTrace(System.out);
 			}
 		}
 	}
@@ -874,8 +873,16 @@ implements LoadClient<T> {
 	public final void shutdown() {
 		super.shutdown();
 		LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
+		//
+		final long timeOut = runTimeConfig.getLoadLimitTimeValue();
+		final TimeUnit timeUnit = runTimeConfig.getLoadLimitTimeUnit();
 		try {
-			if(!awaitTermination(metricsPeriodSec, TimeUnit.SECONDS)) {
+			if(
+				!awaitTermination(
+					timeOut > 0 ? timeOut : Long.MAX_VALUE,
+					timeUnit == null ? TimeUnit.DAYS : timeUnit
+				)
+			) {
 				LOG.debug(
 					Markers.ERR,
 					"Timeout while submitting all the remaining data items to the load servers"
