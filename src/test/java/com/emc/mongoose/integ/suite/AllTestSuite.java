@@ -7,9 +7,9 @@ import org.junit.runners.Suite;
 //
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+	CoreTestSuite.class,
 	DistributedLoadTestSuite.class,
 	StorageAdapterTestSuite.class,
-	CoreTestSuite.class
 })
 public class AllTestSuite {
 }

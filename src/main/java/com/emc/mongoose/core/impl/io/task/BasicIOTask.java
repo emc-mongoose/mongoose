@@ -140,6 +140,11 @@ implements IOTask<T> {
 	}
 	//
 	@Override
+	public final int getDuration() {
+		return (int) (respTimeDone - reqTimeStart);
+	}
+	//
+	@Override
 	public final int getLatency() {
 		return (int) (respTimeStart - reqTimeDone);
 	}

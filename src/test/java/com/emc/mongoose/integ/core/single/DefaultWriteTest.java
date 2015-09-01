@@ -67,8 +67,9 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
-		try (final BufferingOutputStream
-			stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		try(
+			final BufferingOutputStream stdOutStream = StdOutInterceptorTestSuite
+				.getStdOutBufferingStream()
 		) {
 			UniformDataSource.DEFAULT = new UniformDataSource();
 			//  Run mongoose default scenario in standalone mode
