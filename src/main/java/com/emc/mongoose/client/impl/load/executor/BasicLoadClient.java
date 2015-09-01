@@ -690,7 +690,6 @@ implements LoadClient<T> {
 						break;
 					}
 				} catch(final InterruptedException e) {
-					e.printStackTrace(System.out);
 					break;
 				}
 			}
