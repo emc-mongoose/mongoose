@@ -41,10 +41,11 @@ extends WSMockTestBase{
 	//
 	private static String RUN_ID = CustomRampupTest.class.getCanonicalName();
 	private static final String
-		LIMIT_TIME = "60.seconds",
-		RAMPUP_SIZES = "10KB,1MB,10MB",
-		RAMPUP_THREAD_COUNTS = "10,50,100";
-	private static final int COUNT_STEPS = 9;
+		LIMIT_TIME = "15s",
+		RAMPUP_SIZES = "10KB,100MB,1MB",
+		RAMPUP_THREAD_COUNTS = "1,10,100",
+		RAMPUP_LOAD_CHAIN = "create,read,delete";
+	private static final int COUNT_STEPS = 4;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -57,6 +58,7 @@ extends WSMockTestBase{
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, RAMPUP_SIZES);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS, RAMPUP_THREAD_COUNTS);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, RAMPUP_LOAD_CHAIN);
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
