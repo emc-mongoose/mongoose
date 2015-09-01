@@ -149,23 +149,4 @@ implements IOTask<T> {
 		return (int) (respTimeStart - reqTimeDone);
 	}
 	//
-	@Override
-	public final long getReqTimeStart() {
-		return reqTimeStart;
-	}
-	//
-	@Override
-	public final long getReqTimeDone() {
-		return reqTimeDone;
-	}
-	//
-	@Override
-	public final long getRespTimeStart() {
-		return respTimeStart;
-	}
-	//
-	@Override
-	public final long getRespTimeDone() {
-		return respTimeDone;
-	}
 }
