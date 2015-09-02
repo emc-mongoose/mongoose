@@ -46,6 +46,6 @@ import org.junit.runners.Suite;
 	DefaultChainScenarioTest.class,
 	CustomRampupTest.class,
 	DefaultRampupTest.class,
-	InfiniteWriteTest.class
+	InfiniteWriteTest.class,
 })
 public class CoreTestSuite {}

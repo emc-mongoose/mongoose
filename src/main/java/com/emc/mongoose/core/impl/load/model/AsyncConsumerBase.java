@@ -99,11 +99,15 @@ implements AsyncConsumer<T> {
 			transientQueue.remainingCapacity(), getName()
 		);
 		T nextItem;
+		long i = 0;
 		int availItemCount;
 		try {
-			for(long i = 0; i < maxCount;) {
+			while(i < maxCount) {
 				availItemCount = transientQueue.size();
 				if(availItemCount == 0 && isShutdown.get()) {
+					LOG.debug(
+						Markers.MSG, "No items are available for consuming and shutdown flag is set"
+					);
 					break;
 				} else if(availItemCount > 1) {
 					if(shuffle) {
@@ -126,13 +130,13 @@ implements AsyncConsumer<T> {
 					}
 				}
 			}
-			LOG.debug(Markers.MSG, "{}: consuming finished", getName());
+			LOG.debug(Markers.MSG, "{}: consuming finished @ count {}", getName(), i);
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "{}: consuming interrupted", getName());
+			LOG.debug(Markers.MSG, "{}: consuming interrupted @ count {}", getName(), i);
 		} catch(final RejectedExecutionException e) {
-			LOG.debug(Markers.MSG, "{}: consuming rejected", getName());
+			LOG.debug(Markers.MSG, "{}: consuming rejected @ count {}", getName(), i);
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Submit item failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Submit item failure @ count {}", i);
 		} finally {
 			isAllSubm.set(true);
 			shutdown();

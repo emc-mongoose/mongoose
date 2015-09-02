@@ -190,8 +190,8 @@
 					"itemsBuffer": true
 				},
 				"rampup": {
-					"threadCounts": "1,10,100",
-					"sizes": "1KB,10KB,100KB"
+					"threadCounts": "1,10",
+					"sizes": "1KB,1MB"
 				}
 			}
 		},
@@ -240,7 +240,7 @@
 		},
 		"run": {
 			"name": "mongoose",
-			"version": "0.9.0",
+			"version": "0.9.1",
 			"mode": "standalone",
 			"resume": {
 				"enabled" : false

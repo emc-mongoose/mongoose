@@ -38,7 +38,6 @@ import com.emc.mongoose.client.impl.load.executor.tasks.DataItemsFetchPeriodicTa
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
 //
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,12 +53,10 @@ import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -79,7 +76,6 @@ extends ThreadPoolExecutor
 implements LoadClient<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static int SUBMIT_RETRY_COUNT_LIMIT = 100;
 	//
 	protected final Map<String, LoadSvc<T>> remoteLoadMap;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -110,7 +106,7 @@ implements LoadClient<T> {
 	private final ScheduledExecutorService mgmtConnExecutor;
 	private final List<PeriodicTask<Collection<T>>> fetchItemsBuffTasks = new LinkedList<>();
 	private final List<PeriodicTask> metricFetchTasks = new LinkedList<>();
-	private final Set<Long> latencyValues = new HashSet<>(1028);
+	private volatile long durationValues[] = null, latencyValues[] = null;
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	private final long maxCount;
 	private final String name, loadSvcAddrs[];
@@ -626,7 +622,7 @@ implements LoadClient<T> {
 			Markers.MSG, "{}: dropped {} remote tasks",
 			getName(), shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
 		);
-		loadLastLatencyValues();
+		loadLastDurationAndLatencyValues();
 		forceFetchAndAggregation();
 	}
 	//
@@ -681,7 +677,7 @@ implements LoadClient<T> {
 		@Override
 		public final void run() {
 			String loadSvcAddr;
-			for(int tryCount = 0; tryCount < Short.MAX_VALUE && !isShutdown(); tryCount ++) {
+			for(int tryCount = 0; tryCount < Short.MAX_VALUE && !isTerminated(); tryCount ++) {
 				try {
 					loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
 					remoteLoadMap.get(loadSvcAddr).submit(dataItem);
@@ -749,11 +745,8 @@ implements LoadClient<T> {
 			.setCountSubm(taskGetCountSubm.getLastResult())
 			.setLoadElapsedTimeValue(System.nanoTime() - tsStart.get())
 			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
-			.setLatencyValues(
-				ArrayUtils.toPrimitive(
-					latencyValues.toArray(new Long[latencyValues.size()])
-				)
-			);
+			.setDurationValues(durationValues)
+			.setLatencyValues(latencyValues);
         //
 		return stateBuilder.build();
 	}
@@ -823,14 +816,12 @@ implements LoadClient<T> {
 		}
 	}
 	//
-	private void loadLastLatencyValues() {
+	private void loadLastDurationAndLatencyValues() {
 		try {
 			for(final LoadSvc<T> loadSvc : remoteLoadMap.values()) {
-				latencyValues.addAll(
-					Arrays.asList(
-						ArrayUtils.toObject(loadSvc.getLoadState().getLatencyValues())
-					)
-				);
+				final LoadState nextLoadSvcState = loadSvc.getLoadState();
+				durationValues = nextLoadSvcState.getDurationValues();
+				latencyValues = nextLoadSvcState.getLatencyValues();
 			}
 		} catch (final RemoteException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Unexpected failure");
@@ -870,11 +861,27 @@ implements LoadClient<T> {
 	public final void shutdown() {
 		super.shutdown();
 		LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
+		//
+		final long timeOut = runTimeConfig.getLoadLimitTimeValue();
+		final TimeUnit timeUnit = runTimeConfig.getLoadLimitTimeUnit();
 		try {
-			awaitTermination(metricsPeriodSec, TimeUnit.SECONDS);
+			if(
+				!awaitTermination(
+					timeOut > 0 ? timeOut : Long.MAX_VALUE,
+					timeUnit == null ? TimeUnit.DAYS : timeUnit
+				)
+			) {
+				LOG.debug(
+					Markers.ERR,
+					"Timeout while submitting all the remaining data items to the load servers"
+				);
+			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 		} finally {
+			LOG.debug(
+				Markers.MSG, "Submitted {} items to the load servers", getCompletedTaskCount()
+			);
 			for(final String addr : remoteLoadMap.keySet()) {
 				try {
 					remoteLoadMap.get(addr).shutdown();

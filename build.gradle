@@ -1021,11 +1021,9 @@ test {
 	testLogging { events "passed", "skipped", "failed" }
 }
 
-task integTest(type: Test) {
+task integTest(type: Test, dependsOn: dist) {
 
-	include '**/CoreTestSuite.class'
-	include '**/StorageAdapterTestSuite.class'
-	include '**/DistributedLoadTestSuite.class'
+	include '**/AllTestSuite.class'
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
