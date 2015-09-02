@@ -43,6 +43,7 @@ import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.ThreadContext;
 //
 import javax.management.MBeanServer;
+import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
@@ -97,7 +98,7 @@ implements LoadExecutor<T> {
 	private ResumableUserTimeClock clock = new ResumableUserTimeClock();
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	//
-	private DataItem lastDataItem;
+	private T lastDataItem;
 	private final DataItemInput<T> itemsSrc;
 	//
 	private final Thread
@@ -759,7 +760,7 @@ implements LoadExecutor<T> {
 	throws RemoteException {
 		final long prevElapsedTime = currState != null ?
 			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
-		final LoadState.Builder stateBuilder = new BasicLoadState.Builder<>()
+		final LoadState.Builder<DataItem, BasicLoadState<DataItem>> stateBuilder = new BasicLoadState.Builder<>()
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(rtConfig)
 			.setCountSucc(throughPutSucc == null ? 0 : throughPutSucc.getCount())

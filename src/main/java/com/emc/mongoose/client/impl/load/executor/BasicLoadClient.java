@@ -736,7 +736,7 @@ implements LoadClient<T> {
 	public LoadState getLoadState()
 	throws RemoteException {
 		//forceFetchAndAggregation();
-		final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
+		final LoadState.Builder<DataItem, BasicLoadState<DataItem>> stateBuilder = new BasicLoadState.Builder<>()
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(runTimeConfig)
 			.setCountSucc(metricSuccCount.getValue())
