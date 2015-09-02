@@ -24,7 +24,7 @@ implements DataItemInput<T> {
 	//
 	protected final BufferedReader itemsSrc;
 	protected final Constructor<? extends T> itemConstructor;
-	protected String lastItemId = null;
+	private DataItem lastItem = null;
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	/**
@@ -49,23 +49,24 @@ implements DataItemInput<T> {
 	}
 	//
 	@Override
-	public void skip(final long countOfItems)
+	public DataItem getLastDataItem() {
+		return lastItem;
+	}
+	//
+	@Override
+	public void setLastDataItem(final T lastItem) {
+		this.lastItem = lastItem;
+	}
+	//
+	@Override
+	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, "Attempt to skip processed data items. Wait for some time");
-		for (int i = 0; i < countOfItems; i++) {
+		LOG.info(Markers.MSG, "Skipping {} data items. " +
+			"This may take several minutes to complete. Please wait...", itemsCount);
+		for (int i = 0; i < itemsCount; i++) {
 			itemsSrc.readLine();
 		}
-		LOG.info(Markers.MSG, "Data items were skipped successfully");
-	}
-	//
-	@Override
-	public void setLastItemId(final String lastItemId) {
-		this.lastItemId = lastItemId;
-	}
-	//
-	@Override
-	public String getLastItemId() {
-		return lastItemId;
+		LOG.debug(Markers.MSG, "Items were skipped successfully");
 	}
 	//
 	@Override

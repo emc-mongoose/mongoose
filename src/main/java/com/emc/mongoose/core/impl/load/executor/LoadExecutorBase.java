@@ -26,7 +26,6 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
@@ -98,7 +97,8 @@ implements LoadExecutor<T> {
 	private ResumableUserTimeClock clock = new ResumableUserTimeClock();
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	//
-	private String lastItemId;
+	private DataItem lastDataItem;
+	private final DataItemInput<T> itemsSrc;
 	//
 	private final Thread
 		metricsDaemon = new Thread() {
@@ -192,6 +192,7 @@ implements LoadExecutor<T> {
 		//
 		this.dataCls = dataCls;
 		this.rtConfig = rtConfig;
+		this.itemsSrc = itemSrc;
 		if (!INSTANCE_NUMBERS.containsKey(rtConfig.getRunId())) {
 			INSTANCE_NUMBERS.put(rtConfig.getRunId(), new AtomicInteger(0));
 		}
@@ -297,8 +298,8 @@ implements LoadExecutor<T> {
 			producer = reqConfig.getContainerListInput(maxCount, addrs[0]);
 			LOG.debug(Markers.MSG, "{} will use {} as data items producer", getName(), producer);
 		}*/
-		if(itemSrc != null) {
-			producer = new DataItemInputProducer<>(itemSrc);
+		if(itemsSrc != null) {
+			producer = new DataItemInputProducer<>(itemsSrc);
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -470,8 +471,10 @@ implements LoadExecutor<T> {
 					producer.setConsumer(this);
 					if ((producer instanceof DataItemInputProducer)
 						&& (counterResults.get() > 0)) {
-						((DataItemInputProducer) producer).setInStreamOffset(counterResults.get());
-						((DataItemInputProducer) producer).setLastItemId(currState.getLastItemId());
+						final DataItemInputProducer inputProducer
+							= DataItemInputProducer.class.cast(producer);
+						inputProducer.setSkippedItemsCount(counterResults.get());
+						inputProducer.setLastDataItem(currState.getLastDataItem());
 
 					}
 					producer.start();
@@ -661,9 +664,7 @@ implements LoadExecutor<T> {
 		final T dataItem = ioTask.getDataItem();
 		final int latency = ioTask.getLatency();
 		if(status == IOTask.Status.SUCC) {
-			if (dataItem instanceof BasicWSObject) {
-				lastItemId = ((BasicWSObject) dataItem).getId();
-			}
+			lastDataItem = dataItem;
 			// update the metrics with success
 			throughPutSucc.mark();
 			if(latency > 0) {
@@ -759,7 +760,7 @@ implements LoadExecutor<T> {
 			.setLatencyValues(
 					respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
 			)
-			.setLastItemId(lastItemId);
+			.setLastDataItem(lastDataItem);
 		//
 		return stateBuilder.build();
 	}

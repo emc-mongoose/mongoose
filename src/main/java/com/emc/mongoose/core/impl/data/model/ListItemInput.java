@@ -3,6 +3,8 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.core.api.data.DataItem;
 //
 import com.emc.mongoose.core.api.data.model.DataItemInput;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.EOFException;
 import java.io.IOException;
@@ -14,9 +16,11 @@ import java.util.List;
 public class ListItemInput<T extends DataItem>
 implements DataItemInput<T> {
 	//
+	private static final Logger LOG = LogManager.getLogger();
+	//
 	protected final List<T> items;
 	protected volatile int i = 0;
-	protected String lastItemId = null;
+	private DataItem lastItem = null;
 	//
 	public ListItemInput(final List<T> items) {
 		this.items = items;
@@ -69,23 +73,21 @@ implements DataItemInput<T> {
 	}
 
 	@Override
-	public void setLastItemId(final String lastItemId) {
-		this.lastItemId = lastItemId;
+	public DataItem getLastDataItem() {
+		return lastItem;
 	}
 
 	@Override
-	public String getLastItemId() {
-		return lastItemId;
+	public void setLastDataItem(final T lastItem) {
+		this.lastItem = lastItem;
 	}
 
-	/**
-	 * Does nothing
-	 * @param countOfItems count of items which should be skipped from the beginning
-	 * @throws IOException doesn't throw
-	 */
 	@Override
-	public void skip(final long countOfItems)
+	public void skip(final long itemsCount)
 	throws IOException {
+		if (items.size() < itemsCount)
+			throw new IOException();
+		i = (int) itemsCount;
 	}
 
 	/**

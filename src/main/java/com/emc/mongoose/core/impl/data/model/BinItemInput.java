@@ -14,13 +14,13 @@ import java.util.List;
  The data item input implementation deserializing the data items from the specified stream
  */
 public class BinItemInput<T extends DataItem>
-implements DataItemInput<T> {
+implements DataItemInput<T>{
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	protected final ObjectInputStream itemsSrc;
 	protected List<T> remainingItems = null;
-	protected String lastItemId = null;
+	private DataItem lastItem = null;
 	//
 	public BinItemInput(final ObjectInputStream itemsSrc) {
 		this.itemsSrc = itemsSrc;
@@ -34,16 +34,6 @@ implements DataItemInput<T> {
 		} catch(final ClassNotFoundException e) {
 			throw new IOException(e);
 		}
-	}
-	//
-	@Override
-	public void setLastItemId(final String lastItemId) {
-		this.lastItemId = lastItemId;
-	}
-	//
-	@Override
-	public String getLastItemId() {
-		return lastItemId;
 	}
 	//
 	@Override
@@ -97,17 +87,28 @@ implements DataItemInput<T> {
 	}
 	//
 	@Override
-	public void skip(final long countOfItems)
+	public DataItem getLastDataItem() {
+		return lastItem;
+	}
+	//
+	@Override
+	public void setLastDataItem(final T lastItem) {
+		this.lastItem = lastItem;
+	}
+	//
+	@Override
+	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, "Attempt to skip processed data items. Wait for some time");
-		for (int i = 0; i < countOfItems; i++) {
-			try {
+		LOG.info(Markers.MSG, "Skipping {} data items. " +
+			"This may take several minutes to complete. Please wait...", itemsCount);
+		try {
+			for (int i = 0; i < itemsCount; i++) {
 				itemsSrc.readUnshared();
-			} catch (final ClassNotFoundException e) {
-				throw new IOException(e);
 			}
+		} catch (final ClassNotFoundException e) {
+			throw new IOException(e);
 		}
-		LOG.info(Markers.MSG, "Items were skipped successfully");
+		LOG.debug(Markers.MSG, "Items were skipped successfully");
 	}
 	//
 	@Override

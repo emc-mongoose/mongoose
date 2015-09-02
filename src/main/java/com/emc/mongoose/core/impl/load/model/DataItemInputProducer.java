@@ -28,34 +28,37 @@ implements Producer<T> {
 	//
 	protected DataItemInput<T> itemIn;
 	protected volatile Consumer<T> consumer = null;
-	protected long inStreamOffset;
-	protected String lastItemId;
+	protected long skippedItemsCount;
+	protected T lastDataItem;
 	//
 	public DataItemInputProducer(final DataItemInput<T> itemIn) {
-		this(itemIn, 0);
+		this(itemIn, 0, null);
 	}
 	//
-	public DataItemInputProducer(final DataItemInput<T> itemIn, final long inStreamOffset) {
+	public DataItemInputProducer(
+		final DataItemInput<T> itemIn, final long skippedItemsCount, final T dataItem
+	) {
 		this.itemIn = itemIn;
-		this.inStreamOffset = inStreamOffset;
+		this.skippedItemsCount = skippedItemsCount;
+		this.lastDataItem = dataItem;
 		setDaemon(true);
 		setName("dataItemInputProducer<" + itemIn.toString() + ">");
 	}
 	//
-	public void setInStreamOffset(final long inStreamOffset) {
-		this.inStreamOffset = inStreamOffset;
+	public void setSkippedItemsCount(final long itemsCount) {
+		this.skippedItemsCount = itemsCount;
 	}
 	//
-	public long getInStreamOffset() {
-		return inStreamOffset;
+	public long getSkippedItemsCount() {
+		return skippedItemsCount;
 	}
 	//
-	public void setLastItemId(final String lastItemId) {
-		this.lastItemId = lastItemId;
+	public void setLastDataItem(final T dataItem) {
+		this.lastDataItem = dataItem;
 	}
 	//
-	public String getLastItemId() {
-		return lastItemId;
+	public T getLastDataItem() {
+		return lastDataItem;
 	}
 	//
 	@Override
@@ -90,13 +93,13 @@ implements Producer<T> {
 			LOG.warn(Markers.ERR, "Have no consumer set, exiting");
 			return;
 		}
-		if (inStreamOffset > 0) {
+		if (skippedItemsCount > 0) {
 			try {
-				itemIn.setLastItemId(lastItemId);
-				itemIn.skip(inStreamOffset);
+				itemIn.setLastDataItem(lastDataItem);
+				itemIn.skip(skippedItemsCount);
 			} catch (final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e,
-					"Failed to skip such amount of data items - \"{}\"", inStreamOffset);
+					"Failed to skip such amount of data items - \"{}\"", skippedItemsCount);
 			}
 		}
 		try {

@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by gusakk on 19.06.15.
  */
-public class BasicLoadState implements LoadState {
+public class BasicLoadState<T> implements LoadState {
 	//
 	private final int loadNumber;
 	private final RunTimeConfig runTimeConfig;
@@ -38,7 +39,7 @@ public class BasicLoadState implements LoadState {
 	private final long countBytes;
 	private final long countSubm;
 	private final long timeValue;
-	private final String lastItemId;
+	private final DataItem lastDataItem;
 	private final TimeUnit timeUnit;
 	private final long[] latencyValues;
 	//
@@ -78,8 +79,8 @@ public class BasicLoadState implements LoadState {
 	}
 	//
 	@Override
-	public String getLastItemId() {
-		return lastItemId;
+	public DataItem getLastDataItem() {
+		return lastDataItem;
 	}
 	//
 	@Override
@@ -115,7 +116,7 @@ public class BasicLoadState implements LoadState {
 		private long countSucc;
 		private long countFail;
 		private long countBytes;
-		private String lastItemId;
+		private DataItem lastDataItem;
 		private long countSubm;
 		private long timeValue;
 		private TimeUnit timeUnit;
@@ -158,8 +159,8 @@ public class BasicLoadState implements LoadState {
 		}
 		//
 		@Override
-		public Builder setLastItemId(final String lastItemId) {
-			this.lastItemId = lastItemId;
+		public Builder setLastDataItem(final DataItem lastDataItem) {
+			this.lastDataItem = lastDataItem;
 			return this;
 		}
 		//
@@ -198,7 +199,7 @@ public class BasicLoadState implements LoadState {
 		this.timeValue = builder.timeValue;
 		this.timeUnit = builder.timeUnit;
 		this.latencyValues = builder.latencyValues;
-		this.lastItemId = builder.lastItemId;
+		this.lastDataItem = builder.lastDataItem;
 	}
 	//
 	private static final Logger LOG = LogManager.getLogger();

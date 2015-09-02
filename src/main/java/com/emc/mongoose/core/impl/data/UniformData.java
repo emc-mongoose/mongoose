@@ -295,6 +295,18 @@ implements DataItem {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
+	public boolean equals(final Object o) {
+		if (o == this) {
+			return true;
+		}
+		if (!(o instanceof UniformData)) {
+			return false;
+		}
+		final UniformData other = UniformData.class.cast(o);
+		return (size == other.size) && (offset == other.offset);
+	}
+	//
+	@Override
 	public int hashCode() {
 		return (int) (offset ^ size);
 	}

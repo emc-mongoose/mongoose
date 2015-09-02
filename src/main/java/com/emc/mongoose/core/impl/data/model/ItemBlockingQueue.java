@@ -20,8 +20,8 @@ implements DataItemOutput<T>, DataItemInput<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
+	private DataItem lastItem = null;
 	protected final BlockingQueue<T> queue;
-	protected String lastItemId = null;
 	//
 	public ItemBlockingQueue(final BlockingQueue<T> queue) {
 		this.queue = queue;
@@ -95,27 +95,33 @@ implements DataItemOutput<T>, DataItemInput<T> {
 			throw new IOException(e);
 		}
 	}
+
+
 	@Override
-	public void skip(final long countOfItems)
+	public DataItem getLastDataItem() {
+		return lastItem;
+	}
+
+	@Override
+	public void setLastDataItem(final T lastItem) {
+		this.lastItem = lastItem;
+	}
+
+	@Override
+	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, "Attempt to skip processed data items. Wait for some time");
-		for (int i = 0; i < countOfItems; i++) {
-			try {
+		LOG.info(Markers.MSG, "Skipping {} data items. " +
+			"This may take several minutes to complete. Please wait...", itemsCount);
+		try {
+			for (int i = 0; i < itemsCount; i++) {
 				queue.take();
-			} catch (final InterruptedException e) {
-				throw new InterruptedIOException();
 			}
+		} catch (final InterruptedException e) {
+			throw new InterruptedIOException(e.getMessage());
 		}
-		LOG.info(Markers.MSG, "Data items were successfully skipped");
+		LOG.debug("Items were skipped successfully");
 	}
-	@Override
-	public void setLastItemId(final String lastItemId) {
-		this.lastItemId = lastItemId;
-	}
-	@Override
-	public String getLastItemId() {
-		return lastItemId;
-	}
+
 	/**
 	 Does nothing
 	 @throws IOException doesn't throw

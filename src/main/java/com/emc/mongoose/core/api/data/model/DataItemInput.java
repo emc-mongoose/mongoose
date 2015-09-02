@@ -14,16 +14,17 @@ public interface DataItemInput<T extends DataItem>
 extends Closeable {
 
 	/**
-	 * Set id of last processed data item.
-	 * @param lastItemId if of last processed data item
+	 * Set last processed data item.
+	 * @param lastItem last processed data item
 	 */
-	void setLastItemId(final String lastItemId);
+	void setLastDataItem(final T lastItem);
 
 	/**
-	 * Get id of last processed data item.
-	 * @return id of last processed data item
+	 * Get last processed data item
+	 * @return last processed data item
 	 */
-	String getLastItemId();
+	DataItem getLastDataItem();
+	/**
 	/**
 	 Get next data item
 	 @return next data item or null if no data item available
@@ -52,9 +53,10 @@ extends Closeable {
 
 	/**
 	 * Skip some data items.
-	 * @param countOfItems count of items which should be skipped from the beginning
-	 * @throws IOException if failed to skip such amount of data items
+	 * @param itemsCount count of bytes should be skipped from the input stream
+	 * @throws IOException if failed to skip such amount of bytes
 	 */
-	void skip(final long countOfItems)
+	void skip(final long itemsCount)
 	throws IOException;
+
 }
