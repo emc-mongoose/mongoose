@@ -41,7 +41,7 @@ extends WSMockTestBase {
 	//
 	private static String RUN_ID = DefaultRampupTest.class.getCanonicalName();
 	private static final String	LIMIT_TIME = "30.seconds";
-	private static final int COUNT_STEPS = 70;
+	private static final int COUNT_STEPS = 20;
 
 	@BeforeClass
 	public static void setUpClass()

@@ -46,7 +46,7 @@ extends WSMockTestBase{
 		RAMPUP_SIZES = "10KB,100MB,1MB",
 		RAMPUP_THREAD_COUNTS = "1,10,100",
 		RAMPUP_LOAD_CHAIN = "create,read,delete";
-	private static final int COUNT_STEPS = 4;
+	private static final int COUNT_STEPS = 3;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -239,31 +239,23 @@ extends WSMockTestBase{
 				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			boolean firstRow = true;
-			int iterationCount = 3, stepsCount = 0;
-			final Set<String> loadsSet = new HashSet<>();
+			int loadJobCount = 0, stepsCount = 0;
+			final String loadChain[] = RAMPUP_LOAD_CHAIN.split(",");
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			String loadTypeExpected, loadTypeActual;
 			for(final CSVRecord nextRec : recIter) {
 				if(firstRow) {
 					firstRow = false;
-				} else if(nextRec.size() == 21){
-					if(iterationCount == 3) {
-						iterationCount = 0;
-						stepsCount ++;
-						//
-						Assert.assertTrue("There are not all load types in this step", loadsSet.isEmpty());
-						loadsSet.clear();
-						loadsSet.add(TestConstants.LOAD_CREATE);
-						loadsSet.add(TestConstants.LOAD_READ);
-						loadsSet.add(TestConstants.LOAD_DELETE);
-					} else {
-						iterationCount ++;
-					}
+				} else if(nextRec.size() == 21) {
+					loadTypeExpected = loadChain[loadJobCount % loadChain.length];
+					loadTypeActual = nextRec.get(3);
 					Assert.assertTrue(
-						"The load type \"" + nextRec.get(3) + "\" doesn't exist in this step: " +
-						Arrays.toString(loadsSet.toArray()), loadsSet.contains(nextRec.get(3))
+						"Load type is \"" + loadTypeActual + "\" but expected " + loadTypeExpected,
+						loadTypeActual.equalsIgnoreCase(loadTypeExpected)
 					);
-					loadsSet.remove(nextRec.get(3));
-					Assert.assertNotEquals("Count of success equals 0 ", 0, nextRec.get(7));
+					loadJobCount ++;
+				} else {
+					stepsCount ++;
 				}
 			}
 			Assert.assertEquals(
