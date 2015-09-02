@@ -26,6 +26,7 @@ import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -86,7 +87,7 @@ extends WSMockTestBase{
 	}
 
 	@Test
-	public void shouldReportInformationAboutSummaryMetricsFromConsole()
+	public void shouldReportSummaryToConsole()
 	throws Exception {
 		Assert.assertTrue(
 			"Should report information about end of scenario run from console",
@@ -95,7 +96,7 @@ extends WSMockTestBase{
 	}
 
 	@Test
-	public void shouldCreateAllFilesWithLogs()
+	public void shouldCreateLogFiles()
 	throws Exception {
 		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
 		Assert.assertTrue("messages.log file must be contained", Files.exists(expectedFile));
@@ -228,7 +229,7 @@ extends WSMockTestBase{
 	}
 
 	@Test
-	public void shouldContainedInformationAboutAllLoadsByStep()
+	public void shouldContainInformationAboutAllLoadsByStep()
 	throws Exception {
 		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file must be exist", perfSumFile.exists());
@@ -238,34 +239,31 @@ extends WSMockTestBase{
 				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			boolean firstRow = true;
-			int iterationCount = 4, stepsCount = 0;
+			int iterationCount = 3, stepsCount = 0;
 			final Set<String> loadsSet = new HashSet<>();
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
-				if (firstRow) {
+				if(firstRow) {
 					firstRow = false;
-				} else if (nextRec.size() == 21){
-					if (iterationCount == 4) {
+				} else if(nextRec.size() == 21){
+					if(iterationCount == 3) {
 						iterationCount = 0;
-						stepsCount++;
+						stepsCount ++;
 						//
 						Assert.assertTrue("There are not all load types in this step", loadsSet.isEmpty());
 						loadsSet.clear();
 						loadsSet.add(TestConstants.LOAD_CREATE);
 						loadsSet.add(TestConstants.LOAD_READ);
-						loadsSet.add(TestConstants.LOAD_UPDATE);
-						loadsSet.add(TestConstants.LOAD_APPEND);
 						loadsSet.add(TestConstants.LOAD_DELETE);
 					} else {
-						iterationCount++;
+						iterationCount ++;
 					}
 					Assert.assertTrue(
-						"This load isn't exist in this step", loadsSet.contains(nextRec.get(3))
+						"The load type \"" + nextRec.get(3) + "\" doesn't exist in this step: " +
+						Arrays.toString(loadsSet.toArray()), loadsSet.contains(nextRec.get(3))
 					);
 					loadsSet.remove(nextRec.get(3));
-					Assert.assertNotEquals(
-						"Count of success equals 0 ", 0, nextRec.get(7)
-					);
+					Assert.assertNotEquals("Count of success equals 0 ", 0, nextRec.get(7));
 				}
 			}
 			Assert.assertEquals(

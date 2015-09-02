@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.tools.LogPatterns;
 //
@@ -20,6 +21,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 /**
@@ -28,8 +30,9 @@ import java.util.regex.Matcher;
 public class InfiniteWriteTest
 extends WSMockTestBase {
 	//
-	private static final long EXPECTED_RUN_TIME = 10000;
+	private static final long RUN_TIME_OUT_SEC = 100;
 	private static Process PROCESS;
+	private static int PID;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -37,31 +40,27 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, InfiniteWriteTest.class.getCanonicalName());
 		WSMockTestBase.setUpClass();
 		//
-		final String runName = RunTimeConfig.getContext().getRunName();
-		final String runVersion = RunTimeConfig.getContext().getRunVersion();
-
-		final String mongooseTgzPath = Paths.get(new File(RunTimeConfig.DIR_ROOT).getParent(),
-				Constants.DIR_DIST).resolve(runName + "-" + runVersion + ".tgz").toString();
-
-		if (!new File(mongooseTgzPath).exists()) {
-			throw new FileNotFoundException();
+		final String
+			gooseName = RunTimeConfig.getContext().getRunName(),
+			gooseVersion = RunTimeConfig.getContext().getRunVersion();
+		final File
+			gooseTgzFile = Paths.get("build", "dist", gooseName + "-" + gooseVersion + ".tgz").toFile(),
+			gooseJarFile = Paths.get(gooseName + "-" + gooseVersion, gooseName + ".jar").toFile();
+		if(!gooseTgzFile.exists()) {
+			Assert.fail("Mongoose tgz file not found @ " + gooseTgzFile.getAbsolutePath());
 		}
-
-		final ProcessBuilder builder = new ProcessBuilder();
-		builder.command("tar", "xvf", mongooseTgzPath);
-		builder.directory(new File(System.getProperty("user.dir")));
-		PROCESS = builder.start();
+		final ProcessBuilder processBuilder = new ProcessBuilder();
+		PROCESS = processBuilder.command("tar", "xvf", gooseTgzFile.getPath()).start();
 		PROCESS.waitFor();
-		//
-		final ProcessBuilder processBuilder = new ProcessBuilder(
-			"java", "-jar", runName + "-" + runVersion +
-			File.separator + runName + ".jar"
-		);
+		if(!gooseJarFile.exists()) {
+			Assert.fail("Mongoose jar file not found @ " + gooseJarFile.getAbsolutePath());
+		}
+		processBuilder.command("java", "-jar", gooseJarFile.getPath());
 		processBuilder.directory(new File(System.getProperty("user.dir")));
 		PROCESS = processBuilder.start();
-		final int processID = getPid(PROCESS);
-		Thread.sleep(EXPECTED_RUN_TIME);
-		Runtime.getRuntime().exec(String.format("kill -SIGINT %d", processID));
+		PID = getPid(PROCESS);
+		TimeUnit.SECONDS.sleep(RUN_TIME_OUT_SEC);
+		Runtime.getRuntime().exec(String.format("kill -SIGINT %d", PID));
 	}
 
 	@AfterClass
@@ -71,21 +70,27 @@ extends WSMockTestBase {
 	}
 
 	@Test
+	public void shouldHaveCorrectPID() {
+		Assert.assertTrue("Invalid pid: " + PID, PID > 1);
+	}
+
+	@Test
 	public void shouldWriteScenarioExitAfterSIGINT()
 	throws Exception{
-		try (
+		try(
 			final BufferedReader bufReader = new BufferedReader(
 				new InputStreamReader(PROCESS.getInputStream())
 			)
 		) {
 			String line;
+			Matcher matcher;
 			final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 			long startTime = 0, finishTime = 0;
-			while ((line = bufReader.readLine()) != null) {
-				Matcher matcher = LogPatterns.DATE_TIME_ISO8601.matcher(line);
-				if (matcher.find()) {
+			while((line = bufReader.readLine()) != null) {
+				matcher = LogPatterns.DATE_TIME_ISO8601.matcher(line);
+				if(matcher.find()) {
 					finishTime = format.parse(matcher.group("time")).getTime();
-					if (startTime == 0) {
+					if(startTime == 0) {
 						startTime = finishTime;
 					}
 				}
@@ -93,15 +98,15 @@ extends WSMockTestBase {
 			final long actualRunTime = finishTime - startTime;
 			Assert.assertEquals(
 				"Mongoose run time is not equal expected time",
-				EXPECTED_RUN_TIME, actualRunTime, 5500
+				RUN_TIME_OUT_SEC, actualRunTime / 1000, 10
 			);
 		}
 	}
 
 	private static int getPid(Process process) {
 		try {
-			Class<?> ProcessImpl = process.getClass();
-			Field field = ProcessImpl.getDeclaredField("pid");
+			final Class<?> processImplCls = process.getClass();
+			final Field field = processImplCls.getDeclaredField("pid");
 			field.setAccessible(true);
 			return field.getInt(process);
 		} catch (final Exception e) {

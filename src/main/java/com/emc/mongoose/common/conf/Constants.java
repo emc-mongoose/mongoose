@@ -8,7 +8,6 @@ public interface Constants {
 	String DEFAULT_ENC = StandardCharsets.UTF_8.name();
 	String DIR_CONF = "conf";
 	String DIR_LOG = "log";
-	String DIR_DIST = "dist";
 	String STATES_FILE = ".loadStates";
 	String DIR_PROPERTIES = "properties";
 	String DOT = ".";
