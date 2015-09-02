@@ -121,6 +121,20 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
+	public boolean equals(final Object o) {
+		if(o == this) {
+			return true;
+		}
+		if(!(o instanceof RangeLayerData) || !super.equals(o)) {
+			return false;
+		} else {
+			final RangeLayerData other = RangeLayerData.class.cast(o);
+			return maskRangesRead.equals(other.maskRangesRead)
+				&& maskRangesWrite.equals(other.maskRangesWrite);
+		}
+	}
+	//
+	@Override
 	public int hashCode() {
 		return super.hashCode() ^ maskRangesRead.hashCode() ^ maskRangesWrite.hashCode();
 	}
@@ -176,6 +190,11 @@ implements AppendableDataItem, UpdatableDataItem {
 	@Override
 	public final int getCountRangesTotal() {
 		return getRangeCount(size);
+	}
+	//
+	@Override
+	public final int getCurrLayerIndex() {
+		return currLayerIndex;
 	}
 	//
 	@Override
@@ -235,12 +254,13 @@ implements AppendableDataItem, UpdatableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final boolean hasAnyUpdatedRanges() {
+	@Override
+	public boolean hasAnyUpdatedRanges() {
 		return !maskRangesWrite[0].isEmpty() || !maskRangesWrite[1].isEmpty();
 	}
 	//
 	@Override
-	public final boolean isCurrLayerRangeUpdating(final int i) {
+	public boolean isCurrLayerRangeUpdating(final int i) {
 		return maskRangesWrite[0].get(i);
 	}
 	//

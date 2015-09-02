@@ -28,11 +28,37 @@ implements Producer<T> {
 	//
 	protected DataItemInput<T> itemIn;
 	protected volatile Consumer<T> consumer = null;
+	protected long skippedItemsCount;
+	protected T lastDataItem;
 	//
 	public DataItemInputProducer(final DataItemInput<T> itemIn) {
+		this(itemIn, 0, null);
+	}
+	//
+	public DataItemInputProducer(
+		final DataItemInput<T> itemIn, final long skippedItemsCount, final T dataItem
+	) {
 		this.itemIn = itemIn;
+		this.skippedItemsCount = skippedItemsCount;
+		this.lastDataItem = dataItem;
 		setDaemon(true);
 		setName("dataItemInputProducer<" + itemIn.toString() + ">");
+	}
+	//
+	public void setSkippedItemsCount(final long itemsCount) {
+		this.skippedItemsCount = itemsCount;
+	}
+	//
+	public long getSkippedItemsCount() {
+		return skippedItemsCount;
+	}
+	//
+	public void setLastDataItem(final T dataItem) {
+		this.lastDataItem = dataItem;
+	}
+	//
+	public T getLastDataItem() {
+		return lastDataItem;
 	}
 	//
 	@Override
@@ -66,6 +92,15 @@ implements Producer<T> {
 		if(consumer == null) {
 			LOG.warn(Markers.ERR, "Have no consumer set, exiting");
 			return;
+		}
+		if (skippedItemsCount > 0) {
+			try {
+				itemIn.setLastDataItem(lastDataItem);
+				itemIn.skip(skippedItemsCount);
+			} catch (final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e,
+					"Failed to skip such amount of data items - \"{}\"", skippedItemsCount);
+			}
 		}
 		try {
 			do {

@@ -1,8 +1,12 @@
 package com.emc.mongoose.core.impl.data.model;
 //
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -15,6 +19,9 @@ import java.util.concurrent.BlockingQueue;
 public class ItemBlockingQueue<T extends DataItem>
 implements DataItemOutput<T>, DataItemInput<T> {
 	//
+	private static final Logger LOG = LogManager.getLogger();
+	//
+	private DataItem lastItem = null;
 	protected final BlockingQueue<T> queue;
 	//
 	public ItemBlockingQueue(final BlockingQueue<T> queue) {
@@ -88,6 +95,31 @@ implements DataItemOutput<T>, DataItemInput<T> {
 		} catch(final UnsupportedOperationException | IllegalArgumentException e) {
 			throw new IOException(e);
 		}
+	}
+	//
+	@Override
+	public DataItem getLastDataItem() {
+		return lastItem;
+	}
+	//
+	@Override
+	public void setLastDataItem(final T lastItem) {
+		this.lastItem = lastItem;
+	}
+	//
+	@Override
+	public void skip(final long itemsCount)
+	throws IOException {
+		LOG.info(Markers.MSG, String.format(
+			LogUtil.LOCALE_DEFAULT, DataItemInput.MSG_SKIP_START, itemsCount));
+		try {
+			for (int i = 0; i < itemsCount; i++) {
+				queue.take();
+			}
+		} catch (final InterruptedException e) {
+			throw new InterruptedIOException(e.getMessage());
+		}
+		LOG.debug(Markers.MSG, DataItemInput.MSG_SKIP_END);
 	}
 	/**
 	 Does nothing

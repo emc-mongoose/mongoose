@@ -98,7 +98,7 @@ implements WSIOTask<T> {
 	throws IOException {
 		OutputChannel chanOut = THRLOC_CHAN_OUT.get();
 		if(chanOut == null) {
-			chanOut = new OutputChannel();
+			chanOut = new OutputChannel(out);
 			THRLOC_CHAN_OUT.set(chanOut);
 		}
 		chanOut.setContentEncoder(out);

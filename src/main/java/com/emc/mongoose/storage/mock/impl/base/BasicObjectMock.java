@@ -82,12 +82,22 @@ implements DataObjectMock {
 	}
 	//
 	@Override
+	public final boolean hasAnyUpdatedRanges() {
+		return maskRangesRead.isEmpty();
+	}
+	//
+	@Override
+	public final boolean isCurrLayerRangeUpdating(final int i) {
+		return maskRangesRead.get(i);
+	}
+	//
+	@Override
 	public final synchronized long writeFully(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
-		if (maskRangesRead.isEmpty()) {
+		if(hasAnyUpdatedRanges()) {
 			return writeRange(chanOut, 0, size);
 		} else {
 			long writtenCount = 0;
@@ -100,7 +110,7 @@ implements DataObjectMock {
 						UniformDataSource.DEFAULT
 					);
 					writtenCount += updatedRange.writeFully(chanOut);
-				} else if(currLayerIndex > 0 ){ // previous layer of updated ranges
+				} else if(currLayerIndex > 0) { // previous layer of updated ranges
 					updatedRange = new UniformData(
 						offset + rangeOffset, rangeSize, currLayerIndex,
 						UniformDataSource.DEFAULT

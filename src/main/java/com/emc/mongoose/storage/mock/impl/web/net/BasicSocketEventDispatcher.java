@@ -6,7 +6,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
 //
 import org.apache.http.impl.nio.DefaultHttpServerIODispatch;
@@ -74,7 +73,7 @@ implements Runnable {
 			.build();
 		// create the server-side I/O reactor
 		ioReactor = new DefaultListeningIOReactor(
-			ioReactorConf, new IOUtils.IOWorkerFactory("ioReactor", runTimeConfig)
+			ioReactorConf, new GroupThreadFactory("ioReactor")
 		);
 		this.ioStats = ioStats;
 		executor = THREAD_GROUP.newThread(this);

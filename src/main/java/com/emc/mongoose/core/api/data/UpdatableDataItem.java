@@ -25,6 +25,8 @@ extends DataItem {
 	//
 	int getCountRangesTotal();
 	//
+	int getCurrLayerIndex();
+	//
 	long getPendingRangesSize();
 	//
 	long writeUpdatedRangesFully(final WritableByteChannel chanOut)

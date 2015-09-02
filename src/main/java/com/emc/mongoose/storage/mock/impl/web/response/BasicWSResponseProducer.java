@@ -5,7 +5,11 @@ import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-storage-mock.jar
 //
-import com.emc.mongoose.storage.mock.api.DataObjectMock;
+import com.emc.mongoose.core.impl.data.RangeLayerData;
+//
+import com.emc.mongoose.core.impl.data.UniformData;
+import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -30,20 +34,22 @@ implements HttpAsyncResponseProducer {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile HttpResponse response = null;
-	private DataObjectMock contentDataObject = null;
+	private WSObjectMock contentDataObject = null;
 	private NByteArrayEntity contentBytes = null;
-	private long byteCount = 0, contentSize = 0;
-	private final OutputChannel chanOut = new OutputChannel();
+	private long byteCount = 0, contentSize = 0, rangeSize = 0;
+	private OutputChannel chanOut = null;
+	private int rangeIdx = 0;
+	private UniformData currRange = null;
 	//
 	public final void setResponse(final HttpResponse response) {
 		this.response = response;
 		final HttpEntity contentEntity = response.getEntity();
 		if(contentEntity != null) {
 			contentSize = contentEntity.getContentLength();
-			if(DataObjectMock.class.isInstance(contentEntity)) {
-				contentDataObject = (DataObjectMock) contentEntity;
+			if(contentEntity instanceof WSObjectMock) {
+				contentDataObject = (WSObjectMock) contentEntity;
 				contentBytes = null;
-			} else if(NByteArrayEntity.class.isInstance(contentEntity)) {
+			} else if(contentEntity instanceof NByteArrayEntity) {
 				contentBytes = (NByteArrayEntity) contentEntity;
 				contentDataObject = null;
 			}
@@ -59,20 +65,7 @@ implements HttpAsyncResponseProducer {
 	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
 		if(contentDataObject != null) {
-			chanOut.setContentEncoder(encoder);
-			try {
-				contentDataObject.writeFully(chanOut);
-			} catch(final Exception e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");
-			} finally {
-				try {
-					if(!encoder.isCompleted()) {
-						encoder.complete();
-					}
-				} finally {
-					chanOut.close();
-				}
-			}
+			produceDataObjectContent(encoder);
 		} else if(contentBytes != null) {
 			contentBytes.produceContent(encoder, ioctrl);
 		} else {
@@ -81,6 +74,41 @@ implements HttpAsyncResponseProducer {
 				LOG.warn(Markers.ERR, "Unsupported content type: " + contentEntity.getClass());
 			}
 			encoder.complete();
+		}
+	}
+	//
+	private void produceDataObjectContent(final ContentEncoder encoder)
+	throws IOException {
+		if(chanOut == null) {
+			chanOut = new OutputChannel(encoder);
+		}
+		try {
+			if(!contentDataObject.hasAnyUpdatedRanges()) {
+				if(byteCount == contentSize) {
+					chanOut.close();
+				}
+				byteCount += contentDataObject.write(chanOut, contentSize - byteCount);
+			} else {
+				if(byteCount == rangeSize) {
+					rangeSize = contentDataObject.getRangeSize(rangeIdx);
+					currRange = new UniformData(
+						contentDataObject.getOffset() + RangeLayerData.getRangeOffset(rangeIdx),
+						rangeSize,
+						contentDataObject.isCurrLayerRangeUpdating(rangeIdx) ?
+							contentDataObject.getCurrLayerIndex() + 1 :
+							contentDataObject.getCurrLayerIndex(),
+						UniformDataSource.DEFAULT
+					);
+					rangeIdx ++;
+				}
+				if(rangeSize > 0) {
+					byteCount += currRange.write(chanOut, rangeSize - byteCount);
+				} else {
+					chanOut.close();
+				}
+			}
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");
 		}
 	}
 	//
