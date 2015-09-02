@@ -26,6 +26,7 @@ import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -41,9 +42,10 @@ extends WSMockTestBase{
 	//
 	private static String RUN_ID = CustomRampupTest.class.getCanonicalName();
 	private static final String
-		LIMIT_TIME = "60.seconds",
-		RAMPUP_SIZES = "10KB,1MB,10MB",
-		RAMPUP_THREAD_COUNTS = "10,50,100";
+		LIMIT_TIME = "15s",
+		RAMPUP_SIZES = "10KB,100MB,1MB",
+		RAMPUP_THREAD_COUNTS = "1,10,100",
+		RAMPUP_LOAD_CHAIN = "create,read,delete";
 	private static final int COUNT_STEPS = 9;
 
 	@BeforeClass
@@ -57,6 +59,7 @@ extends WSMockTestBase{
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, RAMPUP_SIZES);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS, RAMPUP_THREAD_COUNTS);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, RAMPUP_LOAD_CHAIN);
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
@@ -84,7 +87,7 @@ extends WSMockTestBase{
 	}
 
 	@Test
-	public void shouldReportInformationAboutSummaryMetricsFromConsole()
+	public void shouldReportSummaryToConsole()
 	throws Exception {
 		Assert.assertTrue(
 			"Should report information about end of scenario run from console",
@@ -93,7 +96,7 @@ extends WSMockTestBase{
 	}
 
 	@Test
-	public void shouldCreateAllFilesWithLogs()
+	public void shouldCreateLogFiles()
 	throws Exception {
 		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
 		Assert.assertTrue("messages.log file must be contained", Files.exists(expectedFile));
@@ -226,7 +229,7 @@ extends WSMockTestBase{
 	}
 
 	@Test
-	public void shouldContainedInformationAboutAllLoadsByStep()
+	public void shouldContainInformationAboutAllLoadsByStep()
 	throws Exception {
 		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file must be exist", perfSumFile.exists());
@@ -236,38 +239,27 @@ extends WSMockTestBase{
 				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			boolean firstRow = true;
-			int iterationCount = 4, stepsCount = 0;
-			final Set<String> loadsSet = new HashSet<>();
+			int loadJobCount = 0, stepsCount = 0;
+			final String loadChain[] = RAMPUP_LOAD_CHAIN.split(",");
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			String loadTypeExpected, loadTypeActual;
 			for(final CSVRecord nextRec : recIter) {
-				if (firstRow) {
+				if(firstRow) {
 					firstRow = false;
-				} else if (nextRec.size() == 21){
-					if (iterationCount == 4) {
-						iterationCount = 0;
-						stepsCount++;
-						//
-						Assert.assertTrue("There are not all load types in this step", loadsSet.isEmpty());
-						loadsSet.clear();
-						loadsSet.add(TestConstants.LOAD_CREATE);
-						loadsSet.add(TestConstants.LOAD_READ);
-						loadsSet.add(TestConstants.LOAD_UPDATE);
-						loadsSet.add(TestConstants.LOAD_APPEND);
-						loadsSet.add(TestConstants.LOAD_DELETE);
-					} else {
-						iterationCount++;
-					}
+				} else if(nextRec.size() == 21) {
+					loadTypeExpected = loadChain[loadJobCount % loadChain.length];
+					loadTypeActual = nextRec.get(3);
 					Assert.assertTrue(
-						"This load isn't exist in this step", loadsSet.contains(nextRec.get(3))
+						"Load type is \"" + loadTypeActual + "\" but expected " + loadTypeExpected,
+						loadTypeActual.equalsIgnoreCase(loadTypeExpected)
 					);
-					loadsSet.remove(nextRec.get(3));
-					Assert.assertNotEquals(
-						"Count of success equals 0 ", 0, nextRec.get(7)
-					);
+					loadJobCount ++;
+				} else {
+					stepsCount ++;
 				}
 			}
 			Assert.assertEquals(
-				"Steps counts must be equal" + COUNT_STEPS, COUNT_STEPS, stepsCount
+				"Steps counts must be equal to " + COUNT_STEPS, COUNT_STEPS, stepsCount
 			);
 		}
 	}

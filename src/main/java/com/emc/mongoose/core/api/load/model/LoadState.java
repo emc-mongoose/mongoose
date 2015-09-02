@@ -35,31 +35,31 @@ extends Serializable {
 	//
 	boolean isLoadFinished(final RunTimeConfig rtConfig);
 	//
-	interface Builder<T> {
+	interface Builder<T extends DataItem, U extends LoadState<T>> {
 		//
-		Builder<T> setLoadNumber(final int loadNumber);
+		Builder<T, U> setLoadNumber(final int loadNumber);
 		//
-		Builder<T> setRunTimeConfig(final RunTimeConfig runTimeConfig);
+		Builder<T, U> setRunTimeConfig(final RunTimeConfig runTimeConfig);
 		//
-		Builder<T> setCountSucc(final long countSucc);
+		Builder<T, U> setCountSucc(final long countSucc);
 		//
-		Builder<T> setCountFail(final long countFail);
+		Builder<T, U> setCountFail(final long countFail);
 		//
-		Builder<T> setCountBytes(final long countBytes);
+		Builder<T, U> setCountBytes(final long countBytes);
 		//
-		Builder<T> setCountSubm(final long countSubm);
+		Builder<T, U> setCountSubm(final long countSubm);
 		//
-		Builder<T> setLatencyValues(final long latencyValues[]);
+		Builder<T, U> setLatencyValues(final long latencyValues[]);
 		//
-		Builder<T> setDurationValues(final long durationValues[]);
+		Builder<T, U> setDurationValues(final long durationValues[]);
 		//
-		Builder<T> setLoadElapsedTimeValue(final long timeValue);
+		Builder<T, U> setLoadElapsedTimeValue(final long timeValue);
 		//
-		Builder<T> setLastDataItem(final DataItem dataItem);
+		Builder<T, U> setLastDataItem(final T dataItem);
 		//
-		Builder<T> setLoadElapsedTimeUnit(final TimeUnit timeUnit);
+		Builder<T, U> setLoadElapsedTimeUnit(final TimeUnit timeUnit);
 		//
-		T build();
+		U build();
 		//
 	}
 }

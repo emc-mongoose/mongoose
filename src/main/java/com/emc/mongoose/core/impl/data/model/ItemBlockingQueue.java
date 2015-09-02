@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
@@ -110,8 +109,7 @@ implements DataItemOutput<T>, DataItemInput<T> {
 	@Override
 	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, String.format(
-			LogUtil.LOCALE_DEFAULT, DataItemInput.MSG_SKIP_START, itemsCount));
+		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_START, itemsCount);
 		try {
 			for (int i = 0; i < itemsCount; i++) {
 				queue.take();
@@ -119,7 +117,7 @@ implements DataItemOutput<T>, DataItemInput<T> {
 		} catch (final InterruptedException e) {
 			throw new InterruptedIOException(e.getMessage());
 		}
-		LOG.debug(Markers.MSG, DataItemInput.MSG_SKIP_END);
+		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_END);
 	}
 	/**
 	 Does nothing

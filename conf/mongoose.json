@@ -190,8 +190,8 @@
 					"itemsBuffer": true
 				},
 				"rampup": {
-					"threadCounts": "1,10,100",
-					"sizes": "1KB,10KB,100KB"
+					"threadCounts": "1,10",
+					"sizes": "1KB,1MB"
 				}
 			}
 		},

@@ -97,7 +97,7 @@ implements LoadExecutor<T> {
 	private ResumableUserTimeClock clock = new ResumableUserTimeClock();
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	//
-	private DataItem lastDataItem;
+	private T lastDataItem;
 	private final DataItemInput<T> itemsSrc;
 	//
 	private final Thread
@@ -737,7 +737,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public void setLoadState(final LoadState state) {
+	public void setLoadState(final LoadState<T> state) {
 		if (state != null) {
 			if (state.isLoadFinished(rtConfig)) {
 				isLoadFinished.compareAndSet(false, true);
@@ -760,27 +760,27 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	@Override
-	public LoadState getLoadState()
+	@Override @SuppressWarnings("unchecked")
+	public LoadState<T> getLoadState()
 	throws RemoteException {
 		final long prevElapsedTime = currState != null ?
 			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
-		final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
-			.setLoadNumber(instanceNum)
+		final LoadState.Builder<T, BasicLoadState<T>> stateBuilder = new BasicLoadState.Builder<>();
+		stateBuilder.setLoadNumber(instanceNum)
 			.setRunTimeConfig(rtConfig)
 			.setCountSucc(throughPutSucc == null ? 0 : throughPutSucc.getCount())
 			.setCountFail(throughPutFail == null ? 0 : throughPutFail.getCount())
 			.setCountBytes(reqBytes == null ? 0 : reqBytes.getCount())
 			.setCountSubm(counterSubm == null ? 0 : counterSubm.getCount())
 			.setLoadElapsedTimeValue(
-					tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
+				tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
 			)
 			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
 			.setDurationValues(
 				reqDuration == null ? new long[]{} : reqDuration.getSnapshot().getValues()
 			)
 			.setLatencyValues(
-					respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
+				respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
 			)
 			.setLastDataItem(lastDataItem);
 		//

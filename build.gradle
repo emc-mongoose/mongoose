@@ -1021,7 +1021,7 @@ test {
 	testLogging { events "passed", "skipped", "failed" }
 }
 
-task integTest(type: Test) {
+task integTest(type: Test, dependsOn: dist) {
 
 	include '**/AllTestSuite.class'
 

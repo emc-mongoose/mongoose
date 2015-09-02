@@ -86,8 +86,9 @@ implements HttpAsyncResponseProducer {
 			if(!contentDataObject.hasAnyUpdatedRanges()) {
 				if(byteCount == contentSize) {
 					chanOut.close();
+				} else {
+					byteCount += contentDataObject.write(chanOut, contentSize - byteCount);
 				}
-				byteCount += contentDataObject.write(chanOut, contentSize - byteCount);
 			} else {
 				if(byteCount == rangeSize) {
 					rangeSize = contentDataObject.getRangeSize(rangeIdx);

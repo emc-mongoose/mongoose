@@ -100,6 +100,8 @@ implements WSLoadBuilderSvc<T, U> {
 		//
 		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(reqConf);
 		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+		// the statement below fixes hi-level API distributed mode usage and tests
+		localRunTimeConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		if(minObjSize > maxObjSize) {
 			throw new IllegalStateException(
 				String.format(

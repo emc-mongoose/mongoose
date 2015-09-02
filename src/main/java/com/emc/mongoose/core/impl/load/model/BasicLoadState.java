@@ -30,7 +30,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by gusakk on 19.06.15.
  */
-public class BasicLoadState<T> implements LoadState {
+public class BasicLoadState<T extends DataItem>
+implements LoadState<T> {
 	//
 	private final int loadNumber;
 	private final RunTimeConfig runTimeConfig;
@@ -39,7 +40,7 @@ public class BasicLoadState<T> implements LoadState {
 	private final long countBytes;
 	private final long countSubm;
 	private final long timeValue;
-	private final DataItem lastDataItem;
+	private final T lastDataItem;
 	private final TimeUnit timeUnit;
 	private final long durationValues[], latencyValues[];
 	//
@@ -84,7 +85,7 @@ public class BasicLoadState<T> implements LoadState {
 	}
 	//
 	@Override
-	public DataItem getLastDataItem() {
+	public T getLastDataItem() {
 		return lastDataItem;
 	}
 	//
@@ -114,94 +115,95 @@ public class BasicLoadState<T> implements LoadState {
 		return (counterResults >= maxCount) || (stateTimeMillis >= loadTimeMillis);
 	}
 	//
-	public static class Builder
-	implements LoadState.Builder<BasicLoadState> {
+	public static class Builder<T extends DataItem, U extends BasicLoadState<T>>
+	implements LoadState.Builder<T, U> {
 		//
 		private int loadNumber;
 		private RunTimeConfig runTimeConfig;
 		private long countSucc;
 		private long countFail;
 		private long countBytes;
-		private DataItem lastDataItem;
+		private T lastDataItem;
 		private long countSubm;
 		private long timeValue;
 		private TimeUnit timeUnit;
 		private long durationValues[], latencyValues[];
 		//
 		@Override
-		public Builder setLoadNumber(final int loadNumber) {
+		public Builder<T, U> setLoadNumber(final int loadNumber) {
 			this.loadNumber = loadNumber;
 			return this;
 		}
 		//
 		@Override
-		public Builder setRunTimeConfig(final RunTimeConfig runTimeConfig) {
+		public Builder<T, U> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
 			this.runTimeConfig = runTimeConfig;
 			return this;
 		}
 		//
 		@Override
-		public Builder setCountSucc(final long countSucc) {
+		public Builder<T, U> setCountSucc(final long countSucc) {
 			this.countSucc = countSucc;
 			return this;
 		}
 		//
 		@Override
-		public Builder setCountFail(final long countFail) {
+		public Builder<T, U> setCountFail(final long countFail) {
 			this.countFail = countFail;
 			return this;
 		}
 		//
 		@Override
-		public Builder setCountBytes(final long countBytes) {
+		public Builder<T, U> setCountBytes(final long countBytes) {
 			this.countBytes = countBytes;
 			return this;
 		}
 		//
 		@Override
-		public Builder setCountSubm(final long countSubm) {
+		public Builder<T, U> setCountSubm(final long countSubm) {
 			this.countSubm = countSubm;
 			return this;
 		}
 		//
 		@Override
-		public Builder setLastDataItem(final DataItem lastDataItem) {
+		public Builder<T, U> setLastDataItem(final T lastDataItem) {
 			this.lastDataItem = lastDataItem;
 			return this;
 		}
 		//
 		@Override
-		public Builder setLoadElapsedTimeValue(final long timeValue) {
+		public Builder<T, U> setLoadElapsedTimeValue(final long timeValue) {
 			this.timeValue = timeValue;
 			return this;
 		}
 		//
 		@Override
-		public Builder setLoadElapsedTimeUnit(final TimeUnit timeUnit) {
+		public Builder<T, U> setLoadElapsedTimeUnit(final TimeUnit timeUnit) {
 			this.timeUnit = timeUnit;
 			return this;
 		}
 		//
 		@Override
-		public Builder setDurationValues(final long durationValues[]) {
+		public Builder<T, U> setDurationValues(final long durationValues[]) {
 			this.durationValues = durationValues;
 			return this;
 		}
 		//
 		@Override
-		public Builder setLatencyValues(final long latencyValues[]) {
+		public Builder<T, U> setLatencyValues(final long latencyValues[]) {
 			this.latencyValues = latencyValues;
 			return this;
 		}
 		//
 		@Override
-		public BasicLoadState build() {
-			return new BasicLoadState(this);
+		@SuppressWarnings("unchecked")
+		public U build() {
+			return (U) new BasicLoadState<>((Builder<T, BasicLoadState<T>>) this);
 		}
 		//
 	}
 	//
-	private BasicLoadState(final Builder builder) {
+	private BasicLoadState(final Builder<T, BasicLoadState<T>> builder) {
 		this.loadNumber = builder.loadNumber;
 		this.runTimeConfig = builder.runTimeConfig;
 		this.countSucc = builder.countSucc;
