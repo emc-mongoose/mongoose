@@ -8,7 +8,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by gusakk on 19.06.15.
  */
-public interface LoadState extends Serializable {
+public interface LoadState<T extends DataItem>
+extends Serializable {
 	//
 	int getLoadNumber();
 	//
@@ -26,7 +27,7 @@ public interface LoadState extends Serializable {
 	//
 	long [] getDurationValues();
 	//
-	DataItem getLastDataItem();
+	T getLastDataItem();
 	//
 	long getLoadElapsedTimeValue();
 	//
@@ -34,7 +35,7 @@ public interface LoadState extends Serializable {
 	//
 	boolean isLoadFinished(final RunTimeConfig rtConfig);
 	//
-	interface Builder<T> {
+	interface Builder<T extends DataItem> {
 		//
 		Builder<T> setLoadNumber(final int loadNumber);
 		//
@@ -54,11 +55,11 @@ public interface LoadState extends Serializable {
 		//
 		Builder<T> setLoadElapsedTimeValue(final long timeValue);
 		//
-		Builder<T> setLastDataItem(final DataItem dataItem);
+		Builder<T> setLastDataItem(final T dataItem);
 		//
 		Builder<T> setLoadElapsedTimeUnit(final TimeUnit timeUnit);
 		//
-		T build();
+		LoadState<T> build();
 		//
 	}
 }

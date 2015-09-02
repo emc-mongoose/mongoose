@@ -93,7 +93,7 @@ implements LoadExecutor<T> {
 	//
 	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
 	//
-	private LoadState currState = null;
+	private LoadState<T> currState = null;
 	private ResumableUserTimeClock clock = new ResumableUserTimeClock();
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	//
@@ -478,8 +478,8 @@ implements LoadExecutor<T> {
 					producer.setConsumer(this);
 					if ((producer instanceof DataItemInputProducer)
 						&& (counterResults.get() > 0)) {
-						final DataItemInputProducer inputProducer
-							= DataItemInputProducer.class.cast(producer);
+						final DataItemInputProducer<T> inputProducer
+							= (DataItemInputProducer<T>) producer;
 						inputProducer.setSkippedItemsCount(counterResults.get());
 						inputProducer.setLastDataItem(currState.getLastDataItem());
 
@@ -759,7 +759,7 @@ implements LoadExecutor<T> {
 	throws RemoteException {
 		final long prevElapsedTime = currState != null ?
 			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
-		final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
+		final LoadState.Builder stateBuilder = new BasicLoadState.Builder<>()
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(rtConfig)
 			.setCountSucc(throughPutSucc == null ? 0 : throughPutSucc.getCount())
@@ -767,14 +767,14 @@ implements LoadExecutor<T> {
 			.setCountBytes(reqBytes == null ? 0 : reqBytes.getCount())
 			.setCountSubm(counterSubm == null ? 0 : counterSubm.getCount())
 			.setLoadElapsedTimeValue(
-					tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
+				tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
 			)
 			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
 			.setDurationValues(
 				reqDuration == null ? new long[]{} : reqDuration.getSnapshot().getValues()
 			)
 			.setLatencyValues(
-					respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
+				respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
 			)
 			.setLastDataItem(lastDataItem);
 		//
