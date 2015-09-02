@@ -13,6 +13,10 @@ import java.util.List;
 public interface DataItemInput<T extends DataItem>
 extends Closeable {
 
+	String
+		MSG_SKIP_START = "Skipping %d data items. " +
+			"This may take some time to complete. Please wait...",
+		MSG_SKIP_END = "Items were skipped successfully";
 	/**
 	 * Set last processed data item.
 	 * @param lastItem last processed data item
@@ -24,7 +28,6 @@ extends Closeable {
 	 * @return last processed data item
 	 */
 	DataItem getLastDataItem();
-	/**
 	/**
 	 Get next data item
 	 @return next data item or null if no data item available
