@@ -3,18 +3,24 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.core.api.data.DataItem;
 //
 import com.emc.mongoose.core.api.data.model.DataItemInput;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
+
 /**
  Readable collection of the data items.
  */
 public class ListItemInput<T extends DataItem>
 implements DataItemInput<T> {
 	//
+	private static final Logger LOG = LogManager.getLogger();
+	//
 	protected final List<T> items;
-	protected int i = 0;
+	protected volatile int i = 0;
+	private DataItem lastItem = null;
 	//
 	public ListItemInput(final List<T> items) {
 		this.items = items;
@@ -29,7 +35,7 @@ implements DataItemInput<T> {
 	public T read()
 	throws IOException {
 		if(i < items.size()) {
-			return items.get(i ++);
+			return items.get(i++);
 		} else {
 			throw new EOFException();
 		}
@@ -64,6 +70,24 @@ implements DataItemInput<T> {
 	public void reset()
 	throws IOException {
 		i = 0;
+	}
+
+	@Override
+	public DataItem getLastDataItem() {
+		return lastItem;
+	}
+
+	@Override
+	public void setLastDataItem(final T lastItem) {
+		this.lastItem = lastItem;
+	}
+
+	@Override
+	public void skip(final long itemsCount)
+	throws IOException {
+		if (items.size() < itemsCount)
+			throw new IOException();
+		i = (int) itemsCount;
 	}
 
 	/**

@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by gusakk on 19.06.15.
  */
-public class BasicLoadState implements LoadState {
+public class BasicLoadState<T> implements LoadState {
 	//
 	private final int loadNumber;
 	private final RunTimeConfig runTimeConfig;
@@ -38,8 +39,9 @@ public class BasicLoadState implements LoadState {
 	private final long countBytes;
 	private final long countSubm;
 	private final long timeValue;
+	private final DataItem lastDataItem;
 	private final TimeUnit timeUnit;
-	private long durationValues[], latencyValues[];
+	private final long[] latencyValues;
 	//
 	@Override
 	public int getLoadNumber() {
@@ -72,13 +74,13 @@ public class BasicLoadState implements LoadState {
 	}
 	//
 	@Override
-	public long [] getDurationValues() {
-		return durationValues;
+	public long[] getLatencyValues() {
+		return latencyValues;
 	}
 	//
 	@Override
-	public long [] getLatencyValues() {
-		return latencyValues;
+	public DataItem getLastDataItem() {
+		return lastDataItem;
 	}
 	//
 	@Override
@@ -107,18 +109,18 @@ public class BasicLoadState implements LoadState {
 		return (counterResults >= maxCount) || (stateTimeMillis >= loadTimeMillis);
 	}
 	//
-	public static class Builder
-	implements LoadState.Builder<BasicLoadState> {
+	public static class Builder implements LoadState.Builder<BasicLoadState> {
 		//
 		private int loadNumber;
 		private RunTimeConfig runTimeConfig;
 		private long countSucc;
 		private long countFail;
 		private long countBytes;
+		private DataItem lastDataItem;
 		private long countSubm;
 		private long timeValue;
 		private TimeUnit timeUnit;
-		private long durationValues[], latencyValues[];
+		private long[] latencyValues;
 		//
 		@Override
 		public Builder setLoadNumber(final int loadNumber) {
@@ -157,6 +159,12 @@ public class BasicLoadState implements LoadState {
 		}
 		//
 		@Override
+		public Builder setLastDataItem(final DataItem lastDataItem) {
+			this.lastDataItem = lastDataItem;
+			return this;
+		}
+		//
+		@Override
 		public Builder setLoadElapsedTimeValue(final long timeValue) {
 			this.timeValue = timeValue;
 			return this;
@@ -169,13 +177,7 @@ public class BasicLoadState implements LoadState {
 		}
 		//
 		@Override
-		public Builder setDurationValues(final long durationValues[]) {
-			this.durationValues = durationValues;
-			return this;
-		}
-		//
-		@Override
-		public Builder setLatencyValues(final long latencyValues[]) {
+		public Builder setLatencyValues(final long[] latencyValues) {
 			this.latencyValues = latencyValues;
 			return this;
 		}
@@ -196,31 +198,28 @@ public class BasicLoadState implements LoadState {
 		this.countSubm = builder.countSubm;
 		this.timeValue = builder.timeValue;
 		this.timeUnit = builder.timeUnit;
-		this.durationValues = builder.durationValues;
 		this.latencyValues = builder.latencyValues;
+		this.lastDataItem = builder.lastDataItem;
 	}
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	public static void restoreScenarioState(final RunTimeConfig rtConfig) {
-		final String fullStateFileName = Paths.get(
-			RunTimeConfig.DIR_ROOT, Constants.DIR_LOG, rtConfig.getRunId()
-		).resolve(Constants.STATES_FILE).toString();
+		final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+			Constants.DIR_LOG, rtConfig.getRunId())
+			.resolve(Constants.STATES_FILE).toString();
 		//  if load states list is empty or file w/ load states doesn't exist, then init
 		//  map entry value w/ empty list
 		LoadExecutor.RESTORED_STATES_MAP.put(rtConfig.getRunId(), new ArrayList<LoadState>());
-		if(isSavedStateOfRunExists(rtConfig.getRunId())) {
+		if (isSavedStateOfRunExists(rtConfig.getRunId())) {
 			final List<LoadState> loadStates =
 				getScenarioStateFromFile(rtConfig.getRunId(), fullStateFileName);
-			if(loadStates != null && !loadStates.isEmpty()) {
+			if (loadStates != null && !loadStates.isEmpty()) {
 				//  check if immutable params were changed for load executors
-				for(final LoadState state : loadStates) {
-					if(rtConfig.isImmutableParamsChanged(state.getRunTimeConfig())) {
-						LOG.warn(
-							Markers.MSG,
-							"Run \"{}\": configuration immutability violated. Starting new run",
-							rtConfig.getRunId()
-						);
+				for (final LoadState state : loadStates) {
+					if (rtConfig.isImmutableParamsChanged(state.getRunTimeConfig())) {
+						LOG.warn(Markers.MSG, "Run \"{}\": configuration immutability violated. " +
+							"Starting new run", rtConfig.getRunId());
 						return;
 					}
 				}
@@ -228,7 +227,7 @@ public class BasicLoadState implements LoadState {
 				LoadExecutor.RESTORED_STATES_MAP.put(rtConfig.getRunId(), loadStates);
 				LOG.info(Markers.MSG, "Run \"{}\" was resumed", rtConfig.getRunId());
 				//  don't remove state file if load executor has been already finished
-				for(final LoadState state : loadStates) {
+				for (final LoadState state : loadStates) {
 					if (state.isLoadFinished(rtConfig))
 						return;
 				}
@@ -252,14 +251,13 @@ public class BasicLoadState implements LoadState {
 	private static List<LoadState> getScenarioStateFromFile(
 		final String runId, final String fileName
 	) {
-		try(final FileInputStream fis = new FileInputStream(fileName)) {
+		try (final FileInputStream fis = new FileInputStream(fileName)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
 				return (List<LoadState>) ois.readObject();
 			}
 		} catch (final FileNotFoundException e) {
-			LOG.debug(
-				Markers.MSG, "Could not find saved state of run \"{}\". Starting new run", runId
-			);
+			LOG.debug(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
+				runId);
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
 				"Failed to load state of run \"{}\" from \"{}\" file." +

@@ -3,9 +3,11 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.GenericContainer;
 //
+import com.emc.mongoose.core.impl.data.BasicObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -17,7 +19,7 @@ import java.util.List;
 /**
  The implementation should have a state representing the actual position in the container listing
  */
-public abstract class GenericContainerItemInputBase<T extends DataItem>
+public abstract class GenericContainerItemInputBase<T extends DataObject>
 extends ListItemInput<T>
 implements DataItemInput<T> {
 	//
@@ -27,6 +29,8 @@ implements DataItemInput<T> {
 	protected final String nodeAddr;
 	protected final Constructor<T> itemConstructor;
 	protected final long maxCount;
+	//
+	protected String lastItemId = null;
 	//
 	protected GenericContainerItemInputBase(
 		final GenericContainer<T> container, final String nodeAddr, final Class<T> itemCls,
@@ -75,6 +79,23 @@ implements DataItemInput<T> {
 		loadNewPageIfNecessary();
 		return super.read(buffer, maxCount);
 	}
+	//
+	@Override
+	public void setLastDataItem(final T lastItem) {
+		super.setLastDataItem(lastItem);
+		this.lastItemId = lastItem.getId();
+	}
+	//
+	/**
+	 * Does nothing
+	 * @param itemsCount count of bytes should be skipped from the input stream
+	 * @throws IOException doesn't throw
+	 */
+	@Override
+	public void skip(final long itemsCount)
+	throws IOException {
+	}
+	//
 	/**
 	 Read the items from the beginning of the container listing
 	 @throws IOException

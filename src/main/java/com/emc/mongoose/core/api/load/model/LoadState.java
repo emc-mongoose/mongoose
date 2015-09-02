@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.api.load.model;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.core.api.data.DataItem;
 //
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +25,8 @@ public interface LoadState extends Serializable {
 	long [] getLatencyValues();
 	//
 	long [] getDurationValues();
+	//
+	DataItem getLastDataItem();
 	//
 	long getLoadElapsedTimeValue();
 	//
@@ -50,6 +53,8 @@ public interface LoadState extends Serializable {
 		Builder<T> setDurationValues(final long durationValues[]);
 		//
 		Builder<T> setLoadElapsedTimeValue(final long timeValue);
+		//
+		Builder<T> setLastDataItem(final DataItem dataItem);
 		//
 		Builder<T> setLoadElapsedTimeUnit(final TimeUnit timeUnit);
 		//

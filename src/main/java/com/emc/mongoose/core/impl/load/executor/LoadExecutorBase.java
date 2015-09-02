@@ -97,6 +97,9 @@ implements LoadExecutor<T> {
 	private ResumableUserTimeClock clock = new ResumableUserTimeClock();
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	//
+	private DataItem lastDataItem;
+	private final DataItemInput<T> itemsSrc;
+	//
 	private final Thread
 		metricsDaemon = new Thread() {
 			//
@@ -189,6 +192,7 @@ implements LoadExecutor<T> {
 		//
 		this.dataCls = dataCls;
 		this.rtConfig = rtConfig;
+		this.itemsSrc = itemSrc;
 		if (!INSTANCE_NUMBERS.containsKey(rtConfig.getRunId())) {
 			INSTANCE_NUMBERS.put(rtConfig.getRunId(), new AtomicInteger(0));
 		}
@@ -294,8 +298,8 @@ implements LoadExecutor<T> {
 			producer = reqConfig.getContainerListInput(maxCount, addrs[0]);
 			LOG.debug(Markers.MSG, "{} will use {} as data items producer", getName(), producer);
 		}*/
-		if(itemSrc != null) {
-			producer = new DataItemInputProducer<>(itemSrc);
+		if(itemsSrc != null) {
+			producer = new DataItemInputProducer<>(itemsSrc);
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -470,9 +474,16 @@ implements LoadExecutor<T> {
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
 			} else {
-				//
 				try {
 					producer.setConsumer(this);
+					if ((producer instanceof DataItemInputProducer)
+						&& (counterResults.get() > 0)) {
+						final DataItemInputProducer inputProducer
+							= DataItemInputProducer.class.cast(producer);
+						inputProducer.setSkippedItemsCount(counterResults.get());
+						inputProducer.setLastDataItem(currState.getLastDataItem());
+
+					}
 					producer.start();
 					LOG.debug(Markers.MSG, "Started object producer {}", producer);
 				} catch(final IOException e) {
@@ -660,6 +671,7 @@ implements LoadExecutor<T> {
 		final T dataItem = ioTask.getDataItem();
 		final int duration = ioTask.getDuration(), latency = ioTask.getLatency();
 		if(status == IOTask.Status.SUCC) {
+			lastDataItem = dataItem;
 			// update the metrics with success
 			throughPutSucc.mark();
 			if(latency > 0) {
@@ -755,15 +767,16 @@ implements LoadExecutor<T> {
 			.setCountBytes(reqBytes == null ? 0 : reqBytes.getCount())
 			.setCountSubm(counterSubm == null ? 0 : counterSubm.getCount())
 			.setLoadElapsedTimeValue(
-				tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
+					tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
 			)
 			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
 			.setDurationValues(
 				reqDuration == null ? new long[]{} : reqDuration.getSnapshot().getValues()
 			)
 			.setLatencyValues(
-				respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
-			);
+					respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
+			)
+			.setLastDataItem(lastDataItem);
 		//
 		return stateBuilder.build();
 	}

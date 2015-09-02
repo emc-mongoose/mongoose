@@ -17,12 +17,11 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class NewDataItemInput<T extends DataItem>
 implements DataItemInput<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	//
 	private final Constructor<T> dataConstructor;
 	private final long minObjSize, maxObjSize, sizeRange;
 	private final float objSizeBias;
 	private final ThreadLocalRandom thrLocalRnd = ThreadLocalRandom.current();
+	private DataItem lastItem = null;
 	//
 	public NewDataItemInput(
 		final Class<T> dataCls, final long minObjSize, final long maxObjSize, final float objSizeBias
@@ -72,6 +71,25 @@ implements DataItemInput<T> {
 			throw new IOException(e);
 		}
 		return maxCount;
+	}
+	//
+	@Override
+	public DataItem getLastDataItem() {
+		return lastItem;
+	}
+	//
+	@Override
+	public void setLastDataItem(final T lastItem) {
+		this.lastItem = lastItem;
+	}
+	/**
+	 * Does nothing
+	 * @param itemsCount count of items which should be skipped from the beginning
+	 * @throws IOException doesn't throw
+	 */
+	@Override
+	public void skip(final long itemsCount)
+	throws IOException {
 	}
 	//
 	@Override

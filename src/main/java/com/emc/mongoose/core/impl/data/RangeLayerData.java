@@ -121,6 +121,20 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
+	public boolean equals(final Object o) {
+		if (o == this) {
+			return true;
+		}
+		if (!(o instanceof RangeLayerData) || !super.equals(o)) {
+			return false;
+		} else {
+			final RangeLayerData other = RangeLayerData.class.cast(o);
+			return maskRangesRead.equals(other.maskRangesRead)
+				&& maskRangesWrite.equals(other.maskRangesWrite);
+		}
+	}
+	//
+	@Override
 	public int hashCode() {
 		return super.hashCode() ^ maskRangesRead.hashCode() ^ maskRangesWrite.hashCode();
 	}
