@@ -726,17 +726,20 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public void setLoadState(final LoadState state) {
+	public void setLoadState(final LoadState<T> state) {
 		if (state != null) {
 			LOG.warn(Markers.MSG, "Failed to resume run in distributed mode. See #JIRA-411");
 		}
 	}
 	//
 	@Override
-	public LoadState getLoadState()
+	@SuppressWarnings("unchecked")
+	public LoadState<T> getLoadState()
 	throws RemoteException {
 		//forceFetchAndAggregation();
-		final LoadState.Builder<DataItem, BasicLoadState<DataItem>> stateBuilder = new BasicLoadState.Builder<>()
+		final LoadState.Builder<T, BasicLoadState<T>> stateBuilder
+			= new BasicLoadState.Builder<>();
+		stateBuilder
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(runTimeConfig)
 			.setCountSucc(metricSuccCount.getValue())

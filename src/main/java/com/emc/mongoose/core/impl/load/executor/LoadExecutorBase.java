@@ -732,7 +732,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public void setLoadState(final LoadState state) {
+	public void setLoadState(final LoadState<T> state) {
 		if (state != null) {
 			if (state.isLoadFinished(rtConfig)) {
 				isLoadFinished.compareAndSet(false, true);
@@ -756,12 +756,13 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public LoadState getLoadState()
+	@SuppressWarnings("unchecked")
+	public LoadState<T> getLoadState()
 	throws RemoteException {
 		final long prevElapsedTime = currState != null ?
 			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
-		final LoadState.Builder<DataItem, BasicLoadState<DataItem>> stateBuilder = new BasicLoadState.Builder<>()
-			.setLoadNumber(instanceNum)
+		final LoadState.Builder<T, BasicLoadState<T>> stateBuilder = new BasicLoadState.Builder<>();
+		stateBuilder.setLoadNumber(instanceNum)
 			.setRunTimeConfig(rtConfig)
 			.setCountSucc(throughPutSucc == null ? 0 : throughPutSucc.getCount())
 			.setCountFail(throughPutFail == null ? 0 : throughPutFail.getCount())

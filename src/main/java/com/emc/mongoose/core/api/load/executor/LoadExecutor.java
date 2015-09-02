@@ -64,10 +64,10 @@ extends Producer<T>, AsyncConsumer<T> {
 	void handleResult(final IOTask<T> task)
 	throws RemoteException;
 	//
-	void setLoadState(final LoadState state)
+	void setLoadState(final LoadState<T> state)
 	throws RemoteException;
 	//
-	LoadState getLoadState()
+	LoadState<T> getLoadState()
 	throws RemoteException;
 	//
 	void logMetrics(Marker marker)
