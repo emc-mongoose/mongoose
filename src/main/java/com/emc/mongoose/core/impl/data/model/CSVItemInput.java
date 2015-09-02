@@ -1,7 +1,10 @@
 package com.emc.mongoose.core.impl.data.model;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -12,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
 /**
  The data item input using CSV file containing the human-readable data item records as the source
  */
@@ -20,6 +24,9 @@ implements DataItemInput<T> {
 	//
 	protected final BufferedReader itemsSrc;
 	protected final Constructor<? extends T> itemConstructor;
+	private DataItem lastItem = null;
+	//
+	private static final Logger LOG = LogManager.getLogger();
 	/**
 	 @param in the input stream to read the data item records from
 	 @param itemCls the particular data item implementation class used to parse the records
@@ -39,6 +46,27 @@ implements DataItemInput<T> {
 	) {
 		this.itemsSrc = itemsSrc;
 		this.itemConstructor = itemConstructor;
+	}
+	//
+	@Override
+	public DataItem getLastDataItem() {
+		return lastItem;
+	}
+	//
+	@Override
+	public void setLastDataItem(final T lastItem) {
+		this.lastItem = lastItem;
+	}
+	//
+	@Override
+	public void skip(final long itemsCount)
+	throws IOException {
+		LOG.info(Markers.MSG, "Skipping {} data items. " +
+			"This may take several minutes to complete. Please wait...", itemsCount);
+		for (int i = 0; i < itemsCount; i++) {
+			itemsSrc.readLine();
+		}
+		LOG.debug(Markers.MSG, "Items were skipped successfully");
 	}
 	//
 	@Override

@@ -650,14 +650,15 @@ function onStartButtonPressed() {
 	$.post("/start", $("#main-form").serialize(), function(data) {
 		if (data) {
 			if (confirm("Are you sure? " + data) === true) {
-				$.post("/stop", { "run.id" : $("#run\\.id").val(), "type" : "remove" }, function(data, status) {
-					if (status) {
-						onStartButtonPressed();
-					}
-				}).fail(function() {
-					alert("Internal Server Error");
-				});
-			}
+				$.post("/stop", { "run.id" : $("#run\\.id input").val(), "type" : "remove" },
+					function(data, status) {
+						if (status) {
+							onStartButtonPressed();
+						}
+					}).fail(function() {
+						alert("Internal Server Error");
+					});
+				}
 		} else {
 			$('#config-type option').prop('selected', function() {
 				return this.defaultSelected;

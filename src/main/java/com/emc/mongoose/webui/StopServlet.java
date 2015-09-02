@@ -39,10 +39,13 @@ public final class StopServlet extends CommonServlet {
 		try {
 			if (request.getParameter(STOP_TYPE).equals(TYPE_REMOVE)) {
 				stopMongoose(currentRunId, true);
+				if (stoppedRunModes.containsKey(currentRunId)) {
+					stoppedRunModes.remove(currentRunId);
+				}
 			} else {
 				stopMongoose(currentRunId);
+				stoppedRunModes.put(currentRunId, true);
 			}
-			stoppedRunModes.put(currentRunId, true);
 		} catch (InterruptedException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Mongoose can't stop correctly through Web UI");
 		}
@@ -59,16 +62,13 @@ public final class StopServlet extends CommonServlet {
 	throws InterruptedException {
 		final Thread runnerThread = threadsMap.get(runId);
 		if (runnerThread != null) {
-			if (!runnerThread.isAlive()) {
-				threadsMap.remove(runId);
-				WebUIAppender.removeRunId(runId);
-			} else {
+			if (runnerThread.isAlive()) {
 				runnerThread.interrupt();
 				runnerThread.join();
-				if (removeTab) {
-					threadsMap.remove(runId);
-					WebUIAppender.removeRunId(runId);
-				}
+			}
+			if (removeTab) {
+				threadsMap.remove(runId);
+				WebUIAppender.removeRunId(runId);
 			}
 		}
 	}

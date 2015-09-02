@@ -41,7 +41,7 @@ extends WSMockTestBase {
 	//
 	private static String RUN_ID = DefaultRampupTest.class.getCanonicalName();
 	private static final String	LIMIT_TIME = "30.seconds";
-	private static final int COUNT_STEPS = 20;
+	private static final int COUNT_STEPS = 4;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -265,7 +265,7 @@ extends WSMockTestBase {
 				}
 			}
 			Assert.assertEquals(
-				"Steps counts must be equal" + COUNT_STEPS, COUNT_STEPS, stepsCount
+				"Steps counts must be equal to " + COUNT_STEPS, COUNT_STEPS, stepsCount
 			);
 		}
 	}

@@ -46,7 +46,7 @@ extends WSMockTestBase{
 		RAMPUP_SIZES = "10KB,100MB,1MB",
 		RAMPUP_THREAD_COUNTS = "1,10,100",
 		RAMPUP_LOAD_CHAIN = "create,read,delete";
-	private static final int COUNT_STEPS = 3;
+	private static final int COUNT_STEPS = 9;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -259,7 +259,7 @@ extends WSMockTestBase{
 				}
 			}
 			Assert.assertEquals(
-				"Steps counts must be equal" + COUNT_STEPS, COUNT_STEPS, stepsCount
+				"Steps counts must be equal to " + COUNT_STEPS, COUNT_STEPS, stepsCount
 			);
 		}
 	}

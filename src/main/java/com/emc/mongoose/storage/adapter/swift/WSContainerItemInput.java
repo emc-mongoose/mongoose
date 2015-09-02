@@ -54,7 +54,7 @@ extends GenericContainerItemInputBase<T> {
 		}
 		// execute the request
 		final HttpResponse resp = WSContainerImpl.class.cast(container).execute(
-			nodeAddr, WSRequestConfig.METHOD_GET, lastId, countLimit
+			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit
 		);
 		// response validation
 		if(resp == null) {
@@ -92,7 +92,7 @@ extends GenericContainerItemInputBase<T> {
 			}
 			LOG.debug(
 				Markers.MSG, "Listed {} items the last time, last oid is ",
-				doneCount - lastTimeCount, lastId
+				doneCount - lastTimeCount, lastItemId
 			);
 		}
 	}
@@ -101,7 +101,7 @@ extends GenericContainerItemInputBase<T> {
 	public final void reset()
 	throws IOException {
 		super.reset();
-		lastId = null;
+		lastItemId = null;
 	}
 	//
 	private void handleJsonInputStream(final InputStream in)
@@ -123,10 +123,10 @@ extends GenericContainerItemInputBase<T> {
 							break;
 						case END_OBJECT:
 							if(isInsideObjectToken) {
-								if(lastId != null && lastSize > -1) {
+								if(lastItemId != null && lastSize > -1) {
 									try {
 										nextItem = container.buildItem(
-											itemConstructor, lastId, lastSize
+											itemConstructor, lastItemId, lastSize
 										);
 										if(nextItem != null) {
 											items.add(nextItem);
@@ -139,12 +139,12 @@ extends GenericContainerItemInputBase<T> {
 											"Failed to create data item descriptor"
 										);
 									} catch(final NumberFormatException e) {
-										LOG.debug(Markers.ERR, "Invalid id: {}", lastId);
+										LOG.debug(Markers.ERR, "Invalid id: {}", lastItemId);
 									}
 								} else {
 									LOG.trace(
 										Markers.ERR, "Invalid object id ({}) or size ({})",
-										lastId, lastSize
+										lastItemId, lastSize
 									);
 								}
 							} else {
@@ -157,7 +157,7 @@ extends GenericContainerItemInputBase<T> {
 								lastSize = jsonParser.nextLongValue(-1);
 							}
 							if(KEY_ID.equals(jsonParser.getCurrentName())) {
-								lastId = jsonParser.nextTextValue();
+								lastItemId = jsonParser.nextTextValue();
 							}
 							break;
 						case VALUE_NUMBER_INT:
