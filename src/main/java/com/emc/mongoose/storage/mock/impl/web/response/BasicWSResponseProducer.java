@@ -34,12 +34,16 @@ implements HttpAsyncResponseProducer {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile HttpResponse response = null;
-	private WSObjectMock contentDataObject = null;
-	private NByteArrayEntity contentBytes = null;
-	private long byteCount = 0, contentSize = 0, rangeSize = 0;
-	private OutputChannel chanOut = null;
-	private int rangeIdx = 0;
-	private UniformData currRange = null;
+	private volatile OutputChannel chanOut = null;
+	//
+	private volatile WSObjectMock dataObject = null;
+	private volatile NByteArrayEntity contentBytes = null;
+	//
+	private volatile long countBytesDone = 0, contentSize = 0;
+	//
+	private volatile UniformData currRange = null;
+	private volatile long currRangeSize = 0, nextRangeOffset = 0;
+	private volatile int currRangeIdx = 0, currDataLayerIdx = 0;
 	//
 	public final void setResponse(final HttpResponse response) {
 		this.response = response;
@@ -47,11 +51,12 @@ implements HttpAsyncResponseProducer {
 		if(contentEntity != null) {
 			contentSize = contentEntity.getContentLength();
 			if(contentEntity instanceof WSObjectMock) {
-				contentDataObject = (WSObjectMock) contentEntity;
+				dataObject = (WSObjectMock) contentEntity;
+				currDataLayerIdx = dataObject.getCurrLayerIndex();
 				contentBytes = null;
 			} else if(contentEntity instanceof NByteArrayEntity) {
 				contentBytes = (NByteArrayEntity) contentEntity;
-				contentDataObject = null;
+				dataObject = null;
 			}
 		}
 	}
@@ -64,8 +69,8 @@ implements HttpAsyncResponseProducer {
 	@Override
 	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-		if(contentDataObject != null) {
-			produceDataObjectContent(encoder);
+		if(dataObject != null) {
+			produceObjectContent(encoder);
 		} else if(contentBytes != null) {
 			contentBytes.produceContent(encoder, ioctrl);
 		} else {
@@ -77,39 +82,59 @@ implements HttpAsyncResponseProducer {
 		}
 	}
 	//
-	private void produceDataObjectContent(final ContentEncoder encoder)
+	private void produceObjectContent(final ContentEncoder encoder)
 	throws IOException {
-		if(chanOut == null) {
-			chanOut = new OutputChannel(encoder);
+		//
+		if(chanOut == null) { // 1st time invocation
+			if(contentSize == 0) { // nothing to do
+				encoder.complete();
+				return;
+			} else { // wrap the encoder w/ output channel
+				chanOut = new OutputChannel(encoder);
+			}
 		}
+		//
 		try {
-			if(!contentDataObject.hasAnyUpdatedRanges()) {
-				if(byteCount == contentSize) {
-					chanOut.close();
-				} else {
-					byteCount += contentDataObject.write(chanOut, contentSize - byteCount);
-				}
+			if(dataObject.hasAnyUpdatedRanges()) {
+				produceUpdatedObjectContent();
 			} else {
-				if(byteCount == rangeSize) {
-					rangeSize = contentDataObject.getRangeSize(rangeIdx);
-					currRange = new UniformData(
-						contentDataObject.getOffset() + RangeLayerData.getRangeOffset(rangeIdx),
-						rangeSize,
-						contentDataObject.isCurrLayerRangeUpdating(rangeIdx) ?
-							contentDataObject.getCurrLayerIndex() + 1 :
-							contentDataObject.getCurrLayerIndex(),
-						UniformDataSource.DEFAULT
-					);
-					rangeIdx ++;
-				}
-				if(rangeSize > 0) {
-					byteCount += currRange.write(chanOut, rangeSize - byteCount);
-				} else {
-					chanOut.close();
-				}
+				produceNotUpdatedObjectContent();
 			}
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");
+		}
+	}
+	//
+	private void produceNotUpdatedObjectContent()
+	throws IOException {
+		countBytesDone += dataObject.write(chanOut, contentSize - countBytesDone);
+		if(countBytesDone == contentSize) {
+			chanOut.close();
+		}
+	}
+	//
+	private void produceUpdatedObjectContent()
+	throws IOException {
+		if(countBytesDone == nextRangeOffset) {
+			currRangeSize = dataObject.getRangeSize(currRangeIdx);
+			currRange = new UniformData(
+				dataObject.getOffset() + nextRangeOffset, currRangeSize,
+				dataObject.isCurrLayerRangeUpdating(currRangeIdx) ?
+					currDataLayerIdx + 1 : currDataLayerIdx,
+				UniformDataSource.DEFAULT
+			);
+			currRangeIdx ++;
+			nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
+		}
+		if(currRangeSize > 0) {
+			countBytesDone += currRange.write(
+				chanOut, nextRangeOffset - countBytesDone
+			);
+			if(countBytesDone == contentSize) {
+				chanOut.close();
+			}
+		} else {
+			chanOut.close();
 		}
 	}
 	//

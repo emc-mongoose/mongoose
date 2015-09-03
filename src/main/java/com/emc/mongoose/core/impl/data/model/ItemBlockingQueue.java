@@ -138,6 +138,6 @@ implements DataItemOutput<T>, DataItemInput<T> {
 	//
 	@Override
 	public final String toString() {
-		return "itemsQueue<" + queue.toString() + ">";
+		return "itemsQueue#" + hashCode() + "";
 	}
 }

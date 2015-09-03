@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.data;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
@@ -175,11 +174,11 @@ implements DataItem {
 	@Override
 	public long writeFully(final WritableByteChannel chanDst)
 	throws IOException {
-		return writeRange(chanDst, 0, size);
+		return writeRangeFully(chanDst, 0, size);
 	}
 	//
 	@Override
-	public final long writeRange(
+	public final long writeRangeFully(
 		final WritableByteChannel chanDst, final long relOffset, final long len
 	) throws IOException {
 		long writtenCount = 0;
@@ -225,11 +224,11 @@ implements DataItem {
 	@Override
 	public long readAndVerifyFully(final ReadableByteChannel chanSrc)
 	throws DataSizeException, DataCorruptionException, IOException {
-		return readAndVerifyRange(chanSrc, 0, size);
+		return readAndVerifyRangeFully(chanSrc, 0, size);
 	}
 	// checks that data read from input equals the specified range
 	@Override
-	public final long readAndVerifyRange(
+	public final long readAndVerifyRangeFully(
 		final ReadableByteChannel chanSrc, final long relOffset, final long len
 	) throws DataSizeException, DataCorruptionException, IOException {
 		setRelativeOffset(relOffset);

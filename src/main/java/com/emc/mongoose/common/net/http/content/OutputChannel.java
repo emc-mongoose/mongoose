@@ -11,7 +11,7 @@ import java.nio.channels.WritableByteChannel;
 public final class OutputChannel
 implements WritableByteChannel {
 	//
-	private /*TODO final */ContentEncoder contentEncoder;
+	private ContentEncoder contentEncoder;
 	//
 	public OutputChannel(final ContentEncoder contentEncoder) {
 		this.contentEncoder = contentEncoder;
@@ -39,7 +39,6 @@ implements WritableByteChannel {
 		return !contentEncoder.isCompleted();
 	}
 	//
-	@Deprecated
 	public final void setContentEncoder(final ContentEncoder contentEncoder) {
 		this.contentEncoder = contentEncoder;
 	}

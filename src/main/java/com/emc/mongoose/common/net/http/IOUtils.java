@@ -20,7 +20,7 @@ public final class IOUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int
-		BUFF_COUNT = (int) (Math.log(BUFF_SIZE_HI / BUFF_SIZE_LO) / Math.log(2));
+		BUFF_COUNT = (int) (Math.log(BUFF_SIZE_HI / BUFF_SIZE_LO) / Math.log(2) + 1);
 	//
 	private static ThreadLocal<ByteBuffer[]>
 		THREAD_LOCAL_IO_BUFFERS = new ThreadLocal<ByteBuffer[]>() {
@@ -43,7 +43,7 @@ public final class IOUtils {
 					currBuffSize *= 2;
 				}
 				//
-				ByteBuffer buff = ioBuffers[i];
+				ByteBuffer buff = ioBuffers[i == ioBuffers.length ? i - 1 : i];
 				if(buff == null) {
 					buff = ByteBuffer.allocateDirect(currBuffSize);
 					ioBuffers[i] = buff;

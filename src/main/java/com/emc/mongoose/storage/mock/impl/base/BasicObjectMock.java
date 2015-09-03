@@ -83,7 +83,7 @@ implements DataObjectMock {
 	//
 	@Override
 	public final boolean hasAnyUpdatedRanges() {
-		return maskRangesRead.isEmpty();
+		return !maskRangesRead.isEmpty();
 	}
 	//
 	@Override
@@ -98,7 +98,7 @@ implements DataObjectMock {
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
 		if(hasAnyUpdatedRanges()) {
-			return writeRange(chanOut, 0, size);
+			return writeRangeFully(chanOut, 0, size);
 		} else {
 			long writtenCount = 0;
 			for(int i = 0; i < countRangesTotal; i++) {
@@ -117,7 +117,7 @@ implements DataObjectMock {
 					);
 					writtenCount += updatedRange.writeFully(chanOut);
 				} else { // the range was not updated
-					writtenCount += writeRange(chanOut, rangeOffset, rangeSize);
+					writtenCount += writeRangeFully(chanOut, rangeOffset, rangeSize);
 				}
 			}
 			return writtenCount;

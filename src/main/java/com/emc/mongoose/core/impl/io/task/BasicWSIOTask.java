@@ -272,6 +272,7 @@ implements WSIOTask<T> {
 						try {
 							transferSize += dataItem.readAndVerifyFully(chanIn);
 						} catch(final DataSizeException e) {
+							transferSize += e.offset;
 							LOG.warn(
 								Markers.MSG,
 								"{}: content size mismatch, expected: {}, actual: {}",
@@ -279,6 +280,7 @@ implements WSIOTask<T> {
 							);
 							status = Status.RESP_FAIL_CORRUPT;
 						} catch(final DataCorruptionException e) {
+							transferSize += e.offset;
 							LOG.warn(
 								Markers.MSG,
 								"{}: content mismatch @ offset {}, expected: {}, actual: {}",
@@ -289,6 +291,7 @@ implements WSIOTask<T> {
 							);
 							status = Status.RESP_FAIL_CORRUPT;
 						} finally {
+							IOUtils.consumeQuietlyNIO(in, dataItem.getSize() - transferSize);
 							chanIn.close();
 						}
 					} else { // consume quietly

@@ -31,7 +31,7 @@ extends ReadableByteChannel, Externalizable {
 	int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException;
 	//
-	long writeRange(final WritableByteChannel chanDst, final long relOffset, final long len)
+	long writeRangeFully(final WritableByteChannel chanDst, final long relOffset, final long len)
 		throws IOException;
 	//
 	long writeFully(final WritableByteChannel chanDst)
@@ -40,7 +40,7 @@ extends ReadableByteChannel, Externalizable {
 	int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataSizeException, DataCorruptionException, IOException;
 	//
-	long readAndVerifyRange(
+	long readAndVerifyRangeFully(
 		final ReadableByteChannel chanSrc, final long relOffset, final long len
 	) throws DataSizeException, DataCorruptionException, IOException;
 	//
