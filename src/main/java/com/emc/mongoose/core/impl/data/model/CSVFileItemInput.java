@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -64,5 +65,14 @@ implements FileDataItemInput<T> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to get approx data items size");
 		}
 		return actualCount > 0 ? sumSize / actualCount : 0;
+	}
+	//
+	@Override
+	public void reset()
+	throws IOException {
+		if (itemsSrc != null) {
+			itemsSrc.close();
+		}
+		itemsSrc = Files.newBufferedReader(itemsFilePath, StandardCharsets.UTF_8);
 	}
 }

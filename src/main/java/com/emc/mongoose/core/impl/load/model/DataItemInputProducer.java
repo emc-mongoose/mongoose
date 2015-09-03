@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.model;
 //
+import com.emc.mongoose.common.exceptions.NullHttpResponseException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -14,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.channels.ClosedByInterruptException;
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -30,17 +32,20 @@ implements Producer<T> {
 	protected volatile Consumer<T> consumer = null;
 	protected long skippedItemsCount;
 	protected T lastDataItem;
+	protected boolean isCircular = false;
 	//
-	public DataItemInputProducer(final DataItemInput<T> itemIn) {
-		this(itemIn, 0, null);
+	public DataItemInputProducer(final DataItemInput<T> itemIn, final boolean isCircular) {
+		this(itemIn, isCircular, 0, null);
 	}
 	//
 	public DataItemInputProducer(
-		final DataItemInput<T> itemIn, final long skippedItemsCount, final T dataItem
+		final DataItemInput<T> itemIn, final boolean isCircular,
+		final long skippedItemsCount, final T dataItem
 	) {
 		this.itemIn = itemIn;
 		this.skippedItemsCount = skippedItemsCount;
 		this.lastDataItem = dataItem;
+		this.isCircular = isCircular;
 		setDaemon(true);
 		setName("dataItemInputProducer<" + itemIn.toString() + ">");
 	}
@@ -85,6 +90,14 @@ implements Producer<T> {
 		timeUnit.timedJoin(this, timeOut);
 	}
 	//
+	public void reset() {
+		try {
+			itemIn.reset();
+		} catch (final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to reset data item input");
+		}
+	}
+	//
 	@Override
 	public final void run() {
 		T nextItem = null;
@@ -107,12 +120,23 @@ implements Producer<T> {
 				try {
 					nextItem = itemIn.read();
 				} catch(final EOFException e) {
+					if (isCircular) {
+						reset();
+						continue;
+					} else {
+						break;
+					}
+				} catch (final ClosedByInterruptException | NullHttpResponseException e) {
 					break;
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to read the next data item");
 				}
 				if(nextItem == null) {
-					break;
+					if (isCircular) {
+						reset();
+					} else {
+						break;
+					}
 				} else {
 					try {
 						consumer.submit(nextItem);

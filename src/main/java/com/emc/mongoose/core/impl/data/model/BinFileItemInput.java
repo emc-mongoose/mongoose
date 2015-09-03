@@ -68,4 +68,17 @@ implements FileDataItemInput<T> {
 		}
 		return actualCount > 0 ? sumSize / actualCount : 0;
 	}
+	//
+	@Override
+	public void reset()
+	throws IOException {
+		if (itemsSrc != null) {
+			itemsSrc.close();
+		}
+		itemsSrc = new ObjectInputStream(
+			new BufferedInputStream(
+				Files.newInputStream(itemsSrcPath, StandardOpenOption.READ)
+			)
+		);
+	}
 }

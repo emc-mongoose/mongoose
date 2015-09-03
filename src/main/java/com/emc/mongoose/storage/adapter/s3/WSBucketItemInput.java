@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
+import com.emc.mongoose.common.exceptions.NullHttpResponseException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -167,7 +168,7 @@ extends GenericContainerItemInputBase<T> {
 			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit
 		);
 		if(resp == null) {
-			throw new IOException("No HTTP response");
+			throw new NullHttpResponseException("No HTTP response", new NullPointerException());
 		}
 		// response validation
 		final StatusLine status = resp.getStatusLine();
@@ -218,6 +219,7 @@ extends GenericContainerItemInputBase<T> {
 	public final void reset()
 	throws IOException {
 		super.reset();
+		eof = false;
 		lastItemId = null;
 	}
 }

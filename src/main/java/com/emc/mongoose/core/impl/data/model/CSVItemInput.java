@@ -22,7 +22,7 @@ import java.util.List;
 public class CSVItemInput<T extends DataItem>
 implements DataItemInput<T> {
 	//
-	protected final BufferedReader itemsSrc;
+	protected BufferedReader itemsSrc;
 	protected final Constructor<? extends T> itemConstructor;
 	private DataItem lastItem = null;
 	//

@@ -300,7 +300,7 @@ implements LoadExecutor<T> {
 			LOG.debug(Markers.MSG, "{} will use {} as data items producer", getName(), producer);
 		}*/
 		if(itemsSrc != null) {
-			producer = new DataItemInputProducer<>(itemsSrc);
+			producer = new DataItemInputProducer<>(itemsSrc, rtConfig.getDataSrcCircularEnabled());
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -401,6 +401,7 @@ implements LoadExecutor<T> {
 	private final AtomicLong tsStart = new AtomicLong(-1);
 	//
 	@Override
+	@SuppressWarnings("unchecked")
 	public void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(Markers.MSG, "Starting {}", getName());
@@ -464,7 +465,9 @@ implements LoadExecutor<T> {
 						getName(), SizeUtil.formatSize(itemsFilePath.toFile().length()), itemsFilePath
 					);
 					isShutdown.compareAndSet(true, false); // cancel if shut down before start
-					producer = new DataItemInputProducer<>(itemsFileBuff.getInput());
+					producer = new DataItemInputProducer<>(
+						itemsFileBuff.getInput(), rtConfig.getDataSrcCircularEnabled()
+					);
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");

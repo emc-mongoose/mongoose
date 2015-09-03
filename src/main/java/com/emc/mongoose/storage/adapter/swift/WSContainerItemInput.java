@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
+import com.emc.mongoose.common.exceptions.NullHttpResponseException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -58,7 +59,7 @@ extends GenericContainerItemInputBase<T> {
 		);
 		// response validation
 		if(resp == null) {
-			throw new IOException("No HTTP response is returned");
+			throw new NullHttpResponseException("No HTTP response", new NullPointerException());
 		}
 		final StatusLine status = resp.getStatusLine();
 		if(status == null) {
@@ -101,6 +102,7 @@ extends GenericContainerItemInputBase<T> {
 	public final void reset()
 	throws IOException {
 		super.reset();
+		eof = false;
 		lastItemId = null;
 	}
 	//
