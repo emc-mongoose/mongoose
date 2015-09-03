@@ -43,7 +43,10 @@ public final class IOUtils {
 					currBuffSize *= 2;
 				}
 				//
-				ByteBuffer buff = ioBuffers[i == ioBuffers.length ? i - 1 : i];
+				if(i == ioBuffers.length) {
+					i --;
+				}
+				ByteBuffer buff = ioBuffers[i];
 				if(buff == null) {
 					buff = ByteBuffer.allocateDirect(currBuffSize);
 					ioBuffers[i] = buff;

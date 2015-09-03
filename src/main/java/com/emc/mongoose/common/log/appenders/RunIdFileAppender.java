@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.log.appenders;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import static com.emc.mongoose.common.conf.RunTimeConfig.KEY_RUN_ID;
 //
 import com.emc.mongoose.common.log.Markers;
 import org.apache.logging.log4j.Marker;
@@ -146,17 +146,15 @@ extends AbstractAppender {
 		);
 	}
 	//
-	private final static String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
-	//
 	@Override
 	public final void append(final LogEvent event) {
 		final String currRunId;
 		final Map<String, String> evtCtxMap = event.getContextMap();
 		//
 		if(evtCtxMap.containsKey(KEY_RUN_ID)) {
-			currRunId = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
+			currRunId = event.getContextMap().get(KEY_RUN_ID);
 		} else if(ThreadContext.containsKey(KEY_RUN_ID)) {
-			currRunId = ThreadContext.get(RunTimeConfig.KEY_RUN_ID);
+			currRunId = ThreadContext.get(KEY_RUN_ID);
 		} else {
 			currRunId = null;
 		}
