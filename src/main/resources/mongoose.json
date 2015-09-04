@@ -114,6 +114,13 @@
 			"secret": "uwXSy4kD+N8pmltfOC2JxtrJ+Tg7/yBswV6jMu6h"
 		},
 		"data": {
+			"buffer": {
+				"size": "4KB",
+				"ring": {
+					"seed": "7a42d9c483244167",
+					"size": "4MB"
+				}
+			},
 			"size": {
 				"min": "1MB",
 				"max": "1MB",
@@ -122,13 +129,6 @@
 			"src": {
 				"fpath": "",
 				"separator": ","
-			},
-			"buffer": {
-				"size": "4KB",
-				"ring": {
-					"seed": "7a42d9c483244167",
-					"size": "4MB"
-				}
 			},
 			"fsAccess": false,
 			"prefix": null,
@@ -201,7 +201,7 @@
 			"scheme": "http",
 			"mock": {
 				"headCount": 1,
-				"ioThreadsPerSocket": 100,
+				"ioThreadsPerSocket": 0,
 				"capacity": 10000000,
 				"container": {
 					"capacity": 10000000,
