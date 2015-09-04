@@ -80,6 +80,6 @@ implements FileDataItemInput<T> {
 		if (itemsSrc != null) {
 			itemsSrc.close();
 		}
-		itemsSrc = buildObjectInputStream(itemsSrcPath);
+		setItemsSrc(buildObjectInputStream(itemsSrcPath));
 	}
 }

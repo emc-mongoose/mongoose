@@ -26,6 +26,10 @@ implements DataItemInput<T>{
 		this.itemsSrc = itemsSrc;
 	}
 	//
+	public void setItemsSrc(final ObjectInputStream itemsSrc) {
+		this.itemsSrc = itemsSrc;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	public T read()
 	throws IOException {
