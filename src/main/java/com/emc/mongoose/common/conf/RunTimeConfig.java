@@ -48,8 +48,11 @@ implements Externalizable {
 		KEY_AUTH_ID = "auth.id",
 		KEY_AUTH_SECRET = "auth.secret",
 		//
-		KEY_IO_RING_SEED = "io.buffer.ring.seed",
-		KEY_IO_RING_SIZE = "io.buffer.ring.size",
+		KEY_IO_BUFFER_SIZE_MIN = "io.buffer.size.min",
+		KEY_IO_BUFFER_SIZE_MAX = "io.buffer.size.max",
+		//
+		KEY_DATA_SRC_RING_SEED = "data.src.ring.seed",
+		KEY_DATA_SRC_RING_SIZE = "data.src.ring.size",
 		//
 		KEY_DATA_ITEM_COUNT = "load.limit.count",
 		KEY_DATA_COUNT = "data.count",
@@ -278,8 +281,12 @@ implements Externalizable {
 		return getString("auth.secret");
 	}
 	//
-	public final long getIoBufferSize() {
-		return SizeUtil.toSize(getString("io.buffer.size"));
+	public final long getIOBufferSizeMin() {
+		return SizeUtil.toSize(getString(KEY_IO_BUFFER_SIZE_MIN));
+	}
+	//
+	public final long getIOBufferSizeMax() {
+		return SizeUtil.toSize(getString(KEY_IO_BUFFER_SIZE_MAX));
 	}
 	//
 	public final int getBatchSize() {
@@ -514,12 +521,12 @@ implements Externalizable {
 		return getInt("storage.mock.fault.maxConnLifeMilliSec");
 	}
 	//
-	public final String getIoBufferRingSeed() {
-		return getString("io.buffer.ring.seed");
+	public final String getDataSrcRingSeed() {
+		return getString(KEY_DATA_SRC_RING_SEED);
 	}
 	//
-	public final long getIoBufferRingSize() {
-		return SizeUtil.toSize(getString("io.buffer.ring.size"));
+	public final long getDataSrcRingSize() {
+		return SizeUtil.toSize(getString(KEY_DATA_SRC_RING_SIZE));
 	}
 	//
 	public final int getThreadCountFor(final String loadType) {
@@ -727,8 +734,8 @@ implements Externalizable {
 				case KEY_RUN_VERSION:
 				case KEY_DATA_ITEM_COUNT:
 				case KEY_DATA_SIZE:
-				case KEY_IO_RING_SEED:
-				case KEY_IO_RING_SIZE:
+				case KEY_DATA_SRC_RING_SEED:
+				case KEY_DATA_SRC_RING_SIZE:
 				case KEY_LOAD_THREADS:
 				case KEY_STORAGE_ADDRS:
 				case KEY_API_NAME:

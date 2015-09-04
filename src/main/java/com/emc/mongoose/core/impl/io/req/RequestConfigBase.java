@@ -59,7 +59,7 @@ implements RequestConfig<T> {
 		scheme = runTimeConfig.getStorageProto();
 		port = runTimeConfig.getApiTypePort(api);
 		nameSpace = runTimeConfig.getStorageNameSpace();
-		buffSize = (int) runTimeConfig.getIoBufferSize();
+		buffSize = (int) runTimeConfig.getIOBufferSizeMin();
 		reqSleepMilliSec = runTimeConfig.getLoadLimitReqSleepMilliSec();
 	}
 	//
@@ -269,7 +269,7 @@ implements RequestConfig<T> {
 		setUserName(this.runTimeConfig.getAuthId());
 		setSecret(this.runTimeConfig.getAuthSecret());
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
-		setBuffSize((int)this.runTimeConfig.getIoBufferSize());
+		setBuffSize((int)this.runTimeConfig.getIOBufferSizeMin());
 		setReqSleepMilliSec(this.runTimeConfig.getLoadLimitReqSleepMilliSec());
 		return this;
 	}

@@ -37,12 +37,12 @@
 
 			"data.src.random.enabled": "data.src.random",
 			"data.src.random.batchSize": "data.src.batchSize",
-			"data.page.size": "io.buffer.size",
-			"data.ring.seed": "io.buffer.ring.seed",
-			"data.ring.size": "io.buffer.ring.size",
-			"data.buffer.size": "io.buffer.size",
-			"data.buffer.ring.seed": "io.buffer.ring.seed",
-			"data.buffer.ring.size": "io.buffer.ring.size",
+			"data.page.size": "io.buffer.size.min",
+			"data.ring.seed": "data.src.ring.seed",
+			"data.ring.size": "data.src.ring.size",
+			"data.buffer.size": "io.buffer.size.min",
+			"data.buffer.ring.seed": "data.src.ring.seed",
+			"data.buffer.ring.size": "data.src.ring.size",
 			"http.sign.method": "http.signMethod",
 
 			"load.tasks.batchSize": "data.src.batchSize",
@@ -119,10 +119,9 @@
 		},
 		"io": {
 			"buffer": {
-				"size": "4KB",
-				"ring": {
-					"seed": "7a42d9c483244167",
-					"size": "4MB"
+				"size": {
+					"min": "4KB",
+					"max": "4MB"
 				}
 			}
 		},
@@ -137,7 +136,11 @@
 				"separator": ",",
 				"circular": false,
 				"random": false,
-				"batchSize": 1024
+				"batchSize": 1024,
+				"ring": {
+					"seed": "7a42d9c483244167",
+					"size": "4MB"
+				}
 			},
 			"fsAccess": false,
 			"prefix": null,

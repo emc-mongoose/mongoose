@@ -174,7 +174,7 @@ implements WSRequestConfig<T> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int) runTimeConfig.getIoBufferSize())
+			.setBufferSize((int) runTimeConfig.getIOBufferSizeMin())
 			.build();
 		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
 			runTimeConfig.getLoadLimitTimeValue()
@@ -191,8 +191,8 @@ implements WSRequestConfig<T> {
 			.setSoReuseAddress(runTimeConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(runTimeConfig.getSocketTimeOut())
 			.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize((int) runTimeConfig.getIoBufferSize())
-			.setSndBufSize((int) runTimeConfig.getIoBufferSize())
+			.setRcvBufSize((int) runTimeConfig.getIOBufferSizeMin())
+			.setSndBufSize((int) runTimeConfig.getIOBufferSizeMin())
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 			);

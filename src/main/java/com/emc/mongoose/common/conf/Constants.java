@@ -25,6 +25,6 @@ public interface Constants {
 	String DIR_WEBAPP = "webapp";
 	String DIR_WEBINF = "WEB-INF";
 	//
-	int BUFF_SIZE_LO = (int) RunTimeConfig.getContext().getIoBufferSize();
-	int BUFF_SIZE_HI = (int) RunTimeConfig.getContext().getIoBufferRingSize();
+	int BUFF_SIZE_LO = (int) RunTimeConfig.getContext().getIOBufferSizeMin();
+	int BUFF_SIZE_HI = (int) RunTimeConfig.getContext().getDataSrcRingSize();
 }
