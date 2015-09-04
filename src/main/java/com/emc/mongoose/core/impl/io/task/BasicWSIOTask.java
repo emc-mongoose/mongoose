@@ -8,6 +8,7 @@ import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.DataCorruptionException;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
@@ -16,6 +17,9 @@ import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
+import com.emc.mongoose.core.impl.data.RangeLayerData;
+import com.emc.mongoose.core.impl.data.UniformData;
+import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
@@ -47,6 +51,13 @@ extends BasicObjectIOTask<T>
 implements WSIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
+	private volatile OutputChannel chanOut = null;
+	private volatile InputChannel chanIn = null;
+	//
+	private volatile DataItem currRange = null;
+	private volatile long currRangeSize = 0, nextRangeOffset = 0;
+	private volatile int currRangeIdx = 0, currDataLayerIdx = 0;
 	//
 	public BasicWSIOTask(
 		final WSLoadExecutor<T> loadExecutor, final T dataObject, final String nodeAddr
@@ -91,21 +102,23 @@ implements WSIOTask<T> {
 		return httpRequest;
 	}
 	//
-	private final static ThreadLocal<OutputChannel>
-		THRLOC_CHAN_OUT = new ThreadLocal<>();
 	@Override
-	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
+	public final void produceContent(final ContentEncoder encoder, final IOControl ioCtl)
 	throws IOException {
-		OutputChannel chanOut = THRLOC_CHAN_OUT.get();
-		if(chanOut == null) {
-			chanOut = new OutputChannel(out);
-			THRLOC_CHAN_OUT.set(chanOut);
+		//
+		if(chanOut == null) { // 1st time invocation
+			if(dataItem.getSize() == 0 && dataItem.getAppendSize() == 0) { // nothing to do
+				encoder.complete();
+				return;
+			} else { // wrap the encoder w/ output channel
+				chanOut = new OutputChannel(encoder);
+			}
 		}
-		chanOut.setContentEncoder(out);
+		//
 		try {
-			switch(reqConf.getLoadType()) {
+			switch(ioType) {
 				case CREATE:
-					transferSize += dataItem.writeFully(chanOut);
+					produceObjectContent(ioCtl);
 					break;
 				case READ:
 					// TODO there's a probability to specify some content in this case
@@ -114,10 +127,10 @@ implements WSIOTask<T> {
 					// TODO there's a probability to specify some content in this case
 					break;
 				case UPDATE:
-					transferSize += dataItem.writeUpdatedRangesFully(chanOut);
+					produceUpdatedRangesContent(ioCtl);
 					break;
 				case APPEND:
-					transferSize += dataItem.writeAugmentFully(chanOut);
+					produceAugmentContent(ioCtl);
 					break;
 			}
 		} catch(final ClosedChannelException e) { // probably a manual interruption
@@ -133,7 +146,80 @@ implements WSIOTask<T> {
 		} catch(final Exception e) {
 			status = Status.FAIL_UNKNOWN;
 			LogUtil.exception(LOG, Level.ERROR, e, "#{}: producing content failure", hashCode());
-		} finally {
+		}
+	}
+	//
+	private void produceObjectContent(final IOControl ioCtl)
+	throws IOException {
+		countBytesDone += dataItem.write(chanOut, contentSize - countBytesDone);
+		if(countBytesDone == contentSize) {
+			chanOut.close();
+		}
+	}
+	//
+	private void produceUpdatedRangesContent(final IOControl ioCtl)
+	throws IOException {
+		//
+		if(countBytesDone == nextRangeOffset) {
+			currRangeSize = dataItem.getRangeSize(currRangeIdx);
+			if(dataItem.isCurrLayerRangeUpdating(currRangeIdx)) {
+				currRange = new UniformData(
+					dataItem.getOffset() + nextRangeOffset, currRangeSize,
+					currDataLayerIdx, UniformDataSource.DEFAULT
+				);
+			} else if(dataItem.isNextLayerRangeUpdating(currRangeIdx)) {
+				currRange = new UniformData(
+					dataItem.getOffset() + nextRangeOffset, currRangeSize,
+					currDataLayerIdx + 1, UniformDataSource.DEFAULT
+				);
+			} else {
+				currRange = null;
+			}
+			currRangeIdx ++;
+			nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
+		}
+		//
+		if(currRangeSize > 0) {
+			if(currRange == null) {
+				countBytesDone += currRangeSize;
+			} else {
+				countBytesDone += currRange.write(
+					chanOut, nextRangeOffset - countBytesDone
+				);
+				if(countBytesDone == contentSize) {
+					countBytesDone = dataItem.getUpdatingRangesSize();
+					dataItem.commitUpdatedRanges();
+					chanOut.close();
+				}
+			}
+		} else {
+			countBytesDone = dataItem.getUpdatingRangesSize();
+			dataItem.commitUpdatedRanges();
+			chanOut.close();
+		}
+	}
+	//
+	private void produceAugmentContent(final IOControl ioCtl)
+	throws IOException {
+		if(currRange == null) {
+			final long prevSize = dataItem.getSize();
+			currRangeIdx = prevSize > 0 ? RangeLayerData.getRangeCount(prevSize) - 1 : 0;
+			if(dataItem.isCurrLayerRangeUpdated(currRangeIdx)) {
+				currRange = new UniformData(
+					dataItem.getOffset() + prevSize, contentSize, currDataLayerIdx + 1,
+					UniformDataSource.DEFAULT
+				);
+			} else {
+				currRange = new UniformData(
+					dataItem.getOffset() + prevSize, contentSize, currDataLayerIdx,
+					UniformDataSource.DEFAULT
+				);
+			}
+		}
+		//
+		countBytesDone += dataItem.write(chanOut, contentSize - countBytesDone);
+		if(countBytesDone == contentSize) {
+			dataItem.commitAppend();
 			chanOut.close();
 		}
 	}
@@ -154,7 +240,7 @@ implements WSIOTask<T> {
 	@Override
 	public final void resetRequest() {
 		respStatusCode = -1;
-		transferSize = 0;
+		countBytesDone = 0;
 		status = Status.FAIL_UNKNOWN;
 		exception = null;
 	}
@@ -250,52 +336,21 @@ implements WSIOTask<T> {
 		THRLOC_CHAN_IN = new ThreadLocal<>();
 	//
 	@Override
-	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl) {
+	public final void consumeContent(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
 			if(respStatusCode < 200 || respStatusCode >= 300) { // failure, no user data is expected
-				final ByteBuffer bbuff = ByteBuffer.allocate(Constants.BUFF_SIZE_LO);
-				while(in.read(bbuff) >= 0 && bbuff.remaining() > 0);
-				LOG.debug(
-					Markers.ERR, "#{}: {}, {}", hashCode(), status.description,
-					new String(bbuff.array(), 0, bbuff.position(), StandardCharsets.UTF_8)
-				);
+				consumeFailedResponseContent(decoder, ioCtl);
 			} else {
 				// check for the content corruption
-				if(dataItem != null && Type.READ.equals(reqConf.getLoadType())) {
-					if(reqConf.getVerifyContentFlag()) { // should verify the content
-						InputChannel chanIn = THRLOC_CHAN_IN.get();
-						if(chanIn == null) {
-							chanIn = new InputChannel();
-							THRLOC_CHAN_IN.set(chanIn);
-						}
-						chanIn.setContentDecoder(in);
-						try {
-							transferSize += dataItem.readAndVerifyFully(chanIn);
-						} catch(final DataSizeException e) {
-							transferSize += e.offset;
-							LOG.warn(
-								Markers.MSG,
-								"{}: content size mismatch, expected: {}, actual: {}",
-								dataItem.getId(), dataItem.getSize(), e.offset
-							);
-							status = Status.RESP_FAIL_CORRUPT;
-						} catch(final DataCorruptionException e) {
-							transferSize += e.offset;
-							LOG.warn(
-								Markers.MSG,
-								"{}: content mismatch @ offset {}, expected: {}, actual: {}",
-								dataItem.getId(), e.offset,
-								String.format(
-									"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
-								)
-							);
-							status = Status.RESP_FAIL_CORRUPT;
-						} finally {
-							IOUtils.consumeQuietlyNIO(in, dataItem.getSize() - transferSize);
-							chanIn.close();
-						}
+				if(dataItem != null && Type.READ.equals(ioType)) {
+					// just consume quietly if marked as corrupted once
+					if(!Status.RESP_FAIL_CORRUPT.equals(status) && reqConf.getVerifyContentFlag()) {
+						// should verify the content
+						consumeAndVerifyContent(decoder, ioCtl);
 					} else { // consume quietly
-						transferSize += IOUtils.consumeQuietlyNIO(in, dataItem.getSize());
+						countBytesDone += IOUtils.consumeQuietly(
+							decoder, contentSize - countBytesDone
+						);
 					}
 				}
 			}
@@ -306,10 +361,73 @@ implements WSIOTask<T> {
 			if(!reqConf.isClosed()) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during content consuming");
 			}
-		} finally {
-			while(!in.isCompleted()) {
-				IOUtils.consumeQuietlyNIO(in, Constants.BUFF_SIZE_LO);
+		}
+	}
+	//
+	private void consumeFailedResponseContent(final ContentDecoder in, final IOControl ioCtl)
+	throws IOException {
+		final ByteBuffer bbuff = ByteBuffer.allocate(Constants.BUFF_SIZE_LO);
+		while(in.read(bbuff) >= 0 && bbuff.remaining() > 0);
+		LOG.debug(
+			Markers.ERR, "#{}: {}, {}", hashCode(), status.description,
+			new String(bbuff.array(), 0, bbuff.position(), StandardCharsets.UTF_8)
+		);
+	}
+	//
+	private void consumeAndVerifyContent(final ContentDecoder decoder, final IOControl ioCtl)
+	throws IOException {
+		//
+		if(chanIn == null) {
+			chanIn = new InputChannel(decoder);
+		}
+		//
+		final ByteBuffer buffIn;
+		try {
+			if(dataItem.hasBeenUpdated()) {
+				if(countBytesDone == nextRangeOffset) {
+					currRangeSize = dataItem.getRangeSize(currRangeIdx);
+					currRange = new UniformData(
+						dataItem.getOffset() + nextRangeOffset, currRangeSize,
+						dataItem.isCurrLayerRangeUpdated(currRangeIdx) ?
+							currDataLayerIdx + 1 : currDataLayerIdx,
+						UniformDataSource.DEFAULT
+					);
+					currRangeIdx++;
+					nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
+				}
+				if(currRangeSize > 0) {
+					buffIn = IOUtils.getThreadLocalBuff(nextRangeOffset - countBytesDone);
+					countBytesDone += currRange.readAndVerify(chanIn, buffIn);
+					if(countBytesDone == contentSize) {
+						chanOut.close();
+					}
+				} else {
+					chanOut.close();
+				}
+			} else {
+				buffIn = IOUtils.getThreadLocalBuff(contentSize - countBytesDone);
+				countBytesDone += dataItem.readAndVerify(chanIn, buffIn);
+
 			}
+		} catch(final DataSizeException e) {
+			countBytesDone += e.offset;
+			LOG.warn(
+				Markers.MSG,
+				"{}: content size mismatch, expected: {}, actual: {}",
+				dataItem.getId(), dataItem.getSize(), e.offset
+			);
+			status = Status.RESP_FAIL_CORRUPT;
+		} catch(final DataCorruptionException e) {
+			countBytesDone += e.offset;
+			LOG.warn(
+				Markers.MSG,
+				"{}: content mismatch @ offset {}, expected: {}, actual: {}",
+				dataItem.getId(), e.offset,
+				String.format(
+					"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
+				)
+			);
+			status = Status.RESP_FAIL_CORRUPT;
 		}
 	}
 	//

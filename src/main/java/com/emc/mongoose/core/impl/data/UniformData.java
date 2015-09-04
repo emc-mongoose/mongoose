@@ -8,6 +8,7 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataSizeException;
+import com.emc.mongoose.core.api.data.DataVerificationException;
 import com.emc.mongoose.core.api.data.model.DataSource;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
@@ -171,13 +172,13 @@ implements DataItem {
 		return chanDst.write(ringBuff);
 	}
 	//
-	@Override
+	@Override @Deprecated
 	public long writeFully(final WritableByteChannel chanDst)
 	throws IOException {
 		return writeRangeFully(chanDst, 0, size);
 	}
 	//
-	@Override
+	@Override @Deprecated
 	public final long writeRangeFully(
 		final WritableByteChannel chanDst, final long relOffset, final long len
 	) throws IOException {
@@ -221,13 +222,13 @@ implements DataItem {
 		return n;
 	}
 	//
-	@Override
+	@Override @Deprecated
 	public long readAndVerifyFully(final ReadableByteChannel chanSrc)
 	throws DataSizeException, DataCorruptionException, IOException {
 		return readAndVerifyRangeFully(chanSrc, 0, size);
 	}
 	// checks that data read from input equals the specified range
-	@Override
+	@Override @Deprecated
 	public final long readAndVerifyRangeFully(
 		final ReadableByteChannel chanSrc, final long relOffset, final long len
 	) throws DataSizeException, DataCorruptionException, IOException {

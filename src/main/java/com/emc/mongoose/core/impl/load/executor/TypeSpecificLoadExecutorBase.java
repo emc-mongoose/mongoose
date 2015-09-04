@@ -131,7 +131,7 @@ extends LimitedRateLoadExecutorBase<T> {
 							Math.pow(ThreadLocalRandom.current().nextDouble(), sizeBias) * sizeRange
 						);
 					try {
-						dataItem.append(nextSize);
+						dataItem.scheduleAppend(nextSize);
 					} catch(final IllegalArgumentException e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e,
@@ -147,7 +147,7 @@ extends LimitedRateLoadExecutorBase<T> {
 					break;
 				case UPDATE:
 					if(dataItem.getSize() > 0) {
-						dataItem.updateRandomRanges(countUpdPerReq);
+						dataItem.scheduleRandomUpdates(countUpdPerReq);
 						if(LOG.isTraceEnabled(Markers.MSG)) {
 							LOG.trace(
 								Markers.MSG, "Modified {} ranges for object \"{}\"",

@@ -95,7 +95,7 @@ implements HttpAsyncResponseProducer {
 		}
 		//
 		try {
-			if(dataObject.hasAnyUpdatedRanges()) {
+			if(dataObject.hasBeenUpdated()) {
 				produceUpdatedObjectContent();
 			} else {
 				produceNotUpdatedObjectContent();
@@ -119,7 +119,7 @@ implements HttpAsyncResponseProducer {
 			currRangeSize = dataObject.getRangeSize(currRangeIdx);
 			currRange = new UniformData(
 				dataObject.getOffset() + nextRangeOffset, currRangeSize,
-				dataObject.isCurrLayerRangeUpdating(currRangeIdx) ?
+				dataObject.isCurrLayerRangeUpdated(currRangeIdx) ?
 					currDataLayerIdx + 1 : currDataLayerIdx,
 				UniformDataSource.DEFAULT
 			);

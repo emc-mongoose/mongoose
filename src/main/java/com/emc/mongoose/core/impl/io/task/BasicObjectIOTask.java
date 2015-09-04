@@ -50,7 +50,7 @@ implements DataObjectIOTask<T> {
 				strBuilder
 					.append(nodeAddr).append(',')
 					.append(dataItemId).append(',')
-					.append(transferSize).append(',')
+					.append(countBytesDone).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
 					.append(respTimeStart - reqTimeDone).append(',')
@@ -69,7 +69,7 @@ implements DataObjectIOTask<T> {
 					.append("Invalid trace: ")
 					.append(nodeAddr).append(',')
 					.append(dataItemId).append(',')
-					.append(transferSize).append(',')
+					.append(countBytesDone).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
 					.append(reqTimeDone).append(',')

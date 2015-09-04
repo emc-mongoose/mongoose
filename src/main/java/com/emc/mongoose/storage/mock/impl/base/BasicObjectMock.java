@@ -81,23 +81,13 @@ implements DataObjectMock {
 		this.size += size;
 	}
 	//
-	@Override
-	public final boolean hasAnyUpdatedRanges() {
-		return !maskRangesRead.isEmpty();
-	}
-	//
-	@Override
-	public final boolean isCurrLayerRangeUpdating(final int i) {
-		return maskRangesRead.get(i);
-	}
-	//
-	@Override
+	@Override @Deprecated
 	public final synchronized long writeFully(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
-		if(hasAnyUpdatedRanges()) {
+		if(hasBeenUpdated()) {
 			return writeRangeFully(chanOut, 0, size);
 		} else {
 			long writtenCount = 0;

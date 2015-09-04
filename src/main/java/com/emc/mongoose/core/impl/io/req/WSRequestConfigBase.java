@@ -502,7 +502,7 @@ implements WSRequestConfig<T> {
 		//
 		if(dataItem.isAppending()) {
 			sb.append(dataItem.getSize()).append(VALUE_RANGE_CONCAT);
-		} else if(dataItem.hasAnyUpdatedRanges()) {
+		} else if(dataItem.hasScheduledUpdates()) {
 			final int rangeCount = dataItem.getCountRangesTotal();
 			long nextRangeOffset;
 			for(int i = 0; i < rangeCount; i ++) {

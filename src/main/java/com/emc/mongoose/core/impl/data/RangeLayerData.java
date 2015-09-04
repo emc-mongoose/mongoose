@@ -253,12 +253,22 @@ implements AppendableDataItem, UpdatableDataItem {
 	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public boolean hasAnyUpdatedRanges() {
+	public final boolean hasBeenUpdated() {
+		return !maskRangesRead.isEmpty();
+	}
+	//
+	@Override
+	public final boolean hasScheduledUpdates() {
 		return !maskRangesWrite[0].isEmpty() || !maskRangesWrite[1].isEmpty();
 	}
 	//
 	@Override
-	public boolean isCurrLayerRangeUpdating(final int i) {
+	public final boolean isCurrLayerRangeUpdated(final int i) {
+		return maskRangesRead.get(i);
+	}
+	//
+	@Override
+	public final boolean isCurrLayerRangeUpdating(final int i) {
 		return maskRangesWrite[0].get(i);
 	}
 	//
@@ -268,7 +278,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final synchronized void updateRandomRange() {
+	public final synchronized void scheduleRandomUpdate() {
 		final int
 			countRangesTotal = getRangeCount(size),
 			startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
@@ -299,7 +309,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final void updateRandomRanges(final int count)
+	public final void scheduleRandomUpdates(final int count)
 	throws IllegalArgumentException {
 		final int countRangesTotal = getRangeCount(size);
 		if(count < 1 || count > countRangesTotal) {
@@ -309,12 +319,12 @@ implements AppendableDataItem, UpdatableDataItem {
 			);
 		}
 		for(int i = 0; i < count; i++) {
-			updateRandomRange();
+			scheduleRandomUpdate();
 		}
 	}
 	//
 	@Override
-	public final long getPendingRangesSize() {
+	public final long getUpdatingRangesSize() {
 		final long rangeCount = getRangeCount(size);
 		long pendingSize = 0;
 		for(int i = 0; i < rangeCount; i ++) {
@@ -343,6 +353,13 @@ implements AppendableDataItem, UpdatableDataItem {
 				byteCount += nextRangeData.writeFully(chanOut);
 			}
 		}
+		//
+		commitUpdatedRanges();
+		return byteCount;
+	}
+	//
+	@Override
+	public void commitUpdatedRanges() {
 		// move pending updated ranges to history
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
@@ -361,8 +378,6 @@ implements AppendableDataItem, UpdatableDataItem {
 			currLayerIndex ++;
 		}
 		maskRangesWrite[0].clear();
-		//
-		return byteCount;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// APPEND //////////////////////////////////////////////////////////////////////////////////////
@@ -373,7 +388,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public void append(final long augmentSize)
+	public void scheduleAppend(final long augmentSize)
 	throws IllegalArgumentException {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
@@ -391,8 +406,14 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final long getPendingAugmentSize() {
+	public final long getAppendSize() {
 		return pendingAugmentSize;
+	}
+	//
+	@Override
+	public final void commitAppend() {
+		size += pendingAugmentSize;
+		pendingAugmentSize = 0;
 	}
 	//
 	@Override
@@ -408,21 +429,18 @@ implements AppendableDataItem, UpdatableDataItem {
 					UniformDataSource.DEFAULT
 				);
 				byteCount += augmentData.writeFully(chanOut);
-				size += pendingAugmentSize;
 			} else if(currLayerIndex > 0) { // write from the current layer
 				augmentData = new UniformData(
 					offset + size, pendingAugmentSize, currLayerIndex,
 					UniformDataSource.DEFAULT
 				);
 				byteCount += augmentData.writeFully(chanOut);
-				size += pendingAugmentSize;
 			} else { // write from the zero layer
 				augmentData = this;
 				byteCount += augmentData.writeRangeFully(chanOut, size, pendingAugmentSize);
-				size += pendingAugmentSize;
 			}
 			// clean up the appending on success
-			pendingAugmentSize = 0;
+			commitAppend();
 		}
 		return byteCount;
 	}

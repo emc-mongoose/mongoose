@@ -11,7 +11,7 @@ import java.nio.channels.WritableByteChannel;
 public final class OutputChannel
 implements WritableByteChannel {
 	//
-	private ContentEncoder contentEncoder;
+	private final ContentEncoder contentEncoder;
 	//
 	public OutputChannel(final ContentEncoder contentEncoder) {
 		this.contentEncoder = contentEncoder;
@@ -20,9 +20,6 @@ implements WritableByteChannel {
 	@Override
 	public final int write(final ByteBuffer src)
 	throws IOException {
-		if(contentEncoder == null) {
-			throw new IOException("The channel is not ready for the output");
-		}
 		return contentEncoder.write(src);
 	}
 	//
@@ -37,9 +34,5 @@ implements WritableByteChannel {
 	@Override
 	public final boolean isOpen() {
 		return !contentEncoder.isCompleted();
-	}
-	//
-	public final void setContentEncoder(final ContentEncoder contentEncoder) {
-		this.contentEncoder = contentEncoder;
 	}
 }

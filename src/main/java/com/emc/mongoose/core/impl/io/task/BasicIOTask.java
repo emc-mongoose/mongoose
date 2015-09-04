@@ -3,7 +3,8 @@ package com.emc.mongoose.core.impl.io.task;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.AppendableDataItem;
+import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -16,7 +17,7 @@ import java.rmi.RemoteException;
 /**
  Created by andrey on 12.10.14.
  */
-public class BasicIOTask<T extends DataItem>
+public class BasicIOTask<T extends UpdatableDataItem & AppendableDataItem>
 implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -28,24 +29,48 @@ implements IOTask<T> {
 	};
 	//
 	protected final RequestConfig<T> reqConf;
+	protected final IOTask.Type ioType;
 	protected final LoadExecutor<T> loadExecutor;
 	protected final T dataItem;
+	protected final long contentSize;
 	protected final String nodeAddr;
 	//
 	protected volatile Status status = Status.FAIL_UNKNOWN;
 	protected volatile long
-		reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0, transferSize = 0;
+		reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0, countBytesDone = 0;
 	//
 	public BasicIOTask(
 		final LoadExecutor<T> loadExecutor, final T dataItem, final String nodeAddr
 	) {
 		try {
 			this.reqConf = loadExecutor.getRequestConfig();
+			this.ioType = reqConf.getLoadType();
 		} catch(final RemoteException e) {
 			throw new RuntimeException(e);
 		}
+		//
 		this.loadExecutor = loadExecutor;
 		this.dataItem = dataItem;
+		switch(ioType) {
+			case CREATE:
+				contentSize = dataItem.getSize();
+				break;
+			case READ:
+				contentSize = dataItem.getSize();
+				break;
+			case DELETE:
+				contentSize = 0;
+				break;
+			case UPDATE:
+				contentSize = dataItem.getAppendSize();
+				break;
+			case APPEND:
+				contentSize = dataItem.getAppendSize();
+				break;
+			default:
+				contentSize = 0;
+				break;
+		}
 		this.nodeAddr = nodeAddr;
 	}
 	//
@@ -74,7 +99,7 @@ implements IOTask<T> {
 				strBuilder
 					.append(nodeAddr).append(',')
 					.append(dataItemId).append(',')
-					.append(transferSize).append(',')
+					.append(countBytesDone).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
 					.append(respTimeStart - reqTimeDone).append(',')
@@ -93,7 +118,7 @@ implements IOTask<T> {
 					.append("Invalid trace: ")
 					.append(nodeAddr).append(',')
 					.append(dataItemId).append(',')
-					.append(transferSize).append(',')
+					.append(countBytesDone).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
 					.append(reqTimeDone).append(',')
@@ -125,8 +150,8 @@ implements IOTask<T> {
 	}
 	//
 	@Override
-	public final long getTransferSize() {
-		return transferSize;
+	public final long getCountBytesDone() {
+		return countBytesDone;
 	}
 	//
 	@Override

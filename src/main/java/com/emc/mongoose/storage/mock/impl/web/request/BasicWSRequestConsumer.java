@@ -53,7 +53,7 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	@Override
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
-			final int ingestByteCount = IOUtils.consumeQuietlyNIO(decoder, expectedContentSize);
+			final int ingestByteCount = IOUtils.consumeQuietly(decoder, expectedContentSize);
 			if(ingestByteCount > 0) {
 				expectedContentSize -= ingestByteCount;
 			}

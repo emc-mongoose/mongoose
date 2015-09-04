@@ -11,26 +11,33 @@ import java.nio.channels.WritableByteChannel;
 public interface UpdatableDataItem
 extends DataItem {
 	//
-	boolean hasAnyUpdatedRanges();
+	boolean hasBeenUpdated();
+	//
+	boolean hasScheduledUpdates();
+	//
+	boolean isCurrLayerRangeUpdated(final int i);
 	//
 	boolean isCurrLayerRangeUpdating(final int i);
 	//
 	boolean isNextLayerRangeUpdating(final int i);
 	//
-	void updateRandomRange()
+	void scheduleRandomUpdate()
 	throws IllegalStateException;
 	//
-	void updateRandomRanges(final int count)
+	void scheduleRandomUpdates(final int count)
 	throws IllegalArgumentException, IllegalStateException;
 	//
 	int getCountRangesTotal();
 	//
 	int getCurrLayerIndex();
 	//
-	long getPendingRangesSize();
+	long getUpdatingRangesSize();
 	//
+	@Deprecated
 	long writeUpdatedRangesFully(final WritableByteChannel chanOut)
 	throws IOException;
+	//
+	void commitUpdatedRanges();
 	//
 	long getRangeSize(final int i);
 }

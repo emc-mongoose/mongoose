@@ -687,11 +687,11 @@ implements LoadExecutor<T> {
 				reqDuration.update(duration);
 				durTasksSum.addAndGet(duration);
 			}
-			reqBytes.mark(ioTask.getTransferSize());
+			reqBytes.mark(ioTask.getCountBytesDone());
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Task #{}: successful, {}/{}",
-					ioTask.hashCode(), throughPutSucc.getCount(), ioTask.getTransferSize()
+					ioTask.hashCode(), throughPutSucc.getCount(), ioTask.getCountBytesDone()
 				);
 			}
 			// feed the data item to the consumer and finally check for the finish state

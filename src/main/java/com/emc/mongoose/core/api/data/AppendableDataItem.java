@@ -11,13 +11,16 @@ import java.nio.channels.WritableByteChannel;
 public interface AppendableDataItem
 extends DataItem {
 	//
-	void append(final long augmentSize)
+	void scheduleAppend(final long augmentSize)
 	throws IllegalArgumentException;
 	//
 	boolean isAppending();
 	//
-	long getPendingAugmentSize();
+	long getAppendSize();
 	//
+	void commitAppend();
+	//
+	@Deprecated
 	long writeAugmentFully(final WritableByteChannel chanOut)
 	throws IOException;
 }
