@@ -35,14 +35,18 @@
 			"storage.socket.interest.op.queued": "remote.socket.interestOpQueued",
 			"storage.socket.select.interval": "remote.socket.selectInterval",
 
-			"data.src.random.enabled": "load.tasks.shuffle",
-			"data.src.random.batchSize": "load.tasks.batchSize",
-			"data.page.size": "data.buffer.size",
-			"data.ring.seed": "data.buffer.ring.seed",
-			"data.ring.size": "data.buffer.ring.size",
-
+			"data.src.random.enabled": "data.src.random",
+			"data.src.random.batchSize": "data.src.batchSize",
+			"data.page.size": "io.buffer.size.min",
+			"data.ring.seed": "data.src.ring.seed",
+			"data.ring.size": "data.src.ring.size",
+			"data.buffer.size": "io.buffer.size.min",
+			"data.buffer.ring.seed": "data.src.ring.seed",
+			"data.buffer.ring.size": "data.src.ring.size",
 			"http.sign.method": "http.signMethod",
 
+			"load.tasks.batchSize": "data.src.batchSize",
+			"load.tasks.shuffle": "data.src.random",
 			"load.create.threads": "load.type.create.threads",
 			"load.read.threads": "load.type.read.threads",
 			"load.read.verify.content": "load.type.read.verifyContent",
@@ -113,14 +117,15 @@
 			"id": "wuser1@sanity.local",
 			"secret": "uwXSy4kD+N8pmltfOC2JxtrJ+Tg7/yBswV6jMu6h"
 		},
-		"data": {
+		"io": {
 			"buffer": {
-				"size": "4KB",
-				"ring": {
-					"seed": "7a42d9c483244167",
-					"size": "4MB"
+				"size": {
+					"min": "4KB",
+					"max": "4MB"
 				}
-			},
+			}
+		},
+		"data": {
 			"size": {
 				"min": "1MB",
 				"max": "1MB",
@@ -128,7 +133,14 @@
 			},
 			"src": {
 				"fpath": "",
-				"separator": ","
+				"separator": ",",
+				"circular": false,
+				"random": false,
+				"batchSize": 1024,
+				"ring": {
+					"seed": "7a42d9c483244167",
+					"size": "4MB"
+				}
 			},
 			"fsAccess": false,
 			"prefix": null,
@@ -169,9 +181,7 @@
 				"reqSleepMilliSec": 0
 			},
 			"tasks": {
-				"maxQueueSize": 16384,
-				"batchSize": 1024,
-				"shuffle": false
+				"maxQueueSize": 16384
 			},
 			"servers": "127.0.0.1",
 			"metricsPeriodSec": 10

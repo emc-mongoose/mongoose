@@ -79,7 +79,7 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH,
 			LogParser.getDataItemsFile(CREATE_RUN_ID).getPath());
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
-		rtConfig.set(RunTimeConfig.KEY_DATA_RING_SEED, WRONG_SEED);
+		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_RING_SEED, WRONG_SEED);
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//

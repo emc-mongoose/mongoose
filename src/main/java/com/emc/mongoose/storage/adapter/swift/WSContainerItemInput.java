@@ -58,7 +58,7 @@ extends GenericContainerItemInputBase<T> {
 		);
 		// response validation
 		if(resp == null) {
-			throw new IOException("No HTTP response is returned");
+			throw new IllegalStateException("No HTTP response");
 		}
 		final StatusLine status = resp.getStatusLine();
 		if(status == null) {
@@ -101,6 +101,7 @@ extends GenericContainerItemInputBase<T> {
 	public final void reset()
 	throws IOException {
 		super.reset();
+		eof = false;
 		lastItemId = null;
 	}
 	//

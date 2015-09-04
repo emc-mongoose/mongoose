@@ -18,11 +18,15 @@ implements DataItemInput<T>{
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
-	protected final ObjectInputStream itemsSrc;
+	protected ObjectInputStream itemsSrc;
 	protected List<T> remainingItems = null;
 	private DataItem lastItem = null;
 	//
 	public BinItemInput(final ObjectInputStream itemsSrc) {
+		this.itemsSrc = itemsSrc;
+	}
+	//
+	public void setItemsSrc(final ObjectInputStream itemsSrc) {
 		this.itemsSrc = itemsSrc;
 	}
 	//

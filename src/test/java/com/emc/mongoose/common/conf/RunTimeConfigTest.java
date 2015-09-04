@@ -21,7 +21,7 @@ public class RunTimeConfigTest {
 		Assert.assertArrayEquals(mapOverride.get("api.s3.auth.prefix"),
 			new String[] { "api.type.s3.authPrefix" });
 		Assert.assertArrayEquals(mapOverride.get("api.s3.bucket"),
-			new String[] { "api.type.s3.bucket" });
+				new String[]{"api.type.s3.bucket"});
 		Assert.assertArrayEquals(mapOverride.get("api.s3.bucket.filesystem"),
 			new String[] { "data.fsAccess" });
 		Assert.assertArrayEquals(mapOverride.get("api.s3.bucket.versioning"),
@@ -81,11 +81,21 @@ public class RunTimeConfigTest {
 			new String[] { "remote.socket.selectInterval" });
 
 		Assert.assertArrayEquals(mapOverride.get("data.page.size"),
-			new String[] { "data.buffer.size" });
+			new String[] { "io.buffer.size.min" });
 		Assert.assertArrayEquals(mapOverride.get("data.ring.seed"),
-			new String[] { "data.buffer.ring.seed" });
+			new String[] { "data.src.ring.seed" });
 		Assert.assertArrayEquals(mapOverride.get("data.ring.size"),
-			new String[] { "data.buffer.ring.size" });
+			new String[] { "data.src.ring.size" });
+		Assert.assertArrayEquals(mapOverride.get("data.buffer.size"),
+			new String[] { "io.buffer.size.min" });
+		Assert.assertArrayEquals(mapOverride.get("data.buffer.ring.seed"),
+			new String[] { "data.src.ring.seed" });
+		Assert.assertArrayEquals(mapOverride.get("data.buffer.ring.size"),
+			new String[] { "data.src.ring.size" });
+		Assert.assertArrayEquals(mapOverride.get("data.src.random.enabled"),
+			new String[] { "data.src.random" });
+		Assert.assertArrayEquals(mapOverride.get("data.src.random.batchSize"),
+			new String[] { "data.src.batchSize" });
 
 		Assert.assertArrayEquals(mapOverride.get("http.sign.method"),
 			new String[] { "http.signMethod" });
@@ -104,6 +114,10 @@ public class RunTimeConfigTest {
 			new String[] { "load.type.delete.threads" });
 		Assert.assertArrayEquals(mapOverride.get("load.append.threads"),
 			new String[] { "load.type.append.threads" });
+		Assert.assertArrayEquals(mapOverride.get("load.tasks.shuffle"),
+			new String[] { "data.src.random" });
+		Assert.assertArrayEquals(mapOverride.get("load.tasks.batchSize"),
+			new String[] { "data.src.batchSize" });
 
 		Assert.assertArrayEquals(mapOverride.get("load.time"),
 			new String[] { "load.limit.time" });

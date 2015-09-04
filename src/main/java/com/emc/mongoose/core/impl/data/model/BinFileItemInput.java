@@ -34,13 +34,18 @@ implements FileDataItemInput<T> {
 	public BinFileItemInput(final Path itemsSrcPath)
 	throws IOException {
 		super(
-			new ObjectInputStream(
-				new BufferedInputStream(
-					Files.newInputStream(itemsSrcPath, StandardOpenOption.READ)
-				)
-			)
+			buildObjectInputStream(itemsSrcPath)
 		);
 		this.itemsSrcPath = itemsSrcPath;
+	}
+	//
+	protected static ObjectInputStream buildObjectInputStream(final Path itemsSrcPath)
+	throws IOException {
+		return new ObjectInputStream(
+			new BufferedInputStream(
+				Files.newInputStream(itemsSrcPath, StandardOpenOption.READ)
+			)
+		);
 	}
 	//
 	@Override
@@ -67,5 +72,14 @@ implements FileDataItemInput<T> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to get approx data items size");
 		}
 		return actualCount > 0 ? sumSize / actualCount : 0;
+	}
+	//
+	@Override
+	public void reset()
+	throws IOException {
+		if (itemsSrc != null) {
+			itemsSrc.close();
+		}
+		setItemsSrc(buildObjectInputStream(itemsSrcPath));
 	}
 }

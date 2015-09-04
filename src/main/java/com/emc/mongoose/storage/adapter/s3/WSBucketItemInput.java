@@ -167,7 +167,7 @@ extends GenericContainerItemInputBase<T> {
 			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit
 		);
 		if(resp == null) {
-			throw new IOException("No HTTP response");
+			throw new IllegalStateException("No HTTP response");
 		}
 		// response validation
 		final StatusLine status = resp.getStatusLine();
@@ -218,6 +218,7 @@ extends GenericContainerItemInputBase<T> {
 	public final void reset()
 	throws IOException {
 		super.reset();
+		eof = false;
 		lastItemId = null;
 	}
 }

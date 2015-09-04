@@ -168,7 +168,9 @@ implements LoadClient<T> {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
 		if(itemSrc != null && !NewDataItemInput.class.isInstance(itemSrc)) {
-			producer = new DataItemInputProducer<>(itemSrc);
+			producer = new DataItemInputProducer<>(
+				itemSrc, runTimeConfig.getDataSrcCircularEnabled()
+			);
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -538,6 +540,7 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
+	@SuppressWarnings("unchecked")
 	public final synchronized void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			if (runTimeConfig.isRunResumeEnabled()) {

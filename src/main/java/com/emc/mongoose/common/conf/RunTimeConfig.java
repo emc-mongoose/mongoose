@@ -48,18 +48,25 @@ implements Externalizable {
 		KEY_AUTH_ID = "auth.id",
 		KEY_AUTH_SECRET = "auth.secret",
 		//
+		KEY_IO_BUFFER_SIZE_MIN = "io.buffer.size.min",
+		KEY_IO_BUFFER_SIZE_MAX = "io.buffer.size.max",
+		//
+		KEY_DATA_SRC_RING_SEED = "data.src.ring.seed",
+		KEY_DATA_SRC_RING_SIZE = "data.src.ring.size",
+		//
 		KEY_DATA_ITEM_COUNT = "load.limit.count",
 		KEY_DATA_COUNT = "data.count",
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_SIZE_MIN = "data.size.min",
 		KEY_DATA_SIZE_MAX = "data.size.max",
 		KEY_DATA_SIZE_BIAS = "data.size.bias",
-		KEY_DATA_RING_SEED = "data.buffer.ring.seed",
-		KEY_DATA_RING_SIZE = "data.buffer.ring.size",
 		KEY_DATA_SRC_FPATH = "data.src.fpath",
 		KEY_DATA_FS_ACCESS = "data.fsAccess",
 		KEY_DATA_PREFIX = "data.prefix",
 		KEY_DATA_VERSIONING = "data.versioning",
+		KEY_DATA_SRC_CIRCULAR = "data.src.circular",
+		KEY_DATA_SRC_RANDOM = "data.src.random",
+		KEY_DATA_SRC_BATCH_SIZE = "data.src.batchSize",
 		//
 		KEY_LOAD_SERVERS = "load.servers",
 		KEY_LOAD_THREADS = "load.threads",
@@ -68,8 +75,6 @@ implements Externalizable {
 		KEY_LOAD_TYPE_UPDATE_THREADS = "load.type.update.threads",
 		KEY_LOAD_TYPE_DELETE_THREADS = "load.type.delete.threads",
 		KEY_LOAD_TYPE_APPEND_THREADS = "load.type.append.threads",
-		KEY_LOAD_TASKS_BATCH_SIZE = "load.tasks.batchSize",
-		KEY_LOAD_TASKS_SHUFFLE = "load.tasks.shuffle",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
 		KEY_RUN_ID = "run.id",
@@ -276,16 +281,16 @@ implements Externalizable {
 		return getString("auth.secret");
 	}
 	//
-	public final long getDataBufferSize() {
-		return SizeUtil.toSize(getString("data.buffer.size"));
+	public final long getIOBufferSizeMin() {
+		return SizeUtil.toSize(getString(KEY_IO_BUFFER_SIZE_MIN));
 	}
 	//
-	public final long getDataRingSize() {
-		return SizeUtil.toSize(getString("data.buffer.ring.size"));
+	public final long getIOBufferSizeMax() {
+		return SizeUtil.toSize(getString(KEY_IO_BUFFER_SIZE_MAX));
 	}
 	//
 	public final int getBatchSize() {
-		return getInt(KEY_LOAD_TASKS_BATCH_SIZE);
+		return getInt(KEY_DATA_SRC_BATCH_SIZE);
 	}
 	//
 	public final boolean getFlagServeIfNotLoadServer() {
@@ -356,6 +361,10 @@ implements Externalizable {
 	//
 	public final boolean getDataVersioningEnabled() {
 		return getBoolean(KEY_DATA_VERSIONING);
+	}
+	//
+	public final boolean getDataSrcCircularEnabled() {
+		return getBoolean(KEY_DATA_SRC_CIRCULAR);
 	}
 	//
 	public final String getRunName() {
@@ -512,12 +521,12 @@ implements Externalizable {
 		return getInt("storage.mock.fault.maxConnLifeMilliSec");
 	}
 	//
-	public final String getDataBufferRingSeed() {
-		return getString("data.buffer.ring.seed");
+	public final String getDataSrcRingSeed() {
+		return getString(KEY_DATA_SRC_RING_SEED);
 	}
 	//
-	public final long getDataBufferRingSize() {
-		return SizeUtil.toSize(getString("data.buffer.ring.size"));
+	public final long getDataSrcRingSize() {
+		return SizeUtil.toSize(getString(KEY_DATA_SRC_RING_SIZE));
 	}
 	//
 	public final int getThreadCountFor(final String loadType) {
@@ -560,7 +569,7 @@ implements Externalizable {
 		return getString("remote.webui.wsTimeOut.unit");
 	}
 	//
-	public final boolean isShuffleItemsEnabled() {return  getBoolean(KEY_LOAD_TASKS_SHUFFLE);}
+	public final boolean isShuffleItemsEnabled() {return  getBoolean(KEY_DATA_SRC_RANDOM);}
 	//
 	public final boolean isRunResumeEnabled() {
 		return getBoolean("run.resume.enabled");
@@ -725,8 +734,8 @@ implements Externalizable {
 				case KEY_RUN_VERSION:
 				case KEY_DATA_ITEM_COUNT:
 				case KEY_DATA_SIZE:
-				case KEY_DATA_RING_SEED:
-				case KEY_DATA_RING_SIZE:
+				case KEY_DATA_SRC_RING_SEED:
+				case KEY_DATA_SRC_RING_SIZE:
 				case KEY_LOAD_THREADS:
 				case KEY_STORAGE_ADDRS:
 				case KEY_API_NAME:

@@ -2,12 +2,10 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.GenericContainer;
 //
-import com.emc.mongoose.core.impl.data.BasicObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
