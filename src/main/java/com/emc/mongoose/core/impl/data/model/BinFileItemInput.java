@@ -34,13 +34,18 @@ implements FileDataItemInput<T> {
 	public BinFileItemInput(final Path itemsSrcPath)
 	throws IOException {
 		super(
-			new ObjectInputStream(
-				new BufferedInputStream(
-					Files.newInputStream(itemsSrcPath, StandardOpenOption.READ)
-				)
-			)
+			buildObjectInputStream(itemsSrcPath)
 		);
 		this.itemsSrcPath = itemsSrcPath;
+	}
+	//
+	public static ObjectInputStream buildObjectInputStream(final Path itemsSrcPath)
+	throws IOException {
+		return new ObjectInputStream(
+			new BufferedInputStream(
+				Files.newInputStream(itemsSrcPath, StandardOpenOption.READ)
+			)
+		);
 	}
 	//
 	@Override
@@ -75,10 +80,6 @@ implements FileDataItemInput<T> {
 		if (itemsSrc != null) {
 			itemsSrc.close();
 		}
-		itemsSrc = new ObjectInputStream(
-			new BufferedInputStream(
-				Files.newInputStream(itemsSrcPath, StandardOpenOption.READ)
-			)
-		);
+		itemsSrc = buildObjectInputStream(itemsSrcPath);
 	}
 }
