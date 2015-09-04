@@ -201,7 +201,7 @@
 			"scheme": "http",
 			"mock": {
 				"headCount": 1,
-				"ioThreadsPerSocket": 100,
+				"ioThreadsPerSocket": 0,
 				"capacity": 10000000,
 				"container": {
 					"capacity": 10000000,

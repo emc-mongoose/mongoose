@@ -637,9 +637,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected IOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
-		return new BasicIOTask<>(this, dataItem, nextNodeAddr);
-	}
+	protected abstract IOTask<T> getIOTask(final T dataItem, final String nextNodeAddr);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////

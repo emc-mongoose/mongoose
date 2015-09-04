@@ -342,7 +342,7 @@ implements WSIOTask<T> {
 				consumeFailedResponseContent(decoder, ioCtl);
 			} else {
 				// check for the content corruption
-				if(dataItem != null && Type.READ.equals(ioType)) {
+				if(Type.READ.equals(ioType)) {
 					// just consume quietly if marked as corrupted once
 					if(!Status.RESP_FAIL_CORRUPT.equals(status) && reqConf.getVerifyContentFlag()) {
 						// should verify the content
@@ -352,6 +352,8 @@ implements WSIOTask<T> {
 							decoder, contentSize - countBytesDone
 						);
 					}
+				} else {
+					IOUtils.consumeQuietly(decoder, Constants.BUFF_SIZE_LO);
 				}
 			}
 		} catch(final ClosedChannelException e) {

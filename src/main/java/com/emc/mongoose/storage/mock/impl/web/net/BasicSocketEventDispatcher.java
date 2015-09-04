@@ -54,8 +54,13 @@ implements Runnable {
 		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
 			runTimeConfig.getLoadLimitTimeValue()
 		);
+		int ioThreadCount = runTimeConfig.getStorageMockIoThreadsPerSocket();
+		if(ioThreadCount == 0) {
+			ioThreadCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+		}
+		LOG.info(Markers.MSG, "Using {} I/O threads per socket", ioThreadCount);
 		ioReactorConf = IOReactorConfig.custom()
-			.setIoThreadCount(runTimeConfig.getStorageMockIoThreadsPerSocket())
+			.setIoThreadCount(ioThreadCount)
 			.setBacklogSize((int) runTimeConfig.getSocketBindBackLogSize())
 			.setInterestOpQueued(runTimeConfig.getSocketInterestOpQueued())
 			.setSelectInterval(runTimeConfig.getSocketSelectInterval())
