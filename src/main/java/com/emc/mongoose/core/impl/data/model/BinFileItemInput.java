@@ -39,7 +39,7 @@ implements FileDataItemInput<T> {
 		this.itemsSrcPath = itemsSrcPath;
 	}
 	//
-	public static ObjectInputStream buildObjectInputStream(final Path itemsSrcPath)
+	protected static ObjectInputStream buildObjectInputStream(final Path itemsSrcPath)
 	throws IOException {
 		return new ObjectInputStream(
 			new BufferedInputStream(
