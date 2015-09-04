@@ -5,11 +5,16 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.databind.JsonNode;
 //
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -21,6 +26,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -55,7 +61,6 @@ implements Externalizable {
 		KEY_DATA_SRC_RING_SIZE = "data.src.ring.size",
 		//
 		KEY_DATA_ITEM_COUNT = "load.limit.count",
-		KEY_DATA_COUNT = "data.count",
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_SIZE_MIN = "data.size.min",
 		KEY_DATA_SIZE_MAX = "data.size.max",
@@ -79,12 +84,10 @@ implements Externalizable {
 		//
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
-		KEY_RUN_TIME = "run.time",
 		KEY_SCENARIO_NAME = "scenario.name",
 		KEY_LOAD_METRICS_PERIOD_SEC = "load.metricsPeriodSec",
 		KEY_LOAD_LIMIT_COUNT = "load.limit.count",
 		KEY_LOAD_LIMIT_TIME = "load.limit.time",
-		KEY_LOAD_TIME = "load.time",
 		KEY_LOAD_LIMIT_RATE = "load.limit.rate",
 		KEY_LOAD_LIMIT_REQSLEEP_MILLISEC = "load.limit.reqSleepMilliSec",
 		KEY_RUN_VERSION = "run.version",
@@ -119,12 +122,12 @@ implements Externalizable {
 		//  Rampup
 		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
 		KEY_SCENARIO_RAMPUP_THREAD_COUNTS = "scenario.type.rampup.threadCounts",
-		//  For ui property tree
-		KEY_CHILDREN_PROPS = "children",
 		//
 		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
 		//
-		FNAME_CONF = "mongoose.json";
+		FNAME_CONF = "mongoose.json",
+		//
+		CONFIG_DATE = "date";
 	//
 	private static InheritableThreadLocal<RunTimeConfig>
 		CONTEXT_CONFIG = new InheritableThreadLocal<>();
@@ -164,6 +167,16 @@ implements Externalizable {
 			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
 		);
 		loadSysProps();
+		try {
+			Files.createDirectory(Paths.get(DIR_ROOT, Constants.DIR_LOG, getRunId()));
+			final Path cfgFile = Files.createFile(Paths.get(DIR_ROOT, Constants.DIR_LOG, getRunId(), FNAME_CONF));
+			final ObjectMapper mapper = new ObjectMapper();
+			mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+			//mapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile.toFile(), rootNode);
+			mapper.writeValue(cfgFile.toFile(), rootNode);
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
 	}
 	//
 	public static RunTimeConfig getContext() {
@@ -572,7 +585,7 @@ implements Externalizable {
 	public final boolean isShuffleItemsEnabled() {return  getBoolean(KEY_DATA_SRC_RANDOM);}
 	//
 	public final boolean isRunResumeEnabled() {
-		return getBoolean("run.resume.enabled");
+		return getBoolean(KEY_RUN_RESUME_ENABLED);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

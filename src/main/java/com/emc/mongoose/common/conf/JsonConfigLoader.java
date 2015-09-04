@@ -92,19 +92,19 @@ public class JsonConfigLoader {
 				if (ACTION.equals(JsonConfigLoaderActions.UPDATE)
 						|| ACTION.equals(JsonConfigLoaderActions.UPLOAD)) {
 					final String property = DEFAULT_CFG.getProperty(fullFieldName).toString()
-							.replace("[", "")
-							.replace("]", "")
-							.replace(" ", "")
-							.trim();
+						.replace("[", "")
+						.replace("]", "")
+						.replace(" ", "")
+						.trim();
 					DEFAULT_CFG.setProperty(fullFieldName, DEFAULT_CFG.getProperty(fullFieldName));
 					((ObjectNode) jsonNode).put(shortFieldName, property);
 				} else {
 					DEFAULT_CFG.setProperty(fullFieldName, jsonNode.get(shortFieldName).toString()
-                            .replace("[", "")
-                            .replace("]", "")
-                            .replace(" ", "")
-							.replace("\"", "")
-							.trim());
+                        .replace("[", "")
+                        .replace("]", "")
+                        .replace(" ", "")
+						.replace("\"", "")
+						.trim());
 					mongooseKeys.add(fullFieldName);
 				}
 			} else {
