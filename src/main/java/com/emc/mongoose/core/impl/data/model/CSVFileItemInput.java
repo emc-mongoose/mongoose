@@ -73,6 +73,6 @@ implements FileDataItemInput<T> {
 		if (itemsSrc != null) {
 			itemsSrc.close();
 		}
-		itemsSrc = Files.newBufferedReader(itemsFilePath, StandardCharsets.UTF_8);
+		setItemsSrc(Files.newBufferedReader(itemsFilePath, StandardCharsets.UTF_8));
 	}
 }

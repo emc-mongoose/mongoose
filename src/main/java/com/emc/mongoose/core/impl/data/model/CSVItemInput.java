@@ -48,6 +48,10 @@ implements DataItemInput<T> {
 		this.itemConstructor = itemConstructor;
 	}
 	//
+	public void setItemsSrc(final BufferedReader itemsSrc) {
+		this.itemsSrc = itemsSrc;
+	}
+	//
 	@Override
 	public DataItem getLastDataItem() {
 		return lastItem;
