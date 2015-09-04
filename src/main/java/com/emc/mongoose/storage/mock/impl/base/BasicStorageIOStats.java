@@ -146,7 +146,7 @@ implements StorageIOStats {
 		LOG.debug(Markers.MSG, "Running");
 		try {
 			while(updateMilliPeriod > 0 && !isInterrupted()) {
-				LOG.info(Markers.PERF_AVG, toString());
+				LOG.info(Markers.MSG, toString());
 				Thread.sleep(updateMilliPeriod);
 			}
 		} catch(final InterruptedException ignored) {

@@ -35,7 +35,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 //
@@ -281,22 +283,26 @@ extends WSMockTestBase {
 				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			//
-			final Set<String> setOfChecksum = new HashSet<>();
+			final List<String> dataObjectChecksums = new ArrayList<>(LIMIT_COUNT);
 			//
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			int recCount = 0;
 			for(final CSVRecord nextRec : recIter) {
+				recCount ++;
 				try (
 					final InputStream
-						inputStream = ContentGetter.getStream(nextRec.get(0), TestConstants.BUCKET_NAME)
+						inputStream = ContentGetter.getStream(
+							nextRec.get(0), TestConstants.BUCKET_NAME
+						)
 				) {
-					setOfChecksum.add(DigestUtils.md2Hex(inputStream));
+					dataObjectChecksums.add(DigestUtils.md2Hex(inputStream));
 				}
 			}
 			//  If size of set with checksums is less then dataCount
 			//  it's mean that some checksums are equals
 			Assert.assertEquals(
-				"Did not read different objects from server mock",
-				LIMIT_COUNT, setOfChecksum.size()
+				"Did not read " + recCount + "objects from server mock",
+				LIMIT_COUNT, dataObjectChecksums.size()
 			);
 
 		}

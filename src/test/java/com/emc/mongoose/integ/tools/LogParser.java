@@ -173,7 +173,10 @@ public final class LogParser {
 
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
-			Assert.assertEquals("Count of column is wrong", 22, nextRec.size());
+			Assert.assertEquals(
+				"Column count is wrong for the line: \"" + nextRec.toString() + "\"", 22,
+				nextRec.size()
+			);
 			if(firstRow) {
 				Assert.assertEquals("DateTimeISO8601", nextRec.get(0));
 				Assert.assertEquals("LoadId", nextRec.get(1));
