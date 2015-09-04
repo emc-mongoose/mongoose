@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.model;
 //
-import com.emc.mongoose.common.exceptions.NullHttpResponseException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -126,7 +125,7 @@ implements Producer<T> {
 					} else {
 						break;
 					}
-				} catch (final ClosedByInterruptException | NullHttpResponseException e) {
+				} catch (final ClosedByInterruptException | IllegalStateException e) {
 					break;
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to read the next data item");
