@@ -60,6 +60,7 @@ extends DistributedLoadBuilderTestBase {
 		}
 		//
 		RunIdFileManager.flushAll();
+		TimeUnit.SECONDS.sleep(10);
 	}
 	//
 	@Test public void checkTotalDuration()

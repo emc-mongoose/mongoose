@@ -3,6 +3,7 @@ package com.emc.mongoose.integ.distributed.rampup;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -69,6 +70,7 @@ extends DistributedLoadBuilderTestBase {
 		}
 		//
 		RunIdFileManager.flushAll();
+		TimeUnit.SECONDS.sleep(10);
 	}
 	//
 	@Test public void checkTotalDuration()
@@ -145,7 +147,7 @@ extends DistributedLoadBuilderTestBase {
 					if(nextRec.size() == 21) {
 						final String countSrvStr = nextRec.get(6);
 						if(countSrvStr.length() > 0 && Integer.parseInt(countSrvStr) == 1) {
-							countSummaries++;
+							countSummaries ++;
 						}
 					}
 				}
