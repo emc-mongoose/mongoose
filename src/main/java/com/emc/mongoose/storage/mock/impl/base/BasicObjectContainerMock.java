@@ -90,9 +90,9 @@ implements ObjectContainerMock<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final Future<T> submitPut(final String oid, final T obj)
+	public final Future<T> submitPut(final T obj)
 	throws InterruptedException {
-		return seqWorker.submit(new PutObjectTask<>(this, oid, obj));
+		return seqWorker.submit(new PutObjectTask<>(this, obj));
 	}
 	//
 	private final static class PutObjectTask<T extends DataObjectMock>
@@ -100,19 +100,17 @@ implements ObjectContainerMock<T> {
 	implements RunnableFuture<T> {
 		//
 		private final ObjectContainerMock<T> index;
-		private final String oid;
 		private final T obj;
 		//
-		private PutObjectTask(final ObjectContainerMock<T> index, final String oid, final T obj) {
+		private PutObjectTask(final ObjectContainerMock<T> index, final T obj) {
 			super(null);
 			this.index = index;
-			this.oid = oid;
 			this.obj = obj;
 		}
 		//
 		@Override
 		public final void run() {
-			completed(index.put(oid, obj));
+			completed(index.put(obj.getId(), obj));
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

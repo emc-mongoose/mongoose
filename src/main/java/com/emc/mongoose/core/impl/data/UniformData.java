@@ -97,16 +97,17 @@ implements DataItem {
 		ringBuffSize = ringBuff.capacity();
 	}
 	//
-	protected void reset() {
-		ringBuff.limit(ringBuffSize).position((int) (offset % ringBuffSize));
-	}
-	//
 	private void enforceCircularity() {
 		if(!ringBuff.hasRemaining()) {
 			ringBuff.clear();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public void reset() {
+		ringBuff.limit(ringBuffSize).position((int) (offset % ringBuffSize));
+	}
+	//
 	@Override
 	public final long getOffset() {
 		return offset;

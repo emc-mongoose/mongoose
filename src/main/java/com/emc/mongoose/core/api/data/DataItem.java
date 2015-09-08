@@ -14,6 +14,8 @@ import java.nio.channels.WritableByteChannel;
 public interface DataItem
 extends ReadableByteChannel, Externalizable {
 	//
+	void reset();
+	//
 	long getSize();
 	//
 	void setSize(final long size);

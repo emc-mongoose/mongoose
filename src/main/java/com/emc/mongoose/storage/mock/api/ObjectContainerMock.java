@@ -20,7 +20,7 @@ extends Closeable, Map<String, T> {
 	//
 	T list(final String afterOid, final Collection<T> buffDst, final int limit);
 	//
-	Future<T> submitPut(final String oid, final T obj)
+	Future<T> submitPut(final T obj)
 	throws InterruptedException;
 	//
 	Future<T> submitGet(final String oid)

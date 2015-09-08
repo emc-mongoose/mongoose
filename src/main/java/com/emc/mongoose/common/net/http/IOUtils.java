@@ -5,7 +5,6 @@ import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 //
 import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.common.net.http.content.InputChannel;
 import org.apache.http.nio.ContentDecoder;
 //
 import org.apache.logging.log4j.Level;
@@ -14,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 /**
  Created by kurila on 17.03.15.
  */
@@ -47,7 +45,7 @@ public final class IOUtils {
 			buff = ByteBuffer.allocateDirect(currBuffSize);
 			ioBuffers[i] = buff;
 		} else {
-			buff.clear();
+			buff.position(0).limit(size < buff.capacity() ? (int) size : buff.capacity());
 		}
 		return buff;
 	}

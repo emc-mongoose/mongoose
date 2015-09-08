@@ -55,10 +55,6 @@ implements WSIOTask<T> {
 	private volatile OutputChannel chanOut = null;
 	private volatile InputChannel chanIn = null;
 	//
-	private volatile DataItem currRange = null;
-	private volatile long currRangeSize = 0, nextRangeOffset = 0;
-	private volatile int currRangeIdx = 0, currDataLayerIdx = 0;
-	//
 	public BasicWSIOTask(
 		final WSLoadExecutor<T> loadExecutor, final T dataObject, final String nodeAddr
 	) {
@@ -161,39 +157,31 @@ implements WSIOTask<T> {
 	throws IOException {
 		//
 		if(countBytesDone == nextRangeOffset) {
-			currRangeSize = dataItem.getRangeSize(currRangeIdx);
-			if(dataItem.isCurrLayerRangeUpdating(currRangeIdx)) {
-				currRange = new UniformData(
-					dataItem.getOffset() + nextRangeOffset, currRangeSize,
-					currDataLayerIdx, UniformDataSource.DEFAULT
-				);
-			} else if(dataItem.isNextLayerRangeUpdating(currRangeIdx)) {
-				currRange = new UniformData(
-					dataItem.getOffset() + nextRangeOffset, currRangeSize,
-					currDataLayerIdx + 1, UniformDataSource.DEFAULT
-				);
-			} else {
-				currRange = null;
-			}
-			currRangeIdx ++;
-			nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
+			do {
+				currRangeSize = dataItem.getRangeSize(currRangeIdx);
+				if(dataItem.isCurrLayerRangeUpdating(currRangeIdx)) {
+					currRange = new UniformData(
+						dataItem.getOffset() + nextRangeOffset, currRangeSize,
+						currDataLayerIdx, UniformDataSource.DEFAULT
+					);
+				} else if(dataItem.isNextLayerRangeUpdating(currRangeIdx)) {
+					currRange = new UniformData(
+						dataItem.getOffset() + nextRangeOffset, currRangeSize,
+						currDataLayerIdx + 1, UniformDataSource.DEFAULT
+					);
+				} else {
+					currRange = null;
+				}
+				currRangeIdx ++;
+				nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
+			} while(currRange == null);
 		}
 		//
 		if(currRangeSize > 0) {
-			if(currRange == null) {
-				countBytesDone += currRangeSize;
-			} else {
-				countBytesDone += currRange.write(
-					chanOut, nextRangeOffset - countBytesDone
-				);
-				if(countBytesDone == contentSize) {
-					countBytesDone = dataItem.getUpdatingRangesSize();
-					dataItem.commitUpdatedRanges();
-					chanOut.close();
-				}
-			}
-		} else {
-			countBytesDone = dataItem.getUpdatingRangesSize();
+			countBytesDone += currRange.write(chanOut, nextRangeOffset - countBytesDone);
+		}
+		//
+		if(countBytesDone == contentSize) {
 			dataItem.commitUpdatedRanges();
 			chanOut.close();
 		}
@@ -386,30 +374,36 @@ implements WSIOTask<T> {
 		final ByteBuffer buffIn;
 		try {
 			if(dataItem.hasBeenUpdated()) {
+				// switch the range if current is done or not set yet
 				if(countBytesDone == nextRangeOffset) {
 					currRangeSize = dataItem.getRangeSize(currRangeIdx);
-					currRange = new UniformData(
-						dataItem.getOffset() + nextRangeOffset, currRangeSize,
-						dataItem.isCurrLayerRangeUpdated(currRangeIdx) ?
-							currDataLayerIdx + 1 : currDataLayerIdx,
-						UniformDataSource.DEFAULT
-					);
-					currRangeIdx++;
+					if(dataItem.isCurrLayerRangeUpdated(currRangeIdx)) {
+						currRange = new UniformData(
+							dataItem.getOffset() + nextRangeOffset, currRangeSize,
+							currDataLayerIdx + 1, UniformDataSource.DEFAULT
+						);
+					} else {
+						currRange = new UniformData(
+							dataItem.getOffset() + nextRangeOffset, currRangeSize,
+							currDataLayerIdx, UniformDataSource.DEFAULT
+						);
+					}
+					currRangeIdx ++;
 					nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
 				}
+				//
 				if(currRangeSize > 0) {
 					buffIn = IOUtils.getThreadLocalBuff(nextRangeOffset - countBytesDone);
 					countBytesDone += currRange.readAndVerify(chanIn, buffIn);
 					if(countBytesDone == contentSize) {
-						chanOut.close();
+						chanIn.close();
 					}
 				} else {
-					chanOut.close();
+					chanIn.close();
 				}
 			} else {
 				buffIn = IOUtils.getThreadLocalBuff(contentSize - countBytesDone);
 				countBytesDone += dataItem.readAndVerify(chanIn, buffIn);
-
 			}
 		} catch(final DataSizeException e) {
 			countBytesDone += e.offset;

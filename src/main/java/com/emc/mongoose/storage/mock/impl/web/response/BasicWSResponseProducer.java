@@ -52,6 +52,7 @@ implements HttpAsyncResponseProducer {
 			contentSize = contentEntity.getContentLength();
 			if(contentEntity instanceof WSObjectMock) {
 				dataObject = (WSObjectMock) contentEntity;
+				dataObject.reset();
 				currDataLayerIdx = dataObject.getCurrLayerIndex();
 				contentBytes = null;
 			} else if(contentEntity instanceof NByteArrayEntity) {
@@ -117,12 +118,17 @@ implements HttpAsyncResponseProducer {
 	throws IOException {
 		if(countBytesDone == nextRangeOffset) {
 			currRangeSize = dataObject.getRangeSize(currRangeIdx);
-			currRange = new UniformData(
-				dataObject.getOffset() + nextRangeOffset, currRangeSize,
-				dataObject.isCurrLayerRangeUpdated(currRangeIdx) ?
-					currDataLayerIdx + 1 : currDataLayerIdx,
-				UniformDataSource.DEFAULT
-			);
+			if(dataObject.isCurrLayerRangeUpdated(currRangeIdx)) {
+				currRange = new UniformData(
+					dataObject.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx + 1,
+					UniformDataSource.DEFAULT
+				);
+			} else {
+				currRange = new UniformData(
+					dataObject.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx,
+					UniformDataSource.DEFAULT
+				);
+			}
 			currRangeIdx ++;
 			nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
 		}

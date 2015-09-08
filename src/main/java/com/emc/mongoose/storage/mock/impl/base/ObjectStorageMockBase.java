@@ -49,11 +49,9 @@ implements ObjectStorageMock<T> {
 		containersIndex = new ConcurrentHashMap<>(
 			containerCountLimit, 0.75f, expectConcurrencyLevel
 		);
-		defaultContainer = new BasicObjectContainerMock<>(
-			ObjectContainerMock.DEFAULT_NAME, containerCapacity
-		);
 		try {
 			createContainer(ObjectContainerMock.DEFAULT_NAME);
+			defaultContainer = getContainer(ObjectContainerMock.DEFAULT_NAME);
 		} catch(final StorageMockCapacityLimitReachedException e) {
 			throw new RuntimeException(e);
 		}
@@ -105,7 +103,7 @@ implements ObjectStorageMock<T> {
 				throw new ContainerMockNotFoundException();
 			}
 			final T obj = newDataObject(oid, offset, size);
-			c.submitPut(oid, obj);
+			c.submitPut(obj);
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the create task");
 		}
@@ -254,7 +252,7 @@ implements ObjectStorageMock<T> {
 	@Override
 	public final void putIntoDefaultContainer(final T dataItem) {
 		try {
-			defaultContainer.submitPut(dataItem.getId(), dataItem);
+			defaultContainer.submitPut(dataItem);
 		} catch(final InterruptedException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e,

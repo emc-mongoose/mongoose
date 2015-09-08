@@ -4,6 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.AppendableDataItem;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
@@ -38,6 +39,9 @@ implements IOTask<T> {
 	protected volatile Status status = Status.FAIL_UNKNOWN;
 	protected volatile long
 		reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0, countBytesDone = 0;
+	protected volatile DataItem currRange = null;
+	protected volatile long currRangeSize = 0, nextRangeOffset = 0;
+	protected volatile int currRangeIdx = 0, currDataLayerIdx = 0;
 	//
 	public BasicIOTask(
 		final LoadExecutor<T> loadExecutor, final T dataItem, final String nodeAddr
@@ -51,6 +55,8 @@ implements IOTask<T> {
 		//
 		this.loadExecutor = loadExecutor;
 		this.dataItem = dataItem;
+		dataItem.reset();
+		currDataLayerIdx = dataItem.getCurrLayerIndex();
 		switch(ioType) {
 			case CREATE:
 				contentSize = dataItem.getSize();
@@ -62,7 +68,7 @@ implements IOTask<T> {
 				contentSize = 0;
 				break;
 			case UPDATE:
-				contentSize = dataItem.getAppendSize();
+				contentSize = dataItem.getUpdatingRangesSize();
 				break;
 			case APPEND:
 				contentSize = dataItem.getAppendSize();
