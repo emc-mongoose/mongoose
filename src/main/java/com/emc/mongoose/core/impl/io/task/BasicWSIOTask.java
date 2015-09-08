@@ -359,7 +359,7 @@ implements WSIOTask<T> {
 		final ByteBuffer bbuff = ByteBuffer.allocate(Constants.BUFF_SIZE_LO);
 		while(in.read(bbuff) >= 0 && bbuff.remaining() > 0);
 		LOG.debug(
-			Markers.ERR, "#{}: {}, {}", hashCode(), status.description,
+			Markers.ERR, "#{}: {} - {}", hashCode(), status.description,
 			new String(bbuff.array(), 0, bbuff.position(), StandardCharsets.UTF_8)
 		);
 	}

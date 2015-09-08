@@ -58,7 +58,10 @@ implements Runnable {
 		if(ioThreadCount == 0) {
 			ioThreadCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
 		}
-		LOG.info(Markers.MSG, "Using {} I/O threads per socket", ioThreadCount);
+		LOG.info(
+			Markers.MSG, "Socket {}:{} will use {} I/O threads",
+			socketAddress.getHostString(), socketAddress.getPort(), ioThreadCount
+		);
 		ioReactorConf = IOReactorConfig.custom()
 			.setIoThreadCount(ioThreadCount)
 			.setBacklogSize((int) runTimeConfig.getSocketBindBackLogSize())

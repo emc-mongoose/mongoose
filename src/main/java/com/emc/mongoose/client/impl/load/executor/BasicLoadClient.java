@@ -721,7 +721,7 @@ implements LoadClient<T> {
 		try {
 			forcedAggregator.awaitTermination(metricsPeriodSec, TimeUnit.SECONDS);
 		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Interrupted while aggregating the remote info");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while aggregating the remote info");
 		} finally {
 			forcedAggregator.shutdownNow();
 			postProcessDataItems();
