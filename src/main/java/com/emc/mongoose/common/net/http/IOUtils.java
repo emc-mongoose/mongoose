@@ -55,11 +55,23 @@ public final class IOUtils {
 						buffSizeSum += buff.capacity();
 					}
 				}
-				LOG.error(
-					Markers.ERR, "Failed to allocate {} of direct memory, " +
-					"total direct memory allocated by thread is {}",
-					SizeUtil.formatSize(currBuffSize), SizeUtil.formatSize(buffSizeSum)
-				);
+				if(buff == null) {
+					LOG.error(
+						Markers.ERR, "Failed to allocate {} of direct memory, " +
+							"total direct memory allocated by thread is {}, " +
+							"unable to continue using a smaller buffer",
+						SizeUtil.formatSize(currBuffSize), SizeUtil.formatSize(buffSizeSum)
+					);
+					throw e;
+				} else {
+					LOG.warn(
+						Markers.ERR, "Failed to allocate {} of direct memory, " +
+							"total direct memory allocated by thread is {}, " +
+							"will continue using smaller buffer of size {}",
+						SizeUtil.formatSize(currBuffSize), SizeUtil.formatSize(buffSizeSum),
+						SizeUtil.formatSize(buff.capacity())
+					);
+				}
 			}
 		} else {
 			buff.position(0).limit(size < buff.capacity() ? (int) size : buff.capacity());
