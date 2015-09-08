@@ -3,8 +3,10 @@ package com.emc.mongoose.common.net.http;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 //
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.common.log.Markers;
 import org.apache.http.nio.ContentDecoder;
 //
 import org.apache.logging.log4j.Level;
@@ -42,8 +44,23 @@ public final class IOUtils {
 		}
 		ByteBuffer buff = ioBuffers[i];
 		if(buff == null) {
-			buff = ByteBuffer.allocateDirect(currBuffSize);
-			ioBuffers[i] = buff;
+			try {
+				buff = ByteBuffer.allocateDirect(currBuffSize);
+				ioBuffers[i] = buff;
+			} catch(OutOfMemoryError e) {
+				long buffSizeSum = 0;
+				for(final ByteBuffer ioBuffer : ioBuffers) {
+					if(ioBuffer != null) {
+						buff = ioBuffer;
+						buffSizeSum += buff.capacity();
+					}
+				}
+				LOG.error(
+					Markers.ERR, "Failed to allocate {} of direct memory, " +
+					"total direct memory allocated by thread is {}",
+					SizeUtil.formatSize(currBuffSize), SizeUtil.formatSize(buffSizeSum)
+				);
+			}
 		} else {
 			buff.position(0).limit(size < buff.capacity() ? (int) size : buff.capacity());
 		}

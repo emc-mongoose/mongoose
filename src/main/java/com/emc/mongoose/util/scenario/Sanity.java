@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class Sanity
 implements Runnable {
 	//
-	private final static short DEFAULT_NODE_COUNT = 10, DEFAULT_CONN_PER_NODE = 100;
+	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 50;
 	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("1MB");
 	private final static int DEFAULT_DATA_COUNT_MAX = 1000000;
 	public final static Logger LOG;
