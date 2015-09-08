@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -212,11 +213,9 @@ extends AbstractManager {
 	}
 	//
 	public static void flushAll()
-	throws IOException {
-		for(final RunIdFileManager manager: INSTANCES) {
-			for (final OutputStream out: manager.outStreamsMap.values()){
-				out.flush();
-			}
+	throws ConcurrentModificationException, IOException {
+		for(final RunIdFileManager manager : INSTANCES) {
+			manager.flush();
 		}
 	}
 }
