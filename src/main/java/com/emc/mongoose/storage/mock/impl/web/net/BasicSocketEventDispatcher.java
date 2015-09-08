@@ -81,7 +81,10 @@ implements Runnable {
 			.build();
 		// create the server-side I/O reactor
 		ioReactor = new DefaultListeningIOReactor(
-			ioReactorConf, new GroupThreadFactory("ioReactor")
+			ioReactorConf,
+			new GroupThreadFactory(
+				"ioReactor<" + socketAddress.getHostString() + ":" + socketAddress.getPort() + ">"
+			)
 		);
 		this.ioStats = ioStats;
 		executor = THREAD_GROUP.newThread(this);

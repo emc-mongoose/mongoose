@@ -394,7 +394,10 @@ implements WSIOTask<T> {
 				//
 				if(currRangeSize > 0) {
 					buffIn = IOUtils.getThreadLocalBuff(nextRangeOffset - countBytesDone);
-					countBytesDone += currRange.readAndVerify(chanIn, buffIn);
+					final int n = currRange.readAndVerify(chanIn, buffIn);
+					if(n > 0) {
+						countBytesDone += n;
+					}
 					if(countBytesDone == contentSize) {
 						chanIn.close();
 					}
@@ -403,7 +406,10 @@ implements WSIOTask<T> {
 				}
 			} else {
 				buffIn = IOUtils.getThreadLocalBuff(contentSize - countBytesDone);
-				countBytesDone += dataItem.readAndVerify(chanIn, buffIn);
+				final int n = dataItem.readAndVerify(chanIn, buffIn);
+				if(n > 0) {
+					countBytesDone += n;
+				}
 			}
 		} catch(final DataSizeException e) {
 			countBytesDone += e.offset;

@@ -76,7 +76,9 @@ public final class IOUtils {
 				}
 			}
 		}
-		buff.position(0).limit(size < buff.capacity() ? (int) size : buff.capacity());
+		buff
+			.position(0)
+			.limit(size < buff.capacity() ? Math.max(1, (int) size) : buff.capacity());
 		return buff;
 	}
 	//

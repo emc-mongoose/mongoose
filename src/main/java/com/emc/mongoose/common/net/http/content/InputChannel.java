@@ -27,13 +27,13 @@ implements ReadableByteChannel {
 	//
 	@Override
 	public final void close() {
-		while(!contentDecoder.isCompleted()) {
+		while(isOpen()) {
 			IOUtils.consumeQuietly(contentDecoder, Constants.BUFF_SIZE_LO);
 		}
 	}
 	//
 	@Override
 	public final boolean isOpen() {
-		return contentDecoder.isCompleted();
+		return !contentDecoder.isCompleted();
 	}
 }
