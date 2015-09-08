@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class Sanity
 implements Runnable {
 	//
-	private final static short DEFAULT_NODE_COUNT = 2, DEFAULT_CONN_PER_NODE = 0;
+	private final static short DEFAULT_NODE_COUNT = 10, DEFAULT_CONN_PER_NODE = 100;
 	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("1MB");
 	private final static int DEFAULT_DATA_COUNT_MAX = 1000000;
 	public final static Logger LOG;
@@ -133,7 +133,6 @@ implements Runnable {
 		//
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET, DEFAULT_CONN_PER_NODE);
 		//rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		final Thread wsMockThread = new Thread(
 			new Cinderella(RunTimeConfig.getContext()), "wsMock"
