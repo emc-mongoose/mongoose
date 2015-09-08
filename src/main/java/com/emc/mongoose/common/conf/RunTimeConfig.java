@@ -165,17 +165,17 @@ implements Externalizable {
 			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF)
 		);
 		loadSysProps();
-		logConf();
+		logConfFrom(this);
 	}
 	//
-	public void logConf() {
+	public static void logConfFrom(final RunTimeConfig rtConfig) {
 		final Logger log = LogManager.getLogger();
 		//
 		final ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 		//
 		try {
-			final Object json = mapper.readValue(getJsonProps(), Object.class);
+			final Object json = mapper.readValue(rtConfig.getJsonProps(), Object.class);
 			log.info(Markers.CFG, "Configuration parameters:\n"
 				+ mapper.writeValueAsString(json));
 		} catch (final IOException e) {

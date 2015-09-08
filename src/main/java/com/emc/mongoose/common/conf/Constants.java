@@ -21,6 +21,9 @@ public interface Constants {
 	String RUN_MODE_WEBUI = "webui";
 	String RUN_MODE_CINDERELLA = "cinderella";
 	String RUN_MODE_WSMOCK = "wsmock";
+	String RUN_SCENARIO_SINGLE = "single";
+	String RUN_SCENARIO_CHAIN = "chain";
+	String RUN_SCENARIO_RAMPUP = "rampup";
 	//
 	String DIR_WEBAPP = "webapp";
 	String DIR_WEBINF = "WEB-INF";

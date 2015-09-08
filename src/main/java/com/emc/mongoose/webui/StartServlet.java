@@ -63,8 +63,6 @@ public final class StartServlet extends CommonServlet {
 		setupRunTimeConfig(request);
 		updateLastRunTimeConfig(runTimeConfig);
 		//
-		runTimeConfig.logConf();
-		//
 		switch(request.getParameter(RunTimeConfig.KEY_RUN_MODE)) {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
@@ -100,6 +98,7 @@ public final class StartServlet extends CommonServlet {
 				localRunTimeConfig = runTimeConfig;
 				RunTimeConfig.setContext(localRunTimeConfig);
 				//
+				RunTimeConfig.logConfFrom(runTimeConfig);
 				LOG.debug(Markers.MSG, message);
 				//
 				loadBuilderSvc = new BasicWSLoadBuilderSvc(localRunTimeConfig);
@@ -134,18 +133,19 @@ public final class StartServlet extends CommonServlet {
 				RunTimeConfig.setContext(runTimeConfig);
 				ThreadContext.put(RunTimeConfig.KEY_SCENARIO_NAME, runTimeConfig.getScenarioName());
 				ThreadContext.put(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC,
-						String.valueOf(runTimeConfig.getLoadMetricsPeriodSec()));
+					String.valueOf(runTimeConfig.getLoadMetricsPeriodSec()));
 				//
-				if(runTimeConfig.getScenarioName().equals("rampup")) {
+				if(runTimeConfig.getScenarioName().equals(Constants.RUN_SCENARIO_RAMPUP)) {
 					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
-							convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
+						convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
 					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS,
-							convertArrayToString(runTimeConfig.getScenarioRampupThreadCounts()));
+						convertArrayToString(runTimeConfig.getScenarioRampupThreadCounts()));
 					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD,
-							convertArrayToString(runTimeConfig.getScenarioChainLoad()));
+						convertArrayToString(runTimeConfig.getScenarioChainLoad()));
 				}
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
 				//
+				RunTimeConfig.logConfFrom(runTimeConfig);
 				LOG.debug(Markers.MSG, message);
 				setName("run<" + runTimeConfig.getRunId() + ">");
 				new ScriptRunner().run();
@@ -168,6 +168,7 @@ public final class StartServlet extends CommonServlet {
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
 				//
+				RunTimeConfig.logConfFrom(runTimeConfig);
 				LOG.debug(Markers.MSG, message);
 				try {
 					setName("run<" + runTimeConfig.getRunId() + ">");
