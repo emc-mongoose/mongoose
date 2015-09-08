@@ -203,17 +203,21 @@ extends AbstractManager {
 	}
 	/** Flushes all available output streams */
 	public final void flush() {
-		for(final OutputStream outStream : outStreamsMap.values()) {
-			try {
-				outStream.flush();
-			} catch(final IOException e) {
-				e.printStackTrace(System.err);
+		try {
+			for(final OutputStream outStream : outStreamsMap.values()) {
+				try {
+					outStream.flush();
+				} catch(final IOException e) {
+					e.printStackTrace(System.err);
+				}
 			}
+		} catch(final ConcurrentModificationException e) {
+			e.printStackTrace(System.err);
 		}
 	}
 	//
 	public static void flushAll()
-	throws ConcurrentModificationException, IOException {
+	throws IOException {
 		for(final RunIdFileManager manager : INSTANCES) {
 			manager.flush();
 		}
