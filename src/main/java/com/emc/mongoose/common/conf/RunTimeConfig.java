@@ -132,10 +132,12 @@ implements Externalizable {
 	private static RunTimeConfig DEFAULT_INSTANCE;
 	//
 	public static void initContext() {
+		final Logger log = LogManager.getLogger();
 		RunTimeConfig instance = RunTimeConfig.getContext();
 		if(instance == null) {
 			resetContext();
 		}
+		log.info(Markers.CFG, getFormattedConfStringFrom(RunTimeConfig.getContext()));
 	}
 	//
 	public static RunTimeConfig getDefault() {
@@ -145,19 +147,17 @@ implements Externalizable {
 	public static void resetContext() {
 		final RunTimeConfig instance = new RunTimeConfig();
 		DEFAULT_INSTANCE = instance;
+		instance.loadProperties();
 		final String
 			runId = System.getProperty(KEY_RUN_ID),
 			runMode = System.getProperty(KEY_RUN_MODE);
 		if(runId != null && runId.length() > 0) {
-			ThreadContext.put(KEY_RUN_ID, runId);
 			instance.set(KEY_RUN_ID, runId);
 		}
 		if(runMode != null && runMode.length() > 0) {
-			ThreadContext.put(KEY_RUN_MODE, runMode);
 			instance.set(KEY_RUN_MODE, runMode);
 		}
-		instance.loadProperties();
-		CONTEXT_CONFIG.set(instance);
+		setContext(instance);
 	}
 	//
 	public void loadProperties() {
@@ -165,10 +165,9 @@ implements Externalizable {
 			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF)
 		);
 		loadSysProps();
-		logConfFrom(this);
 	}
 	//
-	public static void logConfFrom(final RunTimeConfig rtConfig) {
+	public static String getFormattedConfStringFrom(final RunTimeConfig rtConfig) {
 		final Logger log = LogManager.getLogger();
 		//
 		final ObjectMapper mapper = new ObjectMapper();
@@ -176,12 +175,12 @@ implements Externalizable {
 		//
 		try {
 			final Object json = mapper.readValue(rtConfig.getJsonProps(), Object.class);
-			log.info(Markers.CFG, "Configuration parameters:\n"
-				+ mapper.writeValueAsString(json));
+			return CFG_HEADER + mapper.writeValueAsString(json);
 		} catch (final IOException e) {
 			LogUtil.exception(log, Level.WARN, e, "Failed to read properties from \"{}\" file",
 				Paths.get(DIR_ROOT, Constants.DIR_CONF, FNAME_CONF).toString());
 		}
+		return null;
 	}
 	//
 	public static RunTimeConfig getContext() {
@@ -728,6 +727,9 @@ implements Externalizable {
 			setProperty(entry.getKey(), entry.getValue());
 		}
 	}
+	//
+	public final static String
+		CFG_HEADER = "Full configuration:\n";
 	//
 	private final static String
 		TABLE_BORDER = "\n+--------------------------------+----------------------------------------------------------------+",
