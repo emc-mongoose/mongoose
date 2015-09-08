@@ -6,9 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.fasterxml.jackson.databind.JsonNode;
 //
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
@@ -26,7 +24,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -37,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.nio.file.Paths;
+
 /**
  Created by kurila on 28.05.14.
  A shared runtime configuration.
@@ -125,9 +123,7 @@ implements Externalizable {
 		//
 		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
 		//
-		FNAME_CONF = "mongoose.json",
-		//
-		CONFIG_DATE = "date";
+		FNAME_CONF = "mongoose.json";
 	//
 	private static InheritableThreadLocal<RunTimeConfig>
 		CONTEXT_CONFIG = new InheritableThreadLocal<>();
@@ -148,34 +144,43 @@ implements Externalizable {
 	//
 	public static void resetContext() {
 		final RunTimeConfig instance = new RunTimeConfig();
-		instance.loadProperties();
 		DEFAULT_INSTANCE = instance;
 		final String
 			runId = System.getProperty(KEY_RUN_ID),
 			runMode = System.getProperty(KEY_RUN_MODE);
 		if(runId != null && runId.length() > 0) {
+			ThreadContext.put(KEY_RUN_ID, runId);
 			instance.set(KEY_RUN_ID, runId);
 		}
 		if(runMode != null && runMode.length() > 0) {
+			ThreadContext.put(KEY_RUN_MODE, runMode);
 			instance.set(KEY_RUN_MODE, runMode);
 		}
-		setContext(instance);
+		instance.loadProperties();
+		CONTEXT_CONFIG.set(instance);
 	}
 	//
 	public void loadProperties() {
 		loadPropsFromJsonCfgFile(
-			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
+			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF)
 		);
 		loadSysProps();
+		logConf();
+	}
+	//
+	private void logConf() {
+		final Logger log = LogManager.getLogger();
+		//
+		final ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+		//
 		try {
-			Files.createDirectory(Paths.get(DIR_ROOT, Constants.DIR_LOG, getRunId()));
-			final Path cfgFile = Files.createFile(Paths.get(DIR_ROOT, Constants.DIR_LOG, getRunId(), FNAME_CONF));
-			final ObjectMapper mapper = new ObjectMapper();
-			mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-			//mapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile.toFile(), rootNode);
-			mapper.writeValue(cfgFile.toFile(), rootNode);
-		} catch (final Exception e) {
-			e.printStackTrace();
+			final Object json = mapper.readValue(getJsonProps(), Object.class);
+			log.info(Markers.CFG, "Configuration parameters:\n"
+				+ mapper.writeValueAsString(json));
+		} catch (final IOException e) {
+			LogUtil.exception(log, Level.WARN, e, "Failed to read properties from \"{}\" file",
+				Paths.get(DIR_ROOT, Constants.DIR_CONF, FNAME_CONF).toString());
 		}
 	}
 	//
@@ -227,8 +232,6 @@ implements Externalizable {
 	//
 	public final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
-	private final Map<String, Object> properties = new HashMap<>();
-	//
 	private JsonNode rootNode;
 	//
 	public long getSizeBytes(final String key) {
@@ -236,9 +239,7 @@ implements Externalizable {
 	}
 	//
 	public String getJsonProps() {
-		JsonConfigLoader.updateProps(
-			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF), this, false
-		);
+		JsonConfigLoader.updateProps(this, false);
 		return rootNode.toString();
 	}
 	//
@@ -251,8 +252,12 @@ implements Externalizable {
 		return false;
 	}
 	//
-	public final synchronized void putJsonProps(final JsonNode rootNode) {
+	public final synchronized void setJsonNode(final JsonNode rootNode) {
 		this.rootNode = rootNode;
+	}
+	//
+	public final synchronized JsonNode getJsonNode() {
+		return rootNode;
 	}
 	//
 	public final synchronized void set(final String key, final Object value) {
@@ -671,13 +676,17 @@ implements Externalizable {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public synchronized void loadPropsFromJsonCfgFile(final Path propsDir) {
+		final Logger log = LogManager.getLogger();
 		JsonConfigLoader.loadPropsFromJsonCfgFile(propsDir, this);
-        for (String key : mongooseKeys) {
-            if (key.startsWith(PREFIX_KEY_ALIASING)) {
-                final String correctKey = key.replaceAll(PREFIX_KEY_ALIASING, "");
-                MAP_OVERRIDE.put(correctKey, getStringArray(key));
-            }
-        }
+		log.debug(Markers.MSG, "Going to override the aliasing section");
+		for (final String key : mongooseKeys) {
+			if (key.startsWith(PREFIX_KEY_ALIASING)) {
+				final String correctKey = key.replaceAll(PREFIX_KEY_ALIASING, "");
+				log.trace(Markers.MSG, "Alias: \"{}\" -> \"{}\"",
+					correctKey, getStringArray(key));
+				MAP_OVERRIDE.put(correctKey, getStringArray(key));
+			}
+		}
 	}
 	//
 	public synchronized void loadSysProps() {

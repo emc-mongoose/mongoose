@@ -60,9 +60,10 @@ public class JsonConfigLoader {
 			}
 			walkJsonTree(rootNode);
 			tgtConfig.setMongooseKeys(mongooseKeys);
-			tgtConfig.putJsonProps(rootNode);
+			tgtConfig.setJsonNode(rootNode);
 			//
 			if (ACTION.equals(JsonConfigLoaderActions.UPLOAD)) {
+				LOG.debug("Going to update the configuration file \"{}\"", cfgFile.toString());
 				jsonMapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile, rootNode);
 			}
 		} catch(final IOException e) {
@@ -96,9 +97,17 @@ public class JsonConfigLoader {
 						.replace("]", "")
 						.replace(" ", "")
 						.trim();
+					if (!fullFieldName.startsWith(RunTimeConfig.PREFIX_KEY_ALIASING)) {
+						LOG.trace(Markers.MSG, "Update property: \"{}\" = {}",
+							fullFieldName, property);
+					}
 					DEFAULT_CFG.setProperty(fullFieldName, DEFAULT_CFG.getProperty(fullFieldName));
 					((ObjectNode) jsonNode).put(shortFieldName, property);
 				} else {
+					if (!fullFieldName.startsWith(RunTimeConfig.PREFIX_KEY_ALIASING)) {
+					LOG.trace(Markers.MSG, "Read property: \"{}\" = {}",
+							fullFieldName, jsonNode.get(shortFieldName).toString());
+					}
 					DEFAULT_CFG.setProperty(fullFieldName, jsonNode.get(shortFieldName).toString()
                         .replace("[", "")
                         .replace("]", "")
@@ -113,14 +122,13 @@ public class JsonConfigLoader {
 		}
 	}
 	//
-	public static void updateProps(
-		final Path rootDir, final RunTimeConfig tgtConfig, final boolean isUpload
-	) {
+	public static void updateProps(final RunTimeConfig tgtConfig, final boolean isUpload) {
 		if (isUpload) {
 			ACTION = JsonConfigLoaderActions.UPLOAD;
 		} else {
 			ACTION = JsonConfigLoaderActions.UPDATE;
 		}
-		loadPropsFromJsonCfgFile(rootDir, tgtConfig);
+		DEFAULT_CFG = tgtConfig;
+		walkJsonTree(tgtConfig.getJsonNode(), null);
 	}
 }

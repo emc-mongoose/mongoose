@@ -15,6 +15,11 @@
 						"Filter" : [
 							{
 								"type": "MarkerFilter",
+								"marker": "cfg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
 								"marker": "dataList",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
@@ -42,6 +47,11 @@
 					"Filters": {
 						"Filter" : [
 							{
+								"type": "MarkerFilter",
+								"marker": "cfg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
 								"type": "MarkerFilter",
 								"marker": "dataList",
 								"onMatch": "DENY",
@@ -86,6 +96,11 @@
 					"Filters": {
 						"Filter": [
 							{
+								"type": "MarkerFilter",
+								"marker": "cfg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
 								"type": "MarkerFilter",
 								"marker": "msg",
 								"onMatch": "DENY",
@@ -233,6 +248,29 @@
 						]
 					}
 				}, {
+					"name": "cfgFile",
+					"type": "runIdFile",
+					"fileName": "config.log",
+					"PatternLayout": {
+						"pattern": "%d{ISO8601}{GMT+0} | %m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "cfg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
 					"name": "async",
 					"type": "Async",
 					"blocking": "true",
@@ -246,7 +284,8 @@
 						{ "ref": "perfAvgFile" },
 						{ "ref": "perfSumFile" },
 						{ "ref": "perfTraceFile" },
-						{ "ref": "WebUI" }
+						{ "ref": "WebUI" },
+						{ "ref": "cfgFile" }
 					]
 				}
 			]
