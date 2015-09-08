@@ -168,7 +168,7 @@ implements Externalizable {
 		logConf();
 	}
 	//
-	private void logConf() {
+	public void logConf() {
 		final Logger log = LogManager.getLogger();
 		//
 		final ObjectMapper mapper = new ObjectMapper();

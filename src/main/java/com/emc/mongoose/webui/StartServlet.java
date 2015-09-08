@@ -62,6 +62,9 @@ public final class StartServlet extends CommonServlet {
 		runTimeConfig = runTimeConfig.clone();
 		setupRunTimeConfig(request);
 		updateLastRunTimeConfig(runTimeConfig);
+		//
+		runTimeConfig.logConf();
+		//
 		switch(request.getParameter(RunTimeConfig.KEY_RUN_MODE)) {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
