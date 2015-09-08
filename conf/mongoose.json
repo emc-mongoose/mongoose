@@ -120,8 +120,8 @@
 		"io": {
 			"buffer": {
 				"size": {
-					"min": "4KB",
-					"max": "256KB"
+					"min": "1KB",
+					"max": "1MB"
 				}
 			}
 		},
