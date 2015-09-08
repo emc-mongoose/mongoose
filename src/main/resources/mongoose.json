@@ -121,7 +121,7 @@
 			"buffer": {
 				"size": {
 					"min": "4KB",
-					"max": "4MB"
+					"max": "256KB"
 				}
 			}
 		},

@@ -51,8 +51,10 @@ public final class IOUtils {
 				long buffSizeSum = 0;
 				for(final ByteBuffer ioBuffer : ioBuffers) {
 					if(ioBuffer != null) {
-						buff = ioBuffer;
 						buffSizeSum += buff.capacity();
+						if(currBuffSize > buff.capacity()) {
+							buff = ioBuffer;
+						}
 					}
 				}
 				if(buff == null) {
