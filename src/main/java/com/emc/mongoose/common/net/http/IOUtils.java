@@ -75,9 +75,8 @@ public final class IOUtils {
 					);
 				}
 			}
-		} else {
-			buff.position(0).limit(size < buff.capacity() ? (int) size : buff.capacity());
 		}
+		buff.position(0).limit(size < buff.capacity() ? (int) size : buff.capacity());
 		return buff;
 	}
 	//
