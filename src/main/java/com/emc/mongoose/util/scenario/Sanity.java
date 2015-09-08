@@ -75,6 +75,8 @@ implements Runnable {
 				dataDstW.getInput(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
+			// it's neccessary to wait a bit until w/s mock consumes all the update requests
+			TimeUnit.SECONDS.sleep(10);
 			// read and verify the updated items
 			final DataItemOutput dataDstR = new CSVFileItemOutput<>(BasicWSObject.class);
 			final long nRead = client.read(
@@ -90,6 +92,8 @@ implements Runnable {
 				DEFAULT_DATA_SIZE, 3 * DEFAULT_DATA_SIZE, 1
 			);
 			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
+			// it's neccessary to wait a bit until w/s mock consumes all the append requests
+			TimeUnit.SECONDS.sleep(10);
 			// update again the appended data items
 			final Path tmpItemsFilePath = Files.createTempFile("reUpdatedItems", ".csv"); // do not delete on exit
 			final DataItemOutput dataDstU2 = new CSVFileItemOutput<>(
@@ -99,6 +103,8 @@ implements Runnable {
 				dataDstA.getInput(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
+			// it's neccessary to wait a bit until w/s mock consumes all the update requests
+			TimeUnit.SECONDS.sleep(10);
 			// read and verify the updated items again
 			final long nRead2 = client.read(
 				dataDstU2.getInput(), null, nUpdated2, DEFAULT_CONN_PER_NODE, true
