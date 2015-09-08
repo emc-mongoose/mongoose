@@ -59,8 +59,11 @@ extends WSMockTestBase {
 		processBuilder.directory(new File(System.getProperty("user.dir")));
 		PROCESS = processBuilder.start();
 		PID = getPid(PROCESS);
+		LOG.info(Markers.MSG, "Launched separate goose process w/ PID #{}", PID);
 		TimeUnit.SECONDS.sleep(RUN_TIME_OUT_SEC);
-		Runtime.getRuntime().exec(String.format("kill -SIGINT %d", PID));
+		final String cmdKill = String.format("kill -SIGINT %d", PID);
+		Runtime.getRuntime().exec(cmdKill);
+		LOG.info(Markers.MSG, "Executed the command: \"{}\"", cmdKill);
 	}
 
 	@AfterClass
