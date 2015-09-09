@@ -1,5 +1,6 @@
 package com.emc.mongoose.integ.core.single;
 
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -208,12 +209,16 @@ extends WSMockTestBase {
 		final Map<Thread, StackTraceElement[]> stackTraceElementMap = Thread.getAllStackTraces();
 		for (final Thread thread : stackTraceElementMap.keySet()) {
 			threadName = thread.getName();
-			matcher = Pattern.compile(LogPatterns.CONSOLE_FULL_LOAD_NAME.pattern() + "\\#[\\d]").matcher(threadName);
+			matcher = Pattern.compile(
+				LogPatterns.CONSOLE_FULL_LOAD_NAME.pattern() + "\\#[\\d]").matcher(threadName
+			);
 			if (matcher.find()) {
-				countProduceWorkloadThreads++;
+				countProduceWorkloadThreads ++;
 			}
 		}
-		Assert.assertEquals("Wrong count of I/O worker threads", LOAD_CONNS, countProduceWorkloadThreads);
+		Assert.assertEquals(
+			"Wrong count of I/O worker threads", ThreadUtil.getWorkerCount(), countProduceWorkloadThreads
+		);
 	}
 
 	@Test

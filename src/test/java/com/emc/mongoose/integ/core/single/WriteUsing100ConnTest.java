@@ -1,9 +1,11 @@
 package com.emc.mongoose.integ.core.single;
 
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
+import com.emc.mongoose.common.net.http.IOUtil;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -206,12 +208,16 @@ extends WSMockTestBase {
 		final Map<Thread, StackTraceElement[]> stackTraceElementMap = Thread.getAllStackTraces();
 		for (final Thread thread : stackTraceElementMap.keySet()) {
 			threadName = thread.getName();
-			matcher = Pattern.compile(LogPatterns.CONSOLE_FULL_LOAD_NAME.pattern() + "\\#[\\d]").matcher(threadName);
+			matcher = Pattern.compile(
+				LogPatterns.CONSOLE_FULL_LOAD_NAME.pattern() + "\\#[\\d]").matcher(threadName
+			);
 			if (matcher.find()) {
-				countProduceWorkloadThreads++;
+				countProduceWorkloadThreads ++;
 			}
 		}
-		Assert.assertEquals("Wrong count of load threads", LOAD_THREADS, countProduceWorkloadThreads);
+		Assert.assertEquals(
+			"Wrong count of load threads", ThreadUtil.getWorkerCount(), countProduceWorkloadThreads
+		);
 	}
 
 	@Test
