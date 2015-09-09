@@ -76,7 +76,7 @@ implements LoadBuilder<T, U> {
 			paramName = RunTimeConfig.getLoadConcurrencyParamName(loadType.name().toLowerCase());
 			try {
 				setConnPerNodeFor(
-					runTimeConfig.getConcurrencyFor(
+					runTimeConfig.getConnCountPerNodeFor(
 						loadType.name().toLowerCase()
 					), loadType
 				);

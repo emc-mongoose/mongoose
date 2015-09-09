@@ -68,7 +68,7 @@ implements Externalizable {
 		KEY_DATA_SRC_RANDOM = "data.src.random",
 		KEY_DATA_SRC_BATCH_SIZE = "data.src.batchSize",
 		//
-		KEY_LOAD_CONNS = "load.concurrency",
+		KEY_LOAD_CONNS = "load.connections",
 		KEY_LOAD_SERVERS = "load.servers",
 		KEY_LOAD_THREADS = "load.threads",
 		KEY_CREATE_THREADS = "load.type.create.threads",
@@ -260,7 +260,7 @@ implements Externalizable {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public static String getLoadConcurrencyParamName(final String loadType) {
-		return "load.type." + loadType + ".concurrency";
+		return "load.type." + loadType + ".connections";
 	}
 	//
 	public static String getLoadThreadsParamName(final String loadType) {
@@ -543,8 +543,8 @@ implements Externalizable {
 		return getInt("load.type." + loadType + ".threads");
 	}
 	//
-	public final int getConcurrencyFor(final String loadType) {
-		return getInt("load.type." + loadType + ".concurrency");
+	public final int getConnCountPerNodeFor(final String loadType) {
+		return getInt("load.type." + loadType + ".connections");
 	}
 	//
 	public final String getApiS3AuthPrefix() {
