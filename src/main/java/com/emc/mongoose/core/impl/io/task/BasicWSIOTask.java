@@ -148,6 +148,7 @@ implements WSIOTask<T> {
 	throws IOException {
 		countBytesDone += dataItem.write(chanOut, contentSize - countBytesDone);
 		if(countBytesDone == contentSize) {
+			dataItem.resetUpdates();
 			chanOut.close();
 		}
 	}

@@ -359,7 +359,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public void commitUpdatedRanges() {
+	public final void commitUpdatedRanges() {
 		// move pending updated ranges to history
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
@@ -378,6 +378,13 @@ implements AppendableDataItem, UpdatableDataItem {
 			currLayerIndex ++;
 		}
 		maskRangesWrite[0].clear();
+	}
+	//
+	@Override
+	public final void resetUpdates() {
+		maskRangesRead.clear();
+		maskRangesWrite[0].clear();
+		maskRangesWrite[1].clear();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// APPEND //////////////////////////////////////////////////////////////////////////////////////

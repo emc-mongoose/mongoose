@@ -19,6 +19,11 @@ extends Runnable, Closeable {
 	void containerCreate();
 	void containerDelete();
 	//
-	double getRate();
-	double getRateBytes();
+	double getWriteRate();
+	double getWriteRateBytes();
+	//
+	double getReadRate();
+	double getReadRateBytes();
+	//
+	double getDeleteRate();
 }

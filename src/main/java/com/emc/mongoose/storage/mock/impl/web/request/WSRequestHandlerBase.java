@@ -27,7 +27,6 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.MethodNotSupportedException;
 import org.apache.http.RequestLine;
 import org.apache.http.protocol.HttpContext;
 //
@@ -78,7 +77,7 @@ implements ReqURIMatchingHandler<T> {
 	) {
 		// load rate limitation algorithm
 		if(rateLimit > 0) {
-			if(ioStats.getRate() > rateLimit) {
+			if(ioStats.getWriteRate() + ioStats.getReadRate() + ioStats.getDeleteRate() > rateLimit) {
 				try {
 					Thread.sleep(lastMilliDelay.incrementAndGet());
 				} catch(final InterruptedException e) {

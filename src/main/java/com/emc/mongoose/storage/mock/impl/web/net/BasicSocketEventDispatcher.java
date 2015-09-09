@@ -1,7 +1,8 @@
 package com.emc.mongoose.storage.mock.impl.web.net;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import com.emc.mongoose.common.conf.Constants;
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -24,6 +25,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketException;
 /**
  Created by kurila on 13.05.15.
  */
@@ -73,20 +76,20 @@ implements Runnable {
 			.setSoReuseAddress(runTimeConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(runTimeConfig.getSocketTimeOut())
 			.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize(Constants.BUFF_SIZE_LO)
-			.setSndBufSize(Constants.BUFF_SIZE_LO)
+			.setRcvBufSize(BUFF_SIZE_LO)
+			.setSndBufSize(BUFF_SIZE_LO)
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 			)
 			.build();
 		// create the server-side I/O reactor
+		this.ioStats = ioStats;
 		ioReactor = new DefaultListeningIOReactor(
 			ioReactorConf,
 			new GroupThreadFactory(
 				"ioReactor<" + socketAddress.getHostString() + ":" + socketAddress.getPort() + ">"
 			)
 		);
-		this.ioStats = ioStats;
 		executor = THREAD_GROUP.newThread(this);
 
 	}

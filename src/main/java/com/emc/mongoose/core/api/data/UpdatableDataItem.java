@@ -39,5 +39,7 @@ extends DataItem {
 	//
 	void commitUpdatedRanges();
 	//
+	void resetUpdates();
+	//
 	long getRangeSize(final int i);
 }
