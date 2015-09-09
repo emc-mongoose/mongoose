@@ -69,17 +69,16 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
-		try (final BufferingOutputStream
+		try(
+			final BufferingOutputStream
 				 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
-			UniformDataSource.DEFAULT = new UniformDataSource();
-			//  Run mongoose default scenario in standalone mode
+			STD_OUTPUT_STREAM = stdOutStream;
 			TIME_ACTUAL_SEC = System.currentTimeMillis();
 			new ScriptRunner().run();
 			TIME_ACTUAL_SEC = System.currentTimeMillis() - TIME_ACTUAL_SEC;
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
-			STD_OUTPUT_STREAM = stdOutStream;
 		}
 		//
 		RunIdFileManager.flushAll();
