@@ -95,12 +95,14 @@ extends WSMockTestBase {
 		}, "writeScenarioThread");
 		SCENARIO_THREAD.start();
 		SCENARIO_THREAD.join(30000);
-		SCENARIO_THREAD.interrupt();
 	}
 
 	@AfterClass
 	public  static void tearDownClass()
 	throws Exception {
+		SCENARIO_THREAD.interrupt();
+		TimeUnit.SECONDS.sleep(1);
+		//
 		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
