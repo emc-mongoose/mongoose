@@ -95,7 +95,7 @@ implements StorageClient<T> {
 		//
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
-			null : new DataItemInputProducer<>(itemsInput, rtConfig.getDataSrcCircularEnabled());
+			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
 				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
@@ -129,7 +129,7 @@ implements StorageClient<T> {
 		loadBuilder.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
-			null : new DataItemInputProducer<>(itemsInput, rtConfig.getDataSrcCircularEnabled());
+			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
 				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
@@ -159,7 +159,7 @@ implements StorageClient<T> {
 	) throws IllegalStateException, RemoteException, IOException {
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
-			null : new DataItemInputProducer<>(itemsInput, rtConfig.getDataSrcCircularEnabled());
+			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
 				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
@@ -189,7 +189,7 @@ implements StorageClient<T> {
 	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException {
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
-			null : new DataItemInputProducer<>(itemsInput, rtConfig.getDataSrcCircularEnabled());
+			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
 				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
@@ -229,7 +229,7 @@ implements StorageClient<T> {
 	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException {
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
-			null : new DataItemInputProducer<>(itemsInput, rtConfig.getDataSrcCircularEnabled());
+			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
 				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
