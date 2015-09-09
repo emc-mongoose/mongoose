@@ -43,8 +43,8 @@ public class Sanity
 implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 100;
-	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("1MB");
-	private final static int DEFAULT_DATA_COUNT_MAX = 1000000;
+	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("100MB");
+	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -72,7 +72,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Start updating");
 			final DataItemOutput<WSObject> dataDstU = new BinFileItemOutput<>();
 			final long nUpdated = client.update(
-				dataDstW.getInput(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
+				dataDstW.getInput(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 15
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
@@ -96,7 +96,7 @@ implements Runnable {
 				tmpItemsFilePath, BasicWSObject.class
 			);
 			final long nUpdated2 = client.update(
-				dataDstA.getInput(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 10
+				dataDstA.getInput(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 15
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
 			// read and verify the updated items again
