@@ -34,9 +34,9 @@ import org.junit.runners.Suite;
 	Read10BItemsTest.class,
 	Read10KBItemsTest.class,
 	Read10MBItemsTest.class,
-	Read200MBItemsTest.class,*/
+	Read200MBItemsTest.class,
 	WriteUsing10ConnTest.class,
-	WriteUsing100ConnTest.class,
+	WriteUsing100ConnTest.class,*/
 	WriteByTimeTest.class,
 	ReadVerificationTest.class,
 	WriteByCountTest.class,
