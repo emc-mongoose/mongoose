@@ -78,8 +78,9 @@ extends WSMockTestBase {
 			@Override
 			public void run() {
 				try {
-					try (final BufferingOutputStream
-						stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
+					try(
+						final BufferingOutputStream
+							stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
 					) {
 						UniformDataSource.DEFAULT = new UniformDataSource();
 						//  Run mongoose default scenario in standalone mode
@@ -95,16 +96,12 @@ extends WSMockTestBase {
 		}, "writeScenarioThread");
 		SCENARIO_THREAD.start();
 		SCENARIO_THREAD.join(30000);
+		SCENARIO_THREAD.interrupt();
 	}
 
 	@AfterClass
 	public  static void tearDownClass()
 	throws Exception {
-		if (!SCENARIO_THREAD.isInterrupted()) {
-			SCENARIO_THREAD.join();
-			SCENARIO_THREAD.interrupt();
-		}
-		//
 		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));

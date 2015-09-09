@@ -5,7 +5,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.common.net.http.IOUtil;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -52,7 +51,7 @@ extends WSMockTestBase {
 
 	private static String RUN_ID = WriteUsing100ConnTest.class.getCanonicalName();
 	private static final String DATA_SIZE = "0B";
-	private static final int LIMIT_COUNT = 1000000, LOAD_THREADS = 100;
+	private static final int LIMIT_COUNT = 1000000, LOAD_CONNS = 100;
 
 	private static Thread SCENARIO_THREAD;
 
@@ -66,7 +65,7 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, Integer.toString(LOAD_THREADS));
+		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, Integer.toString(LOAD_CONNS));
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
@@ -94,6 +93,7 @@ extends WSMockTestBase {
 		}, "writeScenarioThread");
 		SCENARIO_THREAD.start();
 		SCENARIO_THREAD.join(30000);
+		SCENARIO_THREAD.interrupt();
 	}
 
 	@AfterClass
@@ -194,8 +194,8 @@ extends WSMockTestBase {
 		for (int i = 0; i < 3; i++) {
 			int countConnections = PortListener
 				.getCountConnectionsOnPort(TestConstants.PORT_INDICATOR);
-			// Check that actual connection count = (LOAD_THREADS * 2 + 5) because cinderella is run local
-			Assert.assertEquals("Connection count is wrong", (LOAD_THREADS * 2 + 5), countConnections);
+			// Check that actual connection count = (LOAD_CONNS * 2 + 5) because cinderella is run local
+			Assert.assertEquals("Connection count is wrong", (LOAD_CONNS * 2 + 5), countConnections);
 		}
 	}
 
@@ -278,7 +278,7 @@ extends WSMockTestBase {
 					);
 					actualConnectionsCount = Integer.valueOf(nextRec.get(4));
 					Assert.assertEquals(
-						"Count of connections is wrong", LOAD_THREADS, actualConnectionsCount
+						"Count of connections is wrong", LOAD_CONNS, actualConnectionsCount
 					);
 					actualNodesCount = Integer.valueOf(nextRec.get(5));
 					Assert.assertEquals(
