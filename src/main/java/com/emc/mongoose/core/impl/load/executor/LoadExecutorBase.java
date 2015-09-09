@@ -66,7 +66,7 @@ implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final int instanceNum, connCountPerNode, storageNodeCount;
+	protected final int instanceNum, storageNodeCount;
 	protected final String storageNodeAddrs[];
 	//
 	protected final Class<T> dataCls;
@@ -81,7 +81,7 @@ implements LoadExecutor<T> {
 	protected volatile FileDataItemOutput<T> itemsFileBuff = null;
 	//
 	private final long maxCount;
-	private final int totalConnCount;
+	protected final int totalConnCount;
 	// METRICS section
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected Counter counterSubm, counterRej;
@@ -188,7 +188,8 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final Class<T> dataCls,
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount
+		final int connCountPerNode, final int threadCount,
+		final DataItemInput<T> itemSrc, final long maxCount
 	) {
 		super(
 			maxCount, rtConfig.getTasksMaxQueueSize(),
@@ -249,7 +250,6 @@ implements LoadExecutor<T> {
 			jmxReporter.start();
 		}
 		//
-		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the nodes array
 		storageNodeAddrs = addrs.clone();

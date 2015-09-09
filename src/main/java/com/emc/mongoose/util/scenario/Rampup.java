@@ -62,7 +62,7 @@ implements Runnable {
 					loadBuilder
 						.setMinObjSize(nextSize)
 						.setMaxObjSize(nextSize)
-						.setThreadsPerNodeDefault(Integer.parseInt(nextThreadCountStr));
+						.setThreadCountDefault(Integer.parseInt(nextThreadCountStr));
 					nextLoadSeq = new Chain(
 						loadBuilder, timeOut, timeUnit, loadTypeSeq, false, true
 					);

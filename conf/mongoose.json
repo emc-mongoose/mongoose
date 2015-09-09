@@ -85,6 +85,13 @@
 				"data.size.min",
 				"data.size.max"
 			],
+			"load.connections": [
+				"load.type.append.connections",
+				"load.type.create.connections",
+				"load.type.read.connections",
+				"load.type.update.connections",
+				"load.type.delete.connections"
+			],
 			"load.threads": [
 				"load.type.append.threads",
 				"load.type.create.threads",
@@ -155,36 +162,41 @@
 			}
 		},
 		"load": {
-			"type": {
-				"create": {
-					"threads": 1
-				},
-				"read": {
-					"threads": 1,
-					"verifyContent": true
-				},
-				"update": {
-					"threads": 1,
-					"perItem": 1
-				},
-				"delete": {
-					"threads": 1
-				},
-				"append": {
-					"threads": 1
-				}
-			},
 			"limit": {
 				"count": 0,
 				"time": "0s",
 				"rate": 0,
 				"reqSleepMilliSec": 0
 			},
+			"metricsPeriodSec": 10,
+			"servers": "127.0.0.1",
 			"tasks": {
 				"maxQueueSize": 16384
 			},
-			"servers": "127.0.0.1",
-			"metricsPeriodSec": 10
+			"type": {
+				"create": {
+					"threads": 0,
+					"connections": 1
+				},
+				"read": {
+					"threads": 0,
+					"connections": 1,
+					"verifyContent": true
+				},
+				"update": {
+					"threads": 0,
+					"connections": 1,
+					"perItem": 0
+				},
+				"delete": {
+					"threads": 0,
+					"connections": 1
+				},
+				"append": {
+					"threads": 0,
+					"connections": 1
+				}
+			}
 		},
 		"scenario": {
 			"name": "single",

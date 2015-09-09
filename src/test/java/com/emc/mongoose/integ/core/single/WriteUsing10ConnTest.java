@@ -52,7 +52,7 @@ extends WSMockTestBase {
 
 	private static final String RUN_ID = WriteUsing10ConnTest.class.getCanonicalName();
 	private static final String DATA_SIZE = "0B";
-	private static final int LIMIT_COUNT = 1000000, LOAD_THREADS = 10;
+	private static final int LIMIT_COUNT = 1000000, LOAD_CONNS = 10;
 
 	private static Thread SCENARIO_THREAD;
 
@@ -66,7 +66,7 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, String.valueOf(LOAD_THREADS));
+		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, Integer.toString(LOAD_CONNS));
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
@@ -194,8 +194,8 @@ extends WSMockTestBase {
 		for (int i = 0; i < 3; i++) {
 			int countConnections = PortListener
 					.getCountConnectionsOnPort(TestConstants.PORT_INDICATOR);
-			// Check that actual connection count = (LOAD_THREADS * 2 + 5) because cinderella is run local
-			Assert.assertEquals("Connection count is wrong", (LOAD_THREADS * 2 + 5), countConnections);
+			// Check that actual connection count = (LOAD_CONNS * 2 + 5) because cinderella is run local
+			Assert.assertEquals("Connection count is wrong", (LOAD_CONNS * 2 + 5), countConnections);
 		}
 	}
 
@@ -213,7 +213,7 @@ extends WSMockTestBase {
 				countProduceWorkloadThreads++;
 			}
 		}
-		Assert.assertEquals("Wrong count of load threads", LOAD_THREADS, countProduceWorkloadThreads);
+		Assert.assertEquals("Wrong count of I/O worker threads", LOAD_CONNS, countProduceWorkloadThreads);
 	}
 
 	@Test
@@ -274,7 +274,7 @@ extends WSMockTestBase {
 					);
 					actualConnectionsCount = Integer.valueOf(nextRec.get(4));
 					Assert.assertEquals(
-						"Count of connections is wrong", LOAD_THREADS, actualConnectionsCount
+						"Count of connections is wrong", LOAD_CONNS, actualConnectionsCount
 					);
 					actualNodesCount = Integer.valueOf(nextRec.get(5));
 					Assert.assertEquals(

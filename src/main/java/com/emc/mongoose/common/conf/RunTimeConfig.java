@@ -68,13 +68,19 @@ implements Externalizable {
 		KEY_DATA_SRC_RANDOM = "data.src.random",
 		KEY_DATA_SRC_BATCH_SIZE = "data.src.batchSize",
 		//
+		KEY_LOAD_CONNS = "load.concurrency",
 		KEY_LOAD_SERVERS = "load.servers",
 		KEY_LOAD_THREADS = "load.threads",
-		KEY_LOAD_TYPE_CREATE_THREADS = "load.type.create.threads",
-		KEY_LOAD_TYPE_READ_THREADS = "load.type.read.threads",
-		KEY_LOAD_TYPE_UPDATE_THREADS = "load.type.update.threads",
-		KEY_LOAD_TYPE_DELETE_THREADS = "load.type.delete.threads",
-		KEY_LOAD_TYPE_APPEND_THREADS = "load.type.append.threads",
+		KEY_CREATE_THREADS = "load.type.create.threads",
+		KEY_READ_THREADS = "load.type.read.threads",
+		KEY_UPDATE_THREADS = "load.type.update.threads",
+		KEY_DELETE_THREADS = "load.type.delete.threads",
+		KEY_APPEND_THREADS = "load.type.append.threads",
+		KEY_CREATE_CONNS = "load.type.create.connections",
+		KEY_READ_CONNS = "load.type.create.connections",
+		KEY_UPDATE_CONNS = "load.type.create.connections",
+		KEY_DELETE_CONNS = "load.type.create.connections",
+		KEY_APPEND_CONNS = "load.type.create.connections",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
 		KEY_RUN_ID = "run.id",
@@ -120,8 +126,6 @@ implements Externalizable {
 		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
 		KEY_SCENARIO_RAMPUP_THREAD_COUNTS = "scenario.type.rampup.threadCounts",
 		//  For ui property tree
-		KEY_CHILDREN_PROPS = "children",
-		//
 		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
 		//
 		FNAME_CONF = "mongoose.json";
@@ -214,8 +218,6 @@ implements Externalizable {
 	//
 	public final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
-	private final Map<String, Object> properties = new HashMap<>();
-	//
 	private JsonNode rootNode;
 	//
 	public long getSizeBytes(final String key) {
@@ -257,6 +259,10 @@ implements Externalizable {
 		return mongooseKeys;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public static String getLoadConcurrencyParamName(final String loadType) {
+		return "load.type." + loadType + ".concurrency";
+	}
+	//
 	public static String getLoadThreadsParamName(final String loadType) {
 		return "load.type." + loadType + ".threads";
 	}
@@ -373,6 +379,10 @@ implements Externalizable {
 	//
 	public final String getRunVersion() {
 		return getString(KEY_RUN_VERSION);
+	}
+	//
+	public final int getLoadConcurrency() {
+		return getInt(KEY_LOAD_CONNS);
 	}
 	//
 	public final long getLoadLimitCount() {
@@ -533,6 +543,10 @@ implements Externalizable {
 		return getInt("load.type." + loadType + ".threads");
 	}
 	//
+	public final int getConcurrencyFor(final String loadType) {
+		return getInt("load.type." + loadType + ".concurrency");
+	}
+	//
 	public final String getApiS3AuthPrefix() {
 		return getString("api.type.s3.authPrefix");
 	}
@@ -659,12 +673,13 @@ implements Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public synchronized void loadPropsFromJsonCfgFile(final Path propsDir) {
 		JsonConfigLoader.loadPropsFromJsonCfgFile(propsDir, this);
-        for (String key : mongooseKeys) {
-            if (key.startsWith(PREFIX_KEY_ALIASING)) {
-                final String correctKey = key.replaceAll(PREFIX_KEY_ALIASING, "");
-                MAP_OVERRIDE.put(correctKey, getStringArray(key));
-            }
-        }
+		String correctKey;
+		for(String key : mongooseKeys) {
+			if(key.startsWith(PREFIX_KEY_ALIASING)) {
+				correctKey = key.replaceAll(PREFIX_KEY_ALIASING, "");
+				MAP_OVERRIDE.put(correctKey, getStringArray(key));
+			}
+		}
 	}
 	//
 	public synchronized void loadSysProps() {
@@ -736,6 +751,7 @@ implements Externalizable {
 				case KEY_DATA_SIZE:
 				case KEY_DATA_SRC_RING_SEED:
 				case KEY_DATA_SRC_RING_SIZE:
+				case KEY_LOAD_CONNS:
 				case KEY_LOAD_THREADS:
 				case KEY_STORAGE_ADDRS:
 				case KEY_API_NAME:

@@ -18,7 +18,7 @@ import java.nio.ByteBuffer;
 /**
  Created by kurila on 17.03.15.
  */
-public final class IOUtils {
+public final class IOUtil {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int

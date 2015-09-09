@@ -73,18 +73,18 @@ implements WSLoadExecutor<T> {
 	@SuppressWarnings("unchecked")
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount,
+		final int connCountPerNode, final int threadCount,
+		final DataItemInput<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
 		final int countUpdPerReq
 	) {
 		super(
 			(Class<T>) BasicWSObject.class,
-			runTimeConfig, reqConfig, addrs, connCountPerNode, itemSrc, maxCount,
+			runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
 		wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
 		//
-		final int totalConnCount = connCountPerNode * storageNodeCount;
 		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
 		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
 		//
@@ -114,7 +114,7 @@ implements WSLoadExecutor<T> {
 		);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
-			.setIoThreadCount(totalConnCount)
+			.setIoThreadCount(threadCount)
 			.setBacklogSize((int) thrLocalConfig.getSocketBindBackLogSize())
 			.setInterestOpQueued(thrLocalConfig.getSocketInterestOpQueued())
 			.setSelectInterval(thrLocalConfig.getSocketSelectInterval())

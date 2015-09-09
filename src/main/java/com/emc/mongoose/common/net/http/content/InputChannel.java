@@ -1,7 +1,7 @@
 package com.emc.mongoose.common.net.http.content;
 //
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.net.http.IOUtils;
+import com.emc.mongoose.common.net.http.IOUtil;
 import org.apache.http.nio.ContentDecoder;
 //
 import java.io.IOException;
@@ -28,7 +28,7 @@ implements ReadableByteChannel {
 	@Override
 	public final void close() {
 		while(isOpen()) {
-			IOUtils.consumeQuietly(contentDecoder, Constants.BUFF_SIZE_LO);
+			IOUtil.consumeQuietly(contentDecoder, Constants.BUFF_SIZE_LO);
 		}
 	}
 	//

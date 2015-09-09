@@ -40,13 +40,13 @@ extends Closeable {
 	 @param itemsInput data items info source
 	 @param itemsOutput data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
-	 @param threadCount the count of the threads/connections per storage node
+	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param size the size of the data items to write.
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount, final long size
+		final long maxCount, final int connPerNodeCount, final long size
 	) throws IllegalArgumentException, RemoteException, IOException;
 
 	/**
@@ -54,7 +54,7 @@ extends Closeable {
 	 @param itemsInput data items info source
 	 @param itemsOutput data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
-	 @param threadCount the count of the threads/connections per storage node
+	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param minSize the minimum data item size
 	 @param maxSize the maximum data item size
 	 @param sizeBias see the
@@ -64,7 +64,7 @@ extends Closeable {
 	 */
 	long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount,
+		final long maxCount, final int connPerNodeCount,
 		final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, RemoteException, IOException;
 
@@ -81,13 +81,13 @@ extends Closeable {
 	 @param itemsInput data items info source
 	 @param itemsOutput data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
-	 @param threadCount the count of the threads/connections per storage node
+	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param verifyContentFlag To verify the content integrity or to not verify.
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount, final boolean verifyContentFlag
+		final long maxCount, final int connPerNodeCount, final boolean verifyContentFlag
 	) throws IllegalStateException, RemoteException, IOException;
 
 	/**
@@ -103,12 +103,12 @@ extends Closeable {
 	 @param itemsInput data items info source
 	 @param itemsOutput data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
-	 @param threadCount the count of the threads/connections per storage node
+	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long delete(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount
+		final long maxCount, final int connPerNodeCount
 	) throws IllegalStateException, RemoteException, IOException;
 
 	/**
@@ -124,14 +124,14 @@ extends Closeable {
 	 @param itemsInput data items info source
 	 @param itemsOutput data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
-	 @param threadCount the count of the threads/connections per storage node
+	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param countPerTime the count of the non-overlapping ranges to update per one request
 	 @throws java.lang.IllegalArgumentException if non-positive value is passed
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount, final int countPerTime
+		final long maxCount, final int connPerNodeCount, final int countPerTime
 	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException;
 
 	/**
@@ -148,13 +148,13 @@ extends Closeable {
 	 @param itemsInput data items info source
 	 @param itemsOutput data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
-	 @param threadCount the count of the threads/connections per storage node
+	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param size the augment size to append to each data item
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount, final long size
+		final long maxCount, final int connPerNodeCount, final long size
 	) throws IllegalStateException, RemoteException, IOException;
 
 	/**
@@ -162,7 +162,7 @@ extends Closeable {
 	 @param itemsInput data items info source
 	 @param itemsOutput data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
-	 @param threadCount the count of the threads/connections per storage node
+	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param sizeMin the minimal size of the data augment to append
 	 @param sizeMax the maximal size of the data augment to append
 	 @param sizeBias see the
@@ -172,7 +172,7 @@ extends Closeable {
 	 */
 	long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount,
+		final long maxCount, final int connPerNodeCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException;
 }

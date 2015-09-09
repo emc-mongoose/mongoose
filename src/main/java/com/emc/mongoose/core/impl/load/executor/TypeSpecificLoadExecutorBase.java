@@ -37,18 +37,20 @@ extends LimitedRateLoadExecutorBase<T> {
 	protected TypeSpecificLoadExecutorBase(
 		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount,
+		final int connCountPerNode, final int threadCount,
+		final DataItemInput<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final float rateLimit, final int countUpdPerReq
 	) throws ClassCastException {
 		super(
-			dataCls, runTimeConfig, reqConfig, addrs, connCountPerNode, itemSrc, maxCount, rateLimit
+			dataCls, runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount,
+			itemSrc, maxCount, rateLimit
 		);
 		//
 		this.loadType = reqConfig.getLoadType();
-		// TODO
+		//
 		int buffSize;
-		if(itemSrc != null && FileDataItemInput.class.isInstance(itemSrc)) {
+		if(itemSrc instanceof FileDataItemInput) {
 			final long approxDataItemSize = ((FileDataItemInput) itemSrc).getApproxDataItemsSize(
 				runTimeConfig.getBatchSize()
 			);

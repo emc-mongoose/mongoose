@@ -37,12 +37,13 @@ implements WSLoadSvc<T> {
 	//
 	public BasicWSLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
-		final int threadsPerNode, final DataItemInput<T> itemSrc, final long maxCount,
+		final int connPerNode, final int threadsPerNode,
+		final DataItemInput<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
 		final int countUpdPerReq
 	) {
 		super(
-			runTimeConfig, reqConfig, addrs, threadsPerNode, itemSrc, maxCount,
+			runTimeConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
 		// by default, may be overriden later externally:

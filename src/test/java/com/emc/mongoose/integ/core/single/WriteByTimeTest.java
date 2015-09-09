@@ -62,7 +62,7 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, Integer.toString(LOAD_THREADS));
+		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, Integer.toString(LOAD_THREADS));
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//

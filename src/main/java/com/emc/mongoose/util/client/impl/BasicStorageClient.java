@@ -31,7 +31,7 @@ public class BasicStorageClient<T extends DataItem>
 implements StorageClient<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	protected final static int THREAD_COUNT_DEFAULT = 1;
+	protected final static int DEFAULT_CONN_PER_NODE_COUNT = 1;
 	//
 	protected RunTimeConfig rtConfig;
 	protected LoadBuilder<T, LoadExecutor<T>> loadBuilder;
@@ -75,21 +75,21 @@ implements StorageClient<T> {
 	@Override
 	public long write(final long size)
 	throws IllegalArgumentException, RemoteException, IOException {
-		return write(null, null, 0, THREAD_COUNT_DEFAULT, size, size, 0);
+		return write(null, null, 0, DEFAULT_CONN_PER_NODE_COUNT, size, size, 0);
 	}
 	//
 	@Override
 	public long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount, final long size
+		final long maxCount, final int connPerNodeCount, final long size
 	) throws IllegalArgumentException, RemoteException, IOException {
-		return write(itemsInput, itemsOutput, maxCount, threadCount, size, size, 0);
+		return write(itemsInput, itemsOutput, maxCount, connPerNodeCount, size, size, 0);
 	}
 	//
 	@Override
 	public long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount,
+		final long maxCount, final int connPerNodeCount,
 		final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, RemoteException, IOException {
 		//
@@ -104,7 +104,7 @@ implements StorageClient<T> {
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
 					.setLoadType(IOTask.Type.CREATE)
 					.setMaxCount(maxCount)
-					.setThreadsPerNodeFor(threadCount, IOTask.Type.CREATE)
+					.setThreadCountFor(connPerNodeCount, IOTask.Type.CREATE)
 					.setMinObjSize(minSize)
 					.setMaxObjSize(maxSize)
 					.setObjSizeBias(sizeBias)
@@ -118,13 +118,13 @@ implements StorageClient<T> {
 	@Override
 	public long read(final DataItemInput<T> itemsInput)
 	throws IllegalStateException, RemoteException, IOException {
-		return read(itemsInput, null, 0, THREAD_COUNT_DEFAULT, rtConfig.getReadVerifyContent());
+		return read(itemsInput, null, 0, DEFAULT_CONN_PER_NODE_COUNT, rtConfig.getReadVerifyContent());
 	}
 	//
 	@Override
 	public long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount, final boolean verifyContentFlag
+		final long maxCount, final int connPerNodeCount, final boolean verifyContentFlag
 	) throws IllegalStateException, RemoteException, IOException {
 		loadBuilder.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
@@ -138,7 +138,7 @@ implements StorageClient<T> {
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
 					.setLoadType(IOTask.Type.READ)
 					.setMaxCount(maxCount)
-					.setThreadsPerNodeFor(threadCount, IOTask.Type.READ)
+					.setConnPerNodeFor(connPerNodeCount, IOTask.Type.READ)
 					.build()
 			) {
 				return executeLoadJob(producer, loadJobExecutor, consumer);
@@ -149,13 +149,13 @@ implements StorageClient<T> {
 	@Override
 	public long delete(final DataItemInput<T> itemsInput)
 	throws IllegalStateException, RemoteException, IOException {
-		return delete(itemsInput, null, 0, THREAD_COUNT_DEFAULT);
+		return delete(itemsInput, null, 0, DEFAULT_CONN_PER_NODE_COUNT);
 	}
 	//
 	@Override
 	public long delete(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount
+		final long maxCount, final int connPerNodeCount
 	) throws IllegalStateException, RemoteException, IOException {
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
@@ -168,7 +168,7 @@ implements StorageClient<T> {
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
 					.setLoadType(IOTask.Type.DELETE)
 					.setMaxCount(maxCount)
-					.setThreadsPerNodeFor(threadCount, IOTask.Type.DELETE)
+					.setConnPerNodeFor(connPerNodeCount, IOTask.Type.DELETE)
 					.build()
 			) {
 				return executeLoadJob(producer, loadJobExecutor, consumer);
@@ -179,13 +179,13 @@ implements StorageClient<T> {
 	@Override
 	public long update(final DataItemInput<T> itemsInput)
 	throws IllegalStateException, RemoteException, IOException {
-		return update(itemsInput, null, 0, THREAD_COUNT_DEFAULT, rtConfig.getUpdateCountPerTime());
+		return update(itemsInput, null, 0, DEFAULT_CONN_PER_NODE_COUNT, rtConfig.getUpdateCountPerTime());
 	}
 	//
 	@Override
 	public long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount, final int countPerTime
+		final long maxCount, final int connPerNodeCount, final int countPerTime
 	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException {
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
@@ -198,7 +198,7 @@ implements StorageClient<T> {
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
 					.setLoadType(IOTask.Type.UPDATE)
 					.setMaxCount(maxCount)
-					.setThreadsPerNodeFor(threadCount, IOTask.Type.UPDATE)
+					.setConnPerNodeFor(connPerNodeCount, IOTask.Type.UPDATE)
 					.setUpdatesPerItem(countPerTime)
 					.build()
 			) {
@@ -210,21 +210,21 @@ implements StorageClient<T> {
 	@Override
 	public long append(final DataItemInput<T> itemsInput, final long size)
 	throws IllegalStateException, RemoteException, IOException {
-		return append(itemsInput, null, 0, THREAD_COUNT_DEFAULT, size, size, 0);
+		return append(itemsInput, null, 0, DEFAULT_CONN_PER_NODE_COUNT, size, size, 0);
 	}
 	//
 	@Override
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount, final long size
+		final long maxCount, final int connPerNodeCount, final long size
 	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException {
-		return append(itemsInput, itemsOutput, maxCount, threadCount, size, size, 0);
+		return append(itemsInput, itemsOutput, maxCount, connPerNodeCount, size, size, 0);
 	}
 	//
 	@Override
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long maxCount, final int threadCount,
+		final long maxCount, final int connPerNodeCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException {
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
@@ -237,7 +237,7 @@ implements StorageClient<T> {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
 					.setLoadType(IOTask.Type.APPEND)
-					.setThreadsPerNodeFor(threadCount, IOTask.Type.APPEND)
+					.setConnPerNodeFor(connPerNodeCount, IOTask.Type.APPEND)
 					.setMinObjSize(sizeMin)
 					.setMaxObjSize(sizeMax)
 					.setObjSizeBias(sizeBias)

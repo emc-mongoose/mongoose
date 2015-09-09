@@ -2,13 +2,12 @@ package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.http.IOUtils;
+import com.emc.mongoose.common.net.http.IOUtil;
 import com.emc.mongoose.common.net.http.content.InputChannel;
 import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.DataCorruptionException;
-import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
@@ -336,12 +335,12 @@ implements WSIOTask<T> {
 						// should verify the content
 						consumeAndVerifyContent(decoder, ioCtl);
 					} else { // consume quietly
-						countBytesDone += IOUtils.consumeQuietly(
+						countBytesDone += IOUtil.consumeQuietly(
 							decoder, contentSize - countBytesDone
 						);
 					}
 				} else {
-					IOUtils.consumeQuietly(decoder, Constants.BUFF_SIZE_LO);
+					IOUtil.consumeQuietly(decoder, Constants.BUFF_SIZE_LO);
 				}
 			}
 		} catch(final ClosedChannelException e) {
@@ -393,7 +392,7 @@ implements WSIOTask<T> {
 				}
 				//
 				if(currRangeSize > 0) {
-					buffIn = IOUtils.getThreadLocalBuff(nextRangeOffset - countBytesDone);
+					buffIn = IOUtil.getThreadLocalBuff(nextRangeOffset - countBytesDone);
 					final int n = currRange.readAndVerify(chanIn, buffIn);
 					if(n > 0) {
 						countBytesDone += n;
@@ -405,7 +404,7 @@ implements WSIOTask<T> {
 					chanIn.close();
 				}
 			} else {
-				buffIn = IOUtils.getThreadLocalBuff(contentSize - countBytesDone);
+				buffIn = IOUtil.getThreadLocalBuff(contentSize - countBytesDone);
 				final int n = dataItem.readAndVerify(chanIn, buffIn);
 				if(n > 0) {
 					countBytesDone += n;

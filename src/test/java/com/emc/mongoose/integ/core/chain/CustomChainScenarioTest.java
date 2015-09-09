@@ -54,7 +54,7 @@ extends WSMockTestBase {
 		DATA_SIZE = "10KB",
 		LIMIT_TIME = "1.minutes",
 		SCENARIO_NAME = "chain";
-	private static final int LOAD_THREADS = 10;
+	private static final int LOAD_CONNS = 10;
 	private static final boolean VERIFY_CONTENT = false;
 	private static final int LOADS_COUNT = 5;
 
@@ -70,11 +70,11 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, SCENARIO_NAME);
 		rtConfig.set(TestConstants.KEY_VERIFY_CONTENT, String.valueOf(VERIFY_CONTENT));
-		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, String.valueOf(LOAD_THREADS));
-		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_READ_THREADS, String.valueOf(LOAD_THREADS));
-		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_UPDATE_THREADS, String.valueOf(LOAD_THREADS));
-		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_DELETE_THREADS, String.valueOf(LOAD_THREADS));
-		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_APPEND_THREADS, String.valueOf(LOAD_THREADS));
+		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, String.valueOf(LOAD_CONNS));
+		rtConfig.set(RunTimeConfig.KEY_READ_CONNS, String.valueOf(LOAD_CONNS));
+		rtConfig.set(RunTimeConfig.KEY_UPDATE_CONNS, String.valueOf(LOAD_CONNS));
+		rtConfig.set(RunTimeConfig.KEY_DELETE_CONNS, String.valueOf(LOAD_CONNS));
+		rtConfig.set(RunTimeConfig.KEY_APPEND_CONNS, String.valueOf(LOAD_CONNS));
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
@@ -197,10 +197,10 @@ extends WSMockTestBase {
 					confParam.contains(TestConstants.SCENARIO_CHAIN)
 				);
 			}
-			if (confParam.contains(RunTimeConfig.KEY_LOAD_THREADS)) {
+			if (confParam.contains(RunTimeConfig.KEY_LOAD_CONNS)) {
 				Assert.assertTrue(
 					"Information about load threads name in configuration table is wrong",
-					confParam.contains(String.valueOf(LOAD_THREADS))
+					confParam.contains(String.valueOf(LOAD_CONNS))
 				);
 			}
 		}
@@ -537,7 +537,7 @@ extends WSMockTestBase {
 					);
 					actualConnectionsCount = Integer.valueOf(nextRec.get(4));
 					Assert.assertEquals(
-						"Count of connections is wrong", LOAD_THREADS , actualConnectionsCount
+						"Count of connections is wrong", LOAD_CONNS , actualConnectionsCount
 					);
 					actualNodesCount = Integer.valueOf(nextRec.get(5));
 					Assert.assertEquals(

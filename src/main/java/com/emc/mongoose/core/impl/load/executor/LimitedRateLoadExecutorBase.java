@@ -29,17 +29,21 @@ extends LoadExecutorBase<T> {
 	protected LimitedRateLoadExecutorBase(
 		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount,
+		final int connCountPerNode, final int threadCount,
+		final DataItemInput<T> itemSrc, final long maxCount,
 		final float rateLimit
 	) throws ClassCastException {
-		super(dataCls, runTimeConfig, reqConfig, addrs, connCountPerNode, itemSrc, maxCount);
+		super(
+			dataCls, runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount,
+			itemSrc, maxCount
+		);
 		//
 		if(rateLimit < 0) {
 			throw new IllegalArgumentException("Frequency rate limit shouldn't be a negative value");
 		}
 		this.rateLimit = rateLimit;
 		if(rateLimit > 0) {
-			tgtDur = (int) (1000000 * addrs.length * connCountPerNode / rateLimit);
+			tgtDur = (int) (1000000 * totalConnCount / rateLimit);
 			LOG.debug(Markers.MSG, "{}: target I/O task durations is {}[us]", getName(), tgtDur);
 		} else {
 			tgtDur = 0;

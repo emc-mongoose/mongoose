@@ -9,6 +9,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
@@ -116,10 +117,16 @@ implements WSLoadBuilderSvc<T, U> {
 			minObjSize, maxObjSize, objSizeBias
 		);
 		//
+		final IOTask.Type loadType = reqConf.getLoadType();
+		final int
+			connPerNode = loadTypeConnPerNode.get(loadType),
+			minThreadCount = getMinIOThreadCount(
+				loadTypeThreadCount.get(loadType), dataNodeAddrs.length, connPerNode
+			);
+		//
 		return (U) new BasicWSLoadSvc<>(
-			localRunTimeConfig, wsReqConf, dataNodeAddrs,
-			threadsPerNodeMap.get(reqConf.getLoadType()), itemSrc,
-			maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
+			localRunTimeConfig, wsReqConf, dataNodeAddrs, connPerNode, minThreadCount,
+			itemSrc, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}
 	//
