@@ -26,6 +26,7 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -76,17 +77,18 @@ extends WSMockTestBase {
 			@Override
 			public void run() {
 				try {
-					try (final BufferingOutputStream
+					try(
+						final BufferingOutputStream
 							 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
 					) {
-						UniformDataSource.DEFAULT = new UniformDataSource();
-						//  Run mongoose default scenario in standalone mode
+						STD_OUTPUT_STREAM = stdOutStream;
 						new ScriptRunner().run();
 						TimeUnit.SECONDS.sleep(3);
-						STD_OUTPUT_STREAM = stdOutStream;
+					} catch(final InterruptedException ignored) {
+					} finally {
 						RunIdFileManager.flushAll();
 					}
-				} catch (final Exception e) {
+				} catch(final IOException e) {
 					Assert.fail("Failed to execute load job");
 				}
 			}

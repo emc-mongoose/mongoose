@@ -28,6 +28,8 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -74,26 +76,29 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  write
-		SCENARIO_THREAD = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					try(
-						final BufferingOutputStream
-							stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
-					) {
-						UniformDataSource.DEFAULT = new UniformDataSource();
-						//  Run mongoose default scenario in standalone mode
-						new ScriptRunner().run();
-						TimeUnit.SECONDS.sleep(3);
-						STD_OUTPUT_STREAM = stdOutStream;
-						RunIdFileManager.flushAll();
+		SCENARIO_THREAD = new Thread(
+			new Runnable() {
+				@Override
+				public void run() {
+					try {
+						try(
+							final BufferingOutputStream
+								stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+						) {
+							STD_OUTPUT_STREAM = stdOutStream;
+							//  Run mongoose default scenario in standalone mode
+							new ScriptRunner().run();
+							TimeUnit.SECONDS.sleep(3);
+						} catch(final InterruptedException ignored) {
+						} finally {
+							RunIdFileManager.flushAll();
+						}
+					} catch(final IOException e) {
+						Assert.fail(e.toString());
 					}
-				} catch (final Exception e) {
-					Assert.fail("Failed to execute load job");
 				}
-			}
-		}, "writeScenarioThread");
+			}, "writeScenarioThread"
+		);
 		SCENARIO_THREAD.start();
 		SCENARIO_THREAD.join(30000);
 		SCENARIO_THREAD.interrupt();
