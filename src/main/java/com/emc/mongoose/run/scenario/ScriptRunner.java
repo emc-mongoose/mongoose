@@ -84,7 +84,7 @@ implements Runnable {
 			//
 			Path scriptDir = Paths.get(RunTimeConfig.DIR_ROOT, scriptsRootDir, scriptLangKey);
 			if (!Files.exists(scriptDir)){
-				LOG.info(
+				LOG.debug(
 					Markers.MSG, "Directory \"{}\" doesn't exist. " +
 					"Try to look for scripts in src/main/resources directory", scriptDir
 				);

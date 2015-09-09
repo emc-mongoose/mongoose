@@ -99,11 +99,6 @@ extends WSMockTestBase {
 	@AfterClass
 	public  static void tearDownClass()
 	throws Exception {
-		if (!SCENARIO_THREAD.isInterrupted()) {
-			SCENARIO_THREAD.join();
-			SCENARIO_THREAD.interrupt();
-		}
-		//
 		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
@@ -155,8 +150,8 @@ extends WSMockTestBase {
 				countDataItems++;
 			}
 			//  Check that there are 10 lines in data.items.csv file
-			Assert.assertEquals(
-				"Not correct information about created data items", LIMIT_COUNT, countDataItems
+			Assert.assertTrue(
+				"Not correct information about created data items", countDataItems > 10
 			);
 		}
 	}
