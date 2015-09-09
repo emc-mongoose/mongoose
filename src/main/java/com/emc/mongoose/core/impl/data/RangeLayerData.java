@@ -423,7 +423,7 @@ implements AppendableDataItem, UpdatableDataItem {
 		pendingAugmentSize = 0;
 	}
 	//
-	@Override
+	@Override @Deprecated
 	public final synchronized long writeAugmentFully(final WritableByteChannel chanOut)
 	throws IOException {
 		long byteCount = 0;

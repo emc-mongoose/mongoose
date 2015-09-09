@@ -27,7 +27,6 @@ import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
-import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
@@ -303,8 +302,12 @@ implements LoadExecutor<T> {
 			producer = reqConfig.getContainerListInput(maxCount, addrs[0]);
 			LOG.debug(Markers.MSG, "{} will use {} as data items producer", getName(), producer);
 		}*/
+		final boolean isCircular = rtConfig.getDataSrcCircularEnabled();
+		if(isCircular) {
+			setConsumer(this);
+		}
 		if(itemsSrc != null) {
-			producer = new DataItemInputProducer<>(itemsSrc, rtConfig.getDataSrcCircularEnabled());
+			producer = new DataItemInputProducer<>(itemsSrc);
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -469,9 +472,7 @@ implements LoadExecutor<T> {
 						getName(), SizeUtil.formatSize(itemsFilePath.toFile().length()), itemsFilePath
 					);
 					isShutdown.compareAndSet(true, false); // cancel if shut down before start
-					producer = new DataItemInputProducer<>(
-						itemsFileBuff.getInput(), rtConfig.getDataSrcCircularEnabled()
-					);
+					producer = new DataItemInputProducer<>(itemsFileBuff.getInput());
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
