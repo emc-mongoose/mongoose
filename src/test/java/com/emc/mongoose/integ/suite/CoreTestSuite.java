@@ -28,13 +28,13 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	DefaultWriteTest.class,
+	/*DefaultWriteTest.class,
 	WriteRandomSizedItemsTest.class,
 	ReadZeroSizeItemsTest.class,
 	Read10BItemsTest.class,
 	Read10KBItemsTest.class,
 	Read10MBItemsTest.class,
-	Read200MBItemsTest.class,
+	Read200MBItemsTest.class,*/
 	WriteUsing10ConnTest.class,
 	WriteUsing100ConnTest.class,
 	WriteByTimeTest.class,
