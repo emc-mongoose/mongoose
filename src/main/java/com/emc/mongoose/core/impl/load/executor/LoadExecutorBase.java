@@ -132,7 +132,7 @@ implements LoadExecutor<T> {
 			//
 			@Override
 			public final void run() {
-				while(!isClosed.get()) {
+				while(!isClosed.get() && !isInterrupted()) {
 					//
 					LockSupport.parkNanos(1);
 					//

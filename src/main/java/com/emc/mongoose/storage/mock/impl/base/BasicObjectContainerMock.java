@@ -73,15 +73,14 @@ implements ObjectContainerMock<T> {
 	//
 	@Override
 	public final void close() {
-		if(seqWorker.isAlive()) {
-			seqWorker.interrupt();
-		}
+		seqWorker.interrupt();
+		LOG.debug(Markers.MSG, "{}: interrupted", seqWorker.getName());
 		clear();
 	}
 	//
 	@Override
 	protected void finalize()
-		throws Throwable {
+	throws Throwable {
 		try {
 			close();
 		} finally {

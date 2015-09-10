@@ -20,6 +20,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 26.05.15.
  */
@@ -102,13 +103,17 @@ implements AsyncConsumer<T> {
 		long i = 0;
 		int availItemCount;
 		try {
-			while(i < maxCount) {
+			while(i < maxCount && !isInterrupted()) {
 				availItemCount = transientQueue.size();
-				if(availItemCount == 0 && isShutdown.get()) {
-					LOG.debug(
-						Markers.MSG, "No items are available for consuming and shutdown flag is set"
-					);
-					break;
+				if(availItemCount == 0) {
+					if(isShutdown.get()) {
+						LOG.debug(
+							Markers.MSG, "No items are available for consuming and shutdown flag is set"
+						);
+						break;
+					} else {
+						LockSupport.parkNanos(1);
+					}
 				} else if(availItemCount > 1) {
 					if(shuffle) {
 						availItemCount = transientQueue.drainTo(buff, butchSize);

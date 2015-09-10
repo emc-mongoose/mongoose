@@ -2,6 +2,7 @@ package com.emc.mongoose.common.concurrent;
 //
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.common.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,7 +46,7 @@ extends Thread {
 	public final void run() {
 		int n;
 		try {
-			while(true) {
+			while(!isInterrupted()) {
 				n = queue.drainTo(buff, batchSize);
 				if(n > 0) {
 					for(final Runnable nextTask : buff) {
@@ -63,6 +64,7 @@ extends Thread {
 				}
 			}
 		} finally {
+			LOG.debug(Markers.MSG, "{}: finished", getName());
 			queue.clear();
 		}
 	}
