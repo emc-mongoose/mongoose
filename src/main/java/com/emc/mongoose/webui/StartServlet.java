@@ -62,6 +62,7 @@ public final class StartServlet extends CommonServlet {
 		runTimeConfig = runTimeConfig.clone();
 		setupRunTimeConfig(request);
 		updateLastRunTimeConfig(runTimeConfig);
+		//
 		switch(request.getParameter(RunTimeConfig.KEY_RUN_MODE)) {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
@@ -96,15 +97,16 @@ public final class StartServlet extends CommonServlet {
 			public void run() {
 				localRunTimeConfig = runTimeConfig;
 				RunTimeConfig.setContext(localRunTimeConfig);
+				setName("run<" + runTimeConfig.getRunId() + ">");
 				//
 				LOG.debug(Markers.MSG, message);
+				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				//
 				loadBuilderSvc = new BasicWSLoadBuilderSvc(localRunTimeConfig);
 				//
 				try {
 					loadBuilderSvc.setProperties(runTimeConfig);
 					loadBuilderSvc.start();
-					setName("run<" + runTimeConfig.getRunId() + ">");
 				} catch (final RemoteException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to start load builder service");
 				}
@@ -129,22 +131,23 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
+				setName("run<" + runTimeConfig.getRunId() + ">");
 				ThreadContext.put(RunTimeConfig.KEY_SCENARIO_NAME, runTimeConfig.getScenarioName());
 				ThreadContext.put(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC,
-						String.valueOf(runTimeConfig.getLoadMetricsPeriodSec()));
+					String.valueOf(runTimeConfig.getLoadMetricsPeriodSec()));
 				//
-				if(runTimeConfig.getScenarioName().equals("rampup")) {
+				if(runTimeConfig.getScenarioName().equals(Constants.RUN_SCENARIO_RAMPUP)) {
 					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
-							convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
+						convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
 					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS,
-							convertArrayToString(runTimeConfig.getScenarioRampupConnCounts()));
+						convertArrayToString(runTimeConfig.getScenarioRampupConnCounts()));
 					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD,
-							convertArrayToString(runTimeConfig.getScenarioChainLoad()));
+						convertArrayToString(runTimeConfig.getScenarioChainLoad()));
 				}
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);
-				setName("run<" + runTimeConfig.getRunId() + ">");
+				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				new ScriptRunner().run();
 			}
 			//
@@ -164,10 +167,11 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
+				setName("run<" + runTimeConfig.getRunId() + ">");
 				//
 				LOG.debug(Markers.MSG, message);
+				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				try {
-					setName("run<" + runTimeConfig.getRunId() + ">");
 					new Cinderella(runTimeConfig).run();
 				} catch (final IOException e) {
 					LogUtil.exception(LOG, Level.FATAL, e, "Failed run Cinderella");

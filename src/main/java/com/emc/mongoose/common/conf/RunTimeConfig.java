@@ -5,11 +5,14 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.databind.JsonNode;
 //
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -31,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.nio.file.Paths;
+
 /**
  Created by kurila on 28.05.14.
  A shared runtime configuration.
@@ -55,7 +59,6 @@ implements Externalizable {
 		KEY_DATA_SRC_RING_SIZE = "data.src.ring.size",
 		//
 		KEY_DATA_ITEM_COUNT = "load.limit.count",
-		KEY_DATA_COUNT = "data.count",
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_SIZE_MIN = "data.size.min",
 		KEY_DATA_SIZE_MAX = "data.size.max",
@@ -85,12 +88,10 @@ implements Externalizable {
 		//
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
-		KEY_RUN_TIME = "run.time",
 		KEY_SCENARIO_NAME = "scenario.name",
 		KEY_LOAD_METRICS_PERIOD_SEC = "load.metricsPeriodSec",
 		KEY_LOAD_LIMIT_COUNT = "load.limit.count",
 		KEY_LOAD_LIMIT_TIME = "load.limit.time",
-		KEY_LOAD_TIME = "load.time",
 		KEY_LOAD_LIMIT_RATE = "load.limit.rate",
 		KEY_LOAD_LIMIT_REQSLEEP_MILLISEC = "load.limit.reqSleepMilliSec",
 		KEY_RUN_VERSION = "run.version",
@@ -124,8 +125,8 @@ implements Externalizable {
 		KEY_SCENARIO_CHAIN_ITEMSBUFFER = "scenario.type.chain.itemsBuffer",
 		//  Rampup
 		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
-		KEY_SCENARIO_RAMPUP_CONN_COUNTS = "scenario.type.rampup.connCounts",
-		//  For ui property tree
+			KEY_SCENARIO_RAMPUP_CONN_COUNTS = "scenario.type.rampup.connCounts",
+		//
 		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
 		//
 		FNAME_CONF = "mongoose.json";
@@ -137,10 +138,12 @@ implements Externalizable {
 	private static RunTimeConfig DEFAULT_INSTANCE;
 	//
 	public static void initContext() {
+		final Logger log = LogManager.getLogger();
 		RunTimeConfig instance = RunTimeConfig.getContext();
 		if(instance == null) {
 			resetContext();
 		}
+		log.info(Markers.CFG, RunTimeConfig.getContext().toFormattedString());
 	}
 	//
 	public static RunTimeConfig getDefault() {
@@ -149,8 +152,8 @@ implements Externalizable {
 	//
 	public static void resetContext() {
 		final RunTimeConfig instance = new RunTimeConfig();
-		instance.loadProperties();
 		DEFAULT_INSTANCE = instance;
+		instance.loadProperties();
 		final String
 			runId = System.getProperty(KEY_RUN_ID),
 			runMode = System.getProperty(KEY_RUN_MODE);
@@ -165,9 +168,25 @@ implements Externalizable {
 	//
 	public void loadProperties() {
 		loadPropsFromJsonCfgFile(
-			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
+			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF)
 		);
 		loadSysProps();
+	}
+	//
+	public String toFormattedString() {
+		final Logger log = LogManager.getLogger();
+		//
+		final ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+		//
+		try {
+			final Object json = mapper.readValue(getJsonProps(), Object.class);
+			return CFG_HEADER + mapper.writeValueAsString(json);
+		} catch (final IOException e) {
+			LogUtil.exception(log, Level.WARN, e, "Failed to read properties from \"{}\" file",
+				Paths.get(DIR_ROOT, Constants.DIR_CONF, FNAME_CONF).toString());
+		}
+		return null;
 	}
 	//
 	public static RunTimeConfig getContext() {
@@ -225,9 +244,7 @@ implements Externalizable {
 	}
 	//
 	public String getJsonProps() {
-		JsonConfigLoader.updateProps(
-			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF), this, false
-		);
+		JsonConfigLoader.updateProps(this, false);
 		return rootNode.toString();
 	}
 	//
@@ -240,8 +257,12 @@ implements Externalizable {
 		return false;
 	}
 	//
-	public final synchronized void putJsonProps(final JsonNode rootNode) {
+	public final synchronized void setJsonNode(final JsonNode rootNode) {
 		this.rootNode = rootNode;
+	}
+	//
+	public final synchronized JsonNode getJsonNode() {
+		return rootNode;
 	}
 	//
 	public final synchronized void set(final String key, final Object value) {
@@ -586,7 +607,7 @@ implements Externalizable {
 	public final boolean isShuffleItemsEnabled() {return  getBoolean(KEY_DATA_SRC_RANDOM);}
 	//
 	public final boolean isRunResumeEnabled() {
-		return getBoolean("run.resume.enabled");
+		return getBoolean(KEY_RUN_RESUME_ENABLED);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -672,11 +693,15 @@ implements Externalizable {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public synchronized void loadPropsFromJsonCfgFile(final Path propsDir) {
+		final Logger log = LogManager.getLogger();
 		JsonConfigLoader.loadPropsFromJsonCfgFile(propsDir, this);
-		String correctKey;
-		for(String key : mongooseKeys) {
+		log.debug(Markers.MSG, "Going to override the aliasing section");
+		for(final String key : mongooseKeys) {
 			if(key.startsWith(PREFIX_KEY_ALIASING)) {
-				correctKey = key.replaceAll(PREFIX_KEY_ALIASING, "");
+				final String correctKey = key.replaceAll(PREFIX_KEY_ALIASING, "");
+				log.trace(
+					Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
+				);
 				MAP_OVERRIDE.put(correctKey, getStringArray(key));
 			}
 		}
@@ -722,6 +747,8 @@ implements Externalizable {
 		}
 	}
 	//
+	public final static String
+		CFG_HEADER = "Current configuration:\n";
 	private final static String
 		TABLE_BORDER = "\n+--------------------------------+----------------------------------------------------------------+",
 		TABLE_HEADER = "Configuration parameters:";

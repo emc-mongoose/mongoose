@@ -179,5 +179,8 @@ implements AsyncConsumer<T> {
 			LOG.debug(Markers.MSG, "Dropped {} submit tasks", dropCount);
 		}
 		transientQueue.clear(); // dispose
+		if(!super.isInterrupted()) {
+			super.interrupt();
+		}
 	}
 }

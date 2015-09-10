@@ -54,6 +54,10 @@ implements WSLoadSvc<T> {
 	public final void close()
 	throws IOException {
 		super.close();
+		//
+		if(consumer instanceof FrameBuffConsumer) {
+			consumer.close();
+		}
 		// close the exposed network service, if any
 		final Service svc = ServiceUtils.getLocalSvc(
 			ServiceUtils.getLocalSvcName(getName()));
