@@ -90,10 +90,10 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
-		try (final BufferingOutputStream
+		try(
+			final BufferingOutputStream
 				 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
-			UniformDataSource.DEFAULT = new UniformDataSource();
 			//  Run mongoose default scenario in standalone mode
 			new ScriptRunner().run();
 			//  Wait for "Scenario end" message
@@ -367,19 +367,19 @@ extends WSMockTestBase {
 					firstRow = false;
 				} else {
 					Assert.assertEquals(
-						"Storage API is wrong", TestConstants.API_S3, nextRec.get(2).toLowerCase()
+						"Storage API is wrong: " + nextRec.toString(), TestConstants.API_S3, nextRec.get(2).toLowerCase()
 					);
 					matcher = LogPatterns.TYPE_LOAD.matcher(nextRec.get(3));
 					Assert.assertTrue(
-						"Type load is wrong", matcher.find()
+						"Type load is wrong: " + nextRec.toString(), matcher.find()
 					);
 					actualConnectionsCount = Integer.valueOf(nextRec.get(4));
 					Assert.assertEquals(
-						"Count of connections is wrong", LOAD_CONNS, actualConnectionsCount
+						"Count of connections is wrong: " + nextRec.toString(), LOAD_CONNS, actualConnectionsCount
 					);
 					actualNodesCount = Integer.valueOf(nextRec.get(5));
 					Assert.assertEquals(
-						"Count of nodes is wrong", 1, actualNodesCount
+						"Count of nodes is wrong: " + nextRec.toString(), 1, actualNodesCount
 					);
 				}
 			}

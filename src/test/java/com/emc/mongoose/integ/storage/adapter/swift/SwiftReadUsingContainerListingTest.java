@@ -17,7 +17,7 @@ public class SwiftReadUsingContainerListingTest
 extends StandaloneClientTestBase {
 	//
 	private final static long COUNT_TO_WRITE = 10000;
-	private final static String RUN_ID  = SwiftReadUsingContainerListingTest.class.getSimpleName();
+	private final static String RUN_ID  = SwiftReadUsingContainerListingTest.class.getCanonicalName();
 	//
 	private static long COUNT_WRITTEN, COUNT_READ;
 	//

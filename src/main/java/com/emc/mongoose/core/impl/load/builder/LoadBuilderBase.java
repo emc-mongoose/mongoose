@@ -360,7 +360,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setUpdatesPerItem(final int count)
-		throws IllegalArgumentException {
+	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set updates count per data item: {}", count);
 		if(count<0) {
 			throw new IllegalArgumentException("Update count per item should not be less than 0");

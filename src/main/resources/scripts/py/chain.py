@@ -18,7 +18,7 @@ LOG = LogManager.getLogger()
 #
 def build(
 	loadBuilder, loadTypesChain, flagConcurrent=True, flagUseLocalItemList=True,
-	dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0
+	dataItemSizeMin=0, dataItemSizeMax=0, connsPerNode=0
 ):
 	#
 	chain = list()
@@ -31,8 +31,8 @@ def build(
 				loadBuilder.setMinObjSize(dataItemSizeMin)
 			if dataItemSizeMax > 0:
 				loadBuilder.setMaxObjSize(dataItemSizeMax)
-			if threadsPerNode > 0:
-				loadBuilder.setThreadsPerNodeDefault(threadsPerNode)
+			if connsPerNode > 0:
+				loadBuilder.setConnPerNodeDefault(connsPerNode)
 			load = loadBuilder.build()
 			#
 			if load is not None:
@@ -109,7 +109,7 @@ def execute(chain=(), flagConcurrent=True, timeOut=Long.MAX_VALUE, timeUnit=Time
 #
 if __name__ == "__builtin__":
 	#
-	dataItemSize, dataItemSizeMin, dataItemSizeMax, threadsPerNode = 0, 0, 0, 0
+	dataItemSize, dataItemSizeMin, dataItemSizeMax, connsPerNode = 0, 0, 0, 0
 	runTimeConfig = RunTimeConfig.getContext()
 	#
 	try:
@@ -125,9 +125,9 @@ if __name__ == "__builtin__":
 	except:
 		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
 	try:
-		threadsPerNode = Long(runTimeConfig.getInt(RunTimeConfig.KEY_LOAD_THREADS))
+		connsPerNode = Long(runTimeConfig.getInt(RunTimeConfig.KEY_LOAD_CONNS))
 	except:
-		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_LOAD_THREADS)
+		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_LOAD_CONNS)
 	#
 	loadTypesChain = ()
 	try:
@@ -152,7 +152,7 @@ if __name__ == "__builtin__":
 		loadBuilder, loadTypesChain, flagConcurrent, flagUseLocalItemList,
 		dataItemSizeMin if dataItemSize == 0 else dataItemSize,
 		dataItemSizeMax if dataItemSize == 0 else dataItemSize,
-		threadsPerNode
+		connsPerNode
 	)
 	if chain is None or len(chain) == 0:
 		LOG.error(Markers.ERR, "Empty chain has been build, nothing to do")

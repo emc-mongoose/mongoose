@@ -211,20 +211,20 @@ $(document).ready(function() {
 		$("#data\\.size").val(this.value);
 	});
 	//
-	$("#backup-load\\.threads").on("change", function() {
+	$("#backup-load\\.connections").on("change", function() {
 		var currentValue = this.value;
 		var keys2Override = [
-			"#backup-load\\.type\\.append\\.threads",
-			"#backup-load\\.type\\.create\\.threads",
-			"#backup-load\\.type\\.read\\.threads",
-			"#backup-load\\.type\\.update\\.threads",
-			"#backup-load\\.type\\.delete\\.threads"
+			"#backup-load\\.type\\.append\\.connections",
+			"#backup-load\\.type\\.create\\.connections",
+			"#backup-load\\.type\\.read\\.connections",
+			"#backup-load\\.type\\.update\\.connections",
+			"#backup-load\\.type\\.delete\\.connections"
 		];
 		keys2Override.forEach(function(d) {
 			$(d).val(currentValue).change();
 		});
 		//
-		$("#load\\.threads").val(this.value);
+		$("#load\\.connections").val(this.value);
 	});
 	//
 	$("#start").click(function(e) {
@@ -476,7 +476,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 		var runId = json.contextMap["run.id"];
 		var runMetricsPeriodSec = json.contextMap["load.metricsPeriodSec"];
 		var scenarioChainLoad = json.contextMap["scenario.type.chain.load"];
-		var rampupThreadCounts = json.contextMap["scenario.type.rampup.threadCounts"];
+		var rampupConnCounts = json.contextMap["scenario.type.rampup.connCounts"];
 		var loadRampupSizes = json.contextMap["scenario.type.rampup.sizes"];
 		//
 		var entry = runId.split(".").join("_");
@@ -493,7 +493,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 		});
 		if (!isContains) {
 			if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
-				charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+				charts(chartsArray).rampup(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes);
 			}
 		}
 		switch (json.marker.name) {
@@ -584,9 +584,9 @@ function configureWebSocketConnection(location, countOfRecords) {
 						return d.marker.name === MARKERS.PERF_SUM;
 					});
 					var scenarioChainLoad = filtered[0].contextMap["scenario.type.chain.load"];
-					var rampupThreadCounts = filtered[0].contextMap["scenario.type.rampup.threadCounts"];
+					var rampupConnCounts = filtered[0].contextMap["scenario.type.rampup.connCounts"];
 					var loadRampupSizes = filtered[0].contextMap["scenario.type.rampup.sizes"];
-					charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+					charts(chartsArray).rampup(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes);
 					chartsArray.forEach(function(d) {
 						if (d["run.id"] === runId) {
 							d.charts.forEach(function(c) {
@@ -2360,13 +2360,13 @@ function charts(chartsArray) {
 				};
 			}
 		},
-		rampup: function(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes) {
+		rampup: function(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes) {
 			//
 			// change default width
 			width = 480;
 			//
 			var loadTypes = scenarioChainLoad.split(",");
-			var rampupThreadCountsArray = rampupThreadCounts.split(",").map(function(item) {
+			var rampupConnCountsArray = rampupConnCounts.split(",").map(function(item) {
 				return parseInt(item, 10);
 			});
 			var loadRampupSizesArray = loadRampupSizes.split(",").map(function(item) {
@@ -2416,7 +2416,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "thread count", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "Connection count", "Rate[obj/s]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.TP, json);
@@ -2446,7 +2446,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "thread count", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "Connection count", "Rate[MB/s]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.BW, json);
@@ -2462,7 +2462,7 @@ function charts(chartsArray) {
 					var currYScale = SCALE_TYPES[0];
 					//
 					var x = d3.scale.linear()
-						.domain([0, d3.max(rampupThreadCountsArray)])
+						.domain([0, d3.max(rampupConnCountsArray)])
 						.range([0, width]);
 					var y = d3.scale.linear()
 						.domain([
@@ -2743,7 +2743,7 @@ function charts(chartsArray) {
 							if (scaleType === SCALE_TYPES[0]) {
 								if (scaleOrientation === SCALE_ORIENTATION[0]) {
 									x = d3.scale.linear()
-										.domain([0, d3.max(rampupThreadCountsArray)])
+										.domain([0, d3.max(rampupConnCountsArray)])
 										.range([0, width]);
 									currXScale = SCALE_TYPES[0];
 								} else {
@@ -2760,7 +2760,7 @@ function charts(chartsArray) {
 							} else {
 								if (scaleOrientation === SCALE_ORIENTATION[0]) {
 									x = d3.scale.log()
-										.domain([1, d3.max(rampupThreadCountsArray)])
+										.domain([1, d3.max(rampupConnCountsArray)])
 										.range([0, width]);
 									currXScale = SCALE_TYPES[1];
 								} else {
@@ -2817,7 +2817,7 @@ function charts(chartsArray) {
 								if (d.size === json.contextMap["currentSize"]) {
 									d.charts.forEach(function (c, i) {
 										c.values.push({
-											x: parseInt(json.contextMap["currentThreadCount"]),
+											x: parseInt(json.contextMap["currentConnCount"]),
 											y: parseFloat(value[i])
 										});
 									});
@@ -2825,7 +2825,7 @@ function charts(chartsArray) {
 								//
 							});
 							//
-							x.domain([(isNaN(x(0))) ? 1 : 0, d3.max(rampupThreadCountsArray)])
+							x.domain([(isNaN(x(0))) ? 1 : 0, d3.max(rampupConnCountsArray)])
 								.range([0, width]);
 							y.domain([
 								(currYScale === SCALE_TYPES[1]) ? 0.1 : 0,

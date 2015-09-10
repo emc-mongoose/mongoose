@@ -136,8 +136,8 @@ public final class StartServlet extends CommonServlet {
 				if(runTimeConfig.getScenarioName().equals("rampup")) {
 					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
 							convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
-					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS,
-							convertArrayToString(runTimeConfig.getScenarioRampupThreadCounts()));
+					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS,
+							convertArrayToString(runTimeConfig.getScenarioRampupConnCounts()));
 					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD,
 							convertArrayToString(runTimeConfig.getScenarioChainLoad()));
 				}

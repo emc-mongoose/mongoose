@@ -181,14 +181,14 @@
 																			<fieldset>
 																				<legend>Create</legend>
 																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.type.create.threads">
-																						Load threads count
+																					<label class="col-sm-6 control-label" for="backup-load.type.create.connections">
+																						Load concurrent connections count
 																					</label>
 																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.type.create.threads"
+																						<input type="text" id="backup-load.type.create.connections"
 																						       class="form-control"
-																						       data-pointer="load.type.create.threads"
-																						       value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"/>
+																						       data-pointer="load.type.create.connections"
+																						       value="${rt:getString(runTimeConfig, 'load.type.create.connections')}"/>
 																					</div>
 																				</div>
 																			</fieldset>
@@ -198,14 +198,14 @@
 																			<fieldset>
 																				<legend>Read</legend>
 																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.type.read.threads">
-																						Load threads count
+																					<label class="col-sm-6 control-label" for="backup-load.type.read.connections">
+																						Load concurrent connections count
 																					</label>
 																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.type.read.threads"
+																						<input type="text" id="backup-load.type.read.connections"
 																						       class="form-control"
-																						       data-pointer="load.type.read.threads"
-																						       value="${rt:getString(runTimeConfig, 'load.type.read.threads')}"/>
+																						       data-pointer="load.type.read.connections"
+																						       value="${rt:getString(runTimeConfig, 'load.type.read.connections')}"/>
 																					</div>
 																				</div>
 
@@ -230,14 +230,14 @@
 																			<fieldset>
 																				<legend>Update</legend>
 																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.type.update.threads">
-																						Load threads count
+																					<label class="col-sm-6 control-label" for="backup-load.type.update.connections">
+																						Load concurrent connections count
 																					</label>
 																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.type.update.threads"
+																						<input type="text" id="backup-load.type.update.connections"
 																						       class="form-control"
-																						       value="${rt:getString(runTimeConfig, 'load.type.update.threads')}"
-																						       data-pointer="load.type.update.threads"/>
+																						       value="${rt:getString(runTimeConfig, 'load.type.update.connections')}"
+																						       data-pointer="load.type.update.connections"/>
 																					</div>
 																				</div>
 
@@ -259,14 +259,14 @@
 																			<fieldset>
 																				<legend>Delete</legend>
 																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.type.delete.threads">
-																						Load threads count
+																					<label class="col-sm-6 control-label" for="backup-load.type.delete.connections">
+																						Load concurrent connections count
 																					</label>
 																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.type.delete.threads"
+																						<input type="text" id="backup-load.type.delete.connections"
 																						       class="form-control"
-																						       value="${rt:getString(runTimeConfig, 'load.type.delete.threads')}"
-																						       data-pointer="load.type.delete.threads"/>
+																						       value="${rt:getString(runTimeConfig, 'load.type.delete.connections')}"
+																						       data-pointer="load.type.delete.connections"/>
 																					</div>
 																				</div>
 																			</fieldset>
@@ -276,14 +276,14 @@
 																			<fieldset>
 																				<legend>Append</legend>
 																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.type.append.threads">
-																						Load threads count
+																					<label class="col-sm-6 control-label" for="backup-load.type.append.connections">
+																						Load concurrent connections count
 																					</label>
 																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.type.append.threads"
+																						<input type="text" id="backup-load.type.append.connections"
 																						       class="form-control"
-																						       value="${rt:getString(runTimeConfig, 'load.type.append.threads')}"
-																						       data-pointer="load.type.append.threads"/>
+																						       value="${rt:getString(runTimeConfig, 'load.type.append.connections')}"
+																						       data-pointer="load.type.append.connections"/>
 																					</div>
 																				</div>
 																			</fieldset>
@@ -359,27 +359,27 @@
 																				<div role="tabpanel" class="tab-pane active" id="backuptab-create">
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.type.create.threads">
-																							Load threads count
+																						       for="backuptab-load.type.create.connections">
+																							Load concurrent connections count
 																						</label>
 																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.type.create.threads"
+																							<input type="text" id="backuptab-load.type.create.connections"
 																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"
-																							       data-pointer="load.type.create.threads"/>
+																							       value="${rt:getString(runTimeConfig, 'load.type.create.connections')}"
+																							       data-pointer="load.type.create.connections"/>
 																						</div>
 																					</div>
 																				</div>
 																				<div role="tabpanel" class="tab-pane" id="backuptab-read">
 																					<div class="form-group">
-																						<label class="col-sm-6 control-label" for="backuptab-load.type.read.threads">
-																							Load threads count
+																						<label class="col-sm-6 control-label" for="backuptab-load.type.read.connections">
+																							Load concurrent connections count
 																						</label>
 																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.type.read.threads"
+																							<input type="text" id="backuptab-load.type.read.connections"
 																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.type.read.threads')}"
-																							       data-pointer="load.type.read.threads"/>
+																							       value="${rt:getString(runTimeConfig, 'load.type.read.connections')}"
+																							       data-pointer="load.type.read.connections"/>
 																						</div>
 																					</div>
 
@@ -403,14 +403,14 @@
 																				<div role="tabpanel" class="tab-pane" id="backuptab-update">
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.type.update.threads">
-																							Load threads count
+																						       for="backuptab-load.type.update.connections">
+																							Load concurrent connections count
 																						</label>
 																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.type.update.threads"
+																							<input type="text" id="backuptab-load.type.update.connections"
 																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.type.update.threads')}"
-																							       data-pointer="load.type.update.threads"/>
+																							       value="${rt:getString(runTimeConfig, 'load.type.update.connections')}"
+																							       data-pointer="load.type.update.connections"/>
 																						</div>
 																					</div>
 
@@ -430,27 +430,27 @@
 																				<div role="tabpanel" class="tab-pane" id="backuptab-delete">
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.type.delete.threads">
-																							Load threads count
+																						       for="backuptab-load.type.delete.connections">
+																							Load concurrent connections count
 																						</label>
 																						<div class="col-sm-6">
-																							<input type="text" class="form-control" id="backuptab-load.type.delete.threads"
-																							       value="${rt:getString(runTimeConfig, 'load.type.delete.threads')}"
-																							       data-pointer="load.type.delete.threads"/>
+																							<input type="text" class="form-control" id="backuptab-load.type.delete.connections"
+																							       value="${rt:getString(runTimeConfig, 'load.type.delete.connections')}"
+																							       data-pointer="load.type.delete.connections"/>
 																						</div>
 																					</div>
 																				</div>
 																				<div role="tabpanel" class="tab-pane" id="backuptab-append">
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.type.append.threads">
-																							Load threads count
+																						       for="backuptab-load.type.append.connections">
+																							Load concurrent connections count
 																						</label>
 																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.type.append.threads"
+																							<input type="text" id="backuptab-load.type.append.connections"
 																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.type.append.threads')}"
-																							       data-pointer="load.type.append.threads"/>
+																							       value="${rt:getString(runTimeConfig, 'load.type.append.connections')}"
+																							       data-pointer="load.type.append.connections"/>
 																						</div>
 																					</div>
 																				</div>
@@ -507,15 +507,15 @@
 																			</div>
 																		</div>
 																		<div class="form-group">
-																			<label for="backup-scenario.type.rampup.threadCounts"
+																			<label for="backup-scenario.type.rampup.connCounts"
 																			       class="col-sm-4 control-label">
-																				Thread count
+																				Concurrent connections count
 																			</label>
 																			<div class="col-sm-8">
-																				<input type="text" id="backup-scenario.type.rampup.threadCounts"
+																				<input type="text" id="backup-scenario.type.rampup.connCounts"
 																				       class="form-control"
-																				       value="${rt:getString(runTimeConfig, 'scenario.type.rampup.threadCounts')}"
-																				       data-pointer="scenario.type.rampup.threadCounts"/>
+																				       value="${rt:getString(runTimeConfig, 'scenario.type.rampup.connCounts')}"
+																				       data-pointer="scenario.type.rampup.connCounts"/>
 																			</div>
 																		</div>
 
@@ -712,12 +712,12 @@
 											<fieldset>
 												<legend>Load</legend>
 												<div class="form-group">
-													<label for="backup-load.threads" class="col-sm-3 control-label">
-														Threads/connections
+													<label for="backup-load.connections" class="col-sm-3 control-label">
+														Concurrent load connections count
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-load.threads" data-pointer="load.threads" class="form-control"
-																value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"/>
+														<input type="text" id="backup-load.connections" data-pointer="load.connections" class="form-control"
+																value="${rt:getString(runTimeConfig, 'load.type.create.connections')}"/>
 													</div>
 												</div>
 
@@ -817,7 +817,7 @@
 											</c:otherwise>
 										</c:choose>
 										<input type="hidden" id="data.size" name="data.size" value="${rt:getString(runTimeConfig, 'data.size')}"/>
-										<input type="hidden" id="load.threads" name="load.threads" value="${rt:getString(runTimeConfig, 'load.threads')}"/>
+										<input type="hidden" id="load.connections" name="load.connections" value="${rt:getString(runTimeConfig, 'load.connections')}"/>
 										<!-- Input fields with labels from JS -->
 										<div id="configuration-content">
 

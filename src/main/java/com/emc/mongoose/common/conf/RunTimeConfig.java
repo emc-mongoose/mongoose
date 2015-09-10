@@ -77,10 +77,10 @@ implements Externalizable {
 		KEY_DELETE_THREADS = "load.type.delete.threads",
 		KEY_APPEND_THREADS = "load.type.append.threads",
 		KEY_CREATE_CONNS = "load.type.create.connections",
-		KEY_READ_CONNS = "load.type.create.connections",
-		KEY_UPDATE_CONNS = "load.type.create.connections",
-		KEY_DELETE_CONNS = "load.type.create.connections",
-		KEY_APPEND_CONNS = "load.type.create.connections",
+		KEY_READ_CONNS = "load.type.read.connections",
+		KEY_UPDATE_CONNS = "load.type.update.connections",
+		KEY_DELETE_CONNS = "load.type.delete.connections",
+		KEY_APPEND_CONNS = "load.type.append.connections",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
 		KEY_RUN_ID = "run.id",
@@ -124,7 +124,7 @@ implements Externalizable {
 		KEY_SCENARIO_CHAIN_ITEMSBUFFER = "scenario.type.chain.itemsBuffer",
 		//  Rampup
 		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
-		KEY_SCENARIO_RAMPUP_THREAD_COUNTS = "scenario.type.rampup.threadCounts",
+		KEY_SCENARIO_RAMPUP_CONN_COUNTS = "scenario.type.rampup.connCounts",
 		//  For ui property tree
 		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
 		//
@@ -563,8 +563,8 @@ implements Externalizable {
 		return getBoolean(KEY_SCENARIO_CHAIN_CONCURRENT);
 	}
 	//
-	public final String[] getScenarioRampupThreadCounts() {
-		return getStringArray(KEY_SCENARIO_RAMPUP_THREAD_COUNTS);
+	public final String[] getScenarioRampupConnCounts() {
+		return getStringArray(KEY_SCENARIO_RAMPUP_CONN_COUNTS);
 	}
 	//
 	public final String[] getScenarioRampupSizes() {

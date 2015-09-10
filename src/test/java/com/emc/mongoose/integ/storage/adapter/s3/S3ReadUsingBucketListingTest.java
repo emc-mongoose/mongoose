@@ -21,7 +21,7 @@ public final class S3ReadUsingBucketListingTest
 extends StandaloneClientTestBase {
 	//
 	private final static long COUNT_TO_WRITE = 10000;
-	private final static String RUN_ID = S3ReadUsingBucketListingTest.class.getSimpleName();
+	private final static String RUN_ID = S3ReadUsingBucketListingTest.class.getCanonicalName();
 	//
 	private static long COUNT_WRITTEN, COUNT_READ;
 	//

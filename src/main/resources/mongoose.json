@@ -186,7 +186,7 @@
 				"update": {
 					"threads": 0,
 					"connections": 1,
-					"perItem": 0
+					"perItem": 1
 				},
 				"delete": {
 					"threads": 0,
@@ -212,7 +212,7 @@
 					"itemsBuffer": true
 				},
 				"rampup": {
-					"threadCounts": "1,10",
+					"connCounts": "1,10",
 					"sizes": "1KB,1MB"
 				}
 			}

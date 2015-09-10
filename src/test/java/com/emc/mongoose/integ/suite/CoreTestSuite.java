@@ -36,14 +36,14 @@ import org.junit.runners.Suite;
 	Read10MBItemsTest.class,
 	Read200MBItemsTest.class,
 	WriteUsing10ConnTest.class,
-	WriteUsing100ConnTest.class,*/
+	WriteUsing100ConnTest.class,
 	WriteByTimeTest.class,
 	ReadVerificationTest.class,
 	WriteByCountTest.class,
 	CustomChainScenarioTest.class,
 	CRUDSequentialScenarioTest.class,
 	CRUDSimultaneousScenarioTest.class,
-	DefaultChainScenarioTest.class,
+	DefaultChainScenarioTest.class,*/
 	CustomRampupTest.class,
 	DefaultRampupTest.class,
 	InfiniteWriteTest.class,
