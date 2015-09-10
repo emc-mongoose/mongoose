@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 //
+import org.apache.commons.configuration.ConversionException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -130,21 +131,27 @@ public class JsonConfigLoader {
 		final JsonNode property = node.get(shortFieldName);
 		final ObjectNode objectNode = (ObjectNode) node;
 		//
-		if (property.isTextual()) {
+		try {
+			if (property.isTextual()) {
+				objectNode.put(shortFieldName, DEFAULT_CFG.getString(fullFieldName));
+			} else if (property.isNumber()) {
+				objectNode.put(shortFieldName, DEFAULT_CFG.getInt(fullFieldName));
+			} else if (property.isArray()) {
+				final ArrayNode arrayNode = objectNode.putArray(shortFieldName);
+				final String values[] = DEFAULT_CFG.getStringArray(fullFieldName);
+				for (final String value : values) {
+					arrayNode.add(value);
+				}
+			} else if (property.isBoolean()) {
+				objectNode.put(shortFieldName, DEFAULT_CFG.getBoolean(fullFieldName));
+			} else if (property.isNull()) {
+				final Object value = DEFAULT_CFG.getProperty(fullFieldName);
+				if (value != null) {
+					objectNode.put(shortFieldName, value.toString());
+				}
+			}
+		} catch (final ConversionException e) {
 			objectNode.put(shortFieldName, DEFAULT_CFG.getString(fullFieldName));
-		} else if (property.isNumber()) {
-			objectNode.put(shortFieldName, DEFAULT_CFG.getInt(fullFieldName));
-		} else if (property.isArray()) {
-			final ArrayNode arrayNode = objectNode.putArray(shortFieldName);
-			final String values[] = DEFAULT_CFG.getStringArray(fullFieldName);
-			for (final String value : values) {
-				arrayNode.add(value);
-			}
-		} else if (property.isNull()) {
-			final Object value = DEFAULT_CFG.getProperty(fullFieldName);
-			if (value != null) {
-				objectNode.put(shortFieldName, value.toString());
-			}
 		}
 	}
 	//
