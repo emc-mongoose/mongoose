@@ -3,6 +3,7 @@ package com.emc.mongoose.common.conf;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 //
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -137,7 +138,7 @@ implements Externalizable {
 		if(instance == null) {
 			resetContext();
 		}
-		log.info(Markers.CFG, getFormattedConfStringFrom(RunTimeConfig.getContext()));
+		log.info(Markers.CFG, RunTimeConfig.getContext().toFormattedString());
 	}
 	//
 	public static RunTimeConfig getDefault() {
@@ -167,14 +168,14 @@ implements Externalizable {
 		loadSysProps();
 	}
 	//
-	public static String getFormattedConfStringFrom(final RunTimeConfig rtConfig) {
+	public String toFormattedString() {
 		final Logger log = LogManager.getLogger();
 		//
 		final ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 		//
 		try {
-			final Object json = mapper.readValue(rtConfig.getJsonProps(), Object.class);
+			final Object json = mapper.readValue(getJsonProps(), Object.class);
 			return CFG_HEADER + mapper.writeValueAsString(json);
 		} catch (final IOException e) {
 			LogUtil.exception(log, Level.WARN, e, "Failed to read properties from \"{}\" file",

@@ -100,7 +100,7 @@ public final class StartServlet extends CommonServlet {
 				setName("run<" + runTimeConfig.getRunId() + ">");
 				//
 				LOG.debug(Markers.MSG, message);
-				LOG.info(Markers.CFG, RunTimeConfig.getFormattedConfStringFrom(localRunTimeConfig));
+				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				//
 				loadBuilderSvc = new BasicWSLoadBuilderSvc(localRunTimeConfig);
 				//
@@ -147,7 +147,7 @@ public final class StartServlet extends CommonServlet {
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);
-				LOG.info(Markers.CFG, RunTimeConfig.getFormattedConfStringFrom(runTimeConfig));
+				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				new ScriptRunner().run();
 			}
 			//
@@ -170,7 +170,7 @@ public final class StartServlet extends CommonServlet {
 				setName("run<" + runTimeConfig.getRunId() + ">");
 				//
 				LOG.debug(Markers.MSG, message);
-				LOG.info(Markers.CFG, RunTimeConfig.getFormattedConfStringFrom(runTimeConfig));
+				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				try {
 					new Cinderella(runTimeConfig).run();
 				} catch (final IOException e) {
