@@ -106,12 +106,16 @@ public class JsonConfigLoader {
 					LOG.trace(Markers.MSG, "Read property: \"{}\" = {}",
 						fullFieldName, jsonNode.get(shortFieldName).toString());
 					}
-					DEFAULT_CFG.setProperty(fullFieldName, jsonNode.get(shortFieldName).toString()
-						.replace("[", "")
-						.replace("]", "")
-						.replace(" ", "")
-						.replace("\"", "")
-						.trim());
+					if (!jsonNode.get(shortFieldName).isNull()) {
+						DEFAULT_CFG.setProperty(fullFieldName, jsonNode.get(shortFieldName).toString()
+							.replace("[", "")
+							.replace("]", "")
+							.replace(" ", "")
+							.replace("\"", "")
+							.trim());
+					} else {
+						DEFAULT_CFG.setProperty(fullFieldName, null);
+					}
 					mongooseKeys.add(fullFieldName);
 				}
 			} else {
@@ -135,6 +139,11 @@ public class JsonConfigLoader {
 			final String values[] = DEFAULT_CFG.getStringArray(fullFieldName);
 			for (final String value : values) {
 				arrayNode.add(value);
+			}
+		} else if (property.isNull()) {
+			final Object value = DEFAULT_CFG.getProperty(fullFieldName);
+			if (value != null) {
+				objectNode.put(shortFieldName, value.toString());
 			}
 		}
 	}
