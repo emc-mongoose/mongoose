@@ -104,39 +104,37 @@ extends WSMockTestBase {
 	}
 
 	@AfterClass
-	public  static void tearDownClass()
+	public static void tearDownClass()
 	throws Exception {
-		SCENARIO_THREAD.interrupt();
-		TimeUnit.SECONDS.sleep(1);
-		//
-		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
-		//  Check that messages.log exists
-		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
-
-		expectedFile = LogParser.getPerfAvgFile(RUN_ID).toPath();
-		//  Check that perf.avg.csv file exists
-		Assert.assertTrue("perf.avg.csv file doesn't exist", Files.exists(expectedFile));
-
-		expectedFile = LogParser.getPerfTraceFile(RUN_ID).toPath();
-		//  Check that perf.trace.csv file exists
-		Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
-
-		expectedFile = LogParser.getDataItemsFile(RUN_ID).toPath();
-		//  Check that data.items.csv file exists
-		Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
-		//
-		shouldCreateDataItemsFileWithInformationAboutAllObjects();
-		//
-		Assert.assertTrue("Console doesn't contain information about summary metrics",
-			STD_OUTPUT_STREAM.toString().contains(TestConstants.SUMMARY_INDICATOR)
-		);
-		Assert.assertTrue("Console doesn't contain information about end of scenario",
-			STD_OUTPUT_STREAM.toString().contains(TestConstants.SCENARIO_END_INDICATOR)
-		);
-
-		shouldReportScenarioEndToMessageLogFile();
-		//
-		WSMockTestBase.tearDownClass();
+		try {
+			SCENARIO_THREAD.interrupt();
+			TimeUnit.SECONDS.sleep(1);
+			//
+			Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
+			//  Check that messages.log exists
+			Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
+			expectedFile = LogParser.getPerfAvgFile(RUN_ID).toPath();
+			//  Check that perf.avg.csv file exists
+			Assert.assertTrue("perf.avg.csv file doesn't exist", Files.exists(expectedFile));
+			expectedFile = LogParser.getPerfTraceFile(RUN_ID).toPath();
+			//  Check that perf.trace.csv file exists
+			Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
+			expectedFile = LogParser.getDataItemsFile(RUN_ID).toPath();
+			//  Check that data.items.csv file exists
+			Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
+			//
+			shouldCreateDataItemsFileWithInformationAboutAllObjects();
+			//
+			Assert.assertTrue("Console doesn't contain information about summary metrics",
+				STD_OUTPUT_STREAM.toString().contains(TestConstants.SUMMARY_INDICATOR)
+			);
+			Assert.assertTrue("Console doesn't contain information about end of scenario",
+				STD_OUTPUT_STREAM.toString().contains(TestConstants.SCENARIO_END_INDICATOR)
+			);
+			shouldReportScenarioEndToMessageLogFile();
+		} finally {
+			WSMockTestBase.tearDownClass();
+		}
 	}
 
 	public static void shouldCreateDataItemsFileWithInformationAboutAllObjects()
