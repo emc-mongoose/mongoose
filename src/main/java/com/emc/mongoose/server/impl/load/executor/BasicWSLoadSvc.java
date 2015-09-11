@@ -60,7 +60,8 @@ implements WSLoadSvc<T> {
 		}
 		// close the exposed network service, if any
 		final Service svc = ServiceUtils.getLocalSvc(
-			ServiceUtils.getLocalSvcName(getName()));
+			ServiceUtils.getLocalSvcName(getName())
+		);
 		if(svc == null) {
 			LOG.debug(Markers.MSG, "The load was not exposed remotely");
 		} else {

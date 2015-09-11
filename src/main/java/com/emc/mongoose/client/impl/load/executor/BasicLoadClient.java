@@ -780,7 +780,7 @@ implements LoadClient<T> {
 						if(!isTerminating() && !isTerminated()) {
 							LOG.debug(
 								Markers.ERR,
-								"Looks like the remote load service is already shut down"
+								"Looks like the remote load service is already closed"
 							);
 						}
 					} catch(final NoSuchObjectException e) {

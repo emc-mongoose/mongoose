@@ -183,12 +183,9 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public void close()
-	throws IOException {
+	public void interrupt() {
 		try {
-			super.close();
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Closing failure");
+			super.interrupt();
 		} finally {
 			clientDaemon.interrupt();
 			LOG.debug(
@@ -212,8 +209,12 @@ implements WSLoadExecutor<T> {
 				}
 			}
 			//
-			ioReactor.shutdown(1);
-			LOG.debug(Markers.MSG, "I/O reactor has been shut down");
+			try {
+				ioReactor.shutdown(1);
+				LOG.debug(Markers.MSG, "I/O reactor has been shut down");
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down the I/O reactor");
+			}
 		}
 	}
 	//

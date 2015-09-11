@@ -511,13 +511,18 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public final void interrupt() {
+	public void interrupt() {
 		if(isLoadFinished.get()) {
 			return;
 		}
 		if(isInterrupted.compareAndSet(false, true)) {
 			metricsDaemon.interrupt();
 			shutdown();
+			try {
+				reqConfigCopy.close(); // disables connection drop failures
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
+			}
 			// releasing the blocked join() methods, if any
 			lock.lock();
 			try {
@@ -841,7 +846,6 @@ implements LoadExecutor<T> {
 			interrupt();
 			try {
 				LOG.debug(Markers.MSG, "Forcing the shutdown");
-				reqConfigCopy.close(); // disables connection drop failures
 				super.close();
 				if(consumer != null) {
 					consumer.shutdown(); // poison the consumer
@@ -912,9 +916,10 @@ implements LoadExecutor<T> {
 		}
 		//
 		final long timeOutMilliSec;
-		if (currState != null) {
-			if (isLoadFinished.get())
+		if(currState != null) {
+			if(isLoadFinished.get()) {
 				return;
+			}
 			timeOutMilliSec = timeUnit.toMillis(timeOut) -
 				currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue());
 		} else {
