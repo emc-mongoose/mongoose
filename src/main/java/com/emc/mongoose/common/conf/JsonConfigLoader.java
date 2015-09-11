@@ -108,12 +108,9 @@ public class JsonConfigLoader {
 						fullFieldName, jsonNode.get(shortFieldName).toString());
 					}
 					if (!jsonNode.get(shortFieldName).isNull()) {
-						DEFAULT_CFG.setProperty(fullFieldName, jsonNode.get(shortFieldName).toString()
-							.replace("[", "")
-							.replace("]", "")
-							.replace(" ", "")
-							.replace("\"", "")
-							.trim());
+						DEFAULT_CFG.setProperty(
+							fullFieldName, getFormattedValue(jsonNode.get(shortFieldName).toString())
+						);
 					} else {
 						DEFAULT_CFG.setProperty(fullFieldName, null);
 					}
@@ -133,7 +130,8 @@ public class JsonConfigLoader {
 		//
 		try {
 			if (property.isTextual()) {
-				objectNode.put(shortFieldName, DEFAULT_CFG.getString(fullFieldName));
+				final String stringValue = DEFAULT_CFG.getProperty(fullFieldName).toString();
+				objectNode.put(shortFieldName, getFormattedValue(stringValue));
 			} else if (property.isNumber()) {
 				objectNode.put(shortFieldName, DEFAULT_CFG.getInt(fullFieldName));
 			} else if (property.isArray()) {
@@ -151,8 +149,18 @@ public class JsonConfigLoader {
 				}
 			}
 		} catch (final ConversionException e) {
-			objectNode.put(shortFieldName, DEFAULT_CFG.getString(fullFieldName));
+			final String stringValue = DEFAULT_CFG.getProperty(fullFieldName).toString();
+			objectNode.put(shortFieldName, getFormattedValue(stringValue));
 		}
+	}
+	//
+	private static String getFormattedValue(final String value) {
+		return value
+			.replace("[", "")
+			.replace("]", "")
+			.replace(" ", "")
+			.replace("\"", "")
+			.trim();
 	}
 	//
 	public static void updateProps(final RunTimeConfig tgtConfig, final boolean isUpload) {
