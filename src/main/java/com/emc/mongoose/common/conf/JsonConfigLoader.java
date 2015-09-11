@@ -128,10 +128,9 @@ public class JsonConfigLoader {
 		final JsonNode property = node.get(shortFieldName);
 		final ObjectNode objectNode = (ObjectNode) node;
 		//
-		final String stringValue = DEFAULT_CFG.getProperty(fullFieldName).toString();
-		//
 		try {
 			if (property.isTextual()) {
+				final String stringValue = DEFAULT_CFG.getProperty(fullFieldName).toString();
 				objectNode.put(shortFieldName, getFormattedValue(stringValue));
 			} else if (property.isNumber()) {
 				objectNode.put(shortFieldName, DEFAULT_CFG.getInt(fullFieldName));
@@ -150,6 +149,7 @@ public class JsonConfigLoader {
 				}
 			}
 		} catch (final ConversionException e) {
+			final String stringValue = DEFAULT_CFG.getProperty(fullFieldName).toString();
 			objectNode.put(shortFieldName, getFormattedValue(stringValue));
 		}
 	}
