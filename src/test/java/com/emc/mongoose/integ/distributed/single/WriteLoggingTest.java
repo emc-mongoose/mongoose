@@ -56,7 +56,7 @@ extends DistributedClientTestBase {
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
 				countWritten = client.write(null, null, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
-				TimeUnit.SECONDS.sleep(1);
+				TimeUnit.SECONDS.sleep(10);
 				stdOutContent = stdOutInterceptorStream.toByteArray();
 			}
 			//

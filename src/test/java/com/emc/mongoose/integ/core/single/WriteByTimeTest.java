@@ -4,7 +4,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.LogPatterns;
@@ -78,7 +77,7 @@ extends WSMockTestBase {
 			new ScriptRunner().run();
 			TIME_ACTUAL_SEC = System.currentTimeMillis() - TIME_ACTUAL_SEC;
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(10);
 		}
 		//
 		RunIdFileManager.flushAll();

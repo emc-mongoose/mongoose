@@ -495,9 +495,11 @@ implements WSIOTask<T> {
 	public final void failed(final Exception e) {
 		if(!reqConf.isClosed()) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O task failure", hashCode());
+			exception = e;
+			status = Status.FAIL_UNKNOWN;
+		} else {
+			status = Status.CANCELLED;
 		}
-		exception = e;
-		status = Status.FAIL_UNKNOWN;
 		complete();
 	}
 	//
