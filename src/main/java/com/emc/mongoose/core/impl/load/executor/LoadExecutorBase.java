@@ -700,7 +700,9 @@ implements LoadExecutor<T> {
 			try {
 				// is this an end of consumer-producer chain?
 				if(consumer == null) {
-					LOG.info(Markers.DATA_LIST, dataItem);
+					if(LOG.isInfoEnabled(Markers.DATA_LIST)) {
+						LOG.info(Markers.DATA_LIST, dataItem);
+					}
 				} else { // feed to the consumer
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(

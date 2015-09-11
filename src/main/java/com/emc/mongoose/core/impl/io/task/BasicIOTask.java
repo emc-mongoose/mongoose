@@ -87,51 +87,53 @@ implements IOTask<T> {
 			respTimeDone = System.nanoTime() / 1000;
 		}
 		//
-		final String dataItemId = Long.toHexString(dataItem.getOffset());
-		StringBuilder strBuilder = THRLOC_SB.get();
-		if(strBuilder == null) {
-			strBuilder = new StringBuilder();
-			THRLOC_SB.set(strBuilder);
-		} else {
-			strBuilder.setLength(0); // clear/reset
-		}
-		if(
-			reqTimeDone >= reqTimeStart ||
+		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
+			final String dataItemId = Long.toHexString(dataItem.getOffset());
+			StringBuilder strBuilder = THRLOC_SB.get();
+			if(strBuilder == null) {
+				strBuilder = new StringBuilder();
+				THRLOC_SB.set(strBuilder);
+			} else {
+				strBuilder.setLength(0); // clear/reset
+			}
+			if(
+				reqTimeDone >= reqTimeStart ||
 				respTimeStart >= reqTimeDone ||
 				respTimeDone >= respTimeStart
 			) {
-			LOG.info(
-				Markers.PERF_TRACE,
-				strBuilder
-					.append(nodeAddr).append(',')
-					.append(dataItemId).append(',')
-					.append(countBytesDone).append(',')
-					.append(status.code).append(',')
-					.append(reqTimeStart).append(',')
-					.append(respTimeStart - reqTimeDone).append(',')
-					.append(respTimeDone - reqTimeStart)
-					.toString()
-			);
-		} else if(
-			status != Status.CANCELLED &&
-			status != Status.FAIL_IO &&
-			status != Status.FAIL_TIMEOUT &&
-			status != Status.FAIL_UNKNOWN
-		) {
-			LOG.warn(
-				Markers.ERR,
-				strBuilder
-					.append("Invalid trace: ")
-					.append(nodeAddr).append(',')
-					.append(dataItemId).append(',')
-					.append(countBytesDone).append(',')
-					.append(status.code).append(',')
-					.append(reqTimeStart).append(',')
-					.append(reqTimeDone).append(',')
-					.append(respTimeStart).append(',')
-					.append(respTimeDone)
-					.toString()
-			);
+				LOG.info(
+					Markers.PERF_TRACE,
+					strBuilder
+						.append(nodeAddr).append(',')
+						.append(dataItemId).append(',')
+						.append(countBytesDone).append(',')
+						.append(status.code).append(',')
+						.append(reqTimeStart).append(',')
+						.append(respTimeStart - reqTimeDone).append(',')
+						.append(respTimeDone - reqTimeStart)
+						.toString()
+				);
+			} else if(
+				status != Status.CANCELLED &&
+				status != Status.FAIL_IO &&
+				status != Status.FAIL_TIMEOUT &&
+				status != Status.FAIL_UNKNOWN
+			) {
+				LOG.warn(
+					Markers.ERR,
+					strBuilder
+						.append("Invalid trace: ")
+						.append(nodeAddr).append(',')
+						.append(dataItemId).append(',')
+						.append(countBytesDone).append(',')
+						.append(status.code).append(',')
+						.append(reqTimeStart).append(',')
+						.append(reqTimeDone).append(',')
+						.append(respTimeStart).append(',')
+						.append(respTimeDone)
+						.toString()
+				);
+			}
 		}
 		//
 		try {

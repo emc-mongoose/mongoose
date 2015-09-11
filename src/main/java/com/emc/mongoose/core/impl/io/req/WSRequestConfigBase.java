@@ -427,7 +427,13 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {
-		dataItem.setId(Long.toString(dataItem.getOffset(), DataObject.ID_RADIX));
+		final String oldOid = dataItem.getId();
+		if(
+			oldOid == null || oldOid.isEmpty() ||
+			(verifyContentFlag && IOTask.Type.READ.equals(loadType)) || fsAccess
+		) {
+			dataItem.setId(Long.toString(dataItem.getOffset(), DataObject.ID_RADIX));
+		}
 	}
 	//
 	@Override
