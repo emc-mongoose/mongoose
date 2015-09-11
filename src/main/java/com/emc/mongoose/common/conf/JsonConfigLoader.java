@@ -133,7 +133,14 @@ public class JsonConfigLoader {
 		//
 		try {
 			if (property.isTextual()) {
-				objectNode.put(shortFieldName, DEFAULT_CFG.getString(fullFieldName));
+				final String formattedValue = DEFAULT_CFG
+					.getProperty(fullFieldName).toString()
+					.replace("[", "")
+					.replace("]", "")
+					.replace(" ", "")
+					.replace("\"", "")
+					.trim();
+				objectNode.put(shortFieldName, formattedValue);
 			} else if (property.isNumber()) {
 				objectNode.put(shortFieldName, DEFAULT_CFG.getInt(fullFieldName));
 			} else if (property.isArray()) {
@@ -151,7 +158,14 @@ public class JsonConfigLoader {
 				}
 			}
 		} catch (final ConversionException e) {
-			objectNode.put(shortFieldName, DEFAULT_CFG.getString(fullFieldName));
+			final String formattedValue = DEFAULT_CFG
+				.getProperty(fullFieldName).toString()
+				.replace("[", "")
+				.replace("]", "")
+				.replace(" ", "")
+				.replace("\"", "")
+				.trim();
+			objectNode.put(shortFieldName, formattedValue);
 		}
 	}
 	//
