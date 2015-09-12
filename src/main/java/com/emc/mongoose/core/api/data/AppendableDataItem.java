@@ -1,9 +1,6 @@
 package com.emc.mongoose.core.api.data;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-//
-import java.io.IOException;
-import java.nio.channels.WritableByteChannel;
 /**
  Created by kurila on 29.09.14.
  A data item which supports append operation.
@@ -19,8 +16,4 @@ extends DataItem {
 	long getAppendSize();
 	//
 	void commitAppend();
-	//
-	@Deprecated
-	long writeAugmentFully(final WritableByteChannel chanOut)
-	throws IOException;
 }

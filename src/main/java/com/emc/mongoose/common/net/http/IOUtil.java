@@ -26,9 +26,30 @@ public final class IOUtil {
 	//
 	private static ThreadLocal<ByteBuffer[]>
 		THREAD_LOCAL_IO_BUFFERS = new ThreadLocal<ByteBuffer[]>() {
+			//
 			@Override
 			protected final ByteBuffer[] initialValue() {
 				return new ByteBuffer[BUFF_COUNT];
+			}
+			//
+			@Override
+			protected void finalize()
+			throws Throwable {
+				try {
+					long buffSizeSum = 0;
+					final ByteBuffer ioBuffers[] = get();
+					for(final ByteBuffer buff : ioBuffers) {
+						if(buff != null) {
+							buffSizeSum += buff.capacity();
+						}
+					}
+					LOG.debug(
+						Markers.MSG, "Release {} of direct memory", SizeUtil.formatSize(buffSizeSum)
+					);
+					remove();
+				} finally {
+					super.finalize();
+				}
 			}
 		};
 	//
@@ -46,14 +67,17 @@ public final class IOUtil {
 		if(buff == null) {
 			try {
 				buff = ByteBuffer.allocateDirect(currBuffSize);
+				LOG.debug(
+					Markers.MSG, "Allocated {} of direct memory", SizeUtil.formatSize(currBuffSize)
+				);
 				ioBuffers[i] = buff;
-			} catch(OutOfMemoryError e) {
+			} catch(final OutOfMemoryError e) {
 				long buffSizeSum = 0;
-				for(final ByteBuffer ioBuffer : ioBuffers) {
-					if(ioBuffer != null) {
-						buffSizeSum += buff.capacity();
-						if(currBuffSize > buff.capacity()) {
-							buff = ioBuffer;
+				for(final ByteBuffer smallerBuff : ioBuffers) {
+					if(smallerBuff != null) {
+						buffSizeSum += smallerBuff.capacity();
+						if(currBuffSize > smallerBuff.capacity()) {
+							buff = smallerBuff;
 						}
 					}
 				}
