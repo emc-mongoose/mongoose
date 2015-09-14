@@ -731,8 +731,8 @@ implements LoadClient<T> {
 	//
 	@Override
 	public void setLoadState(final LoadState<T> state) {
-		if (state != null) {
-			LOG.warn(Markers.MSG, "Failed to resume run in distributed mode. See #JIRA-411");
+		if(state != null) {
+			LOG.warn(Markers.MSG, "Failed to resume run in distributed mode. See jira ticket #411");
 		}
 	}
 	//
@@ -746,14 +746,9 @@ implements LoadClient<T> {
 		stateBuilder
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(runTimeConfig)
-			.setCountSucc(metricSuccCount.getValue())
-			.setCountFail(taskGetCountFail.getLastResult())
-			.setCountBytes(taskGetCountBytes.getLastResult())
-			.setCountSubm(taskGetCountSubm.getLastResult())
+			.setStatsSnapshot(ioStats.getSnapshot())
 			.setLoadElapsedTimeValue(System.nanoTime() - tsStart.get())
-			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
-			.setDurationValues(durationValues)
-			.setLatencyValues(latencyValues);
+			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS);
         //
 		return stateBuilder.build();
 	}

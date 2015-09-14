@@ -118,7 +118,7 @@ implements IOStats {
 		);
 	}
 	//
-	public class BasicSnapshot
+	public static class BasicSnapshot
 	implements Snapshot {
 		//
 		private final long countSucc;
