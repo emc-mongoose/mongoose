@@ -3,7 +3,6 @@ package com.emc.mongoose.core.impl.load.executor;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 // mongoose-common.jar
@@ -28,6 +27,7 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
+import com.emc.mongoose.core.impl.load.model.util.metrics.CustomMeter;
 import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
@@ -82,9 +82,10 @@ implements LoadExecutor<T> {
 	private final long maxCount;
 	protected final int totalConnCount;
 	// METRICS section
+	private final int metricsUpdatePeriodSec;
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected Counter counterSubm, counterRej;
-	protected Meter throughPutSucc, throughPutFail, reqBytes;
+	protected CustomMeter throughPutSucc, throughPutFail, reqBytes;
 	protected Histogram reqDuration, respLatency;
 	//
 	protected final MBeanServer mBeanServer;
@@ -109,9 +110,8 @@ implements LoadExecutor<T> {
 				// required for int tests passing
 				ThreadContext.put(RunTimeConfig.KEY_RUN_ID, rtConfig.getRunId());
 				//
-				final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
-					rtConfig.getLoadMetricsPeriodSec()
-				);
+				final long
+					metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsUpdatePeriodSec);
 				try {
 					if(metricsUpdatePeriodMilliSec > 0) {
 						while(!isClosed.get()) {
@@ -153,12 +153,12 @@ implements LoadExecutor<T> {
 					//
 					if(
 						throughPutFail.getCount() > 1000000 &&
-						throughPutSucc.getOneMinuteRate() < throughPutFail.getOneMinuteRate()
+						throughPutSucc.getLastRate() < throughPutFail.getLastRate()
 					) {
 						LOG.fatal(
 							Markers.ERR,
 							"There's a more than 1M of failures and the failure rate is higher " +
-							"than success rate for at least 1 minute. Exiting in order to avoid " +
+							"than success rate for at least last {} sec. Exiting in order to avoid " +
 							"the memory exhaustion."
 						);
 						try {
@@ -224,6 +224,7 @@ implements LoadExecutor<T> {
 		}
 		loadType = reqConfig.getLoadType();
 		//
+		metricsUpdatePeriodSec = rtConfig.getLoadMetricsPeriodSec();
 		counterSubm = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_SUBM));
 		counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
 		final String runMode = rtConfig.getRunMode();
@@ -346,13 +347,9 @@ implements LoadExecutor<T> {
 			//  Only average values in TP and BW will be calculated correctly.
 			//  Other values will be gradually recovered.
 			meanTP = countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
-			oneMinTP = throughPutSucc.getOneMinuteRate(),
-			fiveMinTP = throughPutSucc.getFiveMinuteRate(),
-			fifteenMinTP = throughPutSucc.getFifteenMinuteRate(),
+			lastTP = throughPutSucc.getLastRate(),
 			meanBW = reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1),
-			oneMinBW = reqBytes.getOneMinuteRate(),
-			fiveMinBW = reqBytes.getFiveMinuteRate(),
-			fifteenMinBW = reqBytes.getFifteenMinuteRate();
+			lastBW = reqBytes.getLastRate();
 		final Snapshot
 			reqDurationSnapshot = reqDuration.getSnapshot(),
 			respLatencySnapshot = respLatency.getSnapshot();
@@ -360,10 +357,9 @@ implements LoadExecutor<T> {
 		if(Markers.PERF_SUM.equals(logMarker)) {
 			LOG.info(
 				logMarker,
-				String.format(
-					LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
+				"\"" +getName() + "\" summary: " + String.format(
+					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 					//
-					getName(),
 					countReqSucc,
 					countReqFail == 0 ?
 						Long.toString(countReqFail) :
@@ -371,13 +367,17 @@ implements LoadExecutor<T> {
 							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
 							String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
 					//
+					(int) reqDurationSnapshot.getMean(),
+					(int) reqDurationSnapshot.getMin(),
+					(int) reqDurationSnapshot.getStdDev(),
+					(int) reqDurationSnapshot.getMax(),
+					//
 					(int) respLatencySnapshot.getMean(),
 					(int) respLatencySnapshot.getMin(),
-					(int) respLatencySnapshot.getMedian(),
+					(int) respLatencySnapshot.getStdDev(),
 					(int) respLatencySnapshot.getMax(),
 					//
-					meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
-					meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+					meanTP, lastTP, meanBW / MIB, lastBW / MIB
 				)
 			);
 		} else if(Markers.PERF_AVG.equals(logMarker)) {
@@ -386,20 +386,24 @@ implements LoadExecutor<T> {
 				String.format(
 					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 					//
-					countReqSucc, counterSubm.getCount() - counterResults.get(),
+					countReqSucc,
 					countReqFail == 0 ?
 						Long.toString(countReqFail) :
 						(float) countReqSucc / countReqFail > 100 ?
 							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
 							String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
 					//
+					(int) reqDurationSnapshot.getMean(),
+					(int) reqDurationSnapshot.getMin(),
+					(int) reqDurationSnapshot.getStdDev(),
+					(int) reqDurationSnapshot.getMax(),
+					//
 					(int) respLatencySnapshot.getMean(),
 					(int) respLatencySnapshot.getMin(),
-					(int) respLatencySnapshot.getMedian(),
+					(int) respLatencySnapshot.getStdDev(),
 					(int) respLatencySnapshot.getMax(),
 					//
-					meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
-					meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+					meanTP, lastTP, meanBW / MIB, lastBW / MIB
 				)
 			);
 		}
@@ -415,15 +419,15 @@ implements LoadExecutor<T> {
 			// init remaining (load exec time dependent) metrics
 			throughPutSucc = metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP),
-				new Meter(clock)
+				new CustomMeter(clock, metricsUpdatePeriodSec)
 			);
 			throughPutFail = metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_FAIL),
-				new Meter(clock)
+				new CustomMeter(clock, metricsUpdatePeriodSec)
 			);
 			reqBytes = metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW),
-				new Meter(clock)
+				new CustomMeter(clock, metricsUpdatePeriodSec)
 			);
 			respLatency = metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT),

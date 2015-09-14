@@ -90,17 +90,18 @@ implements LoadClient<T> {
 		metricSuccCount, metricByteCount;
 	@SuppressWarnings("FieldCanBeLocal")
 	private final Gauge<Double>
-		metricTPMean, metricTP1Min, metricTP5Min, metricTP15Min,
-		metricBWMean, metricBW1Min, metricBW5Min, metricBW15Min;
+		metricTPMean, metricTPLast, metricBWMean, metricBWLast;
 	@SuppressWarnings("FieldCanBeLocal")
 	private final GaugeValuePeriodicTask<Long>
 		taskGetCountSubm, taskGetCountRej, taskGetCountSucc, taskGetCountFail,
+		taskGetDurationMin, taskGetDurationMax,
 		taskGetLatencyMin, taskGetLatencyMax,
 		taskGetCountBytes;
 	private final GaugeValuePeriodicTask<Double>
-		taskGetTPMean, taskGetTP1Min, taskGetTP5Min, taskGetTP15Min,
-		taskGetBWMean, taskGetBW1Min, taskGetBW5Min, taskGetBW15Min,
-		taskGetLatencyMed, taskGetLatencyAvg;
+		taskGetTPMean, taskGetTPLast,
+		taskGetBWMean, taskGetBWLast,
+		taskGetDurationStdDev, taskGetDurationAvg,
+		taskGetLatencyStdDev, taskGetLatencyAvg;
 	private final AtomicLong tsStart = new AtomicLong(-1);
 	//
 	private final ScheduledExecutorService mgmtConnExecutor;
@@ -217,14 +218,8 @@ implements LoadClient<T> {
 		metricTPMean = registerJmxGaugeSumDouble(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_MEAN
 		);
-		metricTP1Min = registerJmxGaugeSumDouble(
+		metricTPLast = registerJmxGaugeSumDouble(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_1MIN
-		);
-		metricTP5Min = registerJmxGaugeSumDouble(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_5MIN
-		);
-		metricTP15Min = registerJmxGaugeSumDouble(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_15MIN
 		);
 		metricByteCount = registerJmxGaugeSum(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_COUNT
@@ -232,14 +227,8 @@ implements LoadClient<T> {
 		metricBWMean = registerJmxGaugeSumDouble(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_RATE_MEAN
 		);
-		metricBW1Min = registerJmxGaugeSumDouble(
+		metricBWLast = registerJmxGaugeSumDouble(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_RATE_1MIN
-		);
-		metricBW5Min = registerJmxGaugeSumDouble(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ+"."+METRIC_NAME_BW, ATTR_RATE_5MIN
-		);
-		metricBW15Min = registerJmxGaugeSumDouble(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_RATE_15MIN
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		taskGetCountSubm = new GaugeValuePeriodicTask<>(
@@ -256,67 +245,60 @@ implements LoadClient<T> {
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_FAIL, ATTR_COUNT)
 		);
 		metricFetchTasks.add(taskGetCountFail);
-		/*taskGetCountNanoSec = new GaugeValuePeriodicTask<>(
-			registerJmxGaugeSum(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_COUNT
-			)
-		);*/
 		taskGetCountBytes = new GaugeValuePeriodicTask<>(metricByteCount);
 		metricFetchTasks.add(taskGetCountBytes);
-		/*taskGetDurMin = new GaugeValueTask<>(
-			registerJmxGaugeMinLong(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MIN
-			)
-		);
-		taskGetDurMax = new GaugeValueTask<>(
-			registerJmxGaugeMaxLong(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MAX
-			)
-		);*/
 		taskGetLatencyMin = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeMinLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MIN
 			)
 		);
 		metricFetchTasks.add(taskGetLatencyMin);
+		taskGetDurationMin = new GaugeValuePeriodicTask<>(
+			registerJmxGaugeMinLong(
+				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MIN
+			)
+		);
+		metricFetchTasks.add(taskGetDurationMin);
 		taskGetLatencyMax = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeMaxLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MAX
 			)
 		);
 		metricFetchTasks.add(taskGetLatencyMax);
+		taskGetDurationMax = new GaugeValuePeriodicTask<>(
+			registerJmxGaugeMaxLong(
+				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MAX
+			)
+		);
+		metricFetchTasks.add(taskGetDurationMax);
 		taskGetTPMean = new GaugeValuePeriodicTask<>(metricTPMean);
 		metricFetchTasks.add(taskGetTPMean);
-		taskGetTP1Min = new GaugeValuePeriodicTask<>(metricTP1Min);
-		metricFetchTasks.add(taskGetTP1Min);
-		taskGetTP5Min = new GaugeValuePeriodicTask<>(metricTP5Min);
-		metricFetchTasks.add(taskGetTP5Min);
-		taskGetTP15Min = new GaugeValuePeriodicTask<>(metricTP15Min);
-		metricFetchTasks.add(taskGetTP15Min);
+		taskGetTPLast = new GaugeValuePeriodicTask<>(metricTPLast);
+		metricFetchTasks.add(taskGetTPLast);
 		taskGetBWMean = new GaugeValuePeriodicTask<>(metricBWMean);
 		metricFetchTasks.add(taskGetBWMean);
-		taskGetBW1Min = new GaugeValuePeriodicTask<>(metricBW1Min);
-		metricFetchTasks.add(taskGetBW1Min);
-		taskGetBW5Min = new GaugeValuePeriodicTask<>(metricBW5Min);
-		metricFetchTasks.add(taskGetBW5Min);
-		taskGetBW15Min = new GaugeValuePeriodicTask<>(metricBW15Min);
-		metricFetchTasks.add(taskGetBW15Min);
-		/*taskGetDurMed = new GaugeValueTask<>(
+		taskGetBWLast = new GaugeValuePeriodicTask<>(metricBWLast);
+		metricFetchTasks.add(taskGetBWLast);
+		//
+		taskGetDurationStdDev = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MED
 			)
 		);
-		taskGetDurAvg = new GaugeValueTask<>(
+		metricFetchTasks.add(taskGetDurationStdDev);
+		taskGetDurationAvg = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_AVG
 			)
-		);*/
-		taskGetLatencyMed = new GaugeValuePeriodicTask<>(
+		);
+		metricFetchTasks.add(taskGetDurationAvg);
+		//
+		taskGetLatencyStdDev = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MED
 			)
 		);
-		metricFetchTasks.add(taskGetLatencyMed);
+		metricFetchTasks.add(taskGetLatencyStdDev);
 		taskGetLatencyAvg = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_AVG
@@ -432,49 +414,52 @@ implements LoadClient<T> {
 			final long
 				countSucc = taskGetCountSucc.getLastResult(),
 				countFail = taskGetCountFail.getLastResult(),
+				avgDur = taskGetDurationAvg.getLastResult().intValue(),
+				minDur = taskGetDurationMin.getLastResult(),
+				stdDevDur = taskGetDurationStdDev.getLastResult().intValue(),
+				maxDur = taskGetDurationMax.getLastResult(),
 				avgLat = taskGetLatencyAvg.getLastResult().intValue(),
 				minLat = taskGetLatencyMin.getLastResult(),
-				medLat = taskGetLatencyMed.getLastResult().intValue(),
+				stdDevLat = taskGetLatencyStdDev.getLastResult().intValue(),
 				maxLat = taskGetLatencyMax.getLastResult();
 			final String msg;
 			if(Markers.PERF_SUM.equals(logMarker)) {
-				msg = String.format(
-					LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
+				msg = "\"" + name + "\" summary: " + String.format(
+					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 					//
-					name, countSucc,
+					countSucc,
 					countFail == 0 ?
 						Long.toString(countFail) :
 						(float) countSucc / countFail > 100 ?
 							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
 							String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 					//
+					avgDur, minDur == Long.MAX_VALUE ? 0 : minDur,
+					stdDevDur, maxDur == Long.MIN_VALUE ? 0 : maxDur,
 					avgLat, minLat == Long.MAX_VALUE ? 0 : minLat,
-					medLat, maxLat == Long.MIN_VALUE ? 0 : maxLat,
+					stdDevLat, maxLat == Long.MIN_VALUE ? 0 : maxLat,
 					//
-					taskGetTPMean.getLastResult(), taskGetTP1Min.getLastResult(),
-					taskGetTP5Min.getLastResult(), taskGetTP15Min.getLastResult(),
-					//
-					taskGetBWMean.getLastResult() / MIB, taskGetBW1Min.getLastResult() / MIB,
-					taskGetBW5Min.getLastResult() / MIB, taskGetBW15Min.getLastResult() / MIB
+					taskGetTPMean.getLastResult(), taskGetTPLast.getLastResult(),
+					taskGetBWMean.getLastResult() / MIB, taskGetBWLast.getLastResult() / MIB
 				);
 			} else {
 				msg = String.format(
 					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 					//
-					countSucc, taskGetCountSubm.getLastResult() - countSucc,
+					countSucc,
 					countFail == 0 ?
 						Long.toString(countFail) :
 						(float) countSucc / countFail > 100 ?
 							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
 							String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 					//
-					avgLat, minLat == Long.MAX_VALUE ? 0 : minLat, medLat, maxLat == Long.MIN_VALUE ? 0 : maxLat,
+					avgDur, minDur == Long.MAX_VALUE ? 0 : minDur,
+					stdDevDur, maxDur == Long.MIN_VALUE ? 0 : maxDur,
+					avgLat, minLat == Long.MAX_VALUE ? 0 : minLat,
+					stdDevLat, maxLat == Long.MIN_VALUE ? 0 : maxLat,
 					//
-					taskGetTPMean.getLastResult(), taskGetTP1Min.getLastResult(),
-					taskGetTP5Min.getLastResult(), taskGetTP15Min.getLastResult(),
-					//
-					taskGetBWMean.getLastResult() / MIB, taskGetBW1Min.getLastResult() / MIB,
-					taskGetBW5Min.getLastResult() / MIB, taskGetBW15Min.getLastResult() / MIB
+					taskGetTPMean.getLastResult(), taskGetTPLast.getLastResult(),
+					taskGetBWMean.getLastResult() / MIB, taskGetBWLast.getLastResult() / MIB
 				);
 			}
 			LOG.info(logMarker, msg);

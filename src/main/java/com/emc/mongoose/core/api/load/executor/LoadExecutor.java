@@ -43,11 +43,8 @@ extends Producer<T>, AsyncConsumer<T> {
 		METRIC_NAME_LAT = "lat",
 		NAME_SEP = "@";
 	//
-	String
-		MSG_FMT_METRICS = "count=(%d/%d/%s); latency[us]=(%d/%d/%d/%d); " +
-			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)",
-		MSG_FMT_SUM_METRICS = "\"%s\" summary: count=(%d/%s); latency[us]=(%d/%d/%d/%d); " +
-			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
+	String MSG_FMT_METRICS = "count=(%d/%s); dur[us]=(%d/%d/%d/%d); lat[us]=(%d/%d/%d/%d); " +
+		"TP[s^-1]=(%.3f/%.3f); BW[MB*s^-1]=(%.3f/%.3f)";
 	//
 	String getName()
 	throws RemoteException;
