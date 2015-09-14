@@ -1,6 +1,7 @@
 package com.emc.mongoose.client.impl.load.executor;
 //
-import com.codahale.metrics.Gauge;
+import com.codahale.metrics.CachedGauge;
+import com.codahale.metrics.Clock;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
@@ -26,6 +27,7 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.impl.data.model.NewDataItemInput;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
+import com.emc.mongoose.core.impl.load.model.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 // mongoose-server-api.jar
@@ -35,7 +37,7 @@ import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptClientOnMaxCountTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.DataItemsFetchPeriodicTask;
-import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
+import com.emc.mongoose.client.impl.load.executor.tasks.CachedGaugePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
 //
 import org.apache.logging.log4j.Level;
@@ -82,22 +84,23 @@ implements LoadClient<T> {
 	private final Map<String, JMXConnector> remoteJMXConnMap;
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
 	//
+	private final Clock clock = new ResumableUserTimeClock();
 	private final MetricRegistry metrics = new MetricRegistry();
 	protected final JmxReporter metricsReporter;
 	//
 	@SuppressWarnings("FieldCanBeLocal")
-	private final Gauge<Long>
+	private final CachedGauge<Long>
 		metricSuccCount, metricByteCount;
 	@SuppressWarnings("FieldCanBeLocal")
-	private final Gauge<Double>
+	private final CachedGauge<Double>
 		metricTPMean, metricTPLast, metricBWMean, metricBWLast;
 	@SuppressWarnings("FieldCanBeLocal")
-	private final GaugeValuePeriodicTask<Long>
+	private final CachedGaugePeriodicTask<Long>
 		taskGetCountSubm, taskGetCountRej, taskGetCountSucc, taskGetCountFail,
 		taskGetDurationMin, taskGetDurationMax,
 		taskGetLatencyMin, taskGetLatencyMax,
 		taskGetCountBytes;
-	private final GaugeValuePeriodicTask<Double>
+	private final CachedGaugePeriodicTask<Double>
 		taskGetTPMean, taskGetTPLast,
 		taskGetBWMean, taskGetBWLast,
 		taskGetDurationStdDev, taskGetDurationAvg,
@@ -231,75 +234,75 @@ implements LoadClient<T> {
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_RATE_1MIN
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
-		taskGetCountSubm = new GaugeValuePeriodicTask<>(
+		taskGetCountSubm = new CachedGaugePeriodicTask<>(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_SUBM, ATTR_COUNT)
 		);
 		metricFetchTasks.add(taskGetCountSubm);
-		taskGetCountRej = new GaugeValuePeriodicTask<>(
+		taskGetCountRej = new CachedGaugePeriodicTask<>(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_REJ, ATTR_COUNT)
 		);
 		metricFetchTasks.add(taskGetCountRej);
-		taskGetCountSucc = new GaugeValuePeriodicTask<>(metricSuccCount);
+		taskGetCountSucc = new CachedGaugePeriodicTask<>(metricSuccCount);
 		metricFetchTasks.add(taskGetCountSucc);
-		taskGetCountFail = new GaugeValuePeriodicTask<>(
+		taskGetCountFail = new CachedGaugePeriodicTask<>(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_FAIL, ATTR_COUNT)
 		);
 		metricFetchTasks.add(taskGetCountFail);
-		taskGetCountBytes = new GaugeValuePeriodicTask<>(metricByteCount);
+		taskGetCountBytes = new CachedGaugePeriodicTask<>(metricByteCount);
 		metricFetchTasks.add(taskGetCountBytes);
-		taskGetLatencyMin = new GaugeValuePeriodicTask<>(
+		taskGetLatencyMin = new CachedGaugePeriodicTask<>(
 			registerJmxGaugeMinLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MIN
 			)
 		);
 		metricFetchTasks.add(taskGetLatencyMin);
-		taskGetDurationMin = new GaugeValuePeriodicTask<>(
+		taskGetDurationMin = new CachedGaugePeriodicTask<>(
 			registerJmxGaugeMinLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MIN
 			)
 		);
 		metricFetchTasks.add(taskGetDurationMin);
-		taskGetLatencyMax = new GaugeValuePeriodicTask<>(
+		taskGetLatencyMax = new CachedGaugePeriodicTask<>(
 			registerJmxGaugeMaxLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MAX
 			)
 		);
 		metricFetchTasks.add(taskGetLatencyMax);
-		taskGetDurationMax = new GaugeValuePeriodicTask<>(
+		taskGetDurationMax = new CachedGaugePeriodicTask<>(
 			registerJmxGaugeMaxLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MAX
 			)
 		);
 		metricFetchTasks.add(taskGetDurationMax);
-		taskGetTPMean = new GaugeValuePeriodicTask<>(metricTPMean);
+		taskGetTPMean = new CachedGaugePeriodicTask<>(metricTPMean);
 		metricFetchTasks.add(taskGetTPMean);
-		taskGetTPLast = new GaugeValuePeriodicTask<>(metricTPLast);
+		taskGetTPLast = new CachedGaugePeriodicTask<>(metricTPLast);
 		metricFetchTasks.add(taskGetTPLast);
-		taskGetBWMean = new GaugeValuePeriodicTask<>(metricBWMean);
+		taskGetBWMean = new CachedGaugePeriodicTask<>(metricBWMean);
 		metricFetchTasks.add(taskGetBWMean);
-		taskGetBWLast = new GaugeValuePeriodicTask<>(metricBWLast);
+		taskGetBWLast = new CachedGaugePeriodicTask<>(metricBWLast);
 		metricFetchTasks.add(taskGetBWLast);
 		//
-		taskGetDurationStdDev = new GaugeValuePeriodicTask<>(
+		taskGetDurationStdDev = new CachedGaugePeriodicTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MED
 			)
 		);
 		metricFetchTasks.add(taskGetDurationStdDev);
-		taskGetDurationAvg = new GaugeValuePeriodicTask<>(
+		taskGetDurationAvg = new CachedGaugePeriodicTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_AVG
 			)
 		);
 		metricFetchTasks.add(taskGetDurationAvg);
 		//
-		taskGetLatencyStdDev = new GaugeValuePeriodicTask<>(
+		taskGetLatencyStdDev = new CachedGaugePeriodicTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MED
 			)
 		);
 		metricFetchTasks.add(taskGetLatencyStdDev);
-		taskGetLatencyAvg = new GaugeValuePeriodicTask<>(
+		taskGetLatencyAvg = new CachedGaugePeriodicTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_AVG
 			)
@@ -314,48 +317,63 @@ implements LoadClient<T> {
 		LoadCloseHook.add(this);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private Gauge<Long> registerJmxGaugeSum(
+	private CachedGauge<Long> registerJmxGaugeSum(
 		final String domain, final String mBeanName, final String attrName
 	) {
 		return metrics.register(
 			MetricRegistry.name(name, mBeanName + "." + attrName),
-			new SumLong(name, domain, mBeanName, attrName, mBeanSrvConnMap)
+			new SumLong(
+				name, domain, mBeanName, attrName, mBeanSrvConnMap,
+				clock, metricsPeriodSec, TimeUnit.SECONDS
+			)
 		);
 	}
 	//
-	private Gauge<Long> registerJmxGaugeMinLong(
+	private CachedGauge<Long> registerJmxGaugeMinLong(
 		final String domain, final String mBeanName, final String attrName
 	) {
 		return metrics.register(
 			MetricRegistry.name(name, mBeanName + "." + attrName),
-			new MinLong(name, domain, mBeanName, attrName, mBeanSrvConnMap)
+			new MinLong(
+				name, domain, mBeanName, attrName, mBeanSrvConnMap,
+				clock, metricsPeriodSec, TimeUnit.SECONDS
+			)
 		);
 	}
 	//
-	private Gauge<Long> registerJmxGaugeMaxLong(
+	private CachedGauge<Long> registerJmxGaugeMaxLong(
 		final String domain, final String mBeanName, final String attrName
 	) {
 		return metrics.register(
 			MetricRegistry.name(name, mBeanName+"."+attrName),
-			new MaxLong(name, domain, mBeanName, attrName, mBeanSrvConnMap)
+			new MaxLong(
+				name, domain, mBeanName, attrName, mBeanSrvConnMap,
+				clock, metricsPeriodSec, TimeUnit.SECONDS
+			)
 		);
 	}
 	//
-	private Gauge<Double> registerJmxGaugeSumDouble(
+	private CachedGauge<Double> registerJmxGaugeSumDouble(
 		final String domain, final String mBeanName, final String attrName
 	) {
 		return metrics.register(
 			MetricRegistry.name(name, mBeanName+"."+attrName),
-			new SumDouble(name, domain, mBeanName, attrName, mBeanSrvConnMap)
+			new SumDouble(
+				name, domain, mBeanName, attrName, mBeanSrvConnMap,
+				clock, metricsPeriodSec, TimeUnit.SECONDS
+			)
 		);
 	}
 	//
-	private Gauge<Double> registerJmxGaugeAvgDouble(
+	private CachedGauge<Double> registerJmxGaugeAvgDouble(
 		final String domain, final String mBeanName, final String attrName
 	) {
 		return metrics.register(
 			MetricRegistry.name(name, mBeanName + "." + attrName),
-			new AvgDouble(name, domain, mBeanName, attrName, mBeanSrvConnMap)
+			new AvgDouble(
+				name, domain, mBeanName, attrName, mBeanSrvConnMap,
+				clock, metricsPeriodSec, TimeUnit.SECONDS
+			)
 		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

@@ -13,7 +13,7 @@ import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableUserTimeClock;
+import com.emc.mongoose.core.impl.load.model.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
 //

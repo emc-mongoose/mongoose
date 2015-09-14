@@ -1,20 +1,10 @@
 package com.emc.mongoose.core.impl.load.executor;
-//
-import com.codahale.metrics.Clock;
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Snapshot;
 // mongoose-common.jar
-import com.codahale.metrics.UniformReservoir;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.FileDataItemOutput;
@@ -27,13 +17,14 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
-import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableUserTimeClock;
+import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
-//
 import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
+//
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -42,7 +33,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.ThreadContext;
 //
-import javax.management.MBeanServer;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
@@ -84,19 +74,8 @@ implements LoadExecutor<T> {
 	protected final int totalConnCount;
 	// METRICS section
 	private final int metricsUpdatePeriodSec;
-	protected final MetricRegistry metrics = new MetricRegistry();
-	protected Counter counterSubm, counterRej;
-	protected Meter throughPutSucc, throughPutFail, reqBytes;
-	protected Histogram reqDuration, respLatency;
-	//
-	protected final MBeanServer mBeanServer;
-	protected final JmxReporter jmxReporter;
-	//
-	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
-	//
-	private LoadState<T> currState = null;
-	private Clock clock = new ResumableUserTimeClock();
-	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
+	private final IOStats ioStats;
+	protected volatile IOStats.Snapshot lastStats = null;
 	//
 	private T lastDataItem;
 	private final DataItemInput<T> itemsSrc;
@@ -152,9 +131,10 @@ implements LoadExecutor<T> {
 					//
 					LockSupport.parkNanos(1);
 					//
+					lastStats = ioStats.getSnapshot();
 					if(
-						throughPutFail.getCount() > 1000000 &&
-						throughPutSucc.getOneMinuteRate() < throughPutFail.getOneMinuteRate()
+						lastStats.getFailCount() > 1000000 &&
+						lastStats.getFailRateLast() < lastStats.getSuccRateLast()
 					) {
 						LOG.fatal(
 							Markers.ERR,
@@ -175,16 +155,20 @@ implements LoadExecutor<T> {
 				}
 			}
 		};
-	// STATES section
+	// STATES section //////////////////////////////////////////////////////////////////////////////
+	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
+	private LoadState<T> currState = null;
+	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	protected final AtomicLong
-		durTasksSum = new AtomicLong(0),
+		counterSubm = new AtomicLong(0),
+		countRej = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
 	private final AtomicBoolean
 		isInterrupted = new AtomicBoolean(false),
 		isClosed = new AtomicBoolean(false);
 	private final Lock lock = new ReentrantLock();
 	private final Condition condProducerDone = lock.newCondition();
-	//
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
 		final Class<T> dataCls,
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String[] addrs,
@@ -226,8 +210,6 @@ implements LoadExecutor<T> {
 		loadType = reqConfig.getLoadType();
 		//
 		metricsUpdatePeriodSec = rtConfig.getLoadMetricsPeriodSec();
-		counterSubm = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_SUBM));
-		counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
 		final String runMode = rtConfig.getRunMode();
 		final boolean flagServeRemoteIfStandalone = rtConfig.getFlagServeIfNotLoadServer();
 		if(Constants.RUN_MODE_STANDALONE.equals(runMode) && !flagServeRemoteIfStandalone) {
@@ -235,21 +217,15 @@ implements LoadExecutor<T> {
 				Markers.MSG, "{}: running in the \"{}\" mode, remote serving is disabled",
 				getName(), runMode
 			);
-			mBeanServer = null;
-			jmxReporter = null;
+			ioStats = new BasicIOStats(getName(), 0);
 		} else {
 			LOG.debug(
 				Markers.MSG, "{}: running in the \"{}\" mode, remote serving flag is \"{}\"",
 				getName(), runMode, flagServeRemoteIfStandalone
 			);
-			mBeanServer = ServiceUtils.getMBeanServer(rtConfig.getRemotePortExport());
-			jmxReporter = JmxReporter.forRegistry(metrics)
-				//.convertDurationsTo(TimeUnit.MICROSECONDS)
-				//.convertRatesTo(TimeUnit.SECONDS)
-				.registerWith(mBeanServer)
-				.build();
-			jmxReporter.start();
+			ioStats = new BasicIOStats(getName(), rtConfig.getRemotePortExport());
 		}
+		lastStats = ioStats.getSnapshot();
 		//
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the nodes array
@@ -330,15 +306,11 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void logMetrics(final Marker logMarker) {
-		// duration when load is done
+		/* duration when load is done
 		final double elapsedTime = (currState != null) ?
 			currState.getLoadElapsedTimeUnit().
 				toNanos(currState.getLoadElapsedTimeValue()) + (System.nanoTime() - tsStart.get())
 			: (System.nanoTime() - tsStart.get());
-		//
-		final long
-			countReqSucc = throughPutSucc.getCount(),
-			countReqFail = throughPutFail.getCount();
 		final double
 			//  If Mongoose's run was paused w/ SIGSTOP signal then calculate meanTP and meanBW w/
 			//  values from Meter's library implementation after resumption.
@@ -350,62 +322,14 @@ implements LoadExecutor<T> {
 			meanTP = countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
 			lastTP = throughPutSucc.getOneMinuteRate(),
 			meanBW = reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1),
-			lastBW = reqBytes.getOneMinuteRate();
-		final Snapshot
-			reqDurationSnapshot = reqDuration.getSnapshot(),
-			respLatencySnapshot = respLatency.getSnapshot();
+			lastBW = reqBytes.getOneMinuteRate();*/
 		//
 		if(Markers.PERF_SUM.equals(logMarker)) {
 			LOG.info(
 				logMarker,
-				"\"" +getName() + "\" summary: " + String.format(
-					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
-					//
-					countReqSucc,
-					countReqFail == 0 ?
-						Long.toString(countReqFail) :
-						(float) countReqSucc / countReqFail > 100 ?
-							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
-							String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
-					//
-					(int) reqDurationSnapshot.getMean(),
-					(int) reqDurationSnapshot.getMin(),
-					(int) reqDurationSnapshot.getStdDev(),
-					(int) reqDurationSnapshot.getMax(),
-					//
-					(int) respLatencySnapshot.getMean(),
-					(int) respLatencySnapshot.getMin(),
-					(int) respLatencySnapshot.getStdDev(),
-					(int) respLatencySnapshot.getMax(),
-					//
-					meanTP, lastTP, meanBW / MIB, lastBW / MIB
-				)
-			);
-		} else if(Markers.PERF_AVG.equals(logMarker)) {
-			LOG.info(
-				logMarker,
-				String.format(
-					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
-					//
-					countReqSucc,
-					countReqFail == 0 ?
-						Long.toString(countReqFail) :
-						(float) countReqSucc / countReqFail > 100 ?
-							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countReqFail) :
-							String.format(LogUtil.INT_RED_OVER_GREEN, countReqFail),
-					//
-					(int) reqDurationSnapshot.getMean(),
-					(int) reqDurationSnapshot.getMin(),
-					(int) reqDurationSnapshot.getStdDev(),
-					(int) reqDurationSnapshot.getMax(),
-					//
-					(int) respLatencySnapshot.getMean(),
-					(int) respLatencySnapshot.getMin(),
-					(int) respLatencySnapshot.getStdDev(),
-					(int) respLatencySnapshot.getMax(),
-					//
-					meanTP, lastTP, meanBW / MIB, lastBW / MIB
-				)
+				Markers.PERF_SUM.equals(logMarker) ?
+					"\"" +getName() + "\" summary: " + lastStats :
+					lastStats
 			);
 		}
 	}
@@ -417,27 +341,7 @@ implements LoadExecutor<T> {
 	public void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(Markers.MSG, "Starting {}", getName());
-			// init remaining (load exec time dependent) metrics
-			throughPutSucc = metrics.register(
-				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP),
-				new Meter(clock)
-			);
-			throughPutFail = metrics.register(
-				MetricRegistry.name(getName(), METRIC_NAME_FAIL),
-				new Meter(clock)
-			);
-			reqBytes = metrics.register(
-				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW),
-				new Meter(clock)
-			);
-			respLatency = metrics.register(
-				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT),
-				new Histogram(new UniformReservoir())
-			);
-			reqDuration = metrics.register(
-				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_DUR),
-				new Histogram(new UniformReservoir())
-			);
+			ioStats.start();
 			//
 			if(rtConfig.isRunResumeEnabled()) {
 				if (rtConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
@@ -544,7 +448,7 @@ implements LoadExecutor<T> {
 					// calculate the efficiency and report
 					final float
 						loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
-						eff = durTasksSum.get() / (loadDurMicroSec * totalConnCount);
+						eff = lastStats.getDurationSum() / (loadDurMicroSec * totalConnCount);
 					LOG.debug(
 						Markers.MSG,
 						String.format(
@@ -609,7 +513,7 @@ implements LoadExecutor<T> {
 				}
 			}
 		} catch(final RejectedExecutionException e) {
-			counterRej.inc();
+			countRej.incrementAndGet();
 			throw e;
 		}
 	}
@@ -617,10 +521,10 @@ implements LoadExecutor<T> {
 	@Override @SuppressWarnings("unchecked")
 	protected final void submitSync(final T dataItem)
 	throws InterruptedException, RemoteException {
-		if(counterSubm.getCount() + counterRej.getCount() >= maxCount) {
+		if(counterSubm.get() + countRej.get() >= maxCount) {
 			LOG.debug(
 				Markers.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", getName(),
-				counterSubm.getCount(), counterRej.getCount()
+				counterSubm.get(), countRej.get()
 			);
 			super.interrupt();
 			return;
@@ -632,7 +536,7 @@ implements LoadExecutor<T> {
 		// warning: w/o such sleep the behaviour becomes very ugly
 		while(
 			!isAllSubm.get() && !isInterrupted.get() &&
-			counterSubm.getCount() - counterResults.get() >= maxQueueSize
+			counterSubm.get() - counterResults.get() >= maxQueueSize
 		) {
 			LockSupport.parkNanos(1);
 		}
@@ -641,11 +545,11 @@ implements LoadExecutor<T> {
 			if(null == submit(ioTask)) {
 				throw new RejectedExecutionException("Null future returned");
 			}
-			counterSubm.inc();
+			counterSubm.incrementAndGet();
 			activeTasksStats.get(nextNodeAddr).incrementAndGet(); // increment node's usage counter
 		} catch(final RejectedExecutionException e) {
 			if(!isInterrupted.get()) {
-				counterRej.inc();
+				countRej.incrementAndGet();
 				LogUtil.exception(LOG, Level.DEBUG, e, "Rejected the I/O task {}", ioTask);
 			}
 		}
@@ -691,26 +595,17 @@ implements LoadExecutor<T> {
 		if(status == IOTask.Status.SUCC) {
 			lastDataItem = dataItem;
 			// update the metrics with success
-			throughPutSucc.mark();
 			if(latency > duration) {
 				LOG.warn(
 					Markers.ERR, "{}: latency {} is more than duration: {}",
 					ioTask, latency, duration
 				);
-			} else {
-				if(latency > 0) {
-					respLatency.update(latency);
-				}
-				if(duration > 0) {
-					reqDuration.update(duration);
-					durTasksSum.addAndGet(duration);
-				}
 			}
-			reqBytes.mark(ioTask.getCountBytesDone());
+			ioStats.markSucc(ioTask.getCountBytesDone(), duration, latency);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Task #{}: successful, {}/{}",
-					ioTask.hashCode(), throughPutSucc.getCount(), ioTask.getCountBytesDone()
+					ioTask.hashCode(), lastStats.getSuccCount(), ioTask.getCountBytesDone()
 				);
 			}
 			// feed the data item to the consumer and finally check for the finish state
@@ -751,7 +646,7 @@ implements LoadExecutor<T> {
 				}
 			}
 		} else {
-			throughPutFail.mark();
+			ioStats.markFail();
 		}
 		//
 		counterResults.incrementAndGet();
@@ -765,18 +660,18 @@ implements LoadExecutor<T> {
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
 				return;
 			}
-			//  apply parameters from loadState to current load executor
-			counterSubm.inc(state.getCountSucc() + state.getCountFail());
-			counterResults.set(state.getCountSucc() + state.getCountFail());
-			throughPutFail.mark(state.getCountFail());
-			throughPutSucc.mark(state.getCountSucc());
-			reqBytes.mark(state.getCountBytes());
-			for(final long durationValue : state.getDurationValues()) {
-				respLatency.update(durationValue);
-			}
-			for(final long latencyValue : state.getLatencyValues()) {
-				respLatency.update(latencyValue);
-			}
+			// apply parameters from loadState to current load executor
+			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
+			final long
+				countSucc = statsSnapshot.getSuccCount(),
+				countFail = statsSnapshot.getFailCount();
+			counterSubm.addAndGet(countSucc + countFail);
+			counterResults.set(countSucc + countFail);
+			ioStats.markSucc(
+				countSucc, statsSnapshot.getByteCount(), statsSnapshot.getDurationValues(),
+				statsSnapshot.getLatencyValues()
+			);
+			ioStats.markFail(countFail);
 			currState = state;
 		}
 	}
@@ -789,23 +684,19 @@ implements LoadExecutor<T> {
 		final LoadState.Builder<T, BasicLoadState<T>> stateBuilder = new BasicLoadState.Builder<>();
 		stateBuilder.setLoadNumber(instanceNum)
 			.setRunTimeConfig(rtConfig)
-			.setCountSucc(throughPutSucc == null ? 0 : throughPutSucc.getCount())
-			.setCountFail(throughPutFail == null ? 0 : throughPutFail.getCount())
-			.setCountBytes(reqBytes == null ? 0 : reqBytes.getCount())
-			.setCountSubm(counterSubm == null ? 0 : counterSubm.getCount())
+			.setStatsSnapshot(lastStats)
 			.setLoadElapsedTimeValue(
 				tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
 			)
 			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
-			.setDurationValues(
-				reqDuration == null ? new long[]{} : reqDuration.getSnapshot().getValues()
-			)
-			.setLatencyValues(
-				respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
-			)
 			.setLastDataItem(lastDataItem);
 		//
 		return stateBuilder.build();
+	}
+	//
+	@Override
+	public IOStats.Snapshot getStatsSnapshot() {
+		return lastStats;
 	}
 	//
 	private boolean isDoneMaxCount() {
@@ -816,10 +707,10 @@ implements LoadExecutor<T> {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.debug(
 				Markers.MSG, "{}: all submitted: {}, results: {}, submitted: {}",
-				getName(), isAllSubm.get(), counterResults.get(), counterSubm.getCount()
+				getName(), isAllSubm.get(), counterResults.get(), counterSubm.get()
 			);
 		}
-		return isAllSubm.get() && counterResults.get() >= counterSubm.getCount();
+		return isAllSubm.get() && counterResults.get() >= counterSubm.get();
 	}
 	//
 	@Override
@@ -867,9 +758,7 @@ implements LoadExecutor<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
 				releaseDaemon.interrupt();
-				if(jmxReporter != null) {
-					jmxReporter.close();
-				}
+				ioStats.close();
 				LOG.debug(Markers.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);
 				if (currState != null) {
@@ -949,7 +838,7 @@ implements LoadExecutor<T> {
 			} else {
 				LOG.debug(
 					Markers.MSG, "{}: join timeout, unhandled results left: {}",
-					getName(), counterSubm.getCount() - counterResults.get()
+					getName(), counterSubm.get() - counterResults.get()
 				);
 			}
 		} finally {

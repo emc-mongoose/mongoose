@@ -93,7 +93,7 @@ implements DataSource {
 		//
 		LOG.debug(
 			Markers.MSG, "Pre-generating the data done in {}[us]",
-			(System.nanoTime() - d) / LoadExecutor.NANOSEC_SCALEDOWN
+			(System.nanoTime() - d) / 1e9
 		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

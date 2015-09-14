@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.model.util.metrics;
+package com.emc.mongoose.core.impl.load.model.metrics;
 
 import com.codahale.metrics.Clock;
 

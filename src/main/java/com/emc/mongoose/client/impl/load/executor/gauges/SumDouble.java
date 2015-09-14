@@ -1,6 +1,8 @@
 package com.emc.mongoose.client.impl.load.executor.gauges;
 //
 // mongoose-common.jar
+import com.codahale.metrics.CachedGauge;
+import com.codahale.metrics.Clock;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-client.jar
@@ -9,8 +11,6 @@ import com.emc.mongoose.client.api.load.executor.LoadClient;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
-import com.codahale.metrics.Gauge;
 //
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -21,11 +21,12 @@ import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 19.12.14.
  */
 public final class SumDouble
-implements Gauge<Double> {
+extends CachedGauge<Double> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -34,8 +35,10 @@ implements Gauge<Double> {
 	//
 	public SumDouble(
 		final String loadName, final String domain, final String name, final String attrName,
-		final Map<String, MBeanServerConnection> mBeanSrvConnMap
+		final Map<String, MBeanServerConnection> mBeanSrvConnMap,
+		final Clock clock, final long timeOut, final TimeUnit timeUnit
 	) {
+		super(clock, timeOut, timeUnit);
 		this.domain = domain;
 		this.attrName = attrName;
 		fqMBeanName = loadName.substring(0, loadName.lastIndexOf('x')) + '.' + name;
@@ -43,7 +46,7 @@ implements Gauge<Double> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final Double getValue() {
+	protected final Double loadValue() {
 		//
 		double value = 0;
 		MBeanServerConnection nextMBeanConn;

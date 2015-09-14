@@ -7,6 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -35,14 +36,10 @@ implements LoadState<T> {
 	//
 	private final int loadNumber;
 	private final RunTimeConfig runTimeConfig;
-	private final long countSucc;
-	private final long countFail;
-	private final long countBytes;
-	private final long countSubm;
+	private final IOStats.Snapshot ioStatsSnapshot;
 	private final long timeValue;
 	private final T lastDataItem;
 	private final TimeUnit timeUnit;
-	private final long durationValues[], latencyValues[];
 	//
 	@Override
 	public int getLoadNumber() {
@@ -55,33 +52,8 @@ implements LoadState<T> {
 	}
 	//
 	@Override
-	public long getCountSucc() {
-		return countSucc;
-	}
-	//
-	@Override
-	public long getCountFail() {
-		return countFail;
-	}
-	//
-	@Override
-	public long getCountBytes() {
-		return countBytes;
-	}
-	//
-	@Override
-	public long getCountSubm() {
-		return countSubm;
-	}
-	//
-	@Override
-	public long [] getDurationValues() {
-		return durationValues;
-	}
-	//
-	@Override
-	public long [] getLatencyValues() {
-		return latencyValues;
+	public IOStats.Snapshot getStatsSnapshot() {
+		return ioStatsSnapshot;
 	}
 	//
 	@Override
@@ -109,7 +81,7 @@ implements LoadState<T> {
 		final long stateTimeMillis = getLoadElapsedTimeUnit().
 			toMillis(getLoadElapsedTimeValue());
 		//  count limitations
-		final long counterResults = getCountSucc() + getCountFail();
+		final long counterResults = ioStatsSnapshot.getSuccCount() + ioStatsSnapshot.getFailCount();
 		final long maxCount = rtConfig.getLoadLimitCount() > 0
 			? rtConfig.getLoadLimitCount() : Long.MAX_VALUE;
 		return (counterResults >= maxCount) || (stateTimeMillis >= loadTimeMillis);
@@ -120,14 +92,10 @@ implements LoadState<T> {
 		//
 		private int loadNumber;
 		private RunTimeConfig runTimeConfig;
-		private long countSucc;
-		private long countFail;
-		private long countBytes;
+		private IOStats.Snapshot ioStatsSnapshot;
 		private T lastDataItem;
-		private long countSubm;
 		private long timeValue;
 		private TimeUnit timeUnit;
-		private long durationValues[], latencyValues[];
 		//
 		@Override
 		public Builder<T, U> setLoadNumber(final int loadNumber) {
@@ -142,26 +110,8 @@ implements LoadState<T> {
 		}
 		//
 		@Override
-		public Builder<T, U> setCountSucc(final long countSucc) {
-			this.countSucc = countSucc;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setCountFail(final long countFail) {
-			this.countFail = countFail;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setCountBytes(final long countBytes) {
-			this.countBytes = countBytes;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setCountSubm(final long countSubm) {
-			this.countSubm = countSubm;
+		public Builder<T, U> setStatsSnapshot(final IOStats.Snapshot ioStatsSnapshot) {
+			this.ioStatsSnapshot = ioStatsSnapshot;
 			return this;
 		}
 		//
@@ -184,18 +134,6 @@ implements LoadState<T> {
 		}
 		//
 		@Override
-		public Builder<T, U> setDurationValues(final long durationValues[]) {
-			this.durationValues = durationValues;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setLatencyValues(final long latencyValues[]) {
-			this.latencyValues = latencyValues;
-			return this;
-		}
-		//
-		@Override
 		@SuppressWarnings("unchecked")
 		public U build() {
 			return (U) new BasicLoadState<>((Builder<T, BasicLoadState<T>>) this);
@@ -206,14 +144,9 @@ implements LoadState<T> {
 	private BasicLoadState(final Builder<T, BasicLoadState<T>> builder) {
 		this.loadNumber = builder.loadNumber;
 		this.runTimeConfig = builder.runTimeConfig;
-		this.countSucc = builder.countSucc;
-		this.countFail = builder.countFail;
-		this.countBytes = builder.countBytes;
-		this.countSubm = builder.countSubm;
+		this.ioStatsSnapshot = builder.ioStatsSnapshot;
 		this.timeValue = builder.timeValue;
 		this.timeUnit = builder.timeUnit;
-		this.durationValues = builder.durationValues;
-		this.latencyValues = builder.latencyValues;
 		this.lastDataItem = builder.lastDataItem;
 	}
 	//
@@ -326,9 +259,9 @@ implements LoadState<T> {
 		for (final LoadState state : states) {
 			final long stateTimeMillis = state.getLoadElapsedTimeUnit()
 				.toMillis(state.getLoadElapsedTimeValue());
-			final long stateItemsCount = state.getCountSucc() + state.getCountFail();
-			if ((stateTimeMillis < runTimeMillis) && (stateItemsCount < maxItemsCountPerLoad)
-					&& (stateItemsCount < state.getCountSubm())) {
+			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
+			final long stateItemsCount = statsSnapshot.getSuccCount() + statsSnapshot.getFailCount();
+			if((stateTimeMillis < runTimeMillis) && (stateItemsCount < maxItemsCountPerLoad)) {
 				return false;
 			}
 		}

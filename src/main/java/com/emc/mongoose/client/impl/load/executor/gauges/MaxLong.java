@@ -3,6 +3,8 @@ package com.emc.mongoose.client.impl.load.executor.gauges;
  Created by kurila on 19.12.14.
  */
 // mongoose-common.jar
+import com.codahale.metrics.CachedGauge;
+import com.codahale.metrics.Clock;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
@@ -13,8 +15,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import com.codahale.metrics.Gauge;
-//
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
@@ -24,11 +24,12 @@ import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 19.12.14.
  */
 public final class MaxLong
-	implements Gauge<Long> {
+extends CachedGauge<Long> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -37,8 +38,10 @@ public final class MaxLong
 	//
 	public MaxLong(
 		final String loadName, final String domain, final String name, final String attrName,
-		final Map<String, MBeanServerConnection> mBeanSrvConnMap
+		final Map<String, MBeanServerConnection> mBeanSrvConnMap,
+		final Clock clock, final long timeOut, final TimeUnit timeUnit
 	) {
+		super(clock, timeOut, timeUnit);
 		this.domain = domain;
 		this.attrName = attrName;
 		fqMBeanName = loadName.substring(0, loadName.lastIndexOf('x')) + '.' + name;
@@ -46,7 +49,7 @@ public final class MaxLong
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final Long getValue() {
+	protected final Long loadValue() {
 		//
 		long value = Long.MIN_VALUE;
 		MBeanServerConnection nextMBeanConn;
