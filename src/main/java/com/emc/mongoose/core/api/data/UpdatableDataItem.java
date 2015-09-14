@@ -1,9 +1,6 @@
 package com.emc.mongoose.core.api.data;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-//
-import java.io.IOException;
-import java.nio.channels.WritableByteChannel;
 /**
  Created by kurila on 29.09.14.
  A data item which supports update operation.
@@ -32,10 +29,6 @@ extends DataItem {
 	int getCurrLayerIndex();
 	//
 	long getUpdatingRangesSize();
-	//
-	@Deprecated
-	long writeUpdatedRangesFully(final WritableByteChannel chanOut)
-	throws IOException;
 	//
 	void commitUpdatedRanges();
 	//
