@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
@@ -86,7 +87,7 @@ implements Runnable {
 		this.ioStats = ioStats;
 		ioReactor = new DefaultListeningIOReactor(
 			ioReactorConf,
-			new GroupThreadFactory(
+			new IOWorker.Factory(
 				"ioReactor<" + socketAddress.getHostString() + ":" + socketAddress.getPort() + ">"
 			)
 		);

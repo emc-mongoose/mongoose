@@ -1,8 +1,10 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 // mongoose-common.jar
@@ -27,7 +29,6 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
-import com.emc.mongoose.core.impl.load.model.util.metrics.CustomMeter;
 import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
@@ -85,7 +86,7 @@ implements LoadExecutor<T> {
 	private final int metricsUpdatePeriodSec;
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected Counter counterSubm, counterRej;
-	protected CustomMeter throughPutSucc, throughPutFail, reqBytes;
+	protected Meter throughPutSucc, throughPutFail, reqBytes;
 	protected Histogram reqDuration, respLatency;
 	//
 	protected final MBeanServer mBeanServer;
@@ -94,7 +95,7 @@ implements LoadExecutor<T> {
 	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
 	//
 	private LoadState<T> currState = null;
-	private ResumableUserTimeClock clock = new ResumableUserTimeClock();
+	private Clock clock = new ResumableUserTimeClock();
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	//
 	private T lastDataItem;
@@ -153,13 +154,13 @@ implements LoadExecutor<T> {
 					//
 					if(
 						throughPutFail.getCount() > 1000000 &&
-						throughPutSucc.getLastRate() < throughPutFail.getLastRate()
+						throughPutSucc.getOneMinuteRate() < throughPutFail.getOneMinuteRate()
 					) {
 						LOG.fatal(
 							Markers.ERR,
 							"There's a more than 1M of failures and the failure rate is higher " +
-							"than success rate for at least last {} sec. Exiting in order to avoid " +
-							"the memory exhaustion."
+							"than success rate for at least last 1 min. Exiting in order to " +
+							"avoid the memory exhaustion. Please check your environment"
 						);
 						try {
 							LoadExecutorBase.this.close();
@@ -347,9 +348,9 @@ implements LoadExecutor<T> {
 			//  Only average values in TP and BW will be calculated correctly.
 			//  Other values will be gradually recovered.
 			meanTP = countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
-			lastTP = throughPutSucc.getLastRate(),
+			lastTP = throughPutSucc.getOneMinuteRate(),
 			meanBW = reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1),
-			lastBW = reqBytes.getLastRate();
+			lastBW = reqBytes.getOneMinuteRate();
 		final Snapshot
 			reqDurationSnapshot = reqDuration.getSnapshot(),
 			respLatencySnapshot = respLatency.getSnapshot();
@@ -419,15 +420,15 @@ implements LoadExecutor<T> {
 			// init remaining (load exec time dependent) metrics
 			throughPutSucc = metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP),
-				new CustomMeter(clock, metricsUpdatePeriodSec)
+				new Meter(clock)
 			);
 			throughPutFail = metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_FAIL),
-				new CustomMeter(clock, metricsUpdatePeriodSec)
+				new Meter(clock)
 			);
 			reqBytes = metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW),
-				new CustomMeter(clock, metricsUpdatePeriodSec)
+				new Meter(clock)
 			);
 			respLatency = metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT),
@@ -691,12 +692,19 @@ implements LoadExecutor<T> {
 			lastDataItem = dataItem;
 			// update the metrics with success
 			throughPutSucc.mark();
-			if(latency > 0) {
-				respLatency.update(latency);
-			}
-			if(duration > 0) {
-				reqDuration.update(duration);
-				durTasksSum.addAndGet(duration);
+			if(latency > duration) {
+				LOG.warn(
+					Markers.ERR, "{}: latency {} is more than duration: {}",
+					ioTask, latency, duration
+				);
+			} else {
+				if(latency > 0) {
+					respLatency.update(latency);
+				}
+				if(duration > 0) {
+					reqDuration.update(duration);
+					durTasksSum.addAndGet(duration);
+				}
 			}
 			reqBytes.mark(ioTask.getCountBytesDone());
 			if(LOG.isTraceEnabled(Markers.MSG)) {

@@ -56,7 +56,7 @@ extends LoadExecutorBase<T> {
 	@Override
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
-		if(rateLimit > 0 && throughPutSucc.getMeanRate() > rateLimit) {
+		if(rateLimit > 0 && throughPutSucc.getOneMinuteRate() > rateLimit) {
 			final int microDelay = (int) (tgtDur - durTasksSum.get() / throughPutSucc.getCount());
 			if(microDelay > 0) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {

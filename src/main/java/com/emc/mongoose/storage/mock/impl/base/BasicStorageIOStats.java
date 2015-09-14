@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.base;
 //
+import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
@@ -12,6 +13,7 @@ import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
 //
@@ -32,12 +34,13 @@ implements StorageIOStats {
 	//
 	private final MetricRegistry metricRegistry = new MetricRegistry();
 	private final JmxReporter jmxReporter;
+	private final Clock clock = new ResumableUserTimeClock();
 	private final Counter
 		countFailWrite = metricRegistry.counter(
-			MetricRegistry.name(
-				StorageMock.class, IOType.WRITE.name(), LoadExecutor.METRIC_NAME_FAIL
-			)
-		),
+		MetricRegistry.name(
+			StorageMock.class, IOType.WRITE.name(), LoadExecutor.METRIC_NAME_FAIL
+		)
+	),
 		countFailRead = metricRegistry.counter(
 			MetricRegistry.name(
 				StorageMock.class, IOType.READ.name(), LoadExecutor.METRIC_NAME_FAIL
@@ -52,33 +55,38 @@ implements StorageIOStats {
 			MetricRegistry.name(StorageMock.class, METRIC_NAME_CONTAINERS)
 		);
 	private final Meter
-		tpWrite = metricRegistry.meter(
-		MetricRegistry.name(
-			StorageMock.class, IOType.WRITE.name(), LoadExecutor.METRIC_NAME_TP
-		)
-	),
-		tpRead = metricRegistry.meter(
+		tpWrite = metricRegistry.register(
+			MetricRegistry.name(
+				StorageMock.class, IOType.WRITE.name(), LoadExecutor.METRIC_NAME_TP
+			),
+			new Meter(clock)
+		),
+		tpRead = metricRegistry.register(
 			MetricRegistry.name(
 				StorageMock.class, IOType.READ.name(), LoadExecutor.METRIC_NAME_TP
-			)
+			),
+			new Meter(clock)
 		),
-		tpDelete = metricRegistry.meter(
+		tpDelete = metricRegistry.register(
 			MetricRegistry.name(
 				StorageMock.class, IOType.DELETE.name(), LoadExecutor.METRIC_NAME_TP
-			)
+			),
+			new Meter(clock)
 		),
-		bwWrite = metricRegistry.meter(
+		bwWrite = metricRegistry.register(
 			MetricRegistry.name(
 				StorageMock.class, IOType.WRITE.name(), LoadExecutor.METRIC_NAME_BW
-			)
+			),
+			new Meter(clock)
 		),
-		bwRead = metricRegistry.meter(
+		bwRead = metricRegistry.register(
 			MetricRegistry.name(
 				StorageMock.class, IOType.READ.name(), LoadExecutor.METRIC_NAME_BW
-			)
+			),
+			new Meter(clock)
 		);
 	//
-	private final long updateMilliPeriod;
+	private final long updatePeriodMilliSec;
 	private final StorageMock storage;
 	//
 	public BasicStorageIOStats(
@@ -86,7 +94,7 @@ implements StorageIOStats {
 	) {
 		super(BasicStorageIOStats.class.getSimpleName());
 		setDaemon(true);
-		updateMilliPeriod = TimeUnit.SECONDS.toMillis(metricsPeriodSec);
+		updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsPeriodSec);
 		this.storage = storage;
 		//
 		if(jmxServeFlag) {
@@ -105,11 +113,11 @@ implements StorageIOStats {
 	//
 	private final static String
 		MSG_FMT_METRICS = "Capacity used: %d (%.1f%%), containers count: %d\n" +
-			"\tOperation |Count       |Failed      |TP[/s]avg   |TP[/s]1min  |BW[MB/s]avg |BW[MB/s]1min\n" +
-			"\t----------|------------|------------|------------|------------|------------|------------\n" +
-			"\tWrite     |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
-			"\tRead      |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
-			"\tDelete    |%12d|%12d|%12.3f|%12.3f|            |";
+			"\tOperation |Count       |Failed      |TP[s^-1]avg |TP[s^-1]last|BW[MB*s^-1]avg |BW[MB*s^-1]last\n" +
+			"\t----------|------------|------------|------------|------------|---------------|---------------\n" +
+			"\tWrite     |%12d|%12d|%12.3f|%12.3f|%15.3f|%15.3f\n" +
+			"\tRead      |%12d|%12d|%12.3f|%12.3f|%15.3f|%15.3f\n" +
+			"\tDelete    |%12d|%12d|%12.3f|%12.3f|               |";
 	//
 	@Override
 	public final String toString() {
@@ -145,9 +153,9 @@ implements StorageIOStats {
 	public final void run() {
 		LOG.debug(Markers.MSG, "Running");
 		try {
-			while(updateMilliPeriod > 0 && !isInterrupted()) {
+			while(updatePeriodMilliSec > 0 && !isInterrupted()) {
 				LOG.info(Markers.MSG, toString());
-				Thread.sleep(updateMilliPeriod);
+				Thread.sleep(updatePeriodMilliSec);
 			}
 		} catch(final InterruptedException ignored) {
 			LOG.debug(Markers.MSG, "Interrupted");
