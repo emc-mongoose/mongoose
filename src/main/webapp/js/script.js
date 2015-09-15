@@ -1249,10 +1249,10 @@ function charts(chartsArray) {
 					if (scaleOrientation === SCALE_ORIENTATION[0]) {
 						x = d3.scale.log()
 							.domain([d3.min(data, function(c) { return d3.min(c.values, function(d) {
-								return d.x <= 0 ? 0.001 : (d.x / currTimeUnit.value);
+								return d.x <= 0 ? 0.1 : (d.x / currTimeUnit.value);
 							}); }),
 							d3.max(data, function(c) { return d3.max(c.values, function(d) {
-								return d.x <= 0 ? 0.001 : (d.x / currTimeUnit.value);
+								return d.x <= 0 ? 0.1 : (d.x / currTimeUnit.value);
 							}); })])
 							.range([0, width]);
 						currXScale = SCALE_TYPES[1];
@@ -1396,12 +1396,12 @@ function charts(chartsArray) {
 			//
 			x.domain([
 				d3.min(data, function(c) { return d3.min(c.values, function(d) {
-					return (isNaN(x(d.x))) ? 0.001 : (d.x / currTimeUnit.value);
+					return (isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value);
 				}); }),
 				d3.max(data, function(c) { return d3.max(c.values, function(d) {
-					return (isNaN(x(d.x))) ? 0.001 : (d.x / currTimeUnit.value);
+					return (isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value);
 				}); })
-			])
+			]);
 			y.domain([
 				d3.min(data, function(c) { return d3.min(c.values, function(d) {
 					return (isNaN(y(d.y))) ? 0.001 : d.y }); }),
@@ -2153,10 +2153,10 @@ function charts(chartsArray) {
 								x = d3.scale.log()
 									.domain([
 										d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-											return d3.min(c.values, function(v) { return (v.x <= 0) ? 0.001 : (v.x / currTimeUnit.value); }); });
+											return d3.min(c.values, function(v) { return (v.x <= 0) ? 0.1 : (v.x / currTimeUnit.value); }); });
 										}),
 										d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-											return d3.max(c.values, function(v) { return (v.x <= 0) ? 0.001 : (v.x / currTimeUnit.value); }); });
+											return d3.max(c.values, function(v) { return (v.x <= 0) ? 0.1 : (v.x / currTimeUnit.value); }); });
 										})
 									])
 									.range([0, width]);
@@ -2327,12 +2327,12 @@ function charts(chartsArray) {
 					//
 					x.domain([
 						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-							return d3.min(c.values, function(v) { return (isNaN(x(v.x))) ? 0.001 : (v.x / currTimeUnit.value); }); });
+							return d3.min(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : (v.x / currTimeUnit.value); }); });
 						}),
 						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-							return d3.max(c.values, function(v) { return (isNaN(x(v.x))) ? 0.001 : (v.x / currTimeUnit.value); }); });
+							return d3.max(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : (v.x / currTimeUnit.value); }); });
 						})
-					])
+					]);
 					y.domain([
 						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
 							return d3.min(c.values, function(v) { return (isNaN(y(v.y))) ? 0.001 : v.y; }); });
