@@ -1025,6 +1025,7 @@ function charts(chartsArray) {
 				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
 				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; })  })
 			])
+			.nice()
 			.range([height, 0]);
 		//
 		var color = d3.scale.ordinal()
@@ -1240,6 +1241,7 @@ function charts(chartsArray) {
 							d3.max(data, function(c) { return d3.max(c.values, function(d) {
 								return d.y;
 							}); })])
+							.nice()
 							.range([height, 0]);
 						currYScale = SCALE_TYPES[0];
 					}
@@ -1262,6 +1264,7 @@ function charts(chartsArray) {
 							d3.max(data, function(c) { return d3.max(c.values, function(d) {
 								return d.y <= 0 ? 0.1 : d.y;
 							}); })])
+							.nice()
 							.range([height, 0]);
 						currYScale = SCALE_TYPES[1];
 					}
@@ -1398,14 +1401,15 @@ function charts(chartsArray) {
 				d3.max(data, function(c) { return d3.max(c.values, function(d) {
 					return (isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value);
 				}); })
-			]);
+			])
 			y.domain([
 				d3.min(data, function(c) { return d3.min(c.values, function(d) {
 					return (isNaN(y(d.y))) ? 0.1 : d.y }); }),
 				d3.max(data, function(c) { return d3.max(c.values, function(d) {
 					return (isNaN(y(d.y))) ? 0.1 : d.y
 				}); })
-			]);
+			])
+			.nice();
 			//
 			redraw(currXScale, currYScale);
 		};
@@ -1698,6 +1702,7 @@ function charts(chartsArray) {
 							return d3.max(c.values, function(v) { return v.y; }); });
 						})
 					])
+					.nice()
 					.range([height, 0]);
 				//
 				var color = d3.scale.ordinal()
@@ -2139,6 +2144,7 @@ function charts(chartsArray) {
 											return d3.max(c.values, function(v) { return v.y; }); });
 										})
 									])
+									.nice()
 									.range([height, 0]);
 								currYScale = SCALE_TYPES[0];
 							}
@@ -2165,6 +2171,7 @@ function charts(chartsArray) {
 											return d3.max(c.values, function(v) { return (v.y <= 0) ? 0.1 : v.y; }); });
 										})
 									])
+									.nice()
 									.range([height, 0]);
 								currYScale = SCALE_TYPES[1];
 							}
@@ -2325,7 +2332,7 @@ function charts(chartsArray) {
 						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
 							return d3.max(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : (v.x / currTimeUnit.value); }); });
 						})
-					]);
+					])
 					y.domain([
 						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
 							return d3.min(c.values, function(v) { return (isNaN(y(v.y))) ? 0.1 : v.y; }); });
@@ -2333,7 +2340,8 @@ function charts(chartsArray) {
 						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
 							return d3.max(c.values, function(v) { return (isNaN(y(v.y))) ? 0.1 : v.y; }); });
 						})
-					]);
+					])
+					.nice();
 					//
 					redraw(currXScale, currYScale);
 				};
@@ -2442,6 +2450,7 @@ function charts(chartsArray) {
 					//
 					var x = d3.scale.linear()
 						.domain([0, d3.max(rampupConnCountsArray)])
+						.nice()
 						.range([0, width]);
 					var y = d3.scale.linear()
 						.domain([
@@ -2452,6 +2461,7 @@ function charts(chartsArray) {
 								return d3.max(v.values, function(val) { return val.y; });
 							}); })
 						])
+						.nice()
 						.range([height, 0]);
 					//
 					scalesArray.push({
@@ -2723,6 +2733,7 @@ function charts(chartsArray) {
 								if (scaleOrientation === SCALE_ORIENTATION[0]) {
 									x = d3.scale.linear()
 										.domain([0, d3.max(rampupConnCountsArray)])
+										.nice()
 										.range([0, width]);
 									currXScale = SCALE_TYPES[0];
 								} else {
@@ -2733,6 +2744,7 @@ function charts(chartsArray) {
 												return d3.max(v.values, function(val) { return val.y; });
 											}); })
 										])
+										.nice()
 										.range([height, 0]);
 									currYScale = SCALE_TYPES[0];
 								}
@@ -2740,6 +2752,7 @@ function charts(chartsArray) {
 								if (scaleOrientation === SCALE_ORIENTATION[0]) {
 									x = d3.scale.log()
 										.domain([1, d3.max(rampupConnCountsArray)])
+										.nice()
 										.range([0, width]);
 									currXScale = SCALE_TYPES[1];
 								} else {
@@ -2752,6 +2765,7 @@ function charts(chartsArray) {
 												});
 											}); })
 										])
+										.nice()
 										.range([height, 0]);
 									currYScale = SCALE_TYPES[1];
 								}
@@ -2805,6 +2819,7 @@ function charts(chartsArray) {
 							});
 							//
 							x.domain([(isNaN(x(0))) ? 1 : 0, d3.max(rampupConnCountsArray)])
+								.nice()
 								.range([0, width]);
 							y.domain([
 								(currYScale === SCALE_TYPES[1]) ? 0.1 : 0,
@@ -2816,7 +2831,7 @@ function charts(chartsArray) {
 										});
 									});
 								})
-							]).range([height, 0]);
+							]).nice().range([height, 0]);
 							//
 							scalesArray[i].update(i, x, y);
 						}
