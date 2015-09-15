@@ -296,26 +296,9 @@ $(document).ready(function() {
 		}
 	});
 	//
-	/*$(".property").click(function() {
-		var id = $(this).attr("href").replace(/\./g, "\\.");
-		var name = $(this).parents(".file").find(".props").text();
-		$("#" + name).show();
-		var element = $("#" + name).find($(id));
-		var parent = element.parents(".form-group");
-		$("#" + name).children().hide();
-		parent.show();
-	});*/
-	//
 	$("#backup-run\\.id, #run\\.id").change(function() {
 		var startBtn = $("#start");
 		var currVal = this.value;
-		/*var patternValidId = /^[a-zA-Z]([-a-zA-Z0-9]*)$/;
-		if (!patternValidId.test(currVal)) {
-			alert("Invalid id value.\nRegExp for id: /^[a-zA-Z]([-a-zA-Z0-9]*)$/");
-			startBtn.prop("disabled", true);
-		} else {
-			startBtn.prop("disabled", false);
-		}*/
 	});
 });
 
@@ -780,7 +763,7 @@ function charts(chartsArray) {
 			"next": null,
 			"label": "years[y]"
 		}
-	}
+	};
 	//  Some constants from runTimeConfig
 	var RUN_TIME_CONFIG_CONSTANTS = {
 		runId: "run.id",
@@ -954,7 +937,8 @@ function charts(chartsArray) {
 			.attr("class", "scale-labels")
 			.attr("name", function(d) { return d.id; })
 			.attr("transform", function(d, i) {
-				return "translate(10," + (i*20 + height + (margin.bottom/2) + addHeight) + ")";
+				return "translate(" + (10 + i*130)
+					+ "," + (height + (margin.bottom/2) + addHeight) + ")";
 			});
 		groupsEnter.append("text")
 			.attr("dy", ".35em")
@@ -979,15 +963,10 @@ function charts(chartsArray) {
 					d3.select(this).property("checked", false);
 					currScaleType = SCALE_TYPES[0];
 				}
-				//  remove previous elements in group
-				/*parentGroup.selectAll("input")
-					.property("checked", false);*/
 				//  select current checkbox
 				var parentGroup = d3.select(this.parentNode.parentNode.parentNode);
 				var scaleOrientation = parentGroup.attr("name");
 				chartEntry.updateScales(scaleOrientation, currScaleType);
-				//
-				//redrawGridAndAxis(chartSettings, data, currentScale, currScaleType);
 			});
 		groupsEnter.append("text")
 			.attr("class", "foreign-labels")
