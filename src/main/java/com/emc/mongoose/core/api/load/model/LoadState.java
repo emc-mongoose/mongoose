@@ -20,10 +20,6 @@ extends Serializable {
 	//
 	T getLastDataItem();
 	//
-	long getLoadElapsedTimeValue();
-	//
-	TimeUnit getLoadElapsedTimeUnit();
-	//
 	boolean isLoadFinished(final RunTimeConfig rtConfig);
 	//
 	interface Builder<T extends DataItem, U extends LoadState<T>> {
@@ -34,13 +30,8 @@ extends Serializable {
 		//
 		Builder<T, U> setStatsSnapshot(final IOStats.Snapshot ioStatsSnapshot);
 		//
-		Builder<T, U> setLoadElapsedTimeValue(final long timeValue);
-		//
 		Builder<T, U> setLastDataItem(final T dataItem);
 		//
-		Builder<T, U> setLoadElapsedTimeUnit(final TimeUnit timeUnit);
-		//
 		U build();
-		//
 	}
 }

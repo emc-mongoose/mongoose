@@ -134,13 +134,14 @@ implements LoadExecutor<T> {
 					lastStats = ioStats.getSnapshot();
 					if(
 						lastStats.getFailCount() > 1000000 &&
-						lastStats.getFailRateLast() < lastStats.getSuccRateLast()
+						lastStats.getFailRateLast() < lastStats.getSuccRate()
 					) {
 						LOG.fatal(
 							Markers.ERR,
 							"There's a more than 1M of failures and the failure rate is higher " +
-							"than success rate for at least last 1 min. Exiting in order to " +
-							"avoid the memory exhaustion. Please check your environment"
+							"than success rate for at least last {}[sec]. Exiting in order to " +
+							"avoid the memory exhaustion. Please check your environment.",
+							metricsUpdatePeriodSec
 						);
 						try {
 							LoadExecutorBase.this.close();
@@ -157,7 +158,7 @@ implements LoadExecutor<T> {
 		};
 	// STATES section //////////////////////////////////////////////////////////////////////////////
 	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
-	private LoadState<T> currState = null;
+	private LoadState<T> loadedPrevState = null;
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	protected final AtomicLong
 		counterSubm = new AtomicLong(0),
@@ -217,13 +218,15 @@ implements LoadExecutor<T> {
 				Markers.MSG, "{}: running in the \"{}\" mode, remote serving is disabled",
 				getName(), runMode
 			);
-			ioStats = new BasicIOStats(getName(), 0);
+			ioStats = new BasicIOStats(getName(), 0, metricsUpdatePeriodSec);
 		} else {
 			LOG.debug(
 				Markers.MSG, "{}: running in the \"{}\" mode, remote serving flag is \"{}\"",
 				getName(), runMode, flagServeRemoteIfStandalone
 			);
-			ioStats = new BasicIOStats(getName(), rtConfig.getRemotePortExport());
+			ioStats = new BasicIOStats(
+				getName(), rtConfig.getRemotePortExport(), metricsUpdatePeriodSec
+			);
 		}
 		lastStats = ioStats.getSnapshot();
 		//
@@ -306,32 +309,12 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void logMetrics(final Marker logMarker) {
-		/* duration when load is done
-		final double elapsedTime = (currState != null) ?
-			currState.getLoadElapsedTimeUnit().
-				toNanos(currState.getLoadElapsedTimeValue()) + (System.nanoTime() - tsStart.get())
-			: (System.nanoTime() - tsStart.get());
-		final double
-			//  If Mongoose's run was paused w/ SIGSTOP signal then calculate meanTP and meanBW w/
-			//  values from Meter's library implementation after resumption.
-			//  All metrics will be calculated correctly.
-			//  If Mongoose's run was paused w/ SIGINT signal then calculate
-			//  these metrics w/o Meter's library implementation.
-			//  Only average values in TP and BW will be calculated correctly.
-			//  Other values will be gradually recovered.
-			meanTP = countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
-			lastTP = throughPutSucc.getOneMinuteRate(),
-			meanBW = reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1),
-			lastBW = reqBytes.getOneMinuteRate();*/
-		//
-		if(Markers.PERF_SUM.equals(logMarker)) {
-			LOG.info(
-				logMarker,
-				Markers.PERF_SUM.equals(logMarker) ?
-					"\"" +getName() + "\" summary: " + lastStats :
-					lastStats
-			);
-		}
+		LOG.info(
+			logMarker,
+			Markers.PERF_SUM.equals(logMarker) ?
+				"\"" +getName() + "\" summary: " + lastStats :
+				lastStats
+		);
 	}
 	//
 	private final AtomicLong tsStart = new AtomicLong(-1);
@@ -401,7 +384,7 @@ implements LoadExecutor<T> {
 						final DataItemInputProducer<T> inputProducer
 							= (DataItemInputProducer<T>) producer;
 						inputProducer.setSkippedItemsCount(counterResults.get());
-						inputProducer.setLastDataItem(currState.getLastDataItem());
+						inputProducer.setLastDataItem(loadedPrevState.getLastDataItem());
 					}
 					producer.start();
 					LOG.debug(Markers.MSG, "Started object producer {}", producer);
@@ -654,8 +637,8 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public void setLoadState(final LoadState<T> state) {
-		if (state != null) {
-			if (state.isLoadFinished(rtConfig)) {
+		if(state != null) {
+			if(state.isLoadFinished(rtConfig)) {
 				isLoadFinished.compareAndSet(false, true);
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
 				return;
@@ -672,26 +655,20 @@ implements LoadExecutor<T> {
 				statsSnapshot.getLatencyValues()
 			);
 			ioStats.markFail(countFail);
-			currState = state;
+			ioStats.markElapsedTime(statsSnapshot.getElapsedTime());
+			loadedPrevState = state;
 		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public LoadState<T> getLoadState()
 	throws RemoteException {
-		final long prevElapsedTime = currState != null ?
-			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
-		final LoadState.Builder<T, BasicLoadState<T>> stateBuilder = new BasicLoadState.Builder<>();
-		stateBuilder.setLoadNumber(instanceNum)
+		return new BasicLoadState.Builder<T, BasicLoadState<T>>()
+			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(rtConfig)
 			.setStatsSnapshot(lastStats)
-			.setLoadElapsedTimeValue(
-				tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
-			)
-			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
-			.setLastDataItem(lastDataItem);
-		//
-		return stateBuilder.build();
+			.setLastDataItem(lastDataItem)
+			.build();
 	}
 	//
 	@Override
@@ -761,9 +738,9 @@ implements LoadExecutor<T> {
 				ioStats.close();
 				LOG.debug(Markers.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);
-				if (currState != null) {
+				if (loadedPrevState != null) {
 					if (RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
-						RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(currState);
+						RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
 					}
 				}
 				LOG.debug(Markers.MSG, "\"{}\" closed successfully", getName());
@@ -816,24 +793,21 @@ implements LoadExecutor<T> {
 			return;
 		}
 		//
-		final long timeOutMilliSec;
-		if(currState != null) {
+		long timeOutMicroSec = timeUnit.toMicros(timeOut);
+		if(loadedPrevState != null) {
 			if(isLoadFinished.get()) {
 				return;
 			}
-			timeOutMilliSec = timeUnit.toMillis(timeOut) -
-				currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue());
-		} else {
-			timeOutMilliSec = timeUnit.toMillis(timeOut);
+			timeOutMicroSec -= loadedPrevState.getStatsSnapshot().getElapsedTime();
 		}
 		//
 		lock.lock();
 		try {
 			LOG.debug(
-				Markers.MSG, "{}: wait for the done condition at most for {}[ms]",
-				getName(), timeOutMilliSec
+				Markers.MSG, "{}: wait for the done condition at most for {}[us]",
+				getName(), timeOutMicroSec
 			);
-			if(condProducerDone.await(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+			if(condProducerDone.await(timeOutMicroSec, TimeUnit.MICROSECONDS)) {
 				LOG.debug(Markers.MSG, "{}: join finished", getName());
 			} else {
 				LOG.debug(

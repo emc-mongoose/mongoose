@@ -10,6 +10,7 @@ import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
+import com.emc.mongoose.client.impl.load.metrics.model.AggregatedRemoteIOStats;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -24,6 +25,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.load.model.LoadState;
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.data.model.NewDataItemInput;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
@@ -37,7 +39,6 @@ import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptClientOnMaxCountTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.DataItemsFetchPeriodicTask;
-import com.emc.mongoose.client.impl.load.executor.tasks.CachedGaugePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
 //
 import org.apache.logging.log4j.Level;
@@ -45,7 +46,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
-import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 //
@@ -84,42 +84,21 @@ implements LoadClient<T> {
 	private final Map<String, JMXConnector> remoteJMXConnMap;
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
 	//
-	private final Clock clock = new ResumableUserTimeClock();
-	private final MetricRegistry metrics = new MetricRegistry();
-	protected final JmxReporter metricsReporter;
-	//
-	@SuppressWarnings("FieldCanBeLocal")
-	private final CachedGauge<Long>
-		metricSuccCount, metricByteCount;
-	@SuppressWarnings("FieldCanBeLocal")
-	private final CachedGauge<Double>
-		metricTPMean, metricTPLast, metricBWMean, metricBWLast;
-	@SuppressWarnings("FieldCanBeLocal")
-	private final CachedGaugePeriodicTask<Long>
-		taskGetCountSubm, taskGetCountRej, taskGetCountSucc, taskGetCountFail,
-		taskGetDurationMin, taskGetDurationMax,
-		taskGetLatencyMin, taskGetLatencyMax,
-		taskGetCountBytes;
-	private final CachedGaugePeriodicTask<Double>
-		taskGetTPMean, taskGetTPLast,
-		taskGetBWMean, taskGetBWLast,
-		taskGetDurationStdDev, taskGetDurationAvg,
-		taskGetLatencyStdDev, taskGetLatencyAvg;
 	private final AtomicLong tsStart = new AtomicLong(-1);
 	//
 	private final ScheduledExecutorService mgmtConnExecutor;
 	private final List<PeriodicTask<Collection<T>>> fetchItemsBuffTasks = new LinkedList<>();
-	private final List<PeriodicTask> metricFetchTasks = new LinkedList<>();
-	private volatile long durationValues[] = null, latencyValues[] = null;
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	private final long maxCount;
 	private final String name, loadSvcAddrs[];
 	//
 	private final RunTimeConfig runTimeConfig;
+	private final IOStats ioStats;
 	private final RequestConfig<T> reqConfigCopy;
 	private final int instanceNum, metricsPeriodSec;
 	protected volatile Producer<T> producer;
 	protected volatile Consumer<T> consumer = null;
+	protected volatile IOStats.Snapshot lastStats = null;
 	//
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
@@ -183,14 +162,13 @@ implements LoadClient<T> {
 		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
 		//
 		if(runTimeConfig.getFlagServeIfNotLoadServer()) {
-			final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
-				runTimeConfig.getRemotePortExport()
+			ioStats = new AggregatedRemoteIOStats<>(
+				getName(), runTimeConfig.getRemotePortExport(), remoteLoadMap
 			);
-			metricsReporter = JmxReporter.forRegistry(metrics)
-				.registerWith(mBeanServer)
-				.build();
 		} else {
-			metricsReporter = null;
+			ioStats = new AggregatedRemoteIOStats<>(
+				getName(), 0, remoteLoadMap
+			);
 		}
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
@@ -215,166 +193,13 @@ implements LoadClient<T> {
 			}
 		}
 		////////////////////////////////////////////////////////////////////////////////////////////
-		metricSuccCount = registerJmxGaugeSum(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_COUNT
-		);
-		metricTPMean = registerJmxGaugeSumDouble(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_MEAN
-		);
-		metricTPLast = registerJmxGaugeSumDouble(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_1MIN
-		);
-		metricByteCount = registerJmxGaugeSum(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_COUNT
-		);
-		metricBWMean = registerJmxGaugeSumDouble(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_RATE_MEAN
-		);
-		metricBWLast = registerJmxGaugeSumDouble(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_RATE_1MIN
-		);
-		////////////////////////////////////////////////////////////////////////////////////////////
-		taskGetCountSubm = new CachedGaugePeriodicTask<>(
-			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_SUBM, ATTR_COUNT)
-		);
-		metricFetchTasks.add(taskGetCountSubm);
-		taskGetCountRej = new CachedGaugePeriodicTask<>(
-			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_REJ, ATTR_COUNT)
-		);
-		metricFetchTasks.add(taskGetCountRej);
-		taskGetCountSucc = new CachedGaugePeriodicTask<>(metricSuccCount);
-		metricFetchTasks.add(taskGetCountSucc);
-		taskGetCountFail = new CachedGaugePeriodicTask<>(
-			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_FAIL, ATTR_COUNT)
-		);
-		metricFetchTasks.add(taskGetCountFail);
-		taskGetCountBytes = new CachedGaugePeriodicTask<>(metricByteCount);
-		metricFetchTasks.add(taskGetCountBytes);
-		taskGetLatencyMin = new CachedGaugePeriodicTask<>(
-			registerJmxGaugeMinLong(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MIN
-			)
-		);
-		metricFetchTasks.add(taskGetLatencyMin);
-		taskGetDurationMin = new CachedGaugePeriodicTask<>(
-			registerJmxGaugeMinLong(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MIN
-			)
-		);
-		metricFetchTasks.add(taskGetDurationMin);
-		taskGetLatencyMax = new CachedGaugePeriodicTask<>(
-			registerJmxGaugeMaxLong(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MAX
-			)
-		);
-		metricFetchTasks.add(taskGetLatencyMax);
-		taskGetDurationMax = new CachedGaugePeriodicTask<>(
-			registerJmxGaugeMaxLong(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MAX
-			)
-		);
-		metricFetchTasks.add(taskGetDurationMax);
-		taskGetTPMean = new CachedGaugePeriodicTask<>(metricTPMean);
-		metricFetchTasks.add(taskGetTPMean);
-		taskGetTPLast = new CachedGaugePeriodicTask<>(metricTPLast);
-		metricFetchTasks.add(taskGetTPLast);
-		taskGetBWMean = new CachedGaugePeriodicTask<>(metricBWMean);
-		metricFetchTasks.add(taskGetBWMean);
-		taskGetBWLast = new CachedGaugePeriodicTask<>(metricBWLast);
-		metricFetchTasks.add(taskGetBWLast);
-		//
-		taskGetDurationStdDev = new CachedGaugePeriodicTask<>(
-			registerJmxGaugeAvgDouble(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MED
-			)
-		);
-		metricFetchTasks.add(taskGetDurationStdDev);
-		taskGetDurationAvg = new CachedGaugePeriodicTask<>(
-			registerJmxGaugeAvgDouble(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_AVG
-			)
-		);
-		metricFetchTasks.add(taskGetDurationAvg);
-		//
-		taskGetLatencyStdDev = new CachedGaugePeriodicTask<>(
-			registerJmxGaugeAvgDouble(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MED
-			)
-		);
-		metricFetchTasks.add(taskGetLatencyStdDev);
-		taskGetLatencyAvg = new CachedGaugePeriodicTask<>(
-			registerJmxGaugeAvgDouble(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_AVG
-			)
-		);
-		metricFetchTasks.add(taskGetLatencyAvg);
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			loadSvcAddrs.length + metricFetchTasks.size() + 3,
+			loadSvcAddrs.length + 3,
 			new GroupThreadFactory(String.format("%s-aggregator", name), true)
 		);
 		//
 		LoadCloseHook.add(this);
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	private CachedGauge<Long> registerJmxGaugeSum(
-		final String domain, final String mBeanName, final String attrName
-	) {
-		return metrics.register(
-			MetricRegistry.name(name, mBeanName + "." + attrName),
-			new SumLong(
-				name, domain, mBeanName, attrName, mBeanSrvConnMap,
-				clock, metricsPeriodSec, TimeUnit.SECONDS
-			)
-		);
-	}
-	//
-	private CachedGauge<Long> registerJmxGaugeMinLong(
-		final String domain, final String mBeanName, final String attrName
-	) {
-		return metrics.register(
-			MetricRegistry.name(name, mBeanName + "." + attrName),
-			new MinLong(
-				name, domain, mBeanName, attrName, mBeanSrvConnMap,
-				clock, metricsPeriodSec, TimeUnit.SECONDS
-			)
-		);
-	}
-	//
-	private CachedGauge<Long> registerJmxGaugeMaxLong(
-		final String domain, final String mBeanName, final String attrName
-	) {
-		return metrics.register(
-			MetricRegistry.name(name, mBeanName+"."+attrName),
-			new MaxLong(
-				name, domain, mBeanName, attrName, mBeanSrvConnMap,
-				clock, metricsPeriodSec, TimeUnit.SECONDS
-			)
-		);
-	}
-	//
-	private CachedGauge<Double> registerJmxGaugeSumDouble(
-		final String domain, final String mBeanName, final String attrName
-	) {
-		return metrics.register(
-			MetricRegistry.name(name, mBeanName+"."+attrName),
-			new SumDouble(
-				name, domain, mBeanName, attrName, mBeanSrvConnMap,
-				clock, metricsPeriodSec, TimeUnit.SECONDS
-			)
-		);
-	}
-	//
-	private CachedGauge<Double> registerJmxGaugeAvgDouble(
-		final String domain, final String mBeanName, final String attrName
-	) {
-		return metrics.register(
-			MetricRegistry.name(name, mBeanName + "." + attrName),
-			new AvgDouble(
-				name, domain, mBeanName, attrName, mBeanSrvConnMap,
-				clock, metricsPeriodSec, TimeUnit.SECONDS
-			)
-		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -428,73 +253,18 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final void logMetrics(final Marker logMarker) {
-		try {
-			final long
-				countSucc = taskGetCountSucc.getLastResult(),
-				countFail = taskGetCountFail.getLastResult(),
-				avgDur = taskGetDurationAvg.getLastResult().intValue(),
-				minDur = taskGetDurationMin.getLastResult(),
-				stdDevDur = taskGetDurationStdDev.getLastResult().intValue(),
-				maxDur = taskGetDurationMax.getLastResult(),
-				avgLat = taskGetLatencyAvg.getLastResult().intValue(),
-				minLat = taskGetLatencyMin.getLastResult(),
-				stdDevLat = taskGetLatencyStdDev.getLastResult().intValue(),
-				maxLat = taskGetLatencyMax.getLastResult();
-			final String msg;
-			if(Markers.PERF_SUM.equals(logMarker)) {
-				msg = "\"" + name + "\" summary: " + String.format(
-					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
-					//
-					countSucc,
-					countFail == 0 ?
-						Long.toString(countFail) :
-						(float) countSucc / countFail > 100 ?
-							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
-							String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
-					//
-					avgDur, minDur == Long.MAX_VALUE ? 0 : minDur,
-					stdDevDur, maxDur == Long.MIN_VALUE ? 0 : maxDur,
-					avgLat, minLat == Long.MAX_VALUE ? 0 : minLat,
-					stdDevLat, maxLat == Long.MIN_VALUE ? 0 : maxLat,
-					//
-					taskGetTPMean.getLastResult(), taskGetTPLast.getLastResult(),
-					taskGetBWMean.getLastResult() / MIB, taskGetBWLast.getLastResult() / MIB
-				);
-			} else {
-				msg = String.format(
-					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
-					//
-					countSucc,
-					countFail == 0 ?
-						Long.toString(countFail) :
-						(float) countSucc / countFail > 100 ?
-							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
-							String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
-					//
-					avgDur, minDur == Long.MAX_VALUE ? 0 : minDur,
-					stdDevDur, maxDur == Long.MIN_VALUE ? 0 : maxDur,
-					avgLat, minLat == Long.MAX_VALUE ? 0 : minLat,
-					stdDevLat, maxLat == Long.MIN_VALUE ? 0 : maxLat,
-					//
-					taskGetTPMean.getLastResult(), taskGetTPLast.getLastResult(),
-					taskGetBWMean.getLastResult() / MIB, taskGetBWLast.getLastResult() / MIB
-				);
-			}
-			LOG.info(logMarker, msg);
-		} catch(final NullPointerException e) {
-			if(isTerminating() || isTerminated()) {
-				LogUtil.exception(LOG, Level.TRACE, e, "Terminated already");
-			} else {
-				LogUtil.exception(LOG, Level.TRACE, e, "Unexpected failure");
-			}
-		}/* catch(final TimeoutException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "Distributed metrics aggregation timeout");
-		}*/
+		LOG.info(
+			logMarker,
+			Markers.PERF_SUM.equals(logMarker) ?
+				"\"" +getName() + "\" summary: " + lastStats :
+				lastStats
+		);
 	}
 	//
 	private void schedulePeriodicMgmtTasks() {
 		LoadSvc<T> nextLoadSvc;
-		final int periodMilliSec = metricsPeriodSec > 0 ? 1000 * metricsPeriodSec : 1000;
+		final long periodMilliSec = metricsPeriodSec > 0 ?
+			TimeUnit.SECONDS.toMillis(metricsPeriodSec) : TimeUnit.SECONDS.toMillis(1);
 		//
 		for(final String loadSvcAddr : loadSvcAddrs) {
 			nextLoadSvc = remoteLoadMap.get(loadSvcAddr);
@@ -507,25 +277,16 @@ implements LoadClient<T> {
 			);
 		}
 		//
-		for(final PeriodicTask metricTask : metricFetchTasks) {
-			mgmtConnExecutor.scheduleAtFixedRate(
-				metricTask, 0, periodMilliSec, TimeUnit.MILLISECONDS
-			);
-		}
-		//
 		mgmtConnExecutor.scheduleAtFixedRate(
 			new Runnable() {
 				@Override
 				public final void run() {
 					postProcessDataItems();
 				}
-			}, 123, periodMilliSec, TimeUnit.MILLISECONDS
+			}, 0, periodMilliSec, TimeUnit.MILLISECONDS
 		);
 		mgmtConnExecutor.scheduleAtFixedRate(
-			new InterruptClientOnMaxCountTask(
-				this, maxCount,
-				new PeriodicTask[] {taskGetCountSucc, taskGetCountFail, taskGetCountRej}
-			), 456, 1000, TimeUnit.MILLISECONDS
+			new InterruptClientOnMaxCountTask(this, maxCount, ioStats), 0, 1, TimeUnit.SECONDS
 		);
 		//
 		if(metricsPeriodSec > 0) {
@@ -577,9 +338,6 @@ implements LoadClient<T> {
 			}
 			//
 			schedulePeriodicMgmtTasks();
-			if(metricsReporter != null) {
-				metricsReporter.start();
-			}
 			prestartAllCoreThreads();
 			//
 			LOG.debug(Markers.MSG, "{}: started", name);
@@ -626,7 +384,6 @@ implements LoadClient<T> {
 			Markers.MSG, "{}: dropped {} remote tasks",
 			getName(), shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
 		);
-		loadLastDurationAndLatencyValues();
 		forceFetchAndAggregation();
 	}
 	//
@@ -707,15 +464,14 @@ implements LoadClient<T> {
 	}
 	//
 	private void forceFetchAndAggregation() {
+		lastStats = ioStats.getSnapshot();
+		//
 		final ExecutorService forcedAggregator = Executors.newFixedThreadPool(
 			10, new GroupThreadFactory("forcedAggregator")
 		);
 		//
 		for(final PeriodicTask<Collection<T>> frameFetchTask : fetchItemsBuffTasks) {
 			forcedAggregator.submit(frameFetchTask);
-		}
-		for(final PeriodicTask metricFetchTask : metricFetchTasks) {
-			forcedAggregator.submit(metricFetchTask);
 		}
 		forcedAggregator.shutdown();
 		//
@@ -746,11 +502,15 @@ implements LoadClient<T> {
 		stateBuilder
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(runTimeConfig)
-			.setStatsSnapshot(ioStats.getSnapshot())
-			.setLoadElapsedTimeValue(System.nanoTime() - tsStart.get())
-			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS);
+			.setStatsSnapshot(ioStats.getSnapshot());
         //
 		return stateBuilder.build();
+	}
+	//
+	@Override
+	public IOStats.Snapshot getStatsSnapshot()
+	throws RemoteException {
+		return lastStats == null ? (lastStats = ioStats.getSnapshot()) : lastStats;
 	}
 	//
 	@Override
@@ -761,9 +521,6 @@ implements LoadClient<T> {
 			if(!remoteLoadMap.isEmpty()) {
 				interrupt();
 				logMetrics(Markers.PERF_SUM);
-				if(metricsReporter != null) {
-					metricsReporter.close();
-				}
 				//
 				LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
 				LoadSvc<T> nextLoadSvc;
@@ -815,18 +572,6 @@ implements LoadClient<T> {
 			} else {
 				LOG.debug(Markers.MSG, "{}: closed already", getName());
 			}
-		}
-	}
-	//
-	private void loadLastDurationAndLatencyValues() {
-		try {
-			for(final LoadSvc<T> loadSvc : remoteLoadMap.values()) {
-				final LoadState nextLoadSvcState = loadSvc.getLoadState();
-				durationValues = nextLoadSvcState.getDurationValues();
-				latencyValues = nextLoadSvcState.getLatencyValues();
-			}
-		} catch (final RemoteException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Unexpected failure");
 		}
 	}
 	//

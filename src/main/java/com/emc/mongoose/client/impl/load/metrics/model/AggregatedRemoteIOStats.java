@@ -1,119 +1,236 @@
 package com.emc.mongoose.client.impl.load.metrics.model;
 //
-import com.codahale.metrics.Clock;
 import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.UniformReservoir;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import com.emc.mongoose.common.concurrent.ThreadUtil;
-//
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.ServiceUtils;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+//
+import com.emc.mongoose.core.api.data.DataItem;
 //
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
+import com.emc.mongoose.core.impl.load.model.metrics.IOStatsBase;
 //
-import com.emc.mongoose.core.impl.load.model.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import javax.management.MBeanServer;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 14.09.15.
  */
-public class AggregatedRemoteIOStats
-implements IOStats {
+public class AggregatedRemoteIOStats<T extends DataItem>
+extends IOStatsBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final String name;
-	protected final MetricRegistry metrics = new MetricRegistry();
-	protected final MBeanServer mBeanServer;
-	protected final JmxReporter jmxReporter;
-	private final int periodSec;
-	private final Map<String, LoadSvc> loadSvcMap;
+	private final Map<String, LoadSvc<T>> loadSvcMap;
 	private final Map<String, Snapshot> loadStatsSnapshotMap;
-	private final ScheduledExecutorService statsLoader;
+	private final ExecutorService statsLoader;
 	//
-	private Gauge<>
-	private Histogram reqDuration, respLatency;
+	private long
+		countSucc = 0,
+		countFail = 0,
+		countByte = 0,
+		sumDurMicroSec = 0,
+		maxElapsedTimeMicroSec = 0,
+		durationValues[],
+		latencyValues[];
+	private double
+		succRateMean = 0,
+		succRateLast = 0,
+		failRateMean = 0,
+		failRateLast = 0,
+		byteRateMean = 0,
+		byteRateLast = 0;
+	private final Lock lock = new ReentrantLock();
 	//
 	public AggregatedRemoteIOStats(
-		final String name, final int serveJmxPort, final Map<String, LoadSvc> loadSvcMap,
-		final int periodSec
+		final String name, final int serveJmxPort, final Map<String, LoadSvc<T>> loadSvcMap
 	) {
-		this.name = name;
-		this.periodSec = periodSec;
+		super(name, serveJmxPort);
 		this.loadSvcMap = loadSvcMap;
 		this.loadStatsSnapshotMap = new HashMap<>(loadSvcMap.size());
-		statsLoader = Executors.newScheduledThreadPool(
-			Math.max(loadSvcMap.size(), ThreadUtil.getWorkerCount()),
-			new GroupThreadFactory("statsLoader<" + name + ">", true)
+		statsLoader = Executors.newFixedThreadPool(
+			loadSvcMap.size(), new GroupThreadFactory("statsLoader<" + name + ">", true)
 		);
-		if(serveJmxPort > 0) {
-			mBeanServer = ServiceUtils.getMBeanServer(serveJmxPort);
-			jmxReporter = JmxReporter.forRegistry(metrics).registerWith(mBeanServer).build();
-			jmxReporter.start();
-		} else {
-			mBeanServer = null;
-			jmxReporter = null;
-		}
+		//
+		metrics.register(
+			MetricRegistry.name(name, METRIC_NAME_SUCC, METRIC_NAME_COUNT),
+			new Gauge<Long>() {
+				@Override
+				public final Long getValue() {
+					lock.lock();
+					try {
+						return countSucc;
+					} finally {
+						lock.unlock();
+					}
+				}
+			}
+		);
+		metrics.register(
+			MetricRegistry.name(name, METRIC_NAME_SUCC, METRIC_NAME_RATE, METRIC_NAME_MEAN),
+			new Gauge<Double>() {
+				@Override
+				public final Double getValue() {
+					lock.lock();
+					try {
+						return succRateMean;
+					} finally {
+						lock.unlock();
+					}
+				}
+			}
+		);
+		metrics.register(
+			MetricRegistry.name(name, METRIC_NAME_SUCC, METRIC_NAME_RATE, METRIC_NAME_LAST),
+			new Gauge<Double>() {
+				@Override
+				public final Double getValue() {
+					lock.lock();
+					try {
+						return succRateLast;
+					} finally {
+						lock.unlock();
+					}
+				}
+			}
+		);
+		metrics.register(
+			MetricRegistry.name(name, METRIC_NAME_FAIL, METRIC_NAME_COUNT),
+			new Gauge<Long>() {
+				@Override
+				public final Long getValue() {
+					lock.lock();
+					try {
+						return countFail;
+					} finally {
+						lock.unlock();
+					}
+				}
+			}
+		);
+		metrics.register(
+			MetricRegistry.name(name, METRIC_NAME_FAIL, METRIC_NAME_RATE, METRIC_NAME_MEAN),
+			new Gauge<Double>() {
+				@Override
+				public final Double getValue() {
+					lock.lock();
+					try {
+						return failRateMean;
+					} finally {
+						lock.unlock();
+					}
+				}
+			}
+		);
+		metrics.register(
+			MetricRegistry.name(name, METRIC_NAME_FAIL, METRIC_NAME_RATE, METRIC_NAME_LAST),
+			new Gauge<Double>() {
+				@Override
+				public final Double getValue() {
+					lock.lock();
+					try {
+						return failRateLast;
+					} finally {
+						lock.unlock();
+					}
+				}
+			}
+		);
+		metrics.register(
+			MetricRegistry.name(name, METRIC_NAME_BYTE, METRIC_NAME_COUNT),
+			new Gauge<Long>() {
+				@Override
+				public final Long getValue() {
+					lock.lock();
+					try {
+						return countByte;
+					} finally {
+						lock.unlock();
+					}
+				}
+			}
+		);
+		metrics.register(
+			MetricRegistry.name(name, METRIC_NAME_BYTE, METRIC_NAME_RATE, METRIC_NAME_MEAN),
+			new Gauge<Double>() {
+				@Override
+				public final Double getValue() {
+					lock.lock();
+					try {
+						return byteRateMean;
+					} finally {
+						lock.unlock();
+					}
+				}
+			}
+		);
+		metrics.register(
+			MetricRegistry.name(name, METRIC_NAME_BYTE, METRIC_NAME_RATE, METRIC_NAME_LAST),
+			new Gauge<Double>() {
+				@Override
+				public final Double getValue() {
+					lock.lock();
+					try {
+						return byteRateLast;
+					} finally {
+						lock.unlock();
+					}
+				}
+			}
+		);
 	}
 	//
 	@Override
 	public final void start() {
-		// init load exec time dependent metrics
-		throughPutSucc = metrics.register(
-			MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_TP),
-			new Meter(clock)
-		);
-		throughPutFail = metrics.register(
-			MetricRegistry.name(name, METRIC_NAME_FAIL),
-			new Meter(clock)
-		);
-		reqBytes = metrics.register(
-			MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW),
-			new Meter(clock)
-		);
-		respLatency = metrics.register(
-			MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT),
-			new Histogram(new UniformReservoir())
-		);
-		reqDuration = metrics.register(
-			MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR),
-			new Histogram(new UniformReservoir())
-		);
 		for(final String addr : loadSvcMap.keySet()) {
-			statsLoader.scheduleAtFixedRate(
+			statsLoader.submit(
 				new Runnable() {
 					@Override
 					public void run() {
 						final LoadSvc loadSvc = loadSvcMap.get(addr);
-						final Snapshot loadStatsSnapshot = loadSvc.getStatsSnapshot();
-						if(loadStatsSnapshot != null) {
-							loadStatsSnapshotMap.put(addr, loadStatsSnapshot);
-						} else {
-							LOG.warn(
-								Markers.ERR,
-								"Failed to load the stats snapshot from the load server @ {}", addr
-							);
+						final Thread currThread = Thread.currentThread();
+						currThread.setName(currThread.getName() + "@" + addr);
+						Snapshot loadSvcStatsSnapshot;
+						while(!currThread.isInterrupted()) {
+							try {
+								loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
+								if(loadSvcStatsSnapshot != null) {
+									loadStatsSnapshotMap.put(addr, loadSvcStatsSnapshot);
+								} else {
+									LOG.warn(
+										Markers.ERR,
+										"Failed to load the stats snapshot from the load server @ {}",
+										addr
+									);
+								}
+							} catch(final RemoteException e) {
+								LogUtil.exception(
+									LOG, Level.WARN, e,
+									"Failed to fetch the metrics snapshot from {}", addr
+								);
+							}
+							LockSupport.parkNanos(1);
 						}
 					}
-				}, 0, periodSec, TimeUnit.SECONDS
+				}
 			);
 		}
+		statsLoader.shutdown();
+		super.start();
 	}
 	//
 	@Override
@@ -139,62 +256,71 @@ implements IOStats {
 	@Override
 	public final Snapshot getSnapshot() {
 		//
-		long
-			countSucc = 0,
-			countFail = 0,
-			countByte = 0,
-			sumDur = 0,
-			durationValues[],
-			latencyValues[];
-		double
-			succRateMean = 0,
-			succRateLast = 0,
-			failRateMean = 0,
-			failRateLast = 0,
-			byteRateMean = 0,
+		lock.lock();
+		try {
+			countSucc = 0;
+			countFail = 0;
+			countByte = 0;
+			sumDurMicroSec = 0;
+			maxElapsedTimeMicroSec = 0;
+			succRateMean = 0;
+			succRateLast = 0;
+			failRateMean = 0;
+			failRateLast = 0;
+			byteRateMean = 0;
 			byteRateLast = 0;
-		//
-		Snapshot loadStatsSnapshot;
-		for(final String addr : loadStatsSnapshotMap.keySet()) {
-			loadStatsSnapshot = loadStatsSnapshotMap.get(addr);
-			if(loadStatsSnapshot != null) {
-				countSucc += loadStatsSnapshot.getSuccCount();
-				succRateMean += loadStatsSnapshot.getSuccRateMean();
-				succRateLast += loadStatsSnapshot.getSuccRateLast();
-				countFail += loadStatsSnapshot.getFailCount();
-				sumDur += loadStatsSnapshot.getDurationSum();
-				durationValues = loadStatsSnapshot.getDurationValues();
-				if(durationValues != null) {
-					for(final long duration : durationValues) {
-						reqDuration.update(duration);
+			//
+			Snapshot loadStatsSnapshot;
+			for(final String addr : loadStatsSnapshotMap.keySet()) {
+				loadStatsSnapshot = loadStatsSnapshotMap.get(addr);
+				if(loadStatsSnapshot != null) {
+					countSucc += loadStatsSnapshot.getSuccCount();
+					succRateMean += loadStatsSnapshot.getSuccRateMean();
+					succRateLast += loadStatsSnapshot.getSuccRate();
+					countFail += loadStatsSnapshot.getFailCount();
+					sumDurMicroSec += loadStatsSnapshot.getDurationSum();
+					if(loadStatsSnapshot.getElapsedTime() > maxElapsedTimeMicroSec) {
+						maxElapsedTimeMicroSec = loadStatsSnapshot.getElapsedTime();
+					}
+					durationValues = loadStatsSnapshot.getDurationValues();
+					if(durationValues != null) {
+						for(final long duration : durationValues) {
+							reqDuration.update(duration);
+						}
+					} else {
+						LOG.warn(
+							Markers.ERR, "No duration values snapshot is available for {}", addr
+						);
+					}
+					latencyValues = loadStatsSnapshot.getLatencyValues();
+					if(latencyValues != null) {
+						for(final long latency : latencyValues) {
+							respLatency.update(latency);
+						}
+					} else {
+						LOG.warn(
+							Markers.ERR, "No latency values snapshot is available for {}", addr
+						);
 					}
 				} else {
-					LOG.warn(Markers.ERR, "No duration values snapshot is available for {}", addr);
+					LOG.warn(Markers.ERR, "No load stats snapshot is available for {}", addr);
 				}
-				latencyValues = loadStatsSnapshot.getLatencyValues();
-				if(latencyValues != null) {
-					for(final long latency : latencyValues) {
-						respLatency.update(latency);
-					}
-				} else {
-					LOG.warn(Markers.ERR, "No latency values snapshot is available for {}", addr);
-				}
-			} else {
-				LOG.warn(Markers.ERR, "No load stats snapshot is available for {}", addr);
 			}
+		} finally {
+			lock.unlock();
 		}
 		//
 		return new BasicIOStats.BasicSnapshot(
-			countSucc, succRateMean, succRateLast,
-			countFail, failRateMean, failRateLast,
-			countByte, byteRateMean, byteRateLast,
-			reqDuration.getSnapshot(), respLatency.getSnapshot(), sumDur
+			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast,
+			sumDurMicroSec, prevElapsedTimeMicroSec + maxElapsedTimeMicroSec,
+			reqDuration.getSnapshot(), respLatency.getSnapshot()
 		);
 	}
 	//
 	@Override
 	public final void close()
 	throws IOException {
+		super.close();
 		statsLoader.shutdownNow();
 	}
 }

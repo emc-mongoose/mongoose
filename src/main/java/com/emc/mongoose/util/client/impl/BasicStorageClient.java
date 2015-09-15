@@ -69,7 +69,7 @@ implements StorageClient<T> {
 		} finally {
 			loadExecutor.interrupt();
 		}
-		return loadExecutor.getLoadState().getCountSucc();
+		return loadExecutor.getLoadState().getStatsSnapshot().getSuccCount();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

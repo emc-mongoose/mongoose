@@ -58,7 +58,7 @@ extends LoadExecutorBase<T> {
 	@Override
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
-		if(rateLimit > 0 && lastStats.getSuccRateLast() > rateLimit) {
+		if(rateLimit > 0 && lastStats.getSuccRate() > rateLimit) {
 			final int microDelay = (int) (
 				tgtDurMicroSec - lastStats.getDurationSum() / lastStats.getSuccRateMean()
 			);

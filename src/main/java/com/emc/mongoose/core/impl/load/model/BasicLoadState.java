@@ -37,9 +37,7 @@ implements LoadState<T> {
 	private final int loadNumber;
 	private final RunTimeConfig runTimeConfig;
 	private final IOStats.Snapshot ioStatsSnapshot;
-	private final long timeValue;
 	private final T lastDataItem;
-	private final TimeUnit timeUnit;
 	//
 	@Override
 	public int getLoadNumber() {
@@ -62,29 +60,19 @@ implements LoadState<T> {
 	}
 	//
 	@Override
-	public TimeUnit getLoadElapsedTimeUnit() {
-		return timeUnit;
-	}
-	//
-	@Override
-	public long getLoadElapsedTimeValue() {
-		return timeValue;
-	}
-	//
-	@Override
 	public boolean isLoadFinished(final RunTimeConfig rtConfig) {
 		//  time limitations
-		final long loadTimeMillis = (rtConfig.getLoadLimitTimeUnit().
-			toMillis(rtConfig.getLoadLimitTimeValue())) > 0
-			? (rtConfig.getLoadLimitTimeUnit().
-			toMillis(rtConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
-		final long stateTimeMillis = getLoadElapsedTimeUnit().
-			toMillis(getLoadElapsedTimeValue());
+		final TimeUnit loadLimitTimeUnit = rtConfig.getLoadLimitTimeUnit();
+		final long loadLimitTimeValue = rtConfig.getLoadLimitTimeValue();
+		final long loadTimeMicroSec = loadLimitTimeValue > 0 ?
+			loadLimitTimeUnit.toMicros(loadLimitTimeValue) : Long.MAX_VALUE;
+		final long stateTimeMicroSec = ioStatsSnapshot.getElapsedTime();
 		//  count limitations
 		final long counterResults = ioStatsSnapshot.getSuccCount() + ioStatsSnapshot.getFailCount();
-		final long maxCount = rtConfig.getLoadLimitCount() > 0
-			? rtConfig.getLoadLimitCount() : Long.MAX_VALUE;
-		return (counterResults >= maxCount) || (stateTimeMillis >= loadTimeMillis);
+		final long loadLimitCount = rtConfig.getLoadLimitCount();
+		final long maxCount = loadLimitCount > 0 ?
+			rtConfig.getLoadLimitCount() : Long.MAX_VALUE;
+		return (counterResults >= maxCount) || (stateTimeMicroSec >= loadTimeMicroSec);
 	}
 	//
 	public static class Builder<T extends DataItem, U extends BasicLoadState<T>>
@@ -94,8 +82,6 @@ implements LoadState<T> {
 		private RunTimeConfig runTimeConfig;
 		private IOStats.Snapshot ioStatsSnapshot;
 		private T lastDataItem;
-		private long timeValue;
-		private TimeUnit timeUnit;
 		//
 		@Override
 		public Builder<T, U> setLoadNumber(final int loadNumber) {
@@ -122,18 +108,6 @@ implements LoadState<T> {
 		}
 		//
 		@Override
-		public Builder<T, U> setLoadElapsedTimeValue(final long timeValue) {
-			this.timeValue = timeValue;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setLoadElapsedTimeUnit(final TimeUnit timeUnit) {
-			this.timeUnit = timeUnit;
-			return this;
-		}
-		//
-		@Override
 		@SuppressWarnings("unchecked")
 		public U build() {
 			return (U) new BasicLoadState<>((Builder<T, BasicLoadState<T>>) this);
@@ -145,8 +119,6 @@ implements LoadState<T> {
 		this.loadNumber = builder.loadNumber;
 		this.runTimeConfig = builder.runTimeConfig;
 		this.ioStatsSnapshot = builder.ioStatsSnapshot;
-		this.timeValue = builder.timeValue;
-		this.timeUnit = builder.timeUnit;
 		this.lastDataItem = builder.lastDataItem;
 	}
 	//
@@ -249,19 +221,18 @@ implements LoadState<T> {
 	public static boolean isScenarioFinished(final RunTimeConfig rtConfig) {
 		final Queue<LoadState> states = LoadCloseHook.LOAD_STATES.get(rtConfig.getRunId());
 		//
-		final long runTimeMillis = (rtConfig.getLoadLimitTimeUnit().
-			toMillis(rtConfig.getLoadLimitTimeValue())) > 0
-			? (rtConfig.getLoadLimitTimeUnit().
-			toMillis(rtConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
-		final long maxItemsCountPerLoad = (rtConfig.getLoadLimitCount()) > 0
-			? rtConfig.getLoadLimitCount() : Long.MAX_VALUE;
+		final TimeUnit loadLimitTimeUnit = rtConfig.getLoadLimitTimeUnit();
+		final long loadLimitTimeValue = rtConfig.getLoadLimitTimeValue();
+		final long timeLimitMicroSec = loadLimitTimeValue > 0 ?
+			loadLimitTimeUnit.toMicros(rtConfig.getLoadLimitTimeValue()) : Long.MAX_VALUE;
+		final long loadLimitCount = rtConfig.getLoadLimitCount() > 0 ?
+			rtConfig.getLoadLimitCount() : Long.MAX_VALUE;
 		//
-		for (final LoadState state : states) {
-			final long stateTimeMillis = state.getLoadElapsedTimeUnit()
-				.toMillis(state.getLoadElapsedTimeValue());
+		for(final LoadState state : states) {
 			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
+			final long stateTimeMicroSec = statsSnapshot.getElapsedTime();
 			final long stateItemsCount = statsSnapshot.getSuccCount() + statsSnapshot.getFailCount();
-			if((stateTimeMillis < runTimeMillis) && (stateItemsCount < maxItemsCountPerLoad)) {
+			if((stateTimeMicroSec < timeLimitMicroSec) && (stateItemsCount < loadLimitCount)) {
 				return false;
 			}
 		}

@@ -6,12 +6,12 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
 //
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
-import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 17.12.14.
  */
@@ -21,38 +21,35 @@ implements PeriodicTask<Long> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final LoadClient loadClient;
-	private final PeriodicTask<Long> getValueTasks[];
+	private final IOStats ioStats;
 	private final long maxCount;
-	private final AtomicLong processedCount = new AtomicLong(0);
 	//
 	public InterruptClientOnMaxCountTask(
-		final LoadClient loadClient, final long maxCount, final PeriodicTask<Long> getValueTasks[]
+		final LoadClient loadClient, final long maxCount, final IOStats ioStats
 	) {
 		this.loadClient = loadClient;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		this.getValueTasks = getValueTasks;
+		this.ioStats = ioStats;
 	}
 	//
 	@Override
 	public final void run() {
-		processedCount.set(0); // should be reset
-		for(final PeriodicTask<Long> nextCountTask : getValueTasks) {
-			if(nextCountTask.getLastResult() != null && maxCount <= processedCount.addAndGet(nextCountTask.getLastResult())) {
-				try {
-					loadClient.interrupt();
-					LOG.debug(
-						Markers.MSG, "Load client \"{}\" was interrupted due to count limit {}",
-						loadClient, maxCount
-					);
-				} catch(final RemoteException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to shutdown the load client");
-				}
+		if(maxCount >= getLastResult()) {
+			try {
+				loadClient.interrupt();
+				LOG.debug(
+					Markers.MSG, "Load client \"{}\" was interrupted due to count limit {}",
+					loadClient, maxCount
+				);
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to shutdown the load client");
 			}
 		}
 	}
 	//
 	@Override
 	public final Long getLastResult() {
-		return processedCount.get();
+		final IOStats.Snapshot snapshot = ioStats.getSnapshot();
+		return snapshot.getSuccCount() + snapshot.getFailCount();
 	}
 }

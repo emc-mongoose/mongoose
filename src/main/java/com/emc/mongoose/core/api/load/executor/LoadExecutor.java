@@ -50,7 +50,8 @@ extends Producer<T>, AsyncConsumer<T> {
 	LoadState<T> getLoadState()
 	throws RemoteException;
 	//
-	IOStats.Snapshot getStatsSnapshot();
+	IOStats.Snapshot getStatsSnapshot()
+	throws RemoteException;
 	//
 	void logMetrics(Marker marker)
 	throws RemoteException;
