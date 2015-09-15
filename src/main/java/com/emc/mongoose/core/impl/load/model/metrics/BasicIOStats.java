@@ -1,7 +1,5 @@
 package com.emc.mongoose.core.impl.load.model.metrics;
 //
-import com.codahale.metrics.MetricRegistry;
-//
 import com.emc.mongoose.common.log.Markers;
 //
 import org.apache.logging.log4j.LogManager;
@@ -33,13 +31,16 @@ extends IOStatsBase {
 	public void start() {
 		// init load exec time dependent metrics
 		throughPutSucc = metrics.register(
-			MetricRegistry.name(name, METRIC_NAME_SUCC), new CustomMeter(clock, updateIntervalSec)
+			CustomMetricRegistry.name(name, METRIC_NAME_SUCC),
+			new CustomMeter(clock, updateIntervalSec)
 		);
 		throughPutFail = metrics.register(
-			MetricRegistry.name(name, METRIC_NAME_FAIL), new CustomMeter(clock, updateIntervalSec)
+			CustomMetricRegistry.name(name, METRIC_NAME_FAIL),
+			new CustomMeter(clock, updateIntervalSec)
 		);
 		reqBytes = metrics.register(
-			MetricRegistry.name(name, METRIC_NAME_BYTE), new CustomMeter(clock, updateIntervalSec)
+			CustomMetricRegistry.name(name, METRIC_NAME_BYTE),
+			new CustomMeter(clock, updateIntervalSec)
 		);
 		//
 		super.start();

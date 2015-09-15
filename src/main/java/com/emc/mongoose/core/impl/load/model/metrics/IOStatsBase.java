@@ -2,13 +2,10 @@ package com.emc.mongoose.core.impl.load.model.metrics;
 //
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.UniformReservoir;
 //
 import com.codahale.metrics.UniformSnapshot;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
@@ -30,9 +27,9 @@ implements IOStats {
 	//
 	protected final String name;
 	protected final Clock clock = new ResumableUserTimeClock();
-	protected final MetricRegistry metrics = new MetricRegistry();
+	protected final CustomMetricRegistry metrics = new CustomMetricRegistry();
 	protected final MBeanServer mBeanServer;
-	protected final JmxReporter jmxReporter;
+	protected final CustomJmxReporter jmxReporter;
 	protected final Histogram reqDuration, respLatency;
 	protected volatile long tsStartMicroSec = -1, prevElapsedTimeMicroSec = 0;
 	//
@@ -40,17 +37,17 @@ implements IOStats {
 		this.name = name;
 		if(serveJmxPort > 0) {
 			mBeanServer = ServiceUtils.getMBeanServer(serveJmxPort);
-			jmxReporter = JmxReporter.forRegistry(metrics).registerWith(mBeanServer).build();
+			jmxReporter = CustomJmxReporter.forRegistry(metrics).registerWith(mBeanServer).build();
 		} else {
 			mBeanServer = null;
 			jmxReporter = null;
 		}
 		respLatency = metrics.register(
-			MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT),
+			CustomMetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT),
 			new Histogram(new UniformReservoir())
 		);
 		reqDuration = metrics.register(
-			MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR),
+			CustomMetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR),
 			new Histogram(new UniformReservoir())
 		);
 	}
