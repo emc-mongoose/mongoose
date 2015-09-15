@@ -6,10 +6,15 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.UniformReservoir;
 //
+import com.codahale.metrics.UniformSnapshot;
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+//
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
@@ -20,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class IOStatsBase
 implements IOStats {
 	//
+	private final static Logger LOG = LogManager.getLogger();
 	private final static double M = 1e6;
 	//
 	protected final String name;
@@ -70,7 +76,7 @@ implements IOStats {
 		}
 	}
 	//
-	public static class BasicSnapshot
+	protected static class BasicSnapshot
 	implements Snapshot {
 		//
 		private final long countSucc;
@@ -79,8 +85,10 @@ implements IOStats {
 		private final double failRateLast;
 		private final long countByte;
 		private final double byteRateLast;
-		private final com.codahale.metrics.Snapshot snapshotDur;
-		private final com.codahale.metrics.Snapshot snapshotLat;
+		private final long durValues[];
+		private transient com.codahale.metrics.Snapshot durSnapshot = null;
+		private final long latValues[];
+		private transient com.codahale.metrics.Snapshot latSnapshot = null;
 		private final long sumDur;
 		private final long elapsedTime;
 		//
@@ -88,9 +96,9 @@ implements IOStats {
 			final long countSucc, final double succRateLast,
 			final long countFail, final double failRate,
 			final long countByte, final double byteRate,
-			final long sumDur, final long elapsedTime,
-			final com.codahale.metrics.Snapshot snapshotDur,
-			final com.codahale.metrics.Snapshot snapshotLat
+			final long elapsedTime, final long sumDur,
+			final com.codahale.metrics.Snapshot durSnapshot,
+			final com.codahale.metrics.Snapshot latSnapshot
 		) {
 			this.countSucc = countSucc;
 			this.succRateLast = succRateLast;
@@ -100,8 +108,10 @@ implements IOStats {
 			this.byteRateLast = byteRate;
 			this.sumDur = sumDur;
 			this.elapsedTime = elapsedTime;
-			this.snapshotDur = snapshotDur;
-			this.snapshotLat = snapshotLat;
+			this.durSnapshot = durSnapshot;
+			this.durValues = durSnapshot.getValues();
+			this.latSnapshot = latSnapshot;
+			this.latValues = latSnapshot.getValues();
 		}
 		//
 		@Override
@@ -115,7 +125,7 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getSuccRate() {
+		public double getSuccRateLast() {
 			return succRateLast;
 		}
 		//
@@ -145,28 +155,40 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getByteRate() {
+		public double getByteRateLast() {
 			return byteRateLast;
 		}
 		//
 		@Override
 		public double getDurationMean() {
-			return snapshotDur.getMean();
+			if(durSnapshot == null) {
+				durSnapshot = new UniformSnapshot(durValues);
+			}
+			return durSnapshot.getMean();
 		}
 		//
 		@Override
 		public double getDurationMin() {
-			return snapshotDur.getMin();
+			if(durSnapshot == null) {
+				durSnapshot = new UniformSnapshot(durValues);
+			}
+			return durSnapshot.getMin();
 		}
 		//
 		@Override
 		public double getDurationStdDev() {
-			return snapshotDur.getStdDev();
+			if(durSnapshot == null) {
+				durSnapshot = new UniformSnapshot(durValues);
+			}
+			return durSnapshot.getStdDev();
 		}
 		//
 		@Override
 		public double getDurationMax() {
-			return snapshotDur.getMax();
+			if(durSnapshot == null) {
+				durSnapshot = new UniformSnapshot(durValues);
+			}
+			return durSnapshot.getMax();
 		}
 		//
 		@Override
@@ -176,32 +198,44 @@ implements IOStats {
 		//
 		@Override
 		public long[] getDurationValues() {
-			return snapshotDur.getValues();
+			return durValues;
 		}
 		//
 		@Override
 		public double getLatencyMean() {
-			return snapshotLat.getMean();
+			if(latSnapshot == null) {
+				latSnapshot = new UniformSnapshot(latValues);
+			}
+			return latSnapshot.getMean();
 		}
 		//
 		@Override
 		public double getLatencyMin() {
-			return snapshotLat.getMin();
+			if(latSnapshot == null) {
+				latSnapshot = new UniformSnapshot(latValues);
+			}
+			return latSnapshot.getMin();
 		}
 		//
 		@Override
 		public double getLatencyStdDev() {
-			return snapshotLat.getStdDev();
+			if(latSnapshot == null) {
+				latSnapshot = new UniformSnapshot(latValues);
+			}
+			return latSnapshot.getStdDev();
 		}
 		//
 		@Override
 		public double getLatencyMax() {
-			return snapshotLat.getMax();
+			if(latSnapshot == null) {
+				latSnapshot = new UniformSnapshot(latValues);
+			}
+			return latSnapshot.getMax();
 		}
 		//
 		@Override
 		public long[] getLatencyValues() {
-			return snapshotLat.getValues();
+			return latValues;
 		}
 		//
 		@Override
@@ -211,24 +245,30 @@ implements IOStats {
 		//
 		@Override
 		public String toString() {
+			if(durSnapshot == null) {
+				durSnapshot = new UniformSnapshot(durValues);
+			}
+			if(latSnapshot == null) {
+				latSnapshot = new UniformSnapshot(latValues);
+			}
 			return String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				countSucc,
 				countFail == 0 ?
 					Long.toString(countFail) :
-					(float) countSucc / countFail > 100 ?
+					(float) countSucc / countFail > 1000 ?
 						String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
 						String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 				//
-				(int) snapshotDur.getMean(),
-				(int) snapshotDur.getMin(),
-				(int) snapshotDur.getStdDev(),
-				(int) snapshotDur.getMax(),
+				(int) durSnapshot.getMean(),
+				(int) durSnapshot.getMin(),
+				(int) durSnapshot.getStdDev(),
+				(int) durSnapshot.getMax(),
 				//
-				(int) snapshotLat.getMean(),
-				(int) snapshotLat.getMin(),
-				(int) snapshotLat.getStdDev(),
-				(int) snapshotLat.getMax(),
+				(int) latSnapshot.getMean(),
+				(int) latSnapshot.getMin(),
+				(int) latSnapshot.getStdDev(),
+				(int) latSnapshot.getMax(),
 				//
 				getSuccRateMean(), succRateLast, getByteRateMean() / MIB, byteRateLast / MIB
 			);

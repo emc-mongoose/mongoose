@@ -115,7 +115,6 @@ implements LoadExecutor<T> {
 				while(!isClosed.get() && !isInterrupted()) {
 					//
 					LockSupport.parkNanos(1);
-					//
 					if(isDoneAllSubm() || isDoneMaxCount()) {
 						lock.lock();
 						try {
@@ -130,11 +129,10 @@ implements LoadExecutor<T> {
 					}
 					//
 					LockSupport.parkNanos(1);
-					//
 					lastStats = ioStats.getSnapshot();
 					if(
 						lastStats.getFailCount() > 1000000 &&
-						lastStats.getFailRateLast() < lastStats.getSuccRate()
+						lastStats.getFailRateLast() < lastStats.getSuccRateLast()
 					) {
 						LOG.fatal(
 							Markers.ERR,
@@ -152,7 +150,6 @@ implements LoadExecutor<T> {
 					}
 					//
 					LockSupport.parkNanos(1);
-					//
 				}
 			}
 		};
@@ -317,12 +314,10 @@ implements LoadExecutor<T> {
 		);
 	}
 	//
-	private final AtomicLong tsStart = new AtomicLong(-1);
-	//
 	@Override
 	@SuppressWarnings("unchecked")
 	public void start() {
-		if(tsStart.compareAndSet(-1, System.nanoTime())) {
+		if(isStarted.compareAndSet(false, true)) {
 			LOG.debug(Markers.MSG, "Starting {}", getName());
 			ioStats.start();
 			//
@@ -352,7 +347,7 @@ implements LoadExecutor<T> {
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
 			//
-			super.start();
+			super.startActually();
 			//
 			itemsFileLock.lock();
 			try {
@@ -425,13 +420,12 @@ implements LoadExecutor<T> {
 			}
 			//
 			try {
-				final long tsStartNanoSec = tsStart.get();
-				if(tsStartNanoSec > 0) { // if was executing
+				if(isStarted.get()) { // if was executing
 					logMetrics(Markers.PERF_SUM); // provide summary metrics
 					// calculate the efficiency and report
 					final float
-						loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
-						eff = lastStats.getDurationSum() / (loadDurMicroSec * totalConnCount);
+						loadDurMicroSec = lastStats.getElapsedTime(),
+						eff = lastStats.getDurationSum() / loadDurMicroSec / totalConnCount;
 					LOG.debug(
 						Markers.MSG,
 						String.format(
@@ -738,8 +732,8 @@ implements LoadExecutor<T> {
 				ioStats.close();
 				LOG.debug(Markers.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);
-				if (loadedPrevState != null) {
-					if (RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+				if(loadedPrevState != null) {
+					if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
 						RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
 					}
 				}

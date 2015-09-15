@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.api.load.model.metrics;
 //
 import java.io.Closeable;
+import java.io.Externalizable;
 import java.io.Serializable;
 /**
  Created by kurila on 14.09.15.
@@ -54,7 +55,7 @@ extends Closeable {
 		//
 		long getSuccCount();
 		double getSuccRateMean();
-		double getSuccRate();
+		double getSuccRateLast();
 		//
 		long getFailCount();
 		double getFailRateMean();
@@ -62,7 +63,7 @@ extends Closeable {
 		//
 		long getByteCount();
 		double getByteRateMean();
-		double getByteRate();
+		double getByteRateLast();
 		//
 		long getElapsedTime();
 		long getDurationSum();

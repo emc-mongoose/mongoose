@@ -276,7 +276,7 @@ extends IOStatsBase {
 				if(loadStatsSnapshot != null) {
 					countSucc += loadStatsSnapshot.getSuccCount();
 					succRateMean += loadStatsSnapshot.getSuccRateMean();
-					succRateLast += loadStatsSnapshot.getSuccRate();
+					succRateLast += loadStatsSnapshot.getSuccRateLast();
 					countFail += loadStatsSnapshot.getFailCount();
 					sumDurMicroSec += loadStatsSnapshot.getDurationSum();
 					if(loadStatsSnapshot.getElapsedTime() > maxElapsedTimeMicroSec) {

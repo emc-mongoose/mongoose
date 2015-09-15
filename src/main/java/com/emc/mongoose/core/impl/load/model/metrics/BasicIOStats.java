@@ -2,6 +2,11 @@ package com.emc.mongoose.core.impl.load.model.metrics;
 //
 import com.codahale.metrics.MetricRegistry;
 //
+import com.emc.mongoose.common.log.Markers;
+//
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+//
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 /**
@@ -9,6 +14,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class BasicIOStats
 extends IOStatsBase {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final int updateIntervalSec;
 	protected final AtomicLong reqDurationSum = new AtomicLong(0);

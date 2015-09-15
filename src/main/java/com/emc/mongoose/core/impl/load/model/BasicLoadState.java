@@ -218,9 +218,9 @@ implements LoadState<T> {
 		return null;
 	}
 	//
-	public static boolean isScenarioFinished(final RunTimeConfig rtConfig) {
-		final Queue<LoadState> states = LoadCloseHook.LOAD_STATES.get(rtConfig.getRunId());
-		//
+	public static boolean isRunFinished(
+		final RunTimeConfig rtConfig, final List<LoadState> states
+	) {
 		final TimeUnit loadLimitTimeUnit = rtConfig.getLoadLimitTimeUnit();
 		final long loadLimitTimeValue = rtConfig.getLoadLimitTimeValue();
 		final long timeLimitMicroSec = loadLimitTimeValue > 0 ?
@@ -230,32 +230,41 @@ implements LoadState<T> {
 		//
 		for(final LoadState state : states) {
 			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
-			final long stateTimeMicroSec = statsSnapshot.getElapsedTime();
+			final long elapsedTimeMicroSec = statsSnapshot.getElapsedTime();
 			final long stateItemsCount = statsSnapshot.getSuccCount() + statsSnapshot.getFailCount();
-			if((stateTimeMicroSec < timeLimitMicroSec) && (stateItemsCount < loadLimitCount)) {
-				return false;
+			if(elapsedTimeMicroSec >= timeLimitMicroSec) {
+				LOG.debug(
+					Markers.MSG, "Elapsed time {} is not less than the limit {}",
+					elapsedTimeMicroSec, timeLimitMicroSec
+				);
+				return true;
+			}
+			if(stateItemsCount >= loadLimitCount) {
+				LOG.debug(
+					Markers.MSG, "Processed items count {} is not less than the limit {}",
+					elapsedTimeMicroSec, timeLimitMicroSec
+				);
+
+				return true;
 			}
 		}
-		return true;
+		return false;
 	}
 	//
-	public static void saveScenarioState(final RunTimeConfig rtConfig) {
-		final String currRunId = rtConfig.getRunId();
-		final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, currRunId).resolve(Constants.STATES_FILE).toString();
-		try (final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
-			try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-				oos.writeObject(new ArrayList<>(LoadCloseHook.LOAD_STATES.get(currRunId)));
+	public static void saveRunState(final String runId, final List<LoadState> loadStates) {
+		final String fullStateFileName = Paths
+			.get(RunTimeConfig.DIR_ROOT, Constants.DIR_LOG, runId)
+			.resolve(Constants.STATES_FILE)
+			.toString();
+		try(final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
+			try(final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+				synchronized(LoadCloseHook.LOAD_STATES_MAP) {
+					oos.writeObject(loadStates);
+				}
 			}
-			LOG.info(Markers.MSG, "Successfully saved state of run \"{}\"",
-				currRunId);
-			LOG.debug(Markers.MSG, "State of run was successfully saved in \"{}\" file",
-				fullStateFileName);
-			LoadCloseHook.LOAD_STATES.remove(currRunId);
+			LOG.info(Markers.MSG, "Successfully saved state of run \"{}\"", runId);
 		} catch (final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to save state of run \"{}\"",
-				currRunId);
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to save state of run \"{}\"", runId);
 		}
 	}
 }

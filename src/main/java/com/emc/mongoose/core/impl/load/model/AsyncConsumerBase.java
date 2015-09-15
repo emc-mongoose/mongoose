@@ -61,13 +61,17 @@ implements AsyncConsumer<T> {
 	@Override
 	public void start() {
 		if(isStarted.compareAndSet(false, true)) {
-			LOG.debug(
-				Markers.MSG,
-				"{}: started, the further consuming will go through the volatile queue",
-				getName()
-			);
-			super.start();
+			startActually();
 		}
+	}
+	//
+	protected final void startActually() {
+		LOG.debug(
+			Markers.MSG,
+			"{}: started, the further consuming will go through the volatile queue",
+			getName()
+		);
+		super.start();
 	}
 	/**
 	 May block the executing thread until the queue becomes able to ingest more
