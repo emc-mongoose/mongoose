@@ -11,7 +11,6 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.load.model.metrics.ResumableUserTimeClock;
@@ -100,7 +99,7 @@ implements StorageIOStats {
 		//
 		if(jmxServeFlag) {
 			final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
-				RunTimeConfig.getContext().getRemotePortExport()
+				RunTimeConfig.getContext().getRemotePortMonitor()
 			);
 			jmxReporter = JmxReporter.forRegistry(metricRegistry)
 				.convertDurationsTo(TimeUnit.SECONDS)

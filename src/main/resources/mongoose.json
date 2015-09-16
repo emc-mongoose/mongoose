@@ -62,8 +62,9 @@
 			"load.drivers": "load.servers",
 			"remote.servers": "load.servers",
 			"remote.control.port": "remote.port.control",
-			"remote.export.port": "remote.port.export",
-			"remote.import.port": "remote.port.import",
+			"remote.export.port": "remote.port.monitor",
+			"remote.port.export": "remote.port.monitor",
+			"remote.serveIfNotLoadServer": "remote.serveJMX",
 			"remote.wuisvc.port": "remote.port.webui",
 
 			"run.metrics.period.sec": "load.metricsPeriodSec",
@@ -236,11 +237,10 @@
 			}
 		},
 		"remote": {
-			"serveIfNotLoadServer": false,
+			"serveJMX": false,
 			"port" : {
 				"control": 1099,
-				"export": 1199,
-				"import": 1199,
+				"monitor": 1199,
 				"webui": 8080
 			},
 			"socket": {

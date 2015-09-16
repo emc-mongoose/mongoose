@@ -26,8 +26,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface LoadExecutor<T extends DataItem>
 extends Producer<T>, AsyncConsumer<T> {
 	//
-	Map<String, AtomicInteger> INSTANCE_NUMBERS = new ConcurrentHashMap<>();
-	Map<String, List<LoadState>> RESTORED_STATES_MAP = new ConcurrentHashMap<>();
+	Map<String, AtomicInteger>
+		INSTANCE_NUMBERS = new ConcurrentHashMap<>();
+	Map<String, List<LoadState<? extends DataItem>>>
+		RESTORED_STATES_MAP = new ConcurrentHashMap<>();
 	//
 	String getName()
 	throws RemoteException;

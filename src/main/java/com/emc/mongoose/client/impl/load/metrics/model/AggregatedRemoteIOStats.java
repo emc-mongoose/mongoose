@@ -201,10 +201,10 @@ extends IOStatsBase {
 				new Runnable() {
 					@Override
 					public void run() {
+						Snapshot loadSvcStatsSnapshot;
 						final LoadSvc loadSvc = loadSvcMap.get(addr);
 						final Thread currThread = Thread.currentThread();
 						currThread.setName(currThread.getName() + "@" + addr);
-						Snapshot loadSvcStatsSnapshot;
 						while(!currThread.isInterrupted()) {
 							try {
 								loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();

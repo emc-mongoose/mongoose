@@ -96,10 +96,9 @@ implements Externalizable {
 		KEY_LOAD_LIMIT_REQSLEEP_MILLISEC = "load.limit.reqSleepMilliSec",
 		KEY_RUN_VERSION = "run.version",
 		//
-		KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER = "remote.serveIfNotLoadServer",
+		KEY_REMOTE_SERVE_JMX = "remote.serveJMX",
 		KEY_REMOTE_PORT_CONTROL = "remote.port.control",
-		KEY_REMOTE_PORT_EXPORT = "remote.port.export",
-		KEY_REMOTE_PORT_IMPORT = "remote.port.import",
+		KEY_REMOTE_PORT_MONITOR = "remote.port.monitor",
 		KEY_REMOTE_PORT_WEBUI = "remote.port.webui",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
@@ -320,20 +319,16 @@ implements Externalizable {
 		return getInt(KEY_DATA_SRC_BATCH_SIZE);
 	}
 	//
-	public final boolean getFlagServeIfNotLoadServer() {
-		return getBoolean(KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER);
+	public final boolean getFlagServeJMX() {
+		return getBoolean(KEY_REMOTE_SERVE_JMX);
 	}
 	//
 	public final int getRemotePortControl() {
 		return getInt(KEY_REMOTE_PORT_CONTROL);
 	}
 	//
-	public final int getRemotePortExport() {
-		return getInt(KEY_REMOTE_PORT_EXPORT);
-	}
-	//
-	public final int getRemotePortImport() {
-		return getInt(KEY_REMOTE_PORT_IMPORT);
+	public final int getRemotePortMonitor() {
+		return getInt(KEY_REMOTE_PORT_MONITOR);
 	}
 	//
 	public final int getRemotePortWebUI() {
@@ -662,8 +657,9 @@ implements Externalizable {
 			Object nextPropValue;
 			final RunTimeConfig localRunTimeConfig = CONTEXT_CONFIG.get();
 			for(final String nextPropName : confMap.keySet()) {
-				// to not to override the import/export ports from the load client side
-				if(nextPropName.startsWith(KEY_REMOTE_PORT_EXPORT) || nextPropName.startsWith(KEY_REMOTE_PORT_IMPORT)) {
+				// do not override the JMX port from the load client side
+				// in order to allow to run both client and server on the same host
+				if(nextPropName.startsWith(KEY_REMOTE_PORT_MONITOR)) {
 					nextPropValue = localRunTimeConfig.getProperty(nextPropName);
 				} else {
 					nextPropValue = confMap.get(nextPropName);

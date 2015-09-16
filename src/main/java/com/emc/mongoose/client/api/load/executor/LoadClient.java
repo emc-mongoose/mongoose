@@ -12,23 +12,5 @@ import java.util.Map;
  */
 public interface LoadClient<T extends DataItem>
 extends LoadExecutor<T> {
-	String
-		DEFAULT_DOMAIN = "metrics",
-		FMT_MSG_FAIL_FETCH_VALUE = "Failed to fetch the value for \"{}\" from {}",
-		KEY_NAME = "name",
-		ATTR_COUNT = "Count",
-		ATTR_MIN = "Min",
-		ATTR_AVG = "Mean",
-		ATTR_MAX = "Max",
-		ATTR_MED = "50thPercentile",
-		ATTR_75P = "75thPercentile",
-		ATTR_95P = "95thPercentile",
-		ATTR_98P = "98thPercentile",
-		ATTR_99P = "99thPercentile",
-		ATTR_RATE_MEAN = "MeanRate",
-		ATTR_RATE_1MIN = "OneMinuteRate",
-		ATTR_RATE_5MIN = "FiveMinuteRate",
-		ATTR_RATE_15MIN = "FifteenMinuteRate";
 	Map<String, LoadSvc<T>> getRemoteLoadMap();
-	void postProcessDataItems();
 }

@@ -25,7 +25,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -130,10 +129,12 @@ implements LoadState<T> {
 		).resolve(Constants.STATES_FILE).toString();
 		//  if load states list is empty or file w/ load states doesn't exist, then init
 		//  map entry value w/ empty list
-		LoadExecutor.RESTORED_STATES_MAP.put(rtConfig.getRunId(), new ArrayList<LoadState>());
+		LoadExecutor.RESTORED_STATES_MAP.put(
+			rtConfig.getRunId(), new ArrayList<LoadState<? extends DataItem>>()
+		);
 		if(isSavedStateOfRunExists(rtConfig.getRunId())) {
-			final List<LoadState> loadStates =
-				getScenarioStateFromFile(rtConfig.getRunId(), fullStateFileName);
+			final List<LoadState<? extends DataItem>>
+				loadStates = getRunStateFromFile(rtConfig.getRunId(), fullStateFileName);
 			if(loadStates != null && !loadStates.isEmpty()) {
 				//  check if immutable params were changed for load executors
 				for(final LoadState state : loadStates) {
@@ -171,12 +172,12 @@ implements LoadState<T> {
 	}
 	//
 	@SuppressWarnings("unchecked")
-	private static List<LoadState> getScenarioStateFromFile(
+	private static List<LoadState<? extends DataItem>> getRunStateFromFile(
 		final String runId, final String fileName
 	) {
 		try(final FileInputStream fis = new FileInputStream(fileName)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
-				return (List<LoadState>) ois.readObject();
+				return (List<LoadState<?>>) ois.readObject();
 			}
 		} catch (final FileNotFoundException e) {
 			LOG.debug(
@@ -205,14 +206,15 @@ implements LoadState<T> {
 		}
 	}
 	//
-	public static LoadState findStateByLoadNumber(
+	@SuppressWarnings("unchecked")
+	public static <T extends DataItem> LoadState<T> findStateByLoadNumber(
 		final int loadNumber, final RunTimeConfig rtConfig
 	) {
-		final List<LoadState> loadStates =
-			LoadExecutor.RESTORED_STATES_MAP.get(rtConfig.getRunId());
-		for (final LoadState state : loadStates) {
-			if (state.getLoadNumber() == loadNumber) {
-				return state;
+		final List<LoadState<?>>
+			loadStates = LoadExecutor.RESTORED_STATES_MAP.get(rtConfig.getRunId());
+		for(final LoadState<? extends DataItem> state : loadStates) {
+			if(state.getLoadNumber() == loadNumber) {
+				return (LoadState<T>) state;
 			}
 		}
 		return null;

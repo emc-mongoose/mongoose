@@ -209,21 +209,13 @@ implements LoadExecutor<T> {
 		//
 		metricsUpdatePeriodSec = rtConfig.getLoadMetricsPeriodSec();
 		final String runMode = rtConfig.getRunMode();
-		final boolean flagServeRemoteIfStandalone = rtConfig.getFlagServeIfNotLoadServer();
-		if(Constants.RUN_MODE_STANDALONE.equals(runMode) && !flagServeRemoteIfStandalone) {
-			LOG.debug(
-				Markers.MSG, "{}: running in the \"{}\" mode, remote serving is disabled",
-				getName(), runMode
-			);
-			ioStats = new BasicIOStats(getName(), 0, metricsUpdatePeriodSec);
-		} else {
-			LOG.debug(
-				Markers.MSG, "{}: running in the \"{}\" mode, remote serving flag is \"{}\"",
-				getName(), runMode, flagServeRemoteIfStandalone
-			);
+		final boolean flagServeJMX = rtConfig.getFlagServeJMX();
+		if(flagServeJMX) {
 			ioStats = new BasicIOStats(
-				getName(), rtConfig.getRemotePortExport(), metricsUpdatePeriodSec
+				getName(), rtConfig.getRemotePortMonitor(), metricsUpdatePeriodSec
 			);
+		} else {
+			ioStats = new BasicIOStats(getName(), 0, metricsUpdatePeriodSec);
 		}
 		lastStats = ioStats.getSnapshot();
 		//
@@ -315,7 +307,6 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	@SuppressWarnings("unchecked")
 	public void start() {
 		if(isStarted.compareAndSet(false, true)) {
 			LOG.debug(Markers.MSG, "Starting {}", getName());
@@ -327,7 +318,7 @@ implements LoadExecutor<T> {
 						if(!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
 							BasicLoadState.restoreScenarioState(rtConfig);
 						}
-						setLoadState(BasicLoadState.findStateByLoadNumber(instanceNum, rtConfig));
+						setLoadState(BasicLoadState.<T>findStateByLoadNumber(instanceNum, rtConfig));
 					} catch (final Exception e) {
 						LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 					}
