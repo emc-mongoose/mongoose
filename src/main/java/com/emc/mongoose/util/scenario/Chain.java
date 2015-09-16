@@ -9,6 +9,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 //
 import com.emc.mongoose.run.cli.HumanFriendly;
@@ -94,7 +95,7 @@ implements Runnable {
 				loadJobSeq.size(), new GroupThreadFactory("chainFinishAwait")
 			);
 			for(final LoadExecutor nextLoadJob : loadJobSeq) {
-				chainWaitExecSvc.submit(new AwaitLoadJobTask(nextLoadJob, timeOut, timeUnit));
+				chainWaitExecSvc.submit(new AwaitAndCloseLoadJobTask(nextLoadJob, timeOut, timeUnit));
 			}
 			chainWaitExecSvc.shutdown();
 			try {

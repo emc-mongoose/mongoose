@@ -9,7 +9,7 @@ from com.emc.mongoose.common.log import LogUtil, Markers
 #
 from com.emc.mongoose.core.api.io.task import IOTask
 #
-from com.emc.mongoose.core.impl.load.tasks import AwaitLoadJobTask
+from com.emc.mongoose.core.impl.load.tasks import AwaitAndCloseLoadJobTask
 #
 from java.lang import Long, String, Throwable, IllegalArgumentException, InterruptedException
 from java.util.concurrent import Executors, TimeUnit
@@ -66,7 +66,7 @@ def execute(chain=(), flagConcurrent=True, timeOut=Long.MAX_VALUE, timeUnit=Time
 			)
 			for load in chain:
 				chainWaitExecSvc.submit(
-					AwaitLoadJobTask(load, timeOut, timeUnit)
+					AwaitAndCloseLoadJobTask(load, timeOut, timeUnit)
 				)
 			chainWaitExecSvc.shutdown()
 			try:
