@@ -253,6 +253,13 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final void logMetrics(final Marker logMarker) {
+		if(lastStats == null) {
+			try {
+				getStatsSnapshot();
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to aggregate the stats snapshot");
+			}
+		}
 		LOG.info(
 			logMarker,
 			Markers.PERF_SUM.equals(logMarker) ?
@@ -347,7 +354,7 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void interrupt() {
+	public synchronized final void interrupt() {
 		if(!isShutdown()) {
 			LOG.debug(Markers.MSG, "Interrupting {}", name);
 			shutdown();
