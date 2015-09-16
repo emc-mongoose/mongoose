@@ -693,7 +693,14 @@ function charts(chartsArray) {
 		TP: "throughput",
 		BW: "bandwidth"
 	};
-	//
+	var AVG = {
+			id: "avg",
+			text: "total average"
+		},
+		LAST = {
+			id: "last",
+			text: "last 10 sec"
+		};
 	var SCALE_TYPES = ["Linear Scale", "Log Scale"];
 	var SCALE_ORIENTATION = ["x", "y"];
 	//
@@ -1395,14 +1402,7 @@ function charts(chartsArray) {
 			var runMetricsPeriodSec =
 				parseInt(json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec]);
 			//
-			var AVG = {
-					id: "avg",
-					text: "total average"
-				},
-				LAST = {
-					id: "last",
-					text: "last " + runMetricsPeriodSec + " sec"
-				};
+			LAST.text = "last " + runMetricsPeriodSec + " sec";
 			//
 			var data = [
 				{
