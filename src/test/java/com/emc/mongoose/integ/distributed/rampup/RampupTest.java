@@ -133,18 +133,18 @@ extends DistributedLoadBuilderTestBase {
 				Assert.assertEquals("CountLoadServer", nextRec.get(6));
 				Assert.assertEquals("CountSucc", nextRec.get(7));
 				Assert.assertEquals("CountFail", nextRec.get(8));
-				Assert.assertEquals("LatencyAvg[us]", nextRec.get(9));
-				Assert.assertEquals("LatencyMin[us]", nextRec.get(10));
-				Assert.assertEquals("LatencyMed[us]", nextRec.get(11));
-				Assert.assertEquals("LatencyMax[us]", nextRec.get(12));
-				Assert.assertEquals("TPAvg", nextRec.get(13));
-				Assert.assertEquals("TP1Min", nextRec.get(14));
-				Assert.assertEquals("TP5Min", nextRec.get(15));
-				Assert.assertEquals("TP15Min", nextRec.get(16));
-				Assert.assertEquals("BWAvg[MB/s]", nextRec.get(17));
-				Assert.assertEquals("BW1Min[MB/s]", nextRec.get(18));
-				Assert.assertEquals("BW5Min[MB/s]", nextRec.get(19));
-				Assert.assertEquals("BW15Min[MB/s]", nextRec.get(20));
+				Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
+				Assert.assertEquals("DurationMin[us]", nextRec.get(10));
+				Assert.assertEquals("DurationStdDev", nextRec.get(11));
+				Assert.assertEquals("DurationMax[us]", nextRec.get(12));
+				Assert.assertEquals("LatencyAvg[us]", nextRec.get(13));
+				Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
+				Assert.assertEquals("LatencyStdDev", nextRec.get(15));
+				Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
+				Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
+				Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
+				Assert.assertEquals("BWAvg[MB*s^-1]]", nextRec.get(19));
+				Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
 			}
 			for(int i = 1; i < csvRecs.size(); i ++) {
 				nextRec = csvRecs.get(i);

@@ -13,6 +13,8 @@ import com.emc.mongoose.common.net.ServiceUtils;
 //
 //
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.impl.load.model.metrics.CustomJmxReporter;
+import com.emc.mongoose.core.impl.load.model.metrics.CustomMetricRegistry;
 import com.emc.mongoose.core.impl.load.model.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
@@ -32,15 +34,15 @@ implements StorageIOStats {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final MetricRegistry metricRegistry = new MetricRegistry();
-	private final JmxReporter jmxReporter;
+	private final CustomMetricRegistry metricRegistry = new CustomMetricRegistry();
+	private final CustomJmxReporter jmxReporter;
 	private final Clock clock = new ResumableUserTimeClock();
 	private final Counter
 		countFailWrite = metricRegistry.counter(
-		MetricRegistry.name(
-			StorageMock.class, IOType.WRITE.name(), IOStats.METRIC_NAME_FAIL
-		)
-	),
+			MetricRegistry.name(
+				StorageMock.class, IOType.WRITE.name(), IOStats.METRIC_NAME_FAIL
+			)
+		),
 		countFailRead = metricRegistry.counter(
 			MetricRegistry.name(
 				StorageMock.class, IOType.READ.name(), IOStats.METRIC_NAME_FAIL
@@ -101,7 +103,7 @@ implements StorageIOStats {
 			final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
 				RunTimeConfig.getContext().getRemotePortMonitor()
 			);
-			jmxReporter = JmxReporter.forRegistry(metricRegistry)
+			jmxReporter = CustomJmxReporter.forRegistry(metricRegistry)
 				.convertDurationsTo(TimeUnit.SECONDS)
 				.convertRatesTo(TimeUnit.SECONDS)
 				.registerWith(mBeanServer)

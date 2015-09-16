@@ -26,7 +26,6 @@ extends WSMockTestBase {
 	throws Exception {
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVERS, ServiceUtils.getHostAddr());
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_SERVER);
 		ServiceUtils.init();
