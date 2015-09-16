@@ -96,25 +96,19 @@ implements WSLoadSvc<T> {
 		}
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
+	@Override
 	public final Collection<T> takeFrame()
 	throws RemoteException {
 		Collection<T> recFrame = null;
-		if (consumer != null && RecordFrameBuffer.class.isInstance(consumer)) {
+		if(consumer instanceof RecordFrameBuffer) {
 			try {
 				recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
 			} catch (final InterruptedException e) {
-				if (!isShutdown.get()) {
+				if(!isShutdown.get()) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
 				}
 			}
 
-		}
-		if (LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-					Markers.MSG, "Returning {} data items records",
-					recFrame == null ? 0 : recFrame.size()
-			);
 		}
 		return recFrame;
 	}

@@ -599,7 +599,7 @@ implements LoadExecutor<T> {
 					}
 				}
 			} catch(final InterruptedException e) {
-				LOG.debug(Markers.MSG, "Interrupted");
+				LOG.debug(Markers.MSG, "Interrupted while submitting to the consumer");
 			} catch(final RemoteException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to submit the data item \"{}\" to \"{}\"",

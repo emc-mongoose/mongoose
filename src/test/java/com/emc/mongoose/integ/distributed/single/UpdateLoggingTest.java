@@ -43,7 +43,7 @@ extends DistributedClientTestBase {
 	//
 	private final static int COUNT_LIMIT = 1000;
 	//
-	private static long countWritten, countUpdated, outputCount;
+	private static long countWritten, countUpdated;
 	private static byte stdOutContent[];
 	//
 	@BeforeClass
@@ -61,7 +61,11 @@ extends DistributedClientTestBase {
 			final BlockingQueue<WSObject> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
 			final ItemBlockingQueue<WSObject> itemsIO = new ItemBlockingQueue<>(itemsQueue);
 			countWritten = client.write(null, itemsIO, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
-			outputCount = itemsQueue.size();
+			TimeUnit.SECONDS.sleep(10);
+			Assert.assertEquals(
+				"Writing reported different count than available in the output",
+				countWritten, itemsQueue.size()
+			);
 			try(
 				final BufferingOutputStream
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
@@ -86,12 +90,6 @@ extends DistributedClientTestBase {
 	throws Exception {
 		StdOutInterceptorTestSuite.reset();
 		DistributedClientTestBase.tearDownClass();
-	}
-	//
-	@Test public void checkOutputCount() {
-		Assert.assertEquals(
-			"Write reported different count than is in the output", countWritten, outputCount
-		);
 	}
 	//
 	@Test public void checkConsoleAvgMetricsLogging()

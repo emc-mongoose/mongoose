@@ -1,6 +1,7 @@
 package com.emc.mongoose.client.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -83,9 +84,7 @@ implements LoadClient<T> {
 					(int) maxCount : runTimeConfig.getTasksMaxQueueSize()
 			)
 		);
-		setCorePoolSize(
-			remoteLoadMap.size() * Math.max(1, Runtime.getRuntime().availableProcessors())
-		);
+		setCorePoolSize(ThreadUtil.getWorkerCount());
 		setMaximumPoolSize(getCorePoolSize());
 		//
 		String t = null;
@@ -170,7 +169,7 @@ implements LoadClient<T> {
 				LOG.debug(Markers.MSG, "Interrupted while feeding the consumer");
 			} catch(final RemoteException | RejectedExecutionException e) {
 				LogUtil.exception(
-					LOG, Level.DEBUG, e,
+					LOG, Level.WARN, e,
 					"Failed to submit all {} data items to the consumer {}",
 					frame.size(), consumer
 				);
@@ -209,38 +208,51 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final class LoadDataItemsBatchTask
 	implements Runnable {
+		//
 		private final LoadSvc<T> loadSvc;
+		//
 		private LoadDataItemsBatchTask(final LoadSvc<T> loadSvc) {
 			this.loadSvc = loadSvc;
 		}
+		//
+		private void loadAndProcessDataItems()
+		throws InterruptedException, RemoteException {
+			Collection<T> frame = loadSvc.takeFrame();
+			if(frame == null) {
+				LOG.debug(
+					Markers.ERR, "No data items frame from the load server @ {}", loadSvc
+				);
+			} else {
+				final int n = frame.size();
+				if(n == 0) {
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG,
+							"No data items in the frame from the load server @ {}",
+							loadSvc
+						);
+					}
+				} else {
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG, "Got next {} items from the load server @ {}",
+							n, loadSvc
+						);
+					}
+					postProcessDataItems(frame);
+				}
+			}
+		}
+		//
 		@Override
 		public final void run() {
-			Collection<T> frame;
+			//
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("dataItemsBatchLoader<" + getName() + ">");
+			//
 			while(!currThread.isInterrupted()) {
 				try {
-					frame = loadSvc.takeFrame();
-					LockSupport.parkNanos(1);
-					if(frame == null) {
-						LOG.debug(
-							Markers.ERR, "No data items frame from the load server @ {}", loadSvc
-						);
-					} else if(frame.size() == 0) {
-						if(LOG.isTraceEnabled(Markers.MSG)) {
-							LOG.trace(
-								Markers.MSG, "No data items in the frame from the load server @ {}",
-								loadSvc
-							);
-						}
-					} else {
-						if(LOG.isTraceEnabled(Markers.MSG)) {
-							LOG.trace(
-								Markers.MSG, "Got next {} items from the load server @ {}", loadSvc
-							);
-						}
-						postProcessDataItems(frame);
-					}
+					loadAndProcessDataItems();
 					LockSupport.parkNanos(1);
 				} catch(final RemoteException e) {
 					LogUtil.exception(
@@ -259,8 +271,10 @@ implements LoadClient<T> {
 	implements Runnable {
 		@Override
 		public final void run() {
+			//
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("ioStatsAggregator<" + getName() + ">");
+			//
 			while(!currThread.isInterrupted()) {
 				lastStats = ioStats.getSnapshot();
 				LockSupport.parkNanos(1);
@@ -315,6 +329,7 @@ implements LoadClient<T> {
 		if(metricsPeriodSec > 0) {
 			mgmtSvcExecutor.submit(new LogMetricsTask());
 		}
+		mgmtSvcExecutor.shutdown();
 	}
 	//
 	@Override
@@ -387,6 +402,8 @@ implements LoadClient<T> {
 		}
 	}
 	//
+	private volatile boolean isInterrupted = false;
+	//
 	@Override
 	public synchronized final void interrupt() {
 		if(!isShutdown()) {
@@ -394,7 +411,8 @@ implements LoadClient<T> {
 			shutdown();
 		}
 		//
-		if(!isTerminated()) {
+		if(!isInterrupted) {
+			isInterrupted = true;
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(),
 				new GroupThreadFactory(String.format("interrupt<%s>", getName()))
@@ -404,10 +422,19 @@ implements LoadClient<T> {
 			}
 			interruptExecutor.shutdown();
 			try {
-				interruptExecutor.awaitTermination(metricsPeriodSec, TimeUnit.SECONDS);
+				if(!interruptExecutor.awaitTermination(metricsPeriodSec, TimeUnit.SECONDS)) {
+					LOG.warn(Markers.ERR, "{}: remote interrupt tasks timeout", getName());
+				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
+			} finally {
+				interruptExecutor.shutdownNow();
 			}
+			//
+			shutdownNow();
+			mgmtSvcExecutor.shutdownNow();
+			//forceAggregation();
+			//
 			LOG.debug(Markers.MSG, "{}: interrupted", name);
 		}
 		//
@@ -420,11 +447,6 @@ implements LoadClient<T> {
 				);
 			}
 		}
-		//
-		LOG.debug(
-			Markers.MSG, "{}: dropped {} remote tasks",
-			getName(), shutdownNow().size() + mgmtSvcExecutor.shutdownNow().size()
-		);
 	}
 	//
 	@Override
@@ -529,6 +551,24 @@ implements LoadClient<T> {
 	public IOStats.Snapshot getStatsSnapshot()
 	throws RemoteException {
 		return lastStats == null ? (lastStats = ioStats.getSnapshot()) : lastStats;
+	}
+	//
+	private void forceAggregation() {
+		final ExecutorService forcedAggregator = Executors.newFixedThreadPool(
+			remoteLoadMap.size(), new GroupThreadFactory("forcedAggregator<" + getName() + ">")
+		);
+		for(final LoadSvc<T> loadSvc : remoteLoadMap.values()) {
+			forcedAggregator.submit(new LoadDataItemsBatchTask(loadSvc));
+		}
+		forcedAggregator.shutdown();
+		try {
+			if(!forcedAggregator.awaitTermination(metricsPeriodSec, TimeUnit.SECONDS)) {
+				LOG.warn(Markers.ERR, "Forced aggregation timeout");
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Forced aggregation interrupted");
+		}
+		lastStats = ioStats.getSnapshot();
 	}
 	//
 	@Override

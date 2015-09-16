@@ -39,7 +39,7 @@ implements AsyncConsumer<T> {
 		isShutdown = new AtomicBoolean(false),
 		isAllSubm = new AtomicBoolean(false);
 	// volatile
-	private final BlockingQueue<T> transientQueue;
+	protected final BlockingQueue<T> transientQueue;
 	private final List<T> buff;
 	private final boolean shuffle;
 	private final int butchSize;
@@ -65,7 +65,7 @@ implements AsyncConsumer<T> {
 		}
 	}
 	//
-	protected final void startActually() {
+	protected void startActually() {
 		LOG.debug(
 			Markers.MSG,
 			"{}: started, the further consuming will go through the volatile queue",
@@ -98,7 +98,7 @@ implements AsyncConsumer<T> {
 	}
 	/** Consumes the queue */
 	@Override
-	public final void run() {
+	public void run() {
 		LOG.debug(
 			Markers.MSG, "Determined submit queue capacity of {} for \"{}\"",
 			transientQueue.remainingCapacity(), getName()
@@ -185,7 +185,9 @@ implements AsyncConsumer<T> {
 		shutdown();
 		final int dropCount = transientQueue.size();
 		if(dropCount > 0) {
-			LOG.debug(Markers.MSG, "Dropped {} submit tasks", dropCount);
+			LOG.warn(
+				Markers.MSG, "{}: dropped {} submit tasks", getClass().getSimpleName(), dropCount
+			);
 		}
 		transientQueue.clear(); // dispose
 		if(!super.isInterrupted()) {
