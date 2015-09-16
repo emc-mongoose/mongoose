@@ -882,7 +882,7 @@ function charts(chartsArray) {
 	}
 	//
 	function drawThroughputCharts(data, json, sec) {
-		var updateFunction = drawChart(data, json, "seconds[s]", "TP[obj/s]",
+		var updateFunction = drawChart(data, json, "seconds[s]", "Rate[s^-1]",
 				"#tp-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
 			sec);
 		return {
@@ -893,7 +893,7 @@ function charts(chartsArray) {
 	}
 	//
 	function drawBandwidthCharts(data, json, sec) {
-		var updateFunction = drawChart(data, json, "seconds[s]", "BW[MB/s]",
+		var updateFunction = drawChart(data, json, "seconds[s]", "Rate[MB*s^-1]",
 				"#bw-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
 			sec);
 		return {
@@ -1402,6 +1402,8 @@ function charts(chartsArray) {
 			var runMetricsPeriodSec =
 				parseInt(json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec]);
 			//
+			LAST.text = "last " + runMetricsPeriodSec + " sec";
+			//
 			var data = [
 				{
 					name: AVG,
@@ -1454,7 +1456,7 @@ function charts(chartsArray) {
 				},
 				LAST = {
 					id: "last",
-					text: "last 10 sec"
+					text: "last " + runMetricsPeriodSec + " sec"
 				};
 			//
 			var TP_MODES = [AVG, LAST];
@@ -1592,7 +1594,7 @@ function charts(chartsArray) {
 			});
 			//
 			function drawThroughputChart(data) {
-				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
+				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds[s]", "Rate[s^-1]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.TP, json);
@@ -1601,7 +1603,7 @@ function charts(chartsArray) {
 			}
 			//
 			function drawBandwidthChart(data) {
-				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
+				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds[s]", "Rate[MB*s^-1]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.BW, json);
@@ -2262,17 +2264,14 @@ function charts(chartsArray) {
 			var loadRampupSizesArray = loadRampupSizes.split(",").map(function(item) {
 				return item.trim();
 			});
-			var AVG = "total average",
-				MIN_1 = "last 1 min avg",
-				MIN_5 = "last 5 min avg",
-				MIN_15 = "last 15 min avg";
+			var AVG = "total average";
 			//
 			var CHART_TYPES = {
 				TP: "throughput",
 				BW: "bandwidth"
 			};
 			//
-			var TP_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+			var TP_MODES = [AVG];
 			//
 			chartsArray.push({
 				"run.id": runId,
@@ -2306,7 +2305,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "Connection count", "Rate[obj/s]", "#tp-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "Connection count", "Rate[s^-1]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.TP, json);
@@ -2336,7 +2335,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "Connection count", "Rate[MB/s]", "#bw-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "Connection count", "Rate[MB*s^-1]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.BW, json);
@@ -2696,27 +2695,15 @@ function charts(chartsArray) {
 							//
 							var currentLoadType = d.loadType;
 							var currentSizes = d.sizes;
-							var splitIndex;
-							switch (chartType) {
-								case CHART_TYPES.TP:
-									splitIndex = 2;
-									break;
-								case CHART_TYPES.BW:
-									splitIndex = 3;
-									break;
-							}
 							//
-							var parsedString = json.message.formattedMessage.split(";")[splitIndex];
-							var first = parsedString.indexOf("(") + 1;
-							var second = parsedString.lastIndexOf(")");
-							var value = parsedString.substring(first, second).split("/");
+							var parsedValue = parsePerfAvgLogEvent(chartType, json.message.formattedMessage);
 							//
 							d.sizes.forEach(function (d, i) {
 								if (d.size === json.contextMap["currentSize"]) {
 									d.charts.forEach(function (c, i) {
 										c.values.push({
 											x: parseInt(json.contextMap["currentConnCount"]),
-											y: parseFloat(value[i])
+											y: parseFloat(parsedValue[i])
 										});
 									});
 								}
