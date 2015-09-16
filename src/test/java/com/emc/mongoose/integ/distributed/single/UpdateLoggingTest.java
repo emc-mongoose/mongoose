@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 /**
@@ -42,7 +43,7 @@ extends DistributedClientTestBase {
 	//
 	private final static int COUNT_LIMIT = 1000;
 	//
-	private static long countWritten, countUpdated;
+	private static long countWritten, countUpdated, outputCount;
 	private static byte stdOutContent[];
 	//
 	@BeforeClass
@@ -57,24 +58,17 @@ extends DistributedClientTestBase {
 				.setAPI("swift")
 				.build()
 		) {
-			final ItemBlockingQueue<WSObject> itemsQueue = new ItemBlockingQueue<>(
-				new ArrayBlockingQueue<WSObject>(COUNT_LIMIT)
-			);
-			countWritten = client.write(null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
-			TimeUnit.SECONDS.sleep(10);
+			final BlockingQueue<WSObject> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
+			final ItemBlockingQueue<WSObject> itemsIO = new ItemBlockingQueue<>(itemsQueue);
+			countWritten = client.write(null, itemsIO, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
+			outputCount = itemsQueue.size();
 			try(
 				final BufferingOutputStream
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
-				if(stdOutInterceptorStream == null) {
-					throw new IllegalStateException(
-						"Looks like the test case is not included in the \"" +
-							StdOutInterceptorTestSuite.class.getSimpleName() + "\" test suite, cannot run"
-					);
-				}
 				stdOutInterceptorStream.reset(); // clear before using
 				if(countWritten > 0) {
-					countUpdated = client.update(itemsQueue, null, countWritten, 10, 10);
+					countUpdated = client.update(itemsIO, null, countWritten, 10, 10);
 				}
 				TimeUnit.SECONDS.sleep(1);
 				stdOutContent = stdOutInterceptorStream.toByteArray();
@@ -92,6 +86,12 @@ extends DistributedClientTestBase {
 	throws Exception {
 		StdOutInterceptorTestSuite.reset();
 		DistributedClientTestBase.tearDownClass();
+	}
+	//
+	@Test public void checkOutputCount() {
+		Assert.assertEquals(
+			"Write reported different count than is in the output", countWritten, outputCount
+		);
 	}
 	//
 	@Test public void checkConsoleAvgMetricsLogging()
@@ -213,7 +213,7 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
 					Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
 					Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
-					Assert.assertEquals("BWAvg[MB*s^-1]]", nextRec.get(19));
+					Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
 					Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
 					firstRow = false;
 				} else {
@@ -255,7 +255,7 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
 					Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
 					Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
-					Assert.assertEquals("BWAvg[MB*s^-1]]", nextRec.get(19));
+					Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
 					Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
 					firstRow = false;
 				} else  {

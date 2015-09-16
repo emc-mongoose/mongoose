@@ -113,7 +113,6 @@ extends DistributedLoadBuilderTestBase {
 	//
 	@Test public void checkLogFileSummariesCount()
 	throws Exception {
-		boolean firstRow = true;
 		int countSummaries = 0;
 		Assert.assertTrue("Performance sum metrics file doesn't exist", FILE_LOG_PERF_SUM.exists());
 		try(
@@ -143,7 +142,7 @@ extends DistributedLoadBuilderTestBase {
 				Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
 				Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
 				Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
-				Assert.assertEquals("BWAvg[MB*s^-1]]", nextRec.get(19));
+				Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
 				Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
 			}
 			for(int i = 1; i < csvRecs.size(); i ++) {

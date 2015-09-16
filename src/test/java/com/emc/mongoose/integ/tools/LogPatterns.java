@@ -48,10 +48,10 @@ public interface LogPatterns {
 			"lat\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\)"
 		),
 		CONSOLE_TP = Pattern.compile(
-			"TP\\[s\\^\\-1\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)"
+			"TP\\[s\\^\\-1\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\)"
 		),
 		CONSOLE_BW = Pattern.compile(
-			"BW\\[MB\\*s\\^\\-1\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)"
+			"BW\\[MB\\*s\\^\\-1\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\)"
 		),
 		//
 		CONSOLE_METRICS_AVG = Pattern.compile(

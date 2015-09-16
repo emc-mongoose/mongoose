@@ -2,8 +2,6 @@ package com.emc.mongoose.storage.mock.impl.base;
 //
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -14,6 +12,7 @@ import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.load.model.metrics.CustomJmxReporter;
+import com.emc.mongoose.core.impl.load.model.metrics.CustomMeter;
 import com.emc.mongoose.core.impl.load.model.metrics.CustomMetricRegistry;
 import com.emc.mongoose.core.impl.load.model.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.storage.mock.api.StorageMock;
@@ -56,37 +55,7 @@ implements StorageIOStats {
 		countContainers = metricRegistry.counter(
 			MetricRegistry.name(StorageMock.class, METRIC_NAME_CONTAINERS)
 		);
-	private final Meter
-		tpWrite = metricRegistry.register(
-			MetricRegistry.name(
-				StorageMock.class, IOType.WRITE.name(), IOStats.METRIC_NAME_TP
-			),
-			new Meter(clock)
-		),
-		tpRead = metricRegistry.register(
-			MetricRegistry.name(
-				StorageMock.class, IOType.READ.name(), IOStats.METRIC_NAME_TP
-			),
-			new Meter(clock)
-		),
-		tpDelete = metricRegistry.register(
-			MetricRegistry.name(
-				StorageMock.class, IOType.DELETE.name(), IOStats.METRIC_NAME_TP
-			),
-			new Meter(clock)
-		),
-		bwWrite = metricRegistry.register(
-			MetricRegistry.name(
-				StorageMock.class, IOType.WRITE.name(), IOStats.METRIC_NAME_BW
-			),
-			new Meter(clock)
-		),
-		bwRead = metricRegistry.register(
-			MetricRegistry.name(
-				StorageMock.class, IOType.READ.name(), IOStats.METRIC_NAME_BW
-			),
-			new Meter(clock)
-		);
+	private final CustomMeter tpWrite, tpRead, tpDelete, bwWrite, bwRead;
 	//
 	private final long updatePeriodMilliSec;
 	private final StorageMock storage;
@@ -97,6 +66,36 @@ implements StorageIOStats {
 		super(BasicStorageIOStats.class.getSimpleName());
 		setDaemon(true);
 		updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsPeriodSec);
+		tpWrite = metricRegistry.register(
+			MetricRegistry.name(
+				StorageMock.class, IOType.WRITE.name(), IOStats.METRIC_NAME_TP
+			),
+			new CustomMeter(clock, metricsPeriodSec)
+		);
+		tpRead = metricRegistry.register(
+			MetricRegistry.name(
+				StorageMock.class, IOType.READ.name(), IOStats.METRIC_NAME_TP
+			),
+			new CustomMeter(clock, metricsPeriodSec)
+		);
+		tpDelete = metricRegistry.register(
+			MetricRegistry.name(
+				StorageMock.class, IOType.DELETE.name(), IOStats.METRIC_NAME_TP
+			),
+			new CustomMeter(clock, metricsPeriodSec)
+		);
+		bwWrite = metricRegistry.register(
+			MetricRegistry.name(
+				StorageMock.class, IOType.WRITE.name(), IOStats.METRIC_NAME_BW
+			),
+			new CustomMeter(clock, metricsPeriodSec)
+		);
+		bwRead = metricRegistry.register(
+			MetricRegistry.name(
+				StorageMock.class, IOType.READ.name(), IOStats.METRIC_NAME_BW
+			),
+			new CustomMeter(clock, metricsPeriodSec)
+		);
 		this.storage = storage;
 		//
 		if(jmxServeFlag) {
@@ -130,15 +129,15 @@ implements StorageIOStats {
 			countTotal, 100.0 * countTotal / storage.getCapacity(), countContainers.getCount(),
 			//
 			tpWrite.getCount(), countFailWrite.getCount(),
-			tpWrite.getMeanRate(), tpWrite.getOneMinuteRate(),
-			bwWrite.getMeanRate() / 1048576, bwWrite.getOneMinuteRate() / 1048576,
+			tpWrite.getMeanRate(), tpWrite.getLastRate(),
+			bwWrite.getMeanRate() / IOStats.MIB, bwWrite.getLastRate() / IOStats.MIB,
 			//
 			tpRead.getCount(), countFailRead.getCount(),
-			tpRead.getMeanRate(), tpRead.getOneMinuteRate(),
-			bwRead.getMeanRate() / 1048576, bwRead.getOneMinuteRate() / 1048576,
+			tpRead.getMeanRate(), tpRead.getLastRate(),
+			bwRead.getMeanRate() / IOStats.MIB, bwRead.getLastRate() / IOStats.MIB,
 			//
 			tpDelete.getCount(), countFailDelete.getCount(),
-			tpDelete.getMeanRate(), tpDelete.getOneMinuteRate()
+			tpDelete.getMeanRate(), tpDelete.getLastRate()
 		);
 	}
 	//
@@ -225,26 +224,26 @@ implements StorageIOStats {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final double getWriteRate() {
-		return tpWrite.getOneMinuteRate();
+		return tpWrite.getLastRate();
 	}
 	//
 	@Override
 	public final double getWriteRateBytes() {
-		return bwWrite.getOneMinuteRate();
+		return bwWrite.getLastRate();
 	}
 	//
 	@Override
 	public final double getReadRate() {
-		return tpRead.getOneMinuteRate();
+		return tpRead.getLastRate();
 	}
 	//
 	@Override
 	public final double getReadRateBytes() {
-		return bwRead.getOneMinuteRate();
+		return bwRead.getLastRate();
 	}
 	//
 	@Override
 	public final double getDeleteRate() {
-		return tpDelete.getOneMinuteRate();
+		return tpDelete.getLastRate();
 	}
 }

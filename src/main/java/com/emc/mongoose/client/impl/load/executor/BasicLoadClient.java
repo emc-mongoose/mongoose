@@ -294,7 +294,7 @@ implements LoadClient<T> {
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
-			currThread.setName(getName() + "-periodicMetricsDumper");
+			currThread.setName(getName());
 			while(!currThread.isInterrupted()) {
 				try {
 					logMetrics(Markers.PERF_AVG);

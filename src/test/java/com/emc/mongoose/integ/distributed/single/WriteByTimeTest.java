@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 public final class WriteByTimeTest
 extends DistributedClientTestBase {
 	//
-	private final static long TIME_TO_WRITE_SEC = 100;
+	private final static long TIME_TO_WRITE_SEC = 50;
 	//
 	private static long countWritten, timeActualSec;
 	//

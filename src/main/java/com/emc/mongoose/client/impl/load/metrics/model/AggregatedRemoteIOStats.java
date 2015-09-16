@@ -283,13 +283,18 @@ extends IOStatsBase {
 				loadStatsSnapshot = loadStatsSnapshotMap.get(addr);
 				if(loadStatsSnapshot != null) {
 					countSucc += loadStatsSnapshot.getSuccCount();
-					succRateMean += loadStatsSnapshot.getSuccRateMean();
-					succRateLast += loadStatsSnapshot.getSuccRateLast();
 					countFail += loadStatsSnapshot.getFailCount();
+					countByte += loadStatsSnapshot.getByteCount();
 					sumDurMicroSec += loadStatsSnapshot.getDurationSum();
 					if(loadStatsSnapshot.getElapsedTime() > maxElapsedTimeMicroSec) {
 						maxElapsedTimeMicroSec = loadStatsSnapshot.getElapsedTime();
 					}
+					succRateMean += loadStatsSnapshot.getSuccRateMean();
+					succRateLast += loadStatsSnapshot.getSuccRateLast();
+					failRateMean += loadStatsSnapshot.getFailRateMean();
+					failRateLast += loadStatsSnapshot.getFailRateLast();
+					byteRateMean += loadStatsSnapshot.getByteRateMean();
+					byteRateLast += loadStatsSnapshot.getByteRateLast();
 					durationValues = loadStatsSnapshot.getDurationValues();
 					if(durationValues != null) {
 						for(final long duration : durationValues) {

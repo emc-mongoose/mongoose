@@ -35,7 +35,7 @@ extends DistributedLoadBuilderTestBase {
 	private final static String
 		LOAD_SEQ[] = { "create", "read", "update", "append", "delete" };
 	private final static int
-		LOAD_LIMIT_TIME_SEC = 60,
+		LOAD_LIMIT_TIME_SEC = 50,
 		PRECISION_SEC = 10,
 		COUNT_STEPS = LOAD_SEQ.length;
 	//
@@ -131,7 +131,7 @@ extends DistributedLoadBuilderTestBase {
 				Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
 				Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
 				Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
-				Assert.assertEquals("BWAvg[MB*s^-1]]", nextRec.get(19));
+				Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
 				Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
 			} else {
 				Assert.fail("No CSV records are in the summaries log file");
