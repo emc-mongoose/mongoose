@@ -10,7 +10,6 @@ import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
-import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 //
 import com.emc.mongoose.run.cli.HumanFriendly;
 import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
