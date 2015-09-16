@@ -154,7 +154,7 @@ implements LoadClient<T> {
 		LoadCloseHook.add(this);
 	}
 	//
-	public void postProcessDataItems(final Collection<T> frame) {
+	private void postProcessDataItems(final Collection<T> frame) {
 		//
 		if(consumer == null) {
 			for(final T nextDataItem : frame) {
@@ -274,15 +274,16 @@ implements LoadClient<T> {
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("interruptOnCountLimitReached<" + getName() + ">");
-			while(!currThread.isInterrupted()) {
-				if(maxCount >= lastStats.getSuccCount() + lastStats.getFailCount()) {
+			if(maxCount > 0) {
+				try {
+					while(
+						!currThread.isInterrupted() &&
+						maxCount > lastStats.getSuccCount() + lastStats.getFailCount()
+					) {
+						LockSupport.parkNanos(1);
+					}
+				} finally {
 					BasicLoadClient.this.interrupt();
-					LOG.debug(
-						Markers.MSG, "Load client \"{}\" was interrupted due to count limit {}",
-						BasicLoadClient.this, maxCount
-					);
-				} else {
-					LockSupport.parkNanos(1);
 				}
 			}
 		}
@@ -352,6 +353,7 @@ implements LoadClient<T> {
 				}
 			}
 			//
+			ioStats.start();
 			scheduleSvcMgmtTasks();
 			prestartAllCoreThreads();
 			//
@@ -537,6 +539,7 @@ implements LoadClient<T> {
 			if(!remoteLoadMap.isEmpty()) {
 				interrupt();
 				logMetrics(Markers.PERF_SUM);
+				ioStats.close();
 				//
 				LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
 				LoadSvc<T> nextLoadSvc;
@@ -690,9 +693,6 @@ implements LoadClient<T> {
 			} else {
 				LOG.debug(Markers.MSG, "Await tasks execution timeout");
 			}
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Interrupted");
-			throw new InterruptedException();
 		} finally {
 			LOG.debug(
 				Markers.MSG, "Interrupted await tasks: {}",

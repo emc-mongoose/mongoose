@@ -194,40 +194,48 @@ extends IOStatsBase {
 		);
 	}
 	//
+	private final class LoadIOStatsSnapshotTask
+	implements Runnable {
+		//
+		private final String loadSvcAddr;
+		//
+		public LoadIOStatsSnapshotTask(final String loadSvcAddr) {
+			this.loadSvcAddr = loadSvcAddr;
+		}
+		//
+		@Override
+		public void run() {
+			Snapshot loadSvcStatsSnapshot;
+			final LoadSvc loadSvc = loadSvcMap.get(loadSvcAddr);
+			final Thread currThread = Thread.currentThread();
+			currThread.setName(currThread.getName() + "@" + loadSvcAddr);
+			while(!currThread.isInterrupted()) {
+				try {
+					loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
+					if(loadSvcStatsSnapshot != null) {
+						loadStatsSnapshotMap.put(loadSvcAddr, loadSvcStatsSnapshot);
+					} else {
+						LOG.warn(
+							Markers.ERR,
+							"Failed to load the stats snapshot from the load server @ {}",
+							loadSvcAddr
+						);
+					}
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e,
+						"Failed to fetch the metrics snapshot from {}", loadSvcAddr
+					);
+				}
+				LockSupport.parkNanos(1);
+			}
+		}
+	}
+	//
 	@Override
 	public final void start() {
 		for(final String addr : loadSvcMap.keySet()) {
-			statsLoader.submit(
-				new Runnable() {
-					@Override
-					public void run() {
-						Snapshot loadSvcStatsSnapshot;
-						final LoadSvc loadSvc = loadSvcMap.get(addr);
-						final Thread currThread = Thread.currentThread();
-						currThread.setName(currThread.getName() + "@" + addr);
-						while(!currThread.isInterrupted()) {
-							try {
-								loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
-								if(loadSvcStatsSnapshot != null) {
-									loadStatsSnapshotMap.put(addr, loadSvcStatsSnapshot);
-								} else {
-									LOG.warn(
-										Markers.ERR,
-										"Failed to load the stats snapshot from the load server @ {}",
-										addr
-									);
-								}
-							} catch(final RemoteException e) {
-								LogUtil.exception(
-									LOG, Level.WARN, e,
-									"Failed to fetch the metrics snapshot from {}", addr
-								);
-							}
-							LockSupport.parkNanos(1);
-						}
-					}
-				}
-			);
+			statsLoader.submit(new LoadIOStatsSnapshotTask(addr));
 		}
 		statsLoader.shutdown();
 		super.start();

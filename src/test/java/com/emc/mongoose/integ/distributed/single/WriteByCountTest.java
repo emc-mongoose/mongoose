@@ -44,6 +44,6 @@ extends DistributedClientTestBase {
 	//
 	@Test
 	public void checkReturnedCount() {
-		Assert.assertEquals(countWritten, COUNT_TO_WRITE);
+		Assert.assertEquals(COUNT_TO_WRITE, countWritten);
 	}
 }
