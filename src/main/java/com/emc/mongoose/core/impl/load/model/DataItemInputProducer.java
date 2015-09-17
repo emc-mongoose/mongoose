@@ -123,6 +123,7 @@ implements Producer<T> {
 				} catch(final EOFException | ClosedByInterruptException | IllegalStateException e) {
 					if (isCircular) {
 						reset();
+						continue;
 					} else {
 						break;
 					}
