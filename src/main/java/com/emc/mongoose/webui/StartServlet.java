@@ -59,7 +59,8 @@ public final class StartServlet extends CommonServlet {
 			return;
 		}
 		//
-		runTimeConfig = runTimeConfig.clone();
+		runTimeConfig = (RunTimeConfig) runTimeConfig.clone();
+		runTimeConfig.setProperty(RunTimeConfig.KEY_RUN_ID, LogUtil.newRunId());
 		setupRunTimeConfig(request);
 		updateLastRunTimeConfig(runTimeConfig);
 		//

@@ -79,6 +79,13 @@ public final class LogUtil {
 	static {
 		init();
 	}
+	//
+	public static String newRunId() {
+		return LogUtil.FMT_DT.format(
+			Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime()
+		);
+	}
+	//
 	public static void init() {
 		LOG_CTX_LOCK.lock();
 		try {
@@ -91,12 +98,7 @@ public final class LogUtil {
 				// set "run.id" property with timestamp value if not set before
 				String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
-					System.setProperty(
-						RunTimeConfig.KEY_RUN_ID,
-						FMT_DT.format(
-							Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime()
-						)
-					);
+					System.setProperty(RunTimeConfig.KEY_RUN_ID, newRunId());
 				}
 				// determine the logger configuration file path
 				Path logConfPath = Paths.get(

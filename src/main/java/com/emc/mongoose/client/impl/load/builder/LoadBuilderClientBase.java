@@ -14,6 +14,7 @@ import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +25,10 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 /**
  Created by kurila on 20.10.14.
@@ -35,11 +39,14 @@ implements LoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected String listFile = null, dataNodeAddrs[] = null;
+	protected String listFile = null, nodeAddrs[] = null, loadServerAddrs[] = null;
 	protected volatile RunTimeConfig runTimeConfig;
 	protected volatile RequestConfig<T> reqConf = getDefaultRequestConfig();
 	protected long maxCount = 0, minObjSize, maxObjSize;
 	protected float objSizeBias;
+	//
+	protected boolean flagAssignLoadSvcToNode = false;
+	protected final Map<String, RunTimeConfig> loadSvcConfMap = new HashMap<>();
 	//
 	public LoadBuilderClientBase()
 	throws IOException {
@@ -49,12 +56,12 @@ implements LoadBuilderClient<T, U> {
 	public LoadBuilderClientBase(final RunTimeConfig runTimeConfig)
 	throws IOException {
 		//
-		super(runTimeConfig.getLoadServers().length);
-		final String remoteServers[] = runTimeConfig.getLoadServers();
+		super(runTimeConfig.getLoadServerAddrs().length);
+		loadServerAddrs = runTimeConfig.getLoadServerAddrs();
 		//
 		LoadBuilderSvc<T, U> loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
-		for(final String serverAddr : remoteServers) {
+		for(final String serverAddr : loadServerAddrs) {
 			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
 			loadBuilderSvc = resolve(serverAddr);
 			nextInstanceN = loadBuilderSvc.getNextInstanceNum(runTimeConfig.getRunId());
@@ -66,7 +73,7 @@ implements LoadBuilderClient<T, U> {
 		// set properties should be invoked only after the map is filled already
 		setProperties(runTimeConfig);
 		//
-		for(final String serverAddr : remoteServers) {
+		for(final String serverAddr : loadServerAddrs) {
 			get(serverAddr).setNextInstanceNum(runTimeConfig.getRunId(), maxLastInstanceN);
 		}
 	}
@@ -75,6 +82,28 @@ implements LoadBuilderClient<T, U> {
 	//
 	protected abstract LoadBuilderSvc<T, U> resolve(final String serverAddr)
 	throws IOException;
+	//
+	private int greatestCommonDivider(final int x, final int y) {
+		int z = 0;
+		if(x > y) {
+			for(int i = y; i > 0; i --) {
+				if(x % i == 0 && y % i == 0) {
+					z = i;
+					break;
+				}
+			}
+		} else if(x < y) {
+			for(int i = x; i > 0; i --) {
+				if(x % i == 0 && y % i == 0) {
+					z = i;
+					break;
+				}
+			}
+		} else {
+			z = x;
+		}
+		return z;
+	}
 	//
 	@Override
 	public final LoadBuilderClient<T, U> setProperties(final RunTimeConfig runTimeConfig)
@@ -87,16 +116,74 @@ implements LoadBuilderClient<T, U> {
 			reqConf.setProperties(runTimeConfig);
 		}
 		//
-		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			LOG.debug(Markers.MSG, "Applying the configuration to server @ \"{}\"...", addr);
-			nextBuilder.setProperties(runTimeConfig);
+		final String newNodeAddrs[] = runTimeConfig.getStorageAddrsWithPorts();
+		if(newNodeAddrs.length > 0) {
+			nodeAddrs = newNodeAddrs;
+		}
+		flagAssignLoadSvcToNode = runTimeConfig.getFlagAssignLoadServerToNode();
+		if(flagAssignLoadSvcToNode) {
+			final int
+				countNodes = nodeAddrs.length,
+				countLoadSvcs = loadServerAddrs.length;
+			if(countLoadSvcs > 1 || countNodes > 1) {
+				final int k = greatestCommonDivider(countNodes, countLoadSvcs);
+				if(k > 0) {
+					final int
+						countLoadSvcPerSameNodeList = countLoadSvcs / k,
+						countNodesPerLoadSvc = countNodes / k;
+					RunTimeConfig nextConfig;
+					String nextLoadSvcAddr, nextNodeAddrs;
+					List<String> nextNodeAddrList;
+					for(int i = 0; i < k; i ++) {
+						nextNodeAddrList = new ArrayList<>(countNodesPerLoadSvc);
+						for(int j = 0; j < countNodesPerLoadSvc; j ++) {
+							nextNodeAddrList.add(
+								nodeAddrs[i * countNodesPerLoadSvc + j]
+							);
+						}
+						nextNodeAddrs = StringUtils.join(nextNodeAddrList, ',');
+						for(int j = 0; j < countLoadSvcPerSameNodeList; j ++) {
+							nextLoadSvcAddr = loadServerAddrs[
+								i * countLoadSvcPerSameNodeList + j
+							];
+							nextConfig = loadSvcConfMap.get(nextLoadSvcAddr);
+							if(nextConfig == null) {
+								nextConfig = (RunTimeConfig) runTimeConfig.clone();
+								loadSvcConfMap.put(nextLoadSvcAddr, nextConfig);
+							}
+							LOG.info(
+								Markers.MSG, "Next assingment: " + nextLoadSvcAddr + " <-> " +
+								nextNodeAddrs
+							);
+							nextConfig.setProperty(RunTimeConfig.KEY_STORAGE_ADDRS, newNodeAddrs);
+						}
+					}
+				} else {
+					throw new IllegalStateException(
+						"Failed to calculate the greatest common divider for the count of the " +
+						"load servers (" + countLoadSvcs + ") and the count of the storage nodes " +
+						"(" + countNodes + ")"
+					);
+				}
+			}
 		}
 		//
-		final String newAddrs[] = runTimeConfig.getStorageAddrsWithPorts();
-		if(newAddrs != null && newAddrs.length > 0) {
-			dataNodeAddrs = newAddrs;
+		LoadBuilderSvc<T, U> nextBuilder;
+		RunTimeConfig nextLoadSvcConfig;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextLoadSvcConfig = loadSvcConfMap.get(addr);
+			if(nextLoadSvcConfig == null) {
+				nextLoadSvcConfig = runTimeConfig; // use default
+				LOG.debug(
+					Markers.MSG, "Applying the common configuration to server @ \"{}\"...", addr
+				);
+			} else {
+				LOG.debug(
+					Markers.MSG, "Applying the specific configuration to server @ \"{}\"...", addr
+				);
+			}
+			nextBuilder.setProperties(nextLoadSvcConfig);
 		}
 		//
 		setMaxCount(runTimeConfig.getLoadLimitCount());
@@ -281,7 +368,7 @@ implements LoadBuilderClient<T, U> {
 	public final LoadBuilderClient<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException {
 		if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
-			this.dataNodeAddrs = dataNodeAddrs;
+			this.nodeAddrs = dataNodeAddrs;
 			//
 			LoadBuilderSvc<T, U> nextBuilder;
 			for(final String addr : keySet()) {

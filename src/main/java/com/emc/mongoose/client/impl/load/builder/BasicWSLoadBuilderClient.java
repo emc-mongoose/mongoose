@@ -104,7 +104,7 @@ implements WSLoadBuilderClient<T, U> {
 	@Override
 	protected final void invokePreConditions()
 	throws IllegalStateException {
-		reqConf.configureStorage(dataNodeAddrs);
+		reqConf.configureStorage(nodeAddrs);
 	}
 	//
 	@Override  @SuppressWarnings("unchecked")
@@ -126,7 +126,7 @@ implements WSLoadBuilderClient<T, U> {
 		}
 		//
 		final DataItemInput<T> itemSrc = LoadBuilderBase.buildItemInput(
-			(Class<T>) BasicWSObject.class, reqConf, dataNodeAddrs, listFile, maxCount,
+			(Class<T>) BasicWSObject.class, reqConf, nodeAddrs, listFile, maxCount,
 			minObjSize, maxObjSize, objSizeBias
 		);
 		//

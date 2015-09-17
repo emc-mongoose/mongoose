@@ -72,7 +72,8 @@ implements Externalizable {
 		KEY_DATA_SRC_BATCH_SIZE = "data.src.batchSize",
 		//
 		KEY_LOAD_CONNS = "load.connections",
-		KEY_LOAD_SERVERS = "load.servers",
+		KEY_LOAD_SERVER_ADDRS = "load.server.addrs",
+		KEY_LOAD_SERVER_ASSIGN2_NODE = "load.server.assignTo.node",
 		KEY_LOAD_THREADS = "load.threads",
 		KEY_CREATE_THREADS = "load.type.create.threads",
 		KEY_READ_THREADS = "load.type.read.threads",
@@ -146,7 +147,7 @@ implements Externalizable {
 	}
 	//
 	public static RunTimeConfig getDefault() {
-		return DEFAULT_INSTANCE.clone();
+		return (RunTimeConfig) DEFAULT_INSTANCE.clone();
 	}
 	//
 	public static void resetContext() {
@@ -474,8 +475,12 @@ implements Externalizable {
 		return getLong("remote.socket.selectInterval");
 	}
 	//
-	public final String[] getLoadServers() {
-		return getStringArray(KEY_LOAD_SERVERS);
+	public final String[] getLoadServerAddrs() {
+		return getStringArray(KEY_LOAD_SERVER_ADDRS);
+	}
+	//
+	public final boolean getFlagAssignLoadServerToNode() {
+		return getBoolean(KEY_LOAD_SERVER_ASSIGN2_NODE);
 	}
 	//
 	public final String getDataSrcFPath() {
@@ -723,18 +728,6 @@ implements Externalizable {
 				}
 			}
 		}
-	}
-	//
-	@Override
-	public synchronized RunTimeConfig clone() {
-		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
-		if(runTimeConfig != null) {
-			runTimeConfig.set(
-				KEY_RUN_ID,
-				LogUtil.FMT_DT.format(Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime())
-			);
-		}
-		return runTimeConfig;
 	}
 	//
 	public void overrideSystemProperties(Map<String, String> props){
