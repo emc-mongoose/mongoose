@@ -33,6 +33,10 @@ implements Producer<T> {
 	protected T lastDataItem;
 	protected boolean isCircular;
 	//
+	public DataItemInputProducer(final DataItemInput<T> itemIn) {
+		this(itemIn, false);
+	}
+	//
 	public DataItemInputProducer(
 		final DataItemInput<T> itemIn, final boolean isCircular
 	) {
