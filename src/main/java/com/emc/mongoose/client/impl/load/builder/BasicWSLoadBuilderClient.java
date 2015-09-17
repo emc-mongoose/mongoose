@@ -13,7 +13,6 @@ import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -25,15 +24,10 @@ import com.emc.mongoose.client.impl.load.executor.BasicWSLoadClient;
 import com.emc.mongoose.client.api.load.builder.WSLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.WSLoadClient;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -118,51 +112,17 @@ implements WSLoadBuilderClient<T, U> {
 	throws RemoteException {
 		//
 		final Map<String, LoadSvc<T>> remoteLoadMap = new ConcurrentHashMap<>();
-		final Map<String, JMXConnector> remoteJMXConnMap = new ConcurrentHashMap<>();
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
 		LoadSvc<T> nextLoad;
 		//
-		String svcJMXAddr;
-		JMXServiceURL nextJMXURL;
-		JMXConnector nextJMXConn;
-		final int jmxImportPort = runTimeConfig.getRemotePortImport();
-		//
 		for(final String addr : keySet()) {
-			//
 			nextBuilder = get(addr);
 			nextBuilder.setRequestConfig(reqConf); // should upload req conf right before instancing
 			nextLoad = (LoadSvc<T>) ServiceUtils.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
 			remoteLoadMap.put(addr, nextLoad);
-			//
-			nextJMXURL = null;
-			try {
-				svcJMXAddr = ServiceUtils.JMXRMI_URL_PREFIX + addr + ":" +
-					Integer.toString(jmxImportPort) + ServiceUtils.JMXRMI_URL_PATH +
-					Integer.toString(jmxImportPort);
-				nextJMXURL = new JMXServiceURL(svcJMXAddr);
-				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
-			} catch(final MalformedURLException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to generate JMX URL");
-			}
-			//
-			nextJMXConn = null;
-			if(nextJMXURL != null) {
-				try {
-					nextJMXConn = JMXConnectorFactory.connect(nextJMXURL, null);
-				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.ERROR, e, "Failed to connect to \"{}\" via JMX", nextJMXURL
-					);
-				}
-			}
-			//
-			if(nextJMXConn!=null) {
-				remoteJMXConnMap.put(addr, nextJMXConn);
-			}
-			//
 		}
 		//
 		final DataItemInput<T> itemSrc = LoadBuilderBase.buildItemInput(
@@ -171,7 +131,7 @@ implements WSLoadBuilderClient<T, U> {
 		);
 		//
 		return (U) new BasicWSLoadClient<>(
-			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
+			runTimeConfig, remoteLoadMap, (WSRequestConfig<T>) reqConf,
 			runTimeConfig.getLoadLimitCount(), itemSrc
 		);
 	}

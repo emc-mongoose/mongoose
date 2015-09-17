@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.load.executor;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
@@ -143,7 +144,7 @@ implements WSLoadExecutor<T> {
 		//
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
-				ioReactorConfigBuilder.build(), new GroupThreadFactory(getName())
+				ioReactorConfigBuilder.build(), new IOWorker.Factory(getName())
 			);
 		} catch(final IOReactorException e) {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);

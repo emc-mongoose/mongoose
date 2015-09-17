@@ -162,7 +162,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
 		// distributed mode
-		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
+		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		ServiceUtils.init();
 		//
 		try(
@@ -171,7 +171,7 @@ implements Runnable {
 		) {
 			loadSvcBuilder.start();
 			TimeUnit.SECONDS.sleep(1);
-			rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_EXPORT, 1299);
+			rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_MONITOR, 1299);
 			try(
 				final StorageClient<WSObject> client = clientBuilder
 					.setClientMode(new String[] {ServiceUtils.getHostAddr()})

@@ -24,7 +24,7 @@ extends LoadExecutorBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final float rateLimit;
-	private final int tgtDur;
+	private final int tgtDurMicroSec;
 	//
 	protected LimitedRateLoadExecutorBase(
 		final Class<T> dataCls,
@@ -43,10 +43,12 @@ extends LoadExecutorBase<T> {
 		}
 		this.rateLimit = rateLimit;
 		if(rateLimit > 0) {
-			tgtDur = (int) (1000000 * totalConnCount / rateLimit);
-			LOG.debug(Markers.MSG, "{}: target I/O task durations is {}[us]", getName(), tgtDur);
+			tgtDurMicroSec = (int) (1000000 * totalConnCount / rateLimit);
+			LOG.debug(
+				Markers.MSG, "{}: target I/O task durations is {}[us]", getName(), tgtDurMicroSec
+			);
 		} else {
-			tgtDur = 0;
+			tgtDurMicroSec = 0;
 		}
 	}
 	/**
@@ -56,8 +58,10 @@ extends LoadExecutorBase<T> {
 	@Override
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
-		if(rateLimit > 0 && throughPutSucc.getMeanRate() > rateLimit) {
-			final int microDelay = (int) (tgtDur - durTasksSum.get() / throughPutSucc.getCount());
+		if(rateLimit > 0 && lastStats.getSuccRateLast() > rateLimit) {
+			final int microDelay = (int) (
+				tgtDurMicroSec - lastStats.getDurationSum() / lastStats.getSuccRateMean()
+			);
 			if(microDelay > 0) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, "Next delay: {}[us]", microDelay);

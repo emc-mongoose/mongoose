@@ -7,6 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -24,7 +25,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,14 +35,8 @@ implements LoadState<T> {
 	//
 	private final int loadNumber;
 	private final RunTimeConfig runTimeConfig;
-	private final long countSucc;
-	private final long countFail;
-	private final long countBytes;
-	private final long countSubm;
-	private final long timeValue;
+	private final IOStats.Snapshot ioStatsSnapshot;
 	private final T lastDataItem;
-	private final TimeUnit timeUnit;
-	private final long durationValues[], latencyValues[];
 	//
 	@Override
 	public int getLoadNumber() {
@@ -55,33 +49,8 @@ implements LoadState<T> {
 	}
 	//
 	@Override
-	public long getCountSucc() {
-		return countSucc;
-	}
-	//
-	@Override
-	public long getCountFail() {
-		return countFail;
-	}
-	//
-	@Override
-	public long getCountBytes() {
-		return countBytes;
-	}
-	//
-	@Override
-	public long getCountSubm() {
-		return countSubm;
-	}
-	//
-	@Override
-	public long [] getDurationValues() {
-		return durationValues;
-	}
-	//
-	@Override
-	public long [] getLatencyValues() {
-		return latencyValues;
+	public IOStats.Snapshot getStatsSnapshot() {
+		return ioStatsSnapshot;
 	}
 	//
 	@Override
@@ -90,29 +59,19 @@ implements LoadState<T> {
 	}
 	//
 	@Override
-	public TimeUnit getLoadElapsedTimeUnit() {
-		return timeUnit;
-	}
-	//
-	@Override
-	public long getLoadElapsedTimeValue() {
-		return timeValue;
-	}
-	//
-	@Override
 	public boolean isLoadFinished(final RunTimeConfig rtConfig) {
 		//  time limitations
-		final long loadTimeMillis = (rtConfig.getLoadLimitTimeUnit().
-			toMillis(rtConfig.getLoadLimitTimeValue())) > 0
-			? (rtConfig.getLoadLimitTimeUnit().
-			toMillis(rtConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
-		final long stateTimeMillis = getLoadElapsedTimeUnit().
-			toMillis(getLoadElapsedTimeValue());
+		final TimeUnit loadLimitTimeUnit = rtConfig.getLoadLimitTimeUnit();
+		final long loadLimitTimeValue = rtConfig.getLoadLimitTimeValue();
+		final long loadTimeMicroSec = loadLimitTimeValue > 0 ?
+			loadLimitTimeUnit.toMicros(loadLimitTimeValue) : Long.MAX_VALUE;
+		final long stateTimeMicroSec = ioStatsSnapshot.getElapsedTime();
 		//  count limitations
-		final long counterResults = getCountSucc() + getCountFail();
-		final long maxCount = rtConfig.getLoadLimitCount() > 0
-			? rtConfig.getLoadLimitCount() : Long.MAX_VALUE;
-		return (counterResults >= maxCount) || (stateTimeMillis >= loadTimeMillis);
+		final long counterResults = ioStatsSnapshot.getSuccCount() + ioStatsSnapshot.getFailCount();
+		final long loadLimitCount = rtConfig.getLoadLimitCount();
+		final long maxCount = loadLimitCount > 0 ?
+			rtConfig.getLoadLimitCount() : Long.MAX_VALUE;
+		return (counterResults >= maxCount) || (stateTimeMicroSec >= loadTimeMicroSec);
 	}
 	//
 	public static class Builder<T extends DataItem, U extends BasicLoadState<T>>
@@ -120,14 +79,8 @@ implements LoadState<T> {
 		//
 		private int loadNumber;
 		private RunTimeConfig runTimeConfig;
-		private long countSucc;
-		private long countFail;
-		private long countBytes;
+		private IOStats.Snapshot ioStatsSnapshot;
 		private T lastDataItem;
-		private long countSubm;
-		private long timeValue;
-		private TimeUnit timeUnit;
-		private long durationValues[], latencyValues[];
 		//
 		@Override
 		public Builder<T, U> setLoadNumber(final int loadNumber) {
@@ -142,56 +95,14 @@ implements LoadState<T> {
 		}
 		//
 		@Override
-		public Builder<T, U> setCountSucc(final long countSucc) {
-			this.countSucc = countSucc;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setCountFail(final long countFail) {
-			this.countFail = countFail;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setCountBytes(final long countBytes) {
-			this.countBytes = countBytes;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setCountSubm(final long countSubm) {
-			this.countSubm = countSubm;
+		public Builder<T, U> setStatsSnapshot(final IOStats.Snapshot ioStatsSnapshot) {
+			this.ioStatsSnapshot = ioStatsSnapshot;
 			return this;
 		}
 		//
 		@Override
 		public Builder<T, U> setLastDataItem(final T lastDataItem) {
 			this.lastDataItem = lastDataItem;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setLoadElapsedTimeValue(final long timeValue) {
-			this.timeValue = timeValue;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setLoadElapsedTimeUnit(final TimeUnit timeUnit) {
-			this.timeUnit = timeUnit;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setDurationValues(final long durationValues[]) {
-			this.durationValues = durationValues;
-			return this;
-		}
-		//
-		@Override
-		public Builder<T, U> setLatencyValues(final long latencyValues[]) {
-			this.latencyValues = latencyValues;
 			return this;
 		}
 		//
@@ -206,14 +117,7 @@ implements LoadState<T> {
 	private BasicLoadState(final Builder<T, BasicLoadState<T>> builder) {
 		this.loadNumber = builder.loadNumber;
 		this.runTimeConfig = builder.runTimeConfig;
-		this.countSucc = builder.countSucc;
-		this.countFail = builder.countFail;
-		this.countBytes = builder.countBytes;
-		this.countSubm = builder.countSubm;
-		this.timeValue = builder.timeValue;
-		this.timeUnit = builder.timeUnit;
-		this.durationValues = builder.durationValues;
-		this.latencyValues = builder.latencyValues;
+		this.ioStatsSnapshot = builder.ioStatsSnapshot;
 		this.lastDataItem = builder.lastDataItem;
 	}
 	//
@@ -225,10 +129,12 @@ implements LoadState<T> {
 		).resolve(Constants.STATES_FILE).toString();
 		//  if load states list is empty or file w/ load states doesn't exist, then init
 		//  map entry value w/ empty list
-		LoadExecutor.RESTORED_STATES_MAP.put(rtConfig.getRunId(), new ArrayList<LoadState>());
+		LoadExecutor.RESTORED_STATES_MAP.put(
+			rtConfig.getRunId(), new ArrayList<LoadState<? extends DataItem>>()
+		);
 		if(isSavedStateOfRunExists(rtConfig.getRunId())) {
-			final List<LoadState> loadStates =
-				getScenarioStateFromFile(rtConfig.getRunId(), fullStateFileName);
+			final List<LoadState<? extends DataItem>>
+				loadStates = getRunStateFromFile(rtConfig.getRunId(), fullStateFileName);
 			if(loadStates != null && !loadStates.isEmpty()) {
 				//  check if immutable params were changed for load executors
 				for(final LoadState state : loadStates) {
@@ -266,12 +172,12 @@ implements LoadState<T> {
 	}
 	//
 	@SuppressWarnings("unchecked")
-	private static List<LoadState> getScenarioStateFromFile(
+	private static List<LoadState<? extends DataItem>> getRunStateFromFile(
 		final String runId, final String fileName
 	) {
 		try(final FileInputStream fis = new FileInputStream(fileName)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
-				return (List<LoadState>) ois.readObject();
+				return (List<LoadState<?>>) ois.readObject();
 			}
 		} catch (final FileNotFoundException e) {
 			LOG.debug(
@@ -300,58 +206,67 @@ implements LoadState<T> {
 		}
 	}
 	//
-	public static LoadState findStateByLoadNumber(
+	@SuppressWarnings("unchecked")
+	public static <T extends DataItem> LoadState<T> findStateByLoadNumber(
 		final int loadNumber, final RunTimeConfig rtConfig
 	) {
-		final List<LoadState> loadStates =
-			LoadExecutor.RESTORED_STATES_MAP.get(rtConfig.getRunId());
-		for (final LoadState state : loadStates) {
-			if (state.getLoadNumber() == loadNumber) {
-				return state;
+		final List<LoadState<?>>
+			loadStates = LoadExecutor.RESTORED_STATES_MAP.get(rtConfig.getRunId());
+		for(final LoadState<? extends DataItem> state : loadStates) {
+			if(state.getLoadNumber() == loadNumber) {
+				return (LoadState<T>) state;
 			}
 		}
 		return null;
 	}
 	//
-	public static boolean isScenarioFinished(final RunTimeConfig rtConfig) {
-		final Queue<LoadState> states = LoadCloseHook.LOAD_STATES.get(rtConfig.getRunId());
+	public static boolean isRunFinished(
+		final RunTimeConfig rtConfig, final List<LoadState> states
+	) {
+		final TimeUnit loadLimitTimeUnit = rtConfig.getLoadLimitTimeUnit();
+		final long loadLimitTimeValue = rtConfig.getLoadLimitTimeValue();
+		final long timeLimitMicroSec = loadLimitTimeValue > 0 ?
+			loadLimitTimeUnit.toMicros(rtConfig.getLoadLimitTimeValue()) : Long.MAX_VALUE;
+		final long loadLimitCount = rtConfig.getLoadLimitCount() > 0 ?
+			rtConfig.getLoadLimitCount() : Long.MAX_VALUE;
 		//
-		final long runTimeMillis = (rtConfig.getLoadLimitTimeUnit().
-			toMillis(rtConfig.getLoadLimitTimeValue())) > 0
-			? (rtConfig.getLoadLimitTimeUnit().
-			toMillis(rtConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
-		final long maxItemsCountPerLoad = (rtConfig.getLoadLimitCount()) > 0
-			? rtConfig.getLoadLimitCount() : Long.MAX_VALUE;
-		//
-		for (final LoadState state : states) {
-			final long stateTimeMillis = state.getLoadElapsedTimeUnit()
-				.toMillis(state.getLoadElapsedTimeValue());
-			final long stateItemsCount = state.getCountSucc() + state.getCountFail();
-			if ((stateTimeMillis < runTimeMillis) && (stateItemsCount < maxItemsCountPerLoad)
-					&& (stateItemsCount < state.getCountSubm())) {
-				return false;
+		for(final LoadState state : states) {
+			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
+			final long elapsedTimeMicroSec = statsSnapshot.getElapsedTime();
+			final long stateItemsCount = statsSnapshot.getSuccCount() + statsSnapshot.getFailCount();
+			if(elapsedTimeMicroSec >= timeLimitMicroSec) {
+				LOG.debug(
+					Markers.MSG, "Elapsed time {} is not less than the limit {}",
+					elapsedTimeMicroSec, timeLimitMicroSec
+				);
+				return true;
+			}
+			if(stateItemsCount >= loadLimitCount) {
+				LOG.debug(
+					Markers.MSG, "Processed items count {} is not less than the limit {}",
+					elapsedTimeMicroSec, timeLimitMicroSec
+				);
+
+				return true;
 			}
 		}
-		return true;
+		return false;
 	}
 	//
-	public static void saveScenarioState(final RunTimeConfig rtConfig) {
-		final String currRunId = rtConfig.getRunId();
-		final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, currRunId).resolve(Constants.STATES_FILE).toString();
-		try (final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
-			try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-				oos.writeObject(new ArrayList<>(LoadCloseHook.LOAD_STATES.get(currRunId)));
+	public static void saveRunState(final String runId, final List<LoadState> loadStates) {
+		final String fullStateFileName = Paths
+			.get(RunTimeConfig.DIR_ROOT, Constants.DIR_LOG, runId)
+			.resolve(Constants.STATES_FILE)
+			.toString();
+		try(final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
+			try(final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+				synchronized(LoadCloseHook.LOAD_STATES_MAP) {
+					oos.writeObject(loadStates);
+				}
 			}
-			LOG.info(Markers.MSG, "Successfully saved state of run \"{}\"",
-				currRunId);
-			LOG.debug(Markers.MSG, "State of run was successfully saved in \"{}\" file",
-				fullStateFileName);
-			LoadCloseHook.LOAD_STATES.remove(currRunId);
+			LOG.info(Markers.MSG, "Successfully saved state of run \"{}\"", runId);
 		} catch (final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to save state of run \"{}\"",
-				currRunId);
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to save state of run \"{}\"", runId);
 		}
 	}
 }

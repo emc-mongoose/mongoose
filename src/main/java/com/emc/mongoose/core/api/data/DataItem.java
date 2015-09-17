@@ -33,23 +33,6 @@ extends ReadableByteChannel, Externalizable {
 	int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException;
 	//
-	@Deprecated
-	long writeRangeFully(final WritableByteChannel chanDst, final long relOffset, final long len)
-		throws IOException;
-	//
-	@Deprecated
-	long writeFully(final WritableByteChannel chanDst)
-	throws IOException;
-	//
 	int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
-	throws DataSizeException, DataCorruptionException, IOException;
-	//
-	@Deprecated
-	long readAndVerifyRangeFully(
-		final ReadableByteChannel chanSrc, final long relOffset, final long len
-	) throws DataSizeException, DataCorruptionException, IOException;
-	//
-	@Deprecated
-	long readAndVerifyFully(final ReadableByteChannel chanSrc)
 	throws DataSizeException, DataCorruptionException, IOException;
 }

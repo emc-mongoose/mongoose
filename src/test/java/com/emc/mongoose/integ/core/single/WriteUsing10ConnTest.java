@@ -3,6 +3,7 @@ package com.emc.mongoose.integ.core.single;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -18,6 +19,7 @@ import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -94,7 +96,7 @@ extends WSMockTestBase {
 							RunIdFileManager.flushAll();
 						}
 					} catch(final IOException e) {
-						Assert.fail(e.toString());
+						LogUtil.exception(LOG, Level.WARN, e, "Failed to execute the load job");
 					}
 				}
 			}, "writeScenarioThread"

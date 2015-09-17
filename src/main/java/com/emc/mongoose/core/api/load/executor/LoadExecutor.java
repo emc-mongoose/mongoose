@@ -7,6 +7,7 @@ import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 //
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import org.apache.logging.log4j.Marker;
 //
 import java.rmi.RemoteException;
@@ -25,29 +26,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface LoadExecutor<T extends DataItem>
 extends Producer<T>, AsyncConsumer<T> {
 	//
-	Map<String, AtomicInteger> INSTANCE_NUMBERS = new ConcurrentHashMap<>();
-	Map<String, List<LoadState>> RESTORED_STATES_MAP = new ConcurrentHashMap<>();
-	//AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
-	//
-	int NANOSEC_SCALEDOWN = 1000, MIB = 0x100000;
-	//
-	String
-		METRIC_NAME_SUCC = "succ",
-		METRIC_NAME_FAIL = "fail",
-		METRIC_NAME_SUBM = "subm",
-		METRIC_NAME_REJ = "rej",
-		METRIC_NAME_REQ = "req",
-		METRIC_NAME_TP = "TP",
-		METRIC_NAME_BW = "BW",
-		METRIC_NAME_DUR = "dur",
-		METRIC_NAME_LAT = "lat",
-		NAME_SEP = "@";
-	//
-	String
-		MSG_FMT_METRICS = "count=(%d/%d/%s); latency[us]=(%d/%d/%d/%d); " +
-			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)",
-		MSG_FMT_SUM_METRICS = "\"%s\" summary: count=(%d/%s); latency[us]=(%d/%d/%d/%d); " +
-			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
+	Map<String, AtomicInteger>
+		INSTANCE_NUMBERS = new ConcurrentHashMap<>();
+	Map<String, List<LoadState<? extends DataItem>>>
+		RESTORED_STATES_MAP = new ConcurrentHashMap<>();
 	//
 	String getName()
 	throws RemoteException;
@@ -68,6 +50,9 @@ extends Producer<T>, AsyncConsumer<T> {
 	throws RemoteException;
 	//
 	LoadState<T> getLoadState()
+	throws RemoteException;
+	//
+	IOStats.Snapshot getStatsSnapshot()
 	throws RemoteException;
 	//
 	void logMetrics(Marker marker)

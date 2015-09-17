@@ -2,6 +2,7 @@ package com.emc.mongoose.core.api.load.model;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 //
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
@@ -15,23 +16,9 @@ extends Serializable {
 	//
 	RunTimeConfig getRunTimeConfig();
 	//
-	long getCountSucc();
-	//
-	long getCountFail();
-	//
-	long getCountBytes();
-	//
-	long getCountSubm();
-	//
-	long [] getLatencyValues();
-	//
-	long [] getDurationValues();
+	IOStats.Snapshot getStatsSnapshot();
 	//
 	T getLastDataItem();
-	//
-	long getLoadElapsedTimeValue();
-	//
-	TimeUnit getLoadElapsedTimeUnit();
 	//
 	boolean isLoadFinished(final RunTimeConfig rtConfig);
 	//
@@ -41,25 +28,10 @@ extends Serializable {
 		//
 		Builder<T, U> setRunTimeConfig(final RunTimeConfig runTimeConfig);
 		//
-		Builder<T, U> setCountSucc(final long countSucc);
-		//
-		Builder<T, U> setCountFail(final long countFail);
-		//
-		Builder<T, U> setCountBytes(final long countBytes);
-		//
-		Builder<T, U> setCountSubm(final long countSubm);
-		//
-		Builder<T, U> setLatencyValues(final long latencyValues[]);
-		//
-		Builder<T, U> setDurationValues(final long durationValues[]);
-		//
-		Builder<T, U> setLoadElapsedTimeValue(final long timeValue);
+		Builder<T, U> setStatsSnapshot(final IOStats.Snapshot ioStatsSnapshot);
 		//
 		Builder<T, U> setLastDataItem(final T dataItem);
 		//
-		Builder<T, U> setLoadElapsedTimeUnit(final TimeUnit timeUnit);
-		//
 		U build();
-		//
 	}
 }

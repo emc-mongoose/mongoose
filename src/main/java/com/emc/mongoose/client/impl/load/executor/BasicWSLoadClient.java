@@ -15,7 +15,6 @@ import com.emc.mongoose.client.api.load.executor.WSLoadClient;
 //import org.apache.log.log4j.Logger;
 //
 import java.util.Map;
-import javax.management.remote.JMXConnector;
 /**
  Created by kurila on 08.05.14.
  */
@@ -27,9 +26,8 @@ implements WSLoadClient<T> {
 	//
 	public BasicWSLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
-		final Map<String, JMXConnector> remoteJMXConnMap, final WSRequestConfig<T> reqConf,
-		final long maxCount, final DataItemInput<T> itemSrc
+		final WSRequestConfig<T> reqConf, final long maxCount, final DataItemInput<T> itemSrc
 	) {
-		super(runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf, maxCount, itemSrc);
+		super(runTimeConfig, remoteLoadMap, reqConf, maxCount, itemSrc);
 	}
 }

@@ -1,14 +1,10 @@
 package com.emc.mongoose.core.impl.data;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.DataSizeException;
-import com.emc.mongoose.core.api.data.DataVerificationException;
 import com.emc.mongoose.core.api.data.model.DataSource;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
@@ -173,30 +169,6 @@ implements DataItem {
 		return chanDst.write(ringBuff);
 	}
 	//
-	@Override @Deprecated
-	public long writeFully(final WritableByteChannel chanDst)
-	throws IOException {
-		return writeRangeFully(chanDst, 0, size);
-	}
-	//
-	@Override @Deprecated
-	public final long writeRangeFully(
-		final WritableByteChannel chanDst, final long relOffset, final long len
-	) throws IOException {
-		long writtenCount = 0;
-		int n;
-		setRelativeOffset(relOffset);
-		while(writtenCount < len) {
-			n = write(chanDst, len - writtenCount);
-			if(n < 0) {
-				LOG.warn(Markers.ERR, "Channel returned {} as written byte count", n);
-			} else if(n > 0) {
-				writtenCount += n;
-			}
-		}
-		return writtenCount;
-	}
-	//
 	@Override
 	public final int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataCorruptionException, IOException {
@@ -221,42 +193,6 @@ implements DataItem {
 			}
 		}
 		return n;
-	}
-	//
-	@Override @Deprecated
-	public long readAndVerifyFully(final ReadableByteChannel chanSrc)
-	throws DataSizeException, DataCorruptionException, IOException {
-		return readAndVerifyRangeFully(chanSrc, 0, size);
-	}
-	// checks that data read from input equals the specified range
-	@Override @Deprecated
-	public final long readAndVerifyRangeFully(
-		final ReadableByteChannel chanSrc, final long relOffset, final long len
-	) throws DataSizeException, DataCorruptionException, IOException {
-		setRelativeOffset(relOffset);
-		final ByteBuffer buff = ByteBuffer.allocate((int) Math.min(Constants.BUFF_SIZE_HI, len));
-		//
-		int n;
-		long doneByteCount = 0;
-		try {
-			do {
-				n = readAndVerify(chanSrc, buff);
-				if(n > 0) {
-					doneByteCount += n;
-					buff.position(0)
-						.limit((int) Math.min(len - doneByteCount, buff.capacity()));
-				} else if (n < 0 && len != 0) { // premature end of stream
-					throw new DataSizeException();
-				}
-			} while (doneByteCount < len);
-		} catch(final DataSizeException e) {
-			e.offset = relOffset + doneByteCount;
-			throw e;
-		} catch(final DataCorruptionException e) {
-			e.offset += doneByteCount;
-			throw e;
-		}
-		return doneByteCount;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////

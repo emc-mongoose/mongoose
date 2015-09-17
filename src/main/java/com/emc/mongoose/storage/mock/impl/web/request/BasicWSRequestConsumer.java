@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.mock.impl.web.request;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.http.IOUtil;
+import com.emc.mongoose.common.net.http.ContentUtil;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import org.apache.http.protocol.HttpContext;
@@ -53,7 +53,7 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	@Override
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
-			final int ingestByteCount = IOUtil.consumeQuietly(decoder, expectedContentSize);
+			final int ingestByteCount = ContentUtil.consumeQuietly(decoder, expectedContentSize);
 			if(ingestByteCount > 0) {
 				expectedContentSize -= ingestByteCount;
 			}

@@ -75,16 +75,6 @@ public final class ServiceUtils {
 		}
 	}*/
 	//
-	public static boolean isMgmtSvcAllowed() {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		final boolean flagServeIfNotLoadServer = rtConfig.getFlagServeIfNotLoadServer();
-		final String runMode = rtConfig.getRunMode();
-		return
-			flagServeIfNotLoadServer ||
-			RUN_MODE_SERVER.equals(runMode) ||
-			RUN_MODE_COMPAT_SERVER.equals(runMode);
-	}
-	//
 	private static void rmiRegistryInit() {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		REGISTRY_LOCK.lock();
@@ -109,8 +99,8 @@ public final class ServiceUtils {
 	//
 	public static void mBeanServerInit() {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		if(isMgmtSvcAllowed()) {
-			getMBeanServer(rtConfig.getRemotePortExport());
+		if(rtConfig.getFlagServeJMX()) {
+			getMBeanServer(rtConfig.getRemotePortMonitor());
 		}
 	}
 	//

@@ -697,17 +697,9 @@ function charts(chartsArray) {
 			id: "avg",
 			text: "total average"
 		},
-		MIN_1 = {
-			id: "1min",
-			text: "last 1 min avg"
-		},
-		MIN_5 = {
-			id: "5min",
-			text: "last 5 min avg"
-		},
-		MIN_15 = {
-			id: "15min",
-			text: "last 15 min avg"
+		LAST = {
+			id: "last",
+			text: "last 10 sec"
 		};
 	var SCALE_TYPES = ["Linear Scale", "Log Scale"];
 	var SCALE_ORIENTATION = ["x", "y"];
@@ -790,7 +782,7 @@ function charts(chartsArray) {
 		"#7f00c0", // violet
 		"#007fc0" // azure
 	];
-	var CHART_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+	var CHART_MODES = [AVG, LAST];
     //
     function saveChart(chartDOMPath, w, h) {
         var html;
@@ -842,7 +834,7 @@ function charts(chartsArray) {
 	function simplifyChart(destArray, dataArray, chartType, runMetricsPeriodSec) {
 		var currMetricsPeriodSec = -runMetricsPeriodSec;
 		dataArray.forEach(function(d) {
-			var value = parsePerfAvgLogEvent(chartType, d);
+			var value = parsePerfAvgLogEvent(chartType, d.message.formattedMessage);
 			currMetricsPeriodSec += runMetricsPeriodSec;
 			destArray.forEach(function(item, i) {
 				if (item.values.length === CRITICAL_DOTS_COUNT) {
@@ -890,7 +882,7 @@ function charts(chartsArray) {
 	}
 	//
 	function drawThroughputCharts(data, json, sec) {
-		var updateFunction = drawChart(data, json, "seconds[s]", "TP[obj/s]",
+		var updateFunction = drawChart(data, json, "seconds[s]", "Rate[s^-1]",
 				"#tp-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
 			sec);
 		return {
@@ -901,7 +893,7 @@ function charts(chartsArray) {
 	}
 	//
 	function drawBandwidthCharts(data, json, sec) {
-		var updateFunction = drawChart(data, json, "seconds[s]", "BW[MB/s]",
+		var updateFunction = drawChart(data, json, "seconds[s]", "Rate[MB*s^-1]",
 				"#bw-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
 			sec);
 		return {
@@ -911,22 +903,22 @@ function charts(chartsArray) {
 		};
 	}
 	//
-	function parsePerfAvgLogEvent(chartType, json) {
-		var splitIndex = 0;
+	function parsePerfAvgLogEvent(chartType, value) {
+		var result = null;
 		switch(chartType) {
 			case CHART_TYPES.TP:
-				splitIndex = 2;
+				var tpPattern = "[\\s]+TP\\[s\\^\\-1\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\);";
+				var tpArray = value.match(tpPattern);
+				result = tpArray.slice(1, tpArray.length);
 				break;
 			case CHART_TYPES.BW:
-				splitIndex = 3;
+				var bwPattern = "[\\s]+BW\\[MB\\*s\\^\\-1\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\)";
+				var bwArray = value.match(bwPattern);
+				result = bwArray.slice(1, bwArray.length);
 				break;
 		}
 		//
-		var parsedString = json.message.formattedMessage.split(";")[splitIndex];
-		var first = parsedString.indexOf("(") + 1;
-		var second = parsedString.lastIndexOf(")");
-		var value = parsedString.substring(first, second).split("/");
-		return value;
+		return result;
 	}
 	//
 	function appendScaleLabels(svg, chartEntry, addHeight) {
@@ -1327,22 +1319,9 @@ function charts(chartsArray) {
 				saveChart(chartDOMPath, 1070, 460);
 			});
 		return function(chartType, value) {
-			var splitIndex = 0;
-			switch(chartType) {
-				case CHART_TYPES.TP:
-					splitIndex = 2;
-					break;
-				case CHART_TYPES.BW:
-					splitIndex = 3;
-					break;
-			}
-			//
 			currentMetricsPeriodSec += parseInt(runMetricsPeriodSec);
 			//
-			var parsedString = value.split(";")[splitIndex];
-			var first = parsedString.indexOf("(") + 1;
-			var second = parsedString.lastIndexOf(")");
-			value = parsedString.substring(first, second).split("/");
+			var parsedValue = parsePerfAvgLogEvent(chartType, value);
 			//
 			data.forEach(function(d, i) {
 				if (d.values.length === CRITICAL_DOTS_COUNT) {
@@ -1383,7 +1362,7 @@ function charts(chartsArray) {
 					}
 					d.values = newDotsArray;
 				}
-				d.values.push({x: currentMetricsPeriodSec, y: parseFloat(value[i])});
+				d.values.push({x: currentMetricsPeriodSec, y: parseFloat(parsedValue[i])});
 			});
 			//
 			while (isTimeLimitReached(x.domain()[x.domain().length - 1], currTimeUnit)) {
@@ -1423,6 +1402,8 @@ function charts(chartsArray) {
 			var runMetricsPeriodSec =
 				parseInt(json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec]);
 			//
+			LAST.text = "last " + runMetricsPeriodSec + " sec";
+			//
 			var data = [
 				{
 					name: AVG,
@@ -1430,17 +1411,7 @@ function charts(chartsArray) {
 						{x: 0, y: 0}
 					]
 				}, {
-					name: MIN_1,
-					values: [
-						{x: 0, y: 0}
-					]
-				}, {
-					name: MIN_5,
-					values: [
-						{x: 0, y: 0}
-					]
-				}, {
-					name: MIN_15,
+					name: LAST,
 					values: [
 						{x: 0, y: 0}
 					]
@@ -1483,20 +1454,12 @@ function charts(chartsArray) {
 					id: "avg",
 					text: "total average"
 				},
-				MIN_1 = {
-					id: "1min",
-					text: "last 1 min avg"
-				},
-				MIN_5 = {
-					id: "5min",
-					text: "last 5 min avg"
-				},
-				MIN_15 = {
-					id: "15min",
-					text: "last 15 min avg"
+				LAST = {
+					id: "last",
+					text: "last " + runMetricsPeriodSec + " sec"
 				};
 			//
-			var TP_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+			var TP_MODES = [AVG, LAST];
 			//
 			var CHART_TYPES = {
 				TP: "throughput",
@@ -1513,17 +1476,7 @@ function charts(chartsArray) {
 								{x: 0, y: 0}
 							]
 						}, {
-							name: MIN_1,
-							values: [
-								{x: 0, y: 0}
-							]
-						}, {
-							name: MIN_5,
-							values: [
-								{x: 0, y: 0}
-							]
-						}, {
-							name: MIN_15,
+							name: LAST,
 							values: [
 								{x: 0, y: 0}
 							]
@@ -1557,7 +1510,7 @@ function charts(chartsArray) {
 				}
 				//
 				dataArray.forEach(function(d) {
-					var value = parsePerfAvgLogEvent(chartType, d);
+					var value = parsePerfAvgLogEvent(chartType, d.message.formattedMessage);
 					var loadType = d.threadName.match(getThreadNamePattern())[0];
 					destArray.forEach(function(d) {
 						if (d.loadType === loadType) {
@@ -1641,7 +1594,7 @@ function charts(chartsArray) {
 			});
 			//
 			function drawThroughputChart(data) {
-				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
+				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds[s]", "Rate[s^-1]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.TP, json);
@@ -1650,7 +1603,7 @@ function charts(chartsArray) {
 			}
 			//
 			function drawBandwidthChart(data) {
-				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
+				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds[s]", "Rate[MB*s^-1]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.BW, json);
@@ -1791,14 +1744,8 @@ function charts(chartsArray) {
 							case AVG.id:
 								return "0,0";
 								break;
-							case MIN_1.id:
+							case LAST.id:
 								return "3,3";
-								break;
-							case MIN_5.id:
-								return "10,10";
-								break;
-							case MIN_15.id:
-								return "20,10,5,5,5,10";
 								break;
 						}
 					})
@@ -1901,12 +1848,8 @@ function charts(chartsArray) {
 						case AVG.id:
 							return "M20 0 L110 0";
 							break;
-						case MIN_1.id:
+						case LAST.id:
 							return "M20 0 L115 0";
-							break;
-						case MIN_5.id:
-						case MIN_15.id:
-							return "M20 0 L120 0";
 							break;
 						}
 					})
@@ -1915,14 +1858,8 @@ function charts(chartsArray) {
 							case AVG.id:
 								return "0,0";
 								break;
-							case MIN_1.id:
+							case LAST.id:
 								return "3,3";
-								break;
-							case MIN_5.id:
-								return "10,10";
-								break;
-							case MIN_15.id:
-								return "20,10,5,5,5,10";
 								break;
 						}
 					});
@@ -2047,14 +1984,8 @@ function charts(chartsArray) {
 								case AVG.id:
 									return "0,0";
 									break;
-								case MIN_1.id:
+								case LAST.id:
 									return "3,3";
-									break;
-								case MIN_5.id:
-									return "10,10";
-									break;
-								case MIN_15.id:
-									return "20,10,5,5,5,10";
 									break;
 							}
 						})
@@ -2183,20 +2114,7 @@ function charts(chartsArray) {
 					json.threadName = json.threadName.match(getThreadNamePattern())[0];
 					var loadType = json.threadName;
 					//
-					var splitIndex = 0;
-					switch(chartType) {
-						case CHART_TYPES.TP:
-							splitIndex = 2;
-							break;
-						case CHART_TYPES.BW:
-							splitIndex = 3;
-							break;
-					}
-					//
-					var parsedString = json.message.formattedMessage.split(";")[splitIndex];
-					var first = parsedString.indexOf("(") + 1;
-					var second = parsedString.lastIndexOf(")");
-					var value = parsedString.substring(first, second).split("/");
+					var parsedValue = parsePerfAvgLogEvent(chartType, json.message.formattedMessage);
 					//
 					var isFound = false;
 					data.forEach(function(d) {
@@ -2242,7 +2160,7 @@ function charts(chartsArray) {
 									}
 									c.values = newDotsArray;
 								}
-								c.values.push({x: d.currentRunMetricsPeriodSec, y: parseFloat(value[i])});
+								c.values.push({x: d.currentRunMetricsPeriodSec, y: parseFloat(parsedValue[i])});
 							})
 						}
 					});
@@ -2258,17 +2176,7 @@ function charts(chartsArray) {
 										{x: 0, y: 0}
 									]
 								}, {
-									name: MIN_1,
-									values: [
-										{x: 0, y: 0}
-									]
-								}, {
-									name: MIN_5,
-									values: [
-										{x: 0, y: 0}
-									]
-								}, {
-									name: MIN_15,
+									name: LAST,
 									values: [
 										{x: 0, y: 0}
 									]
@@ -2296,9 +2204,6 @@ function charts(chartsArray) {
 							.attr("class", "line")
 							.attr("d", function(c) { return line(c.values); })
 							.attr("stroke-dasharray", function(c, i) {
-								if (i === 3) {
-									return "20,10,5,5,5,10";
-								}
 								return i*15 + "," + i*15;
 							})
 							.attr("id", function(c) { return path.replace("#", "") + loadType + "-" + c.name.id; })
@@ -2359,17 +2264,14 @@ function charts(chartsArray) {
 			var loadRampupSizesArray = loadRampupSizes.split(",").map(function(item) {
 				return item.trim();
 			});
-			var AVG = "total average",
-				MIN_1 = "last 1 min avg",
-				MIN_5 = "last 5 min avg",
-				MIN_15 = "last 15 min avg";
+			var AVG = "total average";
 			//
 			var CHART_TYPES = {
 				TP: "throughput",
 				BW: "bandwidth"
 			};
 			//
-			var TP_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+			var TP_MODES = [AVG];
 			//
 			chartsArray.push({
 				"run.id": runId,
@@ -2403,7 +2305,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "Connection count", "Rate[obj/s]", "#tp-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "Connection count", "Rate[s^-1]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.TP, json);
@@ -2433,7 +2335,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "Connection count", "Rate[MB/s]", "#bw-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "Connection count", "Rate[MB*s^-1]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.BW, json);
@@ -2793,27 +2695,15 @@ function charts(chartsArray) {
 							//
 							var currentLoadType = d.loadType;
 							var currentSizes = d.sizes;
-							var splitIndex;
-							switch (chartType) {
-								case CHART_TYPES.TP:
-									splitIndex = 2;
-									break;
-								case CHART_TYPES.BW:
-									splitIndex = 3;
-									break;
-							}
 							//
-							var parsedString = json.message.formattedMessage.split(";")[splitIndex];
-							var first = parsedString.indexOf("(") + 1;
-							var second = parsedString.lastIndexOf(")");
-							var value = parsedString.substring(first, second).split("/");
+							var parsedValue = parsePerfAvgLogEvent(chartType, json.message.formattedMessage);
 							//
 							d.sizes.forEach(function (d, i) {
 								if (d.size === json.contextMap["currentSize"]) {
 									d.charts.forEach(function (c, i) {
 										c.values.push({
 											x: parseInt(json.contextMap["currentConnCount"]),
-											y: parseFloat(value[i])
+											y: parseFloat(parsedValue[i])
 										});
 									});
 								}

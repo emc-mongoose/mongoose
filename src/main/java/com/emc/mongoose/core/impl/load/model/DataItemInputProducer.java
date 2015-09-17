@@ -139,7 +139,7 @@ implements Producer<T> {
 						}
 					}
 				}
-			} while(true);
+			} while(!isInterrupted());
 		} catch(final InterruptedException ignore) {
 		} finally {
 			LOG.debug(

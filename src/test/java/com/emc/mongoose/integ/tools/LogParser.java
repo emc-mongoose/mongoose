@@ -84,18 +84,18 @@ public final class LogParser {
 				Assert.assertEquals("CountLoadServer", nextRec.get(6));
 				Assert.assertEquals("CountSucc", nextRec.get(7));
 				Assert.assertEquals("CountFail", nextRec.get(8));
-				Assert.assertEquals("LatencyAvg[us]", nextRec.get(9));
-				Assert.assertEquals("LatencyMin[us]", nextRec.get(10));
-				Assert.assertEquals("LatencyMed[us]", nextRec.get(11));
-				Assert.assertEquals("LatencyMax[us]", nextRec.get(12));
-				Assert.assertEquals("TPAvg", nextRec.get(13));
-				Assert.assertEquals("TP1Min", nextRec.get(14));
-				Assert.assertEquals("TP5Min", nextRec.get(15));
-				Assert.assertEquals("TP15Min", nextRec.get(16));
-				Assert.assertEquals("BWAvg[MB/s]", nextRec.get(17));
-				Assert.assertEquals("BW1Min[MB/s]", nextRec.get(18));
-				Assert.assertEquals("BW5Min[MB/s]", nextRec.get(19));
-				Assert.assertEquals("BW15Min[MB/s]", nextRec.get(20));
+				Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
+				Assert.assertEquals("DurationMin[us]", nextRec.get(10));
+				Assert.assertEquals("DurationStdDev", nextRec.get(11));
+				Assert.assertEquals("DurationMax[us]", nextRec.get(12));
+				Assert.assertEquals("LatencyAvg[us]", nextRec.get(13));
+				Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
+				Assert.assertEquals("LatencyStdDev", nextRec.get(15));
+				Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
+				Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
+				Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
+				Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
+				Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
 				firstRow = false;
 			} else if (nextRec.size() == 21) {
 				Assert.assertTrue(
@@ -128,40 +128,40 @@ public final class LogParser {
 				);
 				//
 				Assert.assertTrue(
-					"Latency avg is not correct", LogParser.isInteger(nextRec.get(9))
+					"Duration avg is not correct", LogParser.isInteger(nextRec.get(9))
 				);
 				Assert.assertTrue(
-					"Latency min is not correct", LogParser.isInteger(nextRec.get(10))
+					"Duration min is not correct", LogParser.isInteger(nextRec.get(10))
 				);
 				Assert.assertTrue(
-					"Latency median is not correct", LogParser.isInteger(nextRec.get(11))
+					"Duration std dev is not correct", LogParser.isInteger(nextRec.get(11))
 				);
 				Assert.assertTrue(
-					"Latency max is not correct", LogParser.isInteger(nextRec.get(12))
+					"Duration max is not correct", LogParser.isInteger(nextRec.get(12))
 				);
 				Assert.assertTrue(
-					"TP avg is not correct", LogParser.isDouble(nextRec.get(13))
+					"Latency avg is not correct", LogParser.isInteger(nextRec.get(13))
 				);
 				Assert.assertTrue(
-					"TP 1 minutes is not correct", LogParser.isDouble(nextRec.get(14))
+					"Latency min is not correct", LogParser.isInteger(nextRec.get(14))
 				);
 				Assert.assertTrue(
-					"TP  5 minutes is not correct", LogParser.isDouble(nextRec.get(15))
+					"Latency std dev is not correct", LogParser.isInteger(nextRec.get(15))
 				);
 				Assert.assertTrue(
-					"TP  15 minutes is not correct", LogParser.isDouble(nextRec.get(16))
+					"Latency max is not correct", LogParser.isInteger(nextRec.get(16))
 				);
 				Assert.assertTrue(
-					"BW avg is not correct", LogParser.isDouble(nextRec.get(17))
+					"Average TP is not correct", LogParser.isDouble(nextRec.get(17))
 				);
 				Assert.assertTrue(
-					"BW 1 minutes is not correct", LogParser.isDouble(nextRec.get(18))
+					"Last TP is not correct", LogParser.isDouble(nextRec.get(18))
 				);
 				Assert.assertTrue(
-					"BW  5 minutes is not correct", LogParser.isDouble(nextRec.get(19))
+					"Average BW is not correct", LogParser.isDouble(nextRec.get(19))
 				);
 				Assert.assertTrue(
-					"BW  15 minutes is not correct", LogParser.isDouble(nextRec.get(20))
+					"Last BW minutes is not correct", LogParser.isDouble(nextRec.get(20))
 				);
 			}
 		}
@@ -174,7 +174,7 @@ public final class LogParser {
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
 			Assert.assertEquals(
-				"Column count is wrong for the line: \"" + nextRec.toString() + "\"", 22,
+				"Column count is wrong for the line: \"" + nextRec.toString() + "\"", 21,
 				nextRec.size()
 			);
 			if(firstRow) {
@@ -186,20 +186,19 @@ public final class LogParser {
 				Assert.assertEquals("CountNode", nextRec.get(5));
 				Assert.assertEquals("CountLoadServer", nextRec.get(6));
 				Assert.assertEquals("CountSucc", nextRec.get(7));
-				Assert.assertEquals("CountPending", nextRec.get(8));
-				Assert.assertEquals("CountFail", nextRec.get(9));
-				Assert.assertEquals("LatencyAvg[us]", nextRec.get(10));
-				Assert.assertEquals("LatencyMin[us]", nextRec.get(11));
-				Assert.assertEquals("LatencyMed[us]", nextRec.get(12));
-				Assert.assertEquals("LatencyMax[us]", nextRec.get(13));
-				Assert.assertEquals("TPAvg", nextRec.get(14));
-				Assert.assertEquals("TP1Min", nextRec.get(15));
-				Assert.assertEquals("TP5Min", nextRec.get(16));
-				Assert.assertEquals("TP15Min", nextRec.get(17));
-				Assert.assertEquals("BWAvg[MB/s]", nextRec.get(18));
-				Assert.assertEquals("BW1Min[MB/s]", nextRec.get(19));
-				Assert.assertEquals("BW5Min[MB/s]", nextRec.get(20));
-				Assert.assertEquals("BW15Min[MB/s]", nextRec.get(21));
+				Assert.assertEquals("CountFail", nextRec.get(8));
+				Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
+				Assert.assertEquals("DurationMin[us]", nextRec.get(10));
+				Assert.assertEquals("DurationStdDev", nextRec.get(11));
+				Assert.assertEquals("DurationMax[us]", nextRec.get(12));
+				Assert.assertEquals("LatencyAvg[us]", nextRec.get(13));
+				Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
+				Assert.assertEquals("LatencyStdDev", nextRec.get(15));
+				Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
+				Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
+				Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
+				Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
+				Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
 				firstRow = false;
 			} else {
 				Assert.assertTrue(
@@ -228,47 +227,44 @@ public final class LogParser {
 					"Count of success is not correct", LogParser.isInteger(nextRec.get(7))
 				);
 				Assert.assertTrue(
-					"Count of pending is not correct", LogParser.isInteger(nextRec.get(8))
-				);
-				Assert.assertTrue(
-					"Count of fail is not correct", LogParser.isInteger(nextRec.get(9))
+					"Count of fail is not correct", LogParser.isInteger(nextRec.get(8))
 				);
 				//
 				Assert.assertTrue(
-					"Latency avg is not correct", LogParser.isInteger(nextRec.get(10))
+					"Duration avg is not correct", LogParser.isInteger(nextRec.get(9))
 				);
 				Assert.assertTrue(
-					"Latency min is not correct", LogParser.isInteger(nextRec.get(11))
+					"Duration min is not correct", LogParser.isInteger(nextRec.get(10))
 				);
 				Assert.assertTrue(
-					"Latency median is not correct", LogParser.isInteger(nextRec.get(12))
+					"Duration std dev is not correct", LogParser.isInteger(nextRec.get(11))
 				);
 				Assert.assertTrue(
-					"Latency max is not correct", LogParser.isInteger(nextRec.get(13))
+					"Duration max is not correct", LogParser.isInteger(nextRec.get(12))
 				);
 				Assert.assertTrue(
-					"TP avg is not correct", LogParser.isDouble(nextRec.get(14))
+					"Latency avg is not correct", LogParser.isInteger(nextRec.get(13))
 				);
 				Assert.assertTrue(
-					"TP 1 minutes is not correct", LogParser.isDouble(nextRec.get(15))
+					"Latency min is not correct", LogParser.isInteger(nextRec.get(14))
 				);
 				Assert.assertTrue(
-					"TP  5 minutes is not correct", LogParser.isDouble(nextRec.get(16))
+					"Latency std dev is not correct", LogParser.isInteger(nextRec.get(15))
 				);
 				Assert.assertTrue(
-					"TP  15 minutes is not correct", LogParser.isDouble(nextRec.get(17))
+					"Latency max is not correct", LogParser.isInteger(nextRec.get(16))
 				);
 				Assert.assertTrue(
-					"BW avg is not correct", LogParser.isDouble(nextRec.get(18))
+					"Average TP is not correct", LogParser.isDouble(nextRec.get(17))
 				);
 				Assert.assertTrue(
-					"BW 1 minutes is not correct", LogParser.isDouble(nextRec.get(19))
+					"Last TP is not correct", LogParser.isDouble(nextRec.get(18))
 				);
 				Assert.assertTrue(
-					"BW  5 minutes is not correct", LogParser.isDouble(nextRec.get(20))
+					"Average BW is not correct", LogParser.isDouble(nextRec.get(19))
 				);
 				Assert.assertTrue(
-					"BW  15 minutes is not correct", LogParser.isDouble(nextRec.get(21))
+					"Last BW minutes is not correct", LogParser.isDouble(nextRec.get(20))
 				);
 			}
 		}

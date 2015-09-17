@@ -130,12 +130,14 @@ public class RunTimeConfigTest {
 			new String[] { "load.servers" });
 		Assert.assertArrayEquals(mapOverride.get("remote.servers"),
 			new String[] { "load.servers" });
+		Assert.assertArrayEquals(mapOverride.get("remote.serveIfNotLoadServer"),
+			new String[] { "remote.serveJMX" });
 		Assert.assertArrayEquals(mapOverride.get("remote.control.port"),
 			new String[] { "remote.port.control" });
 		Assert.assertArrayEquals(mapOverride.get("remote.export.port"),
-			new String[] { "remote.port.export" });
-		Assert.assertArrayEquals(mapOverride.get("remote.import.port"),
-			new String[] { "remote.port.import" });
+			new String[] { "remote.port.monitor" });
+		Assert.assertArrayEquals(mapOverride.get("remote.port.export"),
+			new String[] { "remote.port.monitor" });
 		Assert.assertArrayEquals(mapOverride.get("remote.wuisvc.port"),
 			new String[] { "remote.port.webui" });
 

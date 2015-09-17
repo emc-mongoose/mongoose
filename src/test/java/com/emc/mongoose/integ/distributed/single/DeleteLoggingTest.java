@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 /**
@@ -56,27 +57,23 @@ extends DistributedClientTestBase {
 				.setLimitCount(COUNT_LIMIT)
 				.build()
 		) {
-			final ItemBlockingQueue<WSObject> itemsQueue = new ItemBlockingQueue<>(
-				new ArrayBlockingQueue<WSObject>(COUNT_LIMIT)
-			);
+			final BlockingQueue<WSObject> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
+			final ItemBlockingQueue<WSObject> itemIO = new ItemBlockingQueue<>(itemsQueue);
 			COUNT_WRITTEN = client.write(
-				null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB")
+				null, itemIO, COUNT_LIMIT, 10, SizeUtil.toSize("10KB")
 			);
 			TimeUnit.SECONDS.sleep(10);
+			Assert.assertEquals(
+				"Writing reported different count than available in the output",
+				COUNT_WRITTEN, itemsQueue.size()
+			);
 			try(
 				final BufferingOutputStream
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
-				if(stdOutInterceptorStream == null) {
-					throw new IllegalStateException(
-						"Looks like the test case is not included in the \"" +
-						StdOutInterceptorTestSuite.class.getSimpleName() +
-						"\" test suite, cannot run"
-					);
-				}
 				stdOutInterceptorStream.reset(); // clear before using
 				if(COUNT_WRITTEN > 0) {
-					COUNT_DELETED = client.delete(itemsQueue, null, COUNT_WRITTEN, 10);
+					COUNT_DELETED = client.delete(itemIO, null, COUNT_WRITTEN, 10);
 				} else {
 					throw new IllegalStateException("Failed to write");
 				}
@@ -205,20 +202,19 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("CountNode", nextRec.get(5));
 					Assert.assertEquals("CountLoadServer", nextRec.get(6));
 					Assert.assertEquals("CountSucc", nextRec.get(7));
-					Assert.assertEquals("CountPending", nextRec.get(8));
-					Assert.assertEquals("CountFail", nextRec.get(9));
-					Assert.assertEquals("LatencyAvg[us]", nextRec.get(10));
-					Assert.assertEquals("LatencyMin[us]", nextRec.get(11));
-					Assert.assertEquals("LatencyMed[us]", nextRec.get(12));
-					Assert.assertEquals("LatencyMax[us]", nextRec.get(13));
-					Assert.assertEquals("TPAvg", nextRec.get(14));
-					Assert.assertEquals("TP1Min", nextRec.get(15));
-					Assert.assertEquals("TP5Min", nextRec.get(16));
-					Assert.assertEquals("TP15Min", nextRec.get(17));
-					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(18));
-					Assert.assertEquals("BW1Min[MB/s]", nextRec.get(19));
-					Assert.assertEquals("BW5Min[MB/s]", nextRec.get(20));
-					Assert.assertEquals("BW15Min[MB/s]", nextRec.get(21));
+					Assert.assertEquals("CountFail", nextRec.get(8));
+					Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
+					Assert.assertEquals("DurationMin[us]", nextRec.get(10));
+					Assert.assertEquals("DurationStdDev", nextRec.get(11));
+					Assert.assertEquals("DurationMax[us]", nextRec.get(12));
+					Assert.assertEquals("LatencyAvg[us]", nextRec.get(13));
+					Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
+					Assert.assertEquals("LatencyStdDev", nextRec.get(15));
+					Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
+					Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
+					Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
+					Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
+					Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
 					firstRow = false;
 				} else {
 					secondRow = true;
@@ -249,18 +245,18 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("CountLoadServer", nextRec.get(6));
 					Assert.assertEquals("CountSucc", nextRec.get(7));
 					Assert.assertEquals("CountFail", nextRec.get(8));
-					Assert.assertEquals("LatencyAvg[us]", nextRec.get(9));
-					Assert.assertEquals("LatencyMin[us]", nextRec.get(10));
-					Assert.assertEquals("LatencyMed[us]", nextRec.get(11));
-					Assert.assertEquals("LatencyMax[us]", nextRec.get(12));
-					Assert.assertEquals("TPAvg", nextRec.get(13));
-					Assert.assertEquals("TP1Min", nextRec.get(14));
-					Assert.assertEquals("TP5Min", nextRec.get(15));
-					Assert.assertEquals("TP15Min", nextRec.get(16));
-					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(17));
-					Assert.assertEquals("BW1Min[MB/s]", nextRec.get(18));
-					Assert.assertEquals("BW5Min[MB/s]", nextRec.get(19));
-					Assert.assertEquals("BW15Min[MB/s]", nextRec.get(20));
+					Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
+					Assert.assertEquals("DurationMin[us]", nextRec.get(10));
+					Assert.assertEquals("DurationStdDev", nextRec.get(11));
+					Assert.assertEquals("DurationMax[us]", nextRec.get(12));
+					Assert.assertEquals("LatencyAvg[us]", nextRec.get(13));
+					Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
+					Assert.assertEquals("LatencyStdDev", nextRec.get(15));
+					Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
+					Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
+					Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
+					Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
+					Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
 					firstRow = false;
 				} else  {
 					secondRow = true;

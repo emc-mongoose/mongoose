@@ -1,8 +1,9 @@
-package com.emc.mongoose.common.net.http;
+package com.emc.mongoose.common.io;
 //
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 //
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 //
@@ -18,22 +19,42 @@ import java.nio.ByteBuffer;
 /**
  Created by kurila on 17.03.15.
  */
-public final class IOUtil {
+public final class IOWorker
+extends Thread {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int
 		BUFF_COUNT = (int) (Math.log(BUFF_SIZE_HI / BUFF_SIZE_LO) / Math.log(2) + 1);
 	//
-	private static ThreadLocal<ByteBuffer[]>
-		THREAD_LOCAL_IO_BUFFERS = new ThreadLocal<ByteBuffer[]>() {
-			@Override
-			protected final ByteBuffer[] initialValue() {
-				return new ByteBuffer[BUFF_COUNT];
-			}
-		};
+	private final ByteBuffer[] ioBuffers = new ByteBuffer[BUFF_COUNT];
 	//
-	public static ByteBuffer getThreadLocalBuff(final long size) {
-		final ByteBuffer ioBuffers[] = THREAD_LOCAL_IO_BUFFERS.get();
+	private IOWorker(final Runnable task, final String name) {
+		super(task, name);
+	}
+	//
+	@Override
+	protected final void finalize()
+	throws Throwable {
+		for(int i = 0; i < BUFF_COUNT; i ++) {
+			ioBuffers[i] = null;
+		}
+		super.finalize();
+	}
+	//
+	public final static class Factory
+	extends GroupThreadFactory {
+		//
+		public Factory(final String threadNamePrefix) {
+			super(threadNamePrefix);
+		}
+		//
+		@Override
+		public IOWorker newThread(final Runnable task) {
+			return new IOWorker(task, getName() + "#" + threadNumber.incrementAndGet());
+		}
+	}
+	//
+	public ByteBuffer getThreadLocalBuff(final long size) {
 		int i, currBuffSize = BUFF_SIZE_LO;
 		for(i = 0; i < ioBuffers.length && currBuffSize < size; i ++) {
 			currBuffSize *= 2;
@@ -46,14 +67,26 @@ public final class IOUtil {
 		if(buff == null) {
 			try {
 				buff = ByteBuffer.allocateDirect(currBuffSize);
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					long buffSizeSum = 0;
+					for(final ByteBuffer ioBuff : ioBuffers) {
+						if(ioBuff != null) {
+							buffSizeSum += ioBuff.capacity();
+						}
+					}
+					LOG.trace(
+						Markers.MSG, "Allocated {} of direct memory, total used by the thread: {}",
+						SizeUtil.formatSize(currBuffSize), SizeUtil.formatSize(buffSizeSum)
+					);
+				}
 				ioBuffers[i] = buff;
-			} catch(OutOfMemoryError e) {
+			} catch(final OutOfMemoryError e) {
 				long buffSizeSum = 0;
-				for(final ByteBuffer ioBuffer : ioBuffers) {
-					if(ioBuffer != null) {
-						buffSizeSum += buff.capacity();
-						if(currBuffSize > buff.capacity()) {
-							buff = ioBuffer;
+				for(final ByteBuffer smallerBuff : ioBuffers) {
+					if(smallerBuff != null) {
+						buffSizeSum += smallerBuff.capacity();
+						if(currBuffSize > smallerBuff.capacity()) {
+							buff = smallerBuff;
 						}
 					}
 				}
@@ -80,18 +113,5 @@ public final class IOUtil {
 			.position(0)
 			.limit(size < buff.capacity() ? Math.max(1, (int) size) : buff.capacity());
 		return buff;
-	}
-	//
-	public static int consumeQuietly(final ContentDecoder in, final long expectedByteCount) {
-		int doneByteCount = 0;
-		try {
-			if(!in.isCompleted()) {
-				final ByteBuffer buff = getThreadLocalBuff(expectedByteCount);
-				doneByteCount = in.read(buff);
-			}
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Content reading failure");
-		}
-		return doneByteCount;
 	}
 }
