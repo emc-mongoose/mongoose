@@ -5,7 +5,11 @@ import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-storage-mock.jar
 //
-import com.emc.mongoose.storage.mock.api.DataObjectMock;
+import com.emc.mongoose.core.impl.data.RangeLayerData;
+//
+import com.emc.mongoose.core.impl.data.UniformData;
+import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -30,22 +34,30 @@ implements HttpAsyncResponseProducer {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile HttpResponse response = null;
-	private DataObjectMock contentDataObject = null;
-	private NByteArrayEntity contentBytes = null;
-	private long byteCount = 0, contentSize = 0;
-	private final OutputChannel chanOut = new OutputChannel();
+	private volatile OutputChannel chanOut = null;
+	//
+	private volatile WSObjectMock dataObject = null;
+	private volatile NByteArrayEntity contentBytes = null;
+	//
+	private volatile long countBytesDone = 0, contentSize = 0;
+	//
+	private volatile UniformData currRange = null;
+	private volatile long currRangeSize = 0, nextRangeOffset = 0;
+	private volatile int currRangeIdx = 0, currDataLayerIdx = 0;
 	//
 	public final void setResponse(final HttpResponse response) {
 		this.response = response;
 		final HttpEntity contentEntity = response.getEntity();
 		if(contentEntity != null) {
 			contentSize = contentEntity.getContentLength();
-			if(DataObjectMock.class.isInstance(contentEntity)) {
-				contentDataObject = (DataObjectMock) contentEntity;
+			if(contentEntity instanceof WSObjectMock) {
+				dataObject = (WSObjectMock) contentEntity;
+				dataObject.reset();
+				currDataLayerIdx = dataObject.getCurrLayerIndex();
 				contentBytes = null;
-			} else if(NByteArrayEntity.class.isInstance(contentEntity)) {
+			} else if(contentEntity instanceof NByteArrayEntity) {
 				contentBytes = (NByteArrayEntity) contentEntity;
-				contentDataObject = null;
+				dataObject = null;
 			}
 		}
 	}
@@ -58,21 +70,8 @@ implements HttpAsyncResponseProducer {
 	@Override
 	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-		if(contentDataObject != null) {
-			chanOut.setContentEncoder(encoder);
-			try {
-				contentDataObject.writeFully(chanOut);
-			} catch(final Exception e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");
-			} finally {
-				try {
-					if(!encoder.isCompleted()) {
-						encoder.complete();
-					}
-				} finally {
-					chanOut.close();
-				}
-			}
+		if(dataObject != null) {
+			produceObjectContent(encoder);
 		} else if(contentBytes != null) {
 			contentBytes.produceContent(encoder, ioctrl);
 		} else {
@@ -81,6 +80,67 @@ implements HttpAsyncResponseProducer {
 				LOG.warn(Markers.ERR, "Unsupported content type: " + contentEntity.getClass());
 			}
 			encoder.complete();
+		}
+	}
+	//
+	private void produceObjectContent(final ContentEncoder encoder)
+	throws IOException {
+		//
+		if(chanOut == null) { // 1st time invocation
+			if(contentSize == 0) { // nothing to do
+				encoder.complete();
+				return;
+			} else { // wrap the encoder w/ output channel
+				chanOut = new OutputChannel(encoder);
+			}
+		}
+		//
+		try {
+			if(dataObject.hasBeenUpdated()) {
+				produceUpdatedObjectContent();
+			} else {
+				produceNotUpdatedObjectContent();
+			}
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");
+		}
+	}
+	//
+	private void produceNotUpdatedObjectContent()
+	throws IOException {
+		countBytesDone += dataObject.write(chanOut, contentSize - countBytesDone);
+		if(countBytesDone == contentSize) {
+			chanOut.close();
+		}
+	}
+	//
+	private void produceUpdatedObjectContent()
+	throws IOException {
+		if(countBytesDone == nextRangeOffset) {
+			currRangeSize = dataObject.getRangeSize(currRangeIdx);
+			if(dataObject.isCurrLayerRangeUpdated(currRangeIdx)) {
+				currRange = new UniformData(
+					dataObject.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx + 1,
+					UniformDataSource.DEFAULT
+				);
+			} else {
+				currRange = new UniformData(
+					dataObject.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx,
+					UniformDataSource.DEFAULT
+				);
+			}
+			currRangeIdx ++;
+			nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
+		}
+		if(currRangeSize > 0) {
+			countBytesDone += currRange.write(
+				chanOut, nextRangeOffset - countBytesDone
+			);
+			if(countBytesDone == contentSize) {
+				chanOut.close();
+			}
+		} else {
+			chanOut.close();
 		}
 	}
 	//

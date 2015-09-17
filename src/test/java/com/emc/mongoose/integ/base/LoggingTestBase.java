@@ -3,6 +3,7 @@ package com.emc.mongoose.integ.base;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.integ.tools.LogParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,13 +30,14 @@ extends ConfiguredTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		ConfiguredTestBase.setUpClass();
 		if(System.getProperty(LOG_CONF_PROPERTY_KEY) == null) {
 			String fullLogConfFile = Paths
 				.get(System.getProperty(USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, LOG_FILE_NAME)
 				.toString();
 			System.setProperty(LOG_CONF_PROPERTY_KEY, fullLogConfFile);
 		}
+		LogUtil.init();
+		ConfiguredTestBase.setUpClass();
 		final String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 		LogParser.removeLogDirectory(runId);
 		FILE_LOG_PERF_SUM = LogParser.getPerfSumFile(runId);

@@ -27,7 +27,6 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.MethodNotSupportedException;
 import org.apache.http.RequestLine;
 import org.apache.http.protocol.HttpContext;
 //
@@ -65,33 +64,20 @@ implements ReqURIMatchingHandler<T> {
 		this.ioStats = sharedStorage.getStats();
 	}
 	//
-	private final static ThreadLocal<BasicWSRequestConsumer>
-		THRLOC_REQ_CONSUMER = new ThreadLocal<>();
 	@Override
 	public final HttpAsyncRequestConsumer<HttpRequest> processRequest(
 		final HttpRequest request, final HttpContext context
 	) throws HttpException, IOException {
-		try {
-			BasicWSRequestConsumer reqConsumer = THRLOC_REQ_CONSUMER.get();
-			if(reqConsumer == null) {
-				reqConsumer = new BasicWSRequestConsumer();
-				THRLOC_REQ_CONSUMER.set(reqConsumer);
-			}
-			return reqConsumer;
-		} catch(final IllegalArgumentException | IllegalStateException e) {
-			throw new MethodNotSupportedException("Request consumer instantiation failure", e);
-		}
+		return new BasicWSRequestConsumer();
 	}
 	//
-	private final static ThreadLocal<BasicWSResponseProducer>
-		THRLOC_RESP_PRODUCER = new ThreadLocal<>();
 	@Override
 	public final void handle(
 		final HttpRequest req, final HttpAsyncExchange httpExchange, final HttpContext httpContext
 	) {
 		// load rate limitation algorithm
 		if(rateLimit > 0) {
-			if(ioStats.getRate() > rateLimit) {
+			if(ioStats.getWriteRate() + ioStats.getReadRate() + ioStats.getDeleteRate() > rateLimit) {
 				try {
 					Thread.sleep(lastMilliDelay.incrementAndGet());
 				} catch(final InterruptedException e) {
@@ -110,11 +96,7 @@ implements ReqURIMatchingHandler<T> {
 			httpRequest, httpResponse, reqLine.getMethod().toLowerCase(), reqLine.getUri()
 		);
 		// done
-		BasicWSResponseProducer respProducer = THRLOC_RESP_PRODUCER.get();
-		if(respProducer == null) {
-			respProducer = new BasicWSResponseProducer();
-			THRLOC_RESP_PRODUCER.set(respProducer);
-		}
+		final BasicWSResponseProducer respProducer = new BasicWSResponseProducer();
 		respProducer.setResponse(httpResponse);
 		httpExchange.submitResponse(respProducer);
 	}

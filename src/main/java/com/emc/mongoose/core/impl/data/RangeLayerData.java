@@ -6,9 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
-import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.DataSizeException;
-import com.emc.mongoose.core.api.data.DataVerificationException;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
@@ -122,10 +120,10 @@ implements AppendableDataItem, UpdatableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public boolean equals(final Object o) {
-		if (o == this) {
+		if(o == this) {
 			return true;
 		}
-		if (!(o instanceof RangeLayerData) || !super.equals(o)) {
+		if(!(o instanceof RangeLayerData) || !super.equals(o)) {
 			return false;
 		} else {
 			final RangeLayerData other = RangeLayerData.class.cast(o);
@@ -193,6 +191,11 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
+	public final int getCurrLayerIndex() {
+		return currLayerIndex;
+	}
+	//
+	@Override
 	public final synchronized long readAndVerifyFully(final ReadableByteChannel chanSrc)
 	throws DataSizeException, DataCorruptionException, IOException {
 		// do not go over ranges if there's no updated ones
@@ -223,7 +226,7 @@ implements AppendableDataItem, UpdatableDataItem {
 						offset + rangeOffset, rangeSize, currLayerIndex + 1,
 						UniformDataSource.DEFAULT
 					);
-					byteCount += updatedRange.readAndVerifyRange(chanSrc, 0, rangeSize);
+					byteCount += updatedRange.readAndVerifyRangeFully(chanSrc, 0, rangeSize);
 				} else if(currLayerIndex > 0) {
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
@@ -235,9 +238,9 @@ implements AppendableDataItem, UpdatableDataItem {
 						offset + rangeOffset, rangeSize, currLayerIndex,
 						UniformDataSource.DEFAULT
 					);
-					byteCount += updatedRange.readAndVerifyRange(chanSrc, 0, rangeSize);
+					byteCount += updatedRange.readAndVerifyRangeFully(chanSrc, 0, rangeSize);
 				} else {
-					byteCount += readAndVerifyRange(chanSrc, rangeOffset, rangeSize);
+					byteCount += readAndVerifyRangeFully(chanSrc, rangeOffset, rangeSize);
 				}
 			} catch(final DataSizeException | DataCorruptionException e) {
 				e.offset += getRangeOffset(i);
@@ -249,8 +252,19 @@ implements AppendableDataItem, UpdatableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final boolean hasAnyUpdatedRanges() {
+	@Override
+	public final boolean hasBeenUpdated() {
+		return !maskRangesRead.isEmpty();
+	}
+	//
+	@Override
+	public final boolean hasScheduledUpdates() {
 		return !maskRangesWrite[0].isEmpty() || !maskRangesWrite[1].isEmpty();
+	}
+	//
+	@Override
+	public final boolean isCurrLayerRangeUpdated(final int i) {
+		return maskRangesRead.get(i);
 	}
 	//
 	@Override
@@ -264,7 +278,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final synchronized void updateRandomRange() {
+	public final synchronized void scheduleRandomUpdate() {
 		final int
 			countRangesTotal = getRangeCount(size),
 			startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
@@ -295,7 +309,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final void updateRandomRanges(final int count)
+	public final void scheduleRandomUpdates(final int count)
 	throws IllegalArgumentException {
 		final int countRangesTotal = getRangeCount(size);
 		if(count < 1 || count > countRangesTotal) {
@@ -305,12 +319,12 @@ implements AppendableDataItem, UpdatableDataItem {
 			);
 		}
 		for(int i = 0; i < count; i++) {
-			updateRandomRange();
+			scheduleRandomUpdate();
 		}
 	}
 	//
 	@Override
-	public final long getPendingRangesSize() {
+	public final long getUpdatingRangesSize() {
 		final long rangeCount = getRangeCount(size);
 		long pendingSize = 0;
 		for(int i = 0; i < rangeCount; i ++) {
@@ -339,6 +353,13 @@ implements AppendableDataItem, UpdatableDataItem {
 				byteCount += nextRangeData.writeFully(chanOut);
 			}
 		}
+		//
+		commitUpdatedRanges();
+		return byteCount;
+	}
+	//
+	@Override
+	public final void commitUpdatedRanges() {
 		// move pending updated ranges to history
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
@@ -357,8 +378,13 @@ implements AppendableDataItem, UpdatableDataItem {
 			currLayerIndex ++;
 		}
 		maskRangesWrite[0].clear();
-		//
-		return byteCount;
+	}
+	//
+	@Override
+	public final void resetUpdates() {
+		maskRangesRead.clear();
+		maskRangesWrite[0].clear();
+		maskRangesWrite[1].clear();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// APPEND //////////////////////////////////////////////////////////////////////////////////////
@@ -369,7 +395,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public void append(final long augmentSize)
+	public void scheduleAppend(final long augmentSize)
 	throws IllegalArgumentException {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
@@ -387,11 +413,17 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final long getPendingAugmentSize() {
+	public final long getAppendSize() {
 		return pendingAugmentSize;
 	}
 	//
 	@Override
+	public final void commitAppend() {
+		size += pendingAugmentSize;
+		pendingAugmentSize = 0;
+	}
+	//
+	@Override @Deprecated
 	public final synchronized long writeAugmentFully(final WritableByteChannel chanOut)
 	throws IOException {
 		long byteCount = 0;
@@ -404,21 +436,18 @@ implements AppendableDataItem, UpdatableDataItem {
 					UniformDataSource.DEFAULT
 				);
 				byteCount += augmentData.writeFully(chanOut);
-				size += pendingAugmentSize;
 			} else if(currLayerIndex > 0) { // write from the current layer
 				augmentData = new UniformData(
 					offset + size, pendingAugmentSize, currLayerIndex,
 					UniformDataSource.DEFAULT
 				);
 				byteCount += augmentData.writeFully(chanOut);
-				size += pendingAugmentSize;
 			} else { // write from the zero layer
 				augmentData = this;
-				byteCount += augmentData.writeRange(chanOut, size, pendingAugmentSize);
-				size += pendingAugmentSize;
+				byteCount += augmentData.writeRangeFully(chanOut, size, pendingAugmentSize);
 			}
 			// clean up the appending on success
-			pendingAugmentSize = 0;
+			commitAppend();
 		}
 		return byteCount;
 	}

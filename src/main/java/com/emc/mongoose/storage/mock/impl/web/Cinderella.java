@@ -52,9 +52,15 @@ implements WSMock<T> {
 	//
 	public Cinderella(final RunTimeConfig rtConfig)
 	throws IOException {
+		this(rtConfig, rtConfig.getStorageMockIoThreadsPerSocket());
+	}
+	//
+	private Cinderella(final RunTimeConfig rtConfig, final int ioThreadCount)
+	throws IOException {
 		this(
 			rtConfig.getStorageMockHeadCount(),
-			rtConfig.getStorageMockIoThreadsPerSocket(),
+			ioThreadCount > 0 ?
+				ioThreadCount : Math.max(1, Runtime.getRuntime().availableProcessors()),
 			rtConfig.getApiTypePort(rtConfig.getApiName()),
 			rtConfig.getStorageMockCapacity(),
 			rtConfig.getStorageMockContainerCapacity(),
@@ -75,7 +81,8 @@ implements WSMock<T> {
 	) throws IOException {
 		super(
 			(Class<T>) BasicWSObjectMock.class,
-			storageCapacity, containerCapacity, containerCountLimit, headCount * ioThreadCount,
+			storageCapacity, containerCapacity, containerCountLimit,
+			headCount * ioThreadCount,
 			dataSrcPath, metricsPeriodSec, jmxServeFlag
 		);
 		this.portStart = portStart;

@@ -69,7 +69,6 @@ extends CommonServlet {
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		setupRunTimeConfig(request);
 		JsonConfigLoader.updateProps(
-			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF),
 			runTimeConfig, true
 		);
 		updateLastRunTimeConfig(runTimeConfig);

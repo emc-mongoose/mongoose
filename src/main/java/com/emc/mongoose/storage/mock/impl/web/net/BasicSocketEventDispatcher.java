@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.mock.impl.web.net;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import com.emc.mongoose.common.conf.Constants;
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
 //
 import org.apache.http.impl.nio.DefaultHttpServerIODispatch;
@@ -25,6 +25,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketException;
 /**
  Created by kurila on 13.05.15.
  */
@@ -55,8 +57,16 @@ implements Runnable {
 		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
 			runTimeConfig.getLoadLimitTimeValue()
 		);
+		int ioThreadCount = runTimeConfig.getStorageMockIoThreadsPerSocket();
+		if(ioThreadCount == 0) {
+			ioThreadCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+		}
+		LOG.info(
+			Markers.MSG, "Socket {}:{} will use {} I/O threads",
+			socketAddress.getHostString(), socketAddress.getPort(), ioThreadCount
+		);
 		ioReactorConf = IOReactorConfig.custom()
-			.setIoThreadCount(runTimeConfig.getStorageMockIoThreadsPerSocket())
+			.setIoThreadCount(ioThreadCount)
 			.setBacklogSize((int) runTimeConfig.getSocketBindBackLogSize())
 			.setInterestOpQueued(runTimeConfig.getSocketInterestOpQueued())
 			.setSelectInterval(runTimeConfig.getSocketSelectInterval())
@@ -66,17 +76,20 @@ implements Runnable {
 			.setSoReuseAddress(runTimeConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(runTimeConfig.getSocketTimeOut())
 			.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize(Constants.BUFF_SIZE_LO)
-			.setSndBufSize(Constants.BUFF_SIZE_LO)
+			.setRcvBufSize(BUFF_SIZE_LO)
+			.setSndBufSize(BUFF_SIZE_LO)
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 			)
 			.build();
 		// create the server-side I/O reactor
-		ioReactor = new DefaultListeningIOReactor(
-			ioReactorConf, new IOUtils.IOWorkerFactory("ioReactor", runTimeConfig)
-		);
 		this.ioStats = ioStats;
+		ioReactor = new DefaultListeningIOReactor(
+			ioReactorConf,
+			new GroupThreadFactory(
+				"ioReactor<" + socketAddress.getHostString() + ":" + socketAddress.getPort() + ">"
+			)
+		);
 		executor = THREAD_GROUP.newThread(this);
 
 	}

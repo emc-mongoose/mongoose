@@ -27,7 +27,6 @@ import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
-import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableUserTimeClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
@@ -43,7 +42,6 @@ import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.ThreadContext;
 //
 import javax.management.MBeanServer;
-import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
@@ -67,7 +65,7 @@ implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final int instanceNum, connCountPerNode, storageNodeCount;
+	protected final int instanceNum, storageNodeCount;
 	protected final String storageNodeAddrs[];
 	//
 	protected final Class<T> dataCls;
@@ -82,7 +80,7 @@ implements LoadExecutor<T> {
 	protected volatile FileDataItemOutput<T> itemsFileBuff = null;
 	//
 	private final long maxCount;
-	private final int totalConnCount;
+	protected final int totalConnCount;
 	// METRICS section
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected Counter counterSubm, counterRej;
@@ -134,9 +132,10 @@ implements LoadExecutor<T> {
 			//
 			@Override
 			public final void run() {
-				while(!isClosed.get()) {
+				while(!isClosed.get() && !isInterrupted()) {
 					//
 					LockSupport.parkNanos(1);
+					//
 					if(isDoneAllSubm() || isDoneMaxCount()) {
 						lock.lock();
 						try {
@@ -151,6 +150,7 @@ implements LoadExecutor<T> {
 					}
 					//
 					LockSupport.parkNanos(1);
+					//
 					if(
 						throughPutFail.getCount() > 1000000 &&
 						throughPutSucc.getOneMinuteRate() < throughPutFail.getOneMinuteRate()
@@ -168,6 +168,9 @@ implements LoadExecutor<T> {
 						}
 						break;
 					}
+					//
+					LockSupport.parkNanos(1);
+					//
 				}
 			}
 		};
@@ -184,7 +187,8 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final Class<T> dataCls,
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount
+		final int connCountPerNode, final int threadCount,
+		final DataItemInput<T> itemSrc, final long maxCount
 	) {
 		super(
 			maxCount, rtConfig.getTasksMaxQueueSize(),
@@ -245,7 +249,6 @@ implements LoadExecutor<T> {
 			jmxReporter.start();
 		}
 		//
-		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the nodes array
 		storageNodeAddrs = addrs.clone();
@@ -299,8 +302,12 @@ implements LoadExecutor<T> {
 			producer = reqConfig.getContainerListInput(maxCount, addrs[0]);
 			LOG.debug(Markers.MSG, "{} will use {} as data items producer", getName(), producer);
 		}*/
+		final boolean isCircular = rtConfig.getDataSrcCircularEnabled();
+		if(isCircular) {
+			setConsumer(this);
+		}
 		if(itemsSrc != null) {
-			producer = new DataItemInputProducer<>(itemsSrc, rtConfig.getDataSrcCircularEnabled());
+			producer = new DataItemInputProducer<>(itemsSrc);
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -465,9 +472,7 @@ implements LoadExecutor<T> {
 						getName(), SizeUtil.formatSize(itemsFilePath.toFile().length()), itemsFilePath
 					);
 					isShutdown.compareAndSet(true, false); // cancel if shut down before start
-					producer = new DataItemInputProducer<>(
-						itemsFileBuff.getInput(), rtConfig.getDataSrcCircularEnabled()
-					);
+					producer = new DataItemInputProducer<>(itemsFileBuff.getInput());
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
@@ -480,8 +485,10 @@ implements LoadExecutor<T> {
 			} else {
 				try {
 					producer.setConsumer(this);
-					if ((producer instanceof DataItemInputProducer)
-						&& (counterResults.get() > 0)) {
+					if(
+						producer instanceof DataItemInputProducer &&
+						counterResults.get() > 0
+					) {
 						final DataItemInputProducer<T> inputProducer
 							= (DataItemInputProducer<T>) producer;
 						inputProducer.setSkippedItemsCount(counterResults.get());
@@ -504,13 +511,18 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public final void interrupt() {
+	public void interrupt() {
 		if(isLoadFinished.get()) {
 			return;
 		}
 		if(isInterrupted.compareAndSet(false, true)) {
 			metricsDaemon.interrupt();
 			shutdown();
+			try {
+				reqConfigCopy.close(); // disables connection drop failures
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
+			}
 			// releasing the blocked join() methods, if any
 			lock.lock();
 			try {
@@ -634,9 +646,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected IOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
-		return new BasicIOTask<>(this, dataItem, nextNodeAddr);
-	}
+	protected abstract IOTask<T> getIOTask(final T dataItem, final String nextNodeAddr);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -684,18 +694,20 @@ implements LoadExecutor<T> {
 				reqDuration.update(duration);
 				durTasksSum.addAndGet(duration);
 			}
-			reqBytes.mark(ioTask.getTransferSize());
+			reqBytes.mark(ioTask.getCountBytesDone());
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Task #{}: successful, {}/{}",
-					ioTask.hashCode(), throughPutSucc.getCount(), ioTask.getTransferSize()
+					ioTask.hashCode(), throughPutSucc.getCount(), ioTask.getCountBytesDone()
 				);
 			}
 			// feed the data item to the consumer and finally check for the finish state
 			try {
 				// is this an end of consumer-producer chain?
 				if(consumer == null) {
-					LOG.info(Markers.DATA_LIST, dataItem);
+					if(LOG.isInfoEnabled(Markers.DATA_LIST)) {
+						LOG.info(Markers.DATA_LIST, dataItem);
+					}
 				} else { // feed to the consumer
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
@@ -757,8 +769,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	@Override
-	@SuppressWarnings("unchecked")
+	@Override @SuppressWarnings("unchecked")
 	public LoadState<T> getLoadState()
 	throws RemoteException {
 		final long prevElapsedTime = currState != null ?
@@ -835,7 +846,6 @@ implements LoadExecutor<T> {
 			interrupt();
 			try {
 				LOG.debug(Markers.MSG, "Forcing the shutdown");
-				reqConfigCopy.close(); // disables connection drop failures
 				super.close();
 				if(consumer != null) {
 					consumer.shutdown(); // poison the consumer
@@ -906,9 +916,10 @@ implements LoadExecutor<T> {
 		}
 		//
 		final long timeOutMilliSec;
-		if (currState != null) {
-			if (isLoadFinished.get())
+		if(currState != null) {
+			if(isLoadFinished.get()) {
 				return;
+			}
 			timeOutMilliSec = timeUnit.toMillis(timeOut) -
 				currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue());
 		} else {

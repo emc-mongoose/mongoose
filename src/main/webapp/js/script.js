@@ -211,20 +211,20 @@ $(document).ready(function() {
 		$("#data\\.size").val(this.value);
 	});
 	//
-	$("#backup-load\\.threads").on("change", function() {
+	$("#backup-load\\.connections").on("change", function() {
 		var currentValue = this.value;
 		var keys2Override = [
-			"#backup-load\\.type\\.append\\.threads",
-			"#backup-load\\.type\\.create\\.threads",
-			"#backup-load\\.type\\.read\\.threads",
-			"#backup-load\\.type\\.update\\.threads",
-			"#backup-load\\.type\\.delete\\.threads"
+			"#backup-load\\.type\\.append\\.connections",
+			"#backup-load\\.type\\.create\\.connections",
+			"#backup-load\\.type\\.read\\.connections",
+			"#backup-load\\.type\\.update\\.connections",
+			"#backup-load\\.type\\.delete\\.connections"
 		];
 		keys2Override.forEach(function(d) {
 			$(d).val(currentValue).change();
 		});
 		//
-		$("#load\\.threads").val(this.value);
+		$("#load\\.connections").val(this.value);
 	});
 	//
 	$("#start").click(function(e) {
@@ -296,26 +296,9 @@ $(document).ready(function() {
 		}
 	});
 	//
-	/*$(".property").click(function() {
-		var id = $(this).attr("href").replace(/\./g, "\\.");
-		var name = $(this).parents(".file").find(".props").text();
-		$("#" + name).show();
-		var element = $("#" + name).find($(id));
-		var parent = element.parents(".form-group");
-		$("#" + name).children().hide();
-		parent.show();
-	});*/
-	//
 	$("#backup-run\\.id, #run\\.id").change(function() {
 		var startBtn = $("#start");
 		var currVal = this.value;
-		/*var patternValidId = /^[a-zA-Z]([-a-zA-Z0-9]*)$/;
-		if (!patternValidId.test(currVal)) {
-			alert("Invalid id value.\nRegExp for id: /^[a-zA-Z]([-a-zA-Z0-9]*)$/");
-			startBtn.prop("disabled", true);
-		} else {
-			startBtn.prop("disabled", false);
-		}*/
 	});
 });
 
@@ -476,7 +459,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 		var runId = json.contextMap["run.id"];
 		var runMetricsPeriodSec = json.contextMap["load.metricsPeriodSec"];
 		var scenarioChainLoad = json.contextMap["scenario.type.chain.load"];
-		var rampupThreadCounts = json.contextMap["scenario.type.rampup.threadCounts"];
+		var rampupConnCounts = json.contextMap["scenario.type.rampup.connCounts"];
 		var loadRampupSizes = json.contextMap["scenario.type.rampup.sizes"];
 		//
 		var entry = runId.split(".").join("_");
@@ -493,7 +476,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 		});
 		if (!isContains) {
 			if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
-				charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+				charts(chartsArray).rampup(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes);
 			}
 		}
 		switch (json.marker.name) {
@@ -584,9 +567,9 @@ function configureWebSocketConnection(location, countOfRecords) {
 						return d.marker.name === MARKERS.PERF_SUM;
 					});
 					var scenarioChainLoad = filtered[0].contextMap["scenario.type.chain.load"];
-					var rampupThreadCounts = filtered[0].contextMap["scenario.type.rampup.threadCounts"];
+					var rampupConnCounts = filtered[0].contextMap["scenario.type.rampup.connCounts"];
 					var loadRampupSizes = filtered[0].contextMap["scenario.type.rampup.sizes"];
-					charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+					charts(chartsArray).rampup(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes);
 					chartsArray.forEach(function(d) {
 						if (d["run.id"] === runId) {
 							d.charts.forEach(function(c) {
@@ -780,7 +763,7 @@ function charts(chartsArray) {
 			"next": null,
 			"label": "years[y]"
 		}
-	}
+	};
 	//  Some constants from runTimeConfig
 	var RUN_TIME_CONFIG_CONSTANTS = {
 		runId: "run.id",
@@ -954,7 +937,8 @@ function charts(chartsArray) {
 			.attr("class", "scale-labels")
 			.attr("name", function(d) { return d.id; })
 			.attr("transform", function(d, i) {
-				return "translate(10," + (i*20 + height + (margin.bottom/2) + addHeight) + ")";
+				return "translate(" + (10 + i*130)
+					+ "," + (height + (margin.bottom/2) + addHeight) + ")";
 			});
 		groupsEnter.append("text")
 			.attr("dy", ".35em")
@@ -979,15 +963,10 @@ function charts(chartsArray) {
 					d3.select(this).property("checked", false);
 					currScaleType = SCALE_TYPES[0];
 				}
-				//  remove previous elements in group
-				/*parentGroup.selectAll("input")
-					.property("checked", false);*/
 				//  select current checkbox
 				var parentGroup = d3.select(this.parentNode.parentNode.parentNode);
 				var scaleOrientation = parentGroup.attr("name");
 				chartEntry.updateScales(scaleOrientation, currScaleType);
-				//
-				//redrawGridAndAxis(chartSettings, data, currentScale, currScaleType);
 			});
 		groupsEnter.append("text")
 			.attr("class", "foreign-labels")
@@ -1046,6 +1025,7 @@ function charts(chartsArray) {
 				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
 				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; })  })
 			])
+			.nice()
 			.range([height, 0]);
 		//
 		var color = d3.scale.ordinal()
@@ -1076,7 +1056,7 @@ function charts(chartsArray) {
 				return x((isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value));
 			})
 			.y(function (d) {
-				return y((isNaN(y(d.y))) ? 0.1 : d.y);
+				return y((isNaN(y(d.y))) ? 0.001 : d.y);
 			});
 		//
 		var svg = d3.select(chartDOMPath)
@@ -1261,6 +1241,7 @@ function charts(chartsArray) {
 							d3.max(data, function(c) { return d3.max(c.values, function(d) {
 								return d.y;
 							}); })])
+							.nice()
 							.range([height, 0]);
 						currYScale = SCALE_TYPES[0];
 					}
@@ -1278,11 +1259,12 @@ function charts(chartsArray) {
 					} else {
 						y = d3.scale.log()
 							.domain([d3.min(data, function(c) { return d3.min(c.values, function(d) {
-								return d.y <= 0 ? 0.1 : d.y;
+								return d.y <= 0 ? 0.001 : d.y;
 							}); }),
 							d3.max(data, function(c) { return d3.max(c.values, function(d) {
-								return d.y <= 0 ? 0.1 : d.y;
+								return d.y <= 0 ? 0.001 : d.y;
 							}); })])
+							.nice()
 							.range([height, 0]);
 						currYScale = SCALE_TYPES[1];
 					}
@@ -1422,11 +1404,12 @@ function charts(chartsArray) {
 			]);
 			y.domain([
 				d3.min(data, function(c) { return d3.min(c.values, function(d) {
-					return (isNaN(y(d.y))) ? 0.1 : d.y }); }),
+					return (isNaN(y(d.y))) ? 0.001 : d.y }); }),
 				d3.max(data, function(c) { return d3.max(c.values, function(d) {
-					return (isNaN(y(d.y))) ? 0.1 : d.y
+					return (isNaN(y(d.y))) ? 0.001 : d.y
 				}); })
-			]);
+			])
+			.nice();
 			//
 			redraw(currXScale, currYScale);
 		};
@@ -1719,6 +1702,7 @@ function charts(chartsArray) {
 							return d3.max(c.values, function(v) { return v.y; }); });
 						})
 					])
+					.nice()
 					.range([height, 0]);
 				//
 				var color = d3.scale.ordinal()
@@ -1749,7 +1733,7 @@ function charts(chartsArray) {
 						return x((isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value));
 					})
 					.y(function (d) {
-						return y((isNaN(y(d.y))) ? 0.1 : d.y);
+						return y((isNaN(y(d.y))) ? 0.001 : d.y);
 					});
 				//
                 var svg = d3.select(path)
@@ -2160,6 +2144,7 @@ function charts(chartsArray) {
 											return d3.max(c.values, function(v) { return v.y; }); });
 										})
 									])
+									.nice()
 									.range([height, 0]);
 								currYScale = SCALE_TYPES[0];
 							}
@@ -2180,12 +2165,13 @@ function charts(chartsArray) {
 								y = d3.scale.log()
 									.domain([
 										d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-											return d3.min(c.values, function(v) { return (v.y <= 0) ? 0.1 : v.y; }); });
+											return d3.min(c.values, function(v) { return (v.y <= 0) ? 0.001 : v.y; }); });
 										}),
 										d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-											return d3.max(c.values, function(v) { return (v.y <= 0) ? 0.1 : v.y; }); });
+											return d3.max(c.values, function(v) { return (v.y <= 0) ? 0.001 : v.y; }); });
 										})
 									])
+									.nice()
 									.range([height, 0]);
 								currYScale = SCALE_TYPES[1];
 							}
@@ -2349,24 +2335,25 @@ function charts(chartsArray) {
 					]);
 					y.domain([
 						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-							return d3.min(c.values, function(v) { return (isNaN(y(v.y))) ? 0.1 : v.y; }); });
+							return d3.min(c.values, function(v) { return (isNaN(y(v.y))) ? 0.001 : v.y; }); });
 						}),
 						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-							return d3.max(c.values, function(v) { return (isNaN(y(v.y))) ? 0.1 : v.y; }); });
+							return d3.max(c.values, function(v) { return (isNaN(y(v.y))) ? 0.001 : v.y; }); });
 						})
-					]);
+					])
+					.nice();
 					//
 					redraw(currXScale, currYScale);
 				};
 			}
 		},
-		rampup: function(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes) {
+		rampup: function(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes) {
 			//
 			// change default width
 			width = 480;
 			//
 			var loadTypes = scenarioChainLoad.split(",");
-			var rampupThreadCountsArray = rampupThreadCounts.split(",").map(function(item) {
+			var rampupConnCountsArray = rampupConnCounts.split(",").map(function(item) {
 				return parseInt(item, 10);
 			});
 			var loadRampupSizesArray = loadRampupSizes.split(",").map(function(item) {
@@ -2416,7 +2403,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "thread count", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "Connection count", "Rate[obj/s]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.TP, json);
@@ -2446,7 +2433,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "thread count", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "Connection count", "Rate[MB/s]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.BW, json);
@@ -2462,17 +2449,17 @@ function charts(chartsArray) {
 					var currYScale = SCALE_TYPES[0];
 					//
 					var x = d3.scale.linear()
-						.domain([0, d3.max(rampupThreadCountsArray)])
+						.domain([0, d3.max(rampupConnCountsArray)])
+						.nice()
 						.range([0, width]);
 					var y = d3.scale.linear()
 						.domain([
-							d3.min(d.sizes, function(c) { return d3.min(c.charts, function(v) {
-								return d3.min(v.values, function(val) { return val.y; });
-							}); }),
+							0,
 							d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
 								return d3.max(v.values, function(val) { return val.y; });
 							}); })
 						])
+						.nice()
 						.range([height, 0]);
 					//
 					scalesArray.push({
@@ -2510,7 +2497,7 @@ function charts(chartsArray) {
 							return x((isNaN(x(d.x))) ? 0.1 : d.x);
 						})
 						.y(function (d) {
-							return y((isNaN(y(d.y))) ? 0.1 : d.y);
+							return y((isNaN(y(d.y))) ? 0.001 : d.y);
 						});
                     var svg = d3.select(path)
                         .append("div")
@@ -2716,13 +2703,13 @@ function charts(chartsArray) {
 								.attr("class", "dot")
 								//.style("stroke-width", "1.5px")
 								.attr("cx", function(coord) { return x((isNaN(x(coord.x))) ? 0.1 : coord.x); })
-								.attr("cy", function(coord) { return y((isNaN(y(coord.y))) ? 0.1 : coord.y); })
+								.attr("cy", function(coord) { return y((isNaN(y(coord.y))) ? 0.001 : coord.y); })
 								.attr("r", 2);
 							//  Update dots
 							loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
 								.selectAll(".dot").data(function(v) { return v.values; })
 								.attr("cx", function(coord) { return x((isNaN(x(coord.x))) ? 0.1 : coord.x); })
-								.attr("cy", function(coord) { return y((isNaN(y(coord.y))) ? 0.1 : coord.y); })
+								.attr("cy", function(coord) { return y((isNaN(y(coord.y))) ? 0.001 : coord.y); })
 						});
 						//
 						d3.selectAll(".axis path, .axis line")
@@ -2743,7 +2730,8 @@ function charts(chartsArray) {
 							if (scaleType === SCALE_TYPES[0]) {
 								if (scaleOrientation === SCALE_ORIENTATION[0]) {
 									x = d3.scale.linear()
-										.domain([0, d3.max(rampupThreadCountsArray)])
+										.domain([0, d3.max(rampupConnCountsArray)])
+										.nice()
 										.range([0, width]);
 									currXScale = SCALE_TYPES[0];
 								} else {
@@ -2754,25 +2742,32 @@ function charts(chartsArray) {
 												return d3.max(v.values, function(val) { return val.y; });
 											}); })
 										])
+										.nice()
 										.range([height, 0]);
 									currYScale = SCALE_TYPES[0];
 								}
 							} else {
 								if (scaleOrientation === SCALE_ORIENTATION[0]) {
 									x = d3.scale.log()
-										.domain([1, d3.max(rampupThreadCountsArray)])
+										.domain([1, d3.max(rampupConnCountsArray)])
+										.nice()
 										.range([0, width]);
 									currXScale = SCALE_TYPES[1];
 								} else {
 									y = d3.scale.log()
 										.domain([
-											0.1,
+											d3.min(d.sizes, function(c) { return d3.min(c.charts, function(v) {
+												return d3.min(v.values, function(val) {
+													return (val.y <= 0) ? 0.001 : val.y;
+												});
+											}); }),
 											d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
 												return d3.max(v.values, function(val) {
-													return (val.y <= 0) ? 1 : val.y;
+													return (val.y <= 0) ? 0.001 : val.y;
 												});
 											}); })
 										])
+										.nice()
 										.range([height, 0]);
 									currYScale = SCALE_TYPES[1];
 								}
@@ -2817,7 +2812,7 @@ function charts(chartsArray) {
 								if (d.size === json.contextMap["currentSize"]) {
 									d.charts.forEach(function (c, i) {
 										c.values.push({
-											x: parseInt(json.contextMap["currentThreadCount"]),
+											x: parseInt(json.contextMap["currentConnCount"]),
 											y: parseFloat(value[i])
 										});
 									});
@@ -2825,19 +2820,26 @@ function charts(chartsArray) {
 								//
 							});
 							//
-							x.domain([(isNaN(x(0))) ? 1 : 0, d3.max(rampupThreadCountsArray)])
+							x.domain([(isNaN(x(0))) ? 1 : 0, d3.max(rampupConnCountsArray)])
+								.nice()
 								.range([0, width]);
 							y.domain([
-								(currYScale === SCALE_TYPES[1]) ? 0.1 : 0,
+								(currYScale !== SCALE_TYPES[1]) ? 0 : d3.min(currentSizes, function (c) {
+									return d3.min(c.charts, function (v) {
+										return d3.min(v.values, function (val) {
+											return (val.y <= 0) ? 0.001 : val.y;
+										});
+									});
+								}),
 								d3.max(currentSizes, function (c) {
 									return d3.max(c.charts, function (v) {
 										return d3.max(v.values, function (val) {
 											return ((currYScale === SCALE_TYPES[1]) && val.y <= 0) ?
-												1 : val.y;
+												0.001 : val.y;
 										});
 									});
 								})
-							]).range([height, 0]);
+							]).nice().range([height, 0]);
 							//
 							scalesArray[i].update(i, x, y);
 						}

@@ -68,10 +68,6 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
-		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
-		//  write
-		UniformDataSource.DEFAULT = new UniformDataSource();
 		new ScriptRunner().run();
 		//
 		RunIdFileManager.flushAll();
@@ -80,17 +76,18 @@ extends WSMockTestBase {
 		LoggingTestBase.setUpClass();
 		//
 		rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH,
-			LogParser.getDataItemsFile(CREATE_RUN_ID).getPath());
+		rtConfig.set(
+			RunTimeConfig.KEY_DATA_SRC_FPATH, LogParser.getDataItemsFile(CREATE_RUN_ID).getPath()
+		);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		LOG.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  read
-		UniformDataSource.DEFAULT = new UniformDataSource();
-		try (final BufferingOutputStream
-				 stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		try(
+			final BufferingOutputStream
+				stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
 			new ScriptRunner().run();
 			//  Wait for "Scenario end" message

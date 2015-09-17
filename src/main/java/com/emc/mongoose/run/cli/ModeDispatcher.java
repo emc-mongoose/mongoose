@@ -79,7 +79,7 @@ public final class ModeDispatcher {
 				try {
 					new Cinderella(RunTimeConfig.getContext()).run();
 				} catch (final Exception e) {
-					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed");
+					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init the cinderella");
 				}
 				break;
 			case Constants.RUN_MODE_CLIENT:

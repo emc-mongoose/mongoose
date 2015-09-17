@@ -33,18 +33,18 @@ implements Runnable {
 	private final LoadBuilder loadBuilder;
 	private final long timeOut;
 	private final TimeUnit timeUnit;
-	private final String loadTypeSeq[], sizeSeq[], threadCountSeq[];
+	private final String loadTypeSeq[], sizeSeq[], connCountSeq[];
 	//
 	public Rampup(
 		final LoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
-		final String loadTypeSeq[], final String sizeSeq[], final String threadCountSeq[]
+		final String loadTypeSeq[], final String sizeSeq[], final String connCountSeq[]
 	) {
 		this.loadBuilder = loadBuilder;
 		this.timeOut = timeOut;
 		this.timeUnit = timeUnit;
 		this.loadTypeSeq = loadTypeSeq;
 		this.sizeSeq = sizeSeq;
-		this.threadCountSeq = threadCountSeq;
+		this.connCountSeq = connCountSeq;
 	}
 	//
 	@Override
@@ -52,17 +52,17 @@ implements Runnable {
 		Chain nextLoadSeq;
 		for(int i = 0; i < sizeSeq.length; i++) {
 			final String nextSizeStr = sizeSeq[i];
-			for(final String nextThreadCountStr : threadCountSeq) {
+			for(final String nextConnCountStr : connCountSeq) {
 				ThreadContext.put("currentSize", nextSizeStr + "-" + i);
-				ThreadContext.put("currentThreadCount", nextThreadCountStr);
+				ThreadContext.put("currentConnCount", nextConnCountStr);
 				final long nextSize = SizeUtil.toSize(nextSizeStr);
-				final String nextStepName = nextThreadCountStr + "x" + nextSizeStr;
+				final String nextStepName = nextConnCountStr + "x" + nextSizeStr;
 				LOG.debug(Markers.MSG, "Build the next step load chain: \"{}\"", nextStepName);
 				try {
 					loadBuilder
 						.setMinObjSize(nextSize)
 						.setMaxObjSize(nextSize)
-						.setThreadsPerNodeDefault(Integer.parseInt(nextThreadCountStr));
+						.setConnPerNodeDefault(Integer.parseInt(nextConnCountStr));
 					nextLoadSeq = new Chain(
 						loadBuilder, timeOut, timeUnit, loadTypeSeq, false, true
 					);
@@ -98,9 +98,9 @@ implements Runnable {
 			//
 			final String[] loadTypeSeq = runTimeConfig.getScenarioChainLoad();
 			final String[] sizeSeq = runTimeConfig.getScenarioRampupSizes();
-			final String[] threadCountSeq = runTimeConfig.getScenarioRampupThreadCounts();
+			final String[] connCountSeq = runTimeConfig.getScenarioRampupConnCounts();
 			final Rampup rampupScenario = new Rampup(
-				loadBuilder, timeOut, timeUnit, loadTypeSeq, sizeSeq, threadCountSeq
+				loadBuilder, timeOut, timeUnit, loadTypeSeq, sizeSeq, connCountSeq
 			);
 			//
 			rampupScenario.run();

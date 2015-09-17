@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.builder;
 // mongoose-common.jar
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
@@ -12,7 +13,6 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
 import com.emc.mongoose.core.impl.data.model.NewDataItemInput;
 import org.apache.commons.configuration.ConversionException;
@@ -41,10 +41,13 @@ implements LoadBuilder<T, U> {
 	protected float objSizeBias, rateLimit;
 	protected int updatesPerItem;
 	protected String listFile, dataNodeAddrs[];
-	protected final HashMap<IOTask.Type, Integer> threadsPerNodeMap;
+	protected final HashMap<IOTask.Type, Integer>
+		loadTypeThreadCount,
+		loadTypeConnPerNode;
 	//
 	{
-		threadsPerNodeMap = new HashMap<>();
+		loadTypeThreadCount = new HashMap<>();
+		loadTypeConnPerNode = new HashMap<>();
 		try {
 			reqConf = getDefaultRequestConfig();
 			setProperties(RunTimeConfig.getContext());
@@ -70,9 +73,24 @@ implements LoadBuilder<T, U> {
 		//
 		String paramName;
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
+			paramName = RunTimeConfig.getLoadConcurrencyParamName(loadType.name().toLowerCase());
+			try {
+				setConnPerNodeFor(
+					runTimeConfig.getConnCountPerNodeFor(
+						loadType.name().toLowerCase()
+					), loadType
+				);
+			} catch(final NoSuchElementException e) {
+				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			} catch(final IllegalArgumentException e) {
+				LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			}
+		}
+		//
+		for(final IOTask.Type loadType: IOTask.Type.values()) {
 			paramName = RunTimeConfig.getLoadThreadsParamName(loadType.name().toLowerCase());
 			try {
-				setThreadsPerNodeFor(
+				setThreadCountFor(
 					runTimeConfig.getThreadCountFor(
 						loadType.name().toLowerCase()
 					), loadType
@@ -273,30 +291,51 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setThreadsPerNodeDefault(final int threadsPerNode)
-	throws IllegalArgumentException {
-		if(threadsPerNode < 1) {
-			throw new IllegalArgumentException("Thread count should not be less than 1");
-		}
-		LOG.debug(Markers.MSG, "Set default thread count per node: {}", threadsPerNode);
+	public LoadBuilder<T, U> setThreadCountDefault(final int threadsPerNode) {
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
-			threadsPerNodeMap.put(loadType, threadsPerNode);
+			setThreadCountFor(threadsPerNode, loadType);
 		}
 		return this;
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setThreadsPerNodeFor(
+	public LoadBuilder<T, U> setThreadCountFor(
 		final int threadsPerNode, final IOTask.Type loadType
-	) throws IllegalArgumentException {
-		if(threadsPerNode < 1) {
-			throw new IllegalArgumentException("Thread count should not be less than 1");
+	) {
+		if(threadsPerNode > 0) {
+			loadTypeThreadCount.put(loadType, threadsPerNode);
+		} else {
+			loadTypeThreadCount.put(loadType, ThreadUtil.getWorkerCount());
 		}
 		LOG.debug(
 			Markers.MSG, "Set thread count per node {} for load type \"{}\"",
 			threadsPerNode, loadType
 		);
-		threadsPerNodeMap.put(loadType, threadsPerNode);
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilder<T, U> setConnPerNodeDefault(final int connPerNode)
+	throws IllegalArgumentException {
+		LOG.debug(Markers.MSG, "Set default connection count per node: {}", connPerNode);
+		for(final IOTask.Type loadType : IOTask.Type.values()) {
+			setConnPerNodeFor(connPerNode, loadType);
+		}
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilder<T, U> setConnPerNodeFor(
+		final int connPerNode, final IOTask.Type loadType
+	) throws IllegalArgumentException {
+		if(connPerNode < 1) {
+			throw new IllegalArgumentException("Concurrency level should not be less than 1");
+		}
+		LOG.debug(
+			Markers.MSG, "Set connection count per node {} for load type \"{}\"",
+			connPerNode, loadType
+		);
+		loadTypeConnPerNode.put(loadType, connPerNode);
 		return this;
 	}
 	//
@@ -321,7 +360,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setUpdatesPerItem(final int count)
-		throws IllegalArgumentException {
+	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set updates count per data item: {}", count);
 		if(count<0) {
 			throw new IllegalArgumentException("Update count per item should not be less than 0");
@@ -339,8 +378,11 @@ implements LoadBuilder<T, U> {
 		lb.maxCount = maxCount;
 		lb.minObjSize = minObjSize;
 		lb.maxObjSize = maxObjSize;
-		for(final IOTask.Type loadType : threadsPerNodeMap.keySet()) {
-			lb.threadsPerNodeMap.put(loadType, threadsPerNodeMap.get(loadType));
+		for(final IOTask.Type loadType : loadTypeThreadCount.keySet()) {
+			lb.loadTypeThreadCount.put(loadType, loadTypeThreadCount.get(loadType));
+		}
+		for(final IOTask.Type loadType : loadTypeConnPerNode.keySet()) {
+			lb.loadTypeConnPerNode.put(loadType, loadTypeConnPerNode.get(loadType));
 		}
 		lb.dataNodeAddrs = dataNodeAddrs;
 		lb.listFile = listFile;
@@ -391,6 +433,12 @@ implements LoadBuilder<T, U> {
 	protected abstract void invokePreConditions()
 	throws IllegalStateException;
 	//
+	protected final int getMinIOThreadCount(
+		final int threadCount, final int nodeCount, final int connCountPerNode
+	) {
+		return Math.min(Math.max(threadCount, nodeCount), nodeCount * connCountPerNode);
+	}
+	//
 	protected abstract U buildActually();
 	//
 	private final static String FMT_STR = "%s.%dx%s", FMT_SIZE_RANGE = "%s-%s";
@@ -400,7 +448,7 @@ implements LoadBuilder<T, U> {
 		return String.format(
 			FMT_STR,
 			reqConf.toString(),
-			threadsPerNodeMap.get(threadsPerNodeMap.keySet().iterator().next()),
+			loadTypeConnPerNode.get(loadTypeConnPerNode.keySet().iterator().next()),
 			minObjSize == maxObjSize ?
 				SizeUtil.formatSize(minObjSize) :
 				String.format(FMT_SIZE_RANGE, minObjSize, maxObjSize)

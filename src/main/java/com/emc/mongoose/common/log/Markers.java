@@ -13,4 +13,5 @@ public interface Markers {
 	Marker PERF_AVG = MarkerManager.getMarker("perfAvg");
 	Marker PERF_SUM = MarkerManager.getMarker("perfSum");
 	Marker PERF_TRACE = MarkerManager.getMarker("perfTrace");
+	Marker CFG = MarkerManager.getMarker("cfg");
 }

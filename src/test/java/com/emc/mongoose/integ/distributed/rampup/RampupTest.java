@@ -3,6 +3,7 @@ package com.emc.mongoose.integ.distributed.rampup;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -10,6 +11,7 @@ import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.scenario.Rampup;
 //
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 //
 import org.junit.Assert;
@@ -21,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
@@ -69,6 +72,7 @@ extends DistributedLoadBuilderTestBase {
 		}
 		//
 		RunIdFileManager.flushAll();
+		TimeUnit.SECONDS.sleep(10);
 	}
 	//
 	@Test public void checkTotalDuration()
@@ -116,38 +120,41 @@ extends DistributedLoadBuilderTestBase {
 			final BufferedReader
 				in = Files.newBufferedReader(FILE_LOG_PERF_SUM.toPath(), StandardCharsets.UTF_8)
 		) {
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for(final CSVRecord nextRec : recIter) {
-				if(firstRow) {
-					firstRow = false;
-					Assert.assertEquals("DateTimeISO8601", nextRec.get(0));
-					Assert.assertEquals("LoadId", nextRec.get(1));
-					Assert.assertEquals("TypeAPI", nextRec.get(2));
-					Assert.assertEquals("TypeLoad", nextRec.get(3));
-					Assert.assertEquals("CountConn", nextRec.get(4));
-					Assert.assertEquals("CountNode", nextRec.get(5));
-					Assert.assertEquals("CountLoadServer", nextRec.get(6));
-					Assert.assertEquals("CountSucc", nextRec.get(7));
-					Assert.assertEquals("CountFail", nextRec.get(8));
-					Assert.assertEquals("LatencyAvg[us]", nextRec.get(9));
-					Assert.assertEquals("LatencyMin[us]", nextRec.get(10));
-					Assert.assertEquals("LatencyMed[us]", nextRec.get(11));
-					Assert.assertEquals("LatencyMax[us]", nextRec.get(12));
-					Assert.assertEquals("TPAvg", nextRec.get(13));
-					Assert.assertEquals("TP1Min", nextRec.get(14));
-					Assert.assertEquals("TP5Min", nextRec.get(15));
-					Assert.assertEquals("TP15Min", nextRec.get(16));
-					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(17));
-					Assert.assertEquals("BW1Min[MB/s]", nextRec.get(18));
-					Assert.assertEquals("BW5Min[MB/s]", nextRec.get(19));
-					Assert.assertEquals("BW15Min[MB/s]", nextRec.get(20));
-				} else {
-					if(nextRec.size() == 21) {
-						final String countSrvStr = nextRec.get(6);
-						if(countSrvStr.length() > 0 && Integer.parseInt(countSrvStr) == 1) {
-							countSummaries++;
-						}
+			final List<CSVRecord> csvRecs = CSVFormat.RFC4180.parse(in).getRecords();
+			CSVRecord nextRec;
+			if(csvRecs.size() > 0) {
+				nextRec = csvRecs.get(0);
+				Assert.assertEquals("DateTimeISO8601", nextRec.get(0));
+				Assert.assertEquals("LoadId", nextRec.get(1));
+				Assert.assertEquals("TypeAPI", nextRec.get(2));
+				Assert.assertEquals("TypeLoad", nextRec.get(3));
+				Assert.assertEquals("CountConn", nextRec.get(4));
+				Assert.assertEquals("CountNode", nextRec.get(5));
+				Assert.assertEquals("CountLoadServer", nextRec.get(6));
+				Assert.assertEquals("CountSucc", nextRec.get(7));
+				Assert.assertEquals("CountFail", nextRec.get(8));
+				Assert.assertEquals("LatencyAvg[us]", nextRec.get(9));
+				Assert.assertEquals("LatencyMin[us]", nextRec.get(10));
+				Assert.assertEquals("LatencyMed[us]", nextRec.get(11));
+				Assert.assertEquals("LatencyMax[us]", nextRec.get(12));
+				Assert.assertEquals("TPAvg", nextRec.get(13));
+				Assert.assertEquals("TP1Min", nextRec.get(14));
+				Assert.assertEquals("TP5Min", nextRec.get(15));
+				Assert.assertEquals("TP15Min", nextRec.get(16));
+				Assert.assertEquals("BWAvg[MB/s]", nextRec.get(17));
+				Assert.assertEquals("BW1Min[MB/s]", nextRec.get(18));
+				Assert.assertEquals("BW5Min[MB/s]", nextRec.get(19));
+				Assert.assertEquals("BW15Min[MB/s]", nextRec.get(20));
+			}
+			for(int i = 1; i < csvRecs.size(); i ++) {
+				nextRec = csvRecs.get(i);
+				if(nextRec.size() == 21) {
+					final String countSrvStr = nextRec.get(6);
+					if(countSrvStr.length() > 0 && Integer.parseInt(countSrvStr) == 1) {
+						countSummaries ++;
 					}
+				} else {
+					LOG.info(Markers.MSG, "Req #{} is not a summary statement: {}", i, nextRec);
 				}
 			}
 		}

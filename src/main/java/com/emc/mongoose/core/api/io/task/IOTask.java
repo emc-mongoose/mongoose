@@ -36,7 +36,7 @@ public interface IOTask<T extends DataItem> {
 	//
 	T getDataItem();
 	//
-	long getTransferSize();
+	long getCountBytesDone();
 	//
 	Status getStatus();
 	//

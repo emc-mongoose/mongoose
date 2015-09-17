@@ -232,24 +232,47 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setThreadsPerNodeDefault(final int threadCount)
+	public final LoadBuilderClient<T, U> setThreadCountDefault(final int threadCount)
 	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setThreadsPerNodeDefault(threadCount);
+			nextBuilder.setThreadCountDefault(threadCount);
 		}
 		return this;
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setThreadsPerNodeFor(
+	public final LoadBuilderClient<T, U> setThreadCountFor(
 		final int threadCount, final IOTask.Type loadType
 	) throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setThreadsPerNodeFor(threadCount, loadType);
+			nextBuilder.setThreadCountFor(threadCount, loadType);
+		}
+		return this;
+	}
+	//
+	@Override
+	public final LoadBuilderClient<T, U> setConnPerNodeDefault(final int connCount)
+		throws IllegalArgumentException, RemoteException {
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.setThreadCountDefault(connCount);
+		}
+		return this;
+	}
+	//
+	@Override
+	public final LoadBuilderClient<T, U> setConnPerNodeFor(
+		final int connCount, final IOTask.Type loadType
+	) throws IllegalArgumentException, RemoteException {
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.setThreadCountFor(connCount, loadType);
 		}
 		return this;
 	}

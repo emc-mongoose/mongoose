@@ -24,14 +24,15 @@ implements ObjectLoadExecutor<T> {
 	protected ObjectLoadExecutorBase(
 		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final ObjectRequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount,
+		final int connCountPerNode, final int threadCount,
+		final DataItemInput<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
 		final int countUpdPerReq
 	) {
 		super(
 			dataCls,
-			runTimeConfig, reqConfig, addrs, connCountPerNode, itemSrc, maxCount, sizeMin, sizeMax,
-			sizeBias, rateLimit, countUpdPerReq
+			runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
 	}
 	//

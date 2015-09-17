@@ -22,29 +22,29 @@ def init():
 	LOG.info(Markers.MSG, "Load types chain: {}", loadTypesChain)
 	listSizes = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES)
 	LOG.info(Markers.MSG, "Data sizes: {}", listSizes)
-	listThreadCounts = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS)
-	LOG.info(Markers.MSG, "Thread counts: {}", listThreadCounts)
-	return loadTypesChain, listSizes, listThreadCounts
+	listConnCounts = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS)
+	LOG.info(Markers.MSG, "Thread counts: {}", listConnCounts)
+	return loadTypesChain, listSizes, listConnCounts
 #
 def execute(loadBuilder, rampupParams=((),(),()), timeOut=Long.MAX_VALUE, timeUnit=TimeUnit.DAYS):
 	loadTypesChain = rampupParams[0]
 	listSizes = rampupParams[1]
-	listThreadCounts = rampupParams[2]
+	listConnCounts = rampupParams[2]
 	flagConcurrent = False
 	for index, dataItemSizeStr in enumerate(listSizes):
 		dataItemSize = Long(SizeUtil.toSize(dataItemSizeStr))
-		for threadCountStr in listThreadCounts:
+		for connCountStr in listConnCounts:
 			try:
-				threadCount = Integer.parseInt(threadCountStr)
-				LOG.info(Markers.PERF_SUM, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
+				connCount = Integer.parseInt(connCountStr)
+				LOG.info(Markers.PERF_SUM, "---- Step {}x{} start ----", connCount, dataItemSizeStr)
 				ThreadContext.put("currentSize", dataItemSizeStr + "-" + str(index))
-				ThreadContext.put("currentThreadCount", str(threadCount))
+				ThreadContext.put("currentConnCount", str(connCount))
 				nextChain = chainBuild(
 					loadBuilder, loadTypesChain, flagConcurrent, True, dataItemSize, dataItemSize,
-					threadCount
+					connCount
 				)
 				chainExecute(nextChain, flagConcurrent, timeOut, timeUnit)
-				LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
+				LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", connCount, dataItemSizeStr)
 			except InterruptedException as e:
 				raise e
 			except NumberFormatException as e:

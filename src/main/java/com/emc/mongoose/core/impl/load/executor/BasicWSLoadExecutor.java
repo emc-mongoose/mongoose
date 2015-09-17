@@ -1,9 +1,9 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
@@ -73,18 +73,18 @@ implements WSLoadExecutor<T> {
 	@SuppressWarnings("unchecked")
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final DataItemInput<T> itemSrc, final long maxCount,
+		final int connCountPerNode, final int threadCount,
+		final DataItemInput<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
 		final int countUpdPerReq
 	) {
 		super(
 			(Class<T>) BasicWSObject.class,
-			runTimeConfig, reqConfig, addrs, connCountPerNode, itemSrc, maxCount,
+			runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
 		wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
 		//
-		final int totalConnCount = connCountPerNode * storageNodeCount;
 		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
 		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
 		//
@@ -114,7 +114,7 @@ implements WSLoadExecutor<T> {
 		);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
-			.setIoThreadCount(totalConnCount)
+			.setIoThreadCount(threadCount)
 			.setBacklogSize((int) thrLocalConfig.getSocketBindBackLogSize())
 			.setInterestOpQueued(thrLocalConfig.getSocketInterestOpQueued())
 			.setSelectInterval(thrLocalConfig.getSocketSelectInterval())
@@ -143,7 +143,7 @@ implements WSLoadExecutor<T> {
 		//
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
-				ioReactorConfigBuilder.build(), new IOUtils.IOWorkerFactory(getName(), runTimeConfig)
+				ioReactorConfigBuilder.build(), new GroupThreadFactory(getName())
 			);
 		} catch(final IOReactorException e) {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);
@@ -183,12 +183,9 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public void close()
-	throws IOException {
+	public void interrupt() {
 		try {
-			super.close();
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Closing failure");
+			super.interrupt();
 		} finally {
 			clientDaemon.interrupt();
 			LOG.debug(
@@ -212,8 +209,12 @@ implements WSLoadExecutor<T> {
 				}
 			}
 			//
-			ioReactor.shutdown(1);
-			LOG.debug(Markers.MSG, "I/O reactor has been shut down");
+			try {
+				ioReactor.shutdown(1);
+				LOG.debug(Markers.MSG, "I/O reactor has been shut down");
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down the I/O reactor");
+			}
 		}
 	}
 	//

@@ -2,6 +2,7 @@ package com.emc.mongoose.common.concurrent;
 //
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.common.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,6 +13,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by andrey on 04.08.15.
  */
@@ -23,18 +25,15 @@ extends Thread {
 	private final BlockingQueue<Runnable> queue;
 	private final int batchSize;
 	private final Collection<Runnable> buff;
-	private final int sleepTimeMilliSec;
 	//
 	public Sequencer(
-		final String name, boolean daemonFlag, final int queueCapacity, final int batchSize,
-		final int sleepTimeMilliSec
+		final String name, boolean daemonFlag, final int queueCapacity, final int batchSize
 	) {
 		super(name);
 		setDaemon(daemonFlag);
 		queue = new ArrayBlockingQueue<>(queueCapacity, false);
 		this.batchSize = batchSize;
 		buff = new ArrayList<>(batchSize);
-		this.sleepTimeMilliSec = sleepTimeMilliSec;
 	}
 	//
 	public final <V> Future<V> submit(final RunnableFuture<V> task)
@@ -47,7 +46,7 @@ extends Thread {
 	public final void run() {
 		int n;
 		try {
-			while(true) {
+			while(!isInterrupted()) {
 				n = queue.drainTo(buff, batchSize);
 				if(n > 0) {
 					for(final Runnable nextTask : buff) {
@@ -61,12 +60,11 @@ extends Thread {
 					}
 					buff.clear();
 				} else {
-					Thread.sleep(sleepTimeMilliSec);
+					LockSupport.parkNanos(1);
 				}
 			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 		} finally {
+			LOG.debug(Markers.MSG, "{}: finished", getName());
 			queue.clear();
 		}
 	}

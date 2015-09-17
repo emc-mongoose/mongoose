@@ -427,7 +427,13 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {
-		dataItem.setId(Long.toString(dataItem.getOffset(), DataObject.ID_RADIX));
+		final String oldOid = dataItem.getId();
+		if(
+			oldOid == null || oldOid.isEmpty() ||
+			(verifyContentFlag && IOTask.Type.READ.equals(loadType)) || fsAccess
+		) {
+			dataItem.setId(Long.toString(dataItem.getOffset(), DataObject.ID_RADIX));
+		}
 	}
 	//
 	@Override
@@ -502,7 +508,7 @@ implements WSRequestConfig<T> {
 		//
 		if(dataItem.isAppending()) {
 			sb.append(dataItem.getSize()).append(VALUE_RANGE_CONCAT);
-		} else if(dataItem.hasAnyUpdatedRanges()) {
+		} else if(dataItem.hasScheduledUpdates()) {
 			final int rangeCount = dataItem.getCountRangesTotal();
 			long nextRangeOffset;
 			for(int i = 0; i < rangeCount; i ++) {

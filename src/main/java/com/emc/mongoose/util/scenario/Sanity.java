@@ -42,9 +42,9 @@ import java.util.concurrent.TimeUnit;
 public class Sanity
 implements Runnable {
 	//
-	private final static short DEFAULT_NODE_COUNT = 2, DEFAULT_CONN_PER_NODE = 50;
-	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("1MB");
-	private final static int DEFAULT_DATA_COUNT_MAX = 1000000;
+	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 32;
+	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("32MB");
+	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -72,7 +72,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Start updating");
 			final DataItemOutput<WSObject> dataDstU = new BinFileItemOutput<>();
 			final long nUpdated = client.update(
-				dataDstW.getInput(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
+				dataDstW.getInput(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 15
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
@@ -96,7 +96,7 @@ implements Runnable {
 				tmpItemsFilePath, BasicWSObject.class
 			);
 			final long nUpdated2 = client.update(
-				dataDstA.getInput(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 10
+				dataDstA.getInput(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 15
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
 			// read and verify the updated items again
@@ -104,7 +104,7 @@ implements Runnable {
 				dataDstU2.getInput(), null, nUpdated2, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
-			/* recreate the items
+			// recreate the items
 			final long nReWritten = client.write(
 				dataDstW.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
 			);
@@ -113,7 +113,7 @@ implements Runnable {
 			final long nRead3 = client.read(
 				dataDstW.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, true
 			);
-			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);*/
+			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
 			// delete all created data items
 			final long nDeleted = client.delete(
 				dataDstW.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE
@@ -133,7 +133,6 @@ implements Runnable {
 		//
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET, DEFAULT_CONN_PER_NODE);
 		//rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		final Thread wsMockThread = new Thread(
 			new Cinderella(RunTimeConfig.getContext()), "wsMock"
@@ -163,7 +162,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
 		// distributed mode
-		/*rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
+		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
 		ServiceUtils.init();
 		//
 		try(
@@ -186,7 +185,7 @@ implements Runnable {
 			}
 		}
 		//
-		ServiceUtils.shutdown();*/
+		ServiceUtils.shutdown();
 		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");

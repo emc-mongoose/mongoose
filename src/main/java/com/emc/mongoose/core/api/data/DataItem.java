@@ -14,6 +14,8 @@ import java.nio.channels.WritableByteChannel;
 public interface DataItem
 extends ReadableByteChannel, Externalizable {
 	//
+	void reset();
+	//
 	long getSize();
 	//
 	void setSize(final long size);
@@ -31,19 +33,23 @@ extends ReadableByteChannel, Externalizable {
 	int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException;
 	//
-	long writeRange(final WritableByteChannel chanDst, final long relOffset, final long len)
+	@Deprecated
+	long writeRangeFully(final WritableByteChannel chanDst, final long relOffset, final long len)
 		throws IOException;
 	//
+	@Deprecated
 	long writeFully(final WritableByteChannel chanDst)
 	throws IOException;
 	//
 	int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataSizeException, DataCorruptionException, IOException;
 	//
-	long readAndVerifyRange(
+	@Deprecated
+	long readAndVerifyRangeFully(
 		final ReadableByteChannel chanSrc, final long relOffset, final long len
 	) throws DataSizeException, DataCorruptionException, IOException;
 	//
+	@Deprecated
 	long readAndVerifyFully(final ReadableByteChannel chanSrc)
 	throws DataSizeException, DataCorruptionException, IOException;
 }

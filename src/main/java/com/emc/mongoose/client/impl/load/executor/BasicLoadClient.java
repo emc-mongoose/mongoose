@@ -168,9 +168,7 @@ implements LoadClient<T> {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
 		if(itemSrc != null && !NewDataItemInput.class.isInstance(itemSrc)) {
-			producer = new DataItemInputProducer<>(
-				itemSrc, runTimeConfig.getDataSrcCircularEnabled()
-			);
+			producer = new DataItemInputProducer<>(itemSrc);
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -721,7 +719,7 @@ implements LoadClient<T> {
 		try {
 			forcedAggregator.awaitTermination(metricsPeriodSec, TimeUnit.SECONDS);
 		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Interrupted while aggregating the remote info");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while aggregating the remote info");
 		} finally {
 			forcedAggregator.shutdownNow();
 			postProcessDataItems();
@@ -782,7 +780,7 @@ implements LoadClient<T> {
 						if(!isTerminating() && !isTerminated()) {
 							LOG.debug(
 								Markers.ERR,
-								"Looks like the remote load service is already shut down"
+								"Looks like the remote load service is already closed"
 							);
 						}
 					} catch(final NoSuchObjectException e) {

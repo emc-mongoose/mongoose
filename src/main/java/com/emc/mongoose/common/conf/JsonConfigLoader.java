@@ -5,8 +5,10 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 //
+import org.apache.commons.configuration.ConversionException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,9 +62,10 @@ public class JsonConfigLoader {
 			}
 			walkJsonTree(rootNode);
 			tgtConfig.setMongooseKeys(mongooseKeys);
-			tgtConfig.putJsonProps(rootNode);
+			tgtConfig.setJsonNode(rootNode);
 			//
 			if (ACTION.equals(JsonConfigLoaderActions.UPLOAD)) {
+				LOG.debug("Going to update the configuration file \"{}\"", cfgFile.toString());
 				jsonMapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile, rootNode);
 			}
 		} catch(final IOException e) {
@@ -91,20 +94,26 @@ public class JsonConfigLoader {
 			if (!jsonNode.get(shortFieldName).fieldNames().hasNext()) {
 				if (ACTION.equals(JsonConfigLoaderActions.UPDATE)
 						|| ACTION.equals(JsonConfigLoaderActions.UPLOAD)) {
-					final String property = DEFAULT_CFG.getProperty(fullFieldName).toString()
-							.replace("[", "")
-							.replace("]", "")
-							.replace(" ", "")
-							.trim();
-					DEFAULT_CFG.setProperty(fullFieldName, DEFAULT_CFG.getProperty(fullFieldName));
-					((ObjectNode) jsonNode).put(shortFieldName, property);
+					final Object value = DEFAULT_CFG.getProperty(fullFieldName);
+					//
+					if (!fullFieldName.startsWith(RunTimeConfig.PREFIX_KEY_ALIASING)) {
+						LOG.trace(Markers.MSG, "Update property: \"{}\" = {}",
+							fullFieldName, value);
+					}
+					DEFAULT_CFG.setProperty(fullFieldName, value);
+					putJsonFormatValue(jsonNode, shortFieldName, fullFieldName);
 				} else {
-					DEFAULT_CFG.setProperty(fullFieldName, jsonNode.get(shortFieldName).toString()
-                            .replace("[", "")
-                            .replace("]", "")
-                            .replace(" ", "")
-							.replace("\"", "")
-							.trim());
+					if (!fullFieldName.startsWith(RunTimeConfig.PREFIX_KEY_ALIASING)) {
+					LOG.trace(Markers.MSG, "Read property: \"{}\" = {}",
+						fullFieldName, jsonNode.get(shortFieldName).toString());
+					}
+					if (!jsonNode.get(shortFieldName).isNull()) {
+						DEFAULT_CFG.setProperty(
+							fullFieldName, getFormattedValue(jsonNode.get(shortFieldName).toString())
+						);
+					} else {
+						DEFAULT_CFG.setProperty(fullFieldName, null);
+					}
 					mongooseKeys.add(fullFieldName);
 				}
 			} else {
@@ -113,14 +122,54 @@ public class JsonConfigLoader {
 		}
 	}
 	//
-	public static void updateProps(
-		final Path rootDir, final RunTimeConfig tgtConfig, final boolean isUpload
+	private static void putJsonFormatValue(
+		final JsonNode node, final String shortFieldName, final String fullFieldName
 	) {
+		final JsonNode property = node.get(shortFieldName);
+		final ObjectNode objectNode = (ObjectNode) node;
+		//
+		try {
+			if (property.isTextual()) {
+				final String stringValue = DEFAULT_CFG.getProperty(fullFieldName).toString();
+				objectNode.put(shortFieldName, getFormattedValue(stringValue));
+			} else if (property.isNumber()) {
+				objectNode.put(shortFieldName, DEFAULT_CFG.getInt(fullFieldName));
+			} else if (property.isArray()) {
+				final ArrayNode arrayNode = objectNode.putArray(shortFieldName);
+				final String values[] = DEFAULT_CFG.getStringArray(fullFieldName);
+				for (final String value : values) {
+					arrayNode.add(value);
+				}
+			} else if (property.isBoolean()) {
+				objectNode.put(shortFieldName, DEFAULT_CFG.getBoolean(fullFieldName));
+			} else if (property.isNull()) {
+				final Object value = DEFAULT_CFG.getProperty(fullFieldName);
+				if (value != null) {
+					objectNode.put(shortFieldName, value.toString());
+				}
+			}
+		} catch (final ConversionException e) {
+			final String stringValue = DEFAULT_CFG.getProperty(fullFieldName).toString();
+			objectNode.put(shortFieldName, getFormattedValue(stringValue));
+		}
+	}
+	//
+	private static String getFormattedValue(final String value) {
+		return value
+			.replace("[", "")
+			.replace("]", "")
+			.replace(" ", "")
+			.replace("\"", "")
+			.trim();
+	}
+	//
+	public static void updateProps(final RunTimeConfig tgtConfig, final boolean isUpload) {
 		if (isUpload) {
 			ACTION = JsonConfigLoaderActions.UPLOAD;
 		} else {
 			ACTION = JsonConfigLoaderActions.UPDATE;
 		}
-		loadPropsFromJsonCfgFile(rootDir, tgtConfig);
+		DEFAULT_CFG = tgtConfig;
+		walkJsonTree(tgtConfig.getJsonNode(), null);
 	}
 }

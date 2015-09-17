@@ -4,7 +4,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.LogPatterns;
@@ -62,24 +61,23 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_TYPE_CREATE_THREADS, Integer.toString(LOAD_THREADS));
+		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, Integer.toString(LOAD_THREADS));
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
-		try (final BufferingOutputStream
+		try(
+			final BufferingOutputStream
 				 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
-			UniformDataSource.DEFAULT = new UniformDataSource();
-			//  Run mongoose default scenario in standalone mode
+			STD_OUTPUT_STREAM = stdOutStream;
 			TIME_ACTUAL_SEC = System.currentTimeMillis();
 			new ScriptRunner().run();
 			TIME_ACTUAL_SEC = System.currentTimeMillis() - TIME_ACTUAL_SEC;
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
-			STD_OUTPUT_STREAM = stdOutStream;
+			TimeUnit.SECONDS.sleep(10);
 		}
 		//
 		RunIdFileManager.flushAll();

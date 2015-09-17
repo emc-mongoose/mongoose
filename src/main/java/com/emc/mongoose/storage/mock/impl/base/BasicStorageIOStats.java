@@ -53,10 +53,10 @@ implements StorageIOStats {
 		);
 	private final Meter
 		tpWrite = metricRegistry.meter(
-			MetricRegistry.name(
-				StorageMock.class, IOType.WRITE.name(), LoadExecutor.METRIC_NAME_TP
-			)
-		),
+		MetricRegistry.name(
+			StorageMock.class, IOType.WRITE.name(), LoadExecutor.METRIC_NAME_TP
+		)
+	),
 		tpRead = metricRegistry.meter(
 			MetricRegistry.name(
 				StorageMock.class, IOType.READ.name(), LoadExecutor.METRIC_NAME_TP
@@ -146,7 +146,7 @@ implements StorageIOStats {
 		LOG.debug(Markers.MSG, "Running");
 		try {
 			while(updateMilliPeriod > 0 && !isInterrupted()) {
-				LOG.info(Markers.PERF_AVG, toString());
+				LOG.info(Markers.MSG, toString());
 				Thread.sleep(updateMilliPeriod);
 			}
 		} catch(final InterruptedException ignored) {
@@ -214,12 +214,27 @@ implements StorageIOStats {
 	// methods necessary for throttling, perf adaptation, etc
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final double getRate() {
-		return tpWrite.getOneMinuteRate() + tpRead.getOneMinuteRate() + tpDelete.getOneMinuteRate();
+	public final double getWriteRate() {
+		return tpWrite.getOneMinuteRate();
 	}
 	//
 	@Override
-	public final double getRateBytes() {
-		return bwWrite.getOneMinuteRate() + bwRead.getOneMinuteRate();
+	public final double getWriteRateBytes() {
+		return bwWrite.getOneMinuteRate();
+	}
+	//
+	@Override
+	public final double getReadRate() {
+		return tpRead.getOneMinuteRate();
+	}
+	//
+	@Override
+	public final double getReadRateBytes() {
+		return bwRead.getOneMinuteRate();
+	}
+	//
+	@Override
+	public final double getDeleteRate() {
+		return tpDelete.getOneMinuteRate();
 	}
 }

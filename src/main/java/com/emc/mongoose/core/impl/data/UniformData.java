@@ -8,6 +8,7 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataSizeException;
+import com.emc.mongoose.core.api.data.DataVerificationException;
 import com.emc.mongoose.core.api.data.model.DataSource;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
@@ -96,16 +97,17 @@ implements DataItem {
 		ringBuffSize = ringBuff.capacity();
 	}
 	//
-	protected void reset() {
-		ringBuff.limit(ringBuffSize).position((int) (offset % ringBuffSize));
-	}
-	//
 	private void enforceCircularity() {
 		if(!ringBuff.hasRemaining()) {
 			ringBuff.clear();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public void reset() {
+		ringBuff.limit(ringBuffSize).position((int) (offset % ringBuffSize));
+	}
+	//
 	@Override
 	public final long getOffset() {
 		return offset;
@@ -171,21 +173,21 @@ implements DataItem {
 		return chanDst.write(ringBuff);
 	}
 	//
-	@Override
+	@Override @Deprecated
 	public long writeFully(final WritableByteChannel chanDst)
 	throws IOException {
-		return writeRange(chanDst, 0, size);
+		return writeRangeFully(chanDst, 0, size);
 	}
 	//
-	@Override
-	public final long writeRange(
+	@Override @Deprecated
+	public final long writeRangeFully(
 		final WritableByteChannel chanDst, final long relOffset, final long len
 	) throws IOException {
 		long writtenCount = 0;
 		int n;
 		setRelativeOffset(relOffset);
 		while(writtenCount < len) {
-			n = write(chanDst, len-writtenCount);
+			n = write(chanDst, len - writtenCount);
 			if(n < 0) {
 				LOG.warn(Markers.ERR, "Channel returned {} as written byte count", n);
 			} else if(n > 0) {
@@ -221,14 +223,14 @@ implements DataItem {
 		return n;
 	}
 	//
-	@Override
+	@Override @Deprecated
 	public long readAndVerifyFully(final ReadableByteChannel chanSrc)
 	throws DataSizeException, DataCorruptionException, IOException {
-		return readAndVerifyRange(chanSrc, 0, size);
+		return readAndVerifyRangeFully(chanSrc, 0, size);
 	}
 	// checks that data read from input equals the specified range
-	@Override
-	public final long readAndVerifyRange(
+	@Override @Deprecated
+	public final long readAndVerifyRangeFully(
 		final ReadableByteChannel chanSrc, final long relOffset, final long len
 	) throws DataSizeException, DataCorruptionException, IOException {
 		setRelativeOffset(relOffset);

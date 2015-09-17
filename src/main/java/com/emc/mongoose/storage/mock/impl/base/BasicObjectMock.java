@@ -81,14 +81,14 @@ implements DataObjectMock {
 		this.size += size;
 	}
 	//
-	@Override
+	@Override @Deprecated
 	public final synchronized long writeFully(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
-		if (maskRangesRead.isEmpty()) {
-			return writeRange(chanOut, 0, size);
+		if(hasBeenUpdated()) {
+			return writeRangeFully(chanOut, 0, size);
 		} else {
 			long writtenCount = 0;
 			for(int i = 0; i < countRangesTotal; i++) {
@@ -100,14 +100,14 @@ implements DataObjectMock {
 						UniformDataSource.DEFAULT
 					);
 					writtenCount += updatedRange.writeFully(chanOut);
-				} else if(currLayerIndex > 0 ){ // previous layer of updated ranges
+				} else if(currLayerIndex > 0) { // previous layer of updated ranges
 					updatedRange = new UniformData(
 						offset + rangeOffset, rangeSize, currLayerIndex,
 						UniformDataSource.DEFAULT
 					);
 					writtenCount += updatedRange.writeFully(chanOut);
 				} else { // the range was not updated
-					writtenCount += writeRange(chanOut, rangeOffset, rangeSize);
+					writtenCount += writeRangeFully(chanOut, rangeOffset, rangeSize);
 				}
 			}
 			return writtenCount;
