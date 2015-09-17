@@ -486,7 +486,6 @@ implements LoadExecutor<T> {
 							= (DataItemInputProducer<T>) producer;
 						inputProducer.setSkippedItemsCount(counterResults.get());
 						inputProducer.setLastDataItem(currState.getLastDataItem());
-
 					}
 					producer.start();
 					LOG.debug(Markers.MSG, "Started object producer {}", producer);

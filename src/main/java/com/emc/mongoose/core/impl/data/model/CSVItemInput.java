@@ -66,9 +66,13 @@ implements DataItemInput<T> {
 	public void skip(final long itemsCount)
 	throws IOException {
 		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_START, itemsCount);
+		String item;
 		for (int i = 0; i < itemsCount; i++) {
-			if (itemsSrc.readLine() == null) {
+			item = itemsSrc.readLine();
+			if (item == null) {
 				throw new IOException("Couldn't skip such amount of data items");
+			} else if (item.equals(lastItem.toString())) {
+				return;
 			}
 		}
 		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_END);

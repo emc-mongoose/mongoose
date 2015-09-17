@@ -105,8 +105,12 @@ implements DataItemInput<T>{
 	throws IOException {
 		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_START, itemsCount);
 		try {
+			Object item;
 			for (int i = 0; i < itemsCount; i++) {
-				itemsSrc.readUnshared();
+				item = itemsSrc.readUnshared();
+				if (item.equals(lastItem)) {
+					return;
+				}
 			}
 		} catch (final ClassNotFoundException e) {
 			throw new IOException(e);
