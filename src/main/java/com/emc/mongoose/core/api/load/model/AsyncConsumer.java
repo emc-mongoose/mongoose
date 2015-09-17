@@ -11,4 +11,7 @@ extends Consumer<T> {
 	//
 	void start()
 	throws RemoteException, IllegalThreadStateException;
+	//
+	void interrupt()
+	throws RemoteException;
 }

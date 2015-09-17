@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
 import com.emc.mongoose.core.api.load.model.Consumer;
@@ -49,11 +50,16 @@ implements Consumer<T> {
 	@Override
 	public void close()
 	throws IOException {
-		// stop consuming
 		shutdown();
-		// wait for the queue processing is done
+		LOG.debug(
+			Markers.MSG, "{}: stopped consuming, count is {}", getName(), counterPreSubm.get()
+		);
 		try {
 			join();
+			LOG.debug(
+				Markers.MSG, "{}: waiting for the queue remaining content processing is done",
+				getName()
+			);
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Unexpected interruption while closing");
 		}

@@ -11,7 +11,6 @@ import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,7 +57,7 @@ implements RecordFrameBuffer<T> {
 	@Override
 	public final Collection<T> takeFrame() {
 		final Collection<T> buff = new ArrayList<>(buffSize);
-		final int n = transientQueue.drainTo(buff, buffSize);
+		final int n = queue.drainTo(buff, buffSize);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Sending next {} items to the client", n);
 		}

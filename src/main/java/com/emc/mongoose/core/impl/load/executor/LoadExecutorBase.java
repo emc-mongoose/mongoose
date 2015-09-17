@@ -119,10 +119,14 @@ implements LoadExecutor<T> {
 						lock.lock();
 						try {
 							condProducerDone.signalAll();
-							LOG.trace(
-								Markers.MSG, "{}: done/interrupted signal emitted",
-								getName()
-							);
+							//if(LOG.isTraceEnabled(Markers.MSG)) {
+								LOG.debug(
+									Markers.MSG,
+									"{}: done signal emitted because of condition",
+									getName(),
+									isAllSubm.get(), counterSubm.get(), counterResults.get()
+								);
+							//}
 						} finally {
 							lock.unlock();
 						}
@@ -394,6 +398,12 @@ implements LoadExecutor<T> {
 			return;
 		}
 		if(isInterrupted.compareAndSet(false, true)) {
+			final StringBuilder sb = new StringBuilder("Interrupt came from:");
+			final StackTraceElement stackTrace[] = Thread.currentThread().getStackTrace();
+			for(final StackTraceElement ste : stackTrace) {
+				sb.append("\n\t").append(ste.toString());
+			}
+			LOG.debug(Markers.MSG, sb);
 			metricsDaemon.interrupt();
 			shutdown();
 			try {
@@ -405,13 +415,17 @@ implements LoadExecutor<T> {
 			lock.lock();
 			try {
 				condProducerDone.signalAll();
-				LOG.debug(Markers.MSG, "{}: done/interrupted signal emitted", getName());
+				LOG.debug(
+					Markers.MSG, "{}: done signal emitted by the interruption", getName()
+				);
 			} finally {
 				lock.unlock();
 			}
 			//
 			try {
 				if(isStarted.get()) { // if was executing
+					lastStats = ioStats.getSnapshot();
+					ioStats.close();
 					logMetrics(Markers.PERF_SUM); // provide summary metrics
 					// calculate the efficiency and report
 					final float
@@ -667,7 +681,7 @@ implements LoadExecutor<T> {
 	//
 	private boolean isDoneAllSubm() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.debug(
+			LOG.trace(
 				Markers.MSG, "{}: all submitted: {}, results: {}, submitted: {}",
 				getName(), isAllSubm.get(), counterResults.get(), counterSubm.get()
 			);
@@ -720,8 +734,6 @@ implements LoadExecutor<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
 				releaseDaemon.interrupt();
-				ioStats.close();
-				LOG.debug(Markers.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);
 				if(loadedPrevState != null) {
 					if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
@@ -768,7 +780,7 @@ implements LoadExecutor<T> {
 	@Override
 	public final void await()
 	throws InterruptedException {
-		join(Long.MAX_VALUE);
+		await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
@@ -789,14 +801,14 @@ implements LoadExecutor<T> {
 		lock.lock();
 		try {
 			LOG.debug(
-				Markers.MSG, "{}: wait for the done condition at most for {}[us]",
+				Markers.MSG, "{}: await for the done condition at most for {}[us]",
 				getName(), timeOutMicroSec
 			);
 			if(condProducerDone.await(timeOutMicroSec, TimeUnit.MICROSECONDS)) {
-				LOG.debug(Markers.MSG, "{}: join finished", getName());
+				LOG.debug(Markers.MSG, "{}: await for the done condition is finished", getName());
 			} else {
 				LOG.debug(
-					Markers.MSG, "{}: join timeout, unhandled results left: {}",
+					Markers.MSG, "{}: await timeout, unhandled results left: {}",
 					getName(), counterSubm.get() - counterResults.get()
 				);
 			}

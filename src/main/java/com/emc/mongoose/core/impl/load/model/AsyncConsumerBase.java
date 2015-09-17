@@ -39,20 +39,21 @@ implements AsyncConsumer<T> {
 		isShutdown = new AtomicBoolean(false),
 		isAllSubm = new AtomicBoolean(false);
 	// volatile
-	protected final BlockingQueue<T> transientQueue;
+	protected final BlockingQueue<T> queue;
 	private final List<T> buff;
 	private final boolean shuffle;
 	private final int butchSize;
 	//
-	public AsyncConsumerBase(final long maxCount, final int maxQueueSize, final boolean shuffle, final int butchSize)
-	throws IllegalArgumentException {
+	public AsyncConsumerBase(
+		final long maxCount, final int maxQueueSize, final boolean shuffle, final int butchSize
+	) throws IllegalArgumentException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		if(maxQueueSize > 0) {
 			this.maxQueueSize = (int) Math.min(this.maxCount, maxQueueSize);
 		} else {
 			throw new IllegalArgumentException("Invalid max queue size: " + maxQueueSize);
 		}
-		transientQueue = new ArrayBlockingQueue<>(maxQueueSize);
+		queue = new ArrayBlockingQueue<>(maxQueueSize);
 		buff = shuffle ? new ArrayList<T>(butchSize) : new ArrayList<T>(maxQueueSize);
 		this.shuffle = shuffle;
 		this.butchSize = butchSize;
@@ -90,7 +91,7 @@ implements AsyncConsumer<T> {
 			if(isShutdown.get()) {
 				throw new InterruptedException("Shut down already");
 			}
-			transientQueue.put(item);
+			queue.put(item);
 			counterPreSubm.incrementAndGet();
 		} else {
 			throw new RejectedExecutionException("Consuming is not started yet");
@@ -101,18 +102,19 @@ implements AsyncConsumer<T> {
 	public void run() {
 		LOG.debug(
 			Markers.MSG, "Determined submit queue capacity of {} for \"{}\"",
-			transientQueue.remainingCapacity(), getName()
+			queue.remainingCapacity(), getName()
 		);
 		T nextItem;
 		long i = 0;
 		int availItemCount;
 		try {
 			while(i < maxCount && !isInterrupted()) {
-				availItemCount = transientQueue.size();
+				availItemCount = queue.size();
 				if(availItemCount == 0) {
 					if(isShutdown.get()) {
 						LOG.debug(
-							Markers.MSG, "No items are available for consuming and shutdown flag is set"
+							Markers.MSG,
+							"No items are available for consuming and shutdown flag is set"
 						);
 						break;
 					} else {
@@ -120,10 +122,10 @@ implements AsyncConsumer<T> {
 					}
 				} else if(availItemCount > 1) {
 					if(shuffle) {
-						availItemCount = transientQueue.drainTo(buff, butchSize);
+						availItemCount = queue.drainTo(buff, butchSize);
 						Collections.shuffle(buff);
 					} else {
-						availItemCount = transientQueue.drainTo(buff);
+						availItemCount = queue.drainTo(buff);
 					}
 					for(int j = 0; j < availItemCount && i < maxCount; j ++) {
 						submitSync(buff.get(j));
@@ -132,7 +134,7 @@ implements AsyncConsumer<T> {
 					// Do buff.clear() because hasn't to submit the old data item the second time
 					buff.clear();
 				} else {
-					nextItem = transientQueue.poll(POLL_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS);
+					nextItem = queue.poll(POLL_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS);
 					if(nextItem != null) {
 						submitSync(nextItem);
 						i ++;
@@ -183,13 +185,13 @@ implements AsyncConsumer<T> {
 	public void close()
 	throws IOException {
 		shutdown();
-		final int dropCount = transientQueue.size();
+		final int dropCount = queue.size();
 		if(dropCount > 0) {
-			LOG.warn(
+			LOG.debug(
 				Markers.MSG, "{}: dropped {} submit tasks", getClass().getSimpleName(), dropCount
 			);
 		}
-		transientQueue.clear(); // dispose
+		queue.clear(); // dispose
 		if(!super.isInterrupted()) {
 			super.interrupt();
 		}
