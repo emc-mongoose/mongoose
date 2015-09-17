@@ -276,12 +276,8 @@ implements LoadExecutor<T> {
 			producer = reqConfig.getContainerListInput(maxCount, addrs[0]);
 			LOG.debug(Markers.MSG, "{} will use {} as data items producer", getName(), producer);
 		}*/
-		final boolean isCircular = rtConfig.getDataSrcCircularEnabled();
-		if(isCircular) {
-			setConsumer(this);
-		}
 		if(itemsSrc != null) {
-			producer = new DataItemInputProducer<>(itemsSrc);
+			producer = new DataItemInputProducer<>(itemsSrc, rtConfig.isDataSrcCircularEnabled());
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -354,7 +350,9 @@ implements LoadExecutor<T> {
 						getName(), SizeUtil.formatSize(itemsFilePath.toFile().length()), itemsFilePath
 					);
 					isShutdown.compareAndSet(true, false); // cancel if shut down before start
-					producer = new DataItemInputProducer<>(itemsFileBuff.getInput());
+					producer = new DataItemInputProducer<>(
+						itemsFileBuff.getInput(), rtConfig.isDataSrcCircularEnabled()
+					);
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
@@ -682,8 +680,8 @@ implements LoadExecutor<T> {
 	private boolean isDoneAllSubm() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				Markers.MSG, "{}: all submitted: {}, results: {}, submitted: {}",
-				getName(), isAllSubm.get(), counterResults.get(), counterSubm.get()
+					Markers.MSG, "{}: all submitted: {}, results: {}, submitted: {}",
+					getName(), isAllSubm.get(), counterResults.get(), counterSubm.get()
 			);
 		}
 		return isAllSubm.get() && counterResults.get() >= counterSubm.get();

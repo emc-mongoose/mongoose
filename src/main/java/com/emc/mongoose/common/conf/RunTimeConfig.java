@@ -385,7 +385,7 @@ implements Externalizable {
 		return getBoolean(KEY_DATA_VERSIONING);
 	}
 	//
-	public final boolean getDataSrcCircularEnabled() {
+	public final boolean isDataSrcCircularEnabled() {
 		return getBoolean(KEY_DATA_SRC_CIRCULAR);
 	}
 	//

@@ -31,17 +31,22 @@ implements Producer<T> {
 	protected volatile Consumer<T> consumer = null;
 	protected long skippedItemsCount;
 	protected T lastDataItem;
+	protected boolean isCircular;
 	//
-	public DataItemInputProducer(final DataItemInput<T> itemIn) {
-		this(itemIn, 0, null);
+	public DataItemInputProducer(
+		final DataItemInput<T> itemIn, final boolean isCircular
+	) {
+		this(itemIn, isCircular, 0, null);
 	}
 	//
 	public DataItemInputProducer(
-		final DataItemInput<T> itemIn, final long skippedItemsCount, final T dataItem
+		final DataItemInput<T> itemIn, final boolean isCircular,
+		final long skippedItemsCount, final T dataItem
 	) {
 		this.itemIn = itemIn;
 		this.skippedItemsCount = skippedItemsCount;
 		this.lastDataItem = dataItem;
+		this.isCircular = isCircular;
 		setDaemon(true);
 		setName("dataItemInputProducer<" + itemIn.toString() + ">");
 	}
@@ -116,12 +121,20 @@ implements Producer<T> {
 				try {
 					nextItem = itemIn.read();
 				} catch(final EOFException | ClosedByInterruptException | IllegalStateException e) {
-					break;
+					if (isCircular) {
+						reset();
+					} else {
+						break;
+					}
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to read the next data item");
 				}
 				if(nextItem == null) {
-					break;
+					if (isCircular) {
+						reset();
+					} else {
+						break;
+					}
 				} else {
 					try {
 						consumer.submit(nextItem);
