@@ -41,7 +41,7 @@ implements DataItemInput<T> {
 		);
 	}
 	//
-	public CSVItemInput(
+	protected CSVItemInput(
 		final BufferedReader itemsSrc, final Constructor<? extends T> itemConstructor
 	) {
 		this.itemsSrc = itemsSrc;
