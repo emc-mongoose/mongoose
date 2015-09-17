@@ -120,13 +120,15 @@ implements Producer<T> {
 			do {
 				try {
 					nextItem = itemIn.read();
-				} catch(final EOFException | ClosedByInterruptException | IllegalStateException e) {
+				} catch (final EOFException e) {
 					if (isCircular) {
 						reset();
 						continue;
 					} else {
 						break;
 					}
+				} catch(final ClosedByInterruptException | IllegalStateException e) {
+					break;
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to read the next data item");
 				}
