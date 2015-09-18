@@ -104,7 +104,7 @@ implements StorageClient<T> {
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
 					.setLoadType(IOTask.Type.CREATE)
 					.setMaxCount(maxCount)
-					.setThreadCountFor(connPerNodeCount, IOTask.Type.CREATE)
+					.setConnPerNodeFor(connPerNodeCount, IOTask.Type.CREATE)
 					.setMinObjSize(minSize)
 					.setMaxObjSize(maxSize)
 					.setObjSizeBias(sizeBias)
