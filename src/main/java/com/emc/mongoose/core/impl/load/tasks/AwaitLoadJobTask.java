@@ -9,8 +9,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.rmi.NoSuchObjectException;
-import java.rmi.RemoteException;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 23.12.14.
@@ -38,13 +37,11 @@ implements Runnable {
 				loadJob.getName(), timeOut, timeUnit
 			);
 			loadJob.await(timeOut, timeUnit);
-		} catch(final NoSuchObjectException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Remote join failed, no such service");
-		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Remote join task failure");
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Remote await task failure");
 		} catch(final InterruptedException ignore) {
 		} finally {
-			LOG.debug(Markers.MSG, "Remote join task for \"{}\" was completed", loadJob);
+			LOG.debug(Markers.MSG, "Remote await task for \"{}\" was completed", loadJob);
 		}
 	}
 }

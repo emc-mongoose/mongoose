@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 /**
  Created by andrey on 07.04.15.
  */
-public final class TimeUtil {
+public abstract class TimeUtil {
 	//
 	private final static Map<String, TimeUnit> TIME_UNIT_SHORTCUTS = new HashMap<String, TimeUnit>() {
 		{

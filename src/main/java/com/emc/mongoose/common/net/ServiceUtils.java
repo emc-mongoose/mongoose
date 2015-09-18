@@ -46,7 +46,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 05.05.14.
  */
-public final class ServiceUtils {
+public abstract class ServiceUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private static Registry REGISTRY = null;

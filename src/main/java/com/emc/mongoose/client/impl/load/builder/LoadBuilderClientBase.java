@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.math.MathUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -26,6 +27,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +42,7 @@ implements LoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected String listFile = null, nodeAddrs[] = null, loadServerAddrs[] = null;
+	protected String listFile = null, nodeAddrs[] = null, loadSvcAddrs[] = null;
 	protected volatile RunTimeConfig runTimeConfig;
 	protected volatile RequestConfig<T> reqConf = getDefaultRequestConfig();
 	protected long maxCount = 0, minObjSize, maxObjSize;
@@ -57,11 +60,11 @@ implements LoadBuilderClient<T, U> {
 	throws IOException {
 		//
 		super(runTimeConfig.getLoadServerAddrs().length);
-		loadServerAddrs = runTimeConfig.getLoadServerAddrs();
+		loadSvcAddrs = runTimeConfig.getLoadServerAddrs();
 		//
 		LoadBuilderSvc<T, U> loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
-		for(final String serverAddr : loadServerAddrs) {
+		for(final String serverAddr : loadSvcAddrs) {
 			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
 			loadBuilderSvc = resolve(serverAddr);
 			nextInstanceN = loadBuilderSvc.getNextInstanceNum(runTimeConfig.getRunId());
@@ -73,7 +76,7 @@ implements LoadBuilderClient<T, U> {
 		// set properties should be invoked only after the map is filled already
 		setProperties(runTimeConfig);
 		//
-		for(final String serverAddr : loadServerAddrs) {
+		for(final String serverAddr : loadSvcAddrs) {
 			get(serverAddr).setNextInstanceNum(runTimeConfig.getRunId(), maxLastInstanceN);
 		}
 	}
@@ -83,26 +86,48 @@ implements LoadBuilderClient<T, U> {
 	protected abstract LoadBuilderSvc<T, U> resolve(final String serverAddr)
 	throws IOException;
 	//
-	private int greatestCommonDivider(final int x, final int y) {
-		int z = 0;
-		if(x > y) {
-			for(int i = y; i > 0; i --) {
-				if(x % i == 0 && y % i == 0) {
-					z = i;
-					break;
+	protected static void assignNodesToLoadSvcs(
+		final RunTimeConfig srcConf, final Map<String, RunTimeConfig> dstConfMap,
+		final String loadSvcAddrs[], final String nodeAddrs[]
+	) throws IllegalStateException {
+		if(loadSvcAddrs.length > 1 || nodeAddrs.length > 1) {
+			final int nStep = MathUtil.gcd(loadSvcAddrs.length, nodeAddrs.length);
+			if(nStep > 0) {
+				final int
+					nLoadSvcPerStep = loadSvcAddrs.length / nStep,
+					nNodesPerStep = nodeAddrs.length / nStep;
+				RunTimeConfig nextConfig;
+				String nextLoadSvcAddr, nextNodeAddrs;
+				int j;
+				for(int i = 0; i < nStep; i ++) {
+					//
+					j = i * nNodesPerStep;
+					nextNodeAddrs = StringUtils.join(
+						Arrays.asList(nodeAddrs).subList(j, j + nNodesPerStep), ','
+					);
+					//
+					for(j = 0; j < nLoadSvcPerStep; j ++) {
+						nextLoadSvcAddr = loadSvcAddrs[i * nLoadSvcPerStep + j];
+						nextConfig = dstConfMap.get(nextLoadSvcAddr);
+						if(nextConfig == null) {
+							nextConfig = (RunTimeConfig) srcConf.clone();
+							dstConfMap.put(nextLoadSvcAddr, nextConfig);
+						}
+						LOG.info(
+							Markers.MSG, "Load server @ " + nextLoadSvcAddr +
+							" will use the following storage nodes: " + nextNodeAddrs
+						);
+						nextConfig.setProperty(RunTimeConfig.KEY_STORAGE_ADDRS, nextNodeAddrs);
+					}
 				}
+			} else {
+				throw new IllegalStateException(
+					"Failed to calculate the greatest common divider for the count of the " +
+					"load servers (" + loadSvcAddrs.length + ") and the count of the storage " +
+					"nodes (" + nodeAddrs.length + ")"
+				);
 			}
-		} else if(x < y) {
-			for(int i = x; i > 0; i --) {
-				if(x % i == 0 && y % i == 0) {
-					z = i;
-					break;
-				}
-			}
-		} else {
-			z = x;
 		}
-		return z;
 	}
 	//
 	@Override
@@ -122,50 +147,7 @@ implements LoadBuilderClient<T, U> {
 		}
 		flagAssignLoadSvcToNode = runTimeConfig.getFlagAssignLoadServerToNode();
 		if(flagAssignLoadSvcToNode) {
-			final int
-				countNodes = nodeAddrs.length,
-				countLoadSvcs = loadServerAddrs.length;
-			if(countLoadSvcs > 1 || countNodes > 1) {
-				final int k = greatestCommonDivider(countNodes, countLoadSvcs);
-				if(k > 0) {
-					final int
-						countLoadSvcPerSameNodeList = countLoadSvcs / k,
-						countNodesPerLoadSvc = countNodes / k;
-					RunTimeConfig nextConfig;
-					String nextLoadSvcAddr, nextNodeAddrs;
-					List<String> nextNodeAddrList;
-					for(int i = 0; i < k; i ++) {
-						nextNodeAddrList = new ArrayList<>(countNodesPerLoadSvc);
-						for(int j = 0; j < countNodesPerLoadSvc; j ++) {
-							nextNodeAddrList.add(
-								nodeAddrs[i * countNodesPerLoadSvc + j]
-							);
-						}
-						nextNodeAddrs = StringUtils.join(nextNodeAddrList, ',');
-						for(int j = 0; j < countLoadSvcPerSameNodeList; j ++) {
-							nextLoadSvcAddr = loadServerAddrs[
-								i * countLoadSvcPerSameNodeList + j
-							];
-							nextConfig = loadSvcConfMap.get(nextLoadSvcAddr);
-							if(nextConfig == null) {
-								nextConfig = (RunTimeConfig) runTimeConfig.clone();
-								loadSvcConfMap.put(nextLoadSvcAddr, nextConfig);
-							}
-							LOG.info(
-								Markers.MSG, "Next assingment: " + nextLoadSvcAddr + " <-> " +
-								nextNodeAddrs
-							);
-							nextConfig.setProperty(RunTimeConfig.KEY_STORAGE_ADDRS, newNodeAddrs);
-						}
-					}
-				} else {
-					throw new IllegalStateException(
-						"Failed to calculate the greatest common divider for the count of the " +
-						"load servers (" + countLoadSvcs + ") and the count of the storage nodes " +
-						"(" + countNodes + ")"
-					);
-				}
-			}
+			assignNodesToLoadSvcs(runTimeConfig, loadSvcConfMap, loadSvcAddrs, nodeAddrs);
 		}
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
@@ -369,11 +351,16 @@ implements LoadBuilderClient<T, U> {
 	throws IllegalArgumentException, RemoteException {
 		if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
 			this.nodeAddrs = dataNodeAddrs;
+			if(flagAssignLoadSvcToNode) {
+				assignNodesToLoadSvcs(runTimeConfig, loadSvcConfMap, loadSvcAddrs, nodeAddrs);
+			}
 			//
 			LoadBuilderSvc<T, U> nextBuilder;
 			for(final String addr : keySet()) {
 				nextBuilder = get(addr);
-				nextBuilder.setDataNodeAddrs(dataNodeAddrs);
+				nextBuilder.setDataNodeAddrs(
+					loadSvcConfMap.get(addr).getStorageAddrs()
+				);
 			}
 		}
 		return this;

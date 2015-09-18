@@ -140,7 +140,8 @@ implements Producer<T> {
 					}
 				}
 			} while(!isInterrupted());
-		} catch(final InterruptedException ignore) {
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "{}: producing is interrupted", itemIn);
 		} finally {
 			LOG.debug(
 				Markers.MSG, "{}: produced {} items, shutting down the consumer \"{}\"",
@@ -152,5 +153,10 @@ implements Producer<T> {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down remotely the consumer");
 			}
 		}
+	}
+	//
+	@Override
+	public final void interrupt() {
+		super.interrupt();
 	}
 }

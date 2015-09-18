@@ -65,12 +65,12 @@ implements WSLoadBuilderClient<T, U> {
 		);
 		if(remoteSvc == null) {
 			throw new IOException("No remote load builder was resolved from " + serverAddr);
-		} else if(WSLoadBuilderSvc.class.isInstance(remoteSvc)) {
-			rlb = WSLoadBuilderSvc.class.cast(remoteSvc);
+		} else if(remoteSvc instanceof WSLoadBuilderSvc) {
+			rlb = (WSLoadBuilderSvc<T, U>) remoteSvc;
 		} else {
 			throw new IOException(
-				"Illegal class "+remoteSvc.getClass().getCanonicalName()+
-					" of the instance resolved from "+serverAddr
+				"Illegal class " + remoteSvc.getClass().getCanonicalName() +
+				" of the instance resolved from " + serverAddr
 			);
 		}
 		return rlb;

@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
@@ -194,6 +195,8 @@ extends IOStatsBase {
 		);
 	}
 	//
+	private final static int COUNT_LIMIT_RETRIES = 100;
+	//
 	private final class LoadIOStatsSnapshotTask
 	implements Runnable {
 		//
@@ -209,25 +212,37 @@ extends IOStatsBase {
 			final LoadSvc loadSvc = loadSvcMap.get(loadSvcAddr);
 			final Thread currThread = Thread.currentThread();
 			currThread.setName(currThread.getName() + "@" + loadSvcAddr);
+			int countFailed = 0;
 			while(!currThread.isInterrupted()) {
 				try {
-					loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
-					if(loadSvcStatsSnapshot != null) {
-						loadStatsSnapshotMap.put(loadSvcAddr, loadSvcStatsSnapshot);
-					} else {
-						LOG.warn(
-							Markers.ERR,
-							"Failed to load the stats snapshot from the load server @ {}",
-							loadSvcAddr
-						);
+					try {
+						loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
+						if(loadSvcStatsSnapshot != null) {
+							loadStatsSnapshotMap.put(loadSvcAddr, loadSvcStatsSnapshot);
+							countFailed = 0; // reset
+						} else {
+							LOG.warn(
+								Markers.ERR,
+								"Failed to load the stats snapshot from the load server @ {}",
+								loadSvcAddr
+							);
+						}
+						LockSupport.parkNanos(1);
+					} catch(final RemoteException e) {
+						if(countFailed < COUNT_LIMIT_RETRIES) {
+							countFailed ++;
+							TimeUnit.MILLISECONDS.sleep(countFailed);
+						} else {
+							LogUtil.exception(
+								LOG, Level.WARN, e,
+								"Failed to fetch the metrics snapshot from {}", loadSvcAddr
+							);
+							break;
+						}
 					}
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e,
-						"Failed to fetch the metrics snapshot from {}", loadSvcAddr
-					);
+				} catch(final InterruptedException e) {
+					break;
 				}
-				LockSupport.parkNanos(1);
 			}
 		}
 	}
