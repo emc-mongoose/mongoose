@@ -127,9 +127,9 @@ public class RunTimeConfigTest {
 			new String[] { "load.limit.count" });
 
 		Assert.assertArrayEquals(mapOverride.get("load.drivers"),
-			new String[] { "load.servers" });
+			new String[] { "load.server.addrs" });
 		Assert.assertArrayEquals(mapOverride.get("remote.servers"),
-			new String[] { "load.servers" });
+			new String[] { "load.server.addrs" });
 		Assert.assertArrayEquals(mapOverride.get("remote.serveIfNotLoadServer"),
 			new String[] { "remote.serveJMX" });
 		Assert.assertArrayEquals(mapOverride.get("remote.control.port"),

@@ -76,7 +76,9 @@ implements Runnable {
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
-			final DataItemOutput dataDstR = new CSVFileItemOutput<>(BasicWSObject.class);
+			final DataItemOutput<WSObject> dataDstR = new CSVFileItemOutput<>(
+				(Class<? extends WSObject>) BasicWSObject.class
+			);
 			final long nRead = client.read(
 				dataDstU.getInput(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
 			);
@@ -91,9 +93,9 @@ implements Runnable {
 			);
 			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
 			// update again the appended data items
-			final Path tmpItemsFilePath = Files.createTempFile("reUpdatedItems", ".csv"); // do not delete on exit
-			final DataItemOutput dataDstU2 = new CSVFileItemOutput<>(
-				tmpItemsFilePath, BasicWSObject.class
+			final Path fileTmpItems0 = Files.createTempFile("reUpdatedItems", ".csv"); // do not delete on exit
+			final DataItemOutput<WSObject> dataDstU2 = new CSVFileItemOutput<>(
+				fileTmpItems0, (Class<? extends WSObject>) BasicWSObject.class
 			);
 			final long nUpdated2 = client.update(
 				dataDstA.getInput(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 15
@@ -105,13 +107,16 @@ implements Runnable {
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
 			// recreate the items
+			final DataItemOutput<WSObject> dataDstW2 = new CSVFileItemOutput<>(
+				(Class<? extends WSObject>) BasicWSObject.class
+			);
 			final long nReWritten = client.write(
-				dataDstW.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
+				dataDstW.getInput(), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
 			// read and verify the rewritten data items
 			final long nRead3 = client.read(
-				dataDstW.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, true
+				dataDstW2.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
 			// delete all created data items

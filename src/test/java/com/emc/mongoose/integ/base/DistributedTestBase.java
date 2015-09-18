@@ -26,7 +26,7 @@ extends WSMockTestBase {
 	throws Exception {
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVERS, ServiceUtils.getHostAddr());
+		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, ServiceUtils.getHostAddr());
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_SERVER);
 		ServiceUtils.init();
 		LOAD_BUILDER_SVC = new BasicWSLoadBuilderSvc<>(rtConfig);

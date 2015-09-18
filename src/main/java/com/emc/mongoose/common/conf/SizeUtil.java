@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 /**
  Created by andrey on 08.04.15.
  */
-public final class SizeUtil {
+public abstract class SizeUtil {
 	//
 	private final static String
 		SIZE_UNITS = "kmgtpe",

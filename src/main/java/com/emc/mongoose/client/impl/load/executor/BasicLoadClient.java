@@ -206,6 +206,8 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final static int COUNT_LIMIT_RETRY = 100;
+	//
 	private final class LoadDataItemsBatchTask
 	implements Runnable {
 		//
@@ -250,16 +252,26 @@ implements LoadClient<T> {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("dataItemsBatchLoader<" + getName() + ">");
 			//
+			int failCount = 0;
 			while(!currThread.isInterrupted()) {
 				try {
-					loadAndProcessDataItems();
-					LockSupport.parkNanos(1);
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e,
-						"Failed to load the processed data items frame from the load server @ {}",
-						loadSvc
-					);
+					try {
+						loadAndProcessDataItems();
+						LockSupport.parkNanos(1);
+						failCount = 0; // reset
+					} catch(final RemoteException e) {
+						if(failCount < COUNT_LIMIT_RETRY) {
+							failCount ++;
+							TimeUnit.MILLISECONDS.sleep(failCount);
+						} else {
+							LogUtil.exception(
+								LOG, Level.WARN, e,
+								"Failed to load the processed items from the load server @ {}",
+								loadSvc
+							);
+							break;
+						}
+					}
 				} catch(final InterruptedException e) {
 					break;
 				}
@@ -289,16 +301,20 @@ implements LoadClient<T> {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("interruptOnCountLimitReached<" + getName() + ">");
 			if(maxCount > 0) {
-				try {
-					while(
-						!currThread.isInterrupted() &&
-						maxCount > lastStats.getSuccCount() + lastStats.getFailCount()
-					) {
+				while(true) {
+					if(maxCount <= lastStats.getSuccCount() + lastStats.getFailCount()) {
+						LOG.debug(
+							Markers.MSG, "Interrupting due to count limit ({}) is reached", maxCount
+						);
+						break;
+					} else if(currThread.isInterrupted()) {
+						LOG.debug(Markers.MSG, "Interrupting due to external interruption");
+						break;
+					} else {
 						LockSupport.parkNanos(1);
 					}
-				} finally {
-					BasicLoadClient.this.interrupt();
 				}
+				BasicLoadClient.this.interrupt();
 			}
 		}
 	}

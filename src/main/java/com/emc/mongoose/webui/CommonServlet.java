@@ -34,7 +34,7 @@ extends HttpServlet {
 		THREADS_MAP = new ConcurrentHashMap<>();
 		STOPPED_RUN_MODES = new ConcurrentHashMap<>();
 		CHARTS_MAP = new ConcurrentHashMap<>();
-		LAST_RUN_TIME_CONFIG = RunTimeConfig.getContext().clone();
+		LAST_RUN_TIME_CONFIG = (RunTimeConfig) RunTimeConfig.getContext().clone();
 		DEFAULT_CFG = RunTimeConfig.getContext();
 	}
 	//
@@ -42,7 +42,9 @@ extends HttpServlet {
 	public void init() {
 		try {
 			super.init();
-			runTimeConfig = ((RunTimeConfig) getServletContext().getAttribute("rtConfig")).clone();
+			runTimeConfig = (RunTimeConfig) (
+				(RunTimeConfig) getServletContext().getAttribute("rtConfig")
+			).clone();
 		} catch (final ServletException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Interrupted servlet init method");
 		}
@@ -74,7 +76,7 @@ extends HttpServlet {
 	}
 	//
 	public static void updateLastRunTimeConfig(final RunTimeConfig runTimeConfig) {
-		LAST_RUN_TIME_CONFIG = runTimeConfig.clone();
+		LAST_RUN_TIME_CONFIG = (RunTimeConfig) runTimeConfig.clone();
 	}
 	//
 	public static RunTimeConfig getLastRunTimeConfig() {
