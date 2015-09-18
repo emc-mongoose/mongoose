@@ -121,7 +121,7 @@ implements LoadClient<T> {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
 		if(itemSrc != null && !NewDataItemInput.class.isInstance(itemSrc)) {
-			producer = new DataItemInputProducer<>(itemSrc);
+			producer = new DataItemInputProducer<>(itemSrc, runTimeConfig.isDataSrcCircularEnabled());
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {

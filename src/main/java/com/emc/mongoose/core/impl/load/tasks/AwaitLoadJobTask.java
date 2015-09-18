@@ -14,14 +14,14 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 23.12.14.
  */
-public final class AwaitLoadJobTask
+public class AwaitLoadJobTask
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final LoadExecutor loadJob;
-	private final long timeOut;
-	private final TimeUnit timeUnit;
+	protected final LoadExecutor loadJob;
+	protected final long timeOut;
+	protected final TimeUnit timeUnit;
 	//
 	public AwaitLoadJobTask(final LoadExecutor loadJob, final long timeOut, final TimeUnit timeUnit) {
 		this.loadJob = loadJob;
@@ -30,7 +30,7 @@ implements Runnable {
 	}
 	//
 	@Override
-	public final void run() {
+	public void run() {
 		try {
 			LOG.debug(
 				Markers.MSG, "Wait for the remote load service \"{}\" to complete at {}[{}]",

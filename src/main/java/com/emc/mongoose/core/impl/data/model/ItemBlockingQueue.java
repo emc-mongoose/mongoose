@@ -111,8 +111,12 @@ implements DataItemOutput<T>, DataItemInput<T> {
 	throws IOException {
 		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_START, itemsCount);
 		try {
+			T item;
 			for (int i = 0; i < itemsCount; i++) {
-				queue.take();
+				item = queue.take();
+				if (item.equals(lastItem)) {
+					return;
+				}
 			}
 		} catch (final InterruptedException e) {
 			throw new InterruptedIOException(e.getMessage());
