@@ -47,8 +47,9 @@ ext {
 	jstl = [ "javax.servlet:jstl:1.2" ]
 
 	webjars_bootstrap = ['org.webjars:bootstrap:3.3.2-1']
-	webjars_jquery = ['org.webjars:jquery:2.1.0']
+	webjars_jquery = ['org.webjars:jquery:2.1.4']
 	webjars_d3js = ['org.webjars:d3js:3.5.3']
+	webjars_require = ['org.webjars:requirejs:2.1.20']
 
 	jython = [ "org.python:jython:2.7.0" ]
 
@@ -115,6 +116,7 @@ ext {
 		log4j_web,
 		webjars_bootstrap,
 		webjars_jquery,
-		webjars_d3js
+		webjars_d3js,
+		webjars_require
 	]
 }

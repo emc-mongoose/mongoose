@@ -21,43 +21,40 @@ implements Runnable {
 	private final static Logger LOG = LogManager.getLogger();
 	private final RunTimeConfig runTimeConfig;
 	//
-    public final static String
-            webResourceBaseDir,
-            webDescriptorBaseDir;
+	public final static String
+			webResourceBaseDir,
+			webDescriptorBaseDir;
 	//
-    static {
-        webResourceBaseDir = Paths
+	static {
+		webResourceBaseDir = Paths
 			.get(RunTimeConfig.DIR_ROOT, Constants.DIR_WEBAPP)
 			.toString();
-        webDescriptorBaseDir = Paths
+		webDescriptorBaseDir = Paths
 			.get(RunTimeConfig.DIR_ROOT, Constants.DIR_WEBAPP, Constants.DIR_WEBINF)
 			.resolve("web.xml").toString();
-    }
+	}
 	//
-    public WUIRunner(RunTimeConfig runTimeConfig) {
+	public WUIRunner(RunTimeConfig runTimeConfig) {
         this.runTimeConfig = runTimeConfig;
     }
 	//
 	@Override
-    public void run() {
-        final Server server = new Server(runTimeConfig.getRemotePortWebUI());
-        //
-        final WebAppContext webAppContext = new WebAppContext();
-        webAppContext.setContextPath("/");
-        webAppContext.setResourceBase(webResourceBaseDir);
-        webAppContext.setDescriptor(webDescriptorBaseDir);
-        webAppContext.setParentLoaderPriority(true);
-        webAppContext.setAttribute("rtConfig", runTimeConfig);
-
-        //
-        server.setHandler(webAppContext);
-        //
-        try {
-            server.start();
-            server.join();
-        } catch (final Exception e) {
-            LogUtil.exception(LOG, Level.FATAL, e, "Web UI service failure");
-        }
-    }
-
+	public void run() {
+		final Server server = new Server(runTimeConfig.getRemotePortWebUI());
+		//
+		final WebAppContext webAppContext = new WebAppContext();
+		webAppContext.setContextPath("/");
+		webAppContext.setResourceBase(webResourceBaseDir);
+		webAppContext.setDescriptor(webDescriptorBaseDir);
+		webAppContext.setParentLoaderPriority(true);
+		webAppContext.setAttribute("rtConfig", runTimeConfig);
+		//
+		server.setHandler(webAppContext);
+		try {
+			server.start();
+			server.join();
+		} catch (final Exception e) {
+			LogUtil.exception(LOG, Level.FATAL, e, "Web UI service failure");
+		}
+	}
 }

@@ -7,7 +7,7 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Mongoose-Run</title>
-		<link rel='stylesheet' href='webjars/bootstrap/3.3.2-1/css/bootstrap.min.css'>
+		<link rel='stylesheet' href='/webjars/bootstrap/3.1.2-1/css/bootstrap.min.css'>
 		<link href="css/styles.css" rel="stylesheet">
 	</head>
 	<body>
@@ -998,12 +998,13 @@
 				</c:forEach>
 			</div>
 		</div>
-		<script type="text/javascript" src="webjars/d3js/3.5.3/d3.min.js"></script>
+		<script data-main="js/main" src="/webjars/requirejs/2.1.20/require.min.js"></script>
+		<!--<script type="text/javascript" src="webjars/d3js/3.5.3/d3.min.js"></script>
 		<script type="text/javascript" src="webjars/jquery/2.1.0/jquery.min.js"></script>
 		<script type="text/javascript" src="webjars/bootstrap/3.3.2-1/js/bootstrap.min.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
 		<script>
 			jsonProps = ${runTimeConfig.jsonProps};
-		</script>
+		</script>-->
 	</body>
 </html>
