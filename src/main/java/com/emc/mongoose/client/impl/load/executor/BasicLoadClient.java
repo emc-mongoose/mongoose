@@ -306,14 +306,15 @@ implements LoadClient<T> {
 						LOG.debug(
 							Markers.MSG, "Interrupting due to count limit ({}) is reached", maxCount
 						);
-						BasicLoadClient.this.interrupt();
+						break;
 					} else if(currThread.isInterrupted()) {
 						LOG.debug(Markers.MSG, "Interrupting due to external interruption");
-						BasicLoadClient.this.interrupt();
+						break;
 					} else {
 						LockSupport.parkNanos(1);
 					}
 				}
+				BasicLoadClient.this.interrupt();
 			}
 		}
 	}
