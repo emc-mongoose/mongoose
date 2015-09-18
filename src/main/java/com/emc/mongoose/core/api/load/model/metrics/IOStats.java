@@ -31,10 +31,10 @@ extends Closeable {
 		METRIC_NAME_STDDEV = "stdDev",
 		METRIC_NAME_MAX = "max",
 		//
-		NAME_SEP = "@";
-	//
-	String MSG_FMT_METRICS = "count=(%d/%s); dur[us]=(%d/%d/%d/%d); lat[us]=(%d/%d/%d/%d); " +
-		"TP[s^-1]=(%.3f/%.3f); BW[MB*s^-1]=(%.3f/%.3f)";
+		NAME_SEP = "@",
+		//
+		MSG_FMT_METRICS = "count=(%d/%s); dur[us]=(%d/%d/%d/%d/%d); lat[us]=(%d/%d/%d/%d/%d); " +
+			"TP[s^-1]=(%.3f/%.3f); BW[MB*s^-1]=(%.3f/%.3f)";
 	//
 	void start();
 	//
@@ -68,15 +68,17 @@ extends Closeable {
 		long getElapsedTime();
 		long getDurationSum();
 		//
-		double getDurationMean();
 		double getDurationMin();
-		double getDurationStdDev();
+		double getDurationLoQ();
+		double getDurationMed();
+		double getDurationHiQ();
 		double getDurationMax();
 		long[] getDurationValues();
 		//
-		double getLatencyMean();
 		double getLatencyMin();
-		double getLatencyStdDev();
+		double getLatencyLoQ();
+		double getLatencyMed();
+		double getLatencyHiQ();
 		double getLatencyMax();
 		long[] getLatencyValues();
 	}

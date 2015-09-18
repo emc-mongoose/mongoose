@@ -157,14 +157,6 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getDurationMean() {
-			if(durSnapshot == null) {
-				durSnapshot = new UniformSnapshot(durValues);
-			}
-			return durSnapshot.getMean();
-		}
-		//
-		@Override
 		public double getDurationMin() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
@@ -173,11 +165,27 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getDurationStdDev() {
+		public double getDurationLoQ() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
-			return durSnapshot.getStdDev();
+			return durSnapshot.getValue(0.25);
+		}
+		//
+		@Override
+		public double getDurationMed() {
+			if(durSnapshot == null) {
+				durSnapshot = new UniformSnapshot(durValues);
+			}
+			return durSnapshot.getValue(0.5);
+		}
+		//
+		@Override
+		public double getDurationHiQ() {
+			if(durSnapshot == null) {
+				durSnapshot = new UniformSnapshot(durValues);
+			}
+			return durSnapshot.getValue(0.75);
 		}
 		//
 		@Override
@@ -199,14 +207,6 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getLatencyMean() {
-			if(latSnapshot == null) {
-				latSnapshot = new UniformSnapshot(latValues);
-			}
-			return latSnapshot.getMean();
-		}
-		//
-		@Override
 		public double getLatencyMin() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
@@ -215,13 +215,28 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getLatencyStdDev() {
+		public double getLatencyLoQ() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
-			return latSnapshot.getStdDev();
+			return latSnapshot.getValue(0.25);
 		}
 		//
+		@Override
+		public double getLatencyMed() {
+			if(latSnapshot == null) {
+				latSnapshot = new UniformSnapshot(latValues);
+			}
+			return latSnapshot.getValue(0.5);
+		}
+		//
+		@Override
+		public double getLatencyHiQ() {
+			if(latSnapshot == null) {
+				latSnapshot = new UniformSnapshot(latValues);
+			}
+			return latSnapshot.getValue(0.75);
+		}//
 		@Override
 		public double getLatencyMax() {
 			if(latSnapshot == null) {
@@ -257,14 +272,16 @@ implements IOStats {
 						String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
 						String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 				//
-				(int) durSnapshot.getMean(),
 				(int) durSnapshot.getMin(),
-				(int) durSnapshot.getStdDev(),
+				(int) durSnapshot.getValue(0.25),
+				(int) durSnapshot.getValue(0.5),
+				(int) durSnapshot.getValue(0.75),
 				(int) durSnapshot.getMax(),
 				//
-				(int) latSnapshot.getMean(),
 				(int) latSnapshot.getMin(),
-				(int) latSnapshot.getStdDev(),
+				(int) latSnapshot.getValue(0.25),
+				(int) latSnapshot.getValue(0.5),
+				(int) latSnapshot.getValue(0.75),
 				(int) latSnapshot.getMax(),
 				//
 				getSuccRateMean(), succRateLast, getByteRateMean() / MIB, byteRateLast / MIB

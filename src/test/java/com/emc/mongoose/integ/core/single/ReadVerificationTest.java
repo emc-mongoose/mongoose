@@ -9,7 +9,7 @@ import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.TestConstants;
-import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
 import com.emc.mongoose.run.scenario.ScriptRunner;
@@ -77,7 +77,7 @@ extends WSMockTestBase {
 		//
 		rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH,
-			LogParser.getDataItemsFile(CREATE_RUN_ID).getPath());
+			LogValidator.getDataItemsFile(CREATE_RUN_ID).getPath());
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_RING_SEED, WRONG_SEED);
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
@@ -108,7 +108,7 @@ extends WSMockTestBase {
 	public void shouldFailedReadOfAllDataItems()
 	throws Exception {
 		//  Read perf.summary file
-		final File perfSumFile = LogParser.getPerfSumFile(READ_RUN_ID);
+		final File perfSumFile = LogValidator.getPerfSumFile(READ_RUN_ID);
 
 		//  Check that file exists
 		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
@@ -123,9 +123,11 @@ extends WSMockTestBase {
 			for(final CSVRecord nextRec : recIter) {
 				if (firstRow) {
 					firstRow = false;
-				} else if (nextRec.size() == 21) {
+				} else if (nextRec.size() == 23) {
 					Assert.assertTrue(
-						"Count of failed data items is not integer", LogParser.isInteger(nextRec.get(8))
+						"Count of failed data items is not integer", LogValidator.isInteger(
+							nextRec.get(8)
+						)
 					);
 					Assert.assertEquals(
 						"Count of failed data items isn't correct", Integer.toString(LIMIT_COUNT), nextRec.get(8)
@@ -139,7 +141,7 @@ extends WSMockTestBase {
 	public void shouldReportAboutFailedVerificationToConsole()
 	throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = LogParser.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -167,7 +169,7 @@ extends WSMockTestBase {
 	public void shouldReportAboutFailedVerificationToMessageFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = LogParser.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -175,7 +177,7 @@ extends WSMockTestBase {
 				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			// Get content of message.log file of read scenario
-			final String contentMessageFile = new Scanner(LogParser.getMessageFile(READ_RUN_ID))
+			final String contentMessageFile = new Scanner(LogValidator.getMessageFile(READ_RUN_ID))
 				.useDelimiter("\\Z")
 				.next();
 			boolean firstRow = true;
@@ -198,7 +200,7 @@ extends WSMockTestBase {
 	public void shouldReportToMessageFileAboutAllFailedVerification()
 	throws Exception {
 		// Get message.log file of write scenario
-		final File messageFile = LogParser.getMessageFile(READ_RUN_ID);
+		final File messageFile = LogValidator.getMessageFile(READ_RUN_ID);
 		Assert.assertTrue("message.log file of read load doesn't exist", messageFile.exists());
 		//
 		try (final BufferedReader

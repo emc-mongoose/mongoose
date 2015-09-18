@@ -10,7 +10,7 @@ import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.ContentGetter;
 import com.emc.mongoose.integ.tools.TestConstants;
-import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.commons.csv.CSVFormat;
@@ -77,7 +77,7 @@ extends WSMockTestBase {
 		//
 		rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH,
-			LogParser.getDataItemsFile(CREATE_RUN_ID).getPath());
+			LogValidator.getDataItemsFile(CREATE_RUN_ID).getPath());
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
@@ -120,7 +120,7 @@ extends WSMockTestBase {
 	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogParser.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
 		Assert.assertTrue(
 			"data.items.csv file for create load doesn't exist", dataItemsFile.exists()
 		);
@@ -150,7 +150,7 @@ extends WSMockTestBase {
 	public void shouldGetAllDataItemsFromServerAndDataSizeIsCorrect()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogParser.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -177,7 +177,7 @@ extends WSMockTestBase {
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//  Read message file and search "Scenario End"
-		final File messageFile = LogParser.getMessageFile(READ_RUN_ID);
+		final File messageFile = LogValidator.getMessageFile(READ_RUN_ID);
 		Assert.assertTrue(messageFile.exists());
 		//
 		try (final BufferedReader bufferedReader =
@@ -201,23 +201,23 @@ extends WSMockTestBase {
 	@Test
 	public void shouldCreateAllFilesWithLogsAfterWriteScenario()
 	throws Exception {
-		Path expectedFile = LogParser.getMessageFile(CREATE_RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageFile(CREATE_RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file of create load doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfAvgFile(CREATE_RUN_ID).toPath();
+		expectedFile = LogValidator.getPerfAvgFile(CREATE_RUN_ID).toPath();
 		//  Check that perf.avg.csv file exists
 		Assert.assertTrue("perf.avg.csv file of create load doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfSumFile(CREATE_RUN_ID).toPath();
+		expectedFile = LogValidator.getPerfSumFile(CREATE_RUN_ID).toPath();
 		//  Check that perf.sum.csv file exists
 		Assert.assertTrue("perf.sum.csv file of create load doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfTraceFile(CREATE_RUN_ID).toPath();
+		expectedFile = LogValidator.getPerfTraceFile(CREATE_RUN_ID).toPath();
 		//  Check that perf.trace.csv file exists
 		Assert.assertTrue("perf.trace.csv file of create load doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getDataItemsFile(CREATE_RUN_ID).toPath();
+		expectedFile = LogValidator.getDataItemsFile(CREATE_RUN_ID).toPath();
 		//  Check that data.items.csv file exists
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", Files.exists(expectedFile));
 	}
@@ -225,23 +225,23 @@ extends WSMockTestBase {
 	@Test
 	public void shouldCreateAllFilesWithLogsAfterReadScenario()
 	throws Exception {
-		Path expectedFile = LogParser.getMessageFile(READ_RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageFile(READ_RUN_ID).toPath();
 		//  Check that messages.log file is contained
 		Assert.assertTrue("messages.log file of read load doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfAvgFile(READ_RUN_ID).toPath();
+		expectedFile = LogValidator.getPerfAvgFile(READ_RUN_ID).toPath();
 		//  Check that perf.avg.csv file is contained
 		Assert.assertTrue("perf.avg.csv file of read load doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfSumFile(READ_RUN_ID).toPath();
+		expectedFile = LogValidator.getPerfSumFile(READ_RUN_ID).toPath();
 		//  Check that perf.sum.csv file is contained
 		Assert.assertTrue("perf.sum.csv file of read load doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfTraceFile(READ_RUN_ID).toPath();
+		expectedFile = LogValidator.getPerfTraceFile(READ_RUN_ID).toPath();
 		//  Check that perf.trace.csv file is contained
 		Assert.assertTrue("perf.trace.csv file of read load doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getDataItemsFile(READ_RUN_ID).toPath();
+		expectedFile = LogValidator.getDataItemsFile(READ_RUN_ID).toPath();
 		//  Check that data.items.csv file is contained
 		Assert.assertTrue("data.items.csv file of read load doesn't exist", Files.exists(expectedFile));
 	}
@@ -250,14 +250,14 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectDataItemsFileAfterReadScenario()
 	throws Exception {
 		//  Get data.items.csv file of read scenario run
-		final File readDataItemFile = LogParser.getDataItemsFile(READ_RUN_ID);
+		final File readDataItemFile = LogValidator.getDataItemsFile(READ_RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", readDataItemFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(readDataItemFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectDataItemsCSV(in);
+			LogValidator.assertCorrectDataItemsCSV(in);
 		}
 	}
 
@@ -265,14 +265,14 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectPerfSumFileAfterReadScenario()
 	throws Exception {
 		// Get perf.sum.csv file of read scenario run
-		final File readPerfSumFile = LogParser.getPerfSumFile(READ_RUN_ID);
+		final File readPerfSumFile = LogValidator.getPerfSumFile(READ_RUN_ID);
 		Assert.assertTrue("perf.sum.csv file doesn't exist", readPerfSumFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(readPerfSumFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectPerfSumCSV(in);
+			LogValidator.assertCorrectPerfSumCSV(in);
 		}
 	}
 
@@ -280,14 +280,14 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectPerfAvgFileAfterReadScenario()
 	throws Exception {
 		// Get perf.avg.csv file
-		final File readPerfAvgFile = LogParser.getPerfAvgFile(READ_RUN_ID);
+		final File readPerfAvgFile = LogValidator.getPerfAvgFile(READ_RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", readPerfAvgFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(readPerfAvgFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectPerfAvgCSV(in);
+			LogValidator.assertCorrectPerfAvgCSV(in);
 		}
 	}
 
@@ -295,14 +295,14 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectPerfTraceFileAfterReadScenario()
 	throws Exception {
 		// Get perf.trace.csv file
-		final File readPerfTraceFile = LogParser.getPerfTraceFile(READ_RUN_ID);
+		final File readPerfTraceFile = LogValidator.getPerfTraceFile(READ_RUN_ID);
 		Assert.assertTrue("perf.trace.csv file doesn't exist", readPerfTraceFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(readPerfTraceFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectPerfTraceCSV(in);
+			LogValidator.assertCorrectPerfTraceCSV(in);
 		}
 	}
 
@@ -310,7 +310,7 @@ extends WSMockTestBase {
 	public void shouldWriteAllDataItemsInCorrectSize()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogParser.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -338,7 +338,7 @@ extends WSMockTestBase {
 	public void shouldReportCorrectCountOfReadObjectToSummaryLogFile()
 	throws Exception {
 		//  Read perf.summary file
-		final File perfSumFile = LogParser.getPerfSumFile(READ_RUN_ID);
+		final File perfSumFile = LogValidator.getPerfSumFile(READ_RUN_ID);
 
 		//  Check that file exists
 		Assert.assertTrue("perf.sum.csv file of read load doesn't exist", perfSumFile.exists());
@@ -353,9 +353,9 @@ extends WSMockTestBase {
 			for(final CSVRecord nextRec : recIter) {
 				if (firstRow) {
 					firstRow = false;
-				} else if (nextRec.size() == 21) {
+				} else if (nextRec.size() == 23) {
 					Assert.assertTrue(
-						"Count of success is not integer", LogParser.isInteger(nextRec.get(7))
+						"Count of success is not integer", LogValidator.isInteger(nextRec.get(7))
 					);
 					Assert.assertEquals(
 						"Count of success isn't correct", Integer.toString(LIMIT_COUNT), nextRec.get(7)
@@ -369,12 +369,12 @@ extends WSMockTestBase {
 	public void shouldReadDataItemsInSameOrderAsInFileOfWriteScenario()
 	throws Exception {
 		//  Get data.items.csv file of create run
-		final File dataItemsFileWrite = LogParser.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFileWrite = LogValidator.getDataItemsFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", dataItemsFileWrite.exists());
 		//
 		final byte[] bytesDataItemsFileWrite = Files.readAllBytes(dataItemsFileWrite.toPath());
 		//  Get data.items.csv file of read run
-		final File dataItemsFileRead = LogParser.getDataItemsFile(READ_RUN_ID);
+		final File dataItemsFileRead = LogValidator.getDataItemsFile(READ_RUN_ID);
 		Assert.assertTrue("data.items.csv file of read load doesn't exist", dataItemsFileRead.exists());
 		//
 		final byte[] bytesDataItemsFileRead = Files.readAllBytes(dataItemsFileRead.toPath());

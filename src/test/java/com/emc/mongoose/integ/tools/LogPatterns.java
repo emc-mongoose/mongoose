@@ -42,10 +42,10 @@ public interface LogPatterns {
 			"count=\\((?<countSucc>\\d+)/\\\u001B*\\[*\\d*m*(?<countFail>\\d+)\\\u001B*\\[*\\d*m*\\)"
 		),
 		CONSOLE_DURATION = Pattern.compile(
-			"dur\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\)"
+			"dur\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)\\)"
 		),
 		CONSOLE_LATENCY = Pattern.compile(
-			"lat\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\)"
+			"lat\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)\\)"
 		),
 		CONSOLE_TP = Pattern.compile(
 			"TP\\[s\\^\\-1\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\)"

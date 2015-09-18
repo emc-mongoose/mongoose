@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.LogValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -39,9 +39,9 @@ extends ConfiguredTestBase {
 		LogUtil.init();
 		ConfiguredTestBase.setUpClass();
 		final String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
-		LogParser.removeLogDirectory(runId);
-		FILE_LOG_PERF_SUM = LogParser.getPerfSumFile(runId);
-		FILE_LOG_PERF_AVG = LogParser.getPerfAvgFile(runId);
+		LogValidator.removeLogDirectory(runId);
+		FILE_LOG_PERF_SUM = LogValidator.getPerfSumFile(runId);
+		FILE_LOG_PERF_AVG = LogValidator.getPerfAvgFile(runId);
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, runId);
 		RunTimeConfig.setContext(rtConfig);

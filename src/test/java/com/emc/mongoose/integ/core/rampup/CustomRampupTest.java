@@ -8,7 +8,7 @@ import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.commons.csv.CSVFormat;
@@ -95,16 +95,16 @@ extends WSMockTestBase{
 	@Test
 	public void shouldCreateLogFiles()
 	throws Exception {
-		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
 		Assert.assertTrue("messages.log file must be contained", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfSumFile(RUN_ID).toPath();
+		expectedFile = LogValidator.getPerfSumFile(RUN_ID).toPath();
 		Assert.assertTrue("perf.sum.csv file must be contained", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfTraceFile(RUN_ID).toPath();
+		expectedFile = LogValidator.getPerfTraceFile(RUN_ID).toPath();
 		Assert.assertTrue("perf.trace.csv file must be contained", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getDataItemsFile(RUN_ID).toPath();
+		expectedFile = LogValidator.getDataItemsFile(RUN_ID).toPath();
 		Assert.assertTrue("data.items.csv file must be contained", Files.exists(expectedFile));
 	}
 
@@ -157,7 +157,7 @@ extends WSMockTestBase{
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//Read message file and search "Scenario End"
-		final File messageFile = LogParser.getMessageFile(RUN_ID);
+		final File messageFile = LogValidator.getMessageFile(RUN_ID);
 		Assert.assertTrue("message.log file must be exist", messageFile.exists());
 		//
 		try (final BufferedReader
@@ -184,14 +184,14 @@ extends WSMockTestBase{
 	public void shouldCreateCorrectPerfSumFile()
 	throws Exception {
 		// Get perf.sum.csv file
-		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
+		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file must be exist", perfSumFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectPerfSumCSV(in);
+			LogValidator.assertCorrectPerfSumCSV(in);
 		}
 	}
 
@@ -199,14 +199,14 @@ extends WSMockTestBase{
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file
-		final File dataItemFile = LogParser.getDataItemsFile(RUN_ID);
+		final File dataItemFile = LogValidator.getDataItemsFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file must be exist", dataItemFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectDataItemsCSV(in);
+			LogValidator.assertCorrectDataItemsCSV(in);
 		}
 	}
 
@@ -214,21 +214,21 @@ extends WSMockTestBase{
 	public void shouldCreateCorrectPerfTraceFile()
 	throws Exception {
 		// Get perf.trace.csv file
-		final File perfTraceFile = LogParser.getPerfTraceFile(RUN_ID);
+		final File perfTraceFile = LogValidator.getPerfTraceFile(RUN_ID);
 		Assert.assertTrue("perf.trace.csv file doesn't exist",perfTraceFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(perfTraceFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectPerfTraceCSV(in);
+			LogValidator.assertCorrectPerfTraceCSV(in);
 		}
 	}
 
 	@Test
 	public void shouldContainInformationAboutAllLoadsByStep()
 	throws Exception {
-		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
+		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file must be exist", perfSumFile.exists());
 		//
 		try(
@@ -243,7 +243,7 @@ extends WSMockTestBase{
 			for(final CSVRecord nextRec : recIter) {
 				if(firstRow) {
 					firstRow = false;
-				} else if(nextRec.size() == 21) {
+				} else if(nextRec.size() == 23) {
 					loadTypeExpected = loadChain[loadJobCount % loadChain.length];
 					loadTypeActual = nextRec.get(3);
 					Assert.assertTrue(

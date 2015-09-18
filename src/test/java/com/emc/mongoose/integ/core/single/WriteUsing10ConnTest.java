@@ -7,12 +7,11 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
-import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.PortListener;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
@@ -31,7 +30,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InvalidObjectException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,16 +110,16 @@ extends WSMockTestBase {
 			SCENARIO_THREAD.interrupt();
 			TimeUnit.SECONDS.sleep(1);
 			//
-			Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
+			Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
 			//  Check that messages.log exists
 			Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
-			expectedFile = LogParser.getPerfAvgFile(RUN_ID).toPath();
+			expectedFile = LogValidator.getPerfAvgFile(RUN_ID).toPath();
 			//  Check that perf.avg.csv file exists
 			Assert.assertTrue("perf.avg.csv file doesn't exist", Files.exists(expectedFile));
-			expectedFile = LogParser.getPerfTraceFile(RUN_ID).toPath();
+			expectedFile = LogValidator.getPerfTraceFile(RUN_ID).toPath();
 			//  Check that perf.trace.csv file exists
 			Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
-			expectedFile = LogParser.getDataItemsFile(RUN_ID).toPath();
+			expectedFile = LogValidator.getDataItemsFile(RUN_ID).toPath();
 			//  Check that data.items.csv file exists
 			Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
 			//
@@ -142,7 +140,7 @@ extends WSMockTestBase {
 	public static void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
+		final File dataItemsFile = LogValidator.getDataItemsFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -169,7 +167,7 @@ extends WSMockTestBase {
 	public static void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//  Read the message file and search for "Scenario end"
-		final File messageFile = LogParser.getMessageFile(RUN_ID);
+		final File messageFile = LogValidator.getMessageFile(RUN_ID);
 		Assert.assertTrue(
 			"messages.log file doesn't exist",
 			messageFile.exists()
@@ -229,14 +227,14 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectDataItemsFiles()
 	throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File dataItemFile = LogParser.getDataItemsFile(RUN_ID);
+		final File dataItemFile = LogValidator.getDataItemsFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectDataItemsCSV(in);
+			LogValidator.assertCorrectDataItemsCSV(in);
 		}
 	}
 
@@ -244,14 +242,14 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectPerfAvgFiles()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
+		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectPerfAvgCSV(in);
+			LogValidator.assertCorrectPerfAvgCSV(in);
 		}
 	}
 
@@ -259,7 +257,7 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectInformationAboutLoad()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
+		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		//
 		try(
@@ -299,7 +297,7 @@ extends WSMockTestBase {
 	throws Exception {
 		final int precisionMillis = 3000;
 		// Get perf.avg.csv file
-		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
+		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perf.avg.csv file doesn't exist", perfAvgFile.exists());
 		//
 		try(
