@@ -11,7 +11,7 @@
 					"follow": true,
 					"PatternLayout": {
 						"alwaysWriteExceptions" : false,
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t %m%n}"
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-25.25t %m%n}"
 					},
 					"Filters": {
 						"Filter" : [
