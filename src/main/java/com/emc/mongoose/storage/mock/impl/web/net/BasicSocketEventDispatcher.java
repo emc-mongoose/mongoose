@@ -26,8 +26,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketException;
 /**
  Created by kurila on 13.05.15.
  */
@@ -85,12 +83,10 @@ implements Runnable {
 			.build();
 		// create the server-side I/O reactor
 		this.ioStats = ioStats;
-		ioReactor = new DefaultListeningIOReactor(
-			ioReactorConf,
-			new IOWorker.Factory(
-				"ioReactor<" + socketAddress.getHostString() + ":" + socketAddress.getPort() + ">"
-			)
+		final IOWorker.Factory ioWorkerFactory = new IOWorker.Factory(
+			"ioReactor<" + socketAddress.getHostString() + ":" + socketAddress.getPort() + ">"
 		);
+		ioReactor = new DefaultListeningIOReactor(ioReactorConf, ioWorkerFactory);
 		executor = THREAD_GROUP.newThread(this);
 
 	}

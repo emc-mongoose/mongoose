@@ -29,7 +29,7 @@ extends Thread {
 	}
 	//
 	@Override
-	public final void run() {
+	public void run() {
 		try {
 			super.run();
 		} finally {
