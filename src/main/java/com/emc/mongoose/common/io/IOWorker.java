@@ -45,7 +45,7 @@ extends Thread {
 			final Runtime rt = Runtime.getRuntime();
 			LOG.trace(
 				Markers.MSG,
-				"Memory usage: total={}, max={}, free={}",
+				"Free thread I/O buffers, current memory usage: total={}, max={}, free={}",
 				SizeUtil.formatSize(rt.totalMemory()),
 				SizeUtil.formatSize(rt.maxMemory()),
 				SizeUtil.formatSize(rt.freeMemory())
