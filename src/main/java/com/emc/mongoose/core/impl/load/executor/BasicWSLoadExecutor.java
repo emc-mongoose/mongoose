@@ -211,7 +211,7 @@ implements WSLoadExecutor<T> {
 			}
 			//
 			try {
-				ioReactor.shutdown(1);
+				ioReactor.shutdown();
 				LOG.debug(Markers.MSG, "I/O reactor has been shut down");
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down the I/O reactor");
