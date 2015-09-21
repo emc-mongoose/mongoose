@@ -99,7 +99,7 @@ public final class LogValidator {
 				Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(21));
 				Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(22));
 				firstRow = false;
-			} else if (nextRec.size() == 21) {
+			} else if (nextRec.size() == 23) {
 				Assert.assertTrue(
 					"Data and time format is not correct",
 					nextRec.get(0).matches(LogPatterns.DATE_TIME_ISO8601.pattern())
@@ -188,7 +188,7 @@ public final class LogValidator {
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
 			Assert.assertEquals(
-				"Column count is wrong for the line: \"" + nextRec.toString() + "\"", 21,
+				"Column count is wrong for the line: \"" + nextRec.toString() + "\"", 23,
 				nextRec.size()
 			);
 			if(firstRow) {
@@ -324,7 +324,7 @@ public final class LogValidator {
 		//
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
-			Assert.assertEquals("Count of column is wrong", 8, nextRec.size());
+			Assert.assertEquals("Count of columns is wrong", 8, nextRec.size());
 			if (firstRow) {
 				Assert.assertEquals("Thread", nextRec.get(0));
 				Assert.assertEquals("TargetNode", nextRec.get(1));
