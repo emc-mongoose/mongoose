@@ -39,7 +39,6 @@ extends Thread {
 	//
 	private void freeBuffers() {
 		for(int i = 0; i < BUFF_COUNT; i ++) {
-			ioBuffers[i].clear();
 			ioBuffers[i] = null;
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
