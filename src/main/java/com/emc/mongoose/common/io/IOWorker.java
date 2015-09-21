@@ -5,16 +5,12 @@ import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
-import org.apache.http.nio.ContentDecoder;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.IOException;
 import java.nio.ByteBuffer;
 /**
  Created by kurila on 17.03.15.
@@ -33,12 +29,29 @@ extends Thread {
 	}
 	//
 	@Override
-	protected final void finalize()
-	throws Throwable {
+	public final void run() {
+		try {
+			super.run();
+		} finally {
+			freeBuffers();
+		}
+	}
+	//
+	private void freeBuffers() {
 		for(int i = 0; i < BUFF_COUNT; i ++) {
+			ioBuffers[i].clear();
 			ioBuffers[i] = null;
 		}
-		super.finalize();
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			final Runtime rt = Runtime.getRuntime();
+			LOG.trace(
+				Markers.MSG,
+				"Memory usage: total={}, max={}, free={}",
+				SizeUtil.formatSize(rt.totalMemory()),
+				SizeUtil.formatSize(rt.maxMemory()),
+				SizeUtil.formatSize(rt.freeMemory())
+			);
+		}
 	}
 	//
 	public final static class Factory
