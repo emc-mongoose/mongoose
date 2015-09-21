@@ -47,10 +47,10 @@ extends Closeable {
 	LoadBuilder<T, U> setRateLimit(final float rateLimit)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setThreadCountDefault(final int threadCount)
+	LoadBuilder<T, U> setWorkerCountDefault(final int threadCount)
 	throws RemoteException;
 	//
-	LoadBuilder<T, U> setThreadCountFor(final int threadCount, final IOTask.Type loadType)
+	LoadBuilder<T, U> setWorkerCountFor(final int threadCount, final IOTask.Type loadType)
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> setConnPerNodeDefault(final int connCount)

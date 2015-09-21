@@ -41,12 +41,11 @@ implements LoadBuilder<T, U> {
 	protected float objSizeBias, rateLimit;
 	protected int updatesPerItem;
 	protected String listFile, dataNodeAddrs[];
-	protected final HashMap<IOTask.Type, Integer>
-		loadTypeThreadCount,
+	protected final HashMap<IOTask.Type, Integer> loadTypeWorkerCount,
 		loadTypeConnPerNode;
 	//
 	{
-		loadTypeThreadCount = new HashMap<>();
+		loadTypeWorkerCount = new HashMap<>();
 		loadTypeConnPerNode = new HashMap<>();
 		try {
 			reqConf = getDefaultRequestConfig();
@@ -88,10 +87,10 @@ implements LoadBuilder<T, U> {
 		}
 		//
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
-			paramName = RunTimeConfig.getLoadThreadsParamName(loadType.name().toLowerCase());
+			paramName = RunTimeConfig.getLoadWorkersParamName(loadType.name().toLowerCase());
 			try {
-				setThreadCountFor(
-					runTimeConfig.getThreadCountFor(
+				setWorkerCountFor(
+					runTimeConfig.getWorkerCountFor(
 						loadType.name().toLowerCase()
 					), loadType
 				);
@@ -291,25 +290,25 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setThreadCountDefault(final int threadsPerNode) {
+	public LoadBuilder<T, U> setWorkerCountDefault(final int workersPerNode) {
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
-			setThreadCountFor(threadsPerNode, loadType);
+			setWorkerCountFor(workersPerNode, loadType);
 		}
 		return this;
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setThreadCountFor(
-		final int threadsPerNode, final IOTask.Type loadType
+	public LoadBuilder<T, U> setWorkerCountFor(
+		final int workersPerNode, final IOTask.Type loadType
 	) {
-		if(threadsPerNode > 0) {
-			loadTypeThreadCount.put(loadType, threadsPerNode);
+		if(workersPerNode > 0) {
+			loadTypeWorkerCount.put(loadType, workersPerNode);
 		} else {
-			loadTypeThreadCount.put(loadType, ThreadUtil.getWorkerCount());
+			loadTypeWorkerCount.put(loadType, ThreadUtil.getWorkerCount());
 		}
 		LOG.debug(
-			Markers.MSG, "Set thread count per node {} for load type \"{}\"",
-			threadsPerNode, loadType
+			Markers.MSG, "Set worker count per node {} for load type \"{}\"",
+			workersPerNode, loadType
 		);
 		return this;
 	}
@@ -378,8 +377,8 @@ implements LoadBuilder<T, U> {
 		lb.maxCount = maxCount;
 		lb.minObjSize = minObjSize;
 		lb.maxObjSize = maxObjSize;
-		for(final IOTask.Type loadType : loadTypeThreadCount.keySet()) {
-			lb.loadTypeThreadCount.put(loadType, loadTypeThreadCount.get(loadType));
+		for(final IOTask.Type loadType : loadTypeWorkerCount.keySet()) {
+			lb.loadTypeWorkerCount.put(loadType, loadTypeWorkerCount.get(loadType));
 		}
 		for(final IOTask.Type loadType : loadTypeConnPerNode.keySet()) {
 			lb.loadTypeConnPerNode.put(loadType, loadTypeConnPerNode.get(loadType));

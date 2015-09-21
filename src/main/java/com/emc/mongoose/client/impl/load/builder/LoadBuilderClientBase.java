@@ -26,11 +26,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 /**
@@ -301,24 +298,24 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setThreadCountDefault(final int threadCount)
+	public final LoadBuilderClient<T, U> setWorkerCountDefault(final int threadCount)
 	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setThreadCountDefault(threadCount);
+			nextBuilder.setWorkerCountDefault(threadCount);
 		}
 		return this;
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setThreadCountFor(
+	public final LoadBuilderClient<T, U> setWorkerCountFor(
 		final int threadCount, final IOTask.Type loadType
 	) throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setThreadCountFor(threadCount, loadType);
+			nextBuilder.setWorkerCountFor(threadCount, loadType);
 		}
 		return this;
 	}
@@ -329,7 +326,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setThreadCountDefault(connCount);
+			nextBuilder.setWorkerCountDefault(connCount);
 		}
 		return this;
 	}
@@ -341,7 +338,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setThreadCountFor(connCount, loadType);
+			nextBuilder.setWorkerCountFor(connCount, loadType);
 		}
 		return this;
 	}

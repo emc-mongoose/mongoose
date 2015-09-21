@@ -75,17 +75,12 @@ implements Externalizable {
 		KEY_LOAD_CONNS = "load.connections",
 		KEY_LOAD_SERVER_ADDRS = "load.server.addrs",
 		KEY_LOAD_SERVER_ASSIGN2_NODE = "load.server.assignTo.node",
-		KEY_LOAD_THREADS = "load.threads",
-		KEY_CREATE_THREADS = "load.type.create.threads",
-		KEY_READ_THREADS = "load.type.read.threads",
-		KEY_UPDATE_THREADS = "load.type.update.threads",
-		KEY_DELETE_THREADS = "load.type.delete.threads",
-		KEY_APPEND_THREADS = "load.type.append.threads",
 		KEY_CREATE_CONNS = "load.type.create.connections",
 		KEY_READ_CONNS = "load.type.read.connections",
 		KEY_UPDATE_CONNS = "load.type.update.connections",
 		KEY_DELETE_CONNS = "load.type.delete.connections",
 		KEY_APPEND_CONNS = "load.type.append.connections",
+		KEY_LOAD_WORKERS = "load.workers",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
 		KEY_RUN_ID = "run.id",
@@ -285,8 +280,8 @@ implements Externalizable {
 		return "load.type." + loadType + ".connections";
 	}
 	//
-	public static String getLoadThreadsParamName(final String loadType) {
-		return "load.type." + loadType + ".threads";
+	public static String getLoadWorkersParamName(final String loadType) {
+		return "load.type." + loadType + ".workers";
 	}
 	//
 	public static String getApiPortParamName(final String api) {
@@ -565,8 +560,8 @@ implements Externalizable {
 		return SizeUtil.toSize(getString(KEY_DATA_SRC_RING_SIZE));
 	}
 	//
-	public final int getThreadCountFor(final String loadType) {
-		return getInt("load.type." + loadType + ".threads");
+	public final int getWorkerCountFor(final String loadType) {
+		return getInt("load.type." + loadType + ".workers");
 	}
 	//
 	public final int getConnCountPerNodeFor(final String loadType) {
@@ -773,7 +768,7 @@ implements Externalizable {
 				case KEY_DATA_SRC_RING_SEED:
 				case KEY_DATA_SRC_RING_SIZE:
 				case KEY_LOAD_CONNS:
-				case KEY_LOAD_THREADS:
+				case KEY_LOAD_WORKERS:
 				case KEY_STORAGE_ADDRS:
 				case KEY_API_NAME:
 					strBuilder

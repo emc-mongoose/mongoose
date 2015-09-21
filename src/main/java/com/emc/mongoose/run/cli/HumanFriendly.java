@@ -45,11 +45,11 @@ public class HumanFriendly {
 	        RunTimeConfig.getLoadConcurrencyParamName("delete"),
 	        RunTimeConfig.getLoadConcurrencyParamName("append")
         ),
-        THREADS("t", "Number of I/O threads", true, RunTimeConfig.getLoadThreadsParamName("create"),
-                RunTimeConfig.getLoadThreadsParamName("update"),
-                RunTimeConfig.getLoadThreadsParamName("delete"),
-                RunTimeConfig.getLoadThreadsParamName("read"),
-	            RunTimeConfig.getLoadThreadsParamName("append")
+        THREADS("t", "Number of I/O threads", true, RunTimeConfig.getLoadWorkersParamName("create"),
+                RunTimeConfig.getLoadWorkersParamName("update"),
+                RunTimeConfig.getLoadWorkersParamName("delete"),
+                RunTimeConfig.getLoadWorkersParamName("read"),
+	            RunTimeConfig.getLoadWorkersParamName("append")
         ),
         HELP("h", "Displays this message", false, new NullOptionConverter()),
         RUN_ID("z", "Sets run id", true, new SystemOptionConverter(RunTimeConfig.KEY_RUN_ID)),

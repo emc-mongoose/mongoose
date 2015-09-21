@@ -95,7 +95,7 @@ implements WSLoadBuilder<T, U> {
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
 			minThreadCount = getMinIOThreadCount(
-				loadTypeThreadCount.get(loadType), dataNodeAddrs.length, connPerNode
+				loadTypeWorkerCount.get(loadType), dataNodeAddrs.length, connPerNode
 			);
 		//
 		return (U) new BasicWSLoadExecutor<>(

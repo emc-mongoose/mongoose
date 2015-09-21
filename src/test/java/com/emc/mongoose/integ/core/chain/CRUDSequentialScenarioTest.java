@@ -205,7 +205,7 @@ extends WSMockTestBase {
 					confParam.contains(TestConstants.SCENARIO_CHAIN)
 				);
 			}
-			if (confParam.contains(RunTimeConfig.KEY_LOAD_THREADS)) {
+			if (confParam.contains(RunTimeConfig.KEY_LOAD_WORKERS)) {
 				Assert.assertTrue(
 					"Information about load threads in configuration table is wrong",
 					confParam.contains(String.valueOf(LOAD_CONNS))
