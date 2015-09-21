@@ -36,7 +36,9 @@ import org.apache.logging.log4j.ThreadContext;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -301,7 +303,7 @@ implements LoadExecutor<T> {
 		LOG.info(
 			logMarker,
 			Markers.PERF_SUM.equals(logMarker) ?
-				"\"" +getName() + "\" summary: " + lastStats :
+				"\"" + getName() + "\" summary: " + lastStats :
 				lastStats
 		);
 	}
@@ -469,11 +471,11 @@ implements LoadExecutor<T> {
 	private final Lock itemsFileLock = new ReentrantLock();
 	//
 	@Override
-	public void submit(final T dataItem)
+	public void feed(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
 		try {
 			if(isStarted.get()) {
-				super.submit(dataItem);
+				super.feed(dataItem);
 			} else { // accumulate until started
 				itemsFileLock.lock();
 				try {
@@ -498,8 +500,38 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
+	@Override
+	public void feedBatch(final List<T> dataItems)
+	throws InterruptedException, RemoteException, RejectedExecutionException {
+		try {
+			if(isStarted.get()) {
+				super.feedBatch(dataItems);
+			} else { // accumulate until started
+				itemsFileLock.lock();
+				try {
+					if(itemsFileBuff == null) {
+						itemsFileBuff = new CSVFileItemOutput<>(dataCls);
+						LOG.debug(
+							Markers.MSG,
+							"{}: not started yet, consuming into the temporary file @ {}",
+							getName(), itemsFileBuff.getFilePath()
+						);
+					}
+					itemsFileBuff.write(dataItems);
+				} catch(final IOException | NoSuchMethodException e) {
+					throw new RejectedExecutionException(e);
+				} finally {
+					itemsFileLock.unlock();
+				}
+			}
+		} catch(final RejectedExecutionException e) {
+			countRej.incrementAndGet();
+			throw e;
+		}
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
-	protected final void submitSync(final T dataItem)
+	protected final void feedSeq(final T dataItem)
 	throws InterruptedException, RemoteException {
 		if(counterSubm.get() + countRej.get() >= maxCount) {
 			LOG.debug(
@@ -522,7 +554,7 @@ implements LoadExecutor<T> {
 		}
 		//
 		try {
-			if(null == submit(ioTask)) {
+			if(null == submitReq(ioTask)) {
 				throw new RejectedExecutionException("Null future returned");
 			}
 			counterSubm.incrementAndGet();
@@ -535,7 +567,67 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
+	@Override
+	protected final void feedSeqBatch(final List<T> dataItems)
+	throws InterruptedException, RemoteException {
+		final long remaining = maxCount - counterSubm.get() - countRej.get();
+		final int n = dataItems.size();
+		if(remaining > 0) {
+			if(remaining < n) {
+				feedSeqBatch(dataItems.subList(0, (int) remaining));
+				super.interrupt();
+			} else {
+				// prepare the I/O tasks list (make the link between the data item and load type)
+				final String nextNodeAddr = storageNodeCount == 1 ?
+					storageNodeAddrs[0] : getNextNode();
+				final List<? extends IOTask<T>> ioTasks = getIOTasks(dataItems, nextNodeAddr);
+				// try to sleep while underlying connection pool becomes more free if it's going too fast
+				// warning: w/o such sleep the behaviour becomes very ugly
+				while(
+					!isAllSubm.get() && !isInterrupted.get() &&
+					counterSubm.get() - counterResults.get() >= maxQueueSize
+				) {
+					LockSupport.parkNanos(1);
+				}
+				//
+				try {
+					if(null == submitBatchReq(ioTasks)) {
+						throw new RejectedExecutionException("Null future returned");
+					}
+					counterSubm.addAndGet(n);
+					activeTasksStats.get(nextNodeAddr).addAndGet(n); // increment node's usage counter
+				} catch(final RejectedExecutionException e) {
+					if(!isInterrupted.get()) {
+						countRej.incrementAndGet();
+						LogUtil.exception(LOG, Level.DEBUG, e, "Rejected {} I/O tasks", n);
+					}
+				}
+			}
+		} else {
+			super.interrupt();
+			if(n > 0) {
+				countRej.addAndGet(n);
+				LOG.debug(Markers.MSG, "Rejected {} I/O tasks", n);
+			}
+		}
+
+	}
+	//
 	protected abstract IOTask<T> getIOTask(final T dataItem, final String nextNodeAddr);
+	//
+	protected List<IOTask<T>> getIOTasks(
+		final List<T> dataItems, final String nextNodeAddr
+	) {
+		final List<IOTask<T>> ioTasks = new ArrayList<>(dataItems.size());
+		for(final T dataItem : dataItems) {
+			if(dataItem == null) {
+				break;
+			} else {
+				ioTasks.add(getIOTask(dataItem, nextNodeAddr));
+			}
+		}
+		return ioTasks;
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -560,6 +652,26 @@ implements LoadExecutor<T> {
 		return bestNode;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private void markSucc(final IOTask<T> ioTask) {
+		final int
+			duration = ioTask.getDuration(),
+			latency = ioTask.getLatency();
+		// update the metrics with success
+		if(latency > duration) {
+			LOG.warn(
+				Markers.ERR, "{}: latency {} is more than duration: {}",
+				ioTask, latency, duration
+			);
+		}
+		ioStats.markSucc(ioTask.getCountBytesDone(), duration, latency);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "Task #{}: successful, {}/{}",
+				ioTask.hashCode(), lastStats.getSuccCount(),
+				ioTask.getCountBytesDone()
+			);
+		}
+	}
 	@Override
 	public final void handleResult(final IOTask<T> ioTask)
 	throws RemoteException {
@@ -571,23 +683,10 @@ implements LoadExecutor<T> {
 		activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 		final IOTask.Status status = ioTask.getStatus();
 		final T dataItem = ioTask.getDataItem();
-		final int duration = ioTask.getDuration(), latency = ioTask.getLatency();
 		if(status == IOTask.Status.SUCC) {
 			lastDataItem = dataItem;
 			// update the metrics with success
-			if(latency > duration) {
-				LOG.warn(
-					Markers.ERR, "{}: latency {} is more than duration: {}",
-					ioTask, latency, duration
-				);
-			}
-			ioStats.markSucc(ioTask.getCountBytesDone(), duration, latency);
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-					Markers.MSG, "Task #{}: successful, {}/{}",
-					ioTask.hashCode(), lastStats.getSuccCount(), ioTask.getCountBytesDone()
-				);
-			}
+			markSucc(ioTask);
 			// feed the data item to the consumer and finally check for the finish state
 			try {
 				// is this an end of consumer-producer chain?
@@ -602,7 +701,7 @@ implements LoadExecutor<T> {
 							dataItem, consumer
 						);
 					}
-					consumer.submit(dataItem);
+					consumer.feed(dataItem);
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
 							Markers.MSG, "The data item {} is passed to the consumer {} successfully",
@@ -614,7 +713,7 @@ implements LoadExecutor<T> {
 				LOG.debug(Markers.MSG, "Interrupted while submitting to the consumer");
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to submit the data item \"{}\" to \"{}\"",
+					LOG, Level.WARN, e, "Failed to feed the data item \"{}\" to \"{}\"",
 					dataItem, consumer
 				);
 			} catch(final RejectedExecutionException e) {
@@ -630,6 +729,75 @@ implements LoadExecutor<T> {
 		}
 		//
 		counterResults.incrementAndGet();
+	}
+	//
+	@Override
+	public final void handleBatchResult(final List<IOTask<T>> ioTasks) {
+		// producing was interrupted?
+		if(isInterrupted.get()) {
+			return;
+		}
+		//
+		final int n = ioTasks.size();
+		if(n > 0) {
+			final List<T> passedItems = new ArrayList<>(n);
+			final String nodeAddr = ioTasks.get(0).getNodeAddr();
+			activeTasksStats.get(nodeAddr).addAndGet(-n);
+			//
+			IOTask.Status status;
+			T dataItem;
+			for(final IOTask<T> ioTask : ioTasks) {
+				status = ioTask.getStatus();
+				dataItem = ioTask.getDataItem();
+				if(status == IOTask.Status.SUCC) {
+					lastDataItem = dataItem;
+					markSucc(ioTask);
+				} else {
+					ioStats.markFail();
+				}
+			}
+			// feed the data items to the consumer and finally check for the finish state
+			try {
+				// is this an end of consumer-producer chain?
+				if(consumer == null) {
+					for(final T passedItem : passedItems) {
+						if(LOG.isInfoEnabled(Markers.DATA_LIST)) {
+							LOG.info(Markers.DATA_LIST, passedItem);
+						}
+					}
+				} else { // feed to the consumer
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG, "Going to feed {} data items to the consumer {}",
+							passedItems.size(), consumer
+						);
+					}
+					consumer.feedBatch(passedItems);
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG, "{} data items were passed to the consumer {} successfully",
+							passedItems.size(), consumer
+						);
+					}
+				}
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.MSG, "Interrupted while submitting to the consumer");
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to feed {} data items to \"{}\"",
+					passedItems.size(), consumer
+				);
+			} catch(final RejectedExecutionException e) {
+				if(LOG.isTraceEnabled(Markers.ERR)) {
+					LogUtil.exception(
+						LOG, Level.TRACE, e, "\"{}\" rejected {} data items", consumer,
+						passedItems.size()
+					);
+				}
+			}
+			//
+			counterResults.addAndGet(n);
+		}
 	}
 	//
 	@Override

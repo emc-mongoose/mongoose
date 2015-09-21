@@ -42,10 +42,10 @@ implements AsyncConsumer<T> {
 	protected final BlockingQueue<T> queue;
 	private final List<T> buff;
 	private final boolean shuffle;
-	private final int butchSize;
+	private final int batchSize;
 	//
 	public AsyncConsumerBase(
-		final long maxCount, final int maxQueueSize, final boolean shuffle, final int butchSize
+		final long maxCount, final int maxQueueSize, final boolean shuffle, final int batchSize
 	) throws IllegalArgumentException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		if(maxQueueSize > 0) {
@@ -54,9 +54,9 @@ implements AsyncConsumer<T> {
 			throw new IllegalArgumentException("Invalid max queue size: " + maxQueueSize);
 		}
 		queue = new ArrayBlockingQueue<>(maxQueueSize);
-		buff = shuffle ? new ArrayList<T>(butchSize) : new ArrayList<T>(maxQueueSize);
+		buff = new ArrayList<>(batchSize);
 		this.shuffle = shuffle;
-		this.butchSize = butchSize;
+		this.batchSize = batchSize;
 	}
 	//
 	@Override
@@ -82,7 +82,7 @@ implements AsyncConsumer<T> {
 	 @throws RejectedExecutionException
 	 */
 	@Override
-	public void submit(final T item)
+	public void feed(final T item)
 	throws RemoteException, InterruptedException, RejectedExecutionException {
 		if(isStarted.get()) {
 			if(item == null || counterPreSubm.get() >= maxCount) {
@@ -97,11 +97,41 @@ implements AsyncConsumer<T> {
 			throw new RejectedExecutionException("Consuming is not started yet");
 		}
 	}
+	//
+	@Override
+	public void feedBatch(final List<T> items)
+	throws RemoteException, InterruptedException, RejectedExecutionException {
+		if(isStarted.get()) {
+			final long remaining = maxCount - counterPreSubm.get();
+			if(remaining > 0) {
+				if(remaining < items.size()) {
+					feedBatch(items.subList(0, (int) remaining));
+					shutdown();
+				} else {
+					for(final T item : items) {
+						if(item == null || counterPreSubm.get() >= maxCount) {
+							shutdown();
+						}
+						if(isShutdown.get()) {
+							throw new InterruptedException("Shut down already");
+						}
+						queue.put(item);
+						counterPreSubm.incrementAndGet();
+					}
+				}
+			} else {
+				shutdown();
+				throw new InterruptedException(maxCount + " items have been pre-consumed");
+			}
+		} else {
+			throw new RejectedExecutionException("Consuming is not started yet");
+		}
+	}
 	/** Consumes the queue */
 	@Override
 	public void run() {
 		LOG.debug(
-			Markers.MSG, "Determined submit queue capacity of {} for \"{}\"",
+			Markers.MSG, "Determined feed queue capacity of {} for \"{}\"",
 			queue.remainingCapacity(), getName()
 		);
 		T nextItem;
@@ -122,21 +152,21 @@ implements AsyncConsumer<T> {
 					}
 				} else if(availItemCount > 1) {
 					if(shuffle) {
-						availItemCount = queue.drainTo(buff, butchSize);
+						availItemCount = queue.drainTo(buff, batchSize);
 						Collections.shuffle(buff);
 					} else {
 						availItemCount = queue.drainTo(buff);
 					}
 					for(int j = 0; j < availItemCount && i < maxCount; j ++) {
-						submitSync(buff.get(j));
+						feedSeq(buff.get(j));
 						i ++;
 					}
-					// Do buff.clear() because hasn't to submit the old data item the second time
+					// Do buff.clear() because hasn't to feed the old data item the second time
 					buff.clear();
 				} else {
 					nextItem = queue.poll(POLL_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS);
 					if(nextItem != null) {
-						submitSync(nextItem);
+						feedSeq(nextItem);
 						i ++;
 					}
 				}
@@ -154,7 +184,10 @@ implements AsyncConsumer<T> {
 		}
 	}
 	//
-	protected abstract void submitSync(final T item)
+	protected abstract void feedSeq(final T item)
+	throws InterruptedException, RemoteException;
+	//
+	protected abstract void feedSeqBatch(final List<T> items)
 	throws InterruptedException, RemoteException;
 	//
 	@Override
@@ -188,7 +221,7 @@ implements AsyncConsumer<T> {
 		final int dropCount = queue.size();
 		if(dropCount > 0) {
 			LOG.debug(
-				Markers.MSG, "{}: dropped {} submit tasks", getClass().getSimpleName(), dropCount
+				Markers.MSG, "{}: dropped {} feed tasks", getClass().getSimpleName(), dropCount
 			);
 		}
 		queue.clear(); // dispose

@@ -19,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 /**
@@ -121,54 +122,84 @@ extends LimitedRateLoadExecutorBase<T> {
 		this.sizeBias = sizeBias;
 		this.countUpdPerReq = countUpdPerReq;
 	}
+	//
+	private void scheduleAppend(final T dataItem) {
+		final long nextSize = sizeMin +
+			(long) (Math.pow(ThreadLocalRandom.current().nextDouble(), sizeBias) * sizeRange);
+		try {
+			dataItem.scheduleAppend(nextSize);
+		} catch(final IllegalArgumentException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e,
+				"Failed to schedule the append operation for the data item"
+			);
+		}
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "Append the object \"{}\": +{}",
+				dataItem, SizeUtil.formatSize(nextSize)
+			);
+		}
+	}
+	//
+	private void scheduleUpdate(final T dataItem) {
+		if(dataItem.getSize() > 0) {
+			dataItem.scheduleRandomUpdates(countUpdPerReq);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Modified {} ranges for object \"{}\"", countUpdPerReq, dataItem
+				);
+			}
+		} else {
+			throw new RejectedExecutionException("It's impossible to update empty data item");
+		}
+	}
 	// intercepts the data items which should be scheduled for update or append
 	@Override
-	public final void submit(final T dataItem)
+	public final void feed(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
 		try {
 			switch(loadType) {
 				case APPEND:
-					final long nextSize = sizeMin +
-						(long) (
-							Math.pow(ThreadLocalRandom.current().nextDouble(), sizeBias) * sizeRange
-						);
-					try {
-						dataItem.scheduleAppend(nextSize);
-					} catch(final IllegalArgumentException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e,
-							"Failed to schedule the append operation for the data item"
-						);
-					}
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "Append the object \"{}\": +{}",
-							dataItem, SizeUtil.formatSize(nextSize)
-						);
+					scheduleAppend(dataItem);
+					break;
+				case UPDATE:
+					scheduleUpdate(dataItem);
+					break;
+			}
+		} catch(final IllegalArgumentException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to schedule {} for the data item",
+				loadType.name().toLowerCase()
+			);
+		}
+		//
+		super.feed(dataItem);
+	}
+	//
+	@Override
+	public final void feedBatch(final List<T> dataItems)
+	throws InterruptedException, RemoteException, RejectedExecutionException {
+		try {
+			switch(loadType) {
+				case APPEND:
+					for(final T dataItem : dataItems) {
+						scheduleAppend(dataItem);
 					}
 					break;
 				case UPDATE:
-					if(dataItem.getSize() > 0) {
-						dataItem.scheduleRandomUpdates(countUpdPerReq);
-						if(LOG.isTraceEnabled(Markers.MSG)) {
-							LOG.trace(
-								Markers.MSG, "Modified {} ranges for object \"{}\"",
-								countUpdPerReq, dataItem
-							);
-						}
-					} else {
-						throw new RejectedExecutionException(
-							"It's impossible to update empty data item"
-						);
+					for(final T dataItem : dataItems) {
+						scheduleUpdate(dataItem);
 					}
 					break;
 			}
 		} catch(final IllegalArgumentException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to {} the data item", loadType.name().toLowerCase()
+				LOG, Level.WARN, e, "Failed to schedule {} for the data items",
+				loadType.name().toLowerCase()
 			);
 		}
 		//
-		super.submit(dataItem);
+		super.feedBatch(dataItems);
 	}
 }

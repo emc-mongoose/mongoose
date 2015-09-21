@@ -11,9 +11,9 @@ import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 /**
  Created by kurila on 25.06.14.
  A log consumer which accumulates the data items until the accumulated data is externally taken.
@@ -49,8 +49,12 @@ implements RecordFrameBuffer<T> {
 	}
 	//
 	@Override
-	protected final void submitSync(final T item)
-	throws InterruptedException, RemoteException {
+	protected final void feedSeq(final T item) {
+		// do nothing
+	}
+	//
+	@Override
+	protected final void feedSeqBatch(final List<T> items) {
 		// do nothing
 	}
 	//

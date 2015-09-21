@@ -26,7 +26,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -70,6 +69,8 @@ implements Externalizable {
 		KEY_DATA_SRC_CIRCULAR = "data.src.circular",
 		KEY_DATA_SRC_RANDOM = "data.src.random",
 		KEY_DATA_SRC_BATCH_SIZE = "data.src.batchSize",
+		//
+		KEY_HTTP_PIPELINING = "http.pipelining",
 		//
 		KEY_LOAD_CONNS = "load.connections",
 		KEY_LOAD_SERVER_ADDRS = "load.server.addrs",
@@ -125,7 +126,7 @@ implements Externalizable {
 		KEY_SCENARIO_CHAIN_ITEMSBUFFER = "scenario.type.chain.itemsBuffer",
 		//  Rampup
 		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
-			KEY_SCENARIO_RAMPUP_CONN_COUNTS = "scenario.type.rampup.connCounts",
+		KEY_SCENARIO_RAMPUP_CONN_COUNTS = "scenario.type.rampup.connCounts",
 		//
 		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
 		//
@@ -356,6 +357,14 @@ implements Externalizable {
 		return getBoolean("http.content.chunked");
 	}
 	//
+	public final boolean getHttpPipeliningFlag() {
+		return getBoolean(KEY_HTTP_PIPELINING);
+	}
+	//
+	public final String getHttpSignMethod() {
+		return getString("http.signMethod");
+	}
+	//
 	public final boolean getReadVerifyContent() {
 		return getBoolean("load.type.read.verifyContent");
 	}
@@ -368,10 +377,6 @@ implements Externalizable {
 	//
 	public final String getStorageNameSpace() {
 		return getString(KEY_STORAGE_NAMESPACE);
-	}
-	//
-	public final String getHttpSignMethod() {
-		return getString("http.signMethod");
 	}
 	//
 	public final boolean getDataFileAccessEnabled() {

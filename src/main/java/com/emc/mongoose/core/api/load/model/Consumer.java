@@ -2,6 +2,7 @@ package com.emc.mongoose.core.api.load.model;
 //
 import java.io.Closeable;
 import java.rmi.RemoteException;
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 /**
  Created by kurila on 09.05.14.
@@ -12,7 +13,10 @@ import java.util.concurrent.RejectedExecutionException;
 public interface Consumer<T>
 extends Closeable {
 	//
-	void submit(final T item)
+	void feed(final T item)
+	throws RemoteException, InterruptedException, RejectedExecutionException;
+	//
+	void feedBatch(final List<T> items)
 	throws RemoteException, InterruptedException, RejectedExecutionException;
 	//
 	void shutdown()

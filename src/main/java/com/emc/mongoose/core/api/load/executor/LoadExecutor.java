@@ -40,10 +40,16 @@ extends Producer<T>, AsyncConsumer<T> {
 	RequestConfig<T> getRequestConfig()
 	throws RemoteException;
 	//
-	Future<IOTask.Status> submit(final IOTask<T> request)
+	Future<IOTask.Status> submitReq(final IOTask<T> request)
+	throws RemoteException, RejectedExecutionException;
+	//
+	List<Future<IOTask.Status>> submitBatchReq(final List<? extends IOTask<T>> requests)
 	throws RemoteException, RejectedExecutionException;
 	//
 	void handleResult(final IOTask<T> task)
+	throws RemoteException;
+	//
+	void handleBatchResult(final List<IOTask<T>> tasks)
 	throws RemoteException;
 	//
 	void setLoadState(final LoadState<T> state)

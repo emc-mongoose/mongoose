@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.List;
 /**
  Created by kurila on 19.06.15.
  */
@@ -38,12 +39,22 @@ implements Consumer<T> {
 	}
 	//
 	@Override
-	protected void submitSync(final T dataItem)
+	protected void feedSeq(final T dataItem)
 	throws InterruptedException, RemoteException {
 		try {
 			itemOut.write(dataItem);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data item");
+		}
+	}
+	//
+	@Override
+	protected void feedSeqBatch(final List<T> dataItems)
+	throws InterruptedException, RemoteException {
+		try {
+			itemOut.write(dataItems);
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data items");
 		}
 	}
 	//

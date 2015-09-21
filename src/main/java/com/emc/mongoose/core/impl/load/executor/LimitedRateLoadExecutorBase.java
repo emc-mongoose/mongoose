@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
@@ -51,24 +52,37 @@ extends LoadExecutorBase<T> {
 			tgtDurMicroSec = 0;
 		}
 	}
+	//
+	private void invokeDelayToMatchRate(final int itemCountToFeed)
+	throws InterruptedException {
+		if(rateLimit > 0 && lastStats.getSuccRateLast() > rateLimit && itemCountToFeed > 0) {
+			final int microDelay = itemCountToFeed * (int) (
+				tgtDurMicroSec - lastStats.getDurationSum() / lastStats.getSuccRateMean()
+			);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Next delay: {}[us]", microDelay);
+			}
+			TimeUnit.MICROSECONDS.sleep(microDelay);
+		}
+	}
 	/**
 	 Adds the optional delay calculated from last successful I/O task duration and the target
 	 duration
 	 */
 	@Override
-	public void submit(final T dataItem)
+	public void feed(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
-		if(rateLimit > 0 && lastStats.getSuccRateLast() > rateLimit) {
-			final int microDelay = (int) (
-				tgtDurMicroSec - lastStats.getDurationSum() / lastStats.getSuccRateMean()
-			);
-			if(microDelay > 0) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.MSG, "Next delay: {}[us]", microDelay);
-				}
-				TimeUnit.MICROSECONDS.sleep(microDelay);
-			}
-		}
-		super.submit(dataItem);
+		invokeDelayToMatchRate(1);
+		super.feed(dataItem);
+	}
+	/**
+	 Adds the optional delay calculated from last successful I/O task duration and the target
+	 duration
+	 */
+	@Override
+	public void feedBatch(final List<T> dataItems)
+	throws InterruptedException, RemoteException, RejectedExecutionException {
+		invokeDelayToMatchRate(dataItems.size());
+		super.feedBatch(dataItems);
 	}
 }

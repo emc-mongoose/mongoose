@@ -36,6 +36,7 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -163,14 +164,14 @@ implements LoadClient<T> {
 			try {
 				// TODO batch feeding
 				for(final T nextDataItem : frame) {
-					consumer.submit(nextDataItem);
+					consumer.feed(nextDataItem);
 				}
 			} catch(final InterruptedException e) {
 				LOG.debug(Markers.MSG, "Interrupted while feeding the consumer");
 			} catch(final RemoteException | RejectedExecutionException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e,
-					"Failed to submit all {} data items to the consumer {}",
+					"Failed to feed all {} data items to the consumer {}",
 					frame.size(), consumer
 				);
 			}
@@ -504,12 +505,12 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final AtomicInteger rrc = new AtomicInteger(0);
 	//
-	private final class RemoteSubmitTask
+	private final class RemoteFeedTask
 	implements Runnable {
 		//
 		private final T dataItem;
 		//
-		private RemoteSubmitTask(final T dataItem) {
+		private RemoteFeedTask(final T dataItem) {
 			this.dataItem = dataItem;
 		}
 		//
@@ -519,7 +520,7 @@ implements LoadClient<T> {
 			for(int tryCount = 0; tryCount < Short.MAX_VALUE && !isTerminated(); tryCount ++) {
 				try {
 					loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
-					remoteLoadMap.get(loadSvcAddr).submit(dataItem);
+					remoteLoadMap.get(loadSvcAddr).feed(dataItem);
 					rrc.incrementAndGet();
 					break;
 				} catch(final RejectedExecutionException | RemoteException e) {
@@ -536,9 +537,46 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void submit(final T dataItem)
+	public final void feed(final T dataItem)
 	throws RejectedExecutionException, InterruptedException {
-		submit(new RemoteSubmitTask(dataItem));
+		submit(new RemoteFeedTask(dataItem));
+	}
+	//
+	private final class RemoteBatchFeedTask
+	implements Runnable {
+		//
+		private final List<T> dataItems;
+		//
+		private RemoteBatchFeedTask(final List<T> dataItems) {
+			this.dataItems = dataItems;
+		}
+		//
+		@Override
+		public final void run() {
+			String loadSvcAddr;
+			for(int tryCount = 0; tryCount < Short.MAX_VALUE && !isTerminated(); tryCount ++) {
+				try {
+					loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
+					remoteLoadMap.get(loadSvcAddr).feedBatch(dataItems);
+					rrc.addAndGet(dataItems.size());
+					break;
+				} catch(final RejectedExecutionException | RemoteException e) {
+					try {
+						Thread.sleep(tryCount);
+					} catch(final InterruptedException ee) {
+						break;
+					}
+				} catch(final InterruptedException e) {
+					break;
+				}
+			}
+		}
+	}
+	//
+	@Override
+	public final void feedBatch(final List<T> dataItems)
+	throws RejectedExecutionException, InterruptedException {
+		submit(new RemoteBatchFeedTask(dataItems));
 	}
 	//
 	@Override
@@ -701,11 +739,11 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final Future<IOTask.Status> submit(final IOTask<T> request)
+	public final Future<IOTask.Status> submitReq(final IOTask<T> request)
 	throws RemoteException {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
-			.submit(request);
+			.submitReq(request);
 	}
 	//
 	@Override
