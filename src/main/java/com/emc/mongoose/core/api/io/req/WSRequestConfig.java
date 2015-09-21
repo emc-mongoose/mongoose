@@ -91,6 +91,9 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setVersioning(final boolean enabledFlag);
 	boolean getVersioning();
 	//
+	WSRequestConfig<T> setPipelining(final boolean enabledFlag);
+	boolean getPipelining();
+	//
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//

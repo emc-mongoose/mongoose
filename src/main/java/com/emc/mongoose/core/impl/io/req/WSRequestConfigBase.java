@@ -89,7 +89,7 @@ implements WSRequestConfig<T> {
 	//
 	public final static long serialVersionUID = 42L;
 	protected final String userAgent, signMethod;
-	protected boolean fsAccess, versioning;
+	protected boolean fsAccess, versioning, pipelining;
 	protected SecretKeySpec secretKey;
 	//
 	private final HttpAsyncRequester client;
@@ -145,6 +145,7 @@ implements WSRequestConfig<T> {
 			if(reqConf2Clone != null) {
 				this.setSecret(reqConf2Clone.getSecret()).setScheme(reqConf2Clone.getScheme());
 				this.setFileAccessEnabled(reqConf2Clone.getFileAccessEnabled());
+				this.setPipelining(reqConf2Clone.getPipelining());
 			}
 			//
 			final String pkgSpec = getClass().getPackage().getName();
@@ -319,6 +320,17 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
+	public WSRequestConfigBase<T> setPipelining(final boolean flag) {
+		this.pipelining = flag;
+		return this;
+	}
+	//
+	@Override
+	public boolean getPipelining() {
+		return pipelining;
+	}
+	//
+	@Override
 	public final boolean getVersioning() {
 		return versioning;
 	}
@@ -350,6 +362,12 @@ implements WSRequestConfig<T> {
 			setVersioning(runTimeConfig.getDataVersioningEnabled());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_DATA_FS_ACCESS);
+		}
+		//
+		try {
+			setPipelining(runTimeConfig.getHttpPipeliningFlag());
+		} catch(final NoSuchElementException e) {
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_HTTP_PIPELINING);
 		}
 		//
 		super.setProperties(runTimeConfig);
@@ -412,8 +430,9 @@ implements WSRequestConfig<T> {
 		sharedHeaders = HeaderGroup.class.cast(in.readObject());
 		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
 		setNameSpace(String.class.cast(in.readObject()));
-		setFileAccessEnabled(Boolean.class.cast(in.readObject()));
-		setVersioning(Boolean.class.cast(in.readObject()));
+		setFileAccessEnabled(in.readBoolean());
+		setVersioning(in.readBoolean());
+		setPipelining(in.readBoolean());
 	}
 	//
 	@Override
@@ -422,8 +441,9 @@ implements WSRequestConfig<T> {
 		super.writeExternal(out);
 		out.writeObject(sharedHeaders);
 		out.writeObject(getNameSpace());
-		out.writeObject(getFileAccessEnabled());
-		out.writeObject(getVersioning());
+		out.writeBoolean(getFileAccessEnabled());
+		out.writeBoolean(getVersioning());
+		out.writeBoolean(getPipelining());
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {

@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.IOWorker;
@@ -51,6 +50,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -63,13 +65,13 @@ implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	@SuppressWarnings("FieldCanBeLocal")
 	private final HttpProcessor httpProcessor;
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
 	private final WSRequestConfig<T> wsReqConfigCopy;
+	private final boolean isPipeliningEnabled;
 	//
 	@SuppressWarnings("unchecked")
 	public BasicWSLoadExecutor(
@@ -85,6 +87,7 @@ implements WSLoadExecutor<T> {
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
 		wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
+		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
 		//
 		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
 		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
@@ -241,6 +244,27 @@ implements WSLoadExecutor<T> {
 			throw new RejectedExecutionException(e);
 		}
 		return futureResult;
+	}
+	//
+	@Override
+	public final List<Future<IOTask.Status>> submitBatchReq(final List<? extends IOTask<T>> ioTasks)
+	throws RejectedExecutionException {
+		List<Future<IOTask.Status>> futureList;
+		/*if(isPipeliningEnabled) {
+			if(ioTasks.size() > 0) {
+				final HttpHost tgtHost = ioTasks.get(0).getHost;
+				client.executePipelined();
+				futureList = null;
+			} else {
+				futureList = Collections.emptyList();
+			}
+		} else {*/
+			futureList = new ArrayList<>(ioTasks.size());
+			for(final IOTask<T> ioTask : ioTasks) {
+				futureList.add(submitReq(ioTask));
+			}
+		//}
+		return futureList;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing based on the connection pool stats
