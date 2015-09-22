@@ -16,6 +16,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
@@ -27,27 +29,31 @@ implements Producer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected DataItemInput<T> itemIn;
+	protected final DataItemInput<T> itemIn;
+	protected final int batchSize;
+	protected final List<T> buff;
 	protected volatile Consumer<T> consumer = null;
 	protected long skippedItemsCount;
 	protected T lastDataItem;
 	protected boolean isCircular;
 	//
-	public DataItemInputProducer(final DataItemInput<T> itemIn) {
-		this(itemIn, false);
+	public DataItemInputProducer(final DataItemInput<T> itemIn, final int batchSize) {
+		this(itemIn, batchSize, false);
 	}
 	//
 	public DataItemInputProducer(
-		final DataItemInput<T> itemIn, final boolean isCircular
+		final DataItemInput<T> itemIn, final int batchSize, final boolean isCircular
 	) {
-		this(itemIn, isCircular, 0, null);
+		this(itemIn, batchSize, isCircular, 0, null);
 	}
 	//
 	public DataItemInputProducer(
-		final DataItemInput<T> itemIn, final boolean isCircular,
+		final DataItemInput<T> itemIn, final int batchSize, final boolean isCircular,
 		final long skippedItemsCount, final T dataItem
 	) {
 		this.itemIn = itemIn;
+		this.batchSize = batchSize;
+		this.buff = new ArrayList<>(batchSize);
 		this.skippedItemsCount = skippedItemsCount;
 		this.lastDataItem = dataItem;
 		this.isCircular = isCircular;
@@ -105,8 +111,8 @@ implements Producer<T> {
 	//
 	@Override
 	public final void run() {
-		T nextItem = null;
 		long count = 0;
+		int n = 0;
 		if(consumer == null) {
 			LOG.warn(Markers.ERR, "Have no consumer set, exiting");
 			return;
@@ -123,7 +129,7 @@ implements Producer<T> {
 		try {
 			do {
 				try {
-					nextItem = itemIn.read();
+					n = itemIn.read(buff, batchSize);
 				} catch (final EOFException e) {
 					if (isCircular) {
 						reset();
@@ -136,7 +142,7 @@ implements Producer<T> {
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to read the next data item");
 				}
-				if(nextItem == null) {
+				if(n == 0) {
 					if (isCircular) {
 						reset();
 					} else {
@@ -144,8 +150,8 @@ implements Producer<T> {
 					}
 				} else {
 					try {
-						consumer.feed(nextItem);
-						count ++;
+						consumer.feedBatch(buff.subList(0, n));
+						count += n;
 					} catch(final RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e, "Failed to feed remotely the next data item"

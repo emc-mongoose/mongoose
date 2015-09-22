@@ -279,7 +279,9 @@ implements LoadExecutor<T> {
 			LOG.debug(Markers.MSG, "{} will use {} as data items producer", getName(), producer);
 		}*/
 		if(itemsSrc != null) {
-			producer = new DataItemInputProducer<>(itemsSrc, rtConfig.isDataSrcCircularEnabled());
+			producer = new DataItemInputProducer<>(
+				itemsSrc, rtConfig.getBatchSize(), rtConfig.isDataSrcCircularEnabled()
+			);
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -353,7 +355,9 @@ implements LoadExecutor<T> {
 					);
 					isShutdown.compareAndSet(true, false); // cancel if shut down before start
 					producer = new DataItemInputProducer<>(
-						itemsFileBuff.getInput(), rtConfig.isDataSrcCircularEnabled()
+						itemsFileBuff.getInput(),
+						rtConfig.getBatchSize(),
+						rtConfig.isDataSrcCircularEnabled()
 					);
 				}
 			} catch(final IOException e) {

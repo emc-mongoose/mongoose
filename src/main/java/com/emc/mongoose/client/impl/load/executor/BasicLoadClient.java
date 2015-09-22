@@ -75,14 +75,14 @@ implements LoadClient<T> {
 	protected volatile IOStats.Snapshot lastStats = null;
 	//
 	public BasicLoadClient(
-		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
+		final RunTimeConfig rtConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
 		final RequestConfig<T> reqConfig, final long maxCount, final DataItemInput<T> itemSrc
 	) {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<Runnable>(
-				(maxCount > 0 && maxCount < runTimeConfig.getTasksMaxQueueSize()) ?
-					(int) maxCount : runTimeConfig.getTasksMaxQueueSize()
+				(maxCount > 0 && maxCount < rtConfig.getTasksMaxQueueSize()) ?
+					(int) maxCount : rtConfig.getTasksMaxQueueSize()
 			)
 		);
 		setCorePoolSize(ThreadUtil.getWorkerCount());
@@ -113,7 +113,7 @@ implements LoadClient<T> {
 			new GroupThreadFactory(String.format("clientSubmitWorker<%s>", name), true)
 		);
 		//
-		this.runTimeConfig = runTimeConfig;
+		this.runTimeConfig = rtConfig;
 		try {
 			this.reqConfigCopy = reqConfig.clone();
 		} catch(final CloneNotSupportedException e) {
@@ -122,7 +122,9 @@ implements LoadClient<T> {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
 		if(itemSrc != null && !NewDataItemInput.class.isInstance(itemSrc)) {
-			producer = new DataItemInputProducer<>(itemSrc, runTimeConfig.isDataSrcCircularEnabled());
+			producer = new DataItemInputProducer<>(
+				itemSrc, rtConfig.getBatchSize(), rtConfig.isDataSrcCircularEnabled()
+			);
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
@@ -130,11 +132,11 @@ implements LoadClient<T> {
 			}
 		}
 		//
-		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
+		metricsPeriodSec = rtConfig.getLoadMetricsPeriodSec();
 		//
-		if(runTimeConfig.getFlagServeJMX()) {
+		if(rtConfig.getFlagServeJMX()) {
 			ioStats = new AggregatedRemoteIOStats<>(
-				getName(), runTimeConfig.getRemotePortMonitor(), remoteLoadMap
+				getName(), rtConfig.getRemotePortMonitor(), remoteLoadMap
 			);
 		} else {
 			ioStats = new AggregatedRemoteIOStats<>(
