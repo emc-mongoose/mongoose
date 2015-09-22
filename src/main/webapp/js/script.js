@@ -1,5 +1,5 @@
 require(["./requirejs/conf"], function() {
-	require(["d3js", "bootstrap", "./util/visvalingam"], function(d3, bootstrap, vis) {
+	require(["d3js", "jquery", "./util/visvalingam"], function(d3, $, vis) {
 		$(document).ready(function() {
 			$("#backup-run\\.mode").val($("#run\\.mode").val());
 			var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
@@ -305,11 +305,11 @@ require(["./requirejs/conf"], function() {
 		});
 
 		/* Functions */
-//
+		//
 		function getThreadNamePattern() {
 			return /([\d]+)-([A-Za-z0-9]+)-([CreateRdDlUpAn]+)[\d]*-([\d]*)x([\d]*)x?([\d]*)/gi;
 		}
-//
+		//
 		function excludeDuplicateOptions() {
 			var found = [];
 			var selectArray = $("select");
@@ -324,7 +324,7 @@ require(["./requirejs/conf"], function() {
 				});
 			});
 		}
-//
+		//
 		function walkTreeMap(map, ul, shortsPropsMap, fullKeyName) {
 			$.each(map, function(key, value) {
 				var element;
@@ -362,7 +362,7 @@ require(["./requirejs/conf"], function() {
 				}
 			});
 		}
-//
+		//
 		function buildDivBlocksByPropertyNames(shortPropsMap) {
 			for (var key in shortPropsMap) {
 				if (shortPropsMap.hasOwnProperty(key)) {
@@ -393,14 +393,36 @@ require(["./requirejs/conf"], function() {
 				}
 			}
 		}
-//
+		//
+		$.fn.addChild = function(html) {
+			var target = $(this[0]);
+			var child = $(html);
+			child.appendTo(target);
+			return child;
+		};
+		//
+		$.fn.prependChild = function(html) {
+			var target = $(this[0]);
+			var child = $(html);
+			child.prependTo(target);
+			return child;
+		};
+		//
+		(function($) {
+			$.strRemove = function(theTarget, theString) {
+				return $("<div/>").append(
+					$(theTarget, theString).remove().end()
+				).html();
+			};
+		})($);
+		//
 		function generatePropertyPage() {
 			if (!$("#properties").is(":checked")) {
 				$("#properties").trigger("click");
 			}
 			onMenuItemClick($('a[href="#auth"]'));
 		}
-//
+		//
 		function onMenuItemClick(element) {
 			resetParams();
 			element.css("color", "#CC0033");
@@ -411,12 +433,12 @@ require(["./requirejs/conf"], function() {
 				block.children().show();
 			}
 		}
-//
+		//
 		function resetParams() {
 			$("a, label").css("color", "");
 			$("#configuration-content").children().hide();
 		}
-//
+		//
 		function configureWebSocketConnection(location, countOfRecords) {
 			var RUN_SCENARIO_NAME = {
 				single: "single",
@@ -591,14 +613,14 @@ require(["./requirejs/conf"], function() {
 				}
 			};
 		}
-//
+		//
 		function appendMessageToTable(entry, tableName, countOfRows, message) {
 			if ($("#" + entry + "-" +tableName + " table tbody tr").length > countOfRows) {
 				$("#" + entry + "-" + tableName + " table tbody tr:first-child").remove();
 			}
 			$("#" + entry + "-" + tableName +" table tbody").append(getTableRowByMessage(message));
 		}
-//
+		//
 		function getTableRowByMessage(json) {
 			return '<tr>\
 			<td>' + json.level.standardLevel + '</td>\
@@ -608,7 +630,7 @@ require(["./requirejs/conf"], function() {
 			<td>' + json.message.formattedMessage + '</td>\
 			</tr>';
 		}
-//
+		//
 		function onStartButtonPressed() {
 			$.post("/start", $("#main-form").serialize(), function(data) {
 				if (data) {
@@ -630,7 +652,7 @@ require(["./requirejs/conf"], function() {
 				}
 			});
 		}
-//
+		//
 		function loadPropertiesFromFile(file) {
 			var reader = new FileReader();
 			reader.onload = function() {
@@ -657,8 +679,8 @@ require(["./requirejs/conf"], function() {
 			};
 			reader.readAsText(file);
 		}
-//
-//  Charts
+		//
+		//  Charts
 		function charts(chartsArray) {
 			var margin = {top: 40, right: 200, bottom: 60, left: 60},
 				width = 1070 - margin.left - margin.right,
