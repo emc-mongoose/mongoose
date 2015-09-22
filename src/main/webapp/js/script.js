@@ -840,7 +840,7 @@ require(["./requirejs/conf"], function() {
 					currMetricsPeriodSec += runMetricsPeriodSec;
 					destArray.forEach(function(item, i) {
 						if (item.values.length === CRITICAL_DOTS_COUNT) {
-							item.values = vis.simplify(item.values);
+							item.values = vis.simplify($.extend(true, [], item.values));
 						}
 						item.values.push({x: currMetricsPeriodSec, y: parseFloat(value[i])});
 					});
@@ -1450,7 +1450,7 @@ require(["./requirejs/conf"], function() {
 									d.currentRunMetricsPeriodSec += parseInt(runMetricsPeriodSec);
 									d.charts.forEach(function(c, i) {
 										if (c.values.length === CRITICAL_DOTS_COUNT) {
-											c.values = vis.simplify(c.values);
+											c.values = vis.simplify($.extend(true, [], c.values));
 										}
 										c.values.push({x: d.currentRunMetricsPeriodSec, y: parseFloat(value[i])});
 									})
@@ -2020,7 +2020,7 @@ require(["./requirejs/conf"], function() {
 									d.currentRunMetricsPeriodSec += parseInt(runMetricsPeriodSec);
 									d.charts.forEach(function(c, i) {
 										if (c.values.length === CRITICAL_DOTS_COUNT) {
-											c.values = vis.simplify(c.values);
+											c.values = vis.simplify($.extend(true, [], c.values));
 										}
 										c.values.push({x: d.currentRunMetricsPeriodSec, y: parseFloat(parsedValue[i])});
 									})
