@@ -1292,7 +1292,7 @@ require(["./requirejs/conf"], function() {
 					//
 					data.forEach(function(d, i) {
 						if (d.values.length === CRITICAL_DOTS_COUNT) {
-							d.values = vis.simplify(d.values);
+							d.values = vis.simplify($.extend(true, [], d.values));
 						}
 						d.values.push({x: currentMetricsPeriodSec, y: parseFloat(parsedValue[i])});
 					});
