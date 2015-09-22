@@ -23,7 +23,7 @@
 			"storage.mock.data.offset.radix": "data.radix.offset",
 			"storage.mock.data.size.radix": "data.radix.size",
 			"storage.mock.head.count": "storage.mock.headCount",
-			"storage.mock.iothreads.persocket": "workersPerSocket",
+			"storage.mock.iothreads.persocket": "storage.mock.workersPerSocket",
 			"storage.mock.fault.sleep.msec": "storage.mock.fault.sleepMilliSec",
 			"storage.socket.timeout.millisec": "remote.socket.timeoutMilliSec",
 			"storage.socket.reuse.addr": "remote.socket.reuseAddr",
@@ -91,7 +91,7 @@
 				"load.type.read.workers",
 				"load.type.update.workers",
 				"load.type.delete.workers"
-			]
+			],
 
 			"remote.servers": "load.server.addrs",
 			"remote.control.port": "remote.port.control",
@@ -175,7 +175,7 @@
 				"type": "application/octet-stream",
 				"repeatable": true
 			},
-			"pipelining": true
+			"pipelining": true,
 			"signMethod": "HmacSHA1"
 		},
 		"load": {

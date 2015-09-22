@@ -701,6 +701,14 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
+	public final void handleBatchResult(final List<IOTask<T>> ioTasks)
+	throws RemoteException {
+		remoteLoadMap
+			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
+			.handleBatchResult(ioTasks);
+	}
+	//
+	@Override
 	public final void shutdown() {
 		super.shutdown();
 		LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
@@ -744,6 +752,15 @@ implements LoadClient<T> {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
 			.submitReq(request);
+	}
+	//
+	@Override
+	public final List<Future<IOTask.Status>> submitBatchReq(
+		final List<? extends IOTask<T>> requests
+	) throws RemoteException, RejectedExecutionException {
+		return remoteLoadMap
+			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
+			.submitBatchReq(requests);
 	}
 	//
 	@Override
