@@ -2,71 +2,89 @@
  * Created by gusakk on 18.09.15.
  */
 define(function() {
-	var minHeap = function () {
+	function minHeap(cmp) {
 		var heap = {},
 			array = [];
 
-		heap.push = function () {
-			for (var i = 0; i < arguments.length; ++i) {
-				var object = arguments[i];
-				up(object.index = array.push(object) - 1);
-			}
+		var comparator = compare;
+
+		if (cmp) {
+			comparator = cmp;
+		}
+
+		heap.push = function(item) {
+			up(array.push(item) - 1);
 			return array.length;
 		};
 
-		heap.pop = function () {
-			var removed = array[0],
-				object = array.pop();
-			if (array.length) {
-				array[object.index = 0] = object;
-				down(0);
-			}
+		heap.pop = function() {
+			var removed = array[0];
+			array[0] = array[array.length - 1];
+			array.pop();
+			down(0);
+
 			return removed;
 		};
 
-		heap.remove = function (removed) {
-			var i = removed.index,
-				object = array.pop();
-			if (i !== array.length) {
-				array[object.index = i] = object;
-				(compare(object, removed) < 0 ? up : down)(i);
+		heap.remove = function(index) {
+			var removed;
+			for (var i = 0; i < array.length; i++) {
+				if (array[i].index == index) {
+					removed = array[i];
+					break;
+				}
 			}
-			return i;
+			if (removed) {
+				array[i] = array.pop();
+				((comparator(array[i], removed) < 0) ? up : down)(i);
+			}
+
+			return removed.index;
 		};
 
 		function up(i) {
-			var object = array[i];
+			var parent = (i - 1) >> 1;
+			var temp;
 			while (i > 0) {
-				var up = ((i + 1) >> 1) - 1,
-					parent = array[up];
-				if (compare(object, parent) >= 0) break;
-				array[parent.index = i] = parent;
-				array[object.index = i = up] = object;
+				if (comparator(array[i], array[parent]) >= 0)
+					break;
+				temp = array[i];
+				array[i] = array[parent];
+				array[parent] = temp;
+
+				i = parent;
+				parent = (i - 1) >> 1;
 			}
 		}
 
 		function down(i) {
-			var object = array[i];
-			while (true) {
-				var right = (i + 1) << 1,
-					left = right - 1,
-					down = i,
-					child = array[down];
-				if (left < array.length && compare(array[left], child) < 0)
-					child = array[down = left];
-				if (right < array.length && compare(array[right], child) < 0)
-					child = array[down = right];
-				if (down === i) break;
-				array[child.index = i] = child;
-				array[object.index = i = down] = object;
+			var left = 2*i + 1;
+			var right = 2*i + 2;
+			var min = i;
+
+			if (left < array.length && comparator(array[left], array[min]) < 0) {
+				min = left;
+			}
+			if (right < array.length && comparator(array[right], array[min]) < 0) {
+				min = right;
+			}
+			if (min != i) {
+				var temp = array[min];
+				array[min] = array[i];
+				array[i] = temp;
+				down(min);
 			}
 		}
 
-		return heap;
-	};
+		function compare(a, b) {
+			return a - b;
+		}
 
-	function compare(a, b) {
-		return a[1].area - b[1].area;
+		heap.print = function() {
+			console.log(array);
+		};
+
+		return heap;
 	}
 
 	return {
