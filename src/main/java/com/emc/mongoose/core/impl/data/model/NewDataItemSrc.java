@@ -1,10 +1,8 @@
 package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 //
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -14,8 +12,8 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 24.07.15.
  */
-public final class NewDataItemInput<T extends DataItem>
-implements DataItemInput<T> {
+public final class NewDataItemSrc<T extends DataItem>
+implements DataItemSrc<T> {
 	//
 	private final Constructor<T> dataConstructor;
 	private final long minObjSize, maxObjSize, sizeRange;
@@ -23,7 +21,7 @@ implements DataItemInput<T> {
 	private final ThreadLocalRandom thrLocalRnd = ThreadLocalRandom.current();
 	private DataItem lastItem = null;
 	//
-	public NewDataItemInput(
+	public NewDataItemSrc(
 		final Class<T> dataCls, final long minObjSize, final long maxObjSize, final float objSizeBias
 	) throws NoSuchMethodException, IllegalArgumentException {
 		this.dataConstructor = dataCls.getConstructor(Long.class);
@@ -51,7 +49,7 @@ implements DataItemInput<T> {
 	}
 	//
 	@Override
-	public final T read()
+	public final T get()
 	throws IOException {
 		try {
 			return dataConstructor.newInstance(nextSize());
@@ -61,7 +59,7 @@ implements DataItemInput<T> {
 	}
 	//
 	@Override
-	public int read(final List<T> buffer, final int maxCount)
+	public int get(final List<T> buffer, final int maxCount)
 	throws IOException {
 		try {
 			for(int i = 0; i < maxCount; i ++) {

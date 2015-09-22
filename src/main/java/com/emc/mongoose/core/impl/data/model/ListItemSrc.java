@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -13,8 +13,8 @@ import java.util.List;
 /**
  Readable collection of the data items.
  */
-public class ListItemInput<T extends DataItem>
-implements DataItemInput<T> {
+public class ListItemSrc<T extends DataItem>
+implements DataItemSrc<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
@@ -22,17 +22,17 @@ implements DataItemInput<T> {
 	protected volatile int i = 0;
 	private DataItem lastItem = null;
 	//
-	public ListItemInput(final List<T> items) {
+	public ListItemSrc(final List<T> items) {
 		this.items = items;
 	}
 
 	/**
 	 @return next data item
-	 @throws java.io.EOFException if there's nothing to read more
+	 @throws java.io.EOFException if there's nothing to get more
 	 @throws java.io.IOException doesn't throw
 	 */
 	@Override
-	public T read()
+	public T get()
 	throws IOException {
 		if(i < items.size()) {
 			return items.get(i++);
@@ -42,15 +42,15 @@ implements DataItemInput<T> {
 	}
 
 	/**
-	 Bulk read into the specified buffer
+	 Bulk get into the specified buffer
 	 @param buffer buffer for the data items
 	 @param maxCount the count limit
-	 @return the count of the data items been read
-	 @throws java.io.EOFException if there's nothing to read more
+	 @return the count of the data items been get
+	 @throws java.io.EOFException if there's nothing to get more
 	 @throws IOException if fails some-why
 	 */
 	@Override
-	public int read(final List<T> buffer, final int maxCount)
+	public int get(final List<T> buffer, final int maxCount)
 	throws IOException {
 		int n = items.size() - i;
 		if(n > 0) {

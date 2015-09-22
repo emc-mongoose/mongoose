@@ -2,8 +2,8 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemInput;
-import com.emc.mongoose.core.api.data.model.DataItemOutput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,7 +16,7 @@ import java.util.concurrent.BlockingQueue;
  from the head.
  */
 public class ItemBlockingQueue<T extends DataItem>
-implements DataItemOutput<T>, DataItemInput<T> {
+implements DataItemDst<T>, DataItemSrc<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
@@ -27,12 +27,12 @@ implements DataItemOutput<T>, DataItemInput<T> {
 		this.queue = queue;
 	}
 	/**
-	 Blocking write implementation
-	 @param dataItem the data item to write
-	 @throws InterruptedIOException if the thread was interrupted while trying to write
+	 Blocking put implementation
+	 @param dataItem the data item to put
+	 @throws InterruptedIOException if the thread was interrupted while trying to put
 	 */
 	@Override
-	public void write(final T dataItem)
+	public void put(final T dataItem)
 	throws InterruptedIOException {
 		try {
 			queue.put(dataItem);
@@ -41,37 +41,36 @@ implements DataItemOutput<T>, DataItemInput<T> {
 		}
 	}
 	/**
-	 Non-blocking bulk write implementation, THE RESULTING COUNT IS NOT THREAD SAFE
-	 @param buffer the buffer containing the data items to write
+	 Non-blocking bulk put implementation, THE RESULTING COUNT IS NOT THREAD SAFE
+	 @param buffer the buffer containing the data items to put
 	 @return the count of the items been written
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public int write(final List<T> buffer)
+	public int put(final List<T> buffer, final int from, final int to)
 	throws IOException {
-		final int n = queue.size();
 		try {
-			queue.addAll(buffer);
+			queue.addAll(buffer.subList(from, to));
 		} catch(final IllegalStateException e) {
 		}
-		return queue.size() - n;
+		return to - from;
 	}
 	/**
 	 @return self
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public ItemBlockingQueue<T> getInput()
+	public ItemBlockingQueue<T> getDataItemSrc()
 	throws IOException {
 		return this;
 	}
 	/**
-	 Blocking read implementation
+	 Blocking get implementation
 	 @return the data item
-	 @throws InterruptedIOException if the thread was interrupted while trying to read
+	 @throws InterruptedIOException if the thread was interrupted while trying to get
 	 */
 	@Override
-	public T read()
+	public T get()
 	throws InterruptedIOException {
 		try {
 			return queue.take();
@@ -80,14 +79,14 @@ implements DataItemOutput<T>, DataItemInput<T> {
 		}
 	}
 	/**
-	 Non-blocking bulk read implementation
+	 Non-blocking bulk get implementation
 	 @param maxCount the count limit
 	 @param buffer buffer for the data items
-	 @return the count of the items been read
+	 @return the count of the items been get
 	 @throws IOException if something goes wrong
 	 */
 	@Override
-	public int read(final List<T> buffer, final int maxCount)
+	public int get(final List<T> buffer, final int maxCount)
 	throws IOException {
 		try {
 			return queue.drainTo(buffer, maxCount);
@@ -109,7 +108,7 @@ implements DataItemOutput<T>, DataItemInput<T> {
 	@Override
 	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_START, itemsCount);
+		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_START, itemsCount);
 		try {
 			T item;
 			for (int i = 0; i < itemsCount; i++) {
@@ -121,7 +120,7 @@ implements DataItemOutput<T>, DataItemInput<T> {
 		} catch (final InterruptedException e) {
 			throw new InterruptedIOException(e.getMessage());
 		}
-		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_END);
+		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_END);
 	}
 	/**
 	 Does nothing

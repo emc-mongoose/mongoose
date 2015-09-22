@@ -1,11 +1,11 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
-import com.emc.mongoose.core.api.data.model.FileDataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
@@ -82,7 +82,7 @@ implements WSLoadBuilderClient<T, U> {
 		this.listFile = listFile;
 		if(listFile != null) {
 			try {
-				final FileDataItemInput<T> fileInput = new CSVFileItemInput<>(
+				final FileDataItemSrc<T> fileInput = new CSVFileItemSrc<>(
 					Paths.get(listFile), (Class<T>) BasicWSObject.class
 				);
 				final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
@@ -125,7 +125,7 @@ implements WSLoadBuilderClient<T, U> {
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final DataItemInput<T> itemSrc = LoadBuilderBase.buildItemInput(
+		final DataItemSrc<T> itemSrc = LoadBuilderBase.buildItemInput(
 			(Class<T>) BasicWSObject.class, reqConf, nodeAddrs, listFile, maxCount,
 			minObjSize, maxObjSize, objSizeBias
 		);

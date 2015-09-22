@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 //
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
@@ -81,10 +81,10 @@ implements StorageMock<T> {
 		if(null != dataFilePath && !Files.isDirectory(dataFilePath) && Files.exists(dataFilePath)) {
 			long count = 0;
 			try(
-				final CSVFileItemInput<T>
-					csvFileItemInput = new CSVFileItemInput<>(dataFilePath, itemCls)
+				final CSVFileItemSrc<T>
+					csvFileItemInput = new CSVFileItemSrc<>(dataFilePath, itemCls)
 			) {
-				T nextItem = csvFileItemInput.read();
+				T nextItem = csvFileItemInput.get();
 				while (null != nextItem) {
 					// if mongoose is v0.5.0
 					//if(dataSizeRadix == 0x10) {
@@ -92,7 +92,7 @@ implements StorageMock<T> {
 					//}
 					putIntoDefaultContainer(nextItem);
 					count ++;
-					nextItem = csvFileItemInput.read();
+					nextItem = csvFileItemInput.get();
 				}
 			} catch(final EOFException e) {
 				LOG.debug(Markers.MSG, "Loaded {} data items from file {}", count, dataFilePath);

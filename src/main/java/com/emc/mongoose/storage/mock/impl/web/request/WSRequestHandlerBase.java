@@ -153,7 +153,7 @@ implements ReqURIMatchingHandler<T> {
 			final Header rangeHeaders[] = request.getHeaders(HttpHeaders.RANGE);
 			//
 			if(rangeHeaders == null || rangeHeaders.length == 0) {
-				// write or rewrite data item
+				// put or rewrite data item
 				try {
 					sharedStorage.createObject(container, oid, offset, size);
 					ioStats.markWrite(true, size);

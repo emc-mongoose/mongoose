@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -19,8 +19,8 @@ import java.util.List;
 /**
  The data item input using CSV file containing the human-readable data item records as the source
  */
-public class CSVItemInput<T extends DataItem>
-implements DataItemInput<T> {
+public class CSVItemSrc<T extends DataItem>
+implements DataItemSrc<T> {
 	//
 	protected BufferedReader itemsSrc;
 	protected final Constructor<? extends T> itemConstructor;
@@ -28,12 +28,12 @@ implements DataItemInput<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	/**
-	 @param in the input stream to read the data item records from
+	 @param in the input stream to get the data item records from
 	 @param itemCls the particular data item implementation class used to parse the records
 	 @throws IOException
 	 @throws NoSuchMethodException
 	 */
-	public CSVItemInput(final InputStream in, final Class<? extends T> itemCls)
+	public CSVItemSrc(final InputStream in, final Class<? extends T> itemCls)
 	throws IOException, NoSuchMethodException {
 		this(
 			new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)),
@@ -41,7 +41,7 @@ implements DataItemInput<T> {
 		);
 	}
 	//
-	protected CSVItemInput(
+	protected CSVItemSrc(
 		final BufferedReader itemsSrc, final Constructor<? extends T> itemConstructor
 	) {
 		this.itemsSrc = itemsSrc;
@@ -65,7 +65,7 @@ implements DataItemInput<T> {
 	@Override
 	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_START, itemsCount);
+		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_START, itemsCount);
 		String item;
 		for (int i = 0; i < itemsCount; i++) {
 			item = itemsSrc.readLine();
@@ -75,11 +75,11 @@ implements DataItemInput<T> {
 				return;
 			}
 		}
-		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_END);
+		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_END);
 	}
 	//
 	@Override
-	public T read()
+	public T get()
 	throws IOException {
 		final String nextLine = itemsSrc.readLine();
 		T nextItem = null;
@@ -96,7 +96,7 @@ implements DataItemInput<T> {
 	}
 	//
 	@Override
-	public int read(final List<T> buffer, final int maxCount)
+	public int get(final List<T> buffer, final int maxCount)
 	throws IOException {
 		int i;
 		String nextLine;

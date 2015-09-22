@@ -7,8 +7,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
-import com.emc.mongoose.core.api.data.model.FileDataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
@@ -39,7 +39,7 @@ extends LimitedRateLoadExecutorBase<T> {
 		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
-		final DataItemInput<T> itemSrc, final long maxCount,
+		final DataItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final float rateLimit, final int countUpdPerReq
 	) throws ClassCastException {
@@ -51,8 +51,8 @@ extends LimitedRateLoadExecutorBase<T> {
 		this.loadType = reqConfig.getLoadType();
 		//
 		int buffSize;
-		if(itemSrc instanceof FileDataItemInput) {
-			final long approxDataItemSize = ((FileDataItemInput) itemSrc).getApproxDataItemsSize(
+		if(itemSrc instanceof FileDataItemSrc) {
+			final long approxDataItemSize = ((FileDataItemSrc) itemSrc).getApproxDataItemsSize(
 				runTimeConfig.getBatchSize()
 			);
 			if(approxDataItemSize < Constants.BUFF_SIZE_LO) {
@@ -154,9 +154,9 @@ extends LimitedRateLoadExecutorBase<T> {
 			throw new RejectedExecutionException("It's impossible to update empty data item");
 		}
 	}
-	// intercepts the data items which should be scheduled for update or append
+	/** intercepts the data items which should be scheduled for update or append */
 	@Override
-	public final void feed(final T dataItem)
+	public final void put(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
 		try {
 			switch(loadType) {
@@ -174,22 +174,22 @@ extends LimitedRateLoadExecutorBase<T> {
 			);
 		}
 		//
-		super.feed(dataItem);
+		super.put(dataItem);
 	}
 	//
 	@Override
-	public final void feedBatch(final List<T> dataItems)
+	public final int put(final List<T> dataItems, final int from, final int to)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
 		try {
 			switch(loadType) {
 				case APPEND:
-					for(final T dataItem : dataItems) {
-						scheduleAppend(dataItem);
+					for(int i = from; i < to; i ++) {
+						scheduleAppend(dataItems.get(i));
 					}
 					break;
 				case UPDATE:
-					for(final T dataItem : dataItems) {
-						scheduleUpdate(dataItem);
+					for(int i = from; i < to; i ++) {
+						scheduleUpdate(dataItems.get(i));
 					}
 					break;
 			}
@@ -200,6 +200,6 @@ extends LimitedRateLoadExecutorBase<T> {
 			);
 		}
 		//
-		super.feedBatch(dataItems);
+		return super.put(dataItems, from, to);
 	}
 }

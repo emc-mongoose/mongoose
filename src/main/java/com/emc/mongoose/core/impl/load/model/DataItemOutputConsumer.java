@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemOutput;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.load.model.Consumer;
 //
 //
@@ -20,14 +20,14 @@ import java.util.List;
  Created by kurila on 19.06.15.
  */
 public class DataItemOutputConsumer<T extends DataItem>
-extends AsyncConsumerBase<T>
+extends AsyncDataItemDstBase<T>
 implements Consumer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final DataItemOutput<T> itemOut;
+	protected final DataItemDst<T> itemOut;
 	//
-	public DataItemOutputConsumer(final DataItemOutput<T> itemOut, final long maxCount) {
+	public DataItemOutputConsumer(final DataItemDst<T> itemOut, final long maxCount) {
 		super(
 			maxCount > 0 ? maxCount : Long.MAX_VALUE,
 			RunTimeConfig.getContext().getTasksMaxQueueSize(),
@@ -42,20 +42,22 @@ implements Consumer<T> {
 	protected void feedSeq(final T dataItem)
 	throws InterruptedException, RemoteException {
 		try {
-			itemOut.write(dataItem);
+			itemOut.put(dataItem);
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data item");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to put the data item");
 		}
 	}
 	//
 	@Override
-	protected void feedSeqBatch(final List<T> dataItems)
+	protected int feedSeqBatch(final List<T> dataItems, final int from, final int to)
 	throws InterruptedException, RemoteException {
+		int n = 0;
 		try {
-			itemOut.write(dataItems);
+			n = itemOut.put(dataItems, from, to);
 		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to write the data items");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to put the data items");
 		}
+		return n;
 	}
 	//
 	@Override

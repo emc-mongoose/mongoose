@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-import com.emc.mongoose.core.impl.data.model.GenericContainerItemInputBase;
+import com.emc.mongoose.core.impl.data.model.GenericContainerItemSrcBase;
 //
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -27,8 +27,8 @@ import java.io.InputStream;
 /**
  Created by kurila on 03.07.15.
  */
-public class WSContainerItemInput<T extends WSObject>
-extends GenericContainerItemInputBase<T> {
+public class WSContainerItemSrc<T extends WSObject>
+extends GenericContainerItemSrcBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static JsonFactory JSON_FACTORY = new JsonFactory();
@@ -38,9 +38,9 @@ extends GenericContainerItemInputBase<T> {
 	private String lastId = null;
 	private long lastSize = -1, doneCount = 0;
 	//
-	public WSContainerItemInput(
+	public WSContainerItemSrc(
 		final WSContainerImpl<T> container, final String nodeAddr, final Class<T> itemCls,
-	    final long maxCount
+		final long maxCount
 	) throws IllegalStateException {
 		super(container, nodeAddr, itemCls, maxCount);
 	}

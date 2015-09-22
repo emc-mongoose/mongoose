@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.FileDataItemInput;
+import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -20,9 +20,9 @@ import java.util.List;
 /**
  An item input implementation deserializing the data items from the specified file.
  */
-public class BinFileItemInput<T extends DataItem>
-extends BinItemInput<T>
-implements FileDataItemInput<T> {
+public class BinFileItemSrc<T extends DataItem>
+extends BinItemSrc<T>
+implements FileDataItemSrc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -31,7 +31,7 @@ implements FileDataItemInput<T> {
 	 @param itemsSrcPath the path to the file which should be used to restore the serialized items
 	 @throws IOException if unable to open the file for reading
 	 */
-	public BinFileItemInput(final Path itemsSrcPath)
+	public BinFileItemSrc(final Path itemsSrcPath)
 	throws IOException {
 		super(
 			buildObjectInputStream(itemsSrcPath)
@@ -62,9 +62,9 @@ implements FileDataItemInput<T> {
 	public long getApproxDataItemsSize(final int maxCount) {
 		long sumSize = 0;
 		int actualCount = 0;
-		try(final FileDataItemInput<T> nestedItemSrc = new BinFileItemInput<>(itemsSrcPath)) {
+		try(final FileDataItemSrc<T> nestedItemSrc = new BinFileItemSrc<>(itemsSrcPath)) {
 			final List<T> firstItemsBatch = new ArrayList<>(maxCount);
-			actualCount = nestedItemSrc.read(firstItemsBatch, maxCount);
+			actualCount = nestedItemSrc.get(firstItemsBatch, maxCount);
 			for(final T nextItem : firstItemsBatch) {
 				sumSize += nextItem.getSize();
 			}

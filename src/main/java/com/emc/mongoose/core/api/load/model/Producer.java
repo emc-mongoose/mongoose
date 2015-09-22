@@ -1,5 +1,9 @@
 package com.emc.mongoose.core.api.load.model;
 //
+import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
+//
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 /**
@@ -7,13 +11,19 @@ import java.util.concurrent.TimeUnit;
  A producer feeding the generated items to its consumer.
  May be linked with particular consumer, started and interrupted.
  */
-public interface Producer<T> {
+public interface Producer<T extends DataItem> {
 	//
-	void setConsumer(final Consumer<T> consumer)
+	void setDataItemDst(final DataItemDst<T> itemDst)
 	throws RemoteException;
 	//
-	Consumer<T> getConsumer()
+	DataItemSrc<T> getDataItemSrc()
 	throws RemoteException;
+	//
+	void setSkippedItemsCount(final long itemsCount);
+	//
+	void setLastDataItem(final T dataItem);
+	//
+	void reset();
 	//
 	void start()
 	throws RemoteException;

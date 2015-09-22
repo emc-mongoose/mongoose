@@ -6,15 +6,15 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
-import com.emc.mongoose.core.impl.data.model.NewDataItemInput;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
+import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
 import org.apache.commons.configuration.ConversionException;
 //
 import org.apache.logging.log4j.Level;
@@ -388,12 +388,12 @@ implements LoadBuilder<T, U> {
 		return lb;
 	}
 	//
-	public static <T extends DataItem> DataItemInput<T> buildItemInput(
+	public static <T extends DataItem> DataItemSrc<T> buildItemInput(
 		final Class<T> dataCls, final RequestConfig<T> reqConf,
 		final String nodeAddrs[], final String listFile, final long maxCount,
 	    final long minObjSize, final long maxObjSize, final float objSizeBias
 	) {
-		DataItemInput<T> itemSrc = null;
+		DataItemSrc<T> itemSrc = null;
 		if(listFile != null && !listFile.isEmpty()) {
 			final Path listFilePath = Paths.get(listFile);
 			if(!Files.exists(listFilePath)) {
@@ -402,14 +402,14 @@ implements LoadBuilder<T, U> {
 				LOG.warn(Markers.ERR, "Specified input file \"{}\" isn't readable", listFilePath);
 			} else {
 				try {
-					itemSrc = new CSVFileItemInput<>(Paths.get(listFile), dataCls);
+					itemSrc = new CSVFileItemSrc<>(Paths.get(listFile), dataCls);
 				} catch(final IOException | NoSuchMethodException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
 				}
 			}
 		} else if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
 			try {
-				itemSrc = new NewDataItemInput<>(dataCls, minObjSize, maxObjSize, objSizeBias);
+				itemSrc = new NewDataItemSrc<>(dataCls, minObjSize, maxObjSize, objSizeBias);
 			} catch(final NoSuchMethodException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use new data input");
 			}

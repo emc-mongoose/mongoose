@@ -2,7 +2,7 @@ package com.emc.mongoose.client.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
@@ -26,7 +26,7 @@ implements WSLoadClient<T> {
 	//
 	public BasicWSLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
-		final WSRequestConfig<T> reqConf, final long maxCount, final DataItemInput<T> itemSrc
+		final WSRequestConfig<T> reqConf, final long maxCount, final DataItemSrc<T> itemSrc
 	) {
 		super(runTimeConfig, remoteLoadMap, reqConf, maxCount, itemSrc);
 	}

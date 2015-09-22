@@ -382,7 +382,7 @@ extends WSMockTestBase {
 		final byte[] bytesDataItemsFileRead = Files.readAllBytes(dataItemsFileRead.toPath());
 		//  Check files are equal
 		Assert.assertTrue(
-			"File data.items.csv of create load and data.items.csv file of read load aren't equals",
+			"File data.items.csv of create load and data.items.csv file of read load doesn't equal",
 			Arrays.equals(bytesDataItemsFileRead, bytesDataItemsFileWrite));
 	}
 }

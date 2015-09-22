@@ -1,27 +1,21 @@
 package com.emc.mongoose.core.api.load.model;
 //
-import java.io.Closeable;
+import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
+//
 import java.rmi.RemoteException;
-import java.util.List;
-import java.util.concurrent.RejectedExecutionException;
 /**
- Created by kurila on 09.05.14.
- A data items consumer supporting the method to feed the data item to it.
- The count of the consumed data items may be limited externally.
- Also supports closing which may be necessary to perform a cleanup.
+ Created by kurila on 03.06.15.
  */
-public interface Consumer<T>
-extends Closeable {
+public interface Consumer<T extends DataItem>
+extends DataItemDst<T> {
 	//
-	void feed(final T item)
-	throws RemoteException, InterruptedException, RejectedExecutionException;
-	//
-	void feedBatch(final List<T> items)
-	throws RemoteException, InterruptedException, RejectedExecutionException;
+	void start()
+	throws RemoteException, IllegalThreadStateException;
 	//
 	void shutdown()
-	throws RemoteException;
+	throws RemoteException, IllegalStateException;
 	//
-	long getMaxCount()
+	void interrupt()
 	throws RemoteException;
 }

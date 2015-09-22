@@ -9,7 +9,7 @@ import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
@@ -50,8 +50,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -77,7 +75,7 @@ implements WSLoadExecutor<T> {
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
-		final DataItemInput<T> itemSrc, final long maxCount,
+		final DataItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
 		final int countUpdPerReq
 	) {
@@ -247,9 +245,9 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final List<Future<IOTask.Status>> submitBatchReq(final List<? extends IOTask<T>> ioTasks)
+	public final int submitReqs(final List<? extends IOTask<T>> ioTasks, int from, int to)
 	throws RejectedExecutionException {
-		List<Future<IOTask.Status>> futureList;
+		int n = 0;
 		/*if(isPipeliningEnabled) {
 			if(ioTasks.size() > 0) {
 				final HttpHost tgtHost = ioTasks.get(0).getHost;
@@ -259,12 +257,15 @@ implements WSLoadExecutor<T> {
 				futureList = Collections.emptyList();
 			}
 		} else {*/
-			futureList = new ArrayList<>(ioTasks.size());
-			for(final IOTask<T> ioTask : ioTasks) {
-				futureList.add(submitReq(ioTask));
+			for(int i = from; i < to; i ++) {
+				if(null != submitReq(ioTasks.get(i))) {
+					n ++;
+				} else {
+					break;
+				}
 			}
 		//}
-		return futureList;
+		return n;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing based on the connection pool stats

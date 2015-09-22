@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 //
 import org.apache.logging.log4j.LogManager;
@@ -31,7 +31,7 @@ extends LoadExecutorBase<T> {
 		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
-		final DataItemInput<T> itemSrc, final long maxCount,
+		final DataItemSrc<T> itemSrc, final long maxCount,
 		final float rateLimit
 	) throws ClassCastException {
 		super(
@@ -70,19 +70,19 @@ extends LoadExecutorBase<T> {
 	 duration
 	 */
 	@Override
-	public void feed(final T dataItem)
+	public void put(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
 		invokeDelayToMatchRate(1);
-		super.feed(dataItem);
+		super.put(dataItem);
 	}
 	/**
 	 Adds the optional delay calculated from last successful I/O task duration and the target
 	 duration
 	 */
 	@Override
-	public void feedBatch(final List<T> dataItems)
+	public int put(final List<T> dataItems, final int from, final int to)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
-		invokeDelayToMatchRate(dataItems.size());
-		super.feedBatch(dataItems);
+		invokeDelayToMatchRate(to - from);
+		return super.put(dataItems, from, to);
 	}
 }

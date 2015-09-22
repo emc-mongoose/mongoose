@@ -1,10 +1,10 @@
 package com.emc.mongoose.core.api.load.executor;
 //
+import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.AsyncConsumer;
-import com.emc.mongoose.core.api.load.model.Producer;
+import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 //
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  Supports method "join" for waiting the load execution to be done.
  */
 public interface LoadExecutor<T extends DataItem>
-extends Producer<T>, AsyncConsumer<T> {
+extends Consumer<T> {
 	//
 	Map<String, AtomicInteger>
 		INSTANCE_NUMBERS = new ConcurrentHashMap<>();
@@ -34,22 +34,19 @@ extends Producer<T>, AsyncConsumer<T> {
 	String getName()
 	throws RemoteException;
 	//
-	Producer<T> getProducer()
-	throws RemoteException;
-	//
 	RequestConfig<T> getRequestConfig()
 	throws RemoteException;
 	//
 	Future<IOTask.Status> submitReq(final IOTask<T> request)
 	throws RemoteException, RejectedExecutionException;
 	//
-	List<Future<IOTask.Status>> submitBatchReq(final List<? extends IOTask<T>> requests)
+	int submitReqs(final List<? extends IOTask<T>> requests, final int from, final int to)
 	throws RemoteException, RejectedExecutionException;
 	//
 	void handleResult(final IOTask<T> task)
 	throws RemoteException;
 	//
-	void handleBatchResult(final List<IOTask<T>> tasks)
+	int handleResults(final List<IOTask<T>> tasks, final int from, final int to)
 	throws RemoteException;
 	//
 	void setLoadState(final LoadState<T> state)
@@ -62,5 +59,8 @@ extends Producer<T>, AsyncConsumer<T> {
 	throws RemoteException;
 	//
 	void logMetrics(Marker marker)
+	throws RemoteException;
+	//
+	void setDataItemDst(final DataItemDst<T> dataItemDst)
 	throws RemoteException;
 }

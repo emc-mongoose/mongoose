@@ -8,12 +8,12 @@ import java.util.List;
 /**
  The data items input which may be written infinitely (if underlying collection allows that).
  */
-public class CircularListItemOutput<T extends DataItem>
-extends ListItemOutput<T> {
+public class CircularListItemDst<T extends DataItem>
+extends ListItemDst<T> {
 	//
 	protected int capacity, i = 0;
 	//
-	public CircularListItemOutput(final List<T> itemList, final int capacity)
+	public CircularListItemDst(final List<T> itemList, final int capacity)
 	throws IllegalArgumentException {
 		super(itemList);
 		if(ArrayList.class.isInstance(itemList)) {
@@ -25,14 +25,14 @@ extends ListItemOutput<T> {
 		this.capacity = capacity;
 	}
 	/**
-	 @param dataItem the data item to write
+	 @param dataItem the data item to put
 	 @throws java.io.IOException if the destination collection fails to add the data item
 	 */
 	@Override
-	public void write(final T dataItem)
+	public void put(final T dataItem)
 	throws IOException {
 		if(items.size() < capacity) {
-			super.write(dataItem);
+			super.put(dataItem);
 		} else {
 			if(i >= capacity) {
 				i = 0;
@@ -42,43 +42,49 @@ extends ListItemOutput<T> {
 		i ++;
 	}
 	/**
-	 Bulk circular write method
-	 @param buffer the list of the items to write in a batch mode
+	 Bulk circular put method
+	 @param buffer the list of the items to put in a batch mode
 	 @throws java.io.IOException if the destination collection fails to add the data items
-	 @return the size of the buffer to write
+	 @return the size of the buffer to put
 	 */
 	@Override
-	public int write(final List<T> buffer)
+	public int put(final List<T> buffer, final int from, final int to)
 	throws IOException {
-		final int bufferSize = buffer.size();
-		if(bufferSize < capacity) {
+		//
+		int n = to - from;
+		if(buffer.size() > n) {
+			return put(buffer.subList(from, to), 0, n);
+		}
+		//
+		n = buffer.size();
+		if(n < capacity) {
 			// buffer may be placed entirely into the capacitor
 			final int limit = capacity - items.size(); // how many free space is in the capacitor;
-			if(bufferSize > limit) {
+			if(n > limit) {
 				// should remove some items from the beginning of the capacitor in order to place
 				// the buffer entirely
-				items.removeAll(items.subList(0, bufferSize - limit));
+				items.removeAll(items.subList(0, n - limit));
 			}
 			if(!items.addAll(buffer)) {
-				throw new IOException("Failed to write " + bufferSize + " items");
+				throw new IOException("Failed to put " + n + " items");
 			}
 		} else {
 			// only a tail part of the buffer may be placed into the capacitor
 			items.clear(); // discard all the items in the capacitor
-			if(!items.addAll(buffer.subList(bufferSize - capacity, bufferSize))) {
-				throw new IOException("Failed to write " + bufferSize + " items");
+			if(!items.addAll(buffer.subList(n - capacity, n))) {
+				throw new IOException("Failed to put " + n + " items");
 			}
 		}
-		return bufferSize;
+		return n;
 	}
 	/**
 	 @return the corresponding input
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public CircularListItemInput<T> getInput()
+	public CircularListItemSrc<T> getDataItemSrc()
 	throws IOException {
-		return new CircularListItemInput<>(items);
+		return new CircularListItemSrc<>(items);
 	}
 	//
 	@Override

@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.data.util;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import com.emc.mongoose.core.impl.data.model.ListItemInput;
+import com.emc.mongoose.core.impl.data.model.ListItemSrc;
 //
 import org.junit.Assert;
 import org.junit.Rule;
@@ -33,15 +33,15 @@ public class ListItemInputTest {
 		Mockito.when(itemsSrc.size()).thenReturn(1);
 		Mockito.when(itemsSrc.get(0)).thenReturn(dataItem);
 		//
-		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
-		Assert.assertEquals(itemsInput.read(), dataItem);
+		final ListItemSrc<DataItem> itemsInput = new ListItemSrc<>(itemsSrc);
+		Assert.assertEquals(itemsInput.get(), dataItem);
 	}
 	//
 	@Test(expected = EOFException.class)
 	public void shouldThrowEOFIfNoMoreItems()
 	throws Exception {
-		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
-		Assert.assertNull(itemsInput.read());
+		final ListItemSrc<DataItem> itemsInput = new ListItemSrc<>(itemsSrc);
+		Assert.assertNull(itemsInput.get());
 	}
 	//
 	@Test
@@ -58,8 +58,8 @@ public class ListItemInputTest {
 		Mockito
 			.when(itemsSrc.subList(0, dataItems.length))
 			.thenReturn(Arrays.asList(dataItems));
-		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
-		Assert.assertEquals(itemsInput.read(buffer, dataItems.length), dataItems.length);
+		final ListItemSrc<DataItem> itemsInput = new ListItemSrc<>(itemsSrc);
+		Assert.assertEquals(itemsInput.get(buffer, dataItems.length), dataItems.length);
 	}
 	//
 	@Test
@@ -76,8 +76,8 @@ public class ListItemInputTest {
 		Mockito
 			.when(itemsSrc.subList(0, dataItems.length))
 			.thenReturn(Arrays.asList(dataItems));
-		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
-		Assert.assertEquals(itemsInput.read(buffer, dataItems.length), dataItems.length);
+		final ListItemSrc<DataItem> itemsInput = new ListItemSrc<>(itemsSrc);
+		Assert.assertEquals(itemsInput.get(buffer, dataItems.length), dataItems.length);
 	}
 	//
 	@Test
@@ -94,18 +94,18 @@ public class ListItemInputTest {
 		Mockito
 			.when(itemsSrc.subList(0, dataItems.length))
 			.thenReturn(Arrays.asList(dataItems));
-		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
-		Assert.assertEquals(itemsInput.read(buffer, dataItems.length), dataItems.length);
+		final ListItemSrc<DataItem> itemsInput = new ListItemSrc<>(itemsSrc);
+		Assert.assertEquals(itemsInput.get(buffer, dataItems.length), dataItems.length);
 		Assert.assertEquals(buffer.size(), dataItems.length);
 		itemsInput.reset();
-		Assert.assertEquals(itemsInput.read(buffer, dataItems.length), dataItems.length);
+		Assert.assertEquals(itemsInput.get(buffer, dataItems.length), dataItems.length);
 		Assert.assertEquals(buffer.size(), 2 * dataItems.length);
 	}
 	//
 	@Test
 	public void shouldClose()
 	throws Exception {
-		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
+		final ListItemSrc<DataItem> itemsInput = new ListItemSrc<>(itemsSrc);
 		itemsInput.close();
 		Mockito.verifyNoMoreInteractions(itemsSrc);
 	}

@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.ObjectRequestConfig;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
@@ -9,9 +9,6 @@ import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.task.BasicObjectIOTask;
-
-import java.util.ArrayList;
-import java.util.List;
 //
 //import org.apache.log.log4j.LogManager;
 //import org.apache.log.log4j.Logger;
@@ -28,7 +25,7 @@ implements ObjectLoadExecutor<T> {
 		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final ObjectRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
-		final DataItemInput<T> itemSrc, final long maxCount,
+		final DataItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
 		final int countUpdPerReq
 	) {

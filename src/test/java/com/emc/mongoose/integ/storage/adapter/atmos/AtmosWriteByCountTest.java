@@ -3,8 +3,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemOutput;
-import com.emc.mongoose.core.impl.data.model.ListItemOutput;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.impl.data.model.ListItemDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.Assert;
@@ -41,7 +41,7 @@ extends StandaloneClientTestBase {
 				.setAPI("atmos")
 				.build()
 		) {
-			final DataItemOutput<WSObject> writeOutput = new ListItemOutput<>(BUFF_WRITE);
+			final DataItemDst<WSObject> writeOutput = new ListItemDst<>(BUFF_WRITE);
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("8KB")
 			);

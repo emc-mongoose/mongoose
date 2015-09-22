@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.FileDataItemInput;
+import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -19,19 +19,19 @@ import java.util.List;
 /**
  Created by kurila on 30.06.15.
  */
-public class CSVFileItemInput<T extends DataItem>
-extends CSVItemInput<T>
-implements FileDataItemInput<T> {
+public class CSVFileItemSrc<T extends DataItem>
+extends CSVItemSrc<T>
+implements FileDataItemSrc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final Path itemsFilePath;
 	/**
-	 @param itemsFilePath the input stream to read the data item records from
+	 @param itemsFilePath the input stream to get the data item records from
 	 @param itemCls the particular data item implementation class used to parse the records
 	 @throws java.io.IOException
 	 @throws NoSuchMethodException */
-	public CSVFileItemInput(final Path itemsFilePath, final Class<? extends T> itemCls)
+	public CSVFileItemSrc(final Path itemsFilePath, final Class<? extends T> itemCls)
 	throws IOException, NoSuchMethodException {
 		super(Files.newInputStream(itemsFilePath, StandardOpenOption.READ), itemCls);
 		this.itemsFilePath = itemsFilePath;
@@ -52,12 +52,12 @@ implements FileDataItemInput<T> {
 		long sumSize = 0;
 		int actualCount = 0;
 		try(
-			final FileDataItemInput<T> nestedItemSrc = new CSVFileItemInput<>(
+			final FileDataItemSrc<T> nestedItemSrc = new CSVFileItemSrc<>(
 				itemsFilePath, itemConstructor.getDeclaringClass()
 			)
 		) {
 			final List<T> firstItemsBatch = new ArrayList<>(maxCount);
-			actualCount = nestedItemSrc.read(firstItemsBatch, maxCount);
+			actualCount = nestedItemSrc.get(firstItemsBatch, maxCount);
 			for(final T nextItem : firstItemsBatch) {
 				sumSize += nextItem.getSize();
 			}

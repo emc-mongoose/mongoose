@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.data.model.GenericContainer;
 //
 import org.apache.logging.log4j.LogManager;
@@ -17,9 +17,9 @@ import java.util.List;
 /**
  The implementation should have a state representing the actual position in the container listing
  */
-public abstract class GenericContainerItemInputBase<T extends DataObject>
-extends ListItemInput<T>
-implements DataItemInput<T> {
+public abstract class GenericContainerItemSrcBase<T extends DataObject>
+extends ListItemSrc<T>
+implements DataItemSrc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -30,9 +30,9 @@ implements DataItemInput<T> {
 	//
 	protected String lastItemId = null;
 	//
-	protected GenericContainerItemInputBase(
+	protected GenericContainerItemSrcBase(
 		final GenericContainer<T> container, final String nodeAddr, final Class<T> itemCls,
-	    final long maxCount
+		final long maxCount
 	) throws IllegalStateException {
 		super(new ArrayList<T>(RunTimeConfig.getContext().getBatchSize()));
 		this.container = container;
@@ -65,17 +65,17 @@ implements DataItemInput<T> {
 	}
 	//
 	@Override
-	public final T read()
+	public final T get()
 	throws EOFException, IOException {
 		loadNewPageIfNecessary();
-		return super.read();
+		return super.get();
 	}
 	//
 	@Override
-	public final int read(final List<T> buffer, final int maxCount)
+	public final int get(final List<T> buffer, final int maxCount)
 	throws IOException {
 		loadNewPageIfNecessary();
-		return super.read(buffer, maxCount);
+		return super.get(buffer, maxCount);
 	}
 	//
 	@Override

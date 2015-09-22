@@ -34,8 +34,8 @@ public class ItemBlockingQueueTest {
 		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
 			new ArrayBlockingQueue<DataItem>(1)
 		);
-		itemsIO.write(dataItem0);
-		assertEquals(dataItem0, itemsIO.read());
+		itemsIO.put(dataItem0);
+		assertEquals(dataItem0, itemsIO.get());
 	}
 	//
 	@Test
@@ -44,12 +44,12 @@ public class ItemBlockingQueueTest {
 		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
 			new ArrayBlockingQueue<DataItem>(3)
 		);
-		itemsIO.write(dataItem0);
-		itemsIO.write(dataItem1);
-		itemsIO.write(dataItem2);
-		assertEquals(dataItem0, itemsIO.read());
-		assertEquals(dataItem1, itemsIO.read());
-		assertEquals(dataItem2, itemsIO.read());
+		itemsIO.put(dataItem0);
+		itemsIO.put(dataItem1);
+		itemsIO.put(dataItem2);
+		assertEquals(dataItem0, itemsIO.get());
+		assertEquals(dataItem1, itemsIO.get());
+		assertEquals(dataItem2, itemsIO.get());
 	}
 	//
 	@Test
@@ -63,8 +63,8 @@ public class ItemBlockingQueueTest {
 				new DataItem[] {dataItem0, dataItem1, dataItem2, dataItem3, dataItem4}
 			),
 			buffIn = new ArrayList<>(5);
-		itemsIO.write(buffOut);
-		assertEquals(5, itemsIO.read(buffIn, 5));
+		itemsIO.put(buffOut);
+		assertEquals(5, itemsIO.get(buffIn, 5));
 		assertEquals(buffIn, buffOut);
 	}
 	//
@@ -74,13 +74,13 @@ public class ItemBlockingQueueTest {
 		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
-		itemsIO.write(dataItem0);
-		itemsIO.write(dataItem1);
+		itemsIO.put(dataItem0);
+		itemsIO.put(dataItem1);
 		final Thread writeThread = new Thread() {
 			@Override
 			public void run() {
 				try {
-					itemsIO.write(dataItem2);
+					itemsIO.put(dataItem2);
 					fail();
 				} catch(final InterruptedIOException e) {
 					assertNotNull(e);
@@ -97,7 +97,7 @@ public class ItemBlockingQueueTest {
 	throws Exception {
 		final BlockingQueue<DataItem> queue = new ArrayBlockingQueue<>(2);
 		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(queue);
-		final int n = itemsIO.write(
+		final int n = itemsIO.put(
 			Arrays.asList(
 				new DataItem[] {dataItem0, dataItem1, dataItem2, dataItem3, dataItem4}
 			)
@@ -111,13 +111,13 @@ public class ItemBlockingQueueTest {
 		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
-		itemsIO.write(dataItem0);
-		itemsIO.write(dataItem1);
+		itemsIO.put(dataItem0);
+		itemsIO.put(dataItem1);
 		final Thread writeThread = new Thread() {
 			@Override
 			public void run() {
 				try {
-					itemsIO.write(dataItem2);
+					itemsIO.put(dataItem2);
 				} catch(final InterruptedIOException e) {
 					fail(e.getMessage());
 				}
@@ -125,9 +125,9 @@ public class ItemBlockingQueueTest {
 		};
 		writeThread.start();
 		TimeUnit.SECONDS.sleep(1);
-		assertEquals(dataItem0, itemsIO.read());
-		assertEquals(dataItem1, itemsIO.read());
-		assertEquals(dataItem2, itemsIO.read());
+		assertEquals(dataItem0, itemsIO.get());
+		assertEquals(dataItem1, itemsIO.get());
+		assertEquals(dataItem2, itemsIO.get());
 		TimeUnit.SECONDS.timedJoin(writeThread, 1);
 		writeThread.interrupt();
 	}
@@ -138,15 +138,15 @@ public class ItemBlockingQueueTest {
 		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
-		itemsIO.write(dataItem0);
-		itemsIO.write(dataItem1);
-		assertEquals(itemsIO.read(), dataItem0);
-		assertEquals(itemsIO.read(), dataItem1);
+		itemsIO.put(dataItem0);
+		itemsIO.put(dataItem1);
+		assertEquals(itemsIO.get(), dataItem0);
+		assertEquals(itemsIO.get(), dataItem1);
 		final Thread readThread = new Thread() {
 			@Override
 			public void run() {
 				try {
-					itemsIO.read();
+					itemsIO.get();
 					fail();
 				} catch(final InterruptedIOException e) {
 					assertNotNull(e);
@@ -164,18 +164,18 @@ public class ItemBlockingQueueTest {
 		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
 			new ArrayBlockingQueue<DataItem>(3)
 		);
-		itemsIO.write(dataItem0);
-		itemsIO.write(dataItem1);
-		itemsIO.write(dataItem2);
+		itemsIO.put(dataItem0);
+		itemsIO.put(dataItem1);
+		itemsIO.put(dataItem2);
 		final Thread readThread = new Thread() {
 			@Override
 			public void run() {
 				try {
-					assertEquals(dataItem0, itemsIO.read());
-					assertEquals(dataItem1, itemsIO.read());
-					assertEquals(dataItem2, itemsIO.read());
-					assertEquals(dataItem3, itemsIO.read());
-					assertEquals(dataItem4, itemsIO.read());
+					assertEquals(dataItem0, itemsIO.get());
+					assertEquals(dataItem1, itemsIO.get());
+					assertEquals(dataItem2, itemsIO.get());
+					assertEquals(dataItem3, itemsIO.get());
+					assertEquals(dataItem4, itemsIO.get());
 				} catch(final InterruptedIOException e) {
 					fail(e.getMessage());
 				}
@@ -183,8 +183,8 @@ public class ItemBlockingQueueTest {
 		};
 		readThread.start();
 		TimeUnit.SECONDS.sleep(1);
-		itemsIO.write(dataItem3);
-		itemsIO.write(dataItem4);
+		itemsIO.put(dataItem3);
+		itemsIO.put(dataItem4);
 		TimeUnit.SECONDS.timedJoin(readThread, 1);
 		readThread.interrupt();
 	}

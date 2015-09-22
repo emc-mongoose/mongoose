@@ -6,17 +6,17 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.model.FrameBuffConsumer;
+import com.emc.mongoose.server.impl.load.model.BasicItemBuffDst;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.model.ConsumerSvc;
-import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
+import com.emc.mongoose.server.api.load.model.RemoteItemBuffDst;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
 import org.apache.logging.log4j.Level;
@@ -38,7 +38,7 @@ implements WSLoadSvc<T> {
 	public BasicWSLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connPerNode, final int threadsPerNode,
-		final DataItemInput<T> itemSrc, final long maxCount,
+		final DataItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
 		final int countUpdPerReq
 	) {
@@ -47,7 +47,9 @@ implements WSLoadSvc<T> {
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
 		// by default, may be overriden later externally:
-		super.setConsumer(new FrameBuffConsumer<>(dataCls, runTimeConfig, maxCount));
+		super.setDataItemDst(
+			new BasicItemBuffDst<T>(rtConfig.getTasksMaxQueueSize(), rtConfig.getBatchSize())
+		);
 	}
 	//
 	@Override
@@ -55,7 +57,7 @@ implements WSLoadSvc<T> {
 	throws IOException {
 		super.close();
 		//
-		if(consumer instanceof FrameBuffConsumer) {
+		if(consumer instanceof RemoteItemBuffDst) {
 			consumer.close();
 		}
 		// close the exposed network service, if any
@@ -87,6 +89,7 @@ implements WSLoadSvc<T> {
 				if(localSvc == null) {
 					LOG.error(Markers.ERR, "Failed to get local service for name {}", remoteSvcName);
 				} else {
+					super.setDataItemDst(localSvc);
 					super.setConsumer((WSLoadExecutor<T>) localSvc);
 				}
 			}
@@ -97,12 +100,12 @@ implements WSLoadSvc<T> {
 	}
 	//
 	@Override
-	public final Collection<T> takeFrame()
+	public final Collection<T> fetchItems()
 	throws RemoteException {
-		Collection<T> recFrame = null;
-		if(consumer instanceof RecordFrameBuffer) {
+		Collection<T> itemsBuff = null;
+		if(consumer instanceof RemoteItemBuffDst) {
 			try {
-				recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
+				itemsBuff = ((RemoteItemBuffDst<T>) consumer).fetchItems();
 			} catch (final InterruptedException e) {
 				if(!isShutdown.get()) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
@@ -110,7 +113,7 @@ implements WSLoadSvc<T> {
 			}
 
 		}
-		return recFrame;
+		return itemsBuff;
 	}
 	//
 	@Override

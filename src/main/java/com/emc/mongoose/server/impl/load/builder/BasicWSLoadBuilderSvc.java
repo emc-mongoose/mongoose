@@ -8,7 +8,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -112,7 +112,7 @@ implements WSLoadBuilderSvc<T, U> {
 			);
 		}
 		//
-		final DataItemInput<T> itemSrc = buildItemInput(
+		final DataItemSrc<T> itemSrc = buildItemInput(
 			BasicWSObject.class, wsReqConf, dataNodeAddrs, listFile, maxCount,
 			minObjSize, maxObjSize, objSizeBias
 		);

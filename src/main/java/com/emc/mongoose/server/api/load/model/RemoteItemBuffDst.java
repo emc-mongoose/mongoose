@@ -1,17 +1,17 @@
 package com.emc.mongoose.server.api.load.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.AsyncConsumer;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
 //
 import java.rmi.RemoteException;
 import java.util.Collection;
 /**
  Created by kurila on 25.06.14.
  */
-public interface RecordFrameBuffer<T>
-extends AsyncConsumer<T> {
+public interface RemoteItemBuffDst<T extends DataItem>
+extends DataItemDst<T> {
 	//
-	Collection<T> takeFrame()
+	Collection<T> fetchItems()
 	throws RemoteException, InterruptedException;
 	//
 }

@@ -4,9 +4,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemOutput;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.Assert;
@@ -39,14 +39,14 @@ extends StandaloneClientTestBase {
 				.setAPI("atmos")
 				.build()
 		) {
-			final DataItemOutput<WSObject> writeOutput = new CSVFileItemOutput<>(
+			final DataItemDst<WSObject> writeOutput = new CSVFileItemDst<>(
 				(Class) BasicWSObject.class
 			);
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("10MB")
 			);
 			if(COUNT_WRITTEN > 0) {
-				COUNT_READ = client.read(writeOutput.getInput(), null, COUNT_WRITTEN, 10, true);
+				COUNT_READ = client.read(writeOutput.getDataItemSrc(), null, COUNT_WRITTEN, 10, true);
 			} else {
 				throw new IllegalStateException("Failed to write");
 			}

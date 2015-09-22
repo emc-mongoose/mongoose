@@ -65,7 +65,7 @@ implements Runnable {
 						loadBuilder.getRequestConfig().setContainerInputEnabled(false);
 					}
 				} else {
-					prevLoadJob.setConsumer(nextLoadJob);
+					prevLoadJob.setDataItemDst(nextLoadJob);
 				}
 				loadJobSeq.add(nextLoadJob);
 				prevLoadJob = nextLoadJob;

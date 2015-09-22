@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -15,9 +15,9 @@ import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.model.NewDataItemInput;
+import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
-import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
+import com.emc.mongoose.core.impl.load.model.DataItemSrcProducer;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 // mongoose-server-api.jar
@@ -76,7 +76,7 @@ implements LoadClient<T> {
 	//
 	public BasicLoadClient(
 		final RunTimeConfig rtConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
-		final RequestConfig<T> reqConfig, final long maxCount, final DataItemInput<T> itemSrc
+		final RequestConfig<T> reqConfig, final long maxCount, final DataItemSrc<T> itemSrc
 	) {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
@@ -121,12 +121,12 @@ implements LoadClient<T> {
 		}
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
-		if(itemSrc != null && !NewDataItemInput.class.isInstance(itemSrc)) {
-			producer = new DataItemInputProducer<>(
+		if(itemSrc != null && !NewDataItemSrc.class.isInstance(itemSrc)) {
+			producer = new DataItemSrcProducer<>(
 				itemSrc, rtConfig.getBatchSize(), rtConfig.isDataSrcCircularEnabled()
 			);
 			try {
-				producer.setConsumer(this);
+				producer.setDataItemDst(this);
 			} catch(final RemoteException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
 			}
@@ -173,7 +173,7 @@ implements LoadClient<T> {
 			} catch(final RemoteException | RejectedExecutionException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e,
-					"Failed to feed all {} data items to the consumer {}",
+					"Failed to put all {} data items to the consumer {}",
 					frame.size(), consumer
 				);
 			}
@@ -222,7 +222,7 @@ implements LoadClient<T> {
 		//
 		private void loadAndProcessDataItems()
 		throws InterruptedException, RemoteException {
-			Collection<T> frame = loadSvc.takeFrame();
+			Collection<T> frame = loadSvc.fetchItems();
 			if(frame == null) {
 				LOG.debug(
 					Markers.ERR, "No data items frame from the load server @ {}", loadSvc
@@ -469,12 +469,12 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final Consumer<T> getConsumer() {
+	public final Consumer<T> getDataItemSrc() {
 		return consumer;
 	}
 	//
 	@Override
-	public final void setConsumer(final Consumer<T> consumer)
+	public final void setDataItemDst(final Consumer<T> consumer)
 	throws RemoteException {
 		if(LoadClient.class.isInstance(consumer)) {
 			LOG.debug(Markers.MSG, "Consumer is a LoadClient instance");
@@ -507,6 +507,7 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final AtomicInteger rrc = new AtomicInteger(0);
 	//
+	@Deprecated
 	private final class RemoteFeedTask
 	implements Runnable {
 		//
@@ -538,7 +539,7 @@ implements LoadClient<T> {
 		}
 	}
 	//
-	@Override
+	@Override @Deprecated
 	public final void feed(final T dataItem)
 	throws RejectedExecutionException, InterruptedException {
 		submit(new RemoteFeedTask(dataItem));
@@ -548,9 +549,12 @@ implements LoadClient<T> {
 	implements Runnable {
 		//
 		private final List<T> dataItems;
+		private final int from, to;
 		//
-		private RemoteBatchFeedTask(final List<T> dataItems) {
+		private RemoteBatchFeedTask(final List<T> dataItems, final int from, final int to) {
 			this.dataItems = dataItems;
+			this.from = from;
+			this.to = to;
 		}
 		//
 		@Override
@@ -559,7 +563,7 @@ implements LoadClient<T> {
 			for(int tryCount = 0; tryCount < Short.MAX_VALUE && !isTerminated(); tryCount ++) {
 				try {
 					loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
-					remoteLoadMap.get(loadSvcAddr).feedBatch(dataItems);
+					remoteLoadMap.get(loadSvcAddr).feed(dataItems, from, to);
 					rrc.addAndGet(dataItems.size());
 					break;
 				} catch(final RejectedExecutionException | RemoteException e) {
@@ -576,9 +580,10 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void feedBatch(final List<T> dataItems)
+	public final int feed(final List<T> dataItems, final int from, final int to)
 	throws RejectedExecutionException, InterruptedException {
-		submit(new RemoteBatchFeedTask(dataItems));
+		submit(new RemoteBatchFeedTask(dataItems, from, to));
+		return to - from;
 	}
 	//
 	@Override
@@ -679,17 +684,6 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final Producer<T> getProducer() {
-		Producer<T> producer = null;
-		try {
-			producer = remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
-		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to get remote producer");
-		}
-		return producer;
-	}
-	//
-	@Override
 	public final Map<String, LoadSvc<T>> getRemoteLoadMap() {
 		return remoteLoadMap;
 	}
@@ -703,11 +697,11 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void handleBatchResult(final List<IOTask<T>> ioTasks)
+	public final int handleResults(final List<IOTask<T>> ioTasks, final int from, final int to)
 	throws RemoteException {
-		remoteLoadMap
+		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
-			.handleBatchResult(ioTasks);
+			.handleResults(ioTasks, from, to);
 	}
 	//
 	@Override
@@ -757,12 +751,12 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final List<Future<IOTask.Status>> submitBatchReq(
-		final List<? extends IOTask<T>> requests
+	public final int submitReqs(
+		final List<? extends IOTask<T>> requests, final int from, final int to
 	) throws RemoteException, RejectedExecutionException {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
-			.submitBatchReq(requests);
+			.submitReqs(requests, from, to);
 	}
 	//
 	@Override

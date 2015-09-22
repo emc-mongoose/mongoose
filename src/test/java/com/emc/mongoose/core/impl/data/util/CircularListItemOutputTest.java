@@ -2,8 +2,8 @@ package com.emc.mongoose.core.impl.data.util;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import com.emc.mongoose.core.api.data.model.DataItemOutput;
-import com.emc.mongoose.core.impl.data.model.CircularListItemOutput;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.impl.data.model.CircularListItemDst;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
@@ -29,16 +29,16 @@ public class CircularListItemOutputTest {
 	public void shouldWriteItemsCircularily()
 		throws Exception {
 		final List<DataItem> itemDst = new ArrayList<>(2);
-		final DataItemOutput<DataItem> itemOutput = new CircularListItemOutput<>(itemDst, 2);
-		itemOutput.write(dataItem0);
+		final DataItemDst<DataItem> itemOutput = new CircularListItemDst<>(itemDst, 2);
+		itemOutput.put(dataItem0);
 		assertEquals(itemDst.get(0), dataItem0);
-		itemOutput.write(dataItem1);
+		itemOutput.put(dataItem1);
 		assertEquals(itemDst.get(1), dataItem1);
-		itemOutput.write(dataItem2);
+		itemOutput.put(dataItem2);
 		assertEquals(itemDst.get(0), dataItem2);
-		itemOutput.write(dataItem3);
+		itemOutput.put(dataItem3);
 		assertEquals(itemDst.get(1), dataItem3);
-		itemOutput.write(dataItem4);
+		itemOutput.put(dataItem4);
 		assertEquals(itemDst.get(0), dataItem4);
 	}
 	//
@@ -46,11 +46,11 @@ public class CircularListItemOutputTest {
 	public void shouldWriteItemsCircularilyBulk()
 	throws Exception {
 		final List<DataItem> itemDst = new ArrayList<>(2);
-		final DataItemOutput<DataItem> itemOutput = new CircularListItemOutput<>(itemDst, 2);
+		final DataItemDst<DataItem> itemOutput = new CircularListItemDst<>(itemDst, 2);
 		final List<DataItem> buffer = Arrays.asList(
 			new DataItem[] {dataItem0, dataItem1, dataItem2, dataItem3, dataItem4}
 		);
-		assertEquals(buffer.size(), itemOutput.write(buffer));
+		assertEquals(buffer.size(), itemOutput.put(buffer));
 		assertEquals(itemDst.get(0), dataItem3);
 		assertEquals(itemDst.get(1), dataItem4);
 	}

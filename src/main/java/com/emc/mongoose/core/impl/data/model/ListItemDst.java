@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import com.emc.mongoose.core.api.data.model.DataItemOutput;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
 //
 import java.io.IOException;
 import java.util.List;
@@ -10,39 +10,38 @@ import java.util.List;
  Created by kurila on 18.06.15.
  Writable collection of the data items.
  */
-public class ListItemOutput<T extends DataItem>
-implements DataItemOutput<T> {
+public class ListItemDst<T extends DataItem>
+implements DataItemDst<T> {
 	//
 	protected final List<T> items;
 	//
-	public ListItemOutput(final List<T> items) {
+	public ListItemDst(final List<T> items) {
 		this.items = items;
 	}
 
 	/**
-	 @param dataItem the data item to write
+	 @param dataItem the data item to put
 	 @throws IOException if the destination collection fails to add the data item
 	 (due to capacity reasons for example)
 	 */
 	@Override
-	public void write(final T dataItem)
+	public void put(final T dataItem)
 	throws IOException {
 		if(!items.add(dataItem)) {
 			throw new IOException("Failed to add the data item to the destination collection");
 		}
 	}
 	/**
-	 Bulk write of the data items from the specified buffer
-	 @param buffer the buffer containing the data items to write
+	 Bulk put of the data items from the specified buffer
+	 @param buffer the buffer containing the data items to put
 	 @return the count of the data items which have been written successfully
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public int write(final List<T> buffer)
+	public int put(final List<T> buffer, final int from, final int to)
 	throws IOException {
-		final int n = items.size();
-		items.addAll(buffer);
-		return items.size() - n;
+		items.addAll(buffer.subList(from, to));
+		return to - from;
 	}
 
 	/**
@@ -50,9 +49,9 @@ implements DataItemOutput<T> {
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public ListItemInput<T> getInput()
+	public ListItemSrc<T> getDataItemSrc()
 	throws IOException {
-		return new ListItemInput<>(items);
+		return new ListItemSrc<>(items);
 	}
 
 	/**

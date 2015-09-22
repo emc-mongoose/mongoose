@@ -7,7 +7,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.GenericContainer;
 //
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-import com.emc.mongoose.core.impl.data.model.GenericContainerItemInputBase;
+import com.emc.mongoose.core.impl.data.model.GenericContainerItemSrcBase;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -32,8 +32,8 @@ import java.util.List;
 /**
  Created by kurila on 03.07.15.
  */
-public final class WSBucketItemInput<T extends WSObject>
-extends GenericContainerItemInputBase<T> {
+public final class WSBucketItemSrc<T extends WSObject>
+extends GenericContainerItemSrcBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -42,7 +42,7 @@ extends GenericContainerItemInputBase<T> {
 	private boolean eof = false;
 	private long doneCount = 0;
 	//
-	public WSBucketItemInput(
+	public WSBucketItemSrc(
 		final WSBucketImpl<T> bucket, final String nodeAddr, final Class<T> itemCls,
 		final long maxCount
 	) throws IllegalStateException {

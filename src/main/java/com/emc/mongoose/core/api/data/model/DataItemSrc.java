@@ -10,7 +10,7 @@ import java.util.List;
 /**
  Created by kurila on 17.06.15.
  */
-public interface DataItemInput<T extends DataItem>
+public interface DataItemSrc<T extends DataItem>
 extends Closeable {
 
 	String
@@ -32,20 +32,20 @@ extends Closeable {
 	 Get next data item
 	 @return next data item or null if no data item available
 	 @throws java.io.EOFException if no data item available more
-	 @throws java.io.IOException if failed to read some-why
+	 @throws java.io.IOException if failed to get some-why
 	 */
-	T read()
+	T get()
 	throws EOFException, IOException;
 
 	/**
-	 Bulk data items read.
+	 Bulk data items get.
 	 @param buffer buffer for the data items
-	 @param maxCount max count of the items to read
-	 @return count of the data items have been read and put into the buffer actually
+	 @param maxCount max count of the items to get
+	 @return count of the data items have been get and put into the buffer actually
 	 @throws java.io.EOFException if no data item available more
-	 @throws java.io.IOException if failed to read some-why
+	 @throws java.io.IOException if failed to get some-why
 	 */
-	int read(final List<T> buffer, final int maxCount)
+	int get(final List<T> buffer, final int maxCount)
 	throws IOException;
 
 	/**

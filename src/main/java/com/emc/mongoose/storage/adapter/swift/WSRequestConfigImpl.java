@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.BasicWSObject;
@@ -281,8 +281,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final DataItemInput<T> getContainerListInput(final long maxCount, final String addr) {
-		return new WSContainerItemInput<>(container, addr, (Class<T>) BasicWSObject.class, maxCount);
+	public final DataItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
+		return new WSContainerItemSrc<>(container, addr, (Class<T>) BasicWSObject.class, maxCount);
 	}
 	//
 }

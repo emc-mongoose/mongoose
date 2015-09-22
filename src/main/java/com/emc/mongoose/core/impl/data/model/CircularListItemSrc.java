@@ -5,14 +5,14 @@ import com.emc.mongoose.core.api.data.DataItem;
 import java.io.IOException;
 import java.util.List;
 /**
- The data items input which may be read infinitely (if underlying collection allows).
+ The data items input which may be get infinitely (if underlying collection allows).
  */
-public class CircularListItemInput<T extends DataItem>
-extends ListItemInput<T> {
+public class CircularListItemSrc<T extends DataItem>
+extends ListItemSrc<T> {
 	/**
 	 @param dataItems the source data items collection
 	 */
-	public CircularListItemInput(final List<T> dataItems) {
+	public CircularListItemSrc(final List<T> dataItems) {
 		super(dataItems);
 	}
 
@@ -20,7 +20,7 @@ extends ListItemInput<T> {
 	 @return next data item
 	 */
 	@Override
-	public T read()
+	public T get()
 	throws IOException {
 		if(i >= items.size()) {
 			reset();

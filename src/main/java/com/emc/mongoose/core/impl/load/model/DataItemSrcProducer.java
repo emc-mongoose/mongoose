@@ -4,8 +4,8 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemInput;
-import com.emc.mongoose.core.api.load.model.Consumer;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
 import org.apache.logging.log4j.Level;
@@ -23,70 +23,63 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 19.06.15.
  */
-public class DataItemInputProducer<T extends DataItem>
+public class DataItemSrcProducer<T extends DataItem>
 extends Thread
 implements Producer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final DataItemInput<T> itemIn;
+	protected final DataItemSrc<T> itemSrc;
+	protected volatile DataItemDst<T> itemDst = null;
 	protected final int batchSize;
 	protected final List<T> buff;
-	protected volatile Consumer<T> consumer = null;
 	protected long skippedItemsCount;
 	protected T lastDataItem;
 	protected boolean isCircular;
 	//
-	public DataItemInputProducer(final DataItemInput<T> itemIn, final int batchSize) {
-		this(itemIn, batchSize, false);
+	public DataItemSrcProducer(final DataItemSrc<T> itemSrc, final int batchSize) {
+		this(itemSrc, batchSize, false);
 	}
 	//
-	public DataItemInputProducer(
-		final DataItemInput<T> itemIn, final int batchSize, final boolean isCircular
+	public DataItemSrcProducer(
+		final DataItemSrc<T> itemSrc, final int batchSize, final boolean isCircular
 	) {
-		this(itemIn, batchSize, isCircular, 0, null);
+		this(itemSrc, batchSize, isCircular, 0, null);
 	}
 	//
-	public DataItemInputProducer(
-		final DataItemInput<T> itemIn, final int batchSize, final boolean isCircular,
+	public DataItemSrcProducer(
+		final DataItemSrc<T> itemSrc, final int batchSize, final boolean isCircular,
 		final long skippedItemsCount, final T dataItem
 	) {
-		this.itemIn = itemIn;
+		this.itemSrc = itemSrc;
 		this.batchSize = batchSize;
 		this.buff = new ArrayList<>(batchSize);
 		this.skippedItemsCount = skippedItemsCount;
 		this.lastDataItem = dataItem;
 		this.isCircular = isCircular;
 		setDaemon(true);
-		setName("dataItemInputProducer<" + itemIn.toString() + ">");
+		setName("dataItemInputProducer<" + itemSrc.toString() + ">");
 	}
 	//
+	@Override
 	public void setSkippedItemsCount(final long itemsCount) {
 		this.skippedItemsCount = itemsCount;
 	}
 	//
-	public long getSkippedItemsCount() {
-		return skippedItemsCount;
-	}
-	//
+	@Override
 	public void setLastDataItem(final T dataItem) {
 		this.lastDataItem = dataItem;
 	}
 	//
-	public T getLastDataItem() {
-		return lastDataItem;
+	@Override
+	public void setDataItemDst(final DataItemDst<T> itemDst) {
+		this.itemDst = itemDst;
 	}
 	//
 	@Override
-	public void setConsumer(final Consumer<T> consumer)
+	public DataItemSrc<T> getDataItemSrc()
 	throws RemoteException {
-		this.consumer = consumer;
-	}
-	//
-	@Override
-	public Consumer<T> getConsumer()
-	throws RemoteException {
-		return consumer;
+		return itemSrc;
 	}
 	//
 	@Override
@@ -101,9 +94,10 @@ implements Producer<T> {
 		timeUnit.timedJoin(this, timeOut);
 	}
 	//
+	@Override
 	public void reset() {
 		try {
-			itemIn.reset();
+			itemSrc.reset();
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to reset data item input");
 		}
@@ -113,14 +107,14 @@ implements Producer<T> {
 	public final void run() {
 		long count = 0;
 		int n = 0;
-		if(consumer == null) {
-			LOG.warn(Markers.ERR, "Have no consumer set, exiting");
+		if(itemDst == null) {
+			LOG.warn(Markers.ERR, "Have no item destination set, exiting");
 			return;
 		}
 		if (skippedItemsCount > 0) {
 			try {
-				itemIn.setLastDataItem(lastDataItem);
-				itemIn.skip(skippedItemsCount);
+				itemSrc.setLastDataItem(lastDataItem);
+				itemSrc.skip(skippedItemsCount);
 			} catch (final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e,
 					"Failed to skip such amount of data items - \"{}\"", skippedItemsCount);
@@ -128,9 +122,10 @@ implements Producer<T> {
 		}
 		try {
 			do {
+				// get some items into the buffer
 				try {
-					n = itemIn.read(buff, batchSize);
-				} catch (final EOFException e) {
+					n = itemSrc.get(buff, batchSize);
+				} catch(final EOFException e) {
 					if (isCircular) {
 						reset();
 						continue;
@@ -140,8 +135,9 @@ implements Producer<T> {
 				} catch(final ClosedByInterruptException | IllegalStateException e) {
 					break;
 				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to read the next data item");
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to get the next data item");
 				}
+				//
 				if(n == 0) {
 					if (isCircular) {
 						reset();
@@ -149,40 +145,34 @@ implements Producer<T> {
 						break;
 					}
 				} else {
+					// send the items to the consumer
 					try {
-						consumer.feedBatch(buff.subList(0, n));
+						itemDst.put(buff, 0, n);
 						count += n;
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to feed remotely the next data item"
-						);
+					} catch(final IOException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "Failed to put the next data item");
 					} catch(final RejectedExecutionException e) {
 						if(LOG.isTraceEnabled(Markers.ERR)) {
 							LogUtil.exception(
-								LOG, Level.TRACE, e, "Consumer \"{}\" rejected the data item",
-								consumer
+								LOG, Level.TRACE, e, "Destination \"{}\" rejected the data item",
+								itemDst
 							);
 						}
 					}
 				}
 			} while(!isInterrupted());
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "{}: producing is interrupted", itemIn);
+			LOG.debug(Markers.MSG, "{}: producing is interrupted", itemSrc);
 		} finally {
 			LOG.debug(
-				Markers.MSG, "{}: produced {} items, shutting down the consumer \"{}\"",
-				itemIn, count, consumer
+				Markers.MSG, "{}: produced {} items, shutting down the destination \"{}\"",
+				itemSrc, count, itemDst
 			);
 			try {
-				consumer.shutdown();
-			} catch(final RemoteException e) {
+				itemDst.close();
+			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down remotely the consumer");
 			}
 		}
-	}
-	//
-	@Override
-	public final void interrupt() {
-		super.interrupt();
 	}
 }

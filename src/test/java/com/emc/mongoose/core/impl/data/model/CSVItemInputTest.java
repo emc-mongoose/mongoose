@@ -2,14 +2,11 @@ package com.emc.mongoose.core.impl.data.model;
 
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.impl.data.BasicObject;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import org.junit.Assert;
 
 import java.io.BufferedReader;
 import java.lang.reflect.Constructor;
@@ -29,8 +26,8 @@ public class CSVItemInputTest {
 		final Constructor<BasicObject> itemConstructor
 			= BasicObject.class.getConstructor(String.class);
 
-		final CSVItemInput<BasicObject> itemInput
-			= new CSVItemInput<>(itemSrc, itemConstructor);
+		final CSVItemSrc<BasicObject> itemInput
+			= new CSVItemSrc<>(itemSrc, itemConstructor);
 
 		Mockito.mock(DataItem.class);
 	}
