@@ -40,12 +40,12 @@ extends Closeable {
 	/**
 	 Bulk data items get.
 	 @param buffer buffer for the data items
-	 @param maxCount max count of the items to get
+	 @param limit max count of the items to put into the buffer
 	 @return count of the data items have been get and put into the buffer actually
 	 @throws java.io.EOFException if no data item available more
 	 @throws java.io.IOException if failed to get some-why
 	 */
-	int get(final List<T> buffer, final int maxCount)
+	int get(final List<T> buffer, final int limit)
 	throws IOException;
 
 	/**

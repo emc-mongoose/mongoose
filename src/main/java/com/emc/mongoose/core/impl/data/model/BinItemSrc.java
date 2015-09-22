@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.util.List;
 
@@ -19,7 +20,8 @@ implements DataItemSrc<T> {
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	protected ObjectInputStream itemsSrc;
-	protected List<T> remainingItems = null;
+	protected List<T> srcBuff = null;
+	protected int srcFrom = 0;
 	private DataItem lastItem = null;
 	//
 	public BinItemSrc(final ObjectInputStream itemsSrc) {
@@ -31,63 +33,71 @@ implements DataItemSrc<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public T get()
+	public final T get()
 	throws IOException {
-		try {
-			return (T) itemsSrc.readUnshared();
-		} catch(final ClassNotFoundException e) {
-			throw new IOException(e);
+		if(srcBuff != null && srcFrom < srcBuff.size()) {
+			return srcBuff.get(srcFrom ++);
+		} else {
+			try {
+				final Object o = itemsSrc.readUnshared();
+				if(o instanceof DataItem) {
+					return (T) o;
+				} else if(o instanceof List) {
+					srcBuff = (List<T>) o;
+					srcFrom = 0;
+					return get();
+				} else {
+					throw new InvalidClassException(o == null ? null : o.getClass().getName());
+				}
+			} catch(final ClassNotFoundException | ClassCastException e) {
+				throw new InvalidClassException(e.getMessage());
+			}
 		}
 	}
 	//
-	@Override
-	public int get(final List<T> buffer, final int maxCount)
+	@Override @SuppressWarnings("unchecked")
+	public final int get(final List<T> dstBuff, final int dstCountLimit)
 	throws IOException {
-		int done = 0;
 		//
-		if(remainingItems == null) { // there are no remaining items, get new ones from the stream
-			try {
-				final Object o = itemsSrc.readUnshared();
-				if(DataItem.class.isInstance(o)) { // there are single item get from the stream
-					if(maxCount > 0) {
-						buffer.add((T) o);
-						done = 1;
-					}
-				} else if(List.class.isInstance(o)) { // there are a list of items have been get
-					final List<T> l = (List<T>) o;
-					final int countAvail = l.size();
-					if(countAvail <= maxCount) { // list of get items fits the buffer limit
-						buffer.addAll(l);
-						done = countAvail;
-					} else { // list of get items doesn't fit the buffer limit
-						buffer.addAll(l.subList(0, maxCount));
-						remainingItems = l.subList(maxCount, countAvail);
-						done = maxCount;
-					}
-				}
-			} catch(final ClassNotFoundException | ClassCastException e) {
-				throw new IOException(e);
-			}
-		} else {
-			// do not get actually anything until all the remaining items are
-			final int countRemaining = remainingItems.size();
-			if(countRemaining <= maxCount) { // remaining items count fits the buffer limit
-				buffer.addAll(remainingItems);
-				done = countRemaining;
-			} else { // remaining items count doesn't fit the buffer limit
-				buffer.addAll(remainingItems.subList(0, maxCount));
-				remainingItems = remainingItems.subList(maxCount, countRemaining);
-				done = maxCount;
+		if(srcBuff != null) { // there are a buffered items in the source
+			final int srcCountLimit = srcBuff.size() - srcFrom;
+			if(dstCountLimit < srcCountLimit) { // destination buffer has less free space than avail
+				dstBuff.addAll(srcBuff.subList(srcFrom, srcFrom + dstCountLimit));
+				srcFrom += dstCountLimit; // move cursor to the next position in the source buffer
+				return dstCountLimit;
+			} else { // destination buffer has enough free space to put all available items
+				dstBuff.addAll(srcBuff.subList(srcFrom, srcFrom + srcCountLimit));
+				srcBuff = null; // the buffer is sent to destination completely, dispose
+				return srcCountLimit;
 			}
 		}
 		//
-		return done;
+		try {
+			final Object o = itemsSrc.readUnshared();
+			if(o instanceof DataItem) { // there are single item has been got from the stream
+				if(dstCountLimit > 0) {
+					dstBuff.add((T) o);
+					return 1;
+				} else {
+					return 0;
+				}
+			} else if(o instanceof List) { // there are a list of items has been got
+				srcBuff = (List<T>) o;
+				srcFrom = 0;
+				return get(dstBuff, dstCountLimit);
+			} else {
+				throw new InvalidClassException(o == null ? null : o.getClass().getName());
+			}
+		} catch(final ClassNotFoundException | ClassCastException e) {
+			throw new IOException(e);
+		}
 	}
 	//
 	@Override
 	public void reset()
 	throws IOException {
 		itemsSrc.reset();
+		srcBuff = null;
 	}
 	//
 	@Override
@@ -100,28 +110,44 @@ implements DataItemSrc<T> {
 		this.lastItem = lastItem;
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public void skip(final long itemsCount)
 	throws IOException {
 		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_START, itemsCount);
 		try {
-			Object item;
-			for (int i = 0; i < itemsCount; i++) {
-				item = itemsSrc.readUnshared();
-				if (item.equals(lastItem)) {
-					return;
+			Object o;
+			long i = 0;
+			while(i < itemsCount) {
+				o = itemsSrc.readUnshared();
+				if(o instanceof DataItem) {
+					if(o.equals(lastItem)) {
+						return;
+					}
+					i ++;
+				} else if(o instanceof List) {
+					srcBuff = (List<T>) o;
+					if(srcBuff.size() > itemsCount - i) {
+						srcFrom = (int) (itemsCount - i);
+						return;
+					} else {
+						i += srcBuff.size();
+						srcBuff = null;
+					}
+				} else {
+					throw new InvalidClassException(o == null ? null : o.getClass().getName());
 				}
 			}
 		} catch (final ClassNotFoundException e) {
 			throw new IOException(e);
 		}
-		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_END);
+		LOG.info(Markers.MSG, MSG_SKIP_END);
 	}
 	//
 	@Override
 	public void close()
 	throws IOException {
 		itemsSrc.close();
+		srcBuff = null;
 	}
 	//
 	@Override

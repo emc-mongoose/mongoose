@@ -6,8 +6,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
@@ -15,7 +15,6 @@ import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.model.BasicItemBuffDst;
 // mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.model.ConsumerSvc;
 import com.emc.mongoose.server.api.load.model.RemoteItemBuffDst;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
@@ -73,27 +72,41 @@ implements WSLoadSvc<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final void setConsumer(final ConsumerSvc<T> consumer) {
+	public final void setDataItemDst(final DataItemDst<T> consumer) {
 		LOG.debug(
 			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
 			consumer, getName()
 		);
 		this.consumer = consumer;
 		try {
-			if(consumer != null) {
-				final String remoteSvcName = consumer.getName();
+			if(consumer instanceof Service) {
+				final String remoteSvcName = ((Service) consumer).getName();
 				LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
 				final Service localSvc = ServiceUtils.getLocalSvc(
 					ServiceUtils.getLocalSvcName(remoteSvcName)
 				);
 				if(localSvc == null) {
-					LOG.error(Markers.ERR, "Failed to get local service for name {}", remoteSvcName);
+					LOG.error(
+						Markers.ERR, "Failed to get local service for name \"{}\"", remoteSvcName
+					);
+				} else if(localSvc instanceof DataItemDst){
+					super.setDataItemDst((DataItemDst<T>) localSvc);
+					LOG.debug(
+						Markers.MSG,
+						"Successfully resolved local service and appended it as consumer"
+					);
 				} else {
-					super.setDataItemDst(localSvc);
-					super.setConsumer((WSLoadExecutor<T>) localSvc);
+					LOG.error(
+						Markers.ERR, "Local service \"{}\" is not data item destination instance",
+						remoteSvcName
+					);
 				}
+			} else {
+				LOG.warn(
+					Markers.ERR, "Items destination is not a remote service instance: {}",
+					consumer == null ? null : consumer.getClass().getName()
+				);
 			}
-			LOG.debug(Markers.MSG, "Successfully resolved local service and appended it as consumer");
 		} catch(final IOException ee) {
 			LOG.error(Markers.ERR, "Looks like network failure", ee);
 		}

@@ -52,7 +52,7 @@ import java.util.concurrent.locks.LockSupport;
  Created by kurila on 20.10.14.
  */
 public class BasicLoadClient<T extends DataItem>
-extends ThreadPoolExecutor
+extends DataItemSrcProducer<T>
 implements LoadClient<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -78,15 +78,7 @@ implements LoadClient<T> {
 		final RunTimeConfig rtConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
 		final RequestConfig<T> reqConfig, final long maxCount, final DataItemSrc<T> itemSrc
 	) {
-		super(
-			1, 1, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(
-				(maxCount > 0 && maxCount < rtConfig.getTasksMaxQueueSize()) ?
-					(int) maxCount : rtConfig.getTasksMaxQueueSize()
-			)
-		);
-		setCorePoolSize(ThreadUtil.getWorkerCount());
-		setMaximumPoolSize(getCorePoolSize());
+		super(itemSrc, rtConfig.getBatchSize(), rtConfig.isDataSrcCircularEnabled());
 		//
 		String t = null;
 		try {
@@ -108,10 +100,6 @@ implements LoadClient<T> {
 			LOG.error(Markers.ERR, "Looks like connectivity failure", e);
 		}
 		instanceNum = n;
-		//
-		setThreadFactory(
-			new GroupThreadFactory(String.format("clientSubmitWorker<%s>", name), true)
-		);
 		//
 		this.runTimeConfig = rtConfig;
 		try {

@@ -82,26 +82,22 @@ implements DataItemSrc<T> {
 	public T get()
 	throws IOException {
 		final String nextLine = itemsSrc.readLine();
-		T nextItem = null;
-		if(nextLine != null) {
-			try {
-				nextItem = itemConstructor.newInstance(nextLine);
-			} catch(
-				final InstantiationException | IllegalAccessException | InvocationTargetException e
-			) {
-				throw new IOException(e);
-			}
+		try {
+			return nextLine == null ? null : itemConstructor.newInstance(nextLine);
+		} catch(
+			final InstantiationException | IllegalAccessException | InvocationTargetException e
+		) {
+			throw new IOException(e);
 		}
-		return nextItem;
 	}
 	//
 	@Override
-	public int get(final List<T> buffer, final int maxCount)
+	public int get(final List<T> buffer, final int limit)
 	throws IOException {
 		int i;
 		String nextLine;
 		try {
-			for(i = 0; i < maxCount; i ++) {
+			for(i = 0; i < limit; i ++) {
 				nextLine = itemsSrc.readLine();
 				if(nextLine == null) {
 					if(i == 0) {

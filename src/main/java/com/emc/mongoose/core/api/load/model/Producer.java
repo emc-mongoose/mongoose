@@ -19,11 +19,14 @@ public interface Producer<T extends DataItem> {
 	DataItemSrc<T> getDataItemSrc()
 	throws RemoteException;
 	//
-	void setSkippedItemsCount(final long itemsCount);
+	void setSkipCount(final long itemsCount)
+	throws RemoteException;
 	//
-	void setLastDataItem(final T dataItem);
+	void setLastDataItem(final T dataItem)
+	throws RemoteException;
 	//
-	void reset();
+	void reset()
+	throws RemoteException;
 	//
 	void start()
 	throws RemoteException;

@@ -18,8 +18,8 @@ import java.nio.channels.ClosedByInterruptException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 19.06.15.
  */
@@ -33,7 +33,7 @@ implements Producer<T> {
 	protected volatile DataItemDst<T> itemDst = null;
 	protected final int batchSize;
 	protected final List<T> buff;
-	protected long skippedItemsCount;
+	protected long skipCount;
 	protected T lastDataItem;
 	protected boolean isCircular;
 	//
@@ -49,21 +49,19 @@ implements Producer<T> {
 	//
 	public DataItemSrcProducer(
 		final DataItemSrc<T> itemSrc, final int batchSize, final boolean isCircular,
-		final long skippedItemsCount, final T dataItem
+		final long skipCount, final T lastDataItem
 	) {
 		this.itemSrc = itemSrc;
 		this.batchSize = batchSize;
 		this.buff = new ArrayList<>(batchSize);
-		this.skippedItemsCount = skippedItemsCount;
-		this.lastDataItem = dataItem;
+		this.skipCount = skipCount;
+		this.lastDataItem = lastDataItem;
 		this.isCircular = isCircular;
-		setDaemon(true);
-		setName("dataItemInputProducer<" + itemSrc.toString() + ">");
 	}
 	//
 	@Override
-	public void setSkippedItemsCount(final long itemsCount) {
-		this.skippedItemsCount = itemsCount;
+	public void setSkipCount(final long itemsCount) {
+		this.skipCount = itemsCount;
 	}
 	//
 	@Override
@@ -104,74 +102,60 @@ implements Producer<T> {
 	}
 	//
 	@Override
-	public final void run() {
-		long count = 0;
-		int n = 0;
+	public void run() {
+		//
 		if(itemDst == null) {
 			LOG.warn(Markers.ERR, "Have no item destination set, exiting");
 			return;
 		}
-		if (skippedItemsCount > 0) {
-			try {
-				itemSrc.setLastDataItem(lastDataItem);
-				itemSrc.skip(skippedItemsCount);
-			} catch (final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e,
-					"Failed to skip such amount of data items - \"{}\"", skippedItemsCount);
-			}
-		}
+		skipIfNecessary(itemSrc, skipCount, lastDataItem);
+		//
+		long count = 0;
+		int n, m;
 		try {
 			do {
-				// get some items into the buffer
 				try {
 					n = itemSrc.get(buff, batchSize);
+					if(n > 0) {
+						for(m = 0; m < n; m += itemDst.put(buff, m, n)) {
+							LockSupport.parkNanos(1);
+						}
+						count += n;
+					} else {
+						LockSupport.parkNanos(1);
+					}
 				} catch(final EOFException e) {
-					if (isCircular) {
+					if(isCircular) {
 						reset();
-						continue;
 					} else {
 						break;
 					}
 				} catch(final ClosedByInterruptException | IllegalStateException e) {
 					break;
 				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to get the next data item");
-				}
-				//
-				if(n == 0) {
-					if (isCircular) {
-						reset();
-					} else {
-						break;
-					}
-				} else {
-					// send the items to the consumer
-					try {
-						itemDst.put(buff, 0, n);
-						count += n;
-					} catch(final IOException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Failed to put the next data item");
-					} catch(final RejectedExecutionException e) {
-						if(LOG.isTraceEnabled(Markers.ERR)) {
-							LogUtil.exception(
-								LOG, Level.TRACE, e, "Destination \"{}\" rejected the data item",
-								itemDst
-							);
-						}
-					}
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to transfer the data items");
 				}
 			} while(!isInterrupted());
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "{}: producing is interrupted", itemSrc);
 		} finally {
 			LOG.debug(
-				Markers.MSG, "{}: produced {} items, shutting down the destination \"{}\"",
-				itemSrc, count, itemDst
+				Markers.MSG, "{}: produced {} items, shutting down the destination \"{}\"", itemSrc,
+				count, itemDst
 			);
+		}
+	}
+	//
+	private static <T extends DataItem> void skipIfNecessary(
+		final DataItemSrc<T> itemSrc, final long count, final T lastDataItem
+	) {
+		if(count > 0) {
 			try {
-				itemDst.close();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down remotely the consumer");
+				itemSrc.setLastDataItem(lastDataItem);
+				itemSrc.skip(count);
+			} catch (final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e,
+					"Failed to skip such amount of data items - \"{}\"", count);
 			}
 		}
 	}

@@ -12,7 +12,6 @@ import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
@@ -52,8 +51,8 @@ implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final int instanceNum, storageNodeCount, batchSize, maxQueueSize;
-	protected final String name, storageNodeAddrs[];
+	protected final int instanceNum, storageNodeCount, maxQueueSize;
+	protected final String storageNodeAddrs[];
 	//
 	protected final Class<T> dataCls;
 	protected final RunTimeConfig rtConfig;
@@ -88,9 +87,6 @@ implements LoadExecutor<T> {
 	private final Condition condProducerDone = lock.newCondition();
 	private T lastDataItem;
 	//
-	private final DataItemSrc<T> itemsSrc;
-	private final boolean flagShuffle;
-	//
 	private final Thread
 		metricsDaemon = new Thread() {
 			//
@@ -110,7 +106,7 @@ implements LoadExecutor<T> {
 						Thread.sleep(Long.MAX_VALUE);
 					}
 				} catch(final InterruptedException e) {
-					LOG.debug(Markers.MSG, "{}: interrupted", name);
+					LOG.debug(Markers.MSG, "{}: interrupted", getName());
 				}
 			}
 		},
@@ -131,7 +127,7 @@ implements LoadExecutor<T> {
 								LOG.trace(
 									Markers.MSG,
 									"{}: done signal emitted because of condition, submitted: " +
-									"{}, done: {}", name, counterSubm.get(), counterResults.get()
+									"{}, done: {}", getName(), counterSubm.get(), counterResults.get()
 								);
 							}
 						} finally {
@@ -173,24 +169,23 @@ implements LoadExecutor<T> {
 	) {
 		super(itemSrc, rtConfig.getBatchSize(), rtConfig.isDataSrcCircularEnabled());
 		super.setDataItemDst(this);
-		this.flagShuffle = rtConfig.isShuffleItemsEnabled();
-		this.batchSize = rtConfig.getBatchSize();
 		this.maxQueueSize = rtConfig.getTasksMaxQueueSize();
 		//
 		this.dataCls = dataCls;
 		this.rtConfig = rtConfig;
-		this.itemsSrc = itemSrc;
 		if (!INSTANCE_NUMBERS.containsKey(rtConfig.getRunId())) {
 			INSTANCE_NUMBERS.put(rtConfig.getRunId(), new AtomicInteger(0));
 		}
 		instanceNum = INSTANCE_NUMBERS.get(rtConfig.getRunId()).getAndIncrement();
 		storageNodeCount = addrs.length;
 		//
-		name = Integer.toString(instanceNum) + '-' +
-			StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
-			StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
-			(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
-			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
+		setName(
+			Integer.toString(instanceNum) + '-' +
+				StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
+				StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
+				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
+				Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount)
+		);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
 		//
@@ -208,10 +203,10 @@ implements LoadExecutor<T> {
 		final boolean flagServeJMX = rtConfig.getFlagServeJMX();
 		if(flagServeJMX) {
 			ioStats = new BasicIOStats(
-				name, rtConfig.getRemotePortMonitor(), metricsUpdatePeriodSec
+				getName(), rtConfig.getRemotePortMonitor(), metricsUpdatePeriodSec
 			);
 		} else {
-			ioStats = new BasicIOStats(name, 0, metricsUpdatePeriodSec);
+			ioStats = new BasicIOStats(getName(), 0, metricsUpdatePeriodSec);
 		}
 		lastStats = ioStats.getSnapshot();
 		//
@@ -227,18 +222,20 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public final String toString() {
-		return name;
+	public final void run() {
+		try {
+			super.run();
+		} finally {
+			shutdown();
+		}
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// Producer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void logMetrics(final Marker logMarker) {
 		LOG.info(
 			logMarker,
 			Markers.PERF_SUM.equals(logMarker) ?
-				"\"" + name + "\" summary: " + lastStats :
+				"\"" + getName() + "\" summary: " + lastStats :
 				lastStats
 		);
 	}
@@ -246,7 +243,7 @@ implements LoadExecutor<T> {
 	@Override
 	public void start() {
 		if(isStarted.compareAndSet(false, true)) {
-			LOG.debug(Markers.MSG, "Starting {}", name);
+			LOG.debug(Markers.MSG, "Starting {}", getName());
 			ioStats.start();
 			//
 			if(rtConfig.isRunResumeEnabled()) {
@@ -267,25 +264,25 @@ implements LoadExecutor<T> {
 					close();
 				} catch (final IOException e) {
 					LogUtil.exception(LOG, Level.ERROR, e,
-						"Couldn't close the load executor \"{}\"", name);
+						"Couldn't close the load executor \"{}\"", getName());
 				}
 				return;
 			}
 			//
-			releaseDaemon.setName("releaseDaemon<" + name + ">");
+			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
 			//
 			if(counterResults.get() > 0) {
-				setSkippedItemsCount(counterResults.get());
+				setSkipCount(counterResults.get());
 				setLastDataItem(loadedPrevState.getLastDataItem());
 			}
 			super.start();
-			LOG.debug(Markers.MSG, "Started object producer {}", name);
+			LOG.debug(Markers.MSG, "Started object producer {}", getName());
 			//
-			setName(name);
+			setName(getName());
 			metricsDaemon.start();
 			//
-			LOG.debug(Markers.MSG, "Started \"{}\"", name);
+			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		} else {
 			LOG.warn(Markers.ERR, "Second start attempt - skipped");
 		}
@@ -317,7 +314,7 @@ implements LoadExecutor<T> {
 			try {
 				condProducerDone.signalAll();
 				LOG.debug(
-					Markers.MSG, "{}: done signal emitted by the interruption", name
+					Markers.MSG, "{}: done signal emitted by the interruption", getName()
 				);
 			} finally {
 				lock.unlock();
@@ -337,11 +334,11 @@ implements LoadExecutor<T> {
 						String.format(
 							LogUtil.LOCALE_DEFAULT,
 							"%s: load execution duration: %3.3f[sec], efficiency estimation: %3.1f[%%]",
-							name, loadDurMicroSec / 1e6, 100 * eff
+							getName(), loadDurMicroSec / 1e6, 100 * eff
 						)
 					);
 				} else {
-					LOG.debug(Markers.ERR, "{}: trying to interrupt while not started", name);
+					LOG.debug(Markers.ERR, "{}: trying to interrupt while not started", getName());
 				}
 			} catch(final Throwable t) {
 				t.printStackTrace(System.err);
@@ -356,23 +353,18 @@ implements LoadExecutor<T> {
 					);
 				}
 			}
-			LOG.debug(Markers.MSG, "{} interrupted", name);
+			LOG.debug(Markers.MSG, "{} interrupted", getName());
 		} else {
-			LOG.debug(Markers.MSG, "{} was already interrupted", name);
+			LOG.debug(Markers.MSG, "{} was already interrupted", getName());
 		}
 
 	}
-	/*
-	@Override
-	public final AsyncDataItemDst<T> getDataItemDst() {
-		return consumer;
-	}*/
 	//
 	@Override
-	public final void setDataItemDst(final DataItemDst<T> itemDst) {
+	public void setDataItemDst(final DataItemDst<T> itemDst) {
 		this.consumer = itemDst;
 		LOG.debug(
-			Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", itemDst, name
+			Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", itemDst, getName()
 		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -383,7 +375,7 @@ implements LoadExecutor<T> {
 	throws InterruptedException, RemoteException {
 		if(counterSubm.get() + countRej.get() >= maxCount) {
 			LOG.debug(
-				Markers.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", name,
+				Markers.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", getName(),
 				counterSubm.get(), countRej.get()
 			);
 			shutdown();
@@ -511,26 +503,6 @@ implements LoadExecutor<T> {
 		return bestNode;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private void markSucc(final IOTask<T> ioTask) {
-		final int
-			duration = ioTask.getDuration(),
-			latency = ioTask.getLatency();
-		// update the metrics with success
-		if(latency > duration) {
-			LOG.warn(
-				Markers.ERR, "{}: latency {} is more than duration: {}",
-				ioTask, latency, duration
-			);
-		}
-		ioStats.markSucc(ioTask.getCountBytesDone(), duration, latency);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "Task #{}: successful, {}/{}",
-				ioTask.hashCode(), lastStats.getSuccCount(),
-				ioTask.getCountBytesDone()
-			);
-		}
-	}
 	@Override
 	public final void handleResult(final IOTask<T> ioTask)
 	throws RemoteException {
@@ -662,12 +634,31 @@ implements LoadExecutor<T> {
 		return n;
 	}
 	//
+	private void markSucc(final IOTask<T> ioTask) {
+		final int
+			duration = ioTask.getDuration(),
+			latency = ioTask.getLatency();
+		// update the metrics with success
+		if(latency > duration) {
+			LOG.warn(
+				Markers.ERR, "{}: latency {} is more than duration: {}", ioTask, latency, duration
+			);
+		}
+		ioStats.markSucc(ioTask.getCountBytesDone(), duration, latency);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "Task #{}: successful, {}/{}", ioTask.hashCode(),
+				lastStats.getSuccCount(), ioTask.getCountBytesDone()
+			);
+		}
+	}
+	//
 	@Override
 	public void setLoadState(final LoadState<T> state) {
 		if(state != null) {
 			if(state.isLoadFinished(rtConfig)) {
 				isFinished.compareAndSet(false, true);
-				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", name);
+				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
 				return;
 			}
 			// apply parameters from loadState to current load executor
@@ -710,8 +701,8 @@ implements LoadExecutor<T> {
 	private boolean isDoneAllSubm() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				Markers.MSG, "{}: shut down flag: {}, results: {}, submitted: {}",
-				name, isShutdown.get(), counterResults.get(), counterSubm.get()
+				Markers.MSG, "{}: shut down flag: {}, results: {}, submitted: {}", getName(),
+				isShutdown.get(), counterResults.get(), counterSubm.get()
 			);
 		}
 		return isShutdown.get() && counterResults.get() >= counterSubm.get();
@@ -724,62 +715,19 @@ implements LoadExecutor<T> {
 				super.interrupt(); // stop the source producing right now
 				LOG.debug(
 					Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"",
-					itemsSrc, name
+					itemSrc, getName()
 				);
 			} else {
 				LOG.debug(
 					Markers.MSG,
-					"{}: ignoring the shutdown invocation because is already shut down", name
+					"{}: ignoring the shutdown invocation because is already shut down", getName()
 				);
 		} else {
 			LOG.debug(
 				Markers.MSG,
-				"{}: ignoring the shutdown invocation because has not been started yet", name
+				"{}: ignoring the shutdown invocation because has not been started yet", getName()
 			);
 		}
-	}
-	//
-	@Override
-	public void close()
-	throws IOException {
-		// interrupt the producing
-		if(isClosed.compareAndSet(false, true)) {
-			LOG.debug(Markers.MSG, "Invoked close for {}", name);
-			try {
-				interrupt();
-				releaseDaemon.interrupt();
-			} finally {
-				LoadCloseHook.del(this);
-				if(loadedPrevState != null) {
-					if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
-						RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
-					}
-				}
-			}
-			LOG.debug(Markers.MSG, "\"{}\" closed successfully", name);
-		} else {
-			LOG.debug(
-				Markers.MSG,
-				"Not closing \"{}\" because it has been closed before already", name
-			);
-		}
-	}
-	//
-	@Override
-	protected final void finalize()
-	throws Throwable {
-		try {
-			close();
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "{}: failed to close", name);
-		} finally {
-			super.finalize();
-		}
-	}
-	//
-	@Override
-	public final RequestConfig<T> getRequestConfig() {
-		return reqConfigCopy;
 	}
 	//
 	@Override
@@ -807,18 +755,66 @@ implements LoadExecutor<T> {
 		try {
 			LOG.debug(
 				Markers.MSG, "{}: await for the done condition at most for {}[us]",
-				name, timeOutMicroSec
+				getName(), timeOutMicroSec
 			);
 			if(condProducerDone.await(timeOutMicroSec, TimeUnit.MICROSECONDS)) {
-				LOG.debug(Markers.MSG, "{}: await for the done condition is finished", name);
+				LOG.debug(Markers.MSG, "{}: await for the done condition is finished", getName());
 			} else {
 				LOG.debug(
 					Markers.MSG, "{}: await timeout, unhandled results left: {}",
-					name, counterSubm.get() - counterResults.get()
+					getName(), counterSubm.get() - counterResults.get()
 				);
 			}
 		} finally {
 			lock.unlock();
 		}
+	}
+	//
+	@Override
+	public void close()
+		throws IOException {
+		// interrupt the producing
+		if(isClosed.compareAndSet(false, true)) {
+			LOG.debug(Markers.MSG, "Invoked close for {}", getName());
+			try {
+				interrupt();
+				releaseDaemon.interrupt();
+			} finally {
+				LoadCloseHook.del(this);
+				if(loadedPrevState != null) {
+					if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+						RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
+					}
+				}
+			}
+			LOG.debug(Markers.MSG, "\"{}\" closed successfully", getName());
+		} else {
+			LOG.debug(
+				Markers.MSG,
+				"Not closing \"{}\" because it has been closed before already", getName()
+			);
+		}
+	}
+	//
+	@Override
+	protected final void finalize()
+		throws Throwable {
+		try {
+			close();
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "{}: failed to close", getName());
+		} finally {
+			super.finalize();
+		}
+	}
+	//
+	@Override
+	public final RequestConfig<T> getRequestConfig() {
+		return reqConfigCopy;
+	}
+	//
+	@Override
+	public final String toString() {
+		return getName();
 	}
 }

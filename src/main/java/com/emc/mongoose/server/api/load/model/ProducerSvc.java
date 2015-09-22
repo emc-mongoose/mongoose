@@ -12,8 +12,4 @@ import java.rmi.RemoteException;
  */
 public interface ProducerSvc<T extends DataItem>
 extends Producer<T>, Service {
-	//
-	void setConsumer(final ConsumerSvc<T> consumer)
-	throws RemoteException;
-	//
 }
