@@ -9,6 +9,10 @@
 		<title>Mongoose-Run</title>
 		<link rel='stylesheet' href='/webjars/bootstrap/3.3.2-1/css/bootstrap.min.css'>
 		<link href="css/styles.css" rel="stylesheet">
+		<script src="/webjars/jquery/2.1.4/jquery.min.js"></script>
+		<script>
+			jsonProps = ${runTimeConfig.jsonProps};
+		</script>
 	</head>
 	<body>
 		<!-- For waiting image -->
@@ -998,10 +1002,6 @@
 				</c:forEach>
 			</div>
 		</div>
-		<script src="/webjars/jquery/2.1.4/jquery.min.js"></script>
-		<script>
-			jsonProps = ${runTimeConfig.jsonProps};
-		</script>
 		<script data-main="js/script" src="/webjars/requirejs/2.1.20/require.min.js"></script>
 	</body>
 </html>
