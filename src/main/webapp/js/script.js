@@ -722,41 +722,41 @@ require(["./requirejs/conf"], function() {
 					"limit": 300 * 1,
 					"value": 1,
 					"next": "minutes",
-					"label": "seconds[s]"
+					"label": "t[seconds]"
 				},
 				"minutes": {
 					"limit": 300 * 60,
 					"value": 60,
 					"next": "hours",
-					"label": "minutes[m]"
+					"label": "t[minutes]"
 				},
 				"hours": {
 					"limit": 120 * 60 * 60,
 					"value": 60 * 60,
 					"next": "days",
-					"label": "hours[h]"
+					"label": "t[hours]"
 				},
 				"days": {
 					"limit": 35 * 24 * 60 * 60,
 					"value": 24 * 60 * 60,
 					"next": "weeks",
-					"label": "days[d]"
+					"label": "t[days]"
 				},
 				"weeks": {
 					"limit": 20 * 7 * 24 * 60 * 60,
 					"value": 7 * 24 * 60 * 60,
 					"next": "months",
-					"label": "weeks[w]"
+					"label": "t[weeks]"
 				},
 				"months": {
 					"limit": 60 * 4 * 7 * 24 * 60 * 60,
 					"value": 4 * 7 * 24 * 60 * 60,
 					"next": "years",
-					"label": "months[m]"
+					"label": "t[months]"
 				},
 				"years": {
 					"next": null,
-					"label": "years[y]"
+					"label": "t[years]"
 				}
 			};
 			//  Some constants from runTimeConfig
@@ -850,7 +850,7 @@ require(["./requirejs/conf"], function() {
 			}
 			//
 			function drawThroughputCharts(data, json, sec) {
-				var updateFunction = drawChart(data, json, "seconds[s]", "Rate[s^-1]",
+				var updateFunction = drawChart(data, json, "t[seconds]", "Rate[s^-1]",
 					"#tp-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
 					sec);
 				return {
@@ -861,7 +861,7 @@ require(["./requirejs/conf"], function() {
 			}
 			//
 			function drawBandwidthCharts(data, json, sec) {
-				var updateFunction = drawChart(data, json, "seconds[s]", "Rate[MB*s^-1]",
+				var updateFunction = drawChart(data, json, "t[seconds]", "Rate[MB*s^-1]",
 					"#bw-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
 					sec);
 				return {
@@ -1493,7 +1493,7 @@ require(["./requirejs/conf"], function() {
 					});
 					//
 					function drawThroughputChart(data) {
-						var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds[s]", "Rate[s^-1]", "#tp-" + runId.split(".").join("_"));
+						var updateFunction = drawChart(data, "Throughput[obj/s]", "t[seconds]", "Rate[s^-1]", "#tp-" + runId.split(".").join("_"));
 						return {
 							update: function(json) {
 								updateFunction(CHART_TYPES.TP, json);
@@ -1502,7 +1502,7 @@ require(["./requirejs/conf"], function() {
 					}
 					//
 					function drawBandwidthChart(data) {
-						var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds[s]", "Rate[MB*s^-1]", "#bw-" + runId.split(".").join("_"));
+						var updateFunction = drawChart(data, "Bandwidth[MB/s]", "t[seconds]", "Rate[MB*s^-1]", "#bw-" + runId.split(".").join("_"));
 						return {
 							update: function(json) {
 								updateFunction(CHART_TYPES.BW, json);
