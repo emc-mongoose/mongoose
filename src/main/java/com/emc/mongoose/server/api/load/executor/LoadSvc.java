@@ -1,10 +1,9 @@
 package com.emc.mongoose.server.api.load.executor;
 //
+import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.server.api.load.model.ConsumerSvc;
-import com.emc.mongoose.server.api.load.model.ProducerSvc;
 import com.emc.mongoose.server.api.load.model.RemoteItemBuffDst;
 //
 import java.rmi.RemoteException;
@@ -13,7 +12,7 @@ import java.rmi.RemoteException;
  A remote/server-side load executor.
  */
 public interface LoadSvc<T extends DataItem>
-extends LoadExecutor<T>, ConsumerSvc<T>, ProducerSvc<T>, RemoteItemBuffDst<T> {
+extends LoadExecutor<T>, RemoteItemBuffDst<T>, Service {
 	int getInstanceNum()
 	throws RemoteException;
 }

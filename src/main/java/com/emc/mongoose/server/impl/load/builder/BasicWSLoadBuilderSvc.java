@@ -78,15 +78,15 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	@Override
 	public final int getNextInstanceNum(final String runId) {
-		if (!LoadExecutor.INSTANCE_NUMBERS.containsKey(runId)) {
-			LoadExecutor.INSTANCE_NUMBERS.put(runId, new AtomicInteger(0));
+		if (!LoadExecutor.RUN_INSTANCE_NUMBERS.containsKey(runId)) {
+			LoadExecutor.RUN_INSTANCE_NUMBERS.put(runId, new AtomicInteger(0));
 		}
-		return LoadExecutor.INSTANCE_NUMBERS.get(runId).get();
+		return LoadExecutor.RUN_INSTANCE_NUMBERS.get(runId).get();
 	}
 	//
 	@Override
 	public final void setNextInstanceNum(final String runId, final int instanceN) {
-		LoadExecutor.INSTANCE_NUMBERS.get(runId).set(instanceN);
+		LoadExecutor.RUN_INSTANCE_NUMBERS.get(runId).set(instanceN);
 	}
 	//
 	@Override
@@ -144,20 +144,34 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
+	public void shutdown()
+	throws RemoteException, IllegalStateException {
+	}
+	//
+	@Override
+	public void await()
+	throws RemoteException, InterruptedException {
+		await(Long.MAX_VALUE, TimeUnit.DAYS);
+	}
+	//
+	@Override
+	public void await(final long timeOut, final TimeUnit timeUnit)
+	throws RemoteException, InterruptedException {
+		timeUnit.sleep(timeOut);
+	}
+	//
+	@Override
+	public void interrupt()
+	throws RemoteException {
+	}
+	//
+	@Override
 	public final void close()
 	throws IOException {
 		ServiceUtils.close(this);
 	}
 	//
 	@Override
-	public final void await()
-	throws InterruptedException {
-		await(Long.MAX_VALUE, TimeUnit.DAYS);
-	}
-	//
-	@Override
-	public final void await(final long timeOut, final TimeUnit timeUnit)
-	throws InterruptedException {
-		timeUnit.sleep(timeOut);
+	public void run() {
 	}
 }

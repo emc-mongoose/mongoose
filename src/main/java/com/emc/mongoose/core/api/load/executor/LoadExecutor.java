@@ -4,9 +4,10 @@ import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.Consumer;
+import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.core.api.load.model.LoadState;
 //
+import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import org.apache.logging.log4j.Marker;
 //
@@ -24,15 +25,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  Supports method "join" for waiting the load execution to be done.
  */
 public interface LoadExecutor<T extends DataItem>
-extends Consumer<T> {
+extends DataItemDst<T>, LifeCycle, Producer<T> {
 	//
 	Map<String, AtomicInteger>
-		INSTANCE_NUMBERS = new ConcurrentHashMap<>();
+		RUN_INSTANCE_NUMBERS = new ConcurrentHashMap<>();
 	Map<String, List<LoadState<? extends DataItem>>>
 		RESTORED_STATES_MAP = new ConcurrentHashMap<>();
-	//
-	String getName()
-	throws RemoteException;
 	//
 	RequestConfig<T> getRequestConfig()
 	throws RemoteException;

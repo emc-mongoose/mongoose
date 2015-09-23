@@ -86,7 +86,7 @@ implements WSLoadBuilderClient<T, U> {
 					Paths.get(listFile), (Class<T>) BasicWSObject.class
 				);
 				final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-					runTimeConfig.getBatchSize()
+					rtConfig.getBatchSize()
 				);
 				reqConf.setBuffSize(
 					approxDataItemsSize < Constants.BUFF_SIZE_LO ?
@@ -130,9 +130,12 @@ implements WSLoadBuilderClient<T, U> {
 			minObjSize, maxObjSize, objSizeBias
 		);
 		//
+		final String loadTypeStr = reqConf.getLoadType().name();
+		//
 		return (U) new BasicWSLoadClient<>(
-			runTimeConfig, remoteLoadMap, (WSRequestConfig<T>) reqConf,
-			runTimeConfig.getLoadLimitCount(), itemSrc
+			rtConfig, (WSRequestConfig<T>) reqConf, nodeAddrs,
+			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
+			itemSrc, maxCount, remoteLoadMap
 		);
 	}
 }

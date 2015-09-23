@@ -4,7 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.AsyncDataItemDst;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -24,9 +24,9 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 26.05.15.
  */
-public abstract class AsyncDataItemDstBase<T extends DataItem>
+public abstract class DataItemConsumerBase<T extends DataItem>
 extends Thread
-implements AsyncDataItemDst<T> {
+implements DataItemDst<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	// configuration params
@@ -44,7 +44,7 @@ implements AsyncDataItemDst<T> {
 	private final boolean shuffle;
 	private final int batchSize;
 	//
-	public AsyncDataItemDstBase(
+	public DataItemConsumerBase(
 		final long maxCount, final int maxQueueSize, final boolean shuffle, final int batchSize
 	) throws IllegalArgumentException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
@@ -60,19 +60,18 @@ implements AsyncDataItemDst<T> {
 	}
 	//
 	@Override
-	public void start() {
+	public void start()
+	throws IllegalStateException {
 		if(isStarted.compareAndSet(false, true)) {
-			startActually();
+			LOG.debug(
+				Markers.MSG,
+				"{}: started, the further consuming will go through the volatile queue",
+				getName()
+			);
+			super.start();
+		} else {
+			throw new IllegalStateException("Started already");
 		}
-	}
-	//
-	protected void startActually() {
-		LOG.debug(
-			Markers.MSG,
-			"{}: started, the further consuming will go through the volatile queue",
-			getName()
-		);
-		super.start();
 	}
 	//
 	protected void putActually(final T item)
@@ -138,7 +137,7 @@ implements AsyncDataItemDst<T> {
 					}
 					m = 0;
 					while(m < n) {
-						m += feedSeqBatch(buff, m, n);
+						m += feedSeq(buff, m, n);
 					}
 					i += m;
 				} else {
@@ -166,15 +165,10 @@ implements AsyncDataItemDst<T> {
 		}
 	}
 	//
-	@Deprecated
-	protected abstract void feedSeq(final T item)
+	protected abstract int feedSeq(final List<T> items, final int from, final int to)
 	throws InterruptedException, RemoteException;
 	//
-	protected abstract int feedSeqBatch(final List<T> items, final int from, final int to)
-	throws InterruptedException, RemoteException;
-	//
-	@Override
-	public void shutdown() {
+	protected void shutdown() {
 		if(!isStarted.get()) {
 			throw new IllegalStateException(
 				getName() + ": not started yet, but shutdown is invoked"

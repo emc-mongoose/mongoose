@@ -20,7 +20,7 @@ extends Serializable {
 	//
 	T getLastDataItem();
 	//
-	boolean isLoadFinished(final RunTimeConfig rtConfig);
+	boolean isLimitReached(final RunTimeConfig rtConfig);
 	//
 	interface Builder<T extends DataItem, U extends LoadState<T>> {
 		//

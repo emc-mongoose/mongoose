@@ -174,7 +174,7 @@ public abstract class ServiceUtils {
 		if(stub != null) {
 			final String svcName = getLocalSvcName(svc.getName());
 			try {
-				if (!SVC_MAP.containsKey(svcName)) {
+				if(!SVC_MAP.containsKey(svcName)) {
 					Naming.rebind(svcName, svc);
 					SVC_MAP.put(svcName, svc);
 					LOG.info(Markers.MSG, "New service bound: {}", svcName);
@@ -237,7 +237,7 @@ public abstract class ServiceUtils {
 	public static void close(final Service svc)
 	throws RemoteException {
 		try {
-            UnicastRemoteObject.unexportObject(svc, true);
+			UnicastRemoteObject.unexportObject(svc, true);
 			LOG.debug(Markers.MSG, "Unexported service object");
 		} catch(NoSuchObjectException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to unexport service object");

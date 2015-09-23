@@ -6,9 +6,9 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
-import com.emc.mongoose.core.api.load.model.Consumer;
 //
 //
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,41 +19,31 @@ import java.util.List;
 /**
  Created by kurila on 19.06.15.
  */
-public class DataItemOutputConsumer<T extends DataItem>
-extends AsyncDataItemDstBase<T>
-implements Consumer<T> {
+public class DataItemConsumer<T extends DataItem>
+extends DataItemConsumerBase<T>
+implements DataItemDst<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final DataItemDst<T> itemOut;
+	protected final DataItemDst<T> itemDst;
 	//
-	public DataItemOutputConsumer(final DataItemDst<T> itemOut, final long maxCount) {
+	public DataItemConsumer(final DataItemDst<T> itemDst, final long maxCount) {
 		super(
 			maxCount > 0 ? maxCount : Long.MAX_VALUE,
 			RunTimeConfig.getContext().getTasksMaxQueueSize(),
 			RunTimeConfig.getContext().isShuffleItemsEnabled(),
 			RunTimeConfig.getContext().getBatchSize()
 		);
-		setName("consume" + (maxCount > 0 ? maxCount : "") + "<" + itemOut + ">");
-		this.itemOut = itemOut;
+		setName("consume" + (maxCount > 0 ? maxCount : "") + "<" + itemDst + ">");
+		this.itemDst = itemDst;
 	}
 	//
 	@Override
-	protected void feedSeq(final T dataItem)
-	throws InterruptedException, RemoteException {
-		try {
-			itemOut.put(dataItem);
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to put the data item");
-		}
-	}
-	//
-	@Override
-	protected int feedSeqBatch(final List<T> dataItems, final int from, final int to)
+	protected int feedSeq(final List<T> dataItems, final int from, final int to)
 	throws InterruptedException, RemoteException {
 		int n = 0;
 		try {
-			n = itemOut.put(dataItems, from, to);
+			n = itemDst.put(dataItems, from, to);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to put the data items");
 		}
@@ -78,9 +68,15 @@ implements Consumer<T> {
 		}
 		// close
 		try {
-			itemOut.close();
+			itemDst.close();
 		} finally {
 			super.close();
 		}
+	}
+	//
+	@Override
+	public DataItemSrc<T> getDataItemSrc()
+	throws IOException {
+		return itemDst.getDataItemSrc();
 	}
 }

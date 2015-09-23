@@ -18,12 +18,11 @@ import java.nio.channels.ClosedByInterruptException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 19.06.15.
  */
-public class DataItemSrcProducer<T extends DataItem>
+public class DataItemProducer<T extends DataItem>
 extends Thread
 implements Producer<T> {
 	//
@@ -37,17 +36,17 @@ implements Producer<T> {
 	protected T lastDataItem;
 	protected boolean isCircular;
 	//
-	public DataItemSrcProducer(final DataItemSrc<T> itemSrc, final int batchSize) {
+	public DataItemProducer(final DataItemSrc<T> itemSrc, final int batchSize) {
 		this(itemSrc, batchSize, false);
 	}
 	//
-	public DataItemSrcProducer(
+	public DataItemProducer(
 		final DataItemSrc<T> itemSrc, final int batchSize, final boolean isCircular
 	) {
 		this(itemSrc, batchSize, isCircular, 0, null);
 	}
 	//
-	public DataItemSrcProducer(
+	public DataItemProducer(
 		final DataItemSrc<T> itemSrc, final int batchSize, final boolean isCircular,
 		final long skipCount, final T lastDataItem
 	) {
@@ -70,7 +69,8 @@ implements Producer<T> {
 	}
 	//
 	@Override
-	public void setDataItemDst(final DataItemDst<T> itemDst) {
+	public void setDataItemDst(final DataItemDst<T> itemDst)
+	throws RemoteException {
 		this.itemDst = itemDst;
 	}
 	//
@@ -81,34 +81,33 @@ implements Producer<T> {
 	}
 	//
 	@Override
-	public void await()
-	throws RemoteException, InterruptedException {
-		await(Long.MAX_VALUE, TimeUnit.DAYS);
-	}
-	//
-	@Override
-	public void await(final long timeOut, final TimeUnit timeUnit)
-	throws RemoteException, InterruptedException {
-		timeUnit.timedJoin(this, timeOut);
-	}
-	//
-	@Override
 	public void reset() {
-		try {
-			itemSrc.reset();
-		} catch (final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to reset data item input");
+		if(itemSrc != null) {
+			try {
+				itemSrc.reset();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to reset data item input");
+			}
 		}
 	}
 	//
 	@Override
-	public void run() {
+	public final void run() {
+		runActually();
+	}
+	//
+	protected void runActually() {
 		//
 		if(itemDst == null) {
 			LOG.warn(Markers.ERR, "Have no item destination set, exiting");
 			return;
 		}
-		skipIfNecessary(itemSrc, skipCount, lastDataItem);
+		if(itemSrc == null) {
+			LOG.debug(Markers.MSG, "No item source for the producing, exiting");
+			return;
+		}
+		//
+		skipIfNecessary();
 		//
 		long count = 0;
 		int n, m;
@@ -146,16 +145,14 @@ implements Producer<T> {
 		}
 	}
 	//
-	private static <T extends DataItem> void skipIfNecessary(
-		final DataItemSrc<T> itemSrc, final long count, final T lastDataItem
-	) {
-		if(count > 0) {
+	private void skipIfNecessary() {
+		if(skipCount > 0) {
 			try {
 				itemSrc.setLastDataItem(lastDataItem);
-				itemSrc.skip(count);
+				itemSrc.skip(skipCount);
 			} catch (final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e,
-					"Failed to skip such amount of data items - \"{}\"", count);
+					"Failed to skip such amount of data items - \"{}\"", skipCount);
 			}
 		}
 	}

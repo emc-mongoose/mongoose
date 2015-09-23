@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
-import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
@@ -70,7 +70,7 @@ public final class StartServlet extends CommonServlet {
 				startServer("Starting the distributed load server");
 				break;
 			case Constants.RUN_MODE_CINDERELLA:
-				startCinderella("Starting the cinderella");
+				startStorageMock("Starting the cinderella");
 				break;
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
@@ -92,7 +92,7 @@ public final class StartServlet extends CommonServlet {
 	//
 	private void startServer(final String message) {
 		final Thread thread = new Thread() {
-			WSLoadBuilderSvc loadBuilderSvc;
+			LoadBuilderSvc loadBuilderSvc;
 			RunTimeConfig localRunTimeConfig;
 			@Override
 			public void run() {
@@ -155,7 +155,7 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			public void interrupt() {
 				LoadExecutorBase.RESTORED_STATES_MAP.remove(runTimeConfig.getRunId());
-				LoadExecutorBase.INSTANCE_NUMBERS.remove(runTimeConfig.getRunId());
+				LoadExecutorBase.RUN_INSTANCE_NUMBERS.remove(runTimeConfig.getRunId());
 				super.interrupt();
 			}
 		};
@@ -163,7 +163,7 @@ public final class StartServlet extends CommonServlet {
 		threadsMap.put(runTimeConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
 	}
 	//
-	private void startCinderella(final String message) {
+	private void startStorageMock(final String message) {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {

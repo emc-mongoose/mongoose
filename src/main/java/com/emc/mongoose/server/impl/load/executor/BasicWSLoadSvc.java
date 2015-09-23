@@ -24,7 +24,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.Collection;
+import java.util.List;
 /**
  Created by kurila on 16.12.14.
  */
@@ -45,29 +45,38 @@ implements WSLoadSvc<T> {
 			runTimeConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
-		// by default, may be overriden later externally:
-		super.setDataItemDst(
-			new BasicItemBuffDst<T>(rtConfig.getTasksMaxQueueSize(), rtConfig.getBatchSize())
-		);
+		try {
+			// by default, may be overridden later externally:
+			super.setDataItemDst(
+				new BasicItemBuffDst<T>(rtConfig.getTasksMaxQueueSize(), rtConfig.getBatchSize())
+			);
+		} catch(final RemoteException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, getName() + ": failed to set item buffer consumer"
+			);
+		}
 	}
 	//
 	@Override
-	public final void close()
+	protected void closeActually()
 	throws IOException {
-		super.close();
-		//
-		if(consumer instanceof RemoteItemBuffDst) {
-			consumer.close();
-		}
-		// close the exposed network service, if any
-		final Service svc = ServiceUtils.getLocalSvc(
-			ServiceUtils.getLocalSvcName(getName())
-		);
-		if(svc == null) {
-			LOG.debug(Markers.MSG, "The load was not exposed remotely");
-		} else {
-			LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
-			ServiceUtils.close(svc);
+		try {
+			super.closeActually();
+		} finally {
+			//
+			if(consumer instanceof RemoteItemBuffDst) {
+				consumer.close();
+			}
+			// close the exposed network service, if any
+			final Service svc = ServiceUtils.getLocalSvc(
+				ServiceUtils.getLocalSvcName(getName())
+			);
+			if(svc == null) {
+				LOG.debug(Markers.MSG, "The load was not exposed remotely");
+			} else {
+				LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
+				ServiceUtils.close(svc);
+			}
 		}
 	}
 	//
@@ -113,9 +122,9 @@ implements WSLoadSvc<T> {
 	}
 	//
 	@Override
-	public final Collection<T> fetchItems()
+	public final List<T> fetchItems()
 	throws RemoteException {
-		Collection<T> itemsBuff = null;
+		List<T> itemsBuff = null;
 		if(consumer instanceof RemoteItemBuffDst) {
 			try {
 				itemsBuff = ((RemoteItemBuffDst<T>) consumer).fetchItems();

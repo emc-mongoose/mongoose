@@ -398,7 +398,7 @@ implements Externalizable {
 		return getString(KEY_RUN_VERSION);
 	}
 	//
-	public final int getLoadConcurrency() {
+	public final int getLoadConnPerNode() {
 		return getInt(KEY_LOAD_CONNS);
 	}
 	//

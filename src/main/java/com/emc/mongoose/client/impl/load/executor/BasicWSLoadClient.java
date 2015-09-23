@@ -6,6 +6,8 @@ import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.api.io.task.WSIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.WSLoadClient;
@@ -14,20 +16,31 @@ import com.emc.mongoose.client.api.load.executor.WSLoadClient;
 //import org.apache.log.log4j.LogManager;
 //import org.apache.log.log4j.Logger;
 //
+import java.rmi.RemoteException;
 import java.util.Map;
 /**
  Created by kurila on 08.05.14.
  */
 public class BasicWSLoadClient<T extends WSObject>
-extends BasicLoadClient<T>
+extends LoadClientBase<T>
 implements WSLoadClient<T> {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicWSLoadClient(
-		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
-		final WSRequestConfig<T> reqConf, final long maxCount, final DataItemSrc<T> itemSrc
-	) {
-		super(runTimeConfig, remoteLoadMap, reqConf, maxCount, itemSrc);
+		final RunTimeConfig rtConfig, final WSRequestConfig<T> reqConfig, final String addrs[],
+		final int connCountPerNode, final int threadCount,
+		final DataItemSrc<T> itemSrc, final long maxCount,
+		final Map<String, LoadSvc<T>> remoteLoadMap
+	) throws RemoteException {
+		super(
+			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			remoteLoadMap
+		);
+	}
+	//
+	@Override
+	protected WSIOTask<T> getIOTask(final T dataObject, final String nodeAddr) {
+		return new BasicWSIOTask<>(this, dataObject, nodeAddr);
 	}
 }

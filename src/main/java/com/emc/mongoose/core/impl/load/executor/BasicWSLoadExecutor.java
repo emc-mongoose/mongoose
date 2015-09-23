@@ -16,7 +16,6 @@ import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.http.ExceptionLogger;
@@ -73,22 +72,21 @@ implements WSLoadExecutor<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public BasicWSLoadExecutor(
-		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
+		final RunTimeConfig rtConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
 		final DataItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
 		final int countUpdPerReq
 	) {
 		super(
-			(Class<T>) BasicWSObject.class,
-			runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
 		wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
 		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
 		//
 		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
-		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
+		final String userAgent = rtConfig.getRunName() + "/" + rtConfig.getRunVersion();
 		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
@@ -111,8 +109,8 @@ implements WSLoadExecutor<T> {
 		//
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final int buffSize = wsReqConfigCopy.getBuffSize();
-		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
-			runTimeConfig.getLoadLimitTimeValue()
+		final long timeOutMs = rtConfig.getLoadLimitTimeUnit().toMillis(
+			rtConfig.getLoadLimitTimeValue()
 		);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
@@ -176,7 +174,7 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public void start() {
+	protected void startActually() {
 		if(clientDaemon == null) {
 			LOG.debug(Markers.ERR, "Not starting web load client due to initialization failures");
 		} else {
@@ -186,7 +184,7 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public void interrupt() {
+	protected void interruptActually() {
 		try {
 			super.interrupt();
 		} finally {

@@ -40,7 +40,7 @@ implements LoadBuilderClient<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected String listFile = null, nodeAddrs[] = null, loadSvcAddrs[] = null;
-	protected volatile RunTimeConfig runTimeConfig;
+	protected volatile RunTimeConfig rtConfig;
 	protected volatile RequestConfig<T> reqConf = getDefaultRequestConfig();
 	protected long maxCount = 0, minObjSize, maxObjSize;
 	protected float objSizeBias;
@@ -53,28 +53,28 @@ implements LoadBuilderClient<T, U> {
 		this(RunTimeConfig.getContext());
 	}
 	//
-	public LoadBuilderClientBase(final RunTimeConfig runTimeConfig)
+	public LoadBuilderClientBase(final RunTimeConfig rtConfig)
 	throws IOException {
 		//
-		super(runTimeConfig.getLoadServerAddrs().length);
-		loadSvcAddrs = runTimeConfig.getLoadServerAddrs();
+		super(rtConfig.getLoadServerAddrs().length);
+		loadSvcAddrs = rtConfig.getLoadServerAddrs();
 		//
 		LoadBuilderSvc<T, U> loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
 		for(final String serverAddr : loadSvcAddrs) {
 			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
 			loadBuilderSvc = resolve(serverAddr);
-			nextInstanceN = loadBuilderSvc.getNextInstanceNum(runTimeConfig.getRunId());
+			nextInstanceN = loadBuilderSvc.getNextInstanceNum(rtConfig.getRunId());
 			if(nextInstanceN > maxLastInstanceN) {
 				maxLastInstanceN = nextInstanceN;
 			}
 			put(serverAddr, loadBuilderSvc);
 		}
 		// set properties should be invoked only after the map is filled already
-		setProperties(runTimeConfig);
+		setProperties(rtConfig);
 		//
 		for(final String serverAddr : loadSvcAddrs) {
-			get(serverAddr).setNextInstanceNum(runTimeConfig.getRunId(), maxLastInstanceN);
+			get(serverAddr).setNextInstanceNum(rtConfig.getRunId(), maxLastInstanceN);
 		}
 	}
 	//
@@ -131,7 +131,7 @@ implements LoadBuilderClient<T, U> {
 	public final LoadBuilderClient<T, U> setProperties(final RunTimeConfig runTimeConfig)
 	throws IllegalStateException, RemoteException {
 		//
-		this.runTimeConfig = runTimeConfig;
+		this.rtConfig = runTimeConfig;
 		if(reqConf == null) {
 			throw new IllegalStateException("Shared request config is not initialized");
 		} else {
@@ -171,7 +171,7 @@ implements LoadBuilderClient<T, U> {
 		setObjSizeBias(runTimeConfig.getDataSizeBias());
 		//
 		try {
-			final String listFile = this.runTimeConfig.getDataSrcFPath();
+			final String listFile = this.rtConfig.getDataSrcFPath();
 			if(listFile != null && listFile.length() > 0) {
 				final Path dataItemsListPath = Paths.get(listFile);
 				if(!Files.exists(dataItemsListPath)) {
@@ -322,7 +322,7 @@ implements LoadBuilderClient<T, U> {
 	//
 	@Override
 	public final LoadBuilderClient<T, U> setConnPerNodeDefault(final int connCount)
-		throws IllegalArgumentException, RemoteException {
+	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
@@ -349,7 +349,7 @@ implements LoadBuilderClient<T, U> {
 		if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
 			this.nodeAddrs = dataNodeAddrs;
 			if(flagAssignLoadSvcToNode) {
-				assignNodesToLoadSvcs(runTimeConfig, loadSvcConfMap, loadSvcAddrs, nodeAddrs);
+				assignNodesToLoadSvcs(rtConfig, loadSvcConfMap, loadSvcAddrs, nodeAddrs);
 			}
 			//
 			LoadBuilderSvc<T, U> nextBuilder;
@@ -410,7 +410,7 @@ implements LoadBuilderClient<T, U> {
 		StringBuilder strBuilder = new StringBuilder(reqConf.toString());
 		try {
 			strBuilder.append('-').append(get(keySet().iterator().next())
-				.getNextInstanceNum(runTimeConfig.getRunId()));
+				.getNextInstanceNum(rtConfig.getRunId()));
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to make load builder string");
 		}

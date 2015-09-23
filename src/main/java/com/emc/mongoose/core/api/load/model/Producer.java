@@ -5,7 +5,6 @@ import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
 //
 import java.rmi.RemoteException;
-import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 09.05.14.
  A producer feeding the generated items to its consumer.
@@ -26,17 +25,5 @@ public interface Producer<T extends DataItem> {
 	throws RemoteException;
 	//
 	void reset()
-	throws RemoteException;
-	//
-	void start()
-	throws RemoteException;
-	//
-	void await()
-	throws RemoteException, InterruptedException;
-	//
-	void await(final long timeOut, final TimeUnit timeUnit)
-	throws RemoteException, InterruptedException;
-	//
-	void interrupt()
 	throws RemoteException;
 }

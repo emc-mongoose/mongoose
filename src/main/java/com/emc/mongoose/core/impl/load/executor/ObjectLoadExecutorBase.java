@@ -22,7 +22,6 @@ implements ObjectLoadExecutor<T> {
 	//private final static Logger LOG = LogManager.getLogger();
 	//
 	protected ObjectLoadExecutorBase(
-		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final ObjectRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
 		final DataItemSrc<T> itemSrc, final long maxCount,
@@ -30,7 +29,6 @@ implements ObjectLoadExecutor<T> {
 		final int countUpdPerReq
 	) {
 		super(
-			dataCls,
 			runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);

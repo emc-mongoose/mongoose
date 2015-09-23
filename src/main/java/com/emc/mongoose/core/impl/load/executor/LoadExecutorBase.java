@@ -18,7 +18,7 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
-import com.emc.mongoose.core.impl.load.model.DataItemSrcProducer;
+import com.emc.mongoose.core.impl.load.model.DataItemProducer;
 //
 import org.apache.commons.lang.StringUtils;
 //
@@ -46,7 +46,7 @@ import java.util.concurrent.locks.ReentrantLock;
  Created by kurila on 15.10.14.
  */
 public abstract class LoadExecutorBase<T extends DataItem>
-extends DataItemSrcProducer<T>
+extends DataItemProducer<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -54,7 +54,6 @@ implements LoadExecutor<T> {
 	protected final int instanceNum, storageNodeCount, maxQueueSize;
 	protected final String storageNodeAddrs[];
 	//
-	protected final Class<T> dataCls;
 	protected final RunTimeConfig rtConfig;
 	//
 	protected final DataSource dataSrc;
@@ -63,28 +62,27 @@ implements LoadExecutor<T> {
 	//
 	protected volatile DataItemDst<T> consumer = null;
 	//
-	private final long maxCount;
+	protected final long maxCount;
 	protected final int totalConnCount;
 	// METRICS section
-	private final int metricsUpdatePeriodSec;
-	private final IOStats ioStats;
+	protected final int metricsPeriodSec;
+	protected IOStats ioStats;
 	protected volatile IOStats.Snapshot lastStats = null;
 	// STATES section //////////////////////////////////////////////////////////////////////////////
 	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
 	private LoadState<T> loadedPrevState = null;
-	protected AtomicBoolean
+	protected final AtomicBoolean
 		isStarted = new AtomicBoolean(false),
 		isShutdown = new AtomicBoolean(false),
-		isFinished = new AtomicBoolean(false);
+		isLimitReached = new AtomicBoolean(false),
+		isInterrupted = new AtomicBoolean(false),
+		isClosed = new AtomicBoolean(false);
 	protected final AtomicLong
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
-	private final AtomicBoolean
-		isInterrupted = new AtomicBoolean(false),
-		isClosed = new AtomicBoolean(false);
 	private final Lock lock = new ReentrantLock();
-	private final Condition condProducerDone = lock.newCondition();
+	private final Condition condDone = lock.newCondition();
 	private T lastDataItem;
 	//
 	private final Thread
@@ -97,10 +95,10 @@ implements LoadExecutor<T> {
 			@Override
 			public final void run() {
 				try {
-					if(metricsUpdatePeriodSec > 0) {
+					if(metricsPeriodSec > 0) {
 						while(!isClosed.get()) {
 							logMetrics(Markers.PERF_AVG);
-							TimeUnit.SECONDS.sleep(metricsUpdatePeriodSec);
+							TimeUnit.SECONDS.sleep(metricsPeriodSec);
 						}
 					} else {
 						Thread.sleep(Long.MAX_VALUE);
@@ -122,7 +120,7 @@ implements LoadExecutor<T> {
 					if(isDoneAllSubm() || isDoneMaxCount()) {
 						lock.lock();
 						try {
-							condProducerDone.signalAll();
+							condDone.signalAll();
 							if(LOG.isTraceEnabled(Markers.MSG)) {
 								LOG.trace(
 									Markers.MSG,
@@ -146,7 +144,7 @@ implements LoadExecutor<T> {
 							"There's a more than 1M of failures and the failure rate is higher " +
 							"than success rate for at least last {}[sec]. Exiting in order to " +
 							"avoid the memory exhaustion. Please check your environment.",
-							metricsUpdatePeriodSec
+							metricsPeriodSec
 						);
 						try {
 							LoadExecutorBase.this.close();
@@ -162,30 +160,30 @@ implements LoadExecutor<T> {
 		};
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
-		final Class<T> dataCls,
-		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String[] addrs,
+		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
-		final DataItemSrc<T> itemSrc, final long maxCount
+		final DataItemSrc<T> itemSrc, final long maxCount,
+		final int instanceNum, final String name
 	) {
 		super(itemSrc, rtConfig.getBatchSize(), rtConfig.isDataSrcCircularEnabled());
-		super.setDataItemDst(this);
+		try {
+			super.setDataItemDst(this);
+		} catch(final RemoteException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to set \"{}\" as a consumer of \"{}\" producer",
+				name, itemSrc
+			);
+		}
 		this.maxQueueSize = rtConfig.getTasksMaxQueueSize();
 		//
-		this.dataCls = dataCls;
 		this.rtConfig = rtConfig;
-		if (!INSTANCE_NUMBERS.containsKey(rtConfig.getRunId())) {
-			INSTANCE_NUMBERS.put(rtConfig.getRunId(), new AtomicInteger(0));
+		if(!RUN_INSTANCE_NUMBERS.containsKey(rtConfig.getRunId())) {
+			RUN_INSTANCE_NUMBERS.put(rtConfig.getRunId(), new AtomicInteger(0));
 		}
-		instanceNum = INSTANCE_NUMBERS.get(rtConfig.getRunId()).getAndIncrement();
+		this.instanceNum = instanceNum;
 		storageNodeCount = addrs.length;
 		//
-		setName(
-			Integer.toString(instanceNum) + '-' +
-				StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
-				StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
-				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
-				Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount)
-		);
+		setName(name);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
 		//
@@ -199,16 +197,8 @@ implements LoadExecutor<T> {
 		}
 		loadType = reqConfig.getLoadType();
 		//
-		metricsUpdatePeriodSec = rtConfig.getLoadMetricsPeriodSec();
-		final boolean flagServeJMX = rtConfig.getFlagServeJMX();
-		if(flagServeJMX) {
-			ioStats = new BasicIOStats(
-				getName(), rtConfig.getRemotePortMonitor(), metricsUpdatePeriodSec
-			);
-		} else {
-			ioStats = new BasicIOStats(getName(), 0, metricsUpdatePeriodSec);
-		}
-		lastStats = ioStats.getSnapshot();
+		metricsPeriodSec = rtConfig.getLoadMetricsPeriodSec();
+		initStats(rtConfig.getFlagServeJMX());
 		//
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the nodes array
@@ -221,10 +211,48 @@ implements LoadExecutor<T> {
 		LoadCloseHook.add(this);
 	}
 	//
+	protected LoadExecutorBase(
+		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
+		final int connCountPerNode, final int threadCount,
+		final DataItemSrc<T> itemSrc, final long maxCount, final int instanceNum
+	) {
+		this(
+			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			RUN_INSTANCE_NUMBERS.get(rtConfig.getRunId()).getAndIncrement(),
+			Integer.toString(instanceNum) + '-' +
+				StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
+				StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
+				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
+				Integer.toString(connCountPerNode) + 'x' + Integer.toString(addrs.length)
+		);
+	}
+	//
+	protected LoadExecutorBase(
+		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
+		final int connCountPerNode, final int threadCount,
+		final DataItemSrc<T> itemSrc, final long maxCount
+	) {
+		this(
+			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			RUN_INSTANCE_NUMBERS.get(rtConfig.getRunId()).getAndIncrement()
+		);
+	}
+	//
+	protected void initStats(final boolean flagServeJMX) {
+		if(flagServeJMX) {
+			ioStats = new BasicIOStats(
+				getName(), rtConfig.getRemotePortMonitor(), metricsPeriodSec
+			);
+		} else {
+			ioStats = new BasicIOStats(getName(), 0, metricsPeriodSec);
+		}
+		lastStats = ioStats.getSnapshot();
+	}
+	//
 	@Override
-	public final void run() {
+	protected void runActually() {
 		try {
-			super.run();
+			super.runActually();
 		} finally {
 			shutdown();
 		}
@@ -235,39 +263,46 @@ implements LoadExecutor<T> {
 		LOG.info(
 			logMarker,
 			Markers.PERF_SUM.equals(logMarker) ?
-				"\"" + getName() + "\" summary: " + lastStats :
-				lastStats
+				"\"" + getName() + "\" summary: " + lastStats : lastStats
 		);
 	}
 	//
 	@Override
-	public void start() {
+	public final void start()
+	throws IllegalStateException {
 		if(isStarted.compareAndSet(false, true)) {
-			LOG.debug(Markers.MSG, "Starting {}", getName());
-			ioStats.start();
-			//
-			if(rtConfig.isRunResumeEnabled()) {
-				if (rtConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
-					try {
-						if(!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
-							BasicLoadState.restoreScenarioState(rtConfig);
-						}
-						setLoadState(BasicLoadState.<T>findStateByLoadNumber(instanceNum, rtConfig));
-					} catch (final Exception e) {
-						LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
-					}
-				}
-			}
-			//
-			if(isFinished.get()) {
+			startActually();
+		} else {
+			throw new IllegalStateException(getName() + ": was started already");
+		}
+	}
+	//
+	protected void startActually() {
+		LOG.debug(Markers.MSG, "Starting {}", getName());
+		ioStats.start();
+		//
+		if(rtConfig.isRunResumeEnabled()) {
+			if(rtConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
 				try {
-					close();
-				} catch (final IOException e) {
-					LogUtil.exception(LOG, Level.ERROR, e,
-						"Couldn't close the load executor \"{}\"", getName());
+					if(!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+						BasicLoadState.restoreScenarioState(rtConfig);
+					}
+					setLoadState(BasicLoadState.<T>findStateByLoadNumber(instanceNum, rtConfig));
+				} catch (final Exception e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 				}
-				return;
 			}
+		}
+		//
+		if(isLimitReached.get()) {
+			try {
+				close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Couldn't close the load executor \"{}\"", getName()
+				);
+			}
+		} else {
 			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
@@ -279,89 +314,88 @@ implements LoadExecutor<T> {
 			super.start();
 			LOG.debug(Markers.MSG, "Started object producer {}", getName());
 			//
-			setName(getName());
+			metricsDaemon.setName(getName());
 			metricsDaemon.start();
 			//
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
-		} else {
-			LOG.warn(Markers.ERR, "Second start attempt - skipped");
 		}
 	}
 	//
 	@Override
-	public void interrupt() {
-		//
-		if(isFinished.get()) {
-			return;
-		}
-		//
+	public final void interrupt() {
 		if(isInterrupted.compareAndSet(false, true)) {
+			interruptActually();
+		} else {
+			throw new IllegalStateException(getName() + ": was already interrupted");
+		}
+	}
+	//
+	protected void interruptActually() {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			final StringBuilder sb = new StringBuilder("Interrupt came from:");
 			final StackTraceElement stackTrace[] = Thread.currentThread().getStackTrace();
 			for(final StackTraceElement ste : stackTrace) {
 				sb.append("\n\t").append(ste.toString());
 			}
-			LOG.debug(Markers.MSG, sb);
-			metricsDaemon.interrupt();
-			shutdown();
-			try {
-				reqConfigCopy.close(); // disables connection drop failures
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
-			}
-			// releasing the blocked join() methods, if any
-			lock.lock();
-			try {
-				condProducerDone.signalAll();
-				LOG.debug(
-					Markers.MSG, "{}: done signal emitted by the interruption", getName()
-				);
-			} finally {
-				lock.unlock();
-			}
-			//
-			try {
-				if(isStarted.get()) { // if was executing
-					lastStats = ioStats.getSnapshot();
-					ioStats.close();
-					logMetrics(Markers.PERF_SUM); // provide summary metrics
-					// calculate the efficiency and report
-					final float
-						loadDurMicroSec = lastStats.getElapsedTime(),
-						eff = lastStats.getDurationSum() / loadDurMicroSec / totalConnCount;
-					LOG.debug(
-						Markers.MSG,
-						String.format(
-							LogUtil.LOCALE_DEFAULT,
-							"%s: load execution duration: %3.3f[sec], efficiency estimation: %3.1f[%%]",
-							getName(), loadDurMicroSec / 1e6, 100 * eff
-						)
-					);
-				} else {
-					LOG.debug(Markers.ERR, "{}: trying to interrupt while not started", getName());
-				}
-			} catch(final Throwable t) {
-				t.printStackTrace(System.err);
-			}
-			//
-			if(consumer != null) {
-				try {
-					consumer.close();
-				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to close the consumer \"{}\"", consumer
-					);
-				}
-			}
-			LOG.debug(Markers.MSG, "{} interrupted", getName());
-		} else {
-			LOG.debug(Markers.MSG, "{} was already interrupted", getName());
+			LOG.trace(Markers.MSG, sb);
 		}
-
+		metricsDaemon.interrupt();
+		shutdown();
+		try {
+			reqConfigCopy.close(); // disables connection drop failures
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
+		}
+		// releasing the blocked join() methods, if any
+		lock.lock();
+		try {
+			condDone.signalAll();
+			LOG.debug(
+				Markers.MSG, "{}: done signal emitted by the interruption", getName()
+			);
+		} finally {
+			lock.unlock();
+		}
+		//
+		try {
+			if(isStarted.get()) { // if was executing
+				lastStats = ioStats.getSnapshot();
+				ioStats.close();
+				logMetrics(Markers.PERF_SUM); // provide summary metrics
+				// calculate the efficiency and report
+				final float
+					loadDurMicroSec = lastStats.getElapsedTime(),
+					eff = lastStats.getDurationSum() / loadDurMicroSec / totalConnCount;
+				LOG.debug(
+					Markers.MSG,
+					String.format(
+						LogUtil.LOCALE_DEFAULT,
+						"%s: load execution duration: %3.3f[sec], efficiency estimation: %3.1f[%%]",
+						getName(), loadDurMicroSec / 1e6, 100 * eff
+					)
+				);
+			} else {
+				LOG.debug(Markers.ERR, "{}: trying to interrupt while not started", getName());
+			}
+		} catch(final Throwable t) {
+			t.printStackTrace(System.err);
+		}
+		//
+		if(consumer != null) {
+			try {
+				consumer.put(null);
+			} catch(final IOException | InterruptedException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to close the consumer \"{}\"", consumer
+				);
+			}
+		}
+		LOG.debug(Markers.MSG, "{} interrupted", getName());
 	}
 	//
 	@Override
-	public void setDataItemDst(final DataItemDst<T> itemDst) {
+	public void setDataItemDst(final DataItemDst<T> itemDst)
+	throws RemoteException {
 		this.consumer = itemDst;
 		LOG.debug(
 			Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", itemDst, getName()
@@ -455,7 +489,9 @@ implements LoadExecutor<T> {
 				}
 			}
 		} else {
-			shutdown();
+			if(!isShutdown.get()) {
+				shutdown();
+			}
 			if(srcLimit > 0) {
 				countRej.addAndGet(srcLimit);
 				LOG.debug(Markers.MSG, "Rejected {} I/O tasks", srcLimit);
@@ -504,7 +540,7 @@ implements LoadExecutor<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void handleResult(final IOTask<T> ioTask)
+	public void handleResult(final IOTask<T> ioTask)
 	throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
@@ -518,43 +554,7 @@ implements LoadExecutor<T> {
 			lastDataItem = dataItem;
 			// update the metrics with success
 			markSucc(ioTask);
-			// put the data item to the consumer and finally check for the finish state
-			try {
-				// is this an end of consumer-producer chain?
-				if(consumer == null) {
-					if(LOG.isInfoEnabled(Markers.DATA_LIST)) {
-						LOG.info(Markers.DATA_LIST, dataItem);
-					}
-				} else { // put to the consumer
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "Going to put the data item {} to the consumer {}",
-							dataItem, consumer
-						);
-					}
-					consumer.put(dataItem);
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "The data item {} is passed to the consumer {} successfully",
-							dataItem, consumer
-						);
-					}
-				}
-			} catch(final InterruptedException e) {
-				LOG.debug(Markers.MSG, "Interrupted while submitting to the consumer");
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to put the data item \"{}\" to \"{}\"",
-					dataItem, consumer
-				);
-			} catch(final RejectedExecutionException e) {
-				if(LOG.isTraceEnabled(Markers.ERR)) {
-					LogUtil.exception(
-						LOG, Level.TRACE, e, "\"{}\" rejected the data item \"{}\"", consumer,
-						dataItem
-					);
-				}
-			}
+			passDataItem(lastDataItem);
 		} else {
 			ioStats.markFail();
 		}
@@ -563,9 +563,9 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public final int handleResults(
+	public int handleResults(
 		final List<IOTask<T>> ioTasks, final int from, final int to
-	) {
+	) throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return 0;
@@ -588,50 +588,90 @@ implements LoadExecutor<T> {
 					ioStats.markFail();
 				}
 			}
-			// put the data items to the consumer and finally check for the finish state
-			try {
-				// is this an end of consumer-producer chain?
-				if(consumer == null) {
-					for(final T passedItem : passedItems) {
-						if(LOG.isInfoEnabled(Markers.DATA_LIST)) {
-							LOG.info(Markers.DATA_LIST, passedItem);
-						}
-					}
-				} else { // put to the consumer
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "Going to put {} data items to the consumer {}",
-							passedItems.size(), consumer
-						);
-					}
-					consumer.put(passedItems, 0, passedItems.size());
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "{} data items were passed to the consumer {} successfully",
-							passedItems.size(), consumer
-						);
-					}
-				}
-			} catch(final InterruptedException e) {
-				LOG.debug(Markers.MSG, "Interrupted while submitting to the consumer");
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to put {} data items to \"{}\"",
-					passedItems.size(), consumer
-				);
-			} catch(final RejectedExecutionException e) {
-				if(LOG.isTraceEnabled(Markers.ERR)) {
-					LogUtil.exception(
-						LOG, Level.TRACE, e, "\"{}\" rejected {} data items", consumer,
-						passedItems.size()
-					);
-				}
-			}
-			//
+			passDataItems(passedItems, 0, passedItems.size());
 			counterResults.addAndGet(n);
 		}
 		//
 		return n;
+	}
+	//
+	protected void passDataItem(final T item) {
+		try {
+			// is this an end of consumer-producer chain?
+			if(consumer == null) {
+				if(LOG.isInfoEnabled(Markers.DATA_LIST)) {
+					LOG.info(Markers.DATA_LIST, item);
+				}
+			} else { // put to the consumer
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "Going to put the data item {} to the consumer {}",
+						item, consumer
+					);
+				}
+				consumer.put(item);
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "The data item {} is passed to the consumer {} successfully",
+						item, consumer
+					);
+				}
+			}
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "Interrupted while submitting to the consumer");
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to put the data item \"{}\" to \"{}\"",
+				item, consumer
+			);
+		} catch(final RejectedExecutionException e) {
+			if(LOG.isTraceEnabled(Markers.ERR)) {
+				LogUtil.exception(
+					LOG, Level.TRACE, e, "\"{}\" rejected the data item \"{}\"", consumer,
+					item
+				);
+			}
+		}
+	}
+	//
+	protected void passDataItems(final List<T> buff, final int from, final int to) {
+		try {
+			// is this an end of consumer-producer chain?
+			if(consumer == null) {
+				for(int i = from; i < to; i ++) {
+					if(LOG.isInfoEnabled(Markers.DATA_LIST)) {
+						LOG.info(Markers.DATA_LIST, buff.get(i));
+					}
+				}
+			} else { // put to the consumer
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "Going to put {} data items to the consumer {}",
+						to - from, consumer
+					);
+				}
+				consumer.put(buff, from, to);
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "{} data items were passed to the consumer {} successfully",
+						to - from, consumer
+					);
+				}
+			}
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "Interrupted while submitting to the consumer");
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to put {} data items to \"{}\"",
+				to - from, consumer
+			);
+		} catch(final RejectedExecutionException e) {
+			if(LOG.isTraceEnabled(Markers.ERR)) {
+				LogUtil.exception(
+					LOG, Level.TRACE, e, "\"{}\" rejected {} data items", consumer, to - from
+				);
+			}
+		}
 	}
 	//
 	private void markSucc(final IOTask<T> ioTask) {
@@ -656,8 +696,8 @@ implements LoadExecutor<T> {
 	@Override
 	public void setLoadState(final LoadState<T> state) {
 		if(state != null) {
-			if(state.isLoadFinished(rtConfig)) {
-				isFinished.compareAndSet(false, true);
+			if(state.isLimitReached(rtConfig)) {
+				isLimitReached.compareAndSet(false, true);
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
 				return;
 			}
@@ -701,22 +741,19 @@ implements LoadExecutor<T> {
 	private boolean isDoneAllSubm() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				Markers.MSG, "{}: shut down flag: {}, results: {}, submitted: {}", getName(),
-				isShutdown.get(), counterResults.get(), counterSubm.get()
+				Markers.MSG, "{}: shut down flag: {}, results: {}, submitted: {}",
+				getName(), isShutdown.get(), counterResults.get(), counterSubm.get()
 			);
 		}
 		return isShutdown.get() && counterResults.get() >= counterSubm.get();
 	}
 	//
 	@Override
-	public final void shutdown() {
+	public final void shutdown()
+	throws IllegalStateException {
 		if(isStarted.get())
 			if(isShutdown.compareAndSet(false, true)) {
-				super.interrupt(); // stop the source producing right now
-				LOG.debug(
-					Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"",
-					itemSrc, getName()
-				);
+				shutdownActually();
 			} else {
 				LOG.debug(
 					Markers.MSG,
@@ -730,22 +767,27 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
+	protected void shutdownActually() {
+		super.interrupt(); // stop the source producing right now
+		LOG.debug(Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"", itemSrc, getName());
+	}
+	//
 	@Override
 	public final void await()
-	throws InterruptedException {
+	throws InterruptedException, RemoteException {
 		await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
-	public final void await(final long timeOut, final TimeUnit timeUnit)
-	throws InterruptedException {
-		if(isInterrupted.get() || isClosed.get()) {
+	public void await(final long timeOut, final TimeUnit timeUnit)
+	throws InterruptedException, RemoteException {
+		if(isInterrupted.get() || isClosed.get() || isLimitReached.get()) {
 			return;
 		}
 		//
 		long timeOutMicroSec = timeUnit.toMicros(timeOut);
 		if(loadedPrevState != null) {
-			if(isFinished.get()) {
+			if(isLimitReached.get()) {
 				return;
 			}
 			timeOutMicroSec -= loadedPrevState.getStatsSnapshot().getElapsedTime();
@@ -757,7 +799,7 @@ implements LoadExecutor<T> {
 				Markers.MSG, "{}: await for the done condition at most for {}[us]",
 				getName(), timeOutMicroSec
 			);
-			if(condProducerDone.await(timeOutMicroSec, TimeUnit.MICROSECONDS)) {
+			if(condDone.await(timeOutMicroSec, TimeUnit.MICROSECONDS)) {
 				LOG.debug(Markers.MSG, "{}: await for the done condition is finished", getName());
 			} else {
 				LOG.debug(
@@ -771,36 +813,44 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public void close()
-		throws IOException {
+	public final void close()
+	throws IOException, IllegalStateException {
 		// interrupt the producing
 		if(isClosed.compareAndSet(false, true)) {
-			LOG.debug(Markers.MSG, "Invoked close for {}", getName());
-			try {
-				interrupt();
-				releaseDaemon.interrupt();
-			} finally {
-				LoadCloseHook.del(this);
-				if(loadedPrevState != null) {
-					if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
-						RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
-					}
-				}
-			}
-			LOG.debug(Markers.MSG, "\"{}\" closed successfully", getName());
+			closeActually();
 		} else {
-			LOG.debug(
-				Markers.MSG,
-				"Not closing \"{}\" because it has been closed before already", getName()
+			throw new IllegalStateException(
+				getName() + ": has been closed already"
 			);
 		}
+	}
+	//
+	protected void closeActually()
+	throws IOException {
+		LOG.debug(Markers.MSG, "Invoked close for {}", getName());
+		try {
+			if(!isInterrupted.get()) {
+				interrupt();
+			}
+			releaseDaemon.interrupt();
+		} finally {
+			LoadCloseHook.del(this);
+			if(loadedPrevState != null) {
+				if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+					RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
+				}
+			}
+		}
+		LOG.debug(Markers.MSG, "\"{}\" closed successfully", getName());
 	}
 	//
 	@Override
 	protected final void finalize()
 		throws Throwable {
 		try {
-			close();
+			if(!isClosed.get()) {
+				close();
+			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "{}: failed to close", getName());
 		} finally {

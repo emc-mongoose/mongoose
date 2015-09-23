@@ -8,12 +8,11 @@ import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.load.model.AsyncDataItemDst;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
-import com.emc.mongoose.core.impl.load.model.DataItemSrcProducer;
-import com.emc.mongoose.core.impl.load.model.DataItemOutputConsumer;
+import com.emc.mongoose.core.impl.load.model.DataItemProducer;
+import com.emc.mongoose.core.impl.load.model.DataItemConsumer;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
 //
@@ -43,21 +42,9 @@ implements StorageClient<T> {
 		this.loadBuilder = loadBuilder;
 	}
 	//
-	protected long executeLoadJob(
-		final Producer<T> producer, final LoadExecutor<T> loadExecutor,
-		final AsyncDataItemDst<T> consumer
-	) throws RemoteException {
-		if(consumer != null) {
-			loadExecutor.setDataItemDst(consumer);
-			consumer.start();
-		}
-		if(producer != null) {
-			producer.setDataItemDst(loadExecutor);
-		}
+	protected long executeLoadJob(final LoadExecutor<T> loadExecutor)
+	throws RemoteException {
 		loadExecutor.start();
-		if(producer != null) {
-			producer.start();
-		}
 		final long timeOut = rtConfig.getLoadLimitTimeValue();
 		final TimeUnit timeUnit = rtConfig.getLoadLimitTimeUnit();
 		try {
@@ -94,11 +81,11 @@ implements StorageClient<T> {
 	) throws IllegalArgumentException, RemoteException, IOException {
 		//
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
-		final DataItemSrcProducer<T> producer = itemsInput == null ?
-			null : new DataItemSrcProducer<>(itemsInput, rtConfig.getBatchSize());
+		final DataItemProducer<T> producer = itemsInput == null ?
+			null : new DataItemProducer<>(itemsInput, rtConfig.getBatchSize());
 		try(
-			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
+			final DataItemConsumer<T> consumer = itemsOutput == null ?
+				null : new DataItemConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -110,7 +97,7 @@ implements StorageClient<T> {
 					.setObjSizeBias(sizeBias)
 					.build()
 			) {
-				return executeLoadJob(producer, loadJobExecutor, consumer);
+				return executeLoadJob(loadJobExecutor);
 			}
 		}
 	}
@@ -128,11 +115,11 @@ implements StorageClient<T> {
 	) throws IllegalStateException, RemoteException, IOException {
 		loadBuilder.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
-		final DataItemSrcProducer<T> producer = itemsInput == null ?
-			null : new DataItemSrcProducer<>(itemsInput, rtConfig.getBatchSize());
+		final DataItemProducer<T> producer = itemsInput == null ?
+			null : new DataItemProducer<>(itemsInput, rtConfig.getBatchSize());
 		try(
-			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
+			final DataItemConsumer<T> consumer = itemsOutput == null ?
+				null : new DataItemConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -158,11 +145,11 @@ implements StorageClient<T> {
 		final long maxCount, final int connPerNodeCount
 	) throws IllegalStateException, RemoteException, IOException {
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
-		final DataItemSrcProducer<T> producer = itemsInput == null ?
-			null : new DataItemSrcProducer<>(itemsInput, rtConfig.getBatchSize());
+		final DataItemProducer<T> producer = itemsInput == null ?
+			null : new DataItemProducer<>(itemsInput, rtConfig.getBatchSize());
 		try(
-			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
+			final DataItemConsumer<T> consumer = itemsOutput == null ?
+				null : new DataItemConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -188,11 +175,11 @@ implements StorageClient<T> {
 		final long maxCount, final int connPerNodeCount, final int countPerTime
 	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException {
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
-		final DataItemSrcProducer<T> producer = itemsInput == null ?
-			null : new DataItemSrcProducer<>(itemsInput, rtConfig.getBatchSize());
+		final DataItemProducer<T> producer = itemsInput == null ?
+			null : new DataItemProducer<>(itemsInput, rtConfig.getBatchSize());
 		try(
-			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
+			final DataItemConsumer<T> consumer = itemsOutput == null ?
+				null : new DataItemConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -228,11 +215,11 @@ implements StorageClient<T> {
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException {
 		loadBuilder.getRequestConfig().setContainerInputEnabled(itemsInput == null);
-		final DataItemSrcProducer<T> producer = itemsInput == null ?
-			null : new DataItemSrcProducer<>(itemsInput, rtConfig.getBatchSize());
+		final DataItemProducer<T> producer = itemsInput == null ?
+			null : new DataItemProducer<>(itemsInput, rtConfig.getBatchSize());
 		try(
-			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
+			final DataItemConsumer<T> consumer = itemsOutput == null ?
+				null : new DataItemConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder

@@ -28,14 +28,13 @@ extends LoadExecutorBase<T> {
 	private final int tgtDurMicroSec;
 	//
 	protected LimitedRateLoadExecutorBase(
-		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
 		final DataItemSrc<T> itemSrc, final long maxCount,
 		final float rateLimit
 	) throws ClassCastException {
 		super(
-			dataCls, runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount,
+			runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount,
 			itemSrc, maxCount
 		);
 		//
