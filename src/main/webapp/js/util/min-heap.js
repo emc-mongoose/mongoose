@@ -13,44 +13,42 @@ define(function() {
 		}
 
 		heap.push = function(item) {
-			up(array.push(item) - 1);
+			up(item.index = array.push(item) - 1);
 			return array.length;
 		};
 
 		heap.pop = function() {
-			var removed = array[0];
-			array[0] = array[array.length - 1];
-			array.pop();
-			down(0);
+			var removed = array[0],
+				item = array.pop();
+			if (array.length) {
+				array[item.index = 0] = item;
+				down(0);
+			}
 
 			return removed;
 		};
 
-		heap.remove = function(index) {
-			var removed;
-			for (var i = 0; i < array.length; i++) {
-				if (array[i].index == index) {
-					removed = array[i];
-					break;
-				}
-			}
-			if (removed) {
-				array[i] = array.pop();
+		heap.remove = function(removed) {
+			var i = removed.index,
+				item = array.pop();
+
+			if (i != array.length) {
+				array[item.index = i] = item;
 				((comparator(array[i], removed) < 0) ? up : down)(i);
 			}
 
-			return removed.index;
+			return removed;
 		};
 
 		function up(i) {
 			var parent = (i - 1) >> 1;
-			var temp;
 			while (i > 0) {
 				if (comparator(array[i], array[parent]) >= 0)
 					break;
-				temp = array[i];
-				array[i] = array[parent];
-				array[parent] = temp;
+				var childTriangle = array[i],
+					parentTriangle = array[parent];
+				array[parentTriangle.index = i] = parentTriangle;
+				array[childTriangle.index = parent] = childTriangle;
 
 				i = parent;
 				parent = (i - 1) >> 1;
@@ -69,9 +67,10 @@ define(function() {
 				min = right;
 			}
 			if (min != i) {
-				var temp = array[min];
-				array[min] = array[i];
-				array[i] = temp;
+				var currentTriangle = array[i],
+					minTriangle = array[min];
+				array[minTriangle.index = i] = minTriangle;
+				array[currentTriangle.index = min] = currentTriangle;
 				down(min);
 			}
 		}

@@ -3,7 +3,7 @@
  */
 
 /*
-	Simplifying charts w/ Visvalingam's algorithm. More info: http://bost.ocks.org/mike/simplify/
+	Simplifying charts using Visvalingam's algorithm. More info: http://bost.ocks.org/mike/simplify/
  */
 define(["./min-heap"], function(minHeap) {
 
@@ -24,9 +24,8 @@ define(["./min-heap"], function(minHeap) {
 		}
 
 		var i;
-		for (i = 1; i < points.length; i++) {
+		for (i = 1; i < points.length - 1; i++) {
 			triangle = points.slice(i - 1, i + 2);
-			triangle.index = i - 1;
 
 			if (triangle[1][2] = area(triangle)) {
 				triangles.push(triangle);
@@ -40,7 +39,7 @@ define(["./min-heap"], function(minHeap) {
 			triangle.prev = triangles[i - 1];
 		}
 
-		while ((deleted < pointsToRemove) && (triangle = heap.pop())) {
+		while ((deleted <= pointsToRemove) && (triangle = heap.pop())) {
 			if (triangle[1][2] < maxArea) {
 				triangle[1][2] = maxArea;
 			} else {
@@ -63,14 +62,13 @@ define(["./min-heap"], function(minHeap) {
 				triangle[2][2] = triangle[1][2];
 			}
 
-			var index = triangle.index;
-			points.splice(index, 1);
+			triangle[1][3] = null;
 
 			deleted++;
 		}
 
 		function update(triangle) {
-			heap.remove(triangle.index);
+			heap.remove(triangle);
 			triangle[1][2] = area(triangle);
 			heap.push(triangle);
 		}
@@ -88,7 +86,10 @@ define(["./min-heap"], function(minHeap) {
 			return area;
 		}
 
-		return points;
+		return points.filter(function(element) {
+			return !element.hasOwnProperty("3");
+		});
+
 	}
 
 	return {
