@@ -725,7 +725,7 @@ require(["./requirejs/conf"], function() {
 					"label": "t[seconds]"
 				},
 				"minutes": {
-					"limit": 10,
+					"limit": 300,
 					"value": 60,
 					"next": "hours",
 					"label": "t[minutes]"
