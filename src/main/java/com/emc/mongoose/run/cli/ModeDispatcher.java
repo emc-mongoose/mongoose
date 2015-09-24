@@ -9,7 +9,6 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 // mongoose-scenario.jar
-import com.emc.mongoose.run.scenario.ScriptRunner;
 import com.emc.mongoose.run.webserver.WUIRunner;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
@@ -17,6 +16,10 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
+//
+import com.emc.mongoose.util.scenario.Chain;
+import com.emc.mongoose.util.scenario.Rampup;
+import com.emc.mongoose.util.scenario.Single;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -85,7 +88,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
-				new ScriptRunner().run();
+				runScenario();
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -95,6 +98,28 @@ public final class ModeDispatcher {
 		//
 		ServiceUtils.shutdown();
 		LogUtil.shutdown();
+	}
+
+	private static void runScenario() {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		if (rtConfig != null) {
+			final String scenarioName = rtConfig.getScenarioName();
+			switch (rtConfig.getScenarioName()) {
+				case Constants.RUN_SCENARIO_SINGLE:
+					new Single(rtConfig).run();
+					break;
+				case Constants.RUN_SCENARIO_CHAIN:
+					new Chain(rtConfig).run();
+					break;
+				case Constants.RUN_SCENARIO_RAMPUP:
+					new Rampup(rtConfig).run();
+					break;
+				default:
+					throw new IllegalArgumentException(
+						String.format("Incorrect scenario: \"%s\"", scenarioName)
+					);
+			}
+		}
 	}
 }
 //
