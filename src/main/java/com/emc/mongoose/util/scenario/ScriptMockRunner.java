@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario;
+package com.emc.mongoose.util.scenario;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -26,7 +26,8 @@ import javax.script.ScriptException;
  Created by kurila on 12.05.14.
  A scenario runner utility class.
  */
-public final class ScriptRunner
+@Deprecated
+public final class ScriptMockRunner
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();

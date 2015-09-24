@@ -11,7 +11,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
-import com.emc.mongoose.run.cli.HumanFriendly;
+import com.emc.mongoose.util.cli.HumanFriendly;
 import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
@@ -39,9 +39,26 @@ implements Runnable {
 	}
 	//
 	private final List<LoadExecutor> loadJobSeq = new LinkedList<>();
-	private final long timeOut;
-	private final TimeUnit timeUnit;
-	private final boolean flagConcurrent;
+	//
+	private LoadBuilder loadBuilder;
+	private long timeOut;
+	private TimeUnit timeUnit;
+	private boolean flagConcurrent;
+	//
+	public Chain(final RunTimeConfig rtConfig) {
+		final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig);
+		final long timeOut = rtConfig.getLoadLimitTimeValue();
+		//
+		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
+		this.timeUnit = timeOut > 0 ? rtConfig.getLoadLimitTimeUnit() : TimeUnit.DAYS;
+		this.flagConcurrent = rtConfig.getScenarioChainConcurrentFlag();
+		//
+		final String[] loadTypesSeq = rtConfig.getScenarioChainLoad();
+		final boolean flagUseLocalItemList = rtConfig.getBoolean(
+			RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER
+		);
+		setLoadJobConsumers(loadBuilder, loadTypesSeq, flagUseLocalItemList);
+	}
 	//
 	public Chain(
 		final LoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
@@ -52,6 +69,14 @@ implements Runnable {
 		this.timeUnit = timeOut > 0 ? timeUnit : TimeUnit.DAYS;
 		this.flagConcurrent = flagConcurrent;
 		//
+		setLoadJobConsumers(loadBuilder, loadTypesSeq, flagUseLocalItemList);
+	}
+	//
+	public void setLoadJobConsumers(
+		final LoadBuilder loadBuilder,
+		final String[] loadTypesSeq,
+		final boolean flagUseLocalItemList
+	) {
 		LoadExecutor prevLoadJob = null, nextLoadJob;
 		for(final String loadTypeStr : loadTypesSeq) {
 			LOG.debug(Markers.MSG, "Next load type is \"{}\"", loadTypeStr);
@@ -115,7 +140,7 @@ implements Runnable {
 						nextLoadJob.interrupt();
 					} catch(final IOException e) {
 						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to interruptthe load job \"{}\"", nextLoadJob
+							LOG, Level.WARN, e, "Failed to interrupt the load job \"{}\"", nextLoadJob
 						);
 					}
 				}
@@ -179,26 +204,15 @@ implements Runnable {
 		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		if(properties != null && !properties.isEmpty()) {
 			LOG.debug(Markers.MSG, "Overriding properties {}", properties);
-			RunTimeConfig.getContext().overrideSystemProperties(properties);
+			runTimeConfig.overrideSystemProperties(properties);
 		}
 		//
-		LOG.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		LOG.info(Markers.MSG, runTimeConfig);
 		//
-		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(runTimeConfig)) {
-			final long timeOut = runTimeConfig.getLoadLimitTimeValue();
-			final TimeUnit timeUnit = runTimeConfig.getLoadLimitTimeUnit();
-			//
-			final String[] loadTypeSeq = runTimeConfig.getScenarioChainLoad();
-			final boolean isConcurrent = runTimeConfig.getScenarioChainConcurrentFlag();
-			final boolean useLocalItemList = runTimeConfig.getBoolean(
-				RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER
-			);
-			//
-			final Chain chainScenario = new Chain(
-				loadBuilder, timeOut, timeUnit, loadTypeSeq, isConcurrent, useLocalItemList
-			);
+		try {
+			final Chain chainScenario = new Chain(runTimeConfig);
 			chainScenario.run();
-		} catch(final Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace(System.err);
 			LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed");
 		}

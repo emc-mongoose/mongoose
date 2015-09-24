@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.run.cli.HumanFriendly;
+import com.emc.mongoose.util.cli.HumanFriendly;
 import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
@@ -34,15 +34,18 @@ implements Runnable {
 	private final long timeOut;
 	private final TimeUnit timeUnit;
 	//
-	public Single(final LoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit) {
+	public Single(final RunTimeConfig rtConfig) {
+		final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig);
+		final long timeOut = rtConfig.getLoadLimitTimeValue();
+		//
+		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
+		this.timeUnit = timeOut > 0 ? rtConfig.getLoadLimitTimeUnit() : TimeUnit.DAYS;
 		try {
-			loadJob = loadBuilder.build();
-		} catch(final IOException e) {
+			this.loadJob = loadBuilder.build();
+		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.FATAL, e, "Failed to build the load job");
 			throw new IllegalStateException(e);
 		}
-		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
-		this.timeUnit = timeOut > 0 ? timeUnit : TimeUnit.DAYS;
 	}
 	//
 	@Override
@@ -72,17 +75,14 @@ implements Runnable {
 			final RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 			// load the config from CLI arguments
 			final Map<String, String> properties = HumanFriendly.parseCli(args);
-			if(!properties.isEmpty()) {
+			if(properties != null && !properties.isEmpty()) {
 				LOG.debug(Markers.MSG, "Overriding properties {}", properties);
 				runTimeConfig.overrideSystemProperties(properties);
 			}
 			//
-			LOG.info(Markers.MSG, RunTimeConfig.getContext().toString());
+			LOG.info(Markers.MSG, runTimeConfig);
 			//
-			final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(runTimeConfig);
-			final long timeOut = runTimeConfig.getLoadLimitTimeValue();
-			final TimeUnit timeUnit = runTimeConfig.getLoadLimitTimeUnit();
-			final Single singleLoadScenario = new Single(loadBuilder, timeOut, timeUnit);
+			final Single singleLoadScenario = new Single(runTimeConfig);
 			singleLoadScenario.run();
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed");
