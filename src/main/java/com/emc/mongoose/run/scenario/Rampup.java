@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.scenario;
+package com.emc.mongoose.run.scenario;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
@@ -7,8 +7,8 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
-import com.emc.mongoose.util.cli.HumanFriendly;
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
+import com.emc.mongoose.run.cli.HumanFriendly;
+import com.emc.mongoose.run.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -30,15 +30,12 @@ implements Runnable {
 		LOG = LogManager.getLogger();
 	}
 	//
-	private final RunTimeConfig rtConfig;
 	private final LoadBuilder loadBuilder;
 	private final long timeOut;
 	private final TimeUnit timeUnit;
 	private final String loadTypeSeq[], sizeSeq[], connCountSeq[];
 	//
 	public Rampup(final RunTimeConfig rtConfig) {
-		this.rtConfig = rtConfig;
-		//
 		this.loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig);
 		this.timeOut = rtConfig.getLoadLimitTimeValue();
 		this.timeUnit = rtConfig.getLoadLimitTimeUnit();

@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.scenario;
+package com.emc.mongoose.run.scenario;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -7,8 +7,8 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.util.cli.HumanFriendly;
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
+import com.emc.mongoose.run.cli.HumanFriendly;
+import com.emc.mongoose.run.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

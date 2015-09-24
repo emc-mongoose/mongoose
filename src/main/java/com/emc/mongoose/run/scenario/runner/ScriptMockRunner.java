@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario;
+package com.emc.mongoose.run.scenario.runner;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;

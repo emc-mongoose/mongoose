@@ -85,7 +85,6 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
 				runScenario();
-				//new ScriptMockRunner().run();
 				break;
 			default:
 				throw new IllegalArgumentException(

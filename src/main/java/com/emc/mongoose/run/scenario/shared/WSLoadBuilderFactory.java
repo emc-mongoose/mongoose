@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.scenario.shared;
+package com.emc.mongoose.run.scenario.shared;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
