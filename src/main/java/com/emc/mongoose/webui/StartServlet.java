@@ -7,13 +7,13 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
+import com.emc.mongoose.util.scenario.ScriptMockRunner;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 // mongoose-scenario.jar
-import com.emc.mongoose.run.scenario.ScriptRunner;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -149,7 +149,7 @@ public final class StartServlet extends CommonServlet {
 				//
 				LOG.debug(Markers.MSG, message);
 				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
-				new ScriptRunner().run();
+				new ScriptMockRunner().run();
 			}
 			//
 			@Override
