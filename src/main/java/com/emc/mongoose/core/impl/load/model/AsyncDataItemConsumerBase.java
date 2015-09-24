@@ -4,7 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.load.model.Consumer;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -18,15 +18,16 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 26.05.15.
  */
-public abstract class DataItemConsumerBase<T extends DataItem>
+public abstract class AsyncDataItemConsumerBase<T extends DataItem>
 extends Thread
-implements DataItemDst<T> {
+implements Consumer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	// configuration params
@@ -37,14 +38,15 @@ implements DataItemDst<T> {
 	protected final AtomicBoolean
 		isStarted = new AtomicBoolean(false),
 		isShutdown = new AtomicBoolean(false),
-		isAllSubm = new AtomicBoolean(false);
+		isInterrupted = new AtomicBoolean(false),
+		isClosed = new AtomicBoolean(false);
 	// volatile
 	protected final BlockingQueue<T> queue;
 	private final List<T> buff;
 	private final boolean shuffle;
 	private final int batchSize;
 	//
-	public DataItemConsumerBase(
+	public AsyncDataItemConsumerBase(
 		final long maxCount, final int maxQueueSize, final boolean shuffle, final int batchSize
 	) throws IllegalArgumentException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
@@ -60,30 +62,22 @@ implements DataItemDst<T> {
 	}
 	//
 	@Override
-	public void start()
+	public final void start()
 	throws IllegalStateException {
 		if(isStarted.compareAndSet(false, true)) {
-			LOG.debug(
-				Markers.MSG,
-				"{}: started, the further consuming will go through the volatile queue",
-				getName()
-			);
-			super.start();
+			startActually();
 		} else {
 			throw new IllegalStateException("Started already");
 		}
 	}
 	//
-	protected void putActually(final T item)
-	throws InterruptedException {
-		if(item == null || counterPreSubm.get() >= maxCount) {
-			shutdown();
-		}
-		if(isShutdown.get()) {
-			throw new InterruptedException("Shut down already");
-		}
-		queue.put(item);
-		counterPreSubm.incrementAndGet();
+	protected void startActually() {
+		super.start();
+		LOG.debug(
+			Markers.MSG,
+			"{}: started, the further consuming will go through the volatile queue",
+			getName()
+		);
 	}
 	/**
 	 May block the executing thread until the queue becomes able to ingest more
@@ -112,12 +106,24 @@ implements DataItemDst<T> {
 		if(isStarted.get()) {
 			while(i < to) {
 				putActually(items.get(i));
-				i++;
+				i ++;
 			}
 		} else {
 			throw new RejectedExecutionException("Consuming is not started yet");
 		}
 		return i - from;
+	}
+	//
+	protected void putActually(final T item)
+		throws InterruptedException {
+		if(item == null || counterPreSubm.get() >= maxCount) {
+			shutdown();
+		}
+		if(isShutdown.get()) {
+			throw new InterruptedException("Shut down already");
+		}
+		queue.put(item);
+		counterPreSubm.incrementAndGet();
 	}
 	/** Consumes the queue */
 	@Override
@@ -160,7 +166,6 @@ implements DataItemDst<T> {
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Submit item failure @ count {}", i);
 		} finally {
-			isAllSubm.set(true);
 			shutdown();
 		}
 	}
@@ -168,30 +173,69 @@ implements DataItemDst<T> {
 	protected abstract int feedSeq(final List<T> items, final int from, final int to)
 	throws InterruptedException, RemoteException;
 	//
-	protected void shutdown() {
+	@Override
+	public final void shutdown() {
 		if(!isStarted.get()) {
 			throw new IllegalStateException(
 				getName() + ": not started yet, but shutdown is invoked"
 			);
 		} else if(isShutdown.compareAndSet(false, true)) {
-			LOG.debug(Markers.MSG, "{}: consumed {} items", getName(), counterPreSubm.get());
+			shutdownActually();
 		} else {
 			throw new IllegalStateException(getName() + ": shut down already");
 		}
 	}
 	//
-	@Override
-	public synchronized void interrupt() {
-		shutdown();
-		if(!super.isInterrupted()) {
-			super.interrupt();
-		}
+	protected void shutdownActually() {
+		LOG.debug(Markers.MSG, "{}: consumed {} items", getName(), counterPreSubm.get());
 	}
 	//
 	@Override
-	public void close()
+	public final void await()
+	throws InterruptedException {
+		await(Long.MAX_VALUE, TimeUnit.DAYS);
+	}
+	//
+	@Override
+	public void await(final long timeValue, final TimeUnit timeUnit)
+	throws InterruptedException {
+		join();
+		LOG.debug(
+			Markers.MSG, getName() + ": waiting for the queue remaining content processing is done"
+		);
+	}
+	//
+	@Override
+	public final void interrupt() {
+		if(isInterrupted.compareAndSet(false, true)) {
+			interruptActually();
+		} else {
+			throw new IllegalStateException(getName() + ": has been interrupted already");
+		}
+	}
+	//
+	protected void interruptActually() {
+		if(!isShutdown.compareAndSet(false, true)) {
+			shutdownActually();
+		}
+		super.interrupt();
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException, IllegalStateException {
+		if(isClosed.compareAndSet(false, true)) {
+			closeActually();
+		} else {
+			throw new IllegalStateException(getName() + ": has been closed already");
+		}
+	}
+	//
+	protected void closeActually()
 	throws IOException {
-		shutdown();
+		if(isShutdown.compareAndSet(false, true)) {
+			shutdownActually();
+		}
 		final int dropCount = queue.size();
 		if(dropCount > 0) {
 			LOG.debug(
@@ -199,8 +243,8 @@ implements DataItemDst<T> {
 			);
 		}
 		queue.clear(); // dispose
-		if(!super.isInterrupted()) {
-			super.interrupt();
+		if(isInterrupted.compareAndSet(false, true)) {
+			interruptActually();
 		}
 	}
 }

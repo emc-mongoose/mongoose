@@ -72,7 +72,7 @@ implements Runnable {
 			final RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 			// load the config from CLI arguments
 			final Map<String, String> properties = HumanFriendly.parseCli(args);
-			if(!properties.isEmpty()) {
+			if(properties == null || !properties.isEmpty()) {
 				LOG.debug(Markers.MSG, "Overriding properties {}", properties);
 				runTimeConfig.overrideSystemProperties(properties);
 			}

@@ -11,7 +11,7 @@ import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
  Created by kurila on 19.06.15.
  */
 public class BasicWSClientBuilder<T extends WSObject, U extends StorageClient<T>>
-extends BasicStorageClientBuilder<T, U> {
+extends StorageClientBuilderBase<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public U build() {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();

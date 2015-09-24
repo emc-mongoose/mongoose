@@ -3,7 +3,6 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 //
@@ -20,7 +19,7 @@ import java.util.List;
  Created by kurila on 19.06.15.
  */
 public class DataItemConsumer<T extends DataItem>
-extends DataItemConsumerBase<T>
+extends AsyncDataItemConsumerBase<T>
 implements DataItemDst<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -51,26 +50,12 @@ implements DataItemDst<T> {
 	}
 	//
 	@Override
-	public void close()
+	protected void closeActually()
 	throws IOException {
-		shutdown();
-		LOG.debug(
-			Markers.MSG, "{}: stopped consuming, count is {}", getName(), counterPreSubm.get()
-		);
-		try {
-			join();
-			LOG.debug(
-				Markers.MSG, "{}: waiting for the queue remaining content processing is done",
-				getName()
-			);
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Unexpected interruption while closing");
-		}
-		// close
 		try {
 			itemDst.close();
 		} finally {
-			super.close();
+			super.closeActually();
 		}
 	}
 	//

@@ -112,21 +112,17 @@ implements WSLoadBuilderSvc<T, U> {
 			);
 		}
 		//
-		final DataItemSrc<T> itemSrc = buildItemInput(
-			BasicWSObject.class, wsReqConf, dataNodeAddrs, listFile, maxCount,
-			minObjSize, maxObjSize, objSizeBias
-		);
-		//
 		final IOTask.Type loadType = reqConf.getLoadType();
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
 			minThreadCount = getMinIOThreadCount(
-				loadTypeWorkerCount.get(loadType), dataNodeAddrs.length, connPerNode
+				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
 		return (U) new BasicWSLoadSvc<>(
-			localRunTimeConfig, wsReqConf, dataNodeAddrs, connPerNode, minThreadCount,
-			itemSrc, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
+			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
+			itemSrc == null ? getDefaultItemSource() : itemSrc,
+			maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}
 	//

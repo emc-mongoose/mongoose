@@ -58,7 +58,4 @@ extends DataItemDst<T>, LifeCycle, Producer<T> {
 	//
 	void logMetrics(Marker marker)
 	throws RemoteException;
-	//
-	void setDataItemDst(final DataItemDst<T> dataItemDst)
-	throws RemoteException;
 }

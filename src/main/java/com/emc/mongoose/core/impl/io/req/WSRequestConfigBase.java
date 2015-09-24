@@ -17,6 +17,8 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataSource;
 // mongoose-core-impl
 import static com.emc.mongoose.core.impl.data.RangeLayerData.getRangeOffset;
+
+import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -97,19 +99,19 @@ implements WSRequestConfig<T> {
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
 	//
-	public static WSRequestConfigBase getInstance() {
+	public static <T extends WSObject> WSRequestConfig<T> getInstance() {
 		return newInstanceFor(RunTimeConfig.getContext().getApiName());
 	}
 	//
 	@SuppressWarnings("unchecked")
-	public static WSRequestConfigBase newInstanceFor(final String api) {
-		final WSRequestConfigBase reqConf;
+	public static <T extends WSObject> WSRequestConfig<T> newInstanceFor(final String api) {
+		final WSRequestConfig<T> reqConf;
 		final String apiImplClsFQN = PACKAGE_IMPL_BASE + "." + api.toLowerCase() + "." + ADAPTER_CLS;
 		try {
 			final Class apiImplCls = Class.forName(apiImplClsFQN);
-			final Constructor<WSRequestConfigBase>
-				constructor = (Constructor<WSRequestConfigBase>) apiImplCls.getConstructors()[0];
-			reqConf = constructor.newInstance();
+			final Constructor<WSRequestConfig<T>>
+				constructor = (Constructor<WSRequestConfig<T>>) apiImplCls.getConstructors()[0];
+			reqConf = constructor.<T>newInstance();
 		} catch(final Exception e) {
 			e.printStackTrace(System.out);
 			throw new RuntimeException(e);
@@ -384,6 +386,11 @@ implements WSRequestConfig<T> {
 			LogUtil.exception(LOG, Level.ERROR, e, "Configuration error");
 		}
 		return this;
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public Class<T> getDataItemClass() {
+		return (Class<T>) BasicWSObject.class;
 	}
 	//
 	@Override

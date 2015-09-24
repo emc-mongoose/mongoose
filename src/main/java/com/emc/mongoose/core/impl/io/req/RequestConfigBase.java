@@ -36,7 +36,7 @@ implements RequestConfig<T> {
 	protected DataSource
 		dataSrc;
 	protected volatile boolean
-		verifyContentFlag, anyDataProducerEnabled;
+		verifyContentFlag;
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 	protected volatile RunTimeConfig runTimeConfig;
 	protected volatile String
@@ -55,7 +55,6 @@ implements RequestConfig<T> {
 		loadType = IOTask.Type.CREATE;
 		dataSrc = UniformDataSource.DEFAULT;
 		verifyContentFlag = runTimeConfig.getReadVerifyContent();
-		anyDataProducerEnabled = true;
 		scheme = runTimeConfig.getStorageProto();
 		port = runTimeConfig.getApiTypePort(api);
 		nameSpace = runTimeConfig.getStorageNameSpace();
@@ -68,7 +67,6 @@ implements RequestConfig<T> {
 		if(reqConf2Clone != null) {
 			setDataSource(reqConf2Clone.getDataSource());
 			setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
-			setContainerInputEnabled(reqConf2Clone.isContainerListingEnabled());
 			setAPI(reqConf2Clone.getAPI());
 			setUserName(reqConf2Clone.getUserName());
 			setPort(reqConf2Clone.getPort());
@@ -91,7 +89,6 @@ implements RequestConfig<T> {
 		requestConfigBranch
 			.setDataSource(dataSrc)
 			.setVerifyContentFlag(verifyContentFlag)
-			.setContainerInputEnabled(anyDataProducerEnabled)
 			.setAPI(api)
 			.setUserName(userName)
 			.setPort(port)
@@ -235,17 +232,6 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final boolean isContainerListingEnabled() {
-		return anyDataProducerEnabled;
-	}
-	//
-	@Override
-	public final RequestConfigBase<T> setContainerInputEnabled(final boolean enabledFlag) {
-		this.anyDataProducerEnabled = enabledFlag;
-		return this;
-	}
-	//
-	@Override
 	public final int getReqSleepMilliSec() {
 		return reqSleepMilliSec;
 	}
@@ -296,7 +282,6 @@ implements RequestConfig<T> {
 		out.writeObject(getSecret());
 		out.writeObject(getNameSpace());
 		out.writeObject(getDataSource());
-		out.writeBoolean(isContainerListingEnabled());
 		out.writeBoolean(getVerifyContentFlag());
 		out.writeInt(getReqSleepMilliSec());
 	}
@@ -320,8 +305,6 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got namespace {}", secret);
 		setDataSource(DataSource.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
-		setContainerInputEnabled(Boolean.class.cast(in.readBoolean()));
-		LOG.trace(Markers.MSG, "Got any producer enabled flag {}", anyDataProducerEnabled);
 		setVerifyContentFlag(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got verify content flag {}", verifyContentFlag);
 		setReqSleepMilliSec(in.readInt());

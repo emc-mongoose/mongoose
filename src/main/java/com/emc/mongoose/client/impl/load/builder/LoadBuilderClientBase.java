@@ -1,5 +1,6 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
@@ -7,12 +8,15 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.math.MathUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
 import org.apache.commons.lang.StringUtils;
@@ -22,7 +26,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
@@ -39,7 +42,8 @@ implements LoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected String listFile = null, nodeAddrs[] = null, loadSvcAddrs[] = null;
+	protected DataItemSrc<T> itemSrc;
+	protected String nodeAddrs[] = null, loadSvcAddrs[] = null;
 	protected volatile RunTimeConfig rtConfig;
 	protected volatile RequestConfig<T> reqConf = getDefaultRequestConfig();
 	protected long maxCount = 0, minObjSize, maxObjSize;
@@ -185,20 +189,18 @@ implements LoadBuilderClient<T, U> {
 						dataItemsListPath
 					);
 				} else {
-					setInputFile(listFile);
-					// disable API-specific producers
-					reqConf.setContainerInputEnabled(false);
-					// disable file-based producers on the load servers side
+					setItemSrc(new CSVFileItemSrc<>(dataItemsListPath, reqConf.getDataItemClass()));
+					// disable file-based item sources on the load servers side
 					for(final LoadBuilderSvc<T, U> nextLoadBuilder : values()) {
-						nextLoadBuilder.setInputFile(null);
+						nextLoadBuilder.setItemSrc(null);
 					}
 				}
 			}
 		} catch(final NoSuchElementException e) {
-			LOG.warn(Markers.ERR, "No \"data.src.fpath\" property available");
-		} catch(final InvalidPathException e) {
-			LOG.warn(Markers.ERR, "Invalid data metainfo src file path: {}", listFile);
-		} catch(final SecurityException e) {
+			LOG.warn(Markers.ERR, "No \"data.src.fpath\" value was set");
+		} catch(final IOException e) {
+			LOG.warn(Markers.ERR, "Invalid items source file path: {}", itemSrc);
+		} catch(final SecurityException | NoSuchMethodException e) {
 			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
 		return this;
@@ -374,15 +376,25 @@ implements LoadBuilderClient<T, U> {
 		return this;
 	}
 	//
-	@Override
-	public final long getMaxCount()
+	@Override @SuppressWarnings("unchecked")
+	public final LoadBuilderClient<T, U> setItemSrc(final DataItemSrc<T> itemSrc)
 	throws RemoteException {
-		return values().iterator().next().getMaxCount();
+		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
+		this.itemSrc = itemSrc;
+		if(itemSrc instanceof FileDataItemSrc) {
+			final FileDataItemSrc<T> fileInput = (FileDataItemSrc<T>) itemSrc;
+			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
+				rtConfig.getBatchSize()
+			);
+			reqConf.setBuffSize(
+				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
+					Constants.BUFF_SIZE_LO :
+					approxDataItemsSize > Constants.BUFF_SIZE_HI ?
+						Constants.BUFF_SIZE_HI : (int) approxDataItemsSize
+			);
+		}
+		return this;
 	}
-	//
-	@Override
-	public abstract LoadBuilderClient<T, U> setInputFile(final String listFile)
-	throws RemoteException;
 	//
 	@Override
 	public final U build()

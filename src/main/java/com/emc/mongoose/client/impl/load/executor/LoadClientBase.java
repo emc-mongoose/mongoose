@@ -15,7 +15,6 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
-import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar

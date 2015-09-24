@@ -12,9 +12,11 @@ import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.load.model.DataItemConsumer;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
@@ -28,6 +30,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -60,7 +63,7 @@ implements LoadExecutor<T> {
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
-	protected volatile DataItemDst<T> consumer = null;
+	protected volatile Consumer<T> consumer = null;
 	//
 	protected final long maxCount;
 	protected final int totalConnCount;
@@ -383,10 +386,10 @@ implements LoadExecutor<T> {
 		//
 		if(consumer != null) {
 			try {
-				consumer.put(null);
-			} catch(final IOException | InterruptedException e) {
+				consumer.shutdown();
+			} catch(final RemoteException | IllegalStateException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to close the consumer \"{}\"", consumer
+					LOG, Level.WARN, e, "Failed to shut down the consumer \"{}\"", consumer
 				);
 			}
 		}
@@ -396,10 +399,10 @@ implements LoadExecutor<T> {
 	@Override
 	public void setDataItemDst(final DataItemDst<T> itemDst)
 	throws RemoteException {
-		this.consumer = itemDst;
-		LOG.debug(
-			Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", itemDst, getName()
+		this.consumer = new DataItemConsumer<>(
+			itemDst, maxCount
 		);
+		LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemDst + "\"");
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
@@ -785,12 +788,15 @@ implements LoadExecutor<T> {
 			return;
 		}
 		//
-		long timeOutMicroSec = timeUnit.toMicros(timeOut);
+		long
+			timeOutMicroSec = timeUnit.toMicros(timeOut),
+			timeElapsedMicroSec;
 		if(loadedPrevState != null) {
 			if(isLimitReached.get()) {
 				return;
 			}
-			timeOutMicroSec -= loadedPrevState.getStatsSnapshot().getElapsedTime();
+			timeElapsedMicroSec = loadedPrevState.getStatsSnapshot().getElapsedTime();
+			timeOutMicroSec -= timeElapsedMicroSec;
 		}
 		//
 		lock.lock();
@@ -834,10 +840,16 @@ implements LoadExecutor<T> {
 			}
 			releaseDaemon.interrupt();
 		} finally {
-			LoadCloseHook.del(this);
-			if(loadedPrevState != null) {
-				if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
-					RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
+			try {
+				consumer.await();
+			} catch(final InterruptedException e) {
+				LOG.warn(Markers.ERR, getName() + ": awaiting the consumer finish interrupted");
+			} finally {
+				LoadCloseHook.del(this);
+				if(loadedPrevState != null) {
+					if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+						RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
+					}
 				}
 			}
 		}

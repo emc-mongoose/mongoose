@@ -1,19 +1,15 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
-import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-impl.jar
@@ -28,7 +24,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,7 +48,7 @@ implements WSLoadBuilderClient<T, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected WSRequestConfig<T> getDefaultRequestConfig() {
-		return (WSRequestConfig<T>) WSRequestConfigBase.getInstance();
+		return WSRequestConfigBase.getInstance();
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -74,31 +69,6 @@ implements WSLoadBuilderClient<T, U> {
 			);
 		}
 		return rlb;
-	}
-	//
-	@Override @SuppressWarnings("unchecked")
-	public final BasicWSLoadBuilderClient<T, U> setInputFile(final String listFile)
-	throws RemoteException {
-		this.listFile = listFile;
-		if(listFile != null) {
-			try {
-				final FileDataItemSrc<T> fileInput = new CSVFileItemSrc<>(
-					Paths.get(listFile), (Class<T>) BasicWSObject.class
-				);
-				final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-					rtConfig.getBatchSize()
-				);
-				reqConf.setBuffSize(
-					approxDataItemsSize < Constants.BUFF_SIZE_LO ?
-						Constants.BUFF_SIZE_LO :
-						approxDataItemsSize > Constants.BUFF_SIZE_HI ?
-							Constants.BUFF_SIZE_HI : (int) approxDataItemsSize
-				);
-			} catch(final NoSuchMethodException | IOException e) {
-				LOG.error(Markers.ERR, "Failure", e);
-			}
-		}
-		return this;
 	}
 	//
 	@Override
@@ -125,17 +95,13 @@ implements WSLoadBuilderClient<T, U> {
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final DataItemSrc<T> itemSrc = LoadBuilderBase.buildItemInput(
-			(Class<T>) BasicWSObject.class, reqConf, nodeAddrs, listFile, maxCount,
-			minObjSize, maxObjSize, objSizeBias
-		);
-		//
 		final String loadTypeStr = reqConf.getLoadType().name();
 		//
 		return (U) new BasicWSLoadClient<>(
 			rtConfig, (WSRequestConfig<T>) reqConf, nodeAddrs,
 			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
-			itemSrc, maxCount, remoteLoadMap
+			itemSrc == null ? reqConf.getContainerListInput(maxCount, nodeAddrs[0]) : itemSrc,
+			maxCount, remoteLoadMap
 		);
 	}
 }

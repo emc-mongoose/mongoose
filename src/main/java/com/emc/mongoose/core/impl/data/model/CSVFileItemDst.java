@@ -26,7 +26,7 @@ implements FileDataItemDst<T> {
 	}
 	//
 	public CSVFileItemDst(final Class<? extends T> itemCls)
-	throws IOException, NoSuchMethodException {
+	throws IOException {
 		this(Files.createTempFile(null, ".csv"), itemCls);
 		this.itemsFilePath.toFile().deleteOnExit();
 	}

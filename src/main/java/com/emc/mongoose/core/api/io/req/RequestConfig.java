@@ -62,9 +62,9 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	RequestConfig<T> setContainerInputEnabled(final boolean enabled);
-	boolean isContainerListingEnabled();
 	DataItemSrc<T> getContainerListInput(final long maxCount, final String addr);
+	//
+	Class<T> getDataItemClass();
 	//
 	void configureStorage(final String storageAddrs[])
 	throws IllegalStateException;

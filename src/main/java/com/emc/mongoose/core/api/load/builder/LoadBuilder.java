@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.api.load.builder;
 //
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -24,8 +25,7 @@ extends Closeable {
 	LoadBuilder<T, U> setProperties(final RunTimeConfig props)
 	throws IllegalStateException, RemoteException;
 	//
-	RequestConfig<T> getRequestConfig()
-	throws RemoteException;
+	RequestConfig<T> getRequestConfig();
 	LoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws RemoteException;
 	//
@@ -65,13 +65,10 @@ extends Closeable {
 	LoadBuilder<T, U> setUpdatesPerItem(final int count)
 	throws RemoteException;
 	//
-	LoadBuilder<T, U> setInputFile(final String listFile)
+	LoadBuilder<T, U> setItemSrc(final DataItemSrc<T> itemSrc)
 	throws RemoteException;
 	//
 	U build()
 	throws IOException;
-	//
-	long getMaxCount()
-	throws RemoteException;
 	//
 }

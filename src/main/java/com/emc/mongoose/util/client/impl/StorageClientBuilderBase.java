@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 19.06.15.
  */
-public abstract class BasicStorageClientBuilder<T extends WSObject, U extends StorageClient<T>>
+public abstract class StorageClientBuilderBase<T extends WSObject, U extends StorageClient<T>>
 implements StorageClientBuilder<T, U> {
 	//
 	protected final RunTimeConfig rtConfig = RunTimeConfig.getContext();

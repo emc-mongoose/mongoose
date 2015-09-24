@@ -35,7 +35,7 @@ implements WSLoadBuilder<T, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected WSRequestConfig<T> getDefaultRequestConfig() {
-		return WSRequestConfigBase.<T>getInstance();
+		return WSRequestConfigBase.getInstance();
 	}
 	//
 	@Override
@@ -66,7 +66,7 @@ implements WSLoadBuilder<T, U> {
 	@Override
 	protected void invokePreConditions()
 	throws IllegalStateException {
-		reqConf.configureStorage(dataNodeAddrs);
+		reqConf.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -86,21 +86,19 @@ implements WSLoadBuilder<T, U> {
 			);
 		}
 		//
-		final DataItemSrc<T> itemSrc = buildItemInput(
-			BasicWSObject.class, wsReqConf, dataNodeAddrs, listFile, maxCount,
-			minObjSize, maxObjSize, objSizeBias
-		);
+		final DataItemSrc<T> itemSrc = getDefaultItemSource();
 		//
 		final IOTask.Type loadType = reqConf.getLoadType();
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
 			minThreadCount = getMinIOThreadCount(
-				loadTypeWorkerCount.get(loadType), dataNodeAddrs.length, connPerNode
+				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
 		return (U) new BasicWSLoadExecutor<>(
-			localRunTimeConfig, wsReqConf, dataNodeAddrs, connPerNode, minThreadCount,
-			itemSrc, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
+			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
+			this.itemSrc == null ? getDefaultItemSource() : itemSrc,
+			maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}
 }
