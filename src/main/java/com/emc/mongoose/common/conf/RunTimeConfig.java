@@ -106,7 +106,7 @@ implements Externalizable {
 		KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT = "storage.mock.container.countLimit",
 		KEY_STORAGE_MOCK_CONTAINER_CAPACITY = "storage.mock.container.capacity",
 		KEY_STORAGE_MOCK_HEAD_COUNT = "storage.mock.headCount",
-		KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET = "storage.mock.ioThreadsPerSocket",
+		KEY_STORAGE_MOCK_WORKERS_PER_SOCKET = "storage.mock.workersPerSocket",
 		//
 		KEY_API_NAME = "api.name",
 		KEY_API_S3_BUCKET = "api.type.s3.bucket",
@@ -540,8 +540,8 @@ implements Externalizable {
 	//	return getInt("data.radix.offset");
 	//}
 	//
-	public final int getStorageMockIoThreadsPerSocket() {
-		return getInt(KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET);
+	public final int getStorageMockWorkersPerSocket() {
+		return getInt(KEY_STORAGE_MOCK_WORKERS_PER_SOCKET);
 	}
 	//
 	public final int getStorageMockMinConnLifeMilliSec() {

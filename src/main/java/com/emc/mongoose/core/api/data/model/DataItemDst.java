@@ -29,6 +29,9 @@ extends Closeable {
 	int put(final List<T> buffer, final int from, final int to)
 	throws IOException, InterruptedException, RejectedExecutionException;
 
+	int put(final List<T> buffer)
+	throws IOException, InterruptedException, RejectedExecutionException;
+
 	/**
 	 Make a {@link DataItemSrc} instance from this.
 	 @return {@link DataItemSrc} instance containing the items which had been written to this output.

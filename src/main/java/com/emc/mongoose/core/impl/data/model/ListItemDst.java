@@ -44,6 +44,13 @@ implements DataItemDst<T> {
 		return to - from;
 	}
 
+	//
+	@Override
+	public final int put(final List<T> items)
+	throws IOException {
+		return put(items, 0, items.size());
+	}
+
 	/**
 	 @return the corresponding input
 	 @throws IOException doesn't throw

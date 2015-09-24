@@ -41,7 +41,7 @@ implements DataItemDst<T>, DataItemSrc<T> {
 		}
 	}
 	/**
-	 Non-blocking bulk put implementation, THE RESULTING COUNT IS NOT THREAD SAFE
+	 Blocking bulk put implementation
 	 @param buffer the buffer containing the data items to put
 	 @return the count of the items been written
 	 @throws IOException doesn't throw
@@ -49,11 +49,17 @@ implements DataItemDst<T>, DataItemSrc<T> {
 	@Override
 	public int put(final List<T> buffer, final int from, final int to)
 	throws IOException {
-		try {
-			queue.addAll(buffer.subList(from, to));
-		} catch(final IllegalStateException e) {
+		int i = from;
+		while(i < to && queue.offer(buffer.get(i))) {
+			i ++;
 		}
-		return to - from;
+		return i - from;
+	}
+	//
+	@Override
+	public final int put(final List<T> items)
+	throws IOException {
+		return put(items, 0, items.size());
 	}
 	/**
 	 @return self

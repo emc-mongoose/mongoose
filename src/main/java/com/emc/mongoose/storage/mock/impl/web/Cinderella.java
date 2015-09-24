@@ -52,7 +52,7 @@ implements WSMock<T> {
 	//
 	public Cinderella(final RunTimeConfig rtConfig)
 	throws IOException {
-		this(rtConfig, rtConfig.getStorageMockIoThreadsPerSocket());
+		this(rtConfig, rtConfig.getStorageMockWorkersPerSocket());
 	}
 	//
 	private Cinderella(final RunTimeConfig rtConfig, final int ioThreadCount)

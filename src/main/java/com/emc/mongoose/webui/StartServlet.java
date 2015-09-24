@@ -6,6 +6,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
@@ -154,8 +155,7 @@ public final class StartServlet extends CommonServlet {
 			//
 			@Override
 			public void interrupt() {
-				LoadExecutorBase.RESTORED_STATES_MAP.remove(runTimeConfig.getRunId());
-				LoadExecutorBase.RUN_INSTANCE_NUMBERS.remove(runTimeConfig.getRunId());
+				LoadExecutor.RESTORED_STATES_MAP.remove(runTimeConfig.getRunId());
 				super.interrupt();
 			}
 		};

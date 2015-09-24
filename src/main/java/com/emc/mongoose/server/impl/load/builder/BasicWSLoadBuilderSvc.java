@@ -8,14 +8,12 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //mongoose-server-api.jar
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-core-impl.jar
@@ -30,8 +28,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  Created by kurila on 30.05.14.
  */
@@ -78,15 +74,12 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	@Override
 	public final int getNextInstanceNum(final String runId) {
-		if (!LoadExecutor.RUN_INSTANCE_NUMBERS.containsKey(runId)) {
-			LoadExecutor.RUN_INSTANCE_NUMBERS.put(runId, new AtomicInteger(0));
-		}
-		return LoadExecutor.RUN_INSTANCE_NUMBERS.get(runId).get();
+		return LoadExecutor.NEXT_INSTANCE_NUM.get();
 	}
 	//
 	@Override
 	public final void setNextInstanceNum(final String runId, final int instanceN) {
-		LoadExecutor.RUN_INSTANCE_NUMBERS.get(runId).set(instanceN);
+		LoadExecutor.NEXT_INSTANCE_NUM.set(instanceN);
 	}
 	//
 	@Override

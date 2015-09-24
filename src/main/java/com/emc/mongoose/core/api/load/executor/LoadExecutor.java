@@ -27,8 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface LoadExecutor<T extends DataItem>
 extends DataItemDst<T>, LifeCycle, Producer<T> {
 	//
-	Map<String, AtomicInteger>
-		RUN_INSTANCE_NUMBERS = new ConcurrentHashMap<>();
+	AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
+	//
 	Map<String, List<LoadState<? extends DataItem>>>
 		RESTORED_STATES_MAP = new ConcurrentHashMap<>();
 	//

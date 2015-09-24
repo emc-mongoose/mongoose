@@ -76,22 +76,41 @@ implements StorageMock<T> {
 	//
 	protected void loadPersistedDataItems() {
 		// if there is data src file path
-		final Path dataFilePath = Paths.get(dataSrcPath);
-		//final int dataSizeRadix = rtConfig.getDataRadixSize();
-		if(null != dataFilePath && !Files.isDirectory(dataFilePath) && Files.exists(dataFilePath)) {
+		if(dataSrcPath != null && !dataSrcPath.isEmpty()) {
+			final Path dataFilePath = Paths.get(dataSrcPath);
+			//final int dataSizeRadix = rtConfig.getDataRadixSize();
+			if(!Files.exists(dataFilePath)) {
+				LOG.warn(
+					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" doesn't exists"
+				);
+				return;
+			}
+			if(Files.isDirectory(dataFilePath)) {
+				LOG.warn(
+					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is a directory"
+				);
+				return;
+			}
+			if(Files.isReadable(dataFilePath)) {
+				LOG.warn(
+					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is not readable"
+				);
+				return;
+			}
+			//
 			long count = 0;
 			try(
 				final CSVFileItemSrc<T>
 					csvFileItemInput = new CSVFileItemSrc<>(dataFilePath, itemCls)
 			) {
 				T nextItem = csvFileItemInput.get();
-				while (null != nextItem) {
+				while(null != nextItem) {
 					// if mongoose is v0.5.0
 					//if(dataSizeRadix == 0x10) {
 					//	nextItem.setSize(Long.valueOf(String.valueOf(nextItem.getSize()), 0x10));
 					//}
 					putIntoDefaultContainer(nextItem);
-					count ++;
+					count++;
 					nextItem = csvFileItemInput.get();
 				}
 			} catch(final EOFException e) {

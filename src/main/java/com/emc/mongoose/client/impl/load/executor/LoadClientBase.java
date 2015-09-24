@@ -317,7 +317,7 @@ implements LoadClient<T> {
 			//
 			LOG.debug(Markers.MSG, "{}: interrupted", getName());
 		} finally {
-			super.interrupt();
+			super.interruptActually();
 		}
 	}
 	//
@@ -505,6 +505,7 @@ implements LoadClient<T> {
 		} else {
 			LOG.debug(Markers.MSG, "{}: closed already", getName());
 		}
+		super.closeActually();
 	}
 	//
 	@Override

@@ -176,7 +176,7 @@ implements LoadBuilderClient<T, U> {
 		//
 		try {
 			final String listFile = this.rtConfig.getDataSrcFPath();
-			if(listFile != null && listFile.length() > 0) {
+			if(listFile != null && !listFile.isEmpty()) {
 				final Path dataItemsListPath = Paths.get(listFile);
 				if(!Files.exists(dataItemsListPath)) {
 					LOG.warn(
@@ -186,6 +186,11 @@ implements LoadBuilderClient<T, U> {
 				} else if(!Files.isReadable(dataItemsListPath)) {
 					LOG.warn(
 						Markers.ERR, "Data items source file \"{}\" is not readable",
+						dataItemsListPath
+					);
+				} else if(Files.isDirectory(dataItemsListPath)) {
+					LOG.warn(
+						Markers.ERR, "Data items source file \"{}\" is a directory",
 						dataItemsListPath
 					);
 				} else {

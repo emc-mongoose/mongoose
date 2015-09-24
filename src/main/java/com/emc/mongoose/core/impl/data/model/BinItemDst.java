@@ -37,6 +37,12 @@ implements DataItemDst<T> {
 	}
 	//
 	@Override
+	public final int put(final List<T> items)
+	throws IOException {
+		return put(items, 0, items.size());
+	}
+	//
+	@Override
 	public void close()
 	throws IOException {
 		itemsDst.close();

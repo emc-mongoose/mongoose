@@ -25,7 +25,8 @@ extends Closeable {
 	LoadBuilder<T, U> setProperties(final RunTimeConfig props)
 	throws IllegalStateException, RemoteException;
 	//
-	RequestConfig<T> getRequestConfig();
+	RequestConfig<T> getRequestConfig()
+	throws RemoteException;
 	LoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws RemoteException;
 	//

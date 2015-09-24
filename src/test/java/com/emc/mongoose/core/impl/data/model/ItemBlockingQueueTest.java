@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.data.util;
+package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
@@ -63,7 +63,7 @@ public class ItemBlockingQueueTest {
 				new DataItem[] {dataItem0, dataItem1, dataItem2, dataItem3, dataItem4}
 			),
 			buffIn = new ArrayList<>(5);
-		itemsIO.put(buffOut);
+		itemsIO.put(buffOut, 0, 5);
 		assertEquals(5, itemsIO.get(buffIn, 5));
 		assertEquals(buffIn, buffOut);
 	}
@@ -98,9 +98,7 @@ public class ItemBlockingQueueTest {
 		final BlockingQueue<DataItem> queue = new ArrayBlockingQueue<>(2);
 		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(queue);
 		final int n = itemsIO.put(
-			Arrays.asList(
-				new DataItem[] {dataItem0, dataItem1, dataItem2, dataItem3, dataItem4}
-			)
+			Arrays.asList(dataItem0, dataItem1, dataItem2, dataItem3, dataItem4), 0, 5
 		);
 		assertEquals(2, n);
 	}

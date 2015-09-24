@@ -17,6 +17,11 @@
 						"Filter" : [
 							{
 								"type": "MarkerFilter",
+								"marker": "cfg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
 								"marker": "dataList",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"

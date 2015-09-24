@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.data.util;
+package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 //
 @RunWith(MockitoJUnitRunner.class)
-public class CircularListItemOutputTest {
+public class CircularListItemDstTest {
 	//
 	final DataItem
 		dataItem0 = Mockito.mock(DataItem.class),

@@ -18,7 +18,7 @@ import java.util.List;
  * Created by kirill_gusakov on 06.09.15.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class BinItemInputTest {
+public class BinItemSrcTest {
 
 	@Mock
 	private ObjectInputStream itemSrc;

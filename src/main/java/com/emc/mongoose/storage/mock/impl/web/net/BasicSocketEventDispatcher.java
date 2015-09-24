@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.web.net;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
+
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.IOWorker;
@@ -56,7 +56,7 @@ implements Runnable {
 		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
 			runTimeConfig.getLoadLimitTimeValue()
 		);
-		int ioThreadCount = runTimeConfig.getStorageMockIoThreadsPerSocket();
+		int ioThreadCount = runTimeConfig.getStorageMockWorkersPerSocket();
 		if(ioThreadCount == 0) {
 			ioThreadCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
 		}

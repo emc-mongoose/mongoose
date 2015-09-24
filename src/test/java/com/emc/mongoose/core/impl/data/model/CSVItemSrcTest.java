@@ -15,7 +15,7 @@ import java.lang.reflect.Constructor;
  * Created by kirill_gusakov on 06.09.15.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class CSVItemInputTest {
+public class CSVItemSrcTest {
 
 	@Mock
 	private BufferedReader itemSrc;

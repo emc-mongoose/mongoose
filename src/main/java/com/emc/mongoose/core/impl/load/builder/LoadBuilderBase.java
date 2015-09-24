@@ -174,16 +174,21 @@ implements LoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
-		final Path listFilePath = Paths.get(runTimeConfig.getDataSrcFPath());
-		if(!Files.exists(listFilePath)) {
-			LOG.warn(Markers.ERR, "Specified input file \"{}\" doesn't exists", listFilePath);
-		} else if(!Files.isReadable(listFilePath)) {
-			LOG.warn(Markers.ERR, "Specified input file \"{}\" isn't readable", listFilePath);
-		} else {
-			try {
-				setItemSrc(new CSVFileItemSrc<>(listFilePath, reqConf.getDataItemClass()));
-			} catch(final IOException | NoSuchMethodException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
+		final String listFilePathStr = runTimeConfig.getDataSrcFPath();
+		if(listFilePathStr != null && !listFilePathStr.isEmpty()) {
+			final Path listFilePath = Paths.get(listFilePathStr);
+			if(!Files.exists(listFilePath)) {
+				LOG.warn(Markers.ERR, "Specified input file \"{}\" doesn't exists", listFilePath);
+			} else if(!Files.isReadable(listFilePath)) {
+				LOG.warn(Markers.ERR, "Specified input file \"{}\" isn't readable", listFilePath);
+			} else if(Files.isDirectory(listFilePath)) {
+				LOG.warn(Markers.ERR, "Specified input file \"{}\" is a directory", listFilePath);
+			} else {
+				try {
+					setItemSrc(new CSVFileItemSrc<>(listFilePath, reqConf.getDataItemClass()));
+				} catch(final IOException | NoSuchMethodException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
+				}
 			}
 		}
 		//

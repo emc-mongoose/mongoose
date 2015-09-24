@@ -114,6 +114,12 @@ implements Consumer<T> {
 		return i - from;
 	}
 	//
+	@Override
+	public final int put(final List<T> items)
+	throws RemoteException, InterruptedException, RejectedExecutionException {
+		return put(items, 0, items.size());
+	}
+	//
 	protected void putActually(final T item)
 		throws InterruptedException {
 		if(item == null || counterPreSubm.get() >= maxCount) {

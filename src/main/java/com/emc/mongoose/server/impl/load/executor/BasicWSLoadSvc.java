@@ -81,15 +81,14 @@ implements WSLoadSvc<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final void setDataItemDst(final DataItemDst<T> consumer) {
+	public final void setDataItemDst(final DataItemDst<T> itemDst) {
 		LOG.debug(
 			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
-			consumer, getName()
+			itemDst, getName()
 		);
-		this.consumer = consumer;
 		try {
-			if(consumer instanceof Service) {
-				final String remoteSvcName = ((Service) consumer).getName();
+			if(itemDst instanceof Service) {
+				final String remoteSvcName = ((Service) itemDst).getName();
 				LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
 				final Service localSvc = ServiceUtils.getLocalSvc(
 					ServiceUtils.getLocalSvcName(remoteSvcName)
@@ -98,22 +97,17 @@ implements WSLoadSvc<T> {
 					LOG.error(
 						Markers.ERR, "Failed to get local service for name \"{}\"", remoteSvcName
 					);
-				} else if(localSvc instanceof DataItemDst){
+				} else {
 					super.setDataItemDst((DataItemDst<T>) localSvc);
 					LOG.debug(
 						Markers.MSG,
 						"Successfully resolved local service and appended it as consumer"
 					);
-				} else {
-					LOG.error(
-						Markers.ERR, "Local service \"{}\" is not data item destination instance",
-						remoteSvcName
-					);
 				}
 			} else {
 				LOG.warn(
 					Markers.ERR, "Items destination is not a remote service instance: {}",
-					consumer == null ? null : consumer.getClass().getName()
+					itemDst == null ? null : itemDst.getClass().getName()
 				);
 			}
 		} catch(final IOException ee) {

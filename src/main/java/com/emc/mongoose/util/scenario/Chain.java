@@ -12,8 +12,6 @@ import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
-import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
-import com.emc.mongoose.core.impl.load.model.DataItemConsumer;
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
 import com.emc.mongoose.run.cli.HumanFriendly;
@@ -28,7 +26,6 @@ import java.rmi.RemoteException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -53,13 +50,13 @@ implements Runnable {
 	public Chain(
 		final LoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
 		final String[] loadTypeSeq, final boolean isParallel, final boolean flagUseLocalItemList
-	) {
+	) throws RemoteException {
 		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
 		this.timeUnit = timeOut > 0 ? timeUnit : TimeUnit.DAYS;
 		this.isParallel = isParallel;
 		//
 		String loadTypeStr;
-		LoadExecutor nextLoadJob;
+		LoadExecutor nextLoadJob, prevLoadJob = null;
 		final RequestConfig reqConf = loadBuilder.getRequestConfig();
 		DataItemDst itemBuff = null;
 		for(int i = 0; i < loadTypeSeq.length; i ++) {
@@ -81,11 +78,7 @@ implements Runnable {
 				// set the item destination if not last job
 				if(i < loadTypeSeq.length - 1) {
 					if(isParallel) { // use a queue as an item destination
-						itemBuff = new ItemBlockingQueue(
-							new ArrayBlockingQueue(
-								RunTimeConfig.getContext().getTasksMaxQueueSize()
-							)
-						);
+						itemBuff = prevLoadJob;
 					} else {
 						if(flagUseLocalItemList) {
 							// use a temporary file as an item destination
@@ -99,6 +92,7 @@ implements Runnable {
 				}
 				// add the built job into the chain
 				loadJobSeq.add(nextLoadJob);
+				prevLoadJob = nextLoadJob;
 			} catch(final RemoteException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to apply the property remotely");
 			} catch(final IOException e) {

@@ -179,14 +179,14 @@ implements WSLoadExecutor<T> {
 			LOG.debug(Markers.ERR, "Not starting web load client due to initialization failures");
 		} else {
 			clientDaemon.start();
-			super.start();
+			super.startActually();
 		}
 	}
 	//
 	@Override
 	protected void interruptActually() {
 		try {
-			super.interrupt();
+			super.interruptActually();
 		} finally {
 			clientDaemon.interrupt();
 			LOG.debug(

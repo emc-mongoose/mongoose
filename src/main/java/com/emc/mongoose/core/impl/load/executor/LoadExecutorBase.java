@@ -30,7 +30,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -180,9 +179,6 @@ implements LoadExecutor<T> {
 		this.maxQueueSize = rtConfig.getTasksMaxQueueSize();
 		//
 		this.rtConfig = rtConfig;
-		if(!RUN_INSTANCE_NUMBERS.containsKey(rtConfig.getRunId())) {
-			RUN_INSTANCE_NUMBERS.put(rtConfig.getRunId(), new AtomicInteger(0));
-		}
 		this.instanceNum = instanceNum;
 		storageNodeCount = addrs.length;
 		//
@@ -221,7 +217,7 @@ implements LoadExecutor<T> {
 	) {
 		this(
 			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
-			RUN_INSTANCE_NUMBERS.get(rtConfig.getRunId()).getAndIncrement(),
+			instanceNum,
 			Integer.toString(instanceNum) + '-' +
 				StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
 				StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
@@ -237,7 +233,7 @@ implements LoadExecutor<T> {
 	) {
 		this(
 			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
-			RUN_INSTANCE_NUMBERS.get(rtConfig.getRunId()).getAndIncrement()
+			NEXT_INSTANCE_NUM.getAndIncrement()
 		);
 	}
 	//
@@ -342,8 +338,11 @@ implements LoadExecutor<T> {
 			}
 			LOG.trace(Markers.MSG, sb);
 		}
+		super.interrupt();
 		metricsDaemon.interrupt();
-		shutdown();
+		if(isShutdown.compareAndSet(false, true)) {
+			shutdownActually();
+		}
 		try {
 			reqConfigCopy.close(); // disables connection drop failures
 		} catch(final IOException e) {
@@ -399,9 +398,7 @@ implements LoadExecutor<T> {
 	@Override
 	public void setDataItemDst(final DataItemDst<T> itemDst)
 	throws RemoteException {
-		this.consumer = new DataItemConsumer<>(
-			itemDst, maxCount
-		);
+		this.consumer = itemDst == null ? null : new DataItemConsumer<>(itemDst, maxCount);
 		LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemDst + "\"");
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -501,6 +498,12 @@ implements LoadExecutor<T> {
 			}
 		}
 		return n;
+	}
+	//
+	@Override
+	public final int put(final List<T> items)
+	throws RemoteException, InterruptedException, RejectedExecutionException {
+		return put(items, 0, items.size());
 	}
 	//
 	protected abstract IOTask<T> getIOTask(final T dataItem, final String nextNodeAddr);
@@ -836,7 +839,7 @@ implements LoadExecutor<T> {
 		LOG.debug(Markers.MSG, "Invoked close for {}", getName());
 		try {
 			if(!isInterrupted.get()) {
-				interrupt();
+				interruptActually();
 			}
 			releaseDaemon.interrupt();
 		} finally {
