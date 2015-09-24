@@ -17,10 +17,6 @@ import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
-import com.emc.mongoose.util.scenario.Chain;
-import com.emc.mongoose.util.scenario.Rampup;
-import com.emc.mongoose.util.scenario.Single;
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -89,6 +85,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
 				runScenario();
+				//new ScriptMockRunner().run();
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -106,13 +103,10 @@ public final class ModeDispatcher {
 			final String scenarioName = rtConfig.getScenarioName();
 			switch (rtConfig.getScenarioName()) {
 				case Constants.RUN_SCENARIO_SINGLE:
-					new Single(rtConfig).run();
 					break;
 				case Constants.RUN_SCENARIO_CHAIN:
-					new Chain(rtConfig).run();
 					break;
 				case Constants.RUN_SCENARIO_RAMPUP:
-					new Rampup(rtConfig).run();
 					break;
 				default:
 					throw new IllegalArgumentException(
