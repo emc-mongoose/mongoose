@@ -898,7 +898,7 @@ require(["./requirejs/conf"], function() {
 					.attr("name", function(d) { return d.id; })
 					.attr("transform", function(d, i) {
 						return "translate(" + (10 + i*130)
-							+ "," + (height + (margin.bottom/2) + addHeight) + ")";
+							+ "," + (height + (margin.bottom/2) + addHeight + 10) + ")";
 					});
 				groupsEnter.append("text")
 					.attr("dy", ".35em")
@@ -1032,8 +1032,8 @@ require(["./requirejs/conf"], function() {
 				//
 				//  Axis X Label
 				var horizontalLabel = svg.append("text")
-					.attr("x", width - 2)
-					.attr("y", height - 2)
+					.attr("x", (width + margin.left)/2)
+					.attr("y", height + margin.top)
 					.style("text-anchor", "end")
 					.text(xAxisLabel);
 				//
@@ -1074,8 +1074,8 @@ require(["./requirejs/conf"], function() {
 				//  Axis Y Label
 				svg.append("text")
 					.attr("transform", "rotate(-90)")
-					.attr("y", 6)
-					.attr("x", 0)
+					.attr("y", -50)
+					.attr("x", -(height/2) + 30)
 					.attr("dy", ".71em")
 					.style("text-anchor", "end")
 					.text(yAxisLabel);
@@ -1683,7 +1683,7 @@ require(["./requirejs/conf"], function() {
 							.attr("width", 18)
 							.attr("height", 18)
 							.attr("transform", function(d, i) {
-								return "translate(" + (i*210 + 20) + "," + (height + (margin.bottom/2) + 4) + ")";
+								return "translate(" + (i*210 + 20) + "," + (height + (margin.bottom/2) + 24) + ")";
 							})
 							.append("xhtml:body")
 							.append("input")
@@ -1738,7 +1738,7 @@ require(["./requirejs/conf"], function() {
 							.attr("class", "bottom-legend")
 							.attr("stroke", "black")
 							.attr("transform", function(d, i) {
-								return "translate(" + i*210 + "," + (height + (margin.bottom/2)) + ")";
+								return "translate(" + i*210 + "," + (height + (margin.bottom/2) + 20) + ")";
 							});
 
 						bottomLegend.append("path")
@@ -1772,16 +1772,16 @@ require(["./requirejs/conf"], function() {
 							.text(function(d) { return d.text; });
 						//  Axis X Label
 						var horizontalLabel = svg.append("text")
-							.attr("x", width - 2)
-							.attr("y", height - 2)
+							.attr("x", (width + margin.left)/2)
+							.attr("y", height + margin.top)
 							.style("text-anchor", "end")
 							.text(xAxisLabel);
 
 						//  Axis Y Label
 						svg.append("text")
 							.attr("transform", "rotate(-90)")
-							.attr("y", 6)
-							.attr("x", 0)
+							.attr("y", -50)
+							.attr("x", -(height/2) + 30)
 							.attr("dy", ".71em")
 							.style("text-anchor", "end")
 							.text(yAxisLabel);
@@ -2008,7 +2008,7 @@ require(["./requirejs/conf"], function() {
 								}
 								redraw(currXScale, currYScale);
 							}
-						}, 40);
+						}, 50);
 						return function(chartType, json) {
 							json.threadName = json.threadName.match(getThreadNamePattern())[0];
 							var loadType = json.threadName;
@@ -2295,17 +2295,17 @@ require(["./requirejs/conf"], function() {
 								.call(makeYAxis()
 									.tickSize(-width, 0, 0)
 									.tickFormat(""));
-							//  Axis Y Label
+							//  Axis X Label
 							svg.append("text")
-								.attr("x", width - 2)
-								.attr("y", height - 2)
+								.attr("x", (width + margin.left)/2)
+								.attr("y", height + margin.top - 8)
 								.style("text-anchor", "end")
 								.text(xAxisLabel);
 							//  Axis Y Label
 							svg.append("text")
 								.attr("transform", "rotate(-90)")
-								.attr("y", 6)
-								.attr("x", 0)
+								.attr("y", -57)
+								.attr("x", -(height/2) + 30)
 								.attr("dy", ".71em")
 								.style("text-anchor", "end")
 								.text(yAxisLabel);
@@ -2545,7 +2545,7 @@ require(["./requirejs/conf"], function() {
 									scalesArray[currIndex].yLabel = currYScale;
 									redraw(currIndex, x, y);
 								}
-							}, 0);
+							}, 10);
 						});
 						//
 						return function(chartType, json, array) {
