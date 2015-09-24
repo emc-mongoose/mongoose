@@ -1308,6 +1308,16 @@ require(["./requirejs/conf"], function() {
 						}
 						currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
 						horizontalLabel.text(currTimeUnit.label);
+						x.domain([
+							d3.min(data, function(c) { return d3.min(c.values, function(d) {
+								return (isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+									: (d.x / currTimeUnit.value);
+							}); }),
+							d3.max(data, function(c) { return d3.max(c.values, function(d) {
+								return (isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+									: (d.x / currTimeUnit.value);
+							}); })
+						]);
 					}
 					//
 					x.domain([
@@ -2104,6 +2114,20 @@ require(["./requirejs/conf"], function() {
 								}
 								currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
 								horizontalLabel.text(currTimeUnit.label);
+								x.domain([
+									d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+										return d3.min(c.values, function(v) {
+											return (isNaN(x(v.x))) ? (0.1 / currTimeUnit.value)
+												: (v.x / currTimeUnit.value);
+										}); });
+									}),
+									d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+										return d3.max(c.values, function(v) {
+											return (isNaN(x(v.x))) ? (0.1 / currTimeUnit.value)
+												: (v.x / currTimeUnit.value);
+										}); });
+									})
+								]);
 							}
 							//
 							x.domain([
