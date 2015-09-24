@@ -719,37 +719,37 @@ require(["./requirejs/conf"], function() {
 			//  for time accomodation. For more info see #JIRA-314
 			var TIME_LIMITATIONS = {
 				"seconds": {
-					"limit": 300 * 1,
+					"limit": 300,
 					"value": 1,
 					"next": "minutes",
 					"label": "t[seconds]"
 				},
 				"minutes": {
-					"limit": 300 * 60,
+					"limit": 10,
 					"value": 60,
 					"next": "hours",
 					"label": "t[minutes]"
 				},
 				"hours": {
-					"limit": 120 * 60 * 60,
+					"limit": 120,
 					"value": 60 * 60,
 					"next": "days",
 					"label": "t[hours]"
 				},
 				"days": {
-					"limit": 35 * 24 * 60 * 60,
+					"limit": 35,
 					"value": 24 * 60 * 60,
 					"next": "weeks",
 					"label": "t[days]"
 				},
 				"weeks": {
-					"limit": 20 * 7 * 24 * 60 * 60,
+					"limit": 20,
 					"value": 7 * 24 * 60 * 60,
 					"next": "months",
 					"label": "t[weeks]"
 				},
 				"months": {
-					"limit": 60 * 4 * 7 * 24 * 60 * 60,
+					"limit": 60,
 					"value": 4 * 7 * 24 * 60 * 60,
 					"next": "years",
 					"label": "t[months]"
@@ -1013,7 +1013,8 @@ require(["./requirejs/conf"], function() {
 				//
 				var line = d3.svg.line()
 					.x(function (d) {
-						return x((isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value));
+						return x((isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+							: (d.x / currTimeUnit.value));
 					})
 					.y(function (d) {
 						return y((isNaN(y(d.y))) ? 0.001 : d.y);
@@ -1209,10 +1210,12 @@ require(["./requirejs/conf"], function() {
 							if (scaleOrientation === SCALE_ORIENTATION[0]) {
 								x = d3.scale.log()
 									.domain([d3.min(data, function(c) { return d3.min(c.values, function(d) {
-										return d.x <= 0 ? 0.1 : (d.x / currTimeUnit.value);
+										return d.x <= 0 ? (0.1 / currTimeUnit.value)
+											: (d.x / currTimeUnit.value);
 									}); }),
 										d3.max(data, function(c) { return d3.max(c.values, function(d) {
-											return d.x <= 0 ? 0.1 : (d.x / currTimeUnit.value);
+											return d.x <= 0 ? (0.1 / currTimeUnit.value)
+												: (d.x / currTimeUnit.value);
 										}); })])
 									.range([0, width]);
 								currXScale = SCALE_TYPES[1];
@@ -1309,10 +1312,12 @@ require(["./requirejs/conf"], function() {
 					//
 					x.domain([
 						d3.min(data, function(c) { return d3.min(c.values, function(d) {
-							return (isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value);
+							return (isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+								: (d.x / currTimeUnit.value);
 						}); }),
 						d3.max(data, function(c) { return d3.max(c.values, function(d) {
-							return (isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value);
+							return (isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+								: (d.x / currTimeUnit.value);
 						}); })
 					]);
 					y.domain([
@@ -1582,7 +1587,8 @@ require(["./requirejs/conf"], function() {
 						//
 						var line = d3.svg.line()
 							.x(function (d) {
-								return x((isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value));
+								return x((isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+									: (d.x / currTimeUnit.value));
 							})
 							.y(function (d) {
 								return y((isNaN(y(d.y))) ? 0.001 : d.y);
@@ -1983,10 +1989,16 @@ require(["./requirejs/conf"], function() {
 										x = d3.scale.log()
 											.domain([
 												d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-													return d3.min(c.values, function(v) { return (v.x <= 0) ? 0.1 : (v.x / currTimeUnit.value); }); });
+													return d3.min(c.values, function(v) {
+														return (v.x <= 0) ? (0.1 / currTimeUnit.value)
+															: (v.x / currTimeUnit.value);
+													}); });
 												}),
 												d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-													return d3.max(c.values, function(v) { return (v.x <= 0) ? 0.1 : (v.x / currTimeUnit.value); }); });
+													return d3.max(c.values, function(v) {
+														return (v.x <= 0) ? (0.1 / currTimeUnit.value)
+															: (v.x / currTimeUnit.value);
+													}); });
 												})
 											])
 											.range([0, width]);
@@ -2096,10 +2108,16 @@ require(["./requirejs/conf"], function() {
 							//
 							x.domain([
 								d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-									return d3.min(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : (v.x / currTimeUnit.value); }); });
+									return d3.min(c.values, function(v) {
+										return (isNaN(x(v.x))) ? (0.1 / currTimeUnit.value)
+											: (v.x / currTimeUnit.value);
+									}); });
 								}),
 								d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-									return d3.max(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : (v.x / currTimeUnit.value); }); });
+									return d3.max(c.values, function(v) {
+										return (isNaN(x(v.x))) ? (0.1 / currTimeUnit.value)
+											: (v.x / currTimeUnit.value);
+									}); });
 								})
 							]);
 							y.domain([
