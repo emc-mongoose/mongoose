@@ -971,6 +971,12 @@ require(["./requirejs/conf"], function() {
 					}
 					currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
 					xAxisLabel = currTimeUnit.label;
+					x = d3.scale.linear()
+						.domain([
+							d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x / currTimeUnit.value; }); }),
+							d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x / currTimeUnit.value; })  })
+						])
+						.range([0, width]);
 				}
 				//
 				x = d3.scale.linear()
@@ -1549,6 +1555,16 @@ require(["./requirejs/conf"], function() {
 							}
 							currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
 							xAxisLabel = currTimeUnit.label;
+							x = d3.scale.linear()
+								.domain([
+									d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+										return d3.min(c.values, function(v) { return v.x / currTimeUnit.value; }); });
+									}),
+									d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+										return d3.max(c.values, function(v) { return v.x / currTimeUnit.value; }); });
+									})
+								])
+								.range([0, width]);
 						}
 						x = d3.scale.linear()
 							.domain([
