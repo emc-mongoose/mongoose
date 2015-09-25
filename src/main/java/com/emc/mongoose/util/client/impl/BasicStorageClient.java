@@ -9,8 +9,6 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.api.load.model.Consumer;
-import com.emc.mongoose.core.impl.load.model.DataItemConsumer;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
 //

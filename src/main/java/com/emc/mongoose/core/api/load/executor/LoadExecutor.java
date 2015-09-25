@@ -7,7 +7,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.core.api.load.model.LoadState;
 //
-import com.emc.mongoose.core.api.load.model.Producer;
+import com.emc.mongoose.core.api.load.model.DataItemProducer;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import org.apache.logging.log4j.Marker;
 //
@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  Supports method "join" for waiting the load execution to be done.
  */
 public interface LoadExecutor<T extends DataItem>
-extends DataItemDst<T>, LifeCycle, Producer<T> {
+extends DataItemDst<T>, LifeCycle, DataItemProducer<T> {
 	//
 	AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
 	//

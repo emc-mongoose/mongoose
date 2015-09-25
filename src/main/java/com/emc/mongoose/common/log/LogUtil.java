@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.io.IoBuilder;
 //
 import java.io.File;
 import java.io.PrintStream;
@@ -18,6 +19,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.DriverManager;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -133,10 +135,14 @@ public final class LogUtil {
 							}
 						);
 					}
+					final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);
 					System.setErr(
-						new PrintStream(
-							new StdErrLoggingStream(LogManager.getRootLogger(), Markers.ERR), true
-						)
+						logStreamBuilder
+							.setLevel(Level.WARN)
+							.setMarker(Markers.ERR)
+							.setAutoFlush(true)
+							.setBuffered(true)
+							.buildPrintStream()
 					);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);

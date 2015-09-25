@@ -9,6 +9,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -42,8 +44,8 @@ implements DataItemSrc<T> {
 				final Object o = itemsSrc.readUnshared();
 				if(o instanceof DataItem) {
 					return (T) o;
-				} else if(o instanceof List) {
-					srcBuff = (List<T>) o;
+				} else if(o instanceof DataItem[]) {
+					srcBuff = Arrays.asList((T[]) o);
 					srcFrom = 0;
 					return get();
 				} else {

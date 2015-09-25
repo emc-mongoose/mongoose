@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
  A producer feeding the generated items to its consumer.
  May be linked with particular consumer, started and interrupted.
  */
-public interface Producer<T extends DataItem> {
+public interface DataItemProducer<T extends DataItem> {
 	//
 	void setDataItemDst(final DataItemDst<T> itemDst)
 	throws RemoteException;

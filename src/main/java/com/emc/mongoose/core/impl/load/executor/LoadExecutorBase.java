@@ -12,15 +12,15 @@ import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.load.model.Consumer;
+import com.emc.mongoose.core.api.load.model.DataItemConsumer;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.model.DataItemConsumer;
+import com.emc.mongoose.core.impl.load.model.BasicDataItemConsumer;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
-import com.emc.mongoose.core.impl.load.model.DataItemProducer;
+import com.emc.mongoose.core.impl.load.model.BasicDataItemProducer;
 //
 import org.apache.commons.lang.StringUtils;
 //
@@ -48,7 +48,7 @@ import java.util.concurrent.locks.ReentrantLock;
  Created by kurila on 15.10.14.
  */
 public abstract class LoadExecutorBase<T extends DataItem>
-extends DataItemProducer<T>
+extends BasicDataItemProducer<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -62,7 +62,7 @@ implements LoadExecutor<T> {
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
-	protected volatile Consumer<T> consumer = null;
+	protected volatile DataItemConsumer<T> consumer = null;
 	//
 	protected final long maxCount;
 	protected final int totalConnCount;
@@ -253,7 +253,9 @@ implements LoadExecutor<T> {
 		try {
 			super.runActually();
 		} finally {
-			shutdown();
+			if(!isShutdown.compareAndSet(false, true)) {
+				shutdownActually();
+			}
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -269,6 +271,12 @@ implements LoadExecutor<T> {
 	@Override
 	public final void start()
 	throws IllegalStateException {
+		if(isClosed.get()) {
+			throw new IllegalStateException(getName() + ": closed already but start invoked");
+		}
+		if(isInterrupted.get()) {
+			throw new IllegalStateException(getName() + ": interrupted already but start invoked");
+		}
 		if(isStarted.compareAndSet(false, true)) {
 			startActually();
 		} else {
@@ -310,10 +318,20 @@ implements LoadExecutor<T> {
 				setSkipCount(counterResults.get());
 				setLastDataItem(loadedPrevState.getLastDataItem());
 			}
+			if(consumer != null) {
+				try {
+					consumer.start();
+				} catch(final RemoteException | IllegalStateException e) {
+					LogUtil.exception(
+						LOG, Level.DEBUG, e,
+						getName() + ": failed to start the consumer \"" + consumer + "\""
+					);
+				}
+			}
 			super.start();
 			LOG.debug(Markers.MSG, "Started object producer {}", getName());
 			//
-			metricsDaemon.setName(getName());
+			metricsDaemon.setName(getName() + " metrics");
 			metricsDaemon.start();
 			//
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
@@ -322,10 +340,16 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void interrupt() {
-		if(isInterrupted.compareAndSet(false, true)) {
-			interruptActually();
+		if(isStarted.get()) {
+			if(isInterrupted.compareAndSet(false, true)) {
+				interruptActually();
+			} else {
+				throw new IllegalStateException(getName() + ": was already interrupted");
+			}
 		} else {
-			throw new IllegalStateException(getName() + ": was already interrupted");
+			throw new IllegalStateException(
+				getName() + ": not started yet but interrupt is invoked"
+			);
 		}
 	}
 	//
@@ -398,7 +422,7 @@ implements LoadExecutor<T> {
 	@Override
 	public void setDataItemDst(final DataItemDst<T> itemDst)
 	throws RemoteException {
-		this.consumer = itemDst == null ? null : new DataItemConsumer<>(itemDst, maxCount);
+		this.consumer = itemDst == null ? null : new BasicDataItemConsumer(itemDst, maxCount);
 		LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemDst + "\"");
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -412,7 +436,9 @@ implements LoadExecutor<T> {
 				Markers.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", getName(),
 				counterSubm.get(), countRej.get()
 			);
-			shutdown();
+			if(isShutdown.compareAndSet(false, true)) {
+				shutdownActually();
+			}
 			return;
 		}
 		// prepare the I/O task instance (make the link between the data item and load type)
@@ -489,8 +515,8 @@ implements LoadExecutor<T> {
 				}
 			}
 		} else {
-			if(!isShutdown.get()) {
-				shutdown();
+			if(!isShutdown.compareAndSet(false, true)) {
+				shutdownActually();
 			}
 			if(srcLimit > 0) {
 				countRej.addAndGet(srcLimit);
@@ -761,14 +787,10 @@ implements LoadExecutor<T> {
 			if(isShutdown.compareAndSet(false, true)) {
 				shutdownActually();
 			} else {
-				LOG.debug(
-					Markers.MSG,
-					"{}: ignoring the shutdown invocation because is already shut down", getName()
-				);
+				throw new IllegalStateException(getName() + ": has been shutdown already");
 		} else {
-			LOG.debug(
-				Markers.MSG,
-				"{}: ignoring the shutdown invocation because has not been started yet", getName()
+			throw new IllegalStateException(
+				getName() + ": not started yet but shutdown is invoked"
 			);
 		}
 	}
@@ -828,9 +850,7 @@ implements LoadExecutor<T> {
 		if(isClosed.compareAndSet(false, true)) {
 			closeActually();
 		} else {
-			throw new IllegalStateException(
-				getName() + ": has been closed already"
-			);
+			throw new IllegalStateException(getName() + ": has been closed already");
 		}
 	}
 	//
@@ -838,13 +858,15 @@ implements LoadExecutor<T> {
 	throws IOException {
 		LOG.debug(Markers.MSG, "Invoked close for {}", getName());
 		try {
-			if(!isInterrupted.get()) {
+			if(isInterrupted.compareAndSet(false, true)) {
 				interruptActually();
 			}
 			releaseDaemon.interrupt();
 		} finally {
 			try {
-				consumer.await();
+				if(consumer != null) {
+					consumer.await();
+				}
 			} catch(final InterruptedException e) {
 				LOG.warn(Markers.ERR, getName() + ": awaiting the consumer finish interrupted");
 			} finally {

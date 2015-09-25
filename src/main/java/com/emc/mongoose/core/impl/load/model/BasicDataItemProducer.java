@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
-import com.emc.mongoose.core.api.load.model.Producer;
+import com.emc.mongoose.core.api.load.model.DataItemProducer;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -22,9 +22,9 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 19.06.15.
  */
-public class DataItemProducer<T extends DataItem>
+public class BasicDataItemProducer<T extends DataItem>
 extends Thread
-implements Producer<T> {
+implements DataItemProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -36,17 +36,17 @@ implements Producer<T> {
 	protected T lastDataItem;
 	protected boolean isCircular;
 	//
-	public DataItemProducer(final DataItemSrc<T> itemSrc, final int batchSize) {
+	public BasicDataItemProducer(final DataItemSrc<T> itemSrc, final int batchSize) {
 		this(itemSrc, batchSize, false);
 	}
 	//
-	public DataItemProducer(
+	public BasicDataItemProducer(
 		final DataItemSrc<T> itemSrc, final int batchSize, final boolean isCircular
 	) {
 		this(itemSrc, batchSize, isCircular, 0, null);
 	}
 	//
-	public DataItemProducer(
+	public BasicDataItemProducer(
 		final DataItemSrc<T> itemSrc, final int batchSize, final boolean isCircular,
 		final long skipCount, final T lastDataItem
 	) {
@@ -115,13 +115,23 @@ implements Producer<T> {
 			do {
 				try {
 					n = itemSrc.get(buff, batchSize);
+					if(isInterrupted) {
+						break;
+					}
 					if(n > 0) {
-						for(m = 0; m < n; m += itemDst.put(buff, m, n)) {
+						for(m = 0; m < n && !isInterrupted; m += itemDst.put(buff, m, n)) {
 							LockSupport.parkNanos(1);
+						}
+						if(isInterrupted) {
+							break;
 						}
 						count += n;
 					} else {
-						LockSupport.parkNanos(1);
+						if(isInterrupted) {
+							break;
+						} else {
+							LockSupport.parkNanos(1);
+						}
 					}
 				} catch(final EOFException e) {
 					if(isCircular) {
@@ -134,13 +144,13 @@ implements Producer<T> {
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to transfer the data items");
 				}
-			} while(!isInterrupted());
+			} while(!isInterrupted);
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "{}: producing is interrupted", itemSrc);
 		} finally {
 			LOG.debug(
-				Markers.MSG, "{}: produced {} items, shutting down the destination \"{}\"", itemSrc,
-				count, itemDst
+				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
+				count, itemSrc, itemDst
 			);
 		}
 	}
@@ -151,9 +161,16 @@ implements Producer<T> {
 				itemSrc.setLastDataItem(lastDataItem);
 				itemSrc.skip(skipCount);
 			} catch (final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e,
-					"Failed to skip such amount of data items - \"{}\"", skipCount);
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to skip {} items", skipCount);
 			}
 		}
+	}
+	//
+	private volatile boolean isInterrupted = false;
+	//
+	@Override
+	public void interrupt()
+	throws IllegalStateException {
+		isInterrupted = true;
 	}
 }

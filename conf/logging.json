@@ -42,7 +42,7 @@
 					"follow": "true",
 					"PatternLayout": {
 						"alwaysWriteExceptions" : false,
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-25.25t %m%n}"
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-15.15c{1} %-35.35t %m%n}"
 					},
 					"Filters": {
 						"Filter" : [
@@ -274,7 +274,7 @@
 					"name": "async",
 					"type": "Async",
 					"blocking": "true",
-					"bufferSize": "1000000",
+					"bufferSize": "100000",
 					"AppenderRef": [
 						{ "ref": "stdout" },
 						{ "ref": "msgFile" },

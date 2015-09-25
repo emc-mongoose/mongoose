@@ -4,7 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.Consumer;
+import com.emc.mongoose.core.api.load.model.DataItemConsumer;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -25,9 +25,9 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 26.05.15.
  */
-public abstract class AsyncDataItemConsumerBase<T extends DataItem>
+public abstract class DataItemConsumerBase<T extends DataItem>
 extends Thread
-implements Consumer<T> {
+implements DataItemConsumer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	// configuration params
@@ -46,7 +46,7 @@ implements Consumer<T> {
 	private final boolean shuffle;
 	private final int batchSize;
 	//
-	public AsyncDataItemConsumerBase(
+	public DataItemConsumerBase(
 		final long maxCount, final int maxQueueSize, final boolean shuffle, final int batchSize
 	) throws IllegalArgumentException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
@@ -123,7 +123,9 @@ implements Consumer<T> {
 	protected void putActually(final T item)
 		throws InterruptedException {
 		if(item == null || counterPreSubm.get() >= maxCount) {
-			shutdown();
+			if(!isShutdown.compareAndSet(false, true)) {
+				shutdownActually();
+			}
 		}
 		if(isShutdown.get()) {
 			throw new InterruptedException("Shut down already");
@@ -172,7 +174,9 @@ implements Consumer<T> {
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Submit item failure @ count {}", i);
 		} finally {
-			shutdown();
+			if(!isShutdown.compareAndSet(false, true)) {
+				shutdownActually();
+			}
 		}
 	}
 	//

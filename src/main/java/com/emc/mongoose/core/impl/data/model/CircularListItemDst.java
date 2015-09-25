@@ -65,7 +65,7 @@ extends ListItemDst<T> {
 				// the buffer entirely
 				items.removeAll(items.subList(0, n - limit));
 			}
-			if(!items.addAll(buffer)) {
+			if(!items.addAll(0, buffer)) {
 				throw new IOException("Failed to put " + n + " items");
 			}
 		} else {

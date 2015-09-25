@@ -7,6 +7,6 @@ import com.emc.mongoose.core.api.data.model.DataItemDst;
 /**
  Created by kurila on 24.09.15.
  */
-public interface Consumer<T extends DataItem>
+public interface DataItemConsumer<T extends DataItem>
 extends DataItemDst<T>, LifeCycle {
 }

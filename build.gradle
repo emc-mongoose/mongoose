@@ -261,6 +261,7 @@ dependencies {
 		library.commons_collections4,
 		library.httpcore_plus_nio,
 		library.log4j_api_plus_core,
+		library.log4j_iostreams,
 		library.jackson_core,
 		library.jackson_databind,
 	)
