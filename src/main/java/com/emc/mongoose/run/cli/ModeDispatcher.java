@@ -9,6 +9,10 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 // mongoose-scenario.jar
+import com.emc.mongoose.run.scenario.Chain;
+import com.emc.mongoose.run.scenario.Rampup;
+import com.emc.mongoose.run.scenario.Single;
+import com.emc.mongoose.run.scenario.cli.HumanFriendly;
 import com.emc.mongoose.run.webserver.WUIRunner;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
@@ -100,18 +104,25 @@ public final class ModeDispatcher {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		if (rtConfig != null) {
 			final String scenarioName = rtConfig.getScenarioName();
-			switch (rtConfig.getScenarioName()) {
+			switch (scenarioName) {
 				case Constants.RUN_SCENARIO_SINGLE:
+					new Single(rtConfig).run();
 					break;
 				case Constants.RUN_SCENARIO_CHAIN:
+					new Chain(rtConfig).run();
 					break;
 				case Constants.RUN_SCENARIO_RAMPUP:
+					new Rampup(rtConfig).run();
 					break;
 				default:
 					throw new IllegalArgumentException(
 						String.format("Incorrect scenario: \"%s\"", scenarioName)
 					);
 			}
+		} else {
+			throw new NullPointerException(
+				"runTimeConfig hasn't been initialized"
+			);
 		}
 	}
 }
