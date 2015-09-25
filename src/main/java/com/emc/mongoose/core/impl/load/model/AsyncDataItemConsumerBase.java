@@ -25,7 +25,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 26.05.15.
  */
-public abstract class DataItemConsumerBase<T extends DataItem>
+public abstract class AsyncDataItemConsumerBase<T extends DataItem>
 extends Thread
 implements DataItemConsumer<T> {
 	//
@@ -46,7 +46,7 @@ implements DataItemConsumer<T> {
 	private final boolean shuffle;
 	private final int batchSize;
 	//
-	public DataItemConsumerBase(
+	public AsyncDataItemConsumerBase(
 		final long maxCount, final int maxQueueSize, final boolean shuffle, final int batchSize
 	) throws IllegalArgumentException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;

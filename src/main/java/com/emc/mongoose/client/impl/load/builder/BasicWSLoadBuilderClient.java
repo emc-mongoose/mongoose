@@ -1,19 +1,16 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-client.jar
 import com.emc.mongoose.client.impl.load.executor.BasicWSLoadClient;
@@ -55,7 +52,7 @@ implements WSLoadBuilderClient<T, U> {
 	protected WSLoadBuilderSvc<T, U> resolve(final String serverAddr)
 	throws IOException {
 		WSLoadBuilderSvc<T, U> rlb;
-		final Service remoteSvc = ServiceUtils.getRemoteSvc(
+		final Service remoteSvc = ServiceUtil.getRemoteSvc(
 			"//" + serverAddr + '/' + getClass().getPackage().getName().replace("client", "server")
 		);
 		if(remoteSvc == null) {
@@ -89,13 +86,13 @@ implements WSLoadBuilderClient<T, U> {
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setRequestConfig(reqConf); // should upload req conf right before instancing
-			nextLoad = (LoadSvc<T>) ServiceUtils.getRemoteSvc(
+			nextLoad = (LoadSvc<T>) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final String loadTypeStr = reqConf.getLoadType().name();
+		final String loadTypeStr = reqConf.getLoadType().name().toLowerCase();
 		//
 		return (U) new BasicWSLoadClient<>(
 			rtConfig, (WSRequestConfig<T>) reqConf, nodeAddrs,

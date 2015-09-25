@@ -146,7 +146,7 @@ implements DataItemDst<T>, DataItemSrc<T> {
 	}
 	//
 	@Override
-	public final String toString() {
+	public String toString() {
 		return "itemsQueue#" + hashCode() + "";
 	}
 }

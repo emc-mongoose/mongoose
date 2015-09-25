@@ -6,7 +6,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 //mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -59,7 +59,7 @@ implements WSLoadBuilderSvc<T, U> {
 	public final String buildRemotely()
 	throws RemoteException {
 		final WSLoadSvc<T> loadSvc = (WSLoadSvc<T>) build();
-		ServiceUtils.create(loadSvc);
+		ServiceUtil.create(loadSvc);
 		if(configTable != null) {
 			LOG.info(Markers.MSG, configTable);
 			configTable = null;
@@ -124,7 +124,7 @@ implements WSLoadBuilderSvc<T, U> {
 		LOG.debug(Markers.MSG, "Load builder service instance created");
 		try {
 		/*final RemoteStub stub = */
-			ServiceUtils.create(this);
+			ServiceUtil.create(this);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
 		} catch (final DuplicateSvcNameException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");
@@ -157,10 +157,6 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override
 	public final void close()
 	throws IOException {
-		ServiceUtils.close(this);
-	}
-	//
-	@Override
-	public void run() {
+		ServiceUtil.close(this);
 	}
 }

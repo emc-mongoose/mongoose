@@ -45,4 +45,9 @@ implements RemoteItemBuffDst<T> {
 	public void close() {
 		queue.clear();
 	}
+	//
+	@Override
+	public final String toString() {
+		return "svcItemsBuff" + buffSize + "#" + hashCode();
+	}
 }

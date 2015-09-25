@@ -66,7 +66,7 @@ public class BinItemSrcTest {
 		};
 
 		Mockito.when(itemSrc.readUnshared())
-			.thenReturn(Arrays.asList(dataItems))
+			.thenReturn(dataItems)
 			.thenThrow(new RuntimeException());
 
 		int maxCount = 5;
@@ -90,7 +90,7 @@ public class BinItemSrcTest {
 		};
 
 		Mockito.when(itemSrc.readUnshared())
-			.thenReturn(Arrays.asList(dataItems))
+			.thenReturn(dataItems)
 			.thenThrow(new RuntimeException());
 
 		int startCount = 2;

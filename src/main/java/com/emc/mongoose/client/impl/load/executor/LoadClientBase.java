@@ -215,39 +215,17 @@ implements LoadClient<T> {
 		}
 	}
 	//
-	private final class LogMetricsTask
-	implements Runnable {
-		@Override
-		public final void run() {
-			final Thread currThread = Thread.currentThread();
-			currThread.setName(getName());
-			while(!currThread.isInterrupted()) {
-				try {
-					logMetrics(Markers.PERF_AVG);
-					TimeUnit.SECONDS.sleep(metricsPeriodSec);
-				} catch(final InterruptedException e) {
-					break;
-				}
-			}
-		}
-	}
-	//
 	private void scheduleSvcMgmtTasks() {
 		for(final LoadSvc<T> nextLoadSvc : remoteLoadMap.values()) {
 			mgmtSvcExecutor.submit(new LoadDataItemsBatchTask(nextLoadSvc));
 		}
 		mgmtSvcExecutor.submit(new AggregateIOStatsTask());
 		mgmtSvcExecutor.submit(new InterruptOnCountLimitReachedTask());
-		if(metricsPeriodSec > 0) {
-			mgmtSvcExecutor.submit(new LogMetricsTask());
-		}
 		mgmtSvcExecutor.shutdown();
 	}
 	//
 	@Override
 	protected void startActually() {
-		//
-		super.startActually();
 		//
 		LoadSvc<T> nextLoadSvc;
 		for(final String addr : loadSvcAddrs) {
@@ -262,6 +240,8 @@ implements LoadClient<T> {
 				LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
 			}
 		}
+		//
+		super.startActually();
 		//
 		scheduleSvcMgmtTasks();
 	}
@@ -311,9 +291,9 @@ implements LoadClient<T> {
 				interruptExecutor.shutdownNow();
 			}
 			//
-			mgmtSvcExecutor.shutdownNow();
 			remoteSubmExecutor.shutdownNow();
-			//forceAggregation();
+			mgmtSvcExecutor.shutdownNow();
+			forceAggregation();
 			//
 			LOG.debug(Markers.MSG, "{}: interrupted", getName());
 		} finally {
@@ -452,8 +432,10 @@ implements LoadClient<T> {
 		return super.getLoadState();
 	}
 	//
-	//
 	private void forceAggregation() {
+		if(isClosed.get()) {
+			return;
+		}
 		final ExecutorService forcedAggregator = Executors.newFixedThreadPool(
 			remoteLoadMap.size(), new GroupThreadFactory("forcedAggregator<" + getName() + ">")
 		);
@@ -467,8 +449,10 @@ implements LoadClient<T> {
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Forced aggregation interrupted");
+		} finally {
+			forcedAggregator.shutdownNow();
+			lastStats = ioStats.getSnapshot();
 		}
-		lastStats = ioStats.getSnapshot();
 	}
 	//
 	@Override

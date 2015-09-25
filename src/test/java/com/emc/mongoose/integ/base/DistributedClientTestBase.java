@@ -1,6 +1,6 @@
 package com.emc.mongoose.integ.base;
 //
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
@@ -21,7 +21,7 @@ extends DistributedTestBase {
 	throws Exception {
 		DistributedTestBase.setUpClass();
 		CLIENT_BUILDER = new BasicWSClientBuilder<>()
-			.setClientMode(new String[] {ServiceUtils.getHostAddr()});
+			.setClientMode(new String[] {ServiceUtil.getHostAddr()});
 	}
 	//
 	@AfterClass

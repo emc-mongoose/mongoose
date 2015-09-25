@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 23.09.15.
  */
 public interface LifeCycle
-extends Closeable, Runnable {
+extends Closeable {
 	//
 	String getName()
 	throws RemoteException;

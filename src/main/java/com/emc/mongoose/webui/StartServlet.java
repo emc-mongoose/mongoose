@@ -4,10 +4,9 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
@@ -117,7 +116,7 @@ public final class StartServlet extends CommonServlet {
 			public void interrupt() {
 				RunTimeConfig.setContext(localRunTimeConfig);
 				try {
-					ServiceUtils.close(loadBuilderSvc);
+					ServiceUtil.close(loadBuilderSvc);
 				} catch(final RemoteException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Networking failure");
 				}

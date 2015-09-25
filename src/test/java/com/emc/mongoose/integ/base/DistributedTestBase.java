@@ -2,7 +2,7 @@ package com.emc.mongoose.integ.base;
 //
 import static com.emc.mongoose.common.conf.Constants.*;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 //
@@ -26,9 +26,9 @@ extends WSMockTestBase {
 	throws Exception {
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, ServiceUtils.getHostAddr());
+		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, ServiceUtil.getHostAddr());
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_SERVER);
-		ServiceUtils.init();
+		ServiceUtil.init();
 		LOAD_BUILDER_SVC = new BasicWSLoadBuilderSvc<>(rtConfig);
 		LOAD_BUILDER_SVC.start();
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_CLIENT);

@@ -276,7 +276,7 @@ implements Externalizable {
 		return mongooseKeys;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public static String getLoadConcurrencyParamName(final String loadType) {
+	public static String getConnCountPerNodeParamName(final String loadType) {
 		return "load.type." + loadType + ".connections";
 	}
 	//
@@ -435,7 +435,7 @@ implements Externalizable {
 		for(String nodeAddr : getStorageAddrs()) {
 			if (!nodeAddr.contains(STORAGE_PORT_SEP)) {
 				nodeAddr = nodeAddr + STORAGE_PORT_SEP + getString(
-					getApiPortParamName(getApiName())
+					getApiPortParamName(getApiName().toLowerCase())
 				);
 			}
 			nodes.add(nodeAddr);
@@ -561,11 +561,11 @@ implements Externalizable {
 	}
 	//
 	public final int getWorkerCountFor(final String loadType) {
-		return getInt("load.type." + loadType + ".workers");
+		return getInt(getLoadWorkersParamName(loadType));
 	}
 	//
 	public final int getConnCountPerNodeFor(final String loadType) {
-		return getInt("load.type." + loadType + ".connections");
+		return getInt(getConnCountPerNodeParamName(loadType));
 	}
 	//
 	public final String getApiS3AuthPrefix() {

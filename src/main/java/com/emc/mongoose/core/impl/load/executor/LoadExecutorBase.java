@@ -16,7 +16,7 @@ import com.emc.mongoose.core.api.load.model.DataItemConsumer;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.model.BasicDataItemConsumer;
+import com.emc.mongoose.core.impl.load.model.BasicAsyncDataItemConsumer;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
@@ -197,8 +197,6 @@ implements LoadExecutor<T> {
 		loadType = reqConfig.getLoadType();
 		//
 		metricsPeriodSec = rtConfig.getLoadMetricsPeriodSec();
-		initStats(rtConfig.getFlagServeJMX());
-		//
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the nodes array
 		storageNodeAddrs = addrs.clone();
@@ -286,6 +284,7 @@ implements LoadExecutor<T> {
 	//
 	protected void startActually() {
 		LOG.debug(Markers.MSG, "Starting {}", getName());
+		initStats(rtConfig.getFlagServeJMX());
 		ioStats.start();
 		//
 		if(rtConfig.isRunResumeEnabled()) {
@@ -422,8 +421,15 @@ implements LoadExecutor<T> {
 	@Override
 	public void setDataItemDst(final DataItemDst<T> itemDst)
 	throws RemoteException {
-		this.consumer = itemDst == null ? null : new BasicDataItemConsumer(itemDst, maxCount);
-		LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemDst + "\"");
+		if(itemDst == null || itemDst instanceof DataItemConsumer) {
+			this.consumer = (DataItemConsumer<T>) itemDst;
+			LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemDst + "\"");
+		} else {
+			this.consumer = new BasicAsyncDataItemConsumer<>(itemDst, maxCount);
+			LOG.debug(
+				Markers.MSG, getName() + ": wrapped \"" + itemDst + "\" with the async consumer"
+			);
+		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////

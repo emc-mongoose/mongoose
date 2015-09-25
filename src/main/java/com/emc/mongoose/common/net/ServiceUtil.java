@@ -1,7 +1,5 @@
 package com.emc.mongoose.common.net;
 // mongoose-common.jar
-import static com.emc.mongoose.common.conf.Constants.RUN_MODE_COMPAT_SERVER;
-import static com.emc.mongoose.common.conf.Constants.RUN_MODE_SERVER;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
@@ -46,7 +44,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 05.05.14.
  */
-public abstract class ServiceUtils {
+public abstract class ServiceUtil {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private static Registry REGISTRY = null;
@@ -200,7 +198,7 @@ public abstract class ServiceUtils {
 	}
 	//
 	public static String getLocalSvcName(final String name) {
-		final String rmiHostName = System.getProperty(ServiceUtils.KEY_RMI_HOSTNAME);
+		final String rmiHostName = System.getProperty(ServiceUtil.KEY_RMI_HOSTNAME);
 		return "//" + (rmiHostName == null ? getHostAddr() : rmiHostName) +
 			"/" + name;
 	}
@@ -350,7 +348,7 @@ public abstract class ServiceUtils {
 		File jarSelf = null;
 		try {
 			jarSelf = new File(
-				ServiceUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+				ServiceUtil.class.getProtectionDomain().getCodeSource().getLocation().toURI()
 			);
 		} catch(final URISyntaxException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Determining the launcher path failure");

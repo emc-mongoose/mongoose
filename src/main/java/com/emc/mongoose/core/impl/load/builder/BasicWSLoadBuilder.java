@@ -39,13 +39,13 @@ implements WSLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public BasicWSLoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig) {
+	public BasicWSLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig) {
 		//
-		super.setProperties(runTimeConfig);
+		super.setProperties(rtConfig);
 		//
 		final String paramName = RunTimeConfig.KEY_STORAGE_SCHEME;
 		try {
-			WSRequestConfig.class.cast(reqConf).setScheme(runTimeConfig.getStorageProto());
+			WSRequestConfig.class.cast(reqConf).setScheme(rtConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {

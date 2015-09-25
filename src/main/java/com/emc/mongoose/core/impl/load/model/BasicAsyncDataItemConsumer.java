@@ -18,15 +18,15 @@ import java.util.List;
 /**
  Created by kurila on 19.06.15.
  */
-public class BasicDataItemConsumer<T extends DataItem>
-extends DataItemConsumerBase<T>
+public class BasicAsyncDataItemConsumer<T extends DataItem>
+extends AsyncDataItemConsumerBase<T>
 implements DataItemDst<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final DataItemDst<T> itemDst;
 	//
-	public BasicDataItemConsumer(final DataItemDst<T> itemDst, final long maxCount) {
+	public BasicAsyncDataItemConsumer(final DataItemDst<T> itemDst, final long maxCount) {
 		super(
 			maxCount > 0 ? maxCount : Long.MAX_VALUE,
 			RunTimeConfig.getContext().getTasksMaxQueueSize(),

@@ -6,7 +6,7 @@ import com.codahale.metrics.UniformReservoir;
 //
 import com.codahale.metrics.UniformSnapshot;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 //
@@ -36,7 +36,7 @@ implements IOStats {
 	protected IOStatsBase(final String name, final int serveJmxPort) {
 		this.name = name;
 		if(serveJmxPort > 0) {
-			mBeanServer = ServiceUtils.getMBeanServer(serveJmxPort);
+			mBeanServer = ServiceUtil.getMBeanServer(serveJmxPort);
 			jmxReporter = CustomJmxReporter.forRegistry(metrics).registerWith(mBeanServer).build();
 		} else {
 			mBeanServer = null;

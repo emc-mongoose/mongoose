@@ -4,15 +4,17 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.load.model.DataItemConsumer;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 // mongoose-server-impl.jar
+import com.emc.mongoose.core.impl.load.model.BasicSyncDataItemConsumer;
 import com.emc.mongoose.server.impl.load.model.BasicItemBuffDst;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.model.RemoteItemBuffDst;
@@ -25,6 +27,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 16.12.14.
  */
@@ -45,16 +49,10 @@ implements WSLoadSvc<T> {
 			runTimeConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
-		try {
-			// by default, may be overridden later externally:
-			super.setDataItemDst(
-				new BasicItemBuffDst<T>(rtConfig.getTasksMaxQueueSize(), rtConfig.getBatchSize())
-			);
-		} catch(final RemoteException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, getName() + ": failed to set item buffer consumer"
-			);
-		}
+		// by default, may be overridden later externally:
+		setDataItemDst(
+			new BasicItemBuffDst<T>(rtConfig.getTasksMaxQueueSize(), rtConfig.getBatchSize())
+		);
 	}
 	//
 	@Override
@@ -68,14 +66,14 @@ implements WSLoadSvc<T> {
 				consumer.close();
 			}
 			// close the exposed network service, if any
-			final Service svc = ServiceUtils.getLocalSvc(
-				ServiceUtils.getLocalSvcName(getName())
+			final Service svc = ServiceUtil.getLocalSvc(
+				ServiceUtil.getLocalSvcName(getName())
 			);
 			if(svc == null) {
 				LOG.debug(Markers.MSG, "The load was not exposed remotely");
 			} else {
 				LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
-				ServiceUtils.close(svc);
+				ServiceUtil.close(svc);
 			}
 		}
 	}
@@ -87,27 +85,36 @@ implements WSLoadSvc<T> {
 			itemDst, getName()
 		);
 		try {
-			if(itemDst instanceof Service) {
-				final String remoteSvcName = ((Service) itemDst).getName();
-				LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
-				final Service localSvc = ServiceUtils.getLocalSvc(
-					ServiceUtils.getLocalSvcName(remoteSvcName)
-				);
-				if(localSvc == null) {
-					LOG.error(
-						Markers.ERR, "Failed to get local service for name \"{}\"", remoteSvcName
+			if(itemDst instanceof DataItemConsumer) {
+				if(itemDst instanceof Service) {
+					final String remoteSvcName = ((Service) itemDst).getName();
+					LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
+					final Service localSvc = ServiceUtil.getLocalSvc(
+						ServiceUtil.getLocalSvcName(remoteSvcName)
 					);
+					if(localSvc == null) {
+						LOG.error(
+							Markers.ERR, "Failed to get local service for name \"{}\"",
+							remoteSvcName
+						);
+					} else {
+						super.setDataItemDst((DataItemDst<T>) localSvc);
+						LOG.debug(
+							Markers.MSG,
+							"Successfully resolved local service and appended it as consumer"
+						);
+					}
 				} else {
-					super.setDataItemDst((DataItemDst<T>) localSvc);
-					LOG.debug(
-						Markers.MSG,
-						"Successfully resolved local service and appended it as consumer"
+					LOG.warn(
+						Markers.ERR, "Items destination is not a remote service instance: {}",
+						itemDst.getClass().getName()
 					);
 				}
 			} else {
-				LOG.warn(
-					Markers.ERR, "Items destination is not a remote service instance: {}",
-					itemDst == null ? null : itemDst.getClass().getName()
+				super.setDataItemDst(
+					itemDst instanceof RemoteItemBuffDst ?
+						new BasicSyncDataItemConsumer<>(itemDst) :
+						itemDst
 				);
 			}
 		} catch(final IOException ee) {

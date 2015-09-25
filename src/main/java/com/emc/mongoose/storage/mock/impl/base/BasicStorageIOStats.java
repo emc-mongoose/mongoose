@@ -7,7 +7,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 //
 //
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
@@ -99,7 +99,7 @@ implements StorageIOStats {
 		this.storage = storage;
 		//
 		if(jmxServeFlag) {
-			final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
+			final MBeanServer mBeanServer = ServiceUtil.getMBeanServer(
 				RunTimeConfig.getContext().getRemotePortMonitor()
 			);
 			jmxReporter = CustomJmxReporter.forRegistry(metricRegistry)

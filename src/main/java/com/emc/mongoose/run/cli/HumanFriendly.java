@@ -39,11 +39,11 @@ public class HumanFriendly {
         LENGTH("l", "Size of the object to write", true, RunTimeConfig.KEY_DATA_SIZE_MIN, RunTimeConfig.KEY_DATA_SIZE_MAX),
         COUNT("c", "Count of objects to write", true, RunTimeConfig.KEY_DATA_ITEM_COUNT),
         CONNS("n", "Number of concurrent connections per storage node", true,
-	        RunTimeConfig.getLoadConcurrencyParamName("create"),
-	        RunTimeConfig.getLoadConcurrencyParamName("read"),
-	        RunTimeConfig.getLoadConcurrencyParamName("update"),
-	        RunTimeConfig.getLoadConcurrencyParamName("delete"),
-	        RunTimeConfig.getLoadConcurrencyParamName("append")
+	        RunTimeConfig.getConnCountPerNodeParamName("create"),
+	        RunTimeConfig.getConnCountPerNodeParamName("read"),
+	        RunTimeConfig.getConnCountPerNodeParamName("update"),
+	        RunTimeConfig.getConnCountPerNodeParamName("delete"),
+	        RunTimeConfig.getConnCountPerNodeParamName("append")
         ),
         THREADS("t", "Number of I/O threads", true, RunTimeConfig.getLoadWorkersParamName("create"),
                 RunTimeConfig.getLoadWorkersParamName("update"),

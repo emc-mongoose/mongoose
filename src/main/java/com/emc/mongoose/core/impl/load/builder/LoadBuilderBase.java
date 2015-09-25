@@ -64,23 +64,21 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig)
+	public LoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
 	throws IllegalStateException {
-		RunTimeConfig.setContext(runTimeConfig);
+		RunTimeConfig.setContext(rtConfig);
 		if(reqConf != null) {
-			reqConf.setProperties(runTimeConfig);
+			reqConf.setProperties(rtConfig);
 		} else {
 			throw new IllegalStateException("Shared request config is not initialized");
 		}
 		//
 		String paramName;
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
-			paramName = RunTimeConfig.getLoadConcurrencyParamName(loadType.name().toLowerCase());
+			paramName = RunTimeConfig.getConnCountPerNodeParamName(loadType.name().toLowerCase());
 			try {
 				setConnPerNodeFor(
-					runTimeConfig.getConnCountPerNodeFor(
-						loadType.name().toLowerCase()
-					), loadType
+					rtConfig.getConnCountPerNodeFor(loadType.name().toLowerCase()), loadType
 				);
 			} catch(final NoSuchElementException e) {
 				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
@@ -93,9 +91,7 @@ implements LoadBuilder<T, U> {
 			paramName = RunTimeConfig.getLoadWorkersParamName(loadType.name().toLowerCase());
 			try {
 				setWorkerCountFor(
-					runTimeConfig.getWorkerCountFor(
-						loadType.name().toLowerCase()
-					), loadType
+					rtConfig.getWorkerCountFor(loadType.name().toLowerCase()), loadType
 				);
 			} catch(final NoSuchElementException e) {
 				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
@@ -106,7 +102,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_DATA_ITEM_COUNT;
 		try {
-			setMaxCount(runTimeConfig.getLoadLimitCount());
+			setMaxCount(rtConfig.getLoadLimitCount());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -115,7 +111,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_DATA_SIZE_MIN;
 		try {
-			setMinObjSize(runTimeConfig.getDataSizeMin());
+			setMinObjSize(rtConfig.getDataSizeMin());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -124,7 +120,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_DATA_SIZE_MAX;
 		try {
-			setMaxObjSize(runTimeConfig.getDataSizeMax());
+			setMaxObjSize(rtConfig.getDataSizeMax());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -133,7 +129,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_DATA_SIZE_BIAS;
 		try {
-			setObjSizeBias(runTimeConfig.getDataSizeBias());
+			setObjSizeBias(rtConfig.getDataSizeBias());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -142,7 +138,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_LOAD_LIMIT_RATE;
 		try {
-			setRateLimit(runTimeConfig.getLoadLimitRate());
+			setRateLimit(rtConfig.getLoadLimitRate());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -151,7 +147,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_LOAD_UPDATE_PER_ITEM;
 		try {
-			setUpdatesPerItem(runTimeConfig.getInt(paramName));
+			setUpdatesPerItem(rtConfig.getInt(paramName));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -160,7 +156,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_STORAGE_ADDRS;
 		try {
-			setDataNodeAddrs(runTimeConfig.getStorageAddrsWithPorts());
+			setDataNodeAddrs(rtConfig.getStorageAddrsWithPorts());
 		} catch(final NoSuchElementException|ConversionException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -169,12 +165,12 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.getApiPortParamName(reqConf.getAPI().toLowerCase());
 		try {
-			reqConf.setPort(runTimeConfig.getApiTypePort(reqConf.getAPI().toLowerCase()));
+			reqConf.setPort(rtConfig.getApiTypePort(reqConf.getAPI().toLowerCase()));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
-		final String listFilePathStr = runTimeConfig.getDataSrcFPath();
+		final String listFilePathStr = rtConfig.getDataSrcFPath();
 		if(listFilePathStr != null && !listFilePathStr.isEmpty()) {
 			final Path listFilePath = Paths.get(listFilePathStr);
 			if(!Files.exists(listFilePath)) {

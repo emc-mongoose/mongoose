@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 //
@@ -158,17 +158,17 @@ implements Runnable {
 			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
 			.setLimitTime(100, TimeUnit.SECONDS)
 			.setLimitRate(10000);
-		// standalone
+		/* standalone
 		try(final StorageClient<WSObject> client = clientBuilder.build()) {
 			final Thread sanityThread1 = new Thread(new Sanity(client), "sanityStandalone");
 			sanityThread1.start();
 			LOG.info(Markers.MSG, "Standalone sanity started");
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
-		}
+		}*/
 		// distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
-		ServiceUtils.init();
+		ServiceUtil.init();
 		//
 		try(
 			final LoadBuilderSvc<WSObject, WSLoadSvc<WSObject>>
@@ -179,7 +179,7 @@ implements Runnable {
 			rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_MONITOR, 1299);
 			try(
 				final StorageClient<WSObject> client = clientBuilder
-					.setClientMode(new String[] {ServiceUtils.getHostAddr()})
+					.setClientMode(new String[] {ServiceUtil.getHostAddr()})
 					.build();
 			) {
 				final Thread sanityThread2 = new Thread(new Sanity(client), "sanityDistributed");
@@ -190,7 +190,7 @@ implements Runnable {
 			}
 		}
 		//
-		ServiceUtils.shutdown();
+		ServiceUtil.shutdown();
 		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");
