@@ -45,11 +45,17 @@ extends DistributedLoadBuilderTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		System.setProperty(RunTimeConfig.KEY_API_NAME, "s3");
 		DistributedLoadBuilderTestBase.setUpClass();
-		final Chain chainScenario = new Chain(
-			LOAD_BUILDER_CLIENT, LOAD_JOB_TIME_LIMIT_SEC, TimeUnit.SECONDS, LOAD_SEQ, false, true
-		);
+		//
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_API_NAME, "s3");
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LOAD_JOB_TIME_LIMIT_SEC + "s");
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER, true);
+		RunTimeConfig.setContext(rtConfig);
+		//
+		final Chain chainScenario = new Chain(rtConfig);
 		try(
 			final BufferingOutputStream
 				stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
