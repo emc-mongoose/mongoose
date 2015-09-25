@@ -11,8 +11,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
-import com.emc.mongoose.run.cli.HumanFriendly;
-import com.emc.mongoose.run.scenario.shared.WSLoadBuilderFactory;
+import com.emc.mongoose.util.shared.WSLoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -22,7 +21,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -193,18 +191,12 @@ implements Runnable {
 		}
 		//
 		loadJobSeq.clear();
+		LOG.info(Markers.MSG, "Scenario end");
 	}
 	//
 	public static void main(final String... args) {
-		//
 		RunTimeConfig.initContext();
 		final RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
-		// load the config from CLI arguments
-		final Map<String, String> properties = HumanFriendly.parseCli(args);
-		if(properties != null && !properties.isEmpty()) {
-			LOG.debug(Markers.MSG, "Overriding properties {}", properties);
-			runTimeConfig.overrideSystemProperties(properties);
-		}
 		//
 		LOG.info(Markers.MSG, runTimeConfig);
 		//

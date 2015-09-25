@@ -4,11 +4,11 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.run.cli.HumanFriendly;
-import com.emc.mongoose.run.scenario.shared.WSLoadBuilderFactory;
+import com.emc.mongoose.util.shared.WSLoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 09.06.15.
@@ -36,6 +35,18 @@ implements Runnable {
 	//
 	public Single(final RunTimeConfig rtConfig) {
 		final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig);
+		final IOTask.Type loadType = IOTask.Type.valueOf(
+			rtConfig.getString(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD).toUpperCase()
+		);
+		//
+		try {
+			LOG.debug(Markers.MSG, "Using load type: {}", loadType.name());
+			loadBuilder.setLoadType(loadType);
+		} catch (final RemoteException e) {
+			LogUtil.exception(LOG, Level.FATAL, e,
+				"Failed to set load type for \"{}\"", loadBuilder);
+		}
+		//
 		final long timeOut = rtConfig.getLoadLimitTimeValue();
 		//
 		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
@@ -62,6 +73,7 @@ implements Runnable {
 		} finally {
 			try {
 				loadJob.close();
+				LOG.info(Markers.MSG, "Scenario end");
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job: {}", loadJob);
 			}
@@ -73,12 +85,6 @@ implements Runnable {
 		try {
 			RunTimeConfig.initContext();
 			final RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
-			// load the config from CLI arguments
-			final Map<String, String> properties = HumanFriendly.parseCli(args);
-			if(properties != null && !properties.isEmpty()) {
-				LOG.debug(Markers.MSG, "Overriding properties {}", properties);
-				runTimeConfig.overrideSystemProperties(properties);
-			}
 			//
 			LOG.info(Markers.MSG, runTimeConfig);
 			//

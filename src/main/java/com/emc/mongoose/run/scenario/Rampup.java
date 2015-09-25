@@ -7,8 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
-import com.emc.mongoose.run.cli.HumanFriendly;
-import com.emc.mongoose.run.scenario.shared.WSLoadBuilderFactory;
+import com.emc.mongoose.util.shared.WSLoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 //
 import java.rmi.RemoteException;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 11.06.15.
@@ -73,18 +71,13 @@ implements Runnable {
 				}
 			}
 		}
+		//
+		LOG.info(Markers.MSG, "Scenario end");
 	}
 	//
 	public static void main(final String... args) {
-		//
 		RunTimeConfig.initContext();
 		final RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
-		// load the config from CLI arguments
-		final Map<String, String> properties = HumanFriendly.parseCli(args);
-		if(properties != null && !properties.isEmpty()) {
-			LOG.debug(Markers.MSG, "Overriding properties {}", properties);
-			runTimeConfig.overrideSystemProperties(properties);
-		}
 		//
 		LOG.info(Markers.MSG, runTimeConfig);
 		//
