@@ -83,7 +83,7 @@ implements DataItemSrc<T> {
 				} else {
 					return 0;
 				}
-			} else if(o instanceof DataItem[]) { // there are a list of items has been got
+			} else if(o instanceof Object[]) { // there are a list of items has been got
 				srcBuff = Arrays.asList((T[]) o);
 				srcFrom = 0;
 				return get(dstBuff, dstCountLimit);

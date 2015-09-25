@@ -119,9 +119,11 @@ implements DataItemProducer<T> {
 						break;
 					}
 					if(n > 0) {
-						for(m = 0; m < n && !isInterrupted; m += itemDst.put(buff, m, n)) {
+						for(m = 0; m < n && !isInterrupted;) {
+							m += itemDst.put(buff, m, n);
 							LockSupport.parkNanos(1);
 						}
+						buff.clear();
 						if(isInterrupted) {
 							break;
 						}

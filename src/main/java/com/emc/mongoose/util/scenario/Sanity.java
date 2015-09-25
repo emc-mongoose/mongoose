@@ -166,7 +166,7 @@ implements Runnable {
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
-		// distributed mode
+		/* distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		ServiceUtil.init();
 		//
@@ -191,7 +191,7 @@ implements Runnable {
 		}
 		//
 		ServiceUtil.shutdown();
-		// finish
+		// finish*/
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");
 		LOG.info(Markers.MSG, "Sanity done");

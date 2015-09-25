@@ -165,6 +165,7 @@ implements DataItemConsumer<T> {
 						LockSupport.parkNanos(1);
 					}
 				}
+				buff.clear();
 			}
 			LOG.debug(Markers.MSG, "{}: consuming finished @ count {}", getName(), i);
 		} catch(final InterruptedException e) {
