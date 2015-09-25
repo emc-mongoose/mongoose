@@ -183,6 +183,7 @@ implements LoadExecutor<T> {
 		storageNodeCount = addrs.length;
 		//
 		setName(name);
+		LOG.debug(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
 		//
@@ -208,7 +209,7 @@ implements LoadExecutor<T> {
 		LoadCloseHook.add(this);
 	}
 	//
-	protected LoadExecutorBase(
+	private LoadExecutorBase(
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
 		final DataItemSrc<T> itemSrc, final long maxCount, final int instanceNum

@@ -86,8 +86,6 @@ implements WSLoadBuilder<T, U> {
 			);
 		}
 		//
-		final DataItemSrc<T> itemSrc = getDefaultItemSource();
-		//
 		final IOTask.Type loadType = reqConf.getLoadType();
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
@@ -97,7 +95,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		return (U) new BasicWSLoadExecutor<>(
 			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
-			this.itemSrc == null ? getDefaultItemSource() : itemSrc,
+			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}

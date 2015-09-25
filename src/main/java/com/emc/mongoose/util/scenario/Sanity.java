@@ -158,14 +158,14 @@ implements Runnable {
 			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
 			.setLimitTime(100, TimeUnit.SECONDS)
 			.setLimitRate(10000);
-		/* standalone
+		// standalone
 		try(final StorageClient<WSObject> client = clientBuilder.build()) {
 			final Thread sanityThread1 = new Thread(new Sanity(client), "sanityStandalone");
 			sanityThread1.start();
 			LOG.info(Markers.MSG, "Standalone sanity started");
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
-		}*/
+		}
 		// distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		ServiceUtil.init();
