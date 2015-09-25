@@ -89,6 +89,7 @@ implements Runnable {
 			//
 			final Single singleLoadScenario = new Single(runTimeConfig);
 			singleLoadScenario.run();
+			LOG.info(Markers.MSG, "Scenario end");
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed");
 		}

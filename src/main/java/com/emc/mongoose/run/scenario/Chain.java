@@ -207,6 +207,7 @@ implements Runnable {
 		try {
 			final Chain chainScenario = new Chain(runTimeConfig);
 			chainScenario.run();
+			LOG.info(Markers.MSG, "Scenario end");
 		} catch (final Exception e) {
 			e.printStackTrace(System.err);
 			LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed");

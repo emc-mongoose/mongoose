@@ -87,6 +87,7 @@ implements Runnable {
 		try {
 			final Rampup rampupScenario = new Rampup(runTimeConfig);
 			rampupScenario.run();
+			LOG.info(Markers.MSG, "Scenario end");
 		} catch (final Exception e) {
 			e.printStackTrace(System.err);
 			LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed");
