@@ -10,7 +10,7 @@ import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -74,7 +74,7 @@ extends WSMockTestBase {
 		) {
 			STD_OUTPUT_STREAM = stdOutStream;
 			TIME_ACTUAL_SEC = System.currentTimeMillis();
-			new ScriptRunner().run();
+			new ScriptMockRunner().run();
 			TIME_ACTUAL_SEC = System.currentTimeMillis() - TIME_ACTUAL_SEC;
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(10);

@@ -5,7 +5,6 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -14,12 +13,10 @@ import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
-import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -68,7 +65,7 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
-		new ScriptRunner().run();
+		new ScriptMockRunner().run();
 		//
 		RunIdFileManager.flushAll();
 		//
@@ -89,7 +86,7 @@ extends WSMockTestBase {
 			final BufferingOutputStream
 				stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
-			new ScriptRunner().run();
+			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;

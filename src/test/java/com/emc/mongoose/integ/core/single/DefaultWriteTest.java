@@ -10,7 +10,7 @@ import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.ContentGetter;
-import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
 //
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
@@ -75,7 +75,7 @@ extends WSMockTestBase {
 		) {
 			UniformDataSource.DEFAULT = new UniformDataSource();
 			//  Run mongoose default scenario in standalone mode
-			new ScriptRunner().run();
+			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;

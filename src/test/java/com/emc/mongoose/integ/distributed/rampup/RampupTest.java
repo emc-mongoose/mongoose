@@ -8,10 +8,9 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.util.scenario.Rampup;
+import com.emc.mongoose.run.scenario.Rampup;
 //
 import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 //
 import org.junit.Assert;
@@ -57,8 +56,7 @@ extends DistributedLoadBuilderTestBase {
 		System.setProperty(RunTimeConfig.KEY_API_NAME, "swift");
 		DistributedLoadBuilderTestBase.setUpClass();
 		final Rampup rampupScenario = new Rampup(
-			LOAD_BUILDER_CLIENT, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS,
-			LOAD_SEQ, SIZE_SEQ, THREAD_COUNT_SEQ
+			RunTimeConfig.getContext()
 		);
 		//
 		try(

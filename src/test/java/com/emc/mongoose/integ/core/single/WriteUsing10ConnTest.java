@@ -7,7 +7,6 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.LogPatterns;
@@ -16,7 +15,7 @@ import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.PortListener;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
-import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Level;
@@ -31,7 +30,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InvalidObjectException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -89,7 +87,7 @@ extends WSMockTestBase {
 						) {
 							STD_OUTPUT_STREAM = stdOutStream;
 							//  Run mongoose default scenario in standalone mode
-							new ScriptRunner().run();
+							new ScriptMockRunner().run();
 							TimeUnit.SECONDS.sleep(3);
 						} catch(final InterruptedException ignored) {
 						} finally {
