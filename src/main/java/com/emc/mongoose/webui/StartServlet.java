@@ -7,7 +7,9 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
-import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
+import com.emc.mongoose.run.scenario.Chain;
+import com.emc.mongoose.run.scenario.Rampup;
+import com.emc.mongoose.run.scenario.Single;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
@@ -137,19 +139,34 @@ public final class StartServlet extends CommonServlet {
 				ThreadContext.put(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC,
 					String.valueOf(runTimeConfig.getLoadMetricsPeriodSec()));
 				//
-				if(runTimeConfig.getScenarioName().equals(Constants.RUN_SCENARIO_RAMPUP)) {
-					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
-						convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
-					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS,
-						convertArrayToString(runTimeConfig.getScenarioRampupConnCounts()));
-					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD,
-						convertArrayToString(runTimeConfig.getScenarioChainLoad()));
-				}
-				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
+				final String scenarioName = runTimeConfig.getScenarioName();
+				chartsMap.put(runTimeConfig.getRunId(), scenarioName);
 				//
 				LOG.debug(Markers.MSG, message);
 				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
-				new ScriptMockRunner().run();
+				//
+				switch (scenarioName) {
+					case Constants.RUN_SCENARIO_SINGLE:
+						new Single(runTimeConfig).run();
+						break;
+					case Constants.RUN_SCENARIO_CHAIN:
+						new Chain(runTimeConfig).run();
+						break;
+					case Constants.RUN_SCENARIO_RAMPUP:
+						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
+							convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
+						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS,
+							convertArrayToString(runTimeConfig.getScenarioRampupConnCounts()));
+						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD,
+							convertArrayToString(runTimeConfig.getScenarioChainLoad()));
+						new Rampup(runTimeConfig).run();
+						break;
+					default:
+						throw new IllegalArgumentException(
+							String.format("Incorrect scenario: \"%s\"", scenarioName)
+						);
+				}
+				//
 			}
 			//
 			@Override
