@@ -66,6 +66,9 @@ implements Runnable {
 					);
 					LOG.info(Markers.PERF_SUM, "---- Step {} start ----", nextStepName);
 					nextLoadSeq.run();
+					if (nextLoadSeq.isInterrupted()) {
+						return;
+					}
 				} catch(final RemoteException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to apply rampup params remotely");
 				}

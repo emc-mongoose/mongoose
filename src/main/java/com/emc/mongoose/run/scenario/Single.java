@@ -73,7 +73,6 @@ implements Runnable {
 		} finally {
 			try {
 				loadJob.close();
-				LOG.info(Markers.MSG, "Scenario end");
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job: {}", loadJob);
 			}

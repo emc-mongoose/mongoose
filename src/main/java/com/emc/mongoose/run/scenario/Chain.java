@@ -42,6 +42,8 @@ implements Runnable {
 	private TimeUnit timeUnit;
 	private boolean flagConcurrent;
 	//
+	private volatile boolean interrupted;
+	//
 	public Chain(final RunTimeConfig rtConfig) {
 		final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig);
 		final long timeOut = rtConfig.getLoadLimitTimeValue();
@@ -99,6 +101,10 @@ implements Runnable {
 		}
 	}
 	//
+	public boolean isInterrupted() {
+		return interrupted;
+	}
+	//
 	@Override
 	public final void run() {
 		if(flagConcurrent) {
@@ -153,7 +159,6 @@ implements Runnable {
 			}
 		} else {
 			LOG.info(Markers.MSG, "Execute load jobs sequentially");
-			boolean interrupted = false;
 			for(final LoadExecutor nextLoadJob : loadJobSeq) {
 				if(!interrupted) {
 					// start
@@ -191,7 +196,6 @@ implements Runnable {
 		}
 		//
 		loadJobSeq.clear();
-		LOG.info(Markers.MSG, "Scenario end");
 	}
 	//
 	public static void main(final String... args) {

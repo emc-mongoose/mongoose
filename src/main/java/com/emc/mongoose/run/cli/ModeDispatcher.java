@@ -119,6 +119,7 @@ public final class ModeDispatcher {
 						String.format("Incorrect scenario: \"%s\"", scenarioName)
 					);
 			}
+			LogManager.getRootLogger().info(Markers.MSG, "Scenario end");
 		} else {
 			throw new NullPointerException(
 				"runTimeConfig hasn't been initialized"

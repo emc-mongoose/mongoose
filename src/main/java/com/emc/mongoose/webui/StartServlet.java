@@ -166,6 +166,7 @@ public final class StartServlet extends CommonServlet {
 							String.format("Incorrect scenario: \"%s\"", scenarioName)
 						);
 				}
+				LOG.info(Markers.MSG, "Scenario end");
 				//
 			}
 			//
