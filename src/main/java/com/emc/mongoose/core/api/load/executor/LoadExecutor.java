@@ -1,14 +1,15 @@
 package com.emc.mongoose.core.api.load.executor;
 //
+import com.emc.mongoose.common.concurrent.LifeCycle;
+//
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.core.api.load.model.LoadState;
-//
 import com.emc.mongoose.core.api.load.model.DataItemProducer;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+//
 import org.apache.logging.log4j.Marker;
 //
 import java.rmi.RemoteException;
@@ -35,16 +36,13 @@ extends DataItemDst<T>, LifeCycle, DataItemProducer<T> {
 	RequestConfig<T> getRequestConfig()
 	throws RemoteException;
 	//
-	Future<IOTask.Status> submitReq(final IOTask<T> request)
+	Future<? extends IOTask<T>> submitReq(final IOTask<T> request)
 	throws RemoteException, RejectedExecutionException;
 	//
 	int submitReqs(final List<? extends IOTask<T>> requests, final int from, final int to)
 	throws RemoteException, RejectedExecutionException;
 	//
-	void handleResult(final IOTask<T> task)
-	throws RemoteException;
-	//
-	int handleResults(final List<IOTask<T>> tasks, final int from, final int to)
+	int ioTaskCompletedBatch(final List<? extends IOTask<T>> tasks, final int from, final int to)
 	throws RemoteException;
 	//
 	void setLoadState(final LoadState<T> state)
@@ -58,4 +56,10 @@ extends DataItemDst<T>, LifeCycle, DataItemProducer<T> {
 	//
 	void logMetrics(Marker marker)
 	throws RemoteException;
+	//
+	void ioTaskCompleted(final IOTask<T> ioTask);
+	//
+	void ioTaskCancelled(final int n);
+	//
+	void ioTaskFailed(final int n, final Exception e);
 }

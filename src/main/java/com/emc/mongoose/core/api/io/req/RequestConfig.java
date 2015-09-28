@@ -57,9 +57,6 @@ extends Externalizable, Cloneable, Closeable {
 	int getBuffSize();
 	RequestConfig<T> setBuffSize(final int buffSize);
 	//
-	int getReqSleepMilliSec();
-	RequestConfig<T> setReqSleepMilliSec(final int reqSleepMilliSec);
-	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//
 	DataItemSrc<T> getContainerListInput(final long maxCount, final String addr);

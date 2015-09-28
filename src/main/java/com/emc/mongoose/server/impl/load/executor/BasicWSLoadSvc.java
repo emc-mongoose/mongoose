@@ -40,12 +40,12 @@ implements WSLoadSvc<T> {
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connPerNode, final int threadsPerNode,
 		final DataItemSrc<T> itemSrc, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
-		final int countUpdPerReq
+		final long sizeMin, final long sizeMax, final float sizeBias,
+		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
 	) {
 		super(
 			runTimeConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
-			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
+			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
 		);
 		// by default, may be overridden later externally:
 		setDataItemDst(

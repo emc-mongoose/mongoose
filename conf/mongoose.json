@@ -175,7 +175,7 @@
 				"type": "application/octet-stream",
 				"repeatable": true
 			},
-			"pipelining": true,
+			"pipelining": false,
 			"signMethod": "HmacSHA1"
 		},
 		"load": {

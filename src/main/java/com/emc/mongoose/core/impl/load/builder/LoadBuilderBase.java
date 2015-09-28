@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 20.10.14.
  */
@@ -41,7 +42,7 @@ implements LoadBuilder<T, U> {
 	protected RequestConfig<T> reqConf;
 	protected long maxCount, minObjSize, maxObjSize;
 	protected float objSizeBias, rateLimit;
-	protected int updatesPerItem;
+	protected int manualTaskSleepMicroSecs, updatesPerItem;
 	protected DataItemSrc itemSrc;
 	protected String storageNodeAddrs[];
 	protected final HashMap<IOTask.Type, Integer> loadTypeWorkerCount,
@@ -130,6 +131,19 @@ implements LoadBuilder<T, U> {
 		paramName = RunTimeConfig.KEY_DATA_SIZE_BIAS;
 		try {
 			setObjSizeBias(rtConfig.getDataSizeBias());
+		} catch(final NoSuchElementException e) {
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+		} catch(final IllegalArgumentException e) {
+			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+		}
+		//
+		paramName = RunTimeConfig.KEY_LOAD_LIMIT_REQSLEEP_MILLISEC;
+		try {
+			setManualTaskSleepMicroSecs(
+				(int) TimeUnit.MILLISECONDS.toMicros(
+					rtConfig.getLoadLimitReqSleepMilliSec()
+				)
+			);
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -293,6 +307,21 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
+	public LoadBuilder<T, U> setManualTaskSleepMicroSecs(final int manualTaskSleepMicroSecs)
+	throws IllegalArgumentException {
+		LOG.debug(Markers.MSG, "Set manual I/O tasks sleep to: {}[us]", manualTaskSleepMicroSecs);
+		if(rateLimit < 0) {
+			throw new IllegalArgumentException("Tasks sleep time shouldn't be negative");
+		} else {
+			LOG.debug(Markers.MSG, "Using tasks sleep time: {}[us]", manualTaskSleepMicroSecs);
+		}
+		this.manualTaskSleepMicroSecs = manualTaskSleepMicroSecs;
+		return this;
+	}
+	//
+
+	//
+	@Override
 	public LoadBuilder<T, U> setWorkerCountDefault(final int workersPerNode) {
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
 			setWorkerCountFor(workersPerNode, loadType);
@@ -400,6 +429,8 @@ implements LoadBuilder<T, U> {
 		}
 		lb.storageNodeAddrs = storageNodeAddrs;
 		lb.itemSrc = itemSrc;
+		lb.rateLimit = rateLimit;
+		lb.manualTaskSleepMicroSecs = manualTaskSleepMicroSecs;
 		return lb;
 	}
 	//

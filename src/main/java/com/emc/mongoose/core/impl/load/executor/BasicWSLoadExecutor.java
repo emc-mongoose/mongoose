@@ -20,9 +20,11 @@ import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
+import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.message.HeaderGroup;
+import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -75,12 +77,12 @@ implements WSLoadExecutor<T> {
 		final RunTimeConfig rtConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
 		final DataItemSrc<T> itemSrc, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
-		final int countUpdPerReq
+		final long sizeMin, final long sizeMax, final float sizeBias,
+		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
 	) {
 		super(
 			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
-			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
+			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
 		);
 		wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
 		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
@@ -170,7 +172,7 @@ implements WSLoadExecutor<T> {
 	//
 	@Override
 	protected WSIOTask<T> getIOTask(final T dataObject, final String nodeAddr) {
-		return new BasicWSIOTask<>(this, dataObject, nodeAddr);
+		return new BasicWSIOTask<>(dataObject, nodeAddr, wsReqConfigCopy);
 	}
 	//
 	@Override
@@ -220,7 +222,7 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final Future<IOTask.Status> submitReq(final IOTask<T> ioTask)
+	public final Future<? extends WSIOTask<T>> submitReq(final IOTask<T> ioTask)
 	throws RejectedExecutionException {
 		//
 		if(connPool.isShutdown()) {
@@ -228,9 +230,9 @@ implements WSLoadExecutor<T> {
 		}
 		//
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		final Future<IOTask.Status> futureResult;
+		final Future<WSIOTask<T>> futureResult;
 		try {
-			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, wsTask);
+			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, futureCallback);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "I/O task #{} has been submitted for execution", wsTask.hashCode()
@@ -242,19 +244,36 @@ implements WSLoadExecutor<T> {
 		return futureResult;
 	}
 	//
+	private final FutureCallback<WSIOTask<T>> futureCallback = new FutureCallback<WSIOTask<T>>() {
+		@Override
+		public final void completed(final WSIOTask<T> ioTask) {
+			ioTaskCompleted(ioTask);
+		}
+		//
+		public final void cancelled() {
+			ioTaskCancelled(1);
+		}
+		//
+		public final void failed(final Exception e) {
+			ioTaskFailed(1, e);
+		}
+	};
+	//
 	@Override
 	public final int submitReqs(final List<? extends IOTask<T>> ioTasks, int from, int to)
 	throws RejectedExecutionException {
 		int n = 0;
-		/*if(isPipeliningEnabled) {
+		if(isPipeliningEnabled) {
 			if(ioTasks.size() > 0) {
-				final HttpHost tgtHost = ioTasks.get(0).getHost;
-				client.executePipelined();
-				futureList = null;
-			} else {
-				futureList = Collections.emptyList();
+				final List<WSIOTask<T>> wsIOTasks = (List<WSIOTask<T>>) ioTasks;
+				final WSIOTask<T> anyTask = wsIOTasks.get(0);
+				final HttpHost tgtHost = anyTask.getTarget();
+				client.executePipelined(
+					tgtHost, wsIOTasks, wsIOTasks, connPool, HttpCoreContext.create(),
+					new BatchFutureCallback(wsIOTasks)
+				);
 			}
-		} else {*/
+		} else {
 			for(int i = from; i < to; i ++) {
 				if(null != submitReq(ioTasks.get(i))) {
 					n ++;
@@ -262,8 +281,33 @@ implements WSLoadExecutor<T> {
 					break;
 				}
 			}
-		//}
+		}
 		return n;
+	}
+	//
+	private final class BatchFutureCallback
+	implements FutureCallback<List<WSIOTask<T>>> {
+		//
+		private final List<WSIOTask<T>> tasks;
+		//
+		private BatchFutureCallback(final List<WSIOTask<T>> tasks) {
+			this.tasks = tasks;
+		}
+		//
+		@Override
+		public final void completed(final List<WSIOTask<T>> result) {
+			ioTaskCompletedBatch(result, 0, result.size());
+		}
+		//
+		@Override
+		public final void failed(final Exception e) {
+			ioTaskFailed(tasks.size(), e);
+		}
+		//
+		@Override
+		public final void cancelled() {
+			ioTaskCancelled(tasks.size());
+		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing based on the connection pool stats

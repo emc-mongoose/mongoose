@@ -75,7 +75,6 @@ implements RequestConfig<T> {
 			setNameSpace(reqConf2Clone.getNameSpace());
 			secret = reqConf2Clone.getSecret();
 			setBuffSize(reqConf2Clone.getBuffSize());
-			setReqSleepMilliSec(reqConf2Clone.getReqSleepMilliSec());
 			LOG.debug(
 				Markers.MSG, "Forked req conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
 			);
@@ -95,8 +94,7 @@ implements RequestConfig<T> {
 			.setScheme(scheme)
 			.setLoadType(loadType)
 			.setNameSpace(nameSpace)
-			.setBuffSize(buffSize)
-			.setReqSleepMilliSec(reqSleepMilliSec);
+			.setBuffSize(buffSize);
 		requestConfigBranch.secret = secret;
 		LOG.debug(
 			Markers.MSG, "Forked req conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
@@ -232,20 +230,6 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final int getReqSleepMilliSec() {
-		return reqSleepMilliSec;
-	}
-	@Override
-	public final RequestConfigBase<T> setReqSleepMilliSec(final int reqSleepMilliSec)
-	throws IllegalArgumentException {
-		if(reqSleepMilliSec < 0) {
-			throw new IllegalArgumentException("Request sleep time shouldn't have a negative value");
-		}
-		this.reqSleepMilliSec = reqSleepMilliSec;
-		return this;
-	}
-	//
-	@Override
 	public RequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
 		//
@@ -256,7 +240,6 @@ implements RequestConfig<T> {
 		setSecret(this.runTimeConfig.getAuthSecret());
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		setBuffSize((int)this.runTimeConfig.getIOBufferSizeMin());
-		setReqSleepMilliSec(this.runTimeConfig.getLoadLimitReqSleepMilliSec());
 		return this;
 	}
 	//
@@ -283,7 +266,6 @@ implements RequestConfig<T> {
 		out.writeObject(getNameSpace());
 		out.writeObject(getDataSource());
 		out.writeBoolean(getVerifyContentFlag());
-		out.writeInt(getReqSleepMilliSec());
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -307,8 +289,6 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
 		setVerifyContentFlag(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got verify content flag {}", verifyContentFlag);
-		setReqSleepMilliSec(in.readInt());
-		LOG.trace(Markers.MSG, "Got requests sleep time {}", reqSleepMilliSec);
 	}
 	//
 	@Override

@@ -1,12 +1,14 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -25,30 +27,28 @@ extends LoadExecutorBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final float rateLimit;
-	private final int tgtDurMicroSec;
+	private final int manualTaskSleepMicroSecs, tgtDurMicroSecs;
 	//
 	protected LimitedRateLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
 		final DataItemSrc<T> itemSrc, final long maxCount,
-		final float rateLimit
+		final int manualTaskSleepMicroSecs, final float rateLimit
 	) throws ClassCastException {
-		super(
-			runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount,
-			itemSrc, maxCount
-		);
+		super(runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount);
 		//
+		this.manualTaskSleepMicroSecs = manualTaskSleepMicroSecs;
 		if(rateLimit < 0) {
 			throw new IllegalArgumentException("Frequency rate limit shouldn't be a negative value");
 		}
 		this.rateLimit = rateLimit;
 		if(rateLimit > 0) {
-			tgtDurMicroSec = (int) (1000000 * totalConnCount / rateLimit);
+			tgtDurMicroSecs = (int) (1000000 * totalConnCount / rateLimit);
 			LOG.debug(
-				Markers.MSG, "{}: target I/O task durations is {}[us]", getName(), tgtDurMicroSec
+				Markers.MSG, "{}: target I/O task durations is {}[us]", getName(), tgtDurMicroSecs
 			);
 		} else {
-			tgtDurMicroSec = 0;
+			tgtDurMicroSecs = 0;
 		}
 	}
 	//
@@ -56,7 +56,7 @@ extends LoadExecutorBase<T> {
 	throws InterruptedException {
 		if(rateLimit > 0 && lastStats.getSuccRateLast() > rateLimit && itemCountToFeed > 0) {
 			final int microDelay = itemCountToFeed * (int) (
-				tgtDurMicroSec - lastStats.getDurationSum() / lastStats.getSuccRateMean()
+				tgtDurMicroSecs - lastStats.getDurationSum() / lastStats.getSuccRateMean()
 			);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "Next delay: {}[us]", microDelay);
@@ -71,6 +71,13 @@ extends LoadExecutorBase<T> {
 	@Override
 	public void put(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
+		if(manualTaskSleepMicroSecs > 0) {
+			try {
+				TimeUnit.MILLISECONDS.sleep(manualTaskSleepMicroSecs);
+			} catch(final InterruptedException e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
+			}
+		}
 		invokeDelayToMatchRate(1);
 		super.put(dataItem);
 	}
@@ -81,7 +88,19 @@ extends LoadExecutorBase<T> {
 	@Override
 	public int put(final List<T> dataItems, final int from, final int to)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
-		invokeDelayToMatchRate(to - from);
-		return super.put(dataItems, from, to);
+		final int n = to - from;
+		if(n > 0) {
+			if(manualTaskSleepMicroSecs > 0) {
+				try {
+					TimeUnit.MICROSECONDS.sleep(n * manualTaskSleepMicroSecs);
+				} catch(final InterruptedException e) {
+					LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
+				}
+			}
+			invokeDelayToMatchRate(n);
+			return super.put(dataItems, from, to);
+		} else {
+			return 0;
+		}
 	}
 }

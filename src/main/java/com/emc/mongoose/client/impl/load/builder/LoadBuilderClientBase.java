@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 20.10.14.
  */
@@ -132,23 +133,23 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setProperties(final RunTimeConfig runTimeConfig)
+	public final LoadBuilderClient<T, U> setProperties(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
 		//
-		this.rtConfig = runTimeConfig;
+		this.rtConfig = rtConfig;
 		if(reqConf == null) {
 			throw new IllegalStateException("Shared request config is not initialized");
 		} else {
-			reqConf.setProperties(runTimeConfig);
+			reqConf.setProperties(rtConfig);
 		}
 		//
-		final String newNodeAddrs[] = runTimeConfig.getStorageAddrsWithPorts();
+		final String newNodeAddrs[] = rtConfig.getStorageAddrsWithPorts();
 		if(newNodeAddrs.length > 0) {
 			nodeAddrs = newNodeAddrs;
 		}
-		flagAssignLoadSvcToNode = runTimeConfig.getFlagAssignLoadServerToNode();
+		flagAssignLoadSvcToNode = rtConfig.getFlagAssignLoadServerToNode();
 		if(flagAssignLoadSvcToNode) {
-			assignNodesToLoadSvcs(runTimeConfig, loadSvcConfMap, loadSvcAddrs, nodeAddrs);
+			assignNodesToLoadSvcs(rtConfig, loadSvcConfMap, loadSvcAddrs, nodeAddrs);
 		}
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
@@ -157,7 +158,7 @@ implements LoadBuilderClient<T, U> {
 			nextBuilder = get(addr);
 			nextLoadSvcConfig = loadSvcConfMap.get(addr);
 			if(nextLoadSvcConfig == null) {
-				nextLoadSvcConfig = runTimeConfig; // use default
+				nextLoadSvcConfig = rtConfig; // use default
 				LOG.debug(
 					Markers.MSG, "Applying the common configuration to server @ \"{}\"...", addr
 				);
@@ -169,10 +170,14 @@ implements LoadBuilderClient<T, U> {
 			nextBuilder.setProperties(nextLoadSvcConfig);
 		}
 		//
-		setMaxCount(runTimeConfig.getLoadLimitCount());
-		setMinObjSize(runTimeConfig.getDataSizeMin());
-		setMaxObjSize(runTimeConfig.getDataSizeMax());
-		setObjSizeBias(runTimeConfig.getDataSizeBias());
+		setMaxCount(rtConfig.getLoadLimitCount());
+		setMinObjSize(rtConfig.getDataSizeMin());
+		setMaxObjSize(rtConfig.getDataSizeMax());
+		setObjSizeBias(rtConfig.getDataSizeBias());
+		setRateLimit(rtConfig.getLoadLimitRate());
+		setManualTaskSleepMicroSecs(
+			(int) TimeUnit.MILLISECONDS.toMicros(rtConfig.getLoadLimitReqSleepMilliSec())
+		);
 		//
 		try {
 			final String listFile = this.rtConfig.getDataSrcFPath();
@@ -295,9 +300,22 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
+	public final LoadBuilderClient<T, U> setManualTaskSleepMicroSecs(
+		final int manualTaskSleepMicroSecs
+	) throws IllegalArgumentException, RemoteException {
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.setRateLimit(manualTaskSleepMicroSecs);
+		}
+		return this;
+	}
+	//
+	@Override
 	public final LoadBuilderClient<T, U> setRateLimit(final float rateLimit)
 	throws IllegalArgumentException, RemoteException {
-		LoadBuilderSvc<T, U> nextBuilder;for(final String addr : keySet()) {
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setRateLimit(rateLimit);
 		}

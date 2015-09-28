@@ -498,22 +498,6 @@ implements LoadClient<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void handleResult(final IOTask<T> task)
-	throws RemoteException {
-		remoteLoadMap
-			.get(loadSvcAddrs[(int) (remoteSubmExecutor.getTaskCount() % loadSvcAddrs.length)])
-			.handleResult(task);
-	}
-	//
-	@Override
-	public final int handleResults(final List<IOTask<T>> ioTasks, final int from, final int to)
-	throws RemoteException {
-		return remoteLoadMap
-			.get(loadSvcAddrs[(int) (remoteSubmExecutor.getTaskCount() % loadSvcAddrs.length)])
-			.handleResults(ioTasks, from, to);
-	}
-	//
-	@Override
 	protected void shutdownActually() {
 		try {
 			super.shutdownActually();
@@ -556,7 +540,7 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final Future<IOTask.Status> submitReq(final IOTask<T> request)
+	public final Future<? extends IOTask<T>> submitReq(final IOTask<T> request)
 	throws RemoteException {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (remoteSubmExecutor.getTaskCount() % loadSvcAddrs.length)])

@@ -40,11 +40,11 @@ extends LimitedRateLoadExecutorBase<T> {
 		final int connCountPerNode, final int threadCount,
 		final DataItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
-		final float rateLimit, final int countUpdPerReq
+		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
 	) throws ClassCastException {
 		super(
 			runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount,
-			itemSrc, maxCount, rateLimit
+			itemSrc, maxCount, manualTaskSleepMicroSecs, rateLimit
 		);
 		//
 		this.loadType = reqConfig.getLoadType();

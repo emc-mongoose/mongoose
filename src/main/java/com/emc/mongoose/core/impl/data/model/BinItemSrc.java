@@ -83,7 +83,7 @@ implements DataItemSrc<T> {
 				} else {
 					return 0;
 				}
-			} else if(o instanceof Object[]) { // there are a list of items has been got
+			} else if(o instanceof DataItem[]) { // there are a list of items has been got
 				srcBuff = Arrays.asList((T[]) o);
 				srcFrom = 0;
 				return get(dstBuff, dstCountLimit);
@@ -126,8 +126,8 @@ implements DataItemSrc<T> {
 						return;
 					}
 					i ++;
-				} else if(o instanceof List) {
-					srcBuff = (List<T>) o;
+				} else if(o instanceof DataItem[]) {
+					srcBuff = Arrays.asList((T[]) o);
 					if(srcBuff.size() > itemsCount - i) {
 						srcFrom = (int) (itemsCount - i);
 						return;

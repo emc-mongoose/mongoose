@@ -32,7 +32,11 @@ implements DataItemDst<T> {
 	@Override
 	public int put(final List<T> buffer, final int from, final int to)
 	throws IOException {
-		itemsDst.writeUnshared(buffer.subList(from, to).toArray());
+		itemsDst.writeUnshared(
+			buffer
+				.subList(from, to)
+				.toArray(new DataItem[to - from])
+		);
 		return to - from;
 	}
 	//

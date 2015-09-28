@@ -40,9 +40,11 @@ public interface IOTask<T extends DataItem> {
 	//
 	Status getStatus();
 	//
-	int getDuration();
+	long getReqTimeStart();
 	//
-	int getLatency();
+	long getReqTimeDone();
 	//
-	void complete();
+	long getRespTimeStart();
+	//
+	long getRespTimeDone();
 }

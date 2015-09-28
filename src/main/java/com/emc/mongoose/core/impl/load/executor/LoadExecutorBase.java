@@ -252,6 +252,10 @@ implements LoadExecutor<T> {
 		try {
 			super.runActually();
 		} finally {
+			LOG.debug(
+				Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
+				counterSubm.get(), getName()
+			);
 			if(!isShutdown.compareAndSet(false, true)) {
 				shutdownActually();
 			}
@@ -343,8 +347,6 @@ implements LoadExecutor<T> {
 		if(isStarted.get()) {
 			if(isInterrupted.compareAndSet(false, true)) {
 				interruptActually();
-			} else {
-				throw new IllegalStateException(getName() + ": was already interrupted");
 			}
 		} else {
 			throw new IllegalStateException(
@@ -577,22 +579,40 @@ implements LoadExecutor<T> {
 		//LOG.trace(LogUtil.MSG, sb.append("best: ").append(bestNode).toString());
 		return bestNode;
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
+	//
 	@Override
-	public void handleResult(final IOTask<T> ioTask)
-	throws RemoteException {
+	public final void ioTaskCompleted(final IOTask<T> ioTask) {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return;
 		}
+		//
+		final T dataItem = ioTask.getDataItem();
+		final IOTask.Status status = ioTask.getStatus();
+		final String nodeAddr = ioTask.getNodeAddr();
+		final long
+			countBytesDone = ioTask.getCountBytesDone(),
+			reqTimeStart = ioTask.getReqTimeStart(),
+			reqTimeDone = ioTask.getReqTimeDone(),
+			respTimeStart = ioTask.getRespTimeStart(),
+			respTimeDone = ioTask.getRespTimeDone();
+		//
+		final int
+			reqDuration = (int) (respTimeDone - reqTimeStart),
+			respLatency = (int) (respTimeStart - reqTimeDone);
+		//
+		if(respLatency > 0 && reqDuration > respLatency) {
+			logTaskTrace(
+				dataItem, status, nodeAddr, countBytesDone, reqTimeStart, reqDuration, respLatency
+			);
+		}
 		// update the metrics
 		activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
-		final IOTask.Status status = ioTask.getStatus();
-		final T dataItem = ioTask.getDataItem();
 		if(status == IOTask.Status.SUCC) {
 			lastDataItem = dataItem;
 			// update the metrics with success
-			markSucc(ioTask);
+			markSucc(ioTask, countBytesDone, reqDuration, respLatency);
+			// pass data item to a consumer
 			passDataItem(lastDataItem);
 		} else {
 			ioStats.markFail();
@@ -602,9 +622,9 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public int handleResults(
-		final List<IOTask<T>> ioTasks, final int from, final int to
-	) throws RemoteException {
+	public final int ioTaskCompletedBatch(
+		final List<? extends IOTask<T>> ioTasks, final int from, final int to
+	) {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return 0;
@@ -617,12 +637,36 @@ implements LoadExecutor<T> {
 			activeTasksStats.get(nodeAddr).addAndGet(-n);
 			//
 			IOTask<T> ioTask;
-			for(int i = from; i < to; i ++) {
+			T dataItem;
+			IOTask.Status status;
+			long countBytesDone, reqTimeStart, reqTimeDone, respTimeStart, respTimeDone;
+			int reqDuration, respLatency;
+			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
-				if(IOTask.Status.SUCC.equals(ioTask.getStatus())) {
-					lastDataItem = ioTask.getDataItem();
-					markSucc(ioTask);
-					passedItems.add(lastDataItem);
+				dataItem = ioTask.getDataItem();
+				status = ioTask.getStatus();
+				countBytesDone = ioTask.getCountBytesDone();
+				reqTimeStart = ioTask.getReqTimeStart();
+				reqTimeDone = ioTask.getReqTimeDone();
+				respTimeStart = ioTask.getRespTimeStart();
+				respTimeDone = ioTask.getRespTimeDone();
+				reqDuration = (int) (respTimeDone - reqTimeStart);
+				respLatency = (int) (respTimeStart - reqTimeDone);
+				//
+				if(respLatency > 0 && reqDuration > respLatency) {
+					logTaskTrace(
+						dataItem, status, nodeAddr, countBytesDone, reqTimeStart, reqDuration,
+						respLatency
+					);
+				}
+				// update the metrics
+				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
+				if(status == IOTask.Status.SUCC) {
+					lastDataItem = dataItem;
+					// update the metrics with success
+					markSucc(ioTask, countBytesDone, reqDuration, respLatency);
+					// pass data item to a consumer
+					passedItems.add(dataItem);
 				} else {
 					ioStats.markFail();
 				}
@@ -632,6 +676,58 @@ implements LoadExecutor<T> {
 		}
 		//
 		return n;
+	}
+	//
+	@Override
+	public final void ioTaskCancelled(final int n) {
+		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
+		countRej.addAndGet(n);
+	}
+	//
+	@Override
+	public final void ioTaskFailed(final int n, final Exception e) {
+		if(!isClosed.get()) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O tasks ({}) failure", getName(), n);
+		} else {
+			LOG.debug(Markers.ERR, "{}: {} I/O tasks has been interrupted", getName(), n);
+		}
+	}
+	//
+	protected final static ThreadLocal<StringBuilder>
+		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
+		@Override
+		protected final StringBuilder initialValue() {
+			return new StringBuilder();
+		}
+	};
+	//
+	protected void logTaskTrace(
+		final T dataItem, final IOTask.Status status, final String nodeAddr,
+		final long countBytesDone, final long reqTimeStart,
+		final int reqDuration, final int respLatency
+	) {
+		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
+			final String dataItemId = Long.toHexString(dataItem.getOffset());
+			StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
+			if(strBuilder == null) {
+				strBuilder = new StringBuilder();
+				PERF_TRACE_MSG_BUILDER.set(strBuilder);
+			} else {
+				strBuilder.setLength(0); // clear/reset
+			}
+			LOG.info(
+				Markers.PERF_TRACE,
+				strBuilder
+					.append(nodeAddr).append(',')
+					.append(dataItemId).append(',')
+					.append(countBytesDone).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(respLatency).append(',')
+					.append(reqDuration)
+					.toString()
+			);
+		}
 	}
 	//
 	protected void passDataItem(final T item) {
@@ -713,17 +809,16 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	private void markSucc(final IOTask<T> ioTask) {
-		final int
-			duration = ioTask.getDuration(),
-			latency = ioTask.getLatency();
+	private void markSucc(
+		final IOTask<T> ioTask, final long bytes, final int duration, final int latency
+	) {
 		// update the metrics with success
-		if(latency > duration) {
+		if(latency > 0 && latency > duration) {
 			LOG.warn(
 				Markers.ERR, "{}: latency {} is more than duration: {}", ioTask, latency, duration
 			);
 		}
-		ioStats.markSucc(ioTask.getCountBytesDone(), duration, latency);
+		ioStats.markSucc(bytes, duration, latency);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Task #{}: successful, {}/{}", ioTask.hashCode(),
@@ -790,11 +885,10 @@ implements LoadExecutor<T> {
 	@Override
 	public final void shutdown()
 	throws IllegalStateException {
-		if(isStarted.get())
+		if(isStarted.get()) {
 			if(isShutdown.compareAndSet(false, true)) {
 				shutdownActually();
-			} else {
-				throw new IllegalStateException(getName() + ": has been shutdown already");
+			}
 		} else {
 			throw new IllegalStateException(
 				getName() + ": not started yet but shutdown is invoked"
@@ -853,11 +947,8 @@ implements LoadExecutor<T> {
 	@Override
 	public final void close()
 	throws IOException, IllegalStateException {
-		// interrupt the producing
 		if(isClosed.compareAndSet(false, true)) {
 			closeActually();
-		} else {
-			throw new IllegalStateException(getName() + ": has been closed already");
 		}
 	}
 	//
@@ -877,10 +968,14 @@ implements LoadExecutor<T> {
 			} catch(final InterruptedException e) {
 				LOG.warn(Markers.ERR, getName() + ": awaiting the consumer finish interrupted");
 			} finally {
-				LoadCloseHook.del(this);
-				if(loadedPrevState != null) {
-					if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
-						RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
+				try {
+					consumer.close();
+				} finally {
+					LoadCloseHook.del(this);
+					if(loadedPrevState != null) {
+						if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+							RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
+						}
 					}
 				}
 			}

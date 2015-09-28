@@ -12,14 +12,13 @@ import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-//
 import com.emc.mongoose.core.impl.data.RangeLayerData;
 import com.emc.mongoose.core.impl.data.UniformData;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+//
+import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
@@ -56,9 +55,9 @@ implements WSIOTask<T> {
 	private volatile InputChannel chanIn = null;
 	//
 	public BasicWSIOTask(
-		final WSLoadExecutor<T> loadExecutor, final T dataObject, final String nodeAddr
+		final T dataObject, final String nodeAddr, final WSRequestConfig<T> reqConf
 	) {
-		super(loadExecutor, dataObject, nodeAddr);
+		super(dataObject, nodeAddr, reqConf);
 	}
 	/**
 	 * Warning: invoked implicitly and untimely in the depths of HttpCore lib.
@@ -222,6 +221,21 @@ implements WSIOTask<T> {
 	}
 	//
 	@Override
+	public final void failed(final Exception e) {
+		if(e instanceof ConnectionClosedException) {
+			LogUtil.exception(LOG, Level.TRACE, e, "I/O task dropped while executing");
+			status = Status.CANCELLED;
+			exception = e;
+			respTimeDone = System.nanoTime() / 1000;
+		} else {
+			LogUtil.exception(LOG, Level.WARN, e, "I/O task failure");
+			status = Status.FAIL_UNKNOWN;
+			exception = e;
+			respTimeDone = System.nanoTime() / 1000;
+		}
+	}
+	//
+	@Override
 	public final boolean isRepeatable() {
 		return WSObject.IS_CONTENT_REPEATABLE;
 	}
@@ -320,9 +334,6 @@ implements WSIOTask<T> {
 			((WSRequestConfig<T>) reqConf).applySuccResponseToObject(response, dataItem);
 		}
 	}
-	//
-	private final static ThreadLocal<InputChannel>
-		THRLOC_CHAN_IN = new ThreadLocal<>();
 	//
 	@Override
 	public final void consumeContent(final ContentDecoder decoder, final IOControl ioCtl) {
@@ -442,8 +453,8 @@ implements WSIOTask<T> {
 	}
 	//
 	@Override
-	public final IOTask.Status getResult() {
-		return status;
+	public final WSIOTask<T> getResult() {
+		return this;
 	}
 	//
 	@Override
@@ -453,7 +464,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final boolean isDone() {
-		return respTimeDone != 0 || exception != null || status.equals(Status.CANCELLED);
+		return respTimeDone != 0;
 	}
 	//
 	@Override
@@ -477,39 +488,5 @@ implements WSIOTask<T> {
 	@Override
 	public final Object removeAttribute(final String s) {
 		return wrappedHttpCtx.removeAttribute(s);
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// FutureCallback<IOTask.Status> implementation ////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public final void completed(final IOTask.Status status) {
-		complete();
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "I/O task #{} completed", hashCode());
-		}
-	}
-	/**
-	 Overrides HttpAsyncRequestProducer.failed(Exception),
-	 HttpAsyncResponseConsumer&lt;IOTask.Status&gt;.failed(Exception) and
-	 FutureCallback&lt;IOTask.Status&gt;.failed(Exception)
-	 @param e
-	 */
-	@Override
-	public final void failed(final Exception e) {
-		if(!reqConf.isClosed()) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O task failure", hashCode());
-			exception = e;
-			status = Status.FAIL_UNKNOWN;
-		} else {
-			status = Status.CANCELLED;
-		}
-		complete();
-	}
-	//
-	@Override
-	public final void cancelled() {
-		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
-		status = Status.CANCELLED;
-		complete();
 	}
 }

@@ -190,10 +190,9 @@ implements DataItemConsumer<T> {
 			throw new IllegalStateException(
 				getName() + ": not started yet, but shutdown is invoked"
 			);
-		} else if(isShutdown.compareAndSet(false, true)) {
+		}
+		if(isShutdown.compareAndSet(false, true)) {
 			shutdownActually();
-		} else {
-			throw new IllegalStateException(getName() + ": shut down already");
 		}
 	}
 	//
@@ -237,8 +236,6 @@ implements DataItemConsumer<T> {
 	throws IOException, IllegalStateException {
 		if(isClosed.compareAndSet(false, true)) {
 			closeActually();
-		} else {
-			throw new IllegalStateException(getName() + ": has been closed already");
 		}
 	}
 	//

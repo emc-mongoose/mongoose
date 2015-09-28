@@ -110,7 +110,7 @@ implements DataItemProducer<T> {
 		skipIfNecessary();
 		//
 		long count = 0;
-		int n, m;
+		int n = 0, m = 0;
 		try {
 			do {
 				try {
@@ -144,7 +144,11 @@ implements DataItemProducer<T> {
 				} catch(final ClosedByInterruptException | IllegalStateException e) {
 					break;
 				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to transfer the data items");
+					LogUtil.exception(
+						LOG, Level.WARN, e,
+						"Failed to transfer the data items, " +
+						"count = {}, batch size = {}, batch offset = {}", count, n, m
+					);
 				}
 			} while(!isInterrupted);
 		} catch(final InterruptedException e) {
@@ -152,7 +156,7 @@ implements DataItemProducer<T> {
 		} finally {
 			LOG.debug(
 				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-				count, itemSrc, itemDst
+				getName(), count, itemSrc, itemDst
 			);
 		}
 	}

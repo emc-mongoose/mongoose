@@ -115,7 +115,8 @@ implements WSLoadBuilderSvc<T, U> {
 		return (U) new BasicWSLoadSvc<>(
 			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
-			maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
+			maxCount, minObjSize, maxObjSize, objSizeBias,
+			manualTaskSleepMicroSecs, rateLimit, updatesPerItem
 		);
 	}
 	//
