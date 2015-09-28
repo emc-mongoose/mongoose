@@ -254,7 +254,7 @@ implements LoadExecutor<T> {
 		} finally {
 			LOG.debug(
 				Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
-				counterSubm.get(), getName()
+				getName(), counterSubm.get()
 			);
 			if(!isShutdown.compareAndSet(false, true)) {
 				shutdownActually();
@@ -969,7 +969,9 @@ implements LoadExecutor<T> {
 				LOG.warn(Markers.ERR, getName() + ": awaiting the consumer finish interrupted");
 			} finally {
 				try {
-					consumer.close();
+					if(consumer != null) {
+						consumer.close();
+					}
 				} finally {
 					LoadCloseHook.del(this);
 					if(loadedPrevState != null) {

@@ -196,27 +196,33 @@ implements WSLoadExecutor<T> {
 			);
 			if(connPool != null) {
 				connPool.closeExpired();
-				LOG.debug(Markers.MSG, "Closed expired (if any) connections in the pool");
+				LOG.debug(
+					Markers.MSG, "{}: closed expired (if any) connections in the pool", getName()
+				);
 				try {
 					connPool.closeIdle(1, TimeUnit.MILLISECONDS);
-					LOG.debug(Markers.MSG, "Closed idle connections (if any) in the pool");
+					LOG.debug(
+						Markers.MSG, "{}: closed idle connections (if any) in the pool", getName()
+					);
 				} finally {
 					try {
 						connPool.shutdown(1);
-						LOG.debug(Markers.MSG, "Connection pool has been shut down");
+						LOG.debug(Markers.MSG, "{}: connection pool has been shut down", getName());
 					} catch(final IOException e) {
 						LogUtil.exception(
-							LOG, Level.WARN, e, "Connection pool shutdown failure"
+							LOG, Level.WARN, e, "{}: connection pool shutdown failure", getName()
 						);
 					}
 				}
 			}
 			//
 			try {
-				ioReactor.shutdown();
-				LOG.debug(Markers.MSG, "I/O reactor has been shut down");
+				ioReactor.shutdown(1);
+				LOG.debug(Markers.MSG, "{}: I/O reactor has been shut down", getName());
 			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down the I/O reactor");
+				LogUtil.exception(
+					LOG, Level.WARN, e, "{}: failed to shut down the I/O reactor", getName()
+				);
 			}
 		}
 	}
