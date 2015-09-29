@@ -272,19 +272,51 @@ implements IOStats {
 						String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
 						String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 				//
+				(int) durSnapshot.getMean(),
+				(int) durSnapshot.getMin(),
+				(int) durSnapshot.getMax(),
+				//
+				(int) durSnapshot.getMean(),
+				(int) latSnapshot.getMin(),
+				(int) latSnapshot.getMax(),
+				//
+				getSuccRateMean(), succRateLast, getByteRateMean() / MIB, byteRateLast / MIB
+			);
+		}
+		//
+		@Override
+		public String toSummaryString() {
+			if(durSnapshot == null) {
+				durSnapshot = new UniformSnapshot(durValues);
+			}
+			if(latSnapshot == null) {
+				latSnapshot = new UniformSnapshot(latValues);
+			}
+			return String.format(
+				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS_SUM,
+				countSucc,
+				countFail == 0 ?
+				Long.toString(countFail) :
+				(float) countSucc / countFail > 1000 ?
+				String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
+				String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
+				//
+				(int) durSnapshot.getMean(),
 				(int) durSnapshot.getMin(),
 				(int) durSnapshot.getValue(0.25),
 				(int) durSnapshot.getValue(0.5),
 				(int) durSnapshot.getValue(0.75),
 				(int) durSnapshot.getMax(),
 				//
+				(int) durSnapshot.getMean(),
 				(int) latSnapshot.getMin(),
 				(int) latSnapshot.getValue(0.25),
 				(int) latSnapshot.getValue(0.5),
 				(int) latSnapshot.getValue(0.75),
 				(int) latSnapshot.getMax(),
 				//
-				getSuccRateMean(), succRateLast, getByteRateMean() / MIB, byteRateLast / MIB
+				getSuccRateMean(), succRateLast,
+				getByteRateMean() / MIB, byteRateLast / MIB
 			);
 		}
 	}

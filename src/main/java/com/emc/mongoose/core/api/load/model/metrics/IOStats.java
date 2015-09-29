@@ -33,8 +33,16 @@ extends Closeable {
 		//
 		NAME_SEP = "@",
 		//
-		MSG_FMT_METRICS = "count=(%d/%s); dur[us]=(%d/%d/%d/%d/%d); lat[us]=(%d/%d/%d/%d/%d); " +
-			"TP[s^-1]=(%.3f/%.3f); BW[MB*s^-1]=(%.3f/%.3f)";
+		MSG_FMT_METRICS = "count=(%d/%s); " +
+			"duration[us]=(%d/%d/%d); " +
+			"latency[us]=(%d/%d/%d); " +
+			"TP[op/s]=(%.3f/%.3f); " +
+			"BW[MB/s]=(%.3f/%.3f)",
+		MSG_FMT_METRICS_SUM = "count=(%d/%s); " +
+			"duration[us]=(%d/%d/%d/%d/%d/%d); " +
+			"latency[us]=(%d/%d/%d/%d/%d/%d); " +
+			"TP[op/s]=(%.3f/%.3f); " +
+			"BW[MB/s]=(%.3f/%.3f)";
 	//
 	void start();
 	//
@@ -81,5 +89,7 @@ extends Closeable {
 		double getLatencyHiQ();
 		double getLatencyMax();
 		long[] getLatencyValues();
+		//
+		String toSummaryString();
 	}
 }
