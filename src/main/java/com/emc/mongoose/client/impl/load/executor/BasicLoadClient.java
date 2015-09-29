@@ -438,7 +438,7 @@ implements LoadClient<T> {
 			}
 			interruptExecutor.shutdown();
 			try {
-				if(!interruptExecutor.awaitTermination(metricsPeriodSec, TimeUnit.SECONDS)) {
+				if(!interruptExecutor.awaitTermination(POOL_AWAIT_TIMEOUT_SEC, TimeUnit.SECONDS)) {
 					LOG.warn(Markers.ERR, "{}: remote interrupt tasks timeout", getName());
 				}
 			} catch(final InterruptedException e) {
@@ -578,7 +578,7 @@ implements LoadClient<T> {
 		}
 		forcedAggregator.shutdown();
 		try {
-			if(!forcedAggregator.awaitTermination(metricsPeriodSec, TimeUnit.SECONDS)) {
+			if(!forcedAggregator.awaitTermination(POOL_AWAIT_TIMEOUT_SEC, TimeUnit.SECONDS)) {
 				LOG.warn(Markers.ERR, "Forced aggregation timeout");
 			}
 		} catch(final InterruptedException e) {

@@ -12,5 +12,7 @@ import java.util.Map;
  */
 public interface LoadClient<T extends DataItem>
 extends LoadExecutor<T> {
+	long POOL_AWAIT_TIMEOUT_SEC = 1;
+	//
 	Map<String, LoadSvc<T>> getRemoteLoadMap();
 }
