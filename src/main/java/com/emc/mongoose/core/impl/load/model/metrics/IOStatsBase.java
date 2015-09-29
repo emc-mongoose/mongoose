@@ -308,7 +308,7 @@ implements IOStats {
 				(int) durSnapshot.getValue(0.75),
 				(int) durSnapshot.getMax(),
 				//
-				(int) durSnapshot.getMean(),
+				(int) latSnapshot.getMean(),
 				(int) latSnapshot.getMin(),
 				(int) latSnapshot.getValue(0.25),
 				(int) latSnapshot.getValue(0.5),
