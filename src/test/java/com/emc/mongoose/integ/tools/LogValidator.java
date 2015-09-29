@@ -84,22 +84,24 @@ public final class LogValidator {
 				Assert.assertEquals("CountLoadServer", nextRec.get(6));
 				Assert.assertEquals("CountSucc", nextRec.get(7));
 				Assert.assertEquals("CountFail", nextRec.get(8));
-				Assert.assertEquals("DurationMin[us]", nextRec.get(9));
-				Assert.assertEquals("DurationLoQ[us]", nextRec.get(10));
-				Assert.assertEquals("DurationMed[us]", nextRec.get(11));
-				Assert.assertEquals("DurationHiQ[us]", nextRec.get(12));
-				Assert.assertEquals("DurationMax[us]", nextRec.get(13));
-				Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
-				Assert.assertEquals("LatencyLoQ[us]", nextRec.get(15));
-				Assert.assertEquals("LatencyMed[us]", nextRec.get(16));
-				Assert.assertEquals("LatencyHiQ[us]", nextRec.get(17));
-				Assert.assertEquals("LatencyMax[us]", nextRec.get(18));
-				Assert.assertEquals("TPAvg[s^-1]", nextRec.get(19));
-				Assert.assertEquals("TPLast[s^-1]", nextRec.get(20));
-				Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(21));
-				Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(22));
+				Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
+				Assert.assertEquals("DurationMin[us]", nextRec.get(10));
+				Assert.assertEquals("DurationLoQ[us]", nextRec.get(11));
+				Assert.assertEquals("DurationMed[us]", nextRec.get(12));
+				Assert.assertEquals("DurationHiQ[us]", nextRec.get(13));
+				Assert.assertEquals("DurationMax[us]", nextRec.get(14));
+				Assert.assertEquals("LatencyAvg[us]", nextRec.get(15));
+				Assert.assertEquals("LatencyMin[us]", nextRec.get(16));
+				Assert.assertEquals("LatencyLoQ[us]", nextRec.get(17));
+				Assert.assertEquals("LatencyMed[us]", nextRec.get(18));
+				Assert.assertEquals("LatencyHiQ[us]", nextRec.get(19));
+				Assert.assertEquals("LatencyMax[us]", nextRec.get(20));
+				Assert.assertEquals("TPAvg[op/s]", nextRec.get(21));
+				Assert.assertEquals("TPLast[op/s]", nextRec.get(22));
+				Assert.assertEquals("BWAvg[MB/s]", nextRec.get(23));
+				Assert.assertEquals("BWLast[MB/s]", nextRec.get(24));
 				firstRow = false;
-			} else if (nextRec.size() == 23) {
+			} else if (nextRec.size() == 25) {
 				Assert.assertTrue(
 					"Data and time format is not correct",
 					nextRec.get(0).matches(LogPatterns.DATE_TIME_ISO8601.pattern())
@@ -134,48 +136,54 @@ public final class LogValidator {
 				);
 				//
 				Assert.assertTrue(
-					"Duration min is not correct", LogValidator.isInteger(nextRec.get(9))
+					"Duration avg is not correct", LogValidator.isInteger(nextRec.get(9))
 				);
 				Assert.assertTrue(
-					"Duration low quartile is not correct", LogValidator.isInteger(nextRec.get(10))
+					"Duration min is not correct", LogValidator.isInteger(nextRec.get(10))
 				);
 				Assert.assertTrue(
-					"Duration median is not correct", LogValidator.isInteger(nextRec.get(11))
+					"Duration low quartile is not correct", LogValidator.isInteger(nextRec.get(11))
 				);
 				Assert.assertTrue(
-					"Duration high quartile is not correct", LogValidator.isInteger(nextRec.get(12))
+					"Duration median is not correct", LogValidator.isInteger(nextRec.get(12))
 				);
 				Assert.assertTrue(
-					"Duration max is not correct", LogValidator.isInteger(nextRec.get(13))
-				);
-				//
-				Assert.assertTrue(
-					"Latency min is not correct", LogValidator.isInteger(nextRec.get(14))
+					"Duration high quartile is not correct", LogValidator.isInteger(nextRec.get(13))
 				);
 				Assert.assertTrue(
-					"Latency low quartile is not correct", LogValidator.isInteger(nextRec.get(15))
-				);
-				Assert.assertTrue(
-					"Latency median is not correct", LogValidator.isInteger(nextRec.get(16))
-				);
-				Assert.assertTrue(
-					"Latency high quartile is not correct", LogValidator.isInteger(nextRec.get(17))
-				);
-				Assert.assertTrue(
-					"Latency max is not correct", LogValidator.isInteger(nextRec.get(18))
+					"Duration max is not correct", LogValidator.isInteger(nextRec.get(14))
 				);
 				//
 				Assert.assertTrue(
-					"Average TP is not correct", LogValidator.isDouble(nextRec.get(19))
+					"Latency avg is not correct", LogValidator.isInteger(nextRec.get(15))
 				);
 				Assert.assertTrue(
-					"Last TP is not correct", LogValidator.isDouble(nextRec.get(20))
+					"Latency min is not correct", LogValidator.isInteger(nextRec.get(16))
 				);
 				Assert.assertTrue(
-					"Average BW is not correct", LogValidator.isDouble(nextRec.get(21))
+					"Latency low quartile is not correct", LogValidator.isInteger(nextRec.get(17))
 				);
 				Assert.assertTrue(
-					"Last BW minutes is not correct", LogValidator.isDouble(nextRec.get(22))
+					"Latency median is not correct", LogValidator.isInteger(nextRec.get(18))
+				);
+				Assert.assertTrue(
+					"Latency high quartile is not correct", LogValidator.isInteger(nextRec.get(19))
+				);
+				Assert.assertTrue(
+					"Latency max is not correct", LogValidator.isInteger(nextRec.get(20))
+				);
+				//
+				Assert.assertTrue(
+					"Average TP is not correct", LogValidator.isDouble(nextRec.get(21))
+				);
+				Assert.assertTrue(
+					"Last TP is not correct", LogValidator.isDouble(nextRec.get(22))
+				);
+				Assert.assertTrue(
+					"Average BW is not correct", LogValidator.isDouble(nextRec.get(23))
+				);
+				Assert.assertTrue(
+					"Last BW minutes is not correct", LogValidator.isDouble(nextRec.get(24))
 				);
 			}
 		}
@@ -188,7 +196,7 @@ public final class LogValidator {
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
 			Assert.assertEquals(
-				"Column count is wrong for the line: \"" + nextRec.toString() + "\"", 23,
+				"Column count is wrong for the line: \"" + nextRec.toString() + "\"", 19,
 				nextRec.size()
 			);
 			if(firstRow) {
@@ -201,20 +209,16 @@ public final class LogValidator {
 				Assert.assertEquals("CountLoadServer", nextRec.get(6));
 				Assert.assertEquals("CountSucc", nextRec.get(7));
 				Assert.assertEquals("CountFail", nextRec.get(8));
-				Assert.assertEquals("DurationMin[us]", nextRec.get(9));
-				Assert.assertEquals("DurationLoQ[us]", nextRec.get(10));
-				Assert.assertEquals("DurationMed[us]", nextRec.get(11));
-				Assert.assertEquals("DurationHiQ[us]", nextRec.get(12));
-				Assert.assertEquals("DurationMax[us]", nextRec.get(13));
-				Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
-				Assert.assertEquals("LatencyLoQ[us]", nextRec.get(15));
-				Assert.assertEquals("LatencyMed[us]", nextRec.get(16));
-				Assert.assertEquals("LatencyHiQ[us]", nextRec.get(17));
-				Assert.assertEquals("LatencyMax[us]", nextRec.get(18));
-				Assert.assertEquals("TPAvg[s^-1]", nextRec.get(19));
-				Assert.assertEquals("TPLast[s^-1]", nextRec.get(20));
-				Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(21));
-				Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(22));
+				Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
+				Assert.assertEquals("DurationMin[us]", nextRec.get(10));
+				Assert.assertEquals("DurationMax[us]", nextRec.get(11));
+				Assert.assertEquals("LatencyAvg[us]", nextRec.get(12));
+				Assert.assertEquals("LatencyMin[us]", nextRec.get(13));
+				Assert.assertEquals("LatencyMax[us]", nextRec.get(14));
+				Assert.assertEquals("TPAvg[op/s]", nextRec.get(15));
+				Assert.assertEquals("TPLast[op/s]", nextRec.get(16));
+				Assert.assertEquals("BWAvg[MB/s]", nextRec.get(17));
+				Assert.assertEquals("BWLast[MB/s]", nextRec.get(18));
 				firstRow = false;
 			} else {
 				Assert.assertTrue(
@@ -225,7 +229,9 @@ public final class LogValidator {
 					"Load ID is not correct", LogValidator.isInteger(nextRec.get(1))
 				);
 				Assert.assertTrue(
-					"API type format is not correct", nextRec.get(2).matches(LogPatterns.TYPE_API.pattern())
+					"API type format is not correct", nextRec.get(2).matches(
+						LogPatterns.TYPE_API.pattern()
+					)
 				);
 				Assert.assertTrue(
 					"Load type format is not correct",nextRec.get(3).matches(
@@ -250,47 +256,35 @@ public final class LogValidator {
 				);
 				//
 				Assert.assertTrue(
-					"Duration min is not correct", LogValidator.isInteger(nextRec.get(9))
+					"Duration avg is not correct", LogValidator.isInteger(nextRec.get(9))
 				);
 				Assert.assertTrue(
-					"Duration low quartile is not correct", LogValidator.isInteger(nextRec.get(10))
+					"Duration min quartile is not correct", LogValidator.isInteger(nextRec.get(10))
 				);
 				Assert.assertTrue(
-					"Duration median is not correct", LogValidator.isInteger(nextRec.get(11))
-				);
-				Assert.assertTrue(
-					"Duration high quartile is not correct", LogValidator.isInteger(nextRec.get(12))
-				);
-				Assert.assertTrue(
-					"Duration max is not correct", LogValidator.isInteger(nextRec.get(13))
+					"Duration max is not correct", LogValidator.isInteger(nextRec.get(11))
 				);
 				//
 				Assert.assertTrue(
-					"Latency min is not correct", LogValidator.isInteger(nextRec.get(14))
+					"Latency avg is not correct", LogValidator.isInteger(nextRec.get(12))
 				);
 				Assert.assertTrue(
-					"Latency low quartile is not correct", LogValidator.isInteger(nextRec.get(15))
+					"Latency min is not correct", LogValidator.isInteger(nextRec.get(13))
 				);
 				Assert.assertTrue(
-					"Latency median is not correct", LogValidator.isInteger(nextRec.get(16))
+					"Latency max is not correct", LogValidator.isInteger(nextRec.get(14))
 				);
 				Assert.assertTrue(
-					"Latency high quartile is not correct", LogValidator.isInteger(nextRec.get(17))
+					"Average TP is not correct", LogValidator.isDouble(nextRec.get(15))
 				);
 				Assert.assertTrue(
-					"Latency max is not correct", LogValidator.isInteger(nextRec.get(18))
+					"Last TP is not correct", LogValidator.isDouble(nextRec.get(16))
 				);
 				Assert.assertTrue(
-					"Average TP is not correct", LogValidator.isDouble(nextRec.get(19))
+					"Average BW is not correct", LogValidator.isDouble(nextRec.get(17))
 				);
 				Assert.assertTrue(
-					"Last TP is not correct", LogValidator.isDouble(nextRec.get(20))
-				);
-				Assert.assertTrue(
-					"Average BW is not correct", LogValidator.isDouble(nextRec.get(21))
-				);
-				Assert.assertTrue(
-					"Last BW minutes is not correct", LogValidator.isDouble(nextRec.get(22))
+					"Last BW is not correct", LogValidator.isDouble(nextRec.get(18))
 				);
 			}
 		}

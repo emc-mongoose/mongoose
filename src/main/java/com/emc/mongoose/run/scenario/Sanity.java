@@ -44,7 +44,7 @@ implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 200;
 	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("16MB");
-	private final static int DEFAULT_DATA_COUNT_MAX = 1000;
+	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -72,7 +72,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Start updating");
 			final DataItemDst<WSObject> dataDstU = new BinFileItemDst<>();
 			final long nUpdated = client.update(
-				dataDstW.getDataItemSrc(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 25
+				dataDstW.getDataItemSrc(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 20
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
@@ -98,7 +98,7 @@ implements Runnable {
 				fileTmpItems0, (Class<? extends WSObject>) BasicWSObject.class
 			);
 			final long nUpdated2 = client.update(
-				dataDstA.getDataItemSrc(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 25
+				dataDstA.getDataItemSrc(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 20
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
 			// read and verify the updated items again
