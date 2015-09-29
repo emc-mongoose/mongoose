@@ -954,6 +954,9 @@ task dist(type: Tar) {
 		into('conf') {
 			from { 'conf' }
 		}
+		into('doc') {
+			from { 'doc' }
+		}
 		into('lib') {
 			from { configurations.runtime }
 		}
