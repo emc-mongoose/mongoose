@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;

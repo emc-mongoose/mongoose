@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 02.12.14.
  */
@@ -274,10 +275,14 @@ implements WSLoadExecutor<T> {
 				final List<WSIOTask<T>> wsIOTasks = (List<WSIOTask<T>>) ioTasks;
 				final WSIOTask<T> anyTask = wsIOTasks.get(0);
 				final HttpHost tgtHost = anyTask.getTarget();
-				client.executePipelined(
-					tgtHost, wsIOTasks, wsIOTasks, connPool, HttpCoreContext.create(),
-					new BatchFutureCallback(wsIOTasks)
-				);
+				if(
+					null == client.executePipelined(
+						tgtHost, wsIOTasks, wsIOTasks, connPool, HttpCoreContext.create(),
+						new BatchFutureCallback(wsIOTasks)
+					)
+				) {
+					return 0;
+				}
 			}
 		} else {
 			for(int i = from; i < to; i ++) {

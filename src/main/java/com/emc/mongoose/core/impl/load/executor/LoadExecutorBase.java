@@ -167,7 +167,10 @@ implements LoadExecutor<T> {
 		final DataItemSrc<T> itemSrc, final long maxCount,
 		final int instanceNum, final String name
 	) {
-		super(itemSrc, rtConfig.getBatchSize(), rtConfig.isDataSrcCircularEnabled());
+		super(
+			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE,
+			rtConfig.getBatchSize(), rtConfig.isDataSrcCircularEnabled()
+		);
 		try {
 			super.setDataItemDst(this);
 		} catch(final RemoteException e) {
@@ -580,8 +583,7 @@ implements LoadExecutor<T> {
 		return bestNode;
 	}
 	//
-	@Override
-	public final void ioTaskCompleted(final IOTask<T> ioTask) {
+	protected final void ioTaskCompleted(final IOTask<T> ioTask) {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return;
@@ -621,8 +623,7 @@ implements LoadExecutor<T> {
 		counterResults.incrementAndGet();
 	}
 	//
-	@Override
-	public final int ioTaskCompletedBatch(
+	protected final int ioTaskCompletedBatch(
 		final List<? extends IOTask<T>> ioTasks, final int from, final int to
 	) {
 		// producing was interrupted?
@@ -678,14 +679,15 @@ implements LoadExecutor<T> {
 		return n;
 	}
 	//
-	@Override
-	public final void ioTaskCancelled(final int n) {
+	protected final void ioTaskCancelled(final int n) {
 		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
-		countRej.addAndGet(n);
+		ioStats.markFail(n);
+		counterResults.addAndGet(n);
 	}
 	//
-	@Override
-	public final void ioTaskFailed(final int n, final Exception e) {
+	protected final void ioTaskFailed(final int n, final Exception e) {
+		ioStats.markFail(n);
+		counterResults.addAndGet(n);
 		if(!isClosed.get()) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O tasks ({}) failure", getName(), n);
 		} else {

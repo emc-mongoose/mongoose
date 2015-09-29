@@ -36,15 +36,6 @@ extends DataItemDst<T>, LifeCycle, DataItemProducer<T> {
 	RequestConfig<T> getRequestConfig()
 	throws RemoteException;
 	//
-	Future<? extends IOTask<T>> submitReq(final IOTask<T> request)
-	throws RemoteException, RejectedExecutionException;
-	//
-	int submitReqs(final List<? extends IOTask<T>> requests, final int from, final int to)
-	throws RemoteException, RejectedExecutionException;
-	//
-	int ioTaskCompletedBatch(final List<? extends IOTask<T>> tasks, final int from, final int to)
-	throws RemoteException;
-	//
 	void setLoadState(final LoadState<T> state)
 	throws RemoteException;
 	//
@@ -57,9 +48,9 @@ extends DataItemDst<T>, LifeCycle, DataItemProducer<T> {
 	void logMetrics(Marker marker)
 	throws RemoteException;
 	//
-	void ioTaskCompleted(final IOTask<T> ioTask);
+	Future<? extends IOTask<T>> submitReq(final IOTask<T> request)
+	throws RemoteException, RejectedExecutionException;
 	//
-	void ioTaskCancelled(final int n);
-	//
-	void ioTaskFailed(final int n, final Exception e);
+	int submitReqs(final List<? extends IOTask<T>> requests, final int from, final int to)
+	throws RemoteException, RejectedExecutionException;
 }

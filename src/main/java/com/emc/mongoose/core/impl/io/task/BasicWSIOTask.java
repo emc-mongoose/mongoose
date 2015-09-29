@@ -12,6 +12,7 @@ import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.impl.data.RangeLayerData;
@@ -42,6 +43,7 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 06.06.14.
  */
@@ -157,6 +159,12 @@ implements WSIOTask<T> {
 	throws IOException {
 		//
 		if(countBytesDone + countBytesSkipped == nextRangeOffset) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "{}: written {} bytes, {} skipped, find the next updating range",
+					hashCode(), countBytesDone, countBytesSkipped
+				);
+			}
 			// find next updating range
 			do {
 				currRangeSize = dataItem.getRangeSize(currRangeIdx);
@@ -175,9 +183,22 @@ implements WSIOTask<T> {
 					countBytesSkipped += currRangeSize;
 					currRange = null;
 				}
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "{}: range #{} is updating? - {}, written {} bytes, {} skipped",
+						hashCode(), currRangeIdx, currRange != null, countBytesDone,
+						countBytesSkipped
+					);
+				}
 				currRangeIdx ++;
 				nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
-			} while(currRange == null && countBytesDone < contentSize);
+			} while(currRange == null && currRangeSize > 0 && countBytesDone < contentSize);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "{}: next updating range found: #{}, size: {}",
+					hashCode(), currRangeIdx - 1, currRangeSize
+				);
+			}
 		}
 		// write the current updating range's content
 		if(currRangeSize > 0 && currRange != null) {
@@ -185,8 +206,13 @@ implements WSIOTask<T> {
 				chanOut, nextRangeOffset - countBytesDone - countBytesSkipped
 			);
 		}
-		// all scheduled updates are written out, commit the update transaction and finish
 		if(countBytesDone == contentSize) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "{}: finish the updating, {} bytes done, {} skipped",
+					hashCode(), countBytesDone, countBytesSkipped
+				);
+			}
 			dataItem.commitUpdatedRanges();
 			chanOut.close();
 		}

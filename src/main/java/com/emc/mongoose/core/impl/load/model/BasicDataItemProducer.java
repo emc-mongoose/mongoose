@@ -29,6 +29,7 @@ implements DataItemProducer<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final DataItemSrc<T> itemSrc;
+	protected final long maxCount;
 	protected volatile DataItemDst<T> itemDst = null;
 	protected final int batchSize;
 	protected final List<T> buff;
@@ -36,21 +37,19 @@ implements DataItemProducer<T> {
 	protected T lastDataItem;
 	protected boolean isCircular;
 	//
-	public BasicDataItemProducer(final DataItemSrc<T> itemSrc, final int batchSize) {
-		this(itemSrc, batchSize, false);
-	}
-	//
-	public BasicDataItemProducer(
-		final DataItemSrc<T> itemSrc, final int batchSize, final boolean isCircular
+	protected BasicDataItemProducer(
+		final DataItemSrc<T> itemSrc, final long maxCount, final int batchSize,
+		final boolean isCircular
 	) {
-		this(itemSrc, batchSize, isCircular, 0, null);
+		this(itemSrc, maxCount, batchSize, isCircular, 0, null);
 	}
 	//
-	public BasicDataItemProducer(
-		final DataItemSrc<T> itemSrc, final int batchSize, final boolean isCircular,
-		final long skipCount, final T lastDataItem
+	private BasicDataItemProducer(
+		final DataItemSrc<T> itemSrc, final long maxCount, final int batchSize,
+		final boolean isCircular, final long skipCount, final T lastDataItem
 	) {
 		this.itemSrc = itemSrc;
+		this.maxCount = maxCount - skipCount;
 		this.batchSize = batchSize;
 		this.buff = new ArrayList<>(batchSize);
 		this.skipCount = skipCount;
@@ -112,7 +111,7 @@ implements DataItemProducer<T> {
 		long count = 0;
 		int n = 0, m = 0;
 		try {
-			do {
+			while(!isInterrupted && count < maxCount) {
 				try {
 					n = itemSrc.get(buff, batchSize);
 					if(isInterrupted) {
@@ -150,7 +149,7 @@ implements DataItemProducer<T> {
 						"count = {}, batch size = {}, batch offset = {}", count, n, m
 					);
 				}
-			} while(!isInterrupted);
+			}
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "{}: producing is interrupted", itemSrc);
 		} finally {

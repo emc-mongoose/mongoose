@@ -42,8 +42,8 @@ import java.util.concurrent.TimeUnit;
 public class Sanity
 implements Runnable {
 	//
-	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 32;
-	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("32MB");
+	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 25;
+	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("10MB");
 	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
 	public final static Logger LOG;
 	static {
@@ -72,7 +72,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Start updating");
 			final DataItemDst<WSObject> dataDstU = new BinFileItemDst<>();
 			final long nUpdated = client.update(
-				dataDstW.getDataItemSrc(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 15
+				dataDstW.getDataItemSrc(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 20
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
@@ -98,7 +98,7 @@ implements Runnable {
 				fileTmpItems0, (Class<? extends WSObject>) BasicWSObject.class
 			);
 			final long nUpdated2 = client.update(
-				dataDstA.getDataItemSrc(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 15
+				dataDstA.getDataItemSrc(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 20
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
 			// read and verify the updated items again
@@ -156,7 +156,7 @@ implements Runnable {
 			.setNodes(storageNodes)
 			.setAuth("wuser1@sanity.local", "H1jTDL869wgZapHsylVcSYTx3aM7NxVABy8h017Z")
 			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
-			.setLimitTime(100, TimeUnit.SECONDS)
+			.setLimitTime(300, TimeUnit.SECONDS)
 			.setLimitRate(10000);
 		// standalone
 		try(final StorageClient<WSObject> client = clientBuilder.build()) {
@@ -166,7 +166,7 @@ implements Runnable {
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
-		/* distributed mode
+		// distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		ServiceUtil.init();
 		//
@@ -191,7 +191,7 @@ implements Runnable {
 		}
 		//
 		ServiceUtil.shutdown();
-		// finish*/
+		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");
 		LOG.info(Markers.MSG, "Sanity done");
