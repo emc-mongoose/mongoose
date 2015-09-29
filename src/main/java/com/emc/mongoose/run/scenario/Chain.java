@@ -46,8 +46,7 @@ implements Runnable {
 	//
 	private volatile boolean interrupted;
 	//
-	public Chain(final RunTimeConfig rtConfig)
-	throws RemoteException {
+	public Chain(final RunTimeConfig rtConfig) {
 		this(
 			WSLoadBuilderFactory.getInstance(rtConfig),
 			rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit(),
@@ -62,14 +61,19 @@ implements Runnable {
 	public Chain(
 		final LoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
 		final String[] loadTypeSeq, final boolean isParallel, final boolean flagUseLocalItemList
-	) throws RemoteException {
+	) {
 		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
 		this.timeUnit = timeOut > 0 ? timeUnit : TimeUnit.DAYS;
 		this.isParallel = isParallel;
 		//
 		String loadTypeStr;
 		LoadExecutor nextLoadJob, prevLoadJob = null;
-		final RequestConfig reqConf = loadBuilder.getRequestConfig();
+		final RequestConfig reqConf;
+		try {
+			reqConf = loadBuilder.getRequestConfig();
+		} catch(final RemoteException e) {
+			throw new RuntimeException(e);
+		}
 		DataItemDst itemBuff = null;
 		for(int i = 0; i < loadTypeSeq.length; i ++) {
 			loadTypeStr = loadTypeSeq[i];

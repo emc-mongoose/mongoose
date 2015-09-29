@@ -181,7 +181,9 @@ implements WSIOTask<T> {
 		}
 		// write the current updating range's content
 		if(currRangeSize > 0 && currRange != null) {
-			countBytesDone += currRange.write(chanOut, nextRangeOffset - countBytesDone);
+			countBytesDone += currRange.write(
+				chanOut, nextRangeOffset - countBytesDone - countBytesSkipped
+			);
 		}
 		// all scheduled updates are written out, commit the update transaction and finish
 		if(countBytesDone == contentSize) {

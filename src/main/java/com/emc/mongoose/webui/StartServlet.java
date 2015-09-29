@@ -154,13 +154,7 @@ public final class StartServlet extends CommonServlet {
 						new Single(runTimeConfig).run();
 						break;
 					case Constants.RUN_SCENARIO_CHAIN:
-						try {
-							new Chain(runTimeConfig).run();
-						} catch(final RemoteException e) {
-							LogUtil.exception(
-								LOG, Level.FATAL, e, "Failed to start the load chain"
-							);
-						}
+						new Chain(runTimeConfig).run();
 						break;
 					case Constants.RUN_SCENARIO_RAMPUP:
 						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
