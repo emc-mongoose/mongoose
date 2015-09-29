@@ -239,7 +239,8 @@ public final class LogValidator {
 					"Count of node is not correct", LogValidator.isInteger(nextRec.get(5))
 				);
 				Assert.assertTrue(
-					"There are not load servers in run", nextRec.get(6).isEmpty()
+					"There are no load servers in run, but value is: " + nextRec.get(6),
+					nextRec.get(6).isEmpty()
 				);
 				Assert.assertTrue(
 					"Count of success is not correct", LogValidator.isInteger(nextRec.get(7))
