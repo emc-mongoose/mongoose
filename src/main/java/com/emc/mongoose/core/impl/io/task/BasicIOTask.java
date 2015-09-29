@@ -24,7 +24,8 @@ implements IOTask<T> {
 	//
 	protected volatile Status status = Status.FAIL_UNKNOWN;
 	protected volatile long
-		reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0, countBytesDone = 0;
+		reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0,
+		countBytesDone = 0, countBytesSkipped = 0;
 	protected volatile DataItem currRange = null;
 	protected volatile long currRangeSize = 0, nextRangeOffset = 0;
 	protected volatile int currRangeIdx = 0, currDataLayerIdx = 0;

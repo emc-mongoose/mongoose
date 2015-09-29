@@ -140,13 +140,6 @@ sourceSets {
 		compileClasspath += sourceSets.common.output + sourceSets.serverApi.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 	}
-	scenario {
-		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'scenario'].join(File.separator))
-			include '**'
-		}
-		compileClasspath += sourceSets.common.output
-	}
 	serverImpl {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'server', 'impl'].join(File.separator))
@@ -163,6 +156,25 @@ sourceSets {
 		compileClasspath += sourceSets.common.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 		compileClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
+	}
+	util {
+		java {
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'util'].join(File.separator))
+			include '**'
+		}
+		compileClasspath += sourceSets.common.output + sourceSets.client.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
+	}
+	scenario {
+		java {
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'scenario'].join(File.separator))
+			include '**'
+		}
+		compileClasspath += sourceSets.common.output + sourceSets.util.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
+		compileClasspath += sourceSets.client.output + storageMock.output
 	}
 	webui {
 		java {
@@ -195,16 +207,6 @@ sourceSets {
 		//
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
-	}
-	util {
-		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'util'].join(File.separator))
-			include '**'
-		}
-		compileClasspath += sourceSets.common.output + sourceSets.storageMock.output
-		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
-		compileClasspath += sourceSets.client.output + sourceSets.cli.output
-		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Tests ///////////////////////////////////////////////////////////////////////////////////////
@@ -336,6 +338,7 @@ dependencies {
 		library.commons_configuration,
 		library.log4j_api,
 		library.jetty_svc,
+		
 	)
 	webserverRuntime (
 		library.runtime_logging,
@@ -370,8 +373,6 @@ dependencies {
 		library.log4j_api,
 	)
 	scenarioRuntime (
-		library.jython,
-		//library.rhino,
 		library.runtime_logging,
 	)
 
@@ -698,25 +699,6 @@ task clientJar(type: Jar) {
 	}
 }
 
-task scenarioJar(type: Jar) {
-	dependsOn commonJar
-	classifier "scenario"
-	archiveName "${baseName}-${classifier}.${extension}"
-	from sourceSets.scenario.output
-	manifest {
-		from sharedManifest
-		attributes(
-			'Implementation-Title': rootProject.name + "-scenario",
-			'Class-Path': [
-				commonJar.outputs.files.collect {it.name}.join(' '),
-				configurations.scenarioRuntime.collect {
-					libsDirName + File.separator + it.getName()
-				}.join(' '),
-			].join(' ')
-		)
-	}
-}
-
 task serverImplJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar
 	classifier "server-impl"
@@ -760,6 +742,63 @@ task storageMockJar(type: Jar) {
 	}
 }
 
+task utilJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar, clientJar
+	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
+	//dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
+	classifier "util"
+	archiveName "${baseName}-${classifier}.${extension}"
+	from sourceSets.util.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-util",
+			'Class-Path': [
+				clientJar.outputs.files.collect {it.name}.join(' '),
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
+				configurations.utilRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
+		)
+	}
+}
+
+task scenarioJar(type: Jar) {
+	dependsOn commonJar, utilJar, coreApiJar, coreImplJar
+	dependsOn serverApiJar, serverImplJar, clientJar, storageMockJar
+	classifier "scenario"
+	archiveName "${baseName}-${classifier}.${extension}"
+	from sourceSets.scenario.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-scenario",
+			'Main-Class': "com.emc.mongoose.run.scenario.Sanity",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				utilJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				clientJar.outputs.files.collect {it.name}.join(' '),
+				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				configurations.scenarioRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
+		)
+	}
+}
+
 task webuiJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
 	dependsOn serverApiJar, serverImplJar
@@ -786,7 +825,6 @@ task webuiJar(type: Jar) {
 		)
 	}
 }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // entry point /////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -819,38 +857,6 @@ task cliJar(type: Jar) {
 				webserverJar.outputs.files.collect {it.name}.join(' '),
 				webuiJar.outputs.files.collect {it.name}.join(' '),
 				configurations.cliRuntime.collect {
-					libsDirName + File.separator + it.getName()
-				}.join(' '),
-			].join(' ')
-		)
-	}
-}
-
-task utilJar(type: Jar) {
-	dependsOn commonJar, coreApiJar, coreImplJar, clientJar
-	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar, storageMockJar
-	//dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
-	classifier "util"
-	archiveName "${baseName}-${classifier}.${extension}"
-	from sourceSets.util.output
-	manifest {
-		from sharedManifest
-		attributes(
-			'Implementation-Title': rootProject.name + "-util",
-			'Main-Class': "com.emc.mongoose.util.scenario.Sanity",
-			'Class-Path': [
-				clientJar.outputs.files.collect {it.name}.join(' '),
-				commonJar.outputs.files.collect {it.name}.join(' '),
-				coreApiJar.outputs.files.collect {it.name}.join(' '),
-				coreImplJar.outputs.files.collect {it.name}.join(' '),
-				serverApiJar.outputs.files.collect {it.name}.join(' '),
-				serverImplJar.outputs.files.collect {it.name}.join(' '),
-				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
-				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
-				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
-				storageMockJar.outputs.files.collect {it.name}.join(' '),
-				cliJar.outputs.files.collect {it.name}.join(' '),
-				configurations.utilRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
 			].join(' ')
@@ -949,6 +955,9 @@ task dist(type: Tar) {
 		into('conf') {
 			from { 'conf' }
 		}
+		into('doc') {
+			from { 'doc' }
+		}
 		into('lib') {
 			from { configurations.runtime }
 		}
@@ -967,9 +976,6 @@ task dist(type: Tar) {
 		from webuiJar.outputs.files
 		from cliJar.outputs.files
 		from utilJar.outputs.files
-		into('scripts') {
-			from { ["src", "main", "resources", "scripts"].join(File.separator) }
-		}
 		into('webapp') {
 			from { ["src", "main", "webapp"].join(File.separator) }
 		}

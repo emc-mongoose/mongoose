@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.util.scenario.Chain;
+import com.emc.mongoose.run.scenario.Chain;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -46,11 +46,17 @@ extends DistributedLoadBuilderTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, SimultaneousLoadTest.class.getCanonicalName());
-		System.setProperty(RunTimeConfig.KEY_API_NAME, "atmos");
 		DistributedLoadBuilderTestBase.setUpClass();
-		final Chain chainScenario = new Chain(
-			LOAD_BUILDER_CLIENT, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS, LOAD_SEQ, true, false
-		);
+		//
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_API_NAME, "atmos");
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LOAD_LIMIT_TIME_SEC + "s");
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, true);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER, false);
+		RunTimeConfig.setContext(rtConfig);
+		//
+		final Chain chainScenario = new Chain(rtConfig);
 		try(
 			final BufferingOutputStream
 				stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()

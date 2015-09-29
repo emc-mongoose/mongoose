@@ -15,7 +15,7 @@ import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.PortListener;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
-import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Level;
@@ -87,7 +87,7 @@ extends WSMockTestBase {
 						) {
 							STD_OUTPUT_STREAM = stdOutStream;
 							//  Run mongoose default scenario in standalone mode
-							new ScriptRunner().run();
+							new ScriptMockRunner().run();
 							TimeUnit.SECONDS.sleep(3);
 						} catch(final InterruptedException ignored) {
 						} finally {

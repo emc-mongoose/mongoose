@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.scenario;
+package com.emc.mongoose.run.scenario;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -14,8 +14,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
-import com.emc.mongoose.run.cli.HumanFriendly;
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
+import com.emc.mongoose.util.shared.WSLoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -25,7 +24,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +43,20 @@ implements Runnable {
 	private final long timeOut;
 	private final TimeUnit timeUnit;
 	private final boolean isParallel;
+	//
+	private volatile boolean interrupted;
+	//
+	public Chain(final RunTimeConfig rtConfig)
+	throws RemoteException {
+		this(
+			WSLoadBuilderFactory.getInstance(rtConfig),
+			rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit(),
+			rtConfig.getScenarioChainLoad(), rtConfig.getScenarioChainConcurrentFlag(),
+			rtConfig.getBoolean(
+				RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER
+			)
+		);
+	}
 	//
 	@SuppressWarnings("unchecked")
 	public Chain(
@@ -101,6 +113,10 @@ implements Runnable {
 		}
 	}
 	//
+	public boolean isInterrupted() {
+		return interrupted;
+	}
+	//
 	@Override
 	public final void run() {
 		if(isParallel) {
@@ -139,7 +155,7 @@ implements Runnable {
 						nextLoadJob.interrupt();
 					} catch(final IOException e) {
 						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to interruptthe load job \"{}\"", nextLoadJob
+							LOG, Level.WARN, e, "Failed to interrupt the load job \"{}\"", nextLoadJob
 						);
 					}
 				}
@@ -155,7 +171,6 @@ implements Runnable {
 			}
 		} else {
 			LOG.info(Markers.MSG, "Execute load jobs sequentially");
-			boolean interrupted = false;
 			for(final LoadExecutor nextLoadJob : loadJobSeq) {
 				if(!interrupted) {
 					// start
@@ -196,33 +211,16 @@ implements Runnable {
 	}
 	//
 	public static void main(final String... args) {
-		//
 		RunTimeConfig.initContext();
 		final RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
-		// load the config from CLI arguments
-		final Map<String, String> properties = HumanFriendly.parseCli(args);
-		if(properties != null && !properties.isEmpty()) {
-			LOG.debug(Markers.MSG, "Overriding properties {}", properties);
-			RunTimeConfig.getContext().overrideSystemProperties(properties);
-		}
 		//
-		LOG.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		LOG.info(Markers.MSG, runTimeConfig);
 		//
-		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(runTimeConfig)) {
-			final long timeOut = runTimeConfig.getLoadLimitTimeValue();
-			final TimeUnit timeUnit = runTimeConfig.getLoadLimitTimeUnit();
-			//
-			final String[] loadTypeSeq = runTimeConfig.getScenarioChainLoad();
-			final boolean isConcurrent = runTimeConfig.getScenarioChainConcurrentFlag();
-			final boolean useLocalItemList = runTimeConfig.getBoolean(
-				RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER
-			);
-			//
-			final Chain chainScenario = new Chain(
-				loadBuilder, timeOut, timeUnit, loadTypeSeq, isConcurrent, useLocalItemList
-			);
+		try {
+			final Chain chainScenario = new Chain(runTimeConfig);
 			chainScenario.run();
-		} catch(final Exception e) {
+			LOG.info(Markers.MSG, "Scenario end");
+		} catch (final Exception e) {
 			e.printStackTrace(System.err);
 			LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed");
 		}

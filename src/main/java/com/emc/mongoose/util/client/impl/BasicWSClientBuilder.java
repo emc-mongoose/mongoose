@@ -6,7 +6,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
 //
-import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
+import com.emc.mongoose.util.shared.WSLoadBuilderFactory;
 /**
  Created by kurila on 19.06.15.
  */

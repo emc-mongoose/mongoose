@@ -13,7 +13,7 @@ import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
-import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -65,7 +65,7 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
-		new ScriptRunner().run();
+		new ScriptMockRunner().run();
 		//
 		RunIdFileManager.flushAll();
 		//
@@ -86,7 +86,7 @@ extends WSMockTestBase {
 			final BufferingOutputStream
 				stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
-			new ScriptRunner().run();
+			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;

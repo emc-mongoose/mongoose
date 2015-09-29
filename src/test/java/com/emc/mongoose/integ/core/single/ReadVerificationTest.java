@@ -12,7 +12,7 @@ import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
-import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -68,7 +68,7 @@ extends WSMockTestBase {
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  write
 		UniformDataSource.DEFAULT = new UniformDataSource();
-		new ScriptRunner().run();
+		new ScriptMockRunner().run();
 		//
 		RunIdFileManager.flushAll();
 		//
@@ -78,7 +78,8 @@ extends WSMockTestBase {
 		rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH,
 			LogValidator.getDataItemsFile(CREATE_RUN_ID).getPath());
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD,
+			TestConstants.LOAD_READ.toLowerCase());
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_RING_SEED, WRONG_SEED);
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
@@ -89,7 +90,7 @@ extends WSMockTestBase {
 		try (final BufferingOutputStream
 				 stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
-			new ScriptRunner().run();
+			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;

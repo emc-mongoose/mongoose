@@ -8,10 +8,9 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.util.scenario.Rampup;
+import com.emc.mongoose.run.scenario.Rampup;
 //
 import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 //
 import org.junit.Assert;
@@ -50,16 +49,20 @@ extends DistributedLoadBuilderTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RampupTest.class.getCanonicalName());
-		System.setProperty(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, "false");
-		System.setProperty(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s");
-		System.setProperty(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, "0");
-		System.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
-		System.setProperty(RunTimeConfig.KEY_API_NAME, "swift");
 		DistributedLoadBuilderTestBase.setUpClass();
-		final Rampup rampupScenario = new Rampup(
-			LOAD_BUILDER_CLIENT, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS,
-			LOAD_SEQ, SIZE_SEQ, THREAD_COUNT_SEQ
-		);
+		//
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, "false");
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s");
+		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, "0");
+		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
+		rtConfig.set(RunTimeConfig.KEY_API_NAME, "swift");
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, SIZE_SEQ);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS, THREAD_COUNT_SEQ);
+		RunTimeConfig.setContext(rtConfig);
+		//
+		final Rampup rampupScenario = new Rampup(rtConfig);
 		//
 		try(
 			final BufferingOutputStream

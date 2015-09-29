@@ -719,44 +719,44 @@ require(["./requirejs/conf"], function() {
 			//  for time accomodation. For more info see #JIRA-314
 			var TIME_LIMITATIONS = {
 				"seconds": {
-					"limit": 300 * 1,
+					"limit": 300,
 					"value": 1,
 					"next": "minutes",
-					"label": "seconds[s]"
+					"label": "t[seconds]"
 				},
 				"minutes": {
-					"limit": 300 * 60,
+					"limit": 300,
 					"value": 60,
 					"next": "hours",
-					"label": "minutes[m]"
+					"label": "t[minutes]"
 				},
 				"hours": {
-					"limit": 120 * 60 * 60,
+					"limit": 120,
 					"value": 60 * 60,
 					"next": "days",
-					"label": "hours[h]"
+					"label": "t[hours]"
 				},
 				"days": {
-					"limit": 35 * 24 * 60 * 60,
+					"limit": 35,
 					"value": 24 * 60 * 60,
 					"next": "weeks",
-					"label": "days[d]"
+					"label": "t[days]"
 				},
 				"weeks": {
-					"limit": 20 * 7 * 24 * 60 * 60,
+					"limit": 20,
 					"value": 7 * 24 * 60 * 60,
 					"next": "months",
-					"label": "weeks[w]"
+					"label": "t[weeks]"
 				},
 				"months": {
-					"limit": 60 * 4 * 7 * 24 * 60 * 60,
+					"limit": 60,
 					"value": 4 * 7 * 24 * 60 * 60,
 					"next": "years",
-					"label": "months[m]"
+					"label": "t[months]"
 				},
 				"years": {
 					"next": null,
-					"label": "years[y]"
+					"label": "t[years]"
 				}
 			};
 			//  Some constants from runTimeConfig
@@ -850,7 +850,7 @@ require(["./requirejs/conf"], function() {
 			}
 			//
 			function drawThroughputCharts(data, json, sec) {
-				var updateFunction = drawChart(data, json, "seconds[s]", "Rate[s^-1]",
+				var updateFunction = drawChart(data, json, "t[seconds]", "Rate[s^-1]",
 					"#tp-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
 					sec);
 				return {
@@ -861,7 +861,7 @@ require(["./requirejs/conf"], function() {
 			}
 			//
 			function drawBandwidthCharts(data, json, sec) {
-				var updateFunction = drawChart(data, json, "seconds[s]", "Rate[MB*s^-1]",
+				var updateFunction = drawChart(data, json, "t[seconds]", "Rate[MB*s^-1]",
 					"#bw-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
 					sec);
 				return {
@@ -898,7 +898,7 @@ require(["./requirejs/conf"], function() {
 					.attr("name", function(d) { return d.id; })
 					.attr("transform", function(d, i) {
 						return "translate(" + (10 + i*130)
-							+ "," + (height + (margin.bottom/2) + addHeight) + ")";
+							+ "," + (height + (margin.bottom/2) + addHeight + 10) + ")";
 					});
 				groupsEnter.append("text")
 					.attr("dy", ".35em")
@@ -971,6 +971,12 @@ require(["./requirejs/conf"], function() {
 					}
 					currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
 					xAxisLabel = currTimeUnit.label;
+					x = d3.scale.linear()
+						.domain([
+							d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x / currTimeUnit.value; }); }),
+							d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x / currTimeUnit.value; })  })
+						])
+						.range([0, width]);
 				}
 				//
 				x = d3.scale.linear()
@@ -1013,7 +1019,8 @@ require(["./requirejs/conf"], function() {
 				//
 				var line = d3.svg.line()
 					.x(function (d) {
-						return x((isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value));
+						return x((isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+							: (d.x / currTimeUnit.value));
 					})
 					.y(function (d) {
 						return y((isNaN(y(d.y))) ? 0.001 : d.y);
@@ -1032,8 +1039,8 @@ require(["./requirejs/conf"], function() {
 				//
 				//  Axis X Label
 				var horizontalLabel = svg.append("text")
-					.attr("x", width - 2)
-					.attr("y", height - 2)
+					.attr("x", (width + margin.left)/2)
+					.attr("y", height + margin.top)
 					.style("text-anchor", "end")
 					.text(xAxisLabel);
 				//
@@ -1074,8 +1081,8 @@ require(["./requirejs/conf"], function() {
 				//  Axis Y Label
 				svg.append("text")
 					.attr("transform", "rotate(-90)")
-					.attr("y", 6)
-					.attr("x", 0)
+					.attr("y", -50)
+					.attr("x", -(height/2) + 30)
 					.attr("dy", ".71em")
 					.style("text-anchor", "end")
 					.text(yAxisLabel);
@@ -1209,10 +1216,12 @@ require(["./requirejs/conf"], function() {
 							if (scaleOrientation === SCALE_ORIENTATION[0]) {
 								x = d3.scale.log()
 									.domain([d3.min(data, function(c) { return d3.min(c.values, function(d) {
-										return d.x <= 0 ? 0.1 : (d.x / currTimeUnit.value);
+										return d.x <= 0 ? (0.1 / currTimeUnit.value)
+											: (d.x / currTimeUnit.value);
 									}); }),
 										d3.max(data, function(c) { return d3.max(c.values, function(d) {
-											return d.x <= 0 ? 0.1 : (d.x / currTimeUnit.value);
+											return d.x <= 0 ? (0.1 / currTimeUnit.value)
+												: (d.x / currTimeUnit.value);
 										}); })])
 									.range([0, width]);
 								currXScale = SCALE_TYPES[1];
@@ -1305,14 +1314,26 @@ require(["./requirejs/conf"], function() {
 						}
 						currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
 						horizontalLabel.text(currTimeUnit.label);
+						x.domain([
+							d3.min(data, function(c) { return d3.min(c.values, function(d) {
+								return (isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+									: (d.x / currTimeUnit.value);
+							}); }),
+							d3.max(data, function(c) { return d3.max(c.values, function(d) {
+								return (isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+									: (d.x / currTimeUnit.value);
+							}); })
+						]);
 					}
 					//
 					x.domain([
 						d3.min(data, function(c) { return d3.min(c.values, function(d) {
-							return (isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value);
+							return (isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+								: (d.x / currTimeUnit.value);
 						}); }),
 						d3.max(data, function(c) { return d3.max(c.values, function(d) {
-							return (isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value);
+							return (isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+								: (d.x / currTimeUnit.value);
 						}); })
 					]);
 					y.domain([
@@ -1493,7 +1514,7 @@ require(["./requirejs/conf"], function() {
 					});
 					//
 					function drawThroughputChart(data) {
-						var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds[s]", "Rate[s^-1]", "#tp-" + runId.split(".").join("_"));
+						var updateFunction = drawChart(data, "Throughput[obj/s]", "t[seconds]", "Rate[s^-1]", "#tp-" + runId.split(".").join("_"));
 						return {
 							update: function(json) {
 								updateFunction(CHART_TYPES.TP, json);
@@ -1502,7 +1523,7 @@ require(["./requirejs/conf"], function() {
 					}
 					//
 					function drawBandwidthChart(data) {
-						var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds[s]", "Rate[MB*s^-1]", "#bw-" + runId.split(".").join("_"));
+						var updateFunction = drawChart(data, "Bandwidth[MB/s]", "t[seconds]", "Rate[MB*s^-1]", "#bw-" + runId.split(".").join("_"));
 						return {
 							update: function(json) {
 								updateFunction(CHART_TYPES.BW, json);
@@ -1534,6 +1555,16 @@ require(["./requirejs/conf"], function() {
 							}
 							currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
 							xAxisLabel = currTimeUnit.label;
+							x = d3.scale.linear()
+								.domain([
+									d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+										return d3.min(c.values, function(v) { return v.x / currTimeUnit.value; }); });
+									}),
+									d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+										return d3.max(c.values, function(v) { return v.x / currTimeUnit.value; }); });
+									})
+								])
+								.range([0, width]);
 						}
 						x = d3.scale.linear()
 							.domain([
@@ -1582,7 +1613,8 @@ require(["./requirejs/conf"], function() {
 						//
 						var line = d3.svg.line()
 							.x(function (d) {
-								return x((isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value));
+								return x((isNaN(x(d.x))) ? (0.1 / currTimeUnit.value)
+									: (d.x / currTimeUnit.value));
 							})
 							.y(function (d) {
 								return y((isNaN(y(d.y))) ? 0.001 : d.y);
@@ -1683,7 +1715,7 @@ require(["./requirejs/conf"], function() {
 							.attr("width", 18)
 							.attr("height", 18)
 							.attr("transform", function(d, i) {
-								return "translate(" + (i*210 + 20) + "," + (height + (margin.bottom/2) + 4) + ")";
+								return "translate(" + (i*210 + 20) + "," + (height + (margin.bottom/2) + 24) + ")";
 							})
 							.append("xhtml:body")
 							.append("input")
@@ -1738,7 +1770,7 @@ require(["./requirejs/conf"], function() {
 							.attr("class", "bottom-legend")
 							.attr("stroke", "black")
 							.attr("transform", function(d, i) {
-								return "translate(" + i*210 + "," + (height + (margin.bottom/2)) + ")";
+								return "translate(" + i*210 + "," + (height + (margin.bottom/2) + 20) + ")";
 							});
 
 						bottomLegend.append("path")
@@ -1772,16 +1804,16 @@ require(["./requirejs/conf"], function() {
 							.text(function(d) { return d.text; });
 						//  Axis X Label
 						var horizontalLabel = svg.append("text")
-							.attr("x", width - 2)
-							.attr("y", height - 2)
+							.attr("x", (width + margin.left)/2)
+							.attr("y", height + margin.top)
 							.style("text-anchor", "end")
 							.text(xAxisLabel);
 
 						//  Axis Y Label
 						svg.append("text")
 							.attr("transform", "rotate(-90)")
-							.attr("y", 6)
-							.attr("x", 0)
+							.attr("y", -50)
+							.attr("x", -(height/2) + 30)
 							.attr("dy", ".71em")
 							.style("text-anchor", "end")
 							.text(yAxisLabel);
@@ -1983,10 +2015,16 @@ require(["./requirejs/conf"], function() {
 										x = d3.scale.log()
 											.domain([
 												d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-													return d3.min(c.values, function(v) { return (v.x <= 0) ? 0.1 : (v.x / currTimeUnit.value); }); });
+													return d3.min(c.values, function(v) {
+														return (v.x <= 0) ? (0.1 / currTimeUnit.value)
+															: (v.x / currTimeUnit.value);
+													}); });
 												}),
 												d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-													return d3.max(c.values, function(v) { return (v.x <= 0) ? 0.1 : (v.x / currTimeUnit.value); }); });
+													return d3.max(c.values, function(v) {
+														return (v.x <= 0) ? (0.1 / currTimeUnit.value)
+															: (v.x / currTimeUnit.value);
+													}); });
 												})
 											])
 											.range([0, width]);
@@ -2008,7 +2046,7 @@ require(["./requirejs/conf"], function() {
 								}
 								redraw(currXScale, currYScale);
 							}
-						}, 40);
+						}, 50);
 						return function(chartType, json) {
 							json.threadName = json.threadName.match(getThreadNamePattern())[0];
 							var loadType = json.threadName;
@@ -2092,14 +2130,34 @@ require(["./requirejs/conf"], function() {
 								}
 								currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
 								horizontalLabel.text(currTimeUnit.label);
+								x.domain([
+									d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+										return d3.min(c.values, function(v) {
+											return (isNaN(x(v.x))) ? (0.1 / currTimeUnit.value)
+												: (v.x / currTimeUnit.value);
+										}); });
+									}),
+									d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+										return d3.max(c.values, function(v) {
+											return (isNaN(x(v.x))) ? (0.1 / currTimeUnit.value)
+												: (v.x / currTimeUnit.value);
+										}); });
+									})
+								]);
 							}
 							//
 							x.domain([
 								d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-									return d3.min(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : (v.x / currTimeUnit.value); }); });
+									return d3.min(c.values, function(v) {
+										return (isNaN(x(v.x))) ? (0.1 / currTimeUnit.value)
+											: (v.x / currTimeUnit.value);
+									}); });
 								}),
 								d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-									return d3.max(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : (v.x / currTimeUnit.value); }); });
+									return d3.max(c.values, function(v) {
+										return (isNaN(x(v.x))) ? (0.1 / currTimeUnit.value)
+											: (v.x / currTimeUnit.value);
+									}); });
 								})
 							]);
 							y.domain([
@@ -2295,17 +2353,17 @@ require(["./requirejs/conf"], function() {
 								.call(makeYAxis()
 									.tickSize(-width, 0, 0)
 									.tickFormat(""));
-							//  Axis Y Label
+							//  Axis X Label
 							svg.append("text")
-								.attr("x", width - 2)
-								.attr("y", height - 2)
+								.attr("x", (width + margin.left)/2)
+								.attr("y", height + margin.top - 8)
 								.style("text-anchor", "end")
 								.text(xAxisLabel);
 							//  Axis Y Label
 							svg.append("text")
 								.attr("transform", "rotate(-90)")
-								.attr("y", 6)
-								.attr("x", 0)
+								.attr("y", -57)
+								.attr("x", -(height/2) + 30)
 								.attr("dy", ".71em")
 								.style("text-anchor", "end")
 								.text(yAxisLabel);
@@ -2545,7 +2603,7 @@ require(["./requirejs/conf"], function() {
 									scalesArray[currIndex].yLabel = currYScale;
 									redraw(currIndex, x, y);
 								}
-							}, 0);
+							}, 10);
 						});
 						//
 						return function(chartType, json, array) {

@@ -116,10 +116,10 @@ implements WSIOTask<T> {
 					produceObjectContent(ioCtl);
 					break;
 				case READ:
-					// TODO there's a probability to specify some content in this case
+					// TODO here is an ability to specify some content here
 					break;
 				case DELETE:
-					// TODO there's a probability to specify some content in this case
+					// TODO here is an ability to specify some content here
 					break;
 				case UPDATE:
 					produceUpdatedRangesContent(ioCtl);
@@ -156,9 +156,11 @@ implements WSIOTask<T> {
 	private void produceUpdatedRangesContent(final IOControl ioCtl)
 	throws IOException {
 		//
-		if(countBytesDone == nextRangeOffset) {
+		if(countBytesDone + countBytesSkipped == nextRangeOffset) {
+			// find next updating range
 			do {
 				currRangeSize = dataItem.getRangeSize(currRangeIdx);
+				// select the current range if it's updating
 				if(dataItem.isCurrLayerRangeUpdating(currRangeIdx)) {
 					currRange = new UniformData(
 						dataItem.getOffset() + nextRangeOffset, currRangeSize,
@@ -170,17 +172,18 @@ implements WSIOTask<T> {
 						currDataLayerIdx + 1, UniformDataSource.DEFAULT
 					);
 				} else {
+					countBytesSkipped += currRangeSize;
 					currRange = null;
 				}
 				currRangeIdx ++;
 				nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
-			} while(currRange == null);
+			} while(currRange == null && countBytesDone < contentSize);
 		}
-		//
-		if(currRangeSize > 0) {
+		// write the current updating range's content
+		if(currRangeSize > 0 && currRange != null) {
 			countBytesDone += currRange.write(chanOut, nextRangeOffset - countBytesDone);
 		}
-		//
+		// all scheduled updates are written out, commit the update transaction and finish
 		if(countBytesDone == contentSize) {
 			dataItem.commitUpdatedRanges();
 			chanOut.close();
