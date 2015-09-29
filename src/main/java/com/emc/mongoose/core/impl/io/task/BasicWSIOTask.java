@@ -100,7 +100,7 @@ implements WSIOTask<T> {
 	}
 	//
 	@Override
-	public final void produceContent(final ContentEncoder encoder, final IOControl ioCtl)
+	public final synchronized void produceContent(final ContentEncoder encoder, final IOControl ioCtl)
 	throws IOException {
 		//
 		if(chanOut == null) { // 1st time invocation
@@ -367,7 +367,7 @@ implements WSIOTask<T> {
 	}
 	//
 	@Override
-	public final void consumeContent(final ContentDecoder decoder, final IOControl ioCtl) {
+	public final synchronized void consumeContent(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
 			if(respStatusCode < 200 || respStatusCode >= 300) { // failure, no user data is expected
 				consumeFailedResponseContent(decoder, ioCtl);
