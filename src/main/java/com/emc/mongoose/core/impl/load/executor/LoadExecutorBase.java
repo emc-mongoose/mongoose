@@ -90,9 +90,7 @@ implements LoadExecutor<T> {
 	private final Thread
 		metricsDaemon = new Thread() {
 			//
-			{
-				setDaemon(true);
-			}
+			{ setDaemon(true); }
 			//
 			@Override
 			public final void run() {
@@ -266,7 +264,7 @@ implements LoadExecutor<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void logMetrics(final Marker logMarker) {
+	public void logMetrics(final Marker logMarker) {
 		LOG.info(
 			logMarker,
 			Markers.PERF_SUM.equals(logMarker) ?
@@ -338,7 +336,7 @@ implements LoadExecutor<T> {
 			super.start();
 			LOG.debug(Markers.MSG, "Started object producer {}", getName());
 			//
-			metricsDaemon.setName(getName() + " metrics");
+			metricsDaemon.setName(getName() + "-metrics");
 			metricsDaemon.start();
 			//
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());

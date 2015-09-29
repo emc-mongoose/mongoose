@@ -23,6 +23,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
@@ -49,6 +50,7 @@ import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
 import java.util.List;
@@ -72,6 +74,10 @@ implements WSLoadExecutor<T> {
 	private final Thread clientDaemon;
 	private final WSRequestConfig<T> wsReqConfigCopy;
 	private final boolean isPipeliningEnabled;
+	//
+	private final AtomicLong
+		connLeaseCount = new AtomicLong(0),
+		connReleaseCount = new AtomicLong(0);
 	//
 	@SuppressWarnings("unchecked")
 	public BasicWSLoadExecutor(
@@ -162,12 +168,39 @@ implements WSLoadExecutor<T> {
 		connPool = new BasicNIOConnPool(
 			ioReactor, connFactory,
 			timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
-		);
+		) {
+			@Override
+			protected final void onLease(final BasicNIOPoolEntry poolEntry) {
+				super.onLease(poolEntry);
+				connLeaseCount.incrementAndGet();
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(Markers.MSG, "{}: connection lease: {}", getName(), poolEntry);
+				}
+			}
+			//
+			@Override
+			protected final void onRelease(final BasicNIOPoolEntry poolEntry) {
+				super.onRelease(poolEntry);
+				connReleaseCount.incrementAndGet();
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(Markers.MSG, "{}: connection release: {}", getName(), poolEntry);
+				}
+			}
+		};
 		connPool.setMaxTotal(totalConnCount);
 		connPool.setDefaultMaxPerRoute(connCountPerNode);
 		//
 		clientDaemon = new Thread(
 			new HttpClientRunTask(ioEventDispatch, ioReactor), "clientDaemon<" + getName() + ">"
+		);
+	}
+	//
+	@Override
+	public final void logMetrics(final Marker logMarker) {
+		super.logMetrics(logMarker);
+		LOG.info(
+			Markers.MSG, "Connection pool: leased={}, released={}, {}",
+			connLeaseCount.get(), connReleaseCount.get(), connPool.toString()
 		);
 	}
 	//
