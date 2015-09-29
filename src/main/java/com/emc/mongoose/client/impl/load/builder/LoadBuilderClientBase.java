@@ -351,7 +351,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setWorkerCountDefault(connCount);
+			nextBuilder.setConnPerNodeDefault(connCount);
 		}
 		return this;
 	}
@@ -363,7 +363,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setWorkerCountFor(connCount, loadType);
+			nextBuilder.setConnPerNodeFor(connCount, loadType);
 		}
 		return this;
 	}
