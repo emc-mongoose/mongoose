@@ -198,10 +198,12 @@ implements WSLoadExecutor<T> {
 	@Override
 	public final void logMetrics(final Marker logMarker) {
 		super.logMetrics(logMarker);
-		LOG.info(
-			Markers.MSG, "Connection pool: leased={}, released={}, {}",
-			connLeaseCount.get(), connReleaseCount.get(), connPool.toString()
-		);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "Connections: leased={}, released={}, {}",
+				connLeaseCount.get(), connReleaseCount.get(), connPool.toString()
+			);
+		}
 	}
 	//
 	@Override
