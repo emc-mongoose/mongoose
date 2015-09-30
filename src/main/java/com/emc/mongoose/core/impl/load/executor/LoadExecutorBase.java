@@ -42,10 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 15.10.14.
  */
@@ -98,26 +95,6 @@ implements LoadExecutor<T> {
 					if(metricsPeriodSec > 0) {
 						while(!isClosed.get()) {
 							logMetrics(Markers.PERF_AVG);
-							if(
-								lastStats.getFailCount() > 1000000 &&
-								lastStats.getFailRateLast() < lastStats.getSuccRateLast()
-							) {
-								LOG.fatal(
-									Markers.ERR,
-									"There's a more than 1M of failures and the failure rate is higher " +
-									"than success rate for at least last {}[sec]. Exiting in order to " +
-									"avoid the memory exhaustion. Please check your environment.",
-									metricsPeriodSec
-								);
-								try {
-									LoadExecutorBase.this.close();
-								} catch(final IOException e) {
-									LogUtil.exception(
-										LOG, Level.WARN, e, "Failed to close the load job"
-									);
-								}
-								break;
-							}
 							TimeUnit.SECONDS.sleep(metricsPeriodSec);
 						}
 					} else {
