@@ -115,7 +115,7 @@ implements LoadClient<T> {
 		//
 		private void loadAndPassDataItems()
 		throws InterruptedException, RemoteException {
-			List<T> frame = loadSvc.fetchItems();
+			List<T> frame = loadSvc.getProcessedItems();
 			if(frame == null) {
 				LOG.debug(
 					Markers.ERR, "No data items frame from the load server @ {}", loadSvc

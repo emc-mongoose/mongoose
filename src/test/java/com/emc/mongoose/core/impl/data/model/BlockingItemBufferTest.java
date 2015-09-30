@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 import org.junit.Test;
 import static org.junit.Assert.*;
 //
@@ -19,7 +18,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 //
 @RunWith(MockitoJUnitRunner.class)
-public class ItemBlockingQueueTest {
+public class BlockingItemBufferTest {
 	//
 	final DataItem
 		dataItem0 = Mockito.mock(DataItem.class),
@@ -31,7 +30,7 @@ public class ItemBlockingQueueTest {
 	@Test
 	public void shouldReadSingleAfterSingleWrite()
 	throws Exception {
-		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
+		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(1)
 		);
 		itemsIO.put(dataItem0);
@@ -41,7 +40,7 @@ public class ItemBlockingQueueTest {
 	@Test
 	public void shouldReadInTheSameOrder()
 	throws Exception {
-		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
+		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(3)
 		);
 		itemsIO.put(dataItem0);
@@ -55,7 +54,7 @@ public class ItemBlockingQueueTest {
 	@Test
 	public void shouldReadBatchInTheSameOrder()
 	throws Exception {
-		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
+		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(5)
 		);
 		final List<DataItem>
@@ -71,7 +70,7 @@ public class ItemBlockingQueueTest {
 	@Test
 	public void shouldBlockWriteWhenOutOfCapacity()
 	throws Exception {
-		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
+		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
 		itemsIO.put(dataItem0);
@@ -96,7 +95,7 @@ public class ItemBlockingQueueTest {
 	public void shouldWriteBatchPartiallyWhenOutOfCapacity()
 	throws Exception {
 		final BlockingQueue<DataItem> queue = new ArrayBlockingQueue<>(2);
-		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(queue);
+		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(queue);
 		final int n = itemsIO.put(
 			Arrays.asList(dataItem0, dataItem1, dataItem2, dataItem3, dataItem4), 0, 5
 		);
@@ -106,7 +105,7 @@ public class ItemBlockingQueueTest {
 	@Test
 	public void shouldUnblockWriteWhenRead()
 	throws Exception {
-		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
+		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
 		itemsIO.put(dataItem0);
@@ -133,7 +132,7 @@ public class ItemBlockingQueueTest {
 	@Test
 	public void shouldBlockReadWhenEmpty()
 	throws Exception {
-		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
+		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
 		itemsIO.put(dataItem0);
@@ -159,7 +158,7 @@ public class ItemBlockingQueueTest {
 	@Test
 	public void shouldUnblockReadWhenWritten()
 	throws Exception {
-		final ItemBlockingQueue<DataItem> itemsIO = new ItemBlockingQueue<>(
+		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(3)
 		);
 		itemsIO.put(dataItem0);

@@ -1,12 +1,14 @@
 package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.log.Markers;
+//
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.ItemBuffer;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.List;
@@ -15,15 +17,15 @@ import java.util.concurrent.BlockingQueue;
  The blocking queue wrapped in order to act as data item output from the tail and as data item input
  from the head.
  */
-public class ItemBlockingQueue<T extends DataItem>
-implements DataItemDst<T>, DataItemSrc<T> {
+public class BlockingItemBuffer<T extends DataItem>
+implements ItemBuffer<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	private DataItem lastItem = null;
 	protected final BlockingQueue<T> queue;
 	//
-	public ItemBlockingQueue(final BlockingQueue<T> queue) {
+	public BlockingItemBuffer(final BlockingQueue<T> queue) {
 		this.queue = queue;
 	}
 	/**
@@ -66,7 +68,7 @@ implements DataItemDst<T>, DataItemSrc<T> {
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public ItemBlockingQueue<T> getDataItemSrc()
+	public BlockingItemBuffer<T> getDataItemSrc()
 	throws IOException {
 		return this;
 	}

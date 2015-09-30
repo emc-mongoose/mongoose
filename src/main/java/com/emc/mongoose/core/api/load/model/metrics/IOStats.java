@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.api.load.model.metrics;
 //
 import java.io.Closeable;
-import java.io.Externalizable;
 import java.io.Serializable;
 /**
  Created by kurila on 14.09.15.

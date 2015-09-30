@@ -268,7 +268,7 @@ implements LoadExecutor<T> {
 		LOG.info(
 			logMarker,
 			Markers.PERF_SUM.equals(logMarker) ?
-				"\"" + getName() + "\" summary: " + lastStats : lastStats
+				"\"" + getName() + "\" summary: " + lastStats.toSummaryString() : lastStats
 		);
 	}
 	//

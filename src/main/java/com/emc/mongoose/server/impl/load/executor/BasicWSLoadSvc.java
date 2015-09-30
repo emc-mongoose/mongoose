@@ -8,14 +8,15 @@ import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.load.model.DataItemConsumer;
+import com.emc.mongoose.core.impl.data.model.BlockingItemBuffer;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 // mongoose-server-impl.jar
 import com.emc.mongoose.core.impl.load.model.BasicSyncDataItemConsumer;
-import com.emc.mongoose.server.impl.load.model.BasicItemBuffDst;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.model.RemoteItemBuffDst;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
@@ -26,7 +27,9 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 /**
  Created by kurila on 16.12.14.
  */
@@ -49,7 +52,7 @@ implements WSLoadSvc<T> {
 		);
 		// by default, may be overridden later externally:
 		setDataItemDst(
-			new BasicItemBuffDst<T>(rtConfig.getTasksMaxQueueSize(), rtConfig.getBatchSize())
+			new BlockingItemBuffer<>(new ArrayBlockingQueue<T>(rtConfig.getTasksMaxQueueSize()))
 		);
 	}
 	//
@@ -109,30 +112,30 @@ implements WSLoadSvc<T> {
 					);
 				}
 			} else {
-				super.setDataItemDst(
-					itemDst instanceof RemoteItemBuffDst ?
-						new BasicSyncDataItemConsumer<>(itemDst) :
-						itemDst
-				);
+				if(itemDst instanceof ItemBuffer) {
+					// in order to not to be wrapped by async consumer
+					super.setDataItemDst(new BasicSyncDataItemConsumer<>(itemDst));
+				} else {
+					super.setDataItemDst(itemDst);
+				}
 			}
 		} catch(final IOException ee) {
 			LOG.error(Markers.ERR, "Looks like network failure", ee);
 		}
 	}
 	//
-	@Override
-	public final List<T> fetchItems()
+	@Override @SuppressWarnings("unchecked")
+	public final List<T> getProcessedItems()
 	throws RemoteException {
 		List<T> itemsBuff = null;
-		if(consumer instanceof RemoteItemBuffDst) {
+		if(consumer instanceof BasicSyncDataItemConsumer) {
 			try {
-				itemsBuff = ((RemoteItemBuffDst<T>) consumer).fetchItems();
-			} catch (final InterruptedException e) {
-				if(!isShutdown.get()) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
-				}
+				final DataItemSrc<T> itemSrc = consumer.getDataItemSrc();
+				itemsBuff = new ArrayList<>(batchSize);
+				itemSrc.get(itemsBuff, batchSize);
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");
 			}
-
 		}
 		return itemsBuff;
 	}
