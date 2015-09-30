@@ -18,7 +18,10 @@ import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 09.05.14.
  A data item which may produce uniformly distributed non-compressible content.
@@ -97,6 +100,21 @@ implements DataItem {
 		if(!ringBuff.hasRemaining()) {
 			ringBuff.clear();
 		}
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final Lock lock = new ReentrantLock();
+	//
+	public final boolean lock() {
+		return lock.tryLock();
+	}
+	//
+	public final boolean lock(final long timeOut, final TimeUnit timeUnit)
+	throws InterruptedException {
+		return lock.tryLock(timeOut, timeUnit);
+	}
+	//
+	public final void release() {
+		lock.unlock();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

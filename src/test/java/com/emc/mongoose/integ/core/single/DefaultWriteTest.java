@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 //
 /**
@@ -392,6 +393,26 @@ extends WSMockTestBase {
 				in = Files.newBufferedReader(perfTraceFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			LogValidator.assertCorrectPerfTraceCSV(in);
+		}
+	}
+
+	@Test
+	public void checkNoItemDuplicatesLogged()
+	throws Exception {
+		final Set<String> items = new TreeSet<>();
+		String nextLine;
+		int lineNum = 0;
+		try(
+			final BufferedReader in = Files.newBufferedReader(
+				LogValidator.getDataItemsFile(RUN_ID).toPath(), StandardCharsets.UTF_8
+			)
+		) {
+			while((nextLine = in.readLine()) != null) {
+				if(!items.add(nextLine)) {
+					Assert.fail("Duplicate item \"" + nextLine + "\" at line #" + lineNum);
+				}
+				lineNum ++;
+			}
 		}
 	}
 }

@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -613,7 +615,7 @@ implements LoadExecutor<T> {
 			// update the metrics with success
 			markSucc(ioTask, countBytesDone, reqDuration, respLatency);
 			// pass data item to a consumer
-			passDataItem(lastDataItem);
+			passDataItem(dataItem);
 		} else {
 			ioStats.markFail();
 		}

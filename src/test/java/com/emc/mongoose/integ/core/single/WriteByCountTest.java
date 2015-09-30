@@ -26,6 +26,10 @@ import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,7 +45,14 @@ extends WSMockTestBase {
 
 	private static final String RUN_ID = WriteByCountTest.class.getCanonicalName();
 	private static final String DATA_SIZE = "1B", LIMIT_TIME = "365.days";
-	private static final int LIMIT_COUNT = 100000, LOAD_THREADS = 10;
+	private static final int LIMIT_COUNT = 10000, LOAD_THREADS = 10;
+	private static final TreeSet<String>
+		UNIQ_ITEMS = new TreeSet<>(),
+		UNIQ_TRACES = new TreeSet<>();
+	private static final List<String>
+		DUP_ITEMS = new LinkedList<>(),
+		DUP_TRACES = new LinkedList<>(),
+		MISSING_ITEMS = new LinkedList<>();
 
 	@BeforeClass
 	public static void setUpClass()
@@ -73,10 +84,71 @@ extends WSMockTestBase {
 		}
 		//
 		RunIdFileManager.flushAll();
+		//
+		String nextLine, values[];
+		try(
+			final BufferedReader in = Files.newBufferedReader(
+				LogValidator.getDataItemsFile(RUN_ID).toPath(), StandardCharsets.UTF_8
+			)
+		) {
+			LOG.info(
+				Markers.MSG, "Find the duplicates in the \"{}\" file...",
+				LogValidator.getDataItemsFile(RUN_ID)
+			);
+			while((nextLine = in.readLine()) != null) {
+				values = nextLine.split(",");
+				Assert.assertEquals(values.length, 4);
+				if(!UNIQ_ITEMS.add(values[0])) {
+					DUP_ITEMS.add(values[0]);
+				}
+			}
+		}
+		//
+		try(
+			final BufferedReader in = Files.newBufferedReader(
+				LogValidator.getPerfTraceFile(RUN_ID).toPath(), StandardCharsets.UTF_8
+			)
+		) {
+			LOG.info(
+				Markers.MSG, "Find the duplicates in the \"{}\" file...",
+				LogValidator.getPerfTraceFile(RUN_ID)
+			);
+			boolean headerLine = true;
+			while((nextLine = in.readLine()) != null) {
+				if(headerLine) {
+					headerLine = false;
+					continue;
+				}
+				values = nextLine.split(",");
+				Assert.assertEquals(values.length, 8);
+				if(!UNIQ_TRACES.add(values[2])) {
+					DUP_TRACES.add(values[2]);
+				}
+			}
+		}
+		//
+		LOG.info(
+			Markers.MSG, "Find the missing items...",
+			LogValidator.getDataItemsFile(RUN_ID)
+		);
+		boolean found;
+		for(final String oidFromItemTraces : UNIQ_TRACES) {
+			found = false;
+			for(final String oidFromItemList : UNIQ_ITEMS) {
+				if(oidFromItemTraces.equals(oidFromItemList)) {
+					found = true;
+					break;
+				}
+			}
+			if(!found) {
+				MISSING_ITEMS.add(oidFromItemTraces);
+			}
+		}
+		LOG.info(Markers.MSG, "Log analysis done");
 	}
 
 	@AfterClass
-	public  static void tearDownClass()
+	public static void tearDownClass()
 	throws Exception {
 		WSMockTestBase.tearDownClass();
 	}
@@ -231,5 +303,34 @@ extends WSMockTestBase {
 				}
 			}
 		}
+	}
+
+	@Test
+	public void checkNoDuplicateItemsLogged()
+	throws Exception {
+		Assert.assertTrue(
+			DUP_ITEMS.size() + " duplicate ids in the data items list log file:\n" +
+				Arrays.toString(DUP_ITEMS.toArray()),
+			DUP_ITEMS.size() == 0
+		);
+	}
+
+	@Test
+	public void checkNoDuplicateTracesLogged()
+	throws Exception {
+		Assert.assertTrue(
+			DUP_TRACES.size() + " duplicate ids in the perf trace log file:\n" +
+				Arrays.toString(DUP_TRACES.toArray()),
+			DUP_TRACES.size() == 0
+		);
+	}
+
+	@Test
+	public void checkNoMissingItemsLogged() {
+		Assert.assertTrue(
+			MISSING_ITEMS.size() + " missing ids in the list log file:\n" +
+				Arrays.toString(MISSING_ITEMS.toArray()),
+			MISSING_ITEMS.size() == 0
+		);
 	}
 }
