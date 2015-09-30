@@ -85,8 +85,6 @@ implements LoadExecutor<T> {
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
-	private final Lock lock = new ReentrantLock();
-	private final Condition condDone = lock.newCondition();
 	private T lastDataItem;
 	//
 	private final Thread
@@ -100,6 +98,26 @@ implements LoadExecutor<T> {
 					if(metricsPeriodSec > 0) {
 						while(!isClosed.get()) {
 							logMetrics(Markers.PERF_AVG);
+							if(
+								lastStats.getFailCount() > 1000000 &&
+								lastStats.getFailRateLast() < lastStats.getSuccRateLast()
+							) {
+								LOG.fatal(
+									Markers.ERR,
+									"There's a more than 1M of failures and the failure rate is higher " +
+									"than success rate for at least last {}[sec]. Exiting in order to " +
+									"avoid the memory exhaustion. Please check your environment.",
+									metricsPeriodSec
+								);
+								try {
+									LoadExecutorBase.this.close();
+								} catch(final IOException e) {
+									LogUtil.exception(
+										LOG, Level.WARN, e, "Failed to close the load job"
+									);
+								}
+								break;
+							}
 							TimeUnit.SECONDS.sleep(metricsPeriodSec);
 						}
 					} else {
@@ -107,56 +125,6 @@ implements LoadExecutor<T> {
 					}
 				} catch(final InterruptedException e) {
 					LOG.debug(Markers.MSG, "{}: interrupted", getName());
-				}
-			}
-		},
-		releaseDaemon = new Thread() {
-			//
-			{ setDaemon(true); }
-			//
-			@Override
-			public final void run() {
-				while(!isClosed.get() && !isInterrupted()) {
-					//
-					LockSupport.parkNanos(1);
-					if(isDoneAllSubm() || isDoneMaxCount()) {
-						lock.lock();
-						try {
-							condDone.signalAll();
-							if(LOG.isTraceEnabled(Markers.MSG)) {
-								LOG.trace(
-									Markers.MSG,
-									"{}: done signal emitted because of condition, submitted: " +
-									"{}, done: {}", getName(), counterSubm.get(), counterResults.get()
-								);
-							}
-						} finally {
-							lock.unlock();
-						}
-					}
-					//
-					LockSupport.parkNanos(1);
-					lastStats = ioStats.getSnapshot();
-					if(
-						lastStats.getFailCount() > 1000000 &&
-						lastStats.getFailRateLast() < lastStats.getSuccRateLast()
-					) {
-						LOG.fatal(
-							Markers.ERR,
-							"There's a more than 1M of failures and the failure rate is higher " +
-							"than success rate for at least last {}[sec]. Exiting in order to " +
-							"avoid the memory exhaustion. Please check your environment.",
-							metricsPeriodSec
-						);
-						try {
-							LoadExecutorBase.this.close();
-						} catch(final IOException e) {
-							LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
-						}
-						break;
-					}
-					//
-					LockSupport.parkNanos(1);
 				}
 			}
 		};
@@ -319,10 +287,6 @@ implements LoadExecutor<T> {
 				);
 			}
 		} else {
-			//
-			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
-			releaseDaemon.start();
-			//
 			if(counterResults.get() > 0) {
 				setSkipCount(counterResults.get());
 				setLastDataItem(loadedPrevState.getLastDataItem());
@@ -378,16 +342,6 @@ implements LoadExecutor<T> {
 			reqConfigCopy.close(); // disables connection drop failures
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
-		}
-		// releasing the blocked join() methods, if any
-		lock.lock();
-		try {
-			condDone.signalAll();
-			LOG.debug(
-				Markers.MSG, "{}: done signal emitted by the interruption", getName()
-			);
-		} finally {
-			lock.unlock();
 		}
 		//
 		try {
@@ -919,37 +873,53 @@ implements LoadExecutor<T> {
 	@Override
 	public void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
-		if(isInterrupted.get() || isClosed.get() || isLimitReached.get()) {
-			return;
-		}
-		//
-		long
-			timeOutMicroSec = timeUnit.toMicros(timeOut),
-			timeElapsedMicroSec;
+		long t, timeOutNanoSec = timeUnit.toNanos(timeOut);
 		if(loadedPrevState != null) {
 			if(isLimitReached.get()) {
 				return;
 			}
-			timeElapsedMicroSec = loadedPrevState.getStatsSnapshot().getElapsedTime();
-			timeOutMicroSec -= timeElapsedMicroSec;
+			t = TimeUnit.MICROSECONDS.toNanos(
+				loadedPrevState.getStatsSnapshot().getElapsedTime()
+			);
+			timeOutNanoSec -= t;
 		}
 		//
-		lock.lock();
-		try {
-			LOG.debug(
-				Markers.MSG, "{}: await for the done condition at most for {}[us]",
-				getName(), timeOutMicroSec
-			);
-			if(condDone.await(timeOutMicroSec, TimeUnit.MICROSECONDS)) {
-				LOG.debug(Markers.MSG, "{}: await for the done condition is finished", getName());
-			} else {
-				LOG.debug(
-					Markers.MSG, "{}: await timeout, unhandled results left: {}",
-					getName(), counterSubm.get() - counterResults.get()
-				);
+		LOG.debug(
+			Markers.MSG, "{}: await for the done condition at most for {}[s]",
+			getName(), TimeUnit.NANOSECONDS.toSeconds(timeOutNanoSec)
+		);
+		t = System.nanoTime();
+		while(true) {
+			if(isInterrupted.get()) {
+				LOG.debug(Markers.MSG, "{}: await exit due to interrupted state", getName());
+				break;
 			}
-		} finally {
-			lock.unlock();
+			LockSupport.parkNanos(1);
+			if(isClosed.get()) {
+				LOG.debug(Markers.MSG, "{}: await exit due to closed state", getName());
+				break;
+			}
+			LockSupport.parkNanos(1);
+			if(isLimitReached.get()) {
+				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
+				break;
+			}
+			LockSupport.parkNanos(1);
+			if(isDoneAllSubm()) {
+				LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
+				break;
+			}
+			LockSupport.parkNanos(1);
+			if(isDoneMaxCount()) {
+				LOG.debug(Markers.MSG, "{}: await exit due to max count done state", getName());
+				break;
+			}
+			LockSupport.parkNanos(1);
+			if(System.nanoTime() - t > timeOutNanoSec) {
+				LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
+				break;
+			}
+			LockSupport.parkNanos(1);
 		}
 	}
 	//
@@ -968,7 +938,6 @@ implements LoadExecutor<T> {
 			if(isInterrupted.compareAndSet(false, true)) {
 				interruptActually();
 			}
-			releaseDaemon.interrupt();
 		} finally {
 			try {
 				if(consumer != null) {
