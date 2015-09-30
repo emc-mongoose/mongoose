@@ -6,4 +6,5 @@ import com.emc.mongoose.core.api.data.DataItem;
  */
 public interface ItemBuffer<T extends DataItem>
 extends DataItemDst<T>, DataItemSrc<T> {
+	boolean isEmpty();
 }

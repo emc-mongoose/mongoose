@@ -15,8 +15,7 @@ import com.emc.mongoose.core.api.load.model.DataItemConsumer;
 import com.emc.mongoose.core.impl.data.model.BlockingQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 // mongoose-server-impl.jar
-import com.emc.mongoose.core.impl.load.model.BasicDataItemProducer;
-import com.emc.mongoose.core.impl.load.model.BasicSyncDataItemConsumer;
+import com.emc.mongoose.core.impl.load.model.BasicDataItemConsumer;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
@@ -61,7 +60,6 @@ implements WSLoadSvc<T> {
 		try {
 			super.closeActually();
 		} finally {
-			consumer.interrupt();
 			// close the exposed network service, if any
 			final Service svc = ServiceUtil.getLocalSvc(ServiceUtil.getLocalSvcName(getName()));
 			if(svc == null) {
@@ -117,7 +115,7 @@ implements WSLoadSvc<T> {
 	public final List<T> getProcessedItems()
 	throws RemoteException {
 		List<T> itemsBuff = null;
-		if(consumer instanceof BasicSyncDataItemConsumer) {
+		if(consumer instanceof BasicDataItemConsumer) {
 			try {
 				final DataItemSrc<T> itemSrc = consumer.getDataItemSrc();
 				itemsBuff = new ArrayList<>(batchSize);

@@ -51,61 +51,15 @@ implements LoadClient<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final Map<String, LoadSvc<T>> remoteLoadMap;
-	private final ThreadPoolExecutor mgmtSvcExecutor, remoteSubmExecutor;
+	private final ThreadPoolExecutor remoteSubmExecutor;
 	private final String loadSvcAddrs[];
 	//
 	protected volatile DataItemDst<T> consumer = null;
 	//
-	@SuppressWarnings("unchecked")
-	public LoadClientBase(
-		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
-		final int connCountPerNode, final int threadCount,
-		final DataItemSrc<T> itemSrc, final long maxCount,
-		final Map<String, LoadSvc<T>> remoteLoadMap
-	) throws RemoteException {
-		super(
-			rtConfig, reqConfig, addrs, connCountPerNode, threadCount,
-			// supress new data items generation on the client side
-			itemSrc instanceof NewDataItemSrc ? null : itemSrc, maxCount,
-			// get any load server last job number
-			remoteLoadMap.values().iterator().next().getInstanceNum(),
-			remoteLoadMap.values().iterator().next().getName() + 'x' + remoteLoadMap.size()
-		);
-		////////////////////////////////////////////////////////////////////////////////////////////
-		this.remoteLoadMap = remoteLoadMap;
-		this.loadSvcAddrs = new String[remoteLoadMap.size()];
-		remoteLoadMap.keySet().toArray(this.loadSvcAddrs);
-		////////////////////////////////////////////////////////////////////////////////////////////
-		mgmtSvcExecutor = new ThreadPoolExecutor(
-			loadSvcAddrs.length + 3, loadSvcAddrs.length + 3, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(rtConfig.getTasksMaxQueueSize()),
-			new GroupThreadFactory(getName() + "-aggregator", true)
-		);
-		remoteSubmExecutor = new ThreadPoolExecutor(
-			loadSvcAddrs.length, loadSvcAddrs.length, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(rtConfig.getTasksMaxQueueSize()),
-			new GroupThreadFactory(getName() + "-submit", true)
-		);
-	}
-	//
-	@Override
-	protected final void initStats(final boolean flagServeJMX) {
-		if(flagServeJMX) {
-			ioStats = new AggregatedRemoteIOStats<>(
-				getName(), rtConfig.getRemotePortMonitor(), remoteLoadMap
-			);
-		} else {
-			ioStats = new AggregatedRemoteIOStats<>(getName(), 0, remoteLoadMap);
-		}
-		lastStats = ioStats.getSnapshot();
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// Producer implementation /////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static int COUNT_LIMIT_RETRY = 100;
 	//
 	private final class LoadDataItemsBatchTask
-	implements Runnable {
+		implements Runnable {
 		//
 		private final LoadSvc<T> loadSvc;
 		//
@@ -191,7 +145,7 @@ implements LoadClient<T> {
 	}
 	//
 	private final class InterruptOnCountLimitReachedTask
-	implements Runnable {
+		implements Runnable {
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
@@ -214,16 +168,53 @@ implements LoadClient<T> {
 			}
 		}
 	}
-	//
-	private void scheduleSvcMgmtTasks() {
+	@SuppressWarnings("unchecked")
+	public LoadClientBase(
+		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
+		final int connCountPerNode, final int threadCount,
+		final DataItemSrc<T> itemSrc, final long maxCount,
+		final Map<String, LoadSvc<T>> remoteLoadMap
+	) throws RemoteException {
+		super(
+			rtConfig, reqConfig, addrs, connCountPerNode, threadCount,
+			// supress new data items generation on the client side
+			itemSrc instanceof NewDataItemSrc ? null : itemSrc, maxCount,
+			// get any load server last job number
+			remoteLoadMap.values().iterator().next().getInstanceNum(),
+			remoteLoadMap.values().iterator().next().getName() + 'x' + remoteLoadMap.size()
+		);
+		////////////////////////////////////////////////////////////////////////////////////////////
+		this.remoteLoadMap = remoteLoadMap;
+		this.loadSvcAddrs = new String[remoteLoadMap.size()];
+		remoteLoadMap.keySet().toArray(this.loadSvcAddrs);
+		////////////////////////////////////////////////////////////////////////////////////////////
 		for(final LoadSvc<T> nextLoadSvc : remoteLoadMap.values()) {
-			mgmtSvcExecutor.submit(new LoadDataItemsBatchTask(nextLoadSvc));
+			mgmtTasks.add(new LoadDataItemsBatchTask(nextLoadSvc));
 		}
-		mgmtSvcExecutor.submit(new AggregateIOStatsTask());
-		mgmtSvcExecutor.submit(new InterruptOnCountLimitReachedTask());
-		mgmtSvcExecutor.shutdown();
+		mgmtTasks.add(new AggregateIOStatsTask());
+		mgmtTasks.add(new InterruptOnCountLimitReachedTask());
+		//
+		remoteSubmExecutor = new ThreadPoolExecutor(
+			loadSvcAddrs.length, loadSvcAddrs.length, 0, TimeUnit.SECONDS,
+			new ArrayBlockingQueue<Runnable>(rtConfig.getTasksMaxQueueSize()),
+			new GroupThreadFactory(getName() + "-submit", true)
+		);
 	}
 	//
+	@Override
+	protected final void initStats(final boolean flagServeJMX) {
+		if(flagServeJMX) {
+			ioStats = new AggregatedRemoteIOStats<>(
+				getName(), rtConfig.getRemotePortMonitor(), remoteLoadMap
+			);
+		} else {
+			ioStats = new AggregatedRemoteIOStats<>(getName(), 0, remoteLoadMap);
+		}
+		lastStats = ioStats.getSnapshot();
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Producer implementation /////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	protected void startActually() {
 		//
@@ -242,8 +233,6 @@ implements LoadClient<T> {
 		}
 		//
 		super.startActually();
-		//
-		scheduleSvcMgmtTasks();
 	}
 	//
 	private final static class InterruptSvcTask
@@ -292,7 +281,6 @@ implements LoadClient<T> {
 			}
 			//
 			remoteSubmExecutor.shutdownNow();
-			mgmtSvcExecutor.shutdownNow();
 		} finally {
 			super.interruptActually();
 		}
@@ -356,8 +344,6 @@ implements LoadClient<T> {
 							break;
 						}
 					}
-				} catch(final InterruptedException e) {
-					break;
 				}
 			}
 		}
@@ -365,8 +351,12 @@ implements LoadClient<T> {
 	//
 	@Override @Deprecated
 	public final void put(final T dataItem)
-	throws RejectedExecutionException, InterruptedException {
-		remoteSubmExecutor.submit(new RemotePutTask(dataItem));
+	throws IOException {
+		try {
+			remoteSubmExecutor.submit(new RemotePutTask(dataItem));
+		} catch(final RejectedExecutionException e) {
+			throw new IOException(e);
+		}
 	}
 	//
 	private final class RemoteBatchPutTask
@@ -403,8 +393,6 @@ implements LoadClient<T> {
 							break;
 						}
 					}
-				} catch(final InterruptedException e) {
-					break;
 				}
 			}
 		}
@@ -412,8 +400,12 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final int put(final List<T> dataItems, final int from, final int to)
-	throws RejectedExecutionException, InterruptedException {
-		remoteSubmExecutor.submit(new RemoteBatchPutTask(dataItems, from, to));
+	throws IOException {
+		try {
+			remoteSubmExecutor.submit(new RemoteBatchPutTask(dataItems, from, to));
+		} catch(final RejectedExecutionException e) {
+			throw new IOException(e);
+		}
 		return to - from;
 	}
 	//
@@ -428,7 +420,6 @@ implements LoadClient<T> {
 	public final void closeActually()
 	throws IOException {
 		if(!remoteLoadMap.isEmpty()) {
-			mgmtSvcExecutor.shutdownNow();
 			LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
 			LoadSvc<T> nextLoadSvc;
 			for(final String addr : remoteLoadMap.keySet()) {

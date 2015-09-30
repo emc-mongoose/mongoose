@@ -13,12 +13,13 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 25.09.15.
  */
-public class BasicSyncDataItemConsumer<T extends DataItem>
+public class BasicDataItemConsumer<T extends DataItem>
 implements DataItemConsumer<T> {
 	//
 	protected final DataItemDst<T> itemDst;
 	//
-	public BasicSyncDataItemConsumer(final DataItemDst<T> itemDst) {
+	public
+	BasicDataItemConsumer(final DataItemDst<T> itemDst) {
 		this.itemDst = itemDst;
 	}
 	//

@@ -3,9 +3,9 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.BlockingItemBuffer;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
 //
+import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -18,7 +18,7 @@ import java.util.concurrent.BlockingQueue;
  from the head.
  */
 public class BlockingQueueItemBuffer<T extends DataItem>
-implements BlockingItemBuffer<T> {
+implements ItemBuffer<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
@@ -29,21 +29,19 @@ implements BlockingItemBuffer<T> {
 		this.queue = queue;
 	}
 	/**
-	 Blocking put implementation
+	 Non-blocking put implementation
 	 @param dataItem the data item to put
-	 @throws InterruptedIOException if the thread was interrupted while trying to put
+	 @throws IOException if no free capacity in the buffer
 	 */
 	@Override
 	public void put(final T dataItem)
-	throws InterruptedIOException {
-		try {
-			queue.put(dataItem);
-		} catch(final InterruptedException e) {
-			throw new InterruptedIOException();
+	throws IOException {
+		if(!queue.offer(dataItem)) {
+			throw new IOException("Buffer has no free space to put an item");
 		}
 	}
 	/**
-	 Blocking bulk put implementation
+	 Non-blocking bulk put implementation
 	 @param buffer the buffer containing the data items to put
 	 @return the count of the items been written
 	 @throws IOException doesn't throw
@@ -73,18 +71,14 @@ implements BlockingItemBuffer<T> {
 		return this;
 	}
 	/**
-	 Blocking get implementation
-	 @return the data item
-	 @throws InterruptedIOException if the thread was interrupted while trying to get
+	 Non-blocking get implementation
+	 @return the data item or null if the buffer is empty
+	 @throws IOException doesn't throw
 	 */
 	@Override
 	public T get()
-	throws InterruptedIOException {
-		try {
-			return queue.take();
-		} catch(final InterruptedException e) {
-			throw new InterruptedIOException();
-		}
+	throws IOException {
+		return queue.poll();
 	}
 	/**
 	 Non-blocking bulk get implementation
@@ -119,7 +113,7 @@ implements BlockingItemBuffer<T> {
 		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_START, itemsCount);
 		try {
 			T item;
-			for (int i = 0; i < itemsCount; i++) {
+			for(int i = 0; i < itemsCount; i++) {
 				item = queue.take();
 				if (item.equals(lastItem)) {
 					return;
@@ -129,6 +123,11 @@ implements BlockingItemBuffer<T> {
 			throw new InterruptedIOException(e.getMessage());
 		}
 		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_END);
+	}
+	//
+	@Override
+	public final boolean isEmpty() {
+		return queue.isEmpty();
 	}
 	/**
 	 Does nothing

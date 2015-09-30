@@ -18,7 +18,7 @@ extends Closeable {
 	 @throws IOException if fails some-why
 	 */
 	void put(final T dataItem)
-	throws IOException, InterruptedException, RejectedExecutionException;
+	throws IOException;
 
 	/**
 	 Bulk put method for the data items from the specified buffer
@@ -27,10 +27,10 @@ extends Closeable {
 	 @throws IOException
 	 */
 	int put(final List<T> buffer, final int from, final int to)
-	throws IOException, InterruptedException, RejectedExecutionException;
+	throws IOException;
 
 	int put(final List<T> buffer)
-	throws IOException, InterruptedException, RejectedExecutionException;
+	throws IOException;
 
 	/**
 	 Make a {@link DataItemSrc} instance from this.

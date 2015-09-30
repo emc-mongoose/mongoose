@@ -12,9 +12,9 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.rmi.RemoteException;
+import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.List;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 04.05.15.
@@ -53,7 +53,7 @@ extends LoadExecutorBase<T> {
 	}
 	//
 	private void invokeDelayToMatchRate(final int itemCountToFeed)
-	throws InterruptedException {
+	throws InterruptedIOException {
 		if(rateLimit > 0 && lastStats.getSuccRateLast() > rateLimit && itemCountToFeed > 0) {
 			final int microDelay = itemCountToFeed * (int) (
 				tgtDurMicroSecs - lastStats.getDurationSum() / lastStats.getSuccRateMean()
@@ -61,7 +61,11 @@ extends LoadExecutorBase<T> {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "Next delay: {}[us]", microDelay);
 			}
-			TimeUnit.MICROSECONDS.sleep(microDelay);
+			try {
+				TimeUnit.MICROSECONDS.sleep(microDelay);
+			} catch(final InterruptedException e) {
+				throw new InterruptedIOException(e.toString());
+			}
 		}
 	}
 	/**
@@ -70,7 +74,7 @@ extends LoadExecutorBase<T> {
 	 */
 	@Override
 	public void put(final T dataItem)
-	throws InterruptedException, RemoteException, RejectedExecutionException {
+	throws IOException {
 		if(manualTaskSleepMicroSecs > 0) {
 			try {
 				TimeUnit.MILLISECONDS.sleep(manualTaskSleepMicroSecs);
@@ -87,7 +91,7 @@ extends LoadExecutorBase<T> {
 	 */
 	@Override
 	public int put(final List<T> dataItems, final int from, final int to)
-	throws InterruptedException, RemoteException, RejectedExecutionException {
+	throws IOException {
 		final int n = to - from;
 		if(n > 0) {
 			if(manualTaskSleepMicroSecs > 0) {

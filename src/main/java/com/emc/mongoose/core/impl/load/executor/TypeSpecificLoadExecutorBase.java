@@ -18,7 +18,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.rmi.RemoteException;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
@@ -156,7 +156,7 @@ extends LimitedRateLoadExecutorBase<T> {
 	/** intercepts the data items which should be scheduled for update or append */
 	@Override
 	public final void put(final T dataItem)
-	throws InterruptedException, RemoteException, RejectedExecutionException {
+	throws IOException {
 		try {
 			switch(loadType) {
 				case APPEND:
@@ -178,7 +178,7 @@ extends LimitedRateLoadExecutorBase<T> {
 	//
 	@Override
 	public final int put(final List<T> dataItems, final int from, final int to)
-	throws InterruptedException, RemoteException, RejectedExecutionException {
+	throws IOException {
 		try {
 			switch(loadType) {
 				case APPEND:

@@ -71,7 +71,6 @@ implements WSLoadExecutor<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
-	private final Thread clientDaemon;
 	private final WSRequestConfig<T> wsReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
@@ -190,9 +189,7 @@ implements WSLoadExecutor<T> {
 		connPool.setMaxTotal(totalConnCount);
 		connPool.setDefaultMaxPerRoute(connCountPerNode);
 		//
-		clientDaemon = new Thread(
-			new HttpClientRunTask(ioEventDispatch, ioReactor), "clientDaemon<" + getName() + ">"
-		);
+		mgmtTasks.add(new HttpClientRunTask(ioEventDispatch, ioReactor));
 	}
 	//
 	@Override
@@ -212,24 +209,10 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected void startActually() {
-		if(clientDaemon == null) {
-			LOG.debug(Markers.ERR, "Not starting web load client due to initialization failures");
-		} else {
-			clientDaemon.start();
-			super.startActually();
-		}
-	}
-	//
-	@Override
 	protected void interruptActually() {
 		try {
 			super.interruptActually();
 		} finally {
-			clientDaemon.interrupt();
-			LOG.debug(
-				Markers.MSG, "Web storage client daemon \"{}\" interrupted", clientDaemon
-			);
 			if(connPool != null) {
 				connPool.closeExpired();
 				LOG.debug(
