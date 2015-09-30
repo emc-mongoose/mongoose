@@ -392,7 +392,7 @@ extends WSMockTestBase {
 	public void shouldLoadsSwitchOperationsSynchronously()
 	throws Exception {
 		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
+		Assert.assertTrue("perf.avg.csv file doesn't exist", perfAvgFile.exists());
 		//
 		try(
 			final BufferedReader
@@ -404,11 +404,11 @@ extends WSMockTestBase {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			//
 			for(final CSVRecord nextRec : recIter) {
-				if (firstRow) {
+				if(firstRow) {
 					firstRow = false;
 				} else {
-					if (!prevLoadType.equals(nextRec.get(3))) {
-						counterSwitch++;
+					if(!prevLoadType.equals(nextRec.get(3))) {
+						counterSwitch ++;
 						prevLoadType = nextRec.get(3);
 					}
 				}
@@ -561,7 +561,7 @@ extends WSMockTestBase {
 			String rangesMask;
 			char rangesMaskChars[];
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for (final CSVRecord nextRec : recIter) {
+			for(final CSVRecord nextRec : recIter) {
 				rangesMask = nextRec.get(3).split("\\/")[1];
 				if(rangesMask.length() == 0) {
 					rangesMaskChars = ("00" + rangesMask).toCharArray();

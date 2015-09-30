@@ -43,7 +43,7 @@ extends WSMockTestBase{
 		RAMPUP_SIZES = "10KB,100MB,1MB",
 		RAMPUP_CONN_COUNTS = "1,10,100",
 		RAMPUP_LOAD_CHAIN = "create,read,delete";
-	private static final int COUNT_STEPS = 9;
+	private static final int COUNT_STEPS = 3*3;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -243,7 +243,7 @@ extends WSMockTestBase{
 			for(final CSVRecord nextRec : recIter) {
 				if(firstRow) {
 					firstRow = false;
-				} else if(nextRec.size() == 23) {
+				} else if(nextRec.size() == 25) {
 					loadTypeExpected = loadChain[loadJobCount % loadChain.length];
 					loadTypeActual = nextRec.get(3);
 					Assert.assertTrue(

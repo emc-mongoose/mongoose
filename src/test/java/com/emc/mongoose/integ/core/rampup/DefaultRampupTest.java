@@ -235,12 +235,12 @@ extends WSMockTestBase {
 			final Set<String> loadsSet = new HashSet<>();
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
-				if (firstRow) {
+				if(firstRow) {
 					firstRow = false;
-				} else if (nextRec.size() == 23) {
-					if (iterationCount == 4) {
+				} else if(nextRec.size() == 25) {
+					if(iterationCount == 4) {
 						iterationCount = 0;
-						stepsCount++;
+						stepsCount ++;
 						//
 						Assert.assertTrue(
 							"There are not all load types in this step", loadsSet.isEmpty()

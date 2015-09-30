@@ -69,7 +69,7 @@ implements Runnable {
 		this.isParallel = isParallel;
 		//
 		String loadTypeStr;
-		LoadExecutor nextLoadJob, prevLoadJob = null;
+		LoadExecutor nextLoadJob;
 		final RequestConfig reqConf;
 		try {
 			reqConf = loadBuilder.getRequestConfig();
@@ -101,7 +101,6 @@ implements Runnable {
 								RunTimeConfig.getContext().getTasksMaxQueueSize()
 							)
 						);
-						nextLoadJob.setDataItemDst(itemBuff);
 					} else {
 						if(flagUseLocalItemList) {
 							// use a temporary file as an item destination
@@ -111,10 +110,10 @@ implements Runnable {
 							itemBuff = null;
 						}
 					}
+					nextLoadJob.setDataItemDst(itemBuff);
 				}
 				// add the built job into the chain
 				loadJobSeq.add(nextLoadJob);
-				prevLoadJob = nextLoadJob;
 			} catch(final RemoteException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to apply the property remotely");
 			} catch(final IOException e) {
