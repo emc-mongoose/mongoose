@@ -900,11 +900,6 @@ implements LoadExecutor<T> {
 				break;
 			}
 			LockSupport.parkNanos(1);
-			if(isLimitReached.get()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
-				break;
-			}
-			LockSupport.parkNanos(1);
 			if(isDoneAllSubm()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
 				break;
@@ -917,6 +912,11 @@ implements LoadExecutor<T> {
 			LockSupport.parkNanos(1);
 			if(System.nanoTime() - t > timeOutNanoSec) {
 				LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
+				break;
+			}
+			LockSupport.parkNanos(1);
+			if(isLimitReached.get()) {
+				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
 				break;
 			}
 			LockSupport.parkNanos(1);
