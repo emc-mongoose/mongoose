@@ -11,11 +11,8 @@ import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.api.load.model.DataItemConsumer;
 import com.emc.mongoose.core.impl.data.model.BlockingQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
-// mongoose-server-impl.jar
-import com.emc.mongoose.core.impl.load.model.BasicDataItemConsumer;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
@@ -78,51 +75,48 @@ implements WSLoadSvc<T> {
 			itemDst, getName()
 		);
 		try {
-			if(itemDst instanceof DataItemConsumer) {
-				if(itemDst instanceof Service) {
-					final String remoteSvcName = ((Service) itemDst).getName();
-					LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
-					final Service localSvc = ServiceUtil.getLocalSvc(
-						ServiceUtil.getLocalSvcName(remoteSvcName)
+			if(itemDst instanceof Service) {
+				final String remoteSvcName = ((Service) itemDst).getName();
+				LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
+				final Service localSvc = ServiceUtil.getLocalSvc(
+					ServiceUtil.getLocalSvcName(remoteSvcName)
+				);
+				if(localSvc == null) {
+					LOG.error(
+						Markers.ERR, "Failed to get local service for name \"{}\"",
+						remoteSvcName
 					);
-					if(localSvc == null) {
-						LOG.error(
-							Markers.ERR, "Failed to get local service for name \"{}\"",
-							remoteSvcName
-						);
-					} else {
-						super.setDataItemDst((DataItemDst<T>) localSvc);
-						LOG.debug(
-							Markers.MSG,
-							"Successfully resolved local service and appended it as consumer"
-						);
-					}
 				} else {
-					LOG.warn(
-						Markers.ERR, "Items destination is not a remote service instance: {}",
-						itemDst.getClass().getName()
+					super.setDataItemDst((DataItemDst<T>) localSvc);
+					LOG.debug(
+						Markers.MSG,
+						"Successfully resolved local service and appended it as consumer"
 					);
 				}
 			} else {
-				super.setDataItemDst(itemDst);
+				LOG.warn(
+					Markers.ERR, "Items destination is not a remote service instance: {}",
+					itemDst.getClass().getName()
+				);
 			}
 		} catch(final IOException ee) {
 			LOG.error(Markers.ERR, "Looks like network failure", ee);
 		}
 	}
+	// prevent output buffer consuming
+	@Override
+	protected final void passDataItems() {
+	}
 	//
-	@Override @SuppressWarnings("unchecked")
+	@Override
 	public final List<T> getProcessedItems()
 	throws RemoteException {
 		List<T> itemsBuff = null;
-		if(consumer instanceof BasicDataItemConsumer) {
-			try {
-				final DataItemSrc<T> itemSrc = consumer.getDataItemSrc();
-				itemsBuff = new ArrayList<>(batchSize);
-				itemSrc.get(itemsBuff, batchSize);
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");
-			}
+		try {
+			itemsBuff = new ArrayList<>(batchSize);
+			itemOutBuff.get(itemsBuff, batchSize);
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");
 		}
 		return itemsBuff;
 	}
