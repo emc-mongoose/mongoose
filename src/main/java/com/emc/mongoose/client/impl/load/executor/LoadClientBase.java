@@ -292,8 +292,6 @@ implements LoadClient<T> {
 			}
 			//
 			remoteSubmExecutor.shutdownNow();
-			mgmtSvcExecutor.shutdownNow();
-			forceAggregation();
 			//
 			LOG.debug(Markers.MSG, "{}: interrupted", getName());
 		} finally {
@@ -387,10 +385,13 @@ implements LoadClient<T> {
 		@Override
 		public final void run() {
 			String loadSvcAddr;
+			LoadSvc<T> loadSvc;
+			int n;
 			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
 				try {
 					loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
-					remoteLoadMap.get(loadSvcAddr).put(dataItems, from, to);
+					loadSvc = remoteLoadMap.get(loadSvcAddr);
+					n = loadSvc.put(dataItems, from, to);
 					rrc.addAndGet(dataItems.size());
 					break;
 				} catch(final RejectedExecutionException | IOException e) {
@@ -425,40 +426,10 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	@SuppressWarnings("unchecked")
-	public LoadState<T> getLoadState()
-	throws RemoteException {
-		forceAggregation();
-		return super.getLoadState();
-	}
-	//
-	private void forceAggregation() {
-		if(isClosed.get()) {
-			return;
-		}
-		final ExecutorService forcedAggregator = Executors.newFixedThreadPool(
-			remoteLoadMap.size(), new GroupThreadFactory("forcedAggregator<" + getName() + ">")
-		);
-		for(final LoadSvc<T> loadSvc : remoteLoadMap.values()) {
-			forcedAggregator.submit(new LoadDataItemsBatchTask(loadSvc));
-		}
-		forcedAggregator.shutdown();
-		try {
-			if(!forcedAggregator.awaitTermination(REMOTE_TASK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
-				LOG.warn(Markers.ERR, "Forced aggregation timeout");
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Forced aggregation interrupted");
-		} finally {
-			forcedAggregator.shutdownNow();
-			lastStats = ioStats.getSnapshot();
-		}
-	}
-	//
-	@Override
 	public final void closeActually()
 	throws IOException {
 		if(!remoteLoadMap.isEmpty()) {
+			mgmtSvcExecutor.shutdownNow();
 			LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
 			LoadSvc<T> nextLoadSvc;
 			for(final String addr : remoteLoadMap.keySet()) {

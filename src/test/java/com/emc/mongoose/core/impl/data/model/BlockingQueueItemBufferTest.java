@@ -18,7 +18,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 //
 @RunWith(MockitoJUnitRunner.class)
-public class BlockingItemBufferTest {
+public class BlockingQueueItemBufferTest {
 	//
 	final DataItem
 		dataItem0 = Mockito.mock(DataItem.class),
@@ -30,7 +30,7 @@ public class BlockingItemBufferTest {
 	@Test
 	public void shouldReadSingleAfterSingleWrite()
 	throws Exception {
-		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
+		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(1)
 		);
 		itemsIO.put(dataItem0);
@@ -40,7 +40,7 @@ public class BlockingItemBufferTest {
 	@Test
 	public void shouldReadInTheSameOrder()
 	throws Exception {
-		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
+		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(3)
 		);
 		itemsIO.put(dataItem0);
@@ -54,7 +54,7 @@ public class BlockingItemBufferTest {
 	@Test
 	public void shouldReadBatchInTheSameOrder()
 	throws Exception {
-		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
+		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(5)
 		);
 		final List<DataItem>
@@ -70,7 +70,7 @@ public class BlockingItemBufferTest {
 	@Test
 	public void shouldBlockWriteWhenOutOfCapacity()
 	throws Exception {
-		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
+		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
 		itemsIO.put(dataItem0);
@@ -95,7 +95,7 @@ public class BlockingItemBufferTest {
 	public void shouldWriteBatchPartiallyWhenOutOfCapacity()
 	throws Exception {
 		final BlockingQueue<DataItem> queue = new ArrayBlockingQueue<>(2);
-		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(queue);
+		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(queue);
 		final int n = itemsIO.put(
 			Arrays.asList(dataItem0, dataItem1, dataItem2, dataItem3, dataItem4), 0, 5
 		);
@@ -105,7 +105,7 @@ public class BlockingItemBufferTest {
 	@Test
 	public void shouldUnblockWriteWhenRead()
 	throws Exception {
-		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
+		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
 		itemsIO.put(dataItem0);
@@ -132,7 +132,7 @@ public class BlockingItemBufferTest {
 	@Test
 	public void shouldBlockReadWhenEmpty()
 	throws Exception {
-		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
+		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
 		itemsIO.put(dataItem0);
@@ -158,7 +158,7 @@ public class BlockingItemBufferTest {
 	@Test
 	public void shouldUnblockReadWhenWritten()
 	throws Exception {
-		final BlockingItemBuffer<DataItem> itemsIO = new BlockingItemBuffer<>(
+		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(3)
 		);
 		itemsIO.put(dataItem0);

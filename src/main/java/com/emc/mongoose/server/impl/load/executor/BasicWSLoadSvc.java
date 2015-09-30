@@ -8,14 +8,14 @@ import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
-import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.load.model.DataItemConsumer;
-import com.emc.mongoose.core.impl.data.model.BlockingItemBuffer;
+import com.emc.mongoose.core.impl.data.model.BlockingQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 // mongoose-server-impl.jar
+import com.emc.mongoose.core.impl.load.model.BasicDataItemProducer;
 import com.emc.mongoose.core.impl.load.model.BasicSyncDataItemConsumer;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
@@ -51,7 +51,7 @@ implements WSLoadSvc<T> {
 		);
 		// by default, may be overridden later externally:
 		setDataItemDst(
-			new BlockingItemBuffer<>(new ArrayBlockingQueue<T>(rtConfig.getTasksMaxQueueSize()))
+			new BlockingQueueItemBuffer<>(new ArrayBlockingQueue<T>(rtConfig.getTasksMaxQueueSize()))
 		);
 	}
 	//

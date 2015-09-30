@@ -5,9 +5,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.BlockingItemBuffer;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
-import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -37,8 +37,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -257,12 +255,14 @@ implements LoadExecutor<T> {
 		try {
 			super.runActually();
 		} finally {
-			LOG.debug(
-				Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
-				getName(), counterSubm.get()
-			);
-			if(!isShutdown.compareAndSet(false, true)) {
-				shutdownActually();
+			if(itemSrc != null) {
+				LOG.debug(
+					Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
+					getName(), counterSubm.get()
+				);
+				if(!isShutdown.compareAndSet(false, true)) {
+					shutdownActually();
+				}
 			}
 		}
 	}
@@ -432,7 +432,7 @@ implements LoadExecutor<T> {
 		if(itemDst == null || itemDst instanceof DataItemConsumer) {
 			this.consumer = (DataItemConsumer<T>) itemDst;
 			LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemDst + "\"");
-		} else if(itemDst instanceof ItemBuffer) {
+		} else if(itemDst instanceof BlockingItemBuffer) {
 			this.consumer = new BasicSyncDataItemConsumer<>(itemDst);
 			LOG.debug(
 				Markers.MSG, getName() + ": wrapped \"" + itemDst + "\" with the sync consumer"

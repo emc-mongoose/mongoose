@@ -11,7 +11,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.data.model.BlockingItemBuffer;
+import com.emc.mongoose.core.impl.data.model.BlockingQueueItemBuffer;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
@@ -96,7 +96,7 @@ implements Runnable {
 				// set the item destination if not last job
 				if(i < loadTypeSeq.length - 1) {
 					if(isParallel) { // use a queue as an item destination
-						itemBuff = new BlockingItemBuffer(
+						itemBuff = new BlockingQueueItemBuffer(
 							new ArrayBlockingQueue(
 								RunTimeConfig.getContext().getTasksMaxQueueSize()
 							)

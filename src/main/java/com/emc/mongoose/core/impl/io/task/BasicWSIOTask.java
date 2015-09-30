@@ -12,7 +12,6 @@ import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.impl.data.RangeLayerData;
@@ -41,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.StandardCharsets;
 /**
@@ -252,7 +252,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final void failed(final Exception e) {
-		if(e instanceof ConnectionClosedException) {
+		if(e instanceof ConnectionClosedException | e instanceof CancelledKeyException) {
 			LogUtil.exception(LOG, Level.TRACE, e, "I/O task dropped while executing");
 			status = Status.CANCELLED;
 			exception = e;

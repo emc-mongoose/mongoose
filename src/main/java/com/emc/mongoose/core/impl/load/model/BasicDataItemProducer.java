@@ -32,7 +32,6 @@ implements DataItemProducer<T> {
 	protected final long maxCount;
 	protected volatile DataItemDst<T> itemDst = null;
 	protected final int batchSize;
-	protected final List<T> buff;
 	protected long skipCount;
 	protected T lastDataItem;
 	protected boolean isCircular;
@@ -51,7 +50,6 @@ implements DataItemProducer<T> {
 		this.itemSrc = itemSrc;
 		this.maxCount = maxCount - skipCount;
 		this.batchSize = batchSize;
-		this.buff = new ArrayList<>(batchSize);
 		this.skipCount = skipCount;
 		this.lastDataItem = lastDataItem;
 		this.isCircular = isCircular;
@@ -111,8 +109,10 @@ implements DataItemProducer<T> {
 		long count = 0;
 		int n = 0, m = 0;
 		try {
+			List<T> buff;
 			while(!isInterrupted && count < maxCount) {
 				try {
+					buff = new ArrayList<>(batchSize);
 					n = itemSrc.get(buff, batchSize);
 					if(isInterrupted) {
 						break;
@@ -122,7 +122,6 @@ implements DataItemProducer<T> {
 							m += itemDst.put(buff, m, n);
 							LockSupport.parkNanos(1);
 						}
-						buff.clear();
 						if(isInterrupted) {
 							break;
 						}

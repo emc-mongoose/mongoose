@@ -8,12 +8,14 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //mongoose-server-api.jar
+import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-core-impl.jar
@@ -84,6 +86,21 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	@Override
 	protected final void invokePreConditions() {} // discard any precondition invocations in load server mode
+	// load server shouldn't use a container listing as an item source
+	@Override
+	public final DataItemSrc<T> getDefaultItemSource() {
+		DataItemSrc<T> itemSrc = null;
+		if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
+			try {
+				itemSrc = new NewDataItemSrc<>(
+					reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
+				);
+			} catch(final NoSuchMethodException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use new data input");
+			}
+		}
+		return itemSrc;
+	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()
