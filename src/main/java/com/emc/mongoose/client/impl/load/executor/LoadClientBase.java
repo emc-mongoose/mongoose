@@ -292,8 +292,7 @@ implements LoadClient<T> {
 			}
 			//
 			remoteSubmExecutor.shutdownNow();
-			//
-			LOG.debug(Markers.MSG, "{}: interrupted", getName());
+			mgmtSvcExecutor.shutdownNow();
 		} finally {
 			super.interruptActually();
 		}
