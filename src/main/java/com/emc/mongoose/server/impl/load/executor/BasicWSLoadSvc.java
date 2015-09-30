@@ -18,7 +18,6 @@ import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 // mongoose-server-impl.jar
 import com.emc.mongoose.core.impl.load.model.BasicSyncDataItemConsumer;
 // mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.model.RemoteItemBuffDst;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
 import org.apache.logging.log4j.Level;
@@ -62,14 +61,9 @@ implements WSLoadSvc<T> {
 		try {
 			super.closeActually();
 		} finally {
-			//
-			if(consumer instanceof RemoteItemBuffDst) {
-				consumer.close();
-			}
+			consumer.interrupt();
 			// close the exposed network service, if any
-			final Service svc = ServiceUtil.getLocalSvc(
-				ServiceUtil.getLocalSvcName(getName())
-			);
+			final Service svc = ServiceUtil.getLocalSvc(ServiceUtil.getLocalSvcName(getName()));
 			if(svc == null) {
 				LOG.debug(Markers.MSG, "The load was not exposed remotely");
 			} else {
@@ -112,12 +106,7 @@ implements WSLoadSvc<T> {
 					);
 				}
 			} else {
-				if(itemDst instanceof ItemBuffer) {
-					// in order to not to be wrapped by async consumer
-					super.setDataItemDst(new BasicSyncDataItemConsumer<>(itemDst));
-				} else {
-					super.setDataItemDst(itemDst);
-				}
+				super.setDataItemDst(itemDst);
 			}
 		} catch(final IOException ee) {
 			LOG.error(Markers.ERR, "Looks like network failure", ee);

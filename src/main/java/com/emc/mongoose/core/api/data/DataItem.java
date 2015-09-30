@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 29.09.14.
  A most common data item descriptor having a determined size and able to be written out.
@@ -36,11 +35,4 @@ extends ReadableByteChannel, Externalizable {
 	//
 	int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataSizeException, DataCorruptionException, IOException;
-	//
-	boolean lock();
-	//
-	boolean lock(final long timeOut, final TimeUnit timeUnit)
-	throws InterruptedException;
-	//
-	void release();
 }

@@ -11,6 +11,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.impl.data.model.BlockingItemBuffer;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -94,7 +96,12 @@ implements Runnable {
 				// set the item destination if not last job
 				if(i < loadTypeSeq.length - 1) {
 					if(isParallel) { // use a queue as an item destination
-						itemBuff = prevLoadJob;
+						itemBuff = new BlockingItemBuffer(
+							new ArrayBlockingQueue(
+								RunTimeConfig.getContext().getTasksMaxQueueSize()
+							)
+						);
+						nextLoadJob.setDataItemDst(itemBuff);
 					} else {
 						if(flagUseLocalItemList) {
 							// use a temporary file as an item destination
@@ -104,7 +111,6 @@ implements Runnable {
 							itemBuff = null;
 						}
 					}
-					nextLoadJob.setDataItemDst(itemBuff);
 				}
 				// add the built job into the chain
 				loadJobSeq.add(nextLoadJob);

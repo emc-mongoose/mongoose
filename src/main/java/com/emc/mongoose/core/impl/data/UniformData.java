@@ -102,21 +102,6 @@ implements DataItem {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final Lock lock = new ReentrantLock();
-	//
-	public final boolean lock() {
-		return lock.tryLock();
-	}
-	//
-	public final boolean lock(final long timeOut, final TimeUnit timeUnit)
-	throws InterruptedException {
-		return lock.tryLock(timeOut, timeUnit);
-	}
-	//
-	public final void release() {
-		lock.unlock();
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public void reset() {
 		ringBuff.limit(ringBuffSize).position((int) (offset % ringBuffSize));

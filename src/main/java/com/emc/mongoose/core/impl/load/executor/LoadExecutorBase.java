@@ -7,6 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -17,6 +18,7 @@ import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.BasicAsyncDataItemConsumer;
+import com.emc.mongoose.core.impl.load.model.BasicSyncDataItemConsumer;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
@@ -430,6 +432,11 @@ implements LoadExecutor<T> {
 		if(itemDst == null || itemDst instanceof DataItemConsumer) {
 			this.consumer = (DataItemConsumer<T>) itemDst;
 			LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemDst + "\"");
+		} else if(itemDst instanceof ItemBuffer) {
+			this.consumer = new BasicSyncDataItemConsumer<>(itemDst);
+			LOG.debug(
+				Markers.MSG, getName() + ": wrapped \"" + itemDst + "\" with the sync consumer"
+			);
 		} else {
 			this.consumer = new BasicAsyncDataItemConsumer<>(itemDst, maxCount);
 			LOG.debug(

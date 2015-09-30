@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -61,6 +62,7 @@ implements FileDataItemSrc<T> {
 			for(final T nextItem : firstItemsBatch) {
 				sumSize += nextItem.getSize();
 			}
+		} catch(final EOFException ignore) {
 		} catch(final IOException | NoSuchMethodException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to get approx data items size");
 		}

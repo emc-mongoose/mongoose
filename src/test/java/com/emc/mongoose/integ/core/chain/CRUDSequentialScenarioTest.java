@@ -11,6 +11,7 @@ import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -29,6 +30,7 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -546,7 +548,7 @@ extends WSMockTestBase {
 	}
 
 	@Test
-	public void shouldDataItemsMasksAreUpdate()
+	public void checkItemsMasksUpdated()
 	throws Exception {
 		final File dataItemsFile = LogValidator.getDataItemsFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
@@ -555,12 +557,21 @@ extends WSMockTestBase {
 			final BufferedReader
 				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			final int firstMaskVal = 0;
-			int maskVal;
+			BitSet mask;
+			String rangesMask;
+			char rangesMaskChars[];
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for (final CSVRecord nextRec : recIter) {
-				maskVal = Integer.valueOf(nextRec.get(3).split("\\/")[1]);
-				Assert.assertTrue(maskVal != firstMaskVal);
+				rangesMask = nextRec.get(3).split("\\/")[1];
+				if(rangesMask.length() == 0) {
+					rangesMaskChars = ("00" + rangesMask).toCharArray();
+				} else if(rangesMask.length() % 2 == 1) {
+					rangesMaskChars = ("0" + rangesMask).toCharArray();
+				} else {
+					rangesMaskChars = rangesMask.toCharArray();
+				}
+				mask = BitSet.valueOf(Hex.decodeHex(rangesMaskChars));
+				Assert.assertTrue(nextRec.toString(), mask.cardinality() > 0);
 			}
 		}
 	}
