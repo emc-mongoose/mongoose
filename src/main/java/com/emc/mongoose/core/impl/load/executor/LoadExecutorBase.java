@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -37,6 +38,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -84,27 +87,9 @@ implements LoadExecutor<T> {
 		counterResults = new AtomicLong(0);
 	private T lastDataItem;
 	//
-	private final Thread
-		metricsDaemon = new Thread() {
-			//
-			{ setDaemon(true); }
-			//
-			@Override
-			public final void run() {
-				try {
-					if(metricsPeriodSec > 0) {
-						while(!isClosed.get()) {
-							logMetrics(Markers.PERF_AVG);
-							TimeUnit.SECONDS.sleep(metricsPeriodSec);
-						}
-					} else {
-						Thread.sleep(Long.MAX_VALUE);
-					}
-				} catch(final InterruptedException e) {
-					LOG.debug(Markers.MSG, "{}: interrupted", getName());
-				}
-			}
-		};
+	private final ExecutorService svcExecutor = Executors.newFixedThreadPool(
+		2, new GroupThreadFactory("svcDaemon", true)
+	);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
@@ -264,6 +249,27 @@ implements LoadExecutor<T> {
 				);
 			}
 		} else {
+			//
+			svcExecutor.submit(
+				new Runnable() {
+					@Override
+					public final void run() {
+						try {
+							if(metricsPeriodSec > 0) {
+								while(!isClosed.get()) {
+									logMetrics(Markers.PERF_AVG);
+									TimeUnit.SECONDS.sleep(metricsPeriodSec);
+								}
+							} else {
+								Thread.sleep(Long.MAX_VALUE);
+							}
+						} catch(final InterruptedException e) {
+							LOG.debug(Markers.MSG, "{}: interrupted", getName());
+						}
+					}
+				}
+			);
+			//
 			if(counterResults.get() > 0) {
 				setSkipCount(counterResults.get());
 				setLastDataItem(loadedPrevState.getLastDataItem());
@@ -281,8 +287,35 @@ implements LoadExecutor<T> {
 			super.start();
 			LOG.debug(Markers.MSG, "Started object producer {}", getName());
 			//
-			metricsDaemon.setName(getName() + "-metrics");
-			metricsDaemon.start();
+			svcExecutor.submit(
+				new Runnable() {
+					@Override
+					public final void run() {
+						while(!isClosed.get() && !isInterrupted()) {
+							LockSupport.parkNanos(1);
+							lastStats = ioStats.getSnapshot();
+							if(
+								lastStats.getFailCount() > 1000000 &&
+									lastStats.getFailRateLast() < lastStats.getSuccRateLast()
+								) {
+								LOG.fatal(
+									Markers.ERR,
+									"There's a more than 1M of failures and the failure rate is higher " +
+										"than success rate for at least last {}[sec]. Exiting in order to " +
+										"avoid the memory exhaustion. Please check your environment.",
+									metricsPeriodSec
+								);
+								try {
+									LoadExecutorBase.this.close();
+								} catch(final IOException e) {
+									LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
+								}
+								break;
+							}
+						}
+					}
+				}
+			);
 			//
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		}
@@ -311,7 +344,7 @@ implements LoadExecutor<T> {
 			LOG.trace(Markers.MSG, sb);
 		}
 		super.interrupt();
-		metricsDaemon.interrupt();
+		svcExecutor.shutdownNow();
 		if(isShutdown.compareAndSet(false, true)) {
 			shutdownActually();
 		}
