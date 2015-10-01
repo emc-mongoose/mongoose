@@ -45,10 +45,6 @@ implements WSLoadSvc<T> {
 			runTimeConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
 		);
-		// by default, may be overridden later externally:
-		setDataItemDst(
-			new BlockingQueueItemBuffer<>(new ArrayBlockingQueue<T>(batchSize))
-		);
 	}
 	//
 	@Override
