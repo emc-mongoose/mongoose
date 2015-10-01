@@ -73,7 +73,7 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(IOTask.Type.CREATE)
-				.setItemSrc(src)
+				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.CREATE)
 				.setMinObjSize(minSize)
@@ -99,7 +99,7 @@ implements StorageClient<T> {
 		loadBuilder.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setItemSrc(src)
+				.useContainerListingItemSrc().setItemSrc(src)
 				.setLoadType(IOTask.Type.READ)
 				.setMaxCount(maxCount)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.READ)
@@ -122,7 +122,7 @@ implements StorageClient<T> {
 	) throws IllegalStateException, InterruptedException, IOException {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setItemSrc(src)
+				.useContainerListingItemSrc().setItemSrc(src)
 				.setLoadType(IOTask.Type.DELETE)
 				.setMaxCount(maxCount)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.DELETE)
