@@ -48,9 +48,9 @@ implements LoadBuilder<T, U> {
 	protected String storageNodeAddrs[];
 	protected final HashMap<IOTask.Type, Integer> loadTypeWorkerCount, loadTypeConnPerNode;
 	protected boolean
-		flagUseNewItemSrc = false,
-		flagUseNoneItemSrc = false,
-		flagUseContainerItemSrc = false;
+		flagUseContainerItemSrc = true,
+		flagUseNewItemSrc = true,
+		flagUseNoneItemSrc = false;
 	//
 	{
 		loadTypeWorkerCount = new HashMap<>();
@@ -235,7 +235,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setLoadType(final IOTask.Type loadType)
-		throws IllegalStateException {
+	throws IllegalStateException {
 		LOG.debug(Markers.MSG, "Set load type: {}", loadType);
 		if(reqConf == null) {
 			throw new IllegalStateException(
@@ -249,7 +249,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setMaxCount(final long maxCount)
-		throws IllegalArgumentException {
+	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set max data item count: {}", maxCount);
 		if(maxCount < 0) {
 			throw new IllegalArgumentException("Count should be >= 0");
@@ -439,18 +439,26 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	protected DataItemSrc<T> getDefaultItemSource() {
-		if(flagUseNoneItemSrc) {
-			return null;
-		} else if(flagUseContainerItemSrc) {
-			return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
-		} else if(flagUseNewItemSrc) {
-			try {
+		try {
+			if(flagUseNoneItemSrc) {
+				return null;
+			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
+				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
+					return new NewDataItemSrc<>(
+						reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
+					);
+				} else {
+					return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+				}
+			} else if(flagUseNewItemSrc) {
 				return new NewDataItemSrc<>(
 					reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
 				);
-			} catch(final NoSuchMethodException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
+			} else if(flagUseContainerItemSrc) {
+				return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
 			}
+		} catch(final NoSuchMethodException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
 		}
 		return null;
 	}

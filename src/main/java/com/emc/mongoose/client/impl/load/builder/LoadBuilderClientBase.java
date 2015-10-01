@@ -53,9 +53,9 @@ implements LoadBuilderClient<T, U> {
 	//
 	protected boolean
 		flagAssignLoadSvcToNode = false,
-		flagUseNewItemSrc = false,
-		flagUseNoneItemSrc = false,
-		flagUseContainerItemSrc = false;
+		flagUseContainerItemSrc = true,
+		flagUseNewItemSrc = true,
+		flagUseNoneItemSrc = false;
 	protected final Map<String, RunTimeConfig> loadSvcConfMap = new HashMap<>();
 	//
 	public LoadBuilderClientBase()
@@ -476,18 +476,26 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	protected DataItemSrc<T> getDefaultItemSource() {
-		if(flagUseNoneItemSrc) {
-			return null;
-		} else if(flagUseContainerItemSrc) {
-			return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
-		} else if(flagUseNewItemSrc) {
-			try {
+		try {
+			if(flagUseNoneItemSrc) {
+				return null;
+			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
+				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
+					return new NewDataItemSrc<>(
+						reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
+					);
+				} else {
+					return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+				}
+			} else if(flagUseNewItemSrc) {
 				return new NewDataItemSrc<>(
 					reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
 				);
-			} catch(final NoSuchMethodException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
+			} else if(flagUseContainerItemSrc) {
+				return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
 			}
+		} catch(final NoSuchMethodException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
 		}
 		return null;
 	}
