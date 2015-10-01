@@ -409,7 +409,7 @@ implements LoadBuilderClient<T, U> {
 	public LoadBuilderClientBase<T, U> useNewItemSrc()
 	throws RemoteException {
 		// disable new data item generation on the client side
-		flagUseNewItemSrc = true;
+		flagUseNoneItemSrc = true;
 		// enable new data item generation on the load servers side
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
@@ -452,11 +452,13 @@ implements LoadBuilderClient<T, U> {
 	throws RemoteException {
 		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
 		this.itemSrc = itemSrc;
-		// disable any item source usage on the load servers side
-		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.useNoneItemSrc();
+		if(itemSrc != null) {
+			// disable any item source usage on the load servers side
+			LoadBuilderSvc<T, U> nextBuilder;
+			for(final String addr : keySet()) {
+				nextBuilder = get(addr);
+				nextBuilder.useNoneItemSrc();
+			}
 		}
 		//
 		if(itemSrc instanceof FileDataItemSrc) {
