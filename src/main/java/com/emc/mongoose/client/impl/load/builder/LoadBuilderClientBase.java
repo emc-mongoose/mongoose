@@ -409,7 +409,7 @@ implements LoadBuilderClient<T, U> {
 	public LoadBuilderClientBase<T, U> useNewItemSrc()
 	throws RemoteException {
 		// disable new data item generation on the client side
-		flagUseNoneItemSrc = true;
+		flagUseNewItemSrc = true;
 		// enable new data item generation on the load servers side
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
