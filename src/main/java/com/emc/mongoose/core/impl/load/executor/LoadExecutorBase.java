@@ -736,6 +736,10 @@ implements LoadExecutor<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
 				releaseDaemon.interrupt();
+				final long itemsCount = counterResults.get();
+				if (isDoneAllSubm() && (maxCount > itemsCount)) {
+					rtConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, itemsCount);
+				}
 				LoadCloseHook.del(this);
 				if(loadedPrevState != null) {
 					if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
