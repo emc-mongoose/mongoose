@@ -53,7 +53,6 @@ extends DistributedLoadBuilderTestBase {
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LOAD_LIMIT_TIME_SEC + "s");
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, true);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER, false);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Chain chainScenario = new Chain(rtConfig);

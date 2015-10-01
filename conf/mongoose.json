@@ -101,7 +101,6 @@
 			"remote.wuisvc.port": "remote.port.webui",
 
 			"run.metrics.period.sec": "load.metricsPeriodSec",
-			"run.request.queue.size": "load.tasks.maxQueueSize",
 			"run.scenario.name": "scenario.name",
 			"run.scenario.lang": "scenario.lang",
 			"run.scenario.dir": "scenario.dir",
@@ -159,7 +158,7 @@
 				"separator": ",",
 				"circular": false,
 				"random": false,
-				"batchSize": 1024,
+				"batchSize": 10000,
 				"ring": {
 					"seed": "7a42d9c483244167",
 					"size": "4MB"
@@ -191,9 +190,6 @@
 				"assignTo": {
 					"node": false
 				}
-			},
-			"tasks": {
-				"maxQueueSize": 16384
 			},
 			"type": {
 				"create": {
@@ -230,8 +226,7 @@
 				},
 				"chain": {
 					"load": "create,append,update,read,delete",
-					"concurrent": true,
-					"itemsBuffer": true
+					"concurrent": true
 				},
 				"rampup": {
 					"connCounts": "1,10",

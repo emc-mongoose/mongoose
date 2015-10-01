@@ -72,6 +72,15 @@ extends Closeable {
 	LoadBuilder<T, U> setItemSrc(final DataItemSrc<T> itemSrc)
 	throws RemoteException;
 	//
+	LoadBuilder<T, U> useNewItemSrc()
+	throws RemoteException;
+	//
+	LoadBuilder<T, U> useNoneItemSrc()
+	throws RemoteException;
+	//
+	LoadBuilder<T, U> useContainerListingItemSrc()
+	throws RemoteException;
+	//
 	U build()
 	throws IOException;
 	//

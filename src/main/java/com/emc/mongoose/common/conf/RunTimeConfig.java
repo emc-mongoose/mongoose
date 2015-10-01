@@ -336,10 +336,6 @@ implements Externalizable {
 		return getInt("load.metricsPeriodSec");
 	}
 	//
-	public final int getTasksMaxQueueSize() {
-		return getInt("load.tasks.maxQueueSize");
-	}
-	//
 	public final String getHttpContentType() {
 		return getString("http.content.type");
 	}

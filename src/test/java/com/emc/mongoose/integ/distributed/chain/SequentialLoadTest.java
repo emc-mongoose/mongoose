@@ -52,7 +52,6 @@ extends DistributedLoadBuilderTestBase {
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LOAD_JOB_TIME_LIMIT_SEC + "s");
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER, true);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Chain chainScenario = new Chain(rtConfig);
@@ -110,6 +109,7 @@ extends DistributedLoadBuilderTestBase {
 	throws Exception {
 		boolean firstRow = true;
 		int countSummaries = 0;
+		final StringBuilder strb = new StringBuilder();
 		Assert.assertTrue("Performance sum metrics file doesn't exist", FILE_LOG_PERF_SUM.exists());
 		try(
 			final BufferedReader
@@ -144,15 +144,17 @@ extends DistributedLoadBuilderTestBase {
 					Assert.assertEquals("TPLast[op/s]", nextRec.get(22));
 					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(23));
 					Assert.assertEquals("BWLast[MB/s]", nextRec.get(24));
-
 				} else {
 					final String countSrvStr = nextRec.get(6);
 					if(countSrvStr.length() > 0 && Integer.parseInt(countSrvStr) == 1) {
+						strb.append('\n').append(nextRec.toString());
 						countSummaries ++;
 					}
 				}
 			}
 		}
-		Assert.assertEquals("Wrong summary log statements count", COUNT_STEPS, countSummaries);
+		Assert.assertEquals(
+			"Wrong summary log statements count:" + strb.toString(), COUNT_STEPS, countSummaries
+		);
 	}
 }

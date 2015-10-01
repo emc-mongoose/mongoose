@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 //
+import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,7 +82,7 @@ public class BlockingQueueItemBufferTest {
 				try {
 					itemsIO.put(dataItem2);
 					fail();
-				} catch(final InterruptedIOException e) {
+				} catch(final IOException e) {
 					assertNotNull(e);
 				}
 			}
@@ -115,7 +116,7 @@ public class BlockingQueueItemBufferTest {
 			public void run() {
 				try {
 					itemsIO.put(dataItem2);
-				} catch(final InterruptedIOException e) {
+				} catch(final IOException e) {
 					fail(e.getMessage());
 				}
 			}
@@ -145,7 +146,7 @@ public class BlockingQueueItemBufferTest {
 				try {
 					itemsIO.get();
 					fail();
-				} catch(final InterruptedIOException e) {
+				} catch(final IOException e) {
 					assertNotNull(e);
 				}
 			}
@@ -173,7 +174,7 @@ public class BlockingQueueItemBufferTest {
 					assertEquals(dataItem2, itemsIO.get());
 					assertEquals(dataItem3, itemsIO.get());
 					assertEquals(dataItem4, itemsIO.get());
-				} catch(final InterruptedIOException e) {
+				} catch(final IOException e) {
 					fail(e.getMessage());
 				}
 			}

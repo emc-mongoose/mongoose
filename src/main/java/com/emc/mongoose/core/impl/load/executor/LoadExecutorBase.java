@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -54,7 +55,7 @@ implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final int instanceNum, storageNodeCount, maxQueueSize;
+	protected final int instanceNum, storageNodeCount;
 	protected final String storageNodeAddrs[];
 	//
 	protected final RunTimeConfig rtConfig;
@@ -108,7 +109,7 @@ implements LoadExecutor<T> {
 			try {
 				currThread.setName(loadExecutor.getName() + "-metrics");
 				try {
-					while(true) {
+					while(!currThread.isInterrupted()) {
 						loadExecutor.logMetrics(Markers.PERF_AVG);
 						TimeUnit.SECONDS.sleep(metricsPeriodSec);
 					}
@@ -122,31 +123,6 @@ implements LoadExecutor<T> {
 	//
 	private final class StateControlTask
 	implements Runnable {
-		//
-		private void refreshStats() {
-			lastStats = ioStats.getSnapshot();
-		}
-		//
-		private void checkForBadState() {
-			if(
-				lastStats.getFailCount() > 1000000 &&
-				lastStats.getFailRateLast() < lastStats.getSuccRateLast()
-			) {
-				LOG.fatal(
-					Markers.ERR,
-					"There's a more than 1M of failures and the failure rate is higher " +
-					"than success rate for at least last {}[sec]. Exiting in order to " +
-					"avoid the memory exhaustion. Please check your environment.",
-					metricsPeriodSec
-				);
-				try {
-					LoadExecutorBase.this.close();
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
-				}
-			}
-		}
-		//
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
@@ -179,8 +155,7 @@ implements LoadExecutor<T> {
 				name, itemSrc
 			);
 		}
-		this.maxQueueSize = rtConfig.getTasksMaxQueueSize();
-		itemOutBuff = new BlockingQueueItemBuffer<>(new ArrayBlockingQueue<T>(maxQueueSize));
+		itemOutBuff = new BlockingQueueItemBuffer<>(new ArrayBlockingQueue<T>(batchSize));
 		//
 		this.rtConfig = rtConfig;
 		this.instanceNum = instanceNum;
@@ -211,7 +186,7 @@ implements LoadExecutor<T> {
 		dataSrc = reqConfig.getDataSource();
 		//
 		mgmtExecutor = new ThreadPoolExecutor(
-			1, 1, 0, TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(maxQueueSize),
+			1, 1, 0, TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(batchSize),
 			new GroupThreadFactory("mgmtWorker", true)
 		);
 		if(metricsPeriodSec > 0) {
@@ -379,7 +354,7 @@ implements LoadExecutor<T> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
 		}
 		//
-		LOG.debug(Markers.MSG, "{}: waiting the output buffer to become empty");
+		LOG.debug(Markers.MSG, "{}: waiting the output buffer to become empty", getName());
 		try {
 			while(!itemOutBuff.isEmpty()) {
 				TimeUnit.MILLISECONDS.sleep(1);
@@ -392,6 +367,35 @@ implements LoadExecutor<T> {
 		}
 		//
 		mgmtExecutor.shutdownNow();
+		if(consumer != null) {
+			if(consumer instanceof LifeCycle) {
+				try {
+					((LifeCycle) consumer).shutdown();
+					LOG.debug(
+						Markers.MSG, "{}: shut down the consumer \"{}\" successfully",
+						getName(), consumer
+					);
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "{}: failed to shut down the consumer \"{}\"",
+						getName(), consumer
+					);
+				}
+			} else {
+				try {
+					consumer.close();
+					LOG.debug(
+						Markers.MSG, "{}: closed the consumer \"{}\" successfully",
+						getName(), consumer
+					);
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "{}: failed to close the consumer \"{}\"",
+						getName(), consumer
+					);
+				}
+			}
+		}
 		//
 		try {
 			if(isStarted.get()) { // if was executing
@@ -449,7 +453,7 @@ implements LoadExecutor<T> {
 		// warning: w/o such sleep the behaviour becomes very ugly
 		while(
 			!isShutdown.get() && !isInterrupted.get() &&
-			counterSubm.get() - counterResults.get() >= maxQueueSize
+			counterSubm.get() - counterResults.get() >= batchSize
 		) {
 			LockSupport.parkNanos(1);
 		}
@@ -491,7 +495,7 @@ implements LoadExecutor<T> {
 					// don't fill the connection pool as fast as possible, this may cause a failure
 					while(
 						!isShutdown.get() && !isInterrupted.get() &&
-						counterSubm.get() - counterResults.get() >= maxQueueSize
+						counterSubm.get() - counterResults.get() >= batchSize
 					) {
 						LockSupport.parkNanos(1);
 					}
@@ -607,10 +611,12 @@ implements LoadExecutor<T> {
 			try {
 				itemOutBuff.put(dataItem);
 			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e,
-					"{}: failed to put the data item into the output buffer", getName()
-				);
+				if(LOG.isTraceEnabled(Markers.ERR)) {
+					LogUtil.exception(
+						LOG, Level.TRACE, e,
+						"{}: failed to put the data item into the output buffer", getName()
+					);
+				}
 			}
 		} else {
 			ioStats.markFail();
@@ -738,29 +744,33 @@ implements LoadExecutor<T> {
 			//
 			final List<T> dataItems = new ArrayList<>(batchSize);
 			final int n = itemOutBuff.get(dataItems, batchSize);
-			// is this an end of consumer-producer chain?
-			if(consumer == null) {
-				for(int i = 0; i < n; i ++) {
-					if(LOG.isInfoEnabled(Markers.DATA_LIST)) {
-						LOG.info(Markers.DATA_LIST, dataItems.get(i));
+			if(n > 0) {
+				// is this an end of consumer-producer chain?
+				if(consumer == null) {
+					for(int i = 0; i < n; i++) {
+						if(LOG.isInfoEnabled(Markers.DATA_LIST)) {
+							LOG.info(Markers.DATA_LIST, dataItems.get(i));
+						}
 					}
-				}
-			} else { // put to the consumer
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, "Going to put {} data items to the consumer {}",
-						n, consumer
-					);
-				}
-				int m = 0;
-				while(m < n) {
-					m += consumer.put(dataItems, m, n);
-				}
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, "{} data items were passed to the consumer {} successfully",
-						n, consumer
-					);
+				} else { // put to the consumer
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG, "Going to put {} data items to the consumer {}",
+							n, consumer
+						);
+					}
+					int m = 0;
+					while(m < n) {
+						m += consumer.put(dataItems, m, n);
+						LockSupport.parkNanos(1);
+					}
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG,
+							"{} data items were passed to the consumer {} successfully",
+							n, consumer
+						);
+					}
 				}
 			}
 		} catch(final IOException e) {
@@ -770,6 +780,30 @@ implements LoadExecutor<T> {
 		} catch(final RejectedExecutionException e) {
 			if(LOG.isTraceEnabled(Markers.ERR)) {
 				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the data items", consumer);
+			}
+		}
+	}
+	//
+	private void refreshStats() {
+		lastStats = ioStats.getSnapshot();
+	}
+	//
+	private void checkForBadState() {
+		if(
+			lastStats.getFailCount() > 1000000 &&
+				lastStats.getFailRateLast() < lastStats.getSuccRateLast()
+			) {
+			LOG.fatal(
+				Markers.ERR,
+				"There's a more than 1M of failures and the failure rate is higher " +
+					"than success rate for at least last {}[sec]. Exiting in order to " +
+					"avoid the memory exhaustion. Please check your environment.",
+				metricsPeriodSec
+			);
+			try {
+				LoadExecutorBase.this.close();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
 			}
 		}
 	}
@@ -941,16 +975,10 @@ implements LoadExecutor<T> {
 				interruptActually();
 			}
 		} finally {
-			try {
-				if(consumer != null) {
-					consumer.close();
-				}
-			} finally {
-				LoadCloseHook.del(this);
-				if(loadedPrevState != null) {
-					if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
-						RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
-					}
+			LoadCloseHook.del(this);
+			if(loadedPrevState != null) {
+				if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+					RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
 				}
 			}
 		}

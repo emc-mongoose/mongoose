@@ -18,10 +18,7 @@ import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 09.05.14.
  A data item which may produce uniformly distributed non-compressible content.

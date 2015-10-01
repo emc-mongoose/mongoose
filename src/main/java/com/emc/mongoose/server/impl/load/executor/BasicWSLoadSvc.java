@@ -47,7 +47,7 @@ implements WSLoadSvc<T> {
 		);
 		// by default, may be overridden later externally:
 		setDataItemDst(
-			new BlockingQueueItemBuffer<>(new ArrayBlockingQueue<T>(rtConfig.getTasksMaxQueueSize()))
+			new BlockingQueueItemBuffer<>(new ArrayBlockingQueue<T>(batchSize))
 		);
 	}
 	//
@@ -94,18 +94,18 @@ implements WSLoadSvc<T> {
 					);
 				}
 			} else {
-				LOG.warn(
-					Markers.ERR, "Items destination is not a remote service instance: {}",
-					itemDst.getClass().getName()
-				);
+				super.setDataItemDst(itemDst);
 			}
-		} catch(final IOException ee) {
-			LOG.error(Markers.ERR, "Looks like network failure", ee);
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "{}: looks like network failure", getName());
 		}
 	}
-	// prevent output buffer consuming
+	// prevent output buffer consuming by the logger at the end of a chain
 	@Override
 	protected final void passDataItems() {
+		if(consumer != null) {
+			super.passDataItems();
+		}
 	}
 	//
 	@Override

@@ -114,11 +114,11 @@ implements StorageIOStats {
 	//
 	private final static String
 		MSG_FMT_METRICS = "Capacity used: %d (%.1f%%), containers count: %d\n" +
-			"\tOperation |Count       |Failed      |TP[s^-1]avg |TP[s^-1]last|BW[MB*s^-1]avg |BW[MB*s^-1]last\n" +
-			"\t----------|------------|------------|------------|------------|---------------|---------------\n" +
-			"\tWrite     |%12d|%12d|%12.3f|%12.3f|%15.3f|%15.3f\n" +
-			"\tRead      |%12d|%12d|%12.3f|%12.3f|%15.3f|%15.3f\n" +
-			"\tDelete    |%12d|%12d|%12.3f|%12.3f|               |";
+			"\tOperation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last\n" +
+			"\t----------|------------|------------|------------|------------|------------|------------\n" +
+			"\tWrite     |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
+			"\tRead      |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
+			"\tDelete    |%12d|%12d|%12.3f|%12.3f|            |";
 	//
 	@Override
 	public final String toString() {

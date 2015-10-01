@@ -149,8 +149,6 @@ public class RunTimeConfigTest {
 			new String[] { "scenario.lang" });
 		Assert.assertArrayEquals(mapOverride.get("run.scenario.dir"),
 			new String[] { "scenario.dir" });
-		Assert.assertArrayEquals(mapOverride.get("run.request.queue.size"),
-			new String[] { "load.tasks.maxQueueSize" });
 
 		Assert.assertArrayEquals(mapOverride.get("scenario.single.load"),
 			new String[] { "scenario.type.single.load" });

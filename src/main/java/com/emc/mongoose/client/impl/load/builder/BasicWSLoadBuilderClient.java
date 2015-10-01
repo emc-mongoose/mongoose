@@ -71,7 +71,7 @@ implements WSLoadBuilderClient<T, U> {
 	@Override
 	protected final void invokePreConditions()
 	throws IllegalStateException {
-		reqConf.configureStorage(nodeAddrs);
+		reqConf.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override  @SuppressWarnings("unchecked")
@@ -95,9 +95,9 @@ implements WSLoadBuilderClient<T, U> {
 		final String loadTypeStr = reqConf.getLoadType().name().toLowerCase();
 		//
 		return (U) new BasicWSLoadClient<>(
-			rtConfig, (WSRequestConfig<T>) reqConf, nodeAddrs,
+			rtConfig, (WSRequestConfig<T>) reqConf, storageNodeAddrs,
 			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
-			itemSrc == null ? reqConf.getContainerListInput(maxCount, nodeAddrs[0]) : itemSrc,
+			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, remoteLoadMap
 		);
 	}

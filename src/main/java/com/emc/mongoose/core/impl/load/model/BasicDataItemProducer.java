@@ -95,10 +95,6 @@ implements DataItemProducer<T> {
 	//
 	protected void runActually() {
 		//
-		if(itemDst == null) {
-			LOG.warn(Markers.ERR, "Have no item destination set, exiting");
-			return;
-		}
 		if(itemSrc == null) {
 			LOG.debug(Markers.MSG, "No item source for the producing, exiting");
 			return;
@@ -149,8 +145,6 @@ implements DataItemProducer<T> {
 					);
 				}
 			}
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "{}: producing is interrupted", itemSrc);
 		} finally {
 			LOG.debug(
 				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",

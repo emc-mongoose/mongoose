@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
@@ -45,8 +46,11 @@ implements LoadBuilder<T, U> {
 	protected int manualTaskSleepMicroSecs, updatesPerItem;
 	protected DataItemSrc itemSrc;
 	protected String storageNodeAddrs[];
-	protected final HashMap<IOTask.Type, Integer> loadTypeWorkerCount,
-		loadTypeConnPerNode;
+	protected final HashMap<IOTask.Type, Integer> loadTypeWorkerCount, loadTypeConnPerNode;
+	protected boolean
+		flagUseNewItemSrc = false,
+		flagUseNoneItemSrc = false,
+		flagUseContainerItemSrc = false;
 	//
 	{
 		loadTypeWorkerCount = new HashMap<>();
@@ -434,20 +438,42 @@ implements LoadBuilder<T, U> {
 		return lb;
 	}
 	//
-	public DataItemSrc<T> getDefaultItemSource() {
-		DataItemSrc<T> itemSrc = null;
-		if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
+	protected DataItemSrc<T> getDefaultItemSource() {
+		if(flagUseNoneItemSrc) {
+			return null;
+		} else if(flagUseContainerItemSrc) {
+			return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+		} else if(flagUseNewItemSrc) {
 			try {
-				itemSrc = new NewDataItemSrc<>(
+				return new NewDataItemSrc<>(
 					reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
 				);
 			} catch(final NoSuchMethodException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use new data input");
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
 			}
-		} else {
-			itemSrc = reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
 		}
-		return itemSrc;
+		return null;
+	}
+	//
+	@Override
+	public LoadBuilderBase<T, U> useNewItemSrc()
+	throws RemoteException {
+		flagUseNewItemSrc = true;
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilderBase<T, U> useNoneItemSrc()
+	throws RemoteException {
+		flagUseNoneItemSrc = true;
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilderBase<T, U> useContainerListingItemSrc()
+	throws RemoteException {
+		flagUseContainerItemSrc = true;
+		return this;
 	}
 	//
 	@Override

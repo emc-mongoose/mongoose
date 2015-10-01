@@ -68,7 +68,7 @@ implements LoadClient<T> {
 		}
 		//
 		private void loadAndPassDataItems()
-		throws InterruptedException, RemoteException {
+		throws IOException {
 			List<T> frame = loadSvc.getProcessedItems();
 			if(frame == null) {
 				LOG.debug(
@@ -87,11 +87,20 @@ implements LoadClient<T> {
 				} else {
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
-							Markers.MSG, "Got next {} items from the load server @ {}",
+							Markers.MSG, "Got the next {} items from the load server @ {}",
 							n, loadSvc
 						);
 					}
-					passDataItems(frame, 0, frame.size());
+					int m = 0;
+					while(m < n) {
+						m += itemOutBuff.put(frame, m, n);
+					}
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG, "Put the next {} items to the output buffer",
+							n, loadSvc
+						);
+					}
 				}
 			}
 		}
@@ -109,7 +118,7 @@ implements LoadClient<T> {
 						loadAndPassDataItems();
 						LockSupport.parkNanos(1);
 						failCount = 0; // reset
-					} catch(final RemoteException e) {
+					} catch(final IOException e) {
 						if(failCount < COUNT_LIMIT_RETRY) {
 							failCount ++;
 							TimeUnit.MILLISECONDS.sleep(failCount);
@@ -196,7 +205,7 @@ implements LoadClient<T> {
 		//
 		remoteSubmExecutor = new ThreadPoolExecutor(
 			loadSvcAddrs.length, loadSvcAddrs.length, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(rtConfig.getTasksMaxQueueSize()),
+			new ArrayBlockingQueue<Runnable>(rtConfig.getBatchSize()),
 			new GroupThreadFactory(getName() + "-submit", true)
 		);
 	}
@@ -445,12 +454,12 @@ implements LoadClient<T> {
 				}
 			}
 			//
+			super.closeActually(); // requires the remoteLoadMap to be not empty yet
 			LOG.debug(Markers.MSG, "Clear the servers map");
 			remoteLoadMap.clear();
 		} else {
 			LOG.debug(Markers.MSG, "{}: closed already", getName());
 		}
-		super.closeActually();
 	}
 	//
 	@Override

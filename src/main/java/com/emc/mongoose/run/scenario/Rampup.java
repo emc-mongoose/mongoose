@@ -62,7 +62,7 @@ implements Runnable {
 						.setMaxObjSize(nextSize)
 						.setConnPerNodeDefault(Integer.parseInt(nextConnCountStr));
 					nextLoadSeq = new Chain(
-						loadBuilder, timeOut, timeUnit, loadTypeSeq, false, true
+						loadBuilder, timeOut, timeUnit, loadTypeSeq, false
 					);
 					LOG.info(Markers.PERF_SUM, "---- Step {} start ----", nextStepName);
 					nextLoadSeq.run();

@@ -17,6 +17,7 @@ import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
+import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
 import org.apache.commons.lang.StringUtils;
@@ -44,13 +45,17 @@ implements LoadBuilderClient<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected DataItemSrc<T> itemSrc;
-	protected String nodeAddrs[] = null, loadSvcAddrs[] = null;
+	protected String storageNodeAddrs[] = null, loadSvcAddrs[] = null;
 	protected volatile RunTimeConfig rtConfig;
 	protected volatile RequestConfig<T> reqConf = getDefaultRequestConfig();
 	protected long maxCount = 0, minObjSize, maxObjSize;
 	protected float objSizeBias;
 	//
-	protected boolean flagAssignLoadSvcToNode = false;
+	protected boolean
+		flagAssignLoadSvcToNode = false,
+		flagUseNewItemSrc = false,
+		flagUseNoneItemSrc = false,
+		flagUseContainerItemSrc = false;
 	protected final Map<String, RunTimeConfig> loadSvcConfMap = new HashMap<>();
 	//
 	public LoadBuilderClientBase()
@@ -145,11 +150,11 @@ implements LoadBuilderClient<T, U> {
 		//
 		final String newNodeAddrs[] = rtConfig.getStorageAddrsWithPorts();
 		if(newNodeAddrs.length > 0) {
-			nodeAddrs = newNodeAddrs;
+			storageNodeAddrs = newNodeAddrs;
 		}
 		flagAssignLoadSvcToNode = rtConfig.getFlagAssignLoadServerToNode();
 		if(flagAssignLoadSvcToNode) {
-			assignNodesToLoadSvcs(rtConfig, loadSvcConfMap, loadSvcAddrs, nodeAddrs);
+			assignNodesToLoadSvcs(rtConfig, loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
 		}
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
@@ -372,9 +377,9 @@ implements LoadBuilderClient<T, U> {
 	public final LoadBuilderClient<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException {
 		if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
-			this.nodeAddrs = dataNodeAddrs;
+			this.storageNodeAddrs = dataNodeAddrs;
 			if(flagAssignLoadSvcToNode) {
-				assignNodesToLoadSvcs(rtConfig, loadSvcConfMap, loadSvcAddrs, nodeAddrs);
+				assignNodesToLoadSvcs(rtConfig, loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
 			}
 			//
 			LoadBuilderSvc<T, U> nextBuilder;
@@ -399,12 +404,63 @@ implements LoadBuilderClient<T, U> {
 		return this;
 	}
 	//
+	//
+	@Override
+	public LoadBuilderClientBase<T, U> useNewItemSrc()
+	throws RemoteException {
+		// disable new data item generation on the client side
+		flagUseNoneItemSrc = true;
+		// enable new data item generation on the load servers side
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.useNewItemSrc();
+		}
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilderClientBase<T, U> useNoneItemSrc()
+	throws RemoteException {
+		// disable any item source usage on the client side
+		flagUseNoneItemSrc = true;
+		// disable any item source usage on the load servers side
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.useNoneItemSrc();
+		}
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilderClientBase<T, U> useContainerListingItemSrc()
+	throws RemoteException {
+		// enable container listing item source on the client sid
+		flagUseContainerItemSrc = true;
+		// disable any item source usage on the load servers side
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.useNoneItemSrc();
+		}
+		return this;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	public final LoadBuilderClient<T, U> setItemSrc(final DataItemSrc<T> itemSrc)
 	throws RemoteException {
 		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
 		this.itemSrc = itemSrc;
+		// disable any item source usage on the load servers side
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.useNoneItemSrc();
+		}
+		//
 		if(itemSrc instanceof FileDataItemSrc) {
+			// calculate approx average data item size
 			final FileDataItemSrc<T> fileInput = (FileDataItemSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
 				rtConfig.getBatchSize()
@@ -417,6 +473,23 @@ implements LoadBuilderClient<T, U> {
 			);
 		}
 		return this;
+	}
+	//
+	protected DataItemSrc<T> getDefaultItemSource() {
+		if(flagUseNoneItemSrc) {
+			return null;
+		} else if(flagUseContainerItemSrc) {
+			return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+		} else if(flagUseNewItemSrc) {
+			try {
+				return new NewDataItemSrc<>(
+					reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
+				);
+			} catch(final NoSuchMethodException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
+			}
+		}
+		return null;
 	}
 	//
 	@Override

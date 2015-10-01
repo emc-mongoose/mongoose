@@ -62,9 +62,7 @@ extends WSMockTestBase {
 			TestConstants.LOAD_DELETE.toLowerCase();
 	private static final long LOAD_CONNS = 10;
 	private static final long LOADS_COUNT = 4;
-	private static final boolean
-		CHAIN_CONCURRENT = false,
-		ITEMS_BUFFER = true;
+	private static final boolean CHAIN_CONCURRENT = false;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -79,7 +77,6 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, SCENARIO_NAME);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, CHAIN_LOADS);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, String.valueOf(CHAIN_CONCURRENT));
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER, String.valueOf(ITEMS_BUFFER));
 		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, String.valueOf(LOAD_CONNS));
 		rtConfig.set(RunTimeConfig.KEY_READ_CONNS, String.valueOf(LOAD_CONNS));
 		rtConfig.set(RunTimeConfig.KEY_UPDATE_CONNS, String.valueOf(LOAD_CONNS));
