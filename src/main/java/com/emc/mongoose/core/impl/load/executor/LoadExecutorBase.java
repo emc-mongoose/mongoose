@@ -325,6 +325,7 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
+			lastStats = ioStats.getSnapshot();
 			if(isLoadFinished.get()) {
 				try {
 					close();
@@ -335,7 +336,6 @@ implements LoadExecutor<T> {
 				return;
 			}
 			//
-			lastStats = ioStats.getSnapshot();
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
 			//
@@ -639,11 +639,9 @@ implements LoadExecutor<T> {
 	@Override
 	public void setLoadState(final LoadState<T> state) {
 		if(state != null) {
-			loadedPrevState = state;
 			if(state.isLoadFinished(rtConfig)) {
 				isLoadFinished.compareAndSet(false, true);
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
-				return;
 			}
 			// apply parameters from loadState to current load executor
 			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
@@ -658,6 +656,7 @@ implements LoadExecutor<T> {
 			);
 			ioStats.markFail(countFail);
 			ioStats.markElapsedTime(statsSnapshot.getElapsedTime());
+			loadedPrevState = state;
 		}
 	}
 	//
@@ -684,8 +683,8 @@ implements LoadExecutor<T> {
 	private boolean isDoneAllSubm() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-					Markers.MSG, "{}: all submitted: {}, results: {}, submitted: {}",
-					getName(), isAllSubm.get(), counterResults.get(), counterSubm.get()
+				Markers.MSG, "{}: all submitted: {}, results: {}, submitted: {}",
+				getName(), isAllSubm.get(), counterResults.get(), counterSubm.get()
 			);
 		}
 		return isAllSubm.get() && counterResults.get() >= counterSubm.get();
