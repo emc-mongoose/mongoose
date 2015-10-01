@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.03.15.
  */
@@ -44,7 +45,8 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_HEAD, null, batchSize
+				addr, WSRequestConfig.METHOD_HEAD, null, batchSize,
+				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -85,7 +87,8 @@ implements Container<T> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_PUT, null, batchSize
+				addr, WSRequestConfig.METHOD_PUT, null, batchSize,
+				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -125,7 +128,8 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_DELETE, null, batchSize
+				addr, WSRequestConfig.METHOD_DELETE, null, batchSize,
+				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -163,7 +167,8 @@ implements Container<T> {
 	public final void setVersioning(final String addr, final boolean enabledFlag) {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_POST, null, batchSize
+				addr, WSRequestConfig.METHOD_POST, null, batchSize,
+				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -200,8 +205,8 @@ implements Container<T> {
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
 	final HttpResponse execute(
-		final String addr, final String method, final String nextMarker,
-		final long maxCount
+		final String addr, final String method, final String nextMarker, final long maxCount,
+		final long timeOut, final TimeUnit timeUnit
 	) throws IOException {
 		//
 		if(method == null) {
@@ -266,6 +271,6 @@ implements Container<T> {
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
-		return reqConf.execute(addr, httpReq);
+		return reqConf.execute(addr, httpReq, timeOut, timeUnit);
 	}
 }

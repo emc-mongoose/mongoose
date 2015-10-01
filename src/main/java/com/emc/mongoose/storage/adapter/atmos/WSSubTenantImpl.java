@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.10.14.
  */
@@ -51,8 +52,9 @@ implements SubTenant<T> {
 		MSG_INVALID_METHOD = "<NULL> is invalid HTTP method",
 		SUBTENANT = "subtenant";
 	//
-	final HttpResponse execute(final String addr, final String method)
-	throws IOException {
+	final HttpResponse execute(
+		final String addr, final String method, final long timeOut, final TimeUnit timeUnit
+	) throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
@@ -76,7 +78,7 @@ implements SubTenant<T> {
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
-		return reqConf.execute(addr, httpReq);
+		return reqConf.execute(addr, httpReq, timeOut, timeUnit);
 	}
 	//
 	@Override
@@ -86,7 +88,10 @@ implements SubTenant<T> {
 		//
 		if(value != null && value.length() > 0) {
 			try {
-				final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_HEAD);
+				final HttpResponse httpResp = execute(
+					addr, WSRequestConfig.METHOD_HEAD,
+					WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				);
 				if(httpResp != null) {
 					final HttpEntity httpEntity = httpResp.getEntity();
 					final StatusLine statusLine = httpResp.getStatusLine();
@@ -126,7 +131,10 @@ implements SubTenant<T> {
 	public final void create(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_PUT);
+			final HttpResponse httpResp = execute(
+				addr, WSRequestConfig.METHOD_PUT,
+				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -168,7 +176,10 @@ implements SubTenant<T> {
 	public final void delete(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_DELETE);
+			final HttpResponse httpResp = execute(
+				addr, WSRequestConfig.METHOD_DELETE,
+				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();

@@ -186,7 +186,12 @@ implements Externalizable {
 	}
 	//
 	public static RunTimeConfig getContext() {
-		return CONTEXT_CONFIG.get();
+		RunTimeConfig contextConfig = CONTEXT_CONFIG.get();
+		if(contextConfig == null) {
+			initContext();
+			contextConfig = CONTEXT_CONFIG.get();
+		}
+		return contextConfig;
 	}
 	//
 	public static void setContext(final RunTimeConfig instance) {

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
@@ -164,7 +165,8 @@ extends GenericContainerItemSrcBase<T> {
 		}
 		// execute the request
 		final HttpResponse resp = WSBucketImpl.class.cast(container).execute(
-			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit
+			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit,
+			WSRequestConfig.REQUEST_WITH_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 		);
 		if(resp == null) {
 			throw new IllegalStateException("No HTTP response");

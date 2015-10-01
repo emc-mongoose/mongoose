@@ -24,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
@@ -54,7 +55,8 @@ extends GenericContainerItemSrcBase<T> {
 		}
 		// execute the request
 		final HttpResponse resp = WSContainerImpl.class.cast(container).execute(
-			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit
+			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit,
+			WSRequestConfig.REQUEST_WITH_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 		);
 		// response validation
 		if(resp == null) {
