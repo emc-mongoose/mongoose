@@ -72,10 +72,10 @@ implements DataItemInput<T> {
 			if (item == null) {
 				throw new IOException("Couldn't skip such amount of data items");
 			} else if (item.equals(lastItem.toString())) {
+				LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_END);
 				return;
 			}
 		}
-		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_END);
 	}
 	//
 	@Override

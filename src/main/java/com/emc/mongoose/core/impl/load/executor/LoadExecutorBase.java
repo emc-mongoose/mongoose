@@ -335,6 +335,7 @@ implements LoadExecutor<T> {
 				return;
 			}
 			//
+			lastStats = ioStats.getSnapshot();
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
 			//
@@ -371,8 +372,11 @@ implements LoadExecutor<T> {
 					) {
 						final DataItemInputProducer<T> inputProducer
 							= (DataItemInputProducer<T>) producer;
-						inputProducer.setSkippedItemsCount(counterResults.get());
 						inputProducer.setLastDataItem(loadedPrevState.getLastDataItem());
+						final long itemsCount = counterResults.get();
+						if (itemsCount > 0) {
+							inputProducer.skip(itemsCount);
+						}
 					}
 					producer.start();
 					LOG.debug(Markers.MSG, "Started object producer {}", producer);

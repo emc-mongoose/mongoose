@@ -115,13 +115,13 @@ implements DataItemOutput<T>, DataItemInput<T> {
 			for (int i = 0; i < itemsCount; i++) {
 				item = queue.take();
 				if (item.equals(lastItem)) {
+					LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_END);
 					return;
 				}
 			}
 		} catch (final InterruptedException e) {
 			throw new InterruptedIOException(e.getMessage());
 		}
-		LOG.info(Markers.MSG, DataItemInput.MSG_SKIP_END);
 	}
 	/**
 	 Does nothing

@@ -29,7 +29,6 @@ implements Producer<T> {
 	//
 	protected DataItemInput<T> itemIn;
 	protected volatile Consumer<T> consumer = null;
-	protected long skippedItemsCount;
 	protected T lastDataItem;
 	protected boolean isCircular;
 	//
@@ -40,27 +39,17 @@ implements Producer<T> {
 	public DataItemInputProducer(
 		final DataItemInput<T> itemIn, final boolean isCircular
 	) {
-		this(itemIn, isCircular, 0, null);
+		this(itemIn, isCircular, null);
 	}
 	//
 	public DataItemInputProducer(
-		final DataItemInput<T> itemIn, final boolean isCircular,
-		final long skippedItemsCount, final T dataItem
+		final DataItemInput<T> itemIn, final boolean isCircular, final T dataItem
 	) {
 		this.itemIn = itemIn;
-		this.skippedItemsCount = skippedItemsCount;
 		this.lastDataItem = dataItem;
 		this.isCircular = isCircular;
 		setDaemon(true);
 		setName("dataItemInputProducer<" + itemIn.toString() + ">");
-	}
-	//
-	public void setSkippedItemsCount(final long itemsCount) {
-		this.skippedItemsCount = itemsCount;
-	}
-	//
-	public long getSkippedItemsCount() {
-		return skippedItemsCount;
 	}
 	//
 	public void setLastDataItem(final T dataItem) {
@@ -81,6 +70,16 @@ implements Producer<T> {
 	public Consumer<T> getConsumer()
 	throws RemoteException {
 		return consumer;
+	}
+	//
+	public void skip(final long itemsCount) {
+		try {
+			itemIn.setLastDataItem(lastDataItem);
+			itemIn.skip(itemsCount);
+		} catch (final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e,
+				"Failed to skip such amount of data items - \"{}\"", itemsCount);
+		}
 	}
 	//
 	@Override
@@ -110,15 +109,6 @@ implements Producer<T> {
 		if(consumer == null) {
 			LOG.warn(Markers.ERR, "Have no consumer set, exiting");
 			return;
-		}
-		if (skippedItemsCount > 0) {
-			try {
-				itemIn.setLastDataItem(lastDataItem);
-				itemIn.skip(skippedItemsCount);
-			} catch (final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e,
-					"Failed to skip such amount of data items - \"{}\"", skippedItemsCount);
-			}
 		}
 		try {
 			do {
