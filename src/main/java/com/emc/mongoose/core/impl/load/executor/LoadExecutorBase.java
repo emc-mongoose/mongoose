@@ -126,13 +126,16 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
-			while(!currThread.isInterrupted()) {
-				LockSupport.parkNanos(1);
-				refreshStats();
-				LockSupport.parkNanos(1);
-				checkForBadState();
-				LockSupport.parkNanos(1);
-				passDataItems();
+			try {
+				while(!currThread.isInterrupted()) {
+					Thread.sleep(1);
+					refreshStats();
+					Thread.sleep(1);
+					checkForBadState();
+					Thread.sleep(1);
+					passDataItems();
+				}
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}

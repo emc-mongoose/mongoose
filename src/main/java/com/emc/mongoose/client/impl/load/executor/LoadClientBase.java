@@ -40,7 +40,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 20.10.14.
  */
@@ -112,15 +111,15 @@ implements LoadClient<T> {
 			currThread.setName("dataItemsBatchLoader<" + getName() + ">");
 			//
 			int failCount = 0;
-			while(!currThread.isInterrupted()) {
-				try {
+			try {
+				while(!currThread.isInterrupted()) {
 					try {
+						Thread.sleep(1);
 						loadAndPassDataItems();
-						LockSupport.parkNanos(1);
 						failCount = 0; // reset
 					} catch(final IOException e) {
 						if(failCount < COUNT_LIMIT_RETRY) {
-							failCount ++;
+							failCount++;
 							TimeUnit.MILLISECONDS.sleep(failCount);
 						} else {
 							LogUtil.exception(
@@ -131,24 +130,8 @@ implements LoadClient<T> {
 							break;
 						}
 					}
-				} catch(final InterruptedException e) {
-					break;
 				}
-			}
-		}
-	}
-	//
-	private final class AggregateIOStatsTask
-	implements Runnable {
-		@Override
-		public final void run() {
-			//
-			final Thread currThread = Thread.currentThread();
-			currThread.setName("ioStatsAggregator<" + getName() + ">");
-			//
-			while(!currThread.isInterrupted()) {
-				lastStats = ioStats.getSnapshot();
-				LockSupport.parkNanos(1);
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
@@ -160,20 +143,25 @@ implements LoadClient<T> {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("interruptOnCountLimitReached<" + getName() + ">");
 			if(maxCount > 0) {
-				while(true) {
-					if(maxCount <= lastStats.getSuccCount() + lastStats.getFailCount()) {
-						LOG.debug(
-							Markers.MSG, "Interrupting due to count limit ({}) is reached", maxCount
-						);
-						break;
-					} else if(currThread.isInterrupted()) {
-						LOG.debug(Markers.MSG, "Interrupting due to external interruption");
-						break;
-					} else {
-						LockSupport.parkNanos(1);
+				try {
+					while(!currThread.isInterrupted()) {
+						if(maxCount <= lastStats.getSuccCount() + lastStats.getFailCount()) {
+							LOG.debug(
+								Markers.MSG, "Interrupting due to count limit ({}) is reached",
+								maxCount
+							);
+							break;
+						} else if(currThread.isInterrupted()) {
+							LOG.debug(Markers.MSG, "Interrupting due to external interruption");
+							break;
+						} else {
+							Thread.sleep(1);
+						}
 					}
+				} catch(final InterruptedException ignored) {
+				} finally {
+					LoadClientBase.this.interrupt();
 				}
-				LoadClientBase.this.interrupt();
 			}
 		}
 	}
@@ -200,7 +188,6 @@ implements LoadClient<T> {
 		for(final LoadSvc<T> nextLoadSvc : remoteLoadMap.values()) {
 			mgmtTasks.add(new LoadDataItemsBatchTask(nextLoadSvc));
 		}
-		mgmtTasks.add(new AggregateIOStatsTask());
 		mgmtTasks.add(new InterruptOnCountLimitReachedTask());
 		//
 		remoteSubmExecutor = new ThreadPoolExecutor(
@@ -322,8 +309,6 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final AtomicInteger rrc = new AtomicInteger(0);
-	//
 	@Deprecated
 	private final class RemotePutTask
 	implements Runnable {
@@ -339,9 +324,11 @@ implements LoadClient<T> {
 			String loadSvcAddr;
 			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
 				try {
-					loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
+					loadSvcAddr = loadSvcAddrs[
+						(int) ((counterSubm.get() + tryCount) % loadSvcAddrs.length)
+					];
 					remoteLoadMap.get(loadSvcAddr).put(dataItem);
-					rrc.incrementAndGet();
+					counterSubm.incrementAndGet();
 					break;
 				} catch(final RejectedExecutionException | IOException e) {
 					if(remoteSubmExecutor.isTerminated()) {
@@ -372,25 +359,30 @@ implements LoadClient<T> {
 	implements Runnable {
 		//
 		private final List<T> dataItems;
-		private final int from, to;
+		private final int from, to, n;
 		//
 		private RemoteBatchPutTask(final List<T> dataItems, final int from, final int to) {
 			this.dataItems = dataItems;
 			this.from = from;
 			this.to = to;
+			this.n = from - to;
 		}
 		//
 		@Override
 		public final void run() {
 			String loadSvcAddr;
 			LoadSvc<T> loadSvc;
-			int n;
+			int m = 0;
 			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
 				try {
-					loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
+					loadSvcAddr = loadSvcAddrs[
+						(int) ((counterSubm.get() + tryCount) % loadSvcAddrs.length)
+					];
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
-					n = loadSvc.put(dataItems, from, to);
-					rrc.addAndGet(dataItems.size());
+					while(m < n) {
+						m += loadSvc.put(dataItems, from + m, to);
+					}
+					counterSubm.addAndGet(n);
 					break;
 				} catch(final RejectedExecutionException | IOException e) {
 					if(remoteSubmExecutor.isTerminated()) {
@@ -476,6 +468,7 @@ implements LoadClient<T> {
 			//
 			final long timeOut = rtConfig.getLoadLimitTimeValue();
 			final TimeUnit timeUnit = rtConfig.getLoadLimitTimeUnit();
+			remoteSubmExecutor.shutdown();
 			try {
 				if(
 					!remoteSubmExecutor.awaitTermination(

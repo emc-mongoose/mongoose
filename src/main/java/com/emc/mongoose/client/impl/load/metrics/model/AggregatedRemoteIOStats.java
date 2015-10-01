@@ -213,8 +213,8 @@ extends IOStatsBase {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName(currThread.getName() + "@" + loadSvcAddr);
 			int countFailed = 0;
-			while(!currThread.isInterrupted()) {
-				try {
+			try {
+				while(!currThread.isInterrupted()) {
 					try {
 						loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
 						if(loadSvcStatsSnapshot != null) {
@@ -227,10 +227,10 @@ extends IOStatsBase {
 								loadSvcAddr
 							);
 						}
-						LockSupport.parkNanos(1);
+						Thread.sleep(1);
 					} catch(final RemoteException e) {
 						if(countFailed < COUNT_LIMIT_RETRIES) {
-							countFailed ++;
+							countFailed++;
 							TimeUnit.MILLISECONDS.sleep(countFailed);
 						} else {
 							LogUtil.exception(
@@ -240,9 +240,8 @@ extends IOStatsBase {
 							break;
 						}
 					}
-				} catch(final InterruptedException e) {
-					break;
 				}
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
