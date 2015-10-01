@@ -639,6 +639,7 @@ implements LoadExecutor<T> {
 	@Override
 	public void setLoadState(final LoadState<T> state) {
 		if(state != null) {
+			loadedPrevState = state;
 			if(state.isLoadFinished(rtConfig)) {
 				isLoadFinished.compareAndSet(false, true);
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
@@ -657,7 +658,6 @@ implements LoadExecutor<T> {
 			);
 			ioStats.markFail(countFail);
 			ioStats.markElapsedTime(statsSnapshot.getElapsedTime());
-			loadedPrevState = state;
 		}
 	}
 	//
