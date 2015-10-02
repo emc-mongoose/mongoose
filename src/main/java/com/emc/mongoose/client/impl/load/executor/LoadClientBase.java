@@ -137,7 +137,14 @@ implements LoadClient<T> {
 	}
 	//
 	private final class InterruptOnCountLimitReachedTask
-		implements Runnable {
+	implements Runnable {
+		//
+		private final LoadClient loadClient;
+		//
+		private InterruptOnCountLimitReachedTask(final LoadClient loadClient) {
+			this.loadClient = loadClient;
+		}
+		//
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
@@ -160,7 +167,13 @@ implements LoadClient<T> {
 					}
 				} catch(final InterruptedException ignored) {
 				} finally {
-					LoadClientBase.this.interrupt();
+					try {
+						loadClient.interrupt();
+					} catch(final RemoteException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to interrupt \"{}\"", loadClient
+						);
+					}
 				}
 			}
 		}
@@ -188,7 +201,7 @@ implements LoadClient<T> {
 		for(final LoadSvc<T> nextLoadSvc : remoteLoadMap.values()) {
 			mgmtTasks.add(new LoadDataItemsBatchTask(nextLoadSvc));
 		}
-		mgmtTasks.add(new InterruptOnCountLimitReachedTask());
+		mgmtTasks.add(new InterruptOnCountLimitReachedTask(this));
 		//
 		remoteSubmExecutor = new ThreadPoolExecutor(
 			loadSvcAddrs.length, loadSvcAddrs.length, 0, TimeUnit.SECONDS,

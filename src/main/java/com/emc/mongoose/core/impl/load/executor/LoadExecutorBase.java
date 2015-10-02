@@ -367,33 +367,18 @@ implements LoadExecutor<T> {
 		}
 		//
 		mgmtExecutor.shutdownNow();
-		if(consumer != null) {
-			if(consumer instanceof LifeCycle) {
-				try {
-					((LifeCycle) consumer).shutdown();
-					LOG.debug(
-						Markers.MSG, "{}: shut down the consumer \"{}\" successfully",
-						getName(), consumer
-					);
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "{}: failed to shut down the consumer \"{}\"",
-						getName(), consumer
-					);
-				}
-			} else {
-				try {
-					consumer.close();
-					LOG.debug(
-						Markers.MSG, "{}: closed the consumer \"{}\" successfully",
-						getName(), consumer
-					);
-				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "{}: failed to close the consumer \"{}\"",
-						getName(), consumer
-					);
-				}
+		if(consumer instanceof LifeCycle) {
+			try {
+				((LifeCycle) consumer).shutdown();
+				LOG.debug(
+					Markers.MSG, "{}: shut down the consumer \"{}\" successfully",
+					getName(), consumer
+				);
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "{}: failed to shut down the consumer \"{}\"",
+					getName(), consumer
+				);
 			}
 		}
 		//
@@ -801,7 +786,7 @@ implements LoadExecutor<T> {
 				metricsPeriodSec
 			);
 			try {
-				LoadExecutorBase.this.close();
+				close();
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
 			}
@@ -975,6 +960,20 @@ implements LoadExecutor<T> {
 				interruptActually();
 			}
 		} finally {
+			if(consumer != null && !(consumer instanceof LifeCycle)) {
+				try {
+					consumer.close();
+					LOG.debug(
+						Markers.MSG, "{}: closed the consumer \"{}\" successfully",
+						getName(), consumer
+					);
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "{}: failed to close the consumer \"{}\"",
+						getName(), consumer
+					);
+				}
+			}
 			LoadCloseHook.del(this);
 			if(loadedPrevState != null) {
 				if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {

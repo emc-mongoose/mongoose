@@ -118,15 +118,10 @@ implements DataItemProducer<T> {
 							m += itemDst.put(buff, m, n);
 							LockSupport.parkNanos(1);
 						}
-						if(isInterrupted) {
-							break;
-						}
 						count += n;
 					} else {
 						if(isInterrupted) {
 							break;
-						} else {
-							LockSupport.parkNanos(1);
 						}
 					}
 				} catch(final EOFException e) {
