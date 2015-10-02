@@ -63,6 +63,7 @@ public class JsonConfigLoader {
 				rootNode = jsonMapper.readTree(bundledConf);
 			}
 			//
+			action = JsonConfigLoaderActions.LOAD;
 			walkJsonTree(rootNode);
 			rtConfig.setMongooseKeys(mongooseKeys);
 			rtConfig.setJsonNode(rootNode);
