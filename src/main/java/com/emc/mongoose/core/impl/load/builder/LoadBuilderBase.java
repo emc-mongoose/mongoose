@@ -47,10 +47,7 @@ implements LoadBuilder<T, U> {
 	protected DataItemSrc itemSrc;
 	protected String storageNodeAddrs[];
 	protected final HashMap<IOTask.Type, Integer> loadTypeWorkerCount, loadTypeConnPerNode;
-	protected boolean
-		flagUseContainerItemSrc = true,
-		flagUseNewItemSrc = true,
-		flagUseNoneItemSrc = false;
+	protected boolean flagUseContainerItemSrc, flagUseNewItemSrc, flagUseNoneItemSrc;
 	//
 	{
 		loadTypeWorkerCount = new HashMap<>();
@@ -65,7 +62,14 @@ implements LoadBuilder<T, U> {
 	protected abstract RequestConfig<T> getDefaultRequestConfig();
 	//
 	public LoadBuilderBase(final RunTimeConfig runTimeConfig) {
+		resetItemSrcFlags();
 		setProperties(runTimeConfig);
+	}
+	//
+	protected final void resetItemSrcFlags() {
+		flagUseContainerItemSrc = true;
+		flagUseNewItemSrc = true;
+		flagUseNoneItemSrc = false;
 	}
 	//
 	@Override
@@ -491,7 +495,11 @@ implements LoadBuilder<T, U> {
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
-		return buildActually();
+		try {
+			return buildActually();
+		} finally {
+			resetItemSrcFlags();
+		}
 	}
 	//
 	protected abstract void invokePreConditions()

@@ -53,9 +53,7 @@ implements LoadBuilderClient<T, U> {
 	//
 	protected boolean
 		flagAssignLoadSvcToNode = false,
-		flagUseContainerItemSrc = true,
-		flagUseNewItemSrc = true,
-		flagUseNoneItemSrc = false;
+		flagUseContainerItemSrc, flagUseNewItemSrc, flagUseNoneItemSrc;
 	protected final Map<String, RunTimeConfig> loadSvcConfMap = new HashMap<>();
 	//
 	public LoadBuilderClientBase()
@@ -502,6 +500,12 @@ implements LoadBuilderClient<T, U> {
 		return null;
 	}
 	//
+	protected final void resetItemSrcFlags() {
+		flagUseContainerItemSrc = true;
+		flagUseNewItemSrc = true;
+		flagUseNoneItemSrc = false;
+	}
+	//
 	@Override
 	public final U build()
 	throws RemoteException {
@@ -513,6 +517,8 @@ implements LoadBuilderClient<T, U> {
 			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
+		} finally {
+			resetItemSrcFlags();
 		}
 		return client;
 	}
