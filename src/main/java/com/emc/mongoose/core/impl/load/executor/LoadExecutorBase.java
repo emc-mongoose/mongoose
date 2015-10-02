@@ -126,16 +126,13 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
-			try {
-				while(!currThread.isInterrupted()) {
-					Thread.sleep(1);
-					refreshStats();
-					Thread.sleep(1);
-					checkForBadState();
-					Thread.sleep(1);
-					passDataItems();
-				}
-			} catch(final InterruptedException ignored) {
+			while(!currThread.isInterrupted()) {
+				LockSupport.parkNanos(1);
+				refreshStats();
+				LockSupport.parkNanos(1);
+				checkForBadState();
+				LockSupport.parkNanos(1);
+				passDataItems();
 			}
 		}
 	}
@@ -298,7 +295,7 @@ implements LoadExecutor<T> {
 			}
 		}
 		//
-		lastStats = ioStats.getSnapshot();
+		refreshStats();
 		if(isLimitReached.get()) {
 			try {
 				close();
@@ -372,33 +369,18 @@ implements LoadExecutor<T> {
 		}
 		//
 		mgmtExecutor.shutdownNow();
-		if(consumer != null) {
-			if(consumer instanceof LifeCycle) {
-				try {
-					((LifeCycle) consumer).shutdown();
-					LOG.debug(
-						Markers.MSG, "{}: shut down the consumer \"{}\" successfully",
-						getName(), consumer
-					);
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "{}: failed to shut down the consumer \"{}\"",
-						getName(), consumer
-					);
-				}
-			} else {
-				try {
-					consumer.close();
-					LOG.debug(
-						Markers.MSG, "{}: closed the consumer \"{}\" successfully",
-						getName(), consumer
-					);
-				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "{}: failed to close the consumer \"{}\"",
-						getName(), consumer
-					);
-				}
+		if(consumer instanceof LifeCycle) {
+			try {
+				((LifeCycle) consumer).shutdown();
+				LOG.debug(
+					Markers.MSG, "{}: shut down the consumer \"{}\" successfully",
+					getName(), consumer
+				);
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "{}: failed to shut down the consumer \"{}\"",
+					getName(), consumer
+				);
 			}
 		}
 		//
@@ -700,7 +682,7 @@ implements LoadExecutor<T> {
 	protected final void ioTaskFailed(final int n, final Exception e) {
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
-		if(!isClosed.get()) {
+		if(!isClosed.get() && !isInterrupted.get()) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O tasks ({}) failure", getName(), n);
 		} else {
 			LOG.debug(Markers.ERR, "{}: {} I/O tasks has been interrupted", getName(), n);
@@ -796,17 +778,17 @@ implements LoadExecutor<T> {
 	private void checkForBadState() {
 		if(
 			lastStats.getFailCount() > 1000000 &&
-				lastStats.getFailRateLast() < lastStats.getSuccRateLast()
-			) {
+			lastStats.getFailRateLast() < lastStats.getSuccRateLast()
+		) {
 			LOG.fatal(
-					Markers.ERR,
-					"There's a more than 1M of failures and the failure rate is higher " +
-							"than success rate for at least last {}[sec]. Exiting in order to " +
-							"avoid the memory exhaustion. Please check your environment.",
-					metricsPeriodSec
+				Markers.ERR,
+				"There's a more than 1M of failures and the failure rate is higher " +
+					"than success rate for at least last {}[sec]. Exiting in order to " +
+					"avoid the memory exhaustion. Please check your environment.",
+				metricsPeriodSec
 			);
 			try {
-				LoadExecutorBase.this.close();
+				close();
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
 			}
@@ -825,8 +807,8 @@ implements LoadExecutor<T> {
 		ioStats.markSucc(bytes, duration, latency);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-					Markers.MSG, "Task #{}: successful, {}/{}", ioTask.hashCode(),
-					lastStats.getSuccCount(), ioTask.getCountBytesDone()
+				Markers.MSG, "Task #{}: successful, {}/{}", ioTask.hashCode(),
+				lastStats.getSuccCount(), ioTask.getCountBytesDone()
 			);
 		}
 	}
@@ -987,6 +969,20 @@ implements LoadExecutor<T> {
 				interruptActually();
 			}
 		} finally {
+			if(consumer != null && !(consumer instanceof LifeCycle)) {
+				try {
+					consumer.close();
+					LOG.debug(
+						Markers.MSG, "{}: closed the consumer \"{}\" successfully",
+						getName(), consumer
+					);
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "{}: failed to close the consumer \"{}\"",
+						getName(), consumer
+					);
+				}
+			}
 			updateDataItemCount(counterResults.get());
 			LoadCloseHook.del(this);
 			if(loadedPrevState != null) {

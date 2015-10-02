@@ -43,7 +43,7 @@ public class Sanity
 implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 200;
-	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("1MB");
+	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("10MB");
 	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
 	public final static Logger LOG;
 	static {
@@ -133,7 +133,6 @@ implements Runnable {
 	public static void main(final String... args)
 	throws IOException, InterruptedException {
 		//
-		RunTimeConfig.initContext();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
@@ -158,14 +157,14 @@ implements Runnable {
 			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
 			.setLimitTime(0, TimeUnit.SECONDS)
 			.setLimitRate(10000);
-		/* standalone
+		// standalone
 		try(final StorageClient<WSObject> client = clientBuilder.build()) {
 			final Thread sanityThread1 = new Thread(new Sanity(client), "sanityStandalone");
 			sanityThread1.start();
 			LOG.info(Markers.MSG, "Standalone sanity started");
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
-		}*/
+		}
 		// distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		ServiceUtil.init();

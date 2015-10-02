@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.10.14.
  */
@@ -51,14 +52,15 @@ implements Bucket<T> {
 	}
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	HttpResponse execute(final String addr, final String method)
+	HttpResponse execute(
+		final String addr, final String method, final long timeOut, final TimeUnit timeUnit
+	)
 	throws IOException {
-		return execute(addr, method, null, batchSize);
+		return execute(addr, method, null, batchSize, timeOut, timeUnit);
 	}
 	//
-	HttpResponse execute(
-		final String addr, final String method, final boolean versioning
-	) throws IOException {
+	HttpResponse execute(final String addr, final String method, final boolean versioning)
+	throws IOException {
 		final HttpEntityEnclosingRequest
 			httpReq = reqConf.createGenericRequest(method, "/" + name + "?" + URL_ARG_VERSIONING);
 		//
@@ -74,11 +76,14 @@ implements Bucket<T> {
 		}
 		reqConf.applyHeadersFinally(httpReq);
 		//
-		return reqConf.execute(addr, httpReq);
+		return reqConf.execute(
+			addr, httpReq, WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+		);
 	}
 	//
 	HttpResponse execute(
-		final String addr, final String method,  final String marker, final long limit
+		final String addr, final String method,  final String marker, final long limit,
+		final long timeOut, final TimeUnit timeUnit
 	) throws IOException {
 		//
 		if(method == null) {
@@ -112,7 +117,7 @@ implements Bucket<T> {
 		}
 		reqConf.applyHeadersFinally(httpReq);
 		//
-		return reqConf.execute(addr, httpReq);
+		return reqConf.execute(addr, httpReq, timeOut, timeUnit);
 	}
 	//
 	@Override
@@ -121,7 +126,10 @@ implements Bucket<T> {
 		boolean flagExists = false;
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_HEAD);
+			final HttpResponse httpResp = execute(
+				addr, WSRequestConfig.METHOD_HEAD,
+				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -202,7 +210,10 @@ implements Bucket<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_PUT);
+			final HttpResponse httpResp = execute(
+				addr, WSRequestConfig.METHOD_PUT,
+				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -242,7 +253,10 @@ implements Bucket<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_DELETE);
+			final HttpResponse httpResp = execute(
+				addr, WSRequestConfig.METHOD_DELETE,
+				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();

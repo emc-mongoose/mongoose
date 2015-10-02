@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 /**
  Created by kurila on 16.12.14.
  */
@@ -44,10 +43,6 @@ implements WSLoadSvc<T> {
 		super(
 			runTimeConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
-		);
-		// by default, may be overridden later externally:
-		setDataItemDst(
-			new BlockingQueueItemBuffer<>(new ArrayBlockingQueue<T>(batchSize))
 		);
 	}
 	//

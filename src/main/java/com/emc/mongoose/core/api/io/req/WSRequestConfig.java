@@ -13,6 +13,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.message.HeaderGroup;
 //
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 29.09.14.
  An HTTP request shared configuration.
@@ -109,5 +110,7 @@ extends ObjectRequestConfig<T> {
 	//
 	void applySuccResponseToObject(final HttpResponse response, final T dataItem);
 	//
-	HttpResponse execute(final String addr, final HttpRequest request);
+	HttpResponse execute(
+		final String addr, final HttpRequest request, final long timeOut, final TimeUnit timeUnit
+	);
 }

@@ -38,7 +38,7 @@ extends DistributedLoadBuilderTestBase {
 		SIZE_SEQ[] = {"1KB", "10KB", "100KB"},
 		THREAD_COUNT_SEQ[] = {"1", "10", "100"};
 	private final static int
-		LOAD_LIMIT_TIME_SEC = 5,
+		LOAD_LIMIT_TIME_SEC = 10,
 		PRECISION_SEC = 10,
 		COUNT_STEPS = LOAD_SEQ.length * SIZE_SEQ.length * THREAD_COUNT_SEQ.length;
 	//

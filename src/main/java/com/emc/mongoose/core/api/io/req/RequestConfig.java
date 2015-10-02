@@ -17,6 +17,9 @@ public interface RequestConfig<T extends DataItem>
 extends Externalizable, Cloneable, Closeable {
 	//
 	long serialVersionUID = 42L;
+	int REQUEST_NO_PAYLOAD_TIMEOUT_SEC = 100,
+		REQUEST_WITH_PAYLOAD_TIMEOUT_SEC = 100000;
+	//
 	String
 		HOST_PORT_SEP = ":",
 		PACKAGE_IMPL_BASE = "com.emc.mongoose.storage.adapter";

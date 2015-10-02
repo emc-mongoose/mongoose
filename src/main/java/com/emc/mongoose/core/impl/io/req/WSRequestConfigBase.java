@@ -80,6 +80,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 /**
  Created by kurila on 09.06.14.
  */
@@ -657,7 +658,9 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final HttpResponse execute(final String tgtAddr, final HttpRequest request) {
+	public final HttpResponse execute(
+		final String tgtAddr, final HttpRequest request, final long timeOut, final TimeUnit timeUnit
+	) {
 		//
 		try {
 			if(!clientDaemon.isAlive()) {
@@ -703,7 +706,11 @@ implements WSRequestConfig<T> {
 				response = client.execute(
 					new BasicAsyncRequestProducer(tgtHost, request),
 					new BasicAsyncResponseConsumer(), connPool, ctx
-				).get();
+				).get(timeOut, timeUnit);
+			} catch(final TimeoutException e) {
+				if(!isClosed()) {
+					LOG.warn(Markers.ERR, "HTTP request timeout: {}", request.getRequestLine());
+				}
 			} catch(final InterruptedException e) {
 				if(!isClosed()) {
 					LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");

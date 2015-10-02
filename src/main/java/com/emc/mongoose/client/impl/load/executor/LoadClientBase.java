@@ -39,7 +39,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 20.10.14.
  */
@@ -90,9 +90,9 @@ implements LoadClient<T> {
 							n, loadSvc
 						);
 					}
-					int m = 0;
-					while(m < n) {
+					for(int m = 0; m < n;) {
 						m += itemOutBuff.put(frame, m, n);
+						LockSupport.parkNanos(1);
 					}
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
@@ -137,7 +137,14 @@ implements LoadClient<T> {
 	}
 	//
 	private final class InterruptOnCountLimitReachedTask
-		implements Runnable {
+	implements Runnable {
+		//
+		private final LoadClient loadClient;
+		//
+		private InterruptOnCountLimitReachedTask(final LoadClient loadClient) {
+			this.loadClient = loadClient;
+		}
+		//
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
@@ -160,7 +167,13 @@ implements LoadClient<T> {
 					}
 				} catch(final InterruptedException ignored) {
 				} finally {
-					LoadClientBase.this.interrupt();
+					try {
+						loadClient.interrupt();
+					} catch(final RemoteException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to interrupt \"{}\"", loadClient
+						);
+					}
 				}
 			}
 		}
@@ -188,7 +201,7 @@ implements LoadClient<T> {
 		for(final LoadSvc<T> nextLoadSvc : remoteLoadMap.values()) {
 			mgmtTasks.add(new LoadDataItemsBatchTask(nextLoadSvc));
 		}
-		mgmtTasks.add(new InterruptOnCountLimitReachedTask());
+		mgmtTasks.add(new InterruptOnCountLimitReachedTask(this));
 		//
 		remoteSubmExecutor = new ThreadPoolExecutor(
 			loadSvcAddrs.length, loadSvcAddrs.length, 0, TimeUnit.SECONDS,
@@ -379,8 +392,13 @@ implements LoadClient<T> {
 						(int) ((counterSubm.get() + tryCount) % loadSvcAddrs.length)
 					];
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
-					while(m < n) {
+					while(true) {
 						m += loadSvc.put(dataItems, from + m, to);
+						if(m < n) {
+							LockSupport.parkNanos(1);
+						} else {
+							break;
+						}
 					}
 					counterSubm.addAndGet(n);
 					break;
