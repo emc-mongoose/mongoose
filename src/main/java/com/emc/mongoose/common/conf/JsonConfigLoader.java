@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 //
 /**
@@ -33,7 +34,7 @@ public class JsonConfigLoader {
 	}
 	//
 	private static RunTimeConfig DEFAULT_CFG;
-	private static JsonConfigLoaderActions ACTION = JsonConfigLoaderActions.LOAD;
+	public static JsonConfigLoaderActions ACTION = JsonConfigLoaderActions.LOAD;
 	//
 	private final RunTimeConfig tgtConfig;
 	//
@@ -60,7 +61,11 @@ public class JsonConfigLoader {
 				);
 				rootNode = jsonMapper.readTree(bundledConf);
 			}
-			walkJsonTree(rootNode);
+			try {
+				walkJsonTree(rootNode);
+			} catch(final NoSuchElementException e) {
+				LogUtil.exception(LOG, Level.FATAL, e, "Failed to load the configuration");
+			}
 			tgtConfig.setMongooseKeys(mongooseKeys);
 			tgtConfig.setJsonNode(rootNode);
 			//
@@ -129,28 +134,30 @@ public class JsonConfigLoader {
 		final ObjectNode objectNode = (ObjectNode) node;
 		//
 		try {
-			if (property.isTextual()) {
+			if(property.isTextual()) {
 				final String stringValue = DEFAULT_CFG.getProperty(fullFieldName).toString();
 				objectNode.put(shortFieldName, getFormattedValue(stringValue));
-			} else if (property.isNumber()) {
+			} else if(property.isNumber()) {
 				objectNode.put(shortFieldName, DEFAULT_CFG.getInt(fullFieldName));
-			} else if (property.isArray()) {
+			} else if(property.isArray()) {
 				final ArrayNode arrayNode = objectNode.putArray(shortFieldName);
 				final String values[] = DEFAULT_CFG.getStringArray(fullFieldName);
 				for (final String value : values) {
 					arrayNode.add(value);
 				}
-			} else if (property.isBoolean()) {
+			} else if(property.isBoolean()) {
 				objectNode.put(shortFieldName, DEFAULT_CFG.getBoolean(fullFieldName));
-			} else if (property.isNull()) {
+			} else if(property.isNull()) {
 				final Object value = DEFAULT_CFG.getProperty(fullFieldName);
 				if (value != null) {
 					objectNode.put(shortFieldName, value.toString());
 				}
 			}
-		} catch (final ConversionException e) {
+		} catch(final ConversionException e) {
 			final String stringValue = DEFAULT_CFG.getProperty(fullFieldName).toString();
 			objectNode.put(shortFieldName, getFormattedValue(stringValue));
+		} catch(final NullPointerException e) {
+			e.printStackTrace(System.err);
 		}
 	}
 	//

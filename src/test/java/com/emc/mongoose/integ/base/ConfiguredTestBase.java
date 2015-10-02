@@ -12,7 +12,7 @@ public abstract class ConfiguredTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		initContext();
+		resetContext();
 	}
 	//
 	@AfterClass

@@ -135,6 +135,15 @@ implements Externalizable {
 	//
 	public static void initContext() {
 		final Logger log = LogManager.getLogger();
+		resetContext();
+		log.info(Markers.CFG, RunTimeConfig.getContext().toFormattedString());
+	}
+	//
+	public static RunTimeConfig getDefault() {
+		return (RunTimeConfig) DEFAULT_INSTANCE.clone();
+	}
+	//
+	public static void resetContext() {
 		final RunTimeConfig instance = new RunTimeConfig();
 		DEFAULT_INSTANCE = instance;
 		instance.loadProperties();
@@ -148,11 +157,6 @@ implements Externalizable {
 			instance.set(KEY_RUN_MODE, runMode);
 		}
 		setContext(instance);
-		log.info(Markers.CFG, RunTimeConfig.getContext().toFormattedString());
-	}
-	//
-	public static RunTimeConfig getDefault() {
-		return (RunTimeConfig) DEFAULT_INSTANCE.clone();
 	}
 	//
 	public void loadProperties() {

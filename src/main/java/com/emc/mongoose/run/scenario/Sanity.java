@@ -133,7 +133,6 @@ implements Runnable {
 	public static void main(final String... args)
 	throws IOException, InterruptedException {
 		//
-		RunTimeConfig.initContext();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
