@@ -145,7 +145,7 @@ implements DataItemProducer<T> {
 		}
 	}
 	//
-	public void skipIfNecessary() {
+	protected void skipIfNecessary() {
 		if(skipCount > 0) {
 			try {
 				itemSrc.setLastDataItem(lastDataItem);
