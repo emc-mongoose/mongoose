@@ -138,7 +138,7 @@ public final class LogUtil {
 					final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);
 					System.setErr(
 						logStreamBuilder
-							.setLevel(Level.WARN)
+							.setLevel(Level.DEBUG)
 							.setMarker(Markers.ERR)
 							.setAutoFlush(true)
 							.setBuffered(true)
