@@ -850,7 +850,7 @@ require(["./requirejs/conf"], function() {
 			}
 			//
 			function drawThroughputCharts(data, json, sec) {
-				var updateFunction = drawChart(data, json, "t[seconds]", "Rate[s^-1]",
+				var updateFunction = drawChart(data, json, "t[seconds]", "Rate[op/s]",
 					"#tp-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
 					sec);
 				return {
@@ -861,7 +861,7 @@ require(["./requirejs/conf"], function() {
 			}
 			//
 			function drawBandwidthCharts(data, json, sec) {
-				var updateFunction = drawChart(data, json, "t[seconds]", "Rate[MB*s^-1]",
+				var updateFunction = drawChart(data, json, "t[seconds]", "Rate[MB/s]",
 					"#bw-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
 					sec);
 				return {
@@ -875,12 +875,12 @@ require(["./requirejs/conf"], function() {
 				var result = null;
 				switch(chartType) {
 					case CHART_TYPES.TP:
-						var tpPattern = "[\\s]+TP\\[s\\^\\-1\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\);";
+						var tpPattern = "[\\s]+TP\\[op/s]=\\(([\\.\\d]+)/([\\.\\d]+)\\);";
 						var tpArray = value.match(tpPattern);
 						result = tpArray.slice(1, tpArray.length);
 						break;
 					case CHART_TYPES.BW:
-						var bwPattern = "[\\s]+BW\\[MB\\*s\\^\\-1\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\)";
+						var bwPattern = "[\\s]+BW\\[MB/s]=\\(([\\.\\d]+)/([\\.\\d]+)\\)";
 						var bwArray = value.match(bwPattern);
 						result = bwArray.slice(1, bwArray.length);
 						break;
@@ -1514,7 +1514,7 @@ require(["./requirejs/conf"], function() {
 					});
 					//
 					function drawThroughputChart(data) {
-						var updateFunction = drawChart(data, "Throughput[obj/s]", "t[seconds]", "Rate[s^-1]", "#tp-" + runId.split(".").join("_"));
+						var updateFunction = drawChart(data, "Throughput[obj/s]", "t[seconds]", "Rate[op/s]", "#tp-" + runId.split(".").join("_"));
 						return {
 							update: function(json) {
 								updateFunction(CHART_TYPES.TP, json);
@@ -1523,7 +1523,7 @@ require(["./requirejs/conf"], function() {
 					}
 					//
 					function drawBandwidthChart(data) {
-						var updateFunction = drawChart(data, "Bandwidth[MB/s]", "t[seconds]", "Rate[MB*s^-1]", "#bw-" + runId.split(".").join("_"));
+						var updateFunction = drawChart(data, "Bandwidth[MB/s]", "t[seconds]", "Rate[MB/s]", "#bw-" + runId.split(".").join("_"));
 						return {
 							update: function(json) {
 								updateFunction(CHART_TYPES.BW, json);
@@ -2227,7 +2227,7 @@ require(["./requirejs/conf"], function() {
 								})()
 							});
 						});
-						var updateFunction = drawCharts(data, "Connection count", "Rate[s^-1]", "#tp-" + runId.split(".").join("_"));
+						var updateFunction = drawCharts(data, "Connection count", "Rate[op/s]", "#tp-" + runId.split(".").join("_"));
 						return {
 							update: function(json) {
 								updateFunction(CHART_TYPES.TP, json);
@@ -2257,7 +2257,7 @@ require(["./requirejs/conf"], function() {
 								})()
 							});
 						});
-						var updateFunction = drawCharts(data, "Connection count", "Rate[MB*s^-1]", "#bw-" + runId.split(".").join("_"));
+						var updateFunction = drawCharts(data, "Connection count", "Rate[MB/s]", "#bw-" + runId.split(".").join("_"));
 						return {
 							update: function(json) {
 								updateFunction(CHART_TYPES.BW, json);

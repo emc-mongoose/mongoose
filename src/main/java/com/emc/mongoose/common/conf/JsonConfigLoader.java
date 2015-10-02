@@ -19,33 +19,34 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.Set;
 //
 /**
  * Created by gusakk on 3/13/15.
  */
 public class JsonConfigLoader {
-	private final static Logger LOG = LogManager.getLogger();
-	private final static Set<String> mongooseKeys = new HashSet<>();
+	//
+	private static final Logger LOG = LogManager.getLogger();
+	//
+	private final RunTimeConfig rtConfig;
+	private final Set<String> mongooseKeys;
 	//
 	public enum JsonConfigLoaderActions {
-		LOAD, UPDATE, UPLOAD
+		// load configuration from file
+		LOAD,
+		// update jsonNode w/ current configuration parameters
+		UPDATE
+	}
+	private JsonConfigLoaderActions action = JsonConfigLoaderActions.LOAD;
+	//
+	public JsonConfigLoader(final RunTimeConfig rtConfig) {
+		this.rtConfig = rtConfig;
+		final Set<String> keys = rtConfig.getMongooseKeys();
+		mongooseKeys = keys.isEmpty() ? keys : new HashSet<String>();
 	}
 	//
-	private static RunTimeConfig DEFAULT_CFG;
-	public static JsonConfigLoaderActions ACTION = JsonConfigLoaderActions.LOAD;
-	//
-	private final RunTimeConfig tgtConfig;
-	//
-	public JsonConfigLoader(final RunTimeConfig tgtConfig) {
-		this.tgtConfig = tgtConfig;
-	}
-	//
-	public static void loadPropsFromJsonCfgFile(final Path propsDir, final RunTimeConfig tgtConfig) {
-		DEFAULT_CFG = tgtConfig;
-		//
-		final File cfgFile = propsDir.toFile();
+	public void loadPropsFromJsonCfgFile(final Path filePath) {
+		final File cfgFile = filePath.toFile();
 		final ObjectMapper jsonMapper = new ObjectMapper();
 		//
 		try {
@@ -61,18 +62,11 @@ public class JsonConfigLoader {
 				);
 				rootNode = jsonMapper.readTree(bundledConf);
 			}
-			try {
-				walkJsonTree(rootNode);
-			} catch(final NoSuchElementException e) {
-				LogUtil.exception(LOG, Level.FATAL, e, "Failed to load the configuration");
-			}
-			tgtConfig.setMongooseKeys(mongooseKeys);
-			tgtConfig.setJsonNode(rootNode);
 			//
-			if (ACTION.equals(JsonConfigLoaderActions.UPLOAD)) {
-				LOG.debug("Going to update the configuration file \"{}\"", cfgFile.toString());
-				jsonMapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile, rootNode);
-			}
+			action = JsonConfigLoaderActions.LOAD;
+			walkJsonTree(rootNode);
+			rtConfig.setMongooseKeys(mongooseKeys);
+			rtConfig.setJsonNode(rootNode);
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to load properties from \"{}\"", cfgFile
@@ -80,84 +74,111 @@ public class JsonConfigLoader {
 		}
 	}
 	//
-	private static void walkJsonTree(final JsonNode jsonNode) {
+	private void walkJsonTree(final JsonNode jsonNode) {
 		walkJsonTree(jsonNode, null);
 	}
 	//
-	private static void walkJsonTree(final JsonNode jsonNode, final String fullFileName) {
+	private void walkJsonTree(final JsonNode jsonNode, final String fieldPrefix) {
 		final Iterator<String> fields = jsonNode.fieldNames();
-		while (fields.hasNext()) {
-			final String shortFieldName = fields.next();
-			String fullFieldName = "";
-			if (fullFileName != null) {
-				if (fullFileName.isEmpty()) {
-					fullFieldName = shortFieldName;
+		while(fields.hasNext()) {
+			final String jsonField = fields.next();
+			String propertyName = "";
+			if(fieldPrefix != null) {
+				if(fieldPrefix.isEmpty()) {
+					propertyName = jsonField;
 				} else {
-					fullFieldName = fullFileName + Constants.DOT + shortFieldName;
+					propertyName = fieldPrefix + Constants.DOT + jsonField;
 				}
 			}
-			if (!jsonNode.get(shortFieldName).fieldNames().hasNext()) {
-				if (ACTION.equals(JsonConfigLoaderActions.UPDATE)
-						|| ACTION.equals(JsonConfigLoaderActions.UPLOAD)) {
-					final Object value = DEFAULT_CFG.getProperty(fullFieldName);
-					//
-					if (!fullFieldName.startsWith(RunTimeConfig.PREFIX_KEY_ALIASING)) {
+			if(!jsonNode.get(jsonField).fieldNames().hasNext()) {
+				if(action.equals(JsonConfigLoaderActions.UPDATE)) {
+					final Object value = rtConfig.getProperty(propertyName);
+					if(!propertyName.startsWith(RunTimeConfig.PREFIX_KEY_ALIASING)) {
 						LOG.trace(Markers.MSG, "Update property: \"{}\" = {}",
-							fullFieldName, value);
+							propertyName, value);
 					}
-					DEFAULT_CFG.setProperty(fullFieldName, value);
-					putJsonFormatValue(jsonNode, shortFieldName, fullFieldName);
+					rtConfig.setProperty(propertyName, value);
+					putJsonFormatValue(jsonNode, jsonField, propertyName);
 				} else {
-					if (!fullFieldName.startsWith(RunTimeConfig.PREFIX_KEY_ALIASING)) {
-					LOG.trace(Markers.MSG, "Read property: \"{}\" = {}",
-						fullFieldName, jsonNode.get(shortFieldName).toString());
+					// load configuration from mongoose.json
+					final JsonNode nodeValue = jsonNode.get(jsonField);
+					if(!propertyName.startsWith(RunTimeConfig.PREFIX_KEY_ALIASING)) {
+						LOG.trace(Markers.MSG, "Read property: \"{}\" = {}",
+							propertyName, nodeValue);
 					}
-					if (!jsonNode.get(shortFieldName).isNull()) {
-						DEFAULT_CFG.setProperty(
-							fullFieldName, getFormattedValue(jsonNode.get(shortFieldName).toString())
+					//
+					if(!nodeValue.isNull()) {
+						rtConfig.setProperty(
+							propertyName, getFormattedValue(nodeValue.toString())
 						);
 					} else {
-						DEFAULT_CFG.setProperty(fullFieldName, null);
+						rtConfig.setProperty(propertyName, null);
 					}
-					mongooseKeys.add(fullFieldName);
+					mongooseKeys.add(propertyName);
 				}
 			} else {
-				walkJsonTree(jsonNode.get(shortFieldName), fullFieldName);
+				walkJsonTree(jsonNode.get(jsonField), propertyName);
 			}
 		}
 	}
 	//
-	private static void putJsonFormatValue(
-		final JsonNode node, final String shortFieldName, final String fullFieldName
+	public JsonNode updateJsonNode() {
+		action = JsonConfigLoaderActions.UPDATE;
+		final JsonNode rootNode = rtConfig.getJsonNode();
+		//
+		if(rootNode == null) {
+			throw new IllegalArgumentException(
+				"Properties should be loaded from cfg file before updating"
+			);
+		}
+		walkJsonTree(rootNode);
+		return rootNode;
+	}
+	//
+	public void updateJsonCfgFile(final File cfgFile) {
+		final JsonNode rootNode = updateJsonNode();
+		final ObjectMapper jsonMapper = new ObjectMapper();
+		LOG.debug("Going to update the configuration file \"{}\"", cfgFile.toString());
+		try {
+			jsonMapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile, rootNode);
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to update properties in \"{}\"", cfgFile);
+		}
+	}
+	//
+	private void putJsonFormatValue(
+		final JsonNode node, final String jsonField, final String propertyName
 	) {
-		final JsonNode property = node.get(shortFieldName);
+		final JsonNode property = node.get(jsonField);
 		final ObjectNode objectNode = (ObjectNode) node;
 		//
 		try {
 			if(property.isTextual()) {
-				final String stringValue = DEFAULT_CFG.getProperty(fullFieldName).toString();
-				objectNode.put(shortFieldName, getFormattedValue(stringValue));
+				final String stringValue = rtConfig.getProperty(propertyName).toString();
+				objectNode.put(jsonField, getFormattedValue(stringValue));
 			} else if(property.isNumber()) {
-				objectNode.put(shortFieldName, DEFAULT_CFG.getInt(fullFieldName));
+				objectNode.put(jsonField, rtConfig.getInt(propertyName));
 			} else if(property.isArray()) {
-				final ArrayNode arrayNode = objectNode.putArray(shortFieldName);
-				final String values[] = DEFAULT_CFG.getStringArray(fullFieldName);
-				for (final String value : values) {
+				final ArrayNode arrayNode = objectNode.putArray(jsonField);
+				final String values[] = rtConfig.getStringArray(propertyName);
+				for(final String value : values) {
 					arrayNode.add(value);
 				}
 			} else if(property.isBoolean()) {
-				objectNode.put(shortFieldName, DEFAULT_CFG.getBoolean(fullFieldName));
+				objectNode.put(jsonField, rtConfig.getBoolean(propertyName));
 			} else if(property.isNull()) {
-				final Object value = DEFAULT_CFG.getProperty(fullFieldName);
-				if (value != null) {
-					objectNode.put(shortFieldName, value.toString());
+				final Object value = rtConfig.getProperty(propertyName);
+				if(value != null) {
+					objectNode.put(jsonField, value.toString());
 				}
 			}
 		} catch(final ConversionException e) {
-			final String stringValue = DEFAULT_CFG.getProperty(fullFieldName).toString();
-			objectNode.put(shortFieldName, getFormattedValue(stringValue));
+			final String stringValue = rtConfig.getProperty(propertyName).toString();
+			objectNode.put(jsonField, getFormattedValue(stringValue));
 		} catch(final NullPointerException e) {
-			e.printStackTrace(System.err);
+			LogUtil.exception(LOG, Level.WARN, e,
+				"rtConfig doesn't contain \"{}\" property", propertyName);
 		}
 	}
 	//
@@ -168,15 +189,5 @@ public class JsonConfigLoader {
 			.replace(" ", "")
 			.replace("\"", "")
 			.trim();
-	}
-	//
-	public static void updateProps(final RunTimeConfig tgtConfig, final boolean isUpload) {
-		if (isUpload) {
-			ACTION = JsonConfigLoaderActions.UPLOAD;
-		} else {
-			ACTION = JsonConfigLoaderActions.UPDATE;
-		}
-		DEFAULT_CFG = tgtConfig;
-		walkJsonTree(tgtConfig.getJsonNode(), null);
 	}
 }

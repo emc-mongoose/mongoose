@@ -295,6 +295,7 @@ implements LoadExecutor<T> {
 			}
 		}
 		//
+		refreshStats();
 		if(isLimitReached.get()) {
 			try {
 				close();
@@ -306,8 +307,9 @@ implements LoadExecutor<T> {
 		} else {
 			//
 			if(counterResults.get() > 0) {
-				setSkipCount(counterResults.get());
 				setLastDataItem(loadedPrevState.getLastDataItem());
+				setSkipCount(counterResults.get());
+				skipIfNecessary();
 			}
 			super.start();
 			LOG.debug(Markers.MSG, "Started object producer {}", getName());
@@ -817,7 +819,6 @@ implements LoadExecutor<T> {
 			if(state.isLimitReached(rtConfig)) {
 				isLimitReached.compareAndSet(false, true);
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
-				return;
 			}
 			// apply parameters from loadState to current load executor
 			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
@@ -854,6 +855,14 @@ implements LoadExecutor<T> {
 	//
 	private boolean isDoneMaxCount() {
 		return counterResults.get() >= maxCount;
+	}
+	//
+	private void updateDataItemCount(final long itemsCount) {
+		if (isDoneAllSubm() && (maxCount > itemsCount)) {
+			rtConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, itemsCount);
+		} else {
+			rtConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, maxCount);
+		}
 	}
 	//
 	private boolean isDoneAllSubm() {
@@ -974,6 +983,7 @@ implements LoadExecutor<T> {
 					);
 				}
 			}
+			updateDataItemCount(counterResults.get());
 			LoadCloseHook.del(this);
 			if(loadedPrevState != null) {
 				if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {

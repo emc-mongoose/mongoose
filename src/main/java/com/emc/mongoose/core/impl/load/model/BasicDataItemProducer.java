@@ -99,9 +99,6 @@ implements DataItemProducer<T> {
 			LOG.debug(Markers.MSG, "No item source for the producing, exiting");
 			return;
 		}
-		//
-		skipIfNecessary();
-		//
 		long count = 0;
 		int n = 0, m = 0;
 		try {
@@ -148,7 +145,7 @@ implements DataItemProducer<T> {
 		}
 	}
 	//
-	private void skipIfNecessary() {
+	protected void skipIfNecessary() {
 		if(skipCount > 0) {
 			try {
 				itemSrc.setLastDataItem(lastDataItem);

@@ -27,6 +27,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -135,15 +136,6 @@ implements Externalizable {
 	//
 	public static void initContext() {
 		final Logger log = LogManager.getLogger();
-		resetContext();
-		log.info(Markers.CFG, RunTimeConfig.getContext().toFormattedString());
-	}
-	//
-	public static RunTimeConfig getDefault() {
-		return (RunTimeConfig) DEFAULT_INSTANCE.clone();
-	}
-	//
-	public static void resetContext() {
 		final RunTimeConfig instance = new RunTimeConfig();
 		DEFAULT_INSTANCE = instance;
 		instance.loadProperties();
@@ -157,10 +149,15 @@ implements Externalizable {
 			instance.set(KEY_RUN_MODE, runMode);
 		}
 		setContext(instance);
+		log.info(Markers.CFG, RunTimeConfig.getContext().toFormattedString());
+	}
+	//
+	public static RunTimeConfig getDefault() {
+		return (RunTimeConfig) DEFAULT_INSTANCE.clone();
 	}
 	//
 	public void loadProperties() {
-		loadPropsFromJsonCfgFile(
+		loadJsonProps(
 			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF)
 		);
 		loadSysProps();
@@ -183,12 +180,11 @@ implements Externalizable {
 	}
 	//
 	public static RunTimeConfig getContext() {
-		RunTimeConfig contextConfig = CONTEXT_CONFIG.get();
-		if(contextConfig == null) {
+		final RunTimeConfig instance = CONTEXT_CONFIG.get();
+		if(instance == null) {
 			initContext();
-			contextConfig = CONTEXT_CONFIG.get();
 		}
-		return contextConfig;
+		return CONTEXT_CONFIG.get();
 	}
 	//
 	public static void setContext(final RunTimeConfig instance) {
@@ -242,7 +238,7 @@ implements Externalizable {
 	}
 	//
 	public String getJsonProps() {
-		JsonConfigLoader.updateProps(this, false);
+		rootNode = new JsonConfigLoader(this).updateJsonNode();
 		return rootNode.toString();
 	}
 	//
@@ -268,7 +264,7 @@ implements Externalizable {
 		//System.setProperty(key, value);
 	}
 	//
-	private Set<String> mongooseKeys;
+	private Set<String> mongooseKeys = new HashSet<>();
 	//
 	public final synchronized void setMongooseKeys(final Set<String> mongooseKeys) {
 		this.mongooseKeys = mongooseKeys;
@@ -691,9 +687,9 @@ implements Externalizable {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public synchronized void loadPropsFromJsonCfgFile(final Path propsDir) {
+	public synchronized void loadJsonProps(final Path filePath) {
 		final Logger log = LogManager.getLogger();
-		JsonConfigLoader.loadPropsFromJsonCfgFile(propsDir, this);
+		new JsonConfigLoader(this).loadPropsFromJsonCfgFile(filePath);
 		log.debug(Markers.MSG, "Going to override the aliasing section");
 		for(final String key : mongooseKeys) {
 			if(key.startsWith(PREFIX_KEY_ALIASING)) {
