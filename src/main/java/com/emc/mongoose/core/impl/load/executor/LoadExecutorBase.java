@@ -126,16 +126,13 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
-			try {
-				while(!currThread.isInterrupted()) {
-					Thread.sleep(1);
-					refreshStats();
-					Thread.sleep(1);
-					checkForBadState();
-					Thread.sleep(1);
-					passDataItems();
-				}
-			} catch(final InterruptedException ignored) {
+			while(!currThread.isInterrupted()) {
+				LockSupport.parkNanos(1);
+				refreshStats();
+				LockSupport.parkNanos(1);
+				checkForBadState();
+				LockSupport.parkNanos(1);
+				passDataItems();
 			}
 		}
 	}
@@ -698,7 +695,7 @@ implements LoadExecutor<T> {
 	protected final void ioTaskFailed(final int n, final Exception e) {
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
-		if(!isClosed.get()) {
+		if(!isClosed.get() && !isInterrupted.get()) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O tasks ({}) failure", getName(), n);
 		} else {
 			LOG.debug(Markers.ERR, "{}: {} I/O tasks has been interrupted", getName(), n);
@@ -794,8 +791,8 @@ implements LoadExecutor<T> {
 	private void checkForBadState() {
 		if(
 			lastStats.getFailCount() > 1000000 &&
-				lastStats.getFailRateLast() < lastStats.getSuccRateLast()
-			) {
+			lastStats.getFailRateLast() < lastStats.getSuccRateLast()
+		) {
 			LOG.fatal(
 				Markers.ERR,
 				"There's a more than 1M of failures and the failure rate is higher " +
