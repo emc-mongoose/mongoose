@@ -915,32 +915,32 @@ implements LoadExecutor<T> {
 				LOG.debug(Markers.MSG, "{}: await exit due to interrupted state", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
+			TimeUnit.MILLISECONDS.sleep(1);
 			if(isClosed.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to closed state", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
+			TimeUnit.MILLISECONDS.sleep(1);
 			if(isDoneAllSubm()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
+			TimeUnit.MILLISECONDS.sleep(1);
 			if(isDoneMaxCount()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to max count done state", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
+			TimeUnit.MILLISECONDS.sleep(1);
 			if(System.nanoTime() - t > timeOutNanoSec) {
 				LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
+			TimeUnit.MILLISECONDS.sleep(1);
 			if(isLimitReached.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
+			TimeUnit.MILLISECONDS.sleep(1);
 		}
 	}
 	//
