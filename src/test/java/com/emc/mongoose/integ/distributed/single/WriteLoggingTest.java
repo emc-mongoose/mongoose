@@ -12,6 +12,7 @@ import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import static com.emc.mongoose.integ.tools.LogPatterns.*;
 //
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
+import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import org.apache.commons.csv.CSVFormat;
@@ -23,9 +24,12 @@ import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 /**
@@ -35,6 +39,7 @@ public class WriteLoggingTest
 extends DistributedClientTestBase {
 	//
 	private final static long COUNT_LIMIT = 1000;
+	private final static String RUN_ID = WriteLoggingTest.class.getCanonicalName();
 	//
 	private static long countWritten;
 	private static byte stdOutContent[];
@@ -42,7 +47,7 @@ extends DistributedClientTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, WriteLoggingTest.class.getCanonicalName());
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		DistributedClientTestBase.setUpClass();
 		try(
 			final StorageClient<WSObject> client = CLIENT_BUILDER
@@ -183,16 +188,14 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("CountFail", nextRec.get(8));
 					Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
 					Assert.assertEquals("DurationMin[us]", nextRec.get(10));
-					Assert.assertEquals("DurationStdDev", nextRec.get(11));
-					Assert.assertEquals("DurationMax[us]", nextRec.get(12));
-					Assert.assertEquals("LatencyAvg[us]", nextRec.get(13));
-					Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
-					Assert.assertEquals("LatencyStdDev", nextRec.get(15));
-					Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
-					Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
-					Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
-					Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
-					Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
+					Assert.assertEquals("DurationMax[us]", nextRec.get(11));
+					Assert.assertEquals("LatencyAvg[us]", nextRec.get(12));
+					Assert.assertEquals("LatencyMin[us]", nextRec.get(13));
+					Assert.assertEquals("LatencyMax[us]", nextRec.get(14));
+					Assert.assertEquals("TPAvg[op/s]", nextRec.get(15));
+					Assert.assertEquals("TPLast[op/s]", nextRec.get(16));
+					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(17));
+					Assert.assertEquals("BWLast[MB/s]", nextRec.get(18));
 					firstRow = false;
 				} else {
 					secondRow = true;
@@ -228,16 +231,20 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("CountFail", nextRec.get(8));
 					Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
 					Assert.assertEquals("DurationMin[us]", nextRec.get(10));
-					Assert.assertEquals("DurationStdDev", nextRec.get(11));
-					Assert.assertEquals("DurationMax[us]", nextRec.get(12));
-					Assert.assertEquals("LatencyAvg[us]", nextRec.get(13));
-					Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
-					Assert.assertEquals("LatencyStdDev", nextRec.get(15));
-					Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
-					Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
-					Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
-					Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
-					Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
+					Assert.assertEquals("DurationLoQ[us]", nextRec.get(11));
+					Assert.assertEquals("DurationMed[us]", nextRec.get(12));
+					Assert.assertEquals("DurationHiQ[us]", nextRec.get(13));
+					Assert.assertEquals("DurationMax[us]", nextRec.get(14));
+					Assert.assertEquals("LatencyAvg[us]", nextRec.get(15));
+					Assert.assertEquals("LatencyMin[us]", nextRec.get(16));
+					Assert.assertEquals("LatencyLoQ[us]", nextRec.get(17));
+					Assert.assertEquals("LatencyMed[us]", nextRec.get(18));
+					Assert.assertEquals("LatencyHiQ[us]", nextRec.get(19));
+					Assert.assertEquals("LatencyMax[us]", nextRec.get(20));
+					Assert.assertEquals("TPAvg[op/s]", nextRec.get(21));
+					Assert.assertEquals("TPLast[op/s]", nextRec.get(22));
+					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(23));
+					Assert.assertEquals("BWLast[MB/s]", nextRec.get(24));
 					firstRow = false;
 				} else {
 					secondRow = true;
@@ -249,5 +256,31 @@ extends DistributedClientTestBase {
 			}
 		}
 		Assert.assertTrue("Summary metrics record was not found in the log file", secondRow);
+	}
+	//
+	@Test
+	public void checkDataItemsAreAggregatedByClient() {
+		final File dataItemsFile = LogValidator.getDataItemsFile(RUN_ID);
+		Assert.assertTrue(dataItemsFile.exists());
+	}
+	//
+	@Test
+	public void checkNoItemDuplicatesLogged()
+	throws Exception {
+		final Set<String> items = new TreeSet<>();
+		String nextLine;
+		int lineNum = 0;
+		try(
+			final BufferedReader in = Files.newBufferedReader(
+				LogValidator.getDataItemsFile(RUN_ID).toPath(), StandardCharsets.UTF_8
+			)
+		) {
+			while((nextLine = in.readLine()) != null) {
+				if(!items.add(nextLine)) {
+					Assert.fail("Duplicate item \"" + nextLine + "\" at line #" + lineNum);
+				}
+				lineNum ++;
+			}
+		}
 	}
 }

@@ -54,7 +54,7 @@ public class RunTimeConfigTest {
 		Assert.assertArrayEquals(mapOverride.get("storage.mock.head.count"),
 			new String[] { "storage.mock.headCount" });
 		Assert.assertArrayEquals(mapOverride.get("storage.mock.iothreads.persocket"),
-			new String[] { "ioThreadsPerSocket" });
+			new String[] { "storage.mock.workersPerSocket" });
 		Assert.assertArrayEquals(mapOverride.get("storage.mock.fault.sleep.msec"),
 			new String[] { "storage.mock.fault.sleepMilliSec" });
 		Assert.assertArrayEquals(mapOverride.get("storage.connection.timeout.millisec"),
@@ -101,19 +101,19 @@ public class RunTimeConfigTest {
 			new String[] { "http.signMethod" });
 
 		Assert.assertArrayEquals(mapOverride.get("load.create.threads"),
-			new String[] { "load.type.create.threads" });
+			new String[] { "load.type.create.connections" });
 		Assert.assertArrayEquals(mapOverride.get("load.read.threads"),
-			new String[] { "load.type.read.threads" });
+			new String[] { "load.type.read.connections" });
 		Assert.assertArrayEquals(mapOverride.get("load.read.verify.content"),
 			new String[] { "load.type.read.verifyContent" });
 		Assert.assertArrayEquals(mapOverride.get("load.update.threads"),
-			new String[] { "load.type.update.threads" });
+			new String[] { "load.type.update.connections" });
 		Assert.assertArrayEquals(mapOverride.get("load.update.per.item"),
 			new String[] { "load.type.update.perItem" });
 		Assert.assertArrayEquals(mapOverride.get("load.delete.threads"),
-			new String[] { "load.type.delete.threads" });
+			new String[] { "load.type.delete.connections" });
 		Assert.assertArrayEquals(mapOverride.get("load.append.threads"),
-			new String[] { "load.type.append.threads" });
+			new String[] { "load.type.append.connections" });
 		Assert.assertArrayEquals(mapOverride.get("load.tasks.shuffle"),
 			new String[] { "data.src.random" });
 		Assert.assertArrayEquals(mapOverride.get("load.tasks.batchSize"),
@@ -149,8 +149,6 @@ public class RunTimeConfigTest {
 			new String[] { "scenario.lang" });
 		Assert.assertArrayEquals(mapOverride.get("run.scenario.dir"),
 			new String[] { "scenario.dir" });
-		Assert.assertArrayEquals(mapOverride.get("run.request.queue.size"),
-			new String[] { "load.tasks.maxQueueSize" });
 
 		Assert.assertArrayEquals(mapOverride.get("scenario.single.load"),
 			new String[] { "scenario.type.single.load" });
@@ -163,7 +161,7 @@ public class RunTimeConfigTest {
 			new String[] { "scenario.type.chain.itemsbuffer" });
 
 		Assert.assertArrayEquals(mapOverride.get("scenario.rampup.thread.counts"),
-			new String[] { "scenario.type.rampup.threadCounts" });
+			new String[] { "scenario.type.rampup.connCounts" });
 		Assert.assertArrayEquals(mapOverride.get("scenario.rampup.sizes"),
 			new String[] { "scenario.type.rampup.sizes" });
 
@@ -171,11 +169,11 @@ public class RunTimeConfigTest {
 			new String[] { "data.size.min", "data.size.max" });
 		Assert.assertArrayEquals(mapOverride.get("load.threads"),
 			new String[] {
-				"load.type.append.threads",
-				"load.type.create.threads",
-				"load.type.read.threads",
-				"load.type.update.threads",
-				"load.type.delete.threads"
+				"load.type.append.connections",
+				"load.type.create.connections",
+				"load.type.read.connections",
+				"load.type.update.connections",
+				"load.type.delete.connections"
 			});
 	}
 }

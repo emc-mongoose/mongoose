@@ -12,14 +12,13 @@ import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-//
 import com.emc.mongoose.core.impl.data.RangeLayerData;
 import com.emc.mongoose.core.impl.data.UniformData;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+//
+import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
@@ -41,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.charset.StandardCharsets;
 /**
@@ -56,9 +56,9 @@ implements WSIOTask<T> {
 	private volatile InputChannel chanIn = null;
 	//
 	public BasicWSIOTask(
-		final WSLoadExecutor<T> loadExecutor, final T dataObject, final String nodeAddr
+		final T dataObject, final String nodeAddr, final WSRequestConfig<T> reqConf
 	) {
-		super(loadExecutor, dataObject, nodeAddr);
+		super(dataObject, nodeAddr, reqConf);
 	}
 	/**
 	 * Warning: invoked implicitly and untimely in the depths of HttpCore lib.
@@ -117,10 +117,10 @@ implements WSIOTask<T> {
 					produceObjectContent(ioCtl);
 					break;
 				case READ:
-					// TODO there's a probability to specify some content in this case
+					// TODO here is an ability to specify some content here
 					break;
 				case DELETE:
-					// TODO there's a probability to specify some content in this case
+					// TODO here is an ability to specify some content here
 					break;
 				case UPDATE:
 					produceUpdatedRangesContent(ioCtl);
@@ -157,9 +157,17 @@ implements WSIOTask<T> {
 	private void produceUpdatedRangesContent(final IOControl ioCtl)
 	throws IOException {
 		//
-		if(countBytesDone == nextRangeOffset) {
+		if(countBytesDone + countBytesSkipped == nextRangeOffset) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "{}: written {} bytes, {} skipped, find the next updating range",
+					hashCode(), countBytesDone, countBytesSkipped
+				);
+			}
+			// find next updating range
 			do {
 				currRangeSize = dataItem.getRangeSize(currRangeIdx);
+				// select the current range if it's updating
 				if(dataItem.isCurrLayerRangeUpdating(currRangeIdx)) {
 					currRange = new UniformData(
 						dataItem.getOffset() + nextRangeOffset, currRangeSize,
@@ -171,18 +179,39 @@ implements WSIOTask<T> {
 						currDataLayerIdx + 1, UniformDataSource.DEFAULT
 					);
 				} else {
+					countBytesSkipped += currRangeSize;
 					currRange = null;
+				}
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "{}: range #{} is updating? - {}, written {} bytes, {} skipped",
+						hashCode(), currRangeIdx, currRange != null, countBytesDone,
+						countBytesSkipped
+					);
 				}
 				currRangeIdx ++;
 				nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
-			} while(currRange == null);
+			} while(currRange == null && currRangeSize > 0 && countBytesDone < contentSize);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "{}: next updating range found: #{}, size: {}",
+					hashCode(), currRangeIdx - 1, currRangeSize
+				);
+			}
 		}
-		//
-		if(currRangeSize > 0) {
-			countBytesDone += currRange.write(chanOut, nextRangeOffset - countBytesDone);
+		// write the current updating range's content
+		if(currRangeSize > 0 && currRange != null) {
+			countBytesDone += currRange.write(
+				chanOut, nextRangeOffset - countBytesDone - countBytesSkipped
+			);
 		}
-		//
 		if(countBytesDone == contentSize) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "{}: finish the updating, {} bytes done, {} skipped",
+					hashCode(), countBytesDone, countBytesSkipped
+				);
+			}
 			dataItem.commitUpdatedRanges();
 			chanOut.close();
 		}
@@ -218,6 +247,21 @@ implements WSIOTask<T> {
 		reqTimeDone = System.nanoTime() / 1000;
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "I/O task #{}: request sent completely", hashCode());
+		}
+	}
+	//
+	@Override
+	public final void failed(final Exception e) {
+		if(e instanceof ConnectionClosedException | e instanceof CancelledKeyException) {
+			LogUtil.exception(LOG, Level.TRACE, e, "I/O task dropped while executing");
+			status = Status.CANCELLED;
+			exception = e;
+			respTimeDone = System.nanoTime() / 1000;
+		} else {
+			LogUtil.exception(LOG, Level.WARN, e, "I/O task failure");
+			status = Status.FAIL_UNKNOWN;
+			exception = e;
+			respTimeDone = System.nanoTime() / 1000;
 		}
 	}
 	//
@@ -320,9 +364,6 @@ implements WSIOTask<T> {
 			((WSRequestConfig<T>) reqConf).applySuccResponseToObject(response, dataItem);
 		}
 	}
-	//
-	private final static ThreadLocal<InputChannel>
-		THRLOC_CHAN_IN = new ThreadLocal<>();
 	//
 	@Override
 	public final void consumeContent(final ContentDecoder decoder, final IOControl ioCtl) {
@@ -442,8 +483,8 @@ implements WSIOTask<T> {
 	}
 	//
 	@Override
-	public final IOTask.Status getResult() {
-		return status;
+	public final WSIOTask<T> getResult() {
+		return this;
 	}
 	//
 	@Override
@@ -453,7 +494,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final boolean isDone() {
-		return respTimeDone != 0 || exception != null || status.equals(Status.CANCELLED);
+		return respTimeDone != 0;
 	}
 	//
 	@Override
@@ -477,39 +518,5 @@ implements WSIOTask<T> {
 	@Override
 	public final Object removeAttribute(final String s) {
 		return wrappedHttpCtx.removeAttribute(s);
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// FutureCallback<IOTask.Status> implementation ////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public final void completed(final IOTask.Status status) {
-		complete();
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "I/O task #{} completed", hashCode());
-		}
-	}
-	/**
-	 Overrides HttpAsyncRequestProducer.failed(Exception),
-	 HttpAsyncResponseConsumer&lt;IOTask.Status&gt;.failed(Exception) and
-	 FutureCallback&lt;IOTask.Status&gt;.failed(Exception)
-	 @param e
-	 */
-	@Override
-	public final void failed(final Exception e) {
-		if(!reqConf.isClosed()) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O task failure", hashCode());
-			exception = e;
-			status = Status.FAIL_UNKNOWN;
-		} else {
-			status = Status.CANCELLED;
-		}
-		complete();
-	}
-	//
-	@Override
-	public final void cancelled() {
-		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
-		status = Status.CANCELLED;
-		complete();
 	}
 }

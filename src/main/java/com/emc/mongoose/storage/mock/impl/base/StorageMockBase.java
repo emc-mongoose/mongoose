@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 //
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
@@ -76,23 +76,42 @@ implements StorageMock<T> {
 	//
 	protected void loadPersistedDataItems() {
 		// if there is data src file path
-		final Path dataFilePath = Paths.get(dataSrcPath);
-		//final int dataSizeRadix = rtConfig.getDataRadixSize();
-		if(null != dataFilePath && !Files.isDirectory(dataFilePath) && Files.exists(dataFilePath)) {
+		if(dataSrcPath != null && !dataSrcPath.isEmpty()) {
+			final Path dataFilePath = Paths.get(dataSrcPath);
+			//final int dataSizeRadix = rtConfig.getDataRadixSize();
+			if(!Files.exists(dataFilePath)) {
+				LOG.warn(
+					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" doesn't exists"
+				);
+				return;
+			}
+			if(Files.isDirectory(dataFilePath)) {
+				LOG.warn(
+					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is a directory"
+				);
+				return;
+			}
+			if(Files.isReadable(dataFilePath)) {
+				LOG.warn(
+					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is not readable"
+				);
+				return;
+			}
+			//
 			long count = 0;
 			try(
-				final CSVFileItemInput<T>
-					csvFileItemInput = new CSVFileItemInput<>(dataFilePath, itemCls)
+				final CSVFileItemSrc<T>
+					csvFileItemInput = new CSVFileItemSrc<>(dataFilePath, itemCls)
 			) {
-				T nextItem = csvFileItemInput.read();
-				while (null != nextItem) {
+				T nextItem = csvFileItemInput.get();
+				while(null != nextItem) {
 					// if mongoose is v0.5.0
 					//if(dataSizeRadix == 0x10) {
 					//	nextItem.setSize(Long.valueOf(String.valueOf(nextItem.getSize()), 0x10));
 					//}
 					putIntoDefaultContainer(nextItem);
-					count ++;
-					nextItem = csvFileItemInput.read();
+					count++;
+					nextItem = csvFileItemInput.get();
 				}
 			} catch(final EOFException e) {
 				LOG.debug(Markers.MSG, "Loaded {} data items from file {}", count, dataFilePath);

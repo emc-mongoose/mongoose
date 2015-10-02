@@ -41,17 +41,23 @@ public interface LogPatterns {
 		CONSOLE_ITEM_COUNTS_SUM = Pattern.compile(
 			"count=\\((?<countSucc>\\d+)/\\\u001B*\\[*\\d*m*(?<countFail>\\d+)\\\u001B*\\[*\\d*m*\\)"
 		),
-		CONSOLE_DURATION = Pattern.compile(
-			"dur\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\)"
+		CONSOLE_DURATION_AVG = Pattern.compile(
+			"duration\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)\\)"
 		),
-		CONSOLE_LATENCY = Pattern.compile(
-			"lat\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\)"
+		CONSOLE_DURATION_SUM = Pattern.compile(
+			"duration\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)\\)"
+		),
+		CONSOLE_LATENCY_AVG = Pattern.compile(
+			"latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)\\)"
+		),
+		CONSOLE_LATENCY_SUM = Pattern.compile(
+			"latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)\\)"
 		),
 		CONSOLE_TP = Pattern.compile(
-			"TP\\[s\\^\\-1\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\)"
+			"TP\\[op/s]=\\(([\\.\\d]+)/([\\.\\d]+)\\)"
 		),
 		CONSOLE_BW = Pattern.compile(
-			"BW\\[MB\\*s\\^\\-1\\]=\\(([\\.\\d]+)/([\\.\\d]+)\\)"
+			"BW\\[MB/s]=\\(([\\.\\d]+)/([\\.\\d]+)\\)"
 		),
 		//
 		CONSOLE_METRICS_AVG = Pattern.compile(
@@ -59,7 +65,7 @@ public interface LogPatterns {
 			LOG_LEVEL.pattern() + "[\\s]+" + CLASS_NAME.pattern() + "[\\s]+" +
 			CONSOLE_FULL_LOAD_NAME + "[\\s]+" +
 			CONSOLE_ITEM_COUNTS_AVG.pattern() + ";[\\s]+" +
-			CONSOLE_DURATION + ";[\\s]+" + CONSOLE_LATENCY + ";[\\s]+" +
+			CONSOLE_DURATION_AVG + ";[\\s]+" + CONSOLE_LATENCY_AVG + ";[\\s]+" +
 			CONSOLE_TP + ";[\\s]+" + CONSOLE_BW + "$"
 		),
 		//
@@ -68,7 +74,7 @@ public interface LogPatterns {
 			LOG_LEVEL.pattern() + "[\\s]+" + THREAD_NAME.pattern() + "[\\s]+" +
 			CONSOLE_FULL_LOAD_NAME_CLIENT + "[\\w#\\-]*[\\s]+" +
 			CONSOLE_ITEM_COUNTS_AVG.pattern() + ";[\\s]+" +
-			CONSOLE_DURATION + ";[\\s]+" + CONSOLE_LATENCY + ";[\\s]+" +
+			CONSOLE_DURATION_AVG + ";[\\s]+" + CONSOLE_LATENCY_AVG + ";[\\s]+" +
 			CONSOLE_TP + ";[\\s]+" + CONSOLE_BW
 		),
 		//
@@ -77,14 +83,14 @@ public interface LogPatterns {
 			LOG_LEVEL.pattern() + "[\\s]+" + THREAD_NAME.pattern() + "[\\s]+\"" +
 			CONSOLE_FULL_LOAD_NAME.pattern() + "\"[\\s]+summary:[\\s]+" +
 			CONSOLE_ITEM_COUNTS_SUM.pattern() + ";[\\s]+" +
-			CONSOLE_DURATION + ";[\\s]+" + CONSOLE_LATENCY + ";[\\s]+" +
+			CONSOLE_DURATION_SUM + ";[\\s]+" + CONSOLE_LATENCY_SUM + ";[\\s]+" +
 			CONSOLE_TP + ";[\\s]+" + CONSOLE_BW
 		),
 		//
 		CONSOLE_METRICS_SUM_CLIENT = Pattern.compile(
 			"\"" + CONSOLE_FULL_LOAD_NAME_CLIENT.pattern() + "\"[\\s]+summary:[\\s]+" +
 			CONSOLE_ITEM_COUNTS_SUM.pattern() + ";[\\s]+" +
-			CONSOLE_DURATION + ";[\\s]+" + CONSOLE_LATENCY + ";[\\s]+" +
+			CONSOLE_DURATION_SUM + ";[\\s]+" + CONSOLE_LATENCY_SUM + ";[\\s]+" +
 			CONSOLE_TP + ";[\\s]+" + CONSOLE_BW
 		);
 }

@@ -4,19 +4,16 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.data.model.BlockingQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
-// mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.model.FrameBuffConsumer;
 // mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.model.ConsumerSvc;
-import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
 import org.apache.logging.log4j.Level;
@@ -25,7 +22,9 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 /**
  Created by kurila on 16.12.14.
  */
@@ -38,79 +37,88 @@ implements WSLoadSvc<T> {
 	public BasicWSLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connPerNode, final int threadsPerNode,
-		final DataItemInput<T> itemSrc, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
-		final int countUpdPerReq
+		final DataItemSrc<T> itemSrc, final long maxCount,
+		final long sizeMin, final long sizeMax, final float sizeBias,
+		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
 	) {
 		super(
 			runTimeConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
-			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
+			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
 		);
-		// by default, may be overriden later externally:
-		super.setConsumer(new FrameBuffConsumer<>(dataCls, runTimeConfig, maxCount));
+		// by default, may be overridden later externally:
+		setDataItemDst(
+			new BlockingQueueItemBuffer<>(new ArrayBlockingQueue<T>(batchSize))
+		);
 	}
 	//
 	@Override
-	public final void close()
+	protected void closeActually()
 	throws IOException {
-		super.close();
-		//
-		if(consumer instanceof FrameBuffConsumer) {
-			consumer.close();
-		}
-		// close the exposed network service, if any
-		final Service svc = ServiceUtils.getLocalSvc(
-			ServiceUtils.getLocalSvcName(getName())
-		);
-		if(svc == null) {
-			LOG.debug(Markers.MSG, "The load was not exposed remotely");
-		} else {
-			LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
-			ServiceUtils.close(svc);
+		try {
+			super.closeActually();
+		} finally {
+			// close the exposed network service, if any
+			final Service svc = ServiceUtil.getLocalSvc(ServiceUtil.getLocalSvcName(getName()));
+			if(svc == null) {
+				LOG.debug(Markers.MSG, "The load was not exposed remotely");
+			} else {
+				LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
+				ServiceUtil.close(svc);
+			}
 		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final void setConsumer(final ConsumerSvc<T> consumer) {
+	public final void setDataItemDst(final DataItemDst<T> itemDst) {
 		LOG.debug(
 			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
-			consumer, getName()
+			itemDst, getName()
 		);
-		this.consumer = consumer;
 		try {
-			if(consumer != null) {
-				final String remoteSvcName = consumer.getName();
+			if(itemDst instanceof Service) {
+				final String remoteSvcName = ((Service) itemDst).getName();
 				LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
-				final Service localSvc = ServiceUtils.getLocalSvc(
-					ServiceUtils.getLocalSvcName(remoteSvcName)
+				final Service localSvc = ServiceUtil.getLocalSvc(
+					ServiceUtil.getLocalSvcName(remoteSvcName)
 				);
 				if(localSvc == null) {
-					LOG.error(Markers.ERR, "Failed to get local service for name {}", remoteSvcName);
+					LOG.error(
+						Markers.ERR, "Failed to get local service for name \"{}\"",
+						remoteSvcName
+					);
 				} else {
-					super.setConsumer((WSLoadExecutor<T>) localSvc);
+					super.setDataItemDst((DataItemDst<T>) localSvc);
+					LOG.debug(
+						Markers.MSG,
+						"Successfully resolved local service and appended it as consumer"
+					);
 				}
+			} else {
+				super.setDataItemDst(itemDst);
 			}
-			LOG.debug(Markers.MSG, "Successfully resolved local service and appended it as consumer");
-		} catch(final IOException ee) {
-			LOG.error(Markers.ERR, "Looks like network failure", ee);
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "{}: looks like network failure", getName());
+		}
+	}
+	// prevent output buffer consuming by the logger at the end of a chain
+	@Override
+	protected final void passDataItems() {
+		if(consumer != null) {
+			super.passDataItems();
 		}
 	}
 	//
 	@Override
-	public final Collection<T> takeFrame()
+	public final List<T> getProcessedItems()
 	throws RemoteException {
-		Collection<T> recFrame = null;
-		if(consumer instanceof RecordFrameBuffer) {
-			try {
-				recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
-			} catch (final InterruptedException e) {
-				if(!isShutdown.get()) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
-				}
-			}
-
+		List<T> itemsBuff = null;
+		try {
+			itemsBuff = new ArrayList<>(batchSize);
+			itemOutBuff.get(itemsBuff, batchSize);
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");
 		}
-		return recFrame;
+		return itemsBuff;
 	}
 	//
 	@Override

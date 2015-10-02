@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.data;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -39,7 +39,7 @@ implements DataItem {
 			Math.abs(
 				Long.reverse(System.currentTimeMillis()) ^
 				Long.reverseBytes(System.nanoTime()) ^
-				ServiceUtils.getHostAddrCode()
+				ServiceUtil.getHostAddrCode()
 			)
 		);
 	public static long nextOffset(final AtomicLong lastOffset) {

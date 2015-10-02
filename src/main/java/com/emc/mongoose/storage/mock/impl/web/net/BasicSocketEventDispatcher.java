@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.web.net;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
+
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.IOWorker;
@@ -26,8 +26,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketException;
 /**
  Created by kurila on 13.05.15.
  */
@@ -58,7 +56,7 @@ implements Runnable {
 		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
 			runTimeConfig.getLoadLimitTimeValue()
 		);
-		int ioThreadCount = runTimeConfig.getStorageMockIoThreadsPerSocket();
+		int ioThreadCount = runTimeConfig.getStorageMockWorkersPerSocket();
 		if(ioThreadCount == 0) {
 			ioThreadCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
 		}
@@ -85,12 +83,10 @@ implements Runnable {
 			.build();
 		// create the server-side I/O reactor
 		this.ioStats = ioStats;
-		ioReactor = new DefaultListeningIOReactor(
-			ioReactorConf,
-			new IOWorker.Factory(
-				"ioReactor<" + socketAddress.getHostString() + ":" + socketAddress.getPort() + ">"
-			)
+		final IOWorker.Factory ioWorkerFactory = new IOWorker.Factory(
+			"ioReactor<" + socketAddress.getHostString() + ":" + socketAddress.getPort() + ">"
 		);
+		ioReactor = new DefaultListeningIOReactor(ioReactorConf, ioWorkerFactory);
 		executor = THREAD_GROUP.newThread(this);
 
 	}

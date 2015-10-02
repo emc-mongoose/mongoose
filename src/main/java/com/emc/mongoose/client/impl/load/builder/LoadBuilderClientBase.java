@@ -1,5 +1,6 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
@@ -7,12 +8,16 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.math.MathUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
+import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
 import org.apache.commons.lang.StringUtils;
@@ -22,17 +27,14 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 20.10.14.
  */
@@ -42,13 +44,18 @@ implements LoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected String listFile = null, nodeAddrs[] = null, loadSvcAddrs[] = null;
-	protected volatile RunTimeConfig runTimeConfig;
+	protected DataItemSrc<T> itemSrc;
+	protected String storageNodeAddrs[] = null, loadSvcAddrs[] = null;
+	protected volatile RunTimeConfig rtConfig;
 	protected volatile RequestConfig<T> reqConf = getDefaultRequestConfig();
 	protected long maxCount = 0, minObjSize, maxObjSize;
 	protected float objSizeBias;
 	//
-	protected boolean flagAssignLoadSvcToNode = false;
+	protected boolean
+		flagAssignLoadSvcToNode = false,
+		flagUseContainerItemSrc = true,
+		flagUseNewItemSrc = true,
+		flagUseNoneItemSrc = false;
 	protected final Map<String, RunTimeConfig> loadSvcConfMap = new HashMap<>();
 	//
 	public LoadBuilderClientBase()
@@ -56,28 +63,28 @@ implements LoadBuilderClient<T, U> {
 		this(RunTimeConfig.getContext());
 	}
 	//
-	public LoadBuilderClientBase(final RunTimeConfig runTimeConfig)
+	public LoadBuilderClientBase(final RunTimeConfig rtConfig)
 	throws IOException {
 		//
-		super(runTimeConfig.getLoadServerAddrs().length);
-		loadSvcAddrs = runTimeConfig.getLoadServerAddrs();
+		super(rtConfig.getLoadServerAddrs().length);
+		loadSvcAddrs = rtConfig.getLoadServerAddrs();
 		//
 		LoadBuilderSvc<T, U> loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
 		for(final String serverAddr : loadSvcAddrs) {
 			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
 			loadBuilderSvc = resolve(serverAddr);
-			nextInstanceN = loadBuilderSvc.getNextInstanceNum(runTimeConfig.getRunId());
+			nextInstanceN = loadBuilderSvc.getNextInstanceNum(rtConfig.getRunId());
 			if(nextInstanceN > maxLastInstanceN) {
 				maxLastInstanceN = nextInstanceN;
 			}
 			put(serverAddr, loadBuilderSvc);
 		}
 		// set properties should be invoked only after the map is filled already
-		setProperties(runTimeConfig);
+		setProperties(rtConfig);
 		//
 		for(final String serverAddr : loadSvcAddrs) {
-			get(serverAddr).setNextInstanceNum(runTimeConfig.getRunId(), maxLastInstanceN);
+			get(serverAddr).setNextInstanceNum(rtConfig.getRunId(), maxLastInstanceN);
 		}
 	}
 	//
@@ -131,23 +138,23 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setProperties(final RunTimeConfig runTimeConfig)
+	public final LoadBuilderClient<T, U> setProperties(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
 		//
-		this.runTimeConfig = runTimeConfig;
+		this.rtConfig = rtConfig;
 		if(reqConf == null) {
 			throw new IllegalStateException("Shared request config is not initialized");
 		} else {
-			reqConf.setProperties(runTimeConfig);
+			reqConf.setProperties(rtConfig);
 		}
 		//
-		final String newNodeAddrs[] = runTimeConfig.getStorageAddrsWithPorts();
+		final String newNodeAddrs[] = rtConfig.getStorageAddrsWithPorts();
 		if(newNodeAddrs.length > 0) {
-			nodeAddrs = newNodeAddrs;
+			storageNodeAddrs = newNodeAddrs;
 		}
-		flagAssignLoadSvcToNode = runTimeConfig.getFlagAssignLoadServerToNode();
+		flagAssignLoadSvcToNode = rtConfig.getFlagAssignLoadServerToNode();
 		if(flagAssignLoadSvcToNode) {
-			assignNodesToLoadSvcs(runTimeConfig, loadSvcConfMap, loadSvcAddrs, nodeAddrs);
+			assignNodesToLoadSvcs(rtConfig, loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
 		}
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
@@ -156,7 +163,7 @@ implements LoadBuilderClient<T, U> {
 			nextBuilder = get(addr);
 			nextLoadSvcConfig = loadSvcConfMap.get(addr);
 			if(nextLoadSvcConfig == null) {
-				nextLoadSvcConfig = runTimeConfig; // use default
+				nextLoadSvcConfig = rtConfig; // use default
 				LOG.debug(
 					Markers.MSG, "Applying the common configuration to server @ \"{}\"...", addr
 				);
@@ -168,14 +175,18 @@ implements LoadBuilderClient<T, U> {
 			nextBuilder.setProperties(nextLoadSvcConfig);
 		}
 		//
-		setMaxCount(runTimeConfig.getLoadLimitCount());
-		setMinObjSize(runTimeConfig.getDataSizeMin());
-		setMaxObjSize(runTimeConfig.getDataSizeMax());
-		setObjSizeBias(runTimeConfig.getDataSizeBias());
+		setMaxCount(rtConfig.getLoadLimitCount());
+		setMinObjSize(rtConfig.getDataSizeMin());
+		setMaxObjSize(rtConfig.getDataSizeMax());
+		setObjSizeBias(rtConfig.getDataSizeBias());
+		setRateLimit(rtConfig.getLoadLimitRate());
+		setManualTaskSleepMicroSecs(
+			(int) TimeUnit.MILLISECONDS.toMicros(rtConfig.getLoadLimitReqSleepMilliSec())
+		);
 		//
 		try {
-			final String listFile = this.runTimeConfig.getDataSrcFPath();
-			if(listFile != null && listFile.length() > 0) {
+			final String listFile = this.rtConfig.getDataSrcFPath();
+			if(listFile != null && !listFile.isEmpty()) {
 				final Path dataItemsListPath = Paths.get(listFile);
 				if(!Files.exists(dataItemsListPath)) {
 					LOG.warn(
@@ -187,21 +198,24 @@ implements LoadBuilderClient<T, U> {
 						Markers.ERR, "Data items source file \"{}\" is not readable",
 						dataItemsListPath
 					);
+				} else if(Files.isDirectory(dataItemsListPath)) {
+					LOG.warn(
+						Markers.ERR, "Data items source file \"{}\" is a directory",
+						dataItemsListPath
+					);
 				} else {
-					setInputFile(listFile);
-					// disable API-specific producers
-					reqConf.setContainerInputEnabled(false);
-					// disable file-based producers on the load servers side
+					setItemSrc(new CSVFileItemSrc<>(dataItemsListPath, reqConf.getDataItemClass()));
+					// disable file-based item sources on the load servers side
 					for(final LoadBuilderSvc<T, U> nextLoadBuilder : values()) {
-						nextLoadBuilder.setInputFile(null);
+						nextLoadBuilder.setItemSrc(null);
 					}
 				}
 			}
 		} catch(final NoSuchElementException e) {
-			LOG.warn(Markers.ERR, "No \"data.src.fpath\" property available");
-		} catch(final InvalidPathException e) {
-			LOG.warn(Markers.ERR, "Invalid data metainfo src file path: {}", listFile);
-		} catch(final SecurityException e) {
+			LOG.warn(Markers.ERR, "No \"data.src.fpath\" value was set");
+		} catch(final IOException e) {
+			LOG.warn(Markers.ERR, "Invalid items source file path: {}", itemSrc);
+		} catch(final SecurityException | NoSuchMethodException e) {
 			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
 		return this;
@@ -291,9 +305,22 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
+	public final LoadBuilderClient<T, U> setManualTaskSleepMicroSecs(
+		final int manualTaskSleepMicroSecs
+	) throws IllegalArgumentException, RemoteException {
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.setRateLimit(manualTaskSleepMicroSecs);
+		}
+		return this;
+	}
+	//
+	@Override
 	public final LoadBuilderClient<T, U> setRateLimit(final float rateLimit)
 	throws IllegalArgumentException, RemoteException {
-		LoadBuilderSvc<T, U> nextBuilder;for(final String addr : keySet()) {
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setRateLimit(rateLimit);
 		}
@@ -301,35 +328,35 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setThreadCountDefault(final int threadCount)
+	public final LoadBuilderClient<T, U> setWorkerCountDefault(final int threadCount)
 	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setThreadCountDefault(threadCount);
+			nextBuilder.setWorkerCountDefault(threadCount);
 		}
 		return this;
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setThreadCountFor(
+	public final LoadBuilderClient<T, U> setWorkerCountFor(
 		final int threadCount, final IOTask.Type loadType
 	) throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setThreadCountFor(threadCount, loadType);
+			nextBuilder.setWorkerCountFor(threadCount, loadType);
 		}
 		return this;
 	}
 	//
 	@Override
 	public final LoadBuilderClient<T, U> setConnPerNodeDefault(final int connCount)
-		throws IllegalArgumentException, RemoteException {
+	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setThreadCountDefault(connCount);
+			nextBuilder.setConnPerNodeDefault(connCount);
 		}
 		return this;
 	}
@@ -341,7 +368,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setThreadCountFor(connCount, loadType);
+			nextBuilder.setConnPerNodeFor(connCount, loadType);
 		}
 		return this;
 	}
@@ -350,9 +377,9 @@ implements LoadBuilderClient<T, U> {
 	public final LoadBuilderClient<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException {
 		if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
-			this.nodeAddrs = dataNodeAddrs;
+			this.storageNodeAddrs = dataNodeAddrs;
 			if(flagAssignLoadSvcToNode) {
-				assignNodesToLoadSvcs(runTimeConfig, loadSvcConfMap, loadSvcAddrs, nodeAddrs);
+				assignNodesToLoadSvcs(rtConfig, loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
 			}
 			//
 			LoadBuilderSvc<T, U> nextBuilder;
@@ -377,15 +404,103 @@ implements LoadBuilderClient<T, U> {
 		return this;
 	}
 	//
+	//
 	@Override
-	public final long getMaxCount()
+	public LoadBuilderClientBase<T, U> useNewItemSrc()
 	throws RemoteException {
-		return values().iterator().next().getMaxCount();
+		// disable new data item generation on the client side
+		flagUseNoneItemSrc = true;
+		// enable new data item generation on the load servers side
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.useNewItemSrc();
+		}
+		return this;
 	}
 	//
 	@Override
-	public abstract LoadBuilderClient<T, U> setInputFile(final String listFile)
-	throws RemoteException;
+	public LoadBuilderClientBase<T, U> useNoneItemSrc()
+	throws RemoteException {
+		// disable any item source usage on the client side
+		flagUseNoneItemSrc = true;
+		// disable any item source usage on the load servers side
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.useNoneItemSrc();
+		}
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilderClientBase<T, U> useContainerListingItemSrc()
+	throws RemoteException {
+		// enable container listing item source on the client sid
+		flagUseContainerItemSrc = true;
+		// disable any item source usage on the load servers side
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr : keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.useNoneItemSrc();
+		}
+		return this;
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public final LoadBuilderClient<T, U> setItemSrc(final DataItemSrc<T> itemSrc)
+	throws RemoteException {
+		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
+		this.itemSrc = itemSrc;
+		if(itemSrc != null) {
+			// disable any item source usage on the load servers side
+			LoadBuilderSvc<T, U> nextBuilder;
+			for(final String addr : keySet()) {
+				nextBuilder = get(addr);
+				nextBuilder.useNoneItemSrc();
+			}
+		}
+		//
+		if(itemSrc instanceof FileDataItemSrc) {
+			// calculate approx average data item size
+			final FileDataItemSrc<T> fileInput = (FileDataItemSrc<T>) itemSrc;
+			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
+				rtConfig.getBatchSize()
+			);
+			reqConf.setBuffSize(
+				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
+					Constants.BUFF_SIZE_LO :
+					approxDataItemsSize > Constants.BUFF_SIZE_HI ?
+						Constants.BUFF_SIZE_HI : (int) approxDataItemsSize
+			);
+		}
+		return this;
+	}
+	//
+	protected DataItemSrc<T> getDefaultItemSource() {
+		try {
+			if(flagUseNoneItemSrc) {
+				return null;
+			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
+				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
+					return new NewDataItemSrc<>(
+						reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
+					);
+				} else {
+					return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+				}
+			} else if(flagUseNewItemSrc) {
+				return new NewDataItemSrc<>(
+					reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
+				);
+			} else if(flagUseContainerItemSrc) {
+				return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+			}
+		} catch(final NoSuchMethodException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
+		}
+		return null;
+	}
 	//
 	@Override
 	public final U build()
@@ -413,7 +528,7 @@ implements LoadBuilderClient<T, U> {
 		StringBuilder strBuilder = new StringBuilder(reqConf.toString());
 		try {
 			strBuilder.append('-').append(get(keySet().iterator().next())
-				.getNextInstanceNum(runTimeConfig.getRunId()));
+				.getNextInstanceNum(rtConfig.getRunId()));
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to make load builder string");
 		}

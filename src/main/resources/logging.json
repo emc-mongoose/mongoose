@@ -11,11 +11,16 @@
 					"follow": true,
 					"PatternLayout": {
 						"alwaysWriteExceptions" : false,
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t %m%n}"
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-40.-40t %m%n}"
 					},
 					"Filters": {
 						"Filter" : [
 							{
+								"type": "MarkerFilter",
+								"marker": "cfg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
 								"type": "MarkerFilter",
 								"marker": "dataList",
 								"onMatch": "DENY",

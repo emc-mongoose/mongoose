@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.api.io.req;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-common.jar
@@ -57,14 +57,11 @@ extends Externalizable, Cloneable, Closeable {
 	int getBuffSize();
 	RequestConfig<T> setBuffSize(final int buffSize);
 	//
-	int getReqSleepMilliSec();
-	RequestConfig<T> setReqSleepMilliSec(final int reqSleepMilliSec);
-	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	RequestConfig<T> setContainerInputEnabled(final boolean enabled);
-	boolean isContainerListingEnabled();
-	DataItemInput<T> getContainerListInput(final long maxCount, final String addr);
+	DataItemSrc<T> getContainerListInput(final long maxCount, final String addr);
+	//
+	Class<T> getDataItemClass();
 	//
 	void configureStorage(final String storageAddrs[])
 	throws IllegalStateException;

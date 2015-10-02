@@ -1,7 +1,5 @@
 package com.emc.mongoose.core.impl.load.model.metrics;
 //
-import com.emc.mongoose.common.log.Markers;
-//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //

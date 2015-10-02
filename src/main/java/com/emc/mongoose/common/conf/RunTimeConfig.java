@@ -26,7 +26,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -71,20 +70,17 @@ implements Externalizable {
 		KEY_DATA_SRC_RANDOM = "data.src.random",
 		KEY_DATA_SRC_BATCH_SIZE = "data.src.batchSize",
 		//
+		KEY_HTTP_PIPELINING = "http.pipelining",
+		//
 		KEY_LOAD_CONNS = "load.connections",
 		KEY_LOAD_SERVER_ADDRS = "load.server.addrs",
 		KEY_LOAD_SERVER_ASSIGN2_NODE = "load.server.assignTo.node",
-		KEY_LOAD_THREADS = "load.threads",
-		KEY_CREATE_THREADS = "load.type.create.threads",
-		KEY_READ_THREADS = "load.type.read.threads",
-		KEY_UPDATE_THREADS = "load.type.update.threads",
-		KEY_DELETE_THREADS = "load.type.delete.threads",
-		KEY_APPEND_THREADS = "load.type.append.threads",
 		KEY_CREATE_CONNS = "load.type.create.connections",
 		KEY_READ_CONNS = "load.type.read.connections",
 		KEY_UPDATE_CONNS = "load.type.update.connections",
 		KEY_DELETE_CONNS = "load.type.delete.connections",
 		KEY_APPEND_CONNS = "load.type.append.connections",
+		KEY_LOAD_WORKERS = "load.workers",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
 		KEY_RUN_ID = "run.id",
@@ -110,7 +106,7 @@ implements Externalizable {
 		KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT = "storage.mock.container.countLimit",
 		KEY_STORAGE_MOCK_CONTAINER_CAPACITY = "storage.mock.container.capacity",
 		KEY_STORAGE_MOCK_HEAD_COUNT = "storage.mock.headCount",
-		KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET = "storage.mock.ioThreadsPerSocket",
+		KEY_STORAGE_MOCK_WORKERS_PER_SOCKET = "storage.mock.workersPerSocket",
 		//
 		KEY_API_NAME = "api.name",
 		KEY_API_S3_BUCKET = "api.type.s3.bucket",
@@ -125,7 +121,7 @@ implements Externalizable {
 		KEY_SCENARIO_CHAIN_ITEMSBUFFER = "scenario.type.chain.itemsBuffer",
 		//  Rampup
 		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
-			KEY_SCENARIO_RAMPUP_CONN_COUNTS = "scenario.type.rampup.connCounts",
+		KEY_SCENARIO_RAMPUP_CONN_COUNTS = "scenario.type.rampup.connCounts",
 		//
 		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
 		//
@@ -280,12 +276,12 @@ implements Externalizable {
 		return mongooseKeys;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public static String getLoadConcurrencyParamName(final String loadType) {
+	public static String getConnCountPerNodeParamName(final String loadType) {
 		return "load.type." + loadType + ".connections";
 	}
 	//
-	public static String getLoadThreadsParamName(final String loadType) {
-		return "load.type." + loadType + ".threads";
+	public static String getLoadWorkersParamName(final String loadType) {
+		return "load.type." + loadType + ".workers";
 	}
 	//
 	public static String getApiPortParamName(final String api) {
@@ -340,10 +336,6 @@ implements Externalizable {
 		return getInt("load.metricsPeriodSec");
 	}
 	//
-	public final int getTasksMaxQueueSize() {
-		return getInt("load.tasks.maxQueueSize");
-	}
-	//
 	public final String getHttpContentType() {
 		return getString("http.content.type");
 	}
@@ -354,6 +346,14 @@ implements Externalizable {
 	//
 	public final boolean getHttpContentChunked() {
 		return getBoolean("http.content.chunked");
+	}
+	//
+	public final boolean getHttpPipeliningFlag() {
+		return getBoolean(KEY_HTTP_PIPELINING);
+	}
+	//
+	public final String getHttpSignMethod() {
+		return getString("http.signMethod");
 	}
 	//
 	public final boolean getReadVerifyContent() {
@@ -368,10 +368,6 @@ implements Externalizable {
 	//
 	public final String getStorageNameSpace() {
 		return getString(KEY_STORAGE_NAMESPACE);
-	}
-	//
-	public final String getHttpSignMethod() {
-		return getString("http.signMethod");
 	}
 	//
 	public final boolean getDataFileAccessEnabled() {
@@ -398,7 +394,7 @@ implements Externalizable {
 		return getString(KEY_RUN_VERSION);
 	}
 	//
-	public final int getLoadConcurrency() {
+	public final int getLoadConnPerNode() {
 		return getInt(KEY_LOAD_CONNS);
 	}
 	//
@@ -435,7 +431,7 @@ implements Externalizable {
 		for(String nodeAddr : getStorageAddrs()) {
 			if (!nodeAddr.contains(STORAGE_PORT_SEP)) {
 				nodeAddr = nodeAddr + STORAGE_PORT_SEP + getString(
-					getApiPortParamName(getApiName())
+					getApiPortParamName(getApiName().toLowerCase())
 				);
 			}
 			nodes.add(nodeAddr);
@@ -540,8 +536,8 @@ implements Externalizable {
 	//	return getInt("data.radix.offset");
 	//}
 	//
-	public final int getStorageMockIoThreadsPerSocket() {
-		return getInt(KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET);
+	public final int getStorageMockWorkersPerSocket() {
+		return getInt(KEY_STORAGE_MOCK_WORKERS_PER_SOCKET);
 	}
 	//
 	public final int getStorageMockMinConnLifeMilliSec() {
@@ -560,12 +556,12 @@ implements Externalizable {
 		return SizeUtil.toSize(getString(KEY_DATA_SRC_RING_SIZE));
 	}
 	//
-	public final int getThreadCountFor(final String loadType) {
-		return getInt("load.type." + loadType + ".threads");
+	public final int getWorkerCountFor(final String loadType) {
+		return getInt(getLoadWorkersParamName(loadType));
 	}
 	//
 	public final int getConnCountPerNodeFor(final String loadType) {
-		return getInt("load.type." + loadType + ".connections");
+		return getInt(getConnCountPerNodeParamName(loadType));
 	}
 	//
 	public final String getApiS3AuthPrefix() {
@@ -768,7 +764,7 @@ implements Externalizable {
 				case KEY_DATA_SRC_RING_SEED:
 				case KEY_DATA_SRC_RING_SIZE:
 				case KEY_LOAD_CONNS:
-				case KEY_LOAD_THREADS:
+				case KEY_LOAD_WORKERS:
 				case KEY_STORAGE_ADDRS:
 				case KEY_API_NAME:
 					strBuilder

@@ -1,23 +1,16 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
-import com.emc.mongoose.core.api.data.model.FileDataItemInput;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
-import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-client.jar
 import com.emc.mongoose.client.impl.load.executor.BasicWSLoadClient;
@@ -28,7 +21,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,14 +45,14 @@ implements WSLoadBuilderClient<T, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected WSRequestConfig<T> getDefaultRequestConfig() {
-		return (WSRequestConfig<T>) WSRequestConfigBase.getInstance();
+		return WSRequestConfigBase.getInstance();
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected WSLoadBuilderSvc<T, U> resolve(final String serverAddr)
 	throws IOException {
 		WSLoadBuilderSvc<T, U> rlb;
-		final Service remoteSvc = ServiceUtils.getRemoteSvc(
+		final Service remoteSvc = ServiceUtil.getRemoteSvc(
 			"//" + serverAddr + '/' + getClass().getPackage().getName().replace("client", "server")
 		);
 		if(remoteSvc == null) {
@@ -76,35 +68,10 @@ implements WSLoadBuilderClient<T, U> {
 		return rlb;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	public final BasicWSLoadBuilderClient<T, U> setInputFile(final String listFile)
-	throws RemoteException {
-		this.listFile = listFile;
-		if(listFile != null) {
-			try {
-				final FileDataItemInput<T> fileInput = new CSVFileItemInput<>(
-					Paths.get(listFile), (Class<T>) BasicWSObject.class
-				);
-				final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-					runTimeConfig.getBatchSize()
-				);
-				reqConf.setBuffSize(
-					approxDataItemsSize < Constants.BUFF_SIZE_LO ?
-						Constants.BUFF_SIZE_LO :
-						approxDataItemsSize > Constants.BUFF_SIZE_HI ?
-							Constants.BUFF_SIZE_HI : (int) approxDataItemsSize
-				);
-			} catch(final NoSuchMethodException | IOException e) {
-				LOG.error(Markers.ERR, "Failure", e);
-			}
-		}
-		return this;
-	}
-	//
 	@Override
 	protected final void invokePreConditions()
 	throws IllegalStateException {
-		reqConf.configureStorage(nodeAddrs);
+		reqConf.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override  @SuppressWarnings("unchecked")
@@ -119,20 +86,19 @@ implements WSLoadBuilderClient<T, U> {
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setRequestConfig(reqConf); // should upload req conf right before instancing
-			nextLoad = (LoadSvc<T>) ServiceUtils.getRemoteSvc(
+			nextLoad = (LoadSvc<T>) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final DataItemInput<T> itemSrc = LoadBuilderBase.buildItemInput(
-			(Class<T>) BasicWSObject.class, reqConf, nodeAddrs, listFile, maxCount,
-			minObjSize, maxObjSize, objSizeBias
-		);
+		final String loadTypeStr = reqConf.getLoadType().name().toLowerCase();
 		//
 		return (U) new BasicWSLoadClient<>(
-			runTimeConfig, remoteLoadMap, (WSRequestConfig<T>) reqConf,
-			runTimeConfig.getLoadLimitCount(), itemSrc
+			rtConfig, (WSRequestConfig<T>) reqConf, storageNodeAddrs,
+			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
+			itemSrc == null ? getDefaultItemSource() : itemSrc,
+			maxCount, remoteLoadMap
 		);
 	}
 }

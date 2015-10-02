@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.api.load.builder;
 //
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -44,13 +45,16 @@ extends Closeable {
 	LoadBuilder<T, U> setObjSizeBias(final float objSizeBias)
 	throws IllegalArgumentException, RemoteException;
 	//
+	LoadBuilder<T, U> setManualTaskSleepMicroSecs(final int manualTaskSleepMicroSec)
+	throws IllegalArgumentException, RemoteException;
+	//
 	LoadBuilder<T, U> setRateLimit(final float rateLimit)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setThreadCountDefault(final int threadCount)
+	LoadBuilder<T, U> setWorkerCountDefault(final int threadCount)
 	throws RemoteException;
 	//
-	LoadBuilder<T, U> setThreadCountFor(final int threadCount, final IOTask.Type loadType)
+	LoadBuilder<T, U> setWorkerCountFor(final int threadCount, final IOTask.Type loadType)
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> setConnPerNodeDefault(final int connCount)
@@ -65,13 +69,19 @@ extends Closeable {
 	LoadBuilder<T, U> setUpdatesPerItem(final int count)
 	throws RemoteException;
 	//
-	LoadBuilder<T, U> setInputFile(final String listFile)
+	LoadBuilder<T, U> setItemSrc(final DataItemSrc<T> itemSrc)
+	throws RemoteException;
+	//
+	LoadBuilder<T, U> useNewItemSrc()
+	throws RemoteException;
+	//
+	LoadBuilder<T, U> useNoneItemSrc()
+	throws RemoteException;
+	//
+	LoadBuilder<T, U> useContainerListingItemSrc()
 	throws RemoteException;
 	//
 	U build()
 	throws IOException;
-	//
-	long getMaxCount()
-	throws RemoteException;
 	//
 }

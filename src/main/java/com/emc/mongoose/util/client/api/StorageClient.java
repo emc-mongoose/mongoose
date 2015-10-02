@@ -1,18 +1,18 @@
 package com.emc.mongoose.util.client.api;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemInput;
-import com.emc.mongoose.core.api.data.model.DataItemOutput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.DataItemDst;
 //
 import java.io.Closeable;
 import java.io.IOException;
-import java.rmi.RemoteException;
+
 /**
  Created by kurila on 15.06.15.
  The client class supporting the following storage I/O methods: write, read, delete, update, append.
  Note that all the methods are blocking. Use a low-level load execution
  builders and jobs interface if a non-blocking approach is required.
- <p>Every method accepts an {@link com.emc.mongoose.core.api.data.model.DataItemInput} stream as a 1st
+ <p>Every method accepts an {@link DataItemSrc} stream as a 1st
  argument which is used as the source of the data items descriptors which should be processed
  (e.g. written/read/deleted/etc). The resulting behavior is different for write methods and the
  remaining methods. If the value of the 1st argument is null write methods will generate new data
@@ -33,26 +33,26 @@ extends Closeable {
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(final long size)
-	throws IllegalArgumentException, RemoteException, IOException;
+	throws IllegalArgumentException, InterruptedException, IOException;
 
 	/**
 	 (Over|Re)Write the data items in a customized way using fixed data items sizes.
-	 @param itemsInput data items info source
-	 @param itemsOutput data items info destination, may be null
+	 @param src data items info source
+	 @param dst data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
 	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param size the size of the data items to write.
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final DataItemSrc<T> src, final DataItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount, final long size
-	) throws IllegalArgumentException, RemoteException, IOException;
+	) throws IllegalArgumentException, InterruptedException, IOException;
 
 	/**
 	 Write the data items in a customized way using specific data items sizes distribution.
-	 @param itemsInput data items info source
-	 @param itemsOutput data items info destination, may be null
+	 @param src data items info source
+	 @param dst data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
 	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param minSize the minimum data item size
@@ -63,66 +63,66 @@ extends Closeable {
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final DataItemSrc<T> src, final DataItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount,
 		final long minSize, final long maxSize, final float sizeBias
-	) throws IllegalArgumentException, RemoteException, IOException;
+	) throws IllegalArgumentException, InterruptedException, IOException;
 
 	/**
 	 Read the data items using the specified data items source, do not store the output data items info.
-	 @param itemsInput data items info source
+	 @param src data items info source
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
-	long read(final DataItemInput<T> itemsInput)
-	throws IllegalStateException, RemoteException, IOException;
+	long read(final DataItemSrc<T> src)
+	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Read the data items in a customized way.
-	 @param itemsInput data items info source
-	 @param itemsOutput data items info destination, may be null
+	 @param dst data items info source
+	 @param dst data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
 	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param verifyContentFlag To verify the content integrity or to not verify.
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long read(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final DataItemSrc<T> src, final DataItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount, final boolean verifyContentFlag
-	) throws IllegalStateException, RemoteException, IOException;
+	) throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Delete the data items using the specified data items source, do not store the output data items info.
-	 @param itemsInput data items info source
+	 @param src data items info source
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
-	long delete(final DataItemInput<T> itemsInput)
-	throws IllegalStateException, RemoteException, IOException;
+	long delete(final DataItemSrc<T> src)
+	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Delete the data items in a customized way.
-	 @param itemsInput data items info source
-	 @param itemsOutput data items info destination, may be null
+	 @param src data items info source
+	 @param dst data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
 	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long delete(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final DataItemSrc<T> src, final DataItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount
-	) throws IllegalStateException, RemoteException, IOException;
+	) throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Update the data items using the specified data items source, do not store the output data items info.
-	 @param itemsInput data items info source
+	 @param src data items info source
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
-	long update(final DataItemInput<T> itemsInput)
-	throws IllegalStateException, RemoteException, IOException;
+	long update(final DataItemSrc<T> src)
+	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Update the data items in a customized way.
-	 @param itemsInput data items info source
-	 @param itemsOutput data items info destination, may be null
+	 @param src data items info source
+	 @param dst data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
 	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param countPerTime the count of the non-overlapping ranges to update per one request
@@ -130,37 +130,37 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long update(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final DataItemSrc<T> src, final DataItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount, final int countPerTime
-	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException;
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Append the data items using the specified data items source and the specified fixed augment size, do not store the output data items info.
-	 @param itemsInput data items info source
+	 @param src data items info source
 	 @param size the augment size to append to each data item
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
-	long append(final DataItemInput<T> itemsInput, final long size)
-	throws IllegalStateException, RemoteException, IOException;
+	long append(final DataItemSrc<T> src, final long size)
+	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Append the data items using the specified data items source and the specified fixed augment size.
-	 @param itemsInput data items info source
-	 @param itemsOutput data items info destination, may be null
+	 @param src data items info source
+	 @param dst data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
 	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param size the augment size to append to each data item
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long append(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final DataItemSrc<T> src, final DataItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount, final long size
-	) throws IllegalStateException, RemoteException, IOException;
+	) throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Append the data items in a customized way using the specified distribution of the augment size.
-	 @param itemsInput data items info source
-	 @param itemsOutput data items info destination, may be null
+	 @param src data items info source
+	 @param dst data items info destination, may be null
 	 @param maxCount the count limit of the data items to write, 0 means no limit.
 	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param sizeMin the minimal size of the data augment to append
@@ -171,8 +171,8 @@ extends Closeable {
 	 @throws IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long append(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final DataItemSrc<T> src, final DataItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
-	) throws IllegalArgumentException, IllegalStateException, RemoteException, IOException;
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;
 }

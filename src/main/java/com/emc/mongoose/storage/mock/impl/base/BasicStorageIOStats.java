@@ -7,7 +7,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 //
 //
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
@@ -99,7 +99,7 @@ implements StorageIOStats {
 		this.storage = storage;
 		//
 		if(jmxServeFlag) {
-			final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
+			final MBeanServer mBeanServer = ServiceUtil.getMBeanServer(
 				RunTimeConfig.getContext().getRemotePortMonitor()
 			);
 			jmxReporter = CustomJmxReporter.forRegistry(metricRegistry)
@@ -114,11 +114,11 @@ implements StorageIOStats {
 	//
 	private final static String
 		MSG_FMT_METRICS = "Capacity used: %d (%.1f%%), containers count: %d\n" +
-			"\tOperation |Count       |Failed      |TP[s^-1]avg |TP[s^-1]last|BW[MB*s^-1]avg |BW[MB*s^-1]last\n" +
-			"\t----------|------------|------------|------------|------------|---------------|---------------\n" +
-			"\tWrite     |%12d|%12d|%12.3f|%12.3f|%15.3f|%15.3f\n" +
-			"\tRead      |%12d|%12d|%12.3f|%12.3f|%15.3f|%15.3f\n" +
-			"\tDelete    |%12d|%12d|%12.3f|%12.3f|               |";
+			"\tOperation |Count       |Failed      |TP[op/s]avg |TP[op/s]last|BW[MB/s]avg |BW[MB/s]last\n" +
+			"\t----------|------------|------------|------------|------------|------------|------------\n" +
+			"\tWrite     |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
+			"\tRead      |%12d|%12d|%12.3f|%12.3f|%12.3f|%12.3f\n" +
+			"\tDelete    |%12d|%12d|%12.3f|%12.3f|            |";
 	//
 	@Override
 	public final String toString() {

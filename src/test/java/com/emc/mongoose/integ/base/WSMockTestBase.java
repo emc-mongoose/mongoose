@@ -29,7 +29,7 @@ extends LoggingTestBase {
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, 1000000);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, 1000000);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET, 5);
+		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_WORKERS_PER_SOCKET, 5);
 		WS_MOCK = new Cinderella<>(rtConfig);
 		WS_MOCK_THREAD = new Thread(WS_MOCK, "wsMock");
 		WS_MOCK_THREAD.setDaemon(true);

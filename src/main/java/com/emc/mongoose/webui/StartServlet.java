@@ -4,18 +4,22 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.ServiceUtils;
-// mongoose-server-api.jar
+import com.emc.mongoose.common.net.ServiceUtil;
+// mongoose-core-api.jar
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
-import com.emc.mongoose.run.scenario.Chain;
-import com.emc.mongoose.run.scenario.Rampup;
-import com.emc.mongoose.run.scenario.Single;
+// mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
-// mongoose-scenario.jar
+//
+import com.emc.mongoose.run.scenario.Chain;
+import com.emc.mongoose.run.scenario.Rampup;
+import com.emc.mongoose.run.scenario.Single;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -72,7 +76,7 @@ public final class StartServlet extends CommonServlet {
 				startServer("Starting the distributed load server");
 				break;
 			case Constants.RUN_MODE_CINDERELLA:
-				startCinderella("Starting the cinderella");
+				startStorageMock("Starting the cinderella");
 				break;
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
@@ -94,7 +98,7 @@ public final class StartServlet extends CommonServlet {
 	//
 	private void startServer(final String message) {
 		final Thread thread = new Thread() {
-			WSLoadBuilderSvc loadBuilderSvc;
+			LoadBuilderSvc loadBuilderSvc;
 			RunTimeConfig localRunTimeConfig;
 			@Override
 			public void run() {
@@ -118,7 +122,7 @@ public final class StartServlet extends CommonServlet {
 			public void interrupt() {
 				RunTimeConfig.setContext(localRunTimeConfig);
 				try {
-					ServiceUtils.close(loadBuilderSvc);
+					ServiceUtil.close(loadBuilderSvc);
 				} catch(final RemoteException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Networking failure");
 				}
@@ -172,8 +176,7 @@ public final class StartServlet extends CommonServlet {
 			//
 			@Override
 			public void interrupt() {
-				LoadExecutorBase.RESTORED_STATES_MAP.remove(runTimeConfig.getRunId());
-				LoadExecutorBase.INSTANCE_NUMBERS.remove(runTimeConfig.getRunId());
+				LoadExecutor.RESTORED_STATES_MAP.remove(runTimeConfig.getRunId());
 				super.interrupt();
 			}
 		};
@@ -181,7 +184,7 @@ public final class StartServlet extends CommonServlet {
 		threadsMap.put(runTimeConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
 	}
 	//
-	private void startCinderella(final String message) {
+	private void startStorageMock(final String message) {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {

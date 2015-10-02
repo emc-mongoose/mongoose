@@ -8,7 +8,7 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
-import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
+import com.emc.mongoose.core.impl.data.model.BlockingQueueItemBuffer;
 //
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -58,7 +58,7 @@ extends DistributedClientTestBase {
 				.build()
 		) {
 			final BlockingQueue<WSObject> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
-			final ItemBlockingQueue<WSObject> itemIO = new ItemBlockingQueue<>(itemsQueue);
+			final BlockingQueueItemBuffer<WSObject> itemIO = new BlockingQueueItemBuffer<>(itemsQueue);
 			COUNT_WRITTEN = client.write(
 				null, itemIO, COUNT_LIMIT, 10, SizeUtil.toSize("10KB")
 			);
@@ -205,16 +205,14 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("CountFail", nextRec.get(8));
 					Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
 					Assert.assertEquals("DurationMin[us]", nextRec.get(10));
-					Assert.assertEquals("DurationStdDev", nextRec.get(11));
-					Assert.assertEquals("DurationMax[us]", nextRec.get(12));
-					Assert.assertEquals("LatencyAvg[us]", nextRec.get(13));
-					Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
-					Assert.assertEquals("LatencyStdDev", nextRec.get(15));
-					Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
-					Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
-					Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
-					Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
-					Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
+					Assert.assertEquals("DurationMax[us]", nextRec.get(11));
+					Assert.assertEquals("LatencyAvg[us]", nextRec.get(12));
+					Assert.assertEquals("LatencyMin[us]", nextRec.get(13));
+					Assert.assertEquals("LatencyMax[us]", nextRec.get(14));
+					Assert.assertEquals("TPAvg[op/s]", nextRec.get(15));
+					Assert.assertEquals("TPLast[op/s]", nextRec.get(16));
+					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(17));
+					Assert.assertEquals("BWLast[MB/s]", nextRec.get(18));
 					firstRow = false;
 				} else {
 					secondRow = true;
@@ -247,16 +245,20 @@ extends DistributedClientTestBase {
 					Assert.assertEquals("CountFail", nextRec.get(8));
 					Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
 					Assert.assertEquals("DurationMin[us]", nextRec.get(10));
-					Assert.assertEquals("DurationStdDev", nextRec.get(11));
-					Assert.assertEquals("DurationMax[us]", nextRec.get(12));
-					Assert.assertEquals("LatencyAvg[us]", nextRec.get(13));
-					Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
-					Assert.assertEquals("LatencyStdDev", nextRec.get(15));
-					Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
-					Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
-					Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
-					Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
-					Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
+					Assert.assertEquals("DurationLoQ[us]", nextRec.get(11));
+					Assert.assertEquals("DurationMed[us]", nextRec.get(12));
+					Assert.assertEquals("DurationHiQ[us]", nextRec.get(13));
+					Assert.assertEquals("DurationMax[us]", nextRec.get(14));
+					Assert.assertEquals("LatencyAvg[us]", nextRec.get(15));
+					Assert.assertEquals("LatencyMin[us]", nextRec.get(16));
+					Assert.assertEquals("LatencyLoQ[us]", nextRec.get(17));
+					Assert.assertEquals("LatencyMed[us]", nextRec.get(18));
+					Assert.assertEquals("LatencyHiQ[us]", nextRec.get(19));
+					Assert.assertEquals("LatencyMax[us]", nextRec.get(20));
+					Assert.assertEquals("TPAvg[op/s]", nextRec.get(21));
+					Assert.assertEquals("TPLast[op/s]", nextRec.get(22));
+					Assert.assertEquals("BWAvg[MB/s]", nextRec.get(23));
+					Assert.assertEquals("BWLast[MB/s]", nextRec.get(24));
 					firstRow = false;
 				} else  {
 					secondRow = true;

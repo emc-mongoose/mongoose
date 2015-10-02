@@ -177,7 +177,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	//
 	@Override
 	public final long getRangeSize(final int i) {
-		return i < getRangeCount(size) - 1 ? 1 << i : size - getRangeOffset(i);
+		return Math.min(getRangeOffset(i + 1), size) - getRangeOffset(i);
 	}
 	//
 	@Override

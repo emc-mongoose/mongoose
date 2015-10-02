@@ -263,6 +263,7 @@ dependencies {
 		library.commons_collections4,
 		library.httpcore_plus_nio,
 		library.log4j_api_plus_core,
+		library.log4j_iostreams,
 		library.jackson_core,
 		library.jackson_databind,
 	)
@@ -370,6 +371,7 @@ dependencies {
 	scenarioCompile (
 		library.commons_configuration,
 		library.log4j_api,
+		library.httpcore
 	)
 	scenarioRuntime (
 		library.runtime_logging,
@@ -1044,7 +1046,7 @@ build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, s
 build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testJar
 
 tasks.idea.dependsOn(cleanIdea)
-tasks.idea.dependsOn(build)
+//tasks.idea.dependsOn(build)
 
 publishing {
 	publications {

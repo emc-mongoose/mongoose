@@ -4,12 +4,10 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.builder.WSLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
@@ -35,17 +33,17 @@ implements WSLoadBuilder<T, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected WSRequestConfig<T> getDefaultRequestConfig() {
-		return WSRequestConfigBase.<T>getInstance();
+		return WSRequestConfigBase.getInstance();
 	}
 	//
 	@Override
-	public BasicWSLoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig) {
+	public BasicWSLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig) {
 		//
-		super.setProperties(runTimeConfig);
+		super.setProperties(rtConfig);
 		//
 		final String paramName = RunTimeConfig.KEY_STORAGE_SCHEME;
 		try {
-			WSRequestConfig.class.cast(reqConf).setScheme(runTimeConfig.getStorageProto());
+			WSRequestConfig.class.cast(reqConf).setScheme(rtConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -66,7 +64,7 @@ implements WSLoadBuilder<T, U> {
 	@Override
 	protected void invokePreConditions()
 	throws IllegalStateException {
-		reqConf.configureStorage(dataNodeAddrs);
+		reqConf.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -86,21 +84,18 @@ implements WSLoadBuilder<T, U> {
 			);
 		}
 		//
-		final DataItemInput<T> itemSrc = buildItemInput(
-			BasicWSObject.class, wsReqConf, dataNodeAddrs, listFile, maxCount,
-			minObjSize, maxObjSize, objSizeBias
-		);
-		//
 		final IOTask.Type loadType = reqConf.getLoadType();
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
 			minThreadCount = getMinIOThreadCount(
-				loadTypeThreadCount.get(loadType), dataNodeAddrs.length, connPerNode
+				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
 		return (U) new BasicWSLoadExecutor<>(
-			localRunTimeConfig, wsReqConf, dataNodeAddrs, connPerNode, minThreadCount,
-			itemSrc, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
+			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
+			itemSrc == null ? getDefaultItemSource() : itemSrc,
+			maxCount, minObjSize, maxObjSize, objSizeBias,
+			manualTaskSleepMicroSecs, rateLimit, updatesPerItem
 		);
 	}
 }

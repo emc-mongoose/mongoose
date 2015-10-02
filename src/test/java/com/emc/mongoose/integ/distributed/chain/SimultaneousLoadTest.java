@@ -53,7 +53,6 @@ extends DistributedLoadBuilderTestBase {
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LOAD_LIMIT_TIME_SEC + "s");
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, true);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER, false);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Chain chainScenario = new Chain(rtConfig);
@@ -129,16 +128,20 @@ extends DistributedLoadBuilderTestBase {
 				Assert.assertEquals("CountFail", nextRec.get(8));
 				Assert.assertEquals("DurationAvg[us]", nextRec.get(9));
 				Assert.assertEquals("DurationMin[us]", nextRec.get(10));
-				Assert.assertEquals("DurationStdDev", nextRec.get(11));
-				Assert.assertEquals("DurationMax[us]", nextRec.get(12));
-				Assert.assertEquals("LatencyAvg[us]", nextRec.get(13));
-				Assert.assertEquals("LatencyMin[us]", nextRec.get(14));
-				Assert.assertEquals("LatencyStdDev", nextRec.get(15));
-				Assert.assertEquals("LatencyMax[us]", nextRec.get(16));
-				Assert.assertEquals("TPAvg[s^-1]", nextRec.get(17));
-				Assert.assertEquals("TPLast[s^-1]", nextRec.get(18));
-				Assert.assertEquals("BWAvg[MB*s^-1]", nextRec.get(19));
-				Assert.assertEquals("BWLast[MB*s^-1]", nextRec.get(20));
+				Assert.assertEquals("DurationLoQ[us]", nextRec.get(11));
+				Assert.assertEquals("DurationMed[us]", nextRec.get(12));
+				Assert.assertEquals("DurationHiQ[us]", nextRec.get(13));
+				Assert.assertEquals("DurationMax[us]", nextRec.get(14));
+				Assert.assertEquals("LatencyAvg[us]", nextRec.get(15));
+				Assert.assertEquals("LatencyMin[us]", nextRec.get(16));
+				Assert.assertEquals("LatencyLoQ[us]", nextRec.get(17));
+				Assert.assertEquals("LatencyMed[us]", nextRec.get(18));
+				Assert.assertEquals("LatencyHiQ[us]", nextRec.get(19));
+				Assert.assertEquals("LatencyMax[us]", nextRec.get(20));
+				Assert.assertEquals("TPAvg[op/s]", nextRec.get(21));
+				Assert.assertEquals("TPLast[op/s]", nextRec.get(22));
+				Assert.assertEquals("BWAvg[MB/s]", nextRec.get(23));
+				Assert.assertEquals("BWLast[MB/s]", nextRec.get(24));
 			} else {
 				Assert.fail("No CSV records are in the summaries log file");
 			}

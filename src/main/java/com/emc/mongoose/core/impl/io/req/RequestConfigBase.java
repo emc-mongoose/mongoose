@@ -36,7 +36,7 @@ implements RequestConfig<T> {
 	protected DataSource
 		dataSrc;
 	protected volatile boolean
-		verifyContentFlag, anyDataProducerEnabled;
+		verifyContentFlag;
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 	protected volatile RunTimeConfig runTimeConfig;
 	protected volatile String
@@ -55,7 +55,6 @@ implements RequestConfig<T> {
 		loadType = IOTask.Type.CREATE;
 		dataSrc = UniformDataSource.DEFAULT;
 		verifyContentFlag = runTimeConfig.getReadVerifyContent();
-		anyDataProducerEnabled = true;
 		scheme = runTimeConfig.getStorageProto();
 		port = runTimeConfig.getApiTypePort(api);
 		nameSpace = runTimeConfig.getStorageNameSpace();
@@ -68,7 +67,6 @@ implements RequestConfig<T> {
 		if(reqConf2Clone != null) {
 			setDataSource(reqConf2Clone.getDataSource());
 			setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
-			setContainerInputEnabled(reqConf2Clone.isContainerListingEnabled());
 			setAPI(reqConf2Clone.getAPI());
 			setUserName(reqConf2Clone.getUserName());
 			setPort(reqConf2Clone.getPort());
@@ -77,7 +75,6 @@ implements RequestConfig<T> {
 			setNameSpace(reqConf2Clone.getNameSpace());
 			secret = reqConf2Clone.getSecret();
 			setBuffSize(reqConf2Clone.getBuffSize());
-			setReqSleepMilliSec(reqConf2Clone.getReqSleepMilliSec());
 			LOG.debug(
 				Markers.MSG, "Forked req conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
 			);
@@ -91,15 +88,13 @@ implements RequestConfig<T> {
 		requestConfigBranch
 			.setDataSource(dataSrc)
 			.setVerifyContentFlag(verifyContentFlag)
-			.setContainerInputEnabled(anyDataProducerEnabled)
 			.setAPI(api)
 			.setUserName(userName)
 			.setPort(port)
 			.setScheme(scheme)
 			.setLoadType(loadType)
 			.setNameSpace(nameSpace)
-			.setBuffSize(buffSize)
-			.setReqSleepMilliSec(reqSleepMilliSec);
+			.setBuffSize(buffSize);
 		requestConfigBranch.secret = secret;
 		LOG.debug(
 			Markers.MSG, "Forked req conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
@@ -235,31 +230,6 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final boolean isContainerListingEnabled() {
-		return anyDataProducerEnabled;
-	}
-	//
-	@Override
-	public final RequestConfigBase<T> setContainerInputEnabled(final boolean enabledFlag) {
-		this.anyDataProducerEnabled = enabledFlag;
-		return this;
-	}
-	//
-	@Override
-	public final int getReqSleepMilliSec() {
-		return reqSleepMilliSec;
-	}
-	@Override
-	public final RequestConfigBase<T> setReqSleepMilliSec(final int reqSleepMilliSec)
-	throws IllegalArgumentException {
-		if(reqSleepMilliSec < 0) {
-			throw new IllegalArgumentException("Request sleep time shouldn't have a negative value");
-		}
-		this.reqSleepMilliSec = reqSleepMilliSec;
-		return this;
-	}
-	//
-	@Override
 	public RequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
 		//
@@ -270,7 +240,6 @@ implements RequestConfig<T> {
 		setSecret(this.runTimeConfig.getAuthSecret());
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		setBuffSize((int)this.runTimeConfig.getIOBufferSizeMin());
-		setReqSleepMilliSec(this.runTimeConfig.getLoadLimitReqSleepMilliSec());
 		return this;
 	}
 	//
@@ -296,9 +265,7 @@ implements RequestConfig<T> {
 		out.writeObject(getSecret());
 		out.writeObject(getNameSpace());
 		out.writeObject(getDataSource());
-		out.writeBoolean(isContainerListingEnabled());
 		out.writeBoolean(getVerifyContentFlag());
-		out.writeInt(getReqSleepMilliSec());
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -320,12 +287,8 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got namespace {}", secret);
 		setDataSource(DataSource.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
-		setContainerInputEnabled(Boolean.class.cast(in.readBoolean()));
-		LOG.trace(Markers.MSG, "Got any producer enabled flag {}", anyDataProducerEnabled);
 		setVerifyContentFlag(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got verify content flag {}", verifyContentFlag);
-		setReqSleepMilliSec(in.readInt());
-		LOG.trace(Markers.MSG, "Got requests sleep time {}", reqSleepMilliSec);
 	}
 	//
 	@Override

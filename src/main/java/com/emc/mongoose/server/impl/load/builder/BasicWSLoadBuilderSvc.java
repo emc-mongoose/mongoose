@@ -6,16 +6,14 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.net.ServiceUtil;
 //mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //mongoose-server-api.jar
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-core-impl.jar
@@ -30,8 +28,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  Created by kurila on 30.05.14.
  */
@@ -63,7 +59,7 @@ implements WSLoadBuilderSvc<T, U> {
 	public final String buildRemotely()
 	throws RemoteException {
 		final WSLoadSvc<T> loadSvc = (WSLoadSvc<T>) build();
-		ServiceUtils.create(loadSvc);
+		ServiceUtil.create(loadSvc);
 		if(configTable != null) {
 			LOG.info(Markers.MSG, configTable);
 			configTable = null;
@@ -78,15 +74,12 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	@Override
 	public final int getNextInstanceNum(final String runId) {
-		if (!LoadExecutor.INSTANCE_NUMBERS.containsKey(runId)) {
-			LoadExecutor.INSTANCE_NUMBERS.put(runId, new AtomicInteger(0));
-		}
-		return LoadExecutor.INSTANCE_NUMBERS.get(runId).get();
+		return LoadExecutor.NEXT_INSTANCE_NUM.get();
 	}
 	//
 	@Override
 	public final void setNextInstanceNum(final String runId, final int instanceN) {
-		LoadExecutor.INSTANCE_NUMBERS.get(runId).set(instanceN);
+		LoadExecutor.NEXT_INSTANCE_NUM.set(instanceN);
 	}
 	//
 	@Override
@@ -112,21 +105,18 @@ implements WSLoadBuilderSvc<T, U> {
 			);
 		}
 		//
-		final DataItemInput<T> itemSrc = buildItemInput(
-			BasicWSObject.class, wsReqConf, dataNodeAddrs, listFile, maxCount,
-			minObjSize, maxObjSize, objSizeBias
-		);
-		//
 		final IOTask.Type loadType = reqConf.getLoadType();
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
 			minThreadCount = getMinIOThreadCount(
-				loadTypeThreadCount.get(loadType), dataNodeAddrs.length, connPerNode
+				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
 		return (U) new BasicWSLoadSvc<>(
-			localRunTimeConfig, wsReqConf, dataNodeAddrs, connPerNode, minThreadCount,
-			itemSrc, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
+			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
+			itemSrc == null ? getDefaultItemSource() : itemSrc,
+			maxCount, minObjSize, maxObjSize, objSizeBias,
+			manualTaskSleepMicroSecs, rateLimit, updatesPerItem
 		);
 	}
 	//
@@ -135,7 +125,7 @@ implements WSLoadBuilderSvc<T, U> {
 		LOG.debug(Markers.MSG, "Load builder service instance created");
 		try {
 		/*final RemoteStub stub = */
-			ServiceUtils.create(this);
+			ServiceUtil.create(this);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
 		} catch (final DuplicateSvcNameException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");
@@ -144,20 +134,30 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public final void close()
-	throws IOException {
-		ServiceUtils.close(this);
+	public void shutdown()
+	throws RemoteException, IllegalStateException {
 	}
 	//
 	@Override
-	public final void await()
-	throws InterruptedException {
+	public void await()
+	throws RemoteException, InterruptedException {
 		await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
-	public final void await(final long timeOut, final TimeUnit timeUnit)
-	throws InterruptedException {
+	public void await(final long timeOut, final TimeUnit timeUnit)
+	throws RemoteException, InterruptedException {
 		timeUnit.sleep(timeOut);
+	}
+	//
+	@Override
+	public void interrupt()
+	throws RemoteException {
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		ServiceUtil.close(this);
 	}
 }

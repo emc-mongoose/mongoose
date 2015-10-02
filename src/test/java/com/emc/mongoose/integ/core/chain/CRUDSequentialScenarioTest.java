@@ -8,9 +8,10 @@ import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
-import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -29,6 +30,7 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,9 +62,7 @@ extends WSMockTestBase {
 			TestConstants.LOAD_DELETE.toLowerCase();
 	private static final long LOAD_CONNS = 10;
 	private static final long LOADS_COUNT = 4;
-	private static final boolean
-		CHAIN_CONCURRENT = false,
-		ITEMS_BUFFER = true;
+	private static final boolean CHAIN_CONCURRENT = false;
 
 	@BeforeClass
 	public static void setUpClass()
@@ -77,7 +77,6 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, SCENARIO_NAME);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, CHAIN_LOADS);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, String.valueOf(CHAIN_CONCURRENT));
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER, String.valueOf(ITEMS_BUFFER));
 		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, String.valueOf(LOAD_CONNS));
 		rtConfig.set(RunTimeConfig.KEY_READ_CONNS, String.valueOf(LOAD_CONNS));
 		rtConfig.set(RunTimeConfig.KEY_UPDATE_CONNS, String.valueOf(LOAD_CONNS));
@@ -124,7 +123,7 @@ extends WSMockTestBase {
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//  Read the message file and search for "Scenario end"
-		final File messageFile = LogParser.getMessageFile(RUN_ID);
+		final File messageFile = LogValidator.getMessageFile(RUN_ID);
 		Assert.assertTrue(
 			"messages.log file doesn't exist",
 			messageFile.exists()
@@ -205,7 +204,7 @@ extends WSMockTestBase {
 					confParam.contains(TestConstants.SCENARIO_CHAIN)
 				);
 			}
-			if (confParam.contains(RunTimeConfig.KEY_LOAD_THREADS)) {
+			if (confParam.contains(RunTimeConfig.KEY_LOAD_WORKERS)) {
 				Assert.assertTrue(
 					"Information about load threads in configuration table is wrong",
 					confParam.contains(String.valueOf(LOAD_CONNS))
@@ -217,23 +216,23 @@ extends WSMockTestBase {
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 		throws Exception {
-		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfAvgFile(RUN_ID).toPath();
+		expectedFile = LogValidator.getPerfAvgFile(RUN_ID).toPath();
 		//  Check that perf.avg.csv file exists
 		Assert.assertTrue("perf.avg.csv file doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfSumFile(RUN_ID).toPath();
+		expectedFile = LogValidator.getPerfSumFile(RUN_ID).toPath();
 		//  Check that perf.sum.csv file exists
 		Assert.assertTrue("perf.sum.csv file doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getPerfTraceFile(RUN_ID).toPath();
+		expectedFile = LogValidator.getPerfTraceFile(RUN_ID).toPath();
 		//  Check that perf.trace.csv file exists
 		Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogParser.getDataItemsFile(RUN_ID).toPath();
+		expectedFile = LogValidator.getDataItemsFile(RUN_ID).toPath();
 		//  Check that data.items.csv file exists
 		Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
 	}
@@ -242,14 +241,14 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectPerfAvgFile()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
+		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectPerfAvgCSV(in);
+			LogValidator.assertCorrectPerfAvgCSV(in);
 		}
 	}
 
@@ -257,14 +256,14 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectPerfSumFile()
 	throws Exception {
 		// Get perf.sum.csv file
-		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
+		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectPerfSumCSV(in);
+			LogValidator.assertCorrectPerfSumCSV(in);
 		}
 	}
 
@@ -272,14 +271,14 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file
-		final File dataItemFile = LogParser.getDataItemsFile(RUN_ID);
+		final File dataItemFile = LogValidator.getDataItemsFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectDataItemsCSV(in);
+			LogValidator.assertCorrectDataItemsCSV(in);
 		}
 	}
 
@@ -287,21 +286,21 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectPerfTraceFile()
 	throws Exception {
 		// Get perf.trace.csv file
-		final File perfTraceFile = LogParser.getPerfTraceFile(RUN_ID);
+		final File perfTraceFile = LogValidator.getPerfTraceFile(RUN_ID);
 		Assert.assertTrue("perf.trace.csv file doesn't exist", perfTraceFile.exists());
 		//
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(perfTraceFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogParser.assertCorrectPerfTraceCSV(in);
+			LogValidator.assertCorrectPerfTraceCSV(in);
 		}
 	}
 
 	@Test
 	public void shouldContainedInformationAboutAllLoads()
 	throws Exception {
-		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
+		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 		//
 		try (final BufferedReader
@@ -350,7 +349,7 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectInformationAboutLoad()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
+		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		//
 		try(
@@ -389,8 +388,8 @@ extends WSMockTestBase {
 	@Test
 	public void shouldLoadsSwitchOperationsSynchronously()
 	throws Exception {
-		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
+		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
+		Assert.assertTrue("perf.avg.csv file doesn't exist", perfAvgFile.exists());
 		//
 		try(
 			final BufferedReader
@@ -402,11 +401,11 @@ extends WSMockTestBase {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			//
 			for(final CSVRecord nextRec : recIter) {
-				if (firstRow) {
+				if(firstRow) {
 					firstRow = false;
 				} else {
-					if (!prevLoadType.equals(nextRec.get(3))) {
-						counterSwitch++;
+					if(!prevLoadType.equals(nextRec.get(3))) {
+						counterSwitch ++;
 						prevLoadType = nextRec.get(3);
 					}
 				}
@@ -420,7 +419,7 @@ extends WSMockTestBase {
 	throws Exception {
 		final int precisionMillis = 3000;
 		// Get perf.avg.csv file
-		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
+		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perf.avg.csv file doesn't exist", perfAvgFile.exists());
 		//
 		try(
@@ -484,7 +483,7 @@ extends WSMockTestBase {
 		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 		Matcher matcher;
 		// Get start times of loads
-		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
+		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		try(
 			final BufferedReader
@@ -509,7 +508,7 @@ extends WSMockTestBase {
 		}
 
 		// Get finish times of loads
-		final File perfSumFile = LogParser.getPerfSumFile(RUN_ID);
+		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 		try(
 			final BufferedReader
@@ -546,21 +545,30 @@ extends WSMockTestBase {
 	}
 
 	@Test
-	public void shouldDataItemsMasksAreUpdate()
+	public void checkItemsMasksUpdated()
 	throws Exception {
-		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
+		final File dataItemsFile = LogValidator.getDataItemsFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			final int firstMaskVal = 0;
-			int maskVal;
+			BitSet mask;
+			String rangesMask;
+			char rangesMaskChars[];
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for (final CSVRecord nextRec : recIter) {
-				maskVal = Integer.valueOf(nextRec.get(3).split("\\/")[1]);
-				Assert.assertTrue(maskVal != firstMaskVal);
+			for(final CSVRecord nextRec : recIter) {
+				rangesMask = nextRec.get(3).split("\\/")[1];
+				if(rangesMask.length() == 0) {
+					rangesMaskChars = ("00" + rangesMask).toCharArray();
+				} else if(rangesMask.length() % 2 == 1) {
+					rangesMaskChars = ("0" + rangesMask).toCharArray();
+				} else {
+					rangesMaskChars = rangesMask.toCharArray();
+				}
+				mask = BitSet.valueOf(Hex.decodeHex(rangesMaskChars));
+				Assert.assertTrue(nextRec.toString(), mask.cardinality() > 0);
 			}
 		}
 	}

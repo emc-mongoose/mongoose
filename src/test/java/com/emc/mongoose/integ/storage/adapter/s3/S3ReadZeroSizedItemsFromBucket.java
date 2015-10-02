@@ -3,7 +3,7 @@ package com.emc.mongoose.integ.storage.adapter.s3;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.data.model.ListItemOutput;
+import com.emc.mongoose.core.impl.data.model.ListItemDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.Assert;
@@ -45,7 +45,7 @@ extends StandaloneClientTestBase {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, 0);
 			if(COUNT_WRITTEN > 0) {
 				COUNT_READ = client.read(
-					null, new ListItemOutput<>(BUFF_READ), COUNT_WRITTEN, 10, true
+					null, new ListItemDst<>(BUFF_READ), COUNT_WRITTEN, 10, true
 				);
 			} else {
 				throw new IllegalStateException("Failed to write");

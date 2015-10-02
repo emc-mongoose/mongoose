@@ -59,7 +59,7 @@ implements LoadState<T> {
 	}
 	//
 	@Override
-	public boolean isLoadFinished(final RunTimeConfig rtConfig) {
+	public boolean isLimitReached(final RunTimeConfig rtConfig) {
 		//  time limitations
 		final TimeUnit loadLimitTimeUnit = rtConfig.getLoadLimitTimeUnit();
 		final long loadLimitTimeValue = rtConfig.getLoadLimitTimeValue();
@@ -152,7 +152,7 @@ implements LoadState<T> {
 				LOG.info(Markers.MSG, "Run \"{}\" was resumed", rtConfig.getRunId());
 				//  don't remove state file if load executor has been already finished
 				for(final LoadState state : loadStates) {
-					if (state.isLoadFinished(rtConfig))
+					if (state.isLimitReached(rtConfig))
 						return;
 				}
 				//  remove state file when scenario's state was restored

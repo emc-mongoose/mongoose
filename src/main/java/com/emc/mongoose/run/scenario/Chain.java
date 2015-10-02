@@ -5,10 +5,13 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
 import com.emc.mongoose.util.shared.WSLoadBuilderFactory;
@@ -37,60 +40,70 @@ implements Runnable {
 	}
 	//
 	private final List<LoadExecutor> loadJobSeq = new LinkedList<>();
-	//
-	private long timeOut;
-	private TimeUnit timeUnit;
-	private boolean flagConcurrent;
+	private final long timeOut;
+	private final TimeUnit timeUnit;
+	private final boolean isParallel;
 	//
 	private volatile boolean interrupted;
 	//
 	public Chain(final RunTimeConfig rtConfig) {
-		final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig);
-		final long timeOut = rtConfig.getLoadLimitTimeValue();
-		//
-		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
-		this.timeUnit = timeOut > 0 ? rtConfig.getLoadLimitTimeUnit() : TimeUnit.DAYS;
-		this.flagConcurrent = rtConfig.getScenarioChainConcurrentFlag();
-		//
-		final String[] loadTypesSeq = rtConfig.getScenarioChainLoad();
-		final boolean flagUseLocalItemList = rtConfig.getBoolean(
-			RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER
+		this(
+			WSLoadBuilderFactory.getInstance(rtConfig),
+			rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit(),
+			rtConfig.getScenarioChainLoad(), rtConfig.getScenarioChainConcurrentFlag()
 		);
-		setLoadJobConsumers(loadBuilder, loadTypesSeq, flagUseLocalItemList);
 	}
 	//
+	@SuppressWarnings("unchecked")
 	public Chain(
 		final LoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
-		final String[] loadTypesSeq,
-		final boolean flagConcurrent, final boolean flagUseLocalItemList
+		final String[] loadTypeSeq, final boolean isParallel
 	) {
 		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
 		this.timeUnit = timeOut > 0 ? timeUnit : TimeUnit.DAYS;
-		this.flagConcurrent = flagConcurrent;
+		this.isParallel = isParallel;
 		//
-		setLoadJobConsumers(loadBuilder, loadTypesSeq, flagUseLocalItemList);
-	}
-	//
-	public void setLoadJobConsumers(
-		final LoadBuilder loadBuilder,
-		final String[] loadTypesSeq,
-		final boolean flagUseLocalItemList
-	) {
-		LoadExecutor prevLoadJob = null, nextLoadJob;
-		for(final String loadTypeStr : loadTypesSeq) {
-			LOG.debug(Markers.MSG, "Next load type is \"{}\"", loadTypeStr);
+		String loadTypeStr;
+		LoadExecutor nextLoadJob, prevLoadJob = null;
+		final RequestConfig reqConf;
+		try {
+			reqConf = loadBuilder.getRequestConfig();
+		} catch(final RemoteException e) {
+			throw new RuntimeException(e);
+		}
+		DataItemDst itemDst = null;
+		IOTask.Type loadType;
+		for(int i = 0; i < loadTypeSeq.length; i ++) {
+			loadTypeStr = loadTypeSeq[i];
+			loadType = IOTask.Type.valueOf(loadTypeStr.toUpperCase());
+			LOG.debug(Markers.MSG, "Building the load job #{}, type is \"{}\"", i, loadTypeStr);
 			try {
-				loadBuilder.setLoadType(IOTask.Type.valueOf(loadTypeStr.toUpperCase()));
-				nextLoadJob = loadBuilder.build();
+				loadBuilder.setLoadType(loadType);
+				// determine the items source for the next load job
 				if(prevLoadJob == null) {
-					// prevent any external item source creation for the subsequent load jobs
-					loadBuilder.setInputFile(null);
-					if(flagConcurrent || flagUseLocalItemList) {
-						loadBuilder.getRequestConfig().setContainerInputEnabled(false);
+					if(IOTask.Type.CREATE.equals(loadType)) {
+						loadBuilder.useNewItemSrc();
+					} else {
+						loadBuilder.useContainerListingItemSrc();
 					}
 				} else {
-					prevLoadJob.setConsumer(nextLoadJob);
+					if(isParallel) {
+						loadBuilder.useNoneItemSrc();
+					} else {
+						itemDst = new CSVFileItemDst(reqConf.getDataItemClass());
+						loadBuilder.setItemSrc(itemDst.getDataItemSrc());
+					}
 				}
+				// build the job
+				nextLoadJob = loadBuilder.build();
+				// determine the items destination for the next load job
+				if(prevLoadJob != null) {
+					if(isParallel) {
+						itemDst = nextLoadJob;
+					}
+					prevLoadJob.setDataItemDst(itemDst);
+				}
+				// add the built job into the chain
 				loadJobSeq.add(nextLoadJob);
 				prevLoadJob = nextLoadJob;
 			} catch(final RemoteException e) {
@@ -107,7 +120,7 @@ implements Runnable {
 	//
 	@Override
 	public final void run() {
-		if(flagConcurrent) {
+		if(isParallel) {
 			LOG.info(Markers.MSG, "Execute load jobs in parallel");
 			for(int i = loadJobSeq.size() - 1; i >= 0; i --) {
 				try {

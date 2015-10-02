@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.api.load.model.metrics;
 //
 import java.io.Closeable;
-import java.io.Externalizable;
 import java.io.Serializable;
 /**
  Created by kurila on 14.09.15.
@@ -31,10 +30,18 @@ extends Closeable {
 		METRIC_NAME_STDDEV = "stdDev",
 		METRIC_NAME_MAX = "max",
 		//
-		NAME_SEP = "@";
-	//
-	String MSG_FMT_METRICS = "count=(%d/%s); dur[us]=(%d/%d/%d/%d); lat[us]=(%d/%d/%d/%d); " +
-		"TP[s^-1]=(%.3f/%.3f); BW[MB*s^-1]=(%.3f/%.3f)";
+		NAME_SEP = "@",
+		//
+		MSG_FMT_METRICS = "count=(%d/%s); " +
+			"duration[us]=(%d/%d/%d); " +
+			"latency[us]=(%d/%d/%d); " +
+			"TP[op/s]=(%.3f/%.3f); " +
+			"BW[MB/s]=(%.3f/%.3f)",
+		MSG_FMT_METRICS_SUM = "count=(%d/%s); " +
+			"duration[us]=(%d/%d/%d/%d/%d/%d); " +
+			"latency[us]=(%d/%d/%d/%d/%d/%d); " +
+			"TP[op/s]=(%.3f/%.3f); " +
+			"BW[MB/s]=(%.3f/%.3f)";
 	//
 	void start();
 	//
@@ -68,16 +75,20 @@ extends Closeable {
 		long getElapsedTime();
 		long getDurationSum();
 		//
-		double getDurationMean();
 		double getDurationMin();
-		double getDurationStdDev();
+		double getDurationLoQ();
+		double getDurationMed();
+		double getDurationHiQ();
 		double getDurationMax();
 		long[] getDurationValues();
 		//
-		double getLatencyMean();
 		double getLatencyMin();
-		double getLatencyStdDev();
+		double getLatencyLoQ();
+		double getLatencyMed();
+		double getLatencyHiQ();
 		double getLatencyMax();
 		long[] getLatencyValues();
+		//
+		String toSummaryString();
 	}
 }

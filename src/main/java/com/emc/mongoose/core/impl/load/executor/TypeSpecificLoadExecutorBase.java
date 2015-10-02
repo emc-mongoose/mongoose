@@ -7,8 +7,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemInput;
-import com.emc.mongoose.core.api.data.model.FileDataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
@@ -18,7 +18,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.rmi.RemoteException;
+import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 /**
@@ -35,23 +36,22 @@ extends LimitedRateLoadExecutorBase<T> {
 	private final float sizeBias;
 	//
 	protected TypeSpecificLoadExecutorBase(
-		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
-		final DataItemInput<T> itemSrc, final long maxCount,
+		final DataItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
-		final float rateLimit, final int countUpdPerReq
+		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
 	) throws ClassCastException {
 		super(
-			dataCls, runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount,
-			itemSrc, maxCount, rateLimit
+			runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount,
+			itemSrc, maxCount, manualTaskSleepMicroSecs, rateLimit
 		);
 		//
 		this.loadType = reqConfig.getLoadType();
 		//
 		int buffSize;
-		if(itemSrc instanceof FileDataItemInput) {
-			final long approxDataItemSize = ((FileDataItemInput) itemSrc).getApproxDataItemsSize(
+		if(itemSrc instanceof FileDataItemSrc) {
+			final long approxDataItemSize = ((FileDataItemSrc) itemSrc).getApproxDataItemsSize(
 				runTimeConfig.getBatchSize()
 			);
 			if(approxDataItemSize < Constants.BUFF_SIZE_LO) {
@@ -121,54 +121,84 @@ extends LimitedRateLoadExecutorBase<T> {
 		this.sizeBias = sizeBias;
 		this.countUpdPerReq = countUpdPerReq;
 	}
-	// intercepts the data items which should be scheduled for update or append
+	//
+	private void scheduleAppend(final T dataItem) {
+		final long nextSize = sizeMin +
+			(long) (Math.pow(ThreadLocalRandom.current().nextDouble(), sizeBias) * sizeRange);
+		try {
+			dataItem.scheduleAppend(nextSize);
+		} catch(final IllegalArgumentException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e,
+				"Failed to schedule the append operation for the data item"
+			);
+		}
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "Append the object \"{}\": +{}",
+				dataItem, SizeUtil.formatSize(nextSize)
+			);
+		}
+	}
+	//
+	private void scheduleUpdate(final T dataItem) {
+		if(dataItem.getSize() > 0) {
+			dataItem.scheduleRandomUpdates(countUpdPerReq);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Modified {} ranges for object \"{}\"", countUpdPerReq, dataItem
+				);
+			}
+		} else {
+			throw new RejectedExecutionException("It's impossible to update empty data item");
+		}
+	}
+	/** intercepts the data items which should be scheduled for update or append */
 	@Override
-	public final void submit(final T dataItem)
-	throws InterruptedException, RemoteException, RejectedExecutionException {
+	public final void put(final T dataItem)
+	throws IOException {
 		try {
 			switch(loadType) {
 				case APPEND:
-					final long nextSize = sizeMin +
-						(long) (
-							Math.pow(ThreadLocalRandom.current().nextDouble(), sizeBias) * sizeRange
-						);
-					try {
-						dataItem.scheduleAppend(nextSize);
-					} catch(final IllegalArgumentException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e,
-							"Failed to schedule the append operation for the data item"
-						);
-					}
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "Append the object \"{}\": +{}",
-							dataItem, SizeUtil.formatSize(nextSize)
-						);
+					scheduleAppend(dataItem);
+					break;
+				case UPDATE:
+					scheduleUpdate(dataItem);
+					break;
+			}
+		} catch(final IllegalArgumentException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to schedule {} for the data item",
+				loadType.name().toLowerCase()
+			);
+		}
+		//
+		super.put(dataItem);
+	}
+	//
+	@Override
+	public final int put(final List<T> dataItems, final int from, final int to)
+	throws IOException {
+		try {
+			switch(loadType) {
+				case APPEND:
+					for(int i = from; i < to; i ++) {
+						scheduleAppend(dataItems.get(i));
 					}
 					break;
 				case UPDATE:
-					if(dataItem.getSize() > 0) {
-						dataItem.scheduleRandomUpdates(countUpdPerReq);
-						if(LOG.isTraceEnabled(Markers.MSG)) {
-							LOG.trace(
-								Markers.MSG, "Modified {} ranges for object \"{}\"",
-								countUpdPerReq, dataItem
-							);
-						}
-					} else {
-						throw new RejectedExecutionException(
-							"It's impossible to update empty data item"
-						);
+					for(int i = from; i < to; i ++) {
+						scheduleUpdate(dataItems.get(i));
 					}
 					break;
 			}
 		} catch(final IllegalArgumentException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to {} the data item", loadType.name().toLowerCase()
+				LOG, Level.WARN, e, "Failed to schedule {} for the data items",
+				loadType.name().toLowerCase()
 			);
 		}
 		//
-		super.submit(dataItem);
+		return super.put(dataItems, from, to);
 	}
 }

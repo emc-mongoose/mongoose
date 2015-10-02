@@ -23,7 +23,7 @@
 			"storage.mock.data.offset.radix": "data.radix.offset",
 			"storage.mock.data.size.radix": "data.radix.size",
 			"storage.mock.head.count": "storage.mock.headCount",
-			"storage.mock.iothreads.persocket": "ioThreadsPerSocket",
+			"storage.mock.iothreads.persocket": "storage.mock.workersPerSocket",
 			"storage.mock.fault.sleep.msec": "storage.mock.fault.sleepMilliSec",
 			"storage.socket.timeout.millisec": "remote.socket.timeoutMilliSec",
 			"storage.socket.reuse.addr": "remote.socket.reuseAddr",
@@ -51,9 +51,9 @@
 
 			"http.sign.method": "http.signMethod",
 
-			"load.append.threads": "load.type.append.threads",
+			"load.append.threads": "load.type.append.connections",
 
-			"load.create.threads": "load.type.create.threads",
+			"load.create.threads": "load.type.create.connections",
 
 			"load.connections": [
 				"load.type.append.connections",
@@ -63,28 +63,35 @@
 				"load.type.delete.connections"
 			],
 
-			"load.delete.threads": "load.type.delete.threads",
+			"load.delete.threads": "load.type.delete.connections",
 
 			"load.drivers": "load.server.addrs",
 
-			"load.read.threads": "load.type.read.threads",
+			"load.read.threads": "load.type.read.connections",
 			"load.read.verify.content": "load.type.read.verifyContent",
 
 			"load.servers": "load.server.addrs",
 			"load.tasks.batchSize": "data.src.batchSize",
 			"load.tasks.shuffle": "data.src.random",
 			"load.threads": [
-				"load.type.append.threads",
-				"load.type.create.threads",
-				"load.type.read.threads",
-				"load.type.update.threads",
-				"load.type.delete.threads"
+				"load.type.append.connections",
+				"load.type.create.connections",
+				"load.type.read.connections",
+				"load.type.update.connections",
+				"load.type.delete.connections"
 			],
 			"load.time": "load.limit.time",
 
-			"load.update.threads": "load.type.update.threads",
+			"load.update.threads": "load.type.update.connections",
 			"load.update.per.item": "load.type.update.perItem",
 
+			"load.workers": [
+				"load.type.append.workers",
+				"load.type.create.workers",
+				"load.type.read.workers",
+				"load.type.update.workers",
+				"load.type.delete.workers"
+			],
 
 			"remote.servers": "load.server.addrs",
 			"remote.control.port": "remote.port.control",
@@ -94,7 +101,6 @@
 			"remote.wuisvc.port": "remote.port.webui",
 
 			"run.metrics.period.sec": "load.metricsPeriodSec",
-			"run.request.queue.size": "load.tasks.maxQueueSize",
 			"run.scenario.name": "scenario.name",
 			"run.scenario.lang": "scenario.lang",
 			"run.scenario.dir": "scenario.dir",
@@ -104,7 +110,7 @@
 			"scenario.chain.concurrent": "scenario.type.chain.concurrent",
 			"scenario.chain.itemsbuffer": "scenario.type.chain.itemsbuffer",
 
-			"scenario.rampup.thread.counts": "scenario.type.rampup.threadCounts",
+			"scenario.rampup.thread.counts": "scenario.type.rampup.connCounts",
 			"scenario.rampup.sizes": "scenario.type.rampup.sizes",
 
 			"scenario.single.load": "scenario.type.single.load"
@@ -152,7 +158,7 @@
 				"separator": ",",
 				"circular": false,
 				"random": false,
-				"batchSize": 1024,
+				"batchSize": 10000,
 				"ring": {
 					"seed": "7a42d9c483244167",
 					"size": "4MB"
@@ -168,6 +174,7 @@
 				"type": "application/octet-stream",
 				"repeatable": true
 			},
+			"pipelining": false,
 			"signMethod": "HmacSHA1"
 		},
 		"load": {
@@ -184,30 +191,27 @@
 					"node": false
 				}
 			},
-			"tasks": {
-				"maxQueueSize": 16384
-			},
 			"type": {
 				"create": {
-					"threads": 0,
+					"workers": 0,
 					"connections": 1
 				},
 				"read": {
-					"threads": 0,
+					"workers": 0,
 					"connections": 1,
 					"verifyContent": true
 				},
 				"update": {
-					"threads": 0,
+					"workers": 0,
 					"connections": 1,
 					"perItem": 1
 				},
 				"delete": {
-					"threads": 0,
+					"workers": 0,
 					"connections": 1
 				},
 				"append": {
-					"threads": 0,
+					"workers": 0,
 					"connections": 1
 				}
 			}
@@ -222,8 +226,7 @@
 				},
 				"chain": {
 					"load": "create,append,update,read,delete",
-					"concurrent": true,
-					"itemsBuffer": true
+					"concurrent": true
 				},
 				"rampup": {
 					"connCounts": "1,10",
@@ -235,7 +238,7 @@
 			"addrs": "127.0.0.1",
 			"mock": {
 				"headCount": 1,
-				"ioThreadsPerSocket": 0,
+				"workersPerSocket": 0,
 				"capacity": 10000000,
 				"container": {
 					"capacity": 10000000,

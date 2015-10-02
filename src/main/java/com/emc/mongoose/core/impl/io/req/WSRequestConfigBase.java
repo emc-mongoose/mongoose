@@ -17,6 +17,8 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataSource;
 // mongoose-core-impl
 import static com.emc.mongoose.core.impl.data.RangeLayerData.getRangeOffset;
+
+import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -89,7 +91,7 @@ implements WSRequestConfig<T> {
 	//
 	public final static long serialVersionUID = 42L;
 	protected final String userAgent, signMethod;
-	protected boolean fsAccess, versioning;
+	protected boolean fsAccess, versioning, pipelining;
 	protected SecretKeySpec secretKey;
 	//
 	private final HttpAsyncRequester client;
@@ -97,19 +99,19 @@ implements WSRequestConfig<T> {
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
 	//
-	public static WSRequestConfigBase getInstance() {
+	public static <T extends WSObject> WSRequestConfig<T> getInstance() {
 		return newInstanceFor(RunTimeConfig.getContext().getApiName());
 	}
 	//
 	@SuppressWarnings("unchecked")
-	public static WSRequestConfigBase newInstanceFor(final String api) {
-		final WSRequestConfigBase reqConf;
+	public static <T extends WSObject> WSRequestConfig<T> newInstanceFor(final String api) {
+		final WSRequestConfig<T> reqConf;
 		final String apiImplClsFQN = PACKAGE_IMPL_BASE + "." + api.toLowerCase() + "." + ADAPTER_CLS;
 		try {
 			final Class apiImplCls = Class.forName(apiImplClsFQN);
-			final Constructor<WSRequestConfigBase>
-				constructor = (Constructor<WSRequestConfigBase>) apiImplCls.getConstructors()[0];
-			reqConf = constructor.newInstance();
+			final Constructor<WSRequestConfig<T>>
+				constructor = (Constructor<WSRequestConfig<T>>) apiImplCls.getConstructors()[0];
+			reqConf = constructor.<T>newInstance();
 		} catch(final Exception e) {
 			e.printStackTrace(System.out);
 			throw new RuntimeException(e);
@@ -145,6 +147,7 @@ implements WSRequestConfig<T> {
 			if(reqConf2Clone != null) {
 				this.setSecret(reqConf2Clone.getSecret()).setScheme(reqConf2Clone.getScheme());
 				this.setFileAccessEnabled(reqConf2Clone.getFileAccessEnabled());
+				this.setPipelining(reqConf2Clone.getPipelining());
 			}
 			//
 			final String pkgSpec = getClass().getPackage().getName();
@@ -319,6 +322,17 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
+	public WSRequestConfigBase<T> setPipelining(final boolean flag) {
+		this.pipelining = flag;
+		return this;
+	}
+	//
+	@Override
+	public boolean getPipelining() {
+		return pipelining;
+	}
+	//
+	@Override
 	public final boolean getVersioning() {
 		return versioning;
 	}
@@ -352,6 +366,12 @@ implements WSRequestConfig<T> {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_DATA_FS_ACCESS);
 		}
 		//
+		try {
+			setPipelining(runTimeConfig.getHttpPipeliningFlag());
+		} catch(final NoSuchElementException e) {
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_HTTP_PIPELINING);
+		}
+		//
 		super.setProperties(runTimeConfig);
 		//
 		return this;
@@ -366,6 +386,11 @@ implements WSRequestConfig<T> {
 			LogUtil.exception(LOG, Level.ERROR, e, "Configuration error");
 		}
 		return this;
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public Class<T> getDataItemClass() {
+		return (Class<T>) BasicWSObject.class;
 	}
 	//
 	@Override
@@ -412,8 +437,9 @@ implements WSRequestConfig<T> {
 		sharedHeaders = HeaderGroup.class.cast(in.readObject());
 		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
 		setNameSpace(String.class.cast(in.readObject()));
-		setFileAccessEnabled(Boolean.class.cast(in.readObject()));
-		setVersioning(Boolean.class.cast(in.readObject()));
+		setFileAccessEnabled(in.readBoolean());
+		setVersioning(in.readBoolean());
+		setPipelining(in.readBoolean());
 	}
 	//
 	@Override
@@ -422,8 +448,9 @@ implements WSRequestConfig<T> {
 		super.writeExternal(out);
 		out.writeObject(sharedHeaders);
 		out.writeObject(getNameSpace());
-		out.writeObject(getFileAccessEnabled());
-		out.writeObject(getVersioning());
+		out.writeBoolean(getFileAccessEnabled());
+		out.writeBoolean(getVersioning());
+		out.writeBoolean(getPipelining());
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {
