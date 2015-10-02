@@ -158,7 +158,7 @@
 				"separator": ",",
 				"circular": false,
 				"random": false,
-				"batchSize": 10000,
+				"batchSize": 256,
 				"ring": {
 					"seed": "7a42d9c483244167",
 					"size": "4MB"
