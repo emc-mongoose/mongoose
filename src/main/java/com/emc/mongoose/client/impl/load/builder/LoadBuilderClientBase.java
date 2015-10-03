@@ -500,10 +500,11 @@ implements LoadBuilderClient<T, U> {
 		return null;
 	}
 	//
-	protected final void resetItemSrcFlags() {
+	protected final void resetItemSrc() {
 		flagUseContainerItemSrc = true;
 		flagUseNewItemSrc = true;
 		flagUseNoneItemSrc = false;
+		itemSrc = null;
 	}
 	//
 	@Override
@@ -518,7 +519,7 @@ implements LoadBuilderClient<T, U> {
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		} finally {
-			resetItemSrcFlags();
+			resetItemSrc();
 		}
 		return client;
 	}

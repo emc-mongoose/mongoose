@@ -358,9 +358,12 @@ implements LoadClient<T> {
 		}
 	}
 	//
-	@Override @Deprecated
+	@Override
 	public final void put(final T dataItem)
 	throws IOException {
+		if(remoteSubmExecutor.isShutdown()) {
+			return;
+		}
 		try {
 			remoteSubmExecutor.submit(new RemotePutTask(dataItem));
 		} catch(final RejectedExecutionException e) {
@@ -420,6 +423,9 @@ implements LoadClient<T> {
 	@Override
 	public final int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
+		if(remoteSubmExecutor.isShutdown()) {
+			return 0;
+		}
 		try {
 			remoteSubmExecutor.submit(new RemoteBatchPutTask(dataItems, from, to));
 		} catch(final RejectedExecutionException e) {

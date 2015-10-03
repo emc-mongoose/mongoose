@@ -777,7 +777,7 @@ implements LoadExecutor<T> {
 	//
 	private void checkForBadState() {
 		if(
-			lastStats.getFailCount() > 1000000 &&
+			lastStats.getFailCount() > 100000 &&
 			lastStats.getFailRateLast() < lastStats.getSuccRateLast()
 		) {
 			LOG.fatal(

@@ -62,14 +62,15 @@ implements LoadBuilder<T, U> {
 	protected abstract RequestConfig<T> getDefaultRequestConfig();
 	//
 	public LoadBuilderBase(final RunTimeConfig runTimeConfig) {
-		resetItemSrcFlags();
+		resetItemSrc();
 		setProperties(runTimeConfig);
 	}
 	//
-	protected final void resetItemSrcFlags() {
+	protected final void resetItemSrc() {
 		flagUseContainerItemSrc = true;
 		flagUseNewItemSrc = true;
 		flagUseNoneItemSrc = false;
+		itemSrc = null;
 	}
 	//
 	@Override
@@ -498,7 +499,7 @@ implements LoadBuilder<T, U> {
 		try {
 			return buildActually();
 		} finally {
-			resetItemSrcFlags();
+			resetItemSrc();
 		}
 	}
 	//
