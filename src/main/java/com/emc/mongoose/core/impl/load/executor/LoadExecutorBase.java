@@ -42,6 +42,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -121,19 +122,45 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	private final class StateControlTask
+	private final class StatsRefreshTask
 	implements Runnable {
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
-			currThread.setName("stateControl<"+getName()+">");
+			currThread.setName("statsRefresh<"+getName()+">");
 			while(!currThread.isInterrupted()) {
-				LockSupport.parkNanos(1);
 				refreshStats();
 				LockSupport.parkNanos(1);
-				checkForBadState();
-				LockSupport.parkNanos(1);
+			}
+		}
+	}
+	//
+	public final static int MAX_FAIL_COUNT = 100000;
+	private final class FailuresMonitorTask
+	implements Runnable {
+		@Override
+		public final void run() {
+			final Thread currThread = Thread.currentThread();
+			currThread.setName("failuresMonitor<"+getName()+">");
+			try {
+				while(!currThread.isInterrupted()) {
+					checkForBadState();
+					TimeUnit.SECONDS.sleep(1);
+				}
+			} catch(final InterruptedException ignored) {
+			}
+		}
+	}
+	//
+	private final class ResultsDispatcher
+	implements Runnable {
+		@Override
+		public final void run() {
+			final Thread currThread = Thread.currentThread();
+			currThread.setName("resultsDispatcher<" + getName() + ">");
+			while(!currThread.isInterrupted()) {
 				passDataItems();
+				LockSupport.parkNanos(1);
 			}
 		}
 	}
@@ -195,7 +222,9 @@ implements LoadExecutor<T> {
 		if(metricsPeriodSec > 0) {
 			mgmtTasks.add(new LogMetricsTask(this, metricsPeriodSec));
 		}
-		mgmtTasks.add(new StateControlTask());
+		mgmtTasks.add(new StatsRefreshTask());
+		mgmtTasks.add(new FailuresMonitorTask());
+		mgmtTasks.add(new ResultsDispatcher());
 		//
 		LoadCloseHook.add(this);
 	}
@@ -501,7 +530,9 @@ implements LoadExecutor<T> {
 						// increment node's usage counter
 						activeTasksStats.get(nextNodeAddr).addAndGet(m);
 					} catch(final RejectedExecutionException e) {
-						if(!isInterrupted.get()) {
+						if(isInterrupted.get()) {
+							throw new IOException(getName() + " is interrupted");
+						} else {
 							m = srcLimit - n;
 							countRej.addAndGet(m);
 							LogUtil.exception(LOG, Level.DEBUG, e, "Rejected {} I/O tasks", m);
@@ -602,7 +633,7 @@ implements LoadExecutor<T> {
 				itemOutBuff.put(dataItem);
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e,
+					LOG, Level.DEBUG, e,
 					"{}: failed to put the data item into the output buffer", getName()
 				);
 			}
@@ -660,7 +691,7 @@ implements LoadExecutor<T> {
 						itemOutBuff.put(dataItem);
 					} catch(final IOException e) {
 						LogUtil.exception(
-							LOG, Level.WARN, e,
+							LOG, Level.DEBUG, e,
 							"{}: failed to put the data item into the output buffer", getName()
 						);
 					}
@@ -763,7 +794,7 @@ implements LoadExecutor<T> {
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to feed the data items to \"{}\"", consumer
+				LOG, Level.DEBUG, e, "Failed to feed the data items to \"{}\"", consumer
 			);
 		} catch(final RejectedExecutionException e) {
 			if(LOG.isTraceEnabled(Markers.ERR)) {
@@ -778,14 +809,14 @@ implements LoadExecutor<T> {
 	//
 	private void checkForBadState() {
 		if(
-			lastStats.getFailCount() > 100000 &&
+			lastStats.getFailCount() > MAX_FAIL_COUNT &&
 			lastStats.getFailRateLast() < lastStats.getSuccRateLast()
 		) {
 			LOG.fatal(
 				Markers.ERR,
 				"There's a more than 1M of failures and the failure rate is higher " +
-					"than success rate for at least last {}[sec]. Exiting in order to " +
-					"avoid the memory exhaustion. Please check your environment.",
+				"than success rate for at least last {}[sec]. Exiting in order to " +
+				"avoid the memory exhaustion. Please check your environment.",
 				metricsPeriodSec
 			);
 			try {

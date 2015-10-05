@@ -258,7 +258,7 @@ implements WSIOTask<T> {
 			exception = e;
 			respTimeDone = System.nanoTime() / 1000;
 		} else {
-			LogUtil.exception(LOG, Level.WARN, e, "I/O task failure");
+			LogUtil.exception(LOG, Level.DEBUG, e, "I/O task failure");
 			status = Status.FAIL_UNKNOWN;
 			exception = e;
 			respTimeDone = System.nanoTime() / 1000;

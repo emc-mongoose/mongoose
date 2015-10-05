@@ -143,12 +143,6 @@ extends WSMockTestBase {
 			start += lineOffset;
 		}
 		for (final String confParam : params) {
-			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
-				Assert.assertTrue(
-					"Information about limit count in configuration table is wrong",
-					confParam.contains("0")
-				);
-			}
 			if (confParam.contains(RunTimeConfig.KEY_STORAGE_ADDRS)) {
 				Assert.assertTrue(
 					"Information about storage address in configuration table is wrong",
