@@ -13,7 +13,7 @@ import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.model.BinFileItemDst;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 //
-import com.emc.mongoose.core.impl.data.model.BlockingQueueItemBuffer;
+import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.data.model.ListItemDst;
 //
 //
@@ -84,7 +84,7 @@ implements Runnable {
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead);
 			// variable-sized appending of the verified data items
-			final DataItemDst<WSObject> dataDstA = new BlockingQueueItemBuffer<>(
+			final DataItemDst<WSObject> dataDstA = new LimitedQueueItemBuffer<>(
 				new ArrayBlockingQueue<WSObject>(DEFAULT_DATA_COUNT_MAX)
 			);
 			final long nAppended = client.append(

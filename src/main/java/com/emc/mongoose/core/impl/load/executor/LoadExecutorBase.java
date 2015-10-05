@@ -18,7 +18,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.model.BlockingQueueItemBuffer;
+import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
@@ -182,7 +182,7 @@ implements LoadExecutor<T> {
 				name, itemSrc
 			);
 		}
-		itemOutBuff = new BlockingQueueItemBuffer<>(
+		itemOutBuff = new LimitedQueueItemBuffer<>(
 			new ArrayBlockingQueue<T>(DEFAULT_RESULTS_QUEUE_SIZE)
 		);
 		//

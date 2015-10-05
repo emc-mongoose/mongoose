@@ -8,7 +8,7 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
-import com.emc.mongoose.core.impl.data.model.BlockingQueueItemBuffer;
+import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 //
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -58,7 +58,7 @@ extends DistributedClientTestBase {
 				.build()
 		) {
 			final BlockingQueue<WSObject> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
-			final BlockingQueueItemBuffer<WSObject> itemIO = new BlockingQueueItemBuffer<>(itemsQueue);
+			final LimitedQueueItemBuffer<WSObject> itemIO = new LimitedQueueItemBuffer<>(itemsQueue);
 			COUNT_WRITTEN = client.write(
 				null, itemIO, COUNT_LIMIT, 10, SizeUtil.toSize("10KB")
 			);
