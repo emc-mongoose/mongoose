@@ -280,8 +280,10 @@
 						{ "ref": "msgFile" },
 						{ "ref": "3rdPartyFile" },
 						{ "ref": "errFile" },
+						{ "ref": "dataListFile" },
 						{ "ref": "perfAvgFile" },
 						{ "ref": "perfSumFile" },
+						{ "ref": "perfTraceFile" },
 						{ "ref": "WebUI" },
 						{ "ref": "cfgFile" }
 					]
