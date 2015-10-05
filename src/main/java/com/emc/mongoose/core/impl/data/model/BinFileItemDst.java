@@ -56,4 +56,10 @@ implements FileDataItemDst<T> {
 	public final Path getFilePath() {
 		return itemsDstPath;
 	}
+	//
+	@Override
+	public final void delete()
+	throws IOException {
+		Files.delete(itemsDstPath);
+	}
 }

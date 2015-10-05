@@ -6,6 +6,8 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
@@ -196,6 +198,15 @@ implements Runnable {
 							nextLoadJob
 						);
 					}
+				}
+				//
+				try {
+					final DataItemSrc itemSrc = nextLoadJob.getDataItemSrc();
+					if(itemSrc instanceof FileDataItemSrc) {
+						((FileDataItemSrc) itemSrc).delete();
+					}
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to delete source items file");
 				}
 				//
 				try {

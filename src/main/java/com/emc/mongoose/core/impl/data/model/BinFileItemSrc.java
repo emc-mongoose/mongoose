@@ -54,8 +54,14 @@ implements FileDataItemSrc<T> {
 	}
 	//
 	@Override
-	public Path getFilePath() {
+	public final Path getFilePath() {
 		return itemsSrcPath;
+	}
+	//
+	@Override
+	public final void delete()
+		throws IOException {
+		Files.delete(itemsSrcPath);
 	}
 	//
 	@Override

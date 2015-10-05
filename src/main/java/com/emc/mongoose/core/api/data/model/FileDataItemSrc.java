@@ -2,6 +2,7 @@ package com.emc.mongoose.core.api.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
+import java.io.IOException;
 import java.nio.file.Path;
 /**
  Created by kurila on 11.08.15.
@@ -12,4 +13,7 @@ extends DataItemSrc<T> {
 	Path getFilePath();
 	//
 	long getApproxDataItemsSize(final int maxCount);
+	//
+	void delete()
+	throws IOException;
 }
