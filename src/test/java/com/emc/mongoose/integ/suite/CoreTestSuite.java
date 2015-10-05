@@ -28,7 +28,7 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	DefaultWriteTest.class,
+	/*DefaultWriteTest.class,
 	WriteRandomSizedItemsTest.class,
 	ReadZeroSizeItemsTest.class,
 	Read10BItemsTest.class,
@@ -39,7 +39,7 @@ import org.junit.runners.Suite;
 	WriteUsing100ConnTest.class,
 	WriteByTimeTest.class,
 	ReadVerificationTest.class,
-	WriteByCountTest.class,
+	WriteByCountTest.class,*/
 	CustomChainScenarioTest.class,
 	SequentialChainCRUDTest.class,
 	ConcurrentChainCRUDTest.class,
