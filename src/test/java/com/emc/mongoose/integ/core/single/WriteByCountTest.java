@@ -84,6 +84,7 @@ extends WSMockTestBase {
 		}
 		//
 		RunIdFileManager.flushAll();
+		TimeUnit.SECONDS.sleep(5);
 		//
 		String nextLine, values[];
 		try(

@@ -21,17 +21,16 @@ public class Sequencer
 extends Thread {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	public final static int DEFAULT_TASK_QUEUE_SIZE = 0x1000;
 	//
 	private final BlockingQueue<Runnable> queue;
 	private final int batchSize;
 	private final Collection<Runnable> buff;
 	//
-	public Sequencer(
-		final String name, boolean daemonFlag, final int queueCapacity, final int batchSize
-	) {
+	public Sequencer(final String name, boolean daemonFlag, final int batchSize) {
 		super(name);
 		setDaemon(daemonFlag);
-		queue = new ArrayBlockingQueue<>(queueCapacity, false);
+		queue = new ArrayBlockingQueue<>(DEFAULT_TASK_QUEUE_SIZE, false);
 		this.batchSize = batchSize;
 		buff = new ArrayList<>(batchSize);
 	}

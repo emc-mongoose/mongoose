@@ -138,12 +138,6 @@ extends WSMockTestBase{
 					Assert.assertTrue(confParam.contains(RUN_ID));
 				}
 			}
-			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
-				Assert.assertTrue(
-					"Information about load limit by count must be correct in configuration table",
-					confParam.contains("0")
-				);
-			}
 			if (confParam.contains(RunTimeConfig.KEY_SCENARIO_NAME)) {
 				Assert.assertTrue(
 					"Information about scenario name must be correct in configuration table",

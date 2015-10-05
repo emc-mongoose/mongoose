@@ -205,7 +205,7 @@ implements LoadClient<T> {
 		//
 		remoteSubmExecutor = new ThreadPoolExecutor(
 			loadSvcAddrs.length, loadSvcAddrs.length, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(rtConfig.getBatchSize()),
+			new ArrayBlockingQueue<Runnable>(DEFAULT_SUBM_TASKS_QUEUE_SIZE),
 			new GroupThreadFactory(getName() + "-submit", true)
 		);
 	}

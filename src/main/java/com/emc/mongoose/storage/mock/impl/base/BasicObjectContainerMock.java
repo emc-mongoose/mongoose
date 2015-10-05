@@ -34,8 +34,7 @@ implements ObjectContainerMock<T> {
 		this.name = name;
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		seqWorker = new Sequencer(
-			"containerSequencer<" + name + ">", true, rtConfig.getBatchSize(),
-			rtConfig.getBatchSize()
+			"containerSequencer<" + name + ">", true, rtConfig.getBatchSize()
 		);
 		seqWorker.start();
 	}

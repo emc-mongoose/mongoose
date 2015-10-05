@@ -45,12 +45,12 @@ import java.util.regex.Matcher;
  * TC #12 (name: "CRUD - sequential chain scenario.", steps: all) in Mongoose Core Functional Testing
  * HLUC: 1.4.2.2, 1.5.4.5
  */
-public class CRUDSequentialScenarioTest
+public class SequentialChainCRUDTest
 extends WSMockTestBase {
 
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static String RUN_ID = CRUDSequentialScenarioTest.class.getCanonicalName();
+	private static String RUN_ID = SequentialChainCRUDTest.class.getCanonicalName();
 	private static final String
 		DATA_SIZE = "10MB",
 		LIMIT_TIME = "1.minutes",
@@ -161,12 +161,6 @@ extends WSMockTestBase {
 			start += lineOffset;
 		}
 		for (final String confParam : params) {
-			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
-				Assert.assertTrue(
-					"Information about limit count in configuration table is wrong",
-					confParam.contains("0")
-				);
-			}
 			if (confParam.contains(RunTimeConfig.KEY_STORAGE_ADDRS)) {
 				Assert.assertTrue(
 					"Information about storage address in configuration table is wrong",

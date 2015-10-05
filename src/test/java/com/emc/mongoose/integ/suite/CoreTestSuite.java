@@ -1,7 +1,7 @@
 package com.emc.mongoose.integ.suite;
 //
-import com.emc.mongoose.integ.core.chain.CRUDSequentialScenarioTest;
-import com.emc.mongoose.integ.core.chain.CRUDSimultaneousScenarioTest;
+import com.emc.mongoose.integ.core.chain.SequentialChainCRUDTest;
+import com.emc.mongoose.integ.core.chain.ConcurrentChainCRUDTest;
 import com.emc.mongoose.integ.core.chain.CustomChainScenarioTest;
 import com.emc.mongoose.integ.core.chain.DefaultChainScenarioTest;
 //
@@ -41,8 +41,8 @@ import org.junit.runners.Suite;
 	ReadVerificationTest.class,
 	WriteByCountTest.class,
 	CustomChainScenarioTest.class,
-	CRUDSequentialScenarioTest.class,
-	CRUDSimultaneousScenarioTest.class,
+	SequentialChainCRUDTest.class,
+	ConcurrentChainCRUDTest.class,
 	DefaultChainScenarioTest.class,
 	CustomRampupTest.class,
 	DefaultRampupTest.class,

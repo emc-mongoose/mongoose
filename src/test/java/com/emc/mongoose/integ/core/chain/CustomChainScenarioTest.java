@@ -54,7 +54,7 @@ extends WSMockTestBase {
 	private static String RUN_ID = CustomChainScenarioTest.class.getCanonicalName();
 	private static final String
 		DATA_SIZE = "10KB",
-		LIMIT_TIME = "1.minutes",
+		LIMIT_TIME = "1m",
 		SCENARIO_NAME = "chain";
 	private static final int LOAD_CONNS = 10;
 	private static final boolean VERIFY_CONTENT = false;

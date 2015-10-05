@@ -126,6 +126,7 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
+			currThread.setName("stateControl<"+getName()+">");
 			while(!currThread.isInterrupted()) {
 				LockSupport.parkNanos(1);
 				refreshStats();
@@ -155,7 +156,9 @@ implements LoadExecutor<T> {
 				name, itemSrc
 			);
 		}
-		itemOutBuff = new BlockingQueueItemBuffer<>(new ArrayBlockingQueue<T>(batchSize));
+		itemOutBuff = new BlockingQueueItemBuffer<>(
+			new ArrayBlockingQueue<T>(DEFAULT_RESULTS_QUEUE_SIZE)
+		);
 		//
 		this.rtConfig = rtConfig;
 		this.instanceNum = instanceNum;
@@ -594,16 +597,14 @@ implements LoadExecutor<T> {
 			lastDataItem = dataItem;
 			// update the metrics with success
 			markSucc(ioTask, countBytesDone, reqDuration, respLatency);
-			// pass data item to a consumer
+			// put into the output buffer
 			try {
 				itemOutBuff.put(dataItem);
 			} catch(final IOException e) {
-				if(LOG.isTraceEnabled(Markers.ERR)) {
-					LogUtil.exception(
-						LOG, Level.TRACE, e,
-						"{}: failed to put the data item into the output buffer", getName()
-					);
-				}
+				LogUtil.exception(
+					LOG, Level.WARN, e,
+					"{}: failed to put the data item into the output buffer", getName()
+				);
 			}
 		} else {
 			ioStats.markFail();
@@ -734,7 +735,7 @@ implements LoadExecutor<T> {
 			if(n > 0) {
 				// is this an end of consumer-producer chain?
 				if(consumer == null) {
-					for(int i = 0; i < n; i++) {
+					for(int i = 0; i < n; i ++) {
 						if(LOG.isInfoEnabled(Markers.DATA_LIST)) {
 							LOG.info(Markers.DATA_LIST, dataItems.get(i));
 						}
