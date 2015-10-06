@@ -3,6 +3,7 @@ package com.emc.mongoose.client.impl.load.builder;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
@@ -83,6 +84,10 @@ implements WSLoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> nextBuilder;
 		LoadSvc<T> nextLoad;
 		//
+		if(itemSrc == null) {
+			itemSrc = getDefaultItemSource(); // affects load service builders
+		}
+		//
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setRequestConfig(reqConf); // should upload req conf right before instancing
@@ -97,8 +102,7 @@ implements WSLoadBuilderClient<T, U> {
 		return (U) new BasicWSLoadClient<>(
 			rtConfig, (WSRequestConfig<T>) reqConf, storageNodeAddrs,
 			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
-			itemSrc == null ? getDefaultItemSource() : itemSrc,
-			maxCount, remoteLoadMap
+			itemSrc, maxCount, remoteLoadMap
 		);
 	}
 }

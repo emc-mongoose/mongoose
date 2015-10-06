@@ -78,6 +78,8 @@ implements LoadBuilderClient<T, U> {
 			}
 			put(serverAddr, loadBuilderSvc);
 		}
+		//
+		resetItemSrc();
 		// set properties should be invoked only after the map is filled already
 		setProperties(rtConfig);
 		//
@@ -406,42 +408,21 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public LoadBuilderClientBase<T, U> useNewItemSrc()
 	throws RemoteException {
-		// disable new data item generation on the client side
 		flagUseNoneItemSrc = true;
-		// enable new data item generation on the load servers side
-		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.useNewItemSrc();
-		}
 		return this;
 	}
 	//
 	@Override
 	public LoadBuilderClientBase<T, U> useNoneItemSrc()
 	throws RemoteException {
-		// disable any item source usage on the client side
 		flagUseNoneItemSrc = true;
-		// disable any item source usage on the load servers side
-		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.useNoneItemSrc();
-		}
 		return this;
 	}
 	//
 	@Override
 	public LoadBuilderClientBase<T, U> useContainerListingItemSrc()
 	throws RemoteException {
-		// enable container listing item source on the client sid
 		flagUseContainerItemSrc = true;
-		// disable any item source usage on the load servers side
-		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.useNoneItemSrc();
-		}
 		return this;
 	}
 	//
@@ -478,24 +459,55 @@ implements LoadBuilderClient<T, U> {
 	protected DataItemSrc<T> getDefaultItemSource() {
 		try {
 			if(flagUseNoneItemSrc) {
+				// disable any item source usage on the load servers side
+				LoadBuilderSvc<T, U> nextBuilder;
+				for(final String addr : keySet()) {
+					nextBuilder = get(addr);
+					nextBuilder.useNoneItemSrc();
+				}
+				//
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
 				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
-					return new NewDataItemSrc<>(
-						reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
-					);
+					// enable new data item generation on the load servers side
+					LoadBuilderSvc<T, U> nextBuilder;
+					for(final String addr : keySet()) {
+						nextBuilder = get(addr);
+						nextBuilder.useNewItemSrc();
+					}
+					//
+					return null;
 				} else {
+					// disable any item source usage on the load servers side
+					LoadBuilderSvc<T, U> nextBuilder;
+					for(final String addr : keySet()) {
+						nextBuilder = get(addr);
+						nextBuilder.useNoneItemSrc();
+					}
+					//
 					return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
 				}
 			} else if(flagUseNewItemSrc) {
-				return new NewDataItemSrc<>(
-					reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
-				);
+				// enable new data item generation on the load servers side
+				LoadBuilderSvc<T, U> nextBuilder;
+				for(final String addr : keySet()) {
+					nextBuilder = get(addr);
+					nextBuilder.useNewItemSrc();
+				}
+				//
+				return null;
 			} else if(flagUseContainerItemSrc) {
+				// disable any item source usage on the load servers side
+				LoadBuilderSvc<T, U> nextBuilder;
+				for(final String addr : keySet()) {
+					nextBuilder = get(addr);
+					nextBuilder.useNoneItemSrc();
+				}
+				//
 				return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
 			}
-		} catch(final NoSuchMethodException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
+		} catch(final RemoteException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to change the remote data items source");
 		}
 		return null;
 	}

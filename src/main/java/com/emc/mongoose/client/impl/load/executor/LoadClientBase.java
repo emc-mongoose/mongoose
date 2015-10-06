@@ -58,7 +58,7 @@ implements LoadClient<T> {
 	private final static int COUNT_LIMIT_RETRY = 100;
 	//
 	private final class LoadDataItemsBatchTask
-		implements Runnable {
+	implements Runnable {
 		//
 		private final LoadSvc<T> loadSvc;
 		//
@@ -75,21 +75,14 @@ implements LoadClient<T> {
 				);
 			} else {
 				final int n = frame.size();
-				if(n == 0) {
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG,
-							"No data items in the frame from the load server @ {}",
-							loadSvc
-						);
-					}
-				} else {
+				if(n > 0) {
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
 							Markers.MSG, "Got the next {} items from the load server @ {}",
 							n, loadSvc
 						);
 					}
+					counterResults.addAndGet(n);
 					for(int m = 0; m < n;) {
 						m += itemOutBuff.put(frame, m, n);
 						LockSupport.parkNanos(1);
@@ -98,6 +91,14 @@ implements LoadClient<T> {
 						LOG.trace(
 							Markers.MSG, "Put the next {} items to the output buffer",
 							n, loadSvc
+						);
+					}
+				} else {
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG,
+							"No data items in the frame from the load server @ {}",
+							loadSvc
 						);
 					}
 				}
@@ -381,7 +382,7 @@ implements LoadClient<T> {
 			this.dataItems = dataItems;
 			this.from = from;
 			this.to = to;
-			this.n = from - to;
+			this.n = to - from;
 		}
 		//
 		@Override
@@ -444,37 +445,43 @@ implements LoadClient<T> {
 	@Override
 	public final void closeActually()
 	throws IOException {
-		if(!remoteLoadMap.isEmpty()) {
-			LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
-			LoadSvc<T> nextLoadSvc;
-			for(final String addr : remoteLoadMap.keySet()) {
-				//
-				try {
-					nextLoadSvc = remoteLoadMap.get(addr);
-					nextLoadSvc.close();
-					LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
-				} catch(final NoSuchElementException e) {
-					if(!remoteSubmExecutor.isTerminated()) {
-						LOG.debug(
-							Markers.ERR, "Looks like the remote load service is already closed"
+		try {
+			if(isInterrupted.compareAndSet(false, true)) {
+				interruptActually();
+			}
+		} finally {
+			if(!remoteLoadMap.isEmpty()) {
+				LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
+				LoadSvc<T> nextLoadSvc;
+				for(final String addr : remoteLoadMap.keySet()) {
+					//
+					try {
+						nextLoadSvc = remoteLoadMap.get(addr);
+						nextLoadSvc.close();
+						LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
+					} catch(final NoSuchElementException e) {
+						if(!remoteSubmExecutor.isTerminated()) {
+							LOG.debug(
+								Markers.ERR, "Looks like the remote load service is already closed"
+							);
+						}
+					} catch(final NoSuchObjectException e) {
+						LogUtil.exception(
+							LOG, Level.DEBUG, e, "No remote service found for closing"
+						);
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to close remote load executor service"
 						);
 					}
-				} catch(final NoSuchObjectException e) {
-					LogUtil.exception(
-						LOG, Level.DEBUG, e, "No remote service found for closing"
-					);
-				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to close remote load executor service"
-					);
 				}
+				//
+				super.closeActually(); // requires the remoteLoadMap to be not empty yet
+				LOG.debug(Markers.MSG, "Clear the servers map");
+				remoteLoadMap.clear();
+			} else {
+				LOG.debug(Markers.MSG, "{}: closed already", getName());
 			}
-			//
-			super.closeActually(); // requires the remoteLoadMap to be not empty yet
-			LOG.debug(Markers.MSG, "Clear the servers map");
-			remoteLoadMap.clear();
-		} else {
-			LOG.debug(Markers.MSG, "{}: closed already", getName());
 		}
 	}
 	//

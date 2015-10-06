@@ -276,7 +276,7 @@ implements LoadExecutor<T> {
 					Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
 					getName(), counterSubm.get()
 				);
-				if(!isShutdown.compareAndSet(false, true)) {
+				if(isShutdown.compareAndSet(false, true)) {
 					shutdownActually();
 				}
 			}
@@ -399,22 +399,6 @@ implements LoadExecutor<T> {
 			);
 		}
 		//
-		mgmtExecutor.shutdownNow();
-		if(consumer instanceof LifeCycle) {
-			try {
-				((LifeCycle) consumer).shutdown();
-				LOG.debug(
-					Markers.MSG, "{}: shut down the consumer \"{}\" successfully",
-					getName(), consumer
-				);
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "{}: failed to shut down the consumer \"{}\"",
-					getName(), consumer
-				);
-			}
-		}
-		//
 		try {
 			if(isStarted.get()) { // if was executing
 				lastStats = ioStats.getSnapshot();
@@ -437,6 +421,22 @@ implements LoadExecutor<T> {
 			}
 		} catch(final Throwable t) {
 			t.printStackTrace(System.err);
+		}
+		//
+		mgmtExecutor.shutdownNow();
+		if(consumer instanceof LifeCycle) {
+			try {
+				((LifeCycle) consumer).shutdown();
+				LOG.debug(
+					Markers.MSG, "{}: shut down the consumer \"{}\" successfully",
+					getName(), consumer
+				);
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "{}: failed to shut down the consumer \"{}\"",
+					getName(), consumer
+				);
+			}
 		}
 		//
 		LOG.debug(Markers.MSG, "{} interrupted", getName());
@@ -540,7 +540,7 @@ implements LoadExecutor<T> {
 				}
 			}
 		} else {
-			if(!isShutdown.compareAndSet(false, true)) {
+			if(isShutdown.compareAndSet(false, true)) {
 				shutdownActually();
 			}
 			if(srcLimit > 0) {
@@ -848,7 +848,7 @@ implements LoadExecutor<T> {
 	public void setLoadState(final LoadState<T> state) {
 		if(state != null) {
 			if(state.isLimitReached(rtConfig)) {
-				isLimitReached.compareAndSet(false, true);
+				isLimitReached.set(true);
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
 			}
 			// apply parameters from loadState to current load executor
