@@ -12,7 +12,7 @@ extends ByteArrayOutputStream {
 
 	private final PrintStream replacedStream;
 
-	public BufferingOutputStream(final PrintStream out){
+	public BufferingOutputStream(final PrintStream out) {
 		super();
 		this.replacedStream = out;
 	}
