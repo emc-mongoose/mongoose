@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -232,6 +233,9 @@ implements LoadState<T> {
 		//
 		for(final LoadState state : states) {
 			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
+			if (statsSnapshot == null) {
+				return true;
+			}
 			final long elapsedTimeMicroSec = statsSnapshot.getElapsedTime();
 			final long stateItemsCount = statsSnapshot.getSuccCount() + statsSnapshot.getFailCount();
 			if(elapsedTimeMicroSec >= timeLimitMicroSec) {
