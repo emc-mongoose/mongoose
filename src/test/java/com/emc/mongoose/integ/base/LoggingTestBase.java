@@ -25,7 +25,7 @@ extends ConfiguredTestBase {
 		USER_DIR_PROPERTY_NAME = "user.dir";
 	//
 	protected static Logger LOG;
-	protected static File FILE_LOG_PERF_SUM, FILE_LOG_PERF_AVG;
+	protected static File FILE_LOG_PERF_SUM, FILE_LOG_PERF_AVG, FILE_LOG_DATA_ITEMS;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -42,6 +42,7 @@ extends ConfiguredTestBase {
 		LogValidator.removeLogDirectory(runId);
 		FILE_LOG_PERF_SUM = LogValidator.getPerfSumFile(runId);
 		FILE_LOG_PERF_AVG = LogValidator.getPerfAvgFile(runId);
+		FILE_LOG_DATA_ITEMS = LogValidator.getDataItemsFile(runId);
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, runId);
 		RunTimeConfig.setContext(rtConfig);
