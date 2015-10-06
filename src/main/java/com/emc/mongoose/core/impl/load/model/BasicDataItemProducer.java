@@ -131,7 +131,7 @@ implements DataItemProducer<T> {
 					break;
 				} catch(final IOException e) {
 					LogUtil.exception(
-						LOG, Level.WARN, e,
+						LOG, Level.DEBUG, e,
 						"Failed to transfer the data items, " +
 						"count = {}, batch size = {}, batch offset = {}", count, n, m
 					);

@@ -10,7 +10,6 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 //
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +18,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 //
 @RunWith(MockitoJUnitRunner.class)
-public class BlockingQueueItemBufferTest {
+public class LimitedQueueItemBufferTest {
 	//
 	final DataItem
 		dataItem0 = Mockito.mock(DataItem.class),
@@ -31,7 +30,7 @@ public class BlockingQueueItemBufferTest {
 	@Test
 	public void shouldReadSingleAfterSingleWrite()
 	throws Exception {
-		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
+		final LimitedQueueItemBuffer<DataItem> itemsIO = new LimitedQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(1)
 		);
 		itemsIO.put(dataItem0);
@@ -41,7 +40,7 @@ public class BlockingQueueItemBufferTest {
 	@Test
 	public void shouldReadInTheSameOrder()
 	throws Exception {
-		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
+		final LimitedQueueItemBuffer<DataItem> itemsIO = new LimitedQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(3)
 		);
 		itemsIO.put(dataItem0);
@@ -55,7 +54,7 @@ public class BlockingQueueItemBufferTest {
 	@Test
 	public void shouldReadBatchInTheSameOrder()
 	throws Exception {
-		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
+		final LimitedQueueItemBuffer<DataItem> itemsIO = new LimitedQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(5)
 		);
 		final List<DataItem>
@@ -69,9 +68,9 @@ public class BlockingQueueItemBufferTest {
 	}
 	//
 	@Test
-	public void shouldBlockWriteWhenOutOfCapacity()
+	public void shouldFailWriteWhenOutOfCapacity()
 	throws Exception {
-		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
+		final LimitedQueueItemBuffer<DataItem> itemsIO = new LimitedQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
 		itemsIO.put(dataItem0);
@@ -96,7 +95,7 @@ public class BlockingQueueItemBufferTest {
 	public void shouldWriteBatchPartiallyWhenOutOfCapacity()
 	throws Exception {
 		final BlockingQueue<DataItem> queue = new ArrayBlockingQueue<>(2);
-		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(queue);
+		final LimitedQueueItemBuffer<DataItem> itemsIO = new LimitedQueueItemBuffer<>(queue);
 		final int n = itemsIO.put(
 			Arrays.asList(dataItem0, dataItem1, dataItem2, dataItem3, dataItem4), 0, 5
 		);
@@ -104,86 +103,47 @@ public class BlockingQueueItemBufferTest {
 	}
 	//
 	@Test
-	public void shouldUnblockWriteWhenRead()
+	public void shouldAllowWriteWhenRead()
 	throws Exception {
-		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
+		final LimitedQueueItemBuffer<DataItem> itemsIO = new LimitedQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
 		itemsIO.put(dataItem0);
 		itemsIO.put(dataItem1);
-		final Thread writeThread = new Thread() {
-			@Override
-			public void run() {
-				try {
-					itemsIO.put(dataItem2);
-				} catch(final IOException e) {
-					fail(e.getMessage());
-				}
-			}
-		};
-		writeThread.start();
-		TimeUnit.SECONDS.sleep(1);
 		assertEquals(dataItem0, itemsIO.get());
+		itemsIO.put(dataItem2);
 		assertEquals(dataItem1, itemsIO.get());
 		assertEquals(dataItem2, itemsIO.get());
-		TimeUnit.SECONDS.timedJoin(writeThread, 1);
-		writeThread.interrupt();
 	}
 	//
 	@Test
-	public void shouldBlockReadWhenEmpty()
+	public void shouldReadNullWhenEmpty()
 	throws Exception {
-		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
+		final LimitedQueueItemBuffer<DataItem> itemsIO = new LimitedQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(2)
 		);
 		itemsIO.put(dataItem0);
 		itemsIO.put(dataItem1);
 		assertEquals(itemsIO.get(), dataItem0);
 		assertEquals(itemsIO.get(), dataItem1);
-		final Thread readThread = new Thread() {
-			@Override
-			public void run() {
-				try {
-					itemsIO.get();
-					fail();
-				} catch(final IOException e) {
-					assertNotNull(e);
-				}
-			}
-		};
-		readThread.start();
-		TimeUnit.SECONDS.timedJoin(readThread, 1);
-		readThread.interrupt();
+		assertNull(itemsIO.get());
 	}
 	//
 	@Test
-	public void shouldUnblockReadWhenWritten()
+	public void shouldAllowReadWhenWritten()
 	throws Exception {
-		final BlockingQueueItemBuffer<DataItem> itemsIO = new BlockingQueueItemBuffer<>(
+		final LimitedQueueItemBuffer<DataItem> itemsIO = new LimitedQueueItemBuffer<>(
 			new ArrayBlockingQueue<DataItem>(3)
 		);
 		itemsIO.put(dataItem0);
 		itemsIO.put(dataItem1);
 		itemsIO.put(dataItem2);
-		final Thread readThread = new Thread() {
-			@Override
-			public void run() {
-				try {
-					assertEquals(dataItem0, itemsIO.get());
-					assertEquals(dataItem1, itemsIO.get());
-					assertEquals(dataItem2, itemsIO.get());
-					assertEquals(dataItem3, itemsIO.get());
-					assertEquals(dataItem4, itemsIO.get());
-				} catch(final IOException e) {
-					fail(e.getMessage());
-				}
-			}
-		};
-		readThread.start();
-		TimeUnit.SECONDS.sleep(1);
+		assertEquals(dataItem0, itemsIO.get());
 		itemsIO.put(dataItem3);
+		assertEquals(dataItem1, itemsIO.get());
 		itemsIO.put(dataItem4);
-		TimeUnit.SECONDS.timedJoin(readThread, 1);
-		readThread.interrupt();
+		assertEquals(dataItem2, itemsIO.get());
+		assertEquals(dataItem3, itemsIO.get());
+		assertEquals(dataItem4, itemsIO.get());
 	}
 }

@@ -11,7 +11,6 @@ import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.model.BlockingQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;

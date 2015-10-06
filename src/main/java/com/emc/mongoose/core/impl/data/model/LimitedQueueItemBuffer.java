@@ -17,7 +17,7 @@ import java.util.concurrent.BlockingQueue;
  The blocking queue wrapped in order to act as data item output from the tail and as data item input
  from the head.
  */
-public class BlockingQueueItemBuffer<T extends DataItem>
+public class LimitedQueueItemBuffer<T extends DataItem>
 implements ItemBuffer<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
@@ -25,7 +25,7 @@ implements ItemBuffer<T> {
 	private DataItem lastItem = null;
 	protected final BlockingQueue<T> queue;
 	//
-	public BlockingQueueItemBuffer(final BlockingQueue<T> queue) {
+	public LimitedQueueItemBuffer(final BlockingQueue<T> queue) {
 		this.queue = queue;
 	}
 	/**
@@ -43,7 +43,8 @@ implements ItemBuffer<T> {
 	/**
 	 Non-blocking bulk put implementation
 	 @param buffer the buffer containing the data items to put
-	 @return the count of the items been written
+	 @return the count of the items been written, may return less count than specified if not enough
+	 free capacity is in the queue
 	 @throws IOException doesn't throw
 	 */
 	@Override
@@ -66,7 +67,8 @@ implements ItemBuffer<T> {
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public BlockingQueueItemBuffer<T> getDataItemSrc()
+	public
+	LimitedQueueItemBuffer<T> getDataItemSrc()
 	throws IOException {
 		return this;
 	}
