@@ -22,6 +22,7 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
+import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
 
 /**
  * Created by gusakk on 06.10.15.
@@ -40,7 +42,7 @@ extends StandaloneClientTestBase {
 	private static final int WRITE_COUNT = 12345;
 	private static final int READ_COUNT = 123450;
 	//
-	private static final long COUNT_OF_DUPLICATES = 10;
+	private static final int COUNT_OF_DUPLICATES = 10;
 	//
 	private static long COUNT_WRITTEN, COUNT_READ;
 	private static byte[] STD_OUT_CONTENT;
@@ -124,6 +126,36 @@ extends StandaloneClientTestBase {
 			}
 		}
 	}
+	@Test
+	public void checkItemDuplicatesOrder()
+	throws Exception {
+		final Map<String, Integer> items = new HashMap<>();
+		try (
+			final LineNumberReader in = new LineNumberReader(
+				Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
+			)
+		) {
+			long uniqueItems = 0;
+			String line;
+			while ((line = in.readLine()) != null) {
+				if (uniqueItems < WRITE_COUNT) {
+					items.put(line, in.getLineNumber());
+					uniqueItems++;
+				} else {
+					Assert.assertTrue(items.containsKey(line));
+					final int expected;
+					if (in.getLineNumber() % COUNT_OF_DUPLICATES == 0) {
+						expected = WRITE_COUNT;
+					} else {
+						expected = in.getLineNumber() % COUNT_OF_DUPLICATES;
+					}
+					Assert.assertEquals(
+						Integer.valueOf(expected), items.get(line)
+					);
+				}
+			}
+		}
+	}
 	//
 	@Test
 	public void checkConsoleAvgMetricsLogging()
@@ -165,6 +197,49 @@ extends StandaloneClientTestBase {
 		}
 		Assert.assertTrue(
 			"Average metrics line matching the pattern was not met in the stdout", passed
+		);
+	}
+	//
+	@Test
+	public void checkConsoleSumMetricsLogging()
+	throws Exception {
+		boolean passed = false;
+		try(
+			final BufferedReader in = new BufferedReader(
+				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
+			)
+		) {
+			String nextStdOutLine;
+			Matcher m;
+			do {
+				nextStdOutLine = in.readLine();
+				if(nextStdOutLine == null) {
+					break;
+				} else {
+					m = CONSOLE_METRICS_SUM.matcher(nextStdOutLine);
+					if(m.find()) {
+						Assert.assertTrue(
+							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
+							IOTask.Type.READ.name().equalsIgnoreCase(m.group("typeLoad"))
+						);
+						long
+							countLimit = Long.parseLong(m.group("countLimit")),
+							countSucc = Long.parseLong(m.group("countSucc")),
+							countFail = Long.parseLong(m.group("countFail"));
+						Assert.assertTrue(
+							"Deleted items count " + countSucc +
+								" is not equal to the limit: " + countLimit,
+							countSucc == countLimit
+						);
+						Assert.assertTrue("There are failures reported", countFail == 0);
+						Assert.assertFalse("Summary metrics are printed twice at least", passed);
+						passed = true;
+					}
+				}
+			} while(true);
+		}
+		Assert.assertTrue(
+			"Summary metrics line matching the pattern was not met in the stdout", passed
 		);
 	}
 
