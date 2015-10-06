@@ -2,6 +2,7 @@ package com.emc.mongoose.integ.core.single;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -13,8 +14,6 @@ import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -30,7 +29,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
-import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG_CLIENT;
+import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
 
 /**
  * Created by gusakk on 06.10.15.
@@ -40,6 +39,8 @@ extends StandaloneClientTestBase {
 	//
 	private static final int WRITE_COUNT = 12345;
 	private static final int READ_COUNT = 123450;
+	//
+	private static final long COUNT_OF_DUPLICATES = 10;
 	//
 	private static long COUNT_WRITTEN, COUNT_READ;
 	private static byte[] STD_OUT_CONTENT;
@@ -67,7 +68,7 @@ extends StandaloneClientTestBase {
 				.build()
 		) {
 			final DataItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
-					BasicWSObject.class
+				BasicWSObject.class
 			);
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB")
@@ -87,32 +88,84 @@ extends StandaloneClientTestBase {
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 			}
-			System.out.println("Successfully read " + COUNT_READ);
 		}
+		//
+		RunIdFileManager.flushAll();
 	}
 	//
 	@AfterClass
 	public static void tearDown()
 	throws Exception {
-		StandaloneClientTestBase.tearDownClass();
+		StdOutInterceptorTestSuite.reset();
 	}
 	//
 	@Test
 	public void checkItemsFileContainsDuplicates()
 	throws  Exception {
-		/*Assert.assertTrue(
-			"Data items' log file \"" + FILE_LOG_DATA_ITEMS + "\" doesn't exist",
-			FILE_LOG_DATA_ITEMS.exists()
-		);
-		//
-		final Map<String, Integer> items = new HashMap<>();
+		final Map<String, Long> items = new HashMap<>();
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
 		) {
-			//if (items.containsKey())
-		}*/
+			String line;
+			while ((line = in.readLine()) != null) {
+				long count = 1;
+				if (items.containsKey(line)) {
+					count = items.get(line);
+					count++;
+				}
+				items.put(line, count);
+			}
+			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
+			for (final Map.Entry<String, Long> entry : items.entrySet()) {
+				Assert.assertEquals(
+					"data.items.csv doesn't contain necessary count of duplicated items" ,
+						entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES));
+			}
+		}
 	}
 	//
+	@Test
+	public void checkConsoleAvgMetricsLogging()
+	throws Exception {
+		boolean passed = false;
+		long lastSuccCount = 0;
+		try(
+			final BufferedReader in = new BufferedReader(
+				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
+			)
+		) {
+			String nextStdOutLine;
+			Matcher m;
+			do {
+				nextStdOutLine = in.readLine();
+				if(nextStdOutLine == null) {
+					break;
+				} else {
+					m = CONSOLE_METRICS_AVG.matcher(nextStdOutLine);
+					if(m.find()) {
+						Assert.assertTrue(
+							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
+							IOTask.Type.READ.name().equalsIgnoreCase(m.group("typeLoad"))
+						);
+						long
+							nextSuccCount = Long.parseLong(m.group("countSucc")),
+							nextFailCount = Long.parseLong(m.group("countFail"));
+						Assert.assertTrue(
+							"Next deleted items count " + nextSuccCount +
+								" is less than previous: " + lastSuccCount,
+							nextSuccCount >= lastSuccCount
+						);
+						lastSuccCount = nextSuccCount;
+						Assert.assertTrue("There are failures reported", nextFailCount == 0);
+						passed = true;
+					}
+				}
+			} while(true);
+		}
+		Assert.assertTrue(
+			"Average metrics line matching the pattern was not met in the stdout", passed
+		);
+	}
 
 }
