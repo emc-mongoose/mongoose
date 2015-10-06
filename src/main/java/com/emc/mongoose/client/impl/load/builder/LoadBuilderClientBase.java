@@ -408,7 +408,7 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public LoadBuilderClientBase<T, U> useNewItemSrc()
 	throws RemoteException {
-		flagUseNoneItemSrc = true;
+		flagUseNewItemSrc = true;
 		return this;
 	}
 	//
