@@ -56,9 +56,9 @@ extends LoadExecutorBase<T> {
 	throws InterruptedIOException {
 		if(rateLimit > 0 && lastStats.getSuccRateLast() > rateLimit && itemCountToFeed > 0) {
 			final int microDelay = itemCountToFeed * (int) (
-				tgtDurMicroSecs - lastStats.getDurationSum() / lastStats.getSuccRateMean()
+				tgtDurMicroSecs - lastStats.getDurationSum() / lastStats.getSuccCount()
 			);
-			if(LOG.isTraceEnabled(Markers.MSG)) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "Next delay: {}[us]", microDelay);
 			}
 			try {
