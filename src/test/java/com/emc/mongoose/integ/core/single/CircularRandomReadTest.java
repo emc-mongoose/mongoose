@@ -39,11 +39,12 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
 public class CircularRandomReadTest
 extends StandaloneClientTestBase {
 	//
-	private static final int WRITE_COUNT = 10;
-	private static final int READ_COUNT = 100;
+	private static final int WRITE_COUNT = 10000;
+	private static final int READ_COUNT = 100000;
 	//
 	private static final int COUNT_OF_DUPLICATES = 10;
 	//
+	@SuppressWarnings("FieldCanBeLocal")
 	private static long COUNT_WRITTEN, COUNT_READ;
 	private static byte[] STD_OUT_CONTENT;
 	//
