@@ -39,8 +39,8 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
 public class CircularRandomReadTest
 extends StandaloneClientTestBase {
 	//
-	private static final int WRITE_COUNT = 10000;
-	private static final int READ_COUNT = 100000;
+	private static final int WRITE_COUNT = 100;
+	private static final int READ_COUNT = 1000;
 	//
 	private static final int COUNT_OF_DUPLICATES = 10;
 	//
@@ -52,7 +52,7 @@ extends StandaloneClientTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularReadTest.class.getCanonicalName()
+			RunTimeConfig.KEY_RUN_ID, CircularRandomReadTest.class.getCanonicalName()
 		);
 		WSMockTestBase.setUpClass();
 		//

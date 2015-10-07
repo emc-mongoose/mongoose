@@ -47,7 +47,7 @@ extends StandaloneClientTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularReadTest.class.getCanonicalName()
+			RunTimeConfig.KEY_RUN_ID, CircularSingleDataItemReadTest.class.getCanonicalName()
 		);
 		WSMockTestBase.setUpClass();
 		//

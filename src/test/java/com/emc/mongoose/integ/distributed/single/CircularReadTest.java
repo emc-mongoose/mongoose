@@ -1,15 +1,15 @@
-package com.emc.mongoose.integ.core.single;
+package com.emc.mongoose.integ.distributed.single;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
+import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
-import com.emc.mongoose.integ.base.StandaloneClientTestBase;
-import com.emc.mongoose.integ.base.WSMockTestBase;
+import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -30,37 +30,34 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
-import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
-import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
+import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG_CLIENT;
+import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIENT;
 
 /**
- * Created by gusakk on 06.10.15.
+ * Created by gusakk on 07.10.15.
  */
 public class CircularReadTest
-extends StandaloneClientTestBase {
+extends DistributedClientTestBase {
 	//
 	private static final int WRITE_COUNT = 1234;
 	private static final int READ_COUNT = 12340;
 	//
 	private static final int COUNT_OF_DUPLICATES = 10;
 	//
-	private static long COUNT_WRITTEN, COUNT_READ;
-	private static byte[] STD_OUT_CONTENT;
+	private static byte STD_OUT_CONTENT[];
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularReadTest.class.getCanonicalName()
-		);
-		WSMockTestBase.setUpClass();
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, CircularReadTest.class.getCanonicalName());
+		DistributedClientTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_CIRCULAR, true);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		CLIENT_BUILDER = new BasicWSClientBuilder<>()
-			.setClientMode(null);
+			.setClientMode(new String[]{ServiceUtil.getHostAddr()});
 		//
 		try(
 			final StorageClient<WSObject> client = CLIENT_BUILDER
@@ -70,11 +67,10 @@ extends StandaloneClientTestBase {
 				.build()
 		) {
 			final DataItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
-				BasicWSObject.class
+					BasicWSObject.class
 			);
-			COUNT_WRITTEN = client.write(
-				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB")
-			);
+			final long countWritten =
+				client.write(null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB"));
 			TimeUnit.SECONDS.sleep(10);
 			//
 			try (
@@ -82,8 +78,8 @@ extends StandaloneClientTestBase {
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
 				stdOutInterceptorStream.reset();
-				if (COUNT_WRITTEN > 0) {
-					COUNT_READ = client.read(writeOutput.getDataItemSrc(), null, READ_COUNT, 1, true);
+				if (countWritten > 0) {
+					 client.read(writeOutput.getDataItemSrc(), null, READ_COUNT, 1, true);
 				} else {
 					throw new IllegalStateException("Failed to write");
 				}
@@ -122,10 +118,11 @@ extends StandaloneClientTestBase {
 			for (final Map.Entry<String, Long> entry : items.entrySet()) {
 				Assert.assertEquals(
 					"data.items.csv doesn't contain necessary count of duplicated items" ,
-						entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES));
+					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES));
 			}
 		}
 	}
+	//
 	@Test
 	public void checkItemDuplicatesOrder()
 	throws Exception {
@@ -174,7 +171,7 @@ extends StandaloneClientTestBase {
 				if(nextStdOutLine == null) {
 					break;
 				} else {
-					m = CONSOLE_METRICS_AVG.matcher(nextStdOutLine);
+					m = CONSOLE_METRICS_AVG_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
 							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
@@ -216,7 +213,7 @@ extends StandaloneClientTestBase {
 				if(nextStdOutLine == null) {
 					break;
 				} else {
-					m = CONSOLE_METRICS_SUM.matcher(nextStdOutLine);
+					m = CONSOLE_METRICS_SUM_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
 							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
