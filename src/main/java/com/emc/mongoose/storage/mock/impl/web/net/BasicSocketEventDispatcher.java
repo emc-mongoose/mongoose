@@ -3,6 +3,8 @@ package com.emc.mongoose.storage.mock.impl.web.net;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
+
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
@@ -58,7 +60,7 @@ implements Runnable {
 		);
 		int ioThreadCount = runTimeConfig.getStorageMockWorkersPerSocket();
 		if(ioThreadCount == 0) {
-			ioThreadCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+			ioThreadCount = ThreadUtil.getWorkerCount();
 		}
 		LOG.info(
 			Markers.MSG, "Socket {}:{} will use {} I/O threads",
