@@ -4,6 +4,6 @@ package com.emc.mongoose.common.concurrent;
  */
 public class ThreadUtil {
 	public static int getWorkerCount() {
-		return Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+		return Runtime.getRuntime().availableProcessors();
 	}
 }

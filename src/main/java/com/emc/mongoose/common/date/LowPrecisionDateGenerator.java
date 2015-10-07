@@ -7,7 +7,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicReference;
 /**
  Created by kurila on 16.04.15.
  */
@@ -21,25 +20,23 @@ public class LowPrecisionDateGenerator {
 	}};
 	//
 	private static long DT_MILLISEC = System.currentTimeMillis();
-	private static AtomicReference<String> DT_TEXT_REF = new AtomicReference<>(
-		FMT_DATE.format(new Date(DT_MILLISEC))
-	);
+	private static volatile String DT_TEXT = FMT_DATE.format(new Date(DT_MILLISEC));
 	//
 	public static int UPDATE_PERIOD_MILLISEC = 100000;
 	//
-	private static final Timer UPDATE_DAEMON = new Timer(true) {{
+	private static final Timer TIMER = new Timer(true) {{
 		schedule(
 			new TimerTask() {
 				@Override
 				public void run() {
 					DT_MILLISEC = System.currentTimeMillis();
-					DT_TEXT_REF.set(FMT_DATE.format(new Date(DT_MILLISEC)));
+					DT_TEXT = FMT_DATE.format(new Date(DT_MILLISEC));
 				}
 			}, UPDATE_PERIOD_MILLISEC, UPDATE_PERIOD_MILLISEC
 		);
 	}};
 	//
 	public static String getDateText() {
-		return DT_TEXT_REF.get();
+		return DT_TEXT;
 	}
 }
