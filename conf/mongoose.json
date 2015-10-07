@@ -51,8 +51,10 @@
 
 			"http.sign.method": "http.signMethod",
 
+			"load.type.append.threads": "load.type.append.connections",
 			"load.append.threads": "load.type.append.connections",
 
+			"load.type.create.threads": "load.type.create.connections",
 			"load.create.threads": "load.type.create.connections",
 
 			"load.connections": [
@@ -63,10 +65,12 @@
 				"load.type.delete.connections"
 			],
 
+			"load.type.delete.threads": "load.type.delete.connections",
 			"load.delete.threads": "load.type.delete.connections",
 
 			"load.drivers": "load.server.addrs",
 
+			"load.type.read.threads": "load.type.read.connections",
 			"load.read.threads": "load.type.read.connections",
 			"load.read.verify.content": "load.type.read.verifyContent",
 
@@ -82,6 +86,7 @@
 			],
 			"load.time": "load.limit.time",
 
+			"load.type.update.threads": "load.type.update.connections",
 			"load.update.threads": "load.type.update.connections",
 			"load.update.per.item": "load.type.update.perItem",
 
