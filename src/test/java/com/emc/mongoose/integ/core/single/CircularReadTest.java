@@ -144,10 +144,10 @@ extends StandaloneClientTestBase {
 				} else {
 					Assert.assertTrue(items.containsKey(line));
 					final int expected;
-					if (in.getLineNumber() % COUNT_OF_DUPLICATES == 0) {
+					if (in.getLineNumber() % WRITE_COUNT == 0) {
 						expected = WRITE_COUNT;
 					} else {
-						expected = in.getLineNumber() % COUNT_OF_DUPLICATES;
+						expected = in.getLineNumber() % WRITE_COUNT;
 					}
 					Assert.assertEquals(
 						Integer.valueOf(expected), items.get(line)
