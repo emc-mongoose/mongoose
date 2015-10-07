@@ -8,13 +8,13 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 //
+import com.emc.mongoose.core.api.io.task.IOTask;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 04.05.15.
@@ -52,29 +52,10 @@ extends LoadExecutorBase<T> {
 		}
 	}
 	//
-	private void invokeDelayToMatchRate(final int itemCountToFeed)
-	throws InterruptedIOException {
-		if(rateLimit > 0 && lastStats.getSuccRateLast() > rateLimit && itemCountToFeed > 0) {
-			final int microDelay = itemCountToFeed * (int) (
-				tgtDurMicroSecs - lastStats.getDurationSum() / lastStats.getSuccCount()
-			);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "Next delay: {}[us]", microDelay);
-			}
-			try {
-				TimeUnit.MICROSECONDS.sleep(microDelay);
-			} catch(final InterruptedException e) {
-				throw new InterruptedIOException(e.toString());
-			}
-		}
-	}
-	/**
-	 Adds the optional delay calculated from last successful I/O task duration and the target
-	 duration
-	 */
 	@Override
-	public void put(final T dataItem)
-	throws IOException {
+	public Future<? extends IOTask<T>> submitReq(final IOTask<T> request)
+	throws RejectedExecutionException {
+		// manual delay
 		if(manualTaskSleepMicroSecs > 0) {
 			try {
 				TimeUnit.MILLISECONDS.sleep(manualTaskSleepMicroSecs);
@@ -82,29 +63,24 @@ extends LoadExecutorBase<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
 			}
 		}
-		invokeDelayToMatchRate(1);
-		super.put(dataItem);
-	}
-	/**
-	 Adds the optional delay calculated from last successful I/O task duration and the target
-	 duration
-	 */
-	@Override
-	public int put(final List<T> dataItems, final int from, final int to)
-	throws IOException {
-		final int n = to - from;
-		if(n > 0) {
-			if(manualTaskSleepMicroSecs > 0) {
-				try {
-					TimeUnit.MICROSECONDS.sleep(n * manualTaskSleepMicroSecs);
-				} catch(final InterruptedException e) {
-					LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
-				}
+		// rate limit matching
+		if(rateLimit > 0 && lastStats.getSuccRateLast() > rateLimit) {
+			final int microDelay = (int) (
+				tgtDurMicroSecs - lastStats.getDurationSum() / lastStats.getSuccCount()
+			);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Next delay: {}[us]", microDelay);
 			}
-			invokeDelayToMatchRate(n);
-			return super.put(dataItems, from, to);
-		} else {
-			return 0;
+			try {
+				TimeUnit.MICROSECONDS.sleep(microDelay);
+			} catch(final InterruptedException e) {
+				throw new RejectedExecutionException(e);
+			}
 		}
+		//
+		return submitReqActually(request);
 	}
+	//
+	protected abstract Future<? extends IOTask<T>> submitReqActually(final IOTask<T> request)
+	throws RejectedExecutionException;
 }
