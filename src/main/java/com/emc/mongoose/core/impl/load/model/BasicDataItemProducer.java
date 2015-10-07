@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
 /**
@@ -35,17 +36,19 @@ implements DataItemProducer<T> {
 	protected long skipCount;
 	protected T lastDataItem;
 	protected boolean isCircular;
+	protected boolean isShuffled;
 	//
 	protected BasicDataItemProducer(
 		final DataItemSrc<T> itemSrc, final long maxCount, final int batchSize,
-		final boolean isCircular
+		final boolean isCircular, final boolean isShuffled
 	) {
-		this(itemSrc, maxCount, batchSize, isCircular, 0, null);
+		this(itemSrc, maxCount, batchSize, isCircular, isShuffled, 0, null);
 	}
 	//
 	private BasicDataItemProducer(
 		final DataItemSrc<T> itemSrc, final long maxCount, final int batchSize,
-		final boolean isCircular, final long skipCount, final T lastDataItem
+		final boolean isCircular, final boolean isShuffled,
+		final long skipCount, final T lastDataItem
 	) {
 		this.itemSrc = itemSrc;
 		this.maxCount = maxCount - skipCount;
@@ -53,6 +56,7 @@ implements DataItemProducer<T> {
 		this.skipCount = skipCount;
 		this.lastDataItem = lastDataItem;
 		this.isCircular = isCircular;
+		this.isShuffled = isShuffled;
 	}
 	//
 	@Override
@@ -107,6 +111,9 @@ implements DataItemProducer<T> {
 				try {
 					buff = new ArrayList<>(batchSize);
 					n = itemSrc.get(buff, batchSize);
+					if (isShuffled) {
+						Collections.shuffle(buff);
+					}
 					if(isInterrupted) {
 						break;
 					}
