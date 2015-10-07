@@ -509,7 +509,7 @@
 																		<div class="form-group">
 																			<label for="backup-scenario.type.rampup.connCounts"
 																			       class="col-sm-4 control-label">
-																				Concurrent connections count
+																				Connections count
 																			</label>
 																			<div class="col-sm-8">
 																				<input type="text" id="backup-scenario.type.rampup.connCounts"
