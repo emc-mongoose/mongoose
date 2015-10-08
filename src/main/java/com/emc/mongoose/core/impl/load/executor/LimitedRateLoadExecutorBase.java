@@ -58,7 +58,9 @@ extends LoadExecutorBase<T> {
 		// manual delay
 		if(manualTaskSleepMicroSecs > 0) {
 			try {
-				TimeUnit.MILLISECONDS.sleep(manualTaskSleepMicroSecs);
+				TimeUnit.MILLISECONDS.sleep(
+					TimeUnit.MICROSECONDS.toMillis(manualTaskSleepMicroSecs)
+				);
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
 			}
