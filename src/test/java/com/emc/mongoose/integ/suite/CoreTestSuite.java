@@ -7,6 +7,10 @@ import com.emc.mongoose.integ.core.chain.DefaultChainScenarioTest;
 //
 import com.emc.mongoose.integ.core.rampup.CustomRampupTest;
 import com.emc.mongoose.integ.core.rampup.DefaultRampupTest;
+import com.emc.mongoose.integ.core.single.CircularRandomReadTest;
+import com.emc.mongoose.integ.core.single.CircularReadFromBucketTest;
+import com.emc.mongoose.integ.core.single.CircularReadTest;
+import com.emc.mongoose.integ.core.single.CircularSingleDataItemReadTest;
 import com.emc.mongoose.integ.core.single.DefaultWriteTest;
 import com.emc.mongoose.integ.core.single.InfiniteWriteTest;
 import com.emc.mongoose.integ.core.single.Read10BItemsTest;
@@ -47,5 +51,9 @@ import org.junit.runners.Suite;
 	CustomRampupTest.class,
 	DefaultRampupTest.class,
 	InfiniteWriteTest.class,
+	CircularReadTest.class,
+	CircularSingleDataItemReadTest.class,
+	CircularReadFromBucketTest.class,
+	CircularRandomReadTest.class
 })
 public class CoreTestSuite {}

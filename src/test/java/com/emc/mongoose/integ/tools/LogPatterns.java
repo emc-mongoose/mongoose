@@ -62,11 +62,11 @@ public interface LogPatterns {
 		//
 		CONSOLE_METRICS_AVG = Pattern.compile(
 			DATE_TIME_ISO8601.pattern() + "[\\s]+" +
-			LOG_LEVEL.pattern() + "[\\s]+" + CLASS_NAME.pattern() + "[\\s]+" +
-			CONSOLE_FULL_LOAD_NAME + "[\\s]+" +
+			LOG_LEVEL.pattern() + "[\\s]+" + THREAD_NAME.pattern() + "[\\s]+" +
+			CONSOLE_FULL_LOAD_NAME + "[\\w#\\-]*[\\s]+" +
 			CONSOLE_ITEM_COUNTS_AVG.pattern() + ";[\\s]+" +
 			CONSOLE_DURATION_AVG + ";[\\s]+" + CONSOLE_LATENCY_AVG + ";[\\s]+" +
-			CONSOLE_TP + ";[\\s]+" + CONSOLE_BW + "$"
+			CONSOLE_TP + ";[\\s]+" + CONSOLE_BW
 		),
 		//
 		CONSOLE_METRICS_AVG_CLIENT = Pattern.compile(

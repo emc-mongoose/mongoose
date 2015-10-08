@@ -34,16 +34,17 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
 
 /**
- * Created by gusakk on 06.10.15.
+ * Created by gusakk on 07.10.15.
  */
-public class CircularReadTest
+public class CircularRandomReadTest
 extends StandaloneClientTestBase {
 	//
-	private static final int WRITE_COUNT = 1234;
-	private static final int READ_COUNT = 12340;
+	private static final int WRITE_COUNT = 100;
+	private static final int READ_COUNT = 1000;
 	//
 	private static final int COUNT_OF_DUPLICATES = 10;
 	//
+	@SuppressWarnings("FieldCanBeLocal")
 	private static long COUNT_WRITTEN, COUNT_READ;
 	private static byte[] STD_OUT_CONTENT;
 	//
@@ -51,12 +52,13 @@ extends StandaloneClientTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularReadTest.class.getCanonicalName()
+			RunTimeConfig.KEY_RUN_ID, CircularRandomReadTest.class.getCanonicalName()
 		);
 		WSMockTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_CIRCULAR, true);
+		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_RANDOM, true);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		CLIENT_BUILDER = new BasicWSClientBuilder<>()
@@ -122,13 +124,16 @@ extends StandaloneClientTestBase {
 			for (final Map.Entry<String, Long> entry : items.entrySet()) {
 				Assert.assertEquals(
 					"data.items.csv doesn't contain necessary count of duplicated items" ,
-						entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES));
+					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES));
 			}
 		}
 	}
+	//
 	@Test
-	public void checkItemDuplicatesOrder()
+	public void checkItemDuplicatesRandomOrder()
 	throws Exception {
+		boolean passed = false;
+		//
 		final Map<String, Integer> items = new HashMap<>();
 		try (
 			final LineNumberReader in = new LineNumberReader(
@@ -149,12 +154,15 @@ extends StandaloneClientTestBase {
 					} else {
 						expected = in.getLineNumber() % WRITE_COUNT;
 					}
-					Assert.assertEquals(
-						Integer.valueOf(expected), items.get(line)
-					);
+					//
+					if (!Integer.valueOf(expected).equals(items.get(line))) {
+						passed = true;
+					}
 				}
 			}
 		}
+		//
+		Assert.assertTrue("Data items haven't been shuffled", passed);
 	}
 	//
 	@Test

@@ -22,7 +22,6 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -34,24 +33,21 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
 
 /**
- * Created by gusakk on 06.10.15.
+ * Created by gusakk on 07.10.15.
  */
-public class CircularReadTest
+public class CircularSingleDataItemReadTest
 extends StandaloneClientTestBase {
 	//
-	private static final int WRITE_COUNT = 1234;
-	private static final int READ_COUNT = 12340;
-	//
-	private static final int COUNT_OF_DUPLICATES = 10;
-	//
-	private static long COUNT_WRITTEN, COUNT_READ;
+	private static final int WRITE_COUNT = 1;
 	private static byte[] STD_OUT_CONTENT;
+	//
+	private static long READ_COUNT;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularReadTest.class.getCanonicalName()
+			RunTimeConfig.KEY_RUN_ID, CircularSingleDataItemReadTest.class.getCanonicalName()
 		);
 		WSMockTestBase.setUpClass();
 		//
@@ -72,7 +68,7 @@ extends StandaloneClientTestBase {
 			final DataItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
 				BasicWSObject.class
 			);
-			COUNT_WRITTEN = client.write(
+			final long countWritten = client.write(
 				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB")
 			);
 			TimeUnit.SECONDS.sleep(10);
@@ -82,8 +78,8 @@ extends StandaloneClientTestBase {
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
 				stdOutInterceptorStream.reset();
-				if (COUNT_WRITTEN > 0) {
-					COUNT_READ = client.read(writeOutput.getDataItemSrc(), null, READ_COUNT, 1, true);
+				if (countWritten > 0) {
+					READ_COUNT = client.read(writeOutput.getDataItemSrc(), null, 1000, 1, true);
 				} else {
 					throw new IllegalStateException("Failed to write");
 				}
@@ -102,7 +98,7 @@ extends StandaloneClientTestBase {
 	}
 	//
 	@Test
-	public void checkItemsFileContainsDuplicates()
+	public void checkItemsFileContainsSingleDataItemDuplicates()
 	throws  Exception {
 		final Map<String, Long> items = new HashMap<>();
 		try(
@@ -118,41 +114,11 @@ extends StandaloneClientTestBase {
 				}
 				items.put(line, count);
 			}
-			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
+			Assert.assertEquals("Data items haven't been read fully", items.size(), WRITE_COUNT);
 			for (final Map.Entry<String, Long> entry : items.entrySet()) {
 				Assert.assertEquals(
 					"data.items.csv doesn't contain necessary count of duplicated items" ,
-						entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES));
-			}
-		}
-	}
-	@Test
-	public void checkItemDuplicatesOrder()
-	throws Exception {
-		final Map<String, Integer> items = new HashMap<>();
-		try (
-			final LineNumberReader in = new LineNumberReader(
-				Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
-			)
-		) {
-			long uniqueItems = 0;
-			String line;
-			while ((line = in.readLine()) != null) {
-				if (uniqueItems < WRITE_COUNT) {
-					items.put(line, in.getLineNumber());
-					uniqueItems++;
-				} else {
-					Assert.assertTrue(items.containsKey(line));
-					final int expected;
-					if (in.getLineNumber() % WRITE_COUNT == 0) {
-						expected = WRITE_COUNT;
-					} else {
-						expected = in.getLineNumber() % WRITE_COUNT;
-					}
-					Assert.assertEquals(
-						Integer.valueOf(expected), items.get(line)
-					);
-				}
+					entry.getValue(), Long.valueOf(READ_COUNT));
 			}
 		}
 	}
@@ -242,5 +208,4 @@ extends StandaloneClientTestBase {
 			"Summary metrics line matching the pattern was not met in the stdout", passed
 		);
 	}
-
 }

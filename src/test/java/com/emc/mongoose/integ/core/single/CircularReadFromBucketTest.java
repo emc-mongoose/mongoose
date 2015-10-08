@@ -4,10 +4,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
+import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -27,6 +25,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
@@ -34,24 +34,26 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
 
 /**
- * Created by gusakk on 06.10.15.
+ * Created by gusakk on 07.10.15.
  */
-public class CircularReadTest
+public class CircularReadFromBucketTest
 extends StandaloneClientTestBase {
 	//
-	private static final int WRITE_COUNT = 1234;
-	private static final int READ_COUNT = 12340;
+	private static final int WRITE_COUNT = 100;
+	private static final int READ_COUNT = 1000;
 	//
 	private static final int COUNT_OF_DUPLICATES = 10;
 	//
 	private static long COUNT_WRITTEN, COUNT_READ;
 	private static byte[] STD_OUT_CONTENT;
 	//
+	private static final String RUN_ID = CircularReadFromBucketTest.class.getCanonicalName();
+	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularReadTest.class.getCanonicalName()
+			RunTimeConfig.KEY_RUN_ID, RUN_ID
 		);
 		WSMockTestBase.setUpClass();
 		//
@@ -67,13 +69,14 @@ extends StandaloneClientTestBase {
 				.setAPI("s3")
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(WRITE_COUNT)
+				.setS3Bucket(RUN_ID)
 				.build()
 		) {
-			final DataItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
-				BasicWSObject.class
-			);
+			final BlockingQueue<WSObject> itemsQueue = new ArrayBlockingQueue<>(WRITE_COUNT);
+			final LimitedQueueItemBuffer<WSObject> itemsIO
+				= new LimitedQueueItemBuffer<>(itemsQueue);
 			COUNT_WRITTEN = client.write(
-				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB")
+				null, itemsIO, WRITE_COUNT, 1, SizeUtil.toSize("1MB")
 			);
 			TimeUnit.SECONDS.sleep(10);
 			//
@@ -83,7 +86,7 @@ extends StandaloneClientTestBase {
 			) {
 				stdOutInterceptorStream.reset();
 				if (COUNT_WRITTEN > 0) {
-					COUNT_READ = client.read(writeOutput.getDataItemSrc(), null, READ_COUNT, 1, true);
+					COUNT_READ = client.read(null, null, READ_COUNT, 1, true);
 				} else {
 					throw new IllegalStateException("Failed to write");
 				}
@@ -122,7 +125,7 @@ extends StandaloneClientTestBase {
 			for (final Map.Entry<String, Long> entry : items.entrySet()) {
 				Assert.assertEquals(
 					"data.items.csv doesn't contain necessary count of duplicated items" ,
-						entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES));
+					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES));
 			}
 		}
 	}
