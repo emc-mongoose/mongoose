@@ -115,6 +115,7 @@
 			"scenario.chain.concurrent": "scenario.type.chain.concurrent",
 			"scenario.chain.itemsbuffer": "scenario.type.chain.itemsbuffer",
 
+			"scenario.type.rampup.threadCounts": "scenario.type.rampup.connCounts",
 			"scenario.rampup.thread.counts": "scenario.type.rampup.connCounts",
 			"scenario.rampup.sizes": "scenario.type.rampup.sizes",
 
