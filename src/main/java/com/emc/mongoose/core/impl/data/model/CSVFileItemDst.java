@@ -53,7 +53,7 @@ implements FileDataItemDst<T> {
 	//
 	@Override
 	public final void delete()
-		throws IOException {
+	throws IOException {
 		Files.delete(itemsFilePath);
 	}
 }

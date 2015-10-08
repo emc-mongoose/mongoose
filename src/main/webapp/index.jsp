@@ -182,7 +182,7 @@
 																				<legend>Create</legend>
 																				<div class="form-group">
 																					<label class="col-sm-6 control-label" for="backup-load.type.create.connections">
-																						Load concurrent connections count
+																						Connection count
 																					</label>
 																					<div class="col-sm-6">
 																						<input type="text" id="backup-load.type.create.connections"
@@ -199,7 +199,7 @@
 																				<legend>Read</legend>
 																				<div class="form-group">
 																					<label class="col-sm-6 control-label" for="backup-load.type.read.connections">
-																						Load concurrent connections count
+																						Connection count
 																					</label>
 																					<div class="col-sm-6">
 																						<input type="text" id="backup-load.type.read.connections"
@@ -231,7 +231,7 @@
 																				<legend>Update</legend>
 																				<div class="form-group">
 																					<label class="col-sm-6 control-label" for="backup-load.type.update.connections">
-																						Load concurrent connections count
+																						Connection count
 																					</label>
 																					<div class="col-sm-6">
 																						<input type="text" id="backup-load.type.update.connections"
@@ -260,7 +260,7 @@
 																				<legend>Delete</legend>
 																				<div class="form-group">
 																					<label class="col-sm-6 control-label" for="backup-load.type.delete.connections">
-																						Load concurrent connections count
+																						Connection count
 																					</label>
 																					<div class="col-sm-6">
 																						<input type="text" id="backup-load.type.delete.connections"
@@ -277,7 +277,7 @@
 																				<legend>Append</legend>
 																				<div class="form-group">
 																					<label class="col-sm-6 control-label" for="backup-load.type.append.connections">
-																						Load concurrent connections count
+																						Connection count
 																					</label>
 																					<div class="col-sm-6">
 																						<input type="text" id="backup-load.type.append.connections"
@@ -360,7 +360,7 @@
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
 																						       for="backuptab-load.type.create.connections">
-																							Load concurrent connections count
+																							Connection count
 																						</label>
 																						<div class="col-sm-6">
 																							<input type="text" id="backuptab-load.type.create.connections"
@@ -373,7 +373,7 @@
 																				<div role="tabpanel" class="tab-pane" id="backuptab-read">
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label" for="backuptab-load.type.read.connections">
-																							Load concurrent connections count
+																							Connection count
 																						</label>
 																						<div class="col-sm-6">
 																							<input type="text" id="backuptab-load.type.read.connections"
@@ -404,7 +404,7 @@
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
 																						       for="backuptab-load.type.update.connections">
-																							Load concurrent connections count
+																							Connection count
 																						</label>
 																						<div class="col-sm-6">
 																							<input type="text" id="backuptab-load.type.update.connections"
@@ -431,7 +431,7 @@
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
 																						       for="backuptab-load.type.delete.connections">
-																							Load concurrent connections count
+																							Connection count
 																						</label>
 																						<div class="col-sm-6">
 																							<input type="text" class="form-control" id="backuptab-load.type.delete.connections"
@@ -444,7 +444,7 @@
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
 																						       for="backuptab-load.type.append.connections">
-																							Load concurrent connections count
+																							Connection count
 																						</label>
 																						<div class="col-sm-6">
 																							<input type="text" id="backuptab-load.type.append.connections"
@@ -509,7 +509,7 @@
 																		<div class="form-group">
 																			<label for="backup-scenario.type.rampup.connCounts"
 																			       class="col-sm-4 control-label">
-																				Concurrent connections count
+																				Connection count
 																			</label>
 																			<div class="col-sm-8">
 																				<input type="text" id="backup-scenario.type.rampup.connCounts"
@@ -713,7 +713,7 @@
 												<legend>Load</legend>
 												<div class="form-group">
 													<label for="backup-load.connections" class="col-sm-3 control-label">
-														Concurrent load connections count
+														Connection count
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-load.connections" data-pointer="load.connections" class="form-control"

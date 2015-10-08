@@ -149,6 +149,13 @@ implements DataItemProducer<T> {
 				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
 				getName(), count, itemSrc, itemDst
 			);
+			try {
+				itemSrc.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to close the item source \"{}\"", itemSrc
+				);
+			}
 		}
 	}
 	//

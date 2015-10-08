@@ -247,7 +247,7 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final Future<? extends WSIOTask<T>> submitReq(final IOTask<T> ioTask)
+	protected final Future<? extends WSIOTask<T>> submitReqActually(final IOTask<T> ioTask)
 	throws RejectedExecutionException {
 		//
 		if(connPool.isShutdown()) {
