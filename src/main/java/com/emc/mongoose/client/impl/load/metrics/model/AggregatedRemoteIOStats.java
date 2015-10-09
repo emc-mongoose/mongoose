@@ -25,9 +25,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 14.09.15.
  */
@@ -54,7 +51,6 @@ extends IOStatsBase {
 		failRateLast = 0,
 		byteRateMean = 0,
 		byteRateLast = 0;
-	private final Lock lock = new ReentrantLock();
 	//
 	public AggregatedRemoteIOStats(
 		final String name, final int serveJmxPort, final Map<String, LoadSvc<T>> loadSvcMap
@@ -71,12 +67,7 @@ extends IOStatsBase {
 			new Gauge<Long>() {
 				@Override
 				public final Long getValue() {
-					lock.lock();
-					try {
-						return countSucc;
-					} finally {
-						lock.unlock();
-					}
+					return countSucc;
 				}
 			}
 		);
@@ -85,12 +76,7 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
-					try {
-						return succRateMean;
-					} finally {
-						lock.unlock();
-					}
+					return succRateMean;
 				}
 			}
 		);
@@ -99,12 +85,7 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
-					try {
-						return succRateLast;
-					} finally {
-						lock.unlock();
-					}
+					return succRateLast;
 				}
 			}
 		);
@@ -113,12 +94,7 @@ extends IOStatsBase {
 			new Gauge<Long>() {
 				@Override
 				public final Long getValue() {
-					lock.lock();
-					try {
-						return countFail;
-					} finally {
-						lock.unlock();
-					}
+					return countFail;
 				}
 			}
 		);
@@ -127,12 +103,7 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
-					try {
-						return failRateMean;
-					} finally {
-						lock.unlock();
-					}
+					return failRateMean;
 				}
 			}
 		);
@@ -141,12 +112,7 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
-					try {
-						return failRateLast;
-					} finally {
-						lock.unlock();
-					}
+					return failRateLast;
 				}
 			}
 		);
@@ -155,12 +121,7 @@ extends IOStatsBase {
 			new Gauge<Long>() {
 				@Override
 				public final Long getValue() {
-					lock.lock();
-					try {
-						return countByte;
-					} finally {
-						lock.unlock();
-					}
+					return countByte;
 				}
 			}
 		);
@@ -169,12 +130,7 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
-					try {
-						return byteRateMean;
-					} finally {
-						lock.unlock();
-					}
+					return byteRateMean;
 				}
 			}
 		);
@@ -183,12 +139,7 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
-					try {
-						return byteRateLast;
-					} finally {
-						lock.unlock();
-					}
+					return byteRateLast;
 				}
 			}
 		);
@@ -217,6 +168,12 @@ extends IOStatsBase {
 					try {
 						loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
 						if(loadSvcStatsSnapshot != null) {
+							if(LOG.isTraceEnabled(Markers.MSG)) {
+								LOG.trace(
+									Markers.MSG, "Got stats snapshot from {}: {}",
+									loadSvcAddr, loadSvcStatsSnapshot
+								);
+							}
 							loadStatsSnapshotMap.put(loadSvcAddr, loadSvcStatsSnapshot);
 							countFailed = 0; // reset
 						} else {
@@ -277,59 +234,54 @@ extends IOStatsBase {
 	@Override
 	public final Snapshot getSnapshot() {
 		//
-		lock.lock();
-		try {
-			countSucc = 0;
-			countFail = 0;
-			countByte = 0;
-			sumDurMicroSec = 0;
-			succRateMean = 0;
-			succRateLast = 0;
-			failRateMean = 0;
-			failRateLast = 0;
-			byteRateMean = 0;
-			byteRateLast = 0;
-			//
-			Snapshot loadStatsSnapshot;
-			for(final String addr : loadStatsSnapshotMap.keySet()) {
-				loadStatsSnapshot = loadStatsSnapshotMap.get(addr);
-				if(loadStatsSnapshot != null) {
-					countSucc += loadStatsSnapshot.getSuccCount();
-					countFail += loadStatsSnapshot.getFailCount();
-					countByte += loadStatsSnapshot.getByteCount();
-					sumDurMicroSec += loadStatsSnapshot.getDurationSum();
-					succRateMean += loadStatsSnapshot.getSuccRateMean();
-					succRateLast += loadStatsSnapshot.getSuccRateLast();
-					failRateMean += loadStatsSnapshot.getFailRateMean();
-					failRateLast += loadStatsSnapshot.getFailRateLast();
-					byteRateMean += loadStatsSnapshot.getByteRateMean();
-					byteRateLast += loadStatsSnapshot.getByteRateLast();
-					durationValues = loadStatsSnapshot.getDurationValues();
-					if(durationValues != null) {
-						for(final long duration : durationValues) {
-							reqDuration.update(duration);
-						}
-					} else {
-						LOG.warn(
-							Markers.ERR, "No duration values snapshot is available for {}", addr
-						);
-					}
-					latencyValues = loadStatsSnapshot.getLatencyValues();
-					if(latencyValues != null) {
-						for(final long latency : latencyValues) {
-							respLatency.update(latency);
-						}
-					} else {
-						LOG.warn(
-							Markers.ERR, "No latency values snapshot is available for {}", addr
-						);
+		countSucc = 0;
+		countFail = 0;
+		countByte = 0;
+		sumDurMicroSec = 0;
+		succRateMean = 0;
+		succRateLast = 0;
+		failRateMean = 0;
+		failRateLast = 0;
+		byteRateMean = 0;
+		byteRateLast = 0;
+		//
+		Snapshot loadStatsSnapshot;
+		for(final String addr : loadStatsSnapshotMap.keySet()) {
+			loadStatsSnapshot = loadStatsSnapshotMap.get(addr);
+			if(loadStatsSnapshot != null) {
+				countSucc += loadStatsSnapshot.getSuccCount();
+				countFail += loadStatsSnapshot.getFailCount();
+				countByte += loadStatsSnapshot.getByteCount();
+				sumDurMicroSec += loadStatsSnapshot.getDurationSum();
+				succRateMean += loadStatsSnapshot.getSuccRateMean();
+				succRateLast += loadStatsSnapshot.getSuccRateLast();
+				failRateMean += loadStatsSnapshot.getFailRateMean();
+				failRateLast += loadStatsSnapshot.getFailRateLast();
+				byteRateMean += loadStatsSnapshot.getByteRateMean();
+				byteRateLast += loadStatsSnapshot.getByteRateLast();
+				durationValues = loadStatsSnapshot.getDurationValues();
+				if(durationValues != null) {
+					for(final long duration : durationValues) {
+						reqDuration.update(duration);
 					}
 				} else {
-					LOG.warn(Markers.ERR, "No load stats snapshot is available for {}", addr);
+					LOG.warn(
+						Markers.ERR, "No duration values snapshot is available for {}", addr
+					);
 				}
+				latencyValues = loadStatsSnapshot.getLatencyValues();
+				if(latencyValues != null) {
+					for(final long latency : latencyValues) {
+						respLatency.update(latency);
+					}
+				} else {
+					LOG.warn(
+						Markers.ERR, "No latency values snapshot is available for {}", addr
+					);
+				}
+			} else {
+				LOG.warn(Markers.ERR, "No load stats snapshot is available for {}", addr);
 			}
-		} finally {
-			lock.unlock();
 		}
 		//
 		final long currElapsedTime = tsStartMicroSec > 0 ?

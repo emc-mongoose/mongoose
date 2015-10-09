@@ -14,7 +14,6 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.io.IoBuilder;
 //
 import java.io.File;
-import java.io.PrintStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
