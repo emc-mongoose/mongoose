@@ -3,9 +3,62 @@
 <head lang="en">
 	<meta charset="UTF-8">
 	<title>Mongoose [Run]</title>
-	<link rel="stylesheet" href="/webjars/bootstrap/3.3.2-1/css/bootstrap.min.css"/>
+	<!-- Reset default css styles in different browsers -->
+	<link rel="stylesheet" href="assets/css/reset.css"/>
+	<link rel="stylesheet" href="libs/css/bootstrap.min.css"/>
+
+	<!-- Own styles -->
+	<link rel="stylesheet" href="assets/css/navbar.css"/>
+	<!-- <link rel="stylesheet" href="/webjars/bootstrap/3.3.2-1/css/bootstrap.min.css"/> -->
 </head>
 <body>
 
+	<!-- Navigation bar -->
+	<nav class="navbar navbar-default" role="navigation">
+		<div class="container-fluid">
+
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed"
+					data-toggle="collapse" data-target="#main-navbar"
+					aria-expanded="false">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#">
+					<span>
+						<img alt="logo" id="logo" src="assets/img/mongoose_logo.png"/>
+						Mongoose
+					</span>
+				</a>
+			</div>
+
+			<div id="main-navbar" class="collapse navbar-collapse">
+				<ul class="nav navbar-nav">
+					<li class="active">
+						<a href="#">
+							Run
+							<span class="sr-only">(current)</span>
+						</a>
+					</li>
+				</ul>
+				<p class="navbar-text navbar-right">v1.0.0</p>
+			</div>
+
+		</div>
+	</nav>
+
+	<!-- App entry point -->
+	<div id="app">
+		<!-- Tabs -->
+		<ul class="nav nav-tabs">
+			<li role="presentation" class="active"><a href="#">Home</a></li>
+			<li role="presentation"><a href="#">Profile</a></li>
+			<li role="presentation"><a href="#">Messages</a></li>
+		</ul>
+	</div>
+	<!-- Include only Require JS -->
+	<script data-main="js/main" src="libs/js/require.js"></script>
 </body>
 </html>
