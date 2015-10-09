@@ -1,15 +1,15 @@
 require(["./requirejs/conf"], function() {
-	require(["handlebars", "bootstrap", "text!../templates/body.hbs"],
-		function(Handlebars, bootstrap, template) {
+	require(["handlebars", "text!../templates/navbar.hbs", "bootstrap"],
+		function(Handlebars, versionTemplate) {
+
 			var context = {
-				title: "My New Post",
-				body: "This is my first post!"
+				version: "1.0.0"
 			};
 
-			var result = Handlebars.compile(template);
-			var html = result(context);
+			var compiledTemplate = Handlebars.compile(versionTemplate);
+			var html = compiledTemplate(context);
 
-			document.getElementById("app").insertAdjacentHTML("beforeend", html);
+			document.body.insertAdjacentHTML("afterbegin", html);
 		}
 	);
 });
