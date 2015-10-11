@@ -29,7 +29,7 @@ extends HttpServlet {
 		request.getSession(true).setAttribute("chartsMap", CommonServlet.CHARTS_MAP);
 		request.setAttribute(RT_CONFIG_NAME, CommonServlet.getLastRunTimeConfig());
 		try {
-			request.getRequestDispatcher("index.jsp").forward(request, response);
+			request.getRequestDispatcher("index.html").forward(request, response);
 		} catch (final IOException|ServletException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Failed forwarding to index.jsp");
 		}
