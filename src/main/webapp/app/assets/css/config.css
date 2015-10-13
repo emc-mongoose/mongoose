@@ -1,7 +1,6 @@
-/*#run-modes, #config {
+#run-modes, #config {
 	margin-top: 15px;
-	padding-bottom: 5px;
-	padding-left: 12px;
+	padding-bottom: 10px;
 	border-bottom: 1px solid #ccc;
 }
 
@@ -11,11 +10,60 @@
 	margin-left: 10px;
 }
 
-.conf-label {
+.block {
 	display: block;
 }
 
-#configuration .container-fluid {
+#start {
+	margin-left: 15px;
+	width: 130px;
+	height: 40px;
+	float: right;
+}
+
+.save-buttons {
+	margin-left: 30px !important;
+}
+
+#save-config {
+	margin-bottom: 5px;
+}
+
+#file-visibility {
+	margin-top: 10px;
+	text-align: center;
+}
+
+#file-visibility input, #file-visibility label {
+	display: inline;
+	vertical-align: top;
+}
+
+#config-file {
+	margin-top: 10px;
+	display: none;
+}
+
+.no-padding {
+	padding: 0;
+}
+
+#base {
+	margin-top: 10px;
+	margin-left: 10px;
+}
+
+.form-horizontal .form-group {
+	margin-top: 15px;
+	margin-left: 0;
+	margin-right: 0;
+}
+
+.form-horizontal .control-label {
+	text-align: left;
+}
+
+.form-select {
 	padding-left: 0;
-	padding-right: 0;
-}*/
+}
+

@@ -1,32 +1,14 @@
 <div class="container-fluid">
 	<div class="row">
-		<div class="col-xs-12">
-			<h1>Text</h1>
-		</div>
-	</div>
-</div>
-<!--<div class="container-fluid">
-	<div class="row">
-		<div id="menu" class="col-xs-12 col-sm-5 col-md-4 col-lg-3 no-padding">
-			<div id="run-modes">
-				<label for="run-mode" class="conf-label">Run mode</label>
-				<select id="run-mode">
-					<option value="standalone">standalone</option>
-					<option value="client">load client</option>
-					<option value="server">load server</option>
-					<option value="cinderella">cinderella</option>
-				</select>
-			</div>
-		</div>
-	</div>
-</div>-->
-<!--<div class="container-fluid">
-	<div class="row">
+
+		<!-- Left menu panel -->
 		<div id="menu" class="col-xs-12 col-sm-5 col-md-4 col-lg-3 no-padding">
 			<div id="run-modes">
 				<div>
-					<label for="backup-run.mode">Run mode</label>
-					<select id="backup-run.mode" data-pointer="run.mode">
+					<label for="run-mode" class="block">
+						Run mode
+					</label>
+					<select id="run-mode" class="form-control">
 						<option value="standalone">standalone</option>
 						<option value="client">load client</option>
 						<option value="server">load server</option>
@@ -42,30 +24,99 @@
 
 			<div id="config">
 				<div>
-					<label for="config-type">Config mode</label>
-					<select id="config-type">
+					<label for="config-type" class="block">
+						Config mode
+					</label>
+					<select id="config-type" class="form-control">
 						<option value="base">basic</option>
 						<option value="extended">extended</option>
 					</select>
 				</div>
 				<div class="save-buttons">
-					<button class="btn btn-default" id="save-config" type="button">Save</button>
+					<button type="button" class="btn btn-default" id="save-config">
+						Save
+					</button>
 					<br/>
-					<a href="/save" id="save-file" class="btn btn-default">Save As...</a>
+					<a href="#save" class="btn btn-default" id="save-file">
+						Save As...
+					</a>
 				</div>
 				<br/>
 				<div id="file-visibility">
-					<input id="file-checkbox" type="checkbox"/>
-					<label for="file-checkbox">Read config from file</label>
+					<input type="checkbox" id="file-checkbox"/>
+					<label for="file-checkbox">
+						Read config from file
+					</label>
 				</div>
-				<br/>
-				<input id="config-file" type="file" accept=".txt"/>
+				<input type="file" accept=".txt" id="config-file"/>
 			</div>
-
-			<ul class="folders">
-
-			</ul>
 		</div>
+
+		<!-- Base configuration fields -->
+		<div id="main-content" class="col-xs-12 col-sm-7 col-md-8 col-lg-9 no-padding">
+			<div id="base">
+				<form class="form-horizontal" role="form">
+					{{#each sections}}
+						<fieldset>
+							<legend>{{title}}</legend>
+							{{#each fields}}
+								<div class="form-group">
+									<label for="{{id}}" class="col-sm-3 control-label">
+										{{label}}
+									</label>
+									<div class="col-sm-9">
+
+										{{#if complexField}}
+											<div id="{{id}}" class="col-xs-5 no-padding">
+												<input type="text" id="{{textField.id}}"
+												   name="{{textField.id}}"
+												   class="form-control" title=""/>
+											</div>
+											<div class="col-xs-4">
+												<select
+													class="form-control" id="{{selectField.id}}"
+													name="{{textField.id}}" title="">
+													{{#each selectField.values}}
+														<option value="{{this}}">{{this}}</option>
+													{{/each}}
+												</select>
+											</div>
+										{{else}}
+
+											{{#if textField}}
+												<input type="text" id="{{id}}" class="form-control"
+											   		placeholder="{{placeholder}}" name="{{id}}"/>
+											{{/if}}
+
+											{{#if selectField}}
+												<div class="col-xs-5 col-sm-4 form-select">
+													<select id="{{id}}" name={{id}}
+														class="form-control">
+														{{#each values}}
+															<option value="{{this}}">
+																{{this}}
+															</option>
+														{{/each}}
+													</select>
+												</div>
+											{{/if}}
+
+										{{/if}}
+
+									</div>
+								</div>
+							{{/each}}
+						</fieldset>
+					{{/each}}
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<!--<div class="container-fluid">
+	<div class="row">
+		<div id="menu" class="col-xs-12 col-sm-5 col-md-4 col-lg-3 no-padding">
+
 
 		<div id="main-content" class="col-xs-12 col-sm-7 col-md-8 col-lg-9 no-padding">
 			<div id="base">

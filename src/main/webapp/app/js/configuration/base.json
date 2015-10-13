@@ -1,0 +1,111 @@
+{
+	"sections": [
+		{
+			"title": "Run",
+			"fields": [
+				{
+					"id": "run.id",
+					"label": "Run id",
+					"placeholder": null,
+					"textField": true
+				}, {
+					"id": "scenario.name",
+					"label": "Scenario",
+					"values": ["single", "chain", "rampup"],
+					"selectField": true
+				}
+			]
+		}, {
+			"title": "Storage",
+			"fields": [
+				{
+					"id": "storage.addrs",
+					"label": "Nodes (comma-separated list)",
+					"placeholder": null,
+					"textField": true
+				}, {
+					"id": "api.name",
+					"label": "API",
+					"values": ["s3", "swift", "atmos"],
+					"selectField": true
+				}
+			]
+		}, {
+			"title": "Authentication",
+			"fields": [
+				{
+					"id": "auth.id",
+					"label": "User id",
+					"placeholder": null,
+					"textField": true
+				}, {
+					"id": "auth.secret",
+					"label": "Secret",
+					"placeholder": null,
+					"textField": true
+				}
+			]
+		}, {
+			"title": "Load",
+			"fields": [
+				{
+					"id": "load.connections",
+					"label": "Connection count",
+					"placeholder": null,
+					"textField": true,
+					"aliasedFor": [
+						"load.type.create.connections",
+						"load.type.read.connections",
+						"load.type.update.connections",
+						"load.type.delete.connections",
+						"load.type.append.connections"
+					]
+				}, {
+					"id": "load.limit.count",
+					"label": "Items count limit",
+					"placeholder": null,
+					"textField": true
+				}, {
+					"id": "load.limit.time",
+					"label": "Time limit",
+					"complexField": true,
+					"textField": {
+						"id": "load.limit.time.value",
+						"label": null,
+						"placeholder": null
+					},
+					"selectField": {
+						"id": "load.limit.time.unit",
+						"label": null,
+						"values": ["seconds", "minutes", "hours", "days"]
+					}
+				}, {
+					"id": "load.limit.rate",
+					"label": "Rate limit",
+					"placeholder": null,
+					"textField": true
+				}, {
+					"id": "load.servers",
+					"label": "Load servers",
+					"placeholder": null,
+					"textField": true
+				}
+			]
+		}, {
+			"title": "Data",
+			"fields": [
+				{
+					"id": "data.size",
+					"label": "Items size",
+					"placeholder": null,
+					"textField": true,
+					"aliasedFor": [
+						""
+					]
+				}, {
+
+				}
+			]
+		}
+	]
+}
