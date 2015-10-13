@@ -265,7 +265,6 @@ extends IOStatsBase {
 			final LoadSvc loadSvc = loadSvcMap.get(loadSvcAddr);
 			final Thread currThread = Thread.currentThread();
 			currThread.setName(currThread.getName() + "@" + loadSvcAddr);
-			int countFailed = 0;
 			try {
 				while(!currThread.isInterrupted()) {
 					try {
@@ -273,31 +272,23 @@ extends IOStatsBase {
 						if(loadSvcStatsSnapshot != null) {
 							if(LOG.isTraceEnabled(Markers.MSG)) {
 								LOG.trace(
-									Markers.MSG, "Got stats snapshot from {}: {}",
+									Markers.MSG, "Got metrics snapshot from {}: {}",
 									loadSvcAddr, loadSvcStatsSnapshot
 								);
 							}
 							loadStatsSnapshotMap.put(loadSvcAddr, loadSvcStatsSnapshot);
-							countFailed = 0; // reset
 						} else {
 							LOG.warn(
-								Markers.ERR,
-								"Failed to load the stats snapshot from the load server @ {}",
+								Markers.ERR, "Got null metrics snapshot from the load server @ {}",
 								loadSvcAddr
 							);
 						}
 						Thread.sleep(1);
 					} catch(final RemoteException e) {
-						if(countFailed < COUNT_LIMIT_RETRIES) {
-							countFailed ++;
-							TimeUnit.MILLISECONDS.sleep(countFailed);
-						} else {
-							LogUtil.exception(
-								LOG, Level.WARN, e,
-								"Failed to fetch the metrics snapshot from {}", loadSvcAddr
-							);
-							break;
-						}
+						LogUtil.exception(
+							LOG, Level.WARN, e,
+							"Failed to fetch the metrics snapshot from {}", loadSvcAddr
+						);
 					}
 				}
 			} catch(final InterruptedException ignored) {
