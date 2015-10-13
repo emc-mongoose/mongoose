@@ -6,6 +6,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Mongoose-Run</title>
 		<link rel='stylesheet' href='/webjars/bootstrap/3.3.2-1/css/bootstrap.min.css'>
 		<link href="css/styles.css" rel="stylesheet">

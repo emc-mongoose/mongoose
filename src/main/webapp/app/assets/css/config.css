@@ -1,0 +1,21 @@
+/*#run-modes, #config {
+	margin-top: 15px;
+	padding-bottom: 5px;
+	padding-left: 12px;
+	border-bottom: 1px solid #ccc;
+}
+
+#run-modes div, #config div {
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 10px;
+}
+
+.conf-label {
+	display: block;
+}
+
+#configuration .container-fluid {
+	padding-left: 0;
+	padding-right: 0;
+}*/
