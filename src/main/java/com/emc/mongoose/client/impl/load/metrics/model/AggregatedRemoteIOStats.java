@@ -19,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -284,6 +285,11 @@ extends IOStatsBase {
 							);
 						}
 						Thread.sleep(1);
+					} catch(final NoSuchObjectException e) {
+						LogUtil.exception(
+							LOG, Level.DEBUG, e,
+							"Failed to fetch the metrics snapshot from {}", loadSvcAddr
+						);
 					} catch(final RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e,
