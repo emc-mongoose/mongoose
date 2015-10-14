@@ -66,8 +66,8 @@ extends DistributedLoadBuilderTestBase {
 			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
 		}
 		//
-		RunIdFileManager.flushAll();
 		TimeUnit.SECONDS.sleep(10);
+		RunIdFileManager.flushAll();
 	}
 	//
 	@Test public void checkTotalDuration()
