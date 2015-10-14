@@ -67,19 +67,24 @@
 									<div class="col-sm-9">
 
 										{{#if complexField}}
-											<div id="{{id}}" class="col-xs-5 no-padding">
-												<input type="text" id="{{textField.id}}"
-												   name="{{textField.id}}"
-												   class="form-control" title=""/>
-											</div>
-											<div class="col-xs-4">
-												<select
-													class="form-control" id="{{selectField.id}}"
-													name="{{textField.id}}" title="">
-													{{#each selectField.values}}
-														<option value="{{this}}">{{this}}</option>
-													{{/each}}
-												</select>
+											<div id={{id}} class="complex">
+
+												<div class="col-xs-5 no-padding">
+													<input type="text" id="{{textField.id}}"
+													   class="form-control" title=""/>
+												</div>
+
+												<div class="col-xs-4">
+													<select
+														class="form-control" id="{{selectField.id}}"
+														title="">
+														{{#each selectField.values}}
+															<option value="{{this}}">{{this}}</option>
+														{{/each}}
+													</select>
+												</div>
+
+												<input type="hidden" name="{{id}}"/>
 											</div>
 										{{else}}
 

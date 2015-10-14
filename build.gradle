@@ -338,7 +338,6 @@ dependencies {
 		library.commons_configuration,
 		library.log4j_api,
 		library.jetty_svc,
-		
 	)
 	webserverRuntime (
 		library.runtime_logging,
@@ -396,6 +395,7 @@ dependencies {
 		library.jackson_databind,
 		library.log4j_api_plus_core,
 		library.websockets,
+		library.httpcore,
 	)
 	webuiRuntime (
 		library.runtime_logging,
