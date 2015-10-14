@@ -111,6 +111,7 @@ implements LoadExecutor<T> {
 				try {
 					while(!currThread.isInterrupted()) {
 						loadExecutor.logMetrics(Markers.PERF_AVG);
+						Thread.yield();
 						TimeUnit.SECONDS.sleep(metricsPeriodSec);
 					}
 				} catch(final InterruptedException e) {
@@ -141,12 +142,9 @@ implements LoadExecutor<T> {
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("failuresMonitor<"+getName()+">");
-			try {
-				while(!currThread.isInterrupted()) {
-					checkForBadState();
-					TimeUnit.SECONDS.sleep(1);
-				}
-			} catch(final InterruptedException ignored) {
+			while(!currThread.isInterrupted()) {
+				checkForBadState();
+				LockSupport.parkNanos(1000);
 			}
 		}
 	}
@@ -389,15 +387,8 @@ implements LoadExecutor<T> {
 		}
 		//
 		LOG.debug(Markers.MSG, "{}: waiting the output buffer to become empty", getName());
-		try {
-			while(!itemOutBuff.isEmpty()) {
-				TimeUnit.MILLISECONDS.sleep(1);
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, "{}: interrupted waiting the output buffer to become empty",
-				getName()
-			);
+		while(!itemOutBuff.isEmpty()) {
+			LockSupport.parkNanos(1000);
 		}
 		//
 		try {
@@ -956,32 +947,32 @@ implements LoadExecutor<T> {
 				LOG.debug(Markers.MSG, "{}: await exit due to interrupted state", getName());
 				break;
 			}
-			TimeUnit.MILLISECONDS.sleep(1);
+			LockSupport.parkNanos(1);
 			if(isClosed.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to closed state", getName());
 				break;
 			}
-			TimeUnit.MILLISECONDS.sleep(1);
+			LockSupport.parkNanos(1);
 			if(isDoneAllSubm()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
 				break;
 			}
-			TimeUnit.MILLISECONDS.sleep(1);
+			LockSupport.parkNanos(1);
 			if(isDoneMaxCount()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to max count done state", getName());
 				break;
 			}
-			TimeUnit.MILLISECONDS.sleep(1);
+			LockSupport.parkNanos(1);
 			if(System.nanoTime() - t > timeOutNanoSec) {
 				LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
 				break;
 			}
-			TimeUnit.MILLISECONDS.sleep(1);
+			LockSupport.parkNanos(1);
 			if(isLimitReached.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
 				break;
 			}
-			TimeUnit.MILLISECONDS.sleep(1);
+			LockSupport.parkNanos(1);
 		}
 	}
 	//

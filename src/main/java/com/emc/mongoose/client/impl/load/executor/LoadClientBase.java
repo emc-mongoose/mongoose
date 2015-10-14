@@ -115,7 +115,7 @@ implements LoadClient<T> {
 			try {
 				while(!currThread.isInterrupted()) {
 					try {
-						Thread.sleep(1);
+						LockSupport.parkNanos(1);
 						loadAndPassDataItems();
 						failCount = 0; // reset
 					} catch(final IOException e) {
@@ -163,10 +163,9 @@ implements LoadClient<T> {
 							LOG.debug(Markers.MSG, "Interrupting due to external interruption");
 							break;
 						} else {
-							Thread.sleep(1);
+							LockSupport.parkNanos(1);
 						}
 					}
-				} catch(final InterruptedException ignored) {
 				} finally {
 					try {
 						loadClient.interrupt();

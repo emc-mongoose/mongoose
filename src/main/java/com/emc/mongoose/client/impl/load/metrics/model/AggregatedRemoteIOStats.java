@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 14.09.15.
@@ -266,38 +267,35 @@ extends IOStatsBase {
 			final LoadSvc loadSvc = loadSvcMap.get(loadSvcAddr);
 			final Thread currThread = Thread.currentThread();
 			currThread.setName(currThread.getName() + "@" + loadSvcAddr);
-			try {
-				while(!currThread.isInterrupted()) {
-					try {
-						loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
-						if(loadSvcStatsSnapshot != null) {
-							if(LOG.isTraceEnabled(Markers.MSG)) {
-								LOG.trace(
-									Markers.MSG, "Got metrics snapshot from {}: {}",
-									loadSvcAddr, loadSvcStatsSnapshot
-								);
-							}
-							loadStatsSnapshotMap.put(loadSvcAddr, loadSvcStatsSnapshot);
-						} else {
-							LOG.warn(
-								Markers.ERR, "Got null metrics snapshot from the load server @ {}",
-								loadSvcAddr
+			while(!currThread.isInterrupted()) {
+				try {
+					loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
+					if(loadSvcStatsSnapshot != null) {
+						if(LOG.isTraceEnabled(Markers.MSG)) {
+							LOG.trace(
+								Markers.MSG, "Got metrics snapshot from {}: {}",
+								loadSvcAddr, loadSvcStatsSnapshot
 							);
 						}
-						Thread.sleep(1);
-					} catch(final NoSuchObjectException e) {
-						LogUtil.exception(
-							LOG, Level.DEBUG, e,
-							"Failed to fetch the metrics snapshot from {}", loadSvcAddr
-						);
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e,
-							"Failed to fetch the metrics snapshot from {}", loadSvcAddr
+						loadStatsSnapshotMap.put(loadSvcAddr, loadSvcStatsSnapshot);
+					} else {
+						LOG.warn(
+							Markers.ERR, "Got null metrics snapshot from the load server @ {}",
+							loadSvcAddr
 						);
 					}
+					LockSupport.parkNanos(1);
+				} catch(final NoSuchObjectException e) {
+					LogUtil.exception(
+						LOG, Level.DEBUG, e,
+						"Failed to fetch the metrics snapshot from {}", loadSvcAddr
+					);
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e,
+						"Failed to fetch the metrics snapshot from {}", loadSvcAddr
+					);
 				}
-			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
