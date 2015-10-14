@@ -365,7 +365,7 @@ extends IOStatsBase {
 				throw new IllegalStateException("Failed to acquire the lock in 1 sec");
 			}
 		} catch(final InterruptedException | IllegalStateException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Metrics aggregation failure");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Metrics aggregation failure");
 		}
 		//
 		final long currElapsedTime = tsStartMicroSec > 0 ?

@@ -24,7 +24,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -125,14 +124,6 @@ public final class LogUtil {
 						LogManager.getLogger().info(
 							Markers.MSG, "Logging subsystem is configured successfully"
 						);
-						Runtime.getRuntime().addShutdownHook(
-							new Thread("logCtxShutDownHook") {
-								@Override
-								public final void run() {
-									shutdown();
-								}
-							}
-						);
 					}
 					final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);
 					System.setErr(
@@ -149,41 +140,6 @@ public final class LogUtil {
 			}
 		} finally {
 			LOG_CTX_LOCK.unlock();
-		}
-	}
-	//
-	public static void shutdown() {
-		final Logger LOG = LogManager.getLogger();
-		try {
-			if(LOAD_HOOKS_COUNT.get() != 0) {
-				LOG.debug(Markers.MSG, "Not all loads are closed, blocking the logging subsystem shutdown");
-				if(HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
-					try {
-						if(HOOKS_COND.await(10, TimeUnit.SECONDS)) {
-							LOG.debug(Markers.MSG, "All load executors are closed");
-						} else {
-							LOG.debug(Markers.ERR, "Timeout while waiting the load executors to be closed");
-						}
-					} finally {
-						HOOKS_LOCK.unlock();
-					}
-				} else {
-					LOG.debug(Markers.ERR, "Failed to acquire the lock for the del method");
-				}
-			} else {
-				LOG.debug(Markers.MSG, "There's no unclosed loads, forcing logging subsystem shutdown");
-			}
-		} catch (final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Shutdown method was interrupted");
-		} finally {
-			LOG_CTX_LOCK.lock();
-			try {
-				if(LOG_CTX != null && !LOG_CTX.isStopped()) {
-					LOG_CTX.stop();
-				}
-			} finally {
-				LOG_CTX_LOCK.unlock();
-			}
 		}
 	}
 	//

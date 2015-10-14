@@ -2,7 +2,7 @@
 	"configuration": {
 		"status": "off",
 		"name": "mongoose",
-		"shutdownHook": "disable",
+		"shutdownHook": "enable",
 		"appenders": {
 			"appender" : [
 				{
@@ -41,7 +41,7 @@
 				}, {
 					"name": "async",
 					"type": "Async",
-					"blocking": "true",
+					"blocking": "false",
 					"bufferSize": "100000",
 					"AppenderRef": { "ref": "stdout" }
 				}

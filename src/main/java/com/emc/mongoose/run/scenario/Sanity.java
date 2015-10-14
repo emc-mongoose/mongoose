@@ -194,7 +194,5 @@ implements Runnable {
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");
 		LOG.info(Markers.MSG, "Sanity done");
-		//
-		LogUtil.shutdown();
 	}
 }
