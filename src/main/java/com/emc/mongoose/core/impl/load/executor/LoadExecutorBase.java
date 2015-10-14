@@ -472,7 +472,7 @@ implements LoadExecutor<T> {
 		// warning: w/o such sleep the behaviour becomes very ugly
 		while(
 			!isShutdown.get() && !isInterrupted.get() &&
-			counterSubm.get() - counterResults.get() >= batchSize
+			counterSubm.get() - counterResults.get() >= DEFAULT_ACTIVE_TASKS_COUNT_LIMIT
 		) {
 			LockSupport.parkNanos(1);
 		}
@@ -514,7 +514,7 @@ implements LoadExecutor<T> {
 					// don't fill the connection pool as fast as possible, this may cause a failure
 					while(
 						!isShutdown.get() && !isInterrupted.get() &&
-						counterSubm.get() - counterResults.get() >= batchSize
+						counterSubm.get() - counterResults.get() >= DEFAULT_ACTIVE_TASKS_COUNT_LIMIT
 					) {
 						LockSupport.parkNanos(1);
 					}

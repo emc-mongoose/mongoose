@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.model.GenericContainer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 //
@@ -45,7 +46,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_HEAD, null, batchSize,
+				addr, WSRequestConfig.METHOD_HEAD, null, GenericContainer.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
@@ -87,7 +88,7 @@ implements Container<T> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_PUT, null, batchSize,
+				addr, WSRequestConfig.METHOD_PUT, null, GenericContainer.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
@@ -128,7 +129,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_DELETE, null, batchSize,
+				addr, WSRequestConfig.METHOD_DELETE, null, GenericContainer.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
@@ -167,7 +168,7 @@ implements Container<T> {
 	public final void setVersioning(final String addr, final boolean enabledFlag) {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_POST, null, batchSize,
+				addr, WSRequestConfig.METHOD_POST, null, GenericContainer.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {

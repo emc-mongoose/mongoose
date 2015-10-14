@@ -8,9 +8,9 @@ import java.lang.reflect.Constructor;
  */
 public interface GenericContainer<T extends DataItem> {
 	//
-	String getName();
+	int DEFAULT_PAGE_SIZE = 0x1000;
 	//
-	int getBatchSize();
+	String getName();
 	//
 	boolean exists(final String addr)
 	throws IllegalStateException;

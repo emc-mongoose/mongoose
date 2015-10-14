@@ -28,7 +28,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface LoadExecutor<T extends DataItem>
 extends DataItemDst<T>, LifeCycle, DataItemProducer<T> {
 	//
-	int DEFAULT_RESULTS_QUEUE_SIZE = 0x10000;
+	int
+		DEFAULT_RESULTS_QUEUE_SIZE = 0x10000,
+		DEFAULT_ACTIVE_TASKS_COUNT_LIMIT = 0x10000;
 	//
 	AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
 	//

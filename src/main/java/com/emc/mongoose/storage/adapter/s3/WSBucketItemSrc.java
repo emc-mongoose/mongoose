@@ -159,7 +159,9 @@ extends GenericContainerItemSrcBase<T> {
 	@Override
 	protected final void loadNextPage()
 	throws EOFException, IOException {
-		final int countLimit = (int) Math.min(container.getBatchSize(), maxCount - doneCount);
+		final int countLimit = (int) Math.min(
+			GenericContainer.DEFAULT_PAGE_SIZE, maxCount - doneCount
+		);
 		if(eof || countLimit == 0) {
 			throw new EOFException();
 		}
