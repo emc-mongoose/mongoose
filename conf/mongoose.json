@@ -167,7 +167,8 @@
 				"batchSize": 100,
 				"ring": {
 					"seed": "7a42d9c483244167",
-					"size": "4MB"
+					"size": "4MB",
+					"uniformSize": "4MB"
 				}
 			},
 			"fsAccess": false,

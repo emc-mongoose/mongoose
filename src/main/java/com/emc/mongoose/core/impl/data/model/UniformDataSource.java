@@ -6,7 +6,6 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.model.DataSource;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -31,7 +30,7 @@ implements DataSource {
 	private final static int A = 21, B = 35, C = 4;
 	//
 	private long seed;
-	private int size;
+	private int size, uniformSize;
 	private volatile ByteBuffer zeroByteLayer;
 	private final List<ByteBuffer> byteLayers = new ArrayList<>();
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,16 +38,18 @@ implements DataSource {
 	throws NumberFormatException {
 		this(
 			Long.parseLong(RunTimeConfig.getContext().getDataSrcRingSeed(), 0x10),
-			(int) RunTimeConfig.getContext().getDataSrcRingSize()
+			(int) RunTimeConfig.getContext().getDataSrcRingSize(),
+			(int) RunTimeConfig.getContext().getDataSrcRingUniformSize()
 		);
 	}
 	//
-	protected UniformDataSource(final long seed, final int size) {
+	protected UniformDataSource(final long seed, final int size, final int uniformSize) {
 		LOG.debug(Markers.MSG, "New ring buffer instance #{}", hashCode());
 		this.seed = seed;
 		this.size = size;
+		this.uniformSize = uniformSize;
 		zeroByteLayer = ByteBuffer.allocateDirect(size);
-		generateData(zeroByteLayer, seed);
+		generateData(zeroByteLayer, seed, uniformSize);
 		byteLayers.add(zeroByteLayer);
 	}
 	//
@@ -63,7 +64,10 @@ implements DataSource {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private static void generateData(final ByteBuffer byteLayer, final long seed) {
+	private static void generateData(
+		final ByteBuffer byteLayer, final long seed, final int uniformSize
+	) {
+		// TODO issue #528: apply uniform size
 		final int
 			ringBuffSize = byteLayer.capacity(),
 			countWordBytes = Long.SIZE / Byte.SIZE,
@@ -135,7 +139,7 @@ implements DataSource {
 		}
 		this.size = size;
 		zeroByteLayer = ByteBuffer.allocateDirect(size);
-		generateData(zeroByteLayer, seed);
+		generateData(zeroByteLayer, seed, uniformSize);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
 	}
@@ -149,7 +153,7 @@ implements DataSource {
 	public final synchronized void setSeed(final long seed) {
 		this.seed = seed;
 		zeroByteLayer = ByteBuffer.allocateDirect(size);
-		generateData(zeroByteLayer, seed);
+		generateData(zeroByteLayer, seed, uniformSize);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
 	}
@@ -160,7 +164,8 @@ implements DataSource {
 	public final String toString() {
 		return
 			Long.toHexString(seed) + RunTimeConfig.LIST_SEP +
-			Integer.toHexString(zeroByteLayer.capacity());
+			Integer.toHexString(zeroByteLayer.capacity()) +
+			Integer.toHexString(uniformSize);
 	}
 	//
 	@Override
@@ -169,7 +174,9 @@ implements DataSource {
 		final String values[] = metaInfo.split(RunTimeConfig.LIST_SEP);
 		if(values.length == 2) {
 			DEFAULT = new UniformDataSource(
-				Long.parseLong(values[0], 0x10), Integer.parseInt(values[1], 0x10)
+				Long.parseLong(values[0], 0x10),
+				Integer.parseInt(values[1], 0x10),
+				Integer.parseInt(values[2], 0x10)
 			);
 		} else {
 			throw new IllegalArgumentException();
@@ -199,7 +206,7 @@ implements DataSource {
 					"Generate new byte layer #{} using the seed: \"{}\"",
 					i, Long.toHexString(nextSeed)
 				);
-				generateData(nextLayer, nextSeed);
+				generateData(nextLayer, nextSeed, uniformSize);
 				byteLayers.add(nextLayer);
 			}
 		}

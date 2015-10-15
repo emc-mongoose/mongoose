@@ -57,6 +57,7 @@ implements Externalizable {
 		//
 		KEY_DATA_SRC_RING_SEED = "data.src.ring.seed",
 		KEY_DATA_SRC_RING_SIZE = "data.src.ring.size",
+		KEY_DATA_SRC_RING_UNIFORM_SIZE = "data.src.ring.uniformSize",
 		//
 		KEY_DATA_ITEM_COUNT = "load.limit.count",
 		KEY_DATA_SIZE = "data.size",
@@ -552,6 +553,22 @@ implements Externalizable {
 	//
 	public final long getDataSrcRingSize() {
 		return SizeUtil.toSize(getString(KEY_DATA_SRC_RING_SIZE));
+	}
+	//
+	public final long getDataSrcRingUniformSize() {
+		long uniformSize = 0, ringSize = getDataSrcRingSize();
+		try {
+			uniformSize = SizeUtil.toSize(getString(KEY_DATA_SRC_RING_UNIFORM_SIZE));
+		} catch(final Exception e) {
+			LogUtil.exception(
+				LogManager.getLogger(), Level.DEBUG, e,
+				"Failed to get the value for the parameter \"{}\"", KEY_DATA_SRC_RING_UNIFORM_SIZE
+			);
+		}
+		if(uniformSize < 1 || uniformSize > ringSize) {
+			uniformSize = ringSize;
+		}
+		return uniformSize;
 	}
 	//
 	public final int getWorkerCountFor(final String loadType) {
