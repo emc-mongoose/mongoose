@@ -76,11 +76,4 @@ implements DataItemDst<T> {
 		return "listItemOutput<" + items.hashCode() + ">";
 	}
 
-	//
-	@Override
-	protected void finalize()
-	throws Throwable {
-		items.clear();
-		super.finalize();
-	}
 }

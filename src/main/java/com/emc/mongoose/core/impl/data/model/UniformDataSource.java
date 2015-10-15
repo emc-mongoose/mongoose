@@ -67,33 +67,54 @@ implements DataSource {
 	private static void generateData(
 		final ByteBuffer byteLayer, final long seed, final int uniformSize
 	) {
-		// TODO issue #528: apply uniform size
 		final int
 			ringBuffSize = byteLayer.capacity(),
 			countWordBytes = Long.SIZE / Byte.SIZE,
-			countWords = ringBuffSize / countWordBytes,
-			countTailBytes = ringBuffSize % countWordBytes;
-		long word = seed;
+			countWordsPerRing = ringBuffSize / countWordBytes,
+			countRingTailBytes = ringBuffSize % countWordBytes;
 		int i;
+		long word = seed;
+		byteLayer.clear();
 		double d = System.nanoTime();
 		LOG.debug(Markers.MSG, "Prepare {} of ring data...", SizeUtil.formatSize(ringBuffSize));
-		// 64-bit words
-		byteLayer.clear();
-		for(i = 0; i < countWords; i ++) {
-			byteLayer.putLong(word);
-			word = nextWord(word);
+		if(ringBuffSize == uniformSize) { // default case
+			// 64 bit words
+			for(i = 0; i < countWordsPerRing; i++) {
+				byteLayer.putLong(word);
+				word = nextWord(word);
+			}
+			// tail bytes
+			final ByteBuffer tailBytes = ByteBuffer.allocate(countWordBytes);
+			tailBytes.asLongBuffer().put(word).rewind();
+			for(i = 0; i < countRingTailBytes; i++) {
+				byteLayer.put(countWordBytes * countWordsPerRing + i, tailBytes.get(i));
+			}
+		} else { // generate the recurring sequence content 1st
+			final int
+				countWordsPerSeq = uniformSize / countWordBytes,
+				countSeqTailBytes = uniformSize % countWordBytes;
+			final ByteBuffer seqBytes = ByteBuffer.allocate(uniformSize);
+			// 64 bit words
+			for(i = 0; i < countWordsPerSeq; i ++) {
+				seqBytes.putLong(word);
+				word = nextWord(word);
+			}
+			// sequence tail bytes
+			final ByteBuffer tailBytes = ByteBuffer.allocate(countWordBytes);
+			tailBytes.asLongBuffer().put(word).rewind();
+			for(i = 0; i < countSeqTailBytes; i ++) {
+				seqBytes.put(countWordBytes * countWordsPerSeq + i, tailBytes.get(i));
+			}
+			// fill the ring with sequence copies
+			for(i = 0; i < ringBuffSize / uniformSize; i ++) {
+				seqBytes.rewind();
+				byteLayer.put(seqBytes);
+			}
+			for(i = 0; i < ringBuffSize % uniformSize; i ++) {
+				seqBytes.rewind();
+				byteLayer.put(seqBytes.get(i));
+			}
 		}
-		// tail bytes\
-		final ByteBuffer tailBytes = ByteBuffer.allocateDirect(countWordBytes);
-		tailBytes.asLongBuffer().put(word).rewind();
-		for(i = 0; i < countTailBytes; i ++) {
-			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
-		}
-		/*if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(
-				LogUtil.MSG, "Ring buffer data: {}", Base64.encodeBase64String(byteLayer.array())
-			);
-		}*/
 		//
 		LOG.debug(
 			Markers.MSG, "Pre-generating the data done in {}[us]",
