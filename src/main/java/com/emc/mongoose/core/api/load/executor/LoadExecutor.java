@@ -30,7 +30,7 @@ extends DataItemDst<T>, LifeCycle, DataItemProducer<T> {
 	//
 	int
 		DEFAULT_RESULTS_QUEUE_SIZE = 0x10000,
-		DEFAULT_ACTIVE_TASKS_COUNT_LIMIT = 0x10000;
+		DEFAULT_ACTIVE_TASK_COUNT_MAX = 0x1000;
 	//
 	AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
 	//

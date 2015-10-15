@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,14 +79,15 @@ implements LoadExecutor<T> {
 	protected final AtomicBoolean
 		isStarted = new AtomicBoolean(false),
 		isShutdown = new AtomicBoolean(false),
-		isLimitReached = new AtomicBoolean(false),
 		isInterrupted = new AtomicBoolean(false),
 		isClosed = new AtomicBoolean(false);
+	protected boolean isLimitReached = false;
 	protected final AtomicLong
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
 	private T lastDataItem;
+	protected final Object state = new Object();
 	protected final ItemBuffer<T> itemOutBuff;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final List<Runnable> mgmtTasks = new LinkedList<>();
@@ -111,8 +113,7 @@ implements LoadExecutor<T> {
 				try {
 					while(!currThread.isInterrupted()) {
 						loadExecutor.logMetrics(Markers.PERF_AVG);
-						Thread.yield();
-						TimeUnit.SECONDS.sleep(metricsPeriodSec);
+						Thread.yield(); TimeUnit.SECONDS.sleep(metricsPeriodSec);
 					}
 				} catch(final InterruptedException e) {
 					LOG.debug(Markers.MSG, "{}: interrupted", loadExecutor.getName());
@@ -127,10 +128,17 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
-			currThread.setName("statsRefresh<"+getName()+">");
-			while(!currThread.isInterrupted()) {
-				refreshStats();
-				LockSupport.parkNanos(1);
+			currThread.setName("statsRefresh<" + getName() + ">");
+			try {
+				while(!currThread.isInterrupted()) {
+					synchronized(ioStats) {
+						ioStats.wait(1000);
+					}
+					refreshStats();
+					Thread.yield();
+					LockSupport.parkNanos(1000000);
+				}
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
@@ -141,10 +149,17 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
-			currThread.setName("failuresMonitor<"+getName()+">");
-			while(!currThread.isInterrupted()) {
-				checkForBadState();
-				LockSupport.parkNanos(1000);
+			currThread.setName("failuresMonitor<" + getName() + ">");
+			try {
+				while(!currThread.isInterrupted()) {
+					synchronized(ioStats) {
+						ioStats.wait(1000);
+					}
+					checkForBadState();
+					Thread.yield();
+					LockSupport.parkNanos(1000000);
+				}
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
@@ -155,9 +170,13 @@ implements LoadExecutor<T> {
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("resultsDispatcher<" + getName() + ">");
-			while(!currThread.isInterrupted()) {
-				passDataItems();
-				LockSupport.parkNanos(1);
+			try {
+				while(!currThread.isInterrupted()) {
+					passDataItems();
+					Thread.yield();
+					LockSupport.parkNanos(1000);
+				}
+			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
@@ -326,7 +345,7 @@ implements LoadExecutor<T> {
 		}
 		//
 		refreshStats();
-		if(isLimitReached.get()) {
+		if(isLimitReached) {
 			try {
 				close();
 			} catch(final IOException e) {
@@ -358,6 +377,9 @@ implements LoadExecutor<T> {
 	public final void interrupt() {
 		if(isStarted.get()) {
 			if(isInterrupted.compareAndSet(false, true)) {
+				synchronized(state) {
+					state.notifyAll();
+				}
 				interruptActually();
 			}
 		} else {
@@ -388,7 +410,7 @@ implements LoadExecutor<T> {
 		//
 		LOG.debug(Markers.MSG, "{}: waiting the output buffer to become empty", getName());
 		while(!itemOutBuff.isEmpty()) {
-			LockSupport.parkNanos(1000);
+			Thread.yield(); LockSupport.parkNanos(1);
 		}
 		//
 		try {
@@ -459,14 +481,20 @@ implements LoadExecutor<T> {
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final String nextNodeAddr = storageNodeCount == 1 ? storageNodeAddrs[0] : getNextNode();
 		final IOTask<T> ioTask = getIOTask(dataItem, nextNodeAddr);
-		// try to sleep while underlying connection pool becomes more free if it's going too fast
-		// warning: w/o such sleep the behaviour becomes very ugly
-		while(
-			!isShutdown.get() && !isInterrupted.get() &&
-			counterSubm.get() - counterResults.get() >= DEFAULT_ACTIVE_TASKS_COUNT_LIMIT
-		) {
-			LockSupport.parkNanos(1);
-		}
+		// don't fill the connection pool as fast as possible, this may cause a failure
+		int activeTaskCount;
+		do {
+			activeTaskCount = (int) (counterSubm.get() - counterResults.get());
+			if(isShutdown.get() || isInterrupted.get()) {
+				throw new InterruptedIOException(
+					getName() + ": submit failed, shut down already or interrupted"
+				);
+			}
+			if(activeTaskCount < DEFAULT_ACTIVE_TASK_COUNT_MAX) {
+				break;
+			}
+			Thread.yield(); LockSupport.parkNanos(1);
+		} while(true);
 		//
 		try {
 			if(null == submitReq(ioTask)) {
@@ -487,7 +515,7 @@ implements LoadExecutor<T> {
 	throws IOException {
 		final long dstLimit = maxCount - counterSubm.get() - countRej.get();
 		final int srcLimit = to - from;
-		int n = 0, m;
+		int n = 0, m, activeTaskCount;
 		if(dstLimit > 0) {
 			if(dstLimit < srcLimit) {
 				return put(srcBuff, from, from + (int) dstLimit);
@@ -503,12 +531,18 @@ implements LoadExecutor<T> {
 				// submit all I/O tasks
 				while(n < srcLimit) {
 					// don't fill the connection pool as fast as possible, this may cause a failure
-					while(
-						!isShutdown.get() && !isInterrupted.get() &&
-						counterSubm.get() - counterResults.get() >= DEFAULT_ACTIVE_TASKS_COUNT_LIMIT
-					) {
-						LockSupport.parkNanos(1);
-					}
+					do {
+						activeTaskCount = (int) (counterSubm.get() - counterResults.get());
+						if(isShutdown.get() || isInterrupted.get()) {
+							throw new InterruptedIOException(
+								getName() + ": submit failed, shut down already or interrupted"
+							);
+						}
+						if(activeTaskCount < DEFAULT_ACTIVE_TASK_COUNT_MAX) {
+							break;
+						}
+						Thread.yield(); LockSupport.parkNanos(1);
+					} while(true);
 					//
 					try {
 						m = submitReqs(ioTaskBuff, n, srcLimit);
@@ -690,6 +724,9 @@ implements LoadExecutor<T> {
 					ioStats.markFail();
 				}
 			}
+			synchronized(ioStats) {
+				ioStats.notifyAll();
+			}
 			counterResults.addAndGet(n);
 		}
 		//
@@ -749,7 +786,8 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected void passDataItems() {
+	protected void passDataItems()
+	throws InterruptedException {
 		try {
 			//
 			final List<T> dataItems = new ArrayList<>(batchSize);
@@ -771,8 +809,8 @@ implements LoadExecutor<T> {
 					}
 					int m = 0;
 					while(m < n) {
+						Thread.yield(); LockSupport.parkNanos(1);
 						m += consumer.put(dataItems, m, n);
-						LockSupport.parkNanos(1);
 					}
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
@@ -805,10 +843,10 @@ implements LoadExecutor<T> {
 		) {
 			LOG.fatal(
 				Markers.ERR,
-				"There's a more than 1M of failures and the failure rate is higher " +
-				"than success rate for at least last {}[sec]. Exiting in order to " +
-				"avoid the memory exhaustion. Please check your environment.",
-				metricsPeriodSec
+				"There's a more than {} of failures and the failure rate is higher " +
+					"than success rate for at least last {}[sec]. Exiting in order to " +
+					"avoid the memory exhaustion. Please check your environment.",
+				MAX_FAIL_COUNT, metricsPeriodSec
 			);
 			try {
 				close();
@@ -840,7 +878,7 @@ implements LoadExecutor<T> {
 	public void setLoadState(final LoadState<T> state) {
 		if(state != null) {
 			if(state.isLimitReached(rtConfig)) {
-				isLimitReached.set(true);
+				isLimitReached = true;
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
 			}
 			// apply parameters from loadState to current load executor
@@ -857,6 +895,12 @@ implements LoadExecutor<T> {
 			ioStats.markFail(countFail);
 			ioStats.markElapsedTime(statsSnapshot.getElapsedTime());
 			loadedPrevState = state;
+			synchronized(this.state) {
+				state.notifyAll();
+			}
+			synchronized(ioStats) {
+				ioStats.notifyAll();
+			}
 		}
 	}
 	//
@@ -881,7 +925,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	private void updateDataItemCount(final long itemsCount) {
-		if (isDoneAllSubm() && (maxCount > itemsCount)) {
+		if(isDoneAllSubm() && (maxCount > itemsCount)) {
 			rtConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, itemsCount);
 		} else {
 			rtConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, maxCount);
@@ -903,6 +947,9 @@ implements LoadExecutor<T> {
 	throws IllegalStateException {
 		if(isStarted.get()) {
 			if(isShutdown.compareAndSet(false, true)) {
+				synchronized(state) {
+					state.notifyAll();
+				}
 				shutdownActually();
 			}
 		} else {
@@ -928,7 +975,7 @@ implements LoadExecutor<T> {
 	throws InterruptedException, RemoteException {
 		long t, timeOutNanoSec = timeUnit.toNanos(timeOut);
 		if(loadedPrevState != null) {
-			if(isLimitReached.get()) {
+			if(isLimitReached) {
 				return;
 			}
 			t = TimeUnit.MICROSECONDS.toNanos(
@@ -943,36 +990,34 @@ implements LoadExecutor<T> {
 		);
 		t = System.nanoTime();
 		while(true) {
+			synchronized(state) {
+				state.wait(100);
+			}
 			if(isInterrupted.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to interrupted state", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
 			if(isClosed.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to closed state", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
 			if(isDoneAllSubm()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
 			if(isDoneMaxCount()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to max count done state", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
 			if(System.nanoTime() - t > timeOutNanoSec) {
 				LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
-			if(isLimitReached.get()) {
+			if(isLimitReached) {
 				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
 				break;
 			}
-			LockSupport.parkNanos(1);
+			Thread.yield(); LockSupport.parkNanos(1000000);
 		}
 	}
 	//
@@ -980,6 +1025,9 @@ implements LoadExecutor<T> {
 	public final void close()
 	throws IOException, IllegalStateException {
 		if(isClosed.compareAndSet(false, true)) {
+			synchronized(state) {
+				state.notifyAll();
+			}
 			closeActually();
 		}
 	}
@@ -989,6 +1037,9 @@ implements LoadExecutor<T> {
 		LOG.debug(Markers.MSG, "Invoked close for {}", getName());
 		try {
 			if(isInterrupted.compareAndSet(false, true)) {
+				synchronized(state) {
+					state.notifyAll();
+				}
 				interruptActually();
 			}
 		} finally {

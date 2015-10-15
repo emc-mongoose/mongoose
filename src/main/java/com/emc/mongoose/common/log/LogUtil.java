@@ -44,6 +44,12 @@ public final class LogUtil {
 		KEY_THREAD_CTX_INHERIT = "isThreadContextMapInheritable",
 		VALUE_THREAD_CTX_INHERIT = Boolean.toString(true),
 		//
+		KEY_WAIT_STRATEGY = "AsyncLogger.WaitStrategy",
+		VALUE_WAIT_STRATEGY = "Block",
+		//
+		KEY_CLOCK = "log4j.Clock",
+		VALUE_CLOCK = "CoarseCachedClock",
+		//
 		FNAME_LOG_CONF = "logging.json",
 		//
 		MONGOOSE = "mongoose";
@@ -95,6 +101,10 @@ public final class LogUtil {
 				System.setProperty(KEY_LOG4J_CTX_SELECTOR, VALUE_LOG4J_CTX_ASYNC_SELECTOR);
 				// connect JUL to Log4J2
 				System.setProperty(KEY_JUL_MANAGER, VALUE_JUL_MANAGER);
+				//
+				System.setProperty(KEY_WAIT_STRATEGY, VALUE_WAIT_STRATEGY);
+				//
+				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
 				// set "run.id" property with timestamp value if not set before
 				String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {

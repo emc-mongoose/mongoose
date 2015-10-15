@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.http.conn.pool.SequencedConnPool;
 import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
@@ -23,7 +24,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
@@ -33,7 +33,6 @@ import org.apache.http.protocol.RequestContent;
 import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.http.nio.util.DirectByteBufferAllocator;
-import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
@@ -70,7 +69,7 @@ implements WSLoadExecutor<T> {
 	private final HttpProcessor httpProcessor;
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
-	private final BasicNIOConnPool connPool;
+	private final SequencedConnPool connPool;
 	private final WSRequestConfig<T> wsReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
@@ -164,28 +163,11 @@ implements WSLoadExecutor<T> {
 				DirectByteBufferAllocator.INSTANCE, connConfig
 			);
 		//
-		connPool = new BasicNIOConnPool(
+		connPool = new SequencedConnPool(
 			ioReactor, connFactory,
-			timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
-		) {
-			@Override
-			protected final void onLease(final BasicNIOPoolEntry poolEntry) {
-				super.onLease(poolEntry);
-				connLeaseCount.incrementAndGet();
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.MSG, "{}: connection lease: {}", getName(), poolEntry);
-				}
-			}
-			//
-			@Override
-			protected final void onRelease(final BasicNIOPoolEntry poolEntry) {
-				super.onRelease(poolEntry);
-				connReleaseCount.incrementAndGet();
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.MSG, "{}: connection release: {}", getName(), poolEntry);
-				}
-			}
-		};
+			timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE,
+			batchSize
+		);
 		connPool.setMaxTotal(totalConnCount);
 		connPool.setDefaultMaxPerRoute(connCountPerNode);
 		//

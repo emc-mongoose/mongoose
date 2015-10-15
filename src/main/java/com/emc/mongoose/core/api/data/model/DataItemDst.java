@@ -5,7 +5,6 @@ import com.emc.mongoose.core.api.data.DataItem;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.RejectedExecutionException;
 /**
  Created by kurila on 17.06.15.
  */

@@ -446,6 +446,9 @@ implements LoadClient<T> {
 	throws IOException {
 		try {
 			if(isInterrupted.compareAndSet(false, true)) {
+				synchronized(state) {
+					state.notifyAll();
+				}
 				interruptActually();
 			}
 		} finally {

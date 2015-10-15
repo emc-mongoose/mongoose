@@ -96,7 +96,8 @@ implements WSLoadSvc<T> {
 	}
 	// prevent output buffer consuming by the logger at the end of a chain
 	@Override
-	protected final void passDataItems() {
+	protected final void passDataItems()
+	throws InterruptedException {
 		if(consumer != null) {
 			super.passDataItems();
 		}

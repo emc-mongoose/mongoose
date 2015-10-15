@@ -1,10 +1,12 @@
 package com.emc.mongoose.core.impl.load.model.metrics;
 //
+import com.codahale.metrics.Snapshot;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 14.09.15.
  */
@@ -82,6 +84,10 @@ extends IOStatsBase {
 	public Snapshot getSnapshot() {
 		final long currElapsedTime = tsStartMicroSec > 0 ?
 			TimeUnit.NANOSECONDS.toMicros(System.nanoTime()) - tsStartMicroSec : 0;
+		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
+		Thread.yield(); LockSupport.parkNanos(1);
+		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
+		Thread.yield(); LockSupport.parkNanos(1);
 		return new BasicSnapshot(
 			throughPutSucc == null ? 0 : throughPutSucc.getCount(),
 			throughPutSucc == null ? 0 : throughPutSucc.getLastRate(),
@@ -89,8 +95,8 @@ extends IOStatsBase {
 			throughPutFail == null ? 0 : throughPutFail.getLastRate(),
 			reqBytes == null ? 0 : reqBytes.getCount(),
 			reqBytes == null ? 0 : reqBytes.getLastRate(),
-			prevElapsedTimeMicroSec + currElapsedTime,
-			reqDurationSum.get(), reqDuration.getSnapshot(), respLatency.getSnapshot()
+			prevElapsedTimeMicroSec + currElapsedTime, reqDurationSum.get(),
+			reqDurSnapshot, respLatSnapshot
 		);
 	}
 }
