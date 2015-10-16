@@ -62,9 +62,6 @@ extends StandaloneClientTestBase {
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_RANDOM, true);
 		RunTimeConfig.setContext(rtConfig);
 		//
-		CLIENT_BUILDER = new BasicWSClientBuilder<>()
-			.setClientMode(null);
-		//
 		try(
 			final StorageClient<WSObject> client = CLIENT_BUILDER
 				.setAPI("s3")

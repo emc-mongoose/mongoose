@@ -24,6 +24,7 @@ import com.emc.mongoose.integ.core.single.WriteByTimeTest;
 import com.emc.mongoose.integ.core.single.WriteRandomSizedItemsTest;
 import com.emc.mongoose.integ.core.single.WriteUsing100ConnTest;
 import com.emc.mongoose.integ.core.single.WriteUsing10ConnTest;
+import com.emc.mongoose.integ.core.single.WriteZeroBytesTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 /**
@@ -54,5 +55,6 @@ import org.junit.runners.Suite;
 	CircularSingleDataItemReadTest.class,
 	CircularReadFromBucketTest.class,
 	CircularRandomReadTest.class,
+	WriteZeroBytesTest.class,
 })
 public class CoreTestSuite {}
