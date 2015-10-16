@@ -27,7 +27,7 @@ public class CircularListItemDstTest {
 	//
 	@Test
 	public void shouldWriteItemsCircularily()
-		throws Exception {
+	throws Exception {
 		final List<DataItem> itemDst = new ArrayList<>(2);
 		final DataItemDst<DataItem> itemOutput = new CircularListItemDst<>(itemDst, 2);
 		itemOutput.put(dataItem0);
