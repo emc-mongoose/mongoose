@@ -5,9 +5,9 @@ import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataSource;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
  A data item which may produce uniformly distributed non-compressible content.
  Uses UniformDataSource as a ring buffer. Not thread safe.
  */
-public class UniformData
+public class BasicDataItem
 implements DataItem {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -45,7 +45,7 @@ implements DataItem {
 	public static long nextOffset(final AtomicLong lastOffset) {
 		return lastOffset.getAndSet(
 			Math.abs(
-				UniformDataSource.nextWord(lastOffset.get()) ^ System.nanoTime()
+				ContentSourceBase.nextWord(lastOffset.get()) ^ System.nanoTime()
 			)
 		);
 	}
@@ -54,36 +54,42 @@ implements DataItem {
 	private int ringBuffSize;
 	protected long offset = 0, size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public UniformData() {
-		setRingBuffer(UniformDataSource.DEFAULT.getLayer(0).asReadOnlyBuffer());
+	public BasicDataItem(final ContentSource contentSrc) {
+		setRingBuffer(contentSrc.getLayer(0).asReadOnlyBuffer());
 		setOffset(nextOffset(LAST_OFFSET));
 	}
 	//
-	public UniformData(final String metaInfo) {
-		this();
-		fromString(metaInfo);
+	public BasicDataItem(final String metaInfo, final ContentSource contentSrc) {
+		this(contentSrc);
+		final String tokens[] = metaInfo.split(RunTimeConfig.LIST_SEP, 2);
+		if(tokens.length == 2) {
+			try {
+				setOffset(Long.parseLong(tokens[0], 0x10));
+			} catch(final NumberFormatException e) {
+				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[0]));
+			}
+			try {
+				setSize(Long.parseLong(tokens[1], 10));
+			} catch(final NumberFormatException e) {
+				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[1]));
+			}
+		} else {
+			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_RECORD, metaInfo));
+		}
 	}
 	//
-	public UniformData(final Long size) {
-		this(nextOffset(LAST_OFFSET), size, UniformDataSource.DEFAULT);
+	public BasicDataItem(final Long size, final ContentSource contentSrc) {
+		this(nextOffset(LAST_OFFSET), size, contentSrc);
 	}
 	//
-	public UniformData(final Long size, final UniformDataSource dataSrc) {
-		this(nextOffset(LAST_OFFSET), size, dataSrc);
+	public BasicDataItem(final Long offset, final Long size, final ContentSource contentSrc) {
+		this(offset, size, 0, contentSrc);
 	}
 	//
-	public UniformData(final Long offset, final Long size) {
-		this(offset, size, UniformDataSource.DEFAULT);
-	}
-	//
-	public UniformData(final Long offset, final Long size, final UniformDataSource dataSrc) {
-		this(offset, size, 0, dataSrc);
-	}
-	//
-	public UniformData(
-		final Long offset, final Long size, final Integer layerNum, final UniformDataSource dataSrc
+	public BasicDataItem(
+		final Long offset, final Long size, final Integer layerNum, final ContentSource contentSrc
 	) {
-		setRingBuffer(dataSrc.getLayer(layerNum).asReadOnlyBuffer());
+		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
 		setOffset(offset);
 		this.size = size;
 	}
@@ -134,7 +140,7 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final void setDataSource(final DataSource dataSrc, final int overlayIndex) {
+	public final void setContentSource(final ContentSource dataSrc, final int overlayIndex) {
 		setRingBuffer(dataSrc.getLayer(overlayIndex).asReadOnlyBuffer());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,35 +218,16 @@ implements DataItem {
 			.append(Long.toHexString(offset)).append(RunTimeConfig.LIST_SEP)
 			.append(size).toString();
 	}
-	//
-	public void fromString(final String v)
-	throws IllegalArgumentException, NullPointerException {
-		final String tokens[] = v.split(RunTimeConfig.LIST_SEP, 2);
-		if(tokens.length == 2) {
-			try {
-				setOffset(Long.parseLong(tokens[0], 0x10));
-			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[0]));
-			}
-			try {
-				setSize(Long.parseLong(tokens[1], 10));
-			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[1]));
-			}
-		} else {
-			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_RECORD, v));
-		}
-	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public boolean equals(final Object o) {
 		if (o == this) {
 			return true;
 		}
-		if (!(o instanceof UniformData)) {
+		if (!(o instanceof BasicDataItem)) {
 			return false;
 		}
-		final UniformData other = UniformData.class.cast(o);
+		final BasicDataItem other = BasicDataItem.class.cast(o);
 		return (size == other.size) && (offset == other.offset);
 	}
 	//

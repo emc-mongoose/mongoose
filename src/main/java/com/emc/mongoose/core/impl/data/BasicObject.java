@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.data;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -13,26 +14,39 @@ import java.nio.charset.StandardCharsets;
  Basic data object implementation extending DataRanges.
  */
 public class BasicObject
-extends RangeLayerData
+extends MutableDataItem
 implements DataObject {
 	//
 	protected String id = null;
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public BasicObject() {
-		super();
+	public BasicObject(final ContentSource contentSrc) {
+		super(contentSrc);
 	}
 	//
-	public BasicObject(final String metaInfo) {
-		super();
-		fromString(metaInfo);
+	public BasicObject(final String metaInfo, final ContentSource contentSrc) {
+		super(
+			metaInfo.substring(metaInfo.indexOf(RunTimeConfig.LIST_SEP) + 1),
+			contentSrc
+		);
+		//
+		final int posSep = metaInfo.indexOf(RunTimeConfig.LIST_SEP);
+		if(posSep > 0 && posSep < metaInfo.length() - 1) {
+			id = metaInfo.substring(0, posSep);
+		} else {
+			throw new IllegalArgumentException(
+				"Failed to get an object id from the string \"" + metaInfo + "\""
+			);
+		}
 	}
 	//
-	public BasicObject(final Long size) {
-		super(size);
+	public BasicObject(final Long size, final ContentSource contentSrc) {
+		super(size, contentSrc);
 	}
 	//
-	public BasicObject(final String id, final Long offset, final long size) {
-		super(offset, size);
+	public BasicObject(
+		final String id, final Long offset, final long size, final ContentSource contentSrc
+	) {
+		super(offset, size, contentSrc);
 		this.id = id;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,19 +95,5 @@ implements DataObject {
 		return strBuilder
 			.append(id) .append(RunTimeConfig.LIST_SEP)
 			.append(super.toString()).toString();
-	}
-	//
-	@Override
-	public void fromString(final String v)
-	throws IllegalArgumentException {
-		final int posSep = v.indexOf(RunTimeConfig.LIST_SEP);
-		if(posSep > 0 && posSep < v.length() - 1) {
-			id = v.substring(0, posSep);
-		} else {
-			throw new IllegalArgumentException(
-				"Failed to get an object id from the string \"" + v + "\""
-			);
-		}
-		super.fromString(v.substring(posSep + 1));
 	}
 }

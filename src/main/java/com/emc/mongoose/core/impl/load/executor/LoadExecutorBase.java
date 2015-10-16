@@ -13,7 +13,7 @@ import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataSource;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
@@ -61,7 +61,7 @@ implements LoadExecutor<T> {
 	//
 	protected final RunTimeConfig rtConfig;
 	//
-	protected final DataSource dataSrc;
+	protected final ContentSource dataSrc;
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
@@ -230,7 +230,7 @@ implements LoadExecutor<T> {
 		for(final String addr : storageNodeAddrs) {
 			activeTasksStats.put(addr, new AtomicInteger(0));
 		}
-		dataSrc = reqConfig.getDataSource();
+		dataSrc = reqConfig.getContentSource();
 		//
 		mgmtExecutor = new ThreadPoolExecutor(
 			1, 1, 0, TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(batchSize),

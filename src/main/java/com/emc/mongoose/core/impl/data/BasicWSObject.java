@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.data;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import org.apache.http.Header;
 import org.apache.http.util.EntityUtils;
 //
@@ -23,21 +24,22 @@ implements WSObject {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSObject() {
-		super();
+	public BasicWSObject(final ContentSource contentSrc) {
+		super(contentSrc);
 	}
 	//
-	public BasicWSObject(final String metaInfo) {
-		super();
-		fromString(metaInfo);
+	public BasicWSObject(final String metaInfo, final ContentSource contentSrc) {
+		super(metaInfo, contentSrc);
 	}
 	//
-	public BasicWSObject(final Long size) {
-		super(size);
+	public BasicWSObject(final Long size, final ContentSource contentSrc) {
+		super(size, contentSrc);
 	}
 	//
-	public BasicWSObject(final String id, final Long offset, final Long size) {
-		super(id, offset, size);
+	public BasicWSObject(
+		final String id, final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		super(id, offset, size, contentSrc);
 	}
 	//
 	@Override

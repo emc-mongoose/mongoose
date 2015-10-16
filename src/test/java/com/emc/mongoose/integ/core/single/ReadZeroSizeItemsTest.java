@@ -4,7 +4,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -66,7 +65,6 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  write
-		UniformDataSource.DEFAULT = new UniformDataSource();
 		new ScriptMockRunner().run();
 		//
 		RunIdFileManager.flushAll();
@@ -84,9 +82,9 @@ extends WSMockTestBase {
 		//
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  read
-		UniformDataSource.DEFAULT = new UniformDataSource();
-		try (final BufferingOutputStream
-				 stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		try(
+			final BufferingOutputStream
+				stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
 			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message

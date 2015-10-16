@@ -1,11 +1,16 @@
 package com.emc.mongoose.storage.mock.impl.web;
 // mongoose-common.jar
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
+
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
+import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
+import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.ObjectStorageMockBase;
@@ -49,6 +54,7 @@ implements WSMock<T> {
 	private final HttpAsyncService protocolHandler;
 	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
 	private final int portStart;
+	private final ContentSource contentSrc;
 	//
 	public Cinderella(final RunTimeConfig rtConfig)
 	throws IOException {
@@ -59,8 +65,7 @@ implements WSMock<T> {
 	throws IOException {
 		this(
 			rtConfig.getStorageMockHeadCount(),
-			ioThreadCount > 0 ?
-				ioThreadCount : Math.max(1, Runtime.getRuntime().availableProcessors()),
+			ioThreadCount > 0 ? ioThreadCount : ThreadUtil.getWorkerCount(),
 			rtConfig.getApiTypePort(rtConfig.getApiName()),
 			rtConfig.getStorageMockCapacity(),
 			rtConfig.getStorageMockContainerCapacity(),
@@ -126,6 +131,8 @@ implements WSMock<T> {
 		);
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpProc, apiReqHandlerMapper);
+		//
+		contentSrc = ContentSourceBase.getDefault();
 	}
 	//
 	@Override
@@ -155,7 +162,7 @@ implements WSMock<T> {
 	//
 	@Override
 	protected final T newDataObject(final String id, final long offset, final long size) {
-		return (T) new BasicWSObjectMock(id, offset, size);
+		return (T) new BasicWSObjectMock(id, offset, size, contentSrc);
 	}
 	//
 	@Override

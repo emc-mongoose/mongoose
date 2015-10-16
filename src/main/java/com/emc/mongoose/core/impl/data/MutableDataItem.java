@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 //
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -23,8 +23,8 @@ import java.util.concurrent.ThreadLocalRandom;
  Created by kurila on 15.09.14.
  A uniform data extension which may be logically split into isolated ranges for appends and updates.
  */
-public class RangeLayerData
-extends UniformData
+public class MutableDataItem
+extends BasicDataItem
 implements AppendableDataItem, UpdatableDataItem {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -41,20 +41,47 @@ implements AppendableDataItem, UpdatableDataItem {
 	protected int currLayerIndex = 0;
 	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public RangeLayerData() {
-		super(); // ranges remain uninitialized
+	public MutableDataItem(final ContentSource contentSrc) {
+		super(contentSrc); // ranges remain uninitialized
 	}
 	//
-	public RangeLayerData(final String metaInfo) {
-		fromString(metaInfo); // invokes ranges initialization
+	public MutableDataItem(final String metaInfo, final ContentSource contentSrc) {
+		super(
+			metaInfo.substring(0, metaInfo.lastIndexOf(RunTimeConfig.LIST_SEP)),
+			contentSrc
+		);
+		//
+		final String rangesInfo = metaInfo.substring(
+			metaInfo.lastIndexOf(RunTimeConfig.LIST_SEP) + 1, metaInfo.length()
+		);
+		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
+		try {
+			// extract hexadecimal layer number
+			currLayerIndex = Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10);
+			setContentSource(contentSrc, currLayerIndex);
+			// extract hexadecimal mask, convert into bit set and add to the existing mask
+			final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
+			final char rangesMaskChars[];
+			if(rangesMask.length() == 0) {
+				rangesMaskChars = ("00" + rangesMask).toCharArray();
+			} else if(rangesMask.length() % 2 == 1) {
+				rangesMaskChars = ("0" + rangesMask).toCharArray();
+			} else {
+				rangesMaskChars = rangesMask.toCharArray();
+			}
+			// method "or" to merge w/ the existing mask
+			maskRangesRead.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
+		} catch(final DecoderException | NumberFormatException e) {
+			throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
+		}
 	}
 	//
-	public RangeLayerData(final Long size) {
-		super(size);
+	public MutableDataItem(final Long size, final ContentSource contentSrc) {
+		super(size, contentSrc);
 	}
 	//
-	public RangeLayerData(final Long offset, final Long size) {
-		super(offset, size);
+	public MutableDataItem(final Long offset, final Long size, final ContentSource contentSrc) {
+		super(offset, size, contentSrc);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
@@ -78,50 +105,16 @@ implements AppendableDataItem, UpdatableDataItem {
 				Hex.encodeHexString(maskRangesRead.toByteArray())
 			).toString();
 	}
-	//
-	@Override
-	public synchronized void fromString(final String v)
-	throws IllegalArgumentException, NullPointerException {
-		final int lastCommaPos = v.lastIndexOf(RunTimeConfig.LIST_SEP);
-		final String baseItemInfo, rangesInfo;
-		if(lastCommaPos > 0) {
-			baseItemInfo = v.substring(0, lastCommaPos);
-			super.fromString(baseItemInfo);
-			rangesInfo = v.substring(lastCommaPos + 1, v.length());
-			final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
-			try {
-				// extract hexadecimal layer number
-				currLayerIndex = Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10);
-				setDataSource(UniformDataSource.DEFAULT, currLayerIndex);
-				// extract hexadecimal mask, convert into bit set and add to the existing mask
-				final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
-				final char rangesMaskChars[];
-				if(rangesMask.length() == 0) {
-					rangesMaskChars = ("00" + rangesMask).toCharArray();
-				} else if(rangesMask.length() % 2 == 1) {
-					rangesMaskChars = ("0" + rangesMask).toCharArray();
-				} else {
-					rangesMaskChars = rangesMask.toCharArray();
-				}
-				// method "or" to merge w/ the existing mask
-				maskRangesRead.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
-			} catch(final DecoderException | NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
-			}
-		} else {
-			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_RECORD, v));
-		}
-	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public boolean equals(final Object o) {
 		if(o == this) {
 			return true;
 		}
-		if(!(o instanceof RangeLayerData) || !super.equals(o)) {
+		if(!(o instanceof MutableDataItem) || !super.equals(o)) {
 			return false;
 		} else {
-			final RangeLayerData other = RangeLayerData.class.cast(o);
+			final MutableDataItem other = MutableDataItem.class.cast(o);
 			return maskRangesRead.equals(other.maskRangesRead)
 				&& maskRangesWrite.equals(other.maskRangesWrite);
 		}

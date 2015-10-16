@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.api.data;
 //
-import com.emc.mongoose.core.api.data.model.DataSource;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 //
 import java.io.Externalizable;
 import java.io.IOException;
@@ -28,7 +28,7 @@ extends ReadableByteChannel, Externalizable {
 	//
 	void setRelativeOffset(final long relativeOffset);
 	//
-	void setDataSource(final DataSource dataSrc, final int layerNum);
+	void setContentSource(final ContentSource dataSrc, final int layerNum);
 	//
 	int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException;

@@ -14,9 +14,9 @@ import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataSource;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 // mongoose-core-impl
-import static com.emc.mongoose.core.impl.data.RangeLayerData.getRangeOffset;
+import static com.emc.mongoose.core.impl.data.MutableDataItem.getRangeOffset;
 
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
@@ -282,8 +282,8 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setDataSource(final DataSource dataSrc) {
-		super.setDataSource(dataSrc);
+	public final WSRequestConfigBase<T> setContentSource(final ContentSource dataSrc) {
+		super.setContentSource(dataSrc);
 		return this;
 	}
 	//

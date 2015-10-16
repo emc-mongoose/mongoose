@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.web;
 //
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.BasicObjectMock;
 //
@@ -16,12 +17,14 @@ public final class BasicWSObjectMock
 extends BasicObjectMock
 implements WSObjectMock {
 	//
-	public BasicWSObjectMock(final String metaInfo) {
-		super(metaInfo);
+	public BasicWSObjectMock(final String metaInfo, final ContentSource contentSrc) {
+		super(metaInfo, contentSrc);
 	}
 	//
-	public BasicWSObjectMock(final String id, final long offset, final long size) {
-		super(id, offset, size);
+	public BasicWSObjectMock(
+		final String id, final long offset, final long size, final ContentSource contentSrc
+	) {
+		super(id, offset, size, contentSrc);
 	}
 	//
 	@Override

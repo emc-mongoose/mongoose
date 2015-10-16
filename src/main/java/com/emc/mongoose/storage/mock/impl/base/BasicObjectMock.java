@@ -2,17 +2,14 @@ package com.emc.mongoose.storage.mock.impl.base;
 //
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.impl.data.BasicObject;
-import com.emc.mongoose.core.impl.data.UniformData;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 //
 import com.emc.mongoose.storage.mock.api.DataObjectMock;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.IOException;
-import java.nio.channels.WritableByteChannel;
 //
 /**
  * Created by olga on 22.01.15.
@@ -23,13 +20,14 @@ implements DataObjectMock {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicObjectMock(final String metaInfo) {
-		super();
-		fromString(metaInfo);
+	public BasicObjectMock(final String metaInfo, final ContentSource contentSrc) {
+		super(metaInfo, contentSrc);
 	}
 	//
-	public BasicObjectMock(final String id, final Long offset, final Long size) {
-		super(id, offset, size);
+	public BasicObjectMock(
+		final String id, final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		super(id, offset, size, contentSrc);
 	}
 	//
 	public final synchronized void update(final long offset, final long size)

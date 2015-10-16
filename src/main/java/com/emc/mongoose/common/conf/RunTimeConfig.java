@@ -55,6 +55,8 @@ implements Externalizable {
 		KEY_IO_BUFFER_SIZE_MIN = "io.buffer.size.min",
 		KEY_IO_BUFFER_SIZE_MAX = "io.buffer.size.max",
 		//
+		KEY_DATA_CONTENT_FPATH = "data.content.fpath",
+		//
 		KEY_DATA_SRC_RING_SEED = "data.src.ring.seed",
 		KEY_DATA_SRC_RING_SIZE = "data.src.ring.size",
 		//
@@ -546,12 +548,18 @@ implements Externalizable {
 		return getInt("storage.mock.fault.maxConnLifeMilliSec");
 	}
 	//
+	@Deprecated
 	public final String getDataSrcRingSeed() {
 		return getString(KEY_DATA_SRC_RING_SEED);
 	}
 	//
+	@Deprecated
 	public final long getDataSrcRingSize() {
 		return SizeUtil.toSize(getString(KEY_DATA_SRC_RING_SIZE));
+	}
+	//
+	public final String getDataContentFPath() {
+		return getString(KEY_DATA_CONTENT_FPATH);
 	}
 	//
 	public final int getWorkerCountFor(final String loadType) {

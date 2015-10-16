@@ -7,7 +7,9 @@ import com.emc.mongoose.common.log.Markers;
 import static com.emc.mongoose.core.api.io.req.WSRequestConfig.VALUE_RANGE_PREFIX;
 import static com.emc.mongoose.core.api.io.req.WSRequestConfig.VALUE_RANGE_CONCAT;
 // mongoose-storage-mock.jar
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
@@ -51,6 +53,7 @@ implements ReqURIMatchingHandler<T> {
 	private final StorageIOStats ioStats;
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
+	private final ContentSource contentSrc = ContentSourceBase.getDefault();
 	//
 	protected final WSMock<T> sharedStorage;
 	protected final int batchSize;
@@ -96,7 +99,8 @@ implements ReqURIMatchingHandler<T> {
 			httpRequest, httpResponse, reqLine.getMethod().toLowerCase(), reqLine.getUri()
 		);
 		// done
-		final BasicWSResponseProducer respProducer = new BasicWSResponseProducer();
+		final BasicWSResponseProducer
+			respProducer = new BasicWSResponseProducer(contentSrc);
 		respProducer.setResponse(httpResponse);
 		httpExchange.submitResponse(respProducer);
 	}

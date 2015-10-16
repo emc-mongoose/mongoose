@@ -14,9 +14,8 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
-import com.emc.mongoose.core.impl.data.RangeLayerData;
-import com.emc.mongoose.core.impl.data.UniformData;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.core.impl.data.MutableDataItem;
+import com.emc.mongoose.core.impl.data.BasicDataItem;
 //
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -169,14 +168,14 @@ implements WSIOTask<T> {
 				currRangeSize = dataItem.getRangeSize(currRangeIdx);
 				// select the current range if it's updating
 				if(dataItem.isCurrLayerRangeUpdating(currRangeIdx)) {
-					currRange = new UniformData(
+					currRange = new BasicDataItem(
 						dataItem.getOffset() + nextRangeOffset, currRangeSize,
-						currDataLayerIdx, UniformDataSource.DEFAULT
+						currDataLayerIdx, reqConf.getContentSource()
 					);
 				} else if(dataItem.isNextLayerRangeUpdating(currRangeIdx)) {
-					currRange = new UniformData(
+					currRange = new BasicDataItem(
 						dataItem.getOffset() + nextRangeOffset, currRangeSize,
-						currDataLayerIdx + 1, UniformDataSource.DEFAULT
+						currDataLayerIdx + 1, reqConf.getContentSource()
 					);
 				} else {
 					countBytesSkipped += currRangeSize;
@@ -190,7 +189,7 @@ implements WSIOTask<T> {
 					);
 				}
 				currRangeIdx ++;
-				nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
+				nextRangeOffset = MutableDataItem.getRangeOffset(currRangeIdx);
 			} while(currRange == null && currRangeSize > 0 && countBytesDone < contentSize);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
@@ -221,16 +220,16 @@ implements WSIOTask<T> {
 	throws IOException {
 		if(currRange == null) {
 			final long prevSize = dataItem.getSize();
-			currRangeIdx = prevSize > 0 ? RangeLayerData.getRangeCount(prevSize) - 1 : 0;
+			currRangeIdx = prevSize > 0 ? MutableDataItem.getRangeCount(prevSize) - 1 : 0;
 			if(dataItem.isCurrLayerRangeUpdated(currRangeIdx)) {
-				currRange = new UniformData(
+				currRange = new BasicDataItem(
 					dataItem.getOffset() + prevSize, contentSize, currDataLayerIdx + 1,
-					UniformDataSource.DEFAULT
+					reqConf.getContentSource()
 				);
 			} else {
-				currRange = new UniformData(
+				currRange = new BasicDataItem(
 					dataItem.getOffset() + prevSize, contentSize, currDataLayerIdx,
-					UniformDataSource.DEFAULT
+					reqConf.getContentSource()
 				);
 			}
 		}
@@ -420,18 +419,18 @@ implements WSIOTask<T> {
 				if(countBytesDone == nextRangeOffset) {
 					currRangeSize = dataItem.getRangeSize(currRangeIdx);
 					if(dataItem.isCurrLayerRangeUpdated(currRangeIdx)) {
-						currRange = new UniformData(
+						currRange = new BasicDataItem(
 							dataItem.getOffset() + nextRangeOffset, currRangeSize,
-							currDataLayerIdx + 1, UniformDataSource.DEFAULT
+							currDataLayerIdx + 1, reqConf.getContentSource()
 						);
 					} else {
-						currRange = new UniformData(
+						currRange = new BasicDataItem(
 							dataItem.getOffset() + nextRangeOffset, currRangeSize,
-							currDataLayerIdx, UniformDataSource.DEFAULT
+							currDataLayerIdx, reqConf.getContentSource()
 						);
 					}
 					currRangeIdx ++;
-					nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
+					nextRangeOffset = MutableDataItem.getRangeOffset(currRangeIdx);
 				}
 				//
 				if(currRangeSize > 0) {

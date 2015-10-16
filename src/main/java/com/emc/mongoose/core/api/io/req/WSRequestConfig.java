@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.api.io.req;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataSource;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-common.jar
@@ -81,7 +81,7 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setSecret(final String secret);
 	//
 	@Override
-	WSRequestConfig<T> setDataSource(final DataSource dataSrc);
+	WSRequestConfig<T> setContentSource(final ContentSource dataSrc);
 	//
 	String getNameSpace();
 	WSRequestConfig<T> setNameSpace(final String ns);
