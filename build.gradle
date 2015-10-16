@@ -26,7 +26,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.artifactory'
 
-sourceCompatibility = '1.8'
+sourceCompatibility = '1.7'
 
 distsDirName = 'dist'
 dependencyCacheDirName = 'tmp'
@@ -989,7 +989,7 @@ task dist(type: Tar) {
 idea {
 	module {
 		name = rootProject.name
-		jdkName = sourceCompatibility
+		//jdkName = sourceCompatibility
 		//
 		inheritOutputDirs = false
 		outputDir = sourceSets.common.output.resourcesDir
@@ -1004,7 +1004,7 @@ idea {
 			],
 		]
 		//for cleaning mongoose.iml
-		iml{
+		iml {
 			beforeMerged { module ->
 				//if you want skip merging exclude dirs
 				//module.excludeFolders.clear()
