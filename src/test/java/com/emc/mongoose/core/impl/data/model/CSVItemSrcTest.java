@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.data.model;
 
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.impl.data.BasicObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,11 +24,11 @@ public class CSVItemSrcTest {
 	@Test
 	public void shouldSkipSomeDataItems()
 	throws Exception {
-		final Constructor<BasicObject> itemConstructor
-			= BasicObject.class.getConstructor(String.class);
+		final Constructor<BasicObject>
+			itemConstructor = BasicObject.class.getConstructor(String.class, ContentSource.class);
 
-		final CSVItemSrc<BasicObject> itemInput
-			= new CSVItemSrc<>(itemSrc, itemConstructor);
+		final CSVItemSrc<BasicObject>
+			itemInput = new CSVItemSrc<>(itemSrc, itemConstructor);
 
 		Mockito.mock(DataItem.class);
 	}

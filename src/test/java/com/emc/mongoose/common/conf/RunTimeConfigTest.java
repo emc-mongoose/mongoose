@@ -82,16 +82,6 @@ public class RunTimeConfigTest {
 
 		Assert.assertArrayEquals(mapOverride.get("data.page.size"),
 			new String[] { "io.buffer.size.min" });
-		Assert.assertArrayEquals(mapOverride.get("data.ring.seed"),
-			new String[] { "data.src.ring.seed" });
-		Assert.assertArrayEquals(mapOverride.get("data.ring.size"),
-			new String[] { "data.src.ring.size" });
-		Assert.assertArrayEquals(mapOverride.get("data.buffer.size"),
-			new String[] { "io.buffer.size.min" });
-		Assert.assertArrayEquals(mapOverride.get("data.buffer.ring.seed"),
-			new String[] { "data.src.ring.seed" });
-		Assert.assertArrayEquals(mapOverride.get("data.buffer.ring.size"),
-			new String[] { "data.src.ring.size" });
 		Assert.assertArrayEquals(mapOverride.get("data.src.random.enabled"),
 			new String[] { "data.src.random" });
 		Assert.assertArrayEquals(mapOverride.get("data.src.random.batchSize"),

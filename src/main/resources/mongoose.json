@@ -37,8 +37,6 @@
 
 			"data.count": "load.limit.count",
 			"data.page.size": "io.buffer.size.min",
-			"data.ring.seed": "data.src.ring.seed",
-			"data.ring.size": "data.src.ring.size",
 			"data.size": [
 				"data.size.min",
 				"data.size.max"
