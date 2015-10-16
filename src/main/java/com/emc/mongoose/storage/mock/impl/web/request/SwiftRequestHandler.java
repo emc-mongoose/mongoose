@@ -5,6 +5,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-adapter-swift.jar
 import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.data.model.GenericContainer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 //
@@ -149,7 +150,7 @@ extends WSRequestHandlerBase<T> {
 		}
 		//
 		if(maxCount <= 0) {
-			maxCount = batchSize;
+			maxCount = GenericContainer.DEFAULT_PAGE_SIZE;
 		}
 		//
 		final List<T> buff = new ArrayList<>(maxCount);

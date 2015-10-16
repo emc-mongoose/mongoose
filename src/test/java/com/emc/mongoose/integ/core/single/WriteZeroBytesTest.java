@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -74,20 +75,20 @@ extends StandaloneClientTestBase {
 					if(m < 0) {
 						try(
 							final BufferedInputStream listInput = new BufferedInputStream(
-								new URL("127.0.0.1:9020/" + WriteZeroBytesTest.class.getSimpleName())
+								new URL("http://127.0.0.1:9020/" + WriteZeroBytesTest.class.getSimpleName())
 									.openStream()
 							)
 						) {
-							final byte listBuff[] = new byte[8192];
-							final StringBuilder strb = new StringBuilder();
+							final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 							do {
 								m = listInput.read(buff);
 								if(m < 0) {
 									break;
 								} else {
-									// TODO
+									baos.write(buff, 0, m);
 								}
 							} while(true);
+							baos.writeTo(System.out);
 						}
 						throw new EOFException(
 							"#" + i + ": unexpected end of stream @ offset " + n +
