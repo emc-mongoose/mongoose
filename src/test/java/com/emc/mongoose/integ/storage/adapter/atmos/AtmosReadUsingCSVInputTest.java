@@ -4,8 +4,10 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -40,7 +42,7 @@ extends StandaloneClientTestBase {
 				.build()
 		) {
 			final DataItemDst<WSObject> writeOutput = new CSVFileItemDst<>(
-				(Class) BasicWSObject.class
+				(Class) BasicWSObject.class, ContentSourceBase.getDefault()
 			);
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("10MB")

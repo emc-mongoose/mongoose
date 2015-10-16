@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
 //
 //
@@ -15,16 +16,19 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class NewDataItemSrc<T extends DataItem>
 implements DataItemSrc<T> {
 	//
-	private final Constructor<T> dataConstructor;
+	private final Constructor<T> itemConstructor;
+	private final ContentSource contentSrc;
 	private final long minObjSize, maxObjSize, sizeRange;
 	private final float objSizeBias;
 	private final ThreadLocalRandom thrLocalRnd = ThreadLocalRandom.current();
 	private DataItem lastItem = null;
 	//
 	public NewDataItemSrc(
-		final Class<T> dataCls, final long minObjSize, final long maxObjSize, final float objSizeBias
+		final Class<T> dataCls, final ContentSource contentSrc,
+		final long minObjSize, final long maxObjSize, final float objSizeBias
 	) throws NoSuchMethodException, IllegalArgumentException {
-		this.dataConstructor = dataCls.getConstructor(Long.class);
+		this.itemConstructor = dataCls.getConstructor(Long.class, ContentSource.class);
+		this.contentSrc = contentSrc;
 		this.minObjSize = minObjSize;
 		this.maxObjSize = maxObjSize;
 		this.objSizeBias = objSizeBias;
@@ -52,7 +56,7 @@ implements DataItemSrc<T> {
 	public final T get()
 	throws IOException {
 		try {
-			return dataConstructor.newInstance(nextSize());
+			return itemConstructor.newInstance(nextSize(), contentSrc);
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
 		}
@@ -63,7 +67,7 @@ implements DataItemSrc<T> {
 	throws IOException {
 		try {
 			for(int i = 0; i < maxCount; i ++) {
-				buffer.add(dataConstructor.newInstance(nextSize()));
+				buffer.add(itemConstructor.newInstance(nextSize(), contentSrc));
 			}
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
@@ -100,6 +104,6 @@ implements DataItemSrc<T> {
 	//
 	@Override
 	public final String toString() {
-		return "newDataItemInput<" + dataConstructor.getDeclaringClass().getSimpleName() + ">";
+		return "newDataItemInput<" + itemConstructor.getDeclaringClass().getSimpleName() + ">";
 	}
 }

@@ -1,15 +1,16 @@
 package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.log.Markers;
+//
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 

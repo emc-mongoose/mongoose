@@ -92,7 +92,9 @@ implements Runnable {
 					if(isParallel) {
 						loadBuilder.useNoneItemSrc();
 					} else {
-						itemDst = new CSVFileItemDst(reqConf.getDataItemClass());
+						itemDst = new CSVFileItemDst(
+							reqConf.getDataItemClass(), reqConf.getContentSource()
+						);
 						loadBuilder.setItemSrc(itemDst.getDataItemSrc());
 					}
 				}

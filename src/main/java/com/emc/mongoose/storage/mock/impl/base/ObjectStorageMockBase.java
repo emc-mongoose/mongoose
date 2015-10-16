@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.mock.impl.base;
 //
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.storage.mock.api.StorageMockCapacityLimitReachedException;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
@@ -37,12 +38,12 @@ implements ObjectStorageMock<T> {
 	private volatile boolean isCapacityExhausted = false;
 	//
 	protected ObjectStorageMockBase(
-		final Class<T> itemCls,
+		final Class<T> itemCls, final ContentSource contentSrc,
 		final int storageCapacity, final int containerCapacity, final int containerCountLimit,
 	    final int expectConcurrencyLevel, final String dataSrcPath, final int metricsPeriodSec,
 		final boolean jmxServeFlag
 	) {
-		super(itemCls, dataSrcPath, metricsPeriodSec, jmxServeFlag);
+		super(itemCls, contentSrc, dataSrcPath, metricsPeriodSec, jmxServeFlag);
 		this.storageCapacity = storageCapacity;
 		this.containerCapacity = containerCapacity;
 		this.containerCountLimit = containerCountLimit;

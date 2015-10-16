@@ -204,7 +204,11 @@ implements LoadBuilder<T, U> {
 				LOG.warn(Markers.ERR, "Specified input file \"{}\" is a directory", listFilePath);
 			} else {
 				try {
-					setItemSrc(new CSVFileItemSrc<>(listFilePath, reqConf.getDataItemClass()));
+					setItemSrc(
+						new CSVFileItemSrc<>(
+							listFilePath, reqConf.getDataItemClass(), reqConf.getContentSource()
+						)
+					);
 				} catch(final IOException | NoSuchMethodException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
 				}
@@ -450,14 +454,16 @@ implements LoadBuilder<T, U> {
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
 				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
 					return new NewDataItemSrc<>(
-						reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
+						reqConf.getDataItemClass(), reqConf.getContentSource(),
+						minObjSize, maxObjSize, objSizeBias
 					);
 				} else {
 					return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
 				}
 			} else if(flagUseNewItemSrc) {
 				return new NewDataItemSrc<>(
-					reqConf.getDataItemClass(), minObjSize, maxObjSize, objSizeBias
+					reqConf.getDataItemClass(), reqConf.getContentSource(),
+					minObjSize, maxObjSize, objSizeBias
 				);
 			} else if(flagUseContainerItemSrc) {
 				return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);

@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +25,7 @@ implements DataItemSrc<T> {
 	//
 	protected BufferedReader itemsSrc;
 	protected final Constructor<? extends T> itemConstructor;
+	protected final ContentSource contentSrc;
 	private DataItem lastItem = null;
 	//
 	private static final Logger LOG = LogManager.getLogger();
@@ -33,19 +35,22 @@ implements DataItemSrc<T> {
 	 @throws IOException
 	 @throws NoSuchMethodException
 	 */
-	public CSVItemSrc(final InputStream in, final Class<? extends T> itemCls)
-	throws IOException, NoSuchMethodException {
+	public CSVItemSrc(
+		final InputStream in, final Class<? extends T> itemCls, final ContentSource contentSrc
+	) throws IOException, NoSuchMethodException {
 		this(
 			new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)),
-			itemCls.getConstructor(String.class)
+			itemCls.getConstructor(String.class, ContentSource.class), contentSrc
 		);
 	}
 	//
 	protected CSVItemSrc(
-		final BufferedReader itemsSrc, final Constructor<? extends T> itemConstructor
+		final BufferedReader itemsSrc, final Constructor<? extends T> itemConstructor,
+	    final ContentSource contentSrc
 	) {
 		this.itemsSrc = itemsSrc;
 		this.itemConstructor = itemConstructor;
+		this.contentSrc = contentSrc;
 	}
 	//
 	public void setItemsSrc(final BufferedReader itemsSrc) {
@@ -83,7 +88,7 @@ implements DataItemSrc<T> {
 	throws IOException {
 		final String nextLine = itemsSrc.readLine();
 		try {
-			return nextLine == null ? null : itemConstructor.newInstance(nextLine);
+			return nextLine == null ? null : itemConstructor.newInstance(nextLine, contentSrc);
 		} catch(
 			final InstantiationException | IllegalAccessException | InvocationTargetException e
 		) {
@@ -106,7 +111,7 @@ implements DataItemSrc<T> {
 						break;
 					}
 				}
-				buffer.add(itemConstructor.newInstance(nextLine));
+				buffer.add(itemConstructor.newInstance(nextLine, contentSrc));
 			}
 		} catch(
 			final InstantiationException | IllegalAccessException | InvocationTargetException e

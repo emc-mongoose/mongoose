@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.FileDataItemDst;
 //
 import java.io.IOException;
@@ -16,18 +17,19 @@ implements FileDataItemDst<T> {
 	//
 	protected Path itemsFilePath;
 	//
-	public CSVFileItemDst(final Path itemsFilePath, final Class<? extends T> itemCls)
-	throws IOException {
+	public CSVFileItemDst(
+		final Path itemsFilePath, final Class<? extends T> itemCls, final ContentSource contentSrc
+	) throws IOException {
 		super(
 			Files.newOutputStream(itemsFilePath, StandardOpenOption.WRITE),
-			itemCls
+			itemCls, contentSrc
 		);
 		this.itemsFilePath = itemsFilePath;
 	}
 	//
-	public CSVFileItemDst(final Class<? extends T> itemCls)
+	public CSVFileItemDst(final Class<? extends T> itemCls, final ContentSource contentSrc)
 	throws IOException {
-		this(Files.createTempFile(null, ".csv"), itemCls);
+		this(Files.createTempFile(null, ".csv"), itemCls, contentSrc);
 		this.itemsFilePath.toFile().deleteOnExit();
 	}
 	//
@@ -35,7 +37,7 @@ implements FileDataItemDst<T> {
 	public CSVFileItemSrc<T> getDataItemSrc()
 	throws IOException {
 		try {
-			return new CSVFileItemSrc<>(itemsFilePath, itemCls);
+			return new CSVFileItemSrc<>(itemsFilePath, itemCls, contentSrc);
 		} catch(final NoSuchMethodException e) {
 			throw new IOException(e);
 		}

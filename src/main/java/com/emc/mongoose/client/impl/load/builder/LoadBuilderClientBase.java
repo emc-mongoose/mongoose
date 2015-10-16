@@ -204,7 +204,11 @@ implements LoadBuilderClient<T, U> {
 						dataItemsListPath
 					);
 				} else {
-					setItemSrc(new CSVFileItemSrc<>(dataItemsListPath, reqConf.getDataItemClass()));
+					setItemSrc(
+						new CSVFileItemSrc<>(
+							dataItemsListPath, reqConf.getDataItemClass(), reqConf.getContentSource()
+						)
+					);
 					// disable file-based item sources on the load servers side
 					for(final LoadBuilderSvc<T, U> nextLoadBuilder : values()) {
 						nextLoadBuilder.setItemSrc(null);

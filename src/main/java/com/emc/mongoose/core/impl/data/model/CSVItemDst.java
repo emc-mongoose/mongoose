@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 //
 import java.io.BufferedWriter;
@@ -18,12 +19,15 @@ public abstract class CSVItemDst<T extends DataItem>
 implements DataItemDst<T> {
 	//
 	protected final Class<? extends T> itemCls;
+	protected final ContentSource contentSrc;
 	protected final BufferedWriter itemsDst;
 	//
-	protected CSVItemDst(final OutputStream out, final Class<? extends T> itemCls)
-	throws IOException {
+	protected CSVItemDst(
+		final OutputStream out, final Class<? extends T> itemCls, final ContentSource contentSrc
+	) throws IOException {
 		itemsDst = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
 		this.itemCls = itemCls;
+		this.contentSrc = contentSrc;
 	}
 	//
 	@Override

@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 //
 import org.apache.logging.log4j.Level;
@@ -32,9 +33,10 @@ implements FileDataItemSrc<T> {
 	 @param itemCls the particular data item implementation class used to parse the records
 	 @throws java.io.IOException
 	 @throws NoSuchMethodException */
-	public CSVFileItemSrc(final Path itemsFilePath, final Class<? extends T> itemCls)
-	throws IOException, NoSuchMethodException {
-		super(Files.newInputStream(itemsFilePath, StandardOpenOption.READ), itemCls);
+	public CSVFileItemSrc(
+		final Path itemsFilePath, final Class<? extends T> itemCls, final ContentSource contentSrc
+	) throws IOException, NoSuchMethodException {
+		super(Files.newInputStream(itemsFilePath, StandardOpenOption.READ), itemCls, contentSrc);
 		this.itemsFilePath = itemsFilePath;
 	}
 	//
@@ -60,7 +62,7 @@ implements FileDataItemSrc<T> {
 		int actualCount = 0;
 		try(
 			final FileDataItemSrc<T> nestedItemSrc = new CSVFileItemSrc<>(
-				itemsFilePath, itemConstructor.getDeclaringClass()
+				itemsFilePath, itemConstructor.getDeclaringClass(), contentSrc
 			)
 		) {
 			final List<T> firstItemsBatch = new ArrayList<>(maxCount);

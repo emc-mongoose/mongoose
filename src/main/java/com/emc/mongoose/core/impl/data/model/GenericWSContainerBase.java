@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
@@ -88,7 +87,7 @@ implements GenericContainer<T> {
 				offset = 0;
 			}
 			try {
-				item = itemConstructor.newInstance(id, offset, size);
+				item = itemConstructor.newInstance(id, offset, size, reqConf.getContentSource());
 			} catch(
 				final InstantiationException | IllegalAccessException | InvocationTargetException e
 			) {

@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.data.model.GenericContainer;
 //
@@ -40,7 +41,7 @@ implements DataItemSrc<T> {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		try {
 			this.itemConstructor = itemCls.getConstructor(
-				String.class, Long.class, Long.class
+				String.class, Long.class, Long.class, ContentSource.class
 			);
 		} catch(final NoSuchMethodException e) {
 			throw new IllegalStateException(e);

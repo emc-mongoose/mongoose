@@ -8,6 +8,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -67,7 +68,7 @@ extends DistributedClientTestBase {
 				.build()
 		) {
 			final DataItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
-					BasicWSObject.class
+				BasicWSObject.class, ContentSourceBase.getDefault()
 			);
 			final long countWritten =
 				client.write(null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB"));

@@ -5,6 +5,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 //
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
@@ -30,13 +31,15 @@ implements StorageMock<T> {
 	protected final String dataSrcPath;
 	protected final StorageIOStats ioStats;
 	protected final Class<T> itemCls;
+	protected final ContentSource contentSrc;
 	//
 	protected StorageMockBase(
-		final Class<T> itemCls, final String dataSrcPath, final int metricsPeriodSec,
-		final boolean jmxServeFlag
+		final Class<T> itemCls, final ContentSource contentSrc, final String dataSrcPath,
+		final int metricsPeriodSec, final boolean jmxServeFlag
 	) {
 		this.dataSrcPath = dataSrcPath;
 		this.itemCls = itemCls;
+		this.contentSrc = contentSrc;
 		ioStats = new BasicStorageIOStats(this, metricsPeriodSec, jmxServeFlag);
 	}
 	//
@@ -101,7 +104,7 @@ implements StorageMock<T> {
 			long count = 0;
 			try(
 				final CSVFileItemSrc<T>
-					csvFileItemInput = new CSVFileItemSrc<>(dataFilePath, itemCls)
+					csvFileItemInput = new CSVFileItemSrc<>(dataFilePath, itemCls, contentSrc)
 			) {
 				T nextItem = csvFileItemInput.get();
 				while(null != nextItem) {

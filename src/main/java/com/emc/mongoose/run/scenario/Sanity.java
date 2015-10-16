@@ -7,9 +7,11 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 //
 import com.emc.mongoose.core.impl.data.BasicWSObject;
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.core.impl.data.model.BinFileItemDst;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 //
@@ -77,7 +79,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
 			final DataItemDst<WSObject> dataDstR = new CSVFileItemDst<>(
-				(Class<? extends WSObject>) BasicWSObject.class
+				(Class<? extends WSObject>) BasicWSObject.class, ContentSourceBase.getDefault()
 			);
 			final long nRead = client.read(
 				dataDstU.getDataItemSrc(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
@@ -95,7 +97,8 @@ implements Runnable {
 			// update again the appended data items
 			final Path fileTmpItems0 = Files.createTempFile("reUpdatedItems", ".csv"); // do not delete on exit
 			final DataItemDst<WSObject> dataDstU2 = new CSVFileItemDst<>(
-				fileTmpItems0, (Class<? extends WSObject>) BasicWSObject.class
+				fileTmpItems0, (Class<? extends WSObject>) BasicWSObject.class,
+				ContentSourceBase.getDefault()
 			);
 			final long nUpdated2 = client.update(
 				dataDstA.getDataItemSrc(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 20
@@ -108,7 +111,8 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
 			// recreate the items
 			final DataItemDst<WSObject> dataDstW2 = new CSVFileItemDst<>(
-				(Class<? extends WSObject>) BasicWSObject.class
+				(Class<? extends WSObject>) BasicWSObject.class,
+				ContentSourceBase.getDefault()
 			);
 			final long nReWritten = client.write(
 				dataDstW.getDataItemSrc(), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE

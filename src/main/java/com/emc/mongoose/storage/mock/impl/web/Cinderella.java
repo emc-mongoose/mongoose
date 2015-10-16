@@ -54,7 +54,6 @@ implements WSMock<T> {
 	private final HttpAsyncService protocolHandler;
 	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
 	private final int portStart;
-	private final ContentSource contentSrc;
 	//
 	public Cinderella(final RunTimeConfig rtConfig)
 	throws IOException {
@@ -85,7 +84,7 @@ implements WSMock<T> {
 	    final int minConnLifeMilliSec, final int maxConnLifeMilliSec
 	) throws IOException {
 		super(
-			(Class<T>) BasicWSObjectMock.class,
+			(Class<T>) BasicWSObjectMock.class, ContentSourceBase.getDefault(),
 			storageCapacity, containerCapacity, containerCountLimit,
 			headCount * ioThreadCount,
 			dataSrcPath, metricsPeriodSec, jmxServeFlag
@@ -131,8 +130,6 @@ implements WSMock<T> {
 		);
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpProc, apiReqHandlerMapper);
-		//
-		contentSrc = ContentSourceBase.getDefault();
 	}
 	//
 	@Override
