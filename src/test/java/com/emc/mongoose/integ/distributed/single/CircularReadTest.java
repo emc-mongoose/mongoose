@@ -57,9 +57,6 @@ extends DistributedClientTestBase {
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_CIRCULAR, true);
 		RunTimeConfig.setContext(rtConfig);
 		//
-		CLIENT_BUILDER = new BasicWSClientBuilder<>()
-			.setClientMode(new String[]{ServiceUtil.getHostAddr()});
-		//
 		try(
 			final StorageClient<WSObject> client = CLIENT_BUILDER
 				.setAPI("s3")
@@ -70,8 +67,9 @@ extends DistributedClientTestBase {
 			final DataItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
 				BasicWSObject.class, ContentSourceBase.getDefault()
 			);
-			final long countWritten =
-				client.write(null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB"));
+			final long countWritten = client.write(
+				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB")
+			);
 			TimeUnit.SECONDS.sleep(10);
 			//
 			try (

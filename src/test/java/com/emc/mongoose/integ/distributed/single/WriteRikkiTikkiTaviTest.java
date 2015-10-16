@@ -1,10 +1,11 @@
-package com.emc.mongoose.integ.core.single;
+package com.emc.mongoose.integ.distributed.single;
+
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.data.model.ListItemDst;
-import com.emc.mongoose.integ.base.StandaloneClientTestBase;
+import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -22,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 16.10.15.
  */
 public class WriteRikkiTikkiTaviTest
-extends StandaloneClientTestBase {
+extends DistributedClientTestBase {
 	//
 	private final static int COUNT_TO_WRITE = 100, OBJ_SIZE = (int) SizeUtil.toSize("64KB");
 	private final static String
@@ -37,7 +38,7 @@ extends StandaloneClientTestBase {
 		throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "conf/content/textexample");
-		StandaloneClientTestBase.setUpClass();
+		DistributedClientTestBase.setUpClass();
 		try(
 			final StorageClient<WSObject> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)

@@ -1,7 +1,13 @@
 package com.emc.mongoose.core.impl.data.content;
 //
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.log.LogUtil;
+//
 import com.emc.mongoose.core.api.data.content.ContentSource;
+//
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.EOFException;
 import java.io.IOException;
@@ -18,6 +24,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public abstract class ContentSourceBase
 implements ContentSource {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected ByteBuffer zeroByteLayer;
 	protected final List<ByteBuffer> byteLayers = new ArrayList<>();
@@ -63,8 +71,9 @@ implements ContentSource {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		final byte buff[] = new byte[zeroByteLayer.capacity()];
+		zeroByteLayer.clear(); // reset
 		zeroByteLayer.get(buff);
-		out.write(zeroByteLayer.capacity());
+		out.writeInt(zeroByteLayer.capacity());
 		out.write(buff);
 	}
 	//
@@ -97,6 +106,11 @@ implements ContentSource {
 				try {
 					DEFAULT = new FileContentSource();
 				} catch(final Exception e) {
+					LogUtil.exception(
+						LOG, Level.DEBUG, e,
+						"No ring buffer source file available for reading, " +
+						"falling back to use the random data ring buffer"
+					);
 					DEFAULT = new UniformContentSource(
 						UniformContentSource.DEFAULT_SEED, Constants.BUFF_SIZE_HI
 					);

@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 16.10.15.
  */
 public class UpdateRikkiTikkiTaviTest
-	extends StandaloneClientTestBase {
+extends StandaloneClientTestBase {
 	//
 	private final static int COUNT_TO_WRITE = 1000, OBJ_SIZE = (int) SizeUtil.toSize("50KB");
 	private final static String

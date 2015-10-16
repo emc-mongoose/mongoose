@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -59,6 +60,7 @@ implements ContentSource {
 		synchronized(byteLayers) {
 			for(int i = byteLayers.size(); i <= layerIndex; i ++) {
 				lastLayerBytes = byteLayers.get(i - 1);
+				lastLayerBytes.clear();
 				nextLayerBytes = ByteBuffer.allocateDirect(size);
 				// apply xorshift to each word
 				for(int j = 0; j < wordCount; j ++) {

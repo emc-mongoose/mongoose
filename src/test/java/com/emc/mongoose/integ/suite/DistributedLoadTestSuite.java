@@ -16,6 +16,8 @@ import org.junit.runners.Suite;
 	com.emc.mongoose.integ.distributed.chain.SequentialLoadTest.class,
 	com.emc.mongoose.integ.distributed.chain.SimultaneousLoadTest.class,
 	com.emc.mongoose.integ.distributed.rampup.RampupTest.class,
-	com.emc.mongoose.integ.distributed.single.CircularReadTest.class
+	com.emc.mongoose.integ.distributed.single.CircularReadTest.class,
+	com.emc.mongoose.integ.distributed.single.UpdateZeroBytesTest.class,
+	com.emc.mongoose.integ.distributed.single.WriteRikkiTikkiTaviTest.class,
 })
 public class DistributedLoadTestSuite {}

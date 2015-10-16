@@ -17,14 +17,19 @@ import com.emc.mongoose.integ.core.single.Read10BItemsTest;
 import com.emc.mongoose.integ.core.single.Read10KBItemsTest;
 import com.emc.mongoose.integ.core.single.Read10MBItemsTest;
 import com.emc.mongoose.integ.core.single.Read200MBItemsTest;
+import com.emc.mongoose.integ.core.single.ReadRikkiTikkiTaviTest;
 import com.emc.mongoose.integ.core.single.ReadVerificationTest;
+import com.emc.mongoose.integ.core.single.ReadZeroBytesTest;
 import com.emc.mongoose.integ.core.single.ReadZeroSizeItemsTest;
+import com.emc.mongoose.integ.core.single.UpdateRikkiTikkiTaviTest;
 import com.emc.mongoose.integ.core.single.WriteByCountTest;
 import com.emc.mongoose.integ.core.single.WriteByTimeTest;
 import com.emc.mongoose.integ.core.single.WriteRandomSizedItemsTest;
 import com.emc.mongoose.integ.core.single.WriteUsing100ConnTest;
 import com.emc.mongoose.integ.core.single.WriteUsing10ConnTest;
 import com.emc.mongoose.integ.core.single.WriteZeroBytesTest;
+import com.emc.mongoose.integ.distributed.single.UpdateZeroBytesTest;
+import com.emc.mongoose.integ.distributed.single.WriteRikkiTikkiTaviTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 /**
@@ -56,5 +61,10 @@ import org.junit.runners.Suite;
 	CircularReadFromBucketTest.class,
 	CircularRandomReadTest.class,
 	WriteZeroBytesTest.class,
+	ReadZeroBytesTest.class,
+	UpdateZeroBytesTest.class,
+	WriteRikkiTikkiTaviTest.class,
+	ReadRikkiTikkiTaviTest.class,
+	UpdateRikkiTikkiTaviTest.class,
 })
 public class CoreTestSuite {}
