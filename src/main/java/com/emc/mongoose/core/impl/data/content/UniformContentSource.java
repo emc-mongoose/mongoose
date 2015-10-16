@@ -16,15 +16,12 @@ import java.nio.ByteBuffer;
  A uniform data source for producing uniform data items.
  Implemented as finite buffer of pseudorandom bytes.
  */
-@Deprecated
 public final class UniformContentSource
 extends ContentSourceBase
 implements ContentSource {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final static long DEFAULT_SEED = Long.valueOf("7a42d9c483244167", 0x10);
-	//
 	private final long seed;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Deprecated

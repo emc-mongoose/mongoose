@@ -3,6 +3,8 @@ package com.emc.mongoose.common.conf;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.impl.data.content.UniformContentSource;
+//
 import com.fasterxml.jackson.databind.JsonNode;
 //
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -548,14 +550,15 @@ implements Externalizable {
 		return getInt("storage.mock.fault.maxConnLifeMilliSec");
 	}
 	//
+	private final static String DEFAULT_RING_BUFF_SEED = "7a42d9c483244167";
 	@Deprecated
 	public final String getDataSrcRingSeed() {
-		return getString(KEY_DATA_SRC_RING_SEED);
+		return DEFAULT_RING_BUFF_SEED;
 	}
 	//
 	@Deprecated
 	public final long getDataSrcRingSize() {
-		return SizeUtil.toSize(getString(KEY_DATA_SRC_RING_SIZE));
+		return Constants.BUFF_SIZE_HI;
 	}
 	//
 	public final String getDataContentFPath() {

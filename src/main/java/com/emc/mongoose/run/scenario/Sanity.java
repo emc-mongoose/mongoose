@@ -129,7 +129,6 @@ implements Runnable {
 			);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
 		} catch(final Exception e) {
-			e.printStackTrace(System.err);
 			LogUtil.exception(LOG, Level.ERROR, e, "Sanity failure");
 		}
 	}
@@ -161,14 +160,14 @@ implements Runnable {
 			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
 			.setLimitTime(0, TimeUnit.SECONDS)
 			.setLimitRate(10000);
-		// standalone
+		/* standalone
 		try(final StorageClient<WSObject> client = clientBuilder.build()) {
 			final Thread sanityThread1 = new Thread(new Sanity(client), "sanityStandalone");
 			sanityThread1.start();
 			LOG.info(Markers.MSG, "Standalone sanity started");
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
-		}
+		}*/
 		// distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		ServiceUtil.init();

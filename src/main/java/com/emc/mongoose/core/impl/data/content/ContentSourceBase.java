@@ -111,9 +111,7 @@ implements ContentSource {
 						"No ring buffer source file available for reading, " +
 						"falling back to use the random data ring buffer"
 					);
-					DEFAULT = new UniformContentSource(
-						UniformContentSource.DEFAULT_SEED, Constants.BUFF_SIZE_HI
-					);
+					DEFAULT = new UniformContentSource();
 				}
 			}
 		} finally {
