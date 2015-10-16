@@ -3,8 +3,6 @@ package com.emc.mongoose.common.conf;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.impl.data.content.UniformContentSource;
-//
 import com.fasterxml.jackson.databind.JsonNode;
 //
 import com.fasterxml.jackson.databind.ObjectMapper;
