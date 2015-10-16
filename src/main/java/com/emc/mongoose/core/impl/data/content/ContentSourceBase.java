@@ -51,7 +51,7 @@ implements ContentSource {
 		return word;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private static ContentSourceBase DEFAULT = null;
+	public static ContentSourceBase DEFAULT = null;
 	private final static Lock LOCK = new ReentrantLock();
 	public static ContentSourceBase getDefault() {
 		LOCK.lock();

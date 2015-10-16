@@ -54,6 +54,13 @@ implements DataItem {
 	private int ringBuffSize;
 	protected long offset = 0, size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public BasicDataItem() {
+		this(
+			ContentSourceBase.DEFAULT == null ?
+				ContentSourceBase.getDefault() : ContentSourceBase.DEFAULT
+		);
+	}
+	//
 	public BasicDataItem(final ContentSource contentSrc) {
 		setRingBuffer(contentSrc.getLayer(0).asReadOnlyBuffer());
 		setOffset(nextOffset(LAST_OFFSET));

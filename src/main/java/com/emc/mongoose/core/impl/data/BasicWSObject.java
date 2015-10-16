@@ -24,6 +24,10 @@ implements WSObject {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
+	public BasicWSObject() {
+		super();
+	}
+	//
 	public BasicWSObject(final ContentSource contentSrc) {
 		super(contentSrc);
 	}

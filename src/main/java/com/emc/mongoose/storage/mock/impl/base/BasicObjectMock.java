@@ -20,6 +20,10 @@ implements DataObjectMock {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	public BasicObjectMock() {
+		super();
+	}
+	//
 	public BasicObjectMock(final String metaInfo, final ContentSource contentSrc) {
 		super(metaInfo, contentSrc);
 	}

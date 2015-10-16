@@ -19,6 +19,10 @@ implements DataObject {
 	//
 	protected String id = null;
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public BasicObject() {
+		super();
+	}
+	//
 	public BasicObject(final ContentSource contentSrc) {
 		super(contentSrc);
 	}

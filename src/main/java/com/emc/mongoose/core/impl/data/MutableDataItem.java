@@ -41,6 +41,10 @@ implements AppendableDataItem, UpdatableDataItem {
 	protected int currLayerIndex = 0;
 	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public MutableDataItem() {
+		super();
+	}
+	//
 	public MutableDataItem(final ContentSource contentSrc) {
 		super(contentSrc); // ranges remain uninitialized
 	}

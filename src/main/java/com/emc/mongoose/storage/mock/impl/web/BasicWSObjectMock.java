@@ -17,6 +17,10 @@ public final class BasicWSObjectMock
 extends BasicObjectMock
 implements WSObjectMock {
 	//
+	public BasicWSObjectMock() {
+		super();
+	}
+	//
 	public BasicWSObjectMock(final String metaInfo, final ContentSource contentSrc) {
 		super(metaInfo, contentSrc);
 	}
