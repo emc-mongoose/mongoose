@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.data.model.ListItemDst;
+import com.emc.mongoose.core.impl.data.model.ListItemSrc;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.Assert;
@@ -12,7 +13,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -21,16 +21,18 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 16.10.15.
  */
-public class WriteZeroBytesTest
+public class UpdateZeroBytesTest
 extends StandaloneClientTestBase {
 	//
-	private final static int COUNT_TO_WRITE = 1000, OBJ_SIZE = (int) SizeUtil.toSize("10KB");
+	private final static int COUNT_TO_WRITE = 100, OBJ_SIZE = (int) SizeUtil.toSize("100KB");
 	private final static String
-		RUN_ID = WriteZeroBytesTest.class.getCanonicalName(),
-		BASE_URL = "http://127.0.0.1:9020/" + WriteZeroBytesTest.class.getSimpleName() + "/";
-	private final static List<WSObject> OBJ_BUFF = new ArrayList<>(COUNT_TO_WRITE);
+		RUN_ID = UpdateZeroBytesTest.class.getCanonicalName(),
+		BASE_URL = "http://127.0.0.1:9020/" + UpdateZeroBytesTest.class.getSimpleName() + "/";
+	private final static List<WSObject>
+		OBJ_BUFF_WRITTEN = new ArrayList<>(COUNT_TO_WRITE),
+		OBJ_BUFF_UPDATED = new ArrayList<>(COUNT_TO_WRITE);
 	//
-	private static long countWritten;
+	private static int countWritten, countUpdated;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -43,11 +45,15 @@ extends StandaloneClientTestBase {
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("s3")
-				.setS3Bucket(WriteZeroBytesTest.class.getSimpleName())
+				.setS3Bucket(UpdateZeroBytesTest.class.getSimpleName())
 				.build()
 		) {
-			countWritten = client.write(
-				null, new ListItemDst<>(OBJ_BUFF), COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB")
+			countWritten = (int) client.write(
+				null, new ListItemDst<>(OBJ_BUFF_WRITTEN), COUNT_TO_WRITE, 10, OBJ_SIZE
+			);
+			countUpdated = (int) client.update(
+				new ListItemSrc<>(OBJ_BUFF_WRITTEN), new ListItemDst<>(OBJ_BUFF_UPDATED),
+				countWritten, 10, 16
 			);
 			//
 			RunIdFileManager.flushAll();
@@ -56,54 +62,39 @@ extends StandaloneClientTestBase {
 	//
 	@Test
 	public void checkReturnedCount() {
-		Assert.assertEquals(COUNT_TO_WRITE, countWritten);
+		Assert.assertEquals(COUNT_TO_WRITE, countUpdated);
 	}
 	//
 	@Test
-	public void checkAllWrittenBytesAreZero()
-	throws Exception {
-		Assert.assertEquals(COUNT_TO_WRITE, OBJ_BUFF.size());
+	public void checkAllUpdatedContainsNonZeroBytes()
+		throws Exception {
+		Assert.assertEquals(COUNT_TO_WRITE, OBJ_BUFF_UPDATED.size());
 		URL nextObjURL;
 		final byte buff[] = new byte[OBJ_SIZE];
-		for(int i = 0; i < OBJ_BUFF.size(); i ++) {
-			nextObjURL = new URL(BASE_URL + OBJ_BUFF.get(i).getId());
+		for(int i = 0; i < OBJ_BUFF_UPDATED.size(); i ++) {
+			nextObjURL = new URL(BASE_URL + OBJ_BUFF_UPDATED.get(i).getId());
 			try(final BufferedInputStream in = new BufferedInputStream(nextObjURL.openStream())) {
 				int n = 0, m;
 				do {
 					m = in.read(buff, n, OBJ_SIZE - n);
 					if(m < 0) {
-						try(
-							final BufferedInputStream listInput = new BufferedInputStream(
-								new URL("http://127.0.0.1:9020/" + WriteZeroBytesTest.class.getSimpleName())
-									.openStream()
-							)
-						) {
-							final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							do {
-								m = listInput.read(buff);
-								if(m < 0) {
-									break;
-								} else {
-									baos.write(buff, 0, m);
-								}
-							} while(true);
-							baos.writeTo(System.out);
-						}
 						throw new EOFException(
 							"#" + i + ": unexpected end of stream @ offset " + n +
-							" while reading the content from " + nextObjURL
+								" while reading the content from " + nextObjURL
 						);
 					} else {
 						n += m;
 					}
 				} while(n < OBJ_SIZE);
 				//
+				boolean nonZeroByte = false;
 				for(int j = 0; j < OBJ_SIZE; j ++) {
-					Assert.assertEquals(
-						"Non-zero byte @ offset " + j + " in the content of " + nextObjURL,
-						(byte) 0, buff[j]
-					);
+					nonZeroByte = buff[j] != 0;
+					if(nonZeroByte) {
+						break;
+					}
 				}
+				Assert.assertTrue("Non-zero bytes have been not found in the updated object", nonZeroByte);
 			}
 		}
 	}

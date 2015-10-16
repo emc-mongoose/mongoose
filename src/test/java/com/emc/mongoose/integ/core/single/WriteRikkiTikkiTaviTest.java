@@ -1,5 +1,4 @@
 package com.emc.mongoose.integ.core.single;
-//
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -15,19 +14,20 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 16.10.15.
  */
-public class WriteZeroBytesTest
+public class WriteRikkiTikkiTaviTest
 extends StandaloneClientTestBase {
 	//
-	private final static int COUNT_TO_WRITE = 1000, OBJ_SIZE = (int) SizeUtil.toSize("10KB");
+	private final static int COUNT_TO_WRITE = 100, OBJ_SIZE = (int) SizeUtil.toSize("64KB");
 	private final static String
-		RUN_ID = WriteZeroBytesTest.class.getCanonicalName(),
-		BASE_URL = "http://127.0.0.1:9020/" + WriteZeroBytesTest.class.getSimpleName() + "/";
+		RUN_ID = WriteRikkiTikkiTaviTest.class.getCanonicalName(),
+		BASE_URL = "http://127.0.0.1:9020/" + WriteRikkiTikkiTaviTest.class.getSimpleName() + "/";
 	private final static List<WSObject> OBJ_BUFF = new ArrayList<>(COUNT_TO_WRITE);
 	//
 	private static long countWritten;
@@ -36,18 +36,18 @@ extends StandaloneClientTestBase {
 	public static void setUpClass()
 		throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		System.setProperty(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "conf/content/zerobytes");
+		System.setProperty(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "conf/content/textexample");
 		StandaloneClientTestBase.setUpClass();
 		try(
 			final StorageClient<WSObject> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("s3")
-				.setS3Bucket(WriteZeroBytesTest.class.getSimpleName())
+				.setS3Bucket(WriteRikkiTikkiTaviTest.class.getSimpleName())
 				.build()
 		) {
 			countWritten = client.write(
-				null, new ListItemDst<>(OBJ_BUFF), COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB")
+				null, new ListItemDst<>(OBJ_BUFF), COUNT_TO_WRITE, 10, OBJ_SIZE
 			);
 			//
 			RunIdFileManager.flushAll();
@@ -60,8 +60,8 @@ extends StandaloneClientTestBase {
 	}
 	//
 	@Test
-	public void checkAllWrittenBytesAreZero()
-	throws Exception {
+	public void checkAllObjectsContainTheTaleText()
+		throws Exception {
 		Assert.assertEquals(COUNT_TO_WRITE, OBJ_BUFF.size());
 		URL nextObjURL;
 		final byte buff[] = new byte[OBJ_SIZE];
@@ -74,7 +74,7 @@ extends StandaloneClientTestBase {
 					if(m < 0) {
 						try(
 							final BufferedInputStream listInput = new BufferedInputStream(
-								new URL("http://127.0.0.1:9020/" + WriteZeroBytesTest.class.getSimpleName())
+								new URL("http://127.0.0.1:9020/" + WriteRikkiTikkiTaviTest.class.getSimpleName())
 									.openStream()
 							)
 						) {
@@ -91,20 +91,16 @@ extends StandaloneClientTestBase {
 						}
 						throw new EOFException(
 							"#" + i + ": unexpected end of stream @ offset " + n +
-							" while reading the content from " + nextObjURL
+								" while reading the content from " + nextObjURL
 						);
 					} else {
 						n += m;
 					}
 				} while(n < OBJ_SIZE);
-				//
-				for(int j = 0; j < OBJ_SIZE; j ++) {
-					Assert.assertEquals(
-						"Non-zero byte @ offset " + j + " in the content of " + nextObjURL,
-						(byte) 0, buff[j]
-					);
-				}
 			}
+			final String text = new String(buff, StandardCharsets.UTF_8);
+			Assert.assertTrue(text.contains("mongoose"));
+			Assert.assertTrue(text.contains("Nag is dead"));
 		}
 	}
 }
