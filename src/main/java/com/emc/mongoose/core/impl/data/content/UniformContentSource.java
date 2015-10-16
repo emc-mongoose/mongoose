@@ -77,11 +77,6 @@ implements ContentSource {
 		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public final int getSize() {
-		return size;
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -111,8 +106,9 @@ implements ContentSource {
 		}
 		// else
 		long nextSeed;
+		final int size = zeroByteLayer.capacity();
 		synchronized(byteLayers) {
-			for (int i = byteLayers.size(); i <= layerIndex; i++) {
+			for(int i = byteLayers.size(); i <= layerIndex; i++) {
 				ByteBuffer nextLayer = ByteBuffer.allocateDirect(size);
 				nextSeed = Long.reverse(
 					nextWord(

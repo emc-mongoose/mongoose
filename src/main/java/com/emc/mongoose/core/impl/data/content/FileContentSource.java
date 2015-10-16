@@ -45,11 +45,6 @@ implements ContentSource {
 	}
 	//
 	@Override
-	public final int getSize() {
-		return size;
-	}
-	//
-	@Override
 	public final ByteBuffer getLayer(final int layerIndex) {
 		// zero layer always exists so it may be useful to do it very simply and fast
 		if(layerIndex == 0) {
@@ -58,6 +53,7 @@ implements ContentSource {
 		// else
 		ByteBuffer lastLayerBytes, nextLayerBytes;
 		final int
+			size = zeroByteLayer.capacity(),
 			wordCount = Byte.SIZE * size / Long.SIZE,
 			tailByteCount = size % (Long.SIZE / Byte.SIZE);
 		synchronized(byteLayers) {
