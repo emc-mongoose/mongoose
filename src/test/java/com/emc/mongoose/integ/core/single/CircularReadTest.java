@@ -54,7 +54,7 @@ extends StandaloneClientTestBase {
 		System.setProperty(
 			RunTimeConfig.KEY_RUN_ID, CircularReadTest.class.getCanonicalName()
 		);
-		WSMockTestBase.setUpClass();
+		StandaloneClientTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_CIRCULAR, true);
@@ -94,9 +94,10 @@ extends StandaloneClientTestBase {
 	}
 	//
 	@AfterClass
-	public static void tearDown()
+	public static void tearDownClass()
 	throws Exception {
 		StdOutInterceptorTestSuite.reset();
+		StandaloneClientTestBase.tearDownClass();
 	}
 	//
 	@Test

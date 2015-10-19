@@ -4,10 +4,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-//
 import com.emc.mongoose.common.net.ServiceUtil;
+//
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.DataItemDst;
 //
 import com.emc.mongoose.core.impl.data.BasicWSObject;
@@ -17,7 +16,6 @@ import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 //
 import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.data.model.ListItemDst;
-//
 //
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
