@@ -35,8 +35,13 @@
 			"storage.socket.select.interval": "remote.socket.selectInterval",
 			"storage.versioning": "data.versioning",
 
+			"data.buffer.size": "io.buffer.size.min",
+			"data.buffer.ring.seed": "data.src.ring.seed",
+			"data.buffer.ring.size": "data.src.ring.size",
 			"data.count": "load.limit.count",
 			"data.page.size": "io.buffer.size.min",
+			"data.ring.seed": "data.src.ring.seed",
+			"data.ring.size": "data.src.ring.size",
 			"data.size": [
 				"data.size.min",
 				"data.size.max"
@@ -159,7 +164,11 @@
 				"separator": ",",
 				"circular": false,
 				"random": false,
-				"batchSize": 100
+				"batchSize": 100,
+				"ring": {
+					"seed": "7a42d9c483244167",
+					"size": "4MB"
+				}
 			},
 			"content": {
 				"fpath": ""

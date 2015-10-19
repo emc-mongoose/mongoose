@@ -548,15 +548,12 @@ implements Externalizable {
 		return getInt("storage.mock.fault.maxConnLifeMilliSec");
 	}
 	//
-	private final static String DEFAULT_RING_BUFF_SEED = "7a42d9c483244167";
-	@Deprecated
 	public final String getDataSrcRingSeed() {
-		return DEFAULT_RING_BUFF_SEED;
+		return getString(KEY_DATA_SRC_RING_SEED);
 	}
 	//
-	@Deprecated
 	public final long getDataSrcRingSize() {
-		return Constants.BUFF_SIZE_HI;
+		return getLong(KEY_DATA_SRC_RING_SIZE);
 	}
 	//
 	public final String getDataContentFPath() {
