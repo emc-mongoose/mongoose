@@ -553,7 +553,7 @@ implements Externalizable {
 	}
 	//
 	public final long getDataSrcRingSize() {
-		return getLong(KEY_DATA_SRC_RING_SIZE);
+		return SizeUtil.toSize(KEY_DATA_SRC_RING_SIZE);
 	}
 	//
 	public final String getDataContentFPath() {
