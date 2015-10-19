@@ -113,6 +113,8 @@ implements ContentSource {
 					DEFAULT = new UniformContentSource();
 				}
 			}
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.FATAL, e, "Failed to init the ring buffer");
 		} finally {
 			LOCK.unlock();
 		}
