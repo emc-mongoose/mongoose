@@ -170,12 +170,12 @@ implements WSIOTask<T> {
 				if(dataItem.isCurrLayerRangeUpdating(currRangeIdx)) {
 					currRange = new BasicDataItem(
 						dataItem.getOffset() + nextRangeOffset, currRangeSize,
-						currDataLayerIdx, reqConf.getContentSource()
+						currDataLayerIdx + 1, reqConf.getContentSource()
 					);
 				} else if(dataItem.isNextLayerRangeUpdating(currRangeIdx)) {
 					currRange = new BasicDataItem(
 						dataItem.getOffset() + nextRangeOffset, currRangeSize,
-						currDataLayerIdx + 1, reqConf.getContentSource()
+						currDataLayerIdx + 2, reqConf.getContentSource()
 					);
 				} else {
 					countBytesSkipped += currRangeSize;

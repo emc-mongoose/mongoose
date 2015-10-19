@@ -64,9 +64,9 @@ extends StandaloneClientTestBase {
 	public void checkReturnedCount() {
 		Assert.assertEquals(COUNT_TO_WRITE, countUpdated);
 	}
-	//
+	// zero bytes update has no effect as far as xorshift of 0-word returns 0-word
 	@Test
-	public void checkAllUpdatedContainsNonZeroBytes()
+	public void checkAllUpdatedContainsZeroBytes()
 		throws Exception {
 		Assert.assertEquals(COUNT_TO_WRITE, OBJ_BUFF_UPDATED.size());
 		URL nextObjURL;
@@ -94,7 +94,9 @@ extends StandaloneClientTestBase {
 						break;
 					}
 				}
-				Assert.assertTrue("Non-zero bytes have been not found in the updated object", nonZeroByte);
+				Assert.assertFalse(
+					"Non-zero bytes have been found in the updated object", nonZeroByte
+				);
 			}
 		}
 	}

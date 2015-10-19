@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.LongBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -55,8 +54,8 @@ implements ContentSource {
 		ByteBuffer lastLayerBytes, nextLayerBytes;
 		final int
 			size = zeroByteLayer.capacity(),
-			wordCount = Byte.SIZE * size / Long.SIZE,
-			tailByteCount = size % (Long.SIZE / Byte.SIZE);
+			wordCount = size / WORD_SIZE,
+			tailByteCount = size % WORD_SIZE;
 		synchronized(byteLayers) {
 			for(int i = byteLayers.size(); i <= layerIndex; i ++) {
 				lastLayerBytes = byteLayers.get(i - 1);
@@ -66,10 +65,22 @@ implements ContentSource {
 				for(int j = 0; j < wordCount; j ++) {
 					nextLayerBytes.putLong(nextWord(lastLayerBytes.getLong()));
 				}
-				// append the tail bytes w/o modification
+				// append the tail bytes
 				if(tailByteCount > 0) {
+					final ByteBuffer tailBytes = ByteBuffer.allocate(WORD_SIZE);
 					for(int j = 0; j < tailByteCount; j++) {
-						nextLayerBytes.put(lastLayerBytes.get());
+						tailBytes.put(lastLayerBytes.get());
+					}
+					for(int j = tailByteCount; j < WORD_SIZE; j ++) {
+						tailBytes.put((byte) 0);
+					}
+					tailBytes.clear(); // reset the position
+					final long tailWord = tailBytes.asLongBuffer().get();
+					tailBytes.clear(); // reset the position
+					tailBytes.asLongBuffer().put(nextWord(tailWord));
+					tailBytes.clear(); // reset the position
+					for(int j = 0; j < tailByteCount; j ++) {
+						nextLayerBytes.put(tailBytes.get());
 					}
 				}
 				byteLayers.add(nextLayerBytes);
