@@ -5,6 +5,7 @@ import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.content.ContentSource;
 //
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -73,25 +74,23 @@ implements ContentSource {
 		final byte buff[] = new byte[zeroByteLayer.capacity()];
 		zeroByteLayer.clear(); // reset
 		zeroByteLayer.get(buff);
-		out.writeInt(zeroByteLayer.capacity());
+		out.writeInt(buff.length);
 		out.write(buff);
 	}
 	//
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		final int size = in.readInt();
+		int size = in.readInt(), k;
 		final byte buff[] = new byte[size];
-		int n = 0, m;
-		do {
-			m = in.read(buff, n, size - n);
-			if(m < 0) {
-				throw new EOFException("Unexpected end of stream");
+		for(int i = 0; i < size; ) {
+			k = in.read(buff, i, size - i);
+			if(k < 0) {
+				throw new EOFException();
 			} else {
-				n += m;
+				i += k;
 			}
-		} while(size < n);
-		//
+		}
 		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
