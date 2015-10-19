@@ -71,11 +71,11 @@ extends DistributedLoadBuilderTestBase {
 			DURATION_TOTAL_SEQ = System.currentTimeMillis() / 1000;
 			rampupScenario.run();
 			DURATION_TOTAL_SEQ = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEQ;
+			TimeUnit.SECONDS.sleep(10);
 			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
 		}
 		//
 		RunIdFileManager.flushAll();
-		TimeUnit.SECONDS.sleep(10);
 	}
 	//
 	@Test public void checkTotalDuration()

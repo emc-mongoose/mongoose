@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.LogValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,5 +54,6 @@ extends ConfiguredTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		ConfiguredTestBase.tearDownClass();
+		StdOutInterceptorTestSuite.reset();
 	}
 }
