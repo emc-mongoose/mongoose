@@ -1,11 +1,11 @@
 package com.emc.mongoose.integ.base;
 //
-import com.emc.mongoose.client.api.load.builder.WSLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.WSLoadClient;
-import com.emc.mongoose.client.impl.load.builder.BasicWSLoadBuilderClient;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.load.builder.LoadBuilder;
+import com.emc.mongoose.util.factory.LoadBuilderFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 /**
@@ -14,13 +14,13 @@ import org.junit.BeforeClass;
 public abstract class DistributedLoadBuilderTestBase
 extends DistributedTestBase {
 	//
-	protected static WSLoadBuilderClient<WSObject, WSLoadClient<WSObject>> LOAD_BUILDER_CLIENT;
+	protected static LoadBuilder<WSObject, WSLoadClient<WSObject>> LOAD_BUILDER_CLIENT;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		DistributedTestBase.setUpClass();
-		LOAD_BUILDER_CLIENT = new BasicWSLoadBuilderClient<>(RunTimeConfig.getContext());
+		LOAD_BUILDER_CLIENT = LoadBuilderFactory.getInstance(RunTimeConfig.getContext());
 	}
 	//
 	@AfterClass

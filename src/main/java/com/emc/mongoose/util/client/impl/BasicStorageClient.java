@@ -2,6 +2,7 @@ package com.emc.mongoose.util.client.impl;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemDst;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 19.06.15.
  */
-public class BasicStorageClient<T extends DataItem>
+public class BasicStorageClient<T extends Item>
 implements StorageClient<T> {
 	//
 	protected final static int DEFAULT_CONN_PER_NODE_COUNT = 1;

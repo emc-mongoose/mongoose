@@ -20,6 +20,7 @@ import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
+import com.emc.mongoose.util.factory.LoadBuilderFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,6 +33,7 @@ import java.util.Map;
  */
 public final class ModeDispatcher {
 	//
+	@SuppressWarnings("unchecked")
 	public static void main(final String args[]) {
 		// load the config from CLI arguments
 		final Map<String, String> properties = HumanFriendly.parseCli(args);
@@ -61,7 +63,8 @@ public final class ModeDispatcher {
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
-						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
+						loadBuilderSvc = (WSLoadBuilderSvc) LoadBuilderFactory
+							.getInstance(RunTimeConfig.getContext())
 				) {
 					loadBuilderSvc.start();
 					loadBuilderSvc.await();

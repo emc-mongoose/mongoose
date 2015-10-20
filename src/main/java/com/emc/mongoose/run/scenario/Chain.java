@@ -16,7 +16,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
-import com.emc.mongoose.util.shared.WSLoadBuilderFactory;
+import com.emc.mongoose.util.factory.LoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +50,7 @@ implements Runnable {
 	//
 	public Chain(final RunTimeConfig rtConfig) {
 		this(
-			WSLoadBuilderFactory.getInstance(rtConfig),
+			LoadBuilderFactory.getInstance(rtConfig),
 			rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit(),
 			rtConfig.getScenarioChainLoad(), rtConfig.getScenarioChainConcurrentFlag()
 		);
