@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.io.req;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  Created by kurila on 06.06.14.
  The most common implementation of the shared request configuration.
  */
-public abstract class RequestConfigBase<T extends DataItem>
+public abstract class RequestConfigBase<T extends Item>
 implements RequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.ItemDst;
 //
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
@@ -60,7 +60,7 @@ implements Runnable {
 	public void run() {
 		try {
 			// create new items
-			final DataItemDst<WSObject> dataDstW = new ListItemDst<>(
+			final ItemDst<WSObject> dataDstW = new ListItemDst<>(
 				new ArrayList<WSObject>(DEFAULT_DATA_COUNT_MAX)
 			);
 			LOG.info(Markers.MSG, "Start writing");
@@ -70,60 +70,60 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
 			// update the created items
 			LOG.info(Markers.MSG, "Start updating");
-			final DataItemDst<WSObject> dataDstU = new BinFileItemDst<>();
+			final ItemDst<WSObject> dataDstU = new BinFileItemDst<>();
 			final long nUpdated = client.update(
-				dataDstW.getDataItemSrc(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 20
+				dataDstW.getItemSrc(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 20
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
-			final DataItemDst<WSObject> dataDstR = new CSVFileItemDst<>(
+			final ItemDst<WSObject> dataDstR = new CSVFileItemDst<>(
 				(Class<? extends WSObject>) BasicWSObject.class, ContentSourceBase.getDefault()
 			);
 			final long nRead = client.read(
-				dataDstU.getDataItemSrc(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
+				dataDstU.getItemSrc(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead);
 			// variable-sized appending of the verified data items
-			final DataItemDst<WSObject> dataDstA = new LimitedQueueItemBuffer<>(
+			final ItemDst<WSObject> dataDstA = new LimitedQueueItemBuffer<>(
 				new ArrayBlockingQueue<WSObject>(DEFAULT_DATA_COUNT_MAX)
 			);
 			final long nAppended = client.append(
-				dataDstR.getDataItemSrc(), dataDstA, nRead, DEFAULT_CONN_PER_NODE,
+				dataDstR.getItemSrc(), dataDstA, nRead, DEFAULT_CONN_PER_NODE,
 				DEFAULT_DATA_SIZE, 3 * DEFAULT_DATA_SIZE, 1
 			);
 			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
 			// update again the appended data items
 			final Path fileTmpItems0 = Files.createTempFile("reUpdatedItems", ".csv"); // do not delete on exit
-			final DataItemDst<WSObject> dataDstU2 = new CSVFileItemDst<>(
+			final ItemDst<WSObject> dataDstU2 = new CSVFileItemDst<>(
 				fileTmpItems0, (Class<? extends WSObject>) BasicWSObject.class,
 				ContentSourceBase.getDefault()
 			);
 			final long nUpdated2 = client.update(
-				dataDstA.getDataItemSrc(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 20
+				dataDstA.getItemSrc(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 20
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
 			// read and verify the updated items again
 			final long nRead2 = client.read(
-				dataDstU2.getDataItemSrc(), null, nUpdated2, DEFAULT_CONN_PER_NODE, true
+				dataDstU2.getItemSrc(), null, nUpdated2, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
 			// recreate the items
-			final DataItemDst<WSObject> dataDstW2 = new CSVFileItemDst<>(
+			final ItemDst<WSObject> dataDstW2 = new CSVFileItemDst<>(
 				(Class<? extends WSObject>) BasicWSObject.class,
 				ContentSourceBase.getDefault()
 			);
 			final long nReWritten = client.write(
-				dataDstW.getDataItemSrc(), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
+				dataDstW.getItemSrc(), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
 			// read and verify the rewritten data items
 			final long nRead3 = client.read(
-				dataDstW2.getDataItemSrc(), null, nWritten, DEFAULT_CONN_PER_NODE, true
+				dataDstW2.getItemSrc(), null, nWritten, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
 			// delete all created data items
 			final long nDeleted = client.delete(
-				dataDstW.getDataItemSrc(), null, nWritten, DEFAULT_CONN_PER_NODE
+				dataDstW.getItemSrc(), null, nWritten, DEFAULT_CONN_PER_NODE
 			);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
 		} catch(final Exception e) {

@@ -2,8 +2,7 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import com.emc.mongoose.core.api.data.model.DataItemDst;
-import com.emc.mongoose.core.impl.data.model.CircularListItemDst;
+import com.emc.mongoose.core.api.data.model.ItemDst;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
@@ -29,7 +28,7 @@ public class CircularListItemDstTest {
 	public void shouldWriteItemsCircularily()
 	throws Exception {
 		final List<DataItem> itemDst = new ArrayList<>(2);
-		final DataItemDst<DataItem> itemOutput = new CircularListItemDst<>(itemDst, 2);
+		final ItemDst<DataItem> itemOutput = new CircularListItemDst<>(itemDst, 2);
 		itemOutput.put(dataItem0);
 		assertEquals(itemDst.get(0), dataItem0);
 		itemOutput.put(dataItem1);
@@ -46,7 +45,7 @@ public class CircularListItemDstTest {
 	public void shouldWriteItemsCircularilyBulk()
 	throws Exception {
 		final List<DataItem> itemDst = new ArrayList<>(2);
-		final DataItemDst<DataItem> itemOutput = new CircularListItemDst<>(itemDst, 2);
+		final ItemDst<DataItem> itemOutput = new CircularListItemDst<>(itemDst, 2);
 		final List<DataItem> buffer = Arrays.asList(
 			new DataItem[] {dataItem0, dataItem1, dataItem2, dataItem3, dataItem4}
 		);

@@ -3,7 +3,7 @@ package com.emc.mongoose.client.impl.load.executor;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.api.io.task.WSIOTask;
@@ -30,7 +30,7 @@ implements WSLoadClient<T> {
 	public BasicWSLoadClient(
 		final RunTimeConfig rtConfig, final WSRequestConfig<T> reqConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
-		final DataItemSrc<T> itemSrc, final long maxCount,
+		final ItemSrc<T> itemSrc, final long maxCount,
 		final Map<String, LoadSvc<T>> remoteLoadMap
 	) throws RemoteException {
 		super(

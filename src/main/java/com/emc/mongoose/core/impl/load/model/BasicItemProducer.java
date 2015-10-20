@@ -3,10 +3,10 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
-import com.emc.mongoose.core.api.load.model.DataItemProducer;
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.model.ItemDst;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.load.model.ItemProducer;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -23,30 +23,30 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 19.06.15.
  */
-public class BasicDataItemProducer<T extends DataItem>
+public class BasicItemProducer<T extends Item>
 extends Thread
-implements DataItemProducer<T> {
+implements ItemProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final DataItemSrc<T> itemSrc;
+	protected final ItemSrc<T> itemSrc;
 	protected final long maxCount;
-	protected volatile DataItemDst<T> itemDst = null;
+	protected volatile ItemDst<T> itemDst = null;
 	protected final int batchSize;
 	protected long skipCount;
 	protected T lastDataItem;
 	protected boolean isCircular;
 	protected boolean isShuffled;
 	//
-	protected BasicDataItemProducer(
-		final DataItemSrc<T> itemSrc, final long maxCount, final int batchSize,
+	protected BasicItemProducer(
+		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
 		final boolean isCircular, final boolean isShuffled
 	) {
 		this(itemSrc, maxCount, batchSize, isCircular, isShuffled, 0, null);
 	}
 	//
-	private BasicDataItemProducer(
-		final DataItemSrc<T> itemSrc, final long maxCount, final int batchSize,
+	private BasicItemProducer(
+		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
 		final boolean isCircular, final boolean isShuffled,
 		final long skipCount, final T lastDataItem
 	) {
@@ -65,18 +65,18 @@ implements DataItemProducer<T> {
 	}
 	//
 	@Override
-	public void setLastDataItem(final T dataItem) {
+	public void setLastItem(final T dataItem) {
 		this.lastDataItem = dataItem;
 	}
 	//
 	@Override
-	public void setDataItemDst(final DataItemDst<T> itemDst)
+	public void setItemDst(final ItemDst<T> itemDst)
 	throws RemoteException {
 		this.itemDst = itemDst;
 	}
 	//
 	@Override
-	public DataItemSrc<T> getDataItemSrc()
+	public ItemSrc<T> getItemSrc()
 	throws RemoteException {
 		return itemSrc;
 	}
@@ -162,7 +162,7 @@ implements DataItemProducer<T> {
 	protected void skipIfNecessary() {
 		if(skipCount > 0) {
 			try {
-				itemSrc.setLastDataItem(lastDataItem);
+				itemSrc.setLastItem(lastDataItem);
 				itemSrc.skip(skipCount);
 			} catch (final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to skip {} items", skipCount);

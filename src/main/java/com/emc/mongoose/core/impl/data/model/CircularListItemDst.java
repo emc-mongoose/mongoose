@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 //
 import java.io.IOException;
 import java.util.ArrayList;
@@ -8,7 +8,7 @@ import java.util.List;
 /**
  The data items input which may be written infinitely (if underlying collection allows that).
  */
-public class CircularListItemDst<T extends DataItem>
+public class CircularListItemDst<T extends Item>
 extends ListItemDst<T> {
 	//
 	protected int capacity, i = 0;
@@ -82,7 +82,7 @@ extends ListItemDst<T> {
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public CircularListItemSrc<T> getDataItemSrc()
+	public CircularListItemSrc<T> getItemSrc()
 	throws IOException {
 		return new CircularListItemSrc<>(items);
 	}

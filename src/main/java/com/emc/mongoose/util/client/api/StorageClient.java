@@ -1,8 +1,8 @@
 package com.emc.mongoose.util.client.api;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemDst;
 //
 import java.io.Closeable;
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.io.IOException;
  The client class supporting the following storage I/O methods: write, read, delete, update, append.
  Note that all the methods are blocking. Use a low-level load execution
  builders and jobs interface if a non-blocking approach is required.
- <p>Every method accepts an {@link DataItemSrc} stream as a 1st
+ <p>Every method accepts an {@link ItemSrc} stream as a 1st
  argument which is used as the source of the data items descriptors which should be processed
  (e.g. written/read/deleted/etc). The resulting behavior is different for write methods and the
  remaining methods. If the value of the 1st argument is null write methods will generate new data
@@ -45,7 +45,7 @@ extends Closeable {
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(
-		final DataItemSrc<T> src, final DataItemDst<T> dst,
+		final ItemSrc<T> src, final ItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount, final long size
 	) throws IllegalArgumentException, InterruptedException, IOException;
 
@@ -63,7 +63,7 @@ extends Closeable {
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(
-		final DataItemSrc<T> src, final DataItemDst<T> dst,
+		final ItemSrc<T> src, final ItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount,
 		final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, InterruptedException, IOException;
@@ -73,7 +73,7 @@ extends Closeable {
 	 @param src data items info source
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
-	long read(final DataItemSrc<T> src)
+	long read(final ItemSrc<T> src)
 	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
@@ -86,7 +86,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long read(
-		final DataItemSrc<T> src, final DataItemDst<T> dst,
+		final ItemSrc<T> src, final ItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount, final boolean verifyContentFlag
 	) throws IllegalStateException, InterruptedException, IOException;
 
@@ -95,7 +95,7 @@ extends Closeable {
 	 @param src data items info source
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
-	long delete(final DataItemSrc<T> src)
+	long delete(final ItemSrc<T> src)
 	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
@@ -107,7 +107,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long delete(
-		final DataItemSrc<T> src, final DataItemDst<T> dst,
+		final ItemSrc<T> src, final ItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount
 	) throws IllegalStateException, InterruptedException, IOException;
 
@@ -116,7 +116,7 @@ extends Closeable {
 	 @param src data items info source
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
-	long update(final DataItemSrc<T> src)
+	long update(final ItemSrc<T> src)
 	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
@@ -130,7 +130,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long update(
-		final DataItemSrc<T> src, final DataItemDst<T> dst,
+		final ItemSrc<T> src, final ItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount, final int countPerTime
 	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;
 
@@ -140,7 +140,7 @@ extends Closeable {
 	 @param size the augment size to append to each data item
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
-	long append(final DataItemSrc<T> src, final long size)
+	long append(final ItemSrc<T> src, final long size)
 	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
@@ -153,7 +153,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long append(
-		final DataItemSrc<T> src, final DataItemDst<T> dst,
+		final ItemSrc<T> src, final ItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount, final long size
 	) throws IllegalStateException, InterruptedException, IOException;
 
@@ -171,7 +171,7 @@ extends Closeable {
 	 @throws IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long append(
-		final DataItemSrc<T> src, final DataItemDst<T> dst,
+		final ItemSrc<T> src, final ItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;

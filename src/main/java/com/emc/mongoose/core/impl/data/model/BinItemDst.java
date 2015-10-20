@@ -1,8 +1,8 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 //
-import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.ItemDst;
 //
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -10,8 +10,8 @@ import java.util.List;
 /**
  The data item output implementation serializing the data items into the specified stream
  */
-public abstract class BinItemDst<T extends DataItem>
-implements DataItemDst<T> {
+public abstract class BinItemDst<T extends Item>
+implements ItemDst<T> {
 	//
 	protected final ObjectOutputStream itemsDst;
 	//
@@ -35,7 +35,7 @@ implements DataItemDst<T> {
 		itemsDst.writeUnshared(
 			buffer
 				.subList(from, to)
-				.toArray(new DataItem[to - from])
+				.toArray(new Item[to - from])
 		);
 		return to - from;
 	}

@@ -4,8 +4,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 //
 import static org.junit.Assert.*;
 
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
-import com.emc.mongoose.core.impl.data.model.CircularListItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 //
@@ -26,7 +25,7 @@ public class CircularListItemSrcTest {
 	@Test
 	public void shouldReadMoreItemsThanStored()
 	throws Exception {
-		final DataItemSrc<DataItem> itemInput = new CircularListItemSrc<>(items);
+		final ItemSrc<DataItem> itemInput = new CircularListItemSrc<>(items);
 		assertEquals(itemInput.get(), dataItem0);
 		assertEquals(itemInput.get(), dataItem1);
 		assertEquals(itemInput.get(), dataItem0);

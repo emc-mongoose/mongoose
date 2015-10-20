@@ -1,9 +1,11 @@
 package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.data.DataItem;
+//
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.content.ContentSource;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -20,13 +22,13 @@ import java.util.List;
 /**
  The data item input using CSV file containing the human-readable data item records as the source
  */
-public class CSVItemSrc<T extends DataItem>
-implements DataItemSrc<T> {
+public class CSVItemSrc<T extends Item>
+implements ItemSrc<T> {
 	//
 	protected BufferedReader itemsSrc;
 	protected final Constructor<? extends T> itemConstructor;
 	protected final ContentSource contentSrc;
-	private DataItem lastItem = null;
+	private T lastItem = null;
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	/**
@@ -58,26 +60,26 @@ implements DataItemSrc<T> {
 	}
 	//
 	@Override
-	public DataItem getLastDataItem() {
+	public T getLastItem() {
 		return lastItem;
 	}
 	//
 	@Override
-	public void setLastDataItem(final T lastItem) {
+	public void setLastItem(final T lastItem) {
 		this.lastItem = lastItem;
 	}
 	//
 	@Override
 	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_START, itemsCount);
+		LOG.info(Markers.MSG, ItemSrc.MSG_SKIP_START, itemsCount);
 		String item;
 		for (int i = 0; i < itemsCount; i++) {
 			item = itemsSrc.readLine();
 			if (item == null) {
 				throw new IOException("Couldn't skip such amount of data items");
 			} else if (item.equals(lastItem.toString())) {
-				LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_END);
+				LOG.info(Markers.MSG, ItemSrc.MSG_SKIP_END);
 				return;
 			}
 		}

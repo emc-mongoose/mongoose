@@ -1,11 +1,11 @@
 package com.emc.mongoose.core.api.io.task;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
  */
-public interface IOTask<T extends DataItem> {
+public interface IOTask<T extends Item> {
 	//
 	enum Type {
 		CREATE, READ, DELETE, UPDATE, APPEND

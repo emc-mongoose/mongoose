@@ -7,6 +7,7 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.DataItem;
 //
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
@@ -32,7 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 14.09.15.
  */
-public class AggregatedRemoteIOStats<T extends DataItem>
+public class AggregatedRemoteIOStats<T extends Item>
 extends IOStatsBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();

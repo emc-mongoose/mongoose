@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.api.load.builder;
 //
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -69,7 +69,7 @@ extends Closeable {
 	LoadBuilder<T, U> setUpdatesPerItem(final int count)
 	throws RemoteException;
 	//
-	LoadBuilder<T, U> setItemSrc(final DataItemSrc<T> itemSrc)
+	LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> useNewItemSrc()
