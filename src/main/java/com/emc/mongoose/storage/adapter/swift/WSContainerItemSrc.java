@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 //
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.GenericContainer;
+import com.emc.mongoose.core.api.data.model.DataItemContainer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.impl.data.model.GenericContainerItemSrcBase;
 //
@@ -51,7 +51,7 @@ extends GenericContainerItemSrcBase<T> {
 	protected final void loadNextPage()
 	throws EOFException, IOException {
 		final int countLimit = (int) Math.min(
-			GenericContainer.DEFAULT_PAGE_SIZE, maxCount - doneCount
+			DataItemContainer.DEFAULT_PAGE_SIZE, maxCount - doneCount
 		);
 		if(eof || countLimit == 0) {
 			throw new EOFException();

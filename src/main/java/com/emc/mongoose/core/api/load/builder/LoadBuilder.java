@@ -36,15 +36,6 @@ extends Closeable {
 	LoadBuilder<T, U> setMaxCount(final long maxCount)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setMinObjSize(final long minObjSize)
-	throws IllegalArgumentException, RemoteException;
-	//
-	LoadBuilder<T, U> setMaxObjSize(final long maxObjSize)
-	throws IllegalArgumentException, RemoteException;
-	//
-	LoadBuilder<T, U> setObjSizeBias(final float objSizeBias)
-	throws IllegalArgumentException, RemoteException;
-	//
 	LoadBuilder<T, U> setManualTaskSleepMicroSecs(final int manualTaskSleepMicroSec)
 	throws IllegalArgumentException, RemoteException;
 	//
@@ -66,9 +57,6 @@ extends Closeable {
 	LoadBuilder<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setUpdatesPerItem(final int count)
-	throws RemoteException;
-	//
 	LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
 	throws RemoteException;
 	//
@@ -76,9 +64,6 @@ extends Closeable {
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> useNoneItemSrc()
-	throws RemoteException;
-	//
-	LoadBuilder<T, U> useContainerListingItemSrc()
 	throws RemoteException;
 	//
 	U build()

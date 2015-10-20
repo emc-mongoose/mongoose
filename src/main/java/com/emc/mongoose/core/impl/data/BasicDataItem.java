@@ -252,13 +252,13 @@ implements DataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public boolean equals(final Object o) {
-		if (o == this) {
+		if(o == this) {
 			return true;
 		}
-		if (!(o instanceof BasicDataItem)) {
+		if(!(o instanceof BasicDataItem)) {
 			return false;
 		}
-		final BasicDataItem other = BasicDataItem.class.cast(o);
+		final BasicDataItem other = (BasicDataItem) o;
 		return (size == other.size) && (offset == other.offset);
 	}
 	//

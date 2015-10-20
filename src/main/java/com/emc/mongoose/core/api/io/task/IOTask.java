@@ -34,7 +34,7 @@ public interface IOTask<T extends Item> {
 	//
 	String getNodeAddr();
 	//
-	T getDataItem();
+	T getItem();
 	//
 	long getCountBytesDone();
 	//

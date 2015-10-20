@@ -21,7 +21,7 @@ import java.util.NoSuchElementException;
  Created by kurila on 05.05.14.
  */
 public class BasicWSLoadBuilder<T extends WSObject, U extends WSLoadExecutor<T>>
-extends LoadBuilderBase<T, U>
+extends DataLoadBuilderBase<T, U>
 implements WSLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

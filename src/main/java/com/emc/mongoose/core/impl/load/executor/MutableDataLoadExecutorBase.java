@@ -7,12 +7,11 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.MutableDataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
-import com.emc.mongoose.core.api.data.AppendableDataItem;
-import com.emc.mongoose.core.api.data.UpdatableDataItem;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -25,7 +24,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 15.12.14.
  */
-public abstract class TypeSpecificLoadExecutorBase<T extends AppendableDataItem & UpdatableDataItem>
+public abstract class MutableDataLoadExecutorBase<T extends MutableDataItem>
 extends LimitedRateLoadExecutorBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -35,7 +34,7 @@ extends LimitedRateLoadExecutorBase<T> {
 	private final long sizeMin, sizeRange;
 	private final float sizeBias;
 	//
-	protected TypeSpecificLoadExecutorBase(
+	protected MutableDataLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,

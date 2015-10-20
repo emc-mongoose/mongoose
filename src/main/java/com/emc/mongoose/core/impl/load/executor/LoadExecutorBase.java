@@ -583,17 +583,17 @@ implements LoadExecutor<T> {
 		return put(items, 0, items.size());
 	}
 	//
-	protected abstract IOTask<T> getIOTask(final T dataItem, final String nextNodeAddr);
+	protected abstract IOTask<T> getIOTask(final T item, final String nextNodeAddr);
 	//
 	protected int getIOTasks(
-		final List<T> dataItems, final int from, final int to,
+		final List<T> items, final int from, final int to,
 		final List<IOTask<T>> dstTaskBuff, final String nextNodeAddr
 	) {
-		for(final T dataItem : dataItems) {
-			if(dataItem == null) {
+		for(final T item : items) {
+			if(item == null) {
 				break;
 			} else {
-				dstTaskBuff.add(getIOTask(dataItem, nextNodeAddr));
+				dstTaskBuff.add(getIOTask(item, nextNodeAddr));
 			}
 		}
 		return to - from;
@@ -628,7 +628,7 @@ implements LoadExecutor<T> {
 			return;
 		}
 		//
-		final T dataItem = ioTask.getDataItem();
+		final T dataItem = ioTask.getItem();
 		final IOTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
 		final long
@@ -689,7 +689,7 @@ implements LoadExecutor<T> {
 			int reqDuration, respLatency;
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
-				dataItem = ioTask.getDataItem();
+				dataItem = ioTask.getItem();
 				status = ioTask.getStatus();
 				countBytesDone = ioTask.getCountBytesDone();
 				reqTimeStart = ioTask.getReqTimeStart();
