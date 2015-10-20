@@ -6,7 +6,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.builder.LoadBuilder;
+import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 //
@@ -23,10 +23,10 @@ implements StorageClient<T> {
 	protected final static int DEFAULT_CONN_PER_NODE_COUNT = 1;
 	//
 	protected RunTimeConfig rtConfig;
-	protected LoadBuilder<T, LoadExecutor<T>> loadBuilder;
+	protected DataLoadBuilder<T, LoadExecutor<T>> loadBuilder;
 	//
 	public BasicStorageClient(
-		final RunTimeConfig rtConfig, final LoadBuilder<T, LoadExecutor<T>> loadBuilder
+		final RunTimeConfig rtConfig, final DataLoadBuilder<T, LoadExecutor<T>> loadBuilder
 	) {
 		this.rtConfig = rtConfig;
 		this.loadBuilder = loadBuilder;
@@ -72,13 +72,13 @@ implements StorageClient<T> {
 		//
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
+				.setMinObjSize(minSize)
+				.setMaxObjSize(maxSize)
+				.setObjSizeBias(sizeBias)
 				.setLoadType(IOTask.Type.CREATE)
 				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.CREATE)
-				.setMinObjSize(minSize)
-				.setMaxObjSize(maxSize)
-				.setObjSizeBias(sizeBias)
 				.build()
 		) {
 			return executeLoadJob(loadJobExecutor, dst);
@@ -145,11 +145,11 @@ implements StorageClient<T> {
 	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
+				.setUpdatesPerItem(countPerTime)
 				.setItemSrc(src)
 				.setLoadType(IOTask.Type.UPDATE)
 				.setMaxCount(maxCount)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.UPDATE)
-				.setUpdatesPerItem(countPerTime)
 				.build()
 		) {
 			return executeLoadJob(loadJobExecutor, dst);
@@ -178,12 +178,12 @@ implements StorageClient<T> {
 	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setItemSrc(src)
-				.setLoadType(IOTask.Type.APPEND)
-				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.APPEND)
 				.setMinObjSize(sizeMin)
 				.setMaxObjSize(sizeMax)
 				.setObjSizeBias(sizeBias)
+				.setItemSrc(src)
+				.setLoadType(IOTask.Type.APPEND)
+				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.APPEND)
 				.build()
 		) {
 			return executeLoadJob(loadJobExecutor, dst);

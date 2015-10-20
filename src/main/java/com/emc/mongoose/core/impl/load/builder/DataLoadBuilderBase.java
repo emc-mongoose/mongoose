@@ -58,7 +58,7 @@ implements DataLoadBuilder<T, U> {
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
 				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
 					return new NewDataItemSrc<>(
-						reqConf.getDataItemClass(), reqConf.getContentSource(),
+						reqConf.getItemClass(), reqConf.getContentSource(),
 						minObjSize, maxObjSize, objSizeBias
 					);
 				} else {
@@ -66,7 +66,7 @@ implements DataLoadBuilder<T, U> {
 				}
 			} else if(flagUseNewItemSrc) {
 				return new NewDataItemSrc<>(
-					reqConf.getDataItemClass(), reqConf.getContentSource(),
+					reqConf.getItemClass(), reqConf.getContentSource(),
 					minObjSize, maxObjSize, objSizeBias
 				);
 			} else if(flagUseContainerItemSrc) {

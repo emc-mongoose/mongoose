@@ -154,7 +154,7 @@ implements LoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
-		final String listFilePathStr = rtConfig.getDataSrcFPath();
+		final String listFilePathStr = rtConfig.getItemSrcFPath();
 		if(listFilePathStr != null && !listFilePathStr.isEmpty()) {
 			final Path listFilePath = Paths.get(listFilePathStr);
 			if(!Files.exists(listFilePath)) {
@@ -167,7 +167,7 @@ implements LoadBuilder<T, U> {
 				try {
 					setItemSrc(
 						new CSVFileItemSrc<>(
-							listFilePath, reqConf.getDataItemClass(), reqConf.getContentSource()
+							listFilePath, reqConf.getItemClass(), reqConf.getContentSource()
 						)
 					);
 				} catch(final IOException | NoSuchMethodException e) {

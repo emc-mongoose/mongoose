@@ -1,9 +1,9 @@
 package com.emc.mongoose.core.api.load.builder;
 //
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-common
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -15,7 +15,7 @@ import java.rmi.RemoteException;
  Created by kurila on 28.04.14.
  A builder pattern implementation which should help to instantiate a configured load executor.
  */
-public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>>
+public interface LoadBuilder<T extends Item, U extends LoadExecutor<T>>
 extends Closeable {
 	//
 	String

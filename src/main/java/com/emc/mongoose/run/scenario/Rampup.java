@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.load.builder.LoadBuilder;
+import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 //
 import com.emc.mongoose.util.shared.WSLoadBuilderFactory;
 //
@@ -28,7 +28,7 @@ implements Runnable {
 		LOG = LogManager.getLogger();
 	}
 	//
-	private final LoadBuilder loadBuilder;
+	private final DataLoadBuilder loadBuilder;
 	private final long timeOut;
 	private final TimeUnit timeUnit;
 	private final String loadTypeSeq[], sizeSeq[], connCountSeq[];

@@ -27,8 +27,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 08.05.14.
  */
-public final class BasicWSLoadBuilderClient<T extends WSObject, U extends WSLoadClient<T>>
-extends LoadBuilderClientBase<T, U>
+public final class BasicWSLoadBuilderClient<
+	T extends WSObject,
+	U extends WSLoadClient<T>,
+	V extends WSLoadBuilderSvc<T, U>
+>
+extends DataLoadBuilderClientBase<T, U, V>
 implements WSLoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -49,16 +53,16 @@ implements WSLoadBuilderClient<T, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSLoadBuilderSvc<T, U> resolve(final String serverAddr)
+	protected V resolve(final String serverAddr)
 	throws IOException {
-		WSLoadBuilderSvc<T, U> rlb;
+		V rlb;
 		final Service remoteSvc = ServiceUtil.getRemoteSvc(
 			"//" + serverAddr + '/' + getClass().getPackage().getName().replace("client", "server")
 		);
 		if(remoteSvc == null) {
 			throw new IOException("No remote load builder was resolved from " + serverAddr);
 		} else if(remoteSvc instanceof WSLoadBuilderSvc) {
-			rlb = (WSLoadBuilderSvc<T, U>) remoteSvc;
+			rlb = (V) remoteSvc;
 		} else {
 			throw new IOException(
 				"Illegal class " + remoteSvc.getClass().getCanonicalName() +

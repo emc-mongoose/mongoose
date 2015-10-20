@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 //
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import com.emc.mongoose.util.shared.WSLoadBuilderFactory;
@@ -16,7 +17,7 @@ extends StorageClientBuilderBase<T, U> {
 	public U build() {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		return (U) new BasicStorageClient<>(
-			rtConfig, WSLoadBuilderFactory.getInstance(rtConfig)
+			rtConfig, WSLoadBuilderFactory.<T, LoadExecutor<T>>getInstance(rtConfig)
 		);
 	}
 }

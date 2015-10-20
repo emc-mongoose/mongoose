@@ -479,7 +479,7 @@ implements Externalizable {
 		return getBoolean(KEY_LOAD_SERVER_ASSIGN2_NODE);
 	}
 	//
-	public final String getDataSrcFPath() {
+	public final String getItemSrcFPath() {
 		return getString("data.src.fpath");
 	}
 	//

@@ -390,7 +390,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public Class<T> getDataItemClass() {
+	public Class<T> getItemClass() {
 		return (Class<T>) BasicWSObject.class;
 	}
 	//
