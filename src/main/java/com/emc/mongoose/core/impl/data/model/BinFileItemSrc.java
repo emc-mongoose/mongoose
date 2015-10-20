@@ -2,9 +2,11 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 //
+import com.emc.mongoose.core.api.data.model.FileItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,9 +22,9 @@ import java.util.List;
 /**
  An item input implementation deserializing the data items from the specified file.
  */
-public class BinFileItemSrc<T extends DataItem>
+public class BinFileItemSrc<T extends Item>
 extends BinItemSrc<T>
-implements FileDataItemSrc<T> {
+implements FileItemSrc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -62,22 +64,6 @@ implements FileDataItemSrc<T> {
 	public final void delete()
 		throws IOException {
 		Files.delete(itemsSrcPath);
-	}
-	//
-	@Override
-	public long getApproxDataItemsSize(final int maxCount) {
-		long sumSize = 0;
-		int actualCount = 0;
-		try(final FileDataItemSrc<T> nestedItemSrc = new BinFileItemSrc<>(itemsSrcPath)) {
-			final List<T> firstItemsBatch = new ArrayList<>(maxCount);
-			actualCount = nestedItemSrc.get(firstItemsBatch, maxCount);
-			for(final T nextItem : firstItemsBatch) {
-				sumSize += nextItem.getSize();
-			}
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to get approx data items size");
-		}
-		return actualCount > 0 ? sumSize / actualCount : 0;
 	}
 	//
 	@Override

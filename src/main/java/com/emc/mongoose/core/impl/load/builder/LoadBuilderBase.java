@@ -7,7 +7,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -44,7 +44,7 @@ implements LoadBuilder<T, U> {
 	protected long maxCount, minObjSize, maxObjSize;
 	protected float objSizeBias, rateLimit;
 	protected int manualTaskSleepMicroSecs, updatesPerItem;
-	protected DataItemSrc itemSrc;
+	protected ItemSrc itemSrc;
 	protected String storageNodeAddrs[];
 	protected final HashMap<IOTask.Type, Integer> loadTypeWorkerCount, loadTypeConnPerNode;
 	protected boolean flagUseContainerItemSrc, flagUseNewItemSrc, flagUseNoneItemSrc;
@@ -396,7 +396,7 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setItemSrc(final DataItemSrc<T> itemSrc) {
+	public LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc) {
 		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
 		this.itemSrc = itemSrc;
 		if(itemSrc instanceof FileDataItemSrc) {
@@ -447,7 +447,7 @@ implements LoadBuilder<T, U> {
 		return lb;
 	}
 	//
-	protected DataItemSrc<T> getDefaultItemSource() {
+	protected ItemSrc<T> getDefaultItemSource() {
 		try {
 			if(flagUseNoneItemSrc) {
 				return null;

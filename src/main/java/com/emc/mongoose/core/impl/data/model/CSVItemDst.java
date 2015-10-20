@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.core.api.data.DataItem;
 //
 import com.emc.mongoose.core.api.data.content.ContentSource;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.ItemDst;
 //
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import java.util.List;
  format
  */
 public abstract class CSVItemDst<T extends DataItem>
-implements DataItemDst<T> {
+implements ItemDst<T> {
 	//
 	protected final Class<? extends T> itemCls;
 	protected final ContentSource contentSrc;

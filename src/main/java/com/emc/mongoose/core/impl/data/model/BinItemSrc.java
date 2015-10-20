@@ -2,8 +2,9 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,15 +18,15 @@ import java.util.List;
 /**
  The data item input implementation deserializing the data items from the specified stream
  */
-public class BinItemSrc<T extends DataItem>
-implements DataItemSrc<T> {
+public class BinItemSrc<T extends Item>
+implements ItemSrc<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	protected ObjectInputStream itemsSrc;
 	protected List<T> srcBuff = null;
 	protected int srcFrom = 0;
-	private DataItem lastItem = null;
+	private T lastItem = null;
 	//
 	public BinItemSrc(final ObjectInputStream itemsSrc) {
 		this.itemsSrc = itemsSrc;
@@ -104,19 +105,19 @@ implements DataItemSrc<T> {
 	}
 	//
 	@Override
-	public DataItem getLastDataItem() {
+	public T getLastItem() {
 		return lastItem;
 	}
 	//
 	@Override
-	public void setLastDataItem(final T lastItem) {
+	public void setLastItem(final T lastItem) {
 		this.lastItem = lastItem;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_START, itemsCount);
+		LOG.info(Markers.MSG, ItemSrc.MSG_SKIP_START, itemsCount);
 		try {
 			Object o;
 			long i = 0;

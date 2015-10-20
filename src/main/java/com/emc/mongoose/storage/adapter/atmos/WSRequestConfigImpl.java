@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
@@ -223,7 +223,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final DataItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
+	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
 		// TODO implement sub tenant listing producer
 		return null;
 	}

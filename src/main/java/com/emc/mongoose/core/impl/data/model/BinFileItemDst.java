@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.FileDataItemDst;
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.model.FileItemDst;
 //
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -12,9 +12,9 @@ import java.nio.file.StandardOpenOption;
 /**
  An item input implementation serializing the data items to the specified file.
  */
-public class BinFileItemDst<T extends DataItem>
+public class BinFileItemDst<T extends Item>
 extends BinItemDst<T>
-implements FileDataItemDst<T> {
+implements FileItemDst<T> {
 	//
 	protected final Path itemsDstPath;
 	/**
@@ -42,7 +42,7 @@ implements FileDataItemDst<T> {
 	}
 	//
 	@Override
-	public BinFileItemSrc<T> getDataItemSrc()
+	public BinFileItemSrc<T> getItemSrc()
 	throws IOException {
 		return new BinFileItemSrc<>(itemsDstPath);
 	}

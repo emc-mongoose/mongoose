@@ -5,9 +5,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.model.ItemDst;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.load.model.LoadState;
@@ -43,7 +43,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 20.10.14.
  */
-public abstract class LoadClientBase<T extends DataItem>
+public abstract class LoadClientBase<T extends Item>
 extends LoadExecutorBase<T>
 implements LoadClient<T> {
 	//
@@ -53,7 +53,7 @@ implements LoadClient<T> {
 	private final ThreadPoolExecutor remoteSubmExecutor;
 	private final String loadSvcAddrs[];
 	//
-	protected volatile DataItemDst<T> consumer = null;
+	protected volatile ItemDst<T> consumer = null;
 	//
 	private final static int COUNT_LIMIT_RETRY = 100;
 	//
@@ -66,7 +66,7 @@ implements LoadClient<T> {
 			this.loadSvc = loadSvc;
 		}
 		//
-		private void loadAndPassDataItems()
+		private void loadAndPassItems()
 		throws IOException {
 			List<T> frame = loadSvc.getProcessedItems();
 			if(frame == null) {
@@ -116,7 +116,7 @@ implements LoadClient<T> {
 				while(!currThread.isInterrupted()) {
 					try {
 						LockSupport.parkNanos(1);
-						loadAndPassDataItems();
+						loadAndPassItems();
 						failCount = 0; // reset
 					} catch(final IOException e) {
 						if(failCount < COUNT_LIMIT_RETRY) {
@@ -182,7 +182,7 @@ implements LoadClient<T> {
 	public LoadClientBase(
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
-		final DataItemSrc<T> itemSrc, final long maxCount,
+		final ItemSrc<T> itemSrc, final long maxCount,
 		final Map<String, LoadSvc<T>> remoteLoadMap
 	) throws RemoteException {
 		super(
@@ -296,7 +296,7 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void setDataItemDst(final DataItemDst<T> itemDst)
+	public final void setItemDst(final ItemDst<T> itemDst)
 	throws RemoteException {
 		if(itemDst instanceof LoadClient) {
 			LOG.debug(Markers.MSG, "Consumer is a LoadClient instance");
@@ -306,17 +306,17 @@ implements LoadClient<T> {
 			final Map<String, LoadSvc<T>> consumeMap = ((LoadClient<T>) itemDst)
 				.getRemoteLoadMap();
 			for(final String addr : consumeMap.keySet()) {
-				remoteLoadMap.get(addr).setDataItemDst(consumeMap.get(addr));
+				remoteLoadMap.get(addr).setItemDst(consumeMap.get(addr));
 			}
 		} else if(itemDst instanceof LoadSvc) {
 			// single consumer for all these producers
 			final LoadSvc<T> loadSvc = (LoadSvc<T>) itemDst;
 			LOG.debug(Markers.MSG, "Consumer is a load service");
 			for(final String addr : loadSvcAddrs) {
-				remoteLoadMap.get(addr).setDataItemDst(loadSvc);
+				remoteLoadMap.get(addr).setItemDst(loadSvc);
 			}
 		} else {
-			super.setDataItemDst(itemDst);
+			super.setItemDst(itemDst);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

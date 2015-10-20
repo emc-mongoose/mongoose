@@ -5,8 +5,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.model.DataItemDst;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemDst;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -73,7 +73,7 @@ implements Runnable {
 		} catch(final RemoteException e) {
 			throw new RuntimeException(e);
 		}
-		DataItemDst itemDst = null;
+		ItemDst itemDst = null;
 		IOTask.Type loadType;
 		for(int i = 0; i < loadTypeSeq.length; i ++) {
 			loadTypeStr = loadTypeSeq[i];
@@ -95,7 +95,7 @@ implements Runnable {
 						itemDst = new CSVFileItemDst(
 							reqConf.getDataItemClass(), reqConf.getContentSource()
 						);
-						loadBuilder.setItemSrc(itemDst.getDataItemSrc());
+						loadBuilder.setItemSrc(itemDst.getItemSrc());
 					}
 				}
 				// build the job
@@ -105,7 +105,7 @@ implements Runnable {
 					if(isParallel) {
 						itemDst = nextLoadJob;
 					}
-					prevLoadJob.setDataItemDst(itemDst);
+					prevLoadJob.setItemDst(itemDst);
 				}
 				// add the built job into the chain
 				loadJobSeq.add(nextLoadJob);
@@ -203,7 +203,7 @@ implements Runnable {
 				}
 				//
 				try {
-					final DataItemSrc itemSrc = nextLoadJob.getDataItemSrc();
+					final ItemSrc itemSrc = nextLoadJob.getItemSrc();
 					if(itemSrc instanceof FileDataItemSrc) {
 						((FileDataItemSrc) itemSrc).delete();
 					}

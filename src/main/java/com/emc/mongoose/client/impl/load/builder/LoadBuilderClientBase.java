@@ -8,7 +8,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.math.MathUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -17,7 +17,6 @@ import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
-import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
 import org.apache.commons.lang.StringUtils;
@@ -44,7 +43,7 @@ implements LoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected DataItemSrc<T> itemSrc;
+	protected ItemSrc<T> itemSrc;
 	protected String storageNodeAddrs[] = null, loadSvcAddrs[] = null;
 	protected volatile RunTimeConfig rtConfig;
 	protected volatile RequestConfig<T> reqConf = getDefaultRequestConfig();
@@ -431,7 +430,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final LoadBuilderClient<T, U> setItemSrc(final DataItemSrc<T> itemSrc)
+	public final LoadBuilderClient<T, U> setItemSrc(final ItemSrc<T> itemSrc)
 	throws RemoteException {
 		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
 		this.itemSrc = itemSrc;
@@ -460,7 +459,7 @@ implements LoadBuilderClient<T, U> {
 		return this;
 	}
 	//
-	protected DataItemSrc<T> getDefaultItemSource() {
+	protected ItemSrc<T> getDefaultItemSource() {
 		try {
 			if(flagUseNoneItemSrc) {
 				// disable any item source usage on the load servers side

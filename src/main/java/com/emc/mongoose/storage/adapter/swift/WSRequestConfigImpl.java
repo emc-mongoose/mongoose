@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
@@ -281,7 +281,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final DataItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
+	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
 		return new WSContainerItemSrc<>(container, addr, (Class<T>) BasicWSObject.class, maxCount);
 	}
 	//

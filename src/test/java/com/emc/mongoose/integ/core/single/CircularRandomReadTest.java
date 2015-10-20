@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
@@ -67,7 +67,7 @@ extends StandaloneClientTestBase {
 				.setLimitCount(WRITE_COUNT)
 				.build()
 		) {
-			final DataItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
+			final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
 				BasicWSObject.class, ContentSourceBase.getDefault()
 			);
 			COUNT_WRITTEN = client.write(
@@ -81,7 +81,7 @@ extends StandaloneClientTestBase {
 			) {
 				stdOutInterceptorStream.reset();
 				if (COUNT_WRITTEN > 0) {
-					COUNT_READ = client.read(writeOutput.getDataItemSrc(), null, READ_COUNT, 1, true);
+					COUNT_READ = client.read(writeOutput.getItemSrc(), null, READ_COUNT, 1, true);
 				} else {
 					throw new IllegalStateException("Failed to write");
 				}

@@ -7,8 +7,8 @@ import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemDst;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
@@ -35,7 +35,7 @@ implements WSLoadSvc<T> {
 	public BasicWSLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connPerNode, final int threadsPerNode,
-		final DataItemSrc<T> itemSrc, final long maxCount,
+		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
 	) {
@@ -63,7 +63,7 @@ implements WSLoadSvc<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final void setDataItemDst(final DataItemDst<T> itemDst) {
+	public final void setItemDst(final ItemDst<T> itemDst) {
 		LOG.debug(
 			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
 			itemDst, getName()
@@ -81,14 +81,14 @@ implements WSLoadSvc<T> {
 						remoteSvcName
 					);
 				} else {
-					super.setDataItemDst((DataItemDst<T>) localSvc);
+					super.setItemDst((ItemDst<T>) localSvc);
 					LOG.debug(
 						Markers.MSG,
 						"Successfully resolved local service and appended it as consumer"
 					);
 				}
 			} else {
-				super.setDataItemDst(itemDst);
+				super.setItemDst(itemDst);
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "{}: looks like network failure", getName());

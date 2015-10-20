@@ -1,8 +1,7 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.UpdatableDataItem;
+import com.emc.mongoose.core.api.data.MutableDataItem;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
@@ -11,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 /**
  Created by andrey on 12.10.14.
  */
-public class BasicIOTask<T extends UpdatableDataItem & AppendableDataItem>
+public class BasicIOTask<T extends MutableDataItem>
 implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
