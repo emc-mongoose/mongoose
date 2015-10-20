@@ -4,10 +4,10 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.GenericContainer;
+import com.emc.mongoose.core.api.data.model.DataItemContainer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
-import com.emc.mongoose.core.impl.data.model.GenericWSContainerBase;
+import com.emc.mongoose.core.impl.data.model.WSContainerBase;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 02.10.14.
  */
 public class WSBucketImpl<T extends WSObject>
-extends GenericWSContainerBase<T>
+extends WSContainerBase<T>
 implements Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -57,7 +57,7 @@ implements Bucket<T> {
 		final String addr, final String method, final long timeOut, final TimeUnit timeUnit
 	)
 	throws IOException {
-		return execute(addr, method, null, GenericContainer.DEFAULT_PAGE_SIZE, timeOut, timeUnit);
+		return execute(addr, method, null, DataItemContainer.DEFAULT_PAGE_SIZE, timeOut, timeUnit);
 	}
 	//
 	HttpResponse execute(final String addr, final String method, final boolean versioning)

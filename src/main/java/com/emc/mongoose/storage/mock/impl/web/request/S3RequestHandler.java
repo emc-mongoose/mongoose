@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.MutableDataItem;
-import com.emc.mongoose.core.api.data.model.GenericContainer;
+import com.emc.mongoose.core.api.data.model.DataItemContainer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.s3.Bucket;
 //
@@ -129,7 +129,7 @@ extends WSRequestHandlerBase<T> {
 		final HttpRequest req, final HttpResponse resp, final String name, final String dataId
 	) {
 		final String uri = req.getRequestLine().getUri();
-		int maxCount = GenericContainer.DEFAULT_PAGE_SIZE;
+		int maxCount = DataItemContainer.DEFAULT_PAGE_SIZE;
 		String marker = null;
 		final Matcher maxKeysMatcher = PATTERN_MAX_KEYS.matcher(uri);
 		if(maxKeysMatcher.find()) {

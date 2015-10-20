@@ -40,8 +40,8 @@ implements WSLoadClient<T> {
 	}
 	//
 	@Override
-	protected WSIOTask<T> getIOTask(final T dataObject, final String nodeAddr) {
-		return new BasicWSIOTask<>(dataObject, nodeAddr, (WSRequestConfig<T>) reqConfigCopy);
+	protected WSIOTask<T> getIOTask(final T item, final String nodeAddr) {
+		return new BasicWSIOTask<>(item, nodeAddr, (WSRequestConfig<T>) reqConfigCopy);
 	}
 	//
 }

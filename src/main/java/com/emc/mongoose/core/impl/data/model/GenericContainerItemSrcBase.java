@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.data.model.GenericContainer;
+import com.emc.mongoose.core.api.data.model.DataItemContainer;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +24,7 @@ implements ItemSrc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final GenericContainer<T> container;
+	protected final DataItemContainer<T> container;
 	protected final String nodeAddr;
 	protected final Constructor<T> itemConstructor;
 	protected final long maxCount;
@@ -32,7 +32,7 @@ implements ItemSrc<T> {
 	protected String lastItemId = null;
 	//
 	protected GenericContainerItemSrcBase(
-		final GenericContainer<T> container, final String nodeAddr, final Class<T> itemCls,
+		final DataItemContainer<T> container, final String nodeAddr, final Class<T> itemCls,
 		final long maxCount
 	) throws IllegalStateException {
 		super(new ArrayList<T>(RunTimeConfig.getContext().getBatchSize()));

@@ -61,7 +61,7 @@ import java.util.concurrent.atomic.AtomicLong;
  Created by kurila on 02.12.14.
  */
 public class BasicWSLoadExecutor<T extends WSObject>
-extends TypeSpecificLoadExecutorBase<T>
+extends MutableDataLoadExecutorBase<T>
 implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -186,8 +186,8 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected WSIOTask<T> getIOTask(final T dataObject, final String nodeAddr) {
-		return new BasicWSIOTask<>(dataObject, nodeAddr, wsReqConfigCopy);
+	protected WSIOTask<T> getIOTask(final T item, final String nodeAddr) {
+		return new BasicWSIOTask<>(item, nodeAddr, wsReqConfigCopy);
 	}
 	//
 	@Override

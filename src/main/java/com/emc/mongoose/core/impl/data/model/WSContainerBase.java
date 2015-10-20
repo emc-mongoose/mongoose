@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.GenericContainer;
+import com.emc.mongoose.core.api.data.model.DataItemContainer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
 import org.apache.logging.log4j.LogManager;
@@ -16,8 +16,8 @@ import java.util.Date;
 /**
  Created by kurila on 10.07.15.
  */
-public abstract class GenericWSContainerBase<T extends WSObject>
-implements GenericContainer<T> {
+public abstract class WSContainerBase<T extends WSObject>
+implements DataItemContainer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -26,7 +26,7 @@ implements GenericContainer<T> {
 	protected final int idPrefixLen;
 	protected final boolean fsAccess, verifyContent;
 	//
-	protected GenericWSContainerBase(
+	protected WSContainerBase(
 		final WSRequestConfig<T> reqConf, final String name, final boolean versioningEnabled
 	) {
 		this.reqConf = reqConf;

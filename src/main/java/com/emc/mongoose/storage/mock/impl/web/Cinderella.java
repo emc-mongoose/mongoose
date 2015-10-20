@@ -67,7 +67,7 @@ implements WSMock<T> {
 			rtConfig.getStorageMockCapacity(),
 			rtConfig.getStorageMockContainerCapacity(),
 			rtConfig.getStorageMockContainerCountLimit(),
-			rtConfig.getDataSrcFPath(),
+			rtConfig.getItemSrcFPath(),
 			rtConfig.getLoadMetricsPeriodSec(),
 			rtConfig.getFlagServeJMX(),
 			rtConfig.getStorageMockMinConnLifeMilliSec(),

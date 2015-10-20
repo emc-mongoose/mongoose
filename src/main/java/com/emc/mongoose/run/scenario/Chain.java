@@ -10,6 +10,7 @@ import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -58,7 +59,7 @@ implements Runnable {
 	//
 	@SuppressWarnings("unchecked")
 	public Chain(
-		final LoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
+		final DataLoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
 		final String[] loadTypeSeq, final boolean isParallel
 	) {
 		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
@@ -93,7 +94,7 @@ implements Runnable {
 						loadBuilder.useNoneItemSrc();
 					} else {
 						itemDst = new CSVFileItemDst(
-							reqConf.getDataItemClass(), reqConf.getContentSource()
+							reqConf.getItemClass(), reqConf.getContentSource()
 						);
 						loadBuilder.setItemSrc(itemDst.getItemSrc());
 					}

@@ -83,7 +83,7 @@ implements WSIOTask<T> {
 	throws IOException, HttpException {
 		final HttpEntityEnclosingRequest httpRequest;
 		try {
-			 httpRequest = ((WSRequestConfig<T>) reqConf).createDataRequest(dataItem, nodeAddr);
+			 httpRequest = ((WSRequestConfig<T>) reqConf).createDataRequest(item, nodeAddr);
 		} catch(final URISyntaxException e) {
 			throw new HttpException("Failed to generate the request", e);
 		}
@@ -102,7 +102,7 @@ implements WSIOTask<T> {
 	throws IOException {
 		//
 		if(chanOut == null) { // 1st time invocation
-			if(dataItem.getSize() == 0 && dataItem.getAppendSize() == 0) { // nothing to do
+			if(item.getSize() == 0 && item.getAppendSize() == 0) { // nothing to do
 				encoder.complete();
 				return;
 			} else { // wrap the encoder w/ output channel
@@ -146,9 +146,9 @@ implements WSIOTask<T> {
 	//
 	private void produceObjectContent(final IOControl ioCtl)
 	throws IOException {
-		countBytesDone += dataItem.write(chanOut, contentSize - countBytesDone);
+		countBytesDone += item.write(chanOut, contentSize - countBytesDone);
 		if(countBytesDone == contentSize) {
-			dataItem.resetUpdates();
+			item.resetUpdates();
 			chanOut.close();
 		}
 	}
@@ -165,16 +165,16 @@ implements WSIOTask<T> {
 			}
 			// find next updating range
 			do {
-				currRangeSize = dataItem.getRangeSize(currRangeIdx);
+				currRangeSize = item.getRangeSize(currRangeIdx);
 				// select the current range if it's updating
-				if(dataItem.isCurrLayerRangeUpdating(currRangeIdx)) {
+				if(item.isCurrLayerRangeUpdating(currRangeIdx)) {
 					currRange = new BasicDataItem(
-						dataItem.getOffset() + nextRangeOffset, currRangeSize,
+						item.getOffset() + nextRangeOffset, currRangeSize,
 						currDataLayerIdx + 1, reqConf.getContentSource()
 					);
-				} else if(dataItem.isNextLayerRangeUpdating(currRangeIdx)) {
+				} else if(item.isNextLayerRangeUpdating(currRangeIdx)) {
 					currRange = new BasicDataItem(
-						dataItem.getOffset() + nextRangeOffset, currRangeSize,
+						item.getOffset() + nextRangeOffset, currRangeSize,
 						currDataLayerIdx + 2, reqConf.getContentSource()
 					);
 				} else {
@@ -211,7 +211,7 @@ implements WSIOTask<T> {
 					hashCode(), countBytesDone, countBytesSkipped
 				);
 			}
-			dataItem.commitUpdatedRanges();
+			item.commitUpdatedRanges();
 			chanOut.close();
 		}
 	}
@@ -219,24 +219,24 @@ implements WSIOTask<T> {
 	private void produceAugmentContent(final IOControl ioCtl)
 	throws IOException {
 		if(currRange == null) {
-			final long prevSize = dataItem.getSize();
+			final long prevSize = item.getSize();
 			currRangeIdx = prevSize > 0 ? BasicMutableDataItem.getRangeCount(prevSize) - 1 : 0;
-			if(dataItem.isCurrLayerRangeUpdated(currRangeIdx)) {
+			if(item.isCurrLayerRangeUpdated(currRangeIdx)) {
 				currRange = new BasicDataItem(
-					dataItem.getOffset() + prevSize, contentSize, currDataLayerIdx + 1,
+					item.getOffset() + prevSize, contentSize, currDataLayerIdx + 1,
 					reqConf.getContentSource()
 				);
 			} else {
 				currRange = new BasicDataItem(
-					dataItem.getOffset() + prevSize, contentSize, currDataLayerIdx,
+					item.getOffset() + prevSize, contentSize, currDataLayerIdx,
 					reqConf.getContentSource()
 				);
 			}
 		}
 		//
-		countBytesDone += dataItem.write(chanOut, contentSize - countBytesDone);
+		countBytesDone += item.write(chanOut, contentSize - countBytesDone);
 		if(countBytesDone == contentSize) {
-			dataItem.commitAppend();
+			item.commitAppend();
 			chanOut.close();
 		}
 	}
@@ -360,7 +360,7 @@ implements WSIOTask<T> {
 			}
 		} else {
 			this.status = Status.SUCC;
-			((WSRequestConfig<T>) reqConf).applySuccResponseToObject(response, dataItem);
+			((WSRequestConfig<T>) reqConf).applySuccResponseToObject(response, item);
 		}
 	}
 	//
@@ -414,18 +414,18 @@ implements WSIOTask<T> {
 		//
 		final ByteBuffer buffIn;
 		try {
-			if(dataItem.hasBeenUpdated()) {
+			if(item.hasBeenUpdated()) {
 				// switch the range if current is done or not set yet
 				if(countBytesDone == nextRangeOffset) {
-					currRangeSize = dataItem.getRangeSize(currRangeIdx);
-					if(dataItem.isCurrLayerRangeUpdated(currRangeIdx)) {
+					currRangeSize = item.getRangeSize(currRangeIdx);
+					if(item.isCurrLayerRangeUpdated(currRangeIdx)) {
 						currRange = new BasicDataItem(
-							dataItem.getOffset() + nextRangeOffset, currRangeSize,
+							item.getOffset() + nextRangeOffset, currRangeSize,
 							currDataLayerIdx + 1, reqConf.getContentSource()
 						);
 					} else {
 						currRange = new BasicDataItem(
-							dataItem.getOffset() + nextRangeOffset, currRangeSize,
+							item.getOffset() + nextRangeOffset, currRangeSize,
 							currDataLayerIdx, reqConf.getContentSource()
 						);
 					}
@@ -449,7 +449,7 @@ implements WSIOTask<T> {
 			} else {
 				buffIn = ((IOWorker) Thread.currentThread())
 					.getThreadLocalBuff(contentSize - countBytesDone);
-				final int n = dataItem.readAndVerify(chanIn, buffIn);
+				final int n = item.readAndVerify(chanIn, buffIn);
 				if(n > 0) {
 					countBytesDone += n;
 				}
@@ -459,7 +459,7 @@ implements WSIOTask<T> {
 			LOG.warn(
 				Markers.MSG,
 				"{}: content size mismatch, expected: {}, actual: {}",
-				dataItem.getName(), dataItem.getSize(), e.offset
+				item.getName(), item.getSize(), e.offset
 			);
 			status = Status.RESP_FAIL_CORRUPT;
 		} catch(final DataCorruptionException e) {
@@ -467,7 +467,7 @@ implements WSIOTask<T> {
 			LOG.warn(
 				Markers.MSG,
 				"{}: content mismatch @ offset {}, expected: {}, actual: {}",
-				dataItem.getName(), e.offset,
+				item.getName(), e.offset,
 				String.format(
 					"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
 				)

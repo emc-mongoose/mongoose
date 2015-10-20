@@ -67,7 +67,7 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	ItemSrc<T> getContainerListInput(final long maxCount, final String addr);
 	//
-	Class<T> getDataItemClass();
+	Class<T> getItemClass();
 	//
 	void configureStorage(final String storageAddrs[])
 	throws IllegalStateException;
