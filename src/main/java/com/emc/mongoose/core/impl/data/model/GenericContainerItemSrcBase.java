@@ -41,7 +41,7 @@ implements DataItemSrc<T> {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		try {
 			this.itemConstructor = itemCls.getConstructor(
-				String.class, Long.class, Long.class, ContentSource.class
+				String.class, Long.class, Long.class, Integer.class, ContentSource.class
 			);
 		} catch(final NoSuchMethodException e) {
 			throw new IllegalStateException(e);

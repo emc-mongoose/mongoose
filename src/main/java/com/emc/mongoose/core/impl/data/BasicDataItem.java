@@ -74,14 +74,14 @@ implements DataItem {
 		if(tokens.length == 3) {
 			name = tokens[0];
 			try {
-				setOffset(Long.parseLong(tokens[0], 0x10));
+				setOffset(Long.parseLong(tokens[1], 0x10));
 			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[0]));
+				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[1]));
 			}
 			try {
-				setSize(Long.parseLong(tokens[1], 10));
+				setSize(Long.parseLong(tokens[2], 10));
 			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[1]));
+				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[2]));
 			}
 		} else {
 			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_RECORD, metaInfo));

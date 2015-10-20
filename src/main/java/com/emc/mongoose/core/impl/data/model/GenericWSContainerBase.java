@@ -59,27 +59,27 @@ implements GenericContainer<T> {
 		//
 		T item = null;
 		//
-		String id = null;
+		String name = null;
 		if(rawId != null && !rawId.isEmpty()) {
 			if(fsAccess) { // include the items which have the path matching to configured one
 				if(rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
-					id = rawId.substring(idPrefixLen + 1);
-					if(id.contains("/")) { // doesn't include the items from the subdirectories
-						id = null;
+					name = rawId.substring(idPrefixLen + 1);
+					if(name.contains("/")) { // doesn't include the items from the subdirectories
+						name = null;
 					}
 				}
 			} else {
 				if(!rawId.contains("/")) { // doesn't include the items from the directories
-					id = rawId;
+					name = rawId;
 				}
 			}
 		}
 		//
-		if(id != null) {
+		if(name != null) {
 			final long offset;
 			if(verifyContent) { // should parse the id into the ring buffer offset
 				try {
-					offset = Long.parseLong(id, T.ID_RADIX);
+					offset = Long.parseLong(name, T.ID_RADIX);
 				} catch(NumberFormatException e) {
 					throw new IllegalStateException(e);
 				}
@@ -87,7 +87,7 @@ implements GenericContainer<T> {
 				offset = 0;
 			}
 			try {
-				item = itemConstructor.newInstance(id, offset, size, reqConf.getContentSource());
+				item = itemConstructor.newInstance(name, offset, size, 0, reqConf.getContentSource());
 			} catch(
 				final InstantiationException | IllegalAccessException | InvocationTargetException e
 			) {
