@@ -66,7 +66,7 @@ extends StandaloneClientTestBase {
 		URL nextObjURL;
 		final byte buff[] = new byte[OBJ_SIZE];
 		for(int i = 0; i < OBJ_BUFF.size(); i ++) {
-			nextObjURL = new URL(BASE_URL + OBJ_BUFF.get(i).getId());
+			nextObjURL = new URL(BASE_URL + OBJ_BUFF.get(i).getName());
 			try(final BufferedInputStream in = new BufferedInputStream(nextObjURL.openStream())) {
 				int n = 0, m;
 				do {

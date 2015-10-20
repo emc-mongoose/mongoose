@@ -14,7 +14,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
-import com.emc.mongoose.core.impl.data.MutableDataItem;
+import com.emc.mongoose.core.impl.data.BasicMutableDataItem;
 import com.emc.mongoose.core.impl.data.BasicDataItem;
 //
 import org.apache.http.ConnectionClosedException;
@@ -46,7 +46,7 @@ import java.nio.charset.StandardCharsets;
  Created by kurila on 06.06.14.
  */
 public class BasicWSIOTask<T extends WSObject>
-extends BasicObjectIOTask<T>
+extends BasicIOTask<T>
 implements WSIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -189,7 +189,7 @@ implements WSIOTask<T> {
 					);
 				}
 				currRangeIdx ++;
-				nextRangeOffset = MutableDataItem.getRangeOffset(currRangeIdx);
+				nextRangeOffset = BasicMutableDataItem.getRangeOffset(currRangeIdx);
 			} while(currRange == null && currRangeSize > 0 && countBytesDone < contentSize);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
@@ -220,7 +220,7 @@ implements WSIOTask<T> {
 	throws IOException {
 		if(currRange == null) {
 			final long prevSize = dataItem.getSize();
-			currRangeIdx = prevSize > 0 ? MutableDataItem.getRangeCount(prevSize) - 1 : 0;
+			currRangeIdx = prevSize > 0 ? BasicMutableDataItem.getRangeCount(prevSize) - 1 : 0;
 			if(dataItem.isCurrLayerRangeUpdated(currRangeIdx)) {
 				currRange = new BasicDataItem(
 					dataItem.getOffset() + prevSize, contentSize, currDataLayerIdx + 1,
@@ -266,7 +266,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final boolean isRepeatable() {
-		return WSObject.IS_CONTENT_REPEATABLE;
+		return com.emc.mongoose.core.api.data.WSObject.IS_CONTENT_REPEATABLE;
 	}
 	//
 	@Override
@@ -430,7 +430,7 @@ implements WSIOTask<T> {
 						);
 					}
 					currRangeIdx ++;
-					nextRangeOffset = MutableDataItem.getRangeOffset(currRangeIdx);
+					nextRangeOffset = BasicMutableDataItem.getRangeOffset(currRangeIdx);
 				}
 				//
 				if(currRangeSize > 0) {
@@ -459,7 +459,7 @@ implements WSIOTask<T> {
 			LOG.warn(
 				Markers.MSG,
 				"{}: content size mismatch, expected: {}, actual: {}",
-				dataItem.getId(), dataItem.getSize(), e.offset
+				dataItem.getName(), dataItem.getSize(), e.offset
 			);
 			status = Status.RESP_FAIL_CORRUPT;
 		} catch(final DataCorruptionException e) {
@@ -467,7 +467,7 @@ implements WSIOTask<T> {
 			LOG.warn(
 				Markers.MSG,
 				"{}: content mismatch @ offset {}, expected: {}, actual: {}",
-				dataItem.getId(), e.offset,
+				dataItem.getName(), e.offset,
 				String.format(
 					"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
 				)

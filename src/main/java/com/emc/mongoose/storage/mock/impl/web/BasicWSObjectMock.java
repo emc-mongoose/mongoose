@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.mock.impl.web;
 //
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
-import com.emc.mongoose.storage.mock.impl.base.BasicObjectMock;
+import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
 //
 import org.apache.http.Header;
 import org.apache.http.util.EntityUtils;
@@ -14,7 +14,7 @@ import java.io.OutputStream;
  Created by kurila on 27.07.15.
  */
 public final class BasicWSObjectMock
-extends BasicObjectMock
+extends BasicMutableDataItemMock
 implements WSObjectMock {
 	//
 	public BasicWSObjectMock() {
@@ -26,9 +26,10 @@ implements WSObjectMock {
 	}
 	//
 	public BasicWSObjectMock(
-		final String id, final long offset, final long size, final ContentSource contentSrc
+		final String name, final long offset, final long size, final int layerNum,
+		final ContentSource contentSrc
 	) {
-		super(id, offset, size, contentSrc);
+		super(name, offset, size, layerNum, contentSrc);
 	}
 	//
 	@Override

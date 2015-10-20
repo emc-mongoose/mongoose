@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.data.MutableDataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.data.model.GenericContainer;
@@ -18,7 +18,7 @@ import java.util.List;
 /**
  The implementation should have a state representing the actual position in the container listing
  */
-public abstract class GenericContainerItemSrcBase<T extends DataObject>
+public abstract class GenericContainerItemSrcBase<T extends MutableDataItem>
 extends ListItemSrc<T>
 implements DataItemSrc<T> {
 	//
@@ -82,7 +82,7 @@ implements DataItemSrc<T> {
 	@Override
 	public void setLastDataItem(final T lastItem) {
 		super.setLastDataItem(lastItem);
-		this.lastItemId = lastItem.getId();
+		this.lastItemId = lastItem.getName();
 	}
 	//
 	/**

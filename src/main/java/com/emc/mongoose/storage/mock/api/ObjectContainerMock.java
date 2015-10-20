@@ -9,7 +9,7 @@ import java.util.concurrent.Future;
 /**
  Created by kurila on 31.07.15.
  */
-public interface ObjectContainerMock<T extends DataObjectMock>
+public interface ObjectContainerMock<T extends MutableDataItemMock>
 extends Closeable, Map<String, T> {
 	//
 	String DEFAULT_NAME = RunTimeConfig.getContext().getRunName();

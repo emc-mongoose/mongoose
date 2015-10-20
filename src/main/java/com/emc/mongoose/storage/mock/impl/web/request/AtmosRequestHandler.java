@@ -9,12 +9,11 @@ import com.emc.mongoose.core.api.data.model.GenericContainer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 //
-import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import org.apache.commons.codec.binary.Hex;
 //
 import org.apache.http.HttpHeaders;
@@ -222,7 +221,7 @@ extends WSRequestHandlerBase<T> {
 		}
 		//
 		if(lastObj != null) {
-			resp.setHeader(WSRequestConfig.KEY_EMC_TOKEN, lastObj.getId());
+			resp.setHeader(WSRequestConfig.KEY_EMC_TOKEN, lastObj.getName());
 		}
 		//
 		final Document doc = DOM_BUILDER.newDocument();
@@ -233,7 +232,7 @@ extends WSRequestHandlerBase<T> {
 		for(final T dataObject : buff) {
 			e = doc.createElement("Object");
 			ee = doc.createElement("ObjectID");
-			ee.appendChild(doc.createTextNode(dataObject.getId()));
+			ee.appendChild(doc.createTextNode(dataObject.getName()));
 			e.appendChild(ee);
 			eRoot.appendChild(e);
 		}

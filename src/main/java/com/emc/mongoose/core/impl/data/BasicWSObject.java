@@ -1,8 +1,9 @@
 package com.emc.mongoose.core.impl.data;
 // mongoose-core-api
-import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.content.ContentSource;
+//
 import org.apache.http.Header;
 import org.apache.http.util.EntityUtils;
 //
@@ -19,7 +20,7 @@ import java.io.OutputStream;
  Basic web storage data object implementation.
  */
 public class BasicWSObject
-extends BasicObject
+extends BasicMutableDataItem
 implements WSObject {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
@@ -41,9 +42,10 @@ implements WSObject {
 	}
 	//
 	public BasicWSObject(
-		final String id, final Long offset, final Long size, final ContentSource contentSrc
+		final String name, final Long offset, final Long size, final Integer layerNum,
+		final ContentSource contentSrc
 	) {
-		super(id, offset, size, contentSrc);
+		super(name, offset, size, layerNum, contentSrc);
 	}
 	//
 	@Override

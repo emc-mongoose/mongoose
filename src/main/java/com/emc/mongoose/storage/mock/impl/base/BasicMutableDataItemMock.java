@@ -3,9 +3,9 @@ package com.emc.mongoose.storage.mock.impl.base;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.content.ContentSource;
-import com.emc.mongoose.core.impl.data.BasicObject;
 //
-import com.emc.mongoose.storage.mock.api.DataObjectMock;
+import com.emc.mongoose.core.impl.data.BasicMutableDataItem;
+import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,24 +14,25 @@ import org.apache.logging.log4j.Logger;
 /**
  * Created by olga on 22.01.15.
  */
-public class BasicObjectMock
-extends BasicObject
-implements DataObjectMock {
+public class BasicMutableDataItemMock
+extends BasicMutableDataItem
+implements MutableDataItemMock {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicObjectMock() {
+	public BasicMutableDataItemMock() {
 		super();
 	}
 	//
-	public BasicObjectMock(final String metaInfo, final ContentSource contentSrc) {
+	public BasicMutableDataItemMock(final String metaInfo, final ContentSource contentSrc) {
 		super(metaInfo, contentSrc);
 	}
 	//
-	public BasicObjectMock(
-		final String id, final Long offset, final Long size, final ContentSource contentSrc
+	public BasicMutableDataItemMock(
+		final String name, final Long offset, final Long size, final Integer layerNum,
+		final ContentSource contentSrc
 	) {
-		super(id, offset, size, contentSrc);
+		super(name, offset, size, layerNum, contentSrc);
 	}
 	//
 	public final synchronized void update(final long offset, final long size)
@@ -60,18 +61,18 @@ implements DataObjectMock {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "{}: byte range {}-{} updated, mask range {}-{} is set",
-				id, offset, offset + size, maskIndexStart, maskIndexEnd
+				name, offset, offset + size, maskIndexStart, maskIndexEnd
 			);
 		}
 	}
 	//
 	public final synchronized void append(final long offset, final long size) {
 		if(size < 0) {
-			throw new IllegalArgumentException(id + ": range size should not be negative");
+			throw new IllegalArgumentException(name + ": range size should not be negative");
 		}
 		if(this.size != offset) {
 			throw new IllegalArgumentException(
-				id + ": append offset " + offset + " should be equal to the current size " + this.size
+				name + ": append offset " + offset + " should be equal to the current size " + this.size
 			);
 		}
 		final int

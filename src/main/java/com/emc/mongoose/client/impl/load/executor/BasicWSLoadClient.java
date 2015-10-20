@@ -2,9 +2,9 @@ package com.emc.mongoose.client.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;

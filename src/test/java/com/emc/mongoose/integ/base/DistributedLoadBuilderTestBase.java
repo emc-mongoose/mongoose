@@ -4,8 +4,8 @@ import com.emc.mongoose.client.api.load.builder.WSLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.WSLoadClient;
 import com.emc.mongoose.client.impl.load.builder.BasicWSLoadBuilderClient;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.api.data.WSObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 /**

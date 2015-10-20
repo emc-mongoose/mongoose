@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.api.data;
 //
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 //
 import java.io.Externalizable;
@@ -12,7 +13,9 @@ import java.nio.channels.WritableByteChannel;
  A most common data item descriptor having a determined size and able to be written out.
  */
 public interface DataItem
-extends ReadableByteChannel, Externalizable {
+extends Item, ReadableByteChannel, Externalizable {
+	//
+	int ID_RADIX = Character.MAX_RADIX;
 	//
 	void reset();
 	//

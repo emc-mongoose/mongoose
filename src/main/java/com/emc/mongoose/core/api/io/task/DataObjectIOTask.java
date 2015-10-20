@@ -1,10 +1,10 @@
 package com.emc.mongoose.core.api.io.task;
 //
-import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.data.MutableDataItem;
 /**
  Created by kurila on 29.09.14.
  A request regarding a data object.
  */
-public interface DataObjectIOTask<T extends DataObject>
+public interface DataObjectIOTask<T extends MutableDataItem>
 extends IOTask<T> {
 }

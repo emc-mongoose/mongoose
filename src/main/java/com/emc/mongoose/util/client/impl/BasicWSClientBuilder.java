@@ -2,8 +2,8 @@ package com.emc.mongoose.util.client.impl;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import com.emc.mongoose.util.shared.WSLoadBuilderFactory;

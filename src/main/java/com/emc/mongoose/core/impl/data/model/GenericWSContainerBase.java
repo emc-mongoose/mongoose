@@ -37,7 +37,7 @@ implements GenericContainer<T> {
 			this.name = name;
 		}
 		this.fsAccess = reqConf.getFileAccessEnabled();
-		this.idPrefix = reqConf.getIdPrefix();
+		this.idPrefix = reqConf.getNamePrefix();
 		idPrefixLen = idPrefix == null ? 0 : idPrefix.length();
 		this.verifyContent = reqConf.getVerifyContentFlag();
 	}

@@ -5,8 +5,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.storage.mock.api.ReqURIMatchingHandler;
 import com.emc.mongoose.storage.mock.api.WSMock;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import org.apache.http.HttpRequest;
 //
 import org.apache.http.nio.protocol.HttpAsyncRequestHandler;

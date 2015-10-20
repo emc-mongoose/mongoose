@@ -3,9 +3,8 @@ package com.emc.mongoose.core.impl.data;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.AppendableDataItem;
-import com.emc.mongoose.core.api.data.UpdatableDataItem;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.data.MutableDataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 //
 import org.apache.commons.codec.DecoderException;
@@ -23,9 +22,9 @@ import java.util.concurrent.ThreadLocalRandom;
  Created by kurila on 15.09.14.
  A uniform data extension which may be logically split into isolated ranges for appends and updates.
  */
-public class MutableDataItem
+public class BasicMutableDataItem
 extends BasicDataItem
-implements AppendableDataItem, UpdatableDataItem {
+implements MutableDataItem {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static char LAYER_MASK_SEP = '/';
@@ -41,15 +40,15 @@ implements AppendableDataItem, UpdatableDataItem {
 	protected int currLayerIndex = 0;
 	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public MutableDataItem() {
+	public BasicMutableDataItem() {
 		super();
 	}
 	//
-	public MutableDataItem(final ContentSource contentSrc) {
+	public BasicMutableDataItem(final ContentSource contentSrc) {
 		super(contentSrc); // ranges remain uninitialized
 	}
 	//
-	public MutableDataItem(final String metaInfo, final ContentSource contentSrc) {
+	public BasicMutableDataItem(final String metaInfo, final ContentSource contentSrc) {
 		super(
 			metaInfo.substring(0, metaInfo.lastIndexOf(RunTimeConfig.LIST_SEP)),
 			contentSrc
@@ -80,12 +79,15 @@ implements AppendableDataItem, UpdatableDataItem {
 		}
 	}
 	//
-	public MutableDataItem(final Long size, final ContentSource contentSrc) {
+	public BasicMutableDataItem(final Long size, final ContentSource contentSrc) {
 		super(size, contentSrc);
 	}
 	//
-	public MutableDataItem(final Long offset, final Long size, final ContentSource contentSrc) {
-		super(offset, size, contentSrc);
+	public BasicMutableDataItem(
+		final String name, final Long offset, final Long size, Integer layerNum,
+		final ContentSource contentSrc
+	) {
+		super(name, offset, size, layerNum, contentSrc);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
@@ -115,10 +117,10 @@ implements AppendableDataItem, UpdatableDataItem {
 		if(o == this) {
 			return true;
 		}
-		if(!(o instanceof MutableDataItem) || !super.equals(o)) {
+		if(!(o instanceof BasicMutableDataItem) || !super.equals(o)) {
 			return false;
 		} else {
-			final MutableDataItem other = MutableDataItem.class.cast(o);
+			final BasicMutableDataItem other = BasicMutableDataItem.class.cast(o);
 			return maskRangesRead.equals(other.maskRangesRead)
 				&& maskRangesWrite.equals(other.maskRangesWrite);
 		}

@@ -10,13 +10,13 @@ import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.data.MutableDataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 // mongoose-core-impl
-import static com.emc.mongoose.core.impl.data.MutableDataItem.getRangeOffset;
+import static com.emc.mongoose.core.impl.data.BasicMutableDataItem.getRangeOffset;
 
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
@@ -85,7 +85,7 @@ import java.util.concurrent.TimeoutException;
  Created by kurila on 09.06.14.
  */
 public abstract class WSRequestConfigBase<T extends WSObject>
-extends ObjectRequestConfigBase<T>
+extends RequestConfigBase<T>
 implements WSRequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -455,12 +455,12 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {
-		final String oldOid = dataItem.getId();
+		final String oldOid = dataItem.getName();
 		if(
 			oldOid == null || oldOid.isEmpty() ||
 			(verifyContentFlag && IOTask.Type.READ.equals(loadType)) || fsAccess
 		) {
-			dataItem.setId(Long.toString(dataItem.getOffset(), DataObject.ID_RADIX));
+			dataItem.setName(Long.toString(dataItem.getOffset(), MutableDataItem.ID_RADIX));
 		}
 	}
 	//
@@ -507,10 +507,10 @@ implements WSRequestConfig<T> {
 	throws IllegalArgumentException, URISyntaxException;
 	//
 	protected final String getFilePathFor(final T dataItem) {
-		if(fsAccess && idPrefix != null && !idPrefix.isEmpty()) {
-			return "/" + idPrefix + "/" + dataItem.getId();
+		if(fsAccess && namePrefix != null && !namePrefix.isEmpty()) {
+			return "/" + namePrefix + "/" + dataItem.getName();
 		} else {
-			return "/" + dataItem.getId();
+			return "/" + dataItem.getName();
 		}
 	}
 	//

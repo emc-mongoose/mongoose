@@ -5,15 +5,13 @@ import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
-import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
-import com.emc.mongoose.storage.mock.impl.base.ObjectStorageMockBase;
+import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import com.emc.mongoose.storage.mock.impl.web.net.BasicSocketEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.web.request.APIRequestHandlerMapper;
 import com.emc.mongoose.storage.mock.impl.web.net.BasicWSMockConnFactory;
@@ -45,7 +43,7 @@ import java.io.IOException;
  * Created by olga on 28.01.15.
  */
 public final class Cinderella<T extends WSObjectMock>
-extends ObjectStorageMockBase<T>
+extends StorageMockBase<T>
 implements WSMock<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -159,7 +157,7 @@ implements WSMock<T> {
 	//
 	@Override
 	protected final T newDataObject(final String id, final long offset, final long size) {
-		return (T) new BasicWSObjectMock(id, offset, size, contentSrc);
+		return (T) new BasicWSObjectMock(id, offset, size, 0, contentSrc);
 	}
 	//
 	@Override

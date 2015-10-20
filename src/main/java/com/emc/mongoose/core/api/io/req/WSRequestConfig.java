@@ -1,8 +1,8 @@
 package com.emc.mongoose.core.api.io.req;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  An HTTP request shared configuration.
  */
 public interface WSRequestConfig<T extends WSObject>
-extends ObjectRequestConfig<T> {
+extends RequestConfig<T> {
 	//
 	String
 		KEY_EMC_ACCEPT = "x-emc-accept",
