@@ -18,6 +18,7 @@ import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
@@ -53,6 +54,7 @@ implements DataItem {
 	private ByteBuffer ringBuff;
 	private int ringBuffSize;
 	protected long offset = 0, size = 0;
+	protected String name = null;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public BasicDataItem() {
 		this(
@@ -68,17 +70,18 @@ implements DataItem {
 	//
 	public BasicDataItem(final String metaInfo, final ContentSource contentSrc) {
 		this(contentSrc);
-		final String tokens[] = metaInfo.split(RunTimeConfig.LIST_SEP, 2);
-		if(tokens.length == 2) {
+		final String tokens[] = metaInfo.split(RunTimeConfig.LIST_SEP, 3);
+		if(tokens.length == 3) {
+			name = tokens[0];
 			try {
-				setOffset(Long.parseLong(tokens[0], 0x10));
+				setOffset(Long.parseLong(tokens[1], 0x10));
 			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[0]));
+				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[1]));
 			}
 			try {
-				setSize(Long.parseLong(tokens[1], 10));
+				setSize(Long.parseLong(tokens[2], 10));
 			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[1]));
+				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[2]));
 			}
 		} else {
 			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_RECORD, metaInfo));
@@ -99,6 +102,26 @@ implements DataItem {
 		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
 		setOffset(offset);
 		this.size = size;
+	}
+	//
+	public BasicDataItem(
+		final String name, final Long offset, final Long size, final Integer layerNum,
+		final ContentSource contentSrc
+	) {
+		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
+		setOffset(offset);
+		this.name = name;
+		this.size = size;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final String getName() {
+		return name;
+	}
+	//
+	@Override
+	public final void setName(final String name) {
+		this.name = name;
 	}
 	//
 	private void setRingBuffer(final ByteBuffer ringBuff) {
@@ -222,6 +245,7 @@ implements DataItem {
 			strBuilder.setLength(0); // reset
 		}
 		return strBuilder
+			.append(name).append(RunTimeConfig.LIST_SEP)
 			.append(Long.toHexString(offset)).append(RunTimeConfig.LIST_SEP)
 			.append(size).toString();
 	}
@@ -248,6 +272,9 @@ implements DataItem {
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
+		final byte nameBytes[] = name.getBytes(StandardCharsets.UTF_8);
+		out.writeInt(nameBytes.length);
+		out.write(nameBytes, 0, nameBytes.length);
 		out.writeLong(offset);
 		out.writeLong(size);
 	}
@@ -255,6 +282,9 @@ implements DataItem {
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
+		final byte nameBytes[] = new byte[in.readInt()];
+		in.readFully(nameBytes);
+		name = new String(nameBytes, StandardCharsets.UTF_8);
 		setOffset(in.readLong());
 		setSize(in.readLong());
 	}

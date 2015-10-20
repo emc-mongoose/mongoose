@@ -12,7 +12,6 @@ import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.run.scenario.Rampup;
 import com.emc.mongoose.run.scenario.Single;
-import com.emc.mongoose.run.cli.HumanFriendly;
 import com.emc.mongoose.run.webserver.WUIRunner;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;

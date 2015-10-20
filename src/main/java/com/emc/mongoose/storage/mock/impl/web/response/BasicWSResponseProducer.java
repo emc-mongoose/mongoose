@@ -6,11 +6,11 @@ import com.emc.mongoose.common.log.LogUtil;
 // mongoose-storage-mock.jar
 //
 import com.emc.mongoose.core.api.data.content.ContentSource;
-import com.emc.mongoose.core.impl.data.MutableDataItem;
+import com.emc.mongoose.core.impl.data.BasicMutableDataItem;
 //
 import com.emc.mongoose.core.impl.data.BasicDataItem;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.entity.NByteArrayEntity;
@@ -136,7 +136,7 @@ implements HttpAsyncResponseProducer {
 				);
 			}
 			currRangeIdx ++;
-			nextRangeOffset = MutableDataItem.getRangeOffset(currRangeIdx);
+			nextRangeOffset = BasicMutableDataItem.getRangeOffset(currRangeIdx);
 		}
 		if(currRangeSize > 0) {
 			countBytesDone += currRange.write(

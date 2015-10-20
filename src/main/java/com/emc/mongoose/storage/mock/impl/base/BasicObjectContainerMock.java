@@ -4,7 +4,7 @@ import com.emc.mongoose.common.concurrent.Sequencer;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.storage.mock.api.DataObjectMock;
+import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
 //
 import org.apache.commons.collections4.map.LRUMap;
@@ -20,7 +20,7 @@ import java.util.concurrent.RunnableFuture;
 /**
  Created by kurila on 31.07.15.
  */
-public final class BasicObjectContainerMock<T extends DataObjectMock>
+public final class BasicObjectContainerMock<T extends MutableDataItemMock>
 extends LRUMap<String, T>
 implements ObjectContainerMock<T> {
 	//
@@ -93,7 +93,7 @@ implements ObjectContainerMock<T> {
 		return seqWorker.submit(new PutObjectTask<>(this, obj));
 	}
 	//
-	private final static class PutObjectTask<T extends DataObjectMock>
+	private final static class PutObjectTask<T extends MutableDataItemMock>
 	extends BasicFuture<T>
 	implements RunnableFuture<T> {
 		//
@@ -108,7 +108,7 @@ implements ObjectContainerMock<T> {
 		//
 		@Override
 		public final void run() {
-			completed(index.put(obj.getId(), obj));
+			completed(index.put(obj.getName(), obj));
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +118,7 @@ implements ObjectContainerMock<T> {
 		return seqWorker.submit(new GetObjectTask<>(this, oid));
 	}
 	//
-	private final static class GetObjectTask<T extends DataObjectMock>
+	private final static class GetObjectTask<T extends MutableDataItemMock>
 	extends BasicFuture<T>
 	implements RunnableFuture<T> {
 		//
@@ -143,7 +143,7 @@ implements ObjectContainerMock<T> {
 		return seqWorker.submit(new RemoveObjectTask<>(this, oid));
 	}
 	//
-	private final static class RemoveObjectTask<T extends DataObjectMock>
+	private final static class RemoveObjectTask<T extends MutableDataItemMock>
 	extends BasicFuture<T>
 	implements RunnableFuture<T> {
 		//
@@ -168,7 +168,7 @@ implements ObjectContainerMock<T> {
 		return seqWorker.submit(new ListObjectTask<>(this, oid, buff, limit));
 	}
 	//
-	public final static class ListObjectTask<T extends DataObjectMock>
+	public final static class ListObjectTask<T extends MutableDataItemMock>
 	extends BasicFuture<T>
 	implements RunnableFuture<T> {
 		//

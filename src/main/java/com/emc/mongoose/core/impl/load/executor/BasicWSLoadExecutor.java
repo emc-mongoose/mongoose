@@ -61,7 +61,7 @@ import java.util.concurrent.atomic.AtomicLong;
  Created by kurila on 02.12.14.
  */
 public class BasicWSLoadExecutor<T extends WSObject>
-extends ObjectLoadExecutorBase<T>
+extends TypeSpecificLoadExecutorBase<T>
 implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

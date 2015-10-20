@@ -1,10 +1,10 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
-import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.data.MutableDataItem;
 /**
  Created by kurila on 03.03.15.
  */
-public interface AuthToken<T extends DataObject> {
+public interface AuthToken<T extends MutableDataItem> {
 	//
 	String getValue();
 	//

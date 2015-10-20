@@ -1,9 +1,8 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;

@@ -40,7 +40,7 @@ implements RequestConfig<T> {
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 	protected volatile RunTimeConfig runTimeConfig;
 	protected volatile String
-		/*addr, */nameSpace, scheme/*, uriTemplate*/;
+		/*addr, */nameSpace, scheme/*, uriTemplate*/, namePrefix = null;
 	protected volatile int
 		port;
 	protected int buffSize;
@@ -58,6 +58,7 @@ implements RequestConfig<T> {
 		scheme = runTimeConfig.getStorageProto();
 		port = runTimeConfig.getApiTypePort(api);
 		nameSpace = runTimeConfig.getStorageNameSpace();
+		namePrefix = runTimeConfig.getDataPrefix();
 		buffSize = (int) runTimeConfig.getIOBufferSizeMin();
 		reqSleepMilliSec = runTimeConfig.getLoadLimitReqSleepMilliSec();
 	}
@@ -73,6 +74,7 @@ implements RequestConfig<T> {
 			setScheme(reqConf2Clone.getScheme());
 			setLoadType(reqConf2Clone.getLoadType());
 			setNameSpace(reqConf2Clone.getNameSpace());
+			setNamePrefix(reqConf2Clone.getNamePrefix());
 			secret = reqConf2Clone.getSecret();
 			setBuffSize(reqConf2Clone.getBuffSize());
 			LOG.debug(
@@ -209,6 +211,17 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
+	public String getNamePrefix() {
+		return namePrefix;
+	}
+	//
+	@Override
+	public RequestConfigBase<T> setNamePrefix(final String namePrefix) {
+		this.namePrefix = namePrefix;
+		return this;
+	}
+	//
+	@Override
 	public final ContentSource getContentSource() {
 		return contentSrc;
 	}
@@ -264,6 +277,7 @@ implements RequestConfig<T> {
 		out.writeObject(getUserName());
 		out.writeObject(getSecret());
 		out.writeObject(getNameSpace());
+		out.writeObject(getNamePrefix());
 		out.writeObject(getContentSource());
 		out.writeBoolean(getVerifyContentFlag());
 	}
@@ -284,7 +298,9 @@ implements RequestConfig<T> {
 		setSecret(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got secret {}", secret);
 		setNameSpace(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got namespace {}", secret);
+		LOG.trace(Markers.MSG, "Got namespace {}", nameSpace);
+		setNamePrefix(String.class.cast(in.readObject()));
+		LOG.trace(Markers.MSG, "Got name prefix {}", namePrefix);
 		setContentSource(ContentSource.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got data source {}", contentSrc);
 		setVerifyContentFlag(in.readBoolean());

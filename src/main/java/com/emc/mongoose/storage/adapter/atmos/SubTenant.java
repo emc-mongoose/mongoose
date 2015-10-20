@@ -1,10 +1,10 @@
 package com.emc.mongoose.storage.adapter.atmos;
 //
-import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.data.MutableDataItem;
 /**
  Created by kurila on 02.10.14.
  */
-public interface SubTenant<T extends DataObject> {
+public interface SubTenant<T extends MutableDataItem> {
 	//
 	String KEY_SUBTENANT_ID = "subtenantID";
 	//

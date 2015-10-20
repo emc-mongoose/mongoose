@@ -1,8 +1,8 @@
 package com.emc.mongoose.core.api.io.task;
 //
-import com.emc.mongoose.core.api.data.WSObject;
 //
-import org.apache.http.protocol.HttpContext;
+import com.emc.mongoose.core.api.data.WSObject;
+	import org.apache.http.protocol.HttpContext;
 //
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
@@ -13,7 +13,7 @@ import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
 public interface
 	WSIOTask<T extends WSObject>
 extends
-	DataObjectIOTask<T>,
+	IOTask<T>,
 	HttpAsyncRequestProducer,
 	HttpAsyncResponseConsumer<WSIOTask<T>>,
 	HttpContext {

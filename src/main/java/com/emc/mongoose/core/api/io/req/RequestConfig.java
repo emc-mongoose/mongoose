@@ -51,6 +51,9 @@ extends Externalizable, Cloneable, Closeable {
 	String getNameSpace();
 	RequestConfig<T> setNameSpace(final String nameSpace);
 	//
+	String getNamePrefix();
+	RequestConfig<T> setNamePrefix(final String namePrefix);
+	//
 	ContentSource getContentSource();
 	RequestConfig<T> setContentSource(final ContentSource dataSrc);
 	//

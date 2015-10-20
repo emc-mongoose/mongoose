@@ -7,12 +7,6 @@ import com.emc.mongoose.core.api.data.UpdatableDataItem;
  Identifiable, appendable and updatable data item.
  Data item identifier is a 64-bit word.
  */
-public interface DataObject
+public interface MutableDataItem
 extends AppendableDataItem, UpdatableDataItem {
-	//
-	int ID_RADIX = Character.MAX_RADIX;
-    //
-    String getId();
-    //
-    void setId(final String id);
 }

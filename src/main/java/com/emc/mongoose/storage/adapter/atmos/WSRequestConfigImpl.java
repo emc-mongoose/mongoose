@@ -1,9 +1,9 @@
 package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-common.jar
@@ -372,7 +372,7 @@ extends WSRequestConfigBase<T> {
 			) {
 				final String oid = valueLocation.substring(uriBasePath.length() + 1);
 				if(oid.length() > 0) {
-					dataObject.setId(oid);
+					dataObject.setName(oid);
 				} else {
 					LOG.trace(Markers.ERR, "Got empty object id");
 				}
@@ -386,7 +386,7 @@ extends WSRequestConfigBase<T> {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Applied object \"{}\" id \"{}\" from the source \"{}\"",
-				Long.toHexString(dataObject.getOffset()), dataObject.getId(),
+				Long.toHexString(dataObject.getOffset()), dataObject.getName(),
 				httpResponse.getFirstHeader(HttpHeaders.LOCATION)
 			);
 		}

@@ -5,5 +5,5 @@ import com.emc.mongoose.core.api.data.WSObject;
  Created by kurila on 03.07.15.
  */
 public interface WSObjectMock
-extends DataObjectMock, WSObject {
+extends MutableDataItemMock, WSObject {
 }
