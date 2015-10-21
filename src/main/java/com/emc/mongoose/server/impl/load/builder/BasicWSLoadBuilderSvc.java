@@ -12,14 +12,14 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 //mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc;
+import com.emc.mongoose.server.impl.load.executor.BasicWSDataLoadSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.05.14.
  */
-public class BasicWSLoadBuilderSvc<T extends WSObject, U extends WSLoadExecutor<T>>
+public class BasicWSLoadBuilderSvc<T extends WSObject, U extends WSDataLoadExecutor<T>>
 extends BasicWSLoadBuilder<T, U>
 implements WSLoadBuilderSvc<T, U> {
 	//
@@ -112,7 +112,7 @@ implements WSLoadBuilderSvc<T, U> {
 				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
-		return (U) new BasicWSLoadSvc<>(
+		return (U) new BasicWSDataLoadSvc<>(
 			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,

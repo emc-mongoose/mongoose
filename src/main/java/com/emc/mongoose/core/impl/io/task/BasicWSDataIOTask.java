@@ -12,6 +12,7 @@ import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.task.WSDataIOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.impl.data.BasicMutableDataItem;
@@ -45,16 +46,16 @@ import java.nio.charset.StandardCharsets;
 /**
  Created by kurila on 06.06.14.
  */
-public class BasicWSIOTask<T extends WSObject>
-extends BasicIOTask<T>
-implements WSIOTask<T> {
+public class BasicWSDataIOTask<T extends WSObject>
+extends BasicDataIOTask<T>
+implements WSDataIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile OutputChannel chanOut = null;
 	private volatile InputChannel chanIn = null;
 	//
-	public BasicWSIOTask(
+	public BasicWSDataIOTask(
 		final T dataObject, final String nodeAddr, final WSRequestConfig<T> reqConf
 	) {
 		super(dataObject, nodeAddr, reqConf);
@@ -75,7 +76,7 @@ implements WSIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final HttpHost getTarget() {
-		return ((WSRequestConfig<T>) reqConf).getNodeHost(nodeAddr);
+		return ((WSRequestConfig) reqConf).getNodeHost(nodeAddr);
 	}
 	//
 	@Override
@@ -83,7 +84,7 @@ implements WSIOTask<T> {
 	throws IOException, HttpException {
 		final HttpEntityEnclosingRequest httpRequest;
 		try {
-			 httpRequest = ((WSRequestConfig<T>) reqConf).createDataRequest(item, nodeAddr);
+			 httpRequest = ((WSRequestConfig) reqConf).createDataRequest(item, nodeAddr);
 		} catch(final URISyntaxException e) {
 			throw new HttpException("Failed to generate the request", e);
 		}
@@ -266,7 +267,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final boolean isRepeatable() {
-		return com.emc.mongoose.core.api.data.WSObject.IS_CONTENT_REPEATABLE;
+		return WSObject.IS_CONTENT_REPEATABLE;
 	}
 	//
 	@Override
@@ -482,7 +483,7 @@ implements WSIOTask<T> {
 	}
 	//
 	@Override
-	public final WSIOTask<T> getResult() {
+	public final WSDataIOTask<T> getResult() {
 		return this;
 	}
 	//

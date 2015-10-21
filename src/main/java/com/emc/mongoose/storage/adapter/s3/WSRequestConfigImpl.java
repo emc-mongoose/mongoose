@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.adapter.s3;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 // mongoose-core-impl.jar
@@ -119,7 +120,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final String getUriPath(final T dataItem)
+	protected final String getDataUriPath(final T dataItem)
 	throws IllegalStateException, URISyntaxException {
 		if(bucket == null) {
 			throw new IllegalArgumentException(MSG_NO_BUCKET);
@@ -129,6 +130,12 @@ extends WSRequestConfigBase<T> {
 		}
 		applyObjectId(dataItem, null);
 		return "/" + bucket + getFilePathFor(dataItem);
+	}
+	//
+	@Override
+	protected final String getContainerUriPath(final Container<T> container)
+	throws IllegalArgumentException, URISyntaxException {
+		return "/" + container.getName();
 	}
 	//
 	@Override

@@ -1,53 +1,73 @@
 package com.emc.mongoose.core.impl.io.task;
-// mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.MutableDataItem;
+//
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
+import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
- Created by andrey on 12.10.14.
+ Created by kurila on 20.10.15.
  */
-public class BasicIOTask<T extends MutableDataItem>
-extends IOTaskBase<T> {
+public class BasicIOTask<T extends Item>
+implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final long contentSize;
-	protected volatile long countBytesDone = 0, countBytesSkipped = 0;
-	protected volatile DataItem currRange = null;
-	protected volatile long currRangeSize = 0, nextRangeOffset = 0;
-	protected volatile int currRangeIdx = 0, currDataLayerIdx = 0;
+	protected final RequestConfig reqConf;
+	protected final IOTask.Type ioType;
+	protected final T item;
+	protected final String nodeAddr;
 	//
-	public BasicIOTask(final T item, final String nodeAddr, final RequestConfig<T> reqConf) {
-		super(item, nodeAddr, reqConf);
-		item.reset();
-		currDataLayerIdx = item.getCurrLayerIndex();
-		switch(ioType) {
-			case CREATE:
-				contentSize = item.getSize();
-				break;
-			case READ:
-				contentSize = item.getSize();
-				break;
-			case DELETE:
-				contentSize = 0;
-				break;
-			case UPDATE:
-				contentSize = item.getUpdatingRangesSize();
-				break;
-			case APPEND:
-				contentSize = item.getAppendSize();
-				break;
-			default:
-				contentSize = 0;
-				break;
-		}
+	protected volatile IOTask.Status status = IOTask.Status.FAIL_UNKNOWN;
+	protected volatile long
+		reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
+	//
+	public BasicIOTask(
+		final T item, final String nodeAddr, final RequestConfig reqConf
+	) {
+		this.reqConf = reqConf;
+		this.ioType = reqConf.getLoadType();
+		this.item = item;
+		this.nodeAddr = nodeAddr;
 	}
 	//
 	@Override
-	public final long getCountBytesDone() {
-		return countBytesDone;
+	public final String getNodeAddr() {
+		return nodeAddr;
+	}
+	//
+	@Override
+	public final T getItem() {
+		return item;
+	}
+	//
+	@Override
+	public long getCountBytesDone() {
+		return 0;
+	}
+	//
+	@Override
+	public final Status getStatus() {
+		return status;
+	}
+	//
+	@Override
+	public final long getReqTimeStart() {
+		return reqTimeStart;
+	}
+	//
+	@Override
+	public final long getReqTimeDone() {
+		return reqTimeDone;
+	}
+	//
+	@Override
+	public final long getRespTimeStart() {
+		return respTimeStart;
+	}
+	@Override
+	public final long getRespTimeDone() {
+		return respTimeDone;
 	}
 }

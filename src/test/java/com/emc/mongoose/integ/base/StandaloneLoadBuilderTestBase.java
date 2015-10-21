@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.builder.WSLoadBuilder;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
 //
 import org.junit.AfterClass;
@@ -15,7 +15,7 @@ import org.junit.BeforeClass;
 public abstract class StandaloneLoadBuilderTestBase
 extends WSMockTestBase {
 	//
-	protected static WSLoadBuilder<WSObject, WSLoadExecutor<WSObject>> LOAD_BUILDER;
+	protected static WSLoadBuilder<WSObject, WSDataLoadExecutor<WSObject>> LOAD_BUILDER;
 	//
 	@BeforeClass
 	public static void setUpClass()

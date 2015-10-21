@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 // mongoose-scenario.jar
 import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.run.scenario.Rampup;
@@ -60,7 +60,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
-					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
+					final WSLoadBuilderSvc<WSObject, WSDataLoadExecutor<WSObject>>
 						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
 				) {
 					loadBuilderSvc.start();

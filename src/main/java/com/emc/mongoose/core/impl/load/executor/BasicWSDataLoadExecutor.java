@@ -12,11 +12,12 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.WSDataIOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicWSDataIOTask;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.http.ExceptionLogger;
@@ -60,9 +61,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 02.12.14.
  */
-public class BasicWSLoadExecutor<T extends WSObject>
+public class BasicWSDataLoadExecutor<T extends WSObject>
 extends MutableDataLoadExecutorBase<T>
-implements WSLoadExecutor<T> {
+implements WSDataLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -78,7 +79,7 @@ implements WSLoadExecutor<T> {
 		connReleaseCount = new AtomicLong(0);
 	//
 	@SuppressWarnings("unchecked")
-	public BasicWSLoadExecutor(
+	public BasicWSDataLoadExecutor(
 		final RunTimeConfig rtConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
@@ -132,7 +133,7 @@ implements WSLoadExecutor<T> {
 			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize(IOTask.Type.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
-			.setSndBufSize(IOTask.Type.READ.equals(loadType) ? Constants.BUFF_SIZE_LO : buffSize)
+			.setSndBufSize(Constants.BUFF_SIZE_LO)
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 			);
@@ -186,8 +187,8 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected WSIOTask<T> getIOTask(final T item, final String nodeAddr) {
-		return new BasicWSIOTask<>(item, nodeAddr, wsReqConfigCopy);
+	protected WSDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
+		return new BasicWSDataIOTask<>(item, nodeAddr, wsReqConfigCopy);
 	}
 	//
 	@Override
@@ -229,15 +230,15 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected final Future<? extends WSIOTask<T>> submitReqActually(final IOTask<T> ioTask)
+	protected final Future<? extends WSDataIOTask<T>> submitReqActually(final IOTask<T> ioTask)
 	throws RejectedExecutionException {
 		//
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");
 		}
 		//
-		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		final Future<WSIOTask<T>> futureResult;
+		final WSDataIOTask<T> wsTask = (WSDataIOTask<T>) ioTask;
+		final Future<WSDataIOTask<T>> futureResult;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, futureCallback);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -251,9 +252,9 @@ implements WSLoadExecutor<T> {
 		return futureResult;
 	}
 	//
-	private final FutureCallback<WSIOTask<T>> futureCallback = new FutureCallback<WSIOTask<T>>() {
+	private final FutureCallback<WSDataIOTask<T>> futureCallback = new FutureCallback<WSDataIOTask<T>>() {
 		@Override
-		public final void completed(final WSIOTask<T> ioTask) {
+		public final void completed(final WSDataIOTask<T> ioTask) {
 			ioTaskCompleted(ioTask);
 		}
 		//
@@ -272,8 +273,8 @@ implements WSLoadExecutor<T> {
 		int n = 0;
 		if(isPipeliningEnabled) {
 			if(ioTasks.size() > 0) {
-				final List<WSIOTask<T>> wsIOTasks = (List<WSIOTask<T>>) ioTasks;
-				final WSIOTask<T> anyTask = wsIOTasks.get(0);
+				final List<WSDataIOTask<T>> wsIOTasks = (List<WSDataIOTask<T>>) ioTasks;
+				final WSDataIOTask<T> anyTask = wsIOTasks.get(0);
 				final HttpHost tgtHost = anyTask.getTarget();
 				if(
 					null == client.executePipelined(
@@ -297,16 +298,16 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	private final class BatchFutureCallback
-	implements FutureCallback<List<WSIOTask<T>>> {
+	implements FutureCallback<List<WSDataIOTask<T>>> {
 		//
-		private final List<WSIOTask<T>> tasks;
+		private final List<WSDataIOTask<T>> tasks;
 		//
-		private BatchFutureCallback(final List<WSIOTask<T>> tasks) {
+		private BatchFutureCallback(final List<WSDataIOTask<T>> tasks) {
 			this.tasks = tasks;
 		}
 		//
 		@Override
-		public final void completed(final List<WSIOTask<T>> result) {
+		public final void completed(final List<WSDataIOTask<T>> result) {
 			ioTaskCompletedBatch(result, 0, result.size());
 		}
 		//
