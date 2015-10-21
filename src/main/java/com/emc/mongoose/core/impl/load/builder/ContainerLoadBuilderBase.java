@@ -8,7 +8,6 @@ import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
-import com.emc.mongoose.core.impl.container.BasicContainer;
 import com.emc.mongoose.core.impl.data.model.NewContainerSrc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -41,14 +40,14 @@ implements ContainerLoadBuilder<T, C, U>{
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
 				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
 					return new NewContainerSrc<>(
-						BasicContainer.class
+						reqConf.getContainerClass()
 					);
 				} else {
 					return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
 				}
 			} else if(flagUseNewItemSrc) {
 				return  new NewContainerSrc<>(
-					BasicContainer.class
+					reqConf.getContainerClass()
 				);
 			} else if(flagUseContainerItemSrc) {
 				return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
