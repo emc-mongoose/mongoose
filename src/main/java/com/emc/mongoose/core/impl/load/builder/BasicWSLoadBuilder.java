@@ -9,7 +9,7 @@ import com.emc.mongoose.core.impl.load.executor.BasicWSDataLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.builder.WSLoadBuilder;
+import com.emc.mongoose.core.api.load.builder.WSDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
  */
 public class BasicWSLoadBuilder<T extends WSObject, U extends WSDataLoadExecutor<T>>
 extends DataLoadBuilderBase<T, U>
-implements WSLoadBuilder<T, U> {
+implements WSDataLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//

@@ -8,7 +8,8 @@ import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
+import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 //
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import org.junit.AfterClass;
@@ -19,7 +20,7 @@ import org.junit.BeforeClass;
 public abstract class DistributedTestBase
 extends WSMockTestBase {
 	//
-	protected static LoadBuilderSvc<WSObject, WSLoadSvc<WSObject>> LOAD_BUILDER_SVC;
+	protected static LoadBuilderSvc<WSObject, WSDataLoadSvc<WSObject>> LOAD_BUILDER_SVC;
 	//
 	@BeforeClass
 	@SuppressWarnings("unchecked")

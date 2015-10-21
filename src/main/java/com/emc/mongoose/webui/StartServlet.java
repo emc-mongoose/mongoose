@@ -11,6 +11,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
+import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //

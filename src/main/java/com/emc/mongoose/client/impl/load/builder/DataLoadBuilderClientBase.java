@@ -1,7 +1,7 @@
 package com.emc.mongoose.client.impl.load.builder;
 //
 import com.emc.mongoose.client.api.load.builder.DataLoadBuilderClient;
-import com.emc.mongoose.client.api.load.executor.LoadClient;
+import com.emc.mongoose.client.api.load.executor.DataLoadClient;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -14,6 +14,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
 //
+import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,10 +26,11 @@ import java.rmi.RemoteException;
  */
 public abstract class DataLoadBuilderClientBase<
 	T extends DataItem,
-	U extends LoadClient<T>,
-	V extends DataLoadBuilderSvc<T, U>
+	U extends DataLoadClient<T>,
+	W extends DataLoadSvc<T>,
+	V extends DataLoadBuilderSvc<T, W>
 >
-extends LoadBuilderClientBase<T, U, V>
+extends LoadBuilderClientBase<T, U, W, V>
 implements DataLoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

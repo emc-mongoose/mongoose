@@ -10,7 +10,7 @@ import com.emc.mongoose.core.api.io.task.WSDataIOTask;
 import com.emc.mongoose.core.impl.io.task.BasicWSDataIOTask;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
-import com.emc.mongoose.client.api.load.executor.WSLoadClient;
+import com.emc.mongoose.client.api.load.executor.WSDataLoadClient;
 //
 //import org.apache.log.log4j.Level;
 //import org.apache.log.log4j.LogManager;
@@ -21,13 +21,13 @@ import java.util.Map;
 /**
  Created by kurila on 08.05.14.
  */
-public class BasicWSLoadClient<T extends WSObject>
+public class BasicWSDataLoadClient<T extends WSObject>
 extends LoadClientBase<T>
-implements WSLoadClient<T> {
+implements WSDataLoadClient<T> {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSLoadClient(
+	public BasicWSDataLoadClient(
 		final RunTimeConfig rtConfig, final WSRequestConfig<T> reqConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,

@@ -1,5 +1,6 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-common.jar
+import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
@@ -8,7 +9,6 @@ import com.emc.mongoose.common.math.MathUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 // mongoose-client.jar
@@ -17,6 +17,7 @@ import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
+import com.emc.mongoose.server.api.load.executor.LoadSvc;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -37,8 +38,9 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class LoadBuilderClientBase<
 	T extends Item,
-	U extends LoadExecutor<T>,
-	V extends LoadBuilderSvc<T, U>
+	U extends LoadClient<T>,
+	W extends LoadSvc<T>,
+	V extends LoadBuilderSvc<T, W>
 >
 extends HashMap<String, V>
 implements LoadBuilderClient<T, U> {

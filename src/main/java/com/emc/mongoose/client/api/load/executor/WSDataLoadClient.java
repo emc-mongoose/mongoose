@@ -5,6 +5,6 @@ import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 /**
  Created by kurila on 01.10.14.
  */
-public interface WSLoadClient<T extends WSObject>
-extends LoadClient<T>, WSDataLoadExecutor<T> {
+public interface WSDataLoadClient<T extends WSObject>
+extends DataLoadClient<T>, WSDataLoadExecutor<T> {
 }
