@@ -7,16 +7,16 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 // mongoose-scenario.jar
 import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.run.scenario.Rampup;
 import com.emc.mongoose.run.scenario.Single;
 import com.emc.mongoose.run.webserver.WUIRunner;
 // mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
@@ -60,8 +60,8 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
-					final WSLoadBuilderSvc<WSObject, WSDataLoadExecutor<WSObject>>
-						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
+					final WSDataLoadBuilderSvc<WSObject, WSDataLoadSvc<WSObject>>
+						loadBuilderSvc = new BasicWSDataLoadBuilderSvc<>(RunTimeConfig.getContext())
 				) {
 					loadBuilderSvc.start();
 					loadBuilderSvc.await();

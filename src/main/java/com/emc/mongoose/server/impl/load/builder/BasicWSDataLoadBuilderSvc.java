@@ -14,12 +14,12 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 //mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
-import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.executor.BasicWSDataLoadSvc;
+import com.emc.mongoose.server.impl.load.executor.BasicWSDataDataLoadSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -31,20 +31,20 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.05.14.
  */
-public class BasicWSLoadBuilderSvc<T extends WSObject, U extends WSDataLoadExecutor<T>>
+public class BasicWSDataLoadBuilderSvc<T extends WSObject, U extends WSDataLoadSvc<T>>
 extends BasicWSLoadBuilder<T, U>
-implements WSLoadBuilderSvc<T, U> {
+implements WSDataLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private String configTable = null;
 	//
-	public BasicWSLoadBuilderSvc(final RunTimeConfig runTimeConfig) {
+	public BasicWSDataLoadBuilderSvc(final RunTimeConfig runTimeConfig) {
 		super(runTimeConfig);
 	}
 	//
 	@Override
-	public final BasicWSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
+	public final BasicWSDataLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
 		super.setProperties(clientConfig);
 		final String runMode = clientConfig.getRunMode();
 		if (!runMode.equals(Constants.RUN_MODE_SERVER)
@@ -58,7 +58,7 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws RemoteException {
-		final WSLoadSvc<T> loadSvc = (WSLoadSvc<T>) build();
+		final WSDataLoadSvc<T> loadSvc = (WSDataLoadSvc<T>) build();
 		ServiceUtil.create(loadSvc);
 		if(configTable != null) {
 			LOG.info(Markers.MSG, configTable);
@@ -112,7 +112,7 @@ implements WSLoadBuilderSvc<T, U> {
 				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
-		return (U) new BasicWSDataLoadSvc<>(
+		return (U) new BasicWSDataDataLoadSvc<>(
 			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,

@@ -8,12 +8,10 @@ import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 // mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
@@ -109,7 +107,7 @@ public final class StartServlet extends CommonServlet {
 				LOG.debug(Markers.MSG, message);
 				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				//
-				loadBuilderSvc = new BasicWSLoadBuilderSvc(localRunTimeConfig);
+				loadBuilderSvc = new BasicWSDataLoadBuilderSvc(localRunTimeConfig);
 				//
 				try {
 					loadBuilderSvc.setProperties(runTimeConfig);

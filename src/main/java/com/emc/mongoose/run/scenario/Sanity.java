@@ -18,8 +18,8 @@ import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.data.model.ListItemDst;
 //
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -171,8 +171,8 @@ implements Runnable {
 		ServiceUtil.init();
 		//
 		try(
-			final LoadBuilderSvc<WSObject, WSLoadSvc<WSObject>>
-				loadSvcBuilder = new BasicWSLoadBuilderSvc<>(rtConfig);
+			final LoadBuilderSvc<WSObject, WSDataLoadSvc<WSObject>>
+				loadSvcBuilder = new BasicWSDataLoadBuilderSvc<>(rtConfig);
 		) {
 			loadSvcBuilder.start();
 			TimeUnit.SECONDS.sleep(1);
