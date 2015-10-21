@@ -18,7 +18,7 @@ import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.builder.BasicWSDataLoadBuilder;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.executor.BasicWSDataDataLoadSvc;
+import com.emc.mongoose.server.impl.load.executor.BasicWSDataLoadSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -111,7 +111,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
-		return (U) new BasicWSDataDataLoadSvc<>(
+		return (U) new BasicWSDataLoadSvc<>(
 			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
