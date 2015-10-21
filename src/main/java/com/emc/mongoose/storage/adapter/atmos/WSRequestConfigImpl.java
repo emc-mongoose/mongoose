@@ -278,6 +278,7 @@ extends WSRequestConfigBase<T> {
 		THR_LOC_METADATA_STR_BUILDER = new ThreadLocal<>();
 	//
 	@Override
+	@SuppressWarnings("unchecked")
 	protected final void applyMetaDataHeaders(final HttpEntityEnclosingRequest request) {
 		//
 		StringBuilder md = THR_LOC_METADATA_STR_BUILDER.get();

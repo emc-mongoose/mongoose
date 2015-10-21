@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.data.model;
 //
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
@@ -32,7 +33,7 @@ implements DataItemContainer<T> {
 		this.reqConf = reqConf;
 		if(name == null || name.length() == 0) {
 			final Date dt = Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime();
-			this.name = "mongoose-" + LogUtil.FMT_DT.format(dt);
+			this.name = Constants.MONGOOSE_PREFIX + LogUtil.FMT_DT.format(dt);
 		} else {
 			this.name = name;
 		}

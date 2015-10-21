@@ -34,6 +34,7 @@ public class LoadBuilderFactory {
 		final RunTimeConfig rtConfig
 	) {
 		final String mode = rtConfig.getRunMode();
+		final String itemClassName = rtConfig.getLoadItemClass();
 		//
 		LoadBuilder<T, U> loadBuilderInstance = null;
 		switch(mode) {
@@ -50,7 +51,14 @@ public class LoadBuilderFactory {
 				loadBuilderInstance = (WSLoadBuilder) new BasicWSLoadBuilderSvc<>(rtConfig);
 				break;
 			default:
-				loadBuilderInstance = (WSLoadBuilder) new BasicWSLoadBuilder<>(rtConfig);
+				switch (itemClassName) {
+					case Constants.LOAD_ITEMS_CLASS_OBJECT:
+						loadBuilderInstance = (WSLoadBuilder) new BasicWSLoadBuilder<>(rtConfig);
+						break;
+					case Constants.LOAD_ITEMS_CLASS_CONTAINER:
+						System.out.println("a");
+						break;
+				}
 		}
 		return loadBuilderInstance;
 	}

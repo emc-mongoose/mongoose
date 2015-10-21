@@ -25,7 +25,7 @@ import java.io.IOException;
  after being processed successfully.</p>
  <p>Also each method returns the count of the successfully processed data items.</p>
  */
-public interface StorageClient<T extends Item>
+public interface StorageClient<T extends DataItem>
 extends Closeable {
 
 	/**

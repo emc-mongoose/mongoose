@@ -31,6 +31,8 @@ public interface Constants {
 	String DIR_WEBAPP = "webapp";
 	String DIR_WEBINF = "WEB-INF";
 	//
+	String MONGOOSE_PREFIX = "mongoose-";
+	//
 	int BUFF_SIZE_LO = (int) RunTimeConfig.getContext().getIOBufferSizeMin();
 	int BUFF_SIZE_HI = (int) RunTimeConfig.getContext().getIOBufferSizeMax();
 }

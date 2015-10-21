@@ -17,7 +17,7 @@ extends StorageClientBuilderBase<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public U build() {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		return (U) new BasicStorageClient<>(
+		return (U) new BasicStorageClient<T>(
 			rtConfig, (DataLoadBuilder) LoadBuilderFactory.<T, LoadExecutor<T>>getInstance(rtConfig)
 		);
 	}
