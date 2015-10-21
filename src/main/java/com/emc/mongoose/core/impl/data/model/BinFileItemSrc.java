@@ -1,13 +1,9 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.common.log.LogUtil;
-//
 import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 //
 import com.emc.mongoose.core.api.data.model.FileItemSrc;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
-import org.apache.logging.log4j.Level;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -17,8 +13,6 @@ import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.List;
 /**
  An item input implementation deserializing the data items from the specified file.
  */
