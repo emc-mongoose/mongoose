@@ -9,6 +9,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.WSContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSContainerLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.load.executor.BasicWSContainerLoadExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,7 +34,7 @@ implements WSContainerLoadBuilder<T, C, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig<T> getDefaultRequestConfig() {
+	protected WSRequestConfig getDefaultRequestConfig() {
 		return WSRequestConfigBase.getInstance();
 	}
 	//
@@ -85,13 +86,10 @@ implements WSContainerLoadBuilder<T, C, U> {
 				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
-		/*return (U) new BasicWSDataLoadExecutor<>(
+		return (U) new BasicWSContainerLoadExecutor<>(
 				localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
-				itemSrc == null ? getDefa
-				ultItemSource() : itemSrc,
-				maxCount, minObjSize, maxObjSize, objSizeBias,
-				manualTaskSleepMicroSecs, rateLimit, updatesPerItem
-		);*/
-		return null;
+				itemSrc == null ? getDefaultItemSource() : itemSrc,
+				maxCount, manualTaskSleepMicroSecs, rateLimit
+		);
 	}
 }

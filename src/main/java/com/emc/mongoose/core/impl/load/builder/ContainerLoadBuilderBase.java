@@ -34,20 +34,20 @@ implements ContainerLoadBuilder<T, C, U>{
 	}
 	//
 	@SuppressWarnings("unchecked")
-	protected ItemSrc<C> getDefaultItemSource() {
+	protected ItemSrc getDefaultItemSource() {
 		try {
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
 				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
-					return (ItemSrc<C>) new NewContainerSrc<>(
+					return new NewContainerSrc<>(
 						BasicContainer.class
 					);
 				} else {
 					return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
 				}
 			} else if(flagUseNewItemSrc) {
-				return  (ItemSrc<C>) new NewContainerSrc<>(
+				return  new NewContainerSrc<>(
 					BasicContainer.class
 				);
 			} else if(flagUseContainerItemSrc) {

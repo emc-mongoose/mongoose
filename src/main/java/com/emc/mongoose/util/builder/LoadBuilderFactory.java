@@ -6,9 +6,11 @@ import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
+import com.emc.mongoose.core.api.load.builder.WSContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.WSDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
 import com.emc.mongoose.core.impl.load.builder.BasicWSDataLoadBuilder;
 //
 import com.emc.mongoose.client.impl.load.builder.BasicWSDataLoadBuilderClient;
@@ -44,12 +46,12 @@ public class LoadBuilderFactory {
 		switch(mode) {
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
-				try {
+				/*try {
 					loadBuilderInstance
 						= (WSDataLoadBuilder) new BasicWSDataLoadBuilderClient<>(rtConfig);
 				} catch(final IOException | NoSuchElementException | ClassCastException e) {
 					LogUtil.exception(LOG, Level.FATAL, e, "Failed to create the load builder");
-				}
+				}*/
 				break;
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
@@ -61,6 +63,7 @@ public class LoadBuilderFactory {
 						loadBuilderInstance = (WSDataLoadBuilder) new BasicWSDataLoadBuilder<>(rtConfig);
 						break;
 					case Constants.LOAD_ITEMS_CLASS_CONTAINER:
+						//loadBuilderInstance = (LoadBuilder) new BasicWSContainerLoadBuilder<>(rtConfig);
 						break;
 				}
 		}
