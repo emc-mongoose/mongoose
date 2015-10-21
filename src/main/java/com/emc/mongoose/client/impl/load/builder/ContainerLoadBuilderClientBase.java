@@ -1,8 +1,9 @@
 package com.emc.mongoose.client.impl.load.builder;
 //
 import com.emc.mongoose.client.api.load.builder.ContainerLoadBuilderClient;
-//
 import com.emc.mongoose.client.api.load.executor.ContainerLoadClient;
+//
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataItem;
 //
@@ -16,13 +17,19 @@ import java.io.IOException;
 public abstract class ContainerLoadBuilderClientBase<
 	T extends DataItem,
 	C extends Container<T>,
-	U extends ContainerLoadClient<T, C>,
 	W extends ContainerLoadSvc<T, C>,
+	U extends ContainerLoadClient<T, C, W>,
 	V extends ContainerLoadBuilderSvc<T, C, W>
-> extends LoadBuilderClientBase<C, U, W, V>
-implements ContainerLoadBuilderClient<T, C, U> {
+> extends LoadBuilderClientBase<C, W, U, V>
+implements ContainerLoadBuilderClient<T, C, W, U> {
 	//
 	protected ContainerLoadBuilderClientBase()
 	throws IOException {
+		super();
+	}
+	//
+	protected ContainerLoadBuilderClientBase(final RunTimeConfig rtConfig)
+	throws IOException {
+		super(rtConfig);
 	}
 }

@@ -1,21 +1,22 @@
 package com.emc.mongoose.client.impl.load.builder;
-// mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-// mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
-// mongoose-common.jar
+//
+import com.emc.mongoose.client.api.load.executor.WSContainerLoadClient;
+//
+import com.emc.mongoose.client.impl.load.executor.BasicWSContainerLoadClient;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
-// mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
-// mongoose-client.jar
-import com.emc.mongoose.client.impl.load.executor.BasicWSDataLoadClient;
-import com.emc.mongoose.client.api.load.builder.WSDataLoadBuilderClient;
-import com.emc.mongoose.client.api.load.executor.WSDataLoadClient;
 //
-import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+import com.emc.mongoose.core.api.container.Container;
+import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+//
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+//
+import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -24,63 +25,70 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 /**
- Created by kurila on 08.05.14.
+ Created by kurila on 21.10.15.
  */
-public final class BasicWSDataLoadBuilderClient<
-	T extends WSObject, W extends WSDataLoadSvc<T>, U extends WSDataLoadClient<T, W>
-> extends DataLoadBuilderClientBase<T, W, U, WSDataLoadBuilderSvc<T, W>>
-implements WSDataLoadBuilderClient<T, W, U> {
+public class BasicWSContainerLoadBuilderClient<
+	T extends WSObject,
+	C extends Container<T>,
+	W extends WSContainerLoadSvc<T, C>,
+	U extends WSContainerLoadClient<T, C, W>
+> extends ContainerLoadBuilderClientBase<T, C, W, U, WSContainerLoadBuilderSvc<T, C, W>> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSDataLoadBuilderClient()
+	public BasicWSContainerLoadBuilderClient()
 	throws IOException {
 		super();
 	}
 	//
-	public BasicWSDataLoadBuilderClient(final RunTimeConfig runTimeConfig)
+	public BasicWSContainerLoadBuilderClient(final RunTimeConfig runTimeConfig)
 	throws IOException {
 		super(runTimeConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig<T> getDefaultRequestConfig() {
+	protected WSRequestConfig getDefaultRequestConfig() {
 		return WSRequestConfigBase.getInstance();
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSDataLoadBuilderSvc<T, W> resolve(final String serverAddr)
+	protected WSContainerLoadBuilderSvc<T, C, W> resolve(final String serverAddr)
 	throws IOException {
-		WSDataLoadBuilderSvc<T, W> rlb;
+		WSContainerLoadBuilderSvc<T, C, W> rlb;
 		final Service remoteSvc = ServiceUtil.getRemoteSvc(
 			"//" + serverAddr + '/' + getClass().getPackage().getName().replace("client", "server")
 		);
 		if(remoteSvc == null) {
 			throw new IOException("No remote load builder was resolved from " + serverAddr);
-		} else if(remoteSvc instanceof WSDataLoadBuilderSvc) {
-			rlb = (WSDataLoadBuilderSvc<T, W>) remoteSvc;
+		} else if(remoteSvc instanceof WSContainerLoadBuilderSvc) {
+			rlb = (WSContainerLoadBuilderSvc<T, C, W>) remoteSvc;
 		} else {
 			throw new IOException(
 				"Illegal class " + remoteSvc.getClass().getCanonicalName() +
-				" of the instance resolved from " + serverAddr
+					" of the instance resolved from " + serverAddr
 			);
 		}
 		return rlb;
 	}
 	//
 	@Override
+	protected ItemSrc<C> getDefaultItemSource() {
+		return null;
+	}
+	//
+	@Override
 	protected final void invokePreConditions()
-	throws IllegalStateException {
+		throws IllegalStateException {
 		reqConf.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override  @SuppressWarnings("unchecked")
 	protected final U buildActually()
-	throws RemoteException {
+		throws RemoteException {
 		//
-		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
+		final Map<String, WSContainerLoadSvc<T, C>> remoteLoadMap = new ConcurrentHashMap<>();
 		//
-		WSDataLoadBuilderSvc<T, W> nextBuilder;
+		WSContainerLoadBuilderSvc<T, C, W> nextBuilder;
 		W nextLoad;
 		//
 		if(itemSrc == null) {
@@ -98,7 +106,7 @@ implements WSDataLoadBuilderClient<T, W, U> {
 		//
 		final String loadTypeStr = reqConf.getLoadType().name().toLowerCase();
 		//
-		return (U) new BasicWSDataLoadClient<>(
+		return (U) new BasicWSContainerLoadClient<>(
 			rtConfig, (WSRequestConfig) reqConf, storageNodeAddrs,
 			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
 			itemSrc, maxCount, remoteLoadMap

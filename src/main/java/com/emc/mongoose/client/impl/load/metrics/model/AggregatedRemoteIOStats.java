@@ -8,7 +8,6 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.DataItem;
 //
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.model.metrics.IOStatsBase;
@@ -33,12 +32,12 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 14.09.15.
  */
-public class AggregatedRemoteIOStats<T extends Item>
+public class AggregatedRemoteIOStats<T extends Item, W extends LoadSvc<T>>
 extends IOStatsBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final Map<String, LoadSvc<T>> loadSvcMap;
+	private final Map<String, W> loadSvcMap;
 	private final Map<String, Snapshot> loadStatsSnapshotMap;
 	private final ExecutorService statsLoader;
 	//
@@ -60,7 +59,7 @@ extends IOStatsBase {
 		lock = new ReentrantLock();
 	//
 	public AggregatedRemoteIOStats(
-		final String name, final int serveJmxPort, final Map<String, LoadSvc<T>> loadSvcMap
+		final String name, final int serveJmxPort, final Map<String, W> loadSvcMap
 	) {
 		super(name, serveJmxPort);
 		this.loadSvcMap = loadSvcMap;

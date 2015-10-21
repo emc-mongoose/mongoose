@@ -1,6 +1,5 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-common.jar
-import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
@@ -12,12 +11,14 @@ import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 // mongoose-client.jar
+import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
-// mongoose-server-api.jar
-import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
-import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
+import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
+// mongoose-server-api.jar
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
+//
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -38,12 +39,12 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class LoadBuilderClientBase<
 	T extends Item,
-	U extends LoadClient<T>,
 	W extends LoadSvc<T>,
+	U extends LoadClient<T, W>,
 	V extends LoadBuilderSvc<T, W>
 >
 extends HashMap<String, V>
-implements LoadBuilderClient<T, U> {
+implements LoadBuilderClient<T, W, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -140,7 +141,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilderClient<T, U> setProperties(final RunTimeConfig rtConfig)
+	public LoadBuilderClient<T, W, U> setProperties(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
 		//
 		this.rtConfig = rtConfig;
@@ -230,7 +231,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setRequestConfig(final RequestConfig<T> reqConf)
+	public final LoadBuilderClient<T, W, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws ClassCastException, RemoteException {
 		if(this.reqConf.equals(reqConf)) {
 			return this;
@@ -248,7 +249,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setLoadType(final IOTask.Type loadType)
+	public final LoadBuilderClient<T, W, U> setLoadType(final IOTask.Type loadType)
 	throws IllegalStateException, RemoteException {
 		reqConf.setLoadType(loadType);
 		V nextBuilder;
@@ -260,7 +261,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setMaxCount(final long maxCount)
+	public final LoadBuilderClient<T, W, U> setMaxCount(final long maxCount)
 	throws IllegalArgumentException, RemoteException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		V nextBuilder;
@@ -272,7 +273,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setManualTaskSleepMicroSecs(
+	public final LoadBuilderClient<T, W, U> setManualTaskSleepMicroSecs(
 		final int manualTaskSleepMicroSecs
 	) throws IllegalArgumentException, RemoteException {
 		V nextBuilder;
@@ -284,7 +285,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setRateLimit(final float rateLimit)
+	public final LoadBuilderClient<T, W, U> setRateLimit(final float rateLimit)
 	throws IllegalArgumentException, RemoteException {
 		V nextBuilder;
 		for(final String addr : keySet()) {
@@ -295,7 +296,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setWorkerCountDefault(final int threadCount)
+	public final LoadBuilderClient<T, W, U> setWorkerCountDefault(final int threadCount)
 	throws IllegalArgumentException, RemoteException {
 		V nextBuilder;
 		for(final String addr : keySet()) {
@@ -306,7 +307,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setWorkerCountFor(
+	public final LoadBuilderClient<T, W, U> setWorkerCountFor(
 		final int threadCount, final IOTask.Type loadType
 	) throws IllegalArgumentException, RemoteException {
 		V nextBuilder;
@@ -318,7 +319,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setConnPerNodeDefault(final int connCount)
+	public final LoadBuilderClient<T, W, U> setConnPerNodeDefault(final int connCount)
 	throws IllegalArgumentException, RemoteException {
 		V nextBuilder;
 		for(final String addr : keySet()) {
@@ -329,7 +330,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setConnPerNodeFor(
+	public final LoadBuilderClient<T, W, U> setConnPerNodeFor(
 		final int connCount, final IOTask.Type loadType
 	) throws IllegalArgumentException, RemoteException {
 		V nextBuilder;
@@ -341,7 +342,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
+	public final LoadBuilderClient<T, W, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException {
 		if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
 			this.storageNodeAddrs = dataNodeAddrs;
@@ -361,21 +362,21 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilderClient<T, U> useNewItemSrc()
+	public LoadBuilderClient<T, W, U> useNewItemSrc()
 	throws RemoteException {
 		flagUseNewItemSrc = true;
 		return this;
 	}
 	//
 	@Override
-	public LoadBuilderClient<T, U> useNoneItemSrc()
+	public LoadBuilderClient<T, W, U> useNoneItemSrc()
 	throws RemoteException {
 		flagUseNoneItemSrc = true;
 		return this;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public LoadBuilderClient<T, U> setItemSrc(final ItemSrc<T> itemSrc)
+	public LoadBuilderClient<T, W, U> setItemSrc(final ItemSrc<T> itemSrc)
 	throws RemoteException {
 		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
 		this.itemSrc = itemSrc;

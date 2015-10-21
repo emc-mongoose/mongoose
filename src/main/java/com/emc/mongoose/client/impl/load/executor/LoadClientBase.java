@@ -43,13 +43,13 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 20.10.14.
  */
-public abstract class LoadClientBase<T extends Item>
+public abstract class LoadClientBase<T extends Item, W extends LoadSvc<T>>
 extends LoadExecutorBase<T>
-implements LoadClient<T> {
+implements LoadClient<T, W> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final Map<String, LoadSvc<T>> remoteLoadMap;
+	protected final Map<String, W> remoteLoadMap;
 	private final ThreadPoolExecutor remoteSubmExecutor;
 	private final String loadSvcAddrs[];
 	//
@@ -60,9 +60,9 @@ implements LoadClient<T> {
 	private final class LoadDataItemsBatchTask
 	implements Runnable {
 		//
-		private final LoadSvc<T> loadSvc;
+		private final W loadSvc;
 		//
-		private LoadDataItemsBatchTask(final LoadSvc<T> loadSvc) {
+		private LoadDataItemsBatchTask(final W loadSvc) {
 			this.loadSvc = loadSvc;
 		}
 		//
@@ -183,7 +183,7 @@ implements LoadClient<T> {
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
-		final Map<String, LoadSvc<T>> remoteLoadMap
+		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		super(
 			rtConfig, reqConfig, addrs, connCountPerNode, threadCount,
@@ -198,7 +198,7 @@ implements LoadClient<T> {
 		this.loadSvcAddrs = new String[remoteLoadMap.size()];
 		remoteLoadMap.keySet().toArray(this.loadSvcAddrs);
 		////////////////////////////////////////////////////////////////////////////////////////////
-		for(final LoadSvc<T> nextLoadSvc : remoteLoadMap.values()) {
+		for(final W nextLoadSvc : remoteLoadMap.values()) {
 			mgmtTasks.add(new LoadDataItemsBatchTask(nextLoadSvc));
 		}
 		mgmtTasks.add(new InterruptOnCountLimitReachedTask(this));
@@ -227,7 +227,7 @@ implements LoadClient<T> {
 	@Override
 	protected void startActually() {
 		//
-		LoadSvc<T> nextLoadSvc;
+		W nextLoadSvc;
 		for(final String addr : loadSvcAddrs) {
 			nextLoadSvc = remoteLoadMap.get(addr);
 			try {
@@ -303,14 +303,14 @@ implements LoadClient<T> {
 			// consumer is client which has the map of consumers
 			// this is necessary for the distributed chain/rampup scenarios
 			this.consumer = itemDst;
-			final Map<String, LoadSvc<T>> consumeMap = ((LoadClient<T>) itemDst)
+			final Map<String, W> consumeMap = ((LoadClient<T, W>) itemDst)
 				.getRemoteLoadMap();
 			for(final String addr : consumeMap.keySet()) {
 				remoteLoadMap.get(addr).setItemDst(consumeMap.get(addr));
 			}
 		} else if(itemDst instanceof LoadSvc) {
 			// single consumer for all these producers
-			final LoadSvc<T> loadSvc = (LoadSvc<T>) itemDst;
+			final W loadSvc = (W) itemDst;
 			LOG.debug(Markers.MSG, "Consumer is a load service");
 			for(final String addr : loadSvcAddrs) {
 				remoteLoadMap.get(addr).setItemDst(loadSvc);
@@ -387,7 +387,7 @@ implements LoadClient<T> {
 		@Override
 		public final void run() {
 			String loadSvcAddr;
-			LoadSvc<T> loadSvc;
+			W loadSvc;
 			int m = 0;
 			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
 				try {
@@ -454,7 +454,7 @@ implements LoadClient<T> {
 		} finally {
 			if(!remoteLoadMap.isEmpty()) {
 				LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
-				LoadSvc<T> nextLoadSvc;
+				W nextLoadSvc;
 				for(final String addr : remoteLoadMap.keySet()) {
 					//
 					try {
@@ -488,7 +488,7 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final Map<String, LoadSvc<T>> getRemoteLoadMap() {
+	public final Map<String, W> getRemoteLoadMap() {
 		return remoteLoadMap;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
