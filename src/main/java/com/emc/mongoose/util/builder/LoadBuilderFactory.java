@@ -8,7 +8,6 @@ import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
 import com.emc.mongoose.core.impl.load.builder.BasicWSDataLoadBuilder;
 //
 import com.emc.mongoose.client.impl.load.builder.BasicWSDataLoadBuilderClient;
@@ -28,6 +27,7 @@ public class LoadBuilderFactory {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	@SuppressWarnings("unchecked")
 	public static <T extends Item, U extends LoadExecutor<T>, V extends LoadBuilder<T, U>> V getInstance(
 		final RunTimeConfig rtConfig
 	) {
