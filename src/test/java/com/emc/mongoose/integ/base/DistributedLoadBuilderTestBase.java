@@ -6,6 +6,7 @@ import com.emc.mongoose.client.impl.load.builder.BasicWSDataLoadBuilderClient;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 /**
@@ -14,7 +15,7 @@ import org.junit.BeforeClass;
 public abstract class DistributedLoadBuilderTestBase
 extends DistributedTestBase {
 	//
-	protected static WSDataLoadBuilderClient<WSObject, WSDataLoadClient<WSObject>> LOAD_BUILDER_CLIENT;
+	protected static WSDataLoadBuilderClient<WSObject, WSDataLoadSvc<WSObject>, WSDataLoadClient<WSObject, WSDataLoadSvc<WSObject>>> LOAD_BUILDER_CLIENT;
 	//
 	@BeforeClass
 	public static void setUpClass()
