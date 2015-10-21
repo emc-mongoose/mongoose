@@ -28,6 +28,7 @@ public class LoadBuilderFactory {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	@SuppressWarnings("unchecked")
 	public static <T extends Item, U extends LoadExecutor<T>, V extends LoadBuilder<T, U>> V getInstance(
 		final RunTimeConfig rtConfig
 	) {
@@ -54,6 +55,7 @@ public class LoadBuilderFactory {
 						loadBuilderInstance = (LoadBuilder) new BasicWSDataLoadBuilder<>(rtConfig);
 						break;
 					case Constants.LOAD_ITEMS_CLASS_CONTAINER:
+						loadBuilderInstance = (LoadBuilder) new BasicWSContainerLoadBuilder<>(rtConfig);
 						break;
 				}
 		}
