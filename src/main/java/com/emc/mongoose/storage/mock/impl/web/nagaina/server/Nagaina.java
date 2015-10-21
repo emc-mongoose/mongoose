@@ -17,7 +17,7 @@ public class Nagaina {
     public Nagaina(RunTimeConfig rtConfig) {
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public void run() throws InterruptedException {
         EventLoopGroup dispatchGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
@@ -32,9 +32,5 @@ public class Nagaina {
             dispatchGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }
-    }
-
-    public void run() throws InterruptedException {
-        main(new String[] {});
     }
 }
