@@ -10,12 +10,12 @@ import java.util.Map;
  Created by andrey on 30.09.14.
  A client-side handler for controlling remote (server-size) load execution.
  */
-public interface LoadClient<T extends Item>
+public interface LoadClient<T extends Item, W extends LoadSvc<T>>
 extends LoadExecutor<T> {
 	//
 	int
 		REMOTE_TASK_TIMEOUT_SEC = 10,
 		DEFAULT_SUBM_TASKS_QUEUE_SIZE = 0x10000;
 	//
-	Map<String, LoadSvc<T>> getRemoteLoadMap();
+	Map<String, W> getRemoteLoadMap();
 }

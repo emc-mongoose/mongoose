@@ -44,9 +44,9 @@ implements ItemSrc<T> {
 		} else {
 			try {
 				final Object o = itemsSrc.readUnshared();
-				if(o instanceof DataItem) {
+				if(o instanceof Item) {
 					return (T) o;
-				} else if(o instanceof DataItem[]) {
+				} else if(o instanceof Item[]) {
 					srcBuff = Arrays.asList((T[]) o);
 					srcFrom = 0;
 					return get();
@@ -78,14 +78,14 @@ implements ItemSrc<T> {
 		//
 		try {
 			final Object o = itemsSrc.readUnshared();
-			if(o instanceof DataItem) { // there are single item has been got from the stream
+			if(o instanceof Item) { // there are single item has been got from the stream
 				if(dstCountLimit > 0) {
 					dstBuff.add((T) o);
 					return 1;
 				} else {
 					return 0;
 				}
-			} else if(o instanceof DataItem[]) { // there are a list of items has been got
+			} else if(o instanceof Item[]) { // there are a list of items has been got
 				srcBuff = Arrays.asList((T[]) o);
 				srcFrom = 0;
 				return get(dstBuff, dstCountLimit);
@@ -123,12 +123,12 @@ implements ItemSrc<T> {
 			long i = 0;
 			while(i < itemsCount) {
 				o = itemsSrc.readUnshared();
-				if(o instanceof DataItem) {
+				if(o instanceof Item) {
 					if(o.equals(lastItem)) {
 						return;
 					}
 					i ++;
-				} else if(o instanceof DataItem[]) {
+				} else if(o instanceof Item[]) {
 					srcBuff = Arrays.asList((T[]) o);
 					if(srcBuff.size() > itemsCount - i) {
 						srcFrom = (int) (itemsCount - i);

@@ -26,12 +26,12 @@ import java.rmi.RemoteException;
  */
 public abstract class DataLoadBuilderClientBase<
 	T extends DataItem,
-	U extends DataLoadClient<T>,
 	W extends DataLoadSvc<T>,
+	U extends DataLoadClient<T, W>,
 	V extends DataLoadBuilderSvc<T, W>
 >
-extends LoadBuilderClientBase<T, U, W, V>
-implements DataLoadBuilderClient<T, U> {
+extends LoadBuilderClientBase<T, W, U, V>
+implements DataLoadBuilderClient<T, W, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -50,7 +50,7 @@ implements DataLoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, U> setProperties(final RunTimeConfig rtConfig)
+	public final DataLoadBuilderClient<T, W, U> setProperties(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
 		super.setProperties(rtConfig);
 		setMinObjSize(rtConfig.getDataSizeMin());
@@ -60,7 +60,7 @@ implements DataLoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, U> setMinObjSize(final long minObjSize)
+	public final DataLoadBuilderClient<T, W, U> setMinObjSize(final long minObjSize)
 	throws IllegalArgumentException, RemoteException {
 		this.minObjSize = minObjSize;
 		V nextBuilder;
@@ -72,7 +72,7 @@ implements DataLoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, U> setObjSizeBias(final float objSizeBias)
+	public final DataLoadBuilderClient<T, W, U> setObjSizeBias(final float objSizeBias)
 	throws IllegalArgumentException, RemoteException {
 		this.objSizeBias = objSizeBias;
 		V nextBuilder;
@@ -84,7 +84,7 @@ implements DataLoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, U> setMaxObjSize(final long maxObjSize)
+	public final DataLoadBuilderClient<T, W, U> setMaxObjSize(final long maxObjSize)
 	throws IllegalArgumentException, RemoteException {
 		this.maxObjSize = maxObjSize;
 		V nextBuilder;
@@ -96,7 +96,7 @@ implements DataLoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, U> setUpdatesPerItem(int count)
+	public final DataLoadBuilderClient<T, W, U> setUpdatesPerItem(int count)
 	throws RemoteException {
 		V nextBuilder;
 		for(final String addr : keySet()) {
@@ -107,14 +107,14 @@ implements DataLoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public DataLoadBuilderClient<T, U> useContainerListingItemSrc()
+	public DataLoadBuilderClient<T, W, U> useContainerListingItemSrc()
 	throws RemoteException {
 		flagUseContainerItemSrc = true;
 		return this;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public DataLoadBuilderClient<T, U> setItemSrc(final ItemSrc<T> itemSrc)
+	public DataLoadBuilderClient<T, W, U> setItemSrc(final ItemSrc<T> itemSrc)
 	throws RemoteException {
 		super.setItemSrc(itemSrc);
 		//
