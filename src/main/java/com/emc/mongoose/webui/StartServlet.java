@@ -19,6 +19,7 @@ import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.run.scenario.Rampup;
 import com.emc.mongoose.run.scenario.Single;
 //
+import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -107,7 +108,7 @@ public final class StartServlet extends CommonServlet {
 				LOG.debug(Markers.MSG, message);
 				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				//
-				loadBuilderSvc = new BasicWSDataLoadBuilderSvc(localRunTimeConfig);
+				loadBuilderSvc = (LoadBuilderSvc) LoadBuilderFactory.getInstance(localRunTimeConfig);
 				//
 				try {
 					loadBuilderSvc.setProperties(runTimeConfig);

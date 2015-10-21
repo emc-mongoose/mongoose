@@ -1,14 +1,17 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
+import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
@@ -125,6 +128,24 @@ implements DataLoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilder<T, U> setItemSrc(ItemSrc<T> itemSrc) {
+		super.setItemSrc(itemSrc);
+		if(itemSrc instanceof FileDataItemSrc) {
+			final FileDataItemSrc<T> fileInput = (FileDataItemSrc<T>) itemSrc;
+			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
+					RunTimeConfig.getContext().getBatchSize()
+			);
+			reqConf.setBuffSize(
+				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
+					Constants.BUFF_SIZE_LO :
+					approxDataItemsSize > Constants.BUFF_SIZE_HI ?
+						Constants.BUFF_SIZE_HI : (int) approxDataItemsSize
+			);
+		}
 		return this;
 	}
 	//

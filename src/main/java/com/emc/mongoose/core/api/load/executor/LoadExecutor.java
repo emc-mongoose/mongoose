@@ -40,6 +40,9 @@ extends ItemDst<T>, LifeCycle, ItemProducer<T> {
 	RequestConfig<T> getRequestConfig()
 	throws RemoteException;
 	//
+	String getName()
+	throws RemoteException;
+	//
 	void setLoadState(final LoadState<T> state)
 	throws RemoteException;
 	//

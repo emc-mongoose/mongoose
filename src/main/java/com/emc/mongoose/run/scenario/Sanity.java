@@ -26,6 +26,7 @@ import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
+import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -131,6 +132,7 @@ implements Runnable {
 		}
 	}
 	//
+	@SuppressWarnings("unchecked")
 	public static void main(final String... args)
 	throws IOException, InterruptedException {
 		//
@@ -172,7 +174,7 @@ implements Runnable {
 		//
 		try(
 			final LoadBuilderSvc<WSObject, WSDataLoadSvc<WSObject>>
-				loadSvcBuilder = new BasicWSDataLoadBuilderSvc<>(rtConfig);
+				loadSvcBuilder = (LoadBuilderSvc) LoadBuilderFactory.getInstance(rtConfig);
 		) {
 			loadSvcBuilder.start();
 			TimeUnit.SECONDS.sleep(1);
@@ -180,7 +182,7 @@ implements Runnable {
 			try(
 				final StorageClient<WSObject> client = clientBuilder
 					.setClientMode(new String[] {ServiceUtil.getHostAddr()})
-					.build();
+					.build()
 			) {
 				final Thread sanityThread2 = new Thread(new Sanity(client), "sanityDistributed");
 				sanityThread2.start();

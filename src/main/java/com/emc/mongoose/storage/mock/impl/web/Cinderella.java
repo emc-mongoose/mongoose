@@ -75,6 +75,7 @@ implements WSMock<T> {
 		);
 	}
 	//
+	@SuppressWarnings("unchecked")
 	public Cinderella(
 		final int headCount, final int ioThreadCount, final int portStart,
 		final int storageCapacity, final int containerCapacity, final int containerCountLimit,
@@ -156,6 +157,7 @@ implements WSMock<T> {
 	}
 	//
 	@Override
+	@SuppressWarnings("unchecked")
 	protected final T newDataObject(final String id, final long offset, final long size) {
 		return (T) new BasicWSObjectMock(id, offset, size, 0, contentSrc);
 	}

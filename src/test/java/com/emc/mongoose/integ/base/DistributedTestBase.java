@@ -11,6 +11,7 @@ import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 //
+import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 /**
@@ -22,6 +23,7 @@ extends WSMockTestBase {
 	protected static LoadBuilderSvc<WSObject, WSDataLoadSvc<WSObject>> LOAD_BUILDER_SVC;
 	//
 	@BeforeClass
+	@SuppressWarnings("unchecked")
 	public static void setUpClass()
 	throws Exception {
 		WSMockTestBase.setUpClass();
@@ -29,7 +31,7 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, ServiceUtil.getHostAddr());
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_SERVER);
 		ServiceUtil.init();
-		LOAD_BUILDER_SVC = new BasicWSDataLoadBuilderSvc<>(rtConfig);
+		LOAD_BUILDER_SVC = (LoadBuilderSvc) LoadBuilderFactory.getInstance(rtConfig);
 		LOAD_BUILDER_SVC.start();
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_CLIENT);
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, false);

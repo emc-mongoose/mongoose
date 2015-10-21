@@ -187,6 +187,9 @@
 			"signMethod": "HmacSHA1"
 		},
 		"load": {
+			"item": {
+				"class": "object"
+			},
 			"limit": {
 				"count": 0,
 				"time": "0s",

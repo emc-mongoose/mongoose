@@ -1,5 +1,6 @@
 package com.emc.mongoose.util.client.api;
 //
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemDst;

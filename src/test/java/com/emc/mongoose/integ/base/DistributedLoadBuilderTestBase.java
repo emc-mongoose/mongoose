@@ -2,11 +2,15 @@ package com.emc.mongoose.integ.base;
 //
 import com.emc.mongoose.client.api.load.builder.WSDataLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.WSDataLoadClient;
-import com.emc.mongoose.client.impl.load.builder.BasicWSDataLoadBuilderClient;
+//
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.data.WSObject;
+//
 import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+//
+import com.emc.mongoose.util.builder.LoadBuilderFactory;
+//
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 /**
@@ -21,7 +25,10 @@ extends DistributedTestBase {
 	public static void setUpClass()
 	throws Exception {
 		DistributedTestBase.setUpClass();
-		LOAD_BUILDER_CLIENT = new BasicWSDataLoadBuilderClient<>(RunTimeConfig.getContext());
+		LOAD_BUILDER_CLIENT = LoadBuilderFactory.<
+			WSObject, WSDataLoadClient<WSObject, WSDataLoadSvc<WSObject>>,
+			WSDataLoadBuilderClient<WSObject, WSDataLoadSvc<WSObject>, WSDataLoadClient<WSObject, WSDataLoadSvc<WSObject>>>
+		>getInstance(RunTimeConfig.getContext());
 	}
 	//
 	@AfterClass

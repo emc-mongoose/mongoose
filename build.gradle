@@ -185,7 +185,7 @@ sourceSets {
 		compileClasspath += sourceSets.common.output + sourceSets.scenario.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
-		compileClasspath += sourceSets.storageMock.output
+		compileClasspath += sourceSets.storageMock.output + sourceSets.util.output
 		//
 		runtimeClasspath += sourceSets.client.output + sourceSets.storageMock.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
@@ -203,7 +203,7 @@ sourceSets {
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
 		compileClasspath += sourceSets.webserver.output + sourceSets.webui.output
-		compileClasspath += sourceSets.storageMock.output
+		compileClasspath += sourceSets.storageMock.output + sourceSets.util.output
 		//
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
@@ -819,6 +819,7 @@ task webuiJar(type: Jar) {
 				serverApiJar.outputs.files.collect {it.name}.join(' '),
 				serverImplJar.outputs.files.collect {it.name}.join(' '),
 				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				utilJar.outputs.files.collect {it.name}.join(' '),
 				configurations.webuiRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
@@ -855,6 +856,7 @@ task cliJar(type: Jar) {
 				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
 				storageMockJar.outputs.files.collect {it.name}.join(' '),
 				scenarioJar.outputs.files.collect {it.name}.join(' '),
+				utilJar.outputs.files.collect {it.name}.join(' '),
 				webserverJar.outputs.files.collect {it.name}.join(' '),
 				webuiJar.outputs.files.collect {it.name}.join(' '),
 				configurations.cliRuntime.collect {

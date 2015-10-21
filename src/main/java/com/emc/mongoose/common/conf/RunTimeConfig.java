@@ -94,6 +94,7 @@ implements Externalizable {
 		KEY_LOAD_LIMIT_TIME = "load.limit.time",
 		KEY_LOAD_LIMIT_RATE = "load.limit.rate",
 		KEY_LOAD_LIMIT_REQSLEEP_MILLISEC = "load.limit.reqSleepMilliSec",
+		KEY_LOAD_ITEM_CLASS = "load.item.class",
 		KEY_RUN_VERSION = "run.version",
 		//
 		KEY_REMOTE_SERVE_JMX = "remote.serveJMX",
@@ -408,6 +409,10 @@ implements Externalizable {
 	//
 	public final int getLoadLimitReqSleepMilliSec() {
 		return getInt(KEY_LOAD_LIMIT_REQSLEEP_MILLISEC);
+	}
+	//
+	public final String getLoadItemClass() {
+		return getString(KEY_LOAD_ITEM_CLASS);
 	}
 	//
 	public final long getDataSizeMin() {

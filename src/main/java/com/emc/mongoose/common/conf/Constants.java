@@ -25,8 +25,13 @@ public interface Constants {
 	String RUN_SCENARIO_CHAIN = "chain";
 	String RUN_SCENARIO_RAMPUP = "rampup";
 	//
+	String LOAD_ITEMS_CLASS_OBJECT = "object";
+	String LOAD_ITEMS_CLASS_CONTAINER = "container";
+	//
 	String DIR_WEBAPP = "webapp";
 	String DIR_WEBINF = "WEB-INF";
+	//
+	String MONGOOSE_PREFIX = "mongoose-";
 	//
 	int BUFF_SIZE_LO = (int) RunTimeConfig.getContext().getIOBufferSizeMin();
 	int BUFF_SIZE_HI = (int) RunTimeConfig.getContext().getIOBufferSizeMax();

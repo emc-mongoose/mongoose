@@ -26,13 +26,13 @@ import java.util.List;
 /**
  Created by kurila on 16.12.14.
  */
-public final class BasicWSDataDataLoadSvc<T extends WSObject>
+public final class BasicWSDataLoadSvc<T extends WSObject>
 extends BasicWSDataLoadExecutor<T>
 implements WSDataLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSDataDataLoadSvc(
+	public BasicWSDataLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connPerNode, final int threadsPerNode,
 		final ItemSrc<T> itemSrc, final long maxCount,

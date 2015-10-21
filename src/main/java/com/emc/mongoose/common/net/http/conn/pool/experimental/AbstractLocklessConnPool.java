@@ -104,7 +104,7 @@ implements ConnPool<T, E>, ConnPoolControl<T> {
 	) {
 		super();
 		Args.notNull(ioreactor, "I/O reactor");
-		Args.notNull(connFactory, "Connection factory");
+		Args.notNull(connFactory, "Connection builder");
 		Args.notNull(addressResolver, "Address resolver");
 		Args.positive(defaultMaxPerRoute, "Max per route value");
 		Args.positive(maxTotal, "Max total value");
