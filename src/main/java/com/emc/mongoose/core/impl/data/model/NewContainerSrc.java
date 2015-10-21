@@ -1,24 +1,30 @@
 package com.emc.mongoose.core.impl.data.model;
 
-import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.common.net.ServiceUtil;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by gusakk on 21.10.15.
  */
-public class NewContainerSrc<T extends Container>
+public class NewContainerSrc<T extends DataItem>
 implements ItemSrc<T> {
+	//
+	private static AtomicLong
+		LAST_OFFSET = new AtomicLong(
+		Math.abs(
+			Long.reverse(System.currentTimeMillis()) ^
+			Long.reverseBytes(System.nanoTime()) ^
+			ServiceUtil.getHostAddrCode()
+		)
+	);
 	//
 	private final Constructor<T> itemConstructor;
 	private T lastItem = null;
@@ -26,37 +32,40 @@ implements ItemSrc<T> {
 	public NewContainerSrc(
 		final Class<T> dataCls
 	) throws NoSuchMethodException, IllegalArgumentException {
-		this.itemConstructor = dataCls.getConstructor(String.class);
-
+		itemConstructor = dataCls.getConstructor(String.class);
 	}
 	//
 	@Override
 	public final T get()
-			throws IOException {
+	throws IOException {
 		try {
-			itemConstructor.newInstance();
-			//return itemConstructor.newInstance(nextSize(), contentSrc);
+			return itemConstructor.newInstance(nextName(LAST_OFFSET));
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
 		}
-		return null;
 	}
 	//
 	@Override
 	public int get(final List<T> buffer, final int maxCount)
-			throws IOException {
-		/*try {
+	throws IOException {
+		try {
 			for(int i = 0; i < maxCount; i ++) {
-				buffer.add(itemConstructor.newInstance(nextSize(), contentSrc));
+				buffer.add(itemConstructor.newInstance(nextName(LAST_OFFSET)));
 			}
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
-		}*/
+		}
 		return maxCount;
 	}
 	//
-	private String nextName() {
-		return Constants.MONGOOSE_PREFIX + LogUtil.FMT_DT.format(instance.getTime());
+	public String nextName(final AtomicLong lastOffset) {
+		long newOffset = lastOffset.getAndSet(
+			Math.abs(
+				ContentSourceBase.nextWord(lastOffset.get()) ^ System.nanoTime()
+			)
+		);
+		//
+		return Long.toString(newOffset, DataItem.ID_RADIX);
 	}
 	//
 	@Override

@@ -173,7 +173,7 @@ implements Runnable {
 		ServiceUtil.init();
 		//
 		try(
-			final LoadBuilderSvc<WSObject, WSLoadSvc<WSObject>>
+			final LoadBuilderSvc<WSObject, WSDataLoadSvc<WSObject>>
 				loadSvcBuilder = (LoadBuilderSvc) LoadBuilderFactory.getInstance(rtConfig);
 		) {
 			loadSvcBuilder.start();
