@@ -63,6 +63,8 @@ ext {
 
 	metrics_core = [ "io.dropwizard.metrics:metrics-core:3.1.2" ]
 
+	netty_all = [ "io.netty:netty-all:4.0.32.Final" ]
+
 	slf4j_api = [ "org.slf4j:slf4j-api:1.7.7" ]
 
 	websocket_api = [ "org.eclipse.jetty.websocket:websocket-api:9.3.0.M1" ]

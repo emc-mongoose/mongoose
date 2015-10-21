@@ -20,6 +20,7 @@ import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
+import com.emc.mongoose.storage.mock.impl.web.nagaina.server.NagainaPrototypeServer;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -76,10 +77,13 @@ public final class ModeDispatcher {
 				new WUIRunner(RunTimeConfig.getContext()).run();
 				break;
 			case Constants.RUN_MODE_CINDERELLA:
+			case Constants.RUN_MODE_NAGAINA:
 			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
-					new Cinderella(RunTimeConfig.getContext()).run();
+//					new Cinderella(RunTimeConfig.getContext()).run();
+					NagainaPrototypeServer.main(new String[] {});
+
 				} catch (final Exception e) {
 					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init the cinderella");
 				}
