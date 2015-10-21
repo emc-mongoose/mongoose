@@ -40,7 +40,7 @@ public class WSLoadBuilderFactory {
 			case Constants.RUN_MODE_COMPAT_CLIENT:
 				try {
 					loadBuilderInstance = (WSDataLoadBuilder) new BasicWSDataLoadBuilderClient<
-						T, WSDataLoadClient<T>, WSDataLoadSvc<T>
+						T, WSDataLoadSvc<T>, WSDataLoadClient<T, WSDataLoadSvc<T>>
 					>(rtConfig);
 				} catch(final IOException | NoSuchElementException | ClassCastException e) {
 					LogUtil.exception(LOG, Level.FATAL, e, "Failed to create the load builder");
