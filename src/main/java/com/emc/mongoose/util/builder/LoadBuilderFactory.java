@@ -57,6 +57,8 @@ public class LoadBuilderFactory {
 					case Constants.LOAD_ITEMS_CLASS_CONTAINER:
 						loadBuilderInstance = (LoadBuilder) new BasicWSContainerLoadBuilder<>(rtConfig);
 						break;
+					default:
+						break;
 				}
 		}
 		return (V) loadBuilderInstance;
