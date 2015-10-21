@@ -9,6 +9,10 @@ extends Exception {
 		super();
 	}
 	//
+	public ContainerMockException(final String name) {
+		super(name);
+	}
+	//
 	public ContainerMockException(final Throwable t) {
 		super(t);
 	}

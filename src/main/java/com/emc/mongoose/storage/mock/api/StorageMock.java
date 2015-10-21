@@ -2,11 +2,12 @@ package com.emc.mongoose.storage.mock.api;
 //
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Map;
 /**
  Created by kurila on 03.06.15.
  */
 public interface StorageMock<T extends MutableDataItemMock>
-extends Runnable, Closeable {
+extends Map<String, ObjectContainerMock<T>>, Runnable, Closeable {
 	//
 	void start();
 	long getSize();
@@ -15,12 +16,11 @@ extends Runnable, Closeable {
 	//
 	void putIntoDefaultContainer(final T dataItem);
 	//
-	boolean createContainer(final String name)
-	throws StorageMockCapacityLimitReachedException;
+	void createContainer(final String name);
 	//
 	ObjectContainerMock<T> getContainer(final String name);
 	//
-	boolean deleteContainer(final String name);
+	void deleteContainer(final String name);
 	//
 	void createObject(final String container, final String id, final long offset, final long size)
 	throws ContainerMockNotFoundException, StorageMockCapacityLimitReachedException;

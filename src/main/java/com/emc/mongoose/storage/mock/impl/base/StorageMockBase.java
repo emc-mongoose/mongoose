@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.base;
 //
+import com.emc.mongoose.common.concurrent.Sequencer;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -14,8 +15,12 @@ import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
 import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
 import com.emc.mongoose.storage.mock.api.StorageMock;
-//
 import com.emc.mongoose.storage.mock.api.StorageMockCapacityLimitReachedException;
+//
+import org.apache.commons.collections4.map.LRUMap;
+//
+import org.apache.http.concurrent.BasicFuture;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,15 +31,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 03.07.15.
  */
 public abstract class StorageMockBase<T extends MutableDataItemMock>
+extends LRUMap<String, ObjectContainerMock<T>>
 implements StorageMock<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -43,66 +47,121 @@ implements StorageMock<T> {
 	protected final StorageIOStats ioStats;
 	protected final Class<T> itemCls;
 	protected final ContentSource contentSrc;
-	protected final ConcurrentMap<String, ObjectContainerMock<T>> containersIndex;
-	protected final ObjectContainerMock<T> defaultContainer;
-	protected final int storageCapacity, containerCapacity, containerCountLimit;
+	protected final int storageCapacity, containerCapacity;
 	//
-	private final AtomicInteger countContainers = new AtomicInteger(0);
+	private final Sequencer sequencer;
 	//
 	private volatile boolean isCapacityExhausted = false;
 	//
 	protected StorageMockBase(
 		final Class<T> itemCls, final ContentSource contentSrc,
 		final int storageCapacity, final int containerCapacity, final int containerCountLimit,
-		final int expectConcurrencyLevel, final String dataSrcPath, final int metricsPeriodSec,
+		final int batchSize, final String dataSrcPath, final int metricsPeriodSec,
 		final boolean jmxServeFlag
 	) {
+		super(containerCountLimit);
 		this.dataSrcPath = dataSrcPath;
 		this.itemCls = itemCls;
 		this.contentSrc = contentSrc;
 		ioStats = new BasicStorageIOStats(this, metricsPeriodSec, jmxServeFlag);
 		this.storageCapacity = storageCapacity;
 		this.containerCapacity = containerCapacity;
-		this.containerCountLimit = containerCountLimit;
-		containersIndex = new ConcurrentHashMap<>(
-			containerCountLimit, 0.75f, expectConcurrencyLevel
-		);
-		try {
-			createContainer(ObjectContainerMock.DEFAULT_NAME);
-			defaultContainer = getContainer(ObjectContainerMock.DEFAULT_NAME);
-		} catch(final StorageMockCapacityLimitReachedException e) {
-			throw new RuntimeException(e);
-		}
+		this.sequencer = new Sequencer("storageMockSequencer", true, batchSize);
+		createContainer(ObjectContainerMock.DEFAULT_NAME);
+	}
+	//
+	@Override
+	protected final void moveToMRU(final LinkEntry<String, ObjectContainerMock<T>> entry) {
+		// disable entry moving to MRU in case of access
+		// it's required to make list method (right below) working (keeping the linked list order)
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Container methods
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final boolean createContainer(final String name)
-		throws StorageMockCapacityLimitReachedException {
-		if(countContainers.incrementAndGet() > containerCountLimit) {
-			countContainers.decrementAndGet();
-			throw new StorageMockCapacityLimitReachedException();
+	public final void createContainer(final String name) {
+		try {
+			sequencer.submit(new PutContainerTask(name));
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Container creation was interrupted");
 		}
-		ioStats.containerCreate();
-		return null == containersIndex
-			.putIfAbsent(name, new BasicObjectContainerMock<T>(name, containerCapacity));
+	}
+	//
+	private final class PutContainerTask
+	extends BasicFuture<ObjectContainerMock<T>>
+	implements RunnableFuture<ObjectContainerMock<T>> {
+		//
+		private final String name;
+		//
+		private PutContainerTask(final String name) {
+			super(null);
+			this.name = name;
+		}
+		//
+		@Override
+		public final void run() {
+			completed(
+				StorageMockBase.this.<T>put(
+					name, new BasicObjectContainerMock<T>(name, containerCapacity)
+				)
+			);
+			ioStats.containerCreate();
+		}
 	}
 	//
 	@Override
 	public final ObjectContainerMock<T> getContainer(final String name) {
-		return containersIndex.get(name);
+		ObjectContainerMock<T> c = null;
+		try {
+			c = sequencer.submit(new GetContainerTask(name)).get();
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Container getting was interrupted");
+		} catch(final ExecutionException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Container get task failure");
+		}
+		return c;
+	}
+	//
+	private final class GetContainerTask
+	extends BasicFuture<ObjectContainerMock<T>>
+	implements RunnableFuture<ObjectContainerMock<T>> {
+		//
+		private final String name;
+		//
+		private GetContainerTask(final String name) {
+			super(null);
+			this.name = name;
+		}
+		//
+		@Override
+		public final void run() {
+			completed(StorageMockBase.this.<T>get(name));
+		}
 	}
 	//
 	@Override
-	public final boolean deleteContainer(final String name) {
-		final ObjectContainerMock<T> c = containersIndex.remove(name);
-		if(c != null) {
-			countContainers.decrementAndGet();
-			ioStats.containerDelete();
-			return true;
-		} else {
-			return false;
+	public final void deleteContainer(final String name) {
+		try {
+			sequencer.submit(new DeleteContainerTask(name));
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Container deleting was interrupted");
+		}
+	}
+	//
+	private final class DeleteContainerTask
+	extends BasicFuture<ObjectContainerMock<T>>
+	implements RunnableFuture<ObjectContainerMock<T>> {
+		//
+		private final String name;
+		//
+		private DeleteContainerTask(final String name) {
+			super(null);
+			this.name = name;
+		}
+		//
+		@Override
+		public final void run() {
+			completed(StorageMockBase.this.<T>remove(name));
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,27 +177,65 @@ implements StorageMock<T> {
 			throw new StorageMockCapacityLimitReachedException();
 		}
 		try {
-			final ObjectContainerMock<T> c = getContainer(container);
-			if(c == null) {
-				throw new ContainerMockNotFoundException();
-			}
-			final T obj = newDataObject(oid, offset, size);
-			c.submitPut(obj);
+			sequencer.submit(new PutObjectTask(container, newDataObject(oid, offset, size)));
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the create task");
 		}
 	}
 	//
+	private final class PutObjectTask
+	extends BasicFuture<T>
+	implements RunnableFuture<T> {
+		//
+		private final String container;
+		private final T obj;
+		//
+		private PutObjectTask(final String container, final T obj) {
+			super(null);
+			this.container = container;
+			this.obj = obj;
+		}
+		//
+		@Override
+		public final void run() {
+			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
+			if(c != null) {
+				completed(StorageMockBase.this.get(container).put(obj.getName(), obj));
+			} else {
+				failed(new ContainerMockNotFoundException(container));
+			}
+		}
+	}
+	//
+	private final class GetObjectTask
+	extends BasicFuture<T>
+	implements RunnableFuture<T> {
+		//
+		private final String container, oid;
+		//
+		private GetObjectTask(final String container, final String oid) {
+			super(null);
+			this.container = container;
+			this.oid = oid;
+		}
+		//
+		@Override
+		public final void run() {
+			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
+			if(c != null) {
+				completed(c.get(oid));
+			} else {
+				failed(new ContainerMockNotFoundException(container));
+			}
+		}
+	}
+	//
 	@Override
 	public final void updateObject(
-		final String container, final String id, final long offset, final long size
+		final String container, final String oid, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
-			final ObjectContainerMock<T> c = getContainer(container);
-			if(c == null) {
-				throw new ContainerMockNotFoundException();
-			}
-			final T obj = c.submitGet(id).get();
+			final T obj = sequencer.submit(new GetObjectTask(container, oid)).get();
 			if(obj == null) {
 				throw new ObjectMockNotFoundException();
 			}
@@ -152,14 +249,10 @@ implements StorageMock<T> {
 	//
 	@Override
 	public final void appendObject(
-		final String container, final String id, final long offset, final long size
+		final String container, final String oid, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
-			final ObjectContainerMock<T> c = getContainer(container);
-			if(c == null) {
-				throw new ContainerMockNotFoundException();
-			}
-			final T obj = c.submitGet(id).get();
+			final T obj = sequencer.submit(new GetObjectTask(container, oid)).get();
 			if(obj == null) {
 				throw new ObjectMockNotFoundException();
 			}
@@ -173,16 +266,12 @@ implements StorageMock<T> {
 	//
 	@Override
 	public final T getObject(
-		final String container, final String id, final long offset, final long size
+		final String container, final String oid, final long offset, final long size
 	) throws ContainerMockException {
 		// TODO partial read using offset and size args
 		T obj = null;
 		try {
-			final ObjectContainerMock<T> c = getContainer(container);
-			if(c == null) {
-				throw new ContainerMockNotFoundException();
-			}
-			obj = c.submitGet(id).get();
+			obj = sequencer.submit(new GetObjectTask(container, oid)).get();
 		} catch(final ExecutionException e) {
 			throw new ContainerMockException(e);
 		} catch(final InterruptedException e) {
@@ -191,16 +280,36 @@ implements StorageMock<T> {
 		return obj;
 	}
 	//
+	//
+	private final class DeleteObjectTask
+	extends BasicFuture<T>
+	implements RunnableFuture<T> {
+		//
+		private final String container, oid;
+		//
+		private DeleteObjectTask(final String container, final String oid) {
+			super(null);
+			this.container = container;
+			this.oid = oid;
+		}
+		//
+		@Override
+		public final void run() {
+			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
+			if(c != null) {
+				completed(c.remove(oid));
+			} else {
+				failed(new ContainerMockNotFoundException(container));
+			}
+		}
+	}
+	//
 	@Override
 	public final void deleteObject(
 		final String container, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException {
 		try {
-			final ObjectContainerMock<T> c = getContainer(container);
-			if(c == null) {
-				throw new ContainerMockNotFoundException();
-			}
-			c.submitRemove(id);
+			sequencer.submit(new DeleteObjectTask(container, id));
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the read task");
 		}
@@ -212,17 +321,44 @@ implements StorageMock<T> {
 	) throws ContainerMockException {
 		T lastObj = null;
 		try {
-			final ObjectContainerMock<T> c = getContainer(container);
-			if(c == null) {
-				throw new ContainerMockNotFoundException();
-			}
-			lastObj = c.submitList(afterOid, buffDst, limit).get();
+			lastObj = sequencer
+				.submit(new ListObjectTask(container, afterOid, buffDst, limit))
+				.get();
 		} catch(final ExecutionException e) {
 			throw new ContainerMockException(e);
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the read task");
 		}
 		return lastObj;
+	}
+	//
+	public final class ListObjectTask
+	extends BasicFuture<T>
+	implements RunnableFuture<T> {
+		//
+		private final String container, oid;
+		private final Collection<T> buff;
+		private final int limit;
+		//
+		private ListObjectTask(
+			final String container, final String oid, final Collection<T> buff, final int limit
+		) {
+			super(null);
+			this.container = container;
+			this.oid = oid;
+			this.buff = buff;
+			this.limit = limit;
+		}
+		//
+		@Override
+		public final void run() {
+			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
+			if(c == null) {
+				failed(new ContainerMockNotFoundException(container));
+			} else {
+				completed(c.list(oid, buff, limit));
+			}
+		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Misc methods
@@ -255,12 +391,13 @@ implements StorageMock<T> {
 		ioStats.start();
 		startListening();
 		storageCapacityMonitorThread.start();
+		sequencer.start();
 	}
 	//
 	@Override
 	public long getSize() {
 		long size = 0;
-		for(final ObjectContainerMock<T> c : containersIndex.values()) {
+		for(final ObjectContainerMock<T> c : values()) {
 			size += c.size();
 		}
 		return size;
@@ -274,12 +411,12 @@ implements StorageMock<T> {
 	@Override
 	public final void putIntoDefaultContainer(final T dataItem) {
 		try {
-			defaultContainer.submitPut(dataItem);
+			sequencer.submit(new PutObjectTask(ObjectContainerMock.DEFAULT_NAME, dataItem));
 		} catch(final InterruptedException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e,
 				"Failed to put the object \"{}\" into the default container \"{}\"",
-				dataItem.getName(), defaultContainer.getName()
+				dataItem.getName(), ObjectContainerMock.DEFAULT_NAME
 			);
 		}
 	}
@@ -287,10 +424,11 @@ implements StorageMock<T> {
 	@Override
 	public void close()
 	throws IOException {
-		for(final ObjectContainerMock<T> container : containersIndex.values()) {
-			container.close();
+		sequencer.interrupt();
+		for(final ObjectContainerMock<T> container : values()) {
+			container.clear();
 		}
-		containersIndex.clear();
+		clear();
 		storageCapacityMonitorThread.interrupt();
 		ioStats.close();
 	}

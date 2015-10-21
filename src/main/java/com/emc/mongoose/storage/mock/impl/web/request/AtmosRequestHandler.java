@@ -288,13 +288,10 @@ extends WSRequestHandlerBase<T> {
 	}
 	//
 	@Override
-	protected final boolean handleContainerCreate(
+	protected final void handleContainerCreate(
 		final HttpRequest req, final HttpResponse resp, final String name
 	) {
-		final boolean created = super.handleContainerCreate(req, resp, name);
-		if(created) {
-			resp.setHeader(SubTenant.KEY_SUBTENANT_ID, name);
-		}
-		return created;
+		super.handleContainerCreate(req, resp, name);
+		resp.setHeader(SubTenant.KEY_SUBTENANT_ID, name);
 	}
 }
