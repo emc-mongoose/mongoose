@@ -14,8 +14,10 @@ public class NagainaPrototypeServer {
     static final int PORT = 9020;
 
     public static void main(String[] args) throws Exception {
+        // let it be "dispatchGroup" instead of silly "bossGroup" - Andrey
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         // default number of threads is Runtime.getRuntime().availableProcessors() * 2
+        // OK - Andrey
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();

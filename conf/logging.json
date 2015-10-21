@@ -281,6 +281,9 @@
 						{ "ref": "3rdPartyFile" },
 						{ "ref": "errFile" },
 //						{ "ref": "dataListFile" },
+// please don't comment this in the sources
+// do it in the mongoose-<x.y.z>/conf/logging.json (deployed) instead
+// - Andrey
 						{ "ref": "perfAvgFile" },
 						{ "ref": "perfSumFile" },
 //						{ "ref": "perfTraceFile" },

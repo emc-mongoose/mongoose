@@ -76,14 +76,16 @@ public final class ModeDispatcher {
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
 				new WUIRunner(RunTimeConfig.getContext()).run();
 				break;
-			case Constants.RUN_MODE_CINDERELLA:
+			//case Constants.RUN_MODE_CINDERELLA: // Cinderella will not be needed more - Andrey
 			case Constants.RUN_MODE_NAGAINA:
 			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
 //					new Cinderella(RunTimeConfig.getContext()).run();
 					NagainaPrototypeServer.main(new String[] {});
-
+					// let it be like:
+					// new Nagaina(RunTimeConfig.getContext()).run();
+					// - Andrey
 				} catch (final Exception e) {
 					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init the cinderella");
 				}
