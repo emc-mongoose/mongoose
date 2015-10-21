@@ -18,9 +18,8 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
-import com.emc.mongoose.storage.mock.impl.web.nagaina.server.NagainaPrototypeServer;
+import com.emc.mongoose.storage.mock.impl.web.nagaina.server.Nagaina;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -76,18 +75,13 @@ public final class ModeDispatcher {
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
 				new WUIRunner(RunTimeConfig.getContext()).run();
 				break;
-			//case Constants.RUN_MODE_CINDERELLA: // Cinderella will not be needed more - Andrey
 			case Constants.RUN_MODE_NAGAINA:
 			case Constants.RUN_MODE_WSMOCK:
-				rootLogger.debug(Markers.MSG, "Starting the cinderella");
+				rootLogger.debug(Markers.MSG, "Starting nagaina");
 				try {
-//					new Cinderella(RunTimeConfig.getContext()).run();
-					NagainaPrototypeServer.main(new String[] {});
-					// let it be like:
-					// new Nagaina(RunTimeConfig.getContext()).run();
-					// - Andrey
+					 new Nagaina(RunTimeConfig.getContext()).run();
 				} catch (final Exception e) {
-					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init the cinderella");
+					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init nagaina");
 				}
 				break;
 			case Constants.RUN_MODE_CLIENT:
