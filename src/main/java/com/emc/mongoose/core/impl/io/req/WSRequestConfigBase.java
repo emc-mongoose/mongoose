@@ -19,6 +19,7 @@ import com.emc.mongoose.core.api.data.content.ContentSource;
 // mongoose-core-impl
 import static com.emc.mongoose.core.impl.data.BasicMutableDataItem.getRangeOffset;
 
+import com.emc.mongoose.core.impl.container.BasicContainer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
@@ -419,6 +420,12 @@ implements WSRequestConfig<T> {
 			LogUtil.exception(LOG, Level.ERROR, e, "Configuration error");
 		}
 		return this;
+	}
+	//
+	@Override
+	@SuppressWarnings("unchecked")
+	public Class getContainerClass() {
+		return BasicContainer.class;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

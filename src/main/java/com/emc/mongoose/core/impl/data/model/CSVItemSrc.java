@@ -113,7 +113,11 @@ implements ItemSrc<T> {
 						break;
 					}
 				}
-				buffer.add(itemConstructor.newInstance(nextLine, contentSrc));
+				if (contentSrc == null) {
+					buffer.add(itemConstructor.newInstance(nextLine));
+				} else {
+					buffer.add(itemConstructor.newInstance(nextLine, contentSrc));
+				}
 			}
 		} catch(
 			final InstantiationException | IllegalAccessException | InvocationTargetException e

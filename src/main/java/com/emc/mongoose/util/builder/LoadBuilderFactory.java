@@ -35,7 +35,7 @@ public class LoadBuilderFactory {
 		final String mode = rtConfig.getRunMode();
 		final String itemClassName = rtConfig.getLoadItemClass();
 		//
-		LoadBuilder<T, U> loadBuilderInstance = null;
+		LoadBuilder loadBuilderInstance = null;
 		switch(mode) {
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
@@ -56,6 +56,8 @@ public class LoadBuilderFactory {
 						break;
 					case Constants.LOAD_ITEMS_CLASS_CONTAINER:
 						loadBuilderInstance = new BasicWSContainerLoadBuilder(rtConfig);
+						break;
+					default:
 						break;
 				}
 		}

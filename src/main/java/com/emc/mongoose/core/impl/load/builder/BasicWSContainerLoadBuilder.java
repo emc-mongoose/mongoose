@@ -8,11 +8,13 @@ import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.WSContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSContainerLoadExecutor;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.load.executor.BasicWSContainerLoadExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.nio.file.Paths;
 import java.util.NoSuchElementException;
 
 /**
@@ -31,6 +33,17 @@ implements WSContainerLoadBuilder<T, C, U> {
 	public BasicWSContainerLoadBuilder(final RunTimeConfig runTimeConfig) {
 		super(runTimeConfig);
 		setProperties(runTimeConfig);
+		//
+		try {
+			final String filePath = runTimeConfig.getItemSrcFPath();
+			if (filePath != null && !filePath.isEmpty()) {
+				setItemSrc(new CSVFileItemSrc<>(
+					Paths.get(filePath), reqConf.getContainerClass(), null
+				));
+			}
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -66,8 +79,9 @@ implements WSContainerLoadBuilder<T, C, U> {
 	//
 	@Override
 	protected void invokePreConditions()
-			throws IllegalStateException {
-		reqConf.configureStorage(storageNodeAddrs);
+	throws IllegalStateException {
+		//  do nothing
+		//  reqConf.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -87,9 +101,9 @@ implements WSContainerLoadBuilder<T, C, U> {
 			);
 		//
 		return (U) new BasicWSContainerLoadExecutor<>(
-				localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
-				itemSrc == null ? getDefaultItemSource() : itemSrc,
-				maxCount, manualTaskSleepMicroSecs, rateLimit
+			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
+			itemSrc == null ? getDefaultItemSource() : itemSrc,
+			maxCount, manualTaskSleepMicroSecs, rateLimit
 		);
 	}
 }
