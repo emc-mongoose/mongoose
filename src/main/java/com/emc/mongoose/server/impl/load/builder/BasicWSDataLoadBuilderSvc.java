@@ -12,12 +12,11 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 //mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
 import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
+import com.emc.mongoose.core.impl.load.builder.BasicWSDataLoadBuilder;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.executor.BasicWSDataDataLoadSvc;
 //
@@ -32,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 30.05.14.
  */
 public class BasicWSDataLoadBuilderSvc<T extends WSObject, U extends WSDataLoadSvc<T>>
-extends BasicWSLoadBuilder<T, U>
+extends BasicWSDataLoadBuilder<T, U>
 implements WSDataLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

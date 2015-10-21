@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
@@ -33,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 20.10.14.
  */
-public abstract class LoadBuilderBase<T extends DataItem, U extends LoadExecutor<T>>
+public abstract class LoadBuilderBase<T extends Item, U extends LoadExecutor<T>>
 implements LoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -321,18 +322,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc) {
 		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
 		this.itemSrc = itemSrc;
-		if(itemSrc instanceof FileDataItemSrc) {
-			final FileDataItemSrc<T> fileInput = (FileDataItemSrc<T>) itemSrc;
-			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-				RunTimeConfig.getContext().getBatchSize()
-			);
-			reqConf.setBuffSize(
-				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
-					Constants.BUFF_SIZE_LO :
-					approxDataItemsSize > Constants.BUFF_SIZE_HI ?
-						Constants.BUFF_SIZE_HI : (int) approxDataItemsSize
-			);
-		}
+		//
 		return this;
 	}
 	//

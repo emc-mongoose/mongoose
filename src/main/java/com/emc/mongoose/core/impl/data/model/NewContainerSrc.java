@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.data.model;
 
 import com.emc.mongoose.common.net.ServiceUtil;
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
@@ -14,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by gusakk on 21.10.15.
  */
-public class NewContainerSrc<T extends DataItem>
+public class NewContainerSrc<T extends Container>
 implements ItemSrc<T> {
 	//
 	private static AtomicLong

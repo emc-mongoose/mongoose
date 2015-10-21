@@ -9,7 +9,7 @@ import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.builder.WSDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
+import com.emc.mongoose.core.impl.load.builder.BasicWSDataLoadBuilder;
 //
 import com.emc.mongoose.client.impl.load.builder.BasicWSDataLoadBuilderClient;
 //
@@ -58,7 +58,7 @@ public class LoadBuilderFactory {
 			default:
 				switch (itemClassName) {
 					case Constants.LOAD_ITEMS_CLASS_OBJECT:
-						loadBuilderInstance = (WSDataLoadBuilder) new BasicWSLoadBuilder<>(rtConfig);
+						loadBuilderInstance = (WSDataLoadBuilder) new BasicWSDataLoadBuilder<>(rtConfig);
 						break;
 					case Constants.LOAD_ITEMS_CLASS_CONTAINER:
 						break;
