@@ -1,6 +1,5 @@
 package com.emc.mongoose.run.scenario;
 //
-import com.emc.mongoose.client.impl.load.builder.BasicWSContainerLoadBuilderClient;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
@@ -9,7 +8,6 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
@@ -36,7 +34,7 @@ implements Runnable {
 	private final TimeUnit timeUnit;
 	//
 	public Single(final RunTimeConfig rtConfig) {
-		final LoadBuilder loadBuilder = new BasicWSContainerLoadBuilder(rtConfig);
+		final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance(rtConfig);
 		final IOTask.Type loadType = IOTask.Type.valueOf(
 			rtConfig.getString(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD).toUpperCase()
 		);
