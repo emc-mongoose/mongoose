@@ -11,7 +11,7 @@ import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.BasicWSDataLoadExecutor;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
@@ -26,13 +26,13 @@ import java.util.List;
 /**
  Created by kurila on 16.12.14.
  */
-public final class BasicWSLoadSvc<T extends WSObject>
-extends BasicWSLoadExecutor<T>
+public final class BasicWSDataLoadSvc<T extends WSObject>
+extends BasicWSDataLoadExecutor<T>
 implements WSLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSLoadSvc(
+	public BasicWSDataLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connPerNode, final int threadsPerNode,
 		final ItemSrc<T> itemSrc, final long maxCount,

@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.api.io.req;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -63,6 +64,10 @@ extends RequestConfig<T> {
 	//
 	HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException;
+	//
+	HttpEntityEnclosingRequest createContainerRequest(
+		final Container<T> container, final String nodeAddr
+	) throws URISyntaxException;
 	//
 	HttpEntityEnclosingRequest createGenericRequest(final String method, final String uri);
 	//

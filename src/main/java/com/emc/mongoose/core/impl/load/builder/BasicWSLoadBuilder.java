@@ -5,12 +5,12 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.BasicWSDataLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.WSLoadBuilder;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 /**
  Created by kurila on 05.05.14.
  */
-public class BasicWSLoadBuilder<T extends WSObject, U extends WSLoadExecutor<T>>
+public class BasicWSLoadBuilder<T extends WSObject, U extends WSDataLoadExecutor<T>>
 extends DataLoadBuilderBase<T, U>
 implements WSLoadBuilder<T, U> {
 	//
@@ -91,7 +91,7 @@ implements WSLoadBuilder<T, U> {
 				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
-		return (U) new BasicWSLoadExecutor<>(
+		return (U) new BasicWSDataLoadExecutor<>(
 			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,

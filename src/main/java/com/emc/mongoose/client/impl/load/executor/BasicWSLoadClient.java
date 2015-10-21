@@ -6,8 +6,8 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.api.io.task.WSIOTask;
-import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
+import com.emc.mongoose.core.api.io.task.WSDataIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicWSDataIOTask;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.WSLoadClient;
@@ -40,8 +40,8 @@ implements WSLoadClient<T> {
 	}
 	//
 	@Override
-	protected WSIOTask<T> getIOTask(final T item, final String nodeAddr) {
-		return new BasicWSIOTask<>(item, nodeAddr, (WSRequestConfig<T>) reqConfigCopy);
+	protected WSDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
+		return new BasicWSDataIOTask<>(item, nodeAddr, (WSRequestConfig<T>) reqConfigCopy);
 	}
 	//
 }

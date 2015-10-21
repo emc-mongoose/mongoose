@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 // mongoose-scenario.jar
 import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.run.scenario.Rampup;
@@ -20,7 +20,6 @@ import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
-import com.emc.mongoose.util.factory.LoadBuilderFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,7 +32,6 @@ import java.util.Map;
  */
 public final class ModeDispatcher {
 	//
-	@SuppressWarnings("unchecked")
 	public static void main(final String args[]) {
 		// load the config from CLI arguments
 		final Map<String, String> properties = HumanFriendly.parseCli(args);
@@ -62,9 +60,8 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
-					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
-						loadBuilderSvc = (WSLoadBuilderSvc) LoadBuilderFactory
-							.getInstance(RunTimeConfig.getContext())
+					final WSLoadBuilderSvc<WSObject, WSDataLoadExecutor<WSObject>>
+						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
 				) {
 					loadBuilderSvc.start();
 					loadBuilderSvc.await();

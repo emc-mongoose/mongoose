@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.factory;
+package com.emc.mongoose.util.builder;
 //
 import com.emc.mongoose.client.impl.load.builder.BasicWSLoadBuilderClient;
 import com.emc.mongoose.common.conf.Constants;

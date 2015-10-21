@@ -10,6 +10,7 @@ import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -240,7 +241,7 @@ implements WSRequestConfig<T> {
 	public HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
-			getHttpMethod(), getUriPath(obj)
+			getHttpMethod(), getDataUriPath(obj)
 		);
 		try {
 			applyHostHeader(request, nodeAddr);
@@ -257,6 +258,37 @@ implements WSRequestConfig<T> {
 			case READ:
 			case DELETE:
 				applyPayLoad(request, null);
+				break;
+		}
+		applyHeadersFinally(request);
+		return request;
+	}
+	//
+	@Override
+	public HttpEntityEnclosingRequest createContainerRequest(
+		final Container<T> container, final String nodeAddr
+	) throws URISyntaxException {
+		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
+			getHttpMethod(), getContainerUriPath(container)
+		);
+		try {
+			applyHostHeader(request, nodeAddr);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
+		}
+		switch(loadType) {
+			case UPDATE:
+				// TODO update container, toggle the versioning for example
+				break;
+			case APPEND:
+				throw new IllegalStateException(
+					"Append operation is not supported for the containers"
+				);
+			case CREATE:
+				break;
+			case READ:
+				break;
+			case DELETE:
 				break;
 		}
 		applyHeadersFinally(request);
@@ -503,7 +535,10 @@ implements WSRequestConfig<T> {
 		}
 	}
 	//
-	protected abstract String getUriPath(final T dataItem)
+	protected abstract String getDataUriPath(final T dataItem)
+	throws IllegalArgumentException, URISyntaxException;
+	//
+	protected abstract String getContainerUriPath(final Container<T> container)
 	throws IllegalArgumentException, URISyntaxException;
 	//
 	protected final String getFilePathFor(final T dataItem) {
