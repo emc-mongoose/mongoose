@@ -66,8 +66,9 @@ implements WSContainerLoadBuilder<T, C, U> {
 	//
 	@Override
 	protected void invokePreConditions()
-			throws IllegalStateException {
-		reqConf.configureStorage(storageNodeAddrs);
+	throws IllegalStateException {
+		//  do nothing
+		//  reqConf.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
