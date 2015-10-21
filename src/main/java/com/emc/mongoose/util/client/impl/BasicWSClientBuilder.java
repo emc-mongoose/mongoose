@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
-import com.emc.mongoose.util.factory.LoadBuilderFactory;
+import com.emc.mongoose.util.builder.LoadBuilderFactory;
 /**
  Created by kurila on 19.06.15.
  */

@@ -8,12 +8,9 @@ import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 // mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
@@ -21,7 +18,7 @@ import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.run.scenario.Rampup;
 import com.emc.mongoose.run.scenario.Single;
 //
-import com.emc.mongoose.util.factory.LoadBuilderFactory;
+import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
