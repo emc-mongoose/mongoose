@@ -58,6 +58,7 @@ public class ReadFewContainersTest {
 		TimeUnit.SECONDS.sleep(5);
 		RunIdFileManager.flushAll();
 		//
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		LoggingTestBase.setUpClass();
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
