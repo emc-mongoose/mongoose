@@ -12,6 +12,7 @@ import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.WSContainerIOTask;
 //
 import org.apache.http.ConnectionClosedException;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
@@ -19,6 +20,8 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
+import org.apache.http.nio.entity.EntityAsyncContentProducer;
+import org.apache.http.nio.entity.HttpAsyncContentProducer;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 //
@@ -45,6 +48,7 @@ implements WSContainerIOTask<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	private volatile HttpAsyncContentProducer contentProducer = null;
 	private volatile Exception exception = null;
 	@SuppressWarnings("FieldCanBeLocal")
 	private volatile int respStatusCode = -1;
@@ -66,6 +70,12 @@ implements WSContainerIOTask<T, C> {
 		final HttpEntityEnclosingRequest httpRequest;
 		try {
 			httpRequest = ((WSRequestConfig) reqConf).createContainerRequest(item, nodeAddr);
+			final HttpEntity httpEntity = httpRequest.getEntity();
+			if(httpEntity instanceof HttpAsyncContentProducer) {
+				contentProducer = (HttpAsyncContentProducer) httpEntity;
+			} else if(httpEntity != null) {
+				contentProducer = new EntityAsyncContentProducer(httpEntity);
+			}
 		} catch(final URISyntaxException e) {
 			throw new HttpException("Failed to generate the request", e);
 		}
@@ -82,7 +92,11 @@ implements WSContainerIOTask<T, C> {
 	@Override
 	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-
+		if(contentProducer != null) {
+			contentProducer.produceContent(encoder, ioctrl);
+		} else {
+			encoder.complete();
+		}
 	}
 	//
 	@Override
@@ -179,7 +193,7 @@ implements WSContainerIOTask<T, C> {
 			if(respStatusCode < 200 || respStatusCode >= 300) { // failure, no user data is expected
 				consumeFailedResponseContent(decoder, ioctrl);
 			} else {
-				ContentUtil.consumeQuietly(decoder, Constants.BUFF_SIZE_LO);
+				countBytesDone += ContentUtil.consumeQuietly(decoder, Constants.BUFF_SIZE_LO);
 			}
 		} catch(final ClosedChannelException e) {
 			status = Status.CANCELLED;
