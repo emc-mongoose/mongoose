@@ -34,6 +34,8 @@ import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 03.07.15.
  */
@@ -50,6 +52,7 @@ implements StorageMock<T> {
 	protected final int storageCapacity, containerCapacity;
 	//
 	private final Sequencer sequencer;
+	private final AtomicLong dataCount = new AtomicLong(0);
 	//
 	private volatile boolean isCapacityExhausted = false;
 	//
@@ -201,6 +204,7 @@ implements StorageMock<T> {
 			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
 			if(c != null) {
 				completed(StorageMockBase.this.get(container).put(obj.getName(), obj));
+				dataCount.incrementAndGet();
 			} else {
 				failed(new ContainerMockNotFoundException(container));
 			}
@@ -298,6 +302,7 @@ implements StorageMock<T> {
 			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
 			if(c != null) {
 				completed(c.remove(oid));
+				dataCount.decrementAndGet();
 			} else {
 				failed(new ContainerMockNotFoundException(container));
 			}
@@ -396,11 +401,7 @@ implements StorageMock<T> {
 	//
 	@Override
 	public long getSize() {
-		long size = 0;
-		for(final ObjectContainerMock<T> c : values()) {
-			size += c.size();
-		}
-		return size;
+		return dataCount.get();
 	}
 	//
 	@Override

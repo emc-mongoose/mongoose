@@ -99,8 +99,7 @@ implements ReqURIMatchingHandler<T> {
 			httpRequest, httpResponse, reqLine.getMethod().toLowerCase(), reqLine.getUri()
 		);
 		// done
-		final BasicWSResponseProducer
-			respProducer = new BasicWSResponseProducer(contentSrc);
+		final BasicWSResponseProducer respProducer = new BasicWSResponseProducer(contentSrc);
 		respProducer.setResponse(httpResponse);
 		httpExchange.submitResponse(respProducer);
 	}
