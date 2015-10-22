@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.container;
 //
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -14,6 +15,7 @@ public class BasicContainer<T extends DataItem>
 implements Container {
 	//
 	protected volatile String name;
+	protected volatile ContentSource contentSrc;
 	//
 	public BasicContainer() {
 		this.name = null;
@@ -21,6 +23,11 @@ implements Container {
 	//
 	public BasicContainer(final String name) {
 		this.name = name;
+	}
+	//
+	public BasicContainer(final String name, final ContentSource contentSrc) {
+		this.name = name;
+		this.contentSrc = contentSrc;
 	}
 	//
 	@Override

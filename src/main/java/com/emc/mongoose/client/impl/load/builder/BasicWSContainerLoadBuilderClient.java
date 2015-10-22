@@ -78,8 +78,9 @@ public class BasicWSContainerLoadBuilderClient<
 	//
 	@Override
 	protected final void invokePreConditions()
-		throws IllegalStateException {
-		reqConf.configureStorage(storageNodeAddrs);
+	throws IllegalStateException {
+		//  do nothing
+		//  reqConf.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override  @SuppressWarnings("unchecked")

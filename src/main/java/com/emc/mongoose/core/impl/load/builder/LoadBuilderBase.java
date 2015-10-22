@@ -157,8 +157,25 @@ implements LoadBuilder<T, U> {
 		}
 		//
 		final String listFilePathStr = rtConfig.getItemSrcFPath();
-		if(listFilePathStr != null && !listFilePathStr.isEmpty()) {
-			final Path listFilePath = Paths.get(listFilePathStr);
+		if (itemsFileExists(listFilePathStr)) {
+			try {
+				setItemSrc(
+					new CSVFileItemSrc<>(
+						Paths.get(listFilePathStr), reqConf.getItemClass(),
+						reqConf.getContentSource()
+					)
+				);
+			} catch(final IOException | NoSuchMethodException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
+			}
+		}
+		//
+		return this;
+	}
+	//
+	protected boolean itemsFileExists(final String filePathStr) {
+		if (filePathStr != null && !filePathStr.isEmpty()) {
+			final Path listFilePath = Paths.get(filePathStr);
 			if(!Files.exists(listFilePath)) {
 				LOG.warn(Markers.ERR, "Specified input file \"{}\" doesn't exists", listFilePath);
 			} else if(!Files.isReadable(listFilePath)) {
@@ -166,19 +183,10 @@ implements LoadBuilder<T, U> {
 			} else if(Files.isDirectory(listFilePath)) {
 				LOG.warn(Markers.ERR, "Specified input file \"{}\" is a directory", listFilePath);
 			} else {
-				try {
-					setItemSrc(
-						new CSVFileItemSrc<>(
-							listFilePath, reqConf.getItemClass(), reqConf.getContentSource()
-						)
-					);
-				} catch(final IOException | NoSuchMethodException e) {
-					LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
-				}
+				return true;
 			}
 		}
-		//
-		return this;
+		return false;
 	}
 	//
 	@Override
