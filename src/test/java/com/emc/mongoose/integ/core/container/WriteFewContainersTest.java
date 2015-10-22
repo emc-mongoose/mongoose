@@ -1,35 +1,29 @@
-package com.emc.mongoose.integ.core.single;
-// mongoose-common.jar
+package com.emc.mongoose.integ.core.container;
+//
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
-//
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
-import com.emc.mongoose.integ.tools.ContentGetter;
-import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
-//
-import com.emc.mongoose.integ.tools.TestConstants;
-import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-//
+import com.emc.mongoose.integ.tools.ContentGetter;
+import com.emc.mongoose.integ.tools.LogValidator;
+import com.emc.mongoose.integ.tools.TestConstants;
+import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-//
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -40,30 +34,26 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
-//
 /**
- * Created by olga on 30.06.15.
- * Covers TC #1 (name: "Write some data items.", steps: all) in Mongoose Core Functional Testing
- * HLUC: 1.1.1.1, 1.1.2.1, 1.3.1.1, 1.4.1.1, 1.5.3.1(1)
+ Created by andrey on 22.10.15.
  */
-public final class DefaultWriteTest
+public class WriteFewContainersTest
 extends WSMockTestBase {
-
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
 	private static final int LIMIT_COUNT = 10;
-	private static String RUN_ID = DefaultWriteTest.class.getCanonicalName();
-	private static final String DATA_SIZE = "1MB";
+	private static String RUN_ID = WriteFewContainersTest.class.getCanonicalName();
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
+		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
-		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
@@ -87,12 +77,14 @@ extends WSMockTestBase {
 	public  static void tearDownClass()
 	throws Exception {
 		WSMockTestBase.tearDownClass();
+		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1000000");
 	}
 
 	@Test
 	public void shouldReportInformationAboutSummaryMetricsToConsole()
 	throws Exception {
-		Assert.assertTrue("Console doesn't contain information about summary metrics",
+		Assert.assertTrue(
+			"Console doesn't contain information about summary metrics",
 			STD_OUTPUT_STREAM.toString().contains(TestConstants.SUMMARY_INDICATOR)
 		);
 		Assert.assertTrue("Console doesn't contain information about end of scenario",
@@ -120,13 +112,13 @@ extends WSMockTestBase {
 		Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
 
 		expectedFile = LogValidator.getItemsListFile(RUN_ID).toPath();
-		//  Check that data.items.csv file exists
-		Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
+		//  Check that items list file exists
+		Assert.assertTrue("items list file doesn't exist", Files.exists(expectedFile));
 	}
 
 	@Test
 	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
-		throws Exception {
+	throws Exception {
 		final String configTable = RunTimeConfig.getContext().toString();
 		final Set<String> params = new HashSet<>();
 		//  skip table header
@@ -194,7 +186,7 @@ extends WSMockTestBase {
 		);
 		//
 		try (final BufferedReader bufferedReader =
-		        new BufferedReader(new FileReader(messageFile))) {
+				 new BufferedReader(new FileReader(messageFile))) {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
 				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
@@ -243,25 +235,21 @@ extends WSMockTestBase {
 	}
 
 	@Test
-	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
+	public void shouldCreateItemsFileWithInformationAboutAllItems()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
-		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
+		final File itemsListFile = LogValidator.getItemsListFile(RUN_ID);
+		Assert.assertTrue("items list file doesn't exist", itemsListFile.exists());
 		//
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(itemsListFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			//
 			int countDataItems = 0;
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
-				Assert.assertEquals(
-					"Size of data item isn't correct",
-					Long.toString(SizeUtil.toSize(DATA_SIZE)), nextRec.get(2)
-				);
-				countDataItems++;
+				countDataItems ++;
 			}
 			//  Check that there are 10 lines in data.items.csv file
 			Assert.assertEquals(
@@ -271,81 +259,17 @@ extends WSMockTestBase {
 	}
 
 	@Test
-	public void shouldGetDifferentObjectsFromServer()
-	throws Exception {
-		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
-		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
-		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			//
-			final List<String> dataObjectChecksums = new ArrayList<>(LIMIT_COUNT);
-			//
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			int recCount = 0;
-			for(final CSVRecord nextRec : recIter) {
-				recCount ++;
-				try (
-					final InputStream
-						inputStream = ContentGetter.getStream(
-							nextRec.get(0), TestConstants.BUCKET_NAME
-						)
-				) {
-					dataObjectChecksums.add(DigestUtils.md2Hex(inputStream));
-				}
-			}
-			//  If size of set with checksums is less then dataCount
-			//  it's mean that some checksums are equals
-			Assert.assertEquals(
-				"Did not read " + recCount + "objects from server mock",
-				LIMIT_COUNT, dataObjectChecksums.size()
-			);
-
-		}
-	}
-
-	@Test
-	public void shouldGetAllObjectsFromServerAndDataSizeIsDefault()
-	throws Exception {
-		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
-		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
-		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			int actualDataSize;
-			//
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for(final CSVRecord nextRec : recIter) {
-				try {
-					actualDataSize = ContentGetter.getDataSize(nextRec.get(0), TestConstants.BUCKET_NAME);
-					Assert.assertEquals(
-						"Size of data item isn't correct", SizeUtil.toSize(DATA_SIZE), actualDataSize
-					);
-				} catch (final IOException e) {
-					Assert.fail(String.format("Failed to get data item %s from server", nextRec.get(0)));
-				}
-			}
-		}
-	}
-
-	@Test
-	public void shouldCreateCorrectDataItemsFile()
+	public void shouldCreateCorrectItemsListFile()
 	throws Exception {
 		//  Get data.items.csv file
-		final File dataItemFile = LogValidator.getItemsListFile(RUN_ID);
-		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
+		final File itemsListFile = LogValidator.getItemsListFile(RUN_ID);
+		Assert.assertTrue("items list file doesn't exist", itemsListFile.exists());
 		//
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(itemsListFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogValidator.assertCorrectDataItemsCSV(in);
+			LogValidator.assertCorrectContainerItemsCSV(in);
 		}
 	}
 

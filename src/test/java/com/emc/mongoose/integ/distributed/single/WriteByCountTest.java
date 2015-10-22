@@ -58,7 +58,7 @@ extends DistributedClientTestBase {
 		int itemsCount = 0;
 		try(
 			final BufferedReader in = Files.newBufferedReader(
-				LogValidator.getDataItemsFile(RUN_ID).toPath(), StandardCharsets.UTF_8
+				LogValidator.getItemsListFile(RUN_ID).toPath(), StandardCharsets.UTF_8
 			)
 		) {
 			while(in.readLine() != null) {

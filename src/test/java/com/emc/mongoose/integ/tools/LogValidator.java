@@ -58,7 +58,7 @@ public final class LogValidator {
 			Constants.DIR_LOG, runID, TestConstants.PERF_TRACE_FILE_NAME).toString());
 	}
 
-	public static File getDataItemsFile(final String runID){
+	public static File getItemsListFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
 			Constants.DIR_LOG, runID, TestConstants.DATA_ITEMS_FILE_NAME).toString());
 	}
@@ -309,6 +309,17 @@ public final class LogValidator {
 			Assert.assertTrue(
 				"Data layer and mask format is not correct",
 				nextRec.get(3).matches(LogPatterns.DATA_LAYER_MASK.pattern())
+			);
+		}
+	}
+	public static void assertCorrectContainerItemsCSV(BufferedReader in)
+	throws IOException {
+		//
+		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+		for(final CSVRecord nextRec : recIter) {
+			Assert.assertEquals("Count of column is wrong", 1, nextRec.size());
+			Assert.assertTrue(
+				"Data ID format is not correct", nextRec.get(0).matches(LogPatterns.DATA_ID.pattern())
 			);
 		}
 	}

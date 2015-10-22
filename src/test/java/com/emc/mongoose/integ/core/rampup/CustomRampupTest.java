@@ -102,7 +102,7 @@ extends WSMockTestBase{
 		expectedFile = LogValidator.getPerfTraceFile(RUN_ID).toPath();
 		Assert.assertTrue("perf.trace.csv file must be contained", Files.exists(expectedFile));
 
-		expectedFile = LogValidator.getDataItemsFile(RUN_ID).toPath();
+		expectedFile = LogValidator.getItemsListFile(RUN_ID).toPath();
 		Assert.assertTrue("data.items.csv file must be contained", Files.exists(expectedFile));
 	}
 
@@ -191,7 +191,7 @@ extends WSMockTestBase{
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file
-		final File dataItemFile = LogValidator.getDataItemsFile(RUN_ID);
+		final File dataItemFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file must be exist", dataItemFile.exists());
 		//
 		try(
