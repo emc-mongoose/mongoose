@@ -188,7 +188,7 @@
 		},
 		"load": {
 			"item": {
-				"class": "object"
+				"class": "data"
 			},
 			"limit": {
 				"count": 0,

@@ -2,23 +2,23 @@ package com.emc.mongoose.util.builder;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
-import com.emc.mongoose.core.impl.load.builder.BasicWSDataLoadBuilder;
 //
-import com.emc.mongoose.client.impl.load.builder.BasicWSDataLoadBuilderClient;
-import com.emc.mongoose.client.impl.load.builder.BasicWSContainerLoadBuilderClient;
 //
-import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 //
+import org.apache.commons.lang.WordUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.lang.reflect.Constructor;
+
 /**
  Created by kurila on 09.06.15.
  */
@@ -26,56 +26,64 @@ public class LoadBuilderFactory {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	private final static String
+		BUILDER_CORE_PACKAGE_BASE = "com.emc.mongoose.core.impl.load.builder",
+		BUILDER_CLIENT_PACKAGE_BASE = "com.emc.mongoose.client.impl.load.builder",
+		BUILDER_SERVER_PACKAGE_BASE = "com.emc.mongoose.server.impl.load.builder",
+		WS_PREFIX = "WS",
+		BASIC_PREFIX = "Basic",
+		LOAD_BUILDER_POSTFIX = "LoadBuilder",
+		CLIENT_POSTFIX = "Client",
+		SVC_POSTFIX = "Svc";
+	//
 	@SuppressWarnings("unchecked")
 	public static <T extends Item, U extends LoadExecutor<T>> LoadBuilder<T, U> getInstance(
 		final RunTimeConfig rtConfig
 	) {
-		final String mode = rtConfig.getRunMode();
-		final String itemClassName = rtConfig.getLoadItemClass();
+		final String runMode = rtConfig.getRunMode();
+		final String apiName = rtConfig.getApiName();
 		//
-		LoadBuilder loadBuilderInstance = null;
+		String itemClassName = WordUtils.capitalize(rtConfig.getLoadItemClass());
+		//
+		if (
+			apiName.equals(Constants.API_TYPE_S3) ||
+			apiName.equals(Constants.API_TYPE_ATMOS) ||
+			apiName.equals(Constants.API_TYPE_SWIFT)
+		) {
+			itemClassName = WS_PREFIX + itemClassName;
+		}
+		//
+		itemClassName = BASIC_PREFIX + itemClassName + LOAD_BUILDER_POSTFIX;
+		final String itemClassFQN;
+		//  don't append anything if run.mode is standalone
+		switch(runMode) {
+			case Constants.RUN_MODE_CLIENT:
+			case Constants.RUN_MODE_COMPAT_CLIENT:
+				itemClassName = itemClassName + CLIENT_POSTFIX;
+				itemClassFQN = BUILDER_CLIENT_PACKAGE_BASE + "." + itemClassName;
+				break;
+			case Constants.RUN_MODE_SERVER:
+			case Constants.RUN_MODE_COMPAT_SERVER:
+				itemClassName = itemClassName + SVC_POSTFIX;
+				itemClassFQN = BUILDER_SERVER_PACKAGE_BASE + "." + itemClassName;
+				break;
+			case Constants.RUN_MODE_STANDALONE:
+				itemClassFQN = BUILDER_CORE_PACKAGE_BASE + "." + itemClassName;
+				break;
+			default:
+				throw new IllegalArgumentException(
+					"Failed to recognize the run mode \"" + runMode + "\""
+				);
+		}
+		//
+		LoadBuilder loadBuilderInstance;
 		try {
-			switch(mode) {
-				case Constants.RUN_MODE_CLIENT:
-				case Constants.RUN_MODE_COMPAT_CLIENT:
-					switch(itemClassName) {
-						case Constants.LOAD_ITEMS_CLASS_OBJECT:
-							loadBuilderInstance = new BasicWSDataLoadBuilderClient(rtConfig);
-							break;
-						case Constants.LOAD_ITEMS_CLASS_CONTAINER:
-							loadBuilderInstance = new BasicWSContainerLoadBuilderClient(rtConfig);
-							break;
-						default:
-							throw new IllegalArgumentException(
-								"Failed to recognize the load item class \"" + itemClassName + "\""
-							);
-					}
-				case Constants.RUN_MODE_SERVER:
-				case Constants.RUN_MODE_COMPAT_SERVER:
-					loadBuilderInstance = new BasicWSDataLoadBuilderSvc(rtConfig);
-					break;
-				case Constants.RUN_MODE_CINDERELLA:
-				case Constants.RUN_MODE_WEBUI:
-				case Constants.RUN_MODE_WSMOCK:
-					throw new IllegalArgumentException(
-						"Load builder shouldn't be invoked from the run mode \"" + mode + "\""
-					);
-				default:
-					switch(itemClassName) {
-						case Constants.LOAD_ITEMS_CLASS_OBJECT:
-							loadBuilderInstance = new BasicWSDataLoadBuilder(rtConfig);
-							break;
-						case Constants.LOAD_ITEMS_CLASS_CONTAINER:
-							loadBuilderInstance = new BasicWSContainerLoadBuilder(rtConfig);
-							break;
-						default:
-							throw new IllegalArgumentException(
-								"Failed to recognize the load item class \"" + itemClassName + "\""
-							);
-					}
-			}
+			final Class loadBuilderImplClass = Class.forName(itemClassFQN);
+			final Constructor constructor = loadBuilderImplClass.getConstructor(RunTimeConfig.class);
+			loadBuilderInstance = (LoadBuilder) constructor.newInstance(rtConfig);
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.FATAL, e, "Failed to create the load builder");
+			e.printStackTrace(System.out);
+			throw new RuntimeException(e);
 		}
 		return loadBuilderInstance;
 	}
