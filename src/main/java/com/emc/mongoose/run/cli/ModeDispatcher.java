@@ -8,21 +8,26 @@ import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-scenario.jar
+import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.run.scenario.Rampup;
 import com.emc.mongoose.run.scenario.Single;
 import com.emc.mongoose.run.webserver.WUIRunner;
 // mongoose-server-api.jar
+import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicWSContainerLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
+import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.omg.SendingContext.RunTime;
 //
 import java.io.IOException;
 import java.util.Map;
@@ -59,17 +64,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
-				try(
-					final WSDataLoadBuilderSvc<WSObject, WSDataLoadSvc<WSObject>>
-						loadBuilderSvc = new BasicWSDataLoadBuilderSvc<>(RunTimeConfig.getContext())
-				) {
-					loadBuilderSvc.start();
-					loadBuilderSvc.await();
-				} catch(final IOException e) {
-					LogUtil.exception(rootLogger, Level.ERROR, e, "Load builder service failure");
-				} catch(InterruptedException e) {
-					rootLogger.debug(Markers.MSG, "Interrupted load builder service");
-				}
+				LoadBuilderFactory.startSvcBuilders(RunTimeConfig.getContext());
 				break;
 			case Constants.RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
