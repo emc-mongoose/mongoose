@@ -4,19 +4,28 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
+import com.emc.mongoose.core.api.load.builder.WSDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 //
 //
 //
+import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicWSContainerLoadBuilderSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 import org.apache.commons.lang.WordUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 
 /**
@@ -29,12 +38,10 @@ public class LoadBuilderFactory {
 	private final static String
 		BUILDER_CORE_PACKAGE_BASE = "com.emc.mongoose.core.impl.load.builder",
 		BUILDER_CLIENT_PACKAGE_BASE = "com.emc.mongoose.client.impl.load.builder",
-		BUILDER_SERVER_PACKAGE_BASE = "com.emc.mongoose.server.impl.load.builder",
 		WS_PREFIX = "WS",
 		BASIC_PREFIX = "Basic",
 		LOAD_BUILDER_POSTFIX = "LoadBuilder",
-		CLIENT_POSTFIX = "Client",
-		SVC_POSTFIX = "Svc";
+		CLIENT_POSTFIX = "Client";
 	//
 	@SuppressWarnings("unchecked")
 	public static <T extends Item, U extends LoadExecutor<T>> LoadBuilder<T, U> getInstance(
@@ -62,11 +69,6 @@ public class LoadBuilderFactory {
 				itemClassName = itemClassName + CLIENT_POSTFIX;
 				itemClassFQN = BUILDER_CLIENT_PACKAGE_BASE + "." + itemClassName;
 				break;
-			case Constants.RUN_MODE_SERVER:
-			case Constants.RUN_MODE_COMPAT_SERVER:
-				itemClassName = itemClassName + SVC_POSTFIX;
-				itemClassFQN = BUILDER_SERVER_PACKAGE_BASE + "." + itemClassName;
-				break;
 			case Constants.RUN_MODE_STANDALONE:
 				itemClassFQN = BUILDER_CORE_PACKAGE_BASE + "." + itemClassName;
 				break;
@@ -86,5 +88,22 @@ public class LoadBuilderFactory {
 			throw new RuntimeException(e);
 		}
 		return loadBuilderInstance;
+	}
+	//
+	public static void startSvcBuilders(final RunTimeConfig rtConfig) {
+		try {
+			final WSDataLoadBuilderSvc<WSObject, WSDataLoadSvc<WSObject>>
+				loadBuilderSvc = new BasicWSDataLoadBuilderSvc<>(rtConfig);
+			final WSContainerLoadBuilderSvc containerBuilderSvc =
+				new BasicWSContainerLoadBuilderSvc(rtConfig);
+			//
+			loadBuilderSvc.start();
+			containerBuilderSvc.start();
+			//
+			loadBuilderSvc.await();
+			containerBuilderSvc.await();
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

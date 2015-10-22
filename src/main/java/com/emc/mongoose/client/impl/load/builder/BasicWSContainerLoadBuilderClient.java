@@ -56,7 +56,9 @@ public class BasicWSContainerLoadBuilderClient<
 	throws IOException {
 		WSContainerLoadBuilderSvc<T, C, W> rlb;
 		final Service remoteSvc = ServiceUtil.getRemoteSvc(
-			"//" + serverAddr + '/' + getClass().getPackage().getName().replace("client", "server")
+			"//" + serverAddr + '/'
+				+ getClass().getName()
+					.replace("client", "server").replace("Client", "Svc")
 		);
 		if(remoteSvc == null) {
 			throw new IOException("No remote load builder was resolved from " + serverAddr);
