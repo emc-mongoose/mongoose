@@ -37,6 +37,8 @@ implements ContainerLoadBuilder<T, C, U>{
 	//
 	@Override
 	public ContainerLoadBuilderBase<T, C, U> setProperties(final RunTimeConfig rtConfig) {
+		super.setProperties(rtConfig);
+		//
 		final String listFilePathStr = rtConfig.getItemSrcFPath();
 		if (itemsFileExists(listFilePathStr)) {
 			try {

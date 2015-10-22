@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 
 /**
  Created by kurila on 21.10.15.
@@ -45,7 +46,10 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	//
 	@Override
 	public ContainerLoadBuilderClientBase<T, C, W, U, V>
-	setProperties(final RunTimeConfig rtConfig) {
+	setProperties(final RunTimeConfig rtConfig)
+	throws RemoteException {
+		super.setProperties(rtConfig);
+		//
 		final String listFilePathStr = rtConfig.getItemSrcFPath();
 		if (itemsFileExists(listFilePathStr)) {
 			try {
