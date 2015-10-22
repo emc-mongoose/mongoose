@@ -1,12 +1,17 @@
 package com.emc.mongoose.integ.base;
 //
+import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 import com.emc.mongoose.client.api.load.builder.WSDataLoadBuilderClient;
+import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.WSDataLoadClient;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.server.api.load.executor.LoadSvc;
 import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
 //
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
@@ -19,16 +24,14 @@ import org.junit.BeforeClass;
 public abstract class DistributedLoadBuilderTestBase
 extends DistributedTestBase {
 	//
-	protected static WSDataLoadBuilderClient<WSObject, WSDataLoadSvc<WSObject>, WSDataLoadClient<WSObject, WSDataLoadSvc<WSObject>>> LOAD_BUILDER_CLIENT;
+	protected static LoadBuilderClient LOAD_BUILDER_CLIENT;
 	//
-	@BeforeClass
+	@BeforeClass @SuppressWarnings("unchecked")
 	public static void setUpClass()
 	throws Exception {
 		DistributedTestBase.setUpClass();
-		LOAD_BUILDER_CLIENT = LoadBuilderFactory.<
-			WSObject, WSDataLoadClient<WSObject, WSDataLoadSvc<WSObject>>,
-			WSDataLoadBuilderClient<WSObject, WSDataLoadSvc<WSObject>, WSDataLoadClient<WSObject, WSDataLoadSvc<WSObject>>>
-		>getInstance(RunTimeConfig.getContext());
+		LOAD_BUILDER_CLIENT = (LoadBuilderClient) LoadBuilderFactory
+			.getInstance(RunTimeConfig.getContext());
 	}
 	//
 	@AfterClass

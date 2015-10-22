@@ -370,6 +370,7 @@ dependencies {
 
 	scenarioCompile (
 		library.commons_configuration,
+		library.commons_collections4,
 		library.log4j_api,
 		library.httpcore
 	)

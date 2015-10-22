@@ -2,12 +2,12 @@ package com.emc.mongoose.util.client.impl;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
+import com.emc.mongoose.core.api.load.executor.DataLoadExecutor;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 //
@@ -24,10 +24,10 @@ implements StorageClient<T> {
 	protected final static int DEFAULT_CONN_PER_NODE_COUNT = 1;
 	//
 	protected RunTimeConfig rtConfig;
-	protected DataLoadBuilder<T, LoadExecutor<T>> loadBuilder;
+	protected DataLoadBuilder<T, DataLoadExecutor<T>> loadBuilder;
 	//
 	public BasicStorageClient(
-		final RunTimeConfig rtConfig, final DataLoadBuilder<T, LoadExecutor<T>> loadBuilder
+		final RunTimeConfig rtConfig, final DataLoadBuilder<T, DataLoadExecutor<T>> loadBuilder
 	) {
 		this.rtConfig = rtConfig;
 		this.loadBuilder = loadBuilder;
