@@ -30,8 +30,8 @@ extends WSMockTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	private static final int
-		LIMIT_COUNT_OBJ = 200,
-		LIMIT_COUNT_CONTAINER = 50;
+		LIMIT_COUNT_OBJ = 1000,
+		LIMIT_COUNT_CONTAINER = 1000;
 	//
 	private static String RUN_ID_BASE = WriteManyObjectsToManyContainersTest.class.getCanonicalName();
 	private static int countContainerCreated = 0;
@@ -62,23 +62,25 @@ extends WSMockTestBase {
 		final File containerListFile = LogValidator.getItemsListFile(RUN_ID_BASE);
 		Assert.assertTrue("items list file doesn't exist", containerListFile.exists());
 		//
-		String nextContainer;
+		String nextContainer, nextRunId;
 		rtConfig.set(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "data");
 		RunTimeConfig.setContext(rtConfig);
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(containerListFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			try(final BufferingOutputStream stdOutStream = StdOutInterceptorTestSuite
-					.getStdOutBufferingStream()
+			try(
+				final BufferingOutputStream
+					stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
 				do {
 					nextContainer = in.readLine();
+					nextRunId = RUN_ID_BASE + "_" + nextContainer;
 					if(nextContainer == null) {
 						break;
 					} else {
 						countContainerCreated++;
-						rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE + "_" + nextContainer);
+						rtConfig.set(RunTimeConfig.KEY_RUN_ID, nextRunId);
 						rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, nextContainer);
 						RunTimeConfig.setContext(rtConfig);
 						new ScriptMockRunner().run();
@@ -86,6 +88,7 @@ extends WSMockTestBase {
 				} while(true);
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUTPUT_STREAM = stdOutStream;
+				RunIdFileManager.closeAll(nextRunId);
 			}
 		}
 		//
@@ -115,6 +118,6 @@ extends WSMockTestBase {
 		while(m.find()) {
 			countMatch ++;
 		}
-		LOG.info(Markers.MSG, countMatch);
+		Assert.assertEquals(LIMIT_COUNT_CONTAINER, countMatch);
 	}
 }
