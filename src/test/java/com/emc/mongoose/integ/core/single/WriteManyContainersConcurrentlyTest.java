@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.core.container;
+package com.emc.mongoose.integ.core.single;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -62,7 +62,7 @@ extends WSMockTestBase {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(1);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
 		//

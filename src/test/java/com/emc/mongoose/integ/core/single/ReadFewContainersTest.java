@@ -1,17 +1,15 @@
-package com.emc.mongoose.integ.core.container;
-//
+package com.emc.mongoose.integ.core.single;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
+import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.integ.tools.ContentGetter;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -24,30 +22,26 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.10.15.
  */
-public class WriteFewContainersTest
-extends WSMockTestBase {
+public class ReadFewContainersTest {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
 	private static final int LIMIT_COUNT = 10;
-	private static String RUN_ID = WriteFewContainersTest.class.getCanonicalName();
+	private static String RUN_ID = ReadFewContainersTest.class.getCanonicalName();
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID + "Write");
 		System.setProperty(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
 		WSMockTestBase.setUpClass();
@@ -59,6 +53,22 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
+		new ScriptMockRunner().run();
+		//  Wait for "Scenario end" message
+		TimeUnit.SECONDS.sleep(1);
+		RunIdFileManager.flushAll();
+		//
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		LoggingTestBase.setUpClass();
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
+		rtConfig.set(
+			RunTimeConfig.KEY_DATA_SRC_FPATH,
+			LogValidator.getItemsListFile(RUN_ID + "Write").getPath()
+		);
+		RunTimeConfig.setContext(rtConfig);
+		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		//
 		try(
 			final BufferingOutputStream stdOutStream = StdOutInterceptorTestSuite
 				.getStdOutBufferingStream()
@@ -66,7 +76,7 @@ extends WSMockTestBase {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(1);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
 		//
@@ -204,7 +214,7 @@ extends WSMockTestBase {
 	}
 
 	@Test
-	public void shouldReportCorrectWrittenCountToSummaryLogFile()
+	public void shouldReportCorrectCountToSummaryLogFile()
 	throws Exception {
 		//  Read perf.summary file
 		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);

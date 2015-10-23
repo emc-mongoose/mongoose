@@ -7,8 +7,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-// mongoose-storage-mock.jar
+//
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;

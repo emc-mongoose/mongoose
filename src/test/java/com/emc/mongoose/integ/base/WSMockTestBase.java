@@ -3,6 +3,7 @@ package com.emc.mongoose.integ.base;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
@@ -42,5 +43,6 @@ extends LoggingTestBase {
 		WS_MOCK.close();
 		LOG.info(Markers.MSG, "Cinderella stopped");
 		LoggingTestBase.tearDownClass();
+		ContentSourceBase.DEFAULT = null; // reset the content source
 	}
 }

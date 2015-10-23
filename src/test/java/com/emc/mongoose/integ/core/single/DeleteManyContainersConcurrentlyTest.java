@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.core.container;
+package com.emc.mongoose.integ.core.single;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -37,7 +37,7 @@ public class DeleteManyContainersConcurrentlyTest
 extends WSMockTestBase {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static final int LIMIT_COUNT = 1000000;
+	private static final int LIMIT_COUNT = 100000;
 	private static String RUN_ID = DeleteManyContainersConcurrentlyTest.class.getCanonicalName();
 
 	@BeforeClass
@@ -78,7 +78,7 @@ extends WSMockTestBase {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(1);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
 		//
@@ -141,12 +141,6 @@ extends WSMockTestBase {
 			start += lineOffset;
 		}
 		for (final String confParam : params) {
-			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
-				Assert.assertTrue(
-					"Information about limit count in configuration table is wrong",
-					confParam.contains(String.valueOf(LIMIT_COUNT))
-				);
-			}
 			if (confParam.contains(RunTimeConfig.KEY_STORAGE_ADDRS)) {
 				Assert.assertTrue(
 					"Information about storage address in configuration table is wrong",
