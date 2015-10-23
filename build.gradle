@@ -1040,8 +1040,7 @@ task integTest(type: Test, dependsOn: dist) {
 	classpath = sourceSets.integTest.runtimeClasspath
 	minHeapSize = "4g"
 	maxHeapSize = "4g"
-	jvmArgs '-Dremote.serveJMX=true -Djava.security.policy=file:' +
-		new File("").getCanonicalPath() +
+	jvmArgs '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
