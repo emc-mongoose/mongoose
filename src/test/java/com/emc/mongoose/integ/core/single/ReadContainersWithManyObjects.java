@@ -29,7 +29,7 @@ public class ReadContainersWithManyObjects
 extends WSMockTestBase {
 	//
 	private static final int
-		LIMIT_COUNT_OBJ = 10000,
+		LIMIT_COUNT_OBJ = 100000,
 		LIMIT_COUNT_CONTAINER = 100;
 	//
 	private static String RUN_ID_BASE = ReadContainersWithManyObjects.class.getCanonicalName();
@@ -127,7 +127,16 @@ extends WSMockTestBase {
 				if(firstRow) {
 					firstRow = false;
 				} else {
-					LOG.info(Markers.MSG, nextRec);
+					final float
+						containerCount = Long.parseLong(nextRec.get(7)),
+						avgRate = Float.parseFloat(nextRec.get(21)),
+						avgByteRate = Float.parseFloat(nextRec.get(23));
+					Assert.assertEquals(
+						"Read container count should mismatch",
+						countContainerCreated, containerCount, 1
+					);
+					Assert.assertTrue("Container read rate should be > 0", avgRate > 0);
+					Assert.assertTrue("Container read byte rate should be > 0", avgByteRate > 0);
 				}
 			}
 		}
