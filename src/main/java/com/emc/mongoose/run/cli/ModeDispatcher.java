@@ -24,6 +24,7 @@ import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
+import com.emc.mongoose.util.builder.SvcLoadBuildersRunner;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -64,7 +65,9 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
-				LoadBuilderFactory.startSvcBuilders(RunTimeConfig.getContext());
+				SvcLoadBuildersRunner.startSvcLoadBuilders(
+					SvcLoadBuildersRunner.getSvcBuilders(RunTimeConfig.getContext())
+				);
 				break;
 			case Constants.RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");

@@ -20,6 +20,7 @@ import com.emc.mongoose.run.scenario.Rampup;
 import com.emc.mongoose.run.scenario.Single;
 //
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
+import com.emc.mongoose.util.builder.SvcLoadBuildersRunner;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,6 +31,8 @@ import javax.servlet.http.HttpServletResponse;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by gusakk on 01/10/14.
@@ -97,7 +100,7 @@ public final class StartServlet extends CommonServlet {
 	//
 	private void startServer(final String message) {
 		final Thread thread = new Thread() {
-			LoadBuilderSvc loadBuilderSvc;
+			List<LoadBuilderSvc> loadBuilders = new ArrayList<>();
 			RunTimeConfig localRunTimeConfig;
 			@Override
 			public void run() {
@@ -108,20 +111,16 @@ public final class StartServlet extends CommonServlet {
 				LOG.debug(Markers.MSG, message);
 				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				//
-				loadBuilderSvc = (LoadBuilderSvc) LoadBuilderFactory.getInstance(localRunTimeConfig);
-				//
-				try {
-					loadBuilderSvc.setProperties(runTimeConfig);
-					loadBuilderSvc.start();
-				} catch (final RemoteException e) {
-					LogUtil.exception(LOG, Level.ERROR, e, "Failed to start load builder service");
-				}
+				loadBuilders = SvcLoadBuildersRunner.getSvcBuilders(localRunTimeConfig);
+				SvcLoadBuildersRunner.startSvcLoadBuilders(loadBuilders);
 			}
 			@Override
 			public void interrupt() {
 				RunTimeConfig.setContext(localRunTimeConfig);
 				try {
-					ServiceUtil.close(loadBuilderSvc);
+					for (final LoadBuilderSvc builder : loadBuilders) {
+						ServiceUtil.close(builder);
+					}
 				} catch(final RemoteException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Networking failure");
 				}
