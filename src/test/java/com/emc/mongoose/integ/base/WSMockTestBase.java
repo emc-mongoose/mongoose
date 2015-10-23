@@ -26,8 +26,6 @@ extends LoggingTestBase {
 		LoggingTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_API_NAME, "s3"); // reset the ports beginning
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, 1000000);
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, 1000000);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
 		WS_MOCK = new Cinderella<>(rtConfig);
 		WS_MOCK_THREAD = new Thread(WS_MOCK, "wsMock");

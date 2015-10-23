@@ -26,8 +26,17 @@ public interface Constants {
 	String RUN_SCENARIO_CHAIN = "chain";
 	String RUN_SCENARIO_RAMPUP = "rampup";
 	//
+	String API_TYPE_S3 = "s3";
+	String API_TYPE_ATMOS = "atmos";
+	String API_TYPE_SWIFT = "swift";
+	//
+	String LOAD_ITEMS_CLASS_OBJECT = "object";
+	String LOAD_ITEMS_CLASS_CONTAINER = "container";
+	//
 	String DIR_WEBAPP = "webapp";
 	String DIR_WEBINF = "WEB-INF";
+	//
+	String MONGOOSE_PREFIX = "mongoose-";
 	//
 	int BUFF_SIZE_LO = (int) RunTimeConfig.getContext().getIOBufferSizeMin();
 	int BUFF_SIZE_HI = (int) RunTimeConfig.getContext().getIOBufferSizeMax();

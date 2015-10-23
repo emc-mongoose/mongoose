@@ -1,8 +1,8 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 //
-import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.ItemDst;
 //
 import java.io.IOException;
 import java.util.List;
@@ -10,8 +10,8 @@ import java.util.List;
  Created by kurila on 18.06.15.
  Writable collection of the data items.
  */
-public class ListItemDst<T extends DataItem>
-implements DataItemDst<T> {
+public class ListItemDst<T extends Item>
+implements ItemDst<T> {
 	//
 	protected final List<T> items;
 	//
@@ -56,7 +56,7 @@ implements DataItemDst<T> {
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public ListItemSrc<T> getDataItemSrc()
+	public ListItemSrc<T> getItemSrc()
 	throws IOException {
 		return new ListItemSrc<>(items);
 	}

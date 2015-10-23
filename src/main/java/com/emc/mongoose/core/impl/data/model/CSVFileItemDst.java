@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
-import com.emc.mongoose.core.api.data.model.FileDataItemDst;
+import com.emc.mongoose.core.api.data.model.FileItemDst;
 //
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,7 +13,7 @@ import java.nio.file.StandardOpenOption;
  */
 public class CSVFileItemDst<T extends DataItem>
 extends CSVItemDst<T>
-implements FileDataItemDst<T> {
+implements FileItemDst<T> {
 	//
 	protected Path itemsFilePath;
 	//
@@ -34,7 +34,7 @@ implements FileDataItemDst<T> {
 	}
 	//
 	@Override
-	public CSVFileItemSrc<T> getDataItemSrc()
+	public CSVFileItemSrc<T> getItemSrc()
 	throws IOException {
 		try {
 			return new CSVFileItemSrc<>(itemsFilePath, itemCls, contentSrc);

@@ -9,9 +9,6 @@ import java.util.concurrent.TimeUnit;
 public interface LifeCycle
 extends Closeable {
 	//
-	String getName()
-	throws RemoteException;
-	//
 	void start()
 	throws RemoteException, IllegalThreadStateException;
 	//

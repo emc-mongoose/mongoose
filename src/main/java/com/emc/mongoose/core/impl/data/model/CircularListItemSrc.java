@@ -1,13 +1,13 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 //
 import java.io.IOException;
 import java.util.List;
 /**
  The data items input which may be get infinitely (if underlying collection allows).
  */
-public class CircularListItemSrc<T extends DataItem>
+public class CircularListItemSrc<T extends Item>
 extends ListItemSrc<T> {
 	/**
 	 @param dataItems the source data items collection

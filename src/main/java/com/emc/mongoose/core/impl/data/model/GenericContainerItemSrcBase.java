@@ -2,10 +2,10 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.data.MutableDataItem;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
-import com.emc.mongoose.core.api.data.model.GenericContainer;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.data.model.DataItemContainer;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,13 +18,13 @@ import java.util.List;
 /**
  The implementation should have a state representing the actual position in the container listing
  */
-public abstract class GenericContainerItemSrcBase<T extends MutableDataItem>
+public abstract class GenericContainerItemSrcBase<T extends DataItem>
 extends ListItemSrc<T>
-implements DataItemSrc<T> {
+implements ItemSrc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final GenericContainer<T> container;
+	protected final DataItemContainer<T> container;
 	protected final String nodeAddr;
 	protected final Constructor<T> itemConstructor;
 	protected final long maxCount;
@@ -32,7 +32,7 @@ implements DataItemSrc<T> {
 	protected String lastItemId = null;
 	//
 	protected GenericContainerItemSrcBase(
-		final GenericContainer<T> container, final String nodeAddr, final Class<T> itemCls,
+		final DataItemContainer<T> container, final String nodeAddr, final Class<T> itemCls,
 		final long maxCount
 	) throws IllegalStateException {
 		super(new ArrayList<T>(RunTimeConfig.getContext().getBatchSize()));
@@ -80,8 +80,8 @@ implements DataItemSrc<T> {
 	}
 	//
 	@Override
-	public void setLastDataItem(final T lastItem) {
-		super.setLastDataItem(lastItem);
+	public void setLastItem(final T lastItem) {
+		super.setLastItem(lastItem);
 		this.lastItemId = lastItem.getName();
 	}
 	//

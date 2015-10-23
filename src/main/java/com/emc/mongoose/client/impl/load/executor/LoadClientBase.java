@@ -5,9 +5,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.model.ItemDst;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.load.model.LoadState;
@@ -43,30 +43,30 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 20.10.14.
  */
-public abstract class LoadClientBase<T extends DataItem>
+public abstract class LoadClientBase<T extends Item, W extends LoadSvc<T>>
 extends LoadExecutorBase<T>
-implements LoadClient<T> {
+implements LoadClient<T, W> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final Map<String, LoadSvc<T>> remoteLoadMap;
+	protected final Map<String, W> remoteLoadMap;
 	private final ThreadPoolExecutor remoteSubmExecutor;
 	private final String loadSvcAddrs[];
 	//
-	protected volatile DataItemDst<T> consumer = null;
+	protected volatile ItemDst<T> consumer = null;
 	//
 	private final static int COUNT_LIMIT_RETRY = 100;
 	//
 	private final class LoadDataItemsBatchTask
 	implements Runnable {
 		//
-		private final LoadSvc<T> loadSvc;
+		private final W loadSvc;
 		//
-		private LoadDataItemsBatchTask(final LoadSvc<T> loadSvc) {
+		private LoadDataItemsBatchTask(final W loadSvc) {
 			this.loadSvc = loadSvc;
 		}
 		//
-		private void loadAndPassDataItems()
+		private void loadAndPassItems()
 		throws IOException {
 			List<T> frame = loadSvc.getProcessedItems();
 			if(frame == null) {
@@ -116,7 +116,7 @@ implements LoadClient<T> {
 				while(!currThread.isInterrupted()) {
 					try {
 						LockSupport.parkNanos(1);
-						loadAndPassDataItems();
+						loadAndPassItems();
 						failCount = 0; // reset
 					} catch(final IOException e) {
 						if(failCount < COUNT_LIMIT_RETRY) {
@@ -182,8 +182,8 @@ implements LoadClient<T> {
 	public LoadClientBase(
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
-		final DataItemSrc<T> itemSrc, final long maxCount,
-		final Map<String, LoadSvc<T>> remoteLoadMap
+		final ItemSrc<T> itemSrc, final long maxCount,
+		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		super(
 			rtConfig, reqConfig, addrs, connCountPerNode, threadCount,
@@ -198,7 +198,7 @@ implements LoadClient<T> {
 		this.loadSvcAddrs = new String[remoteLoadMap.size()];
 		remoteLoadMap.keySet().toArray(this.loadSvcAddrs);
 		////////////////////////////////////////////////////////////////////////////////////////////
-		for(final LoadSvc<T> nextLoadSvc : remoteLoadMap.values()) {
+		for(final W nextLoadSvc : remoteLoadMap.values()) {
 			mgmtTasks.add(new LoadDataItemsBatchTask(nextLoadSvc));
 		}
 		mgmtTasks.add(new InterruptOnCountLimitReachedTask(this));
@@ -227,7 +227,7 @@ implements LoadClient<T> {
 	@Override
 	protected void startActually() {
 		//
-		LoadSvc<T> nextLoadSvc;
+		W nextLoadSvc;
 		for(final String addr : loadSvcAddrs) {
 			nextLoadSvc = remoteLoadMap.get(addr);
 			try {
@@ -296,27 +296,27 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void setDataItemDst(final DataItemDst<T> itemDst)
+	public final void setItemDst(final ItemDst<T> itemDst)
 	throws RemoteException {
 		if(itemDst instanceof LoadClient) {
 			LOG.debug(Markers.MSG, "Consumer is a LoadClient instance");
 			// consumer is client which has the map of consumers
 			// this is necessary for the distributed chain/rampup scenarios
 			this.consumer = itemDst;
-			final Map<String, LoadSvc<T>> consumeMap = ((LoadClient<T>) itemDst)
+			final Map<String, W> consumeMap = ((LoadClient<T, W>) itemDst)
 				.getRemoteLoadMap();
 			for(final String addr : consumeMap.keySet()) {
-				remoteLoadMap.get(addr).setDataItemDst(consumeMap.get(addr));
+				remoteLoadMap.get(addr).setItemDst(consumeMap.get(addr));
 			}
 		} else if(itemDst instanceof LoadSvc) {
 			// single consumer for all these producers
-			final LoadSvc<T> loadSvc = (LoadSvc<T>) itemDst;
+			final W loadSvc = (W) itemDst;
 			LOG.debug(Markers.MSG, "Consumer is a load service");
 			for(final String addr : loadSvcAddrs) {
-				remoteLoadMap.get(addr).setDataItemDst(loadSvc);
+				remoteLoadMap.get(addr).setItemDst(loadSvc);
 			}
 		} else {
-			super.setDataItemDst(itemDst);
+			super.setItemDst(itemDst);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -387,7 +387,7 @@ implements LoadClient<T> {
 		@Override
 		public final void run() {
 			String loadSvcAddr;
-			LoadSvc<T> loadSvc;
+			W loadSvc;
 			int m = 0;
 			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
 				try {
@@ -454,7 +454,7 @@ implements LoadClient<T> {
 		} finally {
 			if(!remoteLoadMap.isEmpty()) {
 				LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
-				LoadSvc<T> nextLoadSvc;
+				W nextLoadSvc;
 				for(final String addr : remoteLoadMap.keySet()) {
 					//
 					try {
@@ -488,7 +488,7 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final Map<String, LoadSvc<T>> getRemoteLoadMap() {
+	public final Map<String, W> getRemoteLoadMap() {
 		return remoteLoadMap;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

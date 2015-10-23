@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 //
 //
 import java.io.IOException;
@@ -14,14 +14,14 @@ import java.util.concurrent.ThreadLocalRandom;
  Created by kurila on 24.07.15.
  */
 public final class NewDataItemSrc<T extends DataItem>
-implements DataItemSrc<T> {
+implements ItemSrc<T> {
 	//
 	private final Constructor<T> itemConstructor;
 	private final ContentSource contentSrc;
 	private final long minObjSize, maxObjSize, sizeRange;
 	private final float objSizeBias;
 	private final ThreadLocalRandom thrLocalRnd = ThreadLocalRandom.current();
-	private DataItem lastItem = null;
+	private T lastItem = null;
 	//
 	public NewDataItemSrc(
 		final Class<T> dataCls, final ContentSource contentSrc,
@@ -76,12 +76,12 @@ implements DataItemSrc<T> {
 	}
 	//
 	@Override
-	public DataItem getLastDataItem() {
+	public T getLastItem() {
 		return lastItem;
 	}
 	//
 	@Override
-	public void setLastDataItem(final T lastItem) {
+	public void setLastItem(final T lastItem) {
 		this.lastItem = lastItem;
 	}
 	/**

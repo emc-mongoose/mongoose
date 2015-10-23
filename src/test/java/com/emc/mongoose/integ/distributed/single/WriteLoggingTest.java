@@ -260,7 +260,7 @@ extends DistributedClientTestBase {
 	//
 	@Test
 	public void checkDataItemsAreAggregatedByClient() {
-		final File dataItemsFile = LogValidator.getDataItemsFile(RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue(dataItemsFile.exists());
 	}
 	//
@@ -272,7 +272,7 @@ extends DistributedClientTestBase {
 		int lineNum = 0;
 		try(
 			final BufferedReader in = Files.newBufferedReader(
-				LogValidator.getDataItemsFile(RUN_ID).toPath(), StandardCharsets.UTF_8
+				LogValidator.getItemsListFile(RUN_ID).toPath(), StandardCharsets.UTF_8
 			)
 		) {
 			while((nextLine = in.readLine()) != null) {

@@ -53,14 +53,11 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	@Override
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
-			final int ingestByteCount = ContentUtil.consumeQuietly(decoder, expectedContentSize);
-			if(ingestByteCount > 0) {
-				expectedContentSize -= ingestByteCount;
-			}
+			expectedContentSize -= ContentUtil.consumeQuietly(decoder, expectedContentSize);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					Markers.MSG, "Consumed next {}, {} left",
-					SizeUtil.formatSize(ingestByteCount), SizeUtil.formatSize(expectedContentSize)
+					Markers.MSG, "Consumed next batch of bytes, {} left",
+					SizeUtil.formatSize(expectedContentSize)
 				);
 			}
 		} catch(final Throwable e) {

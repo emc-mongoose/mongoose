@@ -3,8 +3,9 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
@@ -19,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 //
 /**
@@ -206,7 +208,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final String getUriPath(final T dataItem)
+	protected final String getDataUriPath(final T dataItem)
 	throws IllegalArgumentException {
 		if(uriSvcBaseContainerPath == null) {
 			LOG.warn(Markers.ERR, "Illegal URI template: <null>");
@@ -216,6 +218,11 @@ extends WSRequestConfigBase<T> {
 		}
 		applyObjectId(dataItem, null);
 		return uriSvcBaseContainerPath + getFilePathFor(dataItem);
+	}
+	@Override
+	protected String getContainerUriPath(final Container<T> container)
+	throws IllegalArgumentException, URISyntaxException {
+		return "/" + uriSvcBasePath + "/" + nameSpace + "/" + container.getName();
 	}
 	//
 	private Header headerAuthToken = null;
@@ -281,7 +288,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final DataItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
+	@SuppressWarnings("unchecked")
+	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
 		return new WSContainerItemSrc<>(container, addr, (Class<T>) BasicWSObject.class, maxCount);
 	}
 	//

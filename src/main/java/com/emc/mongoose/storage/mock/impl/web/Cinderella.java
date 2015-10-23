@@ -67,7 +67,8 @@ implements WSMock<T> {
 			rtConfig.getStorageMockCapacity(),
 			rtConfig.getStorageMockContainerCapacity(),
 			rtConfig.getStorageMockContainerCountLimit(),
-			rtConfig.getDataSrcFPath(),
+			rtConfig.getBatchSize(),
+			rtConfig.getItemSrcFPath(),
 			rtConfig.getLoadMetricsPeriodSec(),
 			rtConfig.getFlagServeJMX(),
 			rtConfig.getStorageMockMinConnLifeMilliSec(),
@@ -75,16 +76,16 @@ implements WSMock<T> {
 		);
 	}
 	//
+	@SuppressWarnings("unchecked")
 	public Cinderella(
 		final int headCount, final int ioThreadCount, final int portStart,
 		final int storageCapacity, final int containerCapacity, final int containerCountLimit,
-		final String dataSrcPath, final int metricsPeriodSec, final boolean jmxServeFlag,
-	    final int minConnLifeMilliSec, final int maxConnLifeMilliSec
+		final int batchSize, final String dataSrcPath, final int metricsPeriodSec,
+		final boolean jmxServeFlag, final int minConnLifeMilliSec, final int maxConnLifeMilliSec
 	) throws IOException {
 		super(
 			(Class<T>) BasicWSObjectMock.class, ContentSourceBase.getDefault(),
-			storageCapacity, containerCapacity, containerCountLimit,
-			headCount * ioThreadCount,
+			storageCapacity, containerCapacity, containerCountLimit, batchSize,
 			dataSrcPath, metricsPeriodSec, jmxServeFlag
 		);
 		this.portStart = portStart;
@@ -156,6 +157,7 @@ implements WSMock<T> {
 	}
 	//
 	@Override
+	@SuppressWarnings("unchecked")
 	protected final T newDataObject(final String id, final long offset, final long size) {
 		return (T) new BasicWSObjectMock(id, offset, size, 0, contentSrc);
 	}

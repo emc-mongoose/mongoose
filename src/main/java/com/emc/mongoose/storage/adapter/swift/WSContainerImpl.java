@@ -4,10 +4,10 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.GenericContainer;
+import com.emc.mongoose.core.api.data.model.DataItemContainer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
-import com.emc.mongoose.core.impl.data.model.GenericWSContainerBase;
+import com.emc.mongoose.core.impl.data.model.WSContainerBase;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 03.03.15.
  */
 public final class WSContainerImpl<T extends WSObject>
-extends GenericWSContainerBase<T>
+extends WSContainerBase<T>
 implements Container<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -46,7 +46,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_HEAD, null, GenericContainer.DEFAULT_PAGE_SIZE,
+				addr, WSRequestConfig.METHOD_HEAD, null, DataItemContainer.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
@@ -88,7 +88,7 @@ implements Container<T> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_PUT, null, GenericContainer.DEFAULT_PAGE_SIZE,
+				addr, WSRequestConfig.METHOD_PUT, null, DataItemContainer.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
@@ -129,7 +129,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_DELETE, null, GenericContainer.DEFAULT_PAGE_SIZE,
+				addr, WSRequestConfig.METHOD_DELETE, null, DataItemContainer.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
@@ -168,7 +168,7 @@ implements Container<T> {
 	public final void setVersioning(final String addr, final boolean enabledFlag) {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_POST, null, GenericContainer.DEFAULT_PAGE_SIZE,
+				addr, WSRequestConfig.METHOD_POST, null, DataItemContainer.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {

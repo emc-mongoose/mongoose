@@ -5,18 +5,18 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.model.DataItemDst;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemDst;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.builder.LoadBuilder;
+import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
-import com.emc.mongoose.util.shared.WSLoadBuilderFactory;
+import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +50,7 @@ implements Runnable {
 	//
 	public Chain(final RunTimeConfig rtConfig) {
 		this(
-			WSLoadBuilderFactory.getInstance(rtConfig),
+			(DataLoadBuilder) LoadBuilderFactory.getInstance(rtConfig),
 			rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit(),
 			rtConfig.getScenarioChainLoad(), rtConfig.getScenarioChainConcurrentFlag()
 		);
@@ -58,7 +58,7 @@ implements Runnable {
 	//
 	@SuppressWarnings("unchecked")
 	public Chain(
-		final LoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
+		final DataLoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
 		final String[] loadTypeSeq, final boolean isParallel
 	) {
 		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
@@ -73,7 +73,7 @@ implements Runnable {
 		} catch(final RemoteException e) {
 			throw new RuntimeException(e);
 		}
-		DataItemDst itemDst = null;
+		ItemDst itemDst = null;
 		IOTask.Type loadType;
 		for(int i = 0; i < loadTypeSeq.length; i ++) {
 			loadTypeStr = loadTypeSeq[i];
@@ -93,9 +93,9 @@ implements Runnable {
 						loadBuilder.useNoneItemSrc();
 					} else {
 						itemDst = new CSVFileItemDst(
-							reqConf.getDataItemClass(), reqConf.getContentSource()
+							reqConf.getItemClass(), reqConf.getContentSource()
 						);
-						loadBuilder.setItemSrc(itemDst.getDataItemSrc());
+						loadBuilder.setItemSrc(itemDst.getItemSrc());
 					}
 				}
 				// build the job
@@ -105,7 +105,7 @@ implements Runnable {
 					if(isParallel) {
 						itemDst = nextLoadJob;
 					}
-					prevLoadJob.setDataItemDst(itemDst);
+					prevLoadJob.setItemDst(itemDst);
 				}
 				// add the built job into the chain
 				loadJobSeq.add(nextLoadJob);
@@ -203,7 +203,7 @@ implements Runnable {
 				}
 				//
 				try {
-					final DataItemSrc itemSrc = nextLoadJob.getDataItemSrc();
+					final ItemSrc itemSrc = nextLoadJob.getItemSrc();
 					if(itemSrc instanceof FileDataItemSrc) {
 						((FileDataItemSrc) itemSrc).delete();
 					}

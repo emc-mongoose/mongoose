@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.api.io.req;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-common.jar
@@ -13,7 +13,7 @@ import java.io.Externalizable;
  Created by kurila on 29.09.14.
  Shared request configuration.
  */
-public interface RequestConfig<T extends DataItem>
+public interface RequestConfig<T extends Item>
 extends Externalizable, Cloneable, Closeable {
 	//
 	long serialVersionUID = 42L;
@@ -65,9 +65,11 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	DataItemSrc<T> getContainerListInput(final long maxCount, final String addr);
+	ItemSrc<T> getContainerListInput(final long maxCount, final String addr);
 	//
-	Class<T> getDataItemClass();
+	Class<T> getContainerClass();
+	//
+	Class<T> getItemClass();
 	//
 	void configureStorage(final String storageAddrs[])
 	throws IllegalStateException;

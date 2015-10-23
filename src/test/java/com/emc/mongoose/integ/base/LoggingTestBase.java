@@ -43,7 +43,7 @@ extends ConfiguredTestBase {
 		LogValidator.removeLogDirectory(runId);
 		FILE_LOG_PERF_SUM = LogValidator.getPerfSumFile(runId);
 		FILE_LOG_PERF_AVG = LogValidator.getPerfAvgFile(runId);
-		FILE_LOG_DATA_ITEMS = LogValidator.getDataItemsFile(runId);
+		FILE_LOG_DATA_ITEMS = LogValidator.getItemsListFile(runId);
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, runId);
 		RunTimeConfig.setContext(rtConfig);

@@ -1,18 +1,21 @@
 package com.emc.mongoose.core.impl.load.model;
-
+//
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.data.DataItem;
+//
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+//
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,14 +27,12 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 /**
  * Created by gusakk on 19.06.15.
  */
-public class BasicLoadState<T extends DataItem>
+public class BasicLoadState<T extends Item>
 implements LoadState<T> {
 	//
 	private final int loadNumber;
@@ -75,7 +76,7 @@ implements LoadState<T> {
 		return (counterResults >= maxCount) || (stateTimeMicroSec >= loadTimeMicroSec);
 	}
 	//
-	public static class Builder<T extends DataItem, U extends BasicLoadState<T>>
+	public static class Builder<T extends Item, U extends BasicLoadState<T>>
 	implements LoadState.Builder<T, U> {
 		//
 		private int loadNumber;
@@ -131,10 +132,10 @@ implements LoadState<T> {
 		//  if load states list is empty or file w/ load states doesn't exist, then init
 		//  map entry value w/ empty list
 		LoadExecutor.RESTORED_STATES_MAP.put(
-			rtConfig.getRunId(), new ArrayList<LoadState<? extends DataItem>>()
+			rtConfig.getRunId(), new ArrayList<LoadState<? extends Item>>()
 		);
 		if(isSavedStateOfRunExists(rtConfig.getRunId())) {
-			final List<LoadState<? extends DataItem>>
+			final List<LoadState<? extends Item>>
 				loadStates = getRunStateFromFile(rtConfig.getRunId(), fullStateFileName);
 			if(loadStates != null && !loadStates.isEmpty()) {
 				//  check if immutable params were changed for load executors
@@ -173,7 +174,7 @@ implements LoadState<T> {
 	}
 	//
 	@SuppressWarnings("unchecked")
-	private static List<LoadState<? extends DataItem>> getRunStateFromFile(
+	private static List<LoadState<? extends Item>> getRunStateFromFile(
 		final String runId, final String fileName
 	) {
 		try(final FileInputStream fis = new FileInputStream(fileName)) {
@@ -208,12 +209,12 @@ implements LoadState<T> {
 	}
 	//
 	@SuppressWarnings("unchecked")
-	public static <T extends DataItem> LoadState<T> findStateByLoadNumber(
+	public static <T extends Item> LoadState<T> findStateByLoadNumber(
 		final int loadNumber, final RunTimeConfig rtConfig
 	) {
 		final List<LoadState<?>>
 			loadStates = LoadExecutor.RESTORED_STATES_MAP.get(rtConfig.getRunId());
-		for(final LoadState<? extends DataItem> state : loadStates) {
+		for(final LoadState<? extends Item> state : loadStates) {
 			if(state.getLoadNumber() == loadNumber) {
 				return (LoadState<T>) state;
 			}

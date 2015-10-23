@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.ItemDst;
 //
 import com.emc.mongoose.core.impl.data.model.ListItemDst;
 //
@@ -53,29 +53,29 @@ extends StandaloneClientTestBase {
 					.setAPI("atmos")
 					.build()
 		) {
-			final DataItemDst<WSObject> writeOutput = new ListItemDst<>(BUFF_WRITE);
+			final ItemDst<WSObject> writeOutput = new ListItemDst<>(BUFF_WRITE);
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB")
 			);
-			final DataItemDst<WSObject> updateOutput0 = new ListItemDst<>(BUFF_UPDATE0);
+			final ItemDst<WSObject> updateOutput0 = new ListItemDst<>(BUFF_UPDATE0);
 			if(COUNT_WRITTEN > 0) {
 				COUNT_UPDATED0 = client.update(
-					writeOutput.getDataItemSrc(), updateOutput0, COUNT_UPDATED0, 10, 10
+					writeOutput.getItemSrc(), updateOutput0, COUNT_UPDATED0, 10, 10
 				);
 			} else {
 				throw new IllegalStateException("Failed to write");
 			}
 			if(COUNT_UPDATED0 > 0) {
-				COUNT_READ0 = client.read(updateOutput0.getDataItemSrc(), null, COUNT_UPDATED0, 10, true);
+				COUNT_READ0 = client.read(updateOutput0.getItemSrc(), null, COUNT_UPDATED0, 10, true);
 			} else {
 				throw new IllegalStateException("Failed to update the 1st time");
 			}
-			final DataItemDst<WSObject> updateOutput1 = new ListItemDst<>(BUFF_UPDATE0);
+			final ItemDst<WSObject> updateOutput1 = new ListItemDst<>(BUFF_UPDATE0);
 			COUNT_UPDATED1 = client.update(
-				writeOutput.getDataItemSrc(), updateOutput1, COUNT_UPDATED0, 10, 10
+				writeOutput.getItemSrc(), updateOutput1, COUNT_UPDATED0, 10, 10
 			);
 			if(COUNT_UPDATED1 > 0) {
-				COUNT_READ1 = client.read(updateOutput1.getDataItemSrc(), null, COUNT_UPDATED1, 10, true);
+				COUNT_READ1 = client.read(updateOutput1.getItemSrc(), null, COUNT_UPDATED1, 10, true);
 			} else {
 				throw new IllegalStateException("Failed to update the 2nd time");
 			}

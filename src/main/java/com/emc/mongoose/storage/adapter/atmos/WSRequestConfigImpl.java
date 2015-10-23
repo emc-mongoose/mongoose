@@ -1,8 +1,9 @@
 package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
@@ -88,7 +89,7 @@ extends WSRequestConfigBase<T> {
 	public final HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
-			getHttpMethod(), getUriPath(obj)
+			getHttpMethod(), getDataUriPath(obj)
 		);
 		try {
 			applyHostHeader(request, nodeAddr);
@@ -112,6 +113,13 @@ extends WSRequestConfigBase<T> {
 		}
 		applyHeadersFinally(request);
 		return request;
+	}
+	//
+	@Override
+	public final HttpEntityEnclosingRequest createContainerRequest(
+		final Container<T> container, final String nodeAddr
+	) throws URISyntaxException {
+		throw new IllegalStateException("No container request is possible using Atmos API");
 	}
 	//
 	@Override
@@ -223,7 +231,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final DataItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
+	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
 		// TODO implement sub tenant listing producer
 		return null;
 	}
@@ -250,7 +258,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final String getUriPath(final T dataItem) {
+	protected final String getDataUriPath(final T dataItem) {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
@@ -260,11 +268,17 @@ extends WSRequestConfigBase<T> {
 			return uriBasePath;
 		}
 	}
+	@Override
+	protected final String getContainerUriPath(final Container<T> container)
+	throws IllegalArgumentException, URISyntaxException {
+		throw new IllegalStateException("No container request is possible using Atmos API");
+	}
 	//
 	private final static ThreadLocal<StringBuilder>
 		THR_LOC_METADATA_STR_BUILDER = new ThreadLocal<>();
 	//
 	@Override
+	@SuppressWarnings("unchecked")
 	protected final void applyMetaDataHeaders(final HttpEntityEnclosingRequest request) {
 		//
 		StringBuilder md = THR_LOC_METADATA_STR_BUILDER.get();

@@ -7,12 +7,12 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataItemDst;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.model.ItemDst;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
-import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
@@ -22,7 +22,7 @@ import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
-import com.emc.mongoose.core.impl.load.model.BasicDataItemProducer;
+import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
 //
 import org.apache.commons.lang.StringUtils;
 //
@@ -50,8 +50,8 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 15.10.14.
  */
-public abstract class LoadExecutorBase<T extends DataItem>
-extends BasicDataItemProducer<T>
+public abstract class LoadExecutorBase<T extends Item>
+extends BasicItemProducer<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -65,7 +65,7 @@ implements LoadExecutor<T> {
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
-	protected volatile DataItemDst<T> consumer = null;
+	protected volatile ItemDst<T> consumer = null;
 	//
 	protected final long maxCount;
 	protected final int totalConnCount;
@@ -184,7 +184,7 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
-		final DataItemSrc<T> itemSrc, final long maxCount,
+		final ItemSrc<T> itemSrc, final long maxCount,
 		final int instanceNum, final String name
 	) {
 		super(
@@ -193,7 +193,7 @@ implements LoadExecutor<T> {
 			rtConfig.isShuffleItemsEnabled()
 		);
 		try {
-			super.setDataItemDst(this);
+			super.setItemDst(this);
 		} catch(final RemoteException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to set \"{}\" as a consumer of \"{}\" producer",
@@ -249,7 +249,7 @@ implements LoadExecutor<T> {
 	private LoadExecutorBase(
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
-		final DataItemSrc<T> itemSrc, final long maxCount, final int instanceNum
+		final ItemSrc<T> itemSrc, final long maxCount, final int instanceNum
 	) {
 		this(
 			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
@@ -265,7 +265,7 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
-		final DataItemSrc<T> itemSrc, final long maxCount
+		final ItemSrc<T> itemSrc, final long maxCount
 	) {
 		this(
 			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
@@ -356,7 +356,7 @@ implements LoadExecutor<T> {
 		} else {
 			//
 			if(counterResults.get() > 0) {
-				setLastDataItem(loadedPrevState.getLastDataItem());
+				setLastItem(loadedPrevState.getLastDataItem());
 				setSkipCount(counterResults.get());
 				skipIfNecessary();
 			}
@@ -457,7 +457,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public void setDataItemDst(final DataItemDst<T> itemDst)
+	public void setItemDst(final ItemDst<T> itemDst)
 	throws RemoteException {
 		this.consumer = itemDst;
 		LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemDst + "\"");
@@ -583,17 +583,17 @@ implements LoadExecutor<T> {
 		return put(items, 0, items.size());
 	}
 	//
-	protected abstract IOTask<T> getIOTask(final T dataItem, final String nextNodeAddr);
+	protected abstract IOTask<T> getIOTask(final T item, final String nextNodeAddr);
 	//
 	protected int getIOTasks(
-		final List<T> dataItems, final int from, final int to,
+		final List<T> items, final int from, final int to,
 		final List<IOTask<T>> dstTaskBuff, final String nextNodeAddr
 	) {
-		for(final T dataItem : dataItems) {
-			if(dataItem == null) {
+		for(final T item : items) {
+			if(item == null) {
 				break;
 			} else {
-				dstTaskBuff.add(getIOTask(dataItem, nextNodeAddr));
+				dstTaskBuff.add(getIOTask(item, nextNodeAddr));
 			}
 		}
 		return to - from;
@@ -628,7 +628,7 @@ implements LoadExecutor<T> {
 			return;
 		}
 		//
-		final T dataItem = ioTask.getDataItem();
+		final T dataItem = ioTask.getItem();
 		final IOTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
 		final long
@@ -689,7 +689,7 @@ implements LoadExecutor<T> {
 			int reqDuration, respLatency;
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
-				dataItem = ioTask.getDataItem();
+				dataItem = ioTask.getItem();
 				status = ioTask.getStatus();
 				countBytesDone = ioTask.getCountBytesDone();
 				reqTimeStart = ioTask.getReqTimeStart();
@@ -758,12 +758,11 @@ implements LoadExecutor<T> {
 	};
 	//
 	protected void logTaskTrace(
-		final T dataItem, final IOTask.Status status, final String nodeAddr,
+		final T item, final IOTask.Status status, final String nodeAddr,
 		final long countBytesDone, final long reqTimeStart,
 		final int reqDuration, final int respLatency
 	) {
 		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
-			final String dataItemId = Long.toHexString(dataItem.getOffset());
 			StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
 			if(strBuilder == null) {
 				strBuilder = new StringBuilder();
@@ -775,7 +774,7 @@ implements LoadExecutor<T> {
 				Markers.PERF_TRACE,
 				strBuilder
 					.append(nodeAddr).append(',')
-					.append(dataItemId).append(',')
+					.append(item.getName()).append(',')
 					.append(countBytesDone).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')

@@ -8,9 +8,11 @@ import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.LoadSvc;
+import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 //
+import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 /**
@@ -19,7 +21,7 @@ import org.junit.BeforeClass;
 public abstract class DistributedTestBase
 extends WSMockTestBase {
 	//
-	protected static LoadBuilderSvc<WSObject, WSLoadSvc<WSObject>> LOAD_BUILDER_SVC;
+	protected static LoadBuilderSvc LOAD_BUILDER_SVC;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -29,7 +31,7 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, ServiceUtil.getHostAddr());
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_SERVER);
 		ServiceUtil.init();
-		LOAD_BUILDER_SVC = new BasicWSLoadBuilderSvc<>(rtConfig);
+		LOAD_BUILDER_SVC = (LoadBuilderSvc) LoadBuilderFactory.getInstance(rtConfig);
 		LOAD_BUILDER_SVC.start();
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_CLIENT);
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, false);

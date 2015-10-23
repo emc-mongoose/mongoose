@@ -4,8 +4,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  The extension of load executor which is able to sustain the rate (throughput, item/sec) not higher
  than the specified limit.
  */
-public abstract class LimitedRateLoadExecutorBase<T extends DataItem>
+public abstract class LimitedRateLoadExecutorBase<T extends Item>
 extends LoadExecutorBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -32,7 +32,7 @@ extends LoadExecutorBase<T> {
 	protected LimitedRateLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount,
-		final DataItemSrc<T> itemSrc, final long maxCount,
+		final ItemSrc<T> itemSrc, final long maxCount,
 		final int manualTaskSleepMicroSecs, final float rateLimit
 	) throws ClassCastException {
 		super(runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount);
