@@ -5,7 +5,6 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-import com.emc.mongoose.integ.base.ConfiguredTestBase;
 import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -75,7 +74,7 @@ extends WSMockTestBase {
 		LoggingTestBase.setUpClass();
 		//
 		rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH,
+		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_FILE,
 			LogValidator.getDataItemsFile(CREATE_RUN_ID).getPath());
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD,
 			TestConstants.LOAD_READ.toLowerCase());

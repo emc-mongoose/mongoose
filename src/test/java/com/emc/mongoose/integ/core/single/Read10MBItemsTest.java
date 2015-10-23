@@ -74,7 +74,7 @@ extends WSMockTestBase {
 		LoggingTestBase.setUpClass();
 		//
 		rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH,
+		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_FILE,
 			LogValidator.getDataItemsFile(CREATE_RUN_ID).getPath());
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);

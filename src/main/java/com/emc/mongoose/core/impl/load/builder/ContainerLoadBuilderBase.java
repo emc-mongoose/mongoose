@@ -39,7 +39,7 @@ implements ContainerLoadBuilder<T, C, U>{
 	public ContainerLoadBuilderBase<T, C, U> setProperties(final RunTimeConfig rtConfig) {
 		super.setProperties(rtConfig);
 		//
-		final String listFilePathStr = rtConfig.getItemSrcFPath();
+		final String listFilePathStr = rtConfig.getItemSrcFile();
 		if (itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(

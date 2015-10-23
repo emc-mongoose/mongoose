@@ -29,9 +29,6 @@ public interface Constants {
 	String API_TYPE_ATMOS = "atmos";
 	String API_TYPE_SWIFT = "swift";
 	//
-	String LOAD_ITEMS_CLASS_OBJECT = "object";
-	String LOAD_ITEMS_CLASS_CONTAINER = "container";
-	//
 	String DIR_WEBAPP = "webapp";
 	String DIR_WEBINF = "WEB-INF";
 	//

@@ -185,7 +185,7 @@ implements LoadBuilderClient<T, W, U> {
 		);
 		//
 		try {
-			final String listFile = rtConfig.getItemSrcFPath();
+			final String listFile = rtConfig.getItemSrcFile();
 			if (itemsFileExists(listFile)) {
 				setItemSrc(
 					new CSVFileItemSrc<>(
