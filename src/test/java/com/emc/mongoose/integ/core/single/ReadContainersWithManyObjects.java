@@ -29,7 +29,7 @@ public class ReadContainersWithManyObjects
 extends WSMockTestBase {
 	//
 	private static final int
-		LIMIT_COUNT_OBJ = 100000,
+		LIMIT_COUNT_OBJ = 10000,
 		LIMIT_COUNT_CONTAINER = 100;
 	//
 	private static String RUN_ID_BASE = ReadContainersWithManyObjects.class.getCanonicalName();
