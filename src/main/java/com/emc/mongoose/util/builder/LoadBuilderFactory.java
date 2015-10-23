@@ -92,8 +92,8 @@ public class LoadBuilderFactory {
 	//
 	public static void startSvcBuilders(final RunTimeConfig rtConfig) {
 		try {
-			final WSDataLoadBuilderSvc<WSObject, WSDataLoadSvc<WSObject>>
-				loadBuilderSvc = new BasicWSDataLoadBuilderSvc<>(rtConfig);
+			final WSDataLoadBuilderSvc loadBuilderSvc =
+				new BasicWSDataLoadBuilderSvc(rtConfig);
 			final WSContainerLoadBuilderSvc containerBuilderSvc =
 				new BasicWSContainerLoadBuilderSvc(rtConfig);
 			//
@@ -102,8 +102,10 @@ public class LoadBuilderFactory {
 			//
 			loadBuilderSvc.await();
 			containerBuilderSvc.await();
-		} catch (final Exception e) {
-			e.printStackTrace();
+		} catch (final IOException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Load builder service failure");
+		} catch (final InterruptedException e) {
+			LOG.debug(Markers.MSG, "Interrupted load builder service");
 		}
 	}
 }
