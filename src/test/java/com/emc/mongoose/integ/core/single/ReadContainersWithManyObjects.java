@@ -25,20 +25,20 @@ import java.util.regex.Pattern;
 /**
  Created by andrey on 23.10.15.
  */
-public class WriteManyObjectsToManyContainersTest
+public class ReadContainersWithManyObjects
 extends WSMockTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	private static final int
-		LIMIT_COUNT_OBJ = 10000,
-		LIMIT_COUNT_CONTAINER = 100;
+		LIMIT_COUNT_OBJ = 200000,
+		LIMIT_COUNT_CONTAINER = 50;
 	//
-	private static String RUN_ID_BASE = WriteManyObjectsToManyContainersTest.class.getCanonicalName();
+	private static String RUN_ID_BASE = ReadContainersWithManyObjects.class.getCanonicalName();
 	private static int countContainerCreated = 0;
 	//
 	@BeforeClass
 	public static void setUpClass()
-	throws Exception {
+		throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE);
 		System.setProperty(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, Integer.toString(LIMIT_COUNT_OBJ));
@@ -48,7 +48,7 @@ extends WSMockTestBase {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
-		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "10");
+		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "25");
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
@@ -64,34 +64,40 @@ extends WSMockTestBase {
 		//
 		String nextContainer, nextRunId;
 		rtConfig.set(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "data");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_OBJ));
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT_OBJ);
 		RunTimeConfig.setContext(rtConfig);
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(containerListFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			try(
-				final BufferingOutputStream
-					stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
-			) {
-				do {
-					nextContainer = in.readLine();
-					nextRunId = RUN_ID_BASE + "_" + nextContainer;
-					if(nextContainer == null) {
-						break;
-					} else {
-						countContainerCreated++;
-						rtConfig.set(RunTimeConfig.KEY_RUN_ID, nextRunId);
-						rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, nextContainer);
-						RunTimeConfig.setContext(rtConfig);
-						new ScriptMockRunner().run();
-						TimeUnit.SECONDS.sleep(1);
-					}
-				} while(true);
-				TimeUnit.SECONDS.sleep(1);
-				STD_OUTPUT_STREAM = stdOutStream;
-				RunIdFileManager.closeAll(nextRunId);
-			}
+			do {
+				nextContainer = in.readLine();
+				if(nextContainer == null) {
+					break;
+				} else {
+					countContainerCreated++;
+					rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, nextContainer);
+					RunTimeConfig.setContext(rtConfig);
+					new ScriptMockRunner().run();
+					TimeUnit.SECONDS.sleep(1);
+				}
+			} while(true);
+		}
+		//
+		rtConfig.set(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
+		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH, containerListFile.toString());
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, "read");
+		rtConfig.set(RunTimeConfig.KEY_READ_CONNS, "25");
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);
+		RunTimeConfig.setContext(rtConfig);
+		//
+		try(
+			final BufferingOutputStream
+				outStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		) {
+			new ScriptMockRunner().run();
+			TimeUnit.SECONDS.sleep(1);
+			STD_OUTPUT_STREAM = outStream;
 		}
 		//
 		RunIdFileManager.flushAll();
@@ -99,7 +105,7 @@ extends WSMockTestBase {
 	//
 	@AfterClass
 	public  static void tearDownClass()
-	throws Exception {
+		throws Exception {
 		WSMockTestBase.tearDownClass();
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1000000");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, "1000000");
@@ -107,7 +113,7 @@ extends WSMockTestBase {
 	//
 	@Test
 	public final void checkCreatedContainerCount()
-	throws Exception {
+		throws Exception {
 		Assert.assertEquals(LIMIT_COUNT_CONTAINER, countContainerCreated);
 	}
 	//
