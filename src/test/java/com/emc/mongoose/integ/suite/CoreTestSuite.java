@@ -42,8 +42,8 @@ import org.junit.runners.Suite;
 	WriteFewContainersTest.class,
 	WriteManyContainersConcurrentlyTest.class,
 	ReadFewContainersTest.class,
-	DeleteManyContainersConcurrentlyTest.class,*/
-	WriteManyObjectsToFewContainersTest.class,
+	DeleteManyContainersConcurrentlyTest.class,
+	WriteManyObjectsToFewContainersTest.class,*/
 	ReadContainersWithManyObjects.class,
 })
 public class CoreTestSuite {}

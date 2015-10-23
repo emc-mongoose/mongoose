@@ -63,6 +63,7 @@ extends WSMockTestBase {
 		Assert.assertTrue("items list file doesn't exist", containerListFile.exists());
 		//
 		String nextContainer, nextRunId;
+		rtConfig.set(RunTimeConfig.KEY_RUN_ID, "Write");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "data");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT_OBJ);
 		RunTimeConfig.setContext(rtConfig);
@@ -84,6 +85,7 @@ extends WSMockTestBase {
 			} while(true);
 		}
 		//
+		rtConfig.set(RunTimeConfig.KEY_RUN_ID, "Read");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
 		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH, containerListFile.toString());
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, "read");
