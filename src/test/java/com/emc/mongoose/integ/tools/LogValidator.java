@@ -60,7 +60,7 @@ public final class LogValidator {
 
 	public static File getDataItemsFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, runID, TestConstants.DATA_ITEMS_FILE_NAME).toString());
+			Constants.DIR_LOG, runID, TestConstants.ITEMS_FILE_NAME).toString());
 	}
 
 	public static File getErrorsFile(final String runID){
