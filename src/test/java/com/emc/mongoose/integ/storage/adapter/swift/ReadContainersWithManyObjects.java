@@ -1,10 +1,8 @@
-package com.emc.mongoose.integ.core.single;
+package com.emc.mongoose.integ.storage.adapter.swift;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.WSMockTestBase;
-import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
-import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
@@ -37,7 +35,8 @@ extends WSMockTestBase {
 	//
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
+	throws Exception {
+		System.setProperty(RunTimeConfig.KEY_API_NAME, "swift");
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE);
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, Integer.toString(LIMIT_COUNT_OBJ));
@@ -76,7 +75,7 @@ extends WSMockTestBase {
 					break;
 				} else {
 					countContainerCreated++;
-					rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, nextContainer);
+					rtConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, nextContainer);
 					RunTimeConfig.setContext(rtConfig);
 					new ScriptMockRunner().run();
 					TimeUnit.SECONDS.sleep(1);
@@ -140,6 +139,33 @@ extends WSMockTestBase {
 				}
 			}
 		}
-
+	}
+	//
+	@Test
+	public final void checkReadContainerPerfTraceLogs()
+	throws Exception {
+		final File perfTraceFile = LogValidator.getPerfTraceFile(RUN_ID_BASE + "Read");
+		try(
+			final BufferedReader in = Files.newBufferedReader(
+				perfTraceFile.toPath(), StandardCharsets.UTF_8
+			)
+		) {
+			boolean firstRow = true;
+			//
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			for(final CSVRecord nextRec : recIter) {
+				if(firstRow) {
+					firstRow = false;
+				} else {
+					Assert.assertTrue(
+						"Not related to read perf trace log found", nextRec.get(0).contains("Read")
+					);
+					Assert.assertTrue(
+						"Size of the read content is not more than 0",
+						Long.parseLong(nextRec.get(3)) > 0
+					);
+				}
+			}
+		}
 	}
 }

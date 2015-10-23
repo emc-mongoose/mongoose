@@ -1,9 +1,10 @@
-package com.emc.mongoose.integ.core.single;
-//
+package com.emc.mongoose.integ.distributed.single;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
+import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
+import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -32,26 +33,42 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.10.15.
  */
-public class WriteFewContainersTest
-extends WSMockTestBase {
+public class ReadFewBucketsTest
+extends DistributedLoadBuilderTestBase  {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
 	private static final int LIMIT_COUNT = 10;
-	private static String RUN_ID = WriteFewContainersTest.class.getCanonicalName();
+	private static String RUN_ID = ReadFewBucketsTest.class.getCanonicalName();
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID + "Write");
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
-		WSMockTestBase.setUpClass();
+		DistributedLoadBuilderTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
+		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		//
+		new ScriptMockRunner().run();
+		//  Wait for "Scenario end" message
+		TimeUnit.SECONDS.sleep(1);
+		RunIdFileManager.flushAll();
+		//
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		LoggingTestBase.setUpClass();
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
+		rtConfig.set(
+			RunTimeConfig.KEY_ITEM_SRC_FILE,
+			LogValidator.getItemsListFile(RUN_ID + "Write").getPath()
+		);
+		RunTimeConfig.setContext(rtConfig);
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
 		try(
@@ -71,7 +88,7 @@ extends WSMockTestBase {
 	@AfterClass
 	public  static void tearDownClass()
 	throws Exception {
-		WSMockTestBase.tearDownClass();
+		DistributedLoadBuilderTestBase.tearDownClass();
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1000000");
 	}
 
@@ -199,7 +216,7 @@ extends WSMockTestBase {
 	}
 
 	@Test
-	public void shouldReportCorrectWrittenCountToSummaryLogFile()
+	public void shouldReportCorrectCountToSummaryLogFile()
 	throws Exception {
 		//  Read perf.summary file
 		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);

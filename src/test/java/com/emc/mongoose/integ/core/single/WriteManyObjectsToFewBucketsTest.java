@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 /**
  Created by andrey on 23.10.15.
  */
-public class WriteManyObjectsToFewContainersTest
+public class WriteManyObjectsToFewBucketsTest
 extends WSMockTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
@@ -33,7 +33,7 @@ extends WSMockTestBase {
 		LIMIT_COUNT_OBJ = 2000,
 		LIMIT_COUNT_CONTAINER = 50;
 	//
-	private static String RUN_ID_BASE = ReadContainersWithManyObjects.class.getCanonicalName();
+	private static String RUN_ID_BASE = ReadBucketsWithManyObjects.class.getCanonicalName();
 	private static int countContainerCreated = 0;
 	//
 	@BeforeClass

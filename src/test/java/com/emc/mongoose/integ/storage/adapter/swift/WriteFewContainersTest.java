@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.core.single;
+package com.emc.mongoose.integ.storage.adapter.swift;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -32,16 +32,17 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.10.15.
  */
-public class WriteManyContainersConcurrentlyTest
+public class WriteFewContainersTest
 extends WSMockTestBase {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static final int LIMIT_COUNT = 1000000;
-	private static String RUN_ID = WriteManyContainersConcurrentlyTest.class.getCanonicalName();
+	private static final int LIMIT_COUNT = 10;
+	private static String RUN_ID = WriteFewContainersTest.class.getCanonicalName();
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		System.setProperty(RunTimeConfig.KEY_API_NAME, "swift");
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
@@ -49,7 +50,6 @@ extends WSMockTestBase {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
-		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "100");
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
@@ -249,8 +249,7 @@ extends WSMockTestBase {
 			}
 			//  Check that there are 10 lines in data.items.csv file
 			Assert.assertEquals(
-				"Not correct information about created data items",
-				LIMIT_COUNT, countDataItems, LIMIT_COUNT / 1000
+				"Not correct information about created data items", LIMIT_COUNT, countDataItems
 			);
 		}
 	}

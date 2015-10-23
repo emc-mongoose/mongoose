@@ -1,10 +1,9 @@
-package com.emc.mongoose.integ.core.single;
+package com.emc.mongoose.integ.storage.adapter.swift;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -33,17 +32,18 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.10.15.
  */
-public class DeleteManyContainersConcurrentlyTest
+public class WriteManyContainersConcurrentlyTest
 extends WSMockTestBase {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static final int LIMIT_COUNT = 100000;
-	private static String RUN_ID = DeleteManyContainersConcurrentlyTest.class.getCanonicalName();
+	private static final int LIMIT_COUNT = 1000000;
+	private static String RUN_ID = WriteManyContainersConcurrentlyTest.class.getCanonicalName();
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID + "Write");
+		System.setProperty(RunTimeConfig.KEY_API_NAME, "swift");
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
 		WSMockTestBase.setUpClass();
@@ -54,21 +54,6 @@ extends WSMockTestBase {
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
-		new ScriptMockRunner().run();
-		//  Wait for "Scenario end" message
-		TimeUnit.SECONDS.sleep(5);
-		RunIdFileManager.flushAll();
-		//
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		LoggingTestBase.setUpClass();
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_DELETE);
-		rtConfig.set(
-			RunTimeConfig.KEY_ITEM_SRC_FILE,
-			LogValidator.getItemsListFile(RUN_ID + "Write").getPath()
-		);
-		RunTimeConfig.setContext(rtConfig);
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
 		try(
@@ -141,6 +126,12 @@ extends WSMockTestBase {
 			start += lineOffset;
 		}
 		for (final String confParam : params) {
+			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
+				Assert.assertTrue(
+					"Information about limit count in configuration table is wrong",
+					confParam.contains(String.valueOf(LIMIT_COUNT))
+				);
+			}
 			if (confParam.contains(RunTimeConfig.KEY_STORAGE_ADDRS)) {
 				Assert.assertTrue(
 					"Information about storage address in configuration table is wrong",
@@ -210,7 +201,7 @@ extends WSMockTestBase {
 	}
 
 	@Test
-	public void shouldReportCorrectCountToSummaryLogFile()
+	public void shouldReportCorrectWrittenCountToSummaryLogFile()
 	throws Exception {
 		//  Read perf.summary file
 		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);

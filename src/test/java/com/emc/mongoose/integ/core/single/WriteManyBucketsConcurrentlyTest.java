@@ -1,9 +1,9 @@
 package com.emc.mongoose.integ.core.single;
+//
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -32,41 +32,27 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.10.15.
  */
-public class ReadFewContainersTest {
+public class WriteManyBucketsConcurrentlyTest
+extends WSMockTestBase {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static final int LIMIT_COUNT = 10;
-	private static String RUN_ID = ReadFewContainersTest.class.getCanonicalName();
+	private static final int LIMIT_COUNT = 1000000;
+	private static String RUN_ID = WriteManyBucketsConcurrentlyTest.class.getCanonicalName();
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID + "Write");
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
+		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "100");
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
-		//
-		new ScriptMockRunner().run();
-		//  Wait for "Scenario end" message
-		TimeUnit.SECONDS.sleep(1);
-		RunIdFileManager.flushAll();
-		//
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		LoggingTestBase.setUpClass();
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
-		rtConfig.set(
-			RunTimeConfig.KEY_ITEM_SRC_FILE,
-			LogValidator.getItemsListFile(RUN_ID + "Write").getPath()
-		);
-		RunTimeConfig.setContext(rtConfig);
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
 		try(
@@ -214,7 +200,7 @@ public class ReadFewContainersTest {
 	}
 
 	@Test
-	public void shouldReportCorrectCountToSummaryLogFile()
+	public void shouldReportCorrectWrittenCountToSummaryLogFile()
 	throws Exception {
 		//  Read perf.summary file
 		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
@@ -263,7 +249,8 @@ public class ReadFewContainersTest {
 			}
 			//  Check that there are 10 lines in data.items.csv file
 			Assert.assertEquals(
-				"Not correct information about created data items", LIMIT_COUNT, countDataItems
+				"Not correct information about created data items",
+				LIMIT_COUNT, countDataItems, LIMIT_COUNT / 1000
 			);
 		}
 	}
