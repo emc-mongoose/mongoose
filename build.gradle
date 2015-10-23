@@ -1038,7 +1038,8 @@ task integTest(type: Test, dependsOn: dist) {
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
-	jvmArgs '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
+	jvmArgs '-Xmx4g -Xms4g -XX:+HeapDumpOnOutOfMemoryError -Djava.security.policy=file:' +
+		new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
