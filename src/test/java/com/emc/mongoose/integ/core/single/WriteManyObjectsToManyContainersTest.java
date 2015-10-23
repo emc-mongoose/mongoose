@@ -42,6 +42,7 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, Integer.toString(LIMIT_COUNT_OBJ));
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, Integer.toString(LIMIT_COUNT_CONTAINER));
+		System.setProperty(RunTimeConfig.KEY_DATA_SIZE, "4KB");
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_CONTAINER));
@@ -62,7 +63,6 @@ extends WSMockTestBase {
 		//
 		String nextContainer;
 		rtConfig.set(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "data");
-		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE, "8KB");
 		RunTimeConfig.setContext(rtConfig);
 		try(
 			final BufferedReader
