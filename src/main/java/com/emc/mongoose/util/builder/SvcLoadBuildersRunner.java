@@ -21,18 +21,23 @@ public class SvcLoadBuildersRunner {
 	private static final Logger LOG = org.apache.logging.log4j.LogManager.getLogger();
 	//
 	public static void startSvcLoadBuilders(final List<LoadBuilderSvc> services) {
-		//
 		try {
-			for (final LoadBuilderSvc service : services) {
+			for(final LoadBuilderSvc service : services) {
 				service.start();
 			}
-			//
-			for (final LoadBuilderSvc service : services) {
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Load builder service failure");
+		}
+	}
+	//
+	public static void awaitSvcLoadBuilders(final List<LoadBuilderSvc> services) {
+		try {
+			for(final LoadBuilderSvc service : services) {
 				service.await();
 			}
-		} catch (final IOException e) {
+		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Load builder service failure");
-		} catch (final InterruptedException e) {
+		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted load builder service");
 		}
 	}
