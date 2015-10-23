@@ -30,8 +30,8 @@ extends WSMockTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	private static final int
-		LIMIT_COUNT_OBJ = 100,
-		LIMIT_COUNT_CONTAINER = 100;
+		LIMIT_COUNT_OBJ = 200,
+		LIMIT_COUNT_CONTAINER = 50;
 	//
 	private static String RUN_ID_BASE = WriteManyObjectsToManyContainersTest.class.getCanonicalName();
 	private static int countContainerCreated = 0;
