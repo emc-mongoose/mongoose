@@ -23,6 +23,7 @@ import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
+import com.emc.mongoose.util.builder.SvcLoadBuildersRunner;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
@@ -173,24 +174,20 @@ implements Runnable {
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		ServiceUtil.init();
 		//
+		SvcLoadBuildersRunner.startSvcLoadBuilders(
+			SvcLoadBuildersRunner.getSvcBuilders(rtConfig)
+		);
+		rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_MONITOR, 1299);
 		try(
-			final LoadBuilderSvc loadSvcBuilder = (LoadBuilderSvc) LoadBuilderFactory
-				.getInstance(rtConfig);
+			final StorageClient<WSObject> client = clientBuilder
+				.setClientMode(new String[] {ServiceUtil.getHostAddr()})
+				.build()
 		) {
-			loadSvcBuilder.start();
-			TimeUnit.SECONDS.sleep(1);
-			rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_MONITOR, 1299);
-			try(
-				final StorageClient<WSObject> client = clientBuilder
-					.setClientMode(new String[] {ServiceUtil.getHostAddr()})
-					.build()
-			) {
-				final Thread sanityThread2 = new Thread(new Sanity(client), "sanityDistributed");
-				sanityThread2.start();
-				LOG.info(Markers.MSG, "Distributed sanity started");
-				sanityThread2.join();
-				LOG.info(Markers.MSG, "Distributed sanity finished");
-			}
+			final Thread sanityThread2 = new Thread(new Sanity(client), "sanityDistributed");
+			sanityThread2.start();
+			LOG.info(Markers.MSG, "Distributed sanity started");
+			sanityThread2.join();
+			LOG.info(Markers.MSG, "Distributed sanity finished");
 		}
 		//
 		ServiceUtil.shutdown();

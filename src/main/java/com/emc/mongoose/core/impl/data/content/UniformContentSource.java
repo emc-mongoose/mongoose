@@ -27,8 +27,8 @@ implements ContentSource {
 	public UniformContentSource()
 	throws NumberFormatException {
 		this(
-			Long.parseLong(RunTimeConfig.getContext().getDataSrcRingSeed(), 0x10),
-			(int) RunTimeConfig.getContext().getDataSrcRingSize()
+			Long.parseLong(RunTimeConfig.getContext().getDataRingSeed(), 0x10),
+			(int) RunTimeConfig.getContext().getDataRingSize()
 		);
 	}
 	//

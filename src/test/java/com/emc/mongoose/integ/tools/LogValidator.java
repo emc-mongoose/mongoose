@@ -60,7 +60,7 @@ public final class LogValidator {
 
 	public static File getItemsListFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, runID, TestConstants.DATA_ITEMS_FILE_NAME).toString());
+			Constants.DIR_LOG, runID, TestConstants.ITEMS_FILE_NAME).toString());
 	}
 
 	public static File getErrorsFile(final String runID){
@@ -334,8 +334,8 @@ public final class LogValidator {
 			if (firstRow) {
 				Assert.assertEquals("Thread", nextRec.get(0));
 				Assert.assertEquals("TargetNode", nextRec.get(1));
-				Assert.assertEquals("DataItemId", nextRec.get(2));
-				Assert.assertEquals("DataItemSize", nextRec.get(3));
+				Assert.assertEquals("ItemId", nextRec.get(2));
+				Assert.assertEquals("ItemSize", nextRec.get(3));
 				Assert.assertEquals("StatusCode", nextRec.get(4));
 				Assert.assertEquals("ReqTimeStart[us]", nextRec.get(5));
 				Assert.assertEquals("Latency[us]", nextRec.get(6));

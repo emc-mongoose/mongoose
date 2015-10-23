@@ -3,29 +3,14 @@ package com.emc.mongoose.util.builder;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
-import com.emc.mongoose.core.api.load.builder.WSDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-//
-//
-//
-import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
-import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
-import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSContainerLoadBuilderSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 import org.apache.commons.lang.WordUtils;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.IOException;
+//
 import java.lang.reflect.Constructor;
 
 /**
@@ -47,10 +32,25 @@ public class LoadBuilderFactory {
 	public static <T extends Item, U extends LoadExecutor<T>> LoadBuilder<T, U> getInstance(
 		final RunTimeConfig rtConfig
 	) {
-		final String runMode = rtConfig.getRunMode();
-		final String apiName = rtConfig.getApiName();
-		//
-		String itemClassName = WordUtils.capitalize(rtConfig.getLoadItemClass());
+		LoadBuilder loadBuilderInstance;
+		try {
+			final Class loadBuilderImplClass = getLoadBuilderClass(
+				rtConfig.getRunMode(), rtConfig.getApiName(), rtConfig.getLoadItemClass()
+			);
+			final Constructor constructor = loadBuilderImplClass.getConstructor(RunTimeConfig.class);
+			loadBuilderInstance = (LoadBuilder) constructor.newInstance(rtConfig);
+		} catch(final Exception e) {
+			e.printStackTrace(System.out);
+			throw new RuntimeException(e);
+		}
+		return loadBuilderInstance;
+	}
+	//
+	@SuppressWarnings("unchecked")
+	private static Class<LoadBuilder> getLoadBuilderClass(
+		final String runMode, final String apiName, final String itemClass
+	) throws ClassNotFoundException {
+		String itemClassName = WordUtils.capitalize(itemClass);
 		//
 		if (
 			apiName.equals(Constants.API_TYPE_S3) ||
@@ -78,32 +78,6 @@ public class LoadBuilderFactory {
 				);
 		}
 		//
-		LoadBuilder loadBuilderInstance;
-		try {
-			final Class loadBuilderImplClass = Class.forName(itemClassFQN);
-			final Constructor constructor = loadBuilderImplClass.getConstructor(RunTimeConfig.class);
-			loadBuilderInstance = (LoadBuilder) constructor.newInstance(rtConfig);
-		} catch(final Exception e) {
-			e.printStackTrace(System.out);
-			throw new RuntimeException(e);
-		}
-		return loadBuilderInstance;
-	}
-	//
-	public static void startSvcBuilders(final RunTimeConfig rtConfig) {
-		try {
-			final WSDataLoadBuilderSvc<WSObject, WSDataLoadSvc<WSObject>>
-				loadBuilderSvc = new BasicWSDataLoadBuilderSvc<>(rtConfig);
-			final WSContainerLoadBuilderSvc containerBuilderSvc =
-				new BasicWSContainerLoadBuilderSvc(rtConfig);
-			//
-			loadBuilderSvc.start();
-			containerBuilderSvc.start();
-			//
-			loadBuilderSvc.await();
-			containerBuilderSvc.await();
-		} catch (final Exception e) {
-			e.printStackTrace();
-		}
+		return (Class<LoadBuilder>) Class.forName(itemClassFQN);
 	}
 }

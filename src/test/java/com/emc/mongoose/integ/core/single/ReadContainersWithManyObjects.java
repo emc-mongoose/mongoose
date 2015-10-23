@@ -40,7 +40,7 @@ extends WSMockTestBase {
 	public static void setUpClass()
 		throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE);
-		System.setProperty(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
+		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, Integer.toString(LIMIT_COUNT_OBJ));
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		System.setProperty(RunTimeConfig.KEY_DATA_SIZE, "1KB");
@@ -64,7 +64,7 @@ extends WSMockTestBase {
 		//
 		String nextContainer, nextRunId;
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, "Write");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "data");
+		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "data");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT_OBJ);
 		RunTimeConfig.setContext(rtConfig);
 		try(
@@ -86,8 +86,8 @@ extends WSMockTestBase {
 		}
 		//
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, "Read");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
-		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH, containerListFile.toString());
+		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "container");
+		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_FILE, containerListFile.toString());
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, "read");
 		rtConfig.set(RunTimeConfig.KEY_READ_CONNS, "25");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);

@@ -14,6 +14,7 @@ import com.emc.mongoose.run.scenario.Rampup;
 import com.emc.mongoose.run.scenario.Single;
 import com.emc.mongoose.run.webserver.WUIRunner;
 // mongoose-server-api.jar
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
 // mongoose-server-impl.jar
@@ -24,12 +25,14 @@ import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
+import com.emc.mongoose.util.builder.SvcLoadBuildersRunner;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.omg.SendingContext.RunTime;
 //
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 /**
  Created by kurila on 04.07.14.
@@ -64,7 +67,10 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
-				LoadBuilderFactory.startSvcBuilders(RunTimeConfig.getContext());
+				final List<LoadBuilderSvc> builders = SvcLoadBuildersRunner
+					.getSvcBuilders(RunTimeConfig.getContext());
+				SvcLoadBuildersRunner.startSvcLoadBuilders(builders);
+				SvcLoadBuildersRunner.awaitSvcLoadBuilders(builders);
 				break;
 			case Constants.RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");

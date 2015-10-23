@@ -40,7 +40,7 @@ extends WSMockTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE);
-		System.setProperty(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
+		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, Integer.toString(LIMIT_COUNT_OBJ));
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		System.setProperty(RunTimeConfig.KEY_DATA_SIZE, "1KB");
@@ -63,7 +63,7 @@ extends WSMockTestBase {
 		Assert.assertTrue("items list file doesn't exist", containerListFile.exists());
 		//
 		String nextContainer, nextRunId;
-		rtConfig.set(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "data");
+		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "data");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_OBJ));
 		RunTimeConfig.setContext(rtConfig);
 		try(

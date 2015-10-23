@@ -44,7 +44,7 @@ extends WSMockTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID + "Write");
-		System.setProperty(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
+		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
@@ -65,7 +65,7 @@ extends WSMockTestBase {
 		LoggingTestBase.setUpClass();
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_DELETE);
 		rtConfig.set(
-			RunTimeConfig.KEY_DATA_SRC_FPATH,
+			RunTimeConfig.KEY_ITEM_SRC_FILE,
 			LogValidator.getItemsListFile(RUN_ID + "Write").getPath()
 		);
 		RunTimeConfig.setContext(rtConfig);

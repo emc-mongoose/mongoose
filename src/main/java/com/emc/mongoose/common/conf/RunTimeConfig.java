@@ -57,21 +57,17 @@ implements Externalizable {
 		//
 		KEY_DATA_CONTENT_FPATH = "data.content.fpath",
 		//
-		KEY_DATA_SRC_RING_SEED = "data.src.ring.seed",
-		KEY_DATA_SRC_RING_SIZE = "data.src.ring.size",
+		KEY_DATA_RING_SEED = "data.ring.seed",
+		KEY_DATA_RING_SIZE = "data.ring.size",
 		//
 		KEY_DATA_ITEM_COUNT = "load.limit.count",
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_SIZE_MIN = "data.size.min",
 		KEY_DATA_SIZE_MAX = "data.size.max",
 		KEY_DATA_SIZE_BIAS = "data.size.bias",
-		KEY_DATA_SRC_FPATH = "data.src.fpath",
 		KEY_DATA_FS_ACCESS = "data.fsAccess",
 		KEY_DATA_PREFIX = "data.prefix",
 		KEY_DATA_VERSIONING = "data.versioning",
-		KEY_DATA_SRC_CIRCULAR = "data.src.circular",
-		KEY_DATA_SRC_RANDOM = "data.src.random",
-		KEY_DATA_SRC_BATCH_SIZE = "data.src.batchSize",
 		//
 		KEY_HTTP_PIPELINING = "http.pipelining",
 		//
@@ -94,7 +90,6 @@ implements Externalizable {
 		KEY_LOAD_LIMIT_TIME = "load.limit.time",
 		KEY_LOAD_LIMIT_RATE = "load.limit.rate",
 		KEY_LOAD_LIMIT_REQSLEEP_MILLISEC = "load.limit.reqSleepMilliSec",
-		KEY_LOAD_ITEM_CLASS = "load.item.class",
 		KEY_RUN_VERSION = "run.version",
 		//
 		KEY_REMOTE_SERVE_JMX = "remote.serveJMX",
@@ -128,6 +123,12 @@ implements Externalizable {
 		KEY_SCENARIO_RAMPUP_CONN_COUNTS = "scenario.type.rampup.connCounts",
 		//
 		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
+		//
+		KEY_ITEM_CLASS = "item.class",
+		KEY_ITEM_SRC_FILE = "item.src.file",
+		KEY_ITEM_SRC_CIRCULAR = "item.src.circular",
+		KEY_ITEM_SRC_RANDOM = "item.src.random",
+		KEY_ITEM_SRC_BATCH_SIZE = "item.src.batchSize",
 		//
 		FNAME_CONF = "mongoose.json";
 	//
@@ -314,7 +315,7 @@ implements Externalizable {
 	}
 	//
 	public final int getBatchSize() {
-		return getInt(KEY_DATA_SRC_BATCH_SIZE);
+		return getInt(KEY_ITEM_SRC_BATCH_SIZE);
 	}
 	//
 	public final boolean getFlagServeJMX() {
@@ -383,8 +384,8 @@ implements Externalizable {
 		return getBoolean(KEY_DATA_VERSIONING);
 	}
 	//
-	public final boolean isDataSrcCircularEnabled() {
-		return getBoolean(KEY_DATA_SRC_CIRCULAR);
+	public final boolean isItemSrcCircularEnabled() {
+		return getBoolean(KEY_ITEM_SRC_CIRCULAR);
 	}
 	//
 	public final String getRunName() {
@@ -412,7 +413,7 @@ implements Externalizable {
 	}
 	//
 	public final String getLoadItemClass() {
-		return getString(KEY_LOAD_ITEM_CLASS);
+		return getString(KEY_ITEM_CLASS);
 	}
 	//
 	public final long getDataSizeMin() {
@@ -484,8 +485,8 @@ implements Externalizable {
 		return getBoolean(KEY_LOAD_SERVER_ASSIGN2_NODE);
 	}
 	//
-	public final String getItemSrcFPath() {
-		return getString("data.src.fpath");
+	public final String getItemSrcFile() {
+		return getString(KEY_ITEM_SRC_FILE);
 	}
 	//
 	public final String getScenarioLang() {
@@ -553,12 +554,12 @@ implements Externalizable {
 		return getInt("storage.mock.fault.maxConnLifeMilliSec");
 	}
 	//
-	public final String getDataSrcRingSeed() {
-		return getString(KEY_DATA_SRC_RING_SEED);
+	public final String getDataRingSeed() {
+		return getString(KEY_DATA_RING_SEED);
 	}
 	//
-	public final long getDataSrcRingSize() {
-		return SizeUtil.toSize(getString(KEY_DATA_SRC_RING_SIZE));
+	public final long getDataRingSize() {
+		return SizeUtil.toSize(getString(KEY_DATA_RING_SIZE));
 	}
 	//
 	public final String getDataContentFPath() {
@@ -609,7 +610,7 @@ implements Externalizable {
 		return getString("remote.webui.wsTimeOut.unit");
 	}
 	//
-	public final boolean isShuffleItemsEnabled() {return  getBoolean(KEY_DATA_SRC_RANDOM);}
+	public final boolean isShuffleItemsEnabled() {return  getBoolean(KEY_ITEM_SRC_RANDOM);}
 	//
 	public final boolean isRunResumeEnabled() {
 		return getBoolean(KEY_RUN_RESUME_ENABLED);
@@ -770,8 +771,8 @@ implements Externalizable {
 				case KEY_RUN_VERSION:
 				case KEY_DATA_ITEM_COUNT:
 				case KEY_DATA_SIZE:
-				case KEY_DATA_SRC_RING_SEED:
-				case KEY_DATA_SRC_RING_SIZE:
+				case KEY_DATA_RING_SEED:
+				case KEY_DATA_RING_SIZE:
 				case KEY_LOAD_CONNS:
 				case KEY_LOAD_WORKERS:
 				case KEY_STORAGE_ADDRS:
