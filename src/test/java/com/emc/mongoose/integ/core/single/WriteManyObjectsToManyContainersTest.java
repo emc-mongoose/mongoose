@@ -30,8 +30,8 @@ extends WSMockTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	private static final int
-		LIMIT_COUNT_OBJ = 50,
-		LIMIT_COUNT_CONTAINER = 2000;
+		LIMIT_COUNT_OBJ = 10000,
+		LIMIT_COUNT_CONTAINER = 100;
 	//
 	private static String RUN_ID_BASE = WriteManyObjectsToManyContainersTest.class.getCanonicalName();
 	private static int countContainerCreated = 0;
@@ -64,6 +64,7 @@ extends WSMockTestBase {
 		//
 		String nextContainer, nextRunId;
 		rtConfig.set(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "data");
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_OBJ));
 		RunTimeConfig.setContext(rtConfig);
 		try(
 			final BufferedReader
@@ -84,6 +85,7 @@ extends WSMockTestBase {
 						rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, nextContainer);
 						RunTimeConfig.setContext(rtConfig);
 						new ScriptMockRunner().run();
+						TimeUnit.SECONDS.sleep(1);
 					}
 				} while(true);
 				TimeUnit.SECONDS.sleep(1);
