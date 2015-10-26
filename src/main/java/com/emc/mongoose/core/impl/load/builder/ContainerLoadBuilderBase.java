@@ -29,6 +29,7 @@ implements ContainerLoadBuilder<T, C, U>{
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	protected boolean flagUseContainerItemSrc;
+	//
 	public ContainerLoadBuilderBase(final RunTimeConfig rtConfig) {
 		super(rtConfig);
 	}

@@ -24,4 +24,3 @@ extends StorageClientBuilderBase<T, U> {
 		);
 	}
 }
-

@@ -1,5 +1,6 @@
 package com.emc.mongoose.util.builder;
 //
+import com.emc.mongoose.client.impl.load.builder.BasicWSContainerLoadBuilderClient;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
