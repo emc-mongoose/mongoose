@@ -3,7 +3,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
-import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
@@ -28,8 +27,8 @@ public class ReadBucketsWithManyObjects
 extends DistributedLoadBuilderTestBase {
 	//
 	private static final int
-		LIMIT_COUNT_OBJ = 1000,
-		LIMIT_COUNT_CONTAINER = 100;
+		LIMIT_COUNT_OBJ = 100,
+		LIMIT_COUNT_CONTAINER = 10;
 	//
 	private static String RUN_ID_BASE = ReadBucketsWithManyObjects.class.getCanonicalName();
 	private static int countContainerCreated = 0;
@@ -46,7 +45,7 @@ extends DistributedLoadBuilderTestBase {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
-		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "25");
+		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "10");
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
@@ -87,7 +86,7 @@ extends DistributedLoadBuilderTestBase {
 		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_FILE, containerListFile.toString());
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, "read");
-		rtConfig.set(RunTimeConfig.KEY_READ_CONNS, "25");
+		rtConfig.set(RunTimeConfig.KEY_READ_CONNS, "10");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);
 		RunTimeConfig.setContext(rtConfig);
 		//
