@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
@@ -426,16 +427,16 @@ implements StorageMock<T> {
 	public void close()
 	throws IOException {
 		sequencer.interrupt();
-		Collection<ObjectContainerMock<T>> containers = null;
+		Iterator<ObjectContainerMock<T>> containerIterator = null;
 		do {
 			try {
-				containers = values();
+				containerIterator = values().iterator();
 			} catch(final ConcurrentModificationException e) {
 				Thread.yield();
 			}
-		} while(containers == null);
-		for(final ObjectContainerMock<T> container : containers) {
-			container.clear();
+		} while(containerIterator == null);
+		while(containerIterator.hasNext()) {
+			containerIterator.next().clear();
 		}
 		clear();
 		storageCapacityMonitorThread.interrupt();
