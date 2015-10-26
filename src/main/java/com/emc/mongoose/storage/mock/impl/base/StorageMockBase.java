@@ -31,10 +31,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 03.07.15.
@@ -426,7 +426,15 @@ implements StorageMock<T> {
 	public void close()
 	throws IOException {
 		sequencer.interrupt();
-		for(final ObjectContainerMock<T> container : values()) {
+		Collection<ObjectContainerMock<T>> containers = null;
+		do {
+			try {
+				containers = values();
+			} catch(final ConcurrentModificationException e) {
+				Thread.yield();
+			}
+		} while(containers == null);
+		for(final ObjectContainerMock<T> container : containers) {
 			container.clear();
 		}
 		clear();

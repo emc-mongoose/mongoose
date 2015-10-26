@@ -38,7 +38,7 @@ implements ContentSource {
 	//
 	protected ContentSourceBase(final ReadableByteChannel zeroLayerSrcChan, final int size)
 	throws IOException {
-		this.zeroByteLayer = ByteBuffer.allocate/*Direct*/(size);
+		this.zeroByteLayer = ByteBuffer.allocateDirect(size);
 		byteLayers.add(zeroByteLayer);
 		int n = 0, m;
 		do {
@@ -91,7 +91,7 @@ implements ContentSource {
 				i += k;
 			}
 		}
-		zeroByteLayer = ByteBuffer.allocate/*Direct*/(size).put(buff);
+		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
 	}

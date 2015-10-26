@@ -36,18 +36,18 @@ implements ItemProducer<T> {
 	protected long skipCount;
 	protected T lastDataItem;
 	protected boolean isCircular;
-	protected boolean isShuffled;
+	protected boolean isShuffling;
 	//
 	protected BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
-		final boolean isCircular, final boolean isShuffled
+		final boolean isCircular, final boolean isShuffling
 	) {
-		this(itemSrc, maxCount, batchSize, isCircular, isShuffled, 0, null);
+		this(itemSrc, maxCount, batchSize, isCircular, isShuffling, 0, null);
 	}
 	//
 	private BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
-		final boolean isCircular, final boolean isShuffled,
+		final boolean isCircular, final boolean isShuffling,
 		final long skipCount, final T lastDataItem
 	) {
 		this.itemSrc = itemSrc;
@@ -56,7 +56,7 @@ implements ItemProducer<T> {
 		this.skipCount = skipCount;
 		this.lastDataItem = lastDataItem;
 		this.isCircular = isCircular;
-		this.isShuffled = isShuffled;
+		this.isShuffling = isShuffling;
 	}
 	//
 	@Override
@@ -111,7 +111,7 @@ implements ItemProducer<T> {
 				try {
 					buff = new ArrayList<>(batchSize);
 					n = itemSrc.get(buff, batchSize);
-					if (isShuffled) {
+					if(isShuffling) {
 						Collections.shuffle(buff);
 					}
 					if(isInterrupted) {

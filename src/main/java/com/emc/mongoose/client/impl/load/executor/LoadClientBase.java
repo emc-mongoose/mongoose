@@ -39,6 +39,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 20.10.14.
@@ -322,6 +323,8 @@ implements LoadClient<T, W> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final AtomicLong rrc = new AtomicLong(0);
+	//
 	@Deprecated
 	private final class RemotePutTask
 	implements Runnable {
@@ -338,7 +341,7 @@ implements LoadClient<T, W> {
 			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
 				try {
 					loadSvcAddr = loadSvcAddrs[
-						(int) ((counterSubm.get() + tryCount) % loadSvcAddrs.length)
+						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)
 					];
 					remoteLoadMap.get(loadSvcAddr).put(dataItem);
 					counterSubm.incrementAndGet();
@@ -392,7 +395,7 @@ implements LoadClient<T, W> {
 			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
 				try {
 					loadSvcAddr = loadSvcAddrs[
-						(int) ((counterSubm.get() + tryCount) % loadSvcAddrs.length)
+						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)
 					];
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
 					while(true) {

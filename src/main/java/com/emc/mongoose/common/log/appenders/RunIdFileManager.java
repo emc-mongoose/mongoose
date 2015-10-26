@@ -210,7 +210,7 @@ extends AbstractManager {
 	//
 	public void close(final String runId) {
 		final OutputStream outStream = outStreamsMap.get(runId);
-		if(runId != null) {
+		if(outStream != null) {
 			try {
 				outStream.close();
 			} catch(final IOException e) {

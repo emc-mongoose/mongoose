@@ -82,9 +82,9 @@ extends WSMockTestBase {
 						final BufferingOutputStream
 							 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
 					) {
-						STD_OUTPUT_STREAM = stdOutStream;
 						new ScriptMockRunner().run();
-						TimeUnit.SECONDS.sleep(3);
+						TimeUnit.SECONDS.sleep(1);
+						STD_OUTPUT_STREAM = stdOutStream;
 					} catch(final InterruptedException ignored) {
 					} finally {
 						RunIdFileManager.flushAll();
