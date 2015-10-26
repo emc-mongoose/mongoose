@@ -140,7 +140,7 @@ extends DistributedLoadBuilderTestBase {
 			if (confParam.contains(RunTimeConfig.KEY_RUN_MODE)) {
 				Assert.assertTrue(
 					"Information about run mode in configuration table is wrong",
-					confParam.contains(Constants.RUN_MODE_STANDALONE)
+					confParam.contains(Constants.RUN_MODE_CLIENT)
 				);
 			}
 			if (confParam.contains(RunTimeConfig.KEY_RUN_ID)) {
@@ -266,51 +266,6 @@ extends DistributedLoadBuilderTestBase {
 				in = Files.newBufferedReader(itemsListFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			LogValidator.assertCorrectContainerItemsCSV(in);
-		}
-	}
-
-	@Test
-	public void shouldCreateCorrectPerfSumFile()
-	throws Exception {
-		//  Get perf.sum.csv file
-		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
-		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
-		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			LogValidator.assertCorrectPerfSumCSV(in);
-		}
-	}
-
-	@Test
-	public void shouldCreateCorrectPerfAvgFile()
-	throws Exception {
-		//  Get perf.avg.csv file
-		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
-		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			LogValidator.assertCorrectPerfAvgCSV(in);
-		}
-	}
-
-	@Test
-	public void shouldCreateCorrectPerfTraceFile()
-	throws Exception {
-		//  Get perf.trace.csv file
-		final File perfTraceFile = LogValidator.getPerfTraceFile(RUN_ID);
-		Assert.assertTrue("perf.trace.csv file doesn't exist", perfTraceFile.exists());
-		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfTraceFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			LogValidator.assertCorrectPerfTraceCSV(in);
 		}
 	}
 

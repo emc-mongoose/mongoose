@@ -139,32 +139,4 @@ extends DistributedLoadBuilderTestBase {
 			}
 		}
 	}
-	//
-	@Test
-	public final void checkReadContainerPerfTraceLogs()
-	throws Exception {
-		final File perfTraceFile = LogValidator.getPerfTraceFile(RUN_ID_BASE + "Read");
-		try(
-			final BufferedReader in = Files.newBufferedReader(
-				perfTraceFile.toPath(), StandardCharsets.UTF_8
-			)
-		) {
-			boolean firstRow = true;
-			//
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for(final CSVRecord nextRec : recIter) {
-				if(firstRow) {
-					firstRow = false;
-				} else {
-					Assert.assertTrue(
-						"Not related to read perf trace log found", nextRec.get(0).contains("Read")
-					);
-					Assert.assertTrue(
-						"Size of the read content is not more than 0",
-						Long.parseLong(nextRec.get(3)) > 0
-					);
-				}
-			}
-		}
-	}
 }
