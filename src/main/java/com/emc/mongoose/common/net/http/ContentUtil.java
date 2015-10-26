@@ -29,6 +29,6 @@ public class ContentUtil {
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Content reading failure");
 		}
-		return doneByteCount;
+		return doneByteCount < 0 ? 0 : doneByteCount;
 	}
 }

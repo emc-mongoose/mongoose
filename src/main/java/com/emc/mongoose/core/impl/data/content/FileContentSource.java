@@ -60,7 +60,7 @@ implements ContentSource {
 			for(int i = byteLayers.size(); i <= layerIndex; i ++) {
 				lastLayerBytes = byteLayers.get(i - 1);
 				lastLayerBytes.clear();
-				nextLayerBytes = ByteBuffer.allocateDirect(size);
+				nextLayerBytes = ByteBuffer.allocate/*Direct*/(size);
 				// apply xorshift to each word
 				for(int j = 0; j < wordCount; j ++) {
 					nextLayerBytes.putLong(nextWord(lastLayerBytes.getLong()));

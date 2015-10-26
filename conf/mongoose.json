@@ -36,18 +36,22 @@
 			"storage.versioning": "data.versioning",
 
 			"data.buffer.size": "io.buffer.size.min",
-			"data.buffer.ring.seed": "data.src.ring.seed",
-			"data.buffer.ring.size": "data.src.ring.size",
+			"data.buffer.ring.seed": "data.ring.seed",
+			"data.buffer.ring.size": "data.ring.size",
 			"data.count": "load.limit.count",
 			"data.page.size": "io.buffer.size.min",
-			"data.ring.seed": "data.src.ring.seed",
-			"data.ring.size": "data.src.ring.size",
 			"data.size": [
 				"data.size.min",
 				"data.size.max"
 			],
-			"data.src.random.enabled": "data.src.random",
-			"data.src.random.batchSize": "data.src.batchSize",
+			"data.src.random.enabled": "item.src.random",
+			"data.src.random.batchSize": "item.src.batchSize",
+
+			"data.src.fpath": "item.src.file",
+			"data.src.separator": "item.src.separator",
+			"data.src.circular": "item.src.circular",
+			"data.src.random": "item.src.random",
+			"data.src.batchSize": "item.src.batchSize",
 
 			"http.sign.method": "http.signMethod",
 
@@ -75,8 +79,8 @@
 			"load.read.verify.content": "load.type.read.verifyContent",
 
 			"load.servers": "load.server.addrs",
-			"load.tasks.batchSize": "data.src.batchSize",
-			"load.tasks.shuffle": "data.src.random",
+			"load.tasks.batchSize": "item.src.batchSize",
+			"load.tasks.shuffle": "item.src.random",
 			"load.threads": [
 				"load.type.append.connections",
 				"load.type.create.connections",
@@ -159,16 +163,9 @@
 				"max": "1MB",
 				"bias": 1
 			},
-			"src": {
-				"fpath": "",
-				"separator": ",",
-				"circular": false,
-				"random": false,
-				"batchSize": 100,
-				"ring": {
-					"seed": "7a42d9c483244167",
-					"size": "4MB"
-				}
+			"ring": {
+				"seed": "7a42d9c483244167",
+				"size": "4MB"
 			},
 			"content": {
 				"fpath": ""
@@ -186,10 +183,17 @@
 			"pipelining": false,
 			"signMethod": "HmacSHA1"
 		},
+		"item": {
+			"class": "data",
+			"src": {
+				"file": "",
+				"separator": ",",
+				"circular": false,
+				"random": false,
+				"batchSize": 100
+			}
+		},
 		"load": {
-			"item": {
-				"class": "object"
-			},
 			"limit": {
 				"count": 0,
 				"time": "0s",
@@ -251,10 +255,10 @@
 			"mock": {
 				"headCount": 1,
 				"workersPerSocket": 0,
-				"capacity": 10000000,
+				"capacity": 1000000,
 				"container": {
-					"capacity": 10000000,
-					"countLimit": 10000000
+					"capacity": 1000000,
+					"countLimit": 1000000
 				},
 				"fault": {
 					"minConnLifeMilliSec": 0,

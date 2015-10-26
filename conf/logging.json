@@ -207,7 +207,7 @@
 					"type": "runIdFile",
 					"fileName": "perf.trace.csv",
 					"PatternLayout": {
-						"header": "Thread,TargetNode,DataItemId,DataItemSize,StatusCode,ReqTimeStart[us],Latency[us],Duration[us]\n",
+						"header": "Thread,TargetNode,ItemId,ItemSize,StatusCode,ReqTimeStart[us],Latency[us],Duration[us]\n",
 						"pattern": "%t,%m%n"
 					},
 					"Filters": {
@@ -229,7 +229,7 @@
 				}, {
 					"name": "dataListFile",
 					"type": "runIdFile",
-					"fileName": "data.items.csv",
+					"fileName": "items.csv",
 					"PatternLayout": { "pattern": "%m%n" },
 					"Filters": {
 						"Filter": [

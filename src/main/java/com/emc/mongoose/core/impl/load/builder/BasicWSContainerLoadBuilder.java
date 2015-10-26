@@ -66,8 +66,9 @@ implements WSContainerLoadBuilder<T, C, U> {
 	//
 	@Override
 	protected void invokePreConditions()
-			throws IllegalStateException {
-		reqConf.configureStorage(storageNodeAddrs);
+	throws IllegalStateException {
+		//  do nothing
+		//  reqConf.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -87,9 +88,9 @@ implements WSContainerLoadBuilder<T, C, U> {
 			);
 		//
 		return (U) new BasicWSContainerLoadExecutor<>(
-				localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
-				itemSrc == null ? getDefaultItemSource() : itemSrc,
-				maxCount, manualTaskSleepMicroSecs, rateLimit
+			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
+			itemSrc == null ? getDefaultItemSource() : itemSrc,
+			maxCount, manualTaskSleepMicroSecs, rateLimit
 		);
 	}
 }

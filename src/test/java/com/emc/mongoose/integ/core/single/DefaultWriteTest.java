@@ -119,7 +119,7 @@ extends WSMockTestBase {
 		//  Check that perf.trace.csv file exists
 		Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogValidator.getDataItemsFile(RUN_ID).toPath();
+		expectedFile = LogValidator.getItemsListFile(RUN_ID).toPath();
 		//  Check that data.items.csv file exists
 		Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
 	}
@@ -246,7 +246,7 @@ extends WSMockTestBase {
 	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getDataItemsFile(RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -274,7 +274,7 @@ extends WSMockTestBase {
 	public void shouldGetDifferentObjectsFromServer()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getDataItemsFile(RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -311,7 +311,7 @@ extends WSMockTestBase {
 	public void shouldGetAllObjectsFromServerAndDataSizeIsDefault()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getDataItemsFile(RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -338,7 +338,7 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		//  Get data.items.csv file
-		final File dataItemFile = LogValidator.getDataItemsFile(RUN_ID);
+		final File dataItemFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
 		//
 		try(
@@ -402,7 +402,7 @@ extends WSMockTestBase {
 		int lineNum = 0;
 		try(
 			final BufferedReader in = Files.newBufferedReader(
-				LogValidator.getDataItemsFile(RUN_ID).toPath(), StandardCharsets.UTF_8
+				LogValidator.getItemsListFile(RUN_ID).toPath(), StandardCharsets.UTF_8
 			)
 		) {
 			while((nextLine = in.readLine()) != null) {

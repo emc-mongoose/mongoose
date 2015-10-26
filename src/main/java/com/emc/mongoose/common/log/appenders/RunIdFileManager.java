@@ -201,6 +201,25 @@ extends AbstractManager {
 			}
 		}
 	}
+	//
+	public static void closeAll(final String runId) {
+		for(final RunIdFileManager manager : INSTANCES) {
+			manager.close(runId);
+		}
+	}
+	//
+	public void close(final String runId) {
+		final OutputStream outStream = outStreamsMap.get(runId);
+		if(runId != null) {
+			try {
+				outStream.close();
+			} catch(final IOException e) {
+				e.printStackTrace(System.err);
+			} finally {
+				outStreamsMap.remove(runId);
+			}
+		}
+	}
 	/** Flushes all available output streams */
 	public final void flush() {
 		try {

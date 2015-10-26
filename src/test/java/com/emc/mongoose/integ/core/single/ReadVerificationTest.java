@@ -5,7 +5,6 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-import com.emc.mongoose.integ.base.ConfiguredTestBase;
 import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -75,8 +74,8 @@ extends WSMockTestBase {
 		LoggingTestBase.setUpClass();
 		//
 		rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH,
-			LogValidator.getDataItemsFile(CREATE_RUN_ID).getPath());
+		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_FILE,
+			LogValidator.getItemsListFile(CREATE_RUN_ID).getPath());
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD,
 			TestConstants.LOAD_READ.toLowerCase());
 		rtConfig.set(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "conf/content/zerobytes");
@@ -142,7 +141,7 @@ extends WSMockTestBase {
 	public void shouldReportAboutFailedVerificationToConsole()
 	throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -170,7 +169,7 @@ extends WSMockTestBase {
 	public void shouldReportAboutFailedVerificationToMessageFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", dataItemsFile.exists());
 		//
 		try(

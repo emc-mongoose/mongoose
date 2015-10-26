@@ -370,6 +370,7 @@ dependencies {
 
 	scenarioCompile (
 		library.commons_configuration,
+		library.commons_collections4,
 		library.log4j_api,
 		library.httpcore
 	)
@@ -1037,6 +1038,8 @@ task integTest(type: Test, dependsOn: dist) {
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
+	minHeapSize = "4g"
+	maxHeapSize = "4g"
 	jvmArgs '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true

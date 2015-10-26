@@ -34,7 +34,7 @@ extends StandaloneClientTestBase {
 	//
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
+	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "conf/content/textexample");
 		StandaloneClientTestBase.setUpClass();
@@ -99,9 +99,12 @@ extends StandaloneClientTestBase {
 				} while(n < OBJ_SIZE);
 			}
 			final String text = new String(buff, StandardCharsets.UTF_8);
-			Assert.assertTrue(text.contains("mongoose"));
-			Assert.assertTrue(text.contains("Nag is dead"));
-			Assert.assertTrue(text.contains("Chuchundra"));
+			Assert.assertTrue(
+				"No word \"mongoose\" in the text of the object #" + i + " @ " + nextObjURL,
+				text.contains("mongoose")
+			);
+			Assert.assertTrue(text, text.contains("Nag is dead"));
+			Assert.assertTrue(text, text.contains("Chuchundra"));
 		}
 	}
 }

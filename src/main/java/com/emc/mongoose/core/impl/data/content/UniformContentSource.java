@@ -27,13 +27,13 @@ implements ContentSource {
 	public UniformContentSource()
 	throws NumberFormatException {
 		this(
-			Long.parseLong(RunTimeConfig.getContext().getDataSrcRingSeed(), 0x10),
-			(int) RunTimeConfig.getContext().getDataSrcRingSize()
+			Long.parseLong(RunTimeConfig.getContext().getDataRingSeed(), 0x10),
+			(int) RunTimeConfig.getContext().getDataRingSize()
 		);
 	}
 	//
 	public UniformContentSource(final long seed, final int size) {
-		super(ByteBuffer.allocateDirect(size));
+		super(ByteBuffer.allocate/*Direct*/(size));
 		this.seed = seed;
 		generateData(zeroByteLayer, seed);
 		LOG.debug(Markers.MSG, "New ring buffer instance #{}", hashCode());
@@ -56,7 +56,7 @@ implements ContentSource {
 			word = nextWord(word);
 		}
 		// tail bytes\
-		final ByteBuffer tailBytes = ByteBuffer.allocateDirect(countWordBytes);
+		final ByteBuffer tailBytes = ByteBuffer.allocate/*Direct*/(countWordBytes);
 		tailBytes.asLongBuffer().put(word).rewind();
 		for(i = 0; i < countTailBytes; i ++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
@@ -105,7 +105,7 @@ implements ContentSource {
 		final int size = zeroByteLayer.capacity();
 		synchronized(byteLayers) {
 			for(int i = byteLayers.size(); i <= layerIndex; i++) {
-				ByteBuffer nextLayer = ByteBuffer.allocateDirect(size);
+				ByteBuffer nextLayer = ByteBuffer.allocate/*Direct*/(size);
 				nextSeed = Long.reverse(
 					nextWord(
 						Long.reverseBytes(

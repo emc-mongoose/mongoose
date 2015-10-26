@@ -17,7 +17,7 @@ implements DataIOTask<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final long contentSize;
-	protected volatile long countBytesDone = 0, countBytesSkipped = 0;
+	protected volatile long countBytesSkipped = 0;
 	protected volatile DataItem currRange = null;
 	protected volatile long currRangeSize = 0, nextRangeOffset = 0;
 	protected volatile int currRangeIdx = 0, currDataLayerIdx = 0;

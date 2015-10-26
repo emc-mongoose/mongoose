@@ -58,9 +58,9 @@ public final class LogValidator {
 			Constants.DIR_LOG, runID, TestConstants.PERF_TRACE_FILE_NAME).toString());
 	}
 
-	public static File getDataItemsFile(final String runID){
+	public static File getItemsListFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, runID, TestConstants.DATA_ITEMS_FILE_NAME).toString());
+			Constants.DIR_LOG, runID, TestConstants.ITEMS_FILE_NAME).toString());
 	}
 
 	public static File getErrorsFile(final String runID){
@@ -312,6 +312,17 @@ public final class LogValidator {
 			);
 		}
 	}
+	public static void assertCorrectContainerItemsCSV(BufferedReader in)
+	throws IOException {
+		//
+		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+		for(final CSVRecord nextRec : recIter) {
+			Assert.assertEquals("Count of column is wrong", 1, nextRec.size());
+			Assert.assertTrue(
+				"Data ID format is not correct", nextRec.get(0).matches(LogPatterns.DATA_ID.pattern())
+			);
+		}
+	}
 	//
 	public static void assertCorrectPerfTraceCSV(BufferedReader in)
 		throws IOException {
@@ -323,8 +334,8 @@ public final class LogValidator {
 			if (firstRow) {
 				Assert.assertEquals("Thread", nextRec.get(0));
 				Assert.assertEquals("TargetNode", nextRec.get(1));
-				Assert.assertEquals("DataItemId", nextRec.get(2));
-				Assert.assertEquals("DataItemSize", nextRec.get(3));
+				Assert.assertEquals("ItemId", nextRec.get(2));
+				Assert.assertEquals("ItemSize", nextRec.get(3));
 				Assert.assertEquals("StatusCode", nextRec.get(4));
 				Assert.assertEquals("ReqTimeStart[us]", nextRec.get(5));
 				Assert.assertEquals("Latency[us]", nextRec.get(6));

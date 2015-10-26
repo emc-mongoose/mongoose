@@ -99,8 +99,7 @@ implements ReqURIMatchingHandler<T> {
 			httpRequest, httpResponse, reqLine.getMethod().toLowerCase(), reqLine.getUri()
 		);
 		// done
-		final BasicWSResponseProducer
-			respProducer = new BasicWSResponseProducer(contentSrc);
+		final BasicWSResponseProducer respProducer = new BasicWSResponseProducer(contentSrc);
 		respProducer.setResponse(httpResponse);
 		httpExchange.submitResponse(respProducer);
 	}
@@ -297,19 +296,10 @@ implements ReqURIMatchingHandler<T> {
 		}
 	}
 	//
-	protected boolean handleContainerCreate(
+	protected void handleContainerCreate(
 		final HttpRequest req, final HttpResponse resp, final String name
 	) {
-		try {
-			if(!sharedStorage.createContainer(name)) {
-				resp.setStatusCode(HttpStatus.SC_CONFLICT);
-				return false;
-			}
-		} catch(final StorageMockCapacityLimitReachedException e) {
-			resp.setStatusCode(HttpStatus.SC_INSUFFICIENT_STORAGE);
-			return false;
-		}
-		return true;
+		sharedStorage.createContainer(name);
 	}
 	//
 	protected abstract void handleContainerList(
@@ -323,8 +313,6 @@ implements ReqURIMatchingHandler<T> {
 	}
 	//
 	private void handleContainerDelete(final HttpResponse resp, final String name) {
-		if(!sharedStorage.deleteContainer(name)) {
-			resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
-		}
+		sharedStorage.deleteContainer(name);
 	}
 }

@@ -68,7 +68,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 	//
 	@Override
 	public final String getName() {
-		return getClass().getPackage().getName();
+		return getClass().getName();
 	}
 	//
 	@Override
@@ -124,7 +124,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 		LOG.debug(Markers.MSG, "Load builder service instance created");
 		try {
 		/*final RemoteStub stub = */
-			ServiceUtil.create(this);
+		ServiceUtil.create(this);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
 		} catch (final DuplicateSvcNameException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");

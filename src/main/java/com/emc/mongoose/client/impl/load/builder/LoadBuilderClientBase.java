@@ -185,34 +185,16 @@ implements LoadBuilderClient<T, W, U> {
 		);
 		//
 		try {
-			final String listFile = this.rtConfig.getItemSrcFPath();
-			if(listFile != null && !listFile.isEmpty()) {
-				final Path itemsListPath = Paths.get(listFile);
-				if(!Files.exists(itemsListPath)) {
-					LOG.warn(
-						Markers.ERR, "Data items source file \"{}\" doesn't exist",
-						itemsListPath
-					);
-				} else if(!Files.isReadable(itemsListPath)) {
-					LOG.warn(
-						Markers.ERR, "Data items source file \"{}\" is not readable",
-						itemsListPath
-					);
-				} else if(Files.isDirectory(itemsListPath)) {
-					LOG.warn(
-						Markers.ERR, "Data items source file \"{}\" is a directory",
-						itemsListPath
-					);
-				} else {
-					setItemSrc(
-						new CSVFileItemSrc<>(
-							itemsListPath, reqConf.getItemClass(), reqConf.getContentSource()
-						)
-					);
-					// disable file-based item sources on the load servers side
-					for(final V nextLoadBuilder : values()) {
-						nextLoadBuilder.setItemSrc(null);
-					}
+			final String listFile = rtConfig.getItemSrcFile();
+			if (itemsFileExists(listFile)) {
+				setItemSrc(
+					new CSVFileItemSrc<>(
+						Paths.get(listFile), reqConf.getItemClass(), reqConf.getContentSource()
+					)
+				);
+				// disable file-based item sources on the load servers side
+				for(final V nextLoadBuilder : values()) {
+					nextLoadBuilder.setItemSrc(null);
 				}
 			}
 		} catch(final NoSuchElementException e) {
@@ -223,6 +205,22 @@ implements LoadBuilderClient<T, W, U> {
 			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
 		return this;
+	}
+	//
+	protected boolean itemsFileExists(final String filePathStr) {
+		if (filePathStr != null && !filePathStr.isEmpty()) {
+			final Path listFilePath = Paths.get(filePathStr);
+			if(!Files.exists(listFilePath)) {
+				LOG.warn(Markers.ERR, "Specified input file \"{}\" doesn't exists", listFilePath);
+			} else if(!Files.isReadable(listFilePath)) {
+				LOG.warn(Markers.ERR, "Specified input file \"{}\" isn't readable", listFilePath);
+			} else if(Files.isDirectory(listFilePath)) {
+				LOG.warn(Markers.ERR, "Specified input file \"{}\" is a directory", listFilePath);
+			} else {
+				return true;
+			}
+		}
+		return false;
 	}
 	//
 	@Override

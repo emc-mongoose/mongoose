@@ -1,5 +1,5 @@
 package com.emc.mongoose.core.impl.load.builder;
-
+//
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.container.Container;
@@ -8,13 +8,15 @@ import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
-import com.emc.mongoose.core.impl.container.BasicContainer;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 import com.emc.mongoose.core.impl.data.model.NewContainerSrc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-
+//
+import java.io.IOException;
+import java.nio.file.Paths;
+//
 /**
  * Created by gusakk on 21.10.15.
  */
@@ -34,6 +36,26 @@ implements ContainerLoadBuilder<T, C, U>{
 		super(rtConfig);
 	}
 	//
+	@Override
+	public ContainerLoadBuilderBase<T, C, U> setProperties(final RunTimeConfig rtConfig) {
+		super.setProperties(rtConfig);
+		//
+		final String listFilePathStr = rtConfig.getItemSrcFile();
+		if (itemsFileExists(listFilePathStr)) {
+			try {
+				setItemSrc(
+					new CSVFileItemSrc<>(
+						Paths.get(listFilePathStr), reqConf.getContainerClass(),
+						reqConf.getContentSource()
+					)
+				);
+			} catch(final IOException | NoSuchMethodException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
+			}
+		}
+		return this;
+	}
+	//
 	@SuppressWarnings("unchecked")
 	protected ItemSrc getDefaultItemSource() {
 		try {
@@ -42,17 +64,13 @@ implements ContainerLoadBuilder<T, C, U>{
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
 				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
 					return new NewContainerSrc<>(
-						BasicContainer.class
+						reqConf.getContainerClass()
 					);
-				} else {
-					return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
 				}
 			} else if(flagUseNewItemSrc) {
 				return  new NewContainerSrc<>(
-					BasicContainer.class
+					reqConf.getContainerClass()
 				);
-			} else if(flagUseContainerItemSrc) {
-				return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
 			}
 		} catch(final NoSuchMethodException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");

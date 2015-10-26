@@ -7,8 +7,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-// mongoose-storage-mock.jar
+//
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
@@ -67,7 +68,8 @@ implements WSMock<T> {
 			rtConfig.getStorageMockCapacity(),
 			rtConfig.getStorageMockContainerCapacity(),
 			rtConfig.getStorageMockContainerCountLimit(),
-			rtConfig.getItemSrcFPath(),
+			rtConfig.getBatchSize(),
+			rtConfig.getItemSrcFile(),
 			rtConfig.getLoadMetricsPeriodSec(),
 			rtConfig.getFlagServeJMX(),
 			rtConfig.getStorageMockMinConnLifeMilliSec(),
@@ -79,13 +81,12 @@ implements WSMock<T> {
 	public Cinderella(
 		final int headCount, final int ioThreadCount, final int portStart,
 		final int storageCapacity, final int containerCapacity, final int containerCountLimit,
-		final String dataSrcPath, final int metricsPeriodSec, final boolean jmxServeFlag,
-	    final int minConnLifeMilliSec, final int maxConnLifeMilliSec
+		final int batchSize, final String dataSrcPath, final int metricsPeriodSec,
+		final boolean jmxServeFlag, final int minConnLifeMilliSec, final int maxConnLifeMilliSec
 	) throws IOException {
 		super(
 			(Class<T>) BasicWSObjectMock.class, ContentSourceBase.getDefault(),
-			storageCapacity, containerCapacity, containerCountLimit,
-			headCount * ioThreadCount,
+			storageCapacity, containerCapacity, containerCountLimit, batchSize,
 			dataSrcPath, metricsPeriodSec, jmxServeFlag
 		);
 		this.portStart = portStart;

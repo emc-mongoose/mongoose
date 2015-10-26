@@ -4,4 +4,7 @@ package com.emc.mongoose.storage.mock.api;
  */
 public class ContainerMockNotFoundException
 extends ContainerMockException {
+	public ContainerMockNotFoundException(final String name) {
+		super(name);
+	}
 }
