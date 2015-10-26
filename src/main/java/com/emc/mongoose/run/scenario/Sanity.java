@@ -139,7 +139,7 @@ implements Runnable {
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
 		//rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
-		final Thread wsMockThread = new Thread(
+		Thread wsMockThread = new Thread(
 			new Cinderella(RunTimeConfig.getContext()), "wsMock"
 		);
 		wsMockThread.setDaemon(true);
@@ -166,6 +166,13 @@ implements Runnable {
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
+		// restart the wsmock
+		wsMockThread.interrupt();
+		wsMockThread = new Thread(
+			new Cinderella(RunTimeConfig.getContext()), "wsMock"
+		);
+		wsMockThread.setDaemon(true);
+		wsMockThread.start();
 		// distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		ServiceUtil.init();
