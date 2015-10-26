@@ -18,17 +18,13 @@ import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.data.model.ListItemDst;
 //
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
-import com.emc.mongoose.util.builder.SvcLoadBuildersRunner;
+import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
-import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -174,9 +170,8 @@ implements Runnable {
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		ServiceUtil.init();
 		//
-		SvcLoadBuildersRunner.startSvcLoadBuilders(
-			SvcLoadBuildersRunner.getSvcBuilders(rtConfig)
-		);
+		final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(rtConfig);
+		multiSvc.start();
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_MONITOR, 1299);
 		try(
 			final StorageClient<WSObject> client = clientBuilder
@@ -190,6 +185,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Distributed sanity finished");
 		}
 		//
+		multiSvc.close();
 		ServiceUtil.shutdown();
 		// finish
 		wsMockThread.interrupt();

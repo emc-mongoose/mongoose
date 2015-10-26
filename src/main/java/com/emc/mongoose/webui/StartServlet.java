@@ -11,7 +11,6 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
@@ -19,8 +18,7 @@ import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.run.scenario.Rampup;
 import com.emc.mongoose.run.scenario.Single;
 //
-import com.emc.mongoose.util.builder.LoadBuilderFactory;
-import com.emc.mongoose.util.builder.SvcLoadBuildersRunner;
+import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -99,9 +97,11 @@ public final class StartServlet extends CommonServlet {
 	}
 	//
 	private void startServer(final String message) {
+		//
 		final Thread thread = new Thread() {
-			List<LoadBuilderSvc> loadBuilders = new ArrayList<>();
 			RunTimeConfig localRunTimeConfig;
+			LoadBuilderSvc multiSvc;
+			//
 			@Override
 			public void run() {
 				localRunTimeConfig = runTimeConfig;
@@ -111,20 +111,27 @@ public final class StartServlet extends CommonServlet {
 				LOG.debug(Markers.MSG, message);
 				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				//
-				loadBuilders = SvcLoadBuildersRunner.getSvcBuilders(localRunTimeConfig);
-				SvcLoadBuildersRunner.startSvcLoadBuilders(loadBuilders);
+				multiSvc = new MultiLoadBuilderSvc(localRunTimeConfig);
+				try {
+					multiSvc.start();
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "Failed to start the load builder services"
+					);
+				}
 			}
+			//
 			@Override
 			public void interrupt() {
 				RunTimeConfig.setContext(localRunTimeConfig);
 				try {
-					for (final LoadBuilderSvc builder : loadBuilders) {
-						ServiceUtil.close(builder);
-					}
-				} catch(final RemoteException e) {
+					multiSvc.interrupt();
+					multiSvc.close();
+				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Networking failure");
+				} finally {
+					super.interrupt();
 				}
-				super.interrupt();
 			}
 		};
 		thread.start();

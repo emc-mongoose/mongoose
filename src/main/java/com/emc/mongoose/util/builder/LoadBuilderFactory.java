@@ -63,15 +63,19 @@ public class LoadBuilderFactory {
 		//
 		itemClassName = BASIC_PREFIX + itemClassName + LOAD_BUILDER_POSTFIX;
 		final String itemClassFQN;
-		//  don't append anything if run.mode is standalone
+		// don't append anything if run.mode is standalone
 		switch(runMode) {
-			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
+			case Constants.RUN_MODE_CLIENT:
 				itemClassName = itemClassName + CLIENT_POSTFIX;
 				itemClassFQN = BUILDER_CLIENT_PACKAGE_BASE + "." + itemClassName;
 				break;
 			case Constants.RUN_MODE_STANDALONE:
 				itemClassFQN = BUILDER_CORE_PACKAGE_BASE + "." + itemClassName;
+				break;
+			case Constants.RUN_MODE_COMPAT_SERVER:
+			case Constants.RUN_MODE_SERVER:
+				itemClassFQN = MultiLoadBuilderSvc.class.getCanonicalName();
 				break;
 			default:
 				throw new IllegalArgumentException(
