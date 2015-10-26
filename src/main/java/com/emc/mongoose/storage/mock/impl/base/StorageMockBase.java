@@ -436,7 +436,11 @@ implements StorageMock<T> {
 			}
 		} while(containerIterator == null);
 		while(containerIterator.hasNext()) {
-			containerIterator.next().clear();
+			try {
+				containerIterator.next().clear();
+			} catch(final ConcurrentModificationException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to clear the container");
+			}
 		}
 		clear();
 		storageCapacityMonitorThread.interrupt();
