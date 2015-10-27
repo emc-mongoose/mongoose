@@ -436,10 +436,19 @@ implements StorageMock<T> {
 		sequencer.interrupt();
 		storageCapacityMonitorThread.interrupt();
 		ioStats.close();
-		for(final ObjectContainerMock<T> containerMock : values()) {
-			containerMock.clear();
+		try {
+			for(final ObjectContainerMock<T> containerMock : values()) {
+				containerMock.clear();
+			}
+		} catch(final ConcurrentModificationException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clean up the containers");
+		} finally {
+			try {
+				clear();
+			} catch(final ConcurrentModificationException e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clean up the storage mock");
+			}
 		}
-		clear();
 	}
 	@Override
 	public StorageIOStats getStats() {
