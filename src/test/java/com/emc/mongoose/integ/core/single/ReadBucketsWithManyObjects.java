@@ -50,10 +50,9 @@ extends WSMockTestBase {
 		//
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
-		//
+		// create the buckets
 		new ScriptMockRunner().run();
 		TimeUnit.SECONDS.sleep(1);
-		//
 		RunIdFileManager.flushAll();
 		//
 		final File containerListFile = LogValidator.getItemsListFile(RUN_ID_BASE);

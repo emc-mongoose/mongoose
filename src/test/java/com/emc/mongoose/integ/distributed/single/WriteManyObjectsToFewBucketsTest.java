@@ -3,7 +3,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
-import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogValidator;
@@ -34,7 +33,7 @@ extends DistributedLoadBuilderTestBase {
 		LIMIT_COUNT_OBJ = 2000,
 		LIMIT_COUNT_CONTAINER = 50;
 	//
-	private static String RUN_ID_BASE = ReadBucketsWithManyObjects.class.getCanonicalName();
+	private static String RUN_ID_BASE = WriteManyObjectsToFewBucketsTest.class.getCanonicalName();
 	private static int countContainerCreated = 0;
 	//
 	@BeforeClass
