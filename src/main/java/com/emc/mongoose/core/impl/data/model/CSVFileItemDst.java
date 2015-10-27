@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.FileItemDst;
 //
@@ -11,7 +11,7 @@ import java.nio.file.StandardOpenOption;
 /**
  Created by kurila on 30.06.15.
  */
-public class CSVFileItemDst<T extends DataItem>
+public class CSVFileItemDst<T extends Item>
 extends CSVItemDst<T>
 implements FileItemDst<T> {
 	//

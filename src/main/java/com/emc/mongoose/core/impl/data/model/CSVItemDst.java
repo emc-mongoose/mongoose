@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 //
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.ItemDst;
@@ -15,7 +15,7 @@ import java.util.List;
  The data item output writing into the specified file human-readable data item records using the CSV
  format
  */
-public abstract class CSVItemDst<T extends DataItem>
+public abstract class CSVItemDst<T extends Item>
 implements ItemDst<T> {
 	//
 	protected final Class<? extends T> itemCls;
