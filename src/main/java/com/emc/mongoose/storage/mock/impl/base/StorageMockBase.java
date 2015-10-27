@@ -427,24 +427,12 @@ implements StorageMock<T> {
 	public void close()
 	throws IOException {
 		sequencer.interrupt();
-		Iterator<ObjectContainerMock<T>> containerIterator = null;
-		do {
-			try {
-				containerIterator = values().iterator();
-			} catch(final ConcurrentModificationException e) {
-				Thread.yield();
-			}
-		} while(containerIterator == null);
-		while(containerIterator.hasNext()) {
-			try {
-				containerIterator.next().clear();
-			} catch(final ConcurrentModificationException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to clear the container");
-			}
-		}
-		clear();
 		storageCapacityMonitorThread.interrupt();
 		ioStats.close();
+		for(final ObjectContainerMock<T> containerMock : values()) {
+			containerMock.clear();
+		}
+		clear();
 	}
 	@Override
 	public StorageIOStats getStats() {

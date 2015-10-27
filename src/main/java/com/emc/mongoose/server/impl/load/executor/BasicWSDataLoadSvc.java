@@ -96,10 +96,10 @@ implements WSDataLoadSvc<T> {
 	}
 	// prevent output buffer consuming by the logger at the end of a chain
 	@Override
-	protected final void passDataItems()
+	protected final void passItems()
 	throws InterruptedException {
 		if(consumer != null) {
-			super.passDataItems();
+			super.passItems();
 		}
 	}
 	//
