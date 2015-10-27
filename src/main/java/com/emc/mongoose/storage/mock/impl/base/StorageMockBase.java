@@ -204,8 +204,12 @@ implements StorageMock<T> {
 		public final void run() {
 			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
 			if(c != null) {
-				completed(StorageMockBase.this.get(container).put(obj.getName(), obj));
-				dataCount.incrementAndGet();
+				final T oldObj = StorageMockBase.this.get(container).put(obj.getName(), obj);
+				if(oldObj == null) {
+					dataCount.incrementAndGet();
+				}
+				completed(obj);
+
 			} else {
 				failed(new ContainerMockNotFoundException(container));
 			}
@@ -227,10 +231,10 @@ implements StorageMock<T> {
 		@Override
 		public final void run() {
 			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
-			if(c != null) {
-				completed(c.get(oid));
-			} else {
+			if(c == null) {
 				failed(new ContainerMockNotFoundException(container));
+			} else {
+				completed(c.get(oid));
 			}
 		}
 	}
@@ -301,11 +305,14 @@ implements StorageMock<T> {
 		@Override
 		public final void run() {
 			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
-			if(c != null) {
-				completed(c.remove(oid));
-				dataCount.decrementAndGet();
-			} else {
+			if(c == null) {
 				failed(new ContainerMockNotFoundException(container));
+			} else {
+				final T obj = c.remove(oid);
+				if(obj != null) {
+					dataCount.decrementAndGet();
+				}
+				completed(obj);
 			}
 		}
 	}
@@ -492,7 +499,7 @@ implements StorageMock<T> {
 					//	nextItem.setSize(Long.valueOf(String.valueOf(nextItem.getSize()), 0x10));
 					//}
 					putIntoDefaultContainer(nextItem);
-					count++;
+					count ++;
 					nextItem = csvFileItemInput.get();
 				}
 			} catch(final EOFException e) {

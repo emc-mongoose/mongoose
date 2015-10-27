@@ -43,7 +43,7 @@ implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 200;
 	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("10MB");
-	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
+	private final static int DEFAULT_DATA_COUNT_MAX = 100;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -137,6 +137,7 @@ implements Runnable {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
+		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, DEFAULT_DATA_COUNT_MAX);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
 		//rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		Thread wsMockThread = new Thread(
