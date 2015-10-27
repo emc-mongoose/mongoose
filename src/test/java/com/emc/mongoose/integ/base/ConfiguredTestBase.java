@@ -13,12 +13,12 @@ public abstract class ConfiguredTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "data");
 		initContext();
 	}
 	//
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "data");
 	}
 }
