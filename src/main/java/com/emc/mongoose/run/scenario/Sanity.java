@@ -43,7 +43,7 @@ implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 200;
 	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("10MB");
-	private final static int DEFAULT_DATA_COUNT_MAX = 100;
+	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -167,7 +167,7 @@ implements Runnable {
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
-		/* distributed mode
+		// distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		ServiceUtil.init();
 		//
@@ -187,7 +187,7 @@ implements Runnable {
 		}
 		//
 		multiSvc.close();
-		ServiceUtil.shutdown();*/
+		ServiceUtil.shutdown();
 		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");
