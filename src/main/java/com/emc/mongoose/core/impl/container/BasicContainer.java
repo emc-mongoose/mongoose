@@ -12,7 +12,6 @@ public class BasicContainer<T extends DataItem>
 extends BasicItem
 implements Container<T> {
 	//
-	protected volatile String name;
 	protected volatile ContentSource contentSrc;
 	//
 	public BasicContainer() {
