@@ -3,9 +3,7 @@ package com.emc.mongoose.integ.core.single;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.LogPatterns;
@@ -16,7 +14,6 @@ import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -27,7 +24,6 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,8 +51,6 @@ extends WSMockTestBase {
 	private static final String DATA_SIZE = "0B";
 	private static final int LIMIT_COUNT = 1000000, LOAD_CONNS = 100;
 
-	private static Thread SCENARIO_THREAD;
-
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
@@ -74,37 +68,20 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  write
-		SCENARIO_THREAD = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					try(
-						final BufferingOutputStream
-							 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
-					) {
-						new ScriptMockRunner().run();
-						TimeUnit.SECONDS.sleep(1);
-						STD_OUTPUT_STREAM = stdOutStream;
-					} catch(final InterruptedException ignored) {
-					} finally {
-						RunIdFileManager.flushAll();
-					}
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to execute the load job");
-				}
-			}
-		}, "writeScenarioThread");
-		SCENARIO_THREAD.start();
-		SCENARIO_THREAD.join(30000);
+		try(
+			final BufferingOutputStream
+				stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		) {
+			new ScriptMockRunner().run();
+			TimeUnit.SECONDS.sleep(5);
+			STD_OUTPUT_STREAM = stdOutStream;
+		}
 	}
 
 	@AfterClass
 	public  static void tearDownClass()
 	throws Exception {
 		try {
-			SCENARIO_THREAD.interrupt();
-			TimeUnit.SECONDS.sleep(10);
-			//
 			Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
 			//  Check that messages.log exists
 			Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
