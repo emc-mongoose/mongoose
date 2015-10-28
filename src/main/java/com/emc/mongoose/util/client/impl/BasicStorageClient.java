@@ -72,7 +72,7 @@ implements StorageClient<T> {
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		//
 		try(
-			final LoadExecutor<T> loadJobExecutor = loadBuilder
+			final LoadExecutor<T> loadJobExecutor = ((DataLoadBuilder<T, DataLoadExecutor<T>>) loadBuilder)
 				.setMinObjSize(minSize)
 				.setMaxObjSize(maxSize)
 				.setObjSizeBias(sizeBias)

@@ -1039,9 +1039,9 @@ task integTest(type: Test, dependsOn: dist) {
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "5g"
-	maxHeapSize = "5g"
-	jvmArgs '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
+	minHeapSize = "2560m"
+	maxHeapSize = "2560m"
+	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
