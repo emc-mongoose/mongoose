@@ -35,6 +35,7 @@ implements ContentSource {
 	protected ContentSourceBase(final ByteBuffer zeroByteLayer) {
 		this.zeroByteLayer = zeroByteLayer;
 		this.seed = nextWord(zeroByteLayer.getLong());
+		zeroByteLayer.clear();
 		//
 		byteLayersMap = new LRUMap<>(
 			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
@@ -46,6 +47,7 @@ implements ContentSource {
 	throws IOException {
 		this.zeroByteLayer = ByteBuffer.allocateDirect(size);
 		this.seed = nextWord(zeroByteLayer.getLong());
+		zeroByteLayer.clear();
 		byteLayersMap = new LRUMap<>(
 			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
 		);
