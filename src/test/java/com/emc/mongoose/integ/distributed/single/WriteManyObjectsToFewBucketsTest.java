@@ -30,8 +30,8 @@ extends DistributedLoadBuilderTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	private static final int
-		LIMIT_COUNT_OBJ = 2000,
-		LIMIT_COUNT_CONTAINER = 50;
+		LIMIT_COUNT_OBJ = 100,
+		LIMIT_COUNT_CONTAINER = 100;
 	//
 	private static String RUN_ID_BASE = WriteManyObjectsToFewBucketsTest.class.getCanonicalName();
 	private static int countContainerCreated = 0;
