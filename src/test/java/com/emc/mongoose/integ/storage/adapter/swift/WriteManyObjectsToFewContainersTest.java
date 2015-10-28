@@ -39,7 +39,6 @@ extends WSMockTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_API_NAME, "swift");
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE);
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, Integer.toString(LIMIT_COUNT_OBJ));
@@ -47,6 +46,7 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_DATA_SIZE, "1KB");
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.setProperty(RunTimeConfig.KEY_API_NAME, "swift");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
 		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "25");

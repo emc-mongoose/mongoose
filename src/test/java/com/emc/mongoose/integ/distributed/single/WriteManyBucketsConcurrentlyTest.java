@@ -167,34 +167,6 @@ extends DistributedLoadBuilderTestBase {
 	}
 
 	@Test
-	public void shouldReportScenarioEndToMessageLogFile()
-	throws Exception {
-		//  Read the message file and search for "Scenario end"
-		final File messageFile = LogValidator.getMessageFile(RUN_ID);
-		Assert.assertTrue(
-			"messages.log file doesn't exist",
-			messageFile.exists()
-		);
-		//
-		try (final BufferedReader bufferedReader =
-				 new BufferedReader(new FileReader(messageFile))) {
-			String line;
-			while ((line = bufferedReader.readLine()) != null) {
-				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
-					break;
-				}
-			}
-			Assert.assertNotNull(
-				"Line with information about end of scenario must not be equal null ", line
-			);
-			Assert.assertTrue(
-				"Information about end of scenario doesn't contain in message.log file",
-				line.contains(TestConstants.SCENARIO_END_INDICATOR)
-			);
-		}
-	}
-
-	@Test
 	public void shouldReportCorrectWrittenCountToSummaryLogFile()
 	throws Exception {
 		//  Read perf.summary file
