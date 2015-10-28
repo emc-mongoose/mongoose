@@ -87,11 +87,11 @@ extends WSMockTestBase {
 						RunTimeConfig.setContext(rtConfig);
 						new ScriptMockRunner().run();
 						TimeUnit.SECONDS.sleep(1);
+						RunIdFileManager.closeAll(nextRunId);
 					}
 				} while(true);
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUTPUT_STREAM = stdOutStream;
-				RunIdFileManager.closeAll(nextRunId);
 			}
 		}
 		//

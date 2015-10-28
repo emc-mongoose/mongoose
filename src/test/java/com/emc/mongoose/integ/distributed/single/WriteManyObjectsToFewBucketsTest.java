@@ -30,7 +30,7 @@ extends DistributedLoadBuilderTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	private static final int
-		LIMIT_COUNT_OBJ = 100,
+		LIMIT_COUNT_OBJ = 1000,
 		LIMIT_COUNT_CONTAINER = 100;
 	//
 	private static String RUN_ID_BASE = WriteManyObjectsToFewBucketsTest.class.getCanonicalName();
@@ -86,11 +86,11 @@ extends DistributedLoadBuilderTestBase {
 						RunTimeConfig.setContext(rtConfig);
 						new ScriptMockRunner().run();
 						TimeUnit.SECONDS.sleep(1);
+						RunIdFileManager.closeAll(nextRunId);
 					}
 				} while(true);
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUTPUT_STREAM = stdOutStream;
-				RunIdFileManager.closeAll(nextRunId);
 			}
 		}
 		//
