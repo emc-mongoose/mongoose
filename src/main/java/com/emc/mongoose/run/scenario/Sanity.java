@@ -23,7 +23,7 @@ import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
-import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
+import com.emc.mongoose.util.client.impl.BasicStorageClientBuilder;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -148,7 +148,7 @@ implements Runnable {
 		//
 		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 10);
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
-			clientBuilder = new BasicWSClientBuilder<>();
+			clientBuilder = new BasicStorageClientBuilder<>();
 		final String storageNodes[] = new String[DEFAULT_NODE_COUNT];
 		for(int i = 0; i < DEFAULT_NODE_COUNT; i++) {
 			storageNodes[i] = "127.0.0.1:" + (9020 + i);

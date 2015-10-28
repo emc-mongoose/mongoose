@@ -2,12 +2,12 @@ package com.emc.mongoose.util.client.impl;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
-import com.emc.mongoose.core.api.load.executor.DataLoadExecutor;
+import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 //
@@ -18,16 +18,16 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 19.06.15.
  */
-public class BasicStorageClient<T extends DataItem>
+public class BasicStorageClient<T extends Item>
 implements StorageClient<T> {
 	//
 	protected final static int DEFAULT_CONN_PER_NODE_COUNT = 1;
 	//
 	protected RunTimeConfig rtConfig;
-	protected DataLoadBuilder<T, DataLoadExecutor<T>> loadBuilder;
+	protected LoadBuilder<T, LoadExecutor<T>> loadBuilder;
 	//
 	public BasicStorageClient(
-		final RunTimeConfig rtConfig, final DataLoadBuilder<T, DataLoadExecutor<T>> loadBuilder
+		final RunTimeConfig rtConfig, final LoadBuilder<T, LoadExecutor<T>> loadBuilder
 	) {
 		this.rtConfig = rtConfig;
 		this.loadBuilder = loadBuilder;
@@ -70,12 +70,14 @@ implements StorageClient<T> {
 		final long maxCount, final int connPerNodeCount,
 		final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, InterruptedException, IOException {
-		//
-		try(
-			final LoadExecutor<T> loadJobExecutor = ((DataLoadBuilder<T, DataLoadExecutor<T>>) loadBuilder)
+		if(loadBuilder instanceof DataLoadBuilder) {
+			((DataLoadBuilder) loadBuilder)
 				.setMinObjSize(minSize)
 				.setMaxObjSize(maxSize)
-				.setObjSizeBias(sizeBias)
+				.setObjSizeBias(sizeBias);
+		}
+		try(
+			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(IOTask.Type.CREATE)
 				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
@@ -97,10 +99,13 @@ implements StorageClient<T> {
 		final ItemSrc<T> src, final ItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount, final boolean verifyContentFlag
 	) throws IllegalStateException, InterruptedException, IOException {
-		loadBuilder.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
+		if(loadBuilder instanceof DataLoadBuilder) {
+			((DataLoadBuilder) loadBuilder)
+				.useContainerListingItemSrc().setItemSrc(src)
+				.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
+		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.useContainerListingItemSrc().setItemSrc(src)
 				.setLoadType(IOTask.Type.READ)
 				.setMaxCount(maxCount)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.READ)
@@ -121,9 +126,11 @@ implements StorageClient<T> {
 		final ItemSrc<T> src, final ItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount
 	) throws IllegalStateException, InterruptedException, IOException {
+		if(loadBuilder instanceof DataLoadBuilder) {
+			((DataLoadBuilder) loadBuilder).useContainerListingItemSrc().setItemSrc(src);
+		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.useContainerListingItemSrc().setItemSrc(src)
 				.setLoadType(IOTask.Type.DELETE)
 				.setMaxCount(maxCount)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.DELETE)
@@ -144,9 +151,11 @@ implements StorageClient<T> {
 		final ItemSrc<T> src, final ItemDst<T> dst,
 		final long maxCount, final int connPerNodeCount, final int countPerTime
 	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
+		if(loadBuilder instanceof DataLoadBuilder) {
+			((DataLoadBuilder) loadBuilder).setUpdatesPerItem(countPerTime);
+		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setUpdatesPerItem(countPerTime)
 				.setItemSrc(src)
 				.setLoadType(IOTask.Type.UPDATE)
 				.setMaxCount(maxCount)
@@ -177,11 +186,14 @@ implements StorageClient<T> {
 		final long maxCount, final int connPerNodeCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
-		try(
-			final LoadExecutor<T> loadJobExecutor = loadBuilder
+		if(loadBuilder instanceof DataLoadBuilder) {
+			((DataLoadBuilder) loadBuilder)
 				.setMinObjSize(sizeMin)
 				.setMaxObjSize(sizeMax)
-				.setObjSizeBias(sizeBias)
+				.setObjSizeBias(sizeBias);
+		}
+		try(
+			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setItemSrc(src)
 				.setLoadType(IOTask.Type.APPEND)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.APPEND)
