@@ -23,7 +23,7 @@ implements DataItemContainer<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final WSRequestConfig<T> reqConf;
-	protected final String name, idPrefix;
+	protected final String name, path;
 	protected final int idPrefixLen;
 	protected final boolean fsAccess, verifyContent;
 	//
@@ -38,8 +38,8 @@ implements DataItemContainer<T> {
 			this.name = name;
 		}
 		this.fsAccess = reqConf.getFileAccessEnabled();
-		this.idPrefix = reqConf.getNamePrefix();
-		idPrefixLen = idPrefix == null ? 0 : idPrefix.length();
+		this.path = reqConf.getNamePrefix();
+		idPrefixLen = path == null ? 0 : path.length();
 		this.verifyContent = reqConf.getVerifyContentFlag();
 	}
 	//
@@ -63,7 +63,7 @@ implements DataItemContainer<T> {
 		String name = null;
 		if(rawId != null && !rawId.isEmpty()) {
 			if(fsAccess) { // include the items which have the path matching to configured one
-				if(rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
+				if(rawId.startsWith(path) && rawId.length() > idPrefixLen) {
 					name = rawId.substring(idPrefixLen + 1);
 					if(name.contains("/")) { // doesn't include the items from the subdirectories
 						name = null;
@@ -76,7 +76,7 @@ implements DataItemContainer<T> {
 			}
 		}
 		//
-		if(name != null) {
+		if(name != null && !name.isEmpty()) {
 			final long offset;
 			if(verifyContent) { // should parse the id into the ring buffer offset
 				try {
