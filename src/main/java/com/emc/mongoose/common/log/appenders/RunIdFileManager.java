@@ -188,7 +188,7 @@ extends AbstractManager {
 	protected final void close() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
-				if (layout != null) {
+				if(layout != null) {
 					byte[] footer = layout.getFooter();
 					if (footer != null) {
 						outStream.write(footer);
@@ -200,6 +200,8 @@ extends AbstractManager {
 				e.printStackTrace(System.err);
 			}
 		}
+		outStreamsMap.clear();
+		INSTANCES.remove(this);
 	}
 	//
 	public static void closeAll(final String runId) {
