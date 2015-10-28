@@ -191,6 +191,9 @@
 				"circular": false,
 				"random": false,
 				"batchSize": 100
+			},
+			"queue": {
+				"maxSize": 65536
 			}
 		},
 		"load": {

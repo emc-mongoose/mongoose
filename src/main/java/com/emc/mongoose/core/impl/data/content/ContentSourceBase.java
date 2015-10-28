@@ -1,11 +1,12 @@
 package com.emc.mongoose.core.impl.data.content;
 //
-import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 //
-import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.collections4.map.LRUMap;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,8 +17,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 /**
@@ -29,17 +29,27 @@ implements ContentSource {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected ByteBuffer zeroByteLayer;
-	protected final List<ByteBuffer> byteLayers = new ArrayList<>();
+	protected long seed;
+	protected final Map<Integer, ByteBuffer> byteLayersMap;
 	//
 	protected ContentSourceBase(final ByteBuffer zeroByteLayer) {
 		this.zeroByteLayer = zeroByteLayer;
-		byteLayers.add(zeroByteLayer);
+		this.seed = nextWord(zeroByteLayer.getLong());
+		//
+		byteLayersMap = new LRUMap<>(
+			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
+		);
+		byteLayersMap.put(0, zeroByteLayer);
 	}
 	//
 	protected ContentSourceBase(final ReadableByteChannel zeroLayerSrcChan, final int size)
 	throws IOException {
 		this.zeroByteLayer = ByteBuffer.allocateDirect(size);
-		byteLayers.add(zeroByteLayer);
+		this.seed = nextWord(zeroByteLayer.getLong());
+		byteLayersMap = new LRUMap<>(
+			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
+		);
+		byteLayersMap.put(0, zeroByteLayer);
 		int n = 0, m;
 		do {
 			m = zeroLayerSrcChan.read(zeroByteLayer);
@@ -92,8 +102,8 @@ implements ContentSource {
 			}
 		}
 		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
-		byteLayers.clear();
-		byteLayers.add(zeroByteLayer);
+		byteLayersMap.clear();
+		byteLayersMap.put(0, zeroByteLayer);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public static ContentSourceBase DEFAULT = null;
@@ -119,5 +129,67 @@ implements ContentSource {
 			LOCK.unlock();
 		}
 		return DEFAULT;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final ByteBuffer getLayer(final int layerIndex) {
+		// zero layer always exists so it may be useful to do it very simply and fast
+		if(layerIndex == 0) {
+			return zeroByteLayer;
+		}
+		// else
+		long nextSeed;
+		final int size = zeroByteLayer.capacity();
+		final ByteBuffer layer;
+		synchronized(byteLayersMap) {
+			if(byteLayersMap.containsKey(layerIndex)) {
+				layer = byteLayersMap.get(layerIndex);
+			} else {
+				layer = ByteBuffer.allocateDirect(size);
+				nextSeed = (seed << layerIndex) ^ layerIndex;
+				LOG.debug(
+					Markers.MSG,
+					"Generate new byte layer #{} using the seed: \"{}\"",
+					layerIndex, Long.toHexString(nextSeed)
+				);
+				generateData(layer, nextSeed);
+				byteLayersMap.put(layerIndex, layer);
+			}
+		}
+		return layer;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	protected static void generateData(final ByteBuffer byteLayer, final long seed) {
+		final int
+			ringBuffSize = byteLayer.capacity(),
+			countWordBytes = Long.SIZE / Byte.SIZE,
+			countWords = ringBuffSize / countWordBytes,
+			countTailBytes = ringBuffSize % countWordBytes;
+		long word = seed;
+		int i;
+		double d = System.nanoTime();
+		LOG.debug(Markers.MSG, "Prepare {} of ring data...", SizeUtil.formatSize(ringBuffSize));
+		// 64-bit words
+		byteLayer.clear();
+		for(i = 0; i < countWords; i ++) {
+			byteLayer.putLong(word);
+			word = nextWord(word);
+		}
+		// tail bytes\
+		final ByteBuffer tailBytes = ByteBuffer.allocateDirect(countWordBytes);
+		tailBytes.asLongBuffer().put(word).rewind();
+		for(i = 0; i < countTailBytes; i ++) {
+			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
+		}
+		/*if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(
+				LogUtil.MSG, "Ring buffer data: {}", Base64.encodeBase64String(byteLayer.array())
+			);
+		}*/
+		//
+		LOG.debug(
+			Markers.MSG, "Pre-generating the data done in {}[us]",
+			(System.nanoTime() - d) / 1e9
+		);
 	}
 }

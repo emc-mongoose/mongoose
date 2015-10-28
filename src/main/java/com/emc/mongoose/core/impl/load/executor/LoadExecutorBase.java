@@ -168,15 +168,29 @@ implements LoadExecutor<T> {
 	implements Runnable {
 		@Override
 		public final void run() {
-			final Thread currThread = Thread.currentThread();
-			currThread.setName("resultsDispatcher<" + getName() + ">");
 			try {
-				while(!currThread.isInterrupted()) {
-					passItems();
-					Thread.yield();
-					LockSupport.parkNanos(1000);
+				if(ITEMS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
+					try {
+						final Thread currThread = Thread.currentThread();
+						currThread.setName("resultsDispatcher<" + getName() + ">");
+						try {
+							if(isCircular) {
+								ITEMS_PRODUCED.await(1000, TimeUnit.SECONDS);
+							}
+							while(!currThread.isInterrupted()) {
+								passItems();
+								Thread.yield();
+								LockSupport.parkNanos(1000);
+							}
+						} catch(final InterruptedException e) {
+							LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
+						}
+					} finally {
+						ITEMS_LOCK.unlock();
+					}
 				}
-			} catch(final InterruptedException ignored) {
+			} catch(final InterruptedException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to catch the lock");
 			}
 		}
 	}
@@ -190,7 +204,7 @@ implements LoadExecutor<T> {
 		super(
 			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE,
 			rtConfig.getBatchSize(), rtConfig.isItemSrcCircularEnabled(),
-			rtConfig.isShuffleItemsEnabled()
+			rtConfig.isShuffleItemsEnabled(), rtConfig.getItemQueueMaxSize()
 		);
 		try {
 			super.setItemDst(this);
@@ -289,13 +303,15 @@ implements LoadExecutor<T> {
 		try {
 			super.runActually();
 		} finally {
-			if(itemSrc != null) {
-				LOG.debug(
-					Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
-					getName(), counterSubm.get()
-				);
-				if(isShutdown.compareAndSet(false, true)) {
-					shutdownActually();
+			if(!isCircular) {
+				if (itemSrc != null) {
+					LOG.debug(
+						Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
+						getName(), counterSubm.get()
+					);
+					if (isShutdown.compareAndSet(false, true)) {
+						shutdownActually();
+					}
 				}
 			}
 		}
@@ -798,6 +814,10 @@ implements LoadExecutor<T> {
 						if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
 							LOG.info(Markers.ITEM_LIST, items.get(i));
 						}
+					}
+					//
+					if(isCircular) {
+						put(items, 0, n);
 					}
 				} else { // put to the consumer
 					if(LOG.isTraceEnabled(Markers.MSG)) {

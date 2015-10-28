@@ -22,8 +22,6 @@ implements ContentSource {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final long seed;
-	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformContentSource()
 	throws NumberFormatException {
 		this(
@@ -37,40 +35,6 @@ implements ContentSource {
 		this.seed = seed;
 		generateData(zeroByteLayer, seed);
 		LOG.debug(Markers.MSG, "New ring buffer instance #{}", hashCode());
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	private static void generateData(final ByteBuffer byteLayer, final long seed) {
-		final int
-			ringBuffSize = byteLayer.capacity(),
-			countWordBytes = Long.SIZE / Byte.SIZE,
-			countWords = ringBuffSize / countWordBytes,
-			countTailBytes = ringBuffSize % countWordBytes;
-		long word = seed;
-		int i;
-		double d = System.nanoTime();
-		LOG.debug(Markers.MSG, "Prepare {} of ring data...", SizeUtil.formatSize(ringBuffSize));
-		// 64-bit words
-		byteLayer.clear();
-		for(i = 0; i < countWords; i ++) {
-			byteLayer.putLong(word);
-			word = nextWord(word);
-		}
-		// tail bytes\
-		final ByteBuffer tailBytes = ByteBuffer.allocateDirect(countWordBytes);
-		tailBytes.asLongBuffer().put(word).rewind();
-		for(i = 0; i < countTailBytes; i ++) {
-			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
-		}
-		/*if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(
-				LogUtil.MSG, "Ring buffer data: {}", Base64.encodeBase64String(byteLayer.array())
-			);
-		}*/
-		//
-		LOG.debug(
-			Markers.MSG, "Pre-generating the data done in {}[us]",
-			(System.nanoTime() - d) / 1e9
-		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
@@ -93,36 +57,4 @@ implements ContentSource {
 			throw new IllegalArgumentException();
 		}
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public final ByteBuffer getLayer(final int layerIndex) {
-		// zero layer always exists so it may be useful to do it very simply and fast
-		if(layerIndex == 0) {
-			return zeroByteLayer;
-		}
-		// else
-		long nextSeed;
-		final int size = zeroByteLayer.capacity();
-		synchronized(byteLayers) {
-			for(int i = byteLayers.size(); i <= layerIndex; i++) {
-				ByteBuffer nextLayer = ByteBuffer.allocateDirect(size);
-				nextSeed = Long.reverse(
-					nextWord(
-						Long.reverseBytes(
-							byteLayers.get(i - 1).getLong(0)
-						)
-					)
-				);
-				LOG.debug(
-					Markers.MSG,
-					"Generate new byte layer #{} using the seed: \"{}\"",
-					i, Long.toHexString(nextSeed)
-				);
-				generateData(nextLayer, nextSeed);
-				byteLayers.add(nextLayer);
-			}
-		}
-		return byteLayers.get(layerIndex);
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
 }

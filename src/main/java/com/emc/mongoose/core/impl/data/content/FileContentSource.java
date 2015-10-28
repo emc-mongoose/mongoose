@@ -44,48 +44,5 @@ implements ContentSource {
 		super(contentSrcChan, size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size);
 	}
 	//
-	@Override
-	public final ByteBuffer getLayer(final int layerIndex) {
-		// zero layer always exists so it may be useful to do it very simply and fast
-		if(layerIndex == 0) {
-			return zeroByteLayer;
-		}
-		// else
-		ByteBuffer lastLayerBytes, nextLayerBytes;
-		final int
-			size = zeroByteLayer.capacity(),
-			wordCount = size / WORD_SIZE,
-			tailByteCount = size % WORD_SIZE;
-		synchronized(byteLayers) {
-			for(int i = byteLayers.size(); i <= layerIndex; i ++) {
-				lastLayerBytes = byteLayers.get(i - 1);
-				lastLayerBytes.clear();
-				nextLayerBytes = ByteBuffer.allocateDirect(size);
-				// apply xorshift to each word
-				for(int j = 0; j < wordCount; j ++) {
-					nextLayerBytes.putLong(nextWord(lastLayerBytes.getLong()));
-				}
-				// append the tail bytes
-				if(tailByteCount > 0) {
-					final ByteBuffer tailBytes = ByteBuffer.allocate(WORD_SIZE);
-					for(int j = 0; j < tailByteCount; j++) {
-						tailBytes.put(lastLayerBytes.get());
-					}
-					for(int j = tailByteCount; j < WORD_SIZE; j ++) {
-						tailBytes.put((byte) 0);
-					}
-					tailBytes.clear(); // reset the position
-					final long tailWord = tailBytes.asLongBuffer().get();
-					tailBytes.clear(); // reset the position
-					tailBytes.asLongBuffer().put(nextWord(tailWord));
-					tailBytes.clear(); // reset the position
-					for(int j = 0; j < tailByteCount; j ++) {
-						nextLayerBytes.put(tailBytes.get());
-					}
-				}
-				byteLayers.add(nextLayerBytes);
-			}
-		}
-		return byteLayers.get(layerIndex);
-	}
+
 }
