@@ -53,6 +53,11 @@ public final class LogUtil {
 		FNAME_LOG_CONF = "logging.json",
 		//
 		MONGOOSE = "mongoose";
+		//
+	public final static String
+		KEY_PERF_TRACE_HEADERS = "perfTraceHeaders",
+		PERF_TRACE_HEADERS_C1 = "Thread,TargetNode,ItemId,ItemSize,StatusCode,ReqTimeStart[us],Latency[us],Duration[us]",
+		PERF_TRACE_HEADERS_C1C2 = "Thread,TargetNode,ItemId,ItemSize,StatusCode,ReqTimeStart[us],Latency[us],LatencyData[us],Duration[us]";
 	//
 	public static final Lock HOOKS_LOCK = new ReentrantLock();
 	public static final Condition HOOKS_COND = HOOKS_LOCK.newCondition();

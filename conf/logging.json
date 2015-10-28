@@ -1,6 +1,6 @@
 {
 	"configuration": {
-		"status": "off",
+		"status": "debug",
 		"name": "mongoose",
 		"monitorInterval": "1000",
 		"packages": "com.emc.mongoose.common.log.appenders",
@@ -207,7 +207,7 @@
 					"type": "runIdFile",
 					"fileName": "perf.trace.csv",
 					"PatternLayout": {
-						"header": "Thread,TargetNode,ItemId,ItemSize,StatusCode,ReqTimeStart[us],Latency[us],Duration[us]\n",
+						"header": "${ctx:perfTraceHeaders}\n",
 						"pattern": "%t,%m%n"
 					},
 					"Filters": {

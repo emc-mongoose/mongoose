@@ -232,6 +232,13 @@
 				}
 			}
 		},
+		"log": {
+			"perf" : {
+				"trace" : {
+					"dataReadLatencyEnabled" : false
+				}
+			}
+		},
 		"scenario": {
 			"dir": "scripts",
 			"lang": "py",
@@ -255,10 +262,10 @@
 			"mock": {
 				"headCount": 1,
 				"workersPerSocket": 0,
-				"capacity": 10000000,
+				"capacity": 1000000,
 				"container": {
-					"capacity": 10000000,
-					"countLimit": 10000000
+					"capacity": 1000000,
+					"countLimit": 1000000
 				},
 				"fault": {
 					"minConnLifeMilliSec": 0,

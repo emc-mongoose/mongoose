@@ -232,6 +232,13 @@
 				}
 			}
 		},
+		"log": {
+			"perf" : {
+				"trace" : {
+					"dataReadLatencyEnabled" : false
+				}
+			}
+		},
 		"scenario": {
 			"dir": "scripts",
 			"lang": "py",

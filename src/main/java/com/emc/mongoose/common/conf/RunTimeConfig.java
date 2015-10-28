@@ -82,6 +82,8 @@ implements Externalizable {
 		KEY_LOAD_WORKERS = "load.workers",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
+		KEY_LOG_PERF_TRACE_DATA_READ_LATENCY_ENABLED = "log.perf.trace.dataReadLatencyEnabled",
+		//
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
 		KEY_SCENARIO_NAME = "scenario.name",
@@ -161,9 +163,7 @@ implements Externalizable {
 	}
 	//
 	public void loadProperties() {
-		loadJsonProps(
-			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF)
-		);
+		loadJsonProps(Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF));
 		loadSysProps();
 	}
 	//
@@ -195,6 +195,15 @@ implements Externalizable {
 		CONTEXT_CONFIG.set(instance);
 		ThreadContext.put(KEY_RUN_ID, instance.getRunId());
 		ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
+		if(instance.getLogPerfTraceDataReadLatencyEnabled()) {
+			ThreadContext.put(
+				LogUtil.KEY_PERF_TRACE_HEADERS, LogUtil.PERF_TRACE_HEADERS_C1C2
+			);
+		} else {
+			ThreadContext.put(
+				LogUtil.KEY_PERF_TRACE_HEADERS, LogUtil.PERF_TRACE_HEADERS_C1
+			);
+		}
 	}
 	//
 	public final static String DIR_ROOT;
@@ -414,6 +423,10 @@ implements Externalizable {
 	//
 	public final String getLoadItemClass() {
 		return getString(KEY_ITEM_CLASS);
+	}
+	//
+	public final boolean getLogPerfTraceDataReadLatencyEnabled() {
+		return getBoolean(KEY_LOG_PERF_TRACE_DATA_READ_LATENCY_ENABLED);
 	}
 	//
 	public final long getDataSizeMin() {
