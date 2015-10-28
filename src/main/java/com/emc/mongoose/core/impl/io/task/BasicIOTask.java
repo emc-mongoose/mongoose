@@ -21,7 +21,8 @@ implements IOTask<T> {
 	//
 	protected volatile IOTask.Status status = IOTask.Status.FAIL_UNKNOWN;
 	protected volatile long
-		reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0,
+		reqTimeStart = 0, reqTimeDone = 0,
+		respTimeStart = 0, respTimeDone = 0,
 		countBytesDone = 0;
 	//
 	public BasicIOTask(
