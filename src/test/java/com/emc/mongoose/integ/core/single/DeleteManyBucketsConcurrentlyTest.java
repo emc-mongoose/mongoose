@@ -233,7 +233,8 @@ extends WSMockTestBase {
 						"Count of success is not integer", LogValidator.isInteger(nextRec.get(7))
 					);
 					Assert.assertEquals(
-						"Count of success isn't correct", Integer.toString(LIMIT_COUNT), nextRec.get(7)
+						"Count of success isn't correct",
+						LIMIT_COUNT, Integer.parseInt(nextRec.get(7)), LIMIT_COUNT / 100
 					);
 				}
 			}
@@ -260,7 +261,7 @@ extends WSMockTestBase {
 			//  Check that there are 10 lines in data.items.csv file
 			Assert.assertEquals(
 				"Not correct information about created data items",
-				LIMIT_COUNT, countDataItems, LIMIT_COUNT / 1000
+				LIMIT_COUNT, countDataItems, LIMIT_COUNT / 100
 			);
 		}
 	}

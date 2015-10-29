@@ -4,6 +4,8 @@ import com.emc.mongoose.common.log.DefaultConfigurationFactory;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.common.log.appenders.RunIdFileAppender;
+import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.fasterxml.jackson.databind.JsonNode;
 //
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +19,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
 //
 import java.io.Externalizable;
 import java.io.File;
@@ -142,7 +146,6 @@ implements Externalizable {
 	private static RunTimeConfig DEFAULT_INSTANCE;
 	//
 	public static void initContext() {
-		final Logger log = LogManager.getLogger();
 		final RunTimeConfig instance = new RunTimeConfig();
 		DEFAULT_INSTANCE = instance;
 		instance.loadProperties();
@@ -155,8 +158,13 @@ implements Externalizable {
 		if(runMode != null && runMode.length() > 0) {
 			instance.set(KEY_RUN_MODE, runMode);
 		}
+		if(instance.getLogPerfTraceDataReadLatencyEnabled()) {
+			DefaultConfigurationFactory.HEADER_PERF_TRACE_FILE = LogUtil.PERF_TRACE_HEADERS_C1C2;
+			RunIdFileManager.closeAll(runId);
+			LogUtil.reset();
+		}
 		setContext(instance);
-		log.info(Markers.CFG, RunTimeConfig.getContext().toFormattedString());
+		LogManager.getLogger().info(Markers.CFG, RunTimeConfig.getContext().toFormattedString());
 	}
 	//
 	public static RunTimeConfig getDefault() {
@@ -196,10 +204,6 @@ implements Externalizable {
 		CONTEXT_CONFIG.set(instance);
 		ThreadContext.put(KEY_RUN_ID, instance.getRunId());
 		ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
-		if(instance.getLogPerfTraceDataReadLatencyEnabled()) {
-			DefaultConfigurationFactory.HEADER_PERF_TRACE_FILE = LogUtil.PERF_TRACE_HEADERS_C1C2;
-			LogUtil.reset();
-		}
 	}
 	//
 	public final static String DIR_ROOT;
