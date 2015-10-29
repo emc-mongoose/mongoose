@@ -4,6 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.load.model.ItemProducer;
@@ -19,6 +20,8 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -37,6 +40,7 @@ implements ItemProducer<T> {
 	public final static Lock ITEMS_LOCK = new ReentrantLock();
 	public final static Condition ITEMS_PRODUCED = ITEMS_LOCK.newCondition();
 	//
+	protected final ConcurrentHashMap<String, Item> uniqueItems;
 	protected final ItemSrc<T> itemSrc;
 	protected final long maxCount;
 	protected volatile ItemDst<T> itemDst = null;
@@ -67,6 +71,8 @@ implements ItemProducer<T> {
 		this.isCircular = isCircular;
 		this.isShuffling = isShuffling;
 		this.maxItemQueueSize = maxItemQueueSize;
+		//
+		this.uniqueItems = new ConcurrentHashMap<>((int) maxItemQueueSize);
 	}
 	//
 	@Override

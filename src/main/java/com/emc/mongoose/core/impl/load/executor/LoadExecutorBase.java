@@ -425,9 +425,6 @@ implements LoadExecutor<T> {
 		}
 		//
 		LOG.debug(Markers.MSG, "{}: waiting the output buffer to become empty", getName());
-		while(!itemOutBuff.isEmpty()) {
-			Thread.yield(); LockSupport.parkNanos(1);
-		}
 		//
 		try {
 			if(isStarted.get()) { // if was executing
@@ -454,6 +451,13 @@ implements LoadExecutor<T> {
 		}
 		//
 		mgmtExecutor.shutdownNow();
+		//
+		for(final Map.Entry<String, Item> entry : uniqueItems.entrySet()) {
+			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
+				LOG.info(Markers.ITEM_LIST, entry.getValue());
+			}
+		}
+		//
 		if(consumer instanceof LifeCycle) {
 			try {
 				((LifeCycle) consumer).shutdown();
@@ -645,6 +649,11 @@ implements LoadExecutor<T> {
 		}
 		//
 		final T dataItem = ioTask.getItem();
+		//
+		if(isCircular) {
+			uniqueItems.putIfAbsent(dataItem.getName(), dataItem);
+		}
+		//
 		final IOTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
 		final long
@@ -706,6 +715,11 @@ implements LoadExecutor<T> {
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
 				dataItem = ioTask.getItem();
+				//
+				if(isCircular) {
+					uniqueItems.putIfAbsent(dataItem.getName(), dataItem);
+				}
+				//
 				status = ioTask.getStatus();
 				countBytesDone = ioTask.getCountBytesDone();
 				reqTimeStart = ioTask.getReqTimeStart();
@@ -810,14 +824,14 @@ implements LoadExecutor<T> {
 			if(n > 0) {
 				// is this an end of consumer-producer chain?
 				if(consumer == null) {
-					for(int i = 0; i < n; i ++) {
-						if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
-							LOG.info(Markers.ITEM_LIST, items.get(i));
-						}
-					}
-					//
 					if(isCircular) {
 						put(items, 0, n);
+					} else {
+						for(int i = 0; i < n; i++) {
+							if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
+								LOG.info(Markers.ITEM_LIST, items.get(i));
+							}
+						}
 					}
 				} else { // put to the consumer
 					if(LOG.isTraceEnabled(Markers.MSG)) {

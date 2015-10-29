@@ -190,10 +190,10 @@
 				"separator": ",",
 				"circular": false,
 				"random": false,
-				"batchSize": 100
+				"batchSize": 10
 			},
 			"queue": {
-				"maxSize": 65536
+				"maxSize": 10
 			}
 		},
 		"load": {
