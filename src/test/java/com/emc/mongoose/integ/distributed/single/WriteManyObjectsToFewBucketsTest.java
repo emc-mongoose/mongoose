@@ -108,7 +108,7 @@ extends DistributedLoadBuilderTestBase {
 	@Test
 	public final void checkCreatedContainerCount()
 	throws Exception {
-		Assert.assertEquals(LIMIT_COUNT_CONTAINER, countContainerCreated);
+		Assert.assertEquals(LIMIT_COUNT_CONTAINER, countContainerCreated, LIMIT_COUNT_CONTAINER / 10);
 	}
 	//
 	@Test

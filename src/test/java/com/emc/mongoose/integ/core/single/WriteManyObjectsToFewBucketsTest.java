@@ -108,7 +108,7 @@ extends WSMockTestBase {
 	@Test
 	public final void checkCreatedContainerCount()
 	throws Exception {
-		Assert.assertEquals(LIMIT_COUNT_CONTAINER, countContainerCreated);
+		Assert.assertEquals(LIMIT_COUNT_CONTAINER, countContainerCreated, LIMIT_COUNT_CONTAINER / 10);
 	}
 	//
 	@Test
@@ -120,6 +120,6 @@ extends WSMockTestBase {
 		while(m.find()) {
 			countMatch ++;
 		}
-		Assert.assertEquals(LIMIT_COUNT_CONTAINER, countMatch);
+		Assert.assertEquals(LIMIT_COUNT_CONTAINER, countMatch, LIMIT_COUNT_CONTAINER / 10);
 	}
 }
