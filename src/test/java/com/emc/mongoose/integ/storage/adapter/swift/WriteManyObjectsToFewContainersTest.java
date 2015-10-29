@@ -87,11 +87,11 @@ extends WSMockTestBase {
 						RunTimeConfig.setContext(rtConfig);
 						new ScriptMockRunner().run();
 						TimeUnit.SECONDS.sleep(1);
+						RunIdFileManager.closeAll(nextRunId);
 					}
 				} while(true);
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUTPUT_STREAM = stdOutStream;
-				RunIdFileManager.closeAll(nextRunId);
 			}
 		}
 		//
@@ -115,7 +115,7 @@ extends WSMockTestBase {
 	@Test
 	public final void checkThatAllContainersAlreadyWereExisting() {
 		final String consoleOutput = STD_OUTPUT_STREAM.toString();
-		final Pattern p = Pattern.compile("Bucket \"[a-z0-9]+\" already exists");
+		final Pattern p = Pattern.compile("Container \"[a-z0-9]+\" already exists");
 		final Matcher m = p.matcher(consoleOutput);
 		int countMatch = 0;
 		while(m.find()) {
