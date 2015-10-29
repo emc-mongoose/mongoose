@@ -10,10 +10,14 @@ import org.apache.logging.log4j.Marker;
 //
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
+import org.apache.logging.log4j.core.config.ConfigurationFactory;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
 import org.apache.logging.log4j.io.IoBuilder;
+import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,12 +54,9 @@ public final class LogUtil {
 		KEY_CLOCK = "log4j.Clock",
 		VALUE_CLOCK = "CoarseCachedClock",
 		//
-		FNAME_LOG_CONF = "logging.json",
-		//
 		MONGOOSE = "mongoose";
 		//
 	public final static String
-		KEY_PERF_TRACE_HEADERS = "perfTraceHeaders",
 		PERF_TRACE_HEADERS_C1 = "Thread,TargetNode,ItemId,ItemSize,StatusCode,ReqTimeStart[us],Latency[us],Duration[us]",
 		PERF_TRACE_HEADERS_C1C2 = "Thread,TargetNode,ItemId,ItemSize,StatusCode,ReqTimeStart[us],Latency[us],LatencyData[us],Duration[us]";
 	//
@@ -101,6 +102,8 @@ public final class LogUtil {
 		LOG_CTX_LOCK.lock();
 		try {
 			if(LOG_CTX == null) {
+				StatusLogger.getLogger().setLevel(Level.OFF);
+				//
 				System.setProperty(KEY_THREAD_CTX_INHERIT, VALUE_THREAD_CTX_INHERIT);
 				// make all used loggers asynchronous
 				System.setProperty(KEY_LOG4J_CTX_SELECTOR, VALUE_LOG4J_CTX_ASYNC_SELECTOR);
@@ -111,26 +114,45 @@ public final class LogUtil {
 				//
 				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
 				// set "run.id" property with timestamp value if not set before
-				String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
+				final String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
 					System.setProperty(RunTimeConfig.KEY_RUN_ID, newRunId());
 				}
+				//
+				System.setErr(
+					IoBuilder.forLogger(DriverManager.class)
+						.setLevel(Level.DEBUG)
+						.setMarker(Markers.ERR)
+						.setAutoFlush(true)
+						.setBuffered(true)
+						.buildPrintStream()
+				);
 				// determine the logger configuration file path
-				Path logConfPath = Paths.get(
-					RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, FNAME_LOG_CONF
+				final Path logConfPath = Paths.get(
+					RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, RunTimeConfig.FNAME_CONF
 				);
 				//
 				try {
 					if(Files.exists(logConfPath)) {
-						LOG_CTX = Configurator.initialize(MONGOOSE, logConfPath.toUri().toString());
+						// this is not embedding environment
+						ConfigurationFactory.setConfigurationFactory(
+							new DefaultConfigurationFactory()
+						);
+						LOG_CTX = Configurator.initialize(
+							ConfigurationBuilderFactory.newConfigurationBuilder().build()
+						);
 					} else if(System.getProperty("log4j.configurationFile") == null) {
-						final ClassLoader classloader = LogUtil.class.getClassLoader();
-						final URL bundleLogConfURL = classloader.getResource(FNAME_LOG_CONF);
-						if(bundleLogConfURL != null) {
-							LOG_CTX = Configurator.initialize(MONGOOSE, classloader, bundleLogConfURL.toURI());
-						}
+						// no log4j conf file available -> embedding environment
+						ConfigurationFactory.setConfigurationFactory(
+							new EmbeddedConfigurationFactory()
+						);
+						LOG_CTX = Configurator.initialize(
+							ConfigurationBuilderFactory.newConfigurationBuilder().build()
+						);
 					} else {
-						LOG_CTX = Configurator.initialize(MONGOOSE, System.getProperty("log4j.configurationFile"));
+						LOG_CTX = Configurator.initialize(
+							MONGOOSE, System.getProperty("log4j.configurationFile")
+						);
 					}
 					//
 					if(LOG_CTX == null) {
@@ -140,15 +162,6 @@ public final class LogUtil {
 							Markers.MSG, "Logging subsystem is configured successfully"
 						);
 					}
-					final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);
-					System.setErr(
-						logStreamBuilder
-							.setLevel(Level.DEBUG)
-							.setMarker(Markers.ERR)
-							.setAutoFlush(true)
-							.setBuffered(true)
-							.buildPrintStream()
-					);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -156,6 +169,13 @@ public final class LogUtil {
 		} finally {
 			LOG_CTX_LOCK.unlock();
 		}
+	}
+	//
+	public static void reset() {
+		LOG_CTX_LOCK.lock();
+		LOG_CTX = null;
+		LOG_CTX_LOCK.unlock();
+		init();
 	}
 	//
 	public static void exception(

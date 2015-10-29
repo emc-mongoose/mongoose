@@ -1,5 +1,6 @@
 package com.emc.mongoose.common.conf;
 // mongoose-common.jar
+import com.emc.mongoose.common.log.DefaultConfigurationFactory;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -196,13 +197,8 @@ implements Externalizable {
 		ThreadContext.put(KEY_RUN_ID, instance.getRunId());
 		ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
 		if(instance.getLogPerfTraceDataReadLatencyEnabled()) {
-			ThreadContext.put(
-				LogUtil.KEY_PERF_TRACE_HEADERS, LogUtil.PERF_TRACE_HEADERS_C1C2
-			);
-		} else {
-			ThreadContext.put(
-				LogUtil.KEY_PERF_TRACE_HEADERS, LogUtil.PERF_TRACE_HEADERS_C1
-			);
+			DefaultConfigurationFactory.HEADER_PERF_TRACE_FILE = LogUtil.PERF_TRACE_HEADERS_C1C2;
+			LogUtil.reset();
 		}
 	}
 	//
@@ -633,16 +629,16 @@ implements Externalizable {
 	public final synchronized void writeExternal(final ObjectOutput out)
 	throws IOException {
 		final Logger log = LogManager.getLogger();
-		log.debug(Markers.MSG, "Going to upload properties to a server");
+		//log.debug(Markers.MSG, "Going to upload properties to a server");
 		String nextPropName;
 		Object nextPropValue;
 		final HashMap<String, String> propsMap = new HashMap<>();
 		for(final Iterator<String> i = getKeys(); i.hasNext();) {
 			nextPropName = i.next();
 			nextPropValue = getProperty(nextPropName);
-			log.trace(
+			/*log.trace(
 				Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
-			);
+			);*/
 			if(List.class.isInstance(nextPropValue)) {
 				propsMap.put(
 					nextPropName,
@@ -654,15 +650,15 @@ implements Externalizable {
 				propsMap.put(nextPropName, Number.class.cast(nextPropValue).toString());
 			} else if(nextPropValue != null) {
 				propsMap.put(nextPropName, nextPropValue.toString());
-			} else {
+			}/* else {
 				log.debug(Markers.ERR, "Property \"{}\" value is null", nextPropName);
-			}
+			}*/
 		}
 		//
-		log.trace(Markers.MSG, "Sending configuration: {}", propsMap);
+		//log.trace(Markers.MSG, "Sending configuration: {}", propsMap);
 		//
 		out.writeObject(propsMap);
-		log.debug(Markers.MSG, "Uploaded the properties from client side");
+		//log.debug(Markers.MSG, "Uploaded the properties from client side");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
