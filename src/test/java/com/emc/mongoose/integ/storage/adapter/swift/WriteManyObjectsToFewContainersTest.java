@@ -81,7 +81,7 @@ extends WSMockTestBase {
 					if(nextContainer == null) {
 						break;
 					} else {
-						countContainerCreated++;
+						countContainerCreated ++;
 						rtConfig.set(RunTimeConfig.KEY_RUN_ID, nextRunId);
 						rtConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, nextContainer);
 						RunTimeConfig.setContext(rtConfig);
