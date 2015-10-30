@@ -10,16 +10,11 @@ import org.apache.logging.log4j.Marker;
 //
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.ConfigurationFactory;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.core.config.builder.api.Component;
-import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
-import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
 import org.apache.logging.log4j.io.IoBuilder;
-import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.File;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,8 +29,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.apache.logging.log4j.core.Filter.Result.ACCEPT;
-import static org.apache.logging.log4j.core.Filter.Result.DENY;
 /**
  Created by kurila on 06.05.14.
  */
@@ -57,11 +50,9 @@ public final class LogUtil {
 		KEY_CLOCK = "log4j.Clock",
 		VALUE_CLOCK = "CoarseCachedClock",
 		//
-		MONGOOSE = "mongoose";
+		FNAME_LOG_CONF = "logging.json",
 		//
-	public final static String
-		PERF_TRACE_HEADERS_C1 = "Thread,TargetNode,ItemId,ItemSize,StatusCode,ReqTimeStart[us],Latency[us],Duration[us]\n",
-		PERF_TRACE_HEADERS_C1C2 = "Thread,TargetNode,ItemId,ItemSize,StatusCode,ReqTimeStart[us],Latency[us],LatencyData[us],Duration[us]\n";
+		MONGOOSE = "mongoose";
 	//
 	public static final Lock HOOKS_LOCK = new ReentrantLock();
 	public static final Condition HOOKS_COND = HOOKS_LOCK.newCondition();
@@ -105,51 +96,36 @@ public final class LogUtil {
 		LOG_CTX_LOCK.lock();
 		try {
 			if(LOG_CTX == null) {
-				StatusLogger.getLogger().setLevel(Level.OFF);
-				//
 				System.setProperty(KEY_THREAD_CTX_INHERIT, VALUE_THREAD_CTX_INHERIT);
 				// make all used loggers asynchronous
 				System.setProperty(KEY_LOG4J_CTX_SELECTOR, VALUE_LOG4J_CTX_ASYNC_SELECTOR);
 				// connect JUL to Log4J2
 				System.setProperty(KEY_JUL_MANAGER, VALUE_JUL_MANAGER);
+				//
 				System.setProperty(KEY_WAIT_STRATEGY, VALUE_WAIT_STRATEGY);
+				//
 				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
 				// set "run.id" property with timestamp value if not set before
-				final String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
+				String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
 					System.setProperty(RunTimeConfig.KEY_RUN_ID, newRunId());
 				}
 				// determine the logger configuration file path
-				final Path logConfPath = Paths.get(
-					RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, RunTimeConfig.FNAME_CONF
-				);
-				//
-				System.setErr(
-					IoBuilder.forLogger(DriverManager.class)
-						.setLevel(Level.DEBUG)
-						.setMarker(Markers.ERR)
-						.setAutoFlush(true)
-						.setBuffered(true)
-						.buildPrintStream()
+				Path logConfPath = Paths.get(
+					RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, FNAME_LOG_CONF
 				);
 				//
 				try {
 					if(Files.exists(logConfPath)) {
-						// this is not embedding environment
-						ConfigurationFactory.setConfigurationFactory(
-							new DefaultConfigurationFactory()
-						);
-						LOG_CTX = Configurator.initialize(MONGOOSE, null);
+						LOG_CTX = Configurator.initialize(MONGOOSE, logConfPath.toUri().toString());
 					} else if(System.getProperty("log4j.configurationFile") == null) {
-						// no log4j conf file available -> embedding environment
-						ConfigurationFactory.setConfigurationFactory(
-							new EmbeddedConfigurationFactory()
-						);
-						LOG_CTX = Configurator.initialize(MONGOOSE, null);
+						final ClassLoader classloader = LogUtil.class.getClassLoader();
+						final URL bundleLogConfURL = classloader.getResource(FNAME_LOG_CONF);
+						if(bundleLogConfURL != null) {
+							LOG_CTX = Configurator.initialize(MONGOOSE, classloader, bundleLogConfURL.toURI());
+						}
 					} else {
-						LOG_CTX = Configurator.initialize(
-							MONGOOSE, System.getProperty("log4j.configurationFile")
-						);
+						LOG_CTX = Configurator.initialize(MONGOOSE, System.getProperty("log4j.configurationFile"));
 					}
 					//
 					if(LOG_CTX == null) {
@@ -159,6 +135,15 @@ public final class LogUtil {
 							Markers.MSG, "Logging subsystem is configured successfully"
 						);
 					}
+					final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);
+					System.setErr(
+						logStreamBuilder
+							.setLevel(Level.DEBUG)
+							.setMarker(Markers.ERR)
+							.setAutoFlush(true)
+							.setBuffered(true)
+							.buildPrintStream()
+					);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -166,16 +151,6 @@ public final class LogUtil {
 		} finally {
 			LOG_CTX_LOCK.unlock();
 		}
-	}
-	//
-	public static void reset() {
-		LOG_CTX = null;
-		init();
-		final Configuration logConf = DefaultConfigurationFactory.createConfiguration(
-			MONGOOSE, DefaultConfigurationFactory.newConfigurationBuilder()
-		);
-		LOG_CTX.start(logConf);
-		LOG_CTX.updateLoggers();
 	}
 	//
 	public static void exception(

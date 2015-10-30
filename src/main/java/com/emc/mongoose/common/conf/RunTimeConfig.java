@@ -1,11 +1,8 @@
 package com.emc.mongoose.common.conf;
 // mongoose-common.jar
-import com.emc.mongoose.common.log.DefaultConfigurationFactory;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.common.log.appenders.RunIdFileAppender;
-import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.fasterxml.jackson.databind.JsonNode;
 //
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,8 +16,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
 //
 import java.io.Externalizable;
 import java.io.File;
@@ -87,8 +82,6 @@ implements Externalizable {
 		KEY_LOAD_WORKERS = "load.workers",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
-		KEY_LOG_PERF_TRACE_DATA_READ_LATENCY_ENABLED = "log.perf.trace.dataReadLatencyEnabled",
-		//
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
 		KEY_SCENARIO_NAME = "scenario.name",
@@ -146,6 +139,7 @@ implements Externalizable {
 	private static RunTimeConfig DEFAULT_INSTANCE;
 	//
 	public static void initContext() {
+		final Logger log = LogManager.getLogger();
 		final RunTimeConfig instance = new RunTimeConfig();
 		DEFAULT_INSTANCE = instance;
 		instance.loadProperties();
@@ -158,13 +152,8 @@ implements Externalizable {
 		if(runMode != null && runMode.length() > 0) {
 			instance.set(KEY_RUN_MODE, runMode);
 		}
-		if(instance.getLogPerfTraceDataReadLatencyEnabled()) {
-			DefaultConfigurationFactory.HEADER_PERF_TRACE_FILE = LogUtil.PERF_TRACE_HEADERS_C1C2;
-			RunIdFileManager.closeAll(runId);
-			LogUtil.reset();
-		}
 		setContext(instance);
-		LogManager.getLogger().info(Markers.CFG, RunTimeConfig.getContext().toFormattedString());
+		log.info(Markers.CFG, RunTimeConfig.getContext().toFormattedString());
 	}
 	//
 	public static RunTimeConfig getDefault() {
@@ -172,7 +161,9 @@ implements Externalizable {
 	}
 	//
 	public void loadProperties() {
-		loadJsonProps(Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF));
+		loadJsonProps(
+			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF)
+		);
 		loadSysProps();
 	}
 	//
@@ -425,10 +416,6 @@ implements Externalizable {
 		return getString(KEY_ITEM_CLASS);
 	}
 	//
-	public final boolean getLogPerfTraceDataReadLatencyEnabled() {
-		return getBoolean(KEY_LOG_PERF_TRACE_DATA_READ_LATENCY_ENABLED);
-	}
-	//
 	public final long getDataSizeMin() {
 		return SizeUtil.toSize(getString(KEY_DATA_SIZE_MIN));
 	}
@@ -633,16 +620,16 @@ implements Externalizable {
 	public final synchronized void writeExternal(final ObjectOutput out)
 	throws IOException {
 		final Logger log = LogManager.getLogger();
-		//log.debug(Markers.MSG, "Going to upload properties to a server");
+		log.debug(Markers.MSG, "Going to upload properties to a server");
 		String nextPropName;
 		Object nextPropValue;
 		final HashMap<String, String> propsMap = new HashMap<>();
 		for(final Iterator<String> i = getKeys(); i.hasNext();) {
 			nextPropName = i.next();
 			nextPropValue = getProperty(nextPropName);
-			/*log.trace(
+			log.trace(
 				Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
-			);*/
+			);
 			if(List.class.isInstance(nextPropValue)) {
 				propsMap.put(
 					nextPropName,
@@ -654,15 +641,15 @@ implements Externalizable {
 				propsMap.put(nextPropName, Number.class.cast(nextPropValue).toString());
 			} else if(nextPropValue != null) {
 				propsMap.put(nextPropName, nextPropValue.toString());
-			}/* else {
+			} else {
 				log.debug(Markers.ERR, "Property \"{}\" value is null", nextPropName);
-			}*/
+			}
 		}
 		//
-		//log.trace(Markers.MSG, "Sending configuration: {}", propsMap);
+		log.trace(Markers.MSG, "Sending configuration: {}", propsMap);
 		//
 		out.writeObject(propsMap);
-		//log.debug(Markers.MSG, "Uploaded the properties from client side");
+		log.debug(Markers.MSG, "Uploaded the properties from client side");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

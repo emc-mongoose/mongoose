@@ -1,0 +1,342 @@
+{
+	"configuration": {
+		"status": "off",
+		"name": "mongoose",
+		"monitorInterval": "1000",
+		"packages": "com.emc.mongoose.common.log.appenders",
+		"shutdownHook": "enable",
+		"appenders": {
+			"appender" : [
+				{
+					"name" : "WebUI",
+					"type" : "WebUI",
+					"enabled" : "true",
+					"Filters" : {
+						"Filter" : [
+							{
+								"type": "MarkerFilter",
+								"marker": "cfg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "dataList",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
+					"name": "stdout",
+					"type": "Console",
+					"follow": "true",
+					"PatternLayout": {
+						"alwaysWriteExceptions" : false,
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-40.-40t %m%n}"
+					},
+					"Filters": {
+						"Filter" : [
+							{
+								"type": "MarkerFilter",
+								"marker": "cfg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "dataList",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
+					"name": "msgFile",
+					"type": "runIdFile",
+					"fileName": "messages.log",
+					"PatternLayout": {
+						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "msg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
+					"name": "3rdPartyFile",
+					"type": "runIdFile",
+					"fileName": "3rdparty.log",
+					"PatternLayout": {
+						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "cfg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "msg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "err",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "dataList",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfAvg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfSum",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "ThresholdFilter",
+								"level": "debug",
+								"onMatch": "NEUTRAL",
+								"onMismatch": "DENY"
+							}, {
+								"type": "BurstFilter",
+								"rate": 10,
+								"maxBurst": 100
+							}
+						]
+					}
+				}, {
+					"name": "errFile",
+					"type": "runIdFile",
+					"fileName": "errors.log",
+					"PatternLayout": {
+						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "err",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}, {
+								"type": "BurstFilter",
+								"rate": 10,
+								"maxBurst": 100
+							}
+						]
+					}
+				}, {
+					"name": "perfAvgFile",
+					"type": "runIdFile",
+					"fileName": "perf.avg.csv",
+					"PatternLayout": {
+						"header": "DateTimeISO8601,LoadId,TypeAPI,TypeLoad,CountConn,CountNode,CountLoadServer,CountSucc,CountFail,DurationAvg[us],DurationMin[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyMax[us],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s]\n",
+						"pattern": "\"%d{ISO8601}{GMT+0}\",%replace{%t}{\\w*<?([\\d]+)\\-([A-Za-z0-9]+)\\-([CreatRdDlUpAn]+)[\\d]*\\-([\\d]*)x([\\d]*)x?([\\d]*)>*[\\S]*}{$1,$2,$3,$4,$5,$6},%replace{%m}{count=\\((\\d+)/\\\u001B*\\[*\\d*m*(\\d+)\\\u001B*\\[*\\d*m*\\);[\\s]+duration\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)\\);[\\s]+latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)\\);[\\s]+TP\\[op/s]=\\(([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+BW\\[MB/s]=\\(([\\.\\d]+)/([\\.\\d]+)\\)}{$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12}%n",
+						"noConsoleNoAnsi": "true"
+					},
+					"MarkerFilter": {
+						"marker": "perfAvg",
+						"onMatch": "ACCEPT",
+						"onMismatch": "DENY"
+					}
+				}, {
+					"name": "perfSumFile",
+					"type": "runIdFile",
+					"fileName": "perf.sum.csv",
+					"PatternLayout": {
+						"header": "DateTimeISO8601,LoadId,TypeAPI,TypeLoad,CountConn,CountNode,CountLoadServer,CountSucc,CountFail,DurationAvg[us],DurationMin[us],DurationLoQ[us],DurationMed[us],DurationHiQ[us],DurationMax[us],LatencyAvg[us],LatencyMin[us],LatencyLoQ[us],LatencyMed[us],LatencyHiQ[us],LatencyMax[us],TPAvg[op/s],TPLast[op/s],BWAvg[MB/s],BWLast[MB/s]\n",
+						"pattern": "\"%d{ISO8601}{GMT+0}\",%replace{%m}{\"([\\d]+)\\-([A-Za-z0-9]+)\\-([CreatRdDlUpAn]+)[\\d]*\\-([\\d]*)x([\\d]*)x?([\\d]*)\"[\\s]+summary:[\\s]+count=\\((\\d+)/\\\u001B*\\[*\\d*m*(\\d+)\\\u001B*\\[*\\d*m*\\);[\\s]+duration\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)\\);[\\s]+latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)/(\\d+)\\);[\\s]+TP\\[op/s]=\\(([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+BW\\[MB/s]=\\(([\\.\\d]+)/([\\.\\d]+)\\)}{$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24}%n",
+						"noConsoleNoAnsi": "true"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "perfSum",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
+					"name": "perfTraceFile",
+					"type": "runIdFile",
+					"fileName": "perf.trace.csv",
+					"PatternLayout": {
+						"header": "Thread,TargetNode,ItemId,ItemSize,StatusCode,ReqTimeStart[us],Latency[us],Duration[us]\n",
+						"pattern": "%t,%m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
+					"name": "dataListFile",
+					"type": "runIdFile",
+					"fileName": "items.csv",
+					"PatternLayout": { "pattern": "%m%n" },
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "dataList",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
+					"name": "cfgFile",
+					"type": "runIdFile",
+					"fileName": "config.log",
+					"PatternLayout": {
+						"pattern": "%d{ISO8601}{GMT+0} | %c{1} | %t | %m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "cfg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
+					"name": "async",
+					"type": "Async",
+					"blocking": "false",
+					"bufferSize": "100000",
+					"AppenderRef": [
+						{ "ref": "stdout" },
+						{ "ref": "msgFile" },
+						{ "ref": "3rdPartyFile" },
+						{ "ref": "errFile" },
+						{ "ref": "dataListFile" },
+						{ "ref": "perfAvgFile" },
+						{ "ref": "perfSumFile" },
+						{ "ref": "perfTraceFile" },
+						{ "ref": "WebUI" },
+						{ "ref": "cfgFile" }
+					]
+				}
+			]
+		},
+		"loggers": {
+			"root": {
+				"level": "debug",
+				"additivity": "false",
+				"AppenderRef": {
+					"ref": "async"
+				}
+			},
+			"logger": [
+				{
+					"name": "com.emc.mongoose.client",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.common",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.core",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.run",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.server",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.storage.adapter.atmos",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.storage.adapter.s3",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.storage.adapter.swift",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.storage.mock",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.util",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.webui",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "org.python.core.PyReflectedFunction",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}
+			]
+		}
+	}
+}

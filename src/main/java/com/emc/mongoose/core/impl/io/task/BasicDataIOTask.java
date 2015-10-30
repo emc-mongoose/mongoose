@@ -47,4 +47,9 @@ implements DataIOTask<T> {
 				break;
 		}
 	}
+	//
+	@Override
+	public final long getCountBytesDone() {
+		return countBytesDone;
+	}
 }

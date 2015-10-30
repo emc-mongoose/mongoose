@@ -65,7 +65,9 @@ extends DistributedClientTestBase {
 			final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
 				BasicWSObject.class, ContentSourceBase.getDefault()
 			);
-			final long countWritten = client.write(null, writeOutput, WRITE_COUNT, 1, 1);
+			final long countWritten = client.write(
+				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB")
+			);
 			TimeUnit.SECONDS.sleep(10);
 			//
 			try (
@@ -218,9 +220,10 @@ extends DistributedClientTestBase {
 							countLimit = Long.parseLong(m.group("countLimit")),
 							countSucc = Long.parseLong(m.group("countSucc")),
 							countFail = Long.parseLong(m.group("countFail"));
-						Assert.assertEquals(
-							"Read items count " + countSucc + " is not equal to the limit: " + countLimit,
-							countLimit, countSucc, countLimit / 100
+						Assert.assertTrue(
+							"Deleted items count " + countSucc +
+								" is not equal to the limit: " + countLimit,
+							countSucc == countLimit
 						);
 						Assert.assertTrue("There are failures reported", countFail == 0);
 						Assert.assertFalse("Summary metrics are printed twice at least", passed);
