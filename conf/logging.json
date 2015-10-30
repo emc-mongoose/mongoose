@@ -207,7 +207,7 @@
 					"type": "runIdFile",
 					"fileName": "perf.trace.csv",
 					"PatternLayout": {
-						"header": "Thread,TargetNode,ItemId,ItemSize,StatusCode,ReqTimeStart[us],Latency[us],Duration[us]\n",
+						"header": "Thread,TargetNode,ItemId,ItemSize,StatusCode,ReqTimeStart[us],RespLatency[us],DataLatency[us],Duration[us]\n",
 						"pattern": "%t,%m%n"
 					},
 					"Filters": {

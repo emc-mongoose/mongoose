@@ -330,7 +330,7 @@ public final class LogValidator {
 		//
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
-			Assert.assertEquals("Count of columns is wrong", 8, nextRec.size());
+			Assert.assertEquals("Count of columns is wrong", 9, nextRec.size());
 			if (firstRow) {
 				Assert.assertEquals("Thread", nextRec.get(0));
 				Assert.assertEquals("TargetNode", nextRec.get(1));
@@ -338,8 +338,9 @@ public final class LogValidator {
 				Assert.assertEquals("ItemSize", nextRec.get(3));
 				Assert.assertEquals("StatusCode", nextRec.get(4));
 				Assert.assertEquals("ReqTimeStart[us]", nextRec.get(5));
-				Assert.assertEquals("Latency[us]", nextRec.get(6));
-				Assert.assertEquals("Duration[us]", nextRec.get(7));
+				Assert.assertEquals("RespLatency[us]", nextRec.get(6));
+				Assert.assertEquals("DataLatency[us]", nextRec.get(7));
+				Assert.assertEquals("Duration[us]", nextRec.get(8));
 				firstRow = false;
 			} else {
 				Assert.assertTrue(
@@ -362,10 +363,13 @@ public final class LogValidator {
 					"Request time start format is not correct", LogValidator.isLong(nextRec.get(5))
 				);
 				Assert.assertTrue(
-					"Latency format is not correct", LogValidator.isInteger(nextRec.get(6))
+					"Response latency format is not correct", LogValidator.isInteger(nextRec.get(6))
 				);
 				Assert.assertTrue(
-					"Duration format is not correct", LogValidator.isInteger(nextRec.get(7))
+					"Data latency format is not correct", LogValidator.isInteger(nextRec.get(7))
+				);
+				Assert.assertTrue(
+					"Duration format is not correct", LogValidator.isInteger(nextRec.get(8))
 				);
 			}
 		}

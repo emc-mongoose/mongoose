@@ -1,9 +1,11 @@
 package com.emc.mongoose.core.impl.io.task;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
@@ -22,7 +24,7 @@ implements IOTask<T> {
 	protected volatile IOTask.Status status = IOTask.Status.FAIL_UNKNOWN;
 	protected volatile long
 		reqTimeStart = 0, reqTimeDone = 0,
-		respTimeStart = 0, respTimeDone = 0,
+		respTimeStart = 0, respDataTimeStart = 0, respTimeDone = 0,
 		countBytesDone = 0;
 	//
 	public BasicIOTask(
@@ -45,31 +47,59 @@ implements IOTask<T> {
 	}
 	//
 	@Override
-	public long getCountBytesDone() {
-		return countBytesDone;
-	}
-	//
-	@Override
 	public final Status getStatus() {
 		return status;
 	}
 	//
-	@Override
-	public final long getReqTimeStart() {
-		return reqTimeStart;
-	}
+	protected final static ThreadLocal<StringBuilder>
+		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
+		@Override
+		protected final StringBuilder initialValue() {
+			return new StringBuilder();
+		}
+	};
 	//
 	@Override
-	public final long getReqTimeDone() {
-		return reqTimeDone;
-	}
-	//
-	@Override
-	public final long getRespTimeStart() {
-		return respTimeStart;
-	}
-	@Override
-	public final long getRespTimeDone() {
-		return respTimeDone;
+	public final void mark(final IOStats ioStats) {
+		// perf traces logging
+		final int
+			reqDuration = (int) (respTimeDone - reqTimeStart),
+			respLatency = (int) (respTimeStart - reqTimeDone),
+			respDataLatency = (int) (respDataTimeStart - reqTimeDone);
+		if(respLatency > 0 && reqDuration > respLatency) {
+			if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
+				StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
+				if(strBuilder == null) {
+					strBuilder = new StringBuilder();
+					PERF_TRACE_MSG_BUILDER.set(strBuilder);
+				} else {
+					strBuilder.setLength(0); // clear/reset
+				}
+				LOG.info(
+					Markers.PERF_TRACE,
+					strBuilder
+						.append(nodeAddr).append(',')
+						.append(item.getName()).append(',')
+						.append(countBytesDone).append(',')
+						.append(status.code).append(',')
+						.append(reqTimeStart).append(',')
+						.append(respLatency).append(',')
+						.append(respDataTimeStart > 0 ? respDataLatency : -1).append(',')
+						.append(reqDuration)
+						.toString()
+				);
+			}
+		}
+		// stats refreshing
+		if(status == IOTask.Status.SUCC) {
+			// update the metrics with success
+			if(respLatency > 0 && respLatency > reqDuration) {
+				LOG.warn(
+					Markers.ERR, "{}: latency {} is more than duration: {}", this, respLatency,
+					reqDuration
+				);
+			}
+			ioStats.markSucc(countBytesDone, reqDuration, respLatency);
+		}
 	}
 }
