@@ -18,6 +18,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 //
 import org.apache.http.HttpResponse;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.StatusLine;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -186,16 +187,16 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		for(final String emcHeaderName : HEADERS_CANONICAL_EMC) {
-			if(sharedHeaders.containsHeader(emcHeaderName)) {
-				canonical
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
-			} else {
+			if(httpRequest.containsHeader(emcHeaderName)) {
 				for(final Header emcHeader : httpRequest.getHeaders(emcHeaderName)) {
 					canonical
 						.append('\n').append(emcHeaderName.toLowerCase())
 						.append(':').append(emcHeader.getValue());
 				}
+			} else if(sharedHeaders.containsHeader(emcHeaderName)) {
+				canonical
+					.append('\n').append(emcHeaderName.toLowerCase())
+					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
 			}
 		}
 		//
@@ -255,6 +256,9 @@ extends WSRequestConfigBase<T> {
 				nodeAddr, createDirReq,
 				REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
+			if(createDirResp == null) {
+				throw new NoHttpResponseException("No HTTP response available");
+			}
 			final StatusLine statusLine = createDirResp.getStatusLine();
 			if(statusLine == null) {
 				LOG.warn(

@@ -19,6 +19,7 @@ import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.StatusLine;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
@@ -91,6 +92,9 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException {
+		if(fsAccess) {
+			super.applyObjectId(obj, null);
+		}
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
 			getHttpMethod(), getDataUriPath(obj)
 		);
@@ -98,9 +102,6 @@ extends WSRequestConfigBase<T> {
 			applyHostHeader(request, nodeAddr);
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
-		}
-		if(fsAccess) {
-			super.applyObjectId(obj, null);
 		}
 		switch(loadType) {
 			case UPDATE:
@@ -279,11 +280,9 @@ extends WSRequestConfigBase<T> {
 	//
 	private final static ThreadLocal<StringBuilder>
 		THR_LOC_METADATA_STR_BUILDER = new ThreadLocal<>();
-	//
-	@Override
-	@SuppressWarnings("unchecked")
+	@Override @SuppressWarnings("unchecked")
 	protected final void applyMetaDataHeaders(final HttpEntityEnclosingRequest request) {
-		//
+		/*
 		StringBuilder md = THR_LOC_METADATA_STR_BUILDER.get();
 		if(md == null) {
 			md = new StringBuilder();
@@ -310,7 +309,7 @@ extends WSRequestConfigBase<T> {
 		//
 		if(md.length() > 0) {
 			request.setHeader(KEY_EMC_TAGS, md.toString());
-		}
+		}*/
 	}
 	//
 	@Override
@@ -339,12 +338,12 @@ extends WSRequestConfigBase<T> {
 		//
 		for(final String headerName : HEADERS_CANONICAL) {
 			// support for multiple non-unique header keys
-			if(sharedHeaders.containsHeader(headerName)) {
-				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
-			} else if(httpRequest.containsHeader(headerName)) {
-				for(final Header header: httpRequest.getHeaders(headerName)) {
+			if(httpRequest.containsHeader(headerName)) {
+				for(final Header header : httpRequest.getHeaders(headerName)) {
 					canonical.append('\n').append(header.getValue());
 				}
+			} else if(sharedHeaders.containsHeader(headerName)) {
+				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
 			} else {
 				canonical.append('\n');
 			}
@@ -354,16 +353,16 @@ extends WSRequestConfigBase<T> {
 		canonical.append('\n').append(uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri);
 		//
 		for(final String emcHeaderName: HEADERS_CANONICAL_EMC) {
-			if(sharedHeaders.containsHeader(emcHeaderName)) {
-				canonical
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
-			} else {
+			if(httpRequest.containsHeader(emcHeaderName)) {
 				for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
 					canonical.append('\n').append(emcHeaderName.toLowerCase()).append(':').append(
 						emcHeader.getValue()
 					);
 				}
+			} else if(sharedHeaders.containsHeader(emcHeaderName)) {
+				canonical
+					.append('\n').append(emcHeaderName.toLowerCase())
+					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
 			}
 		}
 		//
@@ -412,47 +411,6 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public void configureStorage(final String storageAddrs[])
 	throws IllegalStateException {
-		/* show interesting system info
-		try {
-			MutableWSRequest req = WSIOTask.HTTPMethod.GET
-				.createRequest()
-				.setUriPath("/rest/service");
-			applyHeadersFinally(req);
-			final HttpResponse resp = WSLoadExecutor.class.cast(client).execute(req);
-			if(resp != null) {
-				final StatusLine statusLine = resp.getStatusLine();
-				if(statusLine != null) {
-					final int statusCode = statusLine.getStatusCode();
-					if(statusCode >= 200 && statusCode < 300) {
-						final HttpEntity contentEntity = resp.getEntity();
-						if(contentEntity != null && contentEntity.getContentLength() > 0) {
-							try(
-								final BufferedReader streamReader = new BufferedReader(
-									new InputStreamReader(
-										contentEntity.getContent()
-									)
-								)
-							) {
-								final StrBuilder strBuilder = new StrBuilder();
-								String nextLine;
-								do {
-									nextLine = streamReader.readLine();
-									strBuilder.append(nextLine).appendNewLine();
-								} while(nextLine != null);
-								LOG.info(Markers.MSG, strBuilder.toString());
-							} catch(final IOException e) {
-								TraceLogger.failure(
-									LOG, Level.DEBUG, e,
-									"Atmos system info response content reading failure"
-								);
-							}
-						}
-					}
-				}
-			}
-		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Atmos system info request failure");
-		}*/
 		// create the subtenant if neccessary
 		final String subTenantValue = subTenant.getValue();
 		if(subTenantValue == null || subTenantValue.length() == 0) {
@@ -466,43 +424,7 @@ extends WSRequestConfigBase<T> {
 	@Override
 	protected final void createDirectoryPath(final String nodeAddr, final String dirPath)
 	throws IllegalStateException {
-		final HttpEntityEnclosingRequest createDirReq = createGenericRequest(
-			METHOD_PUT, "/" + uriBasePath + "/" + namePrefix + "/"
-		);
-		applyHeadersFinally(createDirReq);
-		try {
-			final HttpResponse createDirResp = execute(
-				nodeAddr, createDirReq,
-				REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
-			);
-			final StatusLine statusLine = createDirResp.getStatusLine();
-			if(statusLine == null) {
-				LOG.warn(Markers.ERR, "Failed to create the storage directory \"{}\"", dirPath);
-			} else {
-				final int statusCode = statusLine.getStatusCode();
-				if(statusCode >= 200 && statusCode < 300) {
-					LOG.info(Markers.MSG, "Using the storage directory \"{}\"", dirPath);
-				} else {
-					final HttpEntity httpEntity = createDirResp.getEntity();
-					final StringBuilder msg = new StringBuilder("Create directory \"")
-						.append(dirPath).append("\" failure: ")
-						.append(statusLine.getReasonPhrase());
-					if(httpEntity != null) {
-						try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
-							httpEntity.writeTo(buff);
-							msg.append('\n').append(buff.toString());
-						} catch(final Exception e) {
-							// ignore
-						}
-					}
-					throw new IllegalStateException(msg.toString());
-				}
-			}
-		} catch(final Exception e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to create the storage directory \"" + dirPath + "\""
-			);
-		}
+		LOG.info(Markers.MSG, "Using the storage directory \"{}\"", dirPath);
 	}
 	//
 	@Override

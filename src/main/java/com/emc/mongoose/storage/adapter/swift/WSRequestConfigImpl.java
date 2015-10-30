@@ -14,8 +14,10 @@ import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.StatusLine;
 import org.apache.http.message.BasicHeader;
 //
@@ -299,16 +301,20 @@ extends WSRequestConfigBase<T> {
 	protected final void createDirectoryPath(final String nodeAddr, final String dirPath)
 	throws IllegalStateException {
 		final String containerName = container.getName();
-		final HttpEntityEnclosingRequest createDirReq = createGenericRequest(
+		/*final HttpEntityEnclosingRequest createDirReq = createGenericRequest(
 			METHOD_PUT,
-			"/" + uriSvcBasePath + "/" + containerName + "/" + nameSpace + "/" + dirPath + "/"
+			"/" + uriSvcBasePath + "/" + containerName + "/" + nameSpace + "/" + dirPath
 		);
+		createDirReq.setHeader(HttpHeaders.CONTENT_TYPE, "application/directory");
 		applyHeadersFinally(createDirReq);
 		try {
 			final HttpResponse createDirResp = execute(
 				nodeAddr, createDirReq,
 				REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
+			if(createDirResp == null) {
+				throw new NoHttpResponseException("No HTTP response available");
+			}
 			final StatusLine statusLine = createDirResp.getStatusLine();
 			if(statusLine == null) {
 				LOG.warn(
@@ -318,12 +324,12 @@ extends WSRequestConfigBase<T> {
 				);
 			} else {
 				final int statusCode = statusLine.getStatusCode();
-				if(statusCode >= 200 && statusCode < 300) {
+				if(statusCode >= 200 && statusCode < 300) {*/
 					LOG.info(
 						Markers.MSG, "Using the storage directory \"{}\" in the container \"{}\"",
 						dirPath, containerName
 					);
-				} else {
+				/*} else {
 					final HttpEntity httpEntity = createDirResp.getEntity();
 					final StringBuilder msg = new StringBuilder("Create directory \"")
 						.append(dirPath).append("\" failure: ")
@@ -344,7 +350,7 @@ extends WSRequestConfigBase<T> {
 				LOG, Level.WARN, e, "Failed to create the storage directory \"" + dirPath +
 					" in the container \"" + containerName + "\""
 			);
-		}
+		}*/
 	}
 	//
 	@Override
