@@ -19,6 +19,7 @@ import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 //
@@ -27,12 +28,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.spec.SecretKeySpec;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 26.03.14.
  */
@@ -457,6 +460,49 @@ extends WSRequestConfigBase<T> {
 		}
 		/*re*/setSubTenant(subTenant);
 		runTimeConfig.set(RunTimeConfig.KEY_API_ATMOS_SUBTENANT, subTenant.getValue());
+		super.configureStorage(storageAddrs);
+	}
+	//
+	@Override
+	protected final void createDirectoryPath(final String nodeAddr, final String dirPath)
+	throws IllegalStateException {
+		final HttpEntityEnclosingRequest createDirReq = createGenericRequest(
+			METHOD_PUT, "/" + uriBasePath + "/" + namePrefix + "/"
+		);
+		applyHeadersFinally(createDirReq);
+		try {
+			final HttpResponse createDirResp = execute(
+				nodeAddr, createDirReq,
+				REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+			);
+			final StatusLine statusLine = createDirResp.getStatusLine();
+			if(statusLine == null) {
+				LOG.warn(Markers.ERR, "Failed to create the storage directory \"{}\"", dirPath);
+			} else {
+				final int statusCode = statusLine.getStatusCode();
+				if(statusCode >= 200 && statusCode < 300) {
+					LOG.info(Markers.MSG, "Using the storage directory \"{}\"", dirPath);
+				} else {
+					final HttpEntity httpEntity = createDirResp.getEntity();
+					final StringBuilder msg = new StringBuilder("Create directory \"")
+						.append(dirPath).append("\" failure: ")
+						.append(statusLine.getReasonPhrase());
+					if(httpEntity != null) {
+						try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
+							httpEntity.writeTo(buff);
+							msg.append('\n').append(buff.toString());
+						} catch(final Exception e) {
+							// ignore
+						}
+					}
+					throw new IllegalStateException(msg.toString());
+				}
+			}
+		} catch(final Exception e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to create the storage directory \"" + dirPath + "\""
+			);
+		}
 	}
 	//
 	@Override
