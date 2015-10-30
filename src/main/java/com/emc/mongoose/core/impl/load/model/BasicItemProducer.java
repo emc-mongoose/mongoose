@@ -150,9 +150,6 @@ implements ItemProducer<T> {
 						break;
 					}
 				} catch(final EOFException e) {
-					if(isCircular) {
-						signalThatItemsWereProduced();
-					}
 					break;
 				} catch(final ClosedByInterruptException | IllegalStateException e) {
 					break;
@@ -165,9 +162,13 @@ implements ItemProducer<T> {
 				}
 			}
 		} finally {
+			//  start ResultsDispatcher thread of load executor
+			if(isCircular) {
+				signalThatItemsWereProduced();
+			}
 			LOG.debug(
-					Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-					getName(), count, itemSrc, itemDst
+				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
+				getName(), count, itemSrc, itemDst
 			);
 			try {
 				itemSrc.close();

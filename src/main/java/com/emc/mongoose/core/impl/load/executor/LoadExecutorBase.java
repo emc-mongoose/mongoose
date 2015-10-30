@@ -1075,9 +1075,6 @@ implements LoadExecutor<T> {
 	protected void closeActually()
 	throws IOException {
 		LOG.debug(Markers.MSG, "Invoked close for {}", getName());
-		if(isCircular) {
-			signalThatItemsWereProduced();
-		}
 		try {
 			if(isInterrupted.compareAndSet(false, true)) {
 				synchronized(state) {
