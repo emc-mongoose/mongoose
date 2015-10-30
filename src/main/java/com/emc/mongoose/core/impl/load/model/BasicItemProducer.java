@@ -4,7 +4,6 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.load.model.ItemProducer;
@@ -20,9 +19,9 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
@@ -37,8 +36,9 @@ implements ItemProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static Lock ITEMS_LOCK = new ReentrantLock();
-	public final static Condition ITEMS_PRODUCED = ITEMS_LOCK.newCondition();
+	protected final Lock itemsLock = new ReentrantLock();
+	protected final Condition itemsWereProduced = itemsLock.newCondition();
+	protected final AtomicBoolean isItemSignalProduced = new AtomicBoolean(false);
 	//
 	protected final ConcurrentHashMap<String, Item> uniqueItems;
 	protected final ItemSrc<T> itemSrc;
@@ -146,12 +146,12 @@ implements ItemProducer<T> {
 					}
 					//
 					if (isCircular && count >= maxItemQueueSize) {
-						signalThatItemsHaveBeenProduced();
+						signalThatItemsWereProduced();
 						break;
 					}
 				} catch(final EOFException e) {
 					if(isCircular) {
-						signalThatItemsHaveBeenProduced();
+						signalThatItemsWereProduced();
 					}
 					break;
 				} catch(final ClosedByInterruptException | IllegalStateException e) {
@@ -179,17 +179,19 @@ implements ItemProducer<T> {
 		}
 	}
 	//
-	private void signalThatItemsHaveBeenProduced() {
-		try {
-			if (ITEMS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
-				try {
-					ITEMS_PRODUCED.signalAll();
-				} finally {
-					ITEMS_LOCK.unlock();
+	protected void signalThatItemsWereProduced() {
+		if(isItemSignalProduced.compareAndSet(false, true)) {
+			try {
+				if(itemsLock.tryLock(10, TimeUnit.SECONDS)) {
+					try {
+						itemsWereProduced.signalAll();
+					} finally {
+						itemsLock.unlock();
+					}
 				}
+			} catch(final InterruptedException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to catch the lock");
 			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to catch the lock");
 		}
 	}
 	//

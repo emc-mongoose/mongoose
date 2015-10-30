@@ -2,7 +2,7 @@
 	"configuration": {
 		"status": "off",
 		"name": "mongoose",
-		"shutdownHook": "enable",
+		"shutdownHook": "disable",
 		"appenders": {
 			"appender" : [
 				{

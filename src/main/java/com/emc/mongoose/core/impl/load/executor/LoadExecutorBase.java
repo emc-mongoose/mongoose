@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -169,13 +170,13 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			try {
-				if(ITEMS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
+				if(itemsLock.tryLock(10, TimeUnit.SECONDS)) {
 					try {
 						final Thread currThread = Thread.currentThread();
 						currThread.setName("resultsDispatcher<" + getName() + ">");
 						try {
 							if(isCircular) {
-								ITEMS_PRODUCED.await(1000, TimeUnit.SECONDS);
+								itemsWereProduced.await(1000, TimeUnit.SECONDS);
 							}
 							while(!currThread.isInterrupted()) {
 								passItems();
@@ -186,7 +187,7 @@ implements LoadExecutor<T> {
 							LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
 						}
 					} finally {
-						ITEMS_LOCK.unlock();
+						itemsLock.unlock();
 					}
 				}
 			} catch(final InterruptedException e) {
@@ -451,11 +452,8 @@ implements LoadExecutor<T> {
 		}
 		//
 		mgmtExecutor.shutdownNow();
-		//
-		for(final Map.Entry<String, Item> entry : uniqueItems.entrySet()) {
-			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
-				LOG.info(Markers.ITEM_LIST, entry.getValue());
-			}
+		if(isCircular) {
+			dumpItems();
 		}
 		//
 		if(consumer instanceof LifeCycle) {
@@ -474,6 +472,15 @@ implements LoadExecutor<T> {
 		}
 		//
 		LOG.debug(Markers.MSG, "{} interrupted", getName());
+	}
+	//
+	private void dumpItems() {
+		final Collection<Item> items = uniqueItems.values();
+		if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
+			for(final Item item : items) {
+				LOG.info(Markers.ITEM_LIST, item);
+			}
+		}
 	}
 	//
 	@Override
@@ -1068,6 +1075,9 @@ implements LoadExecutor<T> {
 	protected void closeActually()
 	throws IOException {
 		LOG.debug(Markers.MSG, "Invoked close for {}", getName());
+		if(isCircular) {
+			signalThatItemsWereProduced();
+		}
 		try {
 			if(isInterrupted.compareAndSet(false, true)) {
 				synchronized(state) {
