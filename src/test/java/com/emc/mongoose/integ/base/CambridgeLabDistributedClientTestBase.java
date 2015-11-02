@@ -25,7 +25,9 @@ extends CambridgeLabDistributedTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		CLIENT_BUILDER.setClientMode(null);
+		if(CLIENT_BUILDER != null) {
+			CLIENT_BUILDER.setClientMode(null);
+		}
 		CambridgeLabDistributedTestBase.tearDownClass();
 	}
 }

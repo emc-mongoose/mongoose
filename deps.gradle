@@ -11,7 +11,6 @@ ext {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	ant = [ "ant:ant:1.6.5" ]
-	ant_jsch = [ "ant:ant-jsch:1.6.5" ]
 
 	commons_cli = [ "commons-cli:commons-cli:1.2" ]
 	commons_codec = [ "commons-codec:commons-codec:1.10" ]
@@ -72,8 +71,6 @@ ext {
 	websocket_core = [ "org.eclipse.jetty.websocket:websocket-core:9.0.0.M2" ]
 	websocket_server = [ "org.eclipse.jetty.websocket:websocket-server:9.3.0.M1" ]
 	websocket_servlet = [ "org.eclipse.jetty.websocket:websocket-servlet:9.3.0.M1" ]
-
-	jsch = ["com.jcraft:jsch:0.1.53"]
 
 	junit = ["junit:junit:4.12"]
 	junit_mockito = ["org.mockito:mockito-all:2.0.2-beta"]

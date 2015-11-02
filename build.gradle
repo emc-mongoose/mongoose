@@ -442,9 +442,6 @@ dependencies {
 	integTestCompile(
 		library.junit,
 		library.commons_csv,
-		library.ant,
-		library.ant_jsch,
-		library.jsch,
 	)
 }
 

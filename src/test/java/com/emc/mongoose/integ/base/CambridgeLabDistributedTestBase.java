@@ -6,8 +6,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import org.apache.logging.log4j.Level;
-import org.apache.tools.ant.taskdefs.optional.ssh.SSHExec;
-import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -100,60 +98,174 @@ extends CambridgeLabViprTestBase {
 	//
 	private static void copyTarBallTo(final String loadSvcAddr)
 	throws IOException, InterruptedException {
-		final Scp scpTask = new Scp();
-		scpTask.setFile(GOOSE_TGZ_FILE.getAbsolutePath());
-		scpTask.setRemoteTodir("/workspace");
-		scpTask.setHost(loadSvcAddr);
-		scpTask.setPassword("ChangeMe");
-		scpTask.setTrust(true);
-		scpTask.setUsername("root");
-		scpTask.setVerbose(true);
-		scpTask.execute();
+		final Thread t = new Thread() {
+			@Override
+			public final
+			void run() {
+				try {
+					final String
+						cmd = "scp " + GOOSE_TGZ_FILE.getAbsolutePath() + " root@" + loadSvcAddr +
+							":" + GOOSE_REMOTE_PATH;
+					LOG.info(Markers.MSG, cmd);
+					final Process p = Runtime.getRuntime().exec(cmd);
+					try {
+						p.waitFor();
+						if(0 != p.exitValue()) {
+							try(
+								final BufferedReader in = new BufferedReader(
+									new InputStreamReader(p.getErrorStream())
+								)
+							) {
+								String l;
+								do {
+									l = in.readLine();
+									if(l != null) {
+										LOG.warn(Markers.ERR, l);
+									}
+								} while(true);
+							}
+						}
+					} catch(final InterruptedException e) {
+					} finally {
+						p.destroy();
+					}
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Process start failure");
+				}
+			}
+		};
+		t.start();
+		t.join(100000);
+		t.interrupt();
 	}
 	//
 	private static void killAllLoadSvc(final String loadSvcAddr)
 	throws IOException, InterruptedException {
-		final SSHExec sshExecTask = new SSHExec();
-		sshExecTask.setUsername("root");
-		sshExecTask.setPassword("ChangeMe");
-		sshExecTask.setHost(loadSvcAddr);
-		sshExecTask.setTrust(true);
-		sshExecTask.setCommand("ssh root@" + loadSvcAddr + " \"killall java\"");
-		sshExecTask.setTimeout(100000);
-		sshExecTask.setVerbose(true);
-		sshExecTask.execute();
+		final Thread t = new Thread() {
+			@Override
+			public final
+			void run() {
+				try {
+					final String cmd = "ssh root@" + loadSvcAddr + " 'killall java'";
+					LOG.info(Markers.MSG, cmd);
+					final Process p = Runtime.getRuntime().exec(cmd);
+					try {
+						p.waitFor();
+						if(0 != p.exitValue()) {
+							try(
+								final BufferedReader in = new BufferedReader(
+									new InputStreamReader(p.getErrorStream())
+								)
+							) {
+								String l;
+								do {
+									l = in.readLine();
+									if(l != null) {
+										LOG.warn(Markers.ERR, l);
+									}
+								} while(true);
+							}
+						}
+					} catch(final InterruptedException e) {
+					} finally {
+						p.destroy();
+					}
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Process start failure");
+				}
+			}
+		};
+		t.start();
+		t.join(100000);
+		t.interrupt();
 	}
 	//
 	private static void unPackRemoteTarBall(final String loadSvcAddr)
 	throws IOException, InterruptedException {
-		final SSHExec sshExecTask = new SSHExec();
-		sshExecTask.setUsername("root");
-		sshExecTask.setPassword("ChangeMe");
-		sshExecTask.setHost(loadSvcAddr);
-		sshExecTask.setTrust(true);
-		sshExecTask.setCommand(
-			"ssh root@" + loadSvcAddr + " \"cd /workspace; tar xvf " + GOOSE_REMOTE_PATH + "\""
-		);
-		sshExecTask.setTimeout(100000);
-		sshExecTask.setVerbose(true);
-		sshExecTask.execute();
+		final Thread t = new Thread() {
+			@Override
+			public final
+			void run() {
+				try {
+					final String
+						cmd = "ssh root@" + loadSvcAddr + " \"cd /workspace; tar xvf " +
+							GOOSE_REMOTE_PATH + "\"";
+					LOG.info(Markers.MSG, cmd);
+					final Process p = Runtime.getRuntime().exec(cmd);
+					try {
+						p.waitFor();
+						if(0 != p.exitValue()) {
+							try(
+								final BufferedReader in = new BufferedReader(
+									new InputStreamReader(p.getErrorStream())
+								)
+							) {
+								String l;
+								do {
+									l = in.readLine();
+									if(l != null) {
+										LOG.warn(Markers.ERR, l);
+									}
+								} while(true);
+							}
+						}
+					} catch(final InterruptedException e) {
+					} finally {
+						p.destroy();
+					}
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Process start failure");
+				}
+			}
+		};
+		t.start();
+		t.join(100000);
+		t.interrupt();
 	}
 	//
 	private static void startRemoteLoadSvc(final String loadSvcAddr)
 	throws IOException, InterruptedException {
-		final SSHExec sshExecTask = new SSHExec();
-		sshExecTask.setUsername("root");
-		sshExecTask.setPassword("ChangeMe");
-		sshExecTask.setHost(loadSvcAddr);
-		sshExecTask.setTrust(true);
-		sshExecTask.setCommand(
-			"ssh root@" + loadSvcAddr +
-			" \"screen -d -m bash -c 'cd /workspace; java -jar /workspace/" + GOOSE_NAME + "-" +
-			GOOSE_VERSION + "/" + GOOSE_JAR_FILE.getName() + " server'\""
-		);
-		sshExecTask.setTimeout(100000);
-		sshExecTask.setVerbose(true);
-		sshExecTask.execute();
+		final Thread t = new Thread() {
+			@Override
+			public final void run() {
+				try {
+					final String
+						cmd = "ssh root@" + loadSvcAddr +
+							" \"screen -d -m bash -c 'cd /workspace; java -jar /workspace/" +
+							GOOSE_NAME + "-" + GOOSE_VERSION + "/" + GOOSE_JAR_FILE.getName() +
+							" server'\"";
+					LOG.info(Markers.MSG, cmd);
+					final Process p = Runtime.getRuntime().exec(cmd);
+					try {
+						p.waitFor();
+						if(0 != p.exitValue()) {
+							try(
+								final BufferedReader
+									in = new BufferedReader(
+										new InputStreamReader(p.getErrorStream())
+									)
+							) {
+								String l;
+								do {
+									l = in.readLine();
+									if(l != null) {
+										LOG.warn(Markers.ERR, l);
+									}
+								} while(true);
+							}
+						}
+					} catch(final InterruptedException e) {
+					} finally {
+						p.destroy();
+					}
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Process start failure");
+				}
+			}
+		};
+		t.start();
+		t.join(100000);
+		t.interrupt();
 	}
 	//
 }
