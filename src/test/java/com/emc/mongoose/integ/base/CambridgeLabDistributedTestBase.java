@@ -103,9 +103,9 @@ extends CambridgeLabViprTestBase {
 			public final
 			void run() {
 				try {
-					final String cmd =
-						"scp " + GOOSE_TGZ_FILE.getAbsolutePath() + " root@" + loadSvcAddr + ":" +
-							GOOSE_REMOTE_PATH;
+					final String
+						cmd = "scp " + GOOSE_TGZ_FILE.getAbsolutePath() + " root@" + loadSvcAddr +
+						":" + GOOSE_REMOTE_PATH;
 					LOG.info(Markers.MSG, cmd);
 					final Process p = Runtime.getRuntime().exec(cmd);
 					try {
@@ -146,7 +146,7 @@ extends CambridgeLabViprTestBase {
 			public final
 			void run() {
 				try {
-					final String cmd = "ssh root@" + loadSvcAddr + " killall java; killall screen";
+					final String cmd = "ssh root@" + loadSvcAddr + " killall java";
 					LOG.info(Markers.MSG, cmd);
 					final Process p = Runtime.getRuntime().exec(cmd);
 					try {
