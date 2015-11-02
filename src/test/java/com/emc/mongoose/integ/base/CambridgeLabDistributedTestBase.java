@@ -146,7 +146,7 @@ extends CambridgeLabViprTestBase {
 			public final
 			void run() {
 				try {
-					final String cmd = "ssh root@" + loadSvcAddr + " \"killall java\"";
+					final String cmd = "ssh root@" + loadSvcAddr + " 'killall java'";
 					LOG.info(Markers.MSG, cmd);
 					final Process p = Runtime.getRuntime().exec(cmd);
 					try {
