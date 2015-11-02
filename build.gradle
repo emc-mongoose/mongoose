@@ -1034,7 +1034,7 @@ test {
 
 task integTest(type: Test, dependsOn: dist) {
 
-	include '**/AllTestSuite.class'
+	include '**/CambridgeLabDistributedTestSuite.class'
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath

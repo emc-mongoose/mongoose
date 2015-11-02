@@ -54,7 +54,7 @@ extends CambridgeLabDistributedClientTestBase {
 	//
 	@Test
 	public void checkLoggedItemsCount()
-		throws Exception {
+	throws Exception {
 		int itemsCount = 0;
 		try(
 			final BufferedReader in = Files.newBufferedReader(
