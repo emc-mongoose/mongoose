@@ -17,6 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 /**
@@ -43,10 +44,14 @@ extends CambridgeLabViprTestBase {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		LOAD_SVC_ADDRS_DEFAULT = rtConfig.getString(RunTimeConfig.KEY_LOAD_SERVER_ADDRS);
 		RUN_MODE_DEFAULT = rtConfig.getRunMode();
-		rtConfig.set(
-			RunTimeConfig.KEY_LOAD_SERVER_ADDRS,
-			LOAD_SVC_ADDRS_CUSTOM[0] + "," + LOAD_SVC_ADDRS_CUSTOM[1]
-		);
+		final StringBuilder sb = new StringBuilder();
+		for(final String loadSvcAddr : LOAD_SVC_ADDRS_CUSTOM) {
+			if(sb.length() > 0) {
+				sb.append(',');
+			}
+			sb.append(loadSvcAddr);
+		}
+		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, sb.toString());
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
 		if(!GOOSE_TGZ_FILE.exists()) {
 			Assert.fail("Mongoose tgz file not found @ " + GOOSE_TGZ_FILE.getAbsolutePath());
