@@ -26,7 +26,7 @@ public class CambridgeLabDistributedTestBase
 extends CambridgeLabViprTestBase {
 	//
 	private static String LOAD_SVC_ADDRS_DEFAULT, RUN_MODE_DEFAULT;
-	protected final static String LOAD_SVC_ADDRS_CUSTOM[] = {"10.249.237.77", "10.249.237.76"};
+	protected final static String LOAD_SVC_ADDRS_CUSTOM[] = {"10.249.237.76"};
 	private final static String
 		GOOSE_NAME = RunTimeConfig.getContext().getRunName(),
 		GOOSE_VERSION = RunTimeConfig.getContext().getRunVersion(),
