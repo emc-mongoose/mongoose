@@ -6,30 +6,21 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-scenario.jar
-import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.run.scenario.Rampup;
 import com.emc.mongoose.run.scenario.Single;
 import com.emc.mongoose.run.webserver.WUIRunner;
 // mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
-import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSContainerLoadBuilderSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 // mongoose-storage-mock.jar
 //
-import com.emc.mongoose.storage.mock.impl.web.nagaina.server.Nagaina;
+import com.emc.mongoose.storage.mock.impl.web.Nagaina;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.omg.SendingContext.RunTime;
 //
-import java.io.IOException;
 import java.util.Map;
 /**
  Created by kurila on 04.07.14.
