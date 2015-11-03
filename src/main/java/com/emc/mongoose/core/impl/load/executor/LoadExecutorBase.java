@@ -452,7 +452,7 @@ implements LoadExecutor<T> {
 		}
 		//
 		mgmtExecutor.shutdownNow();
-		if(isCircular) {
+		if(isCircular && consumer == null) {
 			dumpItems();
 		}
 		//
