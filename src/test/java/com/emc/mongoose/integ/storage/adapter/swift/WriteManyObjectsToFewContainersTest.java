@@ -39,7 +39,6 @@ extends WSMockTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_API_NAME, "swift");
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE);
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, Integer.toString(LIMIT_COUNT_OBJ));
@@ -47,6 +46,7 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_DATA_SIZE, "1KB");
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.setProperty(RunTimeConfig.KEY_API_NAME, "swift");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
 		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "25");
@@ -81,17 +81,17 @@ extends WSMockTestBase {
 					if(nextContainer == null) {
 						break;
 					} else {
-						countContainerCreated++;
+						countContainerCreated ++;
 						rtConfig.set(RunTimeConfig.KEY_RUN_ID, nextRunId);
 						rtConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, nextContainer);
 						RunTimeConfig.setContext(rtConfig);
 						new ScriptMockRunner().run();
 						TimeUnit.SECONDS.sleep(1);
+						RunIdFileManager.closeAll(nextRunId);
 					}
 				} while(true);
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUTPUT_STREAM = stdOutStream;
-				RunIdFileManager.closeAll(nextRunId);
 			}
 		}
 		//
@@ -115,7 +115,7 @@ extends WSMockTestBase {
 	@Test
 	public final void checkThatAllContainersAlreadyWereExisting() {
 		final String consoleOutput = STD_OUTPUT_STREAM.toString();
-		final Pattern p = Pattern.compile("Bucket \"[a-z0-9]+\" already exists");
+		final Pattern p = Pattern.compile("Container \"[a-z0-9]+\" already exists");
 		final Matcher m = p.matcher(consoleOutput);
 		int countMatch = 0;
 		while(m.find()) {

@@ -276,6 +276,7 @@ implements WSDataIOTask<T> {
 		countBytesDone = 0;
 		status = Status.FAIL_UNKNOWN;
 		exception = null;
+		respDataTimeStart = 0;
 	}
 	/*
 	@Override @SuppressWarnings("unchecked")
@@ -367,6 +368,9 @@ implements WSDataIOTask<T> {
 	//
 	@Override
 	public final void consumeContent(final ContentDecoder decoder, final IOControl ioCtl) {
+		if(respDataTimeStart == 0) {
+			respDataTimeStart = System.nanoTime() / 1000;
+		}
 		try {
 			if(respStatusCode < 200 || respStatusCode >= 300) { // failure, no user data is expected
 				consumeFailedResponseContent(decoder, ioCtl);

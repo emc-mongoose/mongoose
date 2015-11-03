@@ -30,8 +30,8 @@ extends DistributedLoadBuilderTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	private static final int
-		LIMIT_COUNT_OBJ = 2000,
-		LIMIT_COUNT_CONTAINER = 50;
+		LIMIT_COUNT_OBJ = 1000,
+		LIMIT_COUNT_CONTAINER = 100;
 	//
 	private static String RUN_ID_BASE = WriteManyObjectsToFewBucketsTest.class.getCanonicalName();
 	private static int countContainerCreated = 0;
@@ -86,11 +86,11 @@ extends DistributedLoadBuilderTestBase {
 						RunTimeConfig.setContext(rtConfig);
 						new ScriptMockRunner().run();
 						TimeUnit.SECONDS.sleep(1);
+						RunIdFileManager.closeAll(nextRunId);
 					}
 				} while(true);
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUTPUT_STREAM = stdOutStream;
-				RunIdFileManager.closeAll(nextRunId);
 			}
 		}
 		//
@@ -108,7 +108,7 @@ extends DistributedLoadBuilderTestBase {
 	@Test
 	public final void checkCreatedContainerCount()
 	throws Exception {
-		Assert.assertEquals(LIMIT_COUNT_CONTAINER, countContainerCreated);
+		Assert.assertEquals(LIMIT_COUNT_CONTAINER, countContainerCreated, LIMIT_COUNT_CONTAINER / 10);
 	}
 	//
 	@Test

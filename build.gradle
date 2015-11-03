@@ -1103,7 +1103,7 @@ for(nextPublicJar in publicJars) {
 }
 
 artifactory {
-	contextUrl = "${artifactory_contextUrl}"   //The base Artifactory URL if not overridden by the publisher/resolver
+	contextUrl = "${artifactory_contextUrl}" //The base Artifactory URL if not overridden by the publisher/resolver
 	publish {
 		repository {
 			repoKey = 'vipr-dev-local'

@@ -58,7 +58,7 @@ extends WSMockTestBase {
 		final File containerListFile = LogValidator.getItemsListFile(RUN_ID_BASE);
 		Assert.assertTrue("items list file doesn't exist", containerListFile.exists());
 		//
-		String nextContainer, nextRunId;
+		String nextContainer;
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE + "Write");
 		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "data");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT_OBJ);

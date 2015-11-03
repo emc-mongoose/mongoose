@@ -1,12 +1,12 @@
 package com.emc.mongoose.util.client.api;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 //
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 17.06.15.
  */
-public interface StorageClientBuilder<T extends DataItem, U extends StorageClient<T>> {
+public interface StorageClientBuilder<T extends Item, U extends StorageClient<T>> {
 	/**
 	 Set the storage API to use.
 	 @param api The value should match to any child package name from the
@@ -107,6 +107,15 @@ public interface StorageClientBuilder<T extends DataItem, U extends StorageClien
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	StorageClientBuilder<T, U> setLimitRate(final float rate)
+	throws IllegalArgumentException;
+
+	/**
+	 Set the load subject class
+	 @param itemCls may one of the predefined values ("data", "container", ...)
+	 @return self.
+	 @throws IllegalArgumentException if the argument value is not one of the predefined values
+	 */
+	StorageClientBuilder<T, U> setItemClass(final String itemCls)
 	throws IllegalArgumentException;
 
 	/**

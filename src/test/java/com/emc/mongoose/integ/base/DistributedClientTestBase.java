@@ -4,7 +4,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
-import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
+import com.emc.mongoose.util.client.impl.BasicStorageClientBuilder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 /**
@@ -20,7 +20,7 @@ extends DistributedTestBase {
 	public static void setUpClass()
 	throws Exception {
 		DistributedTestBase.setUpClass();
-		CLIENT_BUILDER = new BasicWSClientBuilder<>()
+		CLIENT_BUILDER = new BasicStorageClientBuilder<WSObject, StorageClient<WSObject>>()
 			.setClientMode(new String[] {ServiceUtil.getHostAddr()});
 	}
 	//

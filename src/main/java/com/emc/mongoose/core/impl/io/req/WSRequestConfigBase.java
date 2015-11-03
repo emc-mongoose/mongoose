@@ -700,6 +700,17 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
+	public void configureStorage(final String storageNodeAddrs[])
+	throws IllegalStateException {
+		if(fsAccess && namePrefix != null && !namePrefix.isEmpty()) {
+			createDirectoryPath(storageNodeAddrs[0], namePrefix);
+		}
+	}
+	//
+	protected abstract void createDirectoryPath(final String node, final String path)
+	throws IllegalStateException;
+	//
+	@Override
 	public final HttpResponse execute(
 		final String tgtAddr, final HttpRequest request, final long timeOut, final TimeUnit timeUnit
 	) {

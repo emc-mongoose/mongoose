@@ -27,8 +27,8 @@ public class ReadBucketsWithManyObjects
 extends DistributedLoadBuilderTestBase {
 	//
 	private static final int
-		LIMIT_COUNT_OBJ = 100,
-		LIMIT_COUNT_CONTAINER = 10;
+		LIMIT_COUNT_OBJ = 1000,
+		LIMIT_COUNT_CONTAINER = 100;
 	//
 	private static String RUN_ID_BASE = ReadBucketsWithManyObjects.class.getCanonicalName();
 	private static int countContainerCreated = 0;

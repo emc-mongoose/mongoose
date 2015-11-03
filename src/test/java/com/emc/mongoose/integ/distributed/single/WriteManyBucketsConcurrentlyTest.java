@@ -46,7 +46,7 @@ extends DistributedLoadBuilderTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
-		WSMockTestBase.setUpClass();
+		DistributedLoadBuilderTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
@@ -126,12 +126,6 @@ extends DistributedLoadBuilderTestBase {
 			start += lineOffset;
 		}
 		for (final String confParam : params) {
-			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
-				Assert.assertTrue(
-					"Information about limit count in configuration table is wrong",
-					confParam.contains(String.valueOf(LIMIT_COUNT))
-				);
-			}
 			if (confParam.contains(RunTimeConfig.KEY_STORAGE_ADDRS)) {
 				Assert.assertTrue(
 					"Information about storage address in configuration table is wrong",
@@ -169,34 +163,6 @@ extends DistributedLoadBuilderTestBase {
 					confParam.contains(TestConstants.SCENARIO_SINGLE)
 				);
 			}
-		}
-	}
-
-	@Test
-	public void shouldReportScenarioEndToMessageLogFile()
-	throws Exception {
-		//  Read the message file and search for "Scenario end"
-		final File messageFile = LogValidator.getMessageFile(RUN_ID);
-		Assert.assertTrue(
-			"messages.log file doesn't exist",
-			messageFile.exists()
-		);
-		//
-		try (final BufferedReader bufferedReader =
-				 new BufferedReader(new FileReader(messageFile))) {
-			String line;
-			while ((line = bufferedReader.readLine()) != null) {
-				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
-					break;
-				}
-			}
-			Assert.assertNotNull(
-				"Line with information about end of scenario must not be equal null ", line
-			);
-			Assert.assertTrue(
-				"Information about end of scenario doesn't contain in message.log file",
-				line.contains(TestConstants.SCENARIO_END_INDICATOR)
-			);
 		}
 	}
 

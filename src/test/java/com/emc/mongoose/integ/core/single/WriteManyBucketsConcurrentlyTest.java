@@ -250,7 +250,7 @@ extends WSMockTestBase {
 			//  Check that there are 10 lines in data.items.csv file
 			Assert.assertEquals(
 				"Not correct information about created data items",
-				LIMIT_COUNT, countDataItems, LIMIT_COUNT / 1000
+				LIMIT_COUNT, countDataItems, LIMIT_COUNT / 10
 			);
 		}
 	}

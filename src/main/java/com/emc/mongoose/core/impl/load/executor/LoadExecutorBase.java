@@ -663,28 +663,11 @@ implements LoadExecutor<T> {
 		//
 		final IOTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
-		final long
-			countBytesDone = ioTask.getCountBytesDone(),
-			reqTimeStart = ioTask.getReqTimeStart(),
-			reqTimeDone = ioTask.getReqTimeDone(),
-			respTimeStart = ioTask.getRespTimeStart(),
-			respTimeDone = ioTask.getRespTimeDone();
-		//
-		final int
-			reqDuration = (int) (respTimeDone - reqTimeStart),
-			respLatency = (int) (respTimeStart - reqTimeDone);
-		//
-		if(respLatency > 0 && reqDuration > respLatency) {
-			logTaskTrace(
-				dataItem, status, nodeAddr, countBytesDone, reqTimeStart, reqDuration, respLatency
-			);
-		}
 		// update the metrics
-		activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
+		ioTask.mark(ioStats);
+		activeTasksStats.get(nodeAddr).decrementAndGet();
 		if(status == IOTask.Status.SUCC) {
 			lastDataItem = dataItem;
-			// update the metrics with success
-			markSucc(ioTask, countBytesDone, reqDuration, respLatency);
 			// put into the output buffer
 			try {
 				itemOutBuff.put(dataItem);
@@ -717,8 +700,6 @@ implements LoadExecutor<T> {
 			IOTask<T> ioTask;
 			T dataItem;
 			IOTask.Status status;
-			long countBytesDone, reqTimeStart, reqTimeDone, respTimeStart, respTimeDone;
-			int reqDuration, respLatency;
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
 				dataItem = ioTask.getItem();
@@ -728,26 +709,11 @@ implements LoadExecutor<T> {
 				}
 				//
 				status = ioTask.getStatus();
-				countBytesDone = ioTask.getCountBytesDone();
-				reqTimeStart = ioTask.getReqTimeStart();
-				reqTimeDone = ioTask.getReqTimeDone();
-				respTimeStart = ioTask.getRespTimeStart();
-				respTimeDone = ioTask.getRespTimeDone();
-				reqDuration = (int) (respTimeDone - reqTimeStart);
-				respLatency = (int) (respTimeStart - reqTimeDone);
-				//
-				if(respLatency > 0 && reqDuration > respLatency) {
-					logTaskTrace(
-						dataItem, status, nodeAddr, countBytesDone, reqTimeStart, reqDuration,
-						respLatency
-					);
-				}
 				// update the metrics
+				ioTask.mark(ioStats);
 				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 				if(status == IOTask.Status.SUCC) {
 					lastDataItem = dataItem;
-					// update the metrics with success
-					markSucc(ioTask, countBytesDone, reqDuration, respLatency);
 					// pass data item to a consumer
 					try {
 						itemOutBuff.put(dataItem);
@@ -893,24 +859,6 @@ implements LoadExecutor<T> {
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
 			}
-		}
-	}
-	//
-	private void markSucc(
-		final IOTask<T> ioTask, final long bytes, final int duration, final int latency
-	) {
-		// update the metrics with success
-		if(latency > 0 && latency > duration) {
-			LOG.warn(
-				Markers.ERR, "{}: latency {} is more than duration: {}", ioTask, latency, duration
-			);
-		}
-		ioStats.markSucc(bytes, duration, latency);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "Task #{}: successful, {}/{}", ioTask.hashCode(),
-				lastStats.getSuccCount(), ioTask.getCountBytesDone()
-			);
 		}
 	}
 	//

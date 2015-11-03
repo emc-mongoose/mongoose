@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.adapter.swift;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.container.Container;
@@ -11,17 +12,26 @@ import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 //
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.NoHttpResponseException;
+import org.apache.http.StatusLine;
 import org.apache.http.message.BasicHeader;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.TimeUnit;
 //
 /**
  Created by kurila on 26.03.14.
@@ -284,7 +294,63 @@ extends WSRequestConfigBase<T> {
 		if(versioning) {
 			container.setVersioning(storageNodeAddrs[0], true);
 		}
-
+		super.configureStorage(storageNodeAddrs);
+	}
+	//
+	@Override
+	protected final void createDirectoryPath(final String nodeAddr, final String dirPath)
+	throws IllegalStateException {
+		final String containerName = container.getName();
+		/*final HttpEntityEnclosingRequest createDirReq = createGenericRequest(
+			METHOD_PUT,
+			"/" + uriSvcBasePath + "/" + containerName + "/" + nameSpace + "/" + dirPath
+		);
+		createDirReq.setHeader(HttpHeaders.CONTENT_TYPE, "application/directory");
+		applyHeadersFinally(createDirReq);
+		try {
+			final HttpResponse createDirResp = execute(
+				nodeAddr, createDirReq,
+				REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+			);
+			if(createDirResp == null) {
+				throw new NoHttpResponseException("No HTTP response available");
+			}
+			final StatusLine statusLine = createDirResp.getStatusLine();
+			if(statusLine == null) {
+				LOG.warn(
+					Markers.ERR,
+					"Failed to create the storage directory \"{}\" in the container \"{}\"",
+					dirPath, containerName
+				);
+			} else {
+				final int statusCode = statusLine.getStatusCode();
+				if(statusCode >= 200 && statusCode < 300) {*/
+					LOG.info(
+						Markers.MSG, "Using the storage directory \"{}\" in the container \"{}\"",
+						dirPath, containerName
+					);
+				/*} else {
+					final HttpEntity httpEntity = createDirResp.getEntity();
+					final StringBuilder msg = new StringBuilder("Create directory \"")
+						.append(dirPath).append("\" failure: ")
+						.append(statusLine.getReasonPhrase());
+					if(httpEntity != null) {
+						try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
+							httpEntity.writeTo(buff);
+							msg.append('\n').append(buff.toString());
+						} catch(final Exception e) {
+							// ignore
+						}
+					}
+					throw new IllegalStateException(msg.toString());
+				}
+			}
+		} catch(final Exception e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to create the storage directory \"" + dirPath +
+					" in the container \"" + containerName + "\""
+			);
+		}*/
 	}
 	//
 	@Override

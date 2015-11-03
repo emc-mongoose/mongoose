@@ -104,7 +104,7 @@ implements WSContainerLoadSvc<T, C> {
 	//
 	@Override
 	public final List<C> getProcessedItems()
-		throws RemoteException {
+	throws RemoteException {
 		List<C> itemsBuff = null;
 		try {
 			itemsBuff = new ArrayList<>(batchSize);
