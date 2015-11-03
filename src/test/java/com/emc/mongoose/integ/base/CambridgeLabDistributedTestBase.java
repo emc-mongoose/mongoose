@@ -17,8 +17,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 /**
  Created by kurila on 02.11.15.
@@ -35,6 +33,7 @@ extends CambridgeLabViprTestBase {
 	private final static File
 		GOOSE_TGZ_FILE = Paths.get("build", "dist", GOOSE_NAME + "-" + GOOSE_VERSION + ".tgz").toFile(),
 		GOOSE_JAR_FILE = Paths.get(GOOSE_NAME + "-" + GOOSE_VERSION, GOOSE_NAME + ".jar").toFile();
+	private final static ProcessBuilder PROCESS_BUILDER = new ProcessBuilder();
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -146,9 +145,11 @@ extends CambridgeLabViprTestBase {
 			public final
 			void run() {
 				try {
-					final String cmd = "ssh root@" + loadSvcAddr + " 'killall java'";
-					LOG.info(Markers.MSG, cmd);
-					final Process p = Runtime.getRuntime().exec(cmd);
+					PROCESS_BUILDER.command(
+						"ssh", "root@" + loadSvcAddr, "killall java; killall screen"
+					);
+					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
+					final Process p = PROCESS_BUILDER.start();
 					try {
 						p.waitFor();
 						if(0 != p.exitValue()) {
@@ -161,7 +162,7 @@ extends CambridgeLabViprTestBase {
 								do {
 									l = in.readLine();
 									if(l != null) {
-										LOG.warn(Markers.ERR, l);
+										LOG.warn(Markers.ERR, loadSvcAddr + ": " + l);
 									}
 								} while(true);
 							}
@@ -176,7 +177,7 @@ extends CambridgeLabViprTestBase {
 			}
 		};
 		t.start();
-		t.join(100000);
+		t.join(10000);
 		t.interrupt();
 	}
 	//
@@ -187,11 +188,11 @@ extends CambridgeLabViprTestBase {
 			public final
 			void run() {
 				try {
-					final String
-						cmd = "ssh root@" + loadSvcAddr + " \"cd /workspace; tar xvf " +
-							GOOSE_REMOTE_PATH + "\"";
-					LOG.info(Markers.MSG, cmd);
-					final Process p = Runtime.getRuntime().exec(cmd);
+					PROCESS_BUILDER.command(
+						"ssh", "root@" + loadSvcAddr, "cd /workspace; tar xvf " + GOOSE_REMOTE_PATH
+					);
+					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
+					final Process p = PROCESS_BUILDER.start();
 					try {
 						p.waitFor();
 						if(0 != p.exitValue()) {
@@ -204,7 +205,7 @@ extends CambridgeLabViprTestBase {
 								do {
 									l = in.readLine();
 									if(l != null) {
-										LOG.warn(Markers.ERR, l);
+										LOG.warn(Markers.ERR, loadSvcAddr + ": " + l);
 									}
 								} while(true);
 							}
@@ -219,7 +220,7 @@ extends CambridgeLabViprTestBase {
 			}
 		};
 		t.start();
-		t.join(100000);
+		t.join(10000);
 		t.interrupt();
 	}
 	//
@@ -229,13 +230,13 @@ extends CambridgeLabViprTestBase {
 			@Override
 			public final void run() {
 				try {
-					final String
-						cmd = "ssh root@" + loadSvcAddr +
-							" \"screen -d -m bash -c 'cd /workspace; java -jar /workspace/" +
-							GOOSE_NAME + "-" + GOOSE_VERSION + "/" + GOOSE_JAR_FILE.getName() +
-							" server'\"";
-					LOG.info(Markers.MSG, cmd);
-					final Process p = Runtime.getRuntime().exec(cmd);
+					PROCESS_BUILDER.command(
+						"ssh", "root@" + loadSvcAddr,
+						"screen -d -m bash -c 'cd /workspace; java -jar /workspace/" +
+						GOOSE_NAME + "-" + GOOSE_VERSION + "/" + GOOSE_JAR_FILE.getName() + " server'"
+					);
+					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
+					final Process p = PROCESS_BUILDER.start();
 					try {
 						p.waitFor();
 						if(0 != p.exitValue()) {
@@ -249,7 +250,7 @@ extends CambridgeLabViprTestBase {
 								do {
 									l = in.readLine();
 									if(l != null) {
-										LOG.warn(Markers.ERR, l);
+										LOG.warn(Markers.ERR, loadSvcAddr + ": " + l);
 									}
 								} while(true);
 							}
@@ -264,7 +265,7 @@ extends CambridgeLabViprTestBase {
 			}
 		};
 		t.start();
-		t.join(100000);
+		t.join(10000);
 		t.interrupt();
 	}
 	//
