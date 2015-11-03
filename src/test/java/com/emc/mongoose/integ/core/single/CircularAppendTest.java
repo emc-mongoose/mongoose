@@ -31,30 +31,29 @@ import java.util.regex.Matcher;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
 
-
 /**
- * Created by gusakk on 30.10.15.
+ * Created by gusakk on 03.11.15.
  */
-public class CircularUpdateTest
+public class CircularAppendTest
 extends StandaloneClientTestBase {
 	//
 	private static final int ITEM_MAX_QUEUE_SIZE = 65536;
 	private static final int BATCH_SIZE = 100;
 	//
 	private static final int WRITE_COUNT = 1234;
-	private static final int UPDATE_COUNT = 24680;
+	private static final int APPEND_COUNT = 12340;
 	//
-	private static final int COUNT_OF_UPDATES = 20;
-	private static final int LAYER_NUMBER_INDEX = 2;
+	private static final int COUNT_OF_APPEND = 10;
 	//
-	private static long COUNT_WRITTEN, COUNT_UPDATED;
+	private static long COUNT_WRITTEN, COUNT_APPENDED;
 	private static byte[] STD_OUT_CONTENT;
+
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularUpdateTest.class.getCanonicalName()
+			RunTimeConfig.KEY_RUN_ID, CircularAppendTest.class.getCanonicalName()
 		);
 		StandaloneClientTestBase.setUpClass();
 		//
@@ -64,7 +63,7 @@ extends StandaloneClientTestBase {
 		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
 		RunTimeConfig.setContext(rtConfig);
 		//
-		try(
+		try (
 			final StorageClient<WSObject> client = CLIENT_BUILDER
 				.setAPI("s3")
 				.setLimitTime(0, TimeUnit.SECONDS)
@@ -85,7 +84,7 @@ extends StandaloneClientTestBase {
 			) {
 				stdOutInterceptorStream.reset();
 				if (COUNT_WRITTEN > 0) {
-					COUNT_UPDATED = client.update(writeOutput.getItemSrc(), null, UPDATE_COUNT, 10, 1);
+					COUNT_APPENDED = client.append(writeOutput.getItemSrc(), null, APPEND_COUNT, 10, 1);
 				} else {
 					throw new IllegalStateException("Failed to write");
 				}
@@ -105,25 +104,9 @@ extends StandaloneClientTestBase {
 	}
 	//
 	@Test
-	public void checkUpdatedCount()
+	public void checkAppendedCount()
 	throws Exception {
-		Assert.assertEquals(COUNT_WRITTEN * COUNT_OF_UPDATES, COUNT_UPDATED);
-	}
-	//
-	@Test
-	public void checkLayerNumberIndex()
-	throws Exception {
-		try (
-			final BufferedReader
-				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
-		) {
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for (final CSVRecord nextRec : recIter) {
-				Assert.assertEquals(
-					LAYER_NUMBER_INDEX, Integer.parseInt(nextRec.get(3).split("/")[0])
-				);
-			}
-		}
+		Assert.assertEquals(COUNT_WRITTEN * COUNT_OF_APPEND, COUNT_APPENDED);
 	}
 	//
 	@Test
@@ -131,7 +114,7 @@ extends StandaloneClientTestBase {
 	throws Exception {
 		boolean passed = false;
 		long lastSuccCount = 0;
-		try(
+		try (
 			final BufferedReader in = new BufferedReader(
 				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
 			)
@@ -140,14 +123,14 @@ extends StandaloneClientTestBase {
 			Matcher m;
 			do {
 				nextStdOutLine = in.readLine();
-				if(nextStdOutLine == null) {
+				if (nextStdOutLine == null) {
 					break;
 				} else {
 					m = CONSOLE_METRICS_AVG.matcher(nextStdOutLine);
-					if(m.find()) {
+					if (m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.UPDATE.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.UPDATE.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + IOTask.Type.APPEND.name() + ": " + m.group("typeLoad"),
+							IOTask.Type.APPEND.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
@@ -162,7 +145,7 @@ extends StandaloneClientTestBase {
 						passed = true;
 					}
 				}
-			} while(true);
+			} while (true);
 		}
 		Assert.assertTrue(
 			"Average metrics line matching the pattern was not met in the stdout", passed
@@ -173,7 +156,7 @@ extends StandaloneClientTestBase {
 	public void checkConsoleSumMetricsLogging()
 	throws Exception {
 		boolean passed = false;
-		try(
+		try (
 			final BufferedReader in = new BufferedReader(
 				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
 			)
@@ -182,14 +165,14 @@ extends StandaloneClientTestBase {
 			Matcher m;
 			do {
 				nextStdOutLine = in.readLine();
-				if(nextStdOutLine == null) {
+				if (nextStdOutLine == null) {
 					break;
 				} else {
 					m = CONSOLE_METRICS_SUM.matcher(nextStdOutLine);
-					if(m.find()) {
+					if (m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.UPDATE.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.UPDATE.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + IOTask.Type.APPEND.name() + ": " + m.group("typeLoad"),
+							IOTask.Type.APPEND.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long
 							countLimit = Long.parseLong(m.group("countLimit")),
@@ -205,7 +188,7 @@ extends StandaloneClientTestBase {
 						passed = true;
 					}
 				}
-			} while(true);
+			} while (true);
 		}
 		Assert.assertTrue(
 			"Summary metrics line matching the pattern was not met in the stdout", passed
