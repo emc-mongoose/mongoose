@@ -146,7 +146,38 @@ extends CambridgeLabViprTestBase {
 			void run() {
 				try {
 					PROCESS_BUILDER.command(
-						"ssh", "root@" + loadSvcAddr, "'killall java; killall screen'"
+						"ssh", "root@" + loadSvcAddr, "'killall java'"
+					);
+					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
+					final Process p = PROCESS_BUILDER.start();
+					try {
+						p.waitFor();
+						if(0 != p.exitValue()) {
+							try(
+								final BufferedReader in = new BufferedReader(
+									new InputStreamReader(p.getErrorStream())
+								)
+							) {
+								String l;
+								do {
+									l = in.readLine();
+									if(l != null) {
+										LOG.warn(Markers.ERR, loadSvcAddr + ": " + l);
+									}
+								} while(true);
+							}
+						}
+					} catch(final InterruptedException e) {
+					} finally {
+						p.destroy();
+					}
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Process start failure");
+				}
+				//
+				try {
+					PROCESS_BUILDER.command(
+						"ssh", "root@" + loadSvcAddr, "'killall screen'"
 					);
 					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
 					final Process p = PROCESS_BUILDER.start();
@@ -177,7 +208,7 @@ extends CambridgeLabViprTestBase {
 			}
 		};
 		t.start();
-		t.join(10000);
+		t.join(20000);
 		t.interrupt();
 	}
 	//
