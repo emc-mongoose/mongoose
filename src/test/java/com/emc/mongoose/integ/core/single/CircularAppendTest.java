@@ -44,6 +44,7 @@ extends StandaloneClientTestBase {
 	private static final int APPEND_COUNT = 12340;
 	//
 	private static final int COUNT_OF_APPEND = 10;
+	private static final int MIN_SIZE_AFTER_APPEND = 1280;
 	//
 	private static long COUNT_WRITTEN, COUNT_APPENDED;
 	private static byte[] STD_OUT_CONTENT;
@@ -84,9 +85,10 @@ extends StandaloneClientTestBase {
 			) {
 				stdOutInterceptorStream.reset();
 				if (COUNT_WRITTEN > 0) {
-					COUNT_APPENDED = client.append(writeOutput.getItemSrc(), null, APPEND_COUNT, 10, 1);
+					COUNT_APPENDED = client.append(writeOutput.getItemSrc(), null, APPEND_COUNT, 10,
+						SizeUtil.toSize("128B"));
 				} else {
-					throw new IllegalStateException("Failed to write");
+					throw new IllegalStateException("Failed to append");
 				}
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
@@ -107,6 +109,20 @@ extends StandaloneClientTestBase {
 	public void checkAppendedCount()
 	throws Exception {
 		Assert.assertEquals(COUNT_WRITTEN * COUNT_OF_APPEND, COUNT_APPENDED);
+	}
+	//
+	@Test
+	public void checkDataItemsSize()
+	throws Exception {
+		try (
+			final BufferedReader
+				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
+		) {
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			for (final CSVRecord nextRec : recIter) {
+				Assert.assertTrue(Integer.parseInt(nextRec.get(2)) >= MIN_SIZE_AFTER_APPEND);
+			}
+		}
 	}
 	//
 	@Test
