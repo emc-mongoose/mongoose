@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.11.15.
  */
@@ -54,6 +55,7 @@ extends CambridgeLabViprTestBase {
 		for(final String loadSvcAddr : LOAD_SVC_ADDRS_CUSTOM) {
 			deployLoadSvc(loadSvcAddr);
 		}
+		TimeUnit.SECONDS.sleep(5);
 	}
 	//
 	@AfterClass
