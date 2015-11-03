@@ -146,7 +146,7 @@ extends CambridgeLabViprTestBase {
 			void run() {
 				try {
 					PROCESS_BUILDER.command(
-						"ssh", "root@" + loadSvcAddr, "killall java; killall screen"
+						"ssh", "root@" + loadSvcAddr, "'killall java; killall screen'"
 					);
 					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
 					final Process p = PROCESS_BUILDER.start();
