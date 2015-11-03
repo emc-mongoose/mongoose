@@ -146,7 +146,7 @@ extends CambridgeLabViprTestBase {
 			void run() {
 				try {
 					PROCESS_BUILDER.command(
-						"ssh", "root@" + loadSvcAddr, "'killall java'"
+						"ssh", "root@" + loadSvcAddr, "killall java"
 					);
 					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
 					final Process p = PROCESS_BUILDER.start();
@@ -177,7 +177,7 @@ extends CambridgeLabViprTestBase {
 				//
 				try {
 					PROCESS_BUILDER.command(
-						"ssh", "root@" + loadSvcAddr, "'killall screen'"
+						"ssh", "root@" + loadSvcAddr, "killall screen"
 					);
 					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
 					final Process p = PROCESS_BUILDER.start();
@@ -220,7 +220,7 @@ extends CambridgeLabViprTestBase {
 			void run() {
 				try {
 					PROCESS_BUILDER.command(
-						"ssh", "root@" + loadSvcAddr, "'cd /workspace; tar xvf " + GOOSE_REMOTE_PATH + "'"
+						"ssh", "root@" + loadSvcAddr, "cd /workspace; tar xvf " + GOOSE_REMOTE_PATH
 					);
 					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
 					final Process p = PROCESS_BUILDER.start();
