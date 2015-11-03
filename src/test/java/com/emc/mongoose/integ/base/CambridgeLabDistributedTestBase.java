@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Level;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-
+//
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,8 +17,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.11.15.
@@ -31,11 +32,11 @@ extends CambridgeLabViprTestBase {
 	private final static String
 		GOOSE_NAME = RunTimeConfig.getContext().getRunName(),
 		GOOSE_VERSION = RunTimeConfig.getContext().getRunVersion(),
-		GOOSE_REMOTE_PATH = "/workspace/" + GOOSE_NAME + "-" + GOOSE_VERSION + ".tgz";
+		GOOSE_REMOTE_PATH = "/workspace/" + GOOSE_NAME + "-" + GOOSE_VERSION + ".tgz",
+		SECRET_DEFAULT = "TLMer+7YMPKCNwS6VzSTbJBP173orXP7Pop2J8+e";
 	private final static File
 		GOOSE_TGZ_FILE = Paths.get("build", "dist", GOOSE_NAME + "-" + GOOSE_VERSION + ".tgz").toFile(),
 		GOOSE_JAR_FILE = Paths.get(GOOSE_NAME + "-" + GOOSE_VERSION, GOOSE_NAME + ".jar").toFile();
-	private final static ProcessBuilder PROCESS_BUILDER = new ProcessBuilder();
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -53,14 +54,28 @@ extends CambridgeLabViprTestBase {
 		}
 		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, sb.toString());
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
+		rtConfig.set(RunTimeConfig.KEY_AUTH_SECRET, SECRET_DEFAULT);
 		if(!GOOSE_TGZ_FILE.exists()) {
 			Assert.fail("Mongoose tgz file not found @ " + GOOSE_TGZ_FILE.getAbsolutePath());
 		}
 		applyDeploymentOutputIfAny(rtConfig);
-		/*for(final String loadSvcAddr : LOAD_SVC_ADDRS_CUSTOM) {
-			deployLoadSvc(loadSvcAddr);
+		final ExecutorService deployExecutor = Executors.newFixedThreadPool(
+			LOAD_SVC_ADDRS_CUSTOM.length
+		);
+		for(final String loadSvcAddr : LOAD_SVC_ADDRS_CUSTOM) {
+			deployExecutor.submit(
+				new Runnable() {
+					@Override
+					public void run() {
+						deployLoadSvc(loadSvcAddr);
+					}
+				}
+			);
 		}
-		TimeUnit.SECONDS.sleep(5);*/
+		deployExecutor.shutdown();
+		deployExecutor.awaitTermination(1, TimeUnit.MINUTES);
+		deployExecutor.shutdownNow();
+		TimeUnit.SECONDS.sleep(1);
 	}
 	//
 	@AfterClass
@@ -94,186 +109,89 @@ extends CambridgeLabViprTestBase {
 		}
 	}
 	//
-	private static void deployLoadSvc(final String loadSvcAddr)
-	throws IOException, InterruptedException {
-		copyTarBallTo(loadSvcAddr);
-		killAllLoadSvc(loadSvcAddr);
-		unPackRemoteTarBall(loadSvcAddr);
-		startRemoteLoadSvc(loadSvcAddr);
-	}
-	//
-	private static void copyTarBallTo(final String loadSvcAddr)
-	throws IOException, InterruptedException {
-		final Thread t = new Thread() {
-			@Override
-			public final
-			void run() {
-				try {
-					final String
-						cmd = "scp " + GOOSE_TGZ_FILE.getAbsolutePath() + " root@" + loadSvcAddr +
-							":" + GOOSE_REMOTE_PATH;
-					LOG.info(Markers.MSG, cmd);
-					final Process p = Runtime.getRuntime().exec(cmd);
-					try {
-						p.waitFor();
-						if(0 != p.exitValue()) {
-							try(
-								final BufferedReader in = new BufferedReader(
-									new InputStreamReader(p.getErrorStream())
-								)
-							) {
-								String l;
-								do {
-									l = in.readLine();
-									if(l != null) {
-										LOG.warn(Markers.ERR, l);
-									}
-								} while(true);
+	private static void deployLoadSvc(final String loadSvcAddr) {
+		try {
+			final String
+				cmd = "scp " + GOOSE_TGZ_FILE.getAbsolutePath() + " root@" + loadSvcAddr +
+					":" + GOOSE_REMOTE_PATH;
+			LOG.info(Markers.MSG, cmd);
+			final Process p = Runtime.getRuntime().exec(cmd);
+			try {
+				p.waitFor();
+				if(0 != p.exitValue()) {
+					try(
+						final BufferedReader in = new BufferedReader(
+							new InputStreamReader(p.getErrorStream())
+						)
+					) {
+						String l;
+						do {
+							l = in.readLine();
+							if(l != null) {
+								LOG.warn(Markers.ERR, l);
 							}
-						}
-					} catch(final InterruptedException e) {
-					} finally {
-						p.destroy();
+						} while(true);
 					}
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Process start failure");
 				}
+			} catch(final InterruptedException e) {
+			} finally {
+				p.destroy();
 			}
-		};
-		t.start();
-		t.join(100000);
-		t.interrupt();
-	}
-	//
-	private static void killAllLoadSvc(final String loadSvcAddr)
-	throws IOException, InterruptedException {
-		final Thread t = new Thread() {
-			@Override
-			public final
-			void run() {
-				try {
-					PROCESS_BUILDER.command(
-						"ssh", "root@" + loadSvcAddr, "'killall java; killall screen'"
-					);
-					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
-					final Process p = PROCESS_BUILDER.start();
-					try {
-						p.waitFor();
-						if(0 != p.exitValue()) {
-							try(
-								final BufferedReader in = new BufferedReader(
-									new InputStreamReader(p.getErrorStream())
-								)
-							) {
-								String l;
-								do {
-									l = in.readLine();
-									if(l != null) {
-										LOG.warn(Markers.ERR, loadSvcAddr + ": " + l);
-									}
-								} while(true);
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Process start failure");
+		}
+		//
+		try {
+			final String cmd[] = {
+				"/bin/sh", "-c",
+				"echo \"killall java; killall screen; cd /workspace; tar xvf " +
+					GOOSE_REMOTE_PATH + "; screen -d -m bash -c 'java -jar /workspace/" +
+					GOOSE_NAME + "-" + GOOSE_VERSION + "/" + GOOSE_JAR_FILE.getName() +
+					" server'\" | ssh root@" + loadSvcAddr +
+					" -- /bin/bash"
+			};
+			LOG.info(Markers.MSG, cmd[2]);
+			final Process p = Runtime.getRuntime().exec(cmd);
+			final ProcessBuilder pb = new ProcessBuilder();
+			pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
+			try {
+				p.waitFor();
+				if(0 != p.exitValue()) {
+					try(
+						final BufferedReader in = new BufferedReader(
+							new InputStreamReader(p.getErrorStream())
+						)
+					) {
+						String l;
+						do {
+							l = in.readLine();
+							if(l != null) {
+								LOG.warn(Markers.ERR, loadSvcAddr + ": " + l);
 							}
-						}
-					} catch(final InterruptedException e) {
-					} finally {
-						p.destroy();
+						} while(true);
 					}
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Process start failure");
-				}
-			}
-		};
-		t.start();
-		t.join(20000);
-		t.interrupt();
-	}
-	//
-	private static void unPackRemoteTarBall(final String loadSvcAddr)
-	throws IOException, InterruptedException {
-		final Thread t = new Thread() {
-			@Override
-			public final
-			void run() {
-				try {
-					PROCESS_BUILDER.command(
-						"ssh", "root@" + loadSvcAddr, "cd /workspace; tar xvf " + GOOSE_REMOTE_PATH
-					);
-					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
-					final Process p = PROCESS_BUILDER.start();
-					try {
-						p.waitFor();
-						if(0 != p.exitValue()) {
-							try(
-								final BufferedReader in = new BufferedReader(
-									new InputStreamReader(p.getErrorStream())
-								)
-							) {
-								String l;
-								do {
-									l = in.readLine();
-									if(l != null) {
-										LOG.warn(Markers.ERR, loadSvcAddr + ": " + l);
-									}
-								} while(true);
+				} else {
+					try(
+						final BufferedReader in = new BufferedReader(
+							new InputStreamReader(p.getInputStream())
+						)
+					) {
+						String l;
+						do {
+							l = in.readLine();
+							if(l != null) {
+								LOG.info(Markers.MSG, loadSvcAddr + ": " + l);
 							}
-						}
-					} catch(final InterruptedException e) {
-					} finally {
-						p.destroy();
+						} while(true);
 					}
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Process start failure");
 				}
+			} catch(final InterruptedException e) {
+			} finally {
+				p.destroy();
 			}
-		};
-		t.start();
-		t.join(10000);
-		t.interrupt();
-	}
-	//
-	private static void startRemoteLoadSvc(final String loadSvcAddr)
-	throws IOException, InterruptedException {
-		final Thread t = new Thread() {
-			@Override
-			public final void run() {
-				try {
-					PROCESS_BUILDER.command(
-						"ssh", "root@" + loadSvcAddr,
-						"screen -d -m bash -c 'cd /workspace; java -jar /workspace/" +
-						GOOSE_NAME + "-" + GOOSE_VERSION + "/" + GOOSE_JAR_FILE.getName() + " server'"
-					);
-					LOG.info(Markers.MSG, PROCESS_BUILDER.command());
-					final Process p = PROCESS_BUILDER.start();
-					try {
-						p.waitFor();
-						if(0 != p.exitValue()) {
-							try(
-								final BufferedReader
-									in = new BufferedReader(
-										new InputStreamReader(p.getErrorStream())
-									)
-							) {
-								String l;
-								do {
-									l = in.readLine();
-									if(l != null) {
-										LOG.warn(Markers.ERR, loadSvcAddr + ": " + l);
-									}
-								} while(true);
-							}
-						}
-					} catch(final InterruptedException e) {
-					} finally {
-						p.destroy();
-					}
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Process start failure");
-				}
-			}
-		};
-		t.start();
-		t.join(10000);
-		t.interrupt();
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Process start failure");
+		}
 	}
 	//
 }
