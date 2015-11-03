@@ -145,7 +145,7 @@ implements ItemProducer<T> {
 						}
 					}
 					//
-					if (isCircular && count >= maxItemQueueSize) {
+					if(isCircular && count >= maxItemQueueSize) {
 						signalThatItemsWereProduced();
 						break;
 					}
