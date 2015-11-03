@@ -27,7 +27,7 @@ public class CambridgeLabDistributedTestBase
 extends CambridgeLabViprTestBase {
 	//
 	private static String LOAD_SVC_ADDRS_DEFAULT, RUN_MODE_DEFAULT;
-	protected final static String LOAD_SVC_ADDRS_CUSTOM[] = {"10.249.237.76"};
+	protected final static String LOAD_SVC_ADDRS_CUSTOM[] = {"10.249.237.76", "10.249.237.77"};
 	private final static String
 		GOOSE_NAME = RunTimeConfig.getContext().getRunName(),
 		GOOSE_VERSION = RunTimeConfig.getContext().getRunVersion(),
@@ -57,10 +57,10 @@ extends CambridgeLabViprTestBase {
 			Assert.fail("Mongoose tgz file not found @ " + GOOSE_TGZ_FILE.getAbsolutePath());
 		}
 		applyDeploymentOutputIfAny(rtConfig);
-		for(final String loadSvcAddr : LOAD_SVC_ADDRS_CUSTOM) {
+		/*for(final String loadSvcAddr : LOAD_SVC_ADDRS_CUSTOM) {
 			deployLoadSvc(loadSvcAddr);
 		}
-		TimeUnit.SECONDS.sleep(5);
+		TimeUnit.SECONDS.sleep(5);*/
 	}
 	//
 	@AfterClass
