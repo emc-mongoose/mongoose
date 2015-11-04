@@ -16,7 +16,7 @@ import org.junit.runners.Suite;
 	S3Read100MBTest.class,
 	AtmosDirectoryWADTest.class,
 	S3DirectoryWRDTest.class,
-	SwiftDirectoryWURDTest.class,
+	//SwiftDirectoryWURDTest.class,
 })
 public class CambridgeLabDistributedTestSuite {
 }

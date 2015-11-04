@@ -83,9 +83,6 @@ extends CambridgeLabDistributedClientTestBase {
 		Assert.assertTrue(countUpdated > 0);
 		Assert.assertTrue(countRead > 0);
 		Assert.assertTrue(countDeleted > 0);
-		Assert.assertTrue(countWritten >= countUpdated);
-		Assert.assertTrue(countWritten >= countRead);
-		Assert.assertTrue(countWritten >= countDeleted);
 	}
 	//
 	@AfterClass

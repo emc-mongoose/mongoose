@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 03.11.15.
  */
 public class AtmosDirectoryWADTest
-	extends CambridgeLabDistributedClientTestBase {
+extends CambridgeLabDistributedClientTestBase {
 	//
 	private final static String RUN_ID = S3DirectoryWRDTest.class.getCanonicalName();
 	private final static long COUNT_LIMIT = 1000;
@@ -68,8 +68,6 @@ public class AtmosDirectoryWADTest
 		Assert.assertTrue(countWritten > 0);
 		Assert.assertTrue(countAppended > 0);
 		Assert.assertTrue(countDeleted > 0);
-		Assert.assertTrue(countWritten >= countAppended);
-		Assert.assertTrue(countWritten >= countDeleted);
 	}
 	//
 	@AfterClass

@@ -104,6 +104,5 @@ extends CambridgeLabDistributedClientTestBase {
 	public void checkReturnedCount() {
 		Assert.assertTrue(countWritten > 0);
 		Assert.assertTrue(countRead > 0);
-		Assert.assertTrue(countWritten >= countRead);
 	}
 }
