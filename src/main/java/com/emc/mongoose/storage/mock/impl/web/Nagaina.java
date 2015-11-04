@@ -11,7 +11,6 @@ import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import com.emc.mongoose.storage.mock.impl.web.request.NagainaBasicHandler;
-import com.emc.mongoose.storage.mock.impl.web.net.BasicSocketEventDispatcher;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -22,6 +21,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,13 +35,15 @@ public class Nagaina<T extends WSObjectMock>
 		extends StorageMockBase<T>
 		implements WSMock<T> {
 
-	private static int portStart = 9020;
 	private final static Logger LOG = LogManager.getLogger();
-	private Channel channel;
-	private EventLoopGroup dispatchGroup = new NioEventLoopGroup(1);
-	private EventLoopGroup workerGroup = new NioEventLoopGroup();
 
-	private final BasicSocketEventDispatcher socketEventDispatcher = null;
+	private final static int HEAD_COUNT_DEFAULT = 1;
+	private final static int PORT_START_DEFAULT = 9020;
+	private final EventLoopGroup dispatchGroup;
+	private final EventLoopGroup workerGroup;
+	private final NagainaBasicHandler protocolHandler;
+	private final int portStart;
+	private Channel channel;
 
 	public Nagaina(RunTimeConfig rtConfig) {
 		this(rtConfig, rtConfig.getStorageMockWorkersPerSocket());
@@ -49,14 +51,16 @@ public class Nagaina<T extends WSObjectMock>
 
 	private Nagaina(RunTimeConfig rtConfig, int ioThreadCount) {
 		this(
-				rtConfig.getStorageMockHeadCount(),
+//				rtConfig.getStorageMockHeadCount(),  TODO check how many is head count?
+				HEAD_COUNT_DEFAULT,
 				ioThreadCount > 0 ? ioThreadCount : ThreadUtil.getWorkerCount(),
-				rtConfig.getApiTypePort(rtConfig.getApiName()),
+//				rtConfig.getApiTypePort(rtConfig.getApiName()), TODO check what is portStart?,
+				PORT_START_DEFAULT,
 				rtConfig.getStorageMockCapacity(),
 				rtConfig.getStorageMockContainerCapacity(),
 				rtConfig.getStorageMockContainerCountLimit(),
 				rtConfig.getBatchSize(),
-				rtConfig.getItemSrcFPath(),
+				rtConfig.getItemSrcFile(),
 				rtConfig.getLoadMetricsPeriodSec(),
 				rtConfig.getFlagServeJMX(),
 				rtConfig.getStorageMockMinConnLifeMilliSec(),
@@ -74,7 +78,10 @@ public class Nagaina<T extends WSObjectMock>
 				storageCapacity, containerCapacity, containerCountLimit, batchSize, dataSrcPath, metricsPeriodSec,
 				jmxServeFlag);
 		this.portStart = portStart;
-
+		dispatchGroup = new NioEventLoopGroup(headCount, new DefaultThreadFactory("123")); // TODO check does it equal headCount?
+		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
+		workerGroup = new NioEventLoopGroup();
+		protocolHandler = new NagainaBasicHandler(RunTimeConfig.getContext(), this);
 	}
 
 
@@ -91,10 +98,10 @@ public class Nagaina<T extends WSObjectMock>
 					.channel(NioServerSocketChannel.class)
 					.childHandler(new ChannelInitializer<SocketChannel>() {
 						              @Override
-						              protected void initChannel(SocketChannel ch) throws Exception {
-							              ChannelPipeline pipeline = channel.pipeline();
+						              protected void initChannel(SocketChannel socketChannel) throws Exception {
+							              ChannelPipeline pipeline = socketChannel.pipeline();
 							              pipeline.addLast(new HttpServerCodec());
-							              pipeline.addLast(new NagainaBasicHandler());
+							              pipeline.addLast(protocolHandler);
 						              }
 					              }
 					);
