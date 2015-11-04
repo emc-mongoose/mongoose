@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 public class CambridgeLabDistributedTestBase
 extends CambridgeLabViprTestBase {
 	//
-	private static String LOAD_SVC_ADDRS_DEFAULT, RUN_MODE_DEFAULT;
 	protected final static String LOAD_SVC_ADDRS_CUSTOM[] = {"10.249.237.76", "10.249.237.77"};
 	private final static String
 		GOOSE_NAME = RunTimeConfig.getContext().getRunName(),
@@ -43,8 +42,6 @@ extends CambridgeLabViprTestBase {
 	throws Exception {
 		CambridgeLabViprTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		LOAD_SVC_ADDRS_DEFAULT = rtConfig.getString(RunTimeConfig.KEY_LOAD_SERVER_ADDRS);
-		RUN_MODE_DEFAULT = rtConfig.getRunMode();
 		final StringBuilder sb = new StringBuilder();
 		for(final String loadSvcAddr : LOAD_SVC_ADDRS_CUSTOM) {
 			if(sb.length() > 0) {
@@ -83,8 +80,8 @@ extends CambridgeLabViprTestBase {
 	throws Exception {
 		CambridgeLabViprTestBase.tearDownClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, LOAD_SVC_ADDRS_DEFAULT);
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_DEFAULT);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, "127.0.0.1");
+		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
 	}
 	//
 	private static void applyDeploymentOutputIfAny(final RunTimeConfig rtConfig) {
