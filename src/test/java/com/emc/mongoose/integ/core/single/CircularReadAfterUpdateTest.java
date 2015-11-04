@@ -1,5 +1,5 @@
 package com.emc.mongoose.integ.core.single;
-
+//
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -13,49 +13,55 @@ import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+//
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
-
+//
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
-
+//
 /**
- * Created by gusakk on 06.10.15.
+ * Created by gusakk on 03.11.15.
  */
-public class CircularReadTest
+public class CircularReadAfterUpdateTest
 extends StandaloneClientTestBase {
 	//
+	private static final int ITEM_MAX_QUEUE_SIZE = 65536;
+	private static final int BATCH_SIZE = 100;
+	//
 	private static final int WRITE_COUNT = 1234;
-	private static final int READ_COUNT = 12340;
+	private static final int UPDATE_COUNT = 12340;
 	//
-	private static final int COUNT_OF_DUPLICATES = 10;
+	private static final int COUNT_OF_DUPLICATES = 21;
 	//
-	private static long COUNT_WRITTEN, COUNT_READ;
 	private static byte[] STD_OUT_CONTENT;
+	private static long COUNT_WRITTEN, COUNT_READ, COUNT_UPDATED;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularReadTest.class.getCanonicalName()
+				RunTimeConfig.KEY_RUN_ID, CircularReadAfterUpdateTest.class.getCanonicalName()
 		);
 		StandaloneClientTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
+		rtConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
+		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		try(
@@ -69,19 +75,35 @@ extends StandaloneClientTestBase {
 				BasicWSObject.class, ContentSourceBase.getDefault()
 			);
 			COUNT_WRITTEN = client.write(
-				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB")
+				null, writeOutput, WRITE_COUNT, 10, SizeUtil.toSize("128B")
 			);
-			TimeUnit.SECONDS.sleep(10);
+			TimeUnit.SECONDS.sleep(1);
+			//
+			if (COUNT_WRITTEN > 0) {
+				COUNT_UPDATED = client.update(
+					writeOutput.getItemSrc(), null, UPDATE_COUNT, 10, 1
+				);
+			} else {
+				throw new IllegalStateException("Failed to update");
+			}
+			TimeUnit.SECONDS.sleep(1);
 			//
 			try (
 				final BufferingOutputStream
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
 				stdOutInterceptorStream.reset();
-				if (COUNT_WRITTEN > 0) {
-					COUNT_READ = client.read(writeOutput.getItemSrc(), null, READ_COUNT, 1, true);
+				if (COUNT_UPDATED > 0) {
+					final ItemDst<WSObject> updateOutput = new CSVFileItemDst<WSObject>(
+						FILE_LOG_DATA_ITEMS.toPath(),
+						BasicWSObject.class, ContentSourceBase.getDefault()
+					);
+					//
+					COUNT_READ = client.read(
+						updateOutput.getItemSrc(), null, COUNT_UPDATED, 10, true
+					);
 				} else {
-					throw new IllegalStateException("Failed to write");
+					throw new IllegalStateException("Failed to read");
 				}
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
@@ -99,58 +121,35 @@ extends StandaloneClientTestBase {
 	}
 	//
 	@Test
-	public void checkItemsFileContainsDuplicates()
+	public void checkPerfTraceFileContainsDuplicates()
 	throws  Exception {
 		final Map<String, Long> items = new HashMap<>();
-		try(
+		boolean firstRow = true;
+		try (
 			final BufferedReader
-				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(FILE_LOG_PERF_TRACE.toPath(), StandardCharsets.UTF_8)
 		) {
-			String line;
-			while ((line = in.readLine()) != null) {
-				long count = 1;
-				if (items.containsKey(line)) {
-					count = items.get(line);
-					count++;
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			String id;
+			for (final CSVRecord nextRec : recIter) {
+				if (firstRow) {
+					firstRow = false;
+				} else {
+					long count = 1;
+					id = nextRec.get(2);
+					if (items.containsKey(id)) {
+						count = items.get(id);
+						count++;
+					}
+					items.put(id, count);
 				}
-				items.put(line, count);
 			}
+			//
 			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
 			for (final Map.Entry<String, Long> entry : items.entrySet()) {
 				Assert.assertEquals(
-					"data.items.csv doesn't contain necessary count of duplicated items" ,
-						entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES));
-			}
-		}
-	}
-	//
-	@Test
-	public void checkItemDuplicatesOrder()
-	throws Exception {
-		final Map<String, Integer> items = new HashMap<>();
-		try (
-			final LineNumberReader in = new LineNumberReader(
-				Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
-			)
-		) {
-			long uniqueItems = 0;
-			String line;
-			while ((line = in.readLine()) != null) {
-				if (uniqueItems < WRITE_COUNT) {
-					items.put(line, in.getLineNumber());
-					uniqueItems++;
-				} else {
-					Assert.assertTrue(items.containsKey(line));
-					final int expected;
-					if (in.getLineNumber() % WRITE_COUNT == 0) {
-						expected = WRITE_COUNT;
-					} else {
-						expected = in.getLineNumber() % WRITE_COUNT;
-					}
-					Assert.assertEquals(
-						Integer.valueOf(expected), items.get(line)
-					);
-				}
+					"perf.trace.csv doesn't contain necessary count of duplicated items" ,
+					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES), 2);
 			}
 		}
 	}
@@ -240,5 +239,4 @@ extends StandaloneClientTestBase {
 			"Summary metrics line matching the pattern was not met in the stdout", passed
 		);
 	}
-
 }

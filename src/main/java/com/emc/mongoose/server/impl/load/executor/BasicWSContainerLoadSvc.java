@@ -103,6 +103,11 @@ implements WSContainerLoadSvc<T, C> {
 	}
 	//
 	@Override
+	protected final void dumpItems() {
+		// do nothing
+	}
+	//
+	@Override
 	public final List<C> getProcessedItems()
 	throws RemoteException {
 		List<C> itemsBuff = null;

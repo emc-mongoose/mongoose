@@ -75,7 +75,7 @@ implements LoadExecutor<T> {
 	protected IOStats ioStats;
 	protected volatile IOStats.Snapshot lastStats = null;
 	// STATES section //////////////////////////////////////////////////////////////////////////////
-	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
+	protected final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
 	private LoadState<T> loadedPrevState = null;
 	protected final AtomicBoolean
 		isStarted = new AtomicBoolean(false),
@@ -87,7 +87,7 @@ implements LoadExecutor<T> {
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
-	private T lastDataItem;
+	protected T lastDataItem;
 	protected final Object state = new Object();
 	protected final ItemBuffer<T> itemOutBuff;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -172,12 +172,12 @@ implements LoadExecutor<T> {
 			try {
 				if(itemsLock.tryLock(10, TimeUnit.SECONDS)) {
 					try {
-						final Thread currThread = Thread.currentThread();
-						currThread.setName("resultsDispatcher<" + getName() + ">");
 						try {
 							if(isCircular) {
 								itemsWereProduced.await(1000, TimeUnit.SECONDS);
 							}
+							final Thread currThread = Thread.currentThread();
+							currThread.setName("resultsDispatcher<" + getName() + ">");
 							while(!currThread.isInterrupted()) {
 								passItems();
 								Thread.yield();
@@ -304,15 +304,13 @@ implements LoadExecutor<T> {
 		try {
 			super.runActually();
 		} finally {
-			if(!isCircular) {
-				if (itemSrc != null) {
-					LOG.debug(
-						Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
-						getName(), counterSubm.get()
-					);
-					if (isShutdown.compareAndSet(false, true)) {
-						shutdownActually();
-					}
+			if (itemSrc != null) {
+				LOG.debug(
+					Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
+					getName(), counterSubm.get()
+				);
+				if (isShutdown.compareAndSet(false, true)) {
+					shutdownActually();
 				}
 			}
 		}
@@ -474,13 +472,13 @@ implements LoadExecutor<T> {
 		LOG.debug(Markers.MSG, "{} interrupted", getName());
 	}
 	//
-	private void dumpItems() {
-		final Collection<Item> items = uniqueItems.values();
+	protected void dumpItems() {
+		/*final Collection<Item> items = uniqueItems.values();
 		if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
 			for(final Item item : items) {
 				LOG.info(Markers.ITEM_LIST, item);
 			}
-		}
+		}*/
 	}
 	//
 	@Override
@@ -512,7 +510,7 @@ implements LoadExecutor<T> {
 		int activeTaskCount;
 		do {
 			activeTaskCount = (int) (counterSubm.get() - counterResults.get());
-			if(isShutdown.get() || isInterrupted.get()) {
+			if(isInterrupted.get() || (isShutdown.get() && !isCircular)) {
 				throw new InterruptedIOException(
 					getName() + ": submit failed, shut down already or interrupted"
 				);
@@ -560,7 +558,7 @@ implements LoadExecutor<T> {
 					// don't fill the connection pool as fast as possible, this may cause a failure
 					do {
 						activeTaskCount = (int) (counterSubm.get() - counterResults.get());
-						if(isShutdown.get() || isInterrupted.get()) {
+						if(isInterrupted.get() || (isShutdown.get() && !isCircular)) {
 							throw new InterruptedIOException(
 								getName() + ": submit failed, shut down already or interrupted"
 							);
@@ -649,17 +647,13 @@ implements LoadExecutor<T> {
 		return bestNode;
 	}
 	//
-	protected final void ioTaskCompleted(final IOTask<T> ioTask) {
+	protected void ioTaskCompleted(final IOTask<T> ioTask) {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return;
 		}
 		//
 		final T dataItem = ioTask.getItem();
-		//
-		if(isCircular) {
-			uniqueItems.putIfAbsent(dataItem.getName(), dataItem);
-		}
 		//
 		final IOTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
@@ -671,6 +665,9 @@ implements LoadExecutor<T> {
 			// put into the output buffer
 			try {
 				itemOutBuff.put(dataItem);
+				if(isCircular) {
+					uniqueItems.putIfAbsent(dataItem.getName(), dataItem);
+				}
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e,
@@ -684,7 +681,7 @@ implements LoadExecutor<T> {
 		counterResults.incrementAndGet();
 	}
 	//
-	protected final int ioTaskCompletedBatch(
+	protected int ioTaskCompletedBatch(
 		final List<? extends IOTask<T>> ioTasks, final int from, final int to
 	) {
 		// producing was interrupted?
@@ -704,10 +701,6 @@ implements LoadExecutor<T> {
 				ioTask = ioTasks.get(i);
 				dataItem = ioTask.getItem();
 				//
-				if(isCircular) {
-					uniqueItems.putIfAbsent(dataItem.getName(), dataItem);
-				}
-				//
 				status = ioTask.getStatus();
 				// update the metrics
 				ioTask.mark(ioStats);
@@ -717,6 +710,9 @@ implements LoadExecutor<T> {
 					// pass data item to a consumer
 					try {
 						itemOutBuff.put(dataItem);
+						if(isCircular) {
+							uniqueItems.putIfAbsent(dataItem.getName(), dataItem);
+						}
 					} catch(final IOException e) {
 						LogUtil.exception(
 							LOG, Level.DEBUG, e,
@@ -949,6 +945,9 @@ implements LoadExecutor<T> {
 	//
 	protected void shutdownActually() {
 		super.interrupt(); // stop the source producing right now
+		if(isCircular) {
+			signalThatItemsWereProduced(); //  unblock ResultsDispatcher thread
+		}
 		LOG.debug(Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"", itemSrc, getName());
 	}
 	//

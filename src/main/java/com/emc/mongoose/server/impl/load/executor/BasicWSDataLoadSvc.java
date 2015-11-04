@@ -7,10 +7,13 @@ import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.executor.BasicWSDataLoadExecutor;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
@@ -23,6 +26,8 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+
 /**
  Created by kurila on 16.12.14.
  */
@@ -31,6 +36,10 @@ extends BasicWSDataLoadExecutor<T>
 implements WSDataLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final ItemBuffer<T> itemsSvcOutBuff
+		= new LimitedQueueItemBuffer<>(
+			new ArrayBlockingQueue<T>(DEFAULT_RESULTS_QUEUE_SIZE)
+	);
 	//
 	public BasicWSDataLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
@@ -104,11 +113,107 @@ implements WSDataLoadSvc<T> {
 	}
 	//
 	@Override
+	protected final void ioTaskCompleted(final IOTask<T> ioTask) {
+		// producing was interrupted?
+		if(isInterrupted.get()) {
+			return;
+		}
+		//
+		final T dataItem = ioTask.getItem();
+		//
+		final IOTask.Status status = ioTask.getStatus();
+		final String nodeAddr = ioTask.getNodeAddr();
+		// update the metrics
+		ioTask.mark(ioStats);
+		activeTasksStats.get(nodeAddr).decrementAndGet();
+		if(status == IOTask.Status.SUCC) {
+			lastDataItem = dataItem;
+			// put into the output buffer
+			try {
+				itemOutBuff.put(dataItem);
+				if(isCircular) {
+					itemsSvcOutBuff.put(dataItem);
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.DEBUG, e,
+					"{}: failed to put the data item into the output buffer", getName()
+				);
+			}
+		} else {
+			ioStats.markFail();
+		}
+		//
+		counterResults.incrementAndGet();
+	}
+	//
+	@Override
+	protected final int ioTaskCompletedBatch(
+		final List<? extends IOTask<T>> ioTasks, final int from, final int to
+	) {
+		// producing was interrupted?
+		if(isInterrupted.get()) {
+			return 0;
+		}
+		//
+		final int n = to - from;
+		if(n > 0) {
+			final String nodeAddr = ioTasks.get(from).getNodeAddr();
+			activeTasksStats.get(nodeAddr).addAndGet(-n);
+			//
+			IOTask<T> ioTask;
+			T dataItem;
+			IOTask.Status status;
+			for(int i = from; i < to; i++) {
+				ioTask = ioTasks.get(i);
+				dataItem = ioTask.getItem();
+				//
+				status = ioTask.getStatus();
+				// update the metrics
+				ioTask.mark(ioStats);
+				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
+				if(status == IOTask.Status.SUCC) {
+					lastDataItem = dataItem;
+					// pass data item to a consumer
+					try {
+						itemOutBuff.put(dataItem);
+						if(isCircular) {
+							itemsSvcOutBuff.put(dataItem);
+						}
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.DEBUG, e,
+							"{}: failed to put the data item into the output buffer", getName()
+						);
+					}
+				} else {
+					ioStats.markFail();
+				}
+			}
+			synchronized(ioStats) {
+				ioStats.notifyAll();
+			}
+			counterResults.addAndGet(n);
+		}
+		//
+		return n;
+	}
+	//
+	@Override
+	protected final void dumpItems() {
+		// do nothi
+	}
+	//
+	@Override
 	public final List<T> getProcessedItems()
 	throws RemoteException {
 		List<T> itemsBuff = null;
 		try {
 			itemsBuff = new ArrayList<>(batchSize);
+			if(isCircular) {
+				itemsSvcOutBuff.get(itemsBuff, batchSize);
+				return itemsBuff;
+			}
 			itemOutBuff.get(itemsBuff, batchSize);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");

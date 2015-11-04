@@ -84,6 +84,11 @@ implements LoadClient<T, W> {
 						);
 					}
 					counterResults.addAndGet(n);
+					if(isCircular) {
+						for (final T item : frame) {
+							uniqueItems.putIfAbsent(item.getName(), item);
+						}
+					}
 					for(int m = 0; m < n;) {
 						m += itemOutBuff.put(frame, m, n);
 						LockSupport.parkNanos(1);
