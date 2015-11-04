@@ -19,5 +19,11 @@ import org.junit.runners.Suite;
 	com.emc.mongoose.integ.distributed.single.CircularReadTest.class,
 	com.emc.mongoose.integ.distributed.single.UpdateZeroBytesTest.class,
 	com.emc.mongoose.integ.distributed.single.WriteRikkiTikkiTaviTest.class,
+	com.emc.mongoose.integ.distributed.single.WriteFewBucketsTest.class,
+	com.emc.mongoose.integ.distributed.single.WriteManyBucketsConcurrentlyTest.class,
+	com.emc.mongoose.integ.distributed.single.ReadFewBucketsTest.class,
+	com.emc.mongoose.integ.distributed.single.DeleteManyBucketsConcurrentlyTest.class,
+	com.emc.mongoose.integ.distributed.single.WriteManyObjectsToFewBucketsTest.class,
+	com.emc.mongoose.integ.distributed.single.ReadBucketsWithManyObjects.class,
 })
 public class DistributedLoadTestSuite {}

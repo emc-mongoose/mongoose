@@ -31,10 +31,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 03.07.15.
@@ -203,8 +204,12 @@ implements StorageMock<T> {
 		public final void run() {
 			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
 			if(c != null) {
-				completed(StorageMockBase.this.get(container).put(obj.getName(), obj));
-				dataCount.incrementAndGet();
+				final T oldObj = StorageMockBase.this.get(container).put(obj.getName(), obj);
+				if(oldObj == null) {
+					dataCount.incrementAndGet();
+				}
+				completed(obj);
+
 			} else {
 				failed(new ContainerMockNotFoundException(container));
 			}
@@ -226,10 +231,10 @@ implements StorageMock<T> {
 		@Override
 		public final void run() {
 			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
-			if(c != null) {
-				completed(c.get(oid));
-			} else {
+			if(c == null) {
 				failed(new ContainerMockNotFoundException(container));
+			} else {
+				completed(c.get(oid));
 			}
 		}
 	}
@@ -300,11 +305,14 @@ implements StorageMock<T> {
 		@Override
 		public final void run() {
 			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
-			if(c != null) {
-				completed(c.remove(oid));
-				dataCount.decrementAndGet();
-			} else {
+			if(c == null) {
 				failed(new ContainerMockNotFoundException(container));
+			} else {
+				final T obj = c.remove(oid);
+				if(obj != null) {
+					dataCount.decrementAndGet();
+				}
+				completed(obj);
 			}
 		}
 	}
@@ -426,12 +434,21 @@ implements StorageMock<T> {
 	public void close()
 	throws IOException {
 		sequencer.interrupt();
-		for(final ObjectContainerMock<T> container : values()) {
-			container.clear();
-		}
-		clear();
 		storageCapacityMonitorThread.interrupt();
 		ioStats.close();
+		try {
+			for(final ObjectContainerMock<T> containerMock : values()) {
+				containerMock.clear();
+			}
+		} catch(final ConcurrentModificationException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clean up the containers");
+		} finally {
+			try {
+				clear();
+			} catch(final ConcurrentModificationException e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to clean up the storage mock");
+			}
+		}
 	}
 	@Override
 	public StorageIOStats getStats() {
@@ -491,7 +508,7 @@ implements StorageMock<T> {
 					//	nextItem.setSize(Long.valueOf(String.valueOf(nextItem.getSize()), 0x10));
 					//}
 					putIntoDefaultContainer(nextItem);
-					count++;
+					count ++;
 					nextItem = csvFileItemInput.get();
 				}
 			} catch(final EOFException e) {

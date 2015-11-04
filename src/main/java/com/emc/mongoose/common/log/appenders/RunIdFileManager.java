@@ -188,7 +188,7 @@ extends AbstractManager {
 	protected final void close() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
-				if (layout != null) {
+				if(layout != null) {
 					byte[] footer = layout.getFooter();
 					if (footer != null) {
 						outStream.write(footer);
@@ -198,6 +198,27 @@ extends AbstractManager {
 				outStream.close();
 			} catch(final IOException e) {
 				e.printStackTrace(System.err);
+			}
+		}
+		outStreamsMap.clear();
+		INSTANCES.remove(this);
+	}
+	//
+	public static void closeAll(final String runId) {
+		for(final RunIdFileManager manager : INSTANCES) {
+			manager.close(runId);
+		}
+	}
+	//
+	public void close(final String runId) {
+		final OutputStream outStream = outStreamsMap.get(runId);
+		if(outStream != null) {
+			try {
+				outStream.close();
+			} catch(final IOException e) {
+				e.printStackTrace(System.err);
+			} finally {
+				outStreamsMap.remove(runId);
 			}
 		}
 	}

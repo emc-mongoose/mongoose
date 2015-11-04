@@ -14,7 +14,7 @@ public interface TestConstants {
 	String PERF_AVG_FILE_NAME = "perf.avg.csv";
 	String PERF_SUM_FILE_NAME = "perf.sum.csv";
 	String PERF_TRACE_FILE_NAME = "perf.trace.csv";
-	String DATA_ITEMS_FILE_NAME = "data.items.csv";
+	String ITEMS_FILE_NAME = "items.csv";
 	String ERR_FILE_NAME = "errors.log";
 	//
 	String KEY_VERIFY_CONTENT = "load.type.read.verifyContent";

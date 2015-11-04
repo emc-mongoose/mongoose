@@ -1,7 +1,6 @@
 package com.emc.mongoose.util.client.api;
 //
 import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 //
@@ -25,7 +24,7 @@ import java.io.IOException;
  after being processed successfully.</p>
  <p>Also each method returns the count of the successfully processed data items.</p>
  */
-public interface StorageClient<T extends DataItem>
+public interface StorageClient<T extends Item>
 extends Closeable {
 
 	/**

@@ -50,7 +50,7 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	throws RemoteException {
 		super.setProperties(rtConfig);
 		//
-		final String listFilePathStr = rtConfig.getItemSrcFPath();
+		final String listFilePathStr = rtConfig.getItemSrcFile();
 		if (itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(

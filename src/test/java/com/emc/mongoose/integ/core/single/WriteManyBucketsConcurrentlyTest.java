@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.core.container;
+package com.emc.mongoose.integ.core.single;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -7,11 +7,9 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.integ.tools.ContentGetter;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -24,36 +22,34 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.10.15.
  */
-public class WriteFewContainersTest
+public class WriteManyBucketsConcurrentlyTest
 extends WSMockTestBase {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static final int LIMIT_COUNT = 10;
-	private static String RUN_ID = WriteFewContainersTest.class.getCanonicalName();
+	private static final int LIMIT_COUNT = 1000000;
+	private static String RUN_ID = WriteManyBucketsConcurrentlyTest.class.getCanonicalName();
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		System.setProperty(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
+		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
+		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "100");
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
@@ -66,7 +62,7 @@ extends WSMockTestBase {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(1);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
 		//
@@ -253,7 +249,8 @@ extends WSMockTestBase {
 			}
 			//  Check that there are 10 lines in data.items.csv file
 			Assert.assertEquals(
-				"Not correct information about created data items", LIMIT_COUNT, countDataItems
+				"Not correct information about created data items",
+				LIMIT_COUNT, countDataItems, LIMIT_COUNT / 10
 			);
 		}
 	}

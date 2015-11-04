@@ -119,7 +119,7 @@ extends WSMockTestBase {
 					continue;
 				}
 				values = nextLine.split(",");
-				Assert.assertEquals(values.length, 8);
+				Assert.assertEquals(values.length, 9);
 				if(!UNIQ_TRACES.add(values[2])) {
 					DUP_TRACES.add(values[2]);
 				}

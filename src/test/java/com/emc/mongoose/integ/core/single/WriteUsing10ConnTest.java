@@ -76,31 +76,17 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  write
+		STD_OUTPUT_STREAM = StdOutInterceptorTestSuite.getStdOutBufferingStream();
 		SCENARIO_THREAD = new Thread(
 			new Runnable() {
 				@Override
 				public void run() {
-					try {
-						try(
-							final BufferingOutputStream
-								stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
-						) {
-							STD_OUTPUT_STREAM = stdOutStream;
-							//  Run mongoose default scenario in standalone mode
-							new ScriptMockRunner().run();
-							TimeUnit.SECONDS.sleep(3);
-						} catch(final InterruptedException ignored) {
-						} finally {
-							RunIdFileManager.flushAll();
-						}
-					} catch(final IOException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Failed to execute the load job");
-					}
+					new ScriptMockRunner().run();
 				}
 			}, "writeScenarioThread"
 		);
 		SCENARIO_THREAD.start();
-		SCENARIO_THREAD.join(30000);
+		SCENARIO_THREAD.join(10000);
 	}
 
 	@AfterClass
@@ -109,6 +95,7 @@ extends WSMockTestBase {
 		try {
 			SCENARIO_THREAD.interrupt();
 			TimeUnit.SECONDS.sleep(1);
+			RunIdFileManager.flushAll();
 			//
 			Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
 			//  Check that messages.log exists
@@ -133,6 +120,7 @@ extends WSMockTestBase {
 			);
 			shouldReportScenarioEndToMessageLogFile();
 		} finally {
+			STD_OUTPUT_STREAM.close();
 			WSMockTestBase.tearDownClass();
 		}
 	}

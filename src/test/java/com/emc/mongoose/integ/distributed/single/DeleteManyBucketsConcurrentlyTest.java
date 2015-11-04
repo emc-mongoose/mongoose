@@ -1,9 +1,11 @@
-package com.emc.mongoose.integ.core.container;
+package com.emc.mongoose.integ.distributed.single;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
+import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
+import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -32,20 +34,20 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.10.15.
  */
-public class WriteManyContainersConcurrentlyTest
-extends WSMockTestBase {
+public class DeleteManyBucketsConcurrentlyTest
+extends DistributedLoadBuilderTestBase {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static final int LIMIT_COUNT = 1000000;
-	private static String RUN_ID = WriteManyContainersConcurrentlyTest.class.getCanonicalName();
+	private static final int LIMIT_COUNT = 100000;
+	private static String RUN_ID = DeleteManyBucketsConcurrentlyTest.class.getCanonicalName();
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		System.setProperty(RunTimeConfig.KEY_LOAD_ITEM_CLASS, "container");
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID + "Write");
+		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
-		WSMockTestBase.setUpClass();
+		DistributedLoadBuilderTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
@@ -53,6 +55,21 @@ extends WSMockTestBase {
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
+		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		new ScriptMockRunner().run();
+		//  Wait for "Scenario end" message
+		TimeUnit.SECONDS.sleep(5);
+		RunIdFileManager.flushAll();
+		//
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		LoggingTestBase.setUpClass();
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_DELETE);
+		rtConfig.set(
+			RunTimeConfig.KEY_ITEM_SRC_FILE,
+			LogValidator.getItemsListFile(RUN_ID + "Write").getPath()
+		);
+		RunTimeConfig.setContext(rtConfig);
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
 		try(
@@ -62,7 +79,7 @@ extends WSMockTestBase {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(1);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
 		//
@@ -72,7 +89,7 @@ extends WSMockTestBase {
 	@AfterClass
 	public  static void tearDownClass()
 	throws Exception {
-		WSMockTestBase.tearDownClass();
+		DistributedLoadBuilderTestBase.tearDownClass();
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1000000");
 	}
 
@@ -125,12 +142,6 @@ extends WSMockTestBase {
 			start += lineOffset;
 		}
 		for (final String confParam : params) {
-			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
-				Assert.assertTrue(
-					"Information about limit count in configuration table is wrong",
-					confParam.contains(String.valueOf(LIMIT_COUNT))
-				);
-			}
 			if (confParam.contains(RunTimeConfig.KEY_STORAGE_ADDRS)) {
 				Assert.assertTrue(
 					"Information about storage address in configuration table is wrong",
@@ -140,7 +151,7 @@ extends WSMockTestBase {
 			if (confParam.contains(RunTimeConfig.KEY_RUN_MODE)) {
 				Assert.assertTrue(
 					"Information about run mode in configuration table is wrong",
-					confParam.contains(Constants.RUN_MODE_STANDALONE)
+					confParam.contains(Constants.RUN_MODE_CLIENT)
 				);
 			}
 			if (confParam.contains(RunTimeConfig.KEY_RUN_ID)) {
@@ -200,7 +211,7 @@ extends WSMockTestBase {
 	}
 
 	@Test
-	public void shouldReportCorrectWrittenCountToSummaryLogFile()
+	public void shouldReportCorrectCountToSummaryLogFile()
 	throws Exception {
 		//  Read perf.summary file
 		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
@@ -267,51 +278,6 @@ extends WSMockTestBase {
 				in = Files.newBufferedReader(itemsListFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			LogValidator.assertCorrectContainerItemsCSV(in);
-		}
-	}
-
-	@Test
-	public void shouldCreateCorrectPerfSumFile()
-	throws Exception {
-		//  Get perf.sum.csv file
-		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
-		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
-		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			LogValidator.assertCorrectPerfSumCSV(in);
-		}
-	}
-
-	@Test
-	public void shouldCreateCorrectPerfAvgFile()
-	throws Exception {
-		//  Get perf.avg.csv file
-		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
-		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			LogValidator.assertCorrectPerfAvgCSV(in);
-		}
-	}
-
-	@Test
-	public void shouldCreateCorrectPerfTraceFile()
-	throws Exception {
-		//  Get perf.trace.csv file
-		final File perfTraceFile = LogValidator.getPerfTraceFile(RUN_ID);
-		Assert.assertTrue("perf.trace.csv file doesn't exist", perfTraceFile.exists());
-		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfTraceFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			LogValidator.assertCorrectPerfTraceCSV(in);
 		}
 	}
 

@@ -51,7 +51,7 @@ extends StandaloneClientTestBase {
 		StandaloneClientTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_CIRCULAR, true);
+		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		try(

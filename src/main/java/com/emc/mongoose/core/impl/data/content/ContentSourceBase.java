@@ -1,21 +1,25 @@
 package com.emc.mongoose.core.impl.data.content;
 //
-import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.content.ContentSource;
 //
-import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -103,7 +107,30 @@ implements ContentSource {
 		try {
 			if(DEFAULT == null) {
 				try {
-					DEFAULT = new FileContentSource();
+					final String contentFilePath = RunTimeConfig.getContext().getDataContentFPath();
+					if(contentFilePath != null && !contentFilePath.isEmpty()) {
+						final Path p = Paths.get(contentFilePath);
+						if(Files.exists(p) && !Files.isDirectory(p) && Files.isReadable(p)) {
+							final File f = p.toFile();
+							final long fileSize = f.length();
+							if(fileSize > 0) {
+								DEFAULT = new FileContentSource(
+									Files.newByteChannel(p, StandardOpenOption.READ), fileSize
+								);
+							} else {
+								throw new IllegalStateException(
+									"Content source file @" + contentFilePath + " is empty"
+								);
+							}
+						} else {
+							throw new IllegalStateException(
+								"Content source file @" + contentFilePath + " doesn't exist/" +
+								"not readable/is a directory"
+							);
+						}
+					} else {
+						throw new IllegalStateException("Content source file path is empty");
+					}
 				} catch(final Exception e) {
 					LogUtil.exception(
 						LOG, Level.DEBUG, e,

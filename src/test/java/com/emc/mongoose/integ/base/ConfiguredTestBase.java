@@ -2,6 +2,7 @@ package com.emc.mongoose.integ.base;
 //
 import static com.emc.mongoose.common.conf.RunTimeConfig.*;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 /**
@@ -18,5 +19,6 @@ public abstract class ConfiguredTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "data");
 	}
 }

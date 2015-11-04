@@ -52,7 +52,7 @@ extends DistributedClientTestBase {
 		DistributedClientTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_CIRCULAR, true);
+		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		try(
@@ -65,9 +65,7 @@ extends DistributedClientTestBase {
 			final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
 				BasicWSObject.class, ContentSourceBase.getDefault()
 			);
-			final long countWritten = client.write(
-				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB")
-			);
+			final long countWritten = client.write(null, writeOutput, WRITE_COUNT, 1, 1);
 			TimeUnit.SECONDS.sleep(10);
 			//
 			try (

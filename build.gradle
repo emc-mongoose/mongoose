@@ -1042,7 +1042,10 @@ task integTest(type: Test, dependsOn: dist) {
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
-	jvmArgs '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
+	forkEvery = 1
+	minHeapSize = "4g"
+	maxHeapSize = "4g"
+	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
@@ -1104,7 +1107,7 @@ for(nextPublicJar in publicJars) {
 }
 
 artifactory {
-	contextUrl = "${artifactory_contextUrl}"   //The base Artifactory URL if not overridden by the publisher/resolver
+	contextUrl = "${artifactory_contextUrl}" //The base Artifactory URL if not overridden by the publisher/resolver
 	publish {
 		repository {
 			repoKey = 'vipr-dev-local'

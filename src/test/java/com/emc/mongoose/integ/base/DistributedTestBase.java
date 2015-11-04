@@ -4,13 +4,7 @@ import static com.emc.mongoose.common.conf.Constants.*;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-//
-//
-import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 //
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import org.junit.AfterClass;

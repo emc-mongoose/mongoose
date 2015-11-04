@@ -7,6 +7,7 @@ import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.BasicItem;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 //
 import org.apache.logging.log4j.LogManager;
@@ -18,7 +19,6 @@ import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
  Uses UniformDataSource as a ring buffer. Not thread safe.
  */
 public class BasicDataItem
+extends BasicItem
 implements DataItem {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -54,7 +55,6 @@ implements DataItem {
 	private ByteBuffer ringBuff;
 	private int ringBuffSize;
 	protected long offset = 0, size = 0;
-	protected String name = null;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public BasicDataItem() {
 		this(
@@ -112,16 +112,6 @@ implements DataItem {
 		setOffset(offset);
 		this.name = name;
 		this.size = size;
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public final String getName() {
-		return name;
-	}
-	//
-	@Override
-	public final void setName(final String name) {
-		this.name = name;
 	}
 	//
 	private void setRingBuffer(final ByteBuffer ringBuff) {
@@ -272,9 +262,7 @@ implements DataItem {
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
-		final byte nameBytes[] = name.getBytes(StandardCharsets.UTF_8);
-		out.writeInt(nameBytes.length);
-		out.write(nameBytes, 0, nameBytes.length);
+		super.writeExternal(out);
 		out.writeLong(offset);
 		out.writeLong(size);
 	}
@@ -282,9 +270,7 @@ implements DataItem {
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		final byte nameBytes[] = new byte[in.readInt()];
-		in.readFully(nameBytes);
-		name = new String(nameBytes, StandardCharsets.UTF_8);
+		super.readExternal(in);
 		setOffset(in.readLong());
 		setSize(in.readLong());
 	}

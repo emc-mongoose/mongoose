@@ -31,6 +31,7 @@ implements ContainerLoadBuilder<T, C, U>{
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	protected boolean flagUseContainerItemSrc;
+	//
 	public ContainerLoadBuilderBase(final RunTimeConfig rtConfig) {
 		super(rtConfig);
 	}
@@ -39,7 +40,7 @@ implements ContainerLoadBuilder<T, C, U>{
 	public ContainerLoadBuilderBase<T, C, U> setProperties(final RunTimeConfig rtConfig) {
 		super.setProperties(rtConfig);
 		//
-		final String listFilePathStr = rtConfig.getItemSrcFPath();
+		final String listFilePathStr = rtConfig.getItemSrcFile();
 		if (itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(

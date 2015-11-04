@@ -95,16 +95,16 @@ implements WSContainerLoadSvc<T, C> {
 	}
 	// prevent output buffer consuming by the logger at the end of a chain
 	@Override
-	protected final void passDataItems()
+	protected final void passItems()
 	throws InterruptedException {
 		if(consumer != null) {
-			super.passDataItems();
+			super.passItems();
 		}
 	}
 	//
 	@Override
 	public final List<C> getProcessedItems()
-		throws RemoteException {
+	throws RemoteException {
 		List<C> itemsBuff = null;
 		try {
 			itemsBuff = new ArrayList<>(batchSize);

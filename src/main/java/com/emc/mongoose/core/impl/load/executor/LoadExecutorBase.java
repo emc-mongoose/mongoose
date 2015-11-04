@@ -172,7 +172,7 @@ implements LoadExecutor<T> {
 			currThread.setName("resultsDispatcher<" + getName() + ">");
 			try {
 				while(!currThread.isInterrupted()) {
-					passDataItems();
+					passItems();
 					Thread.yield();
 					LockSupport.parkNanos(1000);
 				}
@@ -189,7 +189,7 @@ implements LoadExecutor<T> {
 	) {
 		super(
 			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE,
-			rtConfig.getBatchSize(), rtConfig.isDataSrcCircularEnabled(),
+			rtConfig.getBatchSize(), rtConfig.isItemSrcCircularEnabled(),
 			rtConfig.isShuffleItemsEnabled()
 		);
 		try {
@@ -631,28 +631,11 @@ implements LoadExecutor<T> {
 		final T dataItem = ioTask.getItem();
 		final IOTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
-		final long
-			countBytesDone = ioTask.getCountBytesDone(),
-			reqTimeStart = ioTask.getReqTimeStart(),
-			reqTimeDone = ioTask.getReqTimeDone(),
-			respTimeStart = ioTask.getRespTimeStart(),
-			respTimeDone = ioTask.getRespTimeDone();
-		//
-		final int
-			reqDuration = (int) (respTimeDone - reqTimeStart),
-			respLatency = (int) (respTimeStart - reqTimeDone);
-		//
-		if(respLatency > 0 && reqDuration > respLatency) {
-			logTaskTrace(
-				dataItem, status, nodeAddr, countBytesDone, reqTimeStart, reqDuration, respLatency
-			);
-		}
 		// update the metrics
-		activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
+		ioTask.mark(ioStats);
+		activeTasksStats.get(nodeAddr).decrementAndGet();
 		if(status == IOTask.Status.SUCC) {
 			lastDataItem = dataItem;
-			// update the metrics with success
-			markSucc(ioTask, countBytesDone, reqDuration, respLatency);
 			// put into the output buffer
 			try {
 				itemOutBuff.put(dataItem);
@@ -685,32 +668,15 @@ implements LoadExecutor<T> {
 			IOTask<T> ioTask;
 			T dataItem;
 			IOTask.Status status;
-			long countBytesDone, reqTimeStart, reqTimeDone, respTimeStart, respTimeDone;
-			int reqDuration, respLatency;
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
 				dataItem = ioTask.getItem();
 				status = ioTask.getStatus();
-				countBytesDone = ioTask.getCountBytesDone();
-				reqTimeStart = ioTask.getReqTimeStart();
-				reqTimeDone = ioTask.getReqTimeDone();
-				respTimeStart = ioTask.getRespTimeStart();
-				respTimeDone = ioTask.getRespTimeDone();
-				reqDuration = (int) (respTimeDone - reqTimeStart);
-				respLatency = (int) (respTimeStart - reqTimeDone);
-				//
-				if(respLatency > 0 && reqDuration > respLatency) {
-					logTaskTrace(
-						dataItem, status, nodeAddr, countBytesDone, reqTimeStart, reqDuration,
-						respLatency
-					);
-				}
 				// update the metrics
+				ioTask.mark(ioStats);
 				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 				if(status == IOTask.Status.SUCC) {
 					lastDataItem = dataItem;
-					// update the metrics with success
-					markSucc(ioTask, countBytesDone, reqDuration, respLatency);
 					// pass data item to a consumer
 					try {
 						itemOutBuff.put(dataItem);
@@ -785,36 +751,36 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected void passDataItems()
+	protected void passItems()
 	throws InterruptedException {
 		try {
 			//
-			final List<T> dataItems = new ArrayList<>(batchSize);
-			final int n = itemOutBuff.get(dataItems, batchSize);
+			final List<T> items = new ArrayList<>(batchSize);
+			final int n = itemOutBuff.get(items, batchSize);
 			if(n > 0) {
 				// is this an end of consumer-producer chain?
 				if(consumer == null) {
 					for(int i = 0; i < n; i ++) {
-						if(LOG.isInfoEnabled(Markers.DATA_LIST)) {
-							LOG.info(Markers.DATA_LIST, dataItems.get(i));
+						if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
+							LOG.info(Markers.ITEM_LIST, items.get(i));
 						}
 					}
 				} else { // put to the consumer
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
-							Markers.MSG, "Going to put {} data items to the consumer {}",
+							Markers.MSG, "Going to put {} items to the consumer {}",
 							n, consumer
 						);
 					}
 					int m = 0;
 					while(m < n) {
 						Thread.yield(); LockSupport.parkNanos(1);
-						m += consumer.put(dataItems, m, n);
+						m += consumer.put(items, m, n);
 					}
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
 							Markers.MSG,
-							"{} data items were passed to the consumer {} successfully",
+							"{} items were passed to the consumer {} successfully",
 							n, consumer
 						);
 					}
@@ -822,11 +788,11 @@ implements LoadExecutor<T> {
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.DEBUG, e, "Failed to feed the data items to \"{}\"", consumer
+				LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
 			);
 		} catch(final RejectedExecutionException e) {
 			if(LOG.isTraceEnabled(Markers.ERR)) {
-				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the data items", consumer);
+				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the items", consumer);
 			}
 		}
 	}
@@ -852,24 +818,6 @@ implements LoadExecutor<T> {
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
 			}
-		}
-	}
-	//
-	private void markSucc(
-		final IOTask<T> ioTask, final long bytes, final int duration, final int latency
-	) {
-		// update the metrics with success
-		if(latency > 0 && latency > duration) {
-			LOG.warn(
-				Markers.ERR, "{}: latency {} is more than duration: {}", ioTask, latency, duration
-			);
-		}
-		ioStats.markSucc(bytes, duration, latency);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "Task #{}: successful, {}/{}", ioTask.hashCode(),
-				lastStats.getSuccCount(), ioTask.getCountBytesDone()
-			);
 		}
 	}
 	//
