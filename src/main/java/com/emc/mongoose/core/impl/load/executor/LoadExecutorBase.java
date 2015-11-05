@@ -804,7 +804,7 @@ implements LoadExecutor<T> {
 	private void checkForBadState() {
 		if(
 			lastStats.getFailCount() > MAX_FAIL_COUNT &&
-			lastStats.getFailRateLast() < lastStats.getSuccRateLast()
+			lastStats.getFailRateLast() > lastStats.getSuccRateLast()
 		) {
 			LOG.fatal(
 				Markers.ERR,
@@ -814,10 +814,11 @@ implements LoadExecutor<T> {
 				MAX_FAIL_COUNT, metricsPeriodSec
 			);
 			try {
-				interrupt();
 				close();
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
+			} finally {
+				Thread.currentThread().interrupt();
 			}
 		}
 	}
