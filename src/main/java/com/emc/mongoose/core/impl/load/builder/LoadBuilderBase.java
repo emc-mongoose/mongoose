@@ -152,32 +152,18 @@ implements LoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
-		final String listFilePathStr = rtConfig.getItemSrcFile();
-		if (itemsFileExists(listFilePathStr)) {
-			try {
-				setItemSrc(
-					new CSVFileItemSrc<>(
-						Paths.get(listFilePathStr), reqConf.getItemClass(),
-						reqConf.getContentSource()
-					)
-				);
-			} catch(final IOException | NoSuchMethodException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
-			}
-		}
-		//
 		return this;
 	}
 	//
 	protected boolean itemsFileExists(final String filePathStr) {
-		if (filePathStr != null && !filePathStr.isEmpty()) {
+		if(filePathStr != null && !filePathStr.isEmpty()) {
 			final Path listFilePath = Paths.get(filePathStr);
 			if(!Files.exists(listFilePath)) {
-				LOG.warn(Markers.ERR, "Specified input file \"{}\" doesn't exists", listFilePath);
+				LOG.debug(Markers.MSG, "Specified input file \"{}\" doesn't exists", listFilePath);
 			} else if(!Files.isReadable(listFilePath)) {
-				LOG.warn(Markers.ERR, "Specified input file \"{}\" isn't readable", listFilePath);
+				LOG.debug(Markers.MSG, "Specified input file \"{}\" isn't readable", listFilePath);
 			} else if(Files.isDirectory(listFilePath)) {
-				LOG.warn(Markers.ERR, "Specified input file \"{}\" is a directory", listFilePath);
+				LOG.debug(Markers.MSG, "Specified input file \"{}\" is a directory", listFilePath);
 			} else {
 				return true;
 			}

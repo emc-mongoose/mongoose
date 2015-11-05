@@ -58,12 +58,12 @@ implements LoadClient<T, W> {
 	//
 	private final static int COUNT_LIMIT_RETRY = 100;
 	//
-	private final class LoadDataItemsBatchTask
+	private final class LoadItemsBatchTask
 	implements Runnable {
 		//
 		private final W loadSvc;
 		//
-		private LoadDataItemsBatchTask(final W loadSvc) {
+		private LoadItemsBatchTask(final W loadSvc) {
 			this.loadSvc = loadSvc;
 		}
 		//
@@ -200,7 +200,7 @@ implements LoadClient<T, W> {
 		remoteLoadMap.keySet().toArray(this.loadSvcAddrs);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		for(final W nextLoadSvc : remoteLoadMap.values()) {
-			mgmtTasks.add(new LoadDataItemsBatchTask(nextLoadSvc));
+			mgmtTasks.add(new LoadItemsBatchTask(nextLoadSvc));
 		}
 		mgmtTasks.add(new InterruptOnCountLimitReachedTask(this));
 		//
@@ -367,10 +367,16 @@ implements LoadClient<T, W> {
 		if(remoteSubmExecutor.isShutdown()) {
 			return;
 		}
-		try {
-			remoteSubmExecutor.submit(new RemotePutTask(dataItem));
-		} catch(final RejectedExecutionException e) {
-			throw new IOException(e);
+		while(true) {
+			try {
+				remoteSubmExecutor.submit(new RemotePutTask(dataItem));
+				break;
+			} catch(final RejectedExecutionException e) {
+				if(LOG.isTraceEnabled(Markers.ERR)) {
+					LogUtil.exception(LOG, Level.TRACE, e, "Failed to submit remote put task");
+				}
+				Thread.yield();
+			}
 		}
 	}
 	//
@@ -429,10 +435,16 @@ implements LoadClient<T, W> {
 		if(remoteSubmExecutor.isShutdown()) {
 			return 0;
 		}
-		try {
-			remoteSubmExecutor.submit(new RemoteBatchPutTask(dataItems, from, to));
-		} catch(final RejectedExecutionException e) {
-			throw new IOException(e);
+		while(true) {
+			try {
+				remoteSubmExecutor.submit(new RemoteBatchPutTask(dataItems, from, to));
+				break;
+			} catch(final RejectedExecutionException e) {
+				if(LOG.isTraceEnabled(Markers.ERR)) {
+					LogUtil.exception(LOG, Level.TRACE, e, "Failed to submit remote batch put task");
+				}
+				Thread.yield();
+			}
 		}
 		return to - from;
 	}

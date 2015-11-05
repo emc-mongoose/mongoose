@@ -234,7 +234,8 @@ extends WSMockTestBase {
 						"Count of success is not integer", LogValidator.isInteger(nextRec.get(7))
 					);
 					Assert.assertEquals(
-						"Count of success isn't correct", Integer.toString(LIMIT_COUNT), nextRec.get(7)
+						"Count of success isn't correct",
+						LIMIT_COUNT, Integer.parseInt(nextRec.get(7)), LIMIT_COUNT / 100
 					);
 				}
 			}

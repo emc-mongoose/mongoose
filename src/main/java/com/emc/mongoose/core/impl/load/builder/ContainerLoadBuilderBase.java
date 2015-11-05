@@ -41,7 +41,7 @@ implements ContainerLoadBuilder<T, C, U>{
 		super.setProperties(rtConfig);
 		//
 		final String listFilePathStr = rtConfig.getItemSrcFile();
-		if (itemsFileExists(listFilePathStr)) {
+		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(
 					new CSVFileItemSrc<>(

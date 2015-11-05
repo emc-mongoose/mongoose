@@ -119,6 +119,31 @@ public interface StorageClientBuilder<T extends Item, U extends StorageClient<T>
 	throws IllegalArgumentException;
 
 	/**
+	 Enable/disable the versioning
+	 @param enabledFlag enable the versioning if true
+	 @return self.
+	 */
+	StorageClientBuilder<T, U> setVersioning(final boolean enabledFlag)
+	throws IllegalArgumentException;
+
+	/**
+	 Set the file access mode.
+	 @param enabledFlag enable/disable file access mode flag
+	 @return self.
+	 */
+	StorageClientBuilder<T, U> setFileAccess(final boolean enabledFlag)
+	throws IllegalArgumentException;
+
+	/**
+	 Set the storage directory for writing data items to/reading data items from it
+	 @param path the storage side path, shouldn't begin or end with "/"
+	 @return self.
+	 @throws IllegalArgumentException if the path begins or ends with "/"
+	 */
+	StorageClientBuilder<T, U> setPath(final String path)
+	throws IllegalArgumentException;
+
+	/**
 	 Set the manual delay between each two requests to the storage inside single thread/connection.
 	 @param milliSec the time in milliseconds
 	 @throws java.lang.IllegalArgumentException if negative value is passed

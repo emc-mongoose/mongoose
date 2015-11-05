@@ -14,11 +14,14 @@ import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.NoSuchElementException;
 /**
@@ -126,6 +129,20 @@ implements DataLoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+		}
+		//
+		final String listFilePathStr = rtConfig.getItemSrcFile();
+		if(itemsFileExists(listFilePathStr)) {
+			try {
+				setItemSrc(
+					new CSVFileItemSrc<>(
+						Paths.get(listFilePathStr), reqConf.getItemClass(),
+						reqConf.getContentSource()
+					)
+				);
+			} catch(final IOException | NoSuchMethodException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
+			}
 		}
 		//
 		return this;

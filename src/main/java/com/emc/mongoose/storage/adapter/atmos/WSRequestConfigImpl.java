@@ -282,7 +282,6 @@ extends WSRequestConfigBase<T> {
 		THR_LOC_METADATA_STR_BUILDER = new ThreadLocal<>();
 	@Override @SuppressWarnings("unchecked")
 	protected final void applyMetaDataHeaders(final HttpEntityEnclosingRequest request) {
-		/*
 		StringBuilder md = THR_LOC_METADATA_STR_BUILDER.get();
 		if(md == null) {
 			md = new StringBuilder();
@@ -297,6 +296,7 @@ extends WSRequestConfigBase<T> {
 				md.append("subtenant=").append(subTenant.getValue());
 			}
 		}
+		// the "offset" tag is required for WS mock
 		if(IOTask.Type.CREATE.equals(loadType)) {
 			final HttpEntity entity = request.getEntity();
 			if(entity != null && WSObject.class.isInstance(entity)) {
@@ -309,7 +309,7 @@ extends WSRequestConfigBase<T> {
 		//
 		if(md.length() > 0) {
 			request.setHeader(KEY_EMC_TAGS, md.toString());
-		}*/
+		}
 	}
 	//
 	@Override

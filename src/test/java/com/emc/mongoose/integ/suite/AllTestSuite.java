@@ -7,6 +7,7 @@ import org.junit.runners.Suite;
 //
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+	//CambridgeLabDistributedTestSuite.class,
 	CoreTestSuite.class,
 	DistributedLoadTestSuite.class,
 	StorageAdapterTestSuite.class,
