@@ -38,7 +38,6 @@ implements ItemProducer<T> {
 	//
 	protected final Lock itemsLock = new ReentrantLock();
 	protected final Condition itemsWereProduced = itemsLock.newCondition();
-	protected final AtomicBoolean isItemSignalProduced = new AtomicBoolean(false);
 	//
 	protected final ConcurrentHashMap<String, Item> uniqueItems;
 	protected final ItemSrc<T> itemSrc;
@@ -146,7 +145,6 @@ implements ItemProducer<T> {
 					}
 					//
 					if(isCircular && count >= maxItemQueueSize) {
-						signalThatItemsWereProduced();
 						break;
 					}
 				} catch(final EOFException e) {
@@ -162,10 +160,6 @@ implements ItemProducer<T> {
 				}
 			}
 		} finally {
-			//  start ResultsDispatcher thread of load executor
-			if(isCircular) {
-				signalThatItemsWereProduced();
-			}
 			LOG.debug(
 				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
 				getName(), count, itemSrc, itemDst
@@ -176,22 +170,6 @@ implements ItemProducer<T> {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to close the item source \"{}\"", itemSrc
 				);
-			}
-		}
-	}
-	//
-	protected void signalThatItemsWereProduced() {
-		if(isItemSignalProduced.compareAndSet(false, true)) {
-			try {
-				if(itemsLock.tryLock(10, TimeUnit.SECONDS)) {
-					try {
-						itemsWereProduced.signalAll();
-					} finally {
-						itemsLock.unlock();
-					}
-				}
-			} catch(final InterruptedException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to catch the lock");
 			}
 		}
 	}

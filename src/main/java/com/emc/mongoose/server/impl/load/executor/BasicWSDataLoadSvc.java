@@ -36,10 +36,10 @@ extends BasicWSDataLoadExecutor<T>
 implements WSDataLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final ItemBuffer<T> itemsSvcOutBuff
-		= new LimitedQueueItemBuffer<>(
+	private final ItemBuffer<T>
+		itemsSvcOutBuff = new LimitedQueueItemBuffer<>(
 			new ArrayBlockingQueue<T>(DEFAULT_RESULTS_QUEUE_SIZE)
-	);
+		);
 	//
 	public BasicWSDataLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
@@ -127,7 +127,7 @@ implements WSDataLoadSvc<T> {
 		ioTask.mark(ioStats);
 		activeTasksStats.get(nodeAddr).decrementAndGet();
 		if(status == IOTask.Status.SUCC) {
-			lastDataItem = dataItem;
+			lastItem = dataItem;
 			// put into the output buffer
 			try {
 				itemOutBuff.put(dataItem);
@@ -173,7 +173,7 @@ implements WSDataLoadSvc<T> {
 				ioTask.mark(ioStats);
 				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 				if(status == IOTask.Status.SUCC) {
-					lastDataItem = dataItem;
+					lastItem = dataItem;
 					// pass data item to a consumer
 					try {
 						itemOutBuff.put(dataItem);
@@ -210,11 +210,8 @@ implements WSDataLoadSvc<T> {
 		List<T> itemsBuff = null;
 		try {
 			itemsBuff = new ArrayList<>(batchSize);
-			if(isCircular) {
-				itemsSvcOutBuff.get(itemsBuff, batchSize);
-				return itemsBuff;
-			}
-			itemOutBuff.get(itemsBuff, batchSize);
+			final int n = (isCircular ? itemsSvcOutBuff : itemOutBuff).get(itemsBuff, batchSize);
+			counterPassed.addAndGet(n);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");
 		}

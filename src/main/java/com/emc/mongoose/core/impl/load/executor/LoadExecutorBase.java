@@ -86,8 +86,9 @@ implements LoadExecutor<T> {
 	protected final AtomicLong
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
-		counterResults = new AtomicLong(0);
-	protected T lastDataItem;
+		counterResults = new AtomicLong(0),
+		counterPassed = new AtomicLong(0);
+	protected T lastItem;
 	protected final Object state = new Object();
 	protected final ItemBuffer<T> itemOutBuff;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,6 +176,7 @@ implements LoadExecutor<T> {
 						try {
 							if(isCircular) {
 								itemsWereProduced.await(1000, TimeUnit.SECONDS);
+								LOG.error(Markers.MSG, "{}: producing finished", getName());
 							}
 							final Thread currThread = Thread.currentThread();
 							currThread.setName("resultsDispatcher<" + getName() + ">");
@@ -192,6 +194,8 @@ implements LoadExecutor<T> {
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to catch the lock");
+			} finally {
+				LOG.error(Markers.MSG, "{}: results dispatched finished", getName());
 			}
 		}
 	}
@@ -319,9 +323,9 @@ implements LoadExecutor<T> {
 	@Override
 	public void logMetrics(final Marker logMarker) {
 		LOG.info(
-			logMarker,
-			Markers.PERF_SUM.equals(logMarker) ?
-				"\"" + getName() + "\" summary: " + lastStats.toSummaryString() : lastStats
+				logMarker,
+				Markers.PERF_SUM.equals(logMarker) ?
+						"\"" + getName() + "\" summary: " + lastStats.toSummaryString() : lastStats
 		);
 	}
 	//
@@ -395,7 +399,7 @@ implements LoadExecutor<T> {
 				synchronized(state) {
 					state.notifyAll();
 				}
-				interruptActually();
+ 				interruptActually();
 			}
 		} else {
 			throw new IllegalStateException(
@@ -473,12 +477,12 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected void dumpItems() {
-		/*final Collection<Item> items = uniqueItems.values();
+		final Collection<Item> items = uniqueItems.values();
 		if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
 			for(final Item item : items) {
 				LOG.info(Markers.ITEM_LIST, item);
 			}
-		}*/
+		}
 	}
 	//
 	@Override
@@ -581,11 +585,12 @@ implements LoadExecutor<T> {
 						activeTasksStats.get(nextNodeAddr).addAndGet(m);
 					} catch(final RejectedExecutionException e) {
 						if(isInterrupted.get()) {
-							throw new IOException(getName() + " is interrupted");
+							throw new InterruptedIOException(getName() + " is interrupted");
 						} else {
 							m = srcLimit - n;
 							countRej.addAndGet(m);
 							LogUtil.exception(LOG, Level.DEBUG, e, "Rejected {} I/O tasks", m);
+							throw new InterruptedIOException();
 						}
 					}
 				}
@@ -598,6 +603,7 @@ implements LoadExecutor<T> {
 				countRej.addAndGet(srcLimit);
 				LOG.debug(Markers.MSG, "Rejected {} I/O tasks", srcLimit);
 			}
+			throw new InterruptedIOException();
 		}
 		return n;
 	}
@@ -661,7 +667,7 @@ implements LoadExecutor<T> {
 		ioTask.mark(ioStats);
 		activeTasksStats.get(nodeAddr).decrementAndGet();
 		if(status == IOTask.Status.SUCC) {
-			lastDataItem = dataItem;
+			lastItem = dataItem;
 			// put into the output buffer
 			try {
 				itemOutBuff.put(dataItem);
@@ -706,7 +712,7 @@ implements LoadExecutor<T> {
 				ioTask.mark(ioStats);
 				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 				if(status == IOTask.Status.SUCC) {
-					lastDataItem = dataItem;
+					lastItem = dataItem;
 					// pass data item to a consumer
 					try {
 						itemOutBuff.put(dataItem);
@@ -794,11 +800,17 @@ implements LoadExecutor<T> {
 				// is this an end of consumer-producer chain?
 				if(consumer == null) {
 					if(isCircular) {
-						put(items, 0, n);
+						int m = 0;
+						while(m < n) {
+							m += put(items, m, n);
+							Thread.yield(); LockSupport.parkNanos(1);
+						}
+						counterPassed.addAndGet(n);
 					} else {
 						for(int i = 0; i < n; i++) {
 							if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
 								LOG.info(Markers.ITEM_LIST, items.get(i));
+								counterPassed.incrementAndGet();
 							}
 						}
 					}
@@ -811,9 +823,10 @@ implements LoadExecutor<T> {
 					}
 					int m = 0;
 					while(m < n) {
-						Thread.yield(); LockSupport.parkNanos(1);
 						m += consumer.put(items, m, n);
+						Thread.yield(); LockSupport.parkNanos(1);
 					}
+					counterPassed.addAndGet(n);
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
 							Markers.MSG,
@@ -895,7 +908,7 @@ implements LoadExecutor<T> {
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(rtConfig)
 			.setStatsSnapshot(lastStats)
-			.setLastDataItem(lastDataItem)
+			.setLastDataItem(lastItem)
 			.build();
 	}
 	//
@@ -908,7 +921,7 @@ implements LoadExecutor<T> {
 		return counterResults.get() >= maxCount;
 	}
 	//
-	private void updateDataItemCount(final long itemsCount) {
+	private void setCountLimitConfig(final long itemsCount) {
 		if(isDoneAllSubm() && (maxCount > itemsCount)) {
 			rtConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, itemsCount);
 		} else {
@@ -919,8 +932,8 @@ implements LoadExecutor<T> {
 	private boolean isDoneAllSubm() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				Markers.MSG, "{}: shut down flag: {}, results: {}, submitted: {}",
-				getName(), isShutdown.get(), counterResults.get(), counterSubm.get()
+					Markers.MSG, "{}: shut down flag: {}, results: {}, submitted: {}",
+					getName(), isShutdown.get(), counterResults.get(), counterSubm.get()
 			);
 		}
 		return isShutdown.get() && counterResults.get() >= counterSubm.get();
@@ -951,6 +964,20 @@ implements LoadExecutor<T> {
 		LOG.debug(Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"", itemSrc, getName());
 	}
 	//
+	protected void signalThatItemsWereProduced() {
+		try {
+			if(itemsLock.tryLock(10, TimeUnit.SECONDS)) {
+				try {
+					itemsWereProduced.signalAll();
+				} finally {
+					itemsLock.unlock();
+				}
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to catch the lock");
+		}
+	}
+	//
 	@Override
 	public final void await()
 	throws InterruptedException, RemoteException {
@@ -961,51 +988,70 @@ implements LoadExecutor<T> {
 	public void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
 		long t, timeOutNanoSec = timeUnit.toNanos(timeOut);
-		if(loadedPrevState != null) {
-			if(isLimitReached) {
+		if (loadedPrevState != null) {
+			if (isLimitReached) {
 				return;
 			}
 			t = TimeUnit.MICROSECONDS.toNanos(
-				loadedPrevState.getStatsSnapshot().getElapsedTime()
+					loadedPrevState.getStatsSnapshot().getElapsedTime()
 			);
 			timeOutNanoSec -= t;
 		}
 		//
 		LOG.debug(
-			Markers.MSG, "{}: await for the done condition at most for {}[s]",
-			getName(), TimeUnit.NANOSECONDS.toSeconds(timeOutNanoSec)
+				Markers.MSG, "{}: await for the done condition at most for {}[s]",
+				getName(), TimeUnit.NANOSECONDS.toSeconds(timeOutNanoSec)
 		);
 		t = System.nanoTime();
-		while(true) {
-			synchronized(state) {
+		while (true) {
+			synchronized (state) {
 				state.wait(100);
 			}
-			if(isInterrupted.get()) {
+			if (isInterrupted.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to interrupted state", getName());
 				break;
 			}
-			if(isClosed.get()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to closed state", getName());
+			if (isClosed.get()) {
+				LOG.error(Markers.MSG, "{}: await exit due to closed state", getName());
 				break;
 			}
-			if(isDoneAllSubm()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
+			if (isDoneAllSubm()) {
+				LOG.error(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
 				break;
 			}
-			if(isDoneMaxCount()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to max count done state", getName());
+			if (isDoneMaxCount()) {
+				LOG.error(Markers.MSG, "{}: await exit due to max count done state", getName());
 				break;
 			}
-			if(System.nanoTime() - t > timeOutNanoSec) {
-				LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
+			if (System.nanoTime() - t > timeOutNanoSec) {
+				LOG.error(Markers.MSG, "{}: await exit due to timeout", getName());
 				break;
 			}
-			if(isLimitReached) {
-				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
+			if (isLimitReached) {
+				LOG.error(Markers.MSG, "{}: await exit due to limits reached state", getName());
 				break;
 			}
-			Thread.yield(); LockSupport.parkNanos(1000000);
+			Thread.yield();
+			LockSupport.parkNanos(1000000);
 		}
+		//
+		awaitAllResultsPassed(timeOutNanoSec - (System.nanoTime() - t));
+	}
+	//
+	protected final void awaitAllResultsPassed(final long timeOutNanoSec) {
+		if(timeOutNanoSec < 0) {
+			return;
+		}
+		long t = System.nanoTime();
+		// it's required to pass all the results before stopping the service threads
+		while(counterResults.get() > counterPassed.get()) {
+			Thread.yield(); LockSupport.parkNanos(1000000);
+			if (System.nanoTime() - t > timeOutNanoSec) {
+				LOG.error(Markers.MSG, "{}: await exit due to timeout", getName());
+				break;
+			}
+		}
+		LOG.error(Markers.MSG, "{}: {} results passed", getName(), counterResults.get());
 	}
 	//
 	@Override
@@ -1033,7 +1079,7 @@ implements LoadExecutor<T> {
 			if(consumer != null && !(consumer instanceof LifeCycle)) {
 				try {
 					consumer.close();
-					LOG.debug(
+					LOG.error(
 						Markers.MSG, "{}: closed the consumer \"{}\" successfully",
 						getName(), consumer
 					);
@@ -1044,7 +1090,7 @@ implements LoadExecutor<T> {
 					);
 				}
 			}
-			updateDataItemCount(counterResults.get());
+			setCountLimitConfig(counterPassed.get());
 			LoadCloseHook.del(this);
 			if(loadedPrevState != null) {
 				if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {

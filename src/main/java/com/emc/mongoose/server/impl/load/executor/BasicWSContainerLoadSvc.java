@@ -8,10 +8,13 @@ import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
+import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.executor.BasicWSContainerLoadExecutor;
 //
 import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;
@@ -24,6 +27,8 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+
 /**
  Created by kurila on 21.10.15.
  */
@@ -31,6 +36,11 @@ public class BasicWSContainerLoadSvc<T extends WSObject, C extends Container<T>>
 extends BasicWSContainerLoadExecutor<T, C>
 implements WSContainerLoadSvc<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
+	//
+	private final ItemBuffer<C>
+		itemsSvcOutBuff = new LimitedQueueItemBuffer<>(
+			new ArrayBlockingQueue<C>(DEFAULT_RESULTS_QUEUE_SIZE)
+		);
 	//
 	public BasicWSContainerLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig reqConfig, final String[] addrs,
@@ -64,8 +74,8 @@ implements WSContainerLoadSvc<T, C> {
 	@Override @SuppressWarnings("unchecked")
 	public final void setItemDst(final ItemDst<C> itemDst) {
 		LOG.debug(
-			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
-			itemDst, getName()
+				Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
+				itemDst, getName()
 		);
 		try {
 			if(itemDst instanceof Service) {
@@ -102,6 +112,94 @@ implements WSContainerLoadSvc<T, C> {
 		}
 	}
 	//
+	//
+	@Override
+	protected final void ioTaskCompleted(final IOTask<C> ioTask) {
+		// producing was interrupted?
+		if(isInterrupted.get()) {
+			return;
+		}
+		//
+		final C item = ioTask.getItem();
+		//
+		final IOTask.Status status = ioTask.getStatus();
+		final String nodeAddr = ioTask.getNodeAddr();
+		// update the metrics
+		ioTask.mark(ioStats);
+		activeTasksStats.get(nodeAddr).decrementAndGet();
+		if(status == IOTask.Status.SUCC) {
+			lastItem = item;
+			// put into the output buffer
+			try {
+				itemOutBuff.put(item);
+				if(isCircular) {
+					itemsSvcOutBuff.put(item);
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.DEBUG, e,
+					"{}: failed to put the data item into the output buffer", getName()
+				);
+			}
+		} else {
+			ioStats.markFail();
+		}
+		//
+		counterResults.incrementAndGet();
+	}
+	//
+	@Override
+	protected final int ioTaskCompletedBatch(
+			final List<? extends IOTask<C>> ioTasks, final int from, final int to
+	) {
+		// producing was interrupted?
+		if(isInterrupted.get()) {
+			return 0;
+		}
+		//
+		final int n = to - from;
+		if(n > 0) {
+			final String nodeAddr = ioTasks.get(from).getNodeAddr();
+			activeTasksStats.get(nodeAddr).addAndGet(-n);
+			//
+			IOTask<C> ioTask;
+			C item;
+			IOTask.Status status;
+			for(int i = from; i < to; i++) {
+				ioTask = ioTasks.get(i);
+				item = ioTask.getItem();
+				//
+				status = ioTask.getStatus();
+				// update the metrics
+				ioTask.mark(ioStats);
+				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
+				if(status == IOTask.Status.SUCC) {
+					lastItem = item;
+					// pass data item to a consumer
+					try {
+						itemOutBuff.put(item);
+						if(isCircular) {
+							itemsSvcOutBuff.put(item);
+						}
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.DEBUG, e,
+							"{}: failed to put the data item into the output buffer", getName()
+						);
+					}
+				} else {
+					ioStats.markFail();
+				}
+			}
+			synchronized(ioStats) {
+				ioStats.notifyAll();
+			}
+			counterResults.addAndGet(n);
+		}
+		//
+		return n;
+	}
+	//
 	@Override
 	protected final void dumpItems() {
 		// do nothing
@@ -113,7 +211,8 @@ implements WSContainerLoadSvc<T, C> {
 		List<C> itemsBuff = null;
 		try {
 			itemsBuff = new ArrayList<>(batchSize);
-			itemOutBuff.get(itemsBuff, batchSize);
+			final int n = (isCircular ? itemsSvcOutBuff : itemOutBuff).get(itemsBuff, batchSize);
+			counterPassed.addAndGet(n);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");
 		}

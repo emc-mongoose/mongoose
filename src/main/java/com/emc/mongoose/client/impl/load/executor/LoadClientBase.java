@@ -83,16 +83,16 @@ implements LoadClient<T, W> {
 							n, loadSvc
 						);
 					}
-					counterResults.addAndGet(n);
 					if(isCircular) {
 						for (final T item : frame) {
 							uniqueItems.putIfAbsent(item.getName(), item);
 						}
 					}
-					for(int m = 0; m < n;) {
+					for(int m = 0; m < n; ) {
 						m += itemOutBuff.put(frame, m, n);
 						LockSupport.parkNanos(1);
 					}
+					counterResults.addAndGet(n);
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
 							Markers.MSG, "Put the next {} items to the output buffer",
@@ -173,12 +173,17 @@ implements LoadClient<T, W> {
 						}
 					}
 				} finally {
+					shutdown();
 					try {
-						loadClient.interrupt();
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to interrupt \"{}\"", loadClient
-						);
+						awaitAllResultsPassed(Long.MAX_VALUE);
+					} finally {
+						try {
+							loadClient.interrupt();
+						} catch (final RemoteException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e, "Failed to interrupt \"{}\"", loadClient
+							);
+						}
 					}
 				}
 			}
@@ -382,11 +387,11 @@ implements LoadClient<T, W> {
 	private final class RemoteBatchPutTask
 	implements Runnable {
 		//
-		private final List<T> dataItems;
+		private final List<T> items;
 		private final int from, to, n;
 		//
-		private RemoteBatchPutTask(final List<T> dataItems, final int from, final int to) {
-			this.dataItems = dataItems;
+		private RemoteBatchPutTask(final List<T> items, final int from, final int to) {
+			this.items = items;
 			this.from = from;
 			this.to = to;
 			this.n = to - from;
@@ -404,7 +409,7 @@ implements LoadClient<T, W> {
 					];
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
 					while(true) {
-						m += loadSvc.put(dataItems, from + m, to);
+						m += loadSvc.put(items, from + m, to);
 						if(m < n) {
 							LockSupport.parkNanos(1);
 						} else {
@@ -414,14 +419,10 @@ implements LoadClient<T, W> {
 					counterSubm.addAndGet(n);
 					break;
 				} catch(final RejectedExecutionException | IOException e) {
-					if(remoteSubmExecutor.isTerminated()) {
+					try {
+						Thread.sleep(tryCount);
+					} catch(final InterruptedException ee) {
 						break;
-					} else {
-						try {
-							Thread.sleep(tryCount);
-						} catch(final InterruptedException ee) {
-							break;
-						}
 					}
 				}
 			}
@@ -507,37 +508,40 @@ implements LoadClient<T, W> {
 		} finally {
 			LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 			//
-			final long timeOut = rtConfig.getLoadLimitTimeValue();
-			final TimeUnit timeUnit = rtConfig.getLoadLimitTimeUnit();
-			remoteSubmExecutor.shutdown();
-			try {
-				if(
-					!remoteSubmExecutor.awaitTermination(
-						timeOut > 0 ? timeOut : Long.MAX_VALUE,
-						timeUnit == null ? TimeUnit.DAYS : timeUnit
-					)
-				) {
-					LOG.debug(
-						Markers.ERR,
-						"Timeout while submitting all the remaining data items to the load servers"
-					);
-				}
-			} catch(final InterruptedException e) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
-			} finally {
-				LOG.debug(
-					Markers.MSG, "Submitted {} items to the load servers",
-					remoteSubmExecutor.getCompletedTaskCount()
-				);
-				for(final String addr : remoteLoadMap.keySet()) {
-					try {
-						remoteLoadMap.get(addr).shutdown();
-					} catch(final NoSuchObjectException ignored) {
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to shut down remote load service"
+			if(!isCircular) {
+				final long timeOut = rtConfig.getLoadLimitTimeValue();
+				final TimeUnit timeUnit = rtConfig.getLoadLimitTimeUnit();
+				remoteSubmExecutor.shutdown();
+				try {
+					if (
+						!remoteSubmExecutor.awaitTermination(
+							timeOut > 0 ? timeOut : Long.MAX_VALUE,
+							timeUnit == null ? TimeUnit.DAYS : timeUnit
+						)
+					) {
+						LOG.debug(
+							Markers.ERR,
+							"Timeout while submitting all the remaining data items to the load servers"
 						);
 					}
+				} catch (final InterruptedException e) {
+					LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
+				} catch (final Exception e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failure");
+				}
+			}
+			LOG.debug(
+				Markers.MSG, "Submitted {} items to the load servers",
+				remoteSubmExecutor.getCompletedTaskCount()
+			);
+			for(final String addr : remoteLoadMap.keySet()) {
+				try {
+					remoteLoadMap.get(addr).shutdown();
+				} catch(final NoSuchObjectException ignored) {
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to shut down remote load service"
+					);
 				}
 			}
 		}
@@ -563,23 +567,34 @@ implements LoadClient<T, W> {
 	@Override
 	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
+		//
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size() + 1,
 			new GroupThreadFactory(String.format("awaitWorker<%s>", getName()))
 		);
+		//
 		awaitExecutor.submit(
 			new Runnable() {
 				@Override
-				public final void run() {
-					// wait the remaining tasks to be transmitted to load servers
-					LOG.debug(
-						Markers.MSG, "{}: waiting remaining {} tasks to complete", getName(),
-						remoteSubmExecutor.getQueue().size() + remoteSubmExecutor.getActiveCount()
-					);
+				public void run() {
 					try {
-						remoteSubmExecutor.awaitTermination(timeOut, timeUnit);
-					} catch(final InterruptedException e) {
-						LOG.debug(Markers.MSG, "Interrupted");
+						LoadClientBase.super.await(timeOut, timeUnit);
+						remoteSubmExecutor.shutdown();
+					} catch (final InterruptedException | RemoteException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "Await failure");
+					} finally {
+						// wait the remaining tasks to be transmitted to load servers
+						LOG.debug(
+							Markers.MSG, "{}: waiting remaining {} tasks to complete", getName(),
+							remoteSubmExecutor.getQueue().size() + remoteSubmExecutor.getActiveCount()
+						);
+						try {
+							remoteSubmExecutor.awaitTermination(timeOut, timeUnit);
+						} catch (final InterruptedException e) {
+							LOG.debug(Markers.MSG, "Interrupted");
+						} finally {
+							LOG.debug("Await remote put executor finished");
+						}
 					}
 				}
 			}
@@ -596,7 +611,7 @@ implements LoadClient<T, W> {
 				LOG.debug(Markers.MSG, "Await tasks execution timeout");
 			}
 		} finally {
-			LOG.debug(
+			LOG.error(
 				Markers.MSG, "Interrupted await tasks: {}",
 				Arrays.toString(awaitExecutor.shutdownNow().toArray())
 			);
