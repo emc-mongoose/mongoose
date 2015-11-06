@@ -219,8 +219,7 @@ extends DistributedClientTestBase {
 							countSucc = Long.parseLong(m.group("countSucc")),
 							countFail = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Deleted items count " + countSucc +
-								" is not equal to the limit: " + countLimit,
+							"Read items count " + countSucc + " is not equal to the limit: " + countLimit,
 							countSucc == countLimit
 						);
 						Assert.assertTrue("There are failures reported", countFail == 0);

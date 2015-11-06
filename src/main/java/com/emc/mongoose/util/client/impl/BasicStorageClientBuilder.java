@@ -158,6 +158,33 @@ implements StorageClientBuilder<T, U> {
 	}
 	//
 	@Override
+	public final StorageClientBuilder<T, U> setVersioning(final boolean enabledFlag)
+	throws IllegalArgumentException {
+		rtConfig.set(RunTimeConfig.KEY_DATA_VERSIONING, enabledFlag);
+		return this;
+	}
+	//
+	@Override
+	public final StorageClientBuilder<T, U> setFileAccess(final boolean enabledFlag)
+	throws IllegalArgumentException {
+		rtConfig.set(RunTimeConfig.KEY_DATA_FS_ACCESS, enabledFlag);
+		return this;
+	}
+	//
+	@Override
+	public final StorageClientBuilder<T, U> setPath(final String path)
+	throws IllegalArgumentException {
+		if(
+			path != null && !path.isEmpty() &&
+			(path.charAt(0) == '/' || path.charAt(path.length() - 1) == '/')
+		) {
+			throw new IllegalArgumentException("Path shouldn't begin or end with \"/\"");
+		}
+		rtConfig.set(RunTimeConfig.KEY_DATA_PREFIX, path);
+		return this;
+	}
+	//
+	@Override
 	public final StorageClientBuilder<T, U> setReqThinkTime(final int milliSec) {
 		if(milliSec < 0) {
 			throw new IllegalArgumentException("Request manual delay should be >= 0");

@@ -82,13 +82,14 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
-		try (final BufferingOutputStream
-				 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		try(
+			final BufferingOutputStream
+				stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(1);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
 		//
@@ -540,12 +541,12 @@ extends WSMockTestBase {
 	@Test
 	public void checkItemsMasksUpdated()
 	throws Exception {
-		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
-		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
+		final File itemsFile = LogValidator.getItemsListFile(RUN_ID);
+		Assert.assertTrue("items list file doesn't exist", itemsFile.exists());
 
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(itemsFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			BitSet mask;
 			String rangesMask;
