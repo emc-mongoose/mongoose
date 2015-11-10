@@ -49,6 +49,7 @@ implements ItemProducer<T> {
 	protected boolean isCircular;
 	protected boolean isShuffling;
 	protected long maxItemQueueSize;
+	protected volatile long producedItemsCount = 0;
 	//
 	protected BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
@@ -118,11 +119,10 @@ implements ItemProducer<T> {
 			LOG.debug(Markers.MSG, "No item source for the producing, exiting");
 			return;
 		}
-		long count = 0;
 		int n = 0, m = 0;
 		try {
 			List<T> buff;
-			while(!isInterrupted && count < maxCount) {
+			while(!isInterrupted && producedItemsCount < maxCount) {
 				try {
 					buff = new ArrayList<>(batchSize);
 					n = itemSrc.get(buff, batchSize);
@@ -137,14 +137,14 @@ implements ItemProducer<T> {
 							m += itemDst.put(buff, m, n);
 							LockSupport.parkNanos(1);
 						}
-						count += n;
+						producedItemsCount += n;
 					} else {
 						if(isInterrupted) {
 							break;
 						}
 					}
 					//
-					if(isCircular && count >= maxItemQueueSize) {
+					if(isCircular && producedItemsCount >= maxItemQueueSize) {
 						break;
 					}
 				} catch(final EOFException e) {
@@ -155,14 +155,14 @@ implements ItemProducer<T> {
 					LogUtil.exception(
 						LOG, Level.DEBUG, e,
 						"Failed to transfer the data items, " +
-						"count = {}, batch size = {}, batch offset = {}", count, n, m
+						"count = {}, batch size = {}, batch offset = {}", producedItemsCount, n, m
 					);
 				}
 			}
 		} finally {
 			LOG.debug(
 				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-				getName(), count, itemSrc, itemDst
+				getName(), producedItemsCount, itemSrc, itemDst
 			);
 			try {
 				itemSrc.close();

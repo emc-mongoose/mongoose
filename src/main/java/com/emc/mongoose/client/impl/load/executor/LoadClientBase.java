@@ -84,8 +84,8 @@ implements LoadClient<T, W> {
 						);
 					}
 					if(isCircular) {
-						for (final T item : frame) {
-							uniqueItems.putIfAbsent(item.getName(), item);
+						for(final T item : frame) {
+							uniqueItems.put(item.getName(), item);
 						}
 					}
 					for(int m = 0; m < n; ) {
@@ -411,6 +411,9 @@ implements LoadClient<T, W> {
 					while(true) {
 						m += loadSvc.put(items, from + m, to);
 						if(m < n) {
+							if(isInterrupted.get()) {
+								break;
+							}
 							LockSupport.parkNanos(1);
 						} else {
 							break;
@@ -579,6 +582,7 @@ implements LoadClient<T, W> {
 				public void run() {
 					try {
 						LoadClientBase.super.await(timeOut, timeUnit);
+						System.out.println(getName() + " " + timeOut + " " + timeUnit);
 						remoteSubmExecutor.shutdown();
 					} catch (final InterruptedException | RemoteException e) {
 						LogUtil.exception(LOG, Level.WARN, e, "Await failure");
@@ -611,7 +615,7 @@ implements LoadClient<T, W> {
 				LOG.debug(Markers.MSG, "Await tasks execution timeout");
 			}
 		} finally {
-			LOG.error(
+			LOG.debug(
 				Markers.MSG, "Interrupted await tasks: {}",
 				Arrays.toString(awaitExecutor.shutdownNow().toArray())
 			);

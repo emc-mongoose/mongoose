@@ -1,5 +1,5 @@
-package com.emc.mongoose.integ.core.single;
-//
+package com.emc.mongoose.integ.distributed.single;
+
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -9,6 +9,8 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
+import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
+import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -19,44 +21,44 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-//
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
-//
+
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
-//
+
 /**
- * Created by gusakk on 03.11.15.
+ * Created by gusakk on 05.11.15.
  */
-public class CircularReadAfterUpdateTest
-extends StandaloneClientTestBase {
+public class CircularUpdate1GBItem
+extends DistributedClientTestBase {
 	//
 	private static final int ITEM_MAX_QUEUE_SIZE = 65536;
 	private static final int BATCH_SIZE = 100;
 	//
-	private static final int WRITE_COUNT = 1234;
-	private static final int UPDATE_COUNT = 12340;
-	//
-	private static final int COUNT_OF_DUPLICATES = 21;
-	//
+	@SuppressWarnings("FieldCanBeLocal")
+	private static long COUNT_WRITTEN, COUNT_UPDATED;
 	private static byte[] STD_OUT_CONTENT;
-	private static long COUNT_WRITTEN, COUNT_READ, COUNT_UPDATED;
+	//
+	private static final String DATA_SIZE = "1GB";
+	private static final long RUN_MINUTES = 1;
+	private static final int WRITE_COUNT = 1;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularReadAfterUpdateTest.class.getCanonicalName()
+			RunTimeConfig.KEY_RUN_ID, CircularUpdate1GBItem.class.getCanonicalName()
 		);
-		StandaloneClientTestBase.setUpClass();
+		DistributedClientTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
@@ -64,46 +66,40 @@ extends StandaloneClientTestBase {
 		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
 		RunTimeConfig.setContext(rtConfig);
 		//
+		final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
+			BasicWSObject.class, ContentSourceBase.getDefault()
+		);
+		// write 1GB item
 		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
+			final StorageClient<WSObject> writeClient = CLIENT_BUILDER
 				.setAPI("s3")
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(WRITE_COUNT)
 				.build()
 		) {
-			final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
-				BasicWSObject.class, ContentSourceBase.getDefault()
-			);
-			COUNT_WRITTEN = client.write(
-				null, writeOutput, WRITE_COUNT, 10, SizeUtil.toSize("128B")
+			COUNT_WRITTEN = writeClient.write(
+				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize(DATA_SIZE)
 			);
 			TimeUnit.SECONDS.sleep(1);
 			//
-			if (COUNT_WRITTEN > 0) {
-				COUNT_UPDATED = client.update(
-					writeOutput.getItemSrc(), null, UPDATE_COUNT, 10, 1
-				);
-			} else {
-				throw new IllegalStateException("Failed to update");
-			}
-			TimeUnit.SECONDS.sleep(1);
-			//
-			try (
+		}
+		// update 1GB item
+		try(
+			final StorageClient<WSObject> updateClient = CLIENT_BUILDER
+		        .setAPI("s3")
+		        .setLimitTime(0, TimeUnit.SECONDS)
+		        .setLimitCount(1000000)
+		        .build()
+		) {
+			try(
 				final BufferingOutputStream
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
 				stdOutInterceptorStream.reset();
-				if (COUNT_UPDATED > 0) {
-					final ItemDst<WSObject> updateOutput = new CSVFileItemDst<WSObject>(
-						FILE_LOG_DATA_ITEMS.toPath(),
-						BasicWSObject.class, ContentSourceBase.getDefault()
-					);
-					//
-					COUNT_READ = client.read(
-						updateOutput.getItemSrc(), null, COUNT_UPDATED, 10, true
-					);
+				if(COUNT_WRITTEN > 0) {
+					COUNT_UPDATED = updateClient.update(writeOutput.getItemSrc(), null, 0, 10, 1);
 				} else {
-					throw new IllegalStateException("Failed to read");
+					throw new IllegalStateException("Failed to write");
 				}
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
@@ -121,37 +117,19 @@ extends StandaloneClientTestBase {
 	}
 	//
 	@Test
-	public void checkPerfTraceFileContainsDuplicates()
-	throws  Exception {
-		final Map<String, Long> items = new HashMap<>();
-		boolean firstRow = true;
-		try (
+	public void checkLayerNumberIndex()
+	throws Exception {
+		/*try (
 			final BufferedReader
-				in = Files.newBufferedReader(FILE_LOG_PERF_TRACE.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			String id;
 			for (final CSVRecord nextRec : recIter) {
-				if (firstRow) {
-					firstRow = false;
-				} else {
-					long count = 1;
-					id = nextRec.get(2);
-					if (items.containsKey(id)) {
-						count = items.get(id);
-						count++;
-					}
-					items.put(id, count);
-				}
-			}
-			//
-			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
-			for (final Map.Entry<String, Long> entry : items.entrySet()) {
 				Assert.assertEquals(
-					"perf.trace.csv doesn't contain necessary count of duplicated items" ,
-					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES), 2);
+					LAYER_NUMBER_INDEX, Integer.parseInt(nextRec.get(3).split("/")[0])
+				);
 			}
-		}
+		}*/
 	}
 	//
 	@Test
@@ -174,8 +152,8 @@ extends StandaloneClientTestBase {
 					m = CONSOLE_METRICS_AVG.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.READ.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + IOTask.Type.UPDATE.name() + ": " + m.group("typeLoad"),
+							IOTask.Type.UPDATE.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
@@ -216,8 +194,8 @@ extends StandaloneClientTestBase {
 					m = CONSOLE_METRICS_SUM.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.READ.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + IOTask.Type.UPDATE.name() + ": " + m.group("typeLoad"),
+							IOTask.Type.UPDATE.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long
 							countLimit = Long.parseLong(m.group("countLimit")),
