@@ -5,3 +5,8 @@
 #logo {
 	padding-right: 10px;
 }
+
+.disable-collapse {
+	-webkit-transition: none;
+	transition: none;
+}

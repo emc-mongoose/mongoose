@@ -1,0 +1,56 @@
+<!-- Base configuration fields -->
+<div id="base">
+	<form class="form-horizontal" role="form" id="main-form">
+		{{#each sections}}
+			<div class="{{classes}}">
+				<fieldset>
+					<legend>{{title}}</legend>
+					{{#each fields}}
+						<div class="form-group {{classes}}">
+							<label for="{{id}}" class="col-sm-3 control-label">
+								{{label}}
+							</label>
+							<div class="col-sm-9">
+
+								{{#if complexField}}
+									<div id="{{id}}" class="complex">
+
+										<div class="col-xs-5 no-padding">
+											<input type="text" id="{{textField.id}}" class="form-control"/>
+										</div>
+
+										<div class="col-xs-4 col-lg-3">
+											<select class="form-control" id="{{selectField.id}}">
+												{{#each selectField.values}}
+													<option value="{{this}}">{{this}}</option>
+												{{/each}}
+											</select>
+										</div>
+
+										<input type="hidden" name="{{id}}"/>
+									</div>
+
+								{{else}}
+									{{#if textField}}
+										<input type="text" id="{{id}}" class="form-control"
+										       placeholder="{{placeholder}}" name="{{id}}"/>
+									{{/if}}
+
+									{{#if selectField}}
+										<div class="col-xs-5 col-sm-4 col-lg-3 form-select">
+											<select id="{{id}}" name="{{id}}" class="form-control">
+												{{#each values}}
+													<option value="{{this}}">{{this}}</option>
+												{{/each}}
+											</select>
+										</div>
+									{{/if}}
+								{{/if}}
+							</div>
+						</div>
+					{{/each}}
+				</fieldset>
+			</div>
+		{{/each}}
+	</form>
+</div>
