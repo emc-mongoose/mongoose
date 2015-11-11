@@ -260,7 +260,7 @@ implements LoadClient<T, W> {
 		public final void run() {
 			try {
 				loadSvc.interrupt();
-				LOG.trace(Markers.MSG, "Interrupted remote service @ {}", addr);
+				LOG.info(Markers.MSG, "Interrupted remote service @ {}", addr);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e, "Failed to interrupt remote load service @ {}", addr
@@ -586,9 +586,10 @@ implements LoadClient<T, W> {
 						remoteSubmExecutor.getQueue().size() + remoteSubmExecutor.getActiveCount()
 					);
 					try {
-						if(!remoteSubmExecutor.awaitTermination(timeOut, timeUnit)) {
+						remoteSubmExecutor.awaitTermination(timeOut, timeUnit);
+						/*if(!remoteSubmExecutor.awaitTermination(timeOut, timeUnit)) {
 							remoteSubmExecutor.shutdownNow();
-						}
+						}*/
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "Interrupted");
 					}
