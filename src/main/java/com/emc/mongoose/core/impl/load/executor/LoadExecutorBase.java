@@ -624,7 +624,6 @@ implements LoadExecutor<T> {
 	//
 	protected final void ioTaskCompleted(final IOTask<T> ioTask) {
 		// producing was interrupted?
-		LOG.info(Markers.MSG, getName() + " COMPLETE");
 		if(isInterrupted.get()) {
 			return;
 		}
@@ -656,7 +655,6 @@ implements LoadExecutor<T> {
 	protected final int ioTaskCompletedBatch(
 		final List<? extends IOTask<T>> ioTasks, final int from, final int to
 	) {
-		LOG.info(Markers.MSG, getName() + " COMPLETE");
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return 0;
