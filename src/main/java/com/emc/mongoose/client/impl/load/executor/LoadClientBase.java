@@ -279,7 +279,7 @@ implements LoadClient<T, W> {
 			for(final String addr : loadSvcAddrs) {
 				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
 			}
-			interruptExecutor.shutdown();
+			/*interruptExecutor.shutdown();
 			try {
 				if(!interruptExecutor.awaitTermination(REMOTE_TASK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
 					LOG.warn(Markers.ERR, "{}: remote interrupt tasks timeout", getName());
@@ -288,7 +288,7 @@ implements LoadClient<T, W> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 			} finally {
 				interruptExecutor.shutdownNow();
-			}
+			}*/
 			//
 			remoteSubmExecutor.shutdownNow();
 		} finally {
@@ -584,7 +584,11 @@ implements LoadClient<T, W> {
 						remoteSubmExecutor.getQueue().size() + remoteSubmExecutor.getActiveCount()
 					);
 					try {
-						remoteSubmExecutor.awaitTermination(timeOut, timeUnit);
+						if(remoteSubmExecutor.awaitTermination(timeOut, timeUnit)) {
+							System.out.println("DONE");
+						} else {
+							System.out.println("ERROR");
+						}
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "Interrupted");
 					}
