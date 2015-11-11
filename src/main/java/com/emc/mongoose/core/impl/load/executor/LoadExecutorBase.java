@@ -453,7 +453,7 @@ implements LoadExecutor<T> {
 			}
 		}
 		//
-		LOG.debug(Markers.MSG, "{} interrupted", getName());
+		LOG.info(Markers.MSG, "{} interrupted", getName());
 	}
 	//
 	@Override
