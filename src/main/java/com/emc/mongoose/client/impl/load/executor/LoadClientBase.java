@@ -273,7 +273,7 @@ implements LoadClient<T, W> {
 	protected void interruptActually() {
 		try {
 			//
-			if(remoteSubmExecutor.isShutdown()) {
+			if(remoteSubmExecutor.isTerminated()) {
 				remoteSubmExecutor.shutdownNow();
 			}
 			// wait until all items will be received from load server[s]
