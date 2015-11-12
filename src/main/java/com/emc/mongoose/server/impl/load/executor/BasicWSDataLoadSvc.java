@@ -121,4 +121,9 @@ implements WSDataLoadSvc<T> {
 		return instanceNum;
 	}
 	//
+	@Override
+	public boolean hasUnprocessedItems()
+	throws RemoteException {
+		return !itemOutBuff.isEmpty();
+	}
 }

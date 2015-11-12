@@ -290,8 +290,16 @@ implements LoadClient<T, W> {
 				interruptExecutor.shutdownNow();
 			}
 			//
-			if(!remoteSubmExecutor.isTerminated()) {
-				remoteSubmExecutor.shutdownNow();
+			remoteSubmExecutor.shutdownNow();
+			try {
+				for(final String addr : remoteLoadMap.keySet()) {
+					while(remoteLoadMap.get(addr).hasUnprocessedItems()) {
+						LockSupport.parkNanos(1000);
+						Thread.yield();
+					}
+				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to call remote method");
 			}
 		} finally {
 			super.interruptActually();
@@ -587,9 +595,6 @@ implements LoadClient<T, W> {
 					);
 					try {
 						remoteSubmExecutor.awaitTermination(timeOut, timeUnit);
-						/*if(!remoteSubmExecutor.awaitTermination(timeOut, timeUnit)) {
-							remoteSubmExecutor.shutdownNow();
-						}*/
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "Interrupted");
 					}

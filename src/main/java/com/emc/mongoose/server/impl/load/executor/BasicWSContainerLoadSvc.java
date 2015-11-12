@@ -120,4 +120,9 @@ implements WSContainerLoadSvc<T, C> {
 		return instanceNum;
 	}
 	//
+	@Override
+	public boolean hasUnprocessedItems()
+	throws RemoteException {
+		return !itemOutBuff.isEmpty();
+	}
 }
