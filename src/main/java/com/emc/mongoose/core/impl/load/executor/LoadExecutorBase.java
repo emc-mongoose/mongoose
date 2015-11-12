@@ -453,7 +453,7 @@ implements LoadExecutor<T> {
 			}
 		}
 		//
-		LOG.info(Markers.MSG, "{} interrupted", getName());
+		LOG.debug(Markers.MSG, "{} interrupted", getName());
 	}
 	//
 	@Override
@@ -968,7 +968,6 @@ implements LoadExecutor<T> {
 			}
 			Thread.yield(); LockSupport.parkNanos(1000000);
 		}
-		System.out.println("AWAIT DONE");
 	}
 	//
 	@Override

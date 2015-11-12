@@ -122,7 +122,7 @@ implements WSDataLoadSvc<T> {
 	}
 	//
 	@Override
-	public boolean hasUnprocessedItems()
+	public boolean hasItems()
 	throws RemoteException {
 		return !itemOutBuff.isEmpty();
 	}

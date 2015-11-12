@@ -260,7 +260,7 @@ implements LoadClient<T, W> {
 		public final void run() {
 			try {
 				loadSvc.interrupt();
-				LOG.info(Markers.MSG, "Interrupted remote service @ {}", addr);
+				LOG.debug(Markers.MSG, "Interrupted remote service @ {}", addr);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e, "Failed to interrupt remote load service @ {}", addr
@@ -272,6 +272,22 @@ implements LoadClient<T, W> {
 	@Override
 	protected void interruptActually() {
 		try {
+			//
+			if(remoteSubmExecutor.isShutdown()) {
+				remoteSubmExecutor.shutdownNow();
+			}
+			// wait until all items will be received from load server[s]
+			try {
+				for(final String addr : remoteLoadMap.keySet()) {
+					while(remoteLoadMap.get(addr).hasItems()) {
+						LockSupport.parkNanos(10000000);
+						Thread.yield();
+					}
+				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to call remote method");
+			}
+			//
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(),
 				new GroupThreadFactory(String.format("interrupt<%s>", getName()))
@@ -288,18 +304,6 @@ implements LoadClient<T, W> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 			} finally {
 				interruptExecutor.shutdownNow();
-			}
-			//
-			remoteSubmExecutor.shutdownNow();
-			try {
-				for(final String addr : remoteLoadMap.keySet()) {
-					while(remoteLoadMap.get(addr).hasUnprocessedItems()) {
-						LockSupport.parkNanos(1000);
-						Thread.yield();
-					}
-				}
-			} catch(final RemoteException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to call remote method");
 			}
 		} finally {
 			super.interruptActually();
@@ -594,7 +598,9 @@ implements LoadClient<T, W> {
 						remoteSubmExecutor.getQueue().size() + remoteSubmExecutor.getActiveCount()
 					);
 					try {
-						remoteSubmExecutor.awaitTermination(timeOut, timeUnit);
+						if(!remoteSubmExecutor.awaitTermination(timeOut, timeUnit)) {
+							remoteSubmExecutor.shutdownNow();
+						}
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "Interrupted");
 					}
