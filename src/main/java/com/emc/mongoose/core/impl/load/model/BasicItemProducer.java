@@ -19,7 +19,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -39,6 +38,8 @@ implements ItemProducer<T> {
 	protected T lastDataItem;
 	protected boolean isCircular;
 	protected boolean isShuffling;
+	//
+	protected Thread producerThread;
 	//
 	protected BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
@@ -100,6 +101,8 @@ implements ItemProducer<T> {
 	}
 	//
 	protected void runActually() {
+		//
+		producerThread = Thread.currentThread();
 		//
 		if(itemSrc == null) {
 			LOG.debug(Markers.MSG, "No item source for the producing, exiting");
@@ -187,6 +190,5 @@ implements ItemProducer<T> {
 	public void interrupt()
 	throws IllegalStateException {
 		isInterrupted = true;
-		super.interrupt();
 	}
 }
