@@ -116,8 +116,7 @@ implements LoadClient<T, W> {
 			try {
 				while(!currThread.isInterrupted()) {
 					try {
-						//LockSupport.parkNanos(1);
-						Thread.sleep(1);
+						LockSupport.parkNanos(1);
 						loadAndPassItems();
 						failCount = 0; // reset
 					} catch(final IOException e) {
@@ -165,12 +164,7 @@ implements LoadClient<T, W> {
 							LOG.debug(Markers.MSG, "Interrupting due to external interruption");
 							break;
 						} else {
-							try {
-								Thread.sleep(1);
-							} catch(final InterruptedException e) {
-								LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
-							}
-							//LockSupport.parkNanos(1);
+							LockSupport.parkNanos(1);
 						}
 					}
 				} finally {
@@ -279,7 +273,7 @@ implements LoadClient<T, W> {
 	protected void interruptActually() {
 		try {
 			//
-			if(remoteSubmExecutor.isTerminated()) {
+			if(!remoteSubmExecutor.isTerminated()) {
 				remoteSubmExecutor.shutdownNow();
 			}
 			// wait until all items will be received from load server[s]

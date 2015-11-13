@@ -19,7 +19,9 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+
 /**
  Created by kurila on 19.06.15.
  */
@@ -104,6 +106,7 @@ implements ItemProducer<T> {
 			return;
 		}
 		long count = 0;
+		long sleepTime = 0;
 		int n = 0, m = 0;
 		try {
 			List<T> buff;
@@ -131,10 +134,13 @@ implements ItemProducer<T> {
 				} catch(final EOFException e) {
 					if(isCircular) {
 						try {
-							Thread.sleep(1);
-						} catch(final InterruptedException interrupted) {
-							LogUtil.exception(LOG, Level.DEBUG, interrupted, "Interrupted");
-						}
+							if(sleepTime == 0) {
+								sleepTime = count;
+							}
+							// prevent a lot of calls to the put method of load server[s]
+							Thread.sleep(sleepTime);
+						} catch(final InterruptedException ignored) {}
+						//
 						reset();
 					} else {
 						break;
@@ -181,5 +187,6 @@ implements ItemProducer<T> {
 	public void interrupt()
 	throws IllegalStateException {
 		isInterrupted = true;
+		super.interrupt();
 	}
 }
