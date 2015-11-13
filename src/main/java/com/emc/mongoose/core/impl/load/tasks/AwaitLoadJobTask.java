@@ -40,7 +40,6 @@ implements Runnable {
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Remote await task failure");
 		} catch(final InterruptedException ignore) {
-			System.out.println("FAILED");
 		} finally {
 			LOG.debug(Markers.MSG, "Remote await task for \"{}\" was completed", loadJob);
 		}
