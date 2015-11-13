@@ -130,6 +130,11 @@ implements ItemProducer<T> {
 					}
 				} catch(final EOFException e) {
 					if(isCircular) {
+						try {
+							Thread.sleep(1);
+						} catch(final InterruptedException interrupted) {
+							LogUtil.exception(LOG, Level.DEBUG, interrupted, "Interrupted");
+						}
 						reset();
 					} else {
 						break;
