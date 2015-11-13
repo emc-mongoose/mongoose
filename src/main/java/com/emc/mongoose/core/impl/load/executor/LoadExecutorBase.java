@@ -398,6 +398,7 @@ implements LoadExecutor<T> {
 			}
 			LOG.trace(Markers.MSG, sb);
 		}
+		super.interrupt();
 		if(isShutdown.compareAndSet(false, true)) {
 			shutdownActually();
 		}
@@ -451,7 +452,9 @@ implements LoadExecutor<T> {
 				);
 			}
 		}
-		super.interrupt();
+		if(producerThread != null) {
+			producerThread.interrupt();
+		}
 		//
 		LOG.debug(Markers.MSG, "{} interrupted", getName());
 	}
@@ -805,13 +808,13 @@ implements LoadExecutor<T> {
 		if(
 			lastStats.getFailCount() > MAX_FAIL_COUNT &&
 			lastStats.getFailRateLast() > lastStats.getSuccRateLast()
-				) {
+		) {
 			LOG.fatal(
-					Markers.ERR,
-					"There's a more than {} of failures and the failure rate is higher " +
-							"than success rate for at least last {}[sec]. Exiting in order to " +
-							"avoid the memory exhaustion. Please check your environment.",
-					MAX_FAIL_COUNT, metricsPeriodSec
+				Markers.ERR,
+				"There's a more than {} of failures and the failure rate is higher " +
+					"than success rate for at least last {}[sec]. Exiting in order to " +
+					"avoid the memory exhaustion. Please check your environment.",
+				MAX_FAIL_COUNT, metricsPeriodSec
 			);
 			try {
 				close();
@@ -942,7 +945,7 @@ implements LoadExecutor<T> {
 			synchronized(state) {
 				state.wait(100);
 			}
-			if (isInterrupted.get()) {
+			if(isInterrupted.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to interrupted state", getName());
 				break;
 			}
