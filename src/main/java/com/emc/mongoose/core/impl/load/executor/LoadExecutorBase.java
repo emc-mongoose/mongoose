@@ -452,9 +452,7 @@ implements LoadExecutor<T> {
 				);
 			}
 		}
-		if(producerThread != null) {
-			producerThread.interrupt();
-		}
+		super.interruptProducer();
 		//
 		LOG.debug(Markers.MSG, "{} interrupted", getName());
 	}

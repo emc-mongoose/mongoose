@@ -39,8 +39,6 @@ implements ItemProducer<T> {
 	protected boolean isCircular;
 	protected boolean isShuffling;
 	//
-	protected Thread producerThread;
-	//
 	protected BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
 		final boolean isCircular, final boolean isShuffling
@@ -101,8 +99,6 @@ implements ItemProducer<T> {
 	}
 	//
 	protected void runActually() {
-		//
-		producerThread = Thread.currentThread();
 		//
 		if(itemSrc == null) {
 			LOG.debug(Markers.MSG, "No item source for the producing, exiting");
@@ -190,5 +186,9 @@ implements ItemProducer<T> {
 	public void interrupt()
 	throws IllegalStateException {
 		isInterrupted = true;
+	}
+	//
+	public void interruptProducer() {
+		super.interrupt();
 	}
 }
