@@ -20,7 +20,7 @@ extends LoadExecutor<T>, Service {
 	List<T> getProcessedItems()
 	throws RemoteException;
 	//
-	boolean hasItems()
+	boolean hasProcessedItems()
 	throws RemoteException;
 }
 

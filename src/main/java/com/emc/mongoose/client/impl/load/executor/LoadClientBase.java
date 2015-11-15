@@ -260,7 +260,7 @@ implements LoadClient<T, W> {
 		public final void run() {
 			try {
 				// wait until all items will be received from load server
-				while(loadSvc.hasItems()) {
+				while(loadSvc.hasProcessedItems()) {
 					LockSupport.parkNanos(10000);
 					Thread.yield();
 				}
