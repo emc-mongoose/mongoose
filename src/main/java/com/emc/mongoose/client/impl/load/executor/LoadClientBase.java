@@ -259,6 +259,12 @@ implements LoadClient<T, W> {
 		@Override
 		public final void run() {
 			try {
+				// wait until all items will be received from load server
+				while(loadSvc.hasItems()) {
+					LockSupport.parkNanos(10000);
+					Thread.yield();
+				}
+				LOG.debug(Markers.MSG, "All items will be received from load service @ {}", addr);
 				loadSvc.interrupt();
 				LOG.debug(Markers.MSG, "Interrupted remote service @ {}", addr);
 			} catch(final IOException e) {
@@ -275,17 +281,6 @@ implements LoadClient<T, W> {
 			//
 			if(!remoteSubmExecutor.isTerminated()) {
 				remoteSubmExecutor.shutdownNow();
-			}
-			// wait until all items will be received from load server[s]
-			try {
-				for(final String addr : remoteLoadMap.keySet()) {
-					while(remoteLoadMap.get(addr).hasItems()) {
-						LockSupport.parkNanos(10000000);
-						Thread.yield();
-					}
-				}
-			} catch(final RemoteException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to call remote method");
 			}
 			//
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
