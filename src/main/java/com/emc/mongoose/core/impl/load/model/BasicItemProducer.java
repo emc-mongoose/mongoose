@@ -138,9 +138,8 @@ implements ItemProducer<T> {
 									? (count / 2) : circularSleepTimeMillis;
 							// prevent a lot of calls to put method of load server[s]
 							Thread.sleep(circularSleepTimeMillis);
-						} catch(final InterruptedException ex) {
-							LogUtil.exception(LOG, Level.WARN, ex, "Interrupted");
-						} finally {
+						} catch(final InterruptedException ex) {}
+						finally {
 							reset();
 						}
 					} else {
