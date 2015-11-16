@@ -409,8 +409,12 @@ implements LoadExecutor<T> {
 		}
 		//
 		LOG.debug(Markers.MSG, "{}: waiting the output buffer to become empty", getName());
-		while(!itemOutBuff.isEmpty()) {
-			Thread.yield(); LockSupport.parkNanos(1);
+		for(int i = 0; i < 1000 && !itemOutBuff.isEmpty(); i ++) {
+			try {
+				Thread.sleep(10);
+			} catch(final InterruptedException e) {
+				break;
+			}
 		}
 		//
 		try {

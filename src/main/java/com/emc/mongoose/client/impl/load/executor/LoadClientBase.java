@@ -261,20 +261,27 @@ implements LoadClient<T, W> {
 			try {
 				// wait until all processed items are received from the load server
 				while(loadSvc.hasProcessedItems()) {
-					LockSupport.parkNanos(1000000);
-					Thread.yield();
+					TimeUnit.MILLISECONDS.sleep(10);
 				}
 				LOG.debug(
 					Markers.MSG, "All processed items have been received from load service @ {}",
 					addr
 				);
-				// ok, continue
-				loadSvc.interrupt();
-				LOG.debug(Markers.MSG, "Interrupted remote service @ {}", addr);
-			} catch(final IOException e) {
+			} catch(final InterruptedException | RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.DEBUG, e, "Failed to interrupt remote load service @ {}", addr
+					LOG, Level.DEBUG, e, "Waiting for remote processed items @ {} was interrupted",
+					addr
 				);
+			} finally {
+				// ok, continue
+				try {
+					loadSvc.interrupt();
+					LOG.debug(Markers.MSG, "Interrupted remote service @ {}", addr);
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.DEBUG, e, "Failed to interrupt remote load service @ {}", addr
+					);
+				}
 			}
 		}
 	}
