@@ -259,12 +259,16 @@ implements LoadClient<T, W> {
 		@Override
 		public final void run() {
 			try {
-				// wait until all items will be received from load server
+				// wait until all processed items are received from the load server
 				while(loadSvc.hasProcessedItems()) {
-					LockSupport.parkNanos(10000);
+					LockSupport.parkNanos(1000000);
 					Thread.yield();
 				}
-				LOG.debug(Markers.MSG, "All items will be received from load service @ {}", addr);
+				LOG.debug(
+					Markers.MSG, "All processed items have been received from load service @ {}",
+					addr
+				);
+				// ok, continue
 				loadSvc.interrupt();
 				LOG.debug(Markers.MSG, "Interrupted remote service @ {}", addr);
 			} catch(final IOException e) {

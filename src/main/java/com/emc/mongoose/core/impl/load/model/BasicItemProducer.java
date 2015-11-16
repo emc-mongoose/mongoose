@@ -38,8 +38,6 @@ implements ItemProducer<T> {
 	protected boolean isCircular;
 	protected boolean isShuffling;
 	//
-	protected long circularSleepTimeMillis = 0;
-	//
 	protected BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
 		final boolean isCircular, final boolean isShuffling
@@ -132,16 +130,7 @@ implements ItemProducer<T> {
 					}
 				} catch(final EOFException e) {
 					if(isCircular) {
-						try {
-							circularSleepTimeMillis
-								= (circularSleepTimeMillis == 0)
-									? (count / 2) : circularSleepTimeMillis;
-							// prevent a lot of calls to put method of load server[s]
-							Thread.sleep(circularSleepTimeMillis);
-						} catch(final InterruptedException ex) {}
-						finally {
-							reset();
-						}
+						reset();
 					} else {
 						break;
 					}
@@ -187,9 +176,5 @@ implements ItemProducer<T> {
 	public void interrupt()
 	throws IllegalStateException {
 		isInterrupted = true;
-	}
-	//
-	public void interruptProducer() {
-		super.interrupt();
 	}
 }

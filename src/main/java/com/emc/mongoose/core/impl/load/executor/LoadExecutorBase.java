@@ -452,7 +452,7 @@ implements LoadExecutor<T> {
 				);
 			}
 		}
-		interruptProducer();
+		super.interrupt();
 		//
 		LOG.debug(Markers.MSG, "{} interrupted", getName());
 	}
