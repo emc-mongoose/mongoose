@@ -67,45 +67,6 @@ implements LoadClient<T, W> {
 			this.loadSvc = loadSvc;
 		}
 		//
-		private void loadAndPassItems()
-		throws IOException {
-			List<T> frame = loadSvc.getProcessedItems();
-			if(frame == null) {
-				LOG.debug(
-					Markers.ERR, "No data items frame from the load server @ {}", loadSvc
-				);
-			} else {
-				final int n = frame.size();
-				if(n > 0) {
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "Got the next {} items from the load server @ {}",
-							n, loadSvc
-						);
-					}
-					counterResults.addAndGet(n);
-					for(int m = 0; m < n;) {
-						m += itemOutBuff.put(frame, m, n);
-						LockSupport.parkNanos(1);
-					}
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "Put the next {} items to the output buffer",
-							n, loadSvc
-						);
-					}
-				} else {
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG,
-							"No data items in the frame from the load server @ {}",
-							loadSvc
-						);
-					}
-				}
-			}
-		}
-		//
 		@Override
 		public final void run() {
 			//
@@ -117,7 +78,43 @@ implements LoadClient<T, W> {
 				while(!currThread.isInterrupted()) {
 					try {
 						LockSupport.parkNanos(1);
-						loadAndPassItems();
+						List<T> frame = loadSvc.getProcessedItems();
+						if(frame == null) {
+							LOG.debug(
+								Markers.ERR, "No data items frame from the load server @ {}",
+								loadSvc
+							);
+						} else {
+							final int n = frame.size();
+							if(n > 0) {
+								if(LOG.isTraceEnabled(Markers.MSG)) {
+									LOG.trace(
+										Markers.MSG,
+										"Got the next {} items from the load server @ {}",
+										n, loadSvc
+									);
+								}
+								counterResults.addAndGet(n);
+								for(int m = 0; m < n && !currThread.isInterrupted();) {
+									m += itemOutBuff.put(frame, m, n);
+									LockSupport.parkNanos(1);
+								}
+								if(LOG.isTraceEnabled(Markers.MSG)) {
+									LOG.trace(
+										Markers.MSG, "Put the next {} items to the output buffer",
+										n, loadSvc
+									);
+								}
+							} else {
+								if(LOG.isTraceEnabled(Markers.MSG)) {
+									LOG.trace(
+										Markers.MSG,
+										"No data items in the frame from the load server @ {}",
+										loadSvc
+									);
+								}
+							}
+						}
 						failCount = 0; // reset
 					} catch(final IOException e) {
 						if(failCount < COUNT_LIMIT_RETRY) {
