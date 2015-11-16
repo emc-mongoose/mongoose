@@ -77,7 +77,6 @@ implements LoadClient<T, W> {
 			try {
 				while(!currThread.isInterrupted()) {
 					try {
-						LockSupport.parkNanos(1);
 						List<T> frame = loadSvc.getProcessedItems();
 						if(frame == null) {
 							LOG.debug(
@@ -116,6 +115,7 @@ implements LoadClient<T, W> {
 							}
 						}
 						failCount = 0; // reset
+						Thread.yield();
 					} catch(final IOException e) {
 						if(failCount < COUNT_LIMIT_RETRY) {
 							failCount++;
@@ -264,17 +264,16 @@ implements LoadClient<T, W> {
 				) {
 					TimeUnit.MILLISECONDS.sleep(10);
 				}
-				LOG.info(
+				LOG.debug(
 					Markers.MSG, "All processed items have been received from load service @ {}",
 					addr
 				);
 			} catch(final InterruptedException | RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Waiting for remote processed items @ {} was interrupted",
+					LOG, Level.DEBUG, e, "Waiting for remote processed items @ {} was interrupted",
 					addr
 				);
-			} finally {
-				// ok, continue
+			} finally { // ok, continue
 				try {
 					loadSvc.interrupt();
 					LOG.debug(Markers.MSG, "Interrupted remote service @ {}", addr);

@@ -442,7 +442,7 @@ implements LoadExecutor<T> {
 		}
 		//
 		mgmtExecutor.shutdownNow();
-		LOG.info(Markers.MSG, "{}: service threads executor shut down", getName());
+		LOG.debug(Markers.MSG, "{}: service threads executor shut down", getName());
 		if(consumer instanceof LifeCycle) {
 			try {
 				((LifeCycle) consumer).shutdown();
