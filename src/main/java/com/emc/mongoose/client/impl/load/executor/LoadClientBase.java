@@ -77,12 +77,12 @@ implements LoadClient<T, W> {
 			} else {
 				final int n = frame.size();
 				if(n > 0) {
-					//if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.info(
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
 							Markers.MSG, "Got the next {} items from the load server @ {}",
 							n, loadSvc
 						);
-					//}
+					}
 					counterResults.addAndGet(n);
 					for(int m = 0; m < n;) {
 						m += itemOutBuff.put(frame, m, n);
