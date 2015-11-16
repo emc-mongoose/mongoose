@@ -77,12 +77,12 @@ implements LoadClient<T, W> {
 			} else {
 				final int n = frame.size();
 				if(n > 0) {
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
+					//if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.info(
 							Markers.MSG, "Got the next {} items from the load server @ {}",
 							n, loadSvc
 						);
-					}
+					//}
 					counterResults.addAndGet(n);
 					for(int m = 0; m < n;) {
 						m += itemOutBuff.put(frame, m, n);
@@ -265,8 +265,7 @@ implements LoadClient<T, W> {
 					n > 0;
 					n = loadSvc.getProcessedItemsCount()
 				) {
-					LOG.info(Markers.MSG, n);
-					TimeUnit.MILLISECONDS.sleep(200);
+					TimeUnit.MILLISECONDS.sleep(10);
 				}
 				LOG.info(
 					Markers.MSG, "All processed items have been received from load service @ {}",
