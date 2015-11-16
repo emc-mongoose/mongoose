@@ -121,8 +121,8 @@ implements WSContainerLoadSvc<T, C> {
 	}
 	//
 	@Override
-	public boolean hasProcessedItems()
+	public int getProcessedItemsCount()
 	throws RemoteException {
-		return !itemOutBuff.isEmpty();
+		return itemOutBuff.size();
 	}
 }

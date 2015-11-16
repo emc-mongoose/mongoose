@@ -260,16 +260,21 @@ implements LoadClient<T, W> {
 		public final void run() {
 			try {
 				// wait until all processed items are received from the load server
-				while(loadSvc.hasProcessedItems()) {
-					TimeUnit.MILLISECONDS.sleep(10);
+				for(
+					int n = loadSvc.getProcessedItemsCount();
+					n > 0;
+					n = loadSvc.getProcessedItemsCount()
+				) {
+					LOG.info(Markers.MSG, n);
+					TimeUnit.MILLISECONDS.sleep(200);
 				}
-				LOG.debug(
+				LOG.info(
 					Markers.MSG, "All processed items have been received from load service @ {}",
 					addr
 				);
 			} catch(final InterruptedException | RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.DEBUG, e, "Waiting for remote processed items @ {} was interrupted",
+					LOG, Level.WARN, e, "Waiting for remote processed items @ {} was interrupted",
 					addr
 				);
 			} finally {
