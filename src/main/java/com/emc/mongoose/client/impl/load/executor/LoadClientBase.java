@@ -258,6 +258,7 @@ implements LoadClient<T, W> {
 		@Override
 		public final void run() {
 			try {
+				loadSvc.shutdown();
 				// wait until all processed items are received from the load server
 				for(
 					int n = loadSvc.getProcessedItemsCount();
