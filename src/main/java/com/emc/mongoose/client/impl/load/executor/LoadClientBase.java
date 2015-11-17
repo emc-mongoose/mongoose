@@ -119,7 +119,7 @@ implements LoadClient<T, W> {
 						Thread.yield();
 					} catch(final IOException e) {
 						if(failCount < COUNT_LIMIT_RETRY) {
-							failCount++;
+							failCount ++;
 							TimeUnit.MILLISECONDS.sleep(failCount);
 						} else {
 							LogUtil.exception(

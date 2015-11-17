@@ -721,14 +721,6 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected final static ThreadLocal<StringBuilder>
-		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
-		@Override
-		protected final StringBuilder initialValue() {
-			return new StringBuilder();
-		}
-	};
-	//
 	protected void passItems()
 	throws InterruptedException {
 		try {
@@ -752,7 +744,8 @@ implements LoadExecutor<T> {
 					}
 					int m = 0;
 					while(m < n) {
-						Thread.yield(); LockSupport.parkNanos(1);
+						Thread.yield();
+						LockSupport.parkNanos(1);
 						m += consumer.put(items, m, n);
 					}
 					if(LOG.isTraceEnabled(Markers.MSG)) {
