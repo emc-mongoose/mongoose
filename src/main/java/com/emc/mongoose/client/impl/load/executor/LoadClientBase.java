@@ -138,13 +138,6 @@ implements LoadClient<T, W> {
 	//
 	private final class InterruptOnCountLimitReachedTask
 	implements Runnable {
-		//
-		private final LoadClient loadClient;
-		//
-		private InterruptOnCountLimitReachedTask(final LoadClient loadClient) {
-			this.loadClient = loadClient;
-		}
-		//
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
@@ -162,17 +155,11 @@ implements LoadClient<T, W> {
 							LOG.debug(Markers.MSG, "Interrupting due to external interruption");
 							break;
 						} else {
-							LockSupport.parkNanos(1);
+							LockSupport.parkNanos(1); Thread.yield();
 						}
 					}
 				} finally {
-					try {
-						loadClient.interrupt();
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to interrupt \"{}\"", loadClient
-						);
-					}
+					isLimitReached = true;
 				}
 			}
 		}
@@ -200,7 +187,7 @@ implements LoadClient<T, W> {
 		for(final W nextLoadSvc : remoteLoadMap.values()) {
 			mgmtTasks.add(new LoadItemsBatchTask(nextLoadSvc));
 		}
-		mgmtTasks.add(new InterruptOnCountLimitReachedTask(this));
+		mgmtTasks.add(new InterruptOnCountLimitReachedTask());
 		//
 		final int remotePutThreadCount = Math.max(loadSvcAddrs.length, ThreadUtil.getWorkerCount());
 		remotePutExecutor = new ThreadPoolExecutor(

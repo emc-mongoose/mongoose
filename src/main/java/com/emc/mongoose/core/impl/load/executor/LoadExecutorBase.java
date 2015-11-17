@@ -368,6 +368,7 @@ implements LoadExecutor<T> {
 			for(final Runnable mgmtTask : mgmtTasks) {
 				mgmtExecutor.submit(mgmtTask);
 			}
+			mgmtExecutor.shutdown();
 			//
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		}
