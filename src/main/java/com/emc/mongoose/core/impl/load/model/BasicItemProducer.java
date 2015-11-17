@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
@@ -39,7 +37,7 @@ implements ItemProducer<T> {
 	protected final Lock itemsLock = new ReentrantLock();
 	protected final Condition itemsWereProduced = itemsLock.newCondition();
 	//
-	protected final ConcurrentHashMap<String, Item> uniqueItems;
+	protected final ConcurrentHashMap<String, T> uniqueItems;
 	protected final ItemSrc<T> itemSrc;
 	protected final long maxCount;
 	protected volatile ItemDst<T> itemDst = null;
@@ -49,6 +47,7 @@ implements ItemProducer<T> {
 	protected boolean isCircular;
 	protected boolean isShuffling;
 	protected long maxItemQueueSize;
+	//
 	protected volatile long producedItemsCount = 0;
 	//
 	protected BasicItemProducer(

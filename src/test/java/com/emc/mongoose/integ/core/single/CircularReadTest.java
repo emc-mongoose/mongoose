@@ -108,6 +108,7 @@ extends StandaloneClientTestBase {
 		) {
 			String line;
 			while ((line = in.readLine()) != null) {
+				System.out.println(line);
 				long count = 1;
 				if (items.containsKey(line)) {
 					count = items.get(line);

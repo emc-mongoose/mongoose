@@ -87,6 +87,7 @@ implements LoadClient<T, W> {
 						for(final T item : frame) {
 							uniqueItems.put(item.getName(), item);
 						}
+						System.out.println("Size: " + uniqueItems.size());
 					}
 					for(int m = 0; m < n; ) {
 						m += itemOutBuff.put(frame, m, n);
@@ -173,17 +174,12 @@ implements LoadClient<T, W> {
 						}
 					}
 				} finally {
-					shutdown();
 					try {
-						awaitAllResultsPassed(Long.MAX_VALUE);
-					} finally {
-						try {
-							loadClient.interrupt();
-						} catch (final RemoteException e) {
-							LogUtil.exception(
-								LOG, Level.WARN, e, "Failed to interrupt \"{}\"", loadClient
-							);
-						}
+						loadClient.interrupt();
+					} catch(final RemoteException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to interrupt \"{}\"", loadClient
+						);
 					}
 				}
 			}
@@ -198,7 +194,7 @@ implements LoadClient<T, W> {
 	) throws RemoteException {
 		super(
 			rtConfig, reqConfig, addrs, connCountPerNode, threadCount,
-			// supress new data items generation on the client side
+			// suppress new data items generation on the client side
 			itemSrc instanceof NewDataItemSrc ? null : itemSrc, maxCount,
 			// get any load server last job number
 			remoteLoadMap.values().iterator().next().getInstanceNum(),
@@ -282,6 +278,11 @@ implements LoadClient<T, W> {
 	@Override
 	protected void interruptActually() {
 		try {
+			//
+			if(!remoteSubmExecutor.isTerminated()) {
+				remoteSubmExecutor.shutdownNow();
+			}
+			//
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(),
 				new GroupThreadFactory(String.format("interrupt<%s>", getName()))
@@ -299,8 +300,6 @@ implements LoadClient<T, W> {
 			} finally {
 				interruptExecutor.shutdownNow();
 			}
-			//
-			remoteSubmExecutor.shutdownNow();
 		} finally {
 			super.interruptActually();
 		}
@@ -575,30 +574,21 @@ implements LoadClient<T, W> {
 			remoteLoadMap.size() + 1,
 			new GroupThreadFactory(String.format("awaitWorker<%s>", getName()))
 		);
-		//
 		awaitExecutor.submit(
 			new Runnable() {
 				@Override
-				public void run() {
+				public final void run() {
+					// wait the remaining tasks to be transmitted to load servers
+					LOG.debug(
+						Markers.MSG, "{}: waiting remaining {} tasks to complete", getName(),
+						remoteSubmExecutor.getQueue().size() + remoteSubmExecutor.getActiveCount()
+					);
 					try {
-						LoadClientBase.super.await(timeOut, timeUnit);
-						System.out.println(getName() + " " + timeOut + " " + timeUnit);
-						remoteSubmExecutor.shutdown();
-					} catch (final InterruptedException | RemoteException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Await failure");
-					} finally {
-						// wait the remaining tasks to be transmitted to load servers
-						LOG.debug(
-							Markers.MSG, "{}: waiting remaining {} tasks to complete", getName(),
-							remoteSubmExecutor.getQueue().size() + remoteSubmExecutor.getActiveCount()
-						);
-						try {
-							remoteSubmExecutor.awaitTermination(timeOut, timeUnit);
-						} catch (final InterruptedException e) {
-							LOG.debug(Markers.MSG, "Interrupted");
-						} finally {
-							LOG.debug("Await remote put executor finished");
+						if(!remoteSubmExecutor.awaitTermination(timeOut, timeUnit)) {
+							remoteSubmExecutor.shutdownNow();
 						}
+					} catch(final InterruptedException e) {
+						LOG.debug(Markers.MSG, "Interrupted");
 					}
 				}
 			}

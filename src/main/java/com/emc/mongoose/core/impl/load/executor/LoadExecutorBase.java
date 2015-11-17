@@ -88,9 +88,7 @@ implements LoadExecutor<T> {
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
 		counterResults = new AtomicLong(0),
-		counterPassed = new AtomicLong(0),
-		putCount = new AtomicLong(0),
-		getCount = new AtomicLong(0);
+		counterPassed = new AtomicLong(0);
 	protected T lastItem;
 	protected final Object state = new Object();
 	protected final ItemBuffer<T> itemOutBuff;
@@ -425,6 +423,9 @@ implements LoadExecutor<T> {
 		if(isShutdown.compareAndSet(false, true)) {
 			shutdownActually();
 		}
+		if(rtConfig.getRunMode().equals("server")) {
+			System.out.println(uniqueItems.size());
+		}
 		try {
 			reqConfigCopy.close(); // disables connection drop failures
 		} catch(final IOException e) {
@@ -459,7 +460,7 @@ implements LoadExecutor<T> {
 		//
 		mgmtExecutor.shutdownNow();
 		if(isCircular && consumer == null) {
-			dumpItems();
+			dumpItems(uniqueItems.values());
 		}
 		//
 		if(consumer instanceof LifeCycle) {
@@ -478,15 +479,6 @@ implements LoadExecutor<T> {
 		}
 		//
 		LOG.debug(Markers.MSG, "{} interrupted", getName());
-	}
-	//
-	protected void dumpItems() {
-		final Collection<Item> items = uniqueItems.values();
-		if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
-			for(final Item item : items) {
-				LOG.info(Markers.ITEM_LIST, item);
-			}
-		}
 	}
 	//
 	@Override
@@ -672,7 +664,6 @@ implements LoadExecutor<T> {
 			lastItem = dataItem;
 			// put into the output buffer
 			try {
-				putCount.incrementAndGet();
 				itemOutBuff.put(dataItem);
 				if(isCircular) {
 					uniqueItems.putIfAbsent(dataItem.getName(), dataItem);
@@ -718,7 +709,6 @@ implements LoadExecutor<T> {
 					lastItem = dataItem;
 					// pass data item to a consumer
 					try {
-						putCount.incrementAndGet();
 						itemOutBuff.put(dataItem);
 						if(isCircular) {
 							uniqueItems.putIfAbsent(dataItem.getName(), dataItem);
@@ -800,7 +790,6 @@ implements LoadExecutor<T> {
 			//
 			final List<T> items = new ArrayList<>(batchSize);
 			final int n = itemOutBuff.get(items, batchSize);
-			getCount.addAndGet(n);
 			if(n > 0) {
 				// is this an end of consumer-producer chain?
 				if(consumer == null) {
@@ -815,12 +804,8 @@ implements LoadExecutor<T> {
 							Thread.yield(); LockSupport.parkNanos(1);
 						}
 					} else {
-						for(int i = 0; i < n; i++) {
-							if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
-								LOG.info(Markers.ITEM_LIST, items.get(i));
-								counterPassed.incrementAndGet();
-							}
-						}
+						dumpItems(items);
+						counterPassed.addAndGet(n);
 					}
 				} else { // put to the consumer
 					if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -854,6 +839,14 @@ implements LoadExecutor<T> {
 		} catch(final RejectedExecutionException e) {
 			if(LOG.isTraceEnabled(Markers.ERR)) {
 				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the items", consumer);
+			}
+		}
+	}
+	//
+	protected void dumpItems(final Collection<T> items) {
+		if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
+			for(final Item item : items) {
+				LOG.info(Markers.ITEM_LIST, item);
 			}
 		}
 	}
@@ -943,8 +936,8 @@ implements LoadExecutor<T> {
 	private boolean isDoneAllSubm() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-					Markers.MSG, "{}: shut down flag: {}, results: {}, submitted: {}",
-					getName(), isShutdown.get(), counterResults.get(), counterSubm.get()
+				Markers.MSG, "{}: shut down flag: {}, results: {}, submitted: {}",
+				getName(), isShutdown.get(), counterResults.get(), counterSubm.get()
 			);
 		}
 		return isShutdown.get() && counterResults.get() >= counterSubm.get();
@@ -1050,21 +1043,14 @@ implements LoadExecutor<T> {
 			LockSupport.parkNanos(1000000);
 		}
 		//
-		awaitAllResultsPassed(timeOutNanoSec - (System.nanoTime() - t));
+		//awaitAllResultsPassed();
 	}
 	//
-	protected final void awaitAllResultsPassed(final long timeOutNanoSec) {
-		if(timeOutNanoSec < 0) {
-			return;
-		}
-		long t = System.nanoTime();
+	protected final void awaitAllResultsPassed() {
 		// it's required to pass all the results before stopping the service threads
-		while(counterPassed.get() < maxCount) {
-			Thread.yield(); LockSupport.parkNanos(1000000);
-			if (System.nanoTime() - t > timeOutNanoSec) {
-				LOG.error(Markers.MSG, "{}: await exit due to timeout", getName());
-				break;
-			}
+		while(counterPassed.get() + producedItemsCount < maxCount) {
+			Thread.yield();
+			LockSupport.parkNanos(1000000);
 		}
 	}
 	//

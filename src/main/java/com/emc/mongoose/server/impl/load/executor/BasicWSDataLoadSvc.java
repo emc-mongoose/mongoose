@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -131,9 +132,9 @@ implements WSDataLoadSvc<T> {
 			// put into the output buffer
 			try {
 				itemOutBuff.put(dataItem);
-				if(isCircular) {
+				/*if(isCircular) {
 					itemsSvcOutBuff.put(dataItem);
-				}
+				}*/
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e,
@@ -200,8 +201,8 @@ implements WSDataLoadSvc<T> {
 	}
 	//
 	@Override
-	protected final void dumpItems() {
-		// do nothi
+	protected final void dumpItems(final Collection<T> items) {
+		// do nothing
 	}
 	//
 	@Override

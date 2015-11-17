@@ -67,7 +67,7 @@ extends StandaloneClientTestBase {
 		try (
 			final StorageClient<WSObject> client = CLIENT_BUILDER
 				.setAPI("s3")
-				.setLimitTime(0, TimeUnit.SECONDS)
+				.setLimitTime(1, TimeUnit.MINUTES)
 				.setLimitCount(WRITE_COUNT)
 				.build()
 		) {

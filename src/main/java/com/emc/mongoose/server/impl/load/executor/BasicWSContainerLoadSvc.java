@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -201,7 +202,7 @@ implements WSContainerLoadSvc<T, C> {
 	}
 	//
 	@Override
-	protected final void dumpItems() {
+	protected final void dumpItems(final Collection<C> items) {
 		// do nothing
 	}
 	//
