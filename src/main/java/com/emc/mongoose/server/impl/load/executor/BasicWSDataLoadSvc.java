@@ -108,8 +108,8 @@ implements WSDataLoadSvc<T> {
 	throws RemoteException {
 		List<T> itemsBuff = null;
 		try {
-			itemsBuff = new ArrayList<>(batchSize);
-			itemOutBuff.get(itemsBuff, batchSize);
+			itemsBuff = new ArrayList<>(DEFAULT_RESULTS_QUEUE_SIZE);
+			itemOutBuff.get(itemsBuff, DEFAULT_RESULTS_QUEUE_SIZE);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");
 		}
