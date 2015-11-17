@@ -190,7 +190,7 @@
 				"separator": ",",
 				"circular": false,
 				"random": false,
-				"batchSize": 1024
+				"batchSize": 100
 			}
 		},
 		"load": {
