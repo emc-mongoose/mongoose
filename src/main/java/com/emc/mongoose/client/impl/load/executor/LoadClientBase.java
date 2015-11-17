@@ -160,6 +160,8 @@ implements LoadClient<T, W> {
 					}
 				} finally {
 					isLimitReached = true;
+					remotePutExecutor.shutdownNow();
+					interruptLoadSvcs();
 				}
 			}
 		}
@@ -193,7 +195,7 @@ implements LoadClient<T, W> {
 		remotePutExecutor = new ThreadPoolExecutor(
 			remotePutThreadCount, remotePutThreadCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<Runnable>(DEFAULT_SUBM_TASKS_QUEUE_SIZE),
-			new GroupThreadFactory(getName() + "-submit", true)
+			new GroupThreadFactory(getName() + "-put-remote", true)
 		);
 	}
 	//
@@ -276,31 +278,32 @@ implements LoadClient<T, W> {
 		}
 	}
 	//
+	private void interruptLoadSvcs() {
+		//
+		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
+			remoteLoadMap.size(),
+			new GroupThreadFactory(String.format("interrupt<%s>", getName()))
+		);
+		for(final String addr : loadSvcAddrs) {
+			interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
+		}
+		interruptExecutor.shutdown();
+		try {
+			if(!interruptExecutor.awaitTermination(REMOTE_TASK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
+				LOG.warn(Markers.ERR, "{}: remote interrupt tasks timeout", getName());
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
+		} finally {
+			interruptExecutor.shutdownNow();
+		}
+	}
+	//
 	@Override
 	protected void interruptActually() {
 		try {
-			//
-			if(!remotePutExecutor.isTerminated()) {
-				remotePutExecutor.shutdownNow();
-			}
-			//
-			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-				remoteLoadMap.size(),
-				new GroupThreadFactory(String.format("interrupt<%s>", getName()))
-			);
-			for(final String addr : loadSvcAddrs) {
-				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
-			}
-			interruptExecutor.shutdown();
-			try {
-				if(!interruptExecutor.awaitTermination(REMOTE_TASK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
-					LOG.warn(Markers.ERR, "{}: remote interrupt tasks timeout", getName());
-				}
-			} catch(final InterruptedException e) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
-			} finally {
-				interruptExecutor.shutdownNow();
-			}
+			remotePutExecutor.shutdownNow();
+			interruptLoadSvcs();
 		} finally {
 			super.interruptActually();
 		}
