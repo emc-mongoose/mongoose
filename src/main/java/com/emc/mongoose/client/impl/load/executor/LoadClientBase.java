@@ -462,6 +462,9 @@ implements LoadClient<T, W> {
 				remotePutExecutor.submit(new RemoteBatchPutTask(dataItems, from, to));
 				break;
 			} catch(final RejectedExecutionException e) {
+				if(remotePutExecutor.isShutdown()) {
+					return 0;
+				}
 				if(LOG.isTraceEnabled(Markers.ERR)) {
 					LogUtil.exception(LOG, Level.TRACE, e, "Failed to submit remote batch put task");
 				}
