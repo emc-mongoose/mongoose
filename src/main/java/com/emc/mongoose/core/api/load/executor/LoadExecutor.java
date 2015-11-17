@@ -35,9 +35,6 @@ extends ItemDst<T>, LifeCycle, ItemProducer<T> {
 	Map<String, List<LoadState<? extends Item>>>
 		RESTORED_STATES_MAP = new ConcurrentHashMap<>();
 	//
-	RequestConfig<T> getRequestConfig()
-	throws RemoteException;
-	//
 	String getName()
 	throws RemoteException;
 	//

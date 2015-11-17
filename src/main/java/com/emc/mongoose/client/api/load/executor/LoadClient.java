@@ -15,7 +15,7 @@ extends LoadExecutor<T> {
 	//
 	int
 		REMOTE_TASK_TIMEOUT_SEC = 10,
-		DEFAULT_SUBM_TASKS_QUEUE_SIZE = 0x1000;
+		DEFAULT_SUBM_TASKS_QUEUE_SIZE = 256;
 	//
 	Map<String, W> getRemoteLoadMap();
 }

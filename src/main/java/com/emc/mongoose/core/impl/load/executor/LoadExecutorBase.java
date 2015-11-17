@@ -729,34 +729,6 @@ implements LoadExecutor<T> {
 		}
 	};
 	//
-	protected void logTaskTrace(
-		final T item, final IOTask.Status status, final String nodeAddr,
-		final long countBytesDone, final long reqTimeStart,
-		final int reqDuration, final int respLatency
-	) {
-		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
-			StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
-			if(strBuilder == null) {
-				strBuilder = new StringBuilder();
-				PERF_TRACE_MSG_BUILDER.set(strBuilder);
-			} else {
-				strBuilder.setLength(0); // clear/reset
-			}
-			LOG.info(
-				Markers.PERF_TRACE,
-				strBuilder
-					.append(nodeAddr).append(',')
-					.append(item.getName()).append(',')
-					.append(countBytesDone).append(',')
-					.append(status.code).append(',')
-					.append(reqTimeStart).append(',')
-					.append(respLatency).append(',')
-					.append(reqDuration)
-					.toString()
-			);
-		}
-	}
-	//
 	protected void passItems()
 	throws InterruptedException {
 		try {
@@ -1035,11 +1007,6 @@ implements LoadExecutor<T> {
 		} finally {
 			super.finalize();
 		}
-	}
-	//
-	@Override
-	public final RequestConfig<T> getRequestConfig() {
-		return reqConfigCopy;
 	}
 	//
 	@Override
