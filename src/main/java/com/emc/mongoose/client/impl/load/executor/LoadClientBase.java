@@ -1,6 +1,7 @@
 package com.emc.mongoose.client.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -51,7 +52,7 @@ implements LoadClient<T, W> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final Map<String, W> remoteLoadMap;
-	private final ThreadPoolExecutor remoteSubmExecutor;
+	private final ThreadPoolExecutor remotePutExecutor;
 	private final String loadSvcAddrs[];
 	//
 	protected volatile ItemDst<T> consumer = null;
@@ -201,8 +202,9 @@ implements LoadClient<T, W> {
 		}
 		mgmtTasks.add(new InterruptOnCountLimitReachedTask(this));
 		//
-		remoteSubmExecutor = new ThreadPoolExecutor(
-			loadSvcAddrs.length, loadSvcAddrs.length, 0, TimeUnit.SECONDS,
+		final int remotePutThreadCount = Math.max(loadSvcAddrs.length, ThreadUtil.getWorkerCount());
+		remotePutExecutor = new ThreadPoolExecutor(
+			remotePutThreadCount, remotePutThreadCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<Runnable>(DEFAULT_SUBM_TASKS_QUEUE_SIZE),
 			new GroupThreadFactory(getName() + "-submit", true)
 		);
@@ -290,8 +292,8 @@ implements LoadClient<T, W> {
 	protected void interruptActually() {
 		try {
 			//
-			if(!remoteSubmExecutor.isTerminated()) {
-				remoteSubmExecutor.shutdownNow();
+			if(!remotePutExecutor.isTerminated()) {
+				remotePutExecutor.shutdownNow();
 			}
 			//
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
@@ -367,7 +369,7 @@ implements LoadClient<T, W> {
 					counterSubm.incrementAndGet();
 					break;
 				} catch(final RejectedExecutionException | IOException e) {
-					if(remoteSubmExecutor.isTerminated()) {
+					if(remotePutExecutor.isTerminated()) {
 						break;
 					} else {
 						try {
@@ -384,12 +386,12 @@ implements LoadClient<T, W> {
 	@Override
 	public final void put(final T dataItem)
 	throws IOException {
-		if(remoteSubmExecutor.isShutdown()) {
+		if(remotePutExecutor.isShutdown()) {
 			return;
 		}
 		while(true) {
 			try {
-				remoteSubmExecutor.submit(new RemotePutTask(dataItem));
+				remotePutExecutor.submit(new RemotePutTask(dataItem));
 				break;
 			} catch(final RejectedExecutionException e) {
 				if(LOG.isTraceEnabled(Markers.ERR)) {
@@ -435,7 +437,7 @@ implements LoadClient<T, W> {
 					counterSubm.addAndGet(n);
 					break;
 				} catch(final RejectedExecutionException | IOException e) {
-					if(remoteSubmExecutor.isTerminated()) {
+					if(remotePutExecutor.isTerminated()) {
 						break;
 					} else {
 						try {
@@ -452,12 +454,12 @@ implements LoadClient<T, W> {
 	@Override
 	public final int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
-		if(remoteSubmExecutor.isShutdown()) {
+		if(remotePutExecutor.isShutdown()) {
 			return 0;
 		}
 		while(true) {
 			try {
-				remoteSubmExecutor.submit(new RemoteBatchPutTask(dataItems, from, to));
+				remotePutExecutor.submit(new RemoteBatchPutTask(dataItems, from, to));
 				break;
 			} catch(final RejectedExecutionException e) {
 				if(LOG.isTraceEnabled(Markers.ERR)) {
@@ -497,7 +499,7 @@ implements LoadClient<T, W> {
 						nextLoadSvc.close();
 						LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
 					} catch(final NoSuchElementException e) {
-						if(!remoteSubmExecutor.isTerminated()) {
+						if(!remotePutExecutor.isTerminated()) {
 							LOG.debug(
 								Markers.ERR, "Looks like the remote load service is already closed"
 							);
@@ -536,10 +538,10 @@ implements LoadClient<T, W> {
 			//
 			final long timeOut = rtConfig.getLoadLimitTimeValue();
 			final TimeUnit timeUnit = rtConfig.getLoadLimitTimeUnit();
-			remoteSubmExecutor.shutdown();
+			remotePutExecutor.shutdown();
 			try {
 				if(
-					!remoteSubmExecutor.awaitTermination(
+					!remotePutExecutor.awaitTermination(
 						timeOut > 0 ? timeOut : Long.MAX_VALUE,
 						timeUnit == null ? TimeUnit.DAYS : timeUnit
 					)
@@ -554,7 +556,7 @@ implements LoadClient<T, W> {
 			} finally {
 				LOG.debug(
 					Markers.MSG, "Submitted {} items to the load servers",
-					remoteSubmExecutor.getCompletedTaskCount()
+					remotePutExecutor.getCompletedTaskCount()
 				);
 				for(final String addr : remoteLoadMap.keySet()) {
 					try {
@@ -574,7 +576,7 @@ implements LoadClient<T, W> {
 	public final Future<? extends IOTask<T>> submitReq(final IOTask<T> request)
 	throws RemoteException {
 		return remoteLoadMap
-			.get(loadSvcAddrs[(int) (remoteSubmExecutor.getTaskCount() % loadSvcAddrs.length)])
+			.get(loadSvcAddrs[(int) (remotePutExecutor.getTaskCount() % loadSvcAddrs.length)])
 			.submitReq(request);
 	}
 	//
@@ -583,7 +585,7 @@ implements LoadClient<T, W> {
 		final List<? extends IOTask<T>> requests, final int from, final int to
 	) throws RemoteException, RejectedExecutionException {
 		return remoteLoadMap
-			.get(loadSvcAddrs[(int) (remoteSubmExecutor.getTaskCount() % loadSvcAddrs.length)])
+			.get(loadSvcAddrs[(int) (remotePutExecutor.getTaskCount() % loadSvcAddrs.length)])
 			.submitReqs(requests, from, to);
 	}
 	//
@@ -601,11 +603,11 @@ implements LoadClient<T, W> {
 					// wait the remaining tasks to be transmitted to load servers
 					LOG.debug(
 						Markers.MSG, "{}: waiting remaining {} tasks to complete", getName(),
-						remoteSubmExecutor.getQueue().size() + remoteSubmExecutor.getActiveCount()
+						remotePutExecutor.getQueue().size() + remotePutExecutor.getActiveCount()
 					);
 					try {
-						if(!remoteSubmExecutor.awaitTermination(timeOut, timeUnit)) {
-							remoteSubmExecutor.shutdownNow();
+						if(!remotePutExecutor.awaitTermination(timeOut, timeUnit)) {
+							remotePutExecutor.shutdownNow();
 						}
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "Interrupted");
