@@ -267,6 +267,8 @@ implements WSDataLoadExecutor<T> {
 		}
 	};
 	//
+	private volatile long submActually = 0;
+	//
 	@Override
 	public final int submitReqs(final List<? extends IOTask<T>> ioTasks, int from, int to)
 	throws RejectedExecutionException {
@@ -294,6 +296,7 @@ implements WSDataLoadExecutor<T> {
 				}
 			}
 		}
+		submActually += n;
 		return n;
 	}
 	//

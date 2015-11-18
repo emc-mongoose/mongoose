@@ -497,7 +497,7 @@ implements LoadExecutor<T> {
 					getName() + ": submit failed, shut down already or interrupted"
 				);
 			}
-			if(activeTaskCount < totalConnCount || activeTaskCount < batchSize) {
+			if(activeTaskCount <= totalConnCount) {
 				break;
 			}
 			Thread.yield(); LockSupport.parkNanos(1);
@@ -545,7 +545,7 @@ implements LoadExecutor<T> {
 								getName() + ": submit failed, shut down already or interrupted"
 							);
 						}
-						if(activeTaskCount < totalConnCount || activeTaskCount < batchSize) {
+						if(activeTaskCount <= totalConnCount) {
 							break;
 						}
 						Thread.yield(); LockSupport.parkNanos(1);
