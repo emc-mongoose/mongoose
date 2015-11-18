@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -75,7 +74,7 @@ implements LoadExecutor<T> {
 	protected IOStats ioStats;
 	protected volatile IOStats.Snapshot lastStats = null;
 	// STATES section //////////////////////////////////////////////////////////////////////////////
-	protected final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
+	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
 	private LoadState<T> loadedPrevState = null;
 	protected final AtomicBoolean
 		isStarted = new AtomicBoolean(false),
@@ -171,6 +170,8 @@ implements LoadExecutor<T> {
 	implements Runnable {
 		@Override
 		public final void run() {
+			final Thread currThread = Thread.currentThread();
+			currThread.setName("resultsDispatcher<" + getName() + ">");
 			try {
 				if(itemsLock.tryLock(10, TimeUnit.SECONDS)) {
 					try {
@@ -180,8 +181,6 @@ implements LoadExecutor<T> {
 									itemsWereProduced.await(1000, TimeUnit.SECONDS);
 								}
 							}
-							final Thread currThread = Thread.currentThread();
-							currThread.setName("resultsDispatcher<" + getName() + ">");
 							while(!currThread.isInterrupted()) {
 								passItems();
 								Thread.yield();
@@ -310,12 +309,12 @@ implements LoadExecutor<T> {
 		try {
 			super.runActually();
 		} finally {
-			if (itemSrc != null) {
+			if(itemSrc != null) {
 				LOG.debug(
 					Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
 					getName(), counterSubm.get()
 				);
-				if (isShutdown.compareAndSet(false, true)) {
+				if(isShutdown.compareAndSet(false, true)) {
 					shutdownActually();
 				}
 			}
@@ -389,6 +388,7 @@ implements LoadExecutor<T> {
 			for(final Runnable mgmtTask : mgmtTasks) {
 				mgmtExecutor.submit(mgmtTask);
 			}
+			mgmtExecutor.shutdown();
 			//
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		}
@@ -401,7 +401,7 @@ implements LoadExecutor<T> {
 				synchronized(state) {
 					state.notifyAll();
 				}
- 				interruptActually();
+				interruptActually();
 			}
 		} else {
 			throw new IllegalStateException(
@@ -433,6 +433,13 @@ implements LoadExecutor<T> {
 		}
 		//
 		LOG.debug(Markers.MSG, "{}: waiting the output buffer to become empty", getName());
+		for(int i = 0; i < 1000 && !itemOutBuff.isEmpty(); i ++) {
+			try {
+				Thread.sleep(10);
+			} catch(final InterruptedException e) {
+				break;
+			}
+		}
 		//
 		try {
 			if(isStarted.get()) { // if was executing
@@ -458,8 +465,8 @@ implements LoadExecutor<T> {
 			t.printStackTrace(System.err);
 		}
 		//
-		
 		mgmtExecutor.shutdownNow();
+		LOG.debug(Markers.MSG, "{}: service threads executor shut down", getName());
 		if(isCircular && consumer == null) {
 			dumpItems(uniqueItems.values());
 		}
@@ -478,6 +485,7 @@ implements LoadExecutor<T> {
 				);
 			}
 		}
+		super.interrupt();
 		//
 		LOG.debug(Markers.MSG, "{} interrupted", getName());
 	}
@@ -516,7 +524,7 @@ implements LoadExecutor<T> {
 					getName() + ": submit failed, shut down already or interrupted"
 				);
 			}
-			if(activeTaskCount < DEFAULT_ACTIVE_TASK_COUNT_MAX) {
+			if(activeTaskCount < totalConnCount || activeTaskCount < batchSize) {
 				break;
 			}
 			Thread.yield(); LockSupport.parkNanos(1);
@@ -564,7 +572,7 @@ implements LoadExecutor<T> {
 								getName() + ": submit failed, shut down already or interrupted"
 							);
 						}
-						if(activeTaskCount < DEFAULT_ACTIVE_TASK_COUNT_MAX) {
+						if(activeTaskCount < totalConnCount || activeTaskCount < batchSize) {
 							break;
 						}
 						Thread.yield(); LockSupport.parkNanos(1);
@@ -648,7 +656,7 @@ implements LoadExecutor<T> {
 		return bestNode;
 	}
 	//
-	protected void ioTaskCompleted(final IOTask<T> ioTask) {
+	protected final void ioTaskCompleted(final IOTask<T> ioTask) {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return;
@@ -682,7 +690,7 @@ implements LoadExecutor<T> {
 		counterResults.incrementAndGet();
 	}
 	//
-	protected int ioTaskCompletedBatch(
+	protected final int ioTaskCompletedBatch(
 		final List<? extends IOTask<T>> ioTasks, final int from, final int to
 	) {
 		// producing was interrupted?
@@ -746,42 +754,6 @@ implements LoadExecutor<T> {
 			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O tasks ({}) failure", getName(), n);
 		} else {
 			LOG.debug(Markers.ERR, "{}: {} I/O tasks has been interrupted", getName(), n);
-		}
-	}
-	//
-	protected final static ThreadLocal<StringBuilder>
-		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
-		@Override
-		protected final StringBuilder initialValue() {
-			return new StringBuilder();
-		}
-	};
-	//
-	protected void logTaskTrace(
-		final T item, final IOTask.Status status, final String nodeAddr,
-		final long countBytesDone, final long reqTimeStart,
-		final int reqDuration, final int respLatency
-	) {
-		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
-			StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
-			if(strBuilder == null) {
-				strBuilder = new StringBuilder();
-				PERF_TRACE_MSG_BUILDER.set(strBuilder);
-			} else {
-				strBuilder.setLength(0); // clear/reset
-			}
-			LOG.info(
-				Markers.PERF_TRACE,
-				strBuilder
-					.append(nodeAddr).append(',')
-					.append(item.getName()).append(',')
-					.append(countBytesDone).append(',')
-					.append(status.code).append(',')
-					.append(reqTimeStart).append(',')
-					.append(respLatency).append(',')
-					.append(reqDuration)
-					.toString()
-			);
 		}
 	}
 	//
@@ -860,7 +832,7 @@ implements LoadExecutor<T> {
 	private void checkForBadState() {
 		if(
 			lastStats.getFailCount() > MAX_FAIL_COUNT &&
-			lastStats.getFailRateLast() < lastStats.getSuccRateLast()
+			lastStats.getFailRateLast() > lastStats.getSuccRateLast()
 		) {
 			LOG.fatal(
 				Markers.ERR,
@@ -873,6 +845,8 @@ implements LoadExecutor<T> {
 				close();
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
+			} finally {
+				Thread.currentThread().interrupt();
 			}
 		}
 	}
@@ -934,6 +908,7 @@ implements LoadExecutor<T> {
 			rtConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, maxCount);
 		}
 	}
+
 	//
 	private boolean isDoneAllSubm() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -998,8 +973,8 @@ implements LoadExecutor<T> {
 	public void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
 		long t, timeOutNanoSec = timeUnit.toNanos(timeOut);
-		if (loadedPrevState != null) {
-			if (isLimitReached) {
+		if(loadedPrevState != null) {
+			if(isLimitReached) {
 				return;
 			}
 			t = TimeUnit.MICROSECONDS.toNanos(
@@ -1013,46 +988,35 @@ implements LoadExecutor<T> {
 			getName(), TimeUnit.NANOSECONDS.toSeconds(timeOutNanoSec)
 		);
 		t = System.nanoTime();
-		while (true) {
-			synchronized (state) {
+		while(true) {
+			synchronized(state) {
 				state.wait(100);
 			}
-			if (isInterrupted.get()) {
+			if(isInterrupted.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to interrupted state", getName());
 				break;
 			}
-			if (isClosed.get()) {
+			if(isClosed.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to closed state", getName());
 				break;
 			}
-			if (isDoneAllSubm()) {
+			if(isDoneAllSubm()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
 				break;
 			}
-			if (isDoneMaxCount()) {
+			if(isDoneMaxCount()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to max count done state", getName());
 				break;
 			}
-			if (System.nanoTime() - t > timeOutNanoSec) {
+			if(System.nanoTime() - t > timeOutNanoSec) {
 				LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
 				break;
 			}
-			if (isLimitReached) {
+			if(isLimitReached) {
 				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
 				break;
 			}
-			Thread.yield();
-			LockSupport.parkNanos(1000000);
-		}
-		//
-		//awaitAllResultsPassed();
-	}
-	//
-	protected final void awaitAllResultsPassed() {
-		// it's required to pass all the results before stopping the service threads
-		while(counterPassed.get() + producedItemsCount < maxCount) {
-			Thread.yield();
-			LockSupport.parkNanos(1000000);
+			Thread.yield(); LockSupport.parkNanos(1000000);
 		}
 	}
 	//
@@ -1127,11 +1091,6 @@ implements LoadExecutor<T> {
 		} finally {
 			super.finalize();
 		}
-	}
-	//
-	@Override
-	public final RequestConfig<T> getRequestConfig() {
-		return reqConfigCopy;
 	}
 	//
 	@Override

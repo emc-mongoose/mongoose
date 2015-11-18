@@ -32,7 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
-import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
@@ -53,7 +52,6 @@ implements StorageMock<T> {
 	protected final int storageCapacity, containerCapacity;
 	//
 	private final Sequencer sequencer;
-	private final AtomicLong dataCount = new AtomicLong(0);
 	//
 	private volatile boolean isCapacityExhausted = false;
 	//
@@ -204,11 +202,7 @@ implements StorageMock<T> {
 		public final void run() {
 			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
 			if(c != null) {
-				final T oldObj = StorageMockBase.this.get(container).put(obj.getName(), obj);
-				if(oldObj == null) {
-					dataCount.incrementAndGet();
-				}
-				completed(obj);
+				completed(StorageMockBase.this.get(container).put(obj.getName(), obj));
 
 			} else {
 				failed(new ContainerMockNotFoundException(container));
@@ -308,11 +302,7 @@ implements StorageMock<T> {
 			if(c == null) {
 				failed(new ContainerMockNotFoundException(container));
 			} else {
-				final T obj = c.remove(oid);
-				if(obj != null) {
-					dataCount.decrementAndGet();
-				}
-				completed(obj);
+				completed(c.remove(oid));
 			}
 		}
 	}
@@ -409,7 +399,11 @@ implements StorageMock<T> {
 	//
 	@Override
 	public long getSize() {
-		return dataCount.get();
+		long size = 0;
+		for(final ObjectContainerMock<T> c : values()) {
+			size += c.size();
+		}
+		return size;
 	}
 	//
 	@Override

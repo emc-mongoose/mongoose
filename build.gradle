@@ -26,7 +26,8 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.artifactory'
 
-sourceCompatibility = '1.7'
+sourceCompatibility = JavaVersion.VERSION_1_7
+targetCompatibility = JavaVersion.VERSION_1_7
 
 distsDirName = 'dist'
 dependencyCacheDirName = 'tmp'
@@ -1039,8 +1040,8 @@ task integTest(type: Test, dependsOn: dist) {
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "4g"
-	maxHeapSize = "4g"
+	minHeapSize = "5g"
+	maxHeapSize = "5g"
 	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true

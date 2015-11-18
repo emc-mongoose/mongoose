@@ -6,5 +6,8 @@ import com.emc.mongoose.core.api.Item;
  */
 public interface ItemBuffer<T extends Item>
 extends ItemDst<T>, ItemSrc<T> {
+	//
 	boolean isEmpty();
+	//
+	int size();
 }

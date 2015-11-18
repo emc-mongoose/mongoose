@@ -92,7 +92,7 @@ extends WSMockTestBase {
 		RunTimeConfig.setContext(rtConfig);
 		//
 		new ScriptMockRunner().run();
-		TimeUnit.SECONDS.sleep(1);
+		TimeUnit.SECONDS.sleep(5);
 		//
 		RunIdFileManager.flushAll();
 	}

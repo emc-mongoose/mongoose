@@ -190,7 +190,7 @@
 				"separator": ",",
 				"circular": false,
 				"random": false,
-				"batchSize": 100
+				"batchSize": 4096
 			},
 			"queue": {
 				"maxSize": 65536
@@ -258,10 +258,10 @@
 			"mock": {
 				"headCount": 1,
 				"workersPerSocket": 0,
-				"capacity": 1000000,
+				"capacity": 10000000,
 				"container": {
-					"capacity": 1000000,
-					"countLimit": 1000000
+					"capacity": 10000000,
+					"countLimit": 10000000
 				},
 				"fault": {
 					"minConnLifeMilliSec": 0,
@@ -297,7 +297,7 @@
 		},
 		"run": {
 			"name": "mongoose",
-			"version": "next",
+			"version": "1.1.2",
 			"mode": "standalone",
 			"resume": {
 				"enabled" : false

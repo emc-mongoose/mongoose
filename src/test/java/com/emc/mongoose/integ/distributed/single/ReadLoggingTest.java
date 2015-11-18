@@ -80,7 +80,7 @@ extends DistributedClientTestBase {
 				if(countWritten > 0) {
 					countRead = client.read(itemsIO, null, countWritten, 10, true);
 				} else {
-					throw new IllegalStateException("Failed to write");
+					throw new IllegalStateException("Failed to read");
 				}
 				TimeUnit.SECONDS.sleep(1);
 				stdOutContent = stdOutInterceptorStream.toByteArray();

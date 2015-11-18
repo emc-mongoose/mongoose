@@ -190,7 +190,7 @@
 				"separator": ",",
 				"circular": false,
 				"random": false,
-				"batchSize": 100
+				"batchSize": 4096
 			},
 			"queue": {
 				"maxSize": 65536
@@ -297,7 +297,7 @@
 		},
 		"run": {
 			"name": "mongoose",
-			"version": "next",
+			"version": "1.1.2",
 			"mode": "standalone",
 			"resume": {
 				"enabled" : false
