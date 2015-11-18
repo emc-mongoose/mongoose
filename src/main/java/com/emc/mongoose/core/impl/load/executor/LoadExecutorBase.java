@@ -458,6 +458,7 @@ implements LoadExecutor<T> {
 			t.printStackTrace(System.err);
 		}
 		//
+		
 		mgmtExecutor.shutdownNow();
 		if(isCircular && consumer == null) {
 			dumpItems(uniqueItems.values());
@@ -787,6 +788,7 @@ implements LoadExecutor<T> {
 	protected void passItems()
 	throws InterruptedException {
 		try {
+			System.out.println("a");
 			//
 			final List<T> items = new ArrayList<>(batchSize);
 			final int n = itemOutBuff.get(items, batchSize);
@@ -834,7 +836,7 @@ implements LoadExecutor<T> {
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
+				LOG, Level.ERROR, e, "Failed to feed the items to \"{}\"", consumer
 			);
 		} catch(final RejectedExecutionException e) {
 			if(LOG.isTraceEnabled(Markers.ERR)) {
@@ -1078,6 +1080,18 @@ implements LoadExecutor<T> {
 		} finally {
 			if(consumer != null && !(consumer instanceof LifeCycle)) {
 				try {
+					// wait until are processed by consumer
+					System.out.println(counterPassed.get());
+					System.out.println(countRej.get());
+					System.out.println(producedItemsCount);
+					System.out.println(counterResults.get());
+					while(
+						(counterPassed.get() + countRej.get() + producedItemsCount) < counterResults.get()
+					) {
+						LockSupport.parkNanos(1);
+						Thread.yield();
+					}
+					//
 					consumer.close();
 					LOG.debug(
 						Markers.MSG, "{}: closed the consumer \"{}\" successfully",

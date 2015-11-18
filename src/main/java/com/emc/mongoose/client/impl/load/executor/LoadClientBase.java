@@ -87,7 +87,6 @@ implements LoadClient<T, W> {
 						for(final T item : frame) {
 							uniqueItems.put(item.getName(), item);
 						}
-						System.out.println("Size: " + uniqueItems.size());
 					}
 					for(int m = 0; m < n; ) {
 						m += itemOutBuff.put(frame, m, n);

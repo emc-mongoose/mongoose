@@ -132,9 +132,9 @@ implements WSDataLoadSvc<T> {
 			// put into the output buffer
 			try {
 				itemOutBuff.put(dataItem);
-				/*if(isCircular) {
+				if(isCircular) {
 					itemsSvcOutBuff.put(dataItem);
-				}*/
+				}
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e,
@@ -211,7 +211,8 @@ implements WSDataLoadSvc<T> {
 		List<T> itemsBuff = null;
 		try {
 			itemsBuff = new ArrayList<>(batchSize);
-			final int n = (isCircular ? itemsSvcOutBuff : itemOutBuff).get(itemsBuff, batchSize);
+			final int n = itemOutBuff.get(itemsBuff, batchSize);
+			//final int n = (isCircular ? itemsSvcOutBuff : itemOutBuff).get(itemsBuff, batchSize);
 			counterPassed.addAndGet(n);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");
