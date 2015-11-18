@@ -118,21 +118,7 @@ implements WSDataLoadExecutor<T> {
 					LogUtil.exception(LOG, Level.DEBUG, e, "HTTP client internal failure");
 				}
 			}
-		) {
-			@Override
-			public <D, E extends PoolEntry<HttpHost, NHttpClientConnection>> Future<D> execute(
-				final HttpAsyncRequestProducer requestProducer,
-				final HttpAsyncResponseConsumer<D> responseConsumer,
-				final ConnPool<HttpHost, E> connPool,
-				final HttpContext context,
-				final FutureCallback<D> callback
-			) {
-				submActually.incrementAndGet();
-				return super.execute(
-					requestProducer, responseConsumer, connPool, context, callback
-				);
-			}
-		};
+		);
 		//
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final int buffSize = wsReqConfigCopy.getBuffSize();
