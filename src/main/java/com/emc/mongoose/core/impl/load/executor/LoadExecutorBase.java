@@ -424,9 +424,6 @@ implements LoadExecutor<T> {
 		if(isShutdown.compareAndSet(false, true)) {
 			shutdownActually();
 		}
-		if(rtConfig.getRunMode().equals("server")) {
-			System.out.println(uniqueItems.size());
-		}
 		try {
 			reqConfigCopy.close(); // disables connection drop failures
 		} catch(final IOException e) {
@@ -468,8 +465,9 @@ implements LoadExecutor<T> {
 		//
 		mgmtExecutor.shutdownNow();
 		LOG.debug(Markers.MSG, "{}: service threads executor shut down", getName());
-		if(isCircular && consumer == null) {
-			dumpItems(uniqueItems.values());
+		//
+		if(isCircular) {
+			passUniqueItemsFinally(uniqueItems.values());
 		}
 		//
 		if(consumer instanceof LifeCycle) {
@@ -761,55 +759,52 @@ implements LoadExecutor<T> {
 	protected void passItems()
 	throws InterruptedException {
 		try {
-			System.out.println("a");
 			//
 			final List<T> items = new ArrayList<>(batchSize);
 			final int n = itemOutBuff.get(items, batchSize);
 			if(n > 0) {
-				// is this an end of consumer-producer chain?
-				if(consumer == null) {
-					if(isCircular) {
+				if(isCircular) {
+					int m = 0, k;
+					while(m < n) {
+						k = put(items, m, n);
+						if(k > 0) {
+							m += k;
+						}
+						Thread.yield();
+						LockSupport.parkNanos(1);
+					}
+				} else {
+					// is this an end of consumer-producer chain?
+					if(consumer == null) {
+						passUniqueItemsFinally(items);
+					} else { // put to the consumer
+						if(LOG.isTraceEnabled(Markers.MSG)) {
+							LOG.trace(
+								Markers.MSG, "Going to put {} items to the consumer {}",
+								n, consumer
+							);
+						}
 						int m = 0, k;
 						while(m < n) {
-							k = put(items, m, n);
+							k = consumer.put(items, m, n);
 							if(k > 0) {
-								counterPassed.addAndGet(k);
 								m += k;
 							}
 							Thread.yield(); LockSupport.parkNanos(1);
 						}
-					} else {
-						dumpItems(items);
-						counterPassed.addAndGet(n);
-					}
-				} else { // put to the consumer
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "Going to put {} items to the consumer {}",
-							n, consumer
-						);
-					}
-					int m = 0, k;
-					while(m < n) {
-						k = consumer.put(items, m, n);
-						if(k > 0) {
-							counterPassed.addAndGet(k);
-							m += k;
+						if(LOG.isTraceEnabled(Markers.MSG)) {
+							LOG.trace(
+								Markers.MSG,
+								"{} items were passed to the consumer {} successfully",
+								n, consumer
+							);
 						}
-						Thread.yield(); LockSupport.parkNanos(1);
-					}
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG,
-							"{} items were passed to the consumer {} successfully",
-							n, consumer
-						);
 					}
 				}
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to feed the items to \"{}\"", consumer
+				LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
 			);
 		} catch(final RejectedExecutionException e) {
 			if(LOG.isTraceEnabled(Markers.ERR)) {
@@ -818,10 +813,35 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected void dumpItems(final Collection<T> items) {
-		if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
-			for(final Item item : items) {
-				LOG.info(Markers.ITEM_LIST, item);
+	protected final void passUniqueItemsFinally(final Collection<T> items) {
+		if(consumer == null) {
+			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
+				for(final Item item : items) {
+					LOG.info(Markers.ITEM_LIST, item);
+				}
+			}
+		} else {
+			int n = items.size();
+			final List<T> itemList = new ArrayList<>(n);
+			try {
+				if(!items.isEmpty()) {
+					itemList.addAll(items);
+					int m = 0, k;
+					while(m < n) {
+						k = consumer.put(itemList, m, m + batchSize);
+						if(k > 0) {
+							m += k;
+						}
+						if(m > n || (m + batchSize) > n)
+							break;
+						Thread.yield();
+						LockSupport.parkNanos(1);
+					}
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to feed the items to \"{}\"", consumer
+				);
 			}
 		}
 	}
@@ -1045,17 +1065,6 @@ implements LoadExecutor<T> {
 		} finally {
 			if(consumer != null && !(consumer instanceof LifeCycle)) {
 				try {
-					// wait until are processed by consumer
-					System.out.println(counterPassed.get());
-					System.out.println(countRej.get());
-					System.out.println(producedItemsCount);
-					System.out.println(counterResults.get());
-					while(
-						(counterPassed.get() + countRej.get() + producedItemsCount) < counterResults.get()
-					) {
-						LockSupport.parkNanos(1);
-						Thread.yield();
-					}
 					//
 					consumer.close();
 					LOG.debug(
@@ -1069,7 +1078,7 @@ implements LoadExecutor<T> {
 					);
 				}
 			}
-			setCountLimitConfig(counterPassed.get());
+			setCountLimitConfig(counterResults.get());
 			LoadCloseHook.del(this);
 			if(loadedPrevState != null) {
 				if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {

@@ -36,11 +36,6 @@ extends BasicWSContainerLoadExecutor<T, C>
 implements WSContainerLoadSvc<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final ItemBuffer<C>
-		itemsSvcOutBuff = new LimitedQueueItemBuffer<>(
-			new ArrayBlockingQueue<C>(DEFAULT_RESULTS_QUEUE_SIZE)
-		);
-	//
 	public BasicWSContainerLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig reqConfig, final String[] addrs,
 		final int connPerNode, final int threadsPerNode,

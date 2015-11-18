@@ -35,10 +35,6 @@ extends BasicWSDataLoadExecutor<T>
 implements WSDataLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final ItemBuffer<T>
-		itemsSvcOutBuff = new LimitedQueueItemBuffer<>(
-			new ArrayBlockingQueue<T>(DEFAULT_RESULTS_QUEUE_SIZE)
-		);
 	//
 	public BasicWSDataLoadSvc(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
