@@ -26,6 +26,11 @@ import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.message.HeaderGroup;
+import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
+import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
+import org.apache.http.pool.ConnPool;
+import org.apache.http.pool.PoolEntry;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
@@ -113,7 +118,21 @@ implements WSDataLoadExecutor<T> {
 					LogUtil.exception(LOG, Level.DEBUG, e, "HTTP client internal failure");
 				}
 			}
-		);
+		) {
+			@Override
+			public <D, E extends PoolEntry<HttpHost, NHttpClientConnection>> Future<D> execute(
+				final HttpAsyncRequestProducer requestProducer,
+				final HttpAsyncResponseConsumer<D> responseConsumer,
+				final ConnPool<HttpHost, E> connPool,
+				final HttpContext context,
+				final FutureCallback<D> callback
+			) {
+				submActually.incrementAndGet();
+				return super.execute(
+					requestProducer, responseConsumer, connPool, context, callback
+				);
+			}
+		};
 		//
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final int buffSize = wsReqConfigCopy.getBuffSize();
@@ -267,7 +286,7 @@ implements WSDataLoadExecutor<T> {
 		}
 	};
 	//
-	private volatile long submActually = 0;
+	private final AtomicLong submActually = new AtomicLong(0);
 	//
 	@Override
 	public final int submitReqs(final List<? extends IOTask<T>> ioTasks, int from, int to)
@@ -296,7 +315,6 @@ implements WSDataLoadExecutor<T> {
 				}
 			}
 		}
-		submActually += n;
 		return n;
 	}
 	//
