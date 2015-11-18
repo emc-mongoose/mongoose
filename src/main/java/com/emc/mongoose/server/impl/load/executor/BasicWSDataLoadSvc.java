@@ -12,6 +12,7 @@ import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.executor.BasicWSDataLoadExecutor;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
@@ -24,6 +25,8 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+
 /**
  Created by kurila on 16.12.14.
  */
