@@ -302,8 +302,10 @@ implements LoadExecutor<T> {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	protected final AtomicLong submActually = new AtomicLong(0);
 	@Override
 	public void logMetrics(final Marker logMarker) {
+		LOG.info(Markers.MSG, submActually.get());
 		LOG.info(
 			logMarker,
 			Markers.PERF_SUM.equals(logMarker) ?

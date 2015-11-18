@@ -286,8 +286,6 @@ implements WSDataLoadExecutor<T> {
 		}
 	};
 	//
-	private final AtomicLong submActually = new AtomicLong(0);
-	//
 	@Override
 	public final int submitReqs(final List<? extends IOTask<T>> ioTasks, int from, int to)
 	throws RejectedExecutionException {
