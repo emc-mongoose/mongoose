@@ -132,7 +132,7 @@ implements WSContainerLoadExecutor<T, C> {
 			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize(IOTask.Type.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
+			.setRcvBufSize(Constants.BUFF_SIZE_LO)
 			.setSndBufSize(Constants.BUFF_SIZE_LO)
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE

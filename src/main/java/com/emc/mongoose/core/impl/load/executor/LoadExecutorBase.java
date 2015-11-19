@@ -501,7 +501,7 @@ implements LoadExecutor<T> {
 			if(activeTaskCount < activeTaskCountLimit) {
 				break;
 			}
-			Thread.yield(); LockSupport.parkNanos(1);
+			LockSupport.parkNanos(1000); Thread.yield();
 		} while(true);
 		//
 		try {
@@ -549,7 +549,7 @@ implements LoadExecutor<T> {
 						if(activeTaskCount < activeTaskCountLimit) {
 							break;
 						}
-						Thread.yield(); LockSupport.parkNanos(1);
+						LockSupport.parkNanos(1000); Thread.yield();
 					} while(true);
 					//
 					try {

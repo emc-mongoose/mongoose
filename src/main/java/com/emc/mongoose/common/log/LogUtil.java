@@ -45,7 +45,7 @@ public final class LogUtil {
 		VALUE_THREAD_CTX_INHERIT = Boolean.toString(true),
 		//
 		KEY_WAIT_STRATEGY = "AsyncLogger.WaitStrategy",
-		VALUE_WAIT_STRATEGY = "Block",
+		VALUE_WAIT_STRATEGY = "Yield",
 		//
 		KEY_CLOCK = "log4j.Clock",
 		VALUE_CLOCK = "CoarseCachedClock",
