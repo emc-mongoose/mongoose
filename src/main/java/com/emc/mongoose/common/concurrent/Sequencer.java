@@ -51,9 +51,11 @@ extends Thread {
 					if(nextTask == null) {
 						Thread.yield();
 					} else {
+						queueSize.decrementAndGet();
 						nextTask.run();
 					}
 				} else {
+					queueSize.decrementAndGet();
 					nextTask.run();
 				}
 			}
