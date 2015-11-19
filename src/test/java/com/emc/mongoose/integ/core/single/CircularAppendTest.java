@@ -39,6 +39,7 @@ extends StandaloneClientTestBase {
 	//
 	private static final int ITEM_MAX_QUEUE_SIZE = 65536;
 	private static final int BATCH_SIZE = 100;
+	private static final String DATA_SIZE = "128B";
 	//
 	private static final int WRITE_COUNT = 1234;
 	private static final int APPEND_COUNT = 12340;
@@ -67,7 +68,7 @@ extends StandaloneClientTestBase {
 		try (
 			final StorageClient<WSObject> client = CLIENT_BUILDER
 				.setAPI("s3")
-				.setLimitTime(1, TimeUnit.MINUTES)
+				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(WRITE_COUNT)
 				.build()
 		) {
@@ -75,9 +76,10 @@ extends StandaloneClientTestBase {
 				BasicWSObject.class, ContentSourceBase.getDefault()
 			);
 			COUNT_WRITTEN = client.write(
-				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("128B")
+				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize(DATA_SIZE)
 			);
 			TimeUnit.SECONDS.sleep(1);
+			RunIdFileManager.flushAll();
 			//
 			try (
 				final BufferingOutputStream
@@ -86,7 +88,7 @@ extends StandaloneClientTestBase {
 				stdOutInterceptorStream.reset();
 				if (COUNT_WRITTEN > 0) {
 					COUNT_APPENDED = client.append(writeOutput.getItemSrc(), null, APPEND_COUNT, 10,
-						SizeUtil.toSize("128B"));
+						SizeUtil.toSize(DATA_SIZE));
 				} else {
 					throw new IllegalStateException("Failed to append");
 				}
@@ -152,7 +154,7 @@ extends StandaloneClientTestBase {
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
 							nextFailCount = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Next deleted items count " + nextSuccCount +
+							"Next appended items count " + nextSuccCount +
 								" is less than previous: " + lastSuccCount,
 							nextSuccCount >= lastSuccCount
 						);
@@ -195,7 +197,7 @@ extends StandaloneClientTestBase {
 							countSucc = Long.parseLong(m.group("countSucc")),
 							countFail = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Deleted items count " + countSucc +
+							"Appended items count " + countSucc +
 								" is not equal to the limit: " + countLimit,
 							countSucc == countLimit
 						);
