@@ -769,6 +769,8 @@ implements LoadExecutor<T> {
 						k = put(items, m, n);
 						if(k > 0) {
 							m += k;
+						} else {
+							break;
 						}
 						Thread.yield();
 						LockSupport.parkNanos(1);
@@ -813,7 +815,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected final void passUniqueItemsFinally(final Collection<T> items) {
+	protected void passUniqueItemsFinally(final Collection<T> items) {
 		if(consumer == null) {
 			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
 				for(final Item item : items) {
@@ -826,13 +828,15 @@ implements LoadExecutor<T> {
 			try {
 				if(!items.isEmpty()) {
 					itemList.addAll(items);
-					int m = 0, k;
-					while(m < n) {
-						k = consumer.put(itemList, m, m + batchSize);
+					int left = 0, k;
+					int	right = (left + batchSize) > n ? n : left + batchSize;
+					while(left < n) {
+						k = consumer.put(itemList, left, right);
 						if(k > 0) {
-							m += k;
+							left += k;
 						}
-						if(m > n || (m + batchSize) > n)
+						right += left + batchSize;
+						if(left > n || right >= n)
 							break;
 						Thread.yield();
 						LockSupport.parkNanos(1);
@@ -1022,8 +1026,10 @@ implements LoadExecutor<T> {
 				break;
 			}
 			if(isDoneAllSubm()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
-				break;
+				if(!isCircular) {
+					LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
+					break;
+				}
 			}
 			if(isDoneMaxCount()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to max count done state", getName());

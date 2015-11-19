@@ -25,8 +25,10 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 21.10.15.
@@ -103,6 +105,36 @@ implements WSContainerLoadSvc<T, C> {
 	throws InterruptedException {
 		if(consumer != null) {
 			super.passItems();
+		}
+	}
+	//
+	@Override
+	protected void passUniqueItemsFinally(final Collection<C> items) {
+		if(consumer != null) {
+			int n = items.size();
+			final List<C> itemList = new ArrayList<>(n);
+			try {
+				if(!items.isEmpty()) {
+					itemList.addAll(items);
+					int left = 0, k;
+					int	right = (left + batchSize) > n ? n : left + batchSize;
+					while(left < n) {
+						k = consumer.put(itemList, left, right);
+						if(k > 0) {
+							left += k;
+						}
+						right += left + batchSize;
+						if(left > n || right >= n)
+							break;
+						Thread.yield();
+						LockSupport.parkNanos(1);
+					}
+				}
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to feed the items to \"{}\"", consumer
+				);
+			}
 		}
 	}
 	//
