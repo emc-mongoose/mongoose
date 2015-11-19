@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
-import com.emc.mongoose.common.net.http.conn.pool.SingleRouteSequencedConnPool;
+import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSeqencingConnPool;
 import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
@@ -172,7 +172,7 @@ implements WSDataLoadExecutor<T> {
 		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
 		for(int i = 0; i < storageNodeCount; i ++) {
 			nextRoute = wsReqConfigCopy.getNodeHost(addrs[i]);
-			nextConnPool = new SingleRouteSequencedConnPool(
+			nextConnPool = new FixedRouteSeqencingConnPool(
 				ioReactor, nextRoute, connFactory,
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ?
 					(int) timeOutMs : Integer.MAX_VALUE,

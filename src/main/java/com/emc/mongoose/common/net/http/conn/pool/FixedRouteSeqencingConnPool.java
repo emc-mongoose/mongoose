@@ -23,7 +23,7 @@ import java.util.concurrent.RunnableFuture;
 /**
  Created by kurila on 15.10.15.
  */
-public final class SingleRouteSequencedConnPool
+public final class FixedRouteSeqencingConnPool
 extends BasicNIOConnPool
 implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	//
@@ -32,7 +32,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	private final Sequencer connPoolSequencer;
 	private final HttpHost route;
 	//
-	public SingleRouteSequencedConnPool(
+	public FixedRouteSeqencingConnPool(
 		final ConnectingIOReactor ioReactor, final HttpHost route,
 		final NIOConnFactory<HttpHost, NHttpClientConnection> connFactory,
 		final int connectTimeout, final int batchSize
@@ -40,7 +40,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		super(ioReactor, connFactory, connectTimeout);
 		this.route = route;
 		connPoolSequencer = new Sequencer(
-			"connPoolSequencer#" + hashCode() + "<" + route.toHostString() + ">", false, batchSize
+			"connPoolSequencer<" + route.toHostString() + ">", false, batchSize
 		);
 		connPoolSequencer.start();
 	}
@@ -71,7 +71,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		//
 		@Override
 		public void run() {
-			SingleRouteSequencedConnPool.super.lease(route, state, callback);
+			FixedRouteSeqencingConnPool.super.lease(route, state, callback);
 		}
 	}
 	//
@@ -103,7 +103,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		//
 		@Override
 		public void run() {
-			SingleRouteSequencedConnPool.super.release(entry, reusable);
+			FixedRouteSeqencingConnPool.super.release(entry, reusable);
 		}
 	}
 	//
