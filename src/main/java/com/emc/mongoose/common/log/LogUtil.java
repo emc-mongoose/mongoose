@@ -8,9 +8,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.io.IoBuilder;
 //
 import java.io.File;
@@ -81,6 +84,7 @@ public final class LogUtil {
 		PATH_LOG_DIR = String.format("%s%slog", RunTimeConfig.DIR_ROOT, File.separator);
 	//
 	private static LoggerContext LOG_CTX = null;
+	private static volatile boolean STDOUT_COLORING_ENABLED = false;
 	private final static Lock LOG_CTX_LOCK = new ReentrantLock();
 	static {
 		init();
@@ -90,6 +94,23 @@ public final class LogUtil {
 		return LogUtil.FMT_DT.format(
 			Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime()
 		);
+	}
+	//
+	private static boolean isStdOutColoringEnabledByConfig() {
+		if(LOG_CTX != null) {
+			final Appender consoleAppender = LOG_CTX.getConfiguration().getAppender("stdout");
+			if(consoleAppender != null) {
+				final Layout consoleAppenderLayout = consoleAppender.getLayout();
+				if(consoleAppenderLayout instanceof PatternLayout) {
+					final String pattern =
+						((PatternLayout)consoleAppenderLayout).getConversionPattern();
+					if(pattern != null && pattern.contains("%highlight")) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 	//
 	public static void init() {
@@ -149,8 +170,13 @@ public final class LogUtil {
 				}
 			}
 		} finally {
+			STDOUT_COLORING_ENABLED = isStdOutColoringEnabledByConfig();
 			LOG_CTX_LOCK.unlock();
 		}
+	}
+	//
+	public static boolean isConsoleColoringEnabled() {
+		return STDOUT_COLORING_ENABLED;
 	}
 	//
 	public static void exception(
