@@ -844,7 +844,7 @@ implements LoadExecutor<T> {
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to feed the items to \"{}\"", consumer
+					LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
 				);
 			}
 		}
