@@ -68,7 +68,7 @@ implements StorageMock<T> {
 		ioStats = new BasicStorageIOStats(this, metricsPeriodSec, jmxServeFlag);
 		this.storageCapacity = storageCapacity;
 		this.containerCapacity = containerCapacity;
-		this.sequencer = new Sequencer("storageMockSequencer", true, batchSize);
+		this.sequencer = new Sequencer("storageMockSequencer", true);
 		createContainer(ObjectContainerMock.DEFAULT_NAME);
 	}
 	//

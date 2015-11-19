@@ -36,9 +36,7 @@ extends BasicNIOConnPool {
 		final int connectTimeout, final int batchSize
 	) {
 		super(ioReactor, connFactory, connectTimeout);
-		connPoolSequencer = new Sequencer(
-			"connPoolSequencer#" + hashCode() + ">", false, batchSize
-		);
+		connPoolSequencer = new Sequencer("connPoolSequencer#" + hashCode(), false);
 		connPoolSequencer.start();
 	}
 	//
