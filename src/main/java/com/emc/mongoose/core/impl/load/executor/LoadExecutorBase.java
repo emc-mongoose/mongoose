@@ -173,8 +173,7 @@ implements LoadExecutor<T> {
 			try {
 				while(!currThread.isInterrupted()) {
 					passItems();
-					Thread.yield();
-					LockSupport.parkNanos(1000);
+					LockSupport.parkNanos(1000); Thread.yield();
 				}
 			} catch(final InterruptedException ignored) {
 			}
@@ -746,8 +745,7 @@ implements LoadExecutor<T> {
 					}
 					int m = 0;
 					while(m < n) {
-						Thread.yield();
-						LockSupport.parkNanos(1);
+						Thread.yield(); LockSupport.parkNanos(1);
 						m += consumer.put(items, m, n);
 					}
 					if(LOG.isTraceEnabled(Markers.MSG)) {

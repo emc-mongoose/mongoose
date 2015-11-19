@@ -164,8 +164,12 @@ implements WSContainerLoadExecutor<T, C> {
 			DirectByteBufferAllocator.INSTANCE, connConfig
 		);
 		//
+		final HttpHost routes[] = new HttpHost[storageNodeCount];
+		for(int i = 0; i < routes.length; i ++) {
+			routes[i] = ((WSRequestConfig) reqConfig).getNodeHost(addrs[i]);
+		}
 		connPool = new SequencedConnPool(
-			ioReactor, connFactory,
+			ioReactor, routes, connFactory,
 			timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE,
 			batchSize
 		);

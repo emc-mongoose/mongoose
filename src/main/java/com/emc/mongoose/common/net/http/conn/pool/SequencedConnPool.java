@@ -18,6 +18,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.net.NoRouteToHostException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 /**
@@ -28,16 +31,24 @@ extends BasicNIOConnPool {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final Sequencer connPoolSequencer;
+	private final Map<HttpHost, Sequencer> connPoolSequencerMap;
 	//
 	public SequencedConnPool(
-		final ConnectingIOReactor ioReactor,
+		final ConnectingIOReactor ioReactor, final HttpHost routes[],
 		final NIOConnFactory<HttpHost, NHttpClientConnection> connFactory,
 		final int connectTimeout, final int batchSize
 	) {
 		super(ioReactor, connFactory, connectTimeout);
-		connPoolSequencer = new Sequencer("connPoolSequencer#" + hashCode(), false, batchSize);
-		connPoolSequencer.start();
+		connPoolSequencerMap = new HashMap<>(routes.length);
+		Sequencer nextRouteSequencer;
+		for(final HttpHost nextRoute : routes) {
+			nextRouteSequencer = new Sequencer(
+				"connPoolSequencer#" + hashCode() + "<" + nextRoute.getHostName() + ">",
+				false, batchSize
+			);
+			nextRouteSequencer.start();
+			connPoolSequencerMap.put(nextRoute, nextRouteSequencer);
+		}
 	}
 	//
 	public void shutdown(final long waitMs)
@@ -45,7 +56,10 @@ extends BasicNIOConnPool {
 		try {
 			super.shutdown(waitMs);
 		} finally {
-			connPoolSequencer.interrupt();
+			for(final Sequencer nextRouteSequencer : connPoolSequencerMap.values()) {
+				nextRouteSequencer.interrupt();
+			}
+			connPoolSequencerMap.clear();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,8 +94,12 @@ extends BasicNIOConnPool {
 		final HttpHost route, final Object state, final FutureCallback<BasicNIOPoolEntry> callback
 	) {
 		try {
-			return connPoolSequencer.submit(new ConnLeaseTask(route, state, callback));
-		} catch(final InterruptedException e) {
+			final Sequencer routePoolSequencer = connPoolSequencerMap.get(route);
+			if(routePoolSequencer == null) {
+				throw new NoRouteToHostException(route == null ? null : route.toString());
+			}
+			return routePoolSequencer.submit(new ConnLeaseTask(route, state, callback));
+		} catch(final NoRouteToHostException | InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -110,8 +128,13 @@ extends BasicNIOConnPool {
 	@Override
 	public final void release(final BasicNIOPoolEntry entry, final boolean reusable) {
 		try {
-			connPoolSequencer.submit(new ConnReleaseTask(entry, reusable));
-		} catch(final InterruptedException e) {
+			final HttpHost route = entry.getRoute();
+			final Sequencer routePoolSequencer = connPoolSequencerMap.get(route);
+			if(routePoolSequencer == null) {
+				throw new NoRouteToHostException(route.toString());
+			}
+			routePoolSequencer.submit(new ConnReleaseTask(entry, reusable));
+		} catch(final NoRouteToHostException | InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to enqueue connection release task");
 		}
 	}
