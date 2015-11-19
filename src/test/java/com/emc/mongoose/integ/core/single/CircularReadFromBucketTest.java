@@ -10,6 +10,8 @@ import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -37,13 +39,17 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
 public class CircularReadFromBucketTest
 extends StandaloneClientTestBase {
 	//
+	private static final int ITEM_MAX_QUEUE_SIZE = 65536;
+	private static final int BATCH_SIZE = 100;
+	private static final String DATA_SIZE = "128B";
+	//
 	private static final int WRITE_COUNT = 100;
 	private static final int READ_COUNT = 1000;
 	//
-	private static final int COUNT_OF_DUPLICATES = 10;
+	private static final int COUNT_OF_DUPLICATES = 11;
 	//
-	private static long COUNT_WRITTEN, COUNT_READ;
 	private static byte[] STD_OUT_CONTENT;
+	private static long COUNT_WRITTEN, COUNT_READ;
 	//
 	private static final String RUN_ID = CircularReadFromBucketTest.class.getCanonicalName();
 	//
@@ -51,12 +57,14 @@ extends StandaloneClientTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, RUN_ID
+				RunTimeConfig.KEY_RUN_ID, RUN_ID
 		);
 		StandaloneClientTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
+		rtConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
+		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		try(
@@ -71,9 +79,9 @@ extends StandaloneClientTestBase {
 			final LimitedQueueItemBuffer<WSObject> itemsIO
 				= new LimitedQueueItemBuffer<>(itemsQueue);
 			COUNT_WRITTEN = client.write(
-				null, itemsIO, WRITE_COUNT, 1, SizeUtil.toSize("1MB")
+				null, itemsIO, WRITE_COUNT, 1, SizeUtil.toSize(DATA_SIZE)
 			);
-			TimeUnit.SECONDS.sleep(10);
+			TimeUnit.SECONDS.sleep(1);
 			//
 			try (
 				final BufferingOutputStream
@@ -83,7 +91,7 @@ extends StandaloneClientTestBase {
 				if (COUNT_WRITTEN > 0) {
 					COUNT_READ = client.read(null, null, READ_COUNT, 1, true);
 				} else {
-					throw new IllegalStateException("Failed to write");
+					throw new IllegalStateException("Failed to read");
 				}
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
@@ -101,57 +109,59 @@ extends StandaloneClientTestBase {
 	}
 	//
 	@Test
-	public void checkItemsFileContainsDuplicates()
-	throws  Exception {
+	public void checkItemsFileExists()
+	throws Exception {
 		final Map<String, Long> items = new HashMap<>();
-		try(
+		try (
 			final BufferedReader
 				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
 		) {
-			String line;
-			while ((line = in.readLine()) != null) {
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			String id;
+			for (final CSVRecord nextRec : recIter) {
 				long count = 1;
-				if (items.containsKey(line)) {
-					count = items.get(line);
+				id = nextRec.get(0);
+				if (items.containsKey(id)) {
+					count = items.get(id);
 					count++;
 				}
-				items.put(line, count);
+				items.put(id, count);
 			}
+			//
+			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
+		}
+	}
+	//
+	@Test
+	public void checkPerfTraceFileContainsDuplicates()
+	throws  Exception {
+		final Map<String, Long> items = new HashMap<>();
+		boolean firstRow = true;
+		try (
+			final BufferedReader
+				in = Files.newBufferedReader(FILE_LOG_PERF_TRACE.toPath(), StandardCharsets.UTF_8)
+		) {
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			String id;
+			for (final CSVRecord nextRec : recIter) {
+				if (firstRow) {
+					firstRow = false;
+				} else {
+					long count = 1;
+					id = nextRec.get(2);
+					if (items.containsKey(id)) {
+						count = items.get(id);
+						count++;
+					}
+					items.put(id, count);
+				}
+			}
+			//
 			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
 			for (final Map.Entry<String, Long> entry : items.entrySet()) {
 				Assert.assertEquals(
-					"data.items.csv doesn't contain necessary count of duplicated items" ,
-					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES));
-			}
-		}
-	}
-	@Test
-	public void checkItemDuplicatesOrder()
-	throws Exception {
-		final Map<String, Integer> items = new HashMap<>();
-		try (
-			final LineNumberReader in = new LineNumberReader(
-				Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
-			)
-		) {
-			long uniqueItems = 0;
-			String line;
-			while ((line = in.readLine()) != null) {
-				if (uniqueItems < WRITE_COUNT) {
-					items.put(line, in.getLineNumber());
-					uniqueItems++;
-				} else {
-					Assert.assertTrue(items.containsKey(line));
-					final int expected;
-					if (in.getLineNumber() % WRITE_COUNT == 0) {
-						expected = WRITE_COUNT;
-					} else {
-						expected = in.getLineNumber() % WRITE_COUNT;
-					}
-					Assert.assertEquals(
-						Integer.valueOf(expected), items.get(line)
-					);
-				}
+					"perf.trace.csv doesn't contain necessary count of duplicated items" ,
+					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES), 2);
 			}
 		}
 	}
@@ -183,7 +193,7 @@ extends StandaloneClientTestBase {
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
 							nextFailCount = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Next deleted items count " + nextSuccCount +
+							"Next read items count " + nextSuccCount +
 								" is less than previous: " + lastSuccCount,
 							nextSuccCount >= lastSuccCount
 						);
@@ -226,7 +236,7 @@ extends StandaloneClientTestBase {
 							countSucc = Long.parseLong(m.group("countSucc")),
 							countFail = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Deleted items count " + countSucc +
+							"Read items count " + countSucc +
 								" is not equal to the limit: " + countLimit,
 							countSucc == countLimit
 						);
@@ -241,5 +251,4 @@ extends StandaloneClientTestBase {
 			"Summary metrics line matching the pattern was not met in the stdout", passed
 		);
 	}
-
 }

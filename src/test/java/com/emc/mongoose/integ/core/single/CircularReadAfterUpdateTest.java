@@ -41,6 +41,7 @@ extends StandaloneClientTestBase {
 	//
 	private static final int ITEM_MAX_QUEUE_SIZE = 65536;
 	private static final int BATCH_SIZE = 100;
+	private static final String DATA_SIZE = "128B";
 	//
 	private static final int WRITE_COUNT = 1234;
 	private static final int UPDATE_COUNT = 12340;
@@ -75,18 +76,23 @@ extends StandaloneClientTestBase {
 				BasicWSObject.class, ContentSourceBase.getDefault()
 			);
 			COUNT_WRITTEN = client.write(
-				null, writeOutput, WRITE_COUNT, 10, SizeUtil.toSize("128B")
+				null, writeOutput, WRITE_COUNT, 10, SizeUtil.toSize(DATA_SIZE)
 			);
 			TimeUnit.SECONDS.sleep(1);
+			RunIdFileManager.flushAll();
 			//
-			if (COUNT_WRITTEN > 0) {
+			final ItemDst<WSObject> updateOutput = new CSVFileItemDst<WSObject>(
+				BasicWSObject.class, ContentSourceBase.getDefault()
+			);
+			if(COUNT_WRITTEN > 0) {
 				COUNT_UPDATED = client.update(
-					writeOutput.getItemSrc(), null, UPDATE_COUNT, 10, 1
+					writeOutput.getItemSrc(), updateOutput, UPDATE_COUNT, 10, 1
 				);
 			} else {
 				throw new IllegalStateException("Failed to update");
 			}
 			TimeUnit.SECONDS.sleep(1);
+			RunIdFileManager.flushAll();
 			//
 			try (
 				final BufferingOutputStream
@@ -94,11 +100,6 @@ extends StandaloneClientTestBase {
 			) {
 				stdOutInterceptorStream.reset();
 				if (COUNT_UPDATED > 0) {
-					final ItemDst<WSObject> updateOutput = new CSVFileItemDst<WSObject>(
-						FILE_LOG_DATA_ITEMS.toPath(),
-						BasicWSObject.class, ContentSourceBase.getDefault()
-					);
-					//
 					COUNT_READ = client.read(
 						updateOutput.getItemSrc(), null, COUNT_UPDATED, 10, true
 					);
@@ -181,7 +182,7 @@ extends StandaloneClientTestBase {
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
 							nextFailCount = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Next deleted items count " + nextSuccCount +
+							"Next read items count " + nextSuccCount +
 								" is less than previous: " + lastSuccCount,
 							nextSuccCount >= lastSuccCount
 						);
@@ -224,7 +225,7 @@ extends StandaloneClientTestBase {
 							countSucc = Long.parseLong(m.group("countSucc")),
 							countFail = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Deleted items count " + countSucc +
+							"Read items count " + countSucc +
 								" is not equal to the limit: " + countLimit,
 							countSucc == countLimit
 						);

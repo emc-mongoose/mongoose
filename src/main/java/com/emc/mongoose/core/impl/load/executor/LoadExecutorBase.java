@@ -835,9 +835,13 @@ implements LoadExecutor<T> {
 						if(k > 0) {
 							left += k;
 						}
-						right += left + batchSize;
-						if(left > n || right >= n)
+						if(left > n) {
 							break;
+						}
+						right += left + batchSize;
+						if(right > n) {
+							right = n;
+						}
 						Thread.yield();
 						LockSupport.parkNanos(1);
 					}
