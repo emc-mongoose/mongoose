@@ -356,7 +356,11 @@ implements LoadClient<T, W> {
 		@Override
 		public final void run() {
 			String loadSvcAddr;
-			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
+			for(
+				int tryCount = 0;
+				tryCount < Short.MAX_VALUE && !remotePutExecutor.isShutdown();
+				tryCount ++
+			) {
 				try {
 					loadSvcAddr = loadSvcAddrs[
 						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)
@@ -416,13 +420,17 @@ implements LoadClient<T, W> {
 			String loadSvcAddr;
 			W loadSvc;
 			int m = 0;
-			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
+			for(
+				int tryCount = 0;
+				tryCount < Short.MAX_VALUE && !remotePutExecutor.isShutdown();
+				tryCount ++
+			) {
 				try {
 					loadSvcAddr = loadSvcAddrs[
 						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)
 					];
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
-					while(true) {
+					while(!remotePutExecutor.isShutdown()) {
 						m += loadSvc.put(dataItems, from + m, to);
 						if(m < n) {
 							LockSupport.parkNanos(1);
@@ -432,7 +440,7 @@ implements LoadClient<T, W> {
 					}
 					counterSubm.addAndGet(n);
 					break;
-				} catch(final RejectedExecutionException | IOException e) {
+				} catch(final IOException e) {
 					if(remotePutExecutor.isTerminated()) {
 						break;
 					} else {
