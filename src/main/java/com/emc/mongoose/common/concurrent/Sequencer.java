@@ -1,18 +1,15 @@
 package com.emc.mongoose.common.concurrent;
 //
-import com.emc.mongoose.common.log.LogUtil;
-//
 import com.emc.mongoose.common.log.Markers;
-import org.apache.logging.log4j.Level;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 /**
  Created by andrey on 04.08.15.
@@ -23,44 +20,41 @@ extends Thread {
 	private final static Logger LOG = LogManager.getLogger();
 	public final static int DEFAULT_TASK_QUEUE_SIZE = 0x1000;
 	//
-	private final BlockingQueue<Runnable> queue;
-	private final int batchSize;
-	private final Collection<Runnable> buff;
+	private final Queue<Runnable> queue;
+	private final AtomicLong queueSize = new AtomicLong(0);
 	//
-	public Sequencer(final String name, boolean daemonFlag, final int batchSize) {
+	public Sequencer(final String name, boolean daemonFlag) {
 		super(name);
 		setDaemon(daemonFlag);
-		queue = new ArrayBlockingQueue<>(DEFAULT_TASK_QUEUE_SIZE, false);
-		this.batchSize = batchSize;
-		buff = new ArrayList<>(batchSize);
+		queue = new ConcurrentLinkedQueue<>();
 	}
 	//
 	public final <V> Future<V> submit(final RunnableFuture<V> task)
 	throws InterruptedException {
-		queue.put(task);
+		while(queueSize.get() > DEFAULT_TASK_QUEUE_SIZE) {
+			LockSupport.parkNanos(1); Thread.yield();
+		}
+		queueSize.incrementAndGet();
+		queue.add(task);
 		return task;
 	}
 	//
 	@Override
 	public final void run() {
-		int n;
 		try {
+			Runnable nextTask;
 			while(!isInterrupted()) {
-				n = queue.drainTo(buff, batchSize);
-				if(n > 0) {
-					for(final Runnable nextTask : buff) {
-						try {
-							nextTask.run();
-						} catch(final Exception e) {
-							LogUtil.exception(
-								LOG, Level.WARN, e, "Task \"{}\" failed", nextTask
-							);
-						}
-					}
-					buff.clear();
-				} else {
-					Thread.yield();
+				nextTask = queue.poll();
+				if(nextTask == null) {
 					LockSupport.parkNanos(1);
+					nextTask = queue.poll();
+					if(nextTask == null) {
+						Thread.yield();
+					} else {
+						nextTask.run();
+					}
+				} else {
+					nextTask.run();
 				}
 			}
 		} finally {
