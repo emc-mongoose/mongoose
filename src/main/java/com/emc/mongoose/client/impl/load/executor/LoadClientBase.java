@@ -262,8 +262,8 @@ implements LoadClient<T, W> {
 					TimeUnit.MILLISECONDS.sleep(10);
 				}
 				LOG.debug(
-						Markers.MSG, "All processed items have been received from load service @ {}",
-						addr
+					Markers.MSG, "All processed items have been received from load service @ {}",
+					addr
 				);
 			} catch(final InterruptedException | RemoteException e) {
 				LogUtil.exception(
