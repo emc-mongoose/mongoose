@@ -4,7 +4,8 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.http.conn.pool.SequencedConnPool;
+import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
+import com.emc.mongoose.common.net.http.conn.pool.SingleRouteSequencedConnPool;
 import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
@@ -13,7 +14,6 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSDataIOTask;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 // mongoose-core-impl.jar
@@ -25,12 +25,8 @@ import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
-import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
-import org.apache.http.pool.ConnPool;
-import org.apache.http.pool.PoolEntry;
-import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
@@ -58,7 +54,9 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +73,7 @@ implements WSDataLoadExecutor<T> {
 	private final HttpProcessor httpProcessor;
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
-	private final SequencedConnPool connPool;
+	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
 	private final WSRequestConfig<T> wsReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
@@ -169,17 +167,21 @@ implements WSDataLoadExecutor<T> {
 				DirectByteBufferAllocator.INSTANCE, connConfig
 			);
 		//
-		final HttpHost routes[] = new HttpHost[storageNodeCount];
-		for(int i = 0; i < routes.length; i ++) {
-			routes[i] = reqConfig.getNodeHost(addrs[i]);
+		connPoolMap = new HashMap<>(storageNodeCount);
+		HttpHost nextRoute;
+		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
+		for(int i = 0; i < storageNodeCount; i ++) {
+			nextRoute = wsReqConfigCopy.getNodeHost(addrs[i]);
+			nextConnPool = new SingleRouteSequencedConnPool(
+				ioReactor, nextRoute, connFactory,
+				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ?
+					(int) timeOutMs : Integer.MAX_VALUE,
+				batchSize
+			);
+			nextConnPool.setDefaultMaxPerRoute(connCountPerNode);
+			nextConnPool.setMaxTotal(connCountPerNode);
+			connPoolMap.put(nextRoute, nextConnPool);
 		}
-		connPool = new SequencedConnPool(
-			ioReactor, routes, connFactory,
-			timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE,
-			batchSize
-		);
-		connPool.setMaxTotal(totalConnCount);
-		connPool.setDefaultMaxPerRoute(connCountPerNode);
 		//
 		mgmtTasks.add(new HttpClientRunTask(ioEventDispatch, ioReactor));
 	}
@@ -189,8 +191,8 @@ implements WSDataLoadExecutor<T> {
 		super.logMetrics(logMarker);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				Markers.MSG, "Connections: leased={}, released={}, {}",
-				connLeaseCount.get(), connReleaseCount.get(), connPool.toString()
+				Markers.MSG, "Connections: leased={}, released={}",
+				connLeaseCount.get(), connReleaseCount.get()
 			);
 		}
 	}
@@ -205,19 +207,19 @@ implements WSDataLoadExecutor<T> {
 		try {
 			super.interruptActually();
 		} finally {
-			if(connPool != null) {
-				connPool.closeExpired();
+			for(final HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool : connPoolMap.values()) {
+				nextConnPool.closeExpired();
 				LOG.debug(
 					Markers.MSG, "{}: closed expired (if any) connections in the pool", getName()
 				);
 				try {
-					connPool.closeIdle(1, TimeUnit.MILLISECONDS);
+					nextConnPool.closeIdle(1, TimeUnit.MILLISECONDS);
 					LOG.debug(
 						Markers.MSG, "{}: closed idle connections (if any) in the pool", getName()
 					);
 				} finally {
 					try {
-						connPool.shutdown(1);
+						nextConnPool.shutdown(1);
 						LOG.debug(Markers.MSG, "{}: connection pool has been shut down", getName());
 					} catch(final IOException e) {
 						LogUtil.exception(
@@ -242,11 +244,13 @@ implements WSDataLoadExecutor<T> {
 	protected final Future<? extends WSDataIOTask<T>> submitReqActually(final IOTask<T> ioTask)
 	throws RejectedExecutionException {
 		//
+		final WSDataIOTask<T> wsTask = (WSDataIOTask<T>) ioTask;
+		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
+			connPool = connPoolMap.get(wsTask.getTarget());
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");
 		}
 		//
-		final WSDataIOTask<T> wsTask = (WSDataIOTask<T>) ioTask;
 		final Future<WSDataIOTask<T>> futureResult;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, futureCallback);
@@ -287,8 +291,8 @@ implements WSDataLoadExecutor<T> {
 				final HttpHost tgtHost = anyTask.getTarget();
 				if(
 					null == client.executePipelined(
-						tgtHost, wsIOTasks, wsIOTasks, connPool, HttpCoreContext.create(),
-						new BatchFutureCallback(wsIOTasks)
+						tgtHost, wsIOTasks, wsIOTasks, connPoolMap.get(tgtHost),
+						HttpCoreContext.create(), new BatchFutureCallback(wsIOTasks)
 					)
 				) {
 					return 0;
