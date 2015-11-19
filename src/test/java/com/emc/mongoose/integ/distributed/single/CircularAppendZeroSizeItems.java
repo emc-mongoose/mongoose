@@ -2,6 +2,7 @@ package com.emc.mongoose.integ.distributed.single;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemDst;
@@ -16,6 +17,9 @@ import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -40,6 +44,8 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIEN
 public class CircularAppendZeroSizeItems
 extends DistributedClientTestBase {
 	//
+	private static final Logger LOG = LogManager.getLogger();
+	//
 	private static final int ITEM_MAX_QUEUE_SIZE = 65536;
 	private static final int BATCH_SIZE = 100;
 	//
@@ -53,59 +59,65 @@ extends DistributedClientTestBase {
 	private static byte[] STD_OUT_CONTENT;
 	//
 	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
-		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularAppendZeroSizeItems.class.getCanonicalName()
-		);
-		DistributedClientTestBase.setUpClass();
-		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
-		rtConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
-		RunTimeConfig.setContext(rtConfig);
-		//
-		try (
-			final StorageClient<WSObject> client = CLIENT_BUILDER
-				.setAPI("s3")
-				.setLimitTime(0, TimeUnit.SECONDS)
-				.setLimitCount(WRITE_COUNT)
-				.build()
-		) {
-			final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
-				BasicWSObject.class, ContentSourceBase.getDefault()
+	public static void setUpClass() {
+		try {
+			System.setProperty(
+				RunTimeConfig.KEY_RUN_ID, CircularAppendZeroSizeItems.class.getCanonicalName()
 			);
-			COUNT_WRITTEN = client.write(
-				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("0B")
-			);
-			TimeUnit.SECONDS.sleep(1);
-			RunIdFileManager.flushAll();
+			DistributedClientTestBase.setUpClass();
+			//
+			final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+			rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
+			rtConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
+			rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
+			RunTimeConfig.setContext(rtConfig);
 			//
 			try (
-				final BufferingOutputStream
-					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+				final StorageClient<WSObject> client = CLIENT_BUILDER
+					.setAPI("s3")
+					.setLimitTime(0, TimeUnit.SECONDS)
+					.setLimitCount(WRITE_COUNT)
+					.build()
 			) {
-				stdOutInterceptorStream.reset();
-				if (COUNT_WRITTEN > 0) {
-					COUNT_APPENDED = client.append(writeOutput.getItemSrc(), null, APPEND_COUNT, 10,
-						SizeUtil.toSize("128B"));
-				} else {
-					throw new IllegalStateException("Failed to append");
-				}
+				final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
+					BasicWSObject.class, ContentSourceBase.getDefault()
+				);
+				COUNT_WRITTEN = client.write(
+					null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("0B")
+				);
 				TimeUnit.SECONDS.sleep(1);
-				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
+				RunIdFileManager.flushAll();
+				//
+				try (
+					final BufferingOutputStream
+						stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+				) {
+					stdOutInterceptorStream.reset();
+					if (COUNT_WRITTEN > 0) {
+						COUNT_APPENDED = client.append(writeOutput.getItemSrc(), null, APPEND_COUNT, 10,
+							SizeUtil.toSize("128B"));
+					} else {
+						throw new IllegalStateException("Failed to append");
+					}
+					TimeUnit.SECONDS.sleep(1);
+					STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
+				}
 			}
+			//
+			RunIdFileManager.flushAll();
+		} catch (final Exception e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed");
 		}
-		//
-		RunIdFileManager.flushAll();
 	}
 	//
 	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		StdOutInterceptorTestSuite.reset();
-		DistributedClientTestBase.tearDownClass();
+	public static void tearDownClass() {
+		try {
+			StdOutInterceptorTestSuite.reset();
+			DistributedClientTestBase.tearDownClass();
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed");
+		}
 	}
 	//
 	@Test

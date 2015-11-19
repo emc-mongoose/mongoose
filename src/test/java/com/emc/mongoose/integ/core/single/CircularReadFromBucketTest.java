@@ -2,6 +2,7 @@ package com.emc.mongoose.integ.core.single;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -12,6 +13,9 @@ import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -39,6 +43,8 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
 public class CircularReadFromBucketTest
 extends StandaloneClientTestBase {
 	//
+	private static final Logger LOG = LogManager.getLogger();
+	//
 	private static final int ITEM_MAX_QUEUE_SIZE = 65536;
 	private static final int BATCH_SIZE = 100;
 	private static final String DATA_SIZE = "128B";
@@ -54,58 +60,64 @@ extends StandaloneClientTestBase {
 	private static final String RUN_ID = CircularReadFromBucketTest.class.getCanonicalName();
 	//
 	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
-		System.setProperty(
+	public static void setUpClass() {
+		try {
+			System.setProperty(
 				RunTimeConfig.KEY_RUN_ID, RUN_ID
-		);
-		StandaloneClientTestBase.setUpClass();
-		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
-		rtConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
-		RunTimeConfig.setContext(rtConfig);
-		//
-		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
-				.setAPI("s3")
-				.setLimitTime(0, TimeUnit.SECONDS)
-				.setLimitCount(WRITE_COUNT)
-				.setS3Bucket(RUN_ID)
-				.build()
-		) {
-			final BlockingQueue<WSObject> itemsQueue = new ArrayBlockingQueue<>(WRITE_COUNT);
-			final LimitedQueueItemBuffer<WSObject> itemsIO
-				= new LimitedQueueItemBuffer<>(itemsQueue);
-			COUNT_WRITTEN = client.write(
-				null, itemsIO, WRITE_COUNT, 1, SizeUtil.toSize(DATA_SIZE)
 			);
-			TimeUnit.SECONDS.sleep(1);
+			StandaloneClientTestBase.setUpClass();
+			//
+			final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+			rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
+			rtConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
+			rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
+			RunTimeConfig.setContext(rtConfig);
 			//
 			try (
-				final BufferingOutputStream
-					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+				final StorageClient<WSObject> client = CLIENT_BUILDER
+					.setAPI("s3")
+					.setLimitTime(0, TimeUnit.SECONDS)
+					.setLimitCount(WRITE_COUNT)
+					.setS3Bucket(RUN_ID)
+					.build()
 			) {
-				stdOutInterceptorStream.reset();
-				if (COUNT_WRITTEN > 0) {
-					COUNT_READ = client.read(null, null, READ_COUNT, 1, true);
-				} else {
-					throw new IllegalStateException("Failed to read");
-				}
+				final BlockingQueue<WSObject> itemsQueue = new ArrayBlockingQueue<>(WRITE_COUNT);
+				final LimitedQueueItemBuffer<WSObject> itemsIO
+					= new LimitedQueueItemBuffer<>(itemsQueue);
+				COUNT_WRITTEN = client.write(
+					null, itemsIO, WRITE_COUNT, 1, SizeUtil.toSize(DATA_SIZE)
+				);
 				TimeUnit.SECONDS.sleep(1);
-				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
+				//
+				try (
+					final BufferingOutputStream
+						stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+				) {
+					stdOutInterceptorStream.reset();
+					if (COUNT_WRITTEN > 0) {
+						COUNT_READ = client.read(null, null, READ_COUNT, 1, true);
+					} else {
+						throw new IllegalStateException("Failed to read");
+					}
+					TimeUnit.SECONDS.sleep(1);
+					STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
+				}
 			}
+			//
+			RunIdFileManager.flushAll();
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed");
 		}
-		//
-		RunIdFileManager.flushAll();
 	}
 	//
 	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		StdOutInterceptorTestSuite.reset();
-		StandaloneClientTestBase.tearDownClass();
+	public static void tearDownClass() {
+		try {
+			StdOutInterceptorTestSuite.reset();
+			StandaloneClientTestBase.tearDownClass();
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed");
+		}
 	}
 	//
 	@Test

@@ -2,6 +2,7 @@ package com.emc.mongoose.integ.distributed.chain;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemDst;
@@ -16,6 +17,9 @@ import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -39,6 +43,8 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIEN
 public class CircularSequentialChainTest
 extends DistributedClientTestBase {
 	//
+	private static final Logger LOG = LogManager.getLogger();
+	//
 	private static final int ITEM_MAX_QUEUE_SIZE = 65536;
 	private static final int BATCH_SIZE = 100;
 	private static final int WRITE_COUNT = 100;
@@ -57,53 +63,56 @@ extends DistributedClientTestBase {
 	private static byte STD_OUT_CONTENT[] = null;
 	//
 	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		DistributedClientTestBase.setUpClass();
-		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
-		RunTimeConfig.setContext(rtConfig);
-		//
-		try (
-			final StorageClient<WSObject> client = CLIENT_BUILDER
-				.setAPI("s3")
-				.setLimitTime(0, TimeUnit.SECONDS)
-				.setLimitCount(WRITE_COUNT)
-				.setS3Bucket(RUN_ID)
-				.build()
-		) {
-			final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
-				BasicWSObject.class, ContentSourceBase.getDefault()
-			);
-			COUNT_WRITTEN = client.write(
-				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize(DATA_SIZE)
-			);
-			TimeUnit.SECONDS.sleep(1);
+	public static void setUpClass() {
+		try {
+			System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+			DistributedClientTestBase.setUpClass();
+			//
+			final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+			rtConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
+			rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
+			rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
+			RunTimeConfig.setContext(rtConfig);
+			//
+			try (
+				final StorageClient<WSObject> client = CLIENT_BUILDER
+					.setAPI("s3")
+					.setLimitTime(0, TimeUnit.SECONDS)
+					.setLimitCount(WRITE_COUNT)
+					.setS3Bucket(RUN_ID)
+					.build()
+			) {
+				final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
+					BasicWSObject.class, ContentSourceBase.getDefault()
+				);
+				COUNT_WRITTEN = client.write(
+					null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize(DATA_SIZE)
+				);
+				TimeUnit.SECONDS.sleep(1);
+				RunIdFileManager.flushAll();
+			}
+			//
+			RunTimeConfig newConfig = RunTimeConfig.getContext();
+			newConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
+			newConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
+			newConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, RUN_ID);
+			newConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, RESULTS_COUNT);
+			RunTimeConfig.setContext(rtConfig);
+			//
+			final Chain chainScenario = new Chain(rtConfig);
+			try (
+				final BufferingOutputStream
+					stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+			) {
+				chainScenario.run();
+				TimeUnit.SECONDS.sleep(10);
+				STD_OUT_CONTENT = stdOutBuffer.toByteArray();
+			}
+			//
 			RunIdFileManager.flushAll();
+		} catch (final Exception e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed");
 		}
-		//
-		RunTimeConfig newConfig = RunTimeConfig.getContext();
-		newConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
-		newConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
-		newConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, RUN_ID);
-		newConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, RESULTS_COUNT);
-		RunTimeConfig.setContext(rtConfig);
-		//
-		final Chain chainScenario = new Chain(rtConfig);
-		try(
-			final BufferingOutputStream
-				stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
-		) {
-			chainScenario.run();
-			TimeUnit.SECONDS.sleep(10);
-			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
-		}
-		//
-		RunIdFileManager.flushAll();
 	}
 	//
 	@Test
