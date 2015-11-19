@@ -69,7 +69,7 @@ implements LoadExecutor<T> {
 	protected volatile ItemDst<T> consumer = null;
 	//
 	protected final long maxCount;
-	protected final int totalConnCount;
+	protected final int totalConnCount, activeTaskCountLimit;
 	// METRICS section
 	protected final int metricsPeriodSec;
 	protected IOStats ioStats;
@@ -233,6 +233,7 @@ implements LoadExecutor<T> {
 		LOG.debug(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
+		activeTaskCountLimit = 2 * totalConnCount + 1000;
 		//
 		RequestConfig<T> reqConfigClone = null;
 		try {
@@ -523,7 +524,7 @@ implements LoadExecutor<T> {
 					getName() + ": submit failed, shut down already or interrupted"
 				);
 			}
-			if(activeTaskCount < totalConnCount || activeTaskCount < batchSize) {
+			if(activeTaskCount < activeTaskCountLimit) {
 				break;
 			}
 			Thread.yield(); LockSupport.parkNanos(1);
@@ -571,7 +572,7 @@ implements LoadExecutor<T> {
 								getName() + ": submit failed, shut down already or interrupted"
 							);
 						}
-						if(activeTaskCount < totalConnCount || activeTaskCount < batchSize) {
+						if(activeTaskCount < activeTaskCountLimit) {
 							break;
 						}
 						Thread.yield(); LockSupport.parkNanos(1);
