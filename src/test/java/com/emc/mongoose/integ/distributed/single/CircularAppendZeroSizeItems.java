@@ -30,7 +30,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
+import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG_CLIENT;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
+import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIENT;
 
 /**
  * Created by gusakk on 05.11.15.
@@ -45,7 +47,7 @@ extends DistributedClientTestBase {
 	private static final int APPEND_COUNT = 12340;
 	//
 	private static final int COUNT_OF_APPEND = 10;
-	private static final int MIN_SIZE_AFTER_APPEND = 1280;
+	private static final int MIN_SIZE_AFTER_APPEND = 1152;
 	//
 	private static long COUNT_WRITTEN, COUNT_APPENDED;
 	private static byte[] STD_OUT_CONTENT;
@@ -54,7 +56,7 @@ extends DistributedClientTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularAppendTest.class.getCanonicalName()
+			RunTimeConfig.KEY_RUN_ID, CircularAppendZeroSizeItems.class.getCanonicalName()
 		);
 		DistributedClientTestBase.setUpClass();
 		//
@@ -101,20 +103,22 @@ extends DistributedClientTestBase {
 	//
 	@AfterClass
 	public static void tearDownClass()
-			throws Exception {
+	throws Exception {
 		StdOutInterceptorTestSuite.reset();
-		StandaloneClientTestBase.tearDownClass();
+		DistributedClientTestBase.tearDownClass();
 	}
 	//
 	@Test
 	public void checkAppendedCount()
-			throws Exception {
-		Assert.assertEquals(COUNT_WRITTEN * COUNT_OF_APPEND, COUNT_APPENDED);
+	throws Exception {
+		Assert.assertEquals(
+			COUNT_WRITTEN * COUNT_OF_APPEND, COUNT_APPENDED, (COUNT_APPENDED * 5) / 100
+		);
 	}
 	//
 	@Test
 	public void checkDataItemsSize()
-			throws Exception {
+	throws Exception {
 		try (
 			final BufferedReader
 				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
@@ -128,7 +132,7 @@ extends DistributedClientTestBase {
 	//
 	@Test
 	public void checkConsoleAvgMetricsLogging()
-			throws Exception {
+	throws Exception {
 		boolean passed = false;
 		long lastSuccCount = 0;
 		try (
@@ -143,19 +147,19 @@ extends DistributedClientTestBase {
 				if (nextStdOutLine == null) {
 					break;
 				} else {
-					m = CONSOLE_METRICS_AVG.matcher(nextStdOutLine);
+					m = CONSOLE_METRICS_AVG_CLIENT.matcher(nextStdOutLine);
 					if (m.find()) {
 						Assert.assertTrue(
-								"Load type is not " + IOTask.Type.APPEND.name() + ": " + m.group("typeLoad"),
-								IOTask.Type.APPEND.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + IOTask.Type.APPEND.name() + ": " + m.group("typeLoad"),
+							IOTask.Type.APPEND.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long
-								nextSuccCount = Long.parseLong(m.group("countSucc")),
-								nextFailCount = Long.parseLong(m.group("countFail"));
+							nextSuccCount = Long.parseLong(m.group("countSucc")),
+							nextFailCount = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-								"Next deleted items count " + nextSuccCount +
-										" is less than previous: " + lastSuccCount,
-								nextSuccCount >= lastSuccCount
+							"Next appended items count " + nextSuccCount +
+								" is less than previous: " + lastSuccCount,
+							nextSuccCount >= lastSuccCount
 						);
 						lastSuccCount = nextSuccCount;
 						Assert.assertTrue("There are failures reported", nextFailCount == 0);
@@ -165,18 +169,18 @@ extends DistributedClientTestBase {
 			} while (true);
 		}
 		Assert.assertTrue(
-				"Average metrics line matching the pattern was not met in the stdout", passed
+			"Average metrics line matching the pattern was not met in the stdout", passed
 		);
 	}
 	//
 	@Test
 	public void checkConsoleSumMetricsLogging()
-			throws Exception {
+	throws Exception {
 		boolean passed = false;
 		try (
-				final BufferedReader in = new BufferedReader(
-						new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
-				)
+			final BufferedReader in = new BufferedReader(
+				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
+			)
 		) {
 			String nextStdOutLine;
 			Matcher m;
@@ -185,21 +189,13 @@ extends DistributedClientTestBase {
 				if (nextStdOutLine == null) {
 					break;
 				} else {
-					m = CONSOLE_METRICS_SUM.matcher(nextStdOutLine);
+					m = CONSOLE_METRICS_SUM_CLIENT.matcher(nextStdOutLine);
 					if (m.find()) {
 						Assert.assertTrue(
-								"Load type is not " + IOTask.Type.APPEND.name() + ": " + m.group("typeLoad"),
-								IOTask.Type.APPEND.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + IOTask.Type.APPEND.name() + ": " + m.group("typeLoad"),
+							IOTask.Type.APPEND.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
-						long
-								countLimit = Long.parseLong(m.group("countLimit")),
-								countSucc = Long.parseLong(m.group("countSucc")),
-								countFail = Long.parseLong(m.group("countFail"));
-						Assert.assertTrue(
-								"Deleted items count " + countSucc +
-										" is not equal to the limit: " + countLimit,
-								countSucc == countLimit
-						);
+						long countFail = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue("There are failures reported", countFail == 0);
 						Assert.assertFalse("Summary metrics are printed twice at least", passed);
 						passed = true;
@@ -208,7 +204,7 @@ extends DistributedClientTestBase {
 			} while (true);
 		}
 		Assert.assertTrue(
-				"Summary metrics line matching the pattern was not met in the stdout", passed
+			"Summary metrics line matching the pattern was not met in the stdout", passed
 		);
 	}
 }
