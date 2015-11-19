@@ -208,7 +208,7 @@ implements LoadExecutor<T> {
 		storageNodeCount = addrs.length;
 		//
 		setName(name);
-		LOG.debug(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
+		LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
 		activeTaskCountLimit = 2 * totalConnCount + 1000;
@@ -635,21 +635,21 @@ implements LoadExecutor<T> {
 			return;
 		}
 		//
-		final T dataItem = ioTask.getItem();
+		final T item = ioTask.getItem();
 		final IOTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
 		// update the metrics
 		ioTask.mark(ioStats);
 		activeTasksStats.get(nodeAddr).decrementAndGet();
 		if(status == IOTask.Status.SUCC) {
-			lastDataItem = dataItem;
+			lastDataItem = item;
 			// put into the output buffer
 			try {
-				itemOutBuff.put(dataItem);
+				itemOutBuff.put(item);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e,
-					"{}: failed to put the data item into the output buffer", getName()
+					"{}: failed to put the item into the output buffer", getName()
 				);
 			}
 		} else {
@@ -673,24 +673,24 @@ implements LoadExecutor<T> {
 			activeTasksStats.get(nodeAddr).addAndGet(-n);
 			//
 			IOTask<T> ioTask;
-			T dataItem;
+			T item;
 			IOTask.Status status;
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
-				dataItem = ioTask.getItem();
+				item = ioTask.getItem();
 				status = ioTask.getStatus();
 				// update the metrics
 				ioTask.mark(ioStats);
 				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 				if(status == IOTask.Status.SUCC) {
-					lastDataItem = dataItem;
+					lastDataItem = item;
 					// pass data item to a consumer
 					try {
-						itemOutBuff.put(dataItem);
+						itemOutBuff.put(item);
 					} catch(final IOException e) {
 						LogUtil.exception(
 							LOG, Level.DEBUG, e,
-							"{}: failed to put the data item into the output buffer", getName()
+							"{}: failed to put the item into the output buffer", getName()
 						);
 					}
 				} else {
