@@ -71,10 +71,14 @@ implements Runnable {
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Load job \"{}\" was interrupted", loadJob);
 		} finally {
-			try {
-				loadJob.close();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job: {}", loadJob);
+			if(loadJob != null) {
+				try {
+					loadJob.close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to close the load job: {}", loadJob
+					);
+				}
 			}
 		}
 	}

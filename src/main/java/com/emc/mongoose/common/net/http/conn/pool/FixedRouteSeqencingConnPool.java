@@ -71,7 +71,13 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		//
 		@Override
 		public void run() {
-			FixedRouteSeqencingConnPool.super.lease(route, state, callback);
+			try {
+				FixedRouteSeqencingConnPool.super.lease(route, state, callback);
+			} catch(final Exception e) {
+				if(!FixedRouteSeqencingConnPool.super.isShutdown()) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to lease the connection");
+				}
+			}
 		}
 	}
 	//
@@ -103,7 +109,13 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		//
 		@Override
 		public void run() {
-			FixedRouteSeqencingConnPool.super.release(entry, reusable);
+			try {
+				FixedRouteSeqencingConnPool.super.release(entry, reusable);
+			} catch(final Exception e) {
+				if(!FixedRouteSeqencingConnPool.super.isShutdown()) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to release the connection");
+				}
+			}
 		}
 	}
 	//
