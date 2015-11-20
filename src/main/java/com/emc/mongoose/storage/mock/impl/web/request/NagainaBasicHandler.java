@@ -291,7 +291,7 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 		// TODO check usage of RANGE header
 		List<String> rangeHeaders = ctx.attr(currentHttpRequestKey).get().headers().getAll(RANGE);
 		try {
-			if (rangeHeaders == null) {
+			if (rangeHeaders.size() != 0) {
 				sharedStorage.createObject(containerName, objId,
 						offset, size);
 				ioStats.markWrite(true, size);
