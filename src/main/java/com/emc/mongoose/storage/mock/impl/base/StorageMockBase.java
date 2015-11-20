@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 03.07.15.
  */
@@ -518,18 +519,34 @@ implements StorageMock<T> {
 				//return;
 			}
 			//
-			long count = 0;
+			final AtomicLong count = new AtomicLong(0);
 			final List<T> buff = new ArrayList<>(batchSize);
 			int n;
+			final Thread displayProgressThread = new Thread(
+				new Runnable() {
+					@Override
+					public final void run() {
+						try {
+							while(true) {
+								LOG.info(Markers.MSG, "{} items loaded...", count.get());
+								TimeUnit.SECONDS.sleep(10);
+							}
+						} catch(final InterruptedException ignored) {
+						}
+					}
+				}
+			);
+			//
 			try(
 				final CSVFileItemSrc<T>
 					csvFileItemInput = new CSVFileItemSrc<>(dataFilePath, itemCls, contentSrc)
 			) {
+				displayProgressThread.start();
 				do {
 					n = csvFileItemInput.get(buff, batchSize);
 					if(n > 0) {
 						putIntoDefaultContainer(buff);
-						count += n;
+						count.addAndGet(n);
 					} else {
 						break;
 					}
@@ -541,6 +558,8 @@ implements StorageMock<T> {
 					LOG, Level.WARN, e, "Failed to load the data items from file \"{}\"",
 					dataFilePath
 				);
+			} finally {
+				displayProgressThread.interrupt();
 			}
 		}
 	}
