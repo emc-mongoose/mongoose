@@ -69,11 +69,7 @@ implements ItemProducer<T> {
 		this.isShuffling = isShuffling;
 		this.maxItemQueueSize = maxItemQueueSize;
 		//
-		if(isCircular) {
-			this.uniqueItems = new ConcurrentHashMap<>((int) maxItemQueueSize);
-		} else {
-			this.uniqueItems = new ConcurrentHashMap<>(1);
-		}
+		this.uniqueItems = new ConcurrentHashMap<>((int) maxItemQueueSize);
 	}
 	//
 	@Override
