@@ -30,12 +30,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 03.07.15.
  */
@@ -49,7 +50,7 @@ implements StorageMock<T> {
 	protected final StorageIOStats ioStats;
 	protected final Class<T> itemCls;
 	protected final ContentSource contentSrc;
-	protected final int storageCapacity, containerCapacity;
+	protected final int storageCapacity, containerCapacity, batchSize;
 	//
 	private final Sequencer sequencer;
 	//
@@ -68,6 +69,7 @@ implements StorageMock<T> {
 		ioStats = new BasicStorageIOStats(this, metricsPeriodSec, jmxServeFlag);
 		this.storageCapacity = storageCapacity;
 		this.containerCapacity = containerCapacity;
+		this.batchSize = batchSize;
 		this.sequencer = new Sequencer("storageMockSequencer", true, batchSize);
 		createContainer(ObjectContainerMock.DEFAULT_NAME);
 	}
@@ -204,6 +206,32 @@ implements StorageMock<T> {
 			if(c != null) {
 				completed(StorageMockBase.this.get(container).put(obj.getName(), obj));
 
+			} else {
+				failed(new ContainerMockNotFoundException(container));
+			}
+		}
+	}
+	//
+	private final class PutObjectsBatchTask
+	extends BasicFuture<T>
+	implements RunnableFuture<T> {
+		//
+		private final String container;
+		private final List<T> objs;
+		//
+		private PutObjectsBatchTask(final String container, final List<T> objs) {
+			super(null);
+			this.container = container;
+			this.objs = objs;
+		}
+		//
+		@Override
+		public final void run() {
+			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
+			if(c != null) {
+				for(final T obj : objs) {
+					completed(StorageMockBase.this.get(container).put(obj.getName(), obj));
+				}
 			} else {
 				failed(new ContainerMockNotFoundException(container));
 			}
@@ -412,14 +440,14 @@ implements StorageMock<T> {
 	}
 	//
 	@Override
-	public final void putIntoDefaultContainer(final T dataItem) {
+	public final void putIntoDefaultContainer(final List<T> dataItems) {
 		try {
-			sequencer.submit(new PutObjectTask(ObjectContainerMock.DEFAULT_NAME, dataItem));
+			sequencer.submit(new PutObjectsBatchTask(ObjectContainerMock.DEFAULT_NAME, dataItems));
 		} catch(final InterruptedException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e,
-				"Failed to put the object \"{}\" into the default container \"{}\"",
-				dataItem.getName(), ObjectContainerMock.DEFAULT_NAME
+				"Failed to put {} objects into the default container \"{}\"",
+				dataItems.size(), ObjectContainerMock.DEFAULT_NAME
 			);
 		}
 	}
@@ -491,16 +519,21 @@ implements StorageMock<T> {
 			}
 			//
 			long count = 0;
+			final List<T> buff = new ArrayList<>(batchSize);
+			int n;
 			try(
 				final CSVFileItemSrc<T>
 					csvFileItemInput = new CSVFileItemSrc<>(dataFilePath, itemCls, contentSrc)
 			) {
-				T nextItem = csvFileItemInput.get();
-				while(null != nextItem) {
-					putIntoDefaultContainer(nextItem);
-					count ++;
-					nextItem = csvFileItemInput.get();
-				}
+				do {
+					n = csvFileItemInput.get(buff, batchSize);
+					if(n > 0) {
+						putIntoDefaultContainer(buff);
+						count += n;
+					} else {
+						break;
+					}
+				} while(true);
 			} catch(final EOFException e) {
 				LOG.info(Markers.MSG, "Loaded {} data items from file {}", count, dataFilePath);
 			} catch(final IOException | NoSuchMethodException e) {

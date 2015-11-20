@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.mock.api;
 //
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 /**
  Created by kurila on 03.06.15.
@@ -14,7 +15,7 @@ extends Map<String, ObjectContainerMock<T>>, Runnable, Closeable {
 	long getCapacity();
 	StorageIOStats getStats();
 	//
-	void putIntoDefaultContainer(final T dataItem);
+	void putIntoDefaultContainer(final List<T> dataItems);
 	//
 	void createContainer(final String name);
 	//
