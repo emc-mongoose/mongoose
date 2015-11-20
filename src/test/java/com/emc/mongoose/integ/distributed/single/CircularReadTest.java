@@ -61,7 +61,7 @@ extends DistributedClientTestBase {
 	private static byte[] STD_OUT_CONTENT;
 	private static long COUNT_WRITTEN, COUNT_READ;
 	//
-	private static final String RUN_ID = CircularAppendTest.class.getCanonicalName();
+	private static final String RUN_ID = CircularReadTest.class.getCanonicalName();
 	//
 	@BeforeClass
 	public static void setUpClass() {
