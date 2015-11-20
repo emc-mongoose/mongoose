@@ -25,6 +25,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 /**
@@ -158,5 +161,22 @@ implements WSDataLoadBuilderSvc<T, U> {
 	public final void close()
 	throws IOException {
 		ServiceUtil.close(this);
+	}
+	//
+	@Override
+	protected boolean itemsFileExists(final String filePathStr) {
+		if(filePathStr != null && !filePathStr.isEmpty()) {
+			final Path listFilePath = Paths.get(filePathStr);
+			if(!Files.exists(listFilePath)) {
+				LOG.debug(Markers.MSG, "Specified input file \"{}\" doesn't exists", listFilePath);
+			} else if(!Files.isReadable(listFilePath)) {
+				LOG.debug(Markers.MSG, "Specified input file \"{}\" isn't readable", listFilePath);
+			} else if(Files.isDirectory(listFilePath)) {
+				LOG.debug(Markers.MSG, "Specified input file \"{}\" is a directory", listFilePath);
+			} else {
+				return true;
+			}
+		}
+		return false;
 	}
 }

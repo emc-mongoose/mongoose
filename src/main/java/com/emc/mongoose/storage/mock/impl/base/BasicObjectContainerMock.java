@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 31.07.15.
  */
@@ -21,16 +22,34 @@ implements ObjectContainerMock<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final String name;
+	private final AtomicInteger size = new AtomicInteger(0);
 	//
 	public BasicObjectContainerMock(final String name, final int capacity) {
 		super(capacity);
 		this.name = name;
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
+	//
 	@Override
-	protected final void moveToMRU(final LinkEntry<String, T> entry) {
-		// disable entry moving to MRU in case of access
-		// it's required to make list method (right below) working (keeping the linked list order)
+	public final int size() {
+		return size.get();
+	}
+	//
+	@Override
+	public final T put(final String key, final T value) {
+		final T oldValue = super.put(key, value);
+		if(null == oldValue) {
+			size.incrementAndGet();
+		}
+		return oldValue;
+	}
+	//
+	@Override
+	public final T remove(final Object key) {
+		final T value = super.remove(key);
+		if(value != null) {
+			size.decrementAndGet();
+		}
+		return value;
 	}
 	//
 	@Override
@@ -51,5 +70,21 @@ implements ObjectContainerMock<T> {
 			name, buffDst.size(), afterOid
 		);
 		return (nextEntry == null || nextEntry.getKey() == null) ? null : nextEntry.getValue();
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	protected final void moveToMRU(final LinkEntry<String, T> entry) {
+		// disable entry moving to MRU in case of access
+		// it's required to make list method (right below) working (keeping the linked list order)
+	}
+	//
+	@Override
+	protected final boolean removeLRU(final LinkEntry<String, T> entry) {
+		if(super.removeLRU(entry)) {
+			size.decrementAndGet();
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

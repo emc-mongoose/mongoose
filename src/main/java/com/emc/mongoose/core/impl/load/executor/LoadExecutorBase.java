@@ -68,7 +68,7 @@ implements LoadExecutor<T> {
 	protected volatile ItemDst<T> consumer = null;
 	//
 	protected final long maxCount;
-	protected final int totalConnCount;
+	protected final int totalConnCount, activeTaskCountLimit;
 	// METRICS section
 	protected final int metricsPeriodSec;
 	protected IOStats ioStats;
@@ -212,6 +212,7 @@ implements LoadExecutor<T> {
 		LOG.debug(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
+		activeTaskCountLimit = 2 * totalConnCount + 1000;
 		//
 		RequestConfig<T> reqConfigClone = null;
 		try {
@@ -368,6 +369,7 @@ implements LoadExecutor<T> {
 			for(final Runnable mgmtTask : mgmtTasks) {
 				mgmtExecutor.submit(mgmtTask);
 			}
+			mgmtExecutor.shutdown();
 			//
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		}
@@ -409,8 +411,12 @@ implements LoadExecutor<T> {
 		}
 		//
 		LOG.debug(Markers.MSG, "{}: waiting the output buffer to become empty", getName());
-		while(!itemOutBuff.isEmpty()) {
-			Thread.yield(); LockSupport.parkNanos(1);
+		for(int i = 0; i < 1000 && !itemOutBuff.isEmpty(); i ++) {
+			try {
+				Thread.sleep(10);
+			} catch(final InterruptedException e) {
+				break;
+			}
 		}
 		//
 		try {
@@ -438,6 +444,7 @@ implements LoadExecutor<T> {
 		}
 		//
 		mgmtExecutor.shutdownNow();
+		LOG.debug(Markers.MSG, "{}: service threads executor shut down", getName());
 		if(consumer instanceof LifeCycle) {
 			try {
 				((LifeCycle) consumer).shutdown();
@@ -452,6 +459,7 @@ implements LoadExecutor<T> {
 				);
 			}
 		}
+		super.interrupt();
 		//
 		LOG.debug(Markers.MSG, "{} interrupted", getName());
 	}
@@ -490,7 +498,7 @@ implements LoadExecutor<T> {
 					getName() + ": submit failed, shut down already or interrupted"
 				);
 			}
-			if(activeTaskCount < DEFAULT_ACTIVE_TASK_COUNT_MAX) {
+			if(activeTaskCount < activeTaskCountLimit) {
 				break;
 			}
 			Thread.yield(); LockSupport.parkNanos(1);
@@ -538,7 +546,7 @@ implements LoadExecutor<T> {
 								getName() + ": submit failed, shut down already or interrupted"
 							);
 						}
-						if(activeTaskCount < DEFAULT_ACTIVE_TASK_COUNT_MAX) {
+						if(activeTaskCount < activeTaskCountLimit) {
 							break;
 						}
 						Thread.yield(); LockSupport.parkNanos(1);
@@ -715,42 +723,6 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected final static ThreadLocal<StringBuilder>
-		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
-		@Override
-		protected final StringBuilder initialValue() {
-			return new StringBuilder();
-		}
-	};
-	//
-	protected void logTaskTrace(
-		final T item, final IOTask.Status status, final String nodeAddr,
-		final long countBytesDone, final long reqTimeStart,
-		final int reqDuration, final int respLatency
-	) {
-		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
-			StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
-			if(strBuilder == null) {
-				strBuilder = new StringBuilder();
-				PERF_TRACE_MSG_BUILDER.set(strBuilder);
-			} else {
-				strBuilder.setLength(0); // clear/reset
-			}
-			LOG.info(
-				Markers.PERF_TRACE,
-				strBuilder
-					.append(nodeAddr).append(',')
-					.append(item.getName()).append(',')
-					.append(countBytesDone).append(',')
-					.append(status.code).append(',')
-					.append(reqTimeStart).append(',')
-					.append(respLatency).append(',')
-					.append(reqDuration)
-					.toString()
-			);
-		}
-	}
-	//
 	protected void passItems()
 	throws InterruptedException {
 		try {
@@ -774,7 +746,8 @@ implements LoadExecutor<T> {
 					}
 					int m = 0;
 					while(m < n) {
-						Thread.yield(); LockSupport.parkNanos(1);
+						Thread.yield();
+						LockSupport.parkNanos(1);
 						m += consumer.put(items, m, n);
 					}
 					if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -1029,11 +1002,6 @@ implements LoadExecutor<T> {
 		} finally {
 			super.finalize();
 		}
-	}
-	//
-	@Override
-	public final RequestConfig<T> getRequestConfig() {
-		return reqConfigCopy;
 	}
 	//
 	@Override

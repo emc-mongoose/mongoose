@@ -22,8 +22,8 @@ ext {
 
 	ecj = [ "org.eclipse.jdt.core.compiler:ecj:3.5.1" ]
 
-	httpcore = [ "org.apache.httpcomponents:httpcore-nio:4.4.1" ]
-	httpcore_nio = [ "org.apache.httpcomponents:httpcore-nio:4.4.1" ]
+	httpcore = [ "org.apache.httpcomponents:httpcore-nio:4.4.4" ]
+	httpcore_nio = [ "org.apache.httpcomponents:httpcore-nio:4.4.4" ]
 
 	jackson_annotations = [ "com.fasterxml.jackson.core:jackson-annotations:2.4.1" ]
 	jackson_core = [ "com.fasterxml.jackson.core:jackson-core:2.4.1" ]

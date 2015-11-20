@@ -131,6 +131,11 @@ implements ItemBuffer<T> {
 	public final boolean isEmpty() {
 		return queue.isEmpty();
 	}
+	//
+	@Override
+	public final int size() {
+		return queue.size();
+	}
 	/**
 	 Does nothing
 	 @throws IOException doesn't throw

@@ -19,5 +19,8 @@ extends LoadExecutor<T>, Service {
 	//
 	List<T> getProcessedItems()
 	throws RemoteException;
+	//
+	int getProcessedItemsCount()
+	throws RemoteException;
 }
 
