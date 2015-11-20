@@ -51,7 +51,7 @@ implements StorageMock<T> {
 	protected final StorageIOStats ioStats;
 	protected final Class<T> itemCls;
 	protected final ContentSource contentSrc;
-	protected final int storageCapacity, containerCapacity, batchSize;
+	protected final int storageCapacity, containerCapacity;
 	//
 	private final Sequencer sequencer;
 	//
@@ -70,7 +70,6 @@ implements StorageMock<T> {
 		ioStats = new BasicStorageIOStats(this, metricsPeriodSec, jmxServeFlag);
 		this.storageCapacity = storageCapacity;
 		this.containerCapacity = containerCapacity;
-		this.batchSize = batchSize;
 		this.sequencer = new Sequencer("storageMockSequencer", true, batchSize);
 		createContainer(ObjectContainerMock.DEFAULT_NAME);
 	}
@@ -544,8 +543,8 @@ implements StorageMock<T> {
 			) {
 				displayProgressThread.start();
 				do {
-					buff = new ArrayList<>(batchSize);
-					n = csvFileItemInput.get(buff, batchSize);
+					buff = new ArrayList<>(4096);
+					n = csvFileItemInput.get(buff, 4096);
 					if(n > 0) {
 						putIntoDefaultContainer(buff);
 						count.addAndGet(n);
