@@ -34,9 +34,13 @@ implements ContentSource {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected ByteBuffer zeroByteLayer;
-	protected long seed;
-	protected final Map<Integer, ByteBuffer> byteLayersMap;
+	protected ByteBuffer zeroByteLayer = null;
+	protected long seed = 0;
+	//
+	protected transient Map<Integer, ByteBuffer> byteLayersMap = null;
+	//
+	protected ContentSourceBase() {
+	}
 	//
 	protected ContentSourceBase(final ByteBuffer zeroByteLayer) {
 		this.zeroByteLayer = zeroByteLayer;
@@ -89,6 +93,7 @@ implements ContentSource {
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
+		out.writeLong(seed);
 		final byte buff[] = new byte[zeroByteLayer.capacity()];
 		zeroByteLayer.clear(); // reset
 		zeroByteLayer.get(buff);
@@ -99,6 +104,7 @@ implements ContentSource {
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
+		seed = in.readLong();
 		int size = in.readInt(), k;
 		final byte buff[] = new byte[size];
 		for(int i = 0; i < size; ) {
@@ -111,6 +117,9 @@ implements ContentSource {
 		}
 		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
 		byteLayersMap.clear();
+		byteLayersMap = new LRUMap<>(
+			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
+		);
 		byteLayersMap.put(0, zeroByteLayer);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

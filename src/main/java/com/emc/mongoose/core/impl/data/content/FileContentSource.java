@@ -20,7 +20,7 @@ implements ContentSource {
 	//
 	public FileContentSource()
 	throws IOException, InvalidPathException {
-		super(null);
+		super();
 	}
 	//
 	public FileContentSource(final ReadableByteChannel contentSrcChan, final long size)
