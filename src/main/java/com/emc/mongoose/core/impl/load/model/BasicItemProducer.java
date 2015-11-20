@@ -34,9 +34,6 @@ implements ItemProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final Lock itemsLock = new ReentrantLock();
-	protected final Condition itemsWereProduced = itemsLock.newCondition();
-	//
 	protected final ConcurrentHashMap<String, T> uniqueItems;
 	protected final ItemSrc<T> itemSrc;
 	protected final long maxCount;

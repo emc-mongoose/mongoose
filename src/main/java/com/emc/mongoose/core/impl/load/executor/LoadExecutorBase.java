@@ -24,7 +24,6 @@ import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
 //
-import org.apache.commons.collections4.map.CompositeMap;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -36,7 +35,6 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -85,12 +83,11 @@ implements LoadExecutor<T> {
 		isInterrupted = new AtomicBoolean(false),
 		isClosed = new AtomicBoolean(false);
 	protected boolean isLimitReached = false;
-	protected final AtomicBoolean isDispatcherAwait = new AtomicBoolean(false);
+	protected volatile boolean areAllItemsProduced = false;
 	protected final AtomicLong
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
-		counterResults = new AtomicLong(0),
-		counterPassed = new AtomicLong(0);
+		counterResults = new AtomicLong(0);
 	protected T lastItem;
 	protected final Object state = new Object();
 	protected final ItemBuffer<T> itemOutBuff;
@@ -176,28 +173,19 @@ implements LoadExecutor<T> {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("resultsDispatcher<" + getName() + ">");
 			try {
-				if(itemsLock.tryLock(10, TimeUnit.SECONDS)) {
-					try {
-						try {
-							if(isCircular) {
-								if(isDispatcherAwait.compareAndSet(false, true)) {
-									itemsWereProduced.await(1000, TimeUnit.SECONDS);
-								}
-							}
-							while(!currThread.isInterrupted()) {
-								passItems();
-								Thread.yield();
-								LockSupport.parkNanos(1000);
-							}
-						} catch(final InterruptedException e) {
-							LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
-						}
-					} finally {
-						itemsLock.unlock();
+				if(isCircular) {
+					while(!areAllItemsProduced) {
+						LockSupport.parkNanos(1000000);
+						Thread.yield();
 					}
 				}
+				while(!currThread.isInterrupted()) {
+					passItems();
+					Thread.yield();
+					LockSupport.parkNanos(1000);
+				}
 			} catch(final InterruptedException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to catch the lock");
+				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
 			} finally {
 				LOG.debug(Markers.MSG, "{}: results dispatched finished", getName());
 			}
@@ -973,27 +961,9 @@ implements LoadExecutor<T> {
 	protected void shutdownActually() {
 		super.interrupt(); // stop the source producing right now
 		if(isCircular) {
-			signalThatItemsWereProduced(); //  unblock ResultsDispatcher thread
+			areAllItemsProduced = true; //  unblock ResultsDispatcher thread
 		}
 		LOG.debug(Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"", itemSrc, getName());
-	}
-	//
-	protected void signalThatItemsWereProduced() {
-		while(!isDispatcherAwait.get()) {
-			LockSupport.parkNanos(1000);
-			Thread.yield();
-		}
-		try {
-			if(itemsLock.tryLock(10, TimeUnit.SECONDS)) {
-				try {
-					itemsWereProduced.signalAll();
-				} finally {
-					itemsLock.unlock();
-				}
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to catch the lock");
-		}
 	}
 	//
 	@Override
