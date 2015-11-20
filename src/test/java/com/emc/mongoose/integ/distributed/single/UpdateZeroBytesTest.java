@@ -70,8 +70,10 @@ extends DistributedClientTestBase {
 		Assert.assertEquals(COUNT_TO_WRITE, OBJ_BUFF_UPDATED.size());
 		URL nextObjURL;
 		final byte buff[] = new byte[OBJ_SIZE];
+		WSObject nextObj;
 		for(int i = 0; i < OBJ_BUFF_UPDATED.size(); i ++) {
-			nextObjURL = new URL(BASE_URL + OBJ_BUFF_UPDATED.get(i).getName());
+			nextObj = OBJ_BUFF_UPDATED.get(i);
+			nextObjURL = new URL(BASE_URL + nextObj.getName());
 			try(final BufferedInputStream in = new BufferedInputStream(nextObjURL.openStream())) {
 				int n = 0, m;
 				do {
@@ -93,8 +95,10 @@ extends DistributedClientTestBase {
 						break;
 					}
 				}
-				Assert.assertFalse(
-					"Non-zero bytes have been found in the updated object", nonZeroByte
+				Assert.assertTrue(
+					"Non-zero bytes have not been found in the " + i +
+						"th updated object: " + nextObj.toString(),
+					nonZeroByte
 				);
 			}
 		}

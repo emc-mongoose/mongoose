@@ -185,7 +185,7 @@ implements ContentSource {
 				layer = byteLayersMap.get(layerIndex);
 			} else {
 				layer = ByteBuffer.allocateDirect(size);
-				nextSeed = (seed << layerIndex) ^ layerIndex;
+				nextSeed = Long.reverseBytes((seed << layerIndex) ^ layerIndex);
 				LOG.debug(
 					Markers.MSG,
 					"Generate new byte layer #{} using the seed: \"{}\"",
