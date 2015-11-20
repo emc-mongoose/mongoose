@@ -487,7 +487,7 @@ implements StorageMock<T> {
 				LOG.warn(
 					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is not readable"
 				);
-				return;
+				//return;
 			}
 			//
 			long count = 0;
@@ -497,16 +497,12 @@ implements StorageMock<T> {
 			) {
 				T nextItem = csvFileItemInput.get();
 				while(null != nextItem) {
-					// if mongoose is v0.5.0
-					//if(dataSizeRadix == 0x10) {
-					//	nextItem.setSize(Long.valueOf(String.valueOf(nextItem.getSize()), 0x10));
-					//}
 					putIntoDefaultContainer(nextItem);
 					count ++;
 					nextItem = csvFileItemInput.get();
 				}
 			} catch(final EOFException e) {
-				LOG.debug(Markers.MSG, "Loaded {} data items from file {}", count, dataFilePath);
+				LOG.info(Markers.MSG, "Loaded {} data items from file {}", count, dataFilePath);
 			} catch(final IOException | NoSuchMethodException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to load the data items from file \"{}\"",

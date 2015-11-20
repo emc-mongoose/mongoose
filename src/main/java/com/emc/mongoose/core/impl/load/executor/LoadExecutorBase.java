@@ -208,7 +208,9 @@ implements LoadExecutor<T> {
 		storageNodeCount = addrs.length;
 		//
 		setName(name);
-		LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
+		if(itemSrc != null) {
+			LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
+		}
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
 		activeTaskCountLimit = 2 * totalConnCount + 1000;
