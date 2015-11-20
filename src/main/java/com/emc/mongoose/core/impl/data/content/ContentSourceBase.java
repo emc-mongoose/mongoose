@@ -116,7 +116,6 @@ implements ContentSource {
 			}
 		}
 		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
-		byteLayersMap.clear();
 		byteLayersMap = new LRUMap<>(
 			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
 		);
