@@ -135,14 +135,14 @@ public final class LogUtil {
 						LogManager.getLogger().info(
 							Markers.MSG, "Logging subsystem is configured successfully"
 						);
-						Runtime.getRuntime().addShutdownHook(
+						/*Runtime.getRuntime().addShutdownHook(
 							new Thread("logCtxShutDownHook") {
 								@Override
 								public final void run() {
 									shutdown();
 								}
 							}
-						);
+						);*/
 					}
 					final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);
 					System.setErr(
@@ -162,7 +162,7 @@ public final class LogUtil {
 		}
 	}
 	//
-	public static void shutdown() {
+	/*public static void shutdown() {
 		final Logger LOG = LogManager.getLogger();
 		try {
 			if(LOAD_HOOKS_COUNT.get() != 0) {
@@ -195,7 +195,7 @@ public final class LogUtil {
 				LOG_CTX_LOCK.unlock();
 			}
 		}
-	}
+	}*/
 	//
 	public static void exception(
 		final Logger logger, final Level level, final Throwable e,
