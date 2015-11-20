@@ -231,8 +231,9 @@ implements StorageMock<T> {
 			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
 			if(c != null) {
 				for(final T obj : objs) {
-					completed(StorageMockBase.this.get(container).put(obj.getName(), obj));
+					StorageMockBase.this.get(container).put(obj.getName(), obj);
 				}
+				completed(objs.get(0));
 			} else {
 				failed(new ContainerMockNotFoundException(container));
 			}
