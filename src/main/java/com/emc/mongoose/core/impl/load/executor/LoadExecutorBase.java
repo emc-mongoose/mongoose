@@ -199,7 +199,7 @@ implements LoadExecutor<T> {
 	) {
 		super(
 			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE,
-			rtConfig.getBatchSize(), rtConfig.isItemSrcCircularEnabled(),
+			DEFAULT_INTERNAL_BATCH_SIZE, rtConfig.isItemSrcCircularEnabled(),
 			rtConfig.isShuffleItemsEnabled(), rtConfig.getItemQueueMaxSize()
 		);
 		try {
