@@ -514,14 +514,14 @@ implements StorageMock<T> {
 				return;
 			}
 			if(Files.isReadable(dataFilePath)) {
-				LOG.warn(
+				LOG.debug(
 					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is not readable"
 				);
 				//return;
 			}
 			//
 			final AtomicLong count = new AtomicLong(0);
-			final List<T> buff = new ArrayList<>(batchSize);
+			List<T> buff;
 			int n;
 			final Thread displayProgressThread = new Thread(
 				new Runnable() {
@@ -544,6 +544,7 @@ implements StorageMock<T> {
 			) {
 				displayProgressThread.start();
 				do {
+					buff = new ArrayList<>(batchSize);
 					n = csvFileItemInput.get(buff, batchSize);
 					if(n > 0) {
 						putIntoDefaultContainer(buff);
