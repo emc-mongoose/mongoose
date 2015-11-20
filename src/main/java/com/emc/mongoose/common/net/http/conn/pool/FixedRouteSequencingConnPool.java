@@ -23,7 +23,7 @@ import java.util.concurrent.RunnableFuture;
 /**
  Created by kurila on 15.10.15.
  */
-public final class FixedRouteSeqencingConnPool
+public final class FixedRouteSequencingConnPool
 extends BasicNIOConnPool
 implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	//
@@ -32,7 +32,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	private final Sequencer connPoolSequencer;
 	private final HttpHost route;
 	//
-	public FixedRouteSeqencingConnPool(
+	public FixedRouteSequencingConnPool(
 		final ConnectingIOReactor ioReactor, final HttpHost route,
 		final NIOConnFactory<HttpHost, NHttpClientConnection> connFactory,
 		final int connectTimeout, final int batchSize
@@ -72,9 +72,9 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		@Override
 		public void run() {
 			try {
-				FixedRouteSeqencingConnPool.super.lease(route, state, callback);
+				FixedRouteSequencingConnPool.super.lease(route, state, callback);
 			} catch(final Exception e) {
-				if(!FixedRouteSeqencingConnPool.super.isShutdown()) {
+				if(!FixedRouteSequencingConnPool.super.isShutdown()) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to lease the connection");
 				}
 			}
@@ -110,9 +110,9 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		@Override
 		public void run() {
 			try {
-				FixedRouteSeqencingConnPool.super.release(entry, reusable);
+				FixedRouteSequencingConnPool.super.release(entry, reusable);
 			} catch(final Exception e) {
-				if(!FixedRouteSeqencingConnPool.super.isShutdown()) {
+				if(!FixedRouteSequencingConnPool.super.isShutdown()) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to release the connection");
 				}
 			}
