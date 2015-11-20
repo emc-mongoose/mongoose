@@ -110,6 +110,12 @@ implements WSDataLoadSvc<T> {
 	protected final void passUniqueItemsFinally(final List<T> items) {
 		if(consumer != null) {
 			int n = items.size();
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Going to put {} items to the consumer {}",
+					n, consumer
+				);
+			}
 			try {
 				if(!items.isEmpty()) {
 					int m = 0, k;
@@ -126,6 +132,13 @@ implements WSDataLoadSvc<T> {
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
+				);
+			}
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG,
+					"{} items were passed to the consumer {} successfully",
+					n, consumer
 				);
 			}
 		}

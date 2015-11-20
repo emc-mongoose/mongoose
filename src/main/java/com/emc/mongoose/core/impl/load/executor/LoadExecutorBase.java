@@ -461,9 +461,9 @@ implements LoadExecutor<T> {
 				Collections.enumeration(uniqueItems.values())
 			);
 			passUniqueItemsFinally(itemsList);
-			//
-			uniqueItems.clear();
 		}
+		uniqueItems.clear();
+		uniqueItems = null;
 		//
 		if(consumer instanceof LifeCycle) {
 			try {
@@ -771,32 +771,7 @@ implements LoadExecutor<T> {
 						LockSupport.parkNanos(1);
 					}
 				} else {
-					// is this an end of consumer-producer chain?
-					if(consumer == null) {
-						passUniqueItemsFinally(items);
-					} else { // put to the consumer
-						if(LOG.isTraceEnabled(Markers.MSG)) {
-							LOG.trace(
-								Markers.MSG, "Going to put {} items to the consumer {}",
-								n, consumer
-							);
-						}
-						int m = 0, k;
-						while(m < n) {
-							k = consumer.put(items, m, n);
-							if(k > 0) {
-								m += k;
-							}
-							Thread.yield(); LockSupport.parkNanos(1);
-						}
-						if(LOG.isTraceEnabled(Markers.MSG)) {
-							LOG.trace(
-								Markers.MSG,
-								"{} items were passed to the consumer {} successfully",
-								n, consumer
-							);
-						}
-					}
+					passUniqueItemsFinally(items);
 				}
 			}
 		} catch(final IOException e) {
@@ -811,14 +786,21 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected void passUniqueItemsFinally(final List<T> items) {
+		// is this an end of consumer-producer chain?
 		if(consumer == null) {
 			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
 				for(final Item item : items) {
 					LOG.info(Markers.ITEM_LIST, item);
 				}
 			}
-		} else {
+		} else { // put to the consumer
 			int n = items.size();
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Going to put {} items to the consumer {}",
+					n, consumer
+				);
+			}
 			try {
 				if(!items.isEmpty()) {
 					int m = 0, k;
@@ -835,6 +817,13 @@ implements LoadExecutor<T> {
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
+				);
+			}
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG,
+					"{} items were passed to the consumer {} successfully",
+					n, consumer
 				);
 			}
 		}
