@@ -159,11 +159,17 @@ implements LoadBuilder<T, U> {
 		if(filePathStr != null && !filePathStr.isEmpty()) {
 			final Path listFilePath = Paths.get(filePathStr);
 			if(!Files.exists(listFilePath)) {
-				LOG.debug(Markers.MSG, "Specified input file \"{}\" doesn't exists", listFilePath);
+				throw new IllegalArgumentException(
+					String.format("Specified input file \"%s\" doesn't exists", listFilePath)
+				);
 			} else if(!Files.isReadable(listFilePath)) {
-				LOG.debug(Markers.MSG, "Specified input file \"{}\" isn't readable", listFilePath);
+				throw new IllegalArgumentException(
+					String.format("Specified input file \"%s\" isn't readable", listFilePath)
+				);
 			} else if(Files.isDirectory(listFilePath)) {
-				LOG.debug(Markers.MSG, "Specified input file \"{}\" is a directory", listFilePath);
+				throw new IllegalArgumentException(
+					String.format("Specified input file \"%s\" is a directory", listFilePath)
+				);
 			} else {
 				return true;
 			}

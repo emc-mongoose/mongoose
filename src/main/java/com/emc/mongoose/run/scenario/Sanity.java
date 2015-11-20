@@ -41,9 +41,9 @@ import java.util.concurrent.TimeUnit;
 public class Sanity
 implements Runnable {
 	//
-	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 200;
+	private final static short DEFAULT_NODE_COUNT = 2, DEFAULT_CONN_PER_NODE = 200;
 	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("10MB");
-	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
+	private final static int DEFAULT_DATA_COUNT_MAX = 1000;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -71,7 +71,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Start updating");
 			final ItemDst<WSObject> dataDstU = new BinFileItemDst<>();
 			final long nUpdated = client.update(
-				dataDstW.getItemSrc(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 20
+				dataDstW.getItemSrc(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
@@ -98,7 +98,7 @@ implements Runnable {
 				ContentSourceBase.getDefault()
 			);
 			final long nUpdated2 = client.update(
-				dataDstA.getItemSrc(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 20
+				dataDstA.getItemSrc(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
 			// read and verify the updated items again

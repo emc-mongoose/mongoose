@@ -4,7 +4,6 @@ import com.emc.mongoose.common.concurrent.LifeCycle;
 //
 import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.model.ItemDst;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.ItemProducer;
@@ -28,17 +27,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface LoadExecutor<T extends Item>
 extends ItemDst<T>, LifeCycle, ItemProducer<T> {
 	//
-	int
-		DEFAULT_RESULTS_QUEUE_SIZE = 0x10000,
-		DEFAULT_ACTIVE_TASK_COUNT_MAX = 0x1000;
+	int DEFAULT_RESULTS_QUEUE_SIZE = 0x10000;
 	//
 	AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
 	//
 	Map<String, List<LoadState<? extends Item>>>
 		RESTORED_STATES_MAP = new ConcurrentHashMap<>();
-	//
-	RequestConfig<T> getRequestConfig()
-	throws RemoteException;
 	//
 	String getName()
 	throws RemoteException;

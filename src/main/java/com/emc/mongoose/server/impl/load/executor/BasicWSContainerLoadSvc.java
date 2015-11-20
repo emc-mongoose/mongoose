@@ -107,8 +107,8 @@ implements WSContainerLoadSvc<T, C> {
 	throws RemoteException {
 		List<C> itemsBuff = null;
 		try {
-			itemsBuff = new ArrayList<>(batchSize);
-			itemOutBuff.get(itemsBuff, batchSize);
+			itemsBuff = new ArrayList<>(DEFAULT_RESULTS_QUEUE_SIZE);
+			itemOutBuff.get(itemsBuff, DEFAULT_RESULTS_QUEUE_SIZE);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");
 		}
@@ -120,4 +120,9 @@ implements WSContainerLoadSvc<T, C> {
 		return instanceNum;
 	}
 	//
+	@Override
+	public int getProcessedItemsCount()
+	throws RemoteException {
+		return itemOutBuff.size();
+	}
 }
