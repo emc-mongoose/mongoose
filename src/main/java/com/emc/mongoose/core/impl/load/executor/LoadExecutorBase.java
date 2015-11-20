@@ -24,6 +24,7 @@ import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
 //
+import org.apache.commons.collections4.map.CompositeMap;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -36,6 +37,7 @@ import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -468,7 +470,12 @@ implements LoadExecutor<T> {
 		LOG.debug(Markers.MSG, "{}: service threads executor shut down", getName());
 		//
 		if(isCircular) {
-			passUniqueItemsFinally(uniqueItems.values());
+			final List<T> itemsList = Collections.list(
+				Collections.enumeration(uniqueItems.values())
+			);
+			passUniqueItemsFinally(itemsList);
+			//
+			uniqueItems.clear();
 		}
 		//
 		if(consumer instanceof LifeCycle) {
@@ -816,7 +823,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected void passUniqueItemsFinally(final Collection<T> items) {
+	protected void passUniqueItemsFinally(final List<T> items) {
 		if(consumer == null) {
 			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
 				for(final Item item : items) {
@@ -825,28 +832,24 @@ implements LoadExecutor<T> {
 			}
 		} else {
 			int n = items.size();
-			final List<T> itemList = new ArrayList<>(n);
 			try {
 				if(!items.isEmpty()) {
-					itemList.addAll(items);
 					int left = 0, k;
 					int	right = (left + batchSize) > n ? n : left + batchSize;
 					while(left < n) {
-						k = consumer.put(itemList, left, right);
+						k = consumer.put(items, left, right);
 						if(k > 0) {
 							left += k;
+							if(left >= n) {
+								break;
+							}
 						}
-						if(left > n) {
-							break;
-						}
-						right += left + batchSize;
-						if(right > n) {
-							right = n;
-						}
+						right = (right + k) > n ? n : right + k;
 						Thread.yield();
 						LockSupport.parkNanos(1);
 					}
 				}
+				items.clear();
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer

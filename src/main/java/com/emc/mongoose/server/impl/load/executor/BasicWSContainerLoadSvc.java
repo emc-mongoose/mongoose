@@ -106,30 +106,30 @@ implements WSContainerLoadSvc<T, C> {
 	}
 	//
 	@Override
-	protected void passUniqueItemsFinally(final Collection<C> items) {
+	protected void passUniqueItemsFinally(final List<C> items) {
 		if(consumer != null) {
 			int n = items.size();
-			final List<C> itemList = new ArrayList<>(n);
 			try {
 				if(!items.isEmpty()) {
-					itemList.addAll(items);
 					int left = 0, k;
 					int	right = (left + batchSize) > n ? n : left + batchSize;
 					while(left < n) {
-						k = consumer.put(itemList, left, right);
+						k = consumer.put(items, left, right);
 						if(k > 0) {
 							left += k;
+							if(left >= n) {
+								break;
+							}
 						}
-						right += left + batchSize;
-						if(left > n || right >= n)
-							break;
+						right = (right + k) > n ? n : right + k;
 						Thread.yield();
 						LockSupport.parkNanos(1);
 					}
 				}
+				items.clear();
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to feed the items to \"{}\"", consumer
+					LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
 				);
 			}
 		}
