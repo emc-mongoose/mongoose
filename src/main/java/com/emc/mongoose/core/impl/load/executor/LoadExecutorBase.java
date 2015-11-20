@@ -83,7 +83,6 @@ implements LoadExecutor<T> {
 		isInterrupted = new AtomicBoolean(false),
 		isClosed = new AtomicBoolean(false);
 	protected boolean isLimitReached = false;
-	protected volatile boolean areAllItemsProduced = false;
 	protected final AtomicLong
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),

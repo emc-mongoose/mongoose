@@ -45,6 +45,7 @@ implements ItemProducer<T> {
 	protected boolean isShuffling;
 	protected long maxItemQueueSize;
 	//
+	protected volatile boolean areAllItemsProduced = false;
 	protected volatile long producedItemsCount = 0;
 	//
 	protected BasicItemProducer(
