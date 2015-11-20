@@ -211,7 +211,7 @@ implements WSContainerLoadExecutor<T, C> {
 					);
 				} finally {
 					try {
-						nextConnPool.shutdown(1);
+						nextConnPool.shutdown(0);
 						LOG.debug(Markers.MSG, "{}: connection pool has been shut down", getName());
 					} catch(final IOException e) {
 						LogUtil.exception(
