@@ -391,7 +391,7 @@ implements LoadBuilderClient<T, W, U> {
 	//
 	protected abstract ItemSrc<T> getDefaultItemSource();
 	//
-	protected final void resetItemSrc() {
+	protected void resetItemSrc() {
 		flagUseNewItemSrc = true;
 		flagUseNoneItemSrc = false;
 		itemSrc = null;

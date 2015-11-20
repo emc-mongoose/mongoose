@@ -190,4 +190,10 @@ implements DataLoadBuilderClient<T, W, U> {
 		}
 		return null;
 	}
+	//
+	@Override
+	protected final void resetItemSrc() {
+		super.resetItemSrc();
+		flagUseContainerItemSrc = true;
+	}
 }
