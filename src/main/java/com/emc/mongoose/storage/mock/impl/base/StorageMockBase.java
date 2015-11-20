@@ -30,8 +30,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +51,7 @@ implements StorageMock<T> {
 	protected final StorageIOStats ioStats;
 	protected final Class<T> itemCls;
 	protected final ContentSource contentSrc;
-	protected final int storageCapacity, containerCapacity;
+	protected final int storageCapacity, containerCapacity, batchSize;
 	//
 	private final Sequencer sequencer;
 	//
@@ -68,6 +70,7 @@ implements StorageMock<T> {
 		ioStats = new BasicStorageIOStats(this, metricsPeriodSec, jmxServeFlag);
 		this.storageCapacity = storageCapacity;
 		this.containerCapacity = containerCapacity;
+		this.batchSize = batchSize;
 		this.sequencer = new Sequencer("storageMockSequencer", true, batchSize);
 		createContainer(ObjectContainerMock.DEFAULT_NAME);
 	}
@@ -204,6 +207,33 @@ implements StorageMock<T> {
 			if(c != null) {
 				completed(StorageMockBase.this.get(container).put(obj.getName(), obj));
 
+			} else {
+				failed(new ContainerMockNotFoundException(container));
+			}
+		}
+	}
+	//
+	private final class PutObjectsBatchTask
+	extends BasicFuture<T>
+	implements RunnableFuture<T> {
+		//
+		private final String container;
+		private final List<T> objs;
+		//
+		private PutObjectsBatchTask(final String container, final List<T> objs) {
+			super(null);
+			this.container = container;
+			this.objs = objs;
+		}
+		//
+		@Override
+		public final void run() {
+			final ObjectContainerMock<T> c = StorageMockBase.this.get(container);
+			if(c != null) {
+				for(final T obj : objs) {
+					StorageMockBase.this.get(container).put(obj.getName(), obj);
+				}
+				completed(objs.get(0));
 			} else {
 				failed(new ContainerMockNotFoundException(container));
 			}
@@ -412,14 +442,14 @@ implements StorageMock<T> {
 	}
 	//
 	@Override
-	public final void putIntoDefaultContainer(final T dataItem) {
+	public final void putIntoDefaultContainer(final List<T> dataItems) {
 		try {
-			sequencer.submit(new PutObjectTask(ObjectContainerMock.DEFAULT_NAME, dataItem));
+			sequencer.submit(new PutObjectsBatchTask(ObjectContainerMock.DEFAULT_NAME, dataItems));
 		} catch(final InterruptedException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e,
-				"Failed to put the object \"{}\" into the default container \"{}\"",
-				dataItem.getName(), ObjectContainerMock.DEFAULT_NAME
+				"Failed to put {} objects into the default container \"{}\"",
+				dataItems.size(), ObjectContainerMock.DEFAULT_NAME
 			);
 		}
 	}
@@ -484,34 +514,54 @@ implements StorageMock<T> {
 				return;
 			}
 			if(Files.isReadable(dataFilePath)) {
-				LOG.warn(
+				LOG.debug(
 					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" is not readable"
 				);
-				return;
+				//return;
 			}
 			//
-			long count = 0;
+			final AtomicLong count = new AtomicLong(0);
+			List<T> buff;
+			int n;
+			final Thread displayProgressThread = new Thread(
+				new Runnable() {
+					@Override
+					public final void run() {
+						try {
+							while(true) {
+								LOG.info(Markers.MSG, "{} items loaded...", count.get());
+								TimeUnit.SECONDS.sleep(10);
+							}
+						} catch(final InterruptedException ignored) {
+						}
+					}
+				}
+			);
+			//
 			try(
 				final CSVFileItemSrc<T>
 					csvFileItemInput = new CSVFileItemSrc<>(dataFilePath, itemCls, contentSrc)
 			) {
-				T nextItem = csvFileItemInput.get();
-				while(null != nextItem) {
-					// if mongoose is v0.5.0
-					//if(dataSizeRadix == 0x10) {
-					//	nextItem.setSize(Long.valueOf(String.valueOf(nextItem.getSize()), 0x10));
-					//}
-					putIntoDefaultContainer(nextItem);
-					count ++;
-					nextItem = csvFileItemInput.get();
-				}
+				displayProgressThread.start();
+				do {
+					buff = new ArrayList<>(batchSize);
+					n = csvFileItemInput.get(buff, batchSize);
+					if(n > 0) {
+						putIntoDefaultContainer(buff);
+						count.addAndGet(n);
+					} else {
+						break;
+					}
+				} while(true);
 			} catch(final EOFException e) {
-				LOG.debug(Markers.MSG, "Loaded {} data items from file {}", count, dataFilePath);
+				LOG.info(Markers.MSG, "Loaded {} data items from file {}", count, dataFilePath);
 			} catch(final IOException | NoSuchMethodException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to load the data items from file \"{}\"",
 					dataFilePath
 				);
+			} finally {
+				displayProgressThread.interrupt();
 			}
 		}
 	}

@@ -5,7 +5,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.http.conn.pool.SequencedConnPool;
+import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
+import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 //
@@ -26,6 +27,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
@@ -54,7 +56,9 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -71,7 +75,8 @@ implements WSContainerLoadExecutor<T, C> {
 	private final HttpProcessor httpProcessor;
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
-	private final SequencedConnPool connPool;
+	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
+	private final WSRequestConfig wsReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
 	public BasicWSContainerLoadExecutor(
@@ -85,7 +90,8 @@ implements WSContainerLoadExecutor<T, C> {
 		);
 		//
 		this.loadType = reqConfig.getLoadType();
-		isPipeliningEnabled = ((WSRequestConfig) reqConfigCopy).getPipelining();
+		wsReqConfigCopy = (WSRequestConfig) reqConfigCopy;
+		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
 		//
 		if(IOTask.Type.READ.equals(loadType)) {
 			reqConfig.setBuffSize(Constants.BUFF_SIZE_HI);
@@ -93,7 +99,7 @@ implements WSContainerLoadExecutor<T, C> {
 			reqConfig.setBuffSize(Constants.BUFF_SIZE_LO);
 		}
 		//
-		final HeaderGroup sharedHeaders = ((WSRequestConfig) reqConfigCopy).getSharedHeaders();
+		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
 		final String userAgent = rtConfig.getRunName() + "/" + rtConfig.getRunVersion();
 		//
 		httpProcessor = HttpProcessorBuilder
@@ -116,7 +122,6 @@ implements WSContainerLoadExecutor<T, C> {
 		);
 		//
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
-		final int buffSize = ((WSRequestConfig) reqConfigCopy).getBuffSize();
 		final long timeOutMs = rtConfig.getLoadLimitTimeUnit().toMillis(
 			rtConfig.getLoadLimitTimeValue()
 		);
@@ -132,7 +137,7 @@ implements WSContainerLoadExecutor<T, C> {
 			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize(IOTask.Type.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
+			.setRcvBufSize(Constants.BUFF_SIZE_LO)
 			.setSndBufSize(Constants.BUFF_SIZE_LO)
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
@@ -142,7 +147,7 @@ implements WSContainerLoadExecutor<T, C> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(buffSize)
+			.setBufferSize(Constants.BUFF_SIZE_LO)
 			.setFragmentSizeHint(0)
 			.build();
 		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
@@ -164,13 +169,22 @@ implements WSContainerLoadExecutor<T, C> {
 			DirectByteBufferAllocator.INSTANCE, connConfig
 		);
 		//
-		connPool = new SequencedConnPool(
-			ioReactor, connFactory,
-			timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE,
-			batchSize
-		);
-		connPool.setMaxTotal(totalConnCount);
-		connPool.setDefaultMaxPerRoute(connCountPerNode);
+		//
+		connPoolMap = new HashMap<>(storageNodeCount);
+		HttpHost nextRoute;
+		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
+		for(int i = 0; i < storageNodeCount; i ++) {
+			nextRoute = wsReqConfigCopy.getNodeHost(addrs[i]);
+			nextConnPool = new FixedRouteSequencingConnPool(
+				ioReactor, nextRoute, connFactory,
+				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ?
+					(int) timeOutMs : Integer.MAX_VALUE,
+				batchSize
+			);
+			nextConnPool.setDefaultMaxPerRoute(connCountPerNode);
+			nextConnPool.setMaxTotal(connCountPerNode);
+			connPoolMap.put(nextRoute, nextConnPool);
+		}
 		//
 		mgmtTasks.add(new HttpClientRunTask(ioEventDispatch, ioReactor));
 	}
@@ -185,19 +199,19 @@ implements WSContainerLoadExecutor<T, C> {
 		try {
 			super.interruptActually();
 		} finally {
-			if(connPool != null) {
-				connPool.closeExpired();
+			for(final HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool : connPoolMap.values()) {
+				nextConnPool.closeExpired();
 				LOG.debug(
 					Markers.MSG, "{}: closed expired (if any) connections in the pool", getName()
 				);
 				try {
-					connPool.closeIdle(1, TimeUnit.MILLISECONDS);
+					nextConnPool.closeIdle(1, TimeUnit.MILLISECONDS);
 					LOG.debug(
 						Markers.MSG, "{}: closed idle connections (if any) in the pool", getName()
 					);
 				} finally {
 					try {
-						connPool.shutdown(1);
+						nextConnPool.shutdown(1);
 						LOG.debug(Markers.MSG, "{}: connection pool has been shut down", getName());
 					} catch(final IOException e) {
 						LogUtil.exception(
@@ -222,11 +236,13 @@ implements WSContainerLoadExecutor<T, C> {
 	protected Future<? extends WSContainerIOTask<T, C>> submitReqActually(final IOTask<C> ioTask)
 	throws RejectedExecutionException {
 		//
+		final WSContainerIOTask<T, C> wsTask = (WSContainerIOTask<T, C>) ioTask;
+		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
+			connPool = connPoolMap.get(wsTask.getTarget());
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");
 		}
 		//
-		final WSContainerIOTask<T, C> wsTask = (WSContainerIOTask<T, C>) ioTask;
 		final Future<WSContainerIOTask<T, C>> futureResult;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, futureCallback);
@@ -267,8 +283,8 @@ implements WSContainerLoadExecutor<T, C> {
 				final HttpHost tgtHost = anyTask.getTarget();
 				if(
 					null == client.executePipelined(
-						tgtHost, wsIOTasks, wsIOTasks, connPool, HttpCoreContext.create(),
-						new BatchFutureCallback(wsIOTasks)
+						tgtHost, wsIOTasks, wsIOTasks, connPoolMap.get(tgtHost),
+						HttpCoreContext.create(), new BatchFutureCallback(wsIOTasks)
 					)
 					) {
 					return 0;

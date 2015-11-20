@@ -219,7 +219,9 @@ implements LoadExecutor<T> {
 		storageNodeCount = addrs.length;
 		//
 		setName(name);
-		LOG.debug(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
+		if(itemSrc != null) {
+			LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
+		}
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
 		activeTaskCountLimit = 2 * totalConnCount + 1000;
@@ -317,7 +319,7 @@ implements LoadExecutor<T> {
 		LOG.info(
 			logMarker,
 			Markers.PERF_SUM.equals(logMarker) ?
-			"\"" + getName() + "\" summary: " + lastStats.toSummaryString() : lastStats
+				"\"" + getName() + "\" summary: " + lastStats.toSummaryString() : lastStats
 		);
 	}
 	//
@@ -520,7 +522,7 @@ implements LoadExecutor<T> {
 			if(activeTaskCount < activeTaskCountLimit) {
 				break;
 			}
-			Thread.yield(); LockSupport.parkNanos(1);
+			LockSupport.parkNanos(1000); Thread.yield();
 		} while(true);
 		//
 		try {
@@ -568,7 +570,7 @@ implements LoadExecutor<T> {
 						if(activeTaskCount < activeTaskCountLimit) {
 							break;
 						}
-						Thread.yield(); LockSupport.parkNanos(1);
+						LockSupport.parkNanos(1000); Thread.yield();
 					} while(true);
 					//
 					try {
@@ -655,7 +657,7 @@ implements LoadExecutor<T> {
 			return;
 		}
 		//
-		final T dataItem = ioTask.getItem();
+		final T item = ioTask.getItem();
 		//
 		final IOTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
@@ -663,17 +665,17 @@ implements LoadExecutor<T> {
 		ioTask.mark(ioStats);
 		activeTasksStats.get(nodeAddr).decrementAndGet();
 		if(status == IOTask.Status.SUCC) {
-			lastItem = dataItem;
+			lastItem = item;
 			// put into the output buffer
 			try {
-				itemOutBuff.put(dataItem);
+				itemOutBuff.put(item);
 				if(isCircular) {
-					uniqueItems.putIfAbsent(dataItem.getName(), dataItem);
+					uniqueItems.putIfAbsent(item.getName(), item);
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e,
-					"{}: failed to put the data item into the output buffer", getName()
+					"{}: failed to put the item into the output buffer", getName()
 				);
 			}
 		} else {
@@ -697,28 +699,28 @@ implements LoadExecutor<T> {
 			activeTasksStats.get(nodeAddr).addAndGet(-n);
 			//
 			IOTask<T> ioTask;
-			T dataItem;
+			T item;
 			IOTask.Status status;
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
-				dataItem = ioTask.getItem();
+				item = ioTask.getItem();
 				//
 				status = ioTask.getStatus();
 				// update the metrics
 				ioTask.mark(ioStats);
 				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 				if(status == IOTask.Status.SUCC) {
-					lastItem = dataItem;
+					lastItem = item;
 					// pass data item to a consumer
 					try {
-						itemOutBuff.put(dataItem);
+						itemOutBuff.put(item);
 						if(isCircular) {
-							uniqueItems.putIfAbsent(dataItem.getName(), dataItem);
+							uniqueItems.putIfAbsent(item.getName(), item);
 						}
 					} catch(final IOException e) {
 						LogUtil.exception(
 							LOG, Level.DEBUG, e,
-							"{}: failed to put the data item into the output buffer", getName()
+							"{}: failed to put the item into the output buffer", getName()
 						);
 					}
 				} else {
@@ -911,7 +913,6 @@ implements LoadExecutor<T> {
 			rtConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, maxCount);
 		}
 	}
-
 	//
 	private boolean isDoneAllSubm() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {

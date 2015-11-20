@@ -266,11 +266,13 @@ implements IOStats {
 			return String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				countSucc,
-				countFail == 0 ?
-					Long.toString(countFail) :
-					(float) countSucc / countFail > 1000 ?
-						String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
-						String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
+				LogUtil.isConsoleColoringEnabled() ?
+					countFail == 0 ?
+						Long.toString(countFail) :
+						(float) countSucc / countFail > 1000 ?
+							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
+							String.format(LogUtil.INT_RED_OVER_GREEN, countFail) :
+					Long.toString(countFail),
 				//
 				(int) durSnapshot.getMean(),
 				(int) durSnapshot.getMin(),
@@ -295,11 +297,13 @@ implements IOStats {
 			return String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS_SUM,
 				countSucc,
-				countFail == 0 ?
-				Long.toString(countFail) :
-				(float) countSucc / countFail > 1000 ?
-				String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
-				String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
+				LogUtil.isConsoleColoringEnabled() ?
+					countFail == 0 ?
+						Long.toString(countFail) :
+						(float) countSucc / countFail > 1000 ?
+							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
+							String.format(LogUtil.INT_RED_OVER_GREEN, countFail) :
+					Long.toString(countFail),
 				//
 				(int) durSnapshot.getMean(),
 				(int) durSnapshot.getMin(),
