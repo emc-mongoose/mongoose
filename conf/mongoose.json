@@ -193,7 +193,7 @@
 				"batchSize": 4096
 			},
 			"queue": {
-				"maxSize": 500000
+				"maxSize": 1000000
 			}
 		},
 		"load": {

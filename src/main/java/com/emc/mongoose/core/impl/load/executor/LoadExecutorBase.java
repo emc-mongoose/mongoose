@@ -821,17 +821,12 @@ implements LoadExecutor<T> {
 			int n = items.size();
 			try {
 				if(!items.isEmpty()) {
-					int left = 0, k;
-					int	right = (left + batchSize) > n ? n : left + batchSize;
-					while(left < n) {
-						k = consumer.put(items, left, right);
+					int m = 0, k;
+					while(m < n) {
+						k = consumer.put(items, m, n);
 						if(k > 0) {
-							left += k;
-							if(left >= n) {
-								break;
-							}
+							m += k;
 						}
-						right = (right + k) > n ? n : right + k;
 						Thread.yield();
 						LockSupport.parkNanos(1);
 					}
