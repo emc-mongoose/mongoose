@@ -69,7 +69,11 @@ implements ItemProducer<T> {
 		this.isShuffling = isShuffling;
 		this.maxItemQueueSize = maxItemQueueSize;
 		//
-		this.uniqueItems = new ConcurrentHashMap<>((int) maxItemQueueSize);
+		if(isCircular) {
+			this.uniqueItems = new ConcurrentHashMap<>((int) maxItemQueueSize);
+		} else {
+			this.uniqueItems = new ConcurrentHashMap<>(1);
+		}
 	}
 	//
 	@Override
@@ -158,8 +162,8 @@ implements ItemProducer<T> {
 			}
 		} finally {
 			LOG.debug(
-				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-				getName(), producedItemsCount, itemSrc, itemDst
+					Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
+					getName(), producedItemsCount, itemSrc, itemDst
 			);
 			try {
 				itemSrc.close();
