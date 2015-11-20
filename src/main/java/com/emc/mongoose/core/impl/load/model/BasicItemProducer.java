@@ -34,7 +34,7 @@ implements ItemProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected ConcurrentHashMap<String, T> uniqueItems;
+	protected final ConcurrentHashMap<String, T> uniqueItems;
 	protected final ItemSrc<T> itemSrc;
 	protected final long maxCount;
 	protected volatile ItemDst<T> itemDst = null;

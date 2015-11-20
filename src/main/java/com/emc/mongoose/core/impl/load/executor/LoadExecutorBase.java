@@ -463,7 +463,6 @@ implements LoadExecutor<T> {
 			passUniqueItemsFinally(itemsList);
 		}
 		uniqueItems.clear();
-		uniqueItems = null;
 		//
 		if(consumer instanceof LifeCycle) {
 			try {
