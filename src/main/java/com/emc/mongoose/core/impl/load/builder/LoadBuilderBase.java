@@ -12,7 +12,6 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 import org.apache.commons.configuration.ConversionException;
 //
 import org.apache.logging.log4j.Level;

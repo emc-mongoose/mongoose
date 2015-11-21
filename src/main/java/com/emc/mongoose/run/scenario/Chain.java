@@ -7,13 +7,13 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
+import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileDst;
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
@@ -92,7 +92,7 @@ implements Runnable {
 					if(isParallel) {
 						loadBuilder.useNoneItemSrc();
 					} else {
-						itemDst = new CSVFileItemDst(
+						itemDst = new ItemCSVFileDst(
 							reqConf.getItemClass(), reqConf.getContentSource()
 						);
 						loadBuilder.setItemSrc(itemDst.getItemSrc());
@@ -204,8 +204,8 @@ implements Runnable {
 				//
 				try {
 					final ItemSrc itemSrc = nextLoadJob.getItemSrc();
-					if(itemSrc instanceof FileDataItemSrc) {
-						((FileDataItemSrc) itemSrc).delete();
+					if(itemSrc instanceof DataItemFileSrc) {
+						((DataItemFileSrc) itemSrc).delete();
 					}
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to delete source items file");

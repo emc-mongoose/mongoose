@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.api.data.model;
 //
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataItem;
 
 import java.lang.reflect.Constructor;

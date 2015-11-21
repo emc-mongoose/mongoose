@@ -7,7 +7,7 @@ import java.nio.file.Path;
 /**
  Created by kurila on 11.08.15.
  */
-public interface FileItemDst<T extends Item>
+public interface ItemFileDst<T extends Item>
 extends ItemDst<T> {
 	//
 	Path getFilePath();

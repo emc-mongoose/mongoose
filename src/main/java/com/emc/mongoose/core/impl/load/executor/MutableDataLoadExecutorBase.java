@@ -9,7 +9,7 @@ import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.MutableDataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
+import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 //
@@ -49,8 +49,8 @@ extends LimitedRateLoadExecutorBase<T> {
 		this.loadType = reqConfig.getLoadType();
 		//
 		int buffSize;
-		if(itemSrc instanceof FileDataItemSrc) {
-			final long approxDataItemSize = ((FileDataItemSrc) itemSrc).getApproxDataItemsSize(
+		if(itemSrc instanceof DataItemFileSrc) {
+			final long approxDataItemSize = ((DataItemFileSrc) itemSrc).getApproxDataItemsSize(
 				runTimeConfig.getBatchSize()
 			);
 			if(approxDataItemSize < Constants.BUFF_SIZE_LO) {

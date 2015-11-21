@@ -33,8 +33,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public final class WSBucketItemSrc<T extends WSObject>
-extends GenericContainerItemSrcBase<T> {
+public final class WSBucketItemSrc<T extends WSObject, C extends WSBucketImpl<T>>
+extends GenericContainerItemSrcBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -44,7 +44,7 @@ extends GenericContainerItemSrcBase<T> {
 	private long doneCount = 0;
 	//
 	public WSBucketItemSrc(
-		final WSBucketImpl<T> bucket, final String nodeAddr, final Class<T> itemCls,
+		final C bucket, final String nodeAddr, final Class<T> itemCls,
 		final long maxCount
 	) throws IllegalStateException {
 		super(bucket, nodeAddr, itemCls, maxCount);

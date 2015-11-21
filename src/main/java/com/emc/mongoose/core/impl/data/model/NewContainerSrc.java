@@ -98,7 +98,7 @@ implements ItemSrc<T> {
 	//
 	@Override
 	public final String toString() {
-		return "newDataItemInput<" + itemConstructor.getDeclaringClass().getSimpleName() + ">";
+		return "newContainerSrc<" + itemConstructor.getDeclaringClass().getSimpleName() + ">";
 	}
 
 }

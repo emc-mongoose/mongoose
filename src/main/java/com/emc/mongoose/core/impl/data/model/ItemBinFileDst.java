@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.model.FileItemDst;
+import com.emc.mongoose.core.api.data.model.ItemFileDst;
 //
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -12,16 +12,17 @@ import java.nio.file.StandardOpenOption;
 /**
  An item input implementation serializing the data items to the specified file.
  */
-public class BinFileItemDst<T extends Item>
-extends BinItemDst<T>
-implements FileItemDst<T> {
+public class ItemBinFileDst<T extends Item>
+extends ItemBinDst<T>
+implements ItemFileDst<T> {
 	//
 	protected final Path itemsDstPath;
 	/**
 	 @param itemsDstPath the path to the file which should be used to store the serialized items
 	 @throws IOException if unable to open the file for writing
 	 */
-	public BinFileItemDst(final Path itemsDstPath)
+	public
+	ItemBinFileDst(final Path itemsDstPath)
 	throws IOException {
 		super(
 			new ObjectOutputStream(
@@ -35,16 +36,18 @@ implements FileItemDst<T> {
 		this.itemsDstPath = itemsDstPath;
 	}
 	//
-	public BinFileItemDst()
+	public
+	ItemBinFileDst()
 	throws IOException {
 		this(Files.createTempFile(null, ".bin"));
 		this.itemsDstPath.toFile().deleteOnExit();
 	}
 	//
 	@Override
-	public BinFileItemSrc<T> getItemSrc()
+	public
+	ItemBinFileSrc<T> getItemSrc()
 	throws IOException {
-		return new BinFileItemSrc<>(itemsDstPath);
+		return new ItemBinFileSrc<>(itemsDstPath);
 	}
 	//
 	@Override

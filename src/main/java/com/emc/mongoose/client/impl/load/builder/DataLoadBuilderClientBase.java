@@ -8,7 +8,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
+import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
@@ -118,9 +118,9 @@ implements DataLoadBuilderClient<T, W, U> {
 	throws RemoteException {
 		super.setItemSrc(itemSrc);
 		//
-		if(itemSrc instanceof FileDataItemSrc) {
+		if(itemSrc instanceof DataItemFileSrc) {
 			// calculate approx average data item size
-			final FileDataItemSrc<T> fileInput = (FileDataItemSrc<T>) itemSrc;
+			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
 				rtConfig.getBatchSize()
 			);

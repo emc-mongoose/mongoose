@@ -29,8 +29,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public class WSContainerItemSrc<T extends WSObject>
-extends GenericContainerItemSrcBase<T> {
+public class WSContainerItemSrc<T extends WSObject, C extends WSContainerImpl<T>>
+extends GenericContainerItemSrcBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static JsonFactory JSON_FACTORY = new JsonFactory();
@@ -41,7 +41,7 @@ extends GenericContainerItemSrcBase<T> {
 	private long lastSize = -1, doneCount = 0;
 	//
 	public WSContainerItemSrc(
-		final WSContainerImpl<T> container, final String nodeAddr, final Class<T> itemCls,
+		final C container, final String nodeAddr, final Class<T> itemCls,
 		final long maxCount
 	) throws IllegalStateException {
 		super(container, nodeAddr, itemCls, maxCount);

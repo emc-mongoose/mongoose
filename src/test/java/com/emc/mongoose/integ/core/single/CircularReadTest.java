@@ -9,8 +9,7 @@ import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
-import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -28,13 +27,10 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
@@ -85,7 +81,7 @@ extends StandaloneClientTestBase {
 					.setS3Bucket(RUN_ID)
 					.build()
 			) {
-				final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
+				final ItemDst<WSObject> writeOutput = new ItemCSVFileDst<WSObject>(
 					BasicWSObject.class, ContentSourceBase.getDefault()
 				);
 				COUNT_WRITTEN = client.write(

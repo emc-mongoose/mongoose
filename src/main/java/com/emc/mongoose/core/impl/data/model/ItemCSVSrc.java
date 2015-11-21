@@ -22,7 +22,7 @@ import java.util.List;
 /**
  The data item input using CSV file containing the human-readable data item records as the source
  */
-public class CSVItemSrc<T extends Item>
+public class ItemCSVSrc<T extends Item>
 implements ItemSrc<T> {
 	//
 	protected BufferedReader itemsSrc;
@@ -37,7 +37,8 @@ implements ItemSrc<T> {
 	 @throws IOException
 	 @throws NoSuchMethodException
 	 */
-	public CSVItemSrc(
+	public
+	ItemCSVSrc(
 		final InputStream in, final Class<? extends T> itemCls, final ContentSource contentSrc
 	) throws IOException, NoSuchMethodException {
 		this(
@@ -46,9 +47,10 @@ implements ItemSrc<T> {
 		);
 	}
 	//
-	protected CSVItemSrc(
+	protected
+	ItemCSVSrc(
 		final BufferedReader itemsSrc, final Constructor<? extends T> itemConstructor,
-	    final ContentSource contentSrc
+		final ContentSource contentSrc
 	) {
 		this.itemsSrc = itemsSrc;
 		this.itemConstructor = itemConstructor;

@@ -9,9 +9,8 @@ import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileDst;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
-import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -33,9 +32,7 @@ import java.nio.file.Files;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
-import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG_CLIENT;
-import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIENT;
 
 /**
@@ -79,7 +76,7 @@ extends DistributedClientTestBase {
 					.setLimitCount(WRITE_COUNT)
 					.build()
 			) {
-				final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
+				final ItemDst<WSObject> writeOutput = new ItemCSVFileDst<WSObject>(
 					BasicWSObject.class, ContentSourceBase.getDefault()
 				);
 				COUNT_WRITTEN = client.write(

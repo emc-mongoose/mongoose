@@ -9,7 +9,7 @@ import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -78,7 +78,7 @@ extends StandaloneClientTestBase {
 					.setLimitCount(WRITE_COUNT)
 					.build()
 			) {
-				final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
+				final ItemDst<WSObject> writeOutput = new ItemCSVFileDst<WSObject>(
 					BasicWSObject.class, ContentSourceBase.getDefault()
 				);
 				COUNT_WRITTEN = client.write(
@@ -87,7 +87,7 @@ extends StandaloneClientTestBase {
 				TimeUnit.SECONDS.sleep(1);
 				RunIdFileManager.flushAll();
 				//
-				final ItemDst<WSObject> updateOutput = new CSVFileItemDst<WSObject>(
+				final ItemDst<WSObject> updateOutput = new ItemCSVFileDst<WSObject>(
 					BasicWSObject.class, ContentSourceBase.getDefault()
 				);
 				if (COUNT_WRITTEN > 0) {

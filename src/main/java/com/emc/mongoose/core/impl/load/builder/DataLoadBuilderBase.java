@@ -7,14 +7,14 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
+import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -135,7 +135,7 @@ implements DataLoadBuilder<T, U> {
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(
-					new CSVFileItemSrc<>(
+					new ItemCSVFileSrc<>(
 						Paths.get(listFilePathStr), reqConf.getItemClass(),
 						reqConf.getContentSource()
 					)
@@ -151,8 +151,8 @@ implements DataLoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setItemSrc(ItemSrc<T> itemSrc) {
 		super.setItemSrc(itemSrc);
-		if(itemSrc instanceof FileDataItemSrc) {
-			final FileDataItemSrc<T> fileInput = (FileDataItemSrc<T>) itemSrc;
+		if(itemSrc instanceof DataItemFileSrc) {
+			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
 					RunTimeConfig.getContext().getBatchSize()
 			);

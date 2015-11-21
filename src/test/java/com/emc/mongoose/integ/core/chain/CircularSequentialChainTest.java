@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -80,7 +80,7 @@ extends StandaloneClientTestBase {
 					.setS3Bucket(RUN_ID)
 					.build()
 			) {
-				final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
+				final ItemDst<WSObject> writeOutput = new ItemCSVFileDst<WSObject>(
 					BasicWSObject.class, ContentSourceBase.getDefault()
 				);
 				COUNT_WRITTEN = client.write(

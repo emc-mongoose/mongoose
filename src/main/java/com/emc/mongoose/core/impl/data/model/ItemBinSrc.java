@@ -18,7 +18,7 @@ import java.util.List;
 /**
  The data item input implementation deserializing the data items from the specified stream
  */
-public class BinItemSrc<T extends Item>
+public class ItemBinSrc<T extends Item>
 implements ItemSrc<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
@@ -28,7 +28,8 @@ implements ItemSrc<T> {
 	protected int srcFrom = 0;
 	private T lastItem = null;
 	//
-	public BinItemSrc(final ObjectInputStream itemsSrc) {
+	public
+	ItemBinSrc(final ObjectInputStream itemsSrc) {
 		this.itemsSrc = itemsSrc;
 	}
 	//

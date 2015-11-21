@@ -11,8 +11,8 @@ import com.emc.mongoose.core.api.data.model.ItemDst;
 //
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-import com.emc.mongoose.core.impl.data.model.BinFileItemDst;
-import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
+import com.emc.mongoose.core.impl.data.model.ItemBinFileDst;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileDst;
 //
 import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.data.model.ListItemDst;
@@ -69,13 +69,13 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
 			// update the created items
 			LOG.info(Markers.MSG, "Start updating");
-			final ItemDst<WSObject> dataDstU = new BinFileItemDst<>();
+			final ItemDst<WSObject> dataDstU = new ItemBinFileDst<>();
 			final long nUpdated = client.update(
 				dataDstW.getItemSrc(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
-			final ItemDst<WSObject> dataDstR = new CSVFileItemDst<>(
+			final ItemDst<WSObject> dataDstR = new ItemCSVFileDst<>(
 				(Class<? extends WSObject>) BasicWSObject.class, ContentSourceBase.getDefault()
 			);
 			final long nRead = client.read(
@@ -93,7 +93,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
 			// update again the appended data items
 			final Path fileTmpItems0 = Files.createTempFile("reUpdatedItems", ".csv"); // do not delete on exit
-			final ItemDst<WSObject> dataDstU2 = new CSVFileItemDst<>(
+			final ItemDst<WSObject> dataDstU2 = new ItemCSVFileDst<>(
 				fileTmpItems0, (Class<? extends WSObject>) BasicWSObject.class,
 				ContentSourceBase.getDefault()
 			);
@@ -107,7 +107,7 @@ implements Runnable {
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
 			// recreate the items
-			final ItemDst<WSObject> dataDstW2 = new CSVFileItemDst<>(
+			final ItemDst<WSObject> dataDstW2 = new ItemCSVFileDst<>(
 				(Class<? extends WSObject>) BasicWSObject.class,
 				ContentSourceBase.getDefault()
 			);

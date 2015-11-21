@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.core.api.Item;
 //
-import com.emc.mongoose.core.api.data.model.FileItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemFileSrc;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,9 +16,9 @@ import java.nio.file.StandardOpenOption;
 /**
  An item input implementation deserializing the data items from the specified file.
  */
-public class BinFileItemSrc<T extends Item>
-extends BinItemSrc<T>
-implements FileItemSrc<T> {
+public class ItemBinFileSrc<T extends Item>
+extends ItemBinSrc<T>
+implements ItemFileSrc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -27,7 +27,8 @@ implements FileItemSrc<T> {
 	 @param itemsSrcPath the path to the file which should be used to restore the serialized items
 	 @throws IOException if unable to open the file for reading
 	 */
-	public BinFileItemSrc(final Path itemsSrcPath)
+	public
+	ItemBinFileSrc(final Path itemsSrcPath)
 	throws IOException {
 		super(
 			buildObjectInputStream(itemsSrcPath)

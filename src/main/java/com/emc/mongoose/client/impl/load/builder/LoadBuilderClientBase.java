@@ -14,7 +14,7 @@ import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileSrc;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
@@ -188,7 +188,7 @@ implements LoadBuilderClient<T, W, U> {
 			final String listFile = rtConfig.getItemSrcFile();
 			if (itemsFileExists(listFile)) {
 				setItemSrc(
-					new CSVFileItemSrc<>(
+					new ItemCSVFileSrc<>(
 						Paths.get(listFile), reqConf.getItemClass(), reqConf.getContentSource()
 					)
 				);

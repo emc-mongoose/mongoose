@@ -10,12 +10,13 @@ import java.util.List;
 /**
  The data item output implementation serializing the data items into the specified stream
  */
-public abstract class BinItemDst<T extends Item>
+public abstract class ItemBinDst<T extends Item>
 implements ItemDst<T> {
 	//
 	protected final ObjectOutputStream itemsDst;
 	//
-	protected BinItemDst(final ObjectOutputStream itemsDst) {
+	protected
+	ItemBinDst(final ObjectOutputStream itemsDst) {
 		this.itemsDst = itemsDst;
 	}
 	//
