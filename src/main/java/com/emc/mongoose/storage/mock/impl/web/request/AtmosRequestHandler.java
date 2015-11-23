@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-storage-adapter-atmos.jar
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.data.model.DataItemContainer;
+import com.emc.mongoose.core.api.data.model.ContainerHelper;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 //
@@ -187,7 +187,7 @@ extends WSRequestHandlerBase<T> {
 	protected final void handleContainerList(
 		final HttpRequest req, final HttpResponse resp, final String subtenant, final String oid
 	) {
-		int maxCount = DataItemContainer.DEFAULT_PAGE_SIZE;
+		int maxCount = ContainerHelper.DEFAULT_PAGE_SIZE;
 		if(req.containsHeader(WSRequestConfig.KEY_EMC_LIMIT)) {
 			try {
 				maxCount = Integer.parseInt(

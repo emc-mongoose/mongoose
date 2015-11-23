@@ -69,7 +69,7 @@ implements Runnable {
 		LoadExecutor nextLoadJob, prevLoadJob = null;
 		final RequestConfig reqConf;
 		try {
-			reqConf = loadBuilder.getRequestConfig();
+			reqConf = loadBuilder.getIOConfig();
 		} catch(final RemoteException e) {
 			throw new RuntimeException(e);
 		}

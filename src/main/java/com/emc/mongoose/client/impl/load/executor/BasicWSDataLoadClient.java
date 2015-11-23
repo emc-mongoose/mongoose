@@ -41,7 +41,7 @@ implements WSDataLoadClient<T, W> {
 	//
 	@Override
 	protected WSDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
-		return new BasicWSDataIOTask<>(item, nodeAddr, (WSRequestConfig<T>) reqConfigCopy);
+		return new BasicWSDataIOTask<>(item, nodeAddr, (WSRequestConfig<T>) ioConfigCopy);
 	}
 	//
 }

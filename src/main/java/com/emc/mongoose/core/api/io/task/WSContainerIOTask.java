@@ -5,6 +5,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 /**
  Created by kurila on 21.10.15.
  */
-public interface WSContainerIOTask<T extends WSObject, C extends Container<T>>
-extends WSIOTask<C, WSContainerIOTask<T, C>>, ContainerIOTask<T, C> {
+public interface WSContainerIOTask<
+	T extends WSObject, C extends Container<T>
+> extends WSIOTask<C, WSContainerIOTask<T, C>>, ContainerIOTask<T, C> {
 }

@@ -18,7 +18,6 @@ import com.emc.mongoose.core.api.data.MutableDataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 // mongoose-core-impl
 import static com.emc.mongoose.core.impl.data.BasicMutableDataItem.getRangeOffset;
-
 import com.emc.mongoose.core.impl.container.BasicContainer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
@@ -86,9 +85,9 @@ import java.util.concurrent.TimeoutException;
 /**
  Created by kurila on 09.06.14.
  */
-public abstract class WSRequestConfigBase<T extends WSObject>
-extends RequestConfigBase<T>
-implements WSRequestConfig<T> {
+public abstract class WSRequestConfigBase<T extends WSObject, C extends Container<T>>
+extends RequestConfigBase<T, C>
+implements WSRequestConfig<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -102,19 +101,21 @@ implements WSRequestConfig<T> {
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
 	//
-	public static <T extends WSObject> WSRequestConfig<T> getInstance() {
+	public static <T extends WSObject, C extends Container<T>> WSRequestConfig<T, C> getInstance() {
 		return newInstanceFor(RunTimeConfig.getContext().getApiName());
 	}
 	//
 	@SuppressWarnings("unchecked")
-	public static <T extends WSObject> WSRequestConfig<T> newInstanceFor(final String api) {
-		final WSRequestConfig<T> reqConf;
+	public static <T extends WSObject, C extends Container<T>> WSRequestConfig<T, C> newInstanceFor(
+		final String api
+	) {
+		final WSRequestConfig<T, C> reqConf;
 		final String apiImplClsFQN = PACKAGE_IMPL_BASE + "." + api.toLowerCase() + "." + ADAPTER_CLS;
 		try {
 			final Class apiImplCls = Class.forName(apiImplClsFQN);
-			final Constructor<WSRequestConfig<T>>
-				constructor = (Constructor<WSRequestConfig<T>>) apiImplCls.getConstructors()[0];
-			reqConf = constructor.<T>newInstance();
+			final Constructor<WSRequestConfig<T, C>>
+				constructor = (Constructor<WSRequestConfig<T, C>>) apiImplCls.getConstructors()[0];
+			reqConf = constructor.<T, C>newInstance();
 		} catch(final Exception e) {
 			e.printStackTrace(System.out);
 			throw new RuntimeException(e);
@@ -131,7 +132,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@SuppressWarnings({"unchecked", "SynchronizeOnNonFinalField"})
-	protected WSRequestConfigBase(final WSRequestConfig<T> reqConf2Clone)
+	protected WSRequestConfigBase(final WSRequestConfigBase<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		signMethod = runTimeConfig.getHttpSignMethod();
@@ -267,7 +268,7 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public HttpEntityEnclosingRequest createContainerRequest(
-		final Container<T> container, final String nodeAddr
+		final C container, final String nodeAddr
 	) throws URISyntaxException {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
 			getHttpMethod(), getContainerUriPath(container)
@@ -309,31 +310,37 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setAPI(final String api) {
+	public final WSRequestConfigBase<T, C> setAPI(final String api) {
 		super.setAPI(api);
 		return this;
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setContentSource(final ContentSource dataSrc) {
+	public final WSRequestConfigBase<T, C> setContentSource(final ContentSource dataSrc) {
 		super.setContentSource(dataSrc);
 		return this;
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setUserName(final String userName) {
+	public WSRequestConfigBase<T, C> setUserName(final String userName) {
 		super.setUserName(userName);
 		return this;
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
+	public WSRequestConfigBase<T, C> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		return this;
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setLoadType(final IOTask.Type loadType) {
+	public WSRequestConfigBase<T, C> setNamePrefix(final String prefix) {
+		super.setNamePrefix(prefix);
+		return this;
+	}
+	//
+	@Override
+	public final WSRequestConfigBase<T, C> setLoadType(final IOTask.Type loadType) {
 		super.setLoadType(loadType);
 		return this;
 	}
@@ -344,19 +351,19 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setFileAccessEnabled(final boolean flag) {
+	public WSRequestConfigBase<T, C> setFileAccessEnabled(final boolean flag) {
 		this.fsAccess = flag;
 		return this;
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setVersioning(final boolean flag) {
+	public WSRequestConfigBase<T, C> setVersioning(final boolean flag) {
 		this.versioning = flag;
 		return this;
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setPipelining(final boolean flag) {
+	public WSRequestConfigBase<T, C> setPipelining(final boolean flag) {
 		this.pipelining = flag;
 		return this;
 	}
@@ -372,7 +379,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
+	public WSRequestConfigBase<T, C> setProperties(final RunTimeConfig runTimeConfig) {
 		//
 		try {
 			setScheme(this.runTimeConfig.getStorageProto());
@@ -412,7 +419,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setSecret(final String secret) {
+	public WSRequestConfigBase<T, C> setSecret(final String secret) {
 		super.setSecret(secret);
 		try {
 			secretKey = new SecretKeySpec(secret.getBytes(Constants.DEFAULT_ENC), signMethod);

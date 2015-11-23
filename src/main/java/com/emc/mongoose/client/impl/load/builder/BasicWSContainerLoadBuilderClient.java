@@ -47,7 +47,7 @@ public class BasicWSContainerLoadBuilderClient<
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig getDefaultRequestConfig() {
+	protected WSRequestConfig getDefaultIOConfig() {
 		return WSRequestConfigBase.getInstance();
 	}
 	//
@@ -82,7 +82,7 @@ public class BasicWSContainerLoadBuilderClient<
 	protected final void invokePreConditions()
 	throws IllegalStateException {
 		//  do nothing
-		//  reqConf.configureStorage(storageNodeAddrs);
+		//  ioConfig.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override  @SuppressWarnings("unchecked")
@@ -100,17 +100,17 @@ public class BasicWSContainerLoadBuilderClient<
 		//
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setRequestConfig(reqConf); // should upload req conf right before instancing
+			nextBuilder.setIOConfig(ioConfig); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final String loadTypeStr = reqConf.getLoadType().name().toLowerCase();
+		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
 		//
 		return (U) new BasicWSContainerLoadClient<>(
-			rtConfig, (WSRequestConfig) reqConf, storageNodeAddrs,
+			rtConfig, (WSRequestConfig) ioConfig, storageNodeAddrs,
 			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
 			itemSrc, maxCount, remoteLoadMap
 		);

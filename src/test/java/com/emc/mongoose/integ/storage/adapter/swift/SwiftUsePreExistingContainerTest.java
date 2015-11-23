@@ -5,8 +5,8 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
-import com.emc.mongoose.storage.adapter.swift.Container;
-import com.emc.mongoose.storage.adapter.swift.WSContainerImpl;
+import com.emc.mongoose.storage.adapter.swift.ContainerHelper;
+import com.emc.mongoose.storage.adapter.swift.WSContainerHelper;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.AfterClass;
@@ -25,7 +25,7 @@ extends StandaloneClientTestBase {
 	private final static String RUN_ID = SwiftUsePreExistingContainerTest.class.getCanonicalName();
 	//
 	private static long COUNT_WRITTEN;
-	private static Container<WSObject> CONTAINER;
+	private static ContainerHelper<WSObject> CONTAINER;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -37,7 +37,7 @@ extends StandaloneClientTestBase {
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
 			.newInstanceFor("swift")
 			.setProperties(RunTimeConfig.getContext());
-		CONTAINER = new WSContainerImpl<>(reqConf, RUN_ID, false);
+		CONTAINER = new WSContainerHelper<>(reqConf, RUN_ID, false);
 		CONTAINER.create("127.0.0.1");
 		if(!CONTAINER.exists("127.0.0.1")) {
 			Assert.fail("Failed to pre-create the bucket for test");

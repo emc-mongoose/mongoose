@@ -177,7 +177,7 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public RequestConfig<T> getRequestConfig() {
+	public RequestConfig<T> getIOConfig() {
 		return reqConf;
 	}
 	//

@@ -54,6 +54,6 @@ extends ItemDst<T>, LifeCycle, ItemProducer<T> {
 	Future<? extends IOTask<T>> submitReq(final IOTask<T> request)
 	throws RemoteException, RejectedExecutionException;
 	//
-	int submitReqs(final List<? extends IOTask<T>> requests, final int from, final int to)
+	int submitTasks(final List<? extends IOTask<T>> requests, final int from, final int to)
 	throws RemoteException, RejectedExecutionException;
 }

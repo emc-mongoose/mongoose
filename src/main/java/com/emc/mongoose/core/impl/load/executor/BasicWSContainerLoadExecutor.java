@@ -76,11 +76,11 @@ implements WSContainerLoadExecutor<T, C> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
-	private final WSRequestConfig wsReqConfigCopy;
+	private final WSRequestConfig<T, C> wsReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
 	public BasicWSContainerLoadExecutor(
-		final RunTimeConfig rtConfig, final RequestConfig<C> reqConfig, final String[] addrs,
+		final RunTimeConfig rtConfig, final WSRequestConfig<T, C> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount, final ItemSrc<C> itemSrc,
 		final long maxCount, final int manualTaskSleepMicroSecs, final float rateLimit
 	) throws ClassCastException {
@@ -90,7 +90,7 @@ implements WSContainerLoadExecutor<T, C> {
 		);
 		//
 		this.loadType = reqConfig.getLoadType();
-		wsReqConfigCopy = (WSRequestConfig) reqConfigCopy;
+		wsReqConfigCopy = (WSRequestConfig<T, C>) ioConfigCopy;
 		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
 		//
 		if(IOTask.Type.READ.equals(loadType)) {
@@ -191,7 +191,7 @@ implements WSContainerLoadExecutor<T, C> {
 	//
 	@Override
 	protected WSContainerIOTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
-		return new BasicWSContainerTask<>(item, nextNodeAddr, reqConfigCopy);
+		return new BasicWSContainerTask<>(item, nextNodeAddr, wsReqConfigCopy);
 	}
 	//
 	@Override
@@ -233,7 +233,7 @@ implements WSContainerLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	protected Future<? extends WSContainerIOTask<T, C>> submitReqActually(final IOTask<C> ioTask)
+	protected Future<? extends WSContainerIOTask<T, C>> submitTaskActually(final IOTask<C> ioTask)
 	throws RejectedExecutionException {
 		//
 		final WSContainerIOTask<T, C> wsTask = (WSContainerIOTask<T, C>) ioTask;
@@ -273,7 +273,7 @@ implements WSContainerLoadExecutor<T, C> {
 	};
 	//
 	@Override
-	public int submitReqs(final List<? extends IOTask<C>> ioTasks, final int from, final int to)
+	public int submitTasks(final List<? extends IOTask<C>> ioTasks, final int from, final int to)
 	throws RemoteException, RejectedExecutionException {
 		int n = 0;
 		if(isPipeliningEnabled) {

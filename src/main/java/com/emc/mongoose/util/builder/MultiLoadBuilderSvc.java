@@ -115,7 +115,7 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final RequestConfig getRequestConfig()
+	public final RequestConfig getIOConfig()
 	throws RemoteException {
 		throw new RemoteException("Method shouldn't be invoked");
 	}
@@ -124,7 +124,7 @@ implements LoadBuilderSvc {
 	public final LoadBuilderSvc setRequestConfig(final RequestConfig reqConf)
 	throws RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setRequestConfig(reqConf);
+			loadBuilderSvc.setIOConfig(reqConf);
 		}
 		return this;
 	}

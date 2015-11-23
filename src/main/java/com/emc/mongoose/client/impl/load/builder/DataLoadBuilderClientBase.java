@@ -124,7 +124,7 @@ implements DataLoadBuilderClient<T, W, U> {
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
 				rtConfig.getBatchSize()
 			);
-			reqConf.setBuffSize(
+			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
 					Constants.BUFF_SIZE_LO :
 					approxDataItemsSize > Constants.BUFF_SIZE_HI ?
@@ -147,7 +147,7 @@ implements DataLoadBuilderClient<T, W, U> {
 				//
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
+				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
 					// enable new data item generation on the load servers side
 					V nextBuilder;
 					for(final String addr : keySet()) {
@@ -164,7 +164,7 @@ implements DataLoadBuilderClient<T, W, U> {
 						nextBuilder.useNoneItemSrc();
 					}
 					//
-					return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+					return ioConfig.getContainerListInput(maxCount, storageNodeAddrs[0]);
 				}
 			} else if(flagUseNewItemSrc) {
 				// enable new data item generation on the load servers side
@@ -183,7 +183,7 @@ implements DataLoadBuilderClient<T, W, U> {
 					nextBuilder.useNoneItemSrc();
 				}
 				//
-				return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+				return ioConfig.getContainerListInput(maxCount, storageNodeAddrs[0]);
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to change the remote data items source");

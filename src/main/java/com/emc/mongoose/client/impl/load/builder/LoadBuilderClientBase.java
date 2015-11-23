@@ -8,8 +8,8 @@ import com.emc.mongoose.common.math.MathUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.io.req.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
@@ -51,7 +51,7 @@ implements LoadBuilderClient<T, W, U> {
 	protected ItemSrc<T> itemSrc;
 	protected String storageNodeAddrs[] = null, loadSvcAddrs[] = null;
 	protected volatile RunTimeConfig rtConfig;
-	protected volatile RequestConfig<T> reqConf = getDefaultRequestConfig();
+	protected volatile IOConfig<T> ioConfig = getDefaultIOConfig();
 	protected long maxCount = 0;
 	//
 	protected boolean
@@ -91,7 +91,7 @@ implements LoadBuilderClient<T, W, U> {
 		}
 	}
 	//
-	protected abstract RequestConfig<T> getDefaultRequestConfig();
+	protected abstract IOConfig<T> getDefaultIOConfig();
 	//
 	protected abstract V resolve(final String serverAddr)
 	throws IOException;
@@ -145,10 +145,10 @@ implements LoadBuilderClient<T, W, U> {
 	throws IllegalStateException, RemoteException {
 		//
 		this.rtConfig = rtConfig;
-		if(reqConf == null) {
+		if(ioConfig == null) {
 			throw new IllegalStateException("Shared request config is not initialized");
 		} else {
-			reqConf.setProperties(rtConfig);
+			ioConfig.setProperties(rtConfig);
 		}
 		//
 		final String newNodeAddrs[] = rtConfig.getStorageAddrsWithPorts();
@@ -189,7 +189,7 @@ implements LoadBuilderClient<T, W, U> {
 			if (itemsFileExists(listFile)) {
 				setItemSrc(
 					new ItemCSVFileSrc<>(
-						Paths.get(listFile), reqConf.getItemClass(), reqConf.getContentSource()
+						Paths.get(listFile), ioConfig.getItemClass(), ioConfig.getContentSource()
 					)
 				);
 				// disable file-based item sources on the load servers side
@@ -224,32 +224,32 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final RequestConfig<T> getRequestConfig() {
-		return reqConf;
+	public final IOConfig<T> getIOConfig() {
+		return ioConfig;
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, W, U> setRequestConfig(final RequestConfig<T> reqConf)
+	public final LoadBuilderClient<T, W, U> setIOConfig(final IOConfig<T> ioConfig)
 	throws ClassCastException, RemoteException {
-		if(this.reqConf.equals(reqConf)) {
+		if(this.ioConfig.equals(ioConfig)) {
 			return this;
 		}
 		try {
-			this.reqConf.close(); // see jira ticket #437
+			this.ioConfig.close(); // see jira ticket #437
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to close the replacing req config instance #{}",
+				LOG, Level.WARN, e, "Failed to close the replacing I/O config instance #{}",
 				hashCode()
 			);
 		}
-		this.reqConf = reqConf;
+		this.ioConfig = ioConfig;
 		return this;
 	}
 	//
 	@Override
 	public final LoadBuilderClient<T, W, U> setLoadType(final IOTask.Type loadType)
 	throws IllegalStateException, RemoteException {
-		reqConf.setLoadType(loadType);
+		ioConfig.setLoadType(loadType);
 		V nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
@@ -422,7 +422,7 @@ implements LoadBuilderClient<T, W, U> {
 	//
 	@Override
 	public String toString() {
-		StringBuilder strBuilder = new StringBuilder(reqConf.toString());
+		StringBuilder strBuilder = new StringBuilder(ioConfig.toString());
 		try {
 			strBuilder.append('-').append(get(keySet().iterator().next())
 				.getNextInstanceNum(rtConfig.getRunId()));
@@ -435,6 +435,6 @@ implements LoadBuilderClient<T, W, U> {
 	@Override
 	public final void close()
 	throws IOException {
-		reqConf.close();
+		ioConfig.close();
 	}
 }

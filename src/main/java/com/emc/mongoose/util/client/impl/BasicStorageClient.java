@@ -102,7 +102,7 @@ implements StorageClient<T> {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
 				.useContainerListingItemSrc().setItemSrc(src)
-				.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
+				.getIOConfig().setVerifyContentFlag(verifyContentFlag);
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder

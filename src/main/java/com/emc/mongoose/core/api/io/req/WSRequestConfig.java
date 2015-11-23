@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 29.09.14.
  An HTTP request shared configuration.
  */
-public interface WSRequestConfig<T extends WSObject>
-extends RequestConfig<T> {
+public interface WSRequestConfig<T extends WSObject, C extends Container<T>>
+extends RequestConfig<T, C> {
 	//
 	String
 		KEY_EMC_ACCEPT = "x-emc-accept",
@@ -65,43 +65,45 @@ extends RequestConfig<T> {
 	HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException;
 	//
-	HttpEntityEnclosingRequest createContainerRequest(
-		final Container<T> container, final String nodeAddr
-	) throws URISyntaxException;
+	HttpEntityEnclosingRequest createContainerRequest(final C container, final String nodeAddr)
+	throws URISyntaxException;
 	//
 	HttpEntityEnclosingRequest createGenericRequest(final String method, final String uri);
 	//
 	String getHttpMethod();
 	//
 	@Override
-	WSRequestConfig<T> setAPI(final String api);
+	WSRequestConfig<T, C> setAPI(final String api);
 	//
 	@Override
-	WSRequestConfig<T> setLoadType(final IOTask.Type loadType);
+	WSRequestConfig<T, C> setLoadType(final IOTask.Type loadType);
 	//
 	@Override
-	WSRequestConfig<T> setUserName(final String userName);
+	WSRequestConfig<T, C> setUserName(final String userName);
 	//
 	@Override
-	WSRequestConfig<T> setSecret(final String secret);
+	WSRequestConfig<T, C> setSecret(final String secret);
 	//
 	@Override
-	WSRequestConfig<T> setContentSource(final ContentSource dataSrc);
+	WSRequestConfig<T, C> setContentSource(final ContentSource dataSrc);
 	//
-	String getNameSpace();
-	WSRequestConfig<T> setNameSpace(final String ns);
+	@Override
+	WSRequestConfig<T, C> setNameSpace(final String ns);
 	//
-	WSRequestConfig<T> setFileAccessEnabled(final boolean fsAccessFlag);
+	@Override
+	WSRequestConfig<T, C> setNamePrefix(final String prefix);
+	//
+	WSRequestConfig<T, C> setFileAccessEnabled(final boolean fsAccessFlag);
 	boolean getFileAccessEnabled();
 	//
-	WSRequestConfig<T> setVersioning(final boolean enabledFlag);
+	WSRequestConfig<T, C> setVersioning(final boolean enabledFlag);
 	boolean getVersioning();
 	//
-	WSRequestConfig<T> setPipelining(final boolean enabledFlag);
+	WSRequestConfig<T, C> setPipelining(final boolean enabledFlag);
 	boolean getPipelining();
 	//
 	@Override
-	WSRequestConfig<T> setProperties(final RunTimeConfig props);
+	WSRequestConfig<T, C> setProperties(final RunTimeConfig props);
 	//
 	HeaderGroup getSharedHeaders();
 	//

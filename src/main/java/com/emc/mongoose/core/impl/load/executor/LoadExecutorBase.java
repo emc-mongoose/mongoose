@@ -8,11 +8,13 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.container.Container;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemBuffer;
+import com.emc.mongoose.core.api.io.req.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
@@ -63,7 +65,8 @@ implements LoadExecutor<T> {
 	protected final RunTimeConfig rtConfig;
 	//
 	protected final ContentSource dataSrc;
-	protected final RequestConfig<T> reqConfigCopy;
+	protected final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>>
+		ioConfigCopy;
 	protected final IOTask.Type loadType;
 	//
 	protected volatile ItemDst<T> consumer = null;
@@ -192,8 +195,9 @@ implements LoadExecutor<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
-		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
-		final int connCountPerNode, final int threadCount,
+		final RunTimeConfig rtConfig,
+		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String addrs[], final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final int instanceNum, final String name
 	) {
@@ -226,15 +230,15 @@ implements LoadExecutor<T> {
 		totalConnCount = connCountPerNode * storageNodeCount;
 		activeTaskCountLimit = 2 * totalConnCount + 1000;
 		//
-		RequestConfig<T> reqConfigClone = null;
+		IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> reqConfigClone = null;
 		try {
-			reqConfigClone = reqConfig.clone();
+			reqConfigClone = ioConfig.clone();
 		} catch(final CloneNotSupportedException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the request config");
 		} finally {
-			this.reqConfigCopy = reqConfigClone;
+			this.ioConfigCopy = reqConfigClone;
 		}
-		loadType = reqConfig.getLoadType();
+		loadType = ioConfig.getLoadType();
 		//
 		metricsPeriodSec = rtConfig.getLoadMetricsPeriodSec();
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
@@ -243,7 +247,7 @@ implements LoadExecutor<T> {
 		for(final String addr : storageNodeAddrs) {
 			activeTasksStats.put(addr, new AtomicInteger(0));
 		}
-		dataSrc = reqConfig.getContentSource();
+		dataSrc = ioConfig.getContentSource();
 		//
 		mgmtExecutor = new ThreadPoolExecutor(
 			1, 1, 0, TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(batchSize),
@@ -260,28 +264,29 @@ implements LoadExecutor<T> {
 	}
 	//
 	private LoadExecutorBase(
-		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
-		final int connCountPerNode, final int threadCount,
+		final RunTimeConfig rtConfig,
+		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String addrs[], final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount, final int instanceNum
 	) {
 		this(
-			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			instanceNum,
 			Integer.toString(instanceNum) + '-' +
-				StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
-				StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
+				StringUtils.capitalize(ioConfig.getLoadType().toString().toLowerCase()) +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
 				Integer.toString(connCountPerNode) + 'x' + Integer.toString(addrs.length)
 		);
 	}
 	//
 	protected LoadExecutorBase(
-		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
-		final int connCountPerNode, final int threadCount,
+		final RunTimeConfig rtConfig,
+		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String addrs[], final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount
 	) {
 		this(
-			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			NEXT_INSTANCE_NUM.getAndIncrement()
 		);
 	}
@@ -417,7 +422,7 @@ implements LoadExecutor<T> {
 			shutdownActually();
 		}
 		try {
-			reqConfigCopy.close(); // disables connection drop failures
+			ioConfigCopy.close(); // disables connection drop failures
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
 		}
@@ -574,7 +579,7 @@ implements LoadExecutor<T> {
 					} while(true);
 					//
 					try {
-						m = submitReqs(ioTaskBuff, n, srcLimit);
+						m = submitTasks(ioTaskBuff, n, srcLimit);
 						if(m < 1) {
 							throw new RejectedExecutionException("No I/O tasks submitted");
 						} else {

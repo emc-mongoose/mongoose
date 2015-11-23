@@ -7,7 +7,8 @@ import java.lang.reflect.Constructor;
 /**
  Created by kurila on 03.07.15.
  */
-public interface DataItemContainer<T extends DataItem> {
+public interface ContainerHelper<T extends DataItem>
+extends Container<T> {
 	//
 	int DEFAULT_PAGE_SIZE = 0x1000;
 	//

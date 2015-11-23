@@ -40,8 +40,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSRequestConfigImpl<T extends WSObject>
-extends WSRequestConfigBase<T> {
+public final class WSRequestConfigImpl<T extends WSObject, C extends Container<T>>
+extends WSRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -59,7 +59,7 @@ extends WSRequestConfigBase<T> {
 		this(null);
 	}
 	//
-	protected WSRequestConfigImpl(final WSRequestConfigImpl<T> reqConf2Clone)
+	protected WSRequestConfigImpl(final WSRequestConfigImpl<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		//
@@ -79,8 +79,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
-	public WSRequestConfigImpl<T> clone() {
-		WSRequestConfigImpl<T> copy = null;
+	public WSRequestConfigImpl<T, C> clone() {
+		WSRequestConfigImpl<T, C> copy = null;
 		try {
 			copy = new WSRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
@@ -121,7 +121,7 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public final HttpEntityEnclosingRequest createContainerRequest(
-		final Container<T> container, final String nodeAddr
+		final C container, final String nodeAddr
 	) throws URISyntaxException {
 		throw new IllegalStateException("No container request is possible using Atmos API");
 	}
@@ -144,7 +144,7 @@ extends WSRequestConfigBase<T> {
 		return subTenant;
 	}
 	//
-	public final WSRequestConfigImpl<T> setSubTenant(final WSSubTenantImpl<T> subTenant)
+	public final WSRequestConfigImpl<T, C> setSubTenant(final WSSubTenantImpl<T> subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
 		if(sharedHeaders != null && userName != null) {
@@ -160,7 +160,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setUserName(final String userName)
+	public final WSRequestConfigImpl<T, C> setUserName(final String userName)
 	throws IllegalStateException {
 		if(userName == null) {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
@@ -182,7 +182,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setSecret(final String secret) {
+	public final WSRequestConfigBase<T, C> setSecret(final String secret) {
 		super.setSecret(secret);
 		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		secretKey = new SecretKeySpec(Base64.decodeBase64(secret), signMethod);
@@ -190,7 +190,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
+	public final WSRequestConfigBase<T, C> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		//if(nameSpace == null || nameSpace.length() < 1) {
 			LOG.debug(Markers.MSG, "Using empty namespace");
@@ -201,7 +201,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setFileAccessEnabled(final boolean flag) {
+	public final WSRequestConfigImpl<T, C> setFileAccessEnabled(final boolean flag) {
 		super.setFileAccessEnabled(flag);
 		if(flag) {
 			uriBasePath = PREFIX_URI + API_TYPE_FS;
@@ -212,7 +212,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+	public final WSRequestConfigImpl<T, C> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
 		try {

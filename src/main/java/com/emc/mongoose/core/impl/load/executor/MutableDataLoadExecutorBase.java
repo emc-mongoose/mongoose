@@ -7,11 +7,13 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.MutableDataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
+import com.emc.mongoose.core.api.io.req.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -35,18 +37,19 @@ extends LimitedRateLoadExecutorBase<T> {
 	private final float sizeBias;
 	//
 	protected MutableDataLoadExecutorBase(
-		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final int threadCount,
+		final RunTimeConfig runTimeConfig,
+		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
 	) throws ClassCastException {
 		super(
-			runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount,
+			runTimeConfig, ioConfig, addrs, connCountPerNode, threadCount,
 			itemSrc, maxCount, manualTaskSleepMicroSecs, rateLimit
 		);
 		//
-		this.loadType = reqConfig.getLoadType();
+		this.loadType = ioConfig.getLoadType();
 		//
 		int buffSize;
 		if(itemSrc instanceof DataItemFileSrc) {
@@ -84,7 +87,7 @@ extends LimitedRateLoadExecutorBase<T> {
 			Markers.MSG, "Determined buffer size of {} for \"{}\"",
 			SizeUtil.formatSize(buffSize), getName()
 		);
-		this.reqConfigCopy.setBuffSize(buffSize);
+		this.ioConfigCopy.setBuffSize(buffSize);
 		//
 		switch(loadType) {
 			case APPEND:

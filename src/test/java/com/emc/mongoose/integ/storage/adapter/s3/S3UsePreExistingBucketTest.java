@@ -8,8 +8,8 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
-import com.emc.mongoose.storage.adapter.s3.Bucket;
-import com.emc.mongoose.storage.adapter.s3.WSBucketImpl;
+import com.emc.mongoose.storage.adapter.s3.BucketHelper;
+import com.emc.mongoose.storage.adapter.s3.WSBucketHelper;
 import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
@@ -28,7 +28,7 @@ extends StandaloneClientTestBase {
 	private final static long COUNT_TO_WRITE = 10000;
 	//
 	private static long COUNT_WRITTEN;
-	private static Bucket BUCKET;
+	private static BucketHelper bucketHelper;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -43,11 +43,11 @@ extends StandaloneClientTestBase {
 			.newInstanceFor("s3")
 			.setProperties(RunTimeConfig.getContext());
 		reqConf.setProperties(RunTimeConfig.getContext());
-		BUCKET = new WSBucketImpl(
+		bucketHelper = new WSBucketHelper(
 			reqConf, S3UsePreExistingBucketTest.class.getSimpleName(), false
 		);
-		BUCKET.create("127.0.0.1");
-		if(!BUCKET.exists("127.0.0.1")) {
+		bucketHelper.create("127.0.0.1");
+		if(!bucketHelper.exists("127.0.0.1")) {
 			Assert.fail("Failed to pre-create the bucket for test");
 		}
 		//
@@ -56,7 +56,7 @@ extends StandaloneClientTestBase {
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("s3")
-				.setS3Bucket(BUCKET.getName())
+				.setS3Bucket(bucketHelper.getName())
 				.build()
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
@@ -68,7 +68,7 @@ extends StandaloneClientTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		BUCKET.delete(RunTimeConfig.getContext().getStorageAddrs()[0]);
+		bucketHelper.delete(RunTimeConfig.getContext().getStorageAddrs()[0]);
 		StandaloneClientTestBase.tearDownClass();
 	}
 	//

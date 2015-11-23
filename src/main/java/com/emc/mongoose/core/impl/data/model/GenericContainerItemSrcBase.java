@@ -2,10 +2,10 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.data.model.DataItemContainer;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,26 +18,23 @@ import java.util.List;
 /**
  The implementation should have a state representing the actual position in the container listing
  */
-public abstract class GenericContainerItemSrcBase<
-	T extends DataItem, C extends DataItemContainer<T>
->  extends ListItemSrc<T>
+public abstract class GenericContainerItemSrcBase<T extends DataItem, C extends Container<T>>
+extends ListItemSrc<T>
 implements ItemSrc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final C container;
-	protected final String nodeAddr;
 	protected final Constructor<T> itemConstructor;
 	protected final long maxCount;
 	//
 	protected String lastItemId = null;
 	//
 	protected GenericContainerItemSrcBase(
-		final C container, final String nodeAddr, final Class<T> itemCls, final long maxCount
+		final C container, final Class<T> itemCls, final long maxCount
 	) throws IllegalStateException {
 		super(new ArrayList<T>(RunTimeConfig.getContext().getBatchSize()));
 		this.container = container;
-		this.nodeAddr = nodeAddr;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		try {
 			this.itemConstructor = itemCls.getConstructor(

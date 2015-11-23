@@ -55,8 +55,8 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 			try {
 				setItemSrc(
 					new ItemCSVFileSrc<>(
-						Paths.get(listFilePathStr), reqConf.getContainerClass(),
-						reqConf.getContentSource()
+						Paths.get(listFilePathStr), ioConfig.getContainerClass(),
+						ioConfig.getContentSource()
 					)
 				);
 			} catch(final IOException | NoSuchMethodException e) {

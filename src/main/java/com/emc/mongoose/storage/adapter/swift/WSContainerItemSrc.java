@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 //
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemContainer;
+import com.emc.mongoose.core.api.data.model.ContainerHelper;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.impl.data.model.GenericContainerItemSrcBase;
 //
@@ -29,12 +29,14 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public class WSContainerItemSrc<T extends WSObject, C extends WSContainerImpl<T>>
+public class WSContainerItemSrc<T extends WSObject, C extends WSContainerHelper<T>>
 extends GenericContainerItemSrcBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static JsonFactory JSON_FACTORY = new JsonFactory();
 	private final static String KEY_SIZE = "bytes", KEY_ID = "name";
+	//
+	private final String nodeAddr;
 	//
 	private boolean isInsideObjectToken = false, eof = false;
 	private String lastId = null;
@@ -44,20 +46,21 @@ extends GenericContainerItemSrcBase<T, C> {
 		final C container, final String nodeAddr, final Class<T> itemCls,
 		final long maxCount
 	) throws IllegalStateException {
-		super(container, nodeAddr, itemCls, maxCount);
+		super(container, itemCls, maxCount);
+		this.nodeAddr = nodeAddr;
 	}
 	//
 	@Override
 	protected final void loadNextPage()
 	throws EOFException, IOException {
 		final int countLimit = (int) Math.min(
-			DataItemContainer.DEFAULT_PAGE_SIZE, maxCount - doneCount
+			ContainerHelper.DEFAULT_PAGE_SIZE, maxCount - doneCount
 		);
 		if(eof || countLimit == 0) {
 			throw new EOFException();
 		}
 		// execute the request
-		final HttpResponse resp = WSContainerImpl.class.cast(container).execute(
+		final HttpResponse resp = WSContainerHelper.class.cast(container).execute(
 			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit,
 			WSRequestConfig.REQUEST_WITH_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 		);

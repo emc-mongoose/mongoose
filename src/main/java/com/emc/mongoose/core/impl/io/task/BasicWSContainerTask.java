@@ -42,8 +42,9 @@ import java.nio.charset.StandardCharsets;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicWSContainerTask<T extends WSObject, C extends Container<T>>
-extends BasicIOTask<C>
+public class BasicWSContainerTask<
+	T extends WSObject, C extends Container<T>, X extends WSRequestConfig<T, C>
+> extends BasicIOTask<C, C, X>
 implements WSContainerIOTask<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -54,14 +55,14 @@ implements WSContainerIOTask<T, C> {
 	private volatile int respStatusCode = -1;
 	//
 	public BasicWSContainerTask(
-		final C item, final String nodeAddr, final RequestConfig reqConf
+		final C item, final String nodeAddr, final X reqConf
 	) {
 		super(item, nodeAddr, reqConf);
 	}
 	//
 	@Override
 	public final HttpHost getTarget() {
-		return ((WSRequestConfig) reqConf).getNodeHost(nodeAddr);
+		return ioConfig.getNodeHost(nodeAddr);
 	}
 	//
 	@Override
@@ -69,7 +70,7 @@ implements WSContainerIOTask<T, C> {
 	throws IOException, HttpException {
 		final HttpEntityEnclosingRequest httpRequest;
 		try {
-			httpRequest = ((WSRequestConfig) reqConf).createContainerRequest(item, nodeAddr);
+			httpRequest = ((WSRequestConfig) ioConfig).createContainerRequest(item, nodeAddr);
 			final HttpEntity httpEntity = httpRequest.getEntity();
 			if(httpEntity instanceof HttpAsyncContentProducer) {
 				contentProducer = (HttpAsyncContentProducer) httpEntity;
@@ -202,7 +203,7 @@ implements WSContainerIOTask<T, C> {
 			status = Status.CANCELLED;
 			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
 		} catch(final IOException e) {
-			if(!reqConf.isClosed()) {
+			if(!ioConfig.isClosed()) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during content consuming");
 			}
 		}

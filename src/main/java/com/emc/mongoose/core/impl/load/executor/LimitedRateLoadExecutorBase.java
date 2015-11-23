@@ -5,10 +5,12 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.container.Container;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
-//
+import com.emc.mongoose.core.api.io.req.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,12 +32,13 @@ extends LoadExecutorBase<T> {
 	private final int manualTaskSleepMicroSecs, tgtDurMicroSecs;
 	//
 	protected LimitedRateLoadExecutorBase(
-		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final int threadCount,
+		final RunTimeConfig runTimeConfig,
+		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final int manualTaskSleepMicroSecs, final float rateLimit
 	) throws ClassCastException {
-		super(runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount);
+		super(runTimeConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount);
 		//
 		this.manualTaskSleepMicroSecs = manualTaskSleepMicroSecs;
 		if(rateLimit < 0) {
@@ -80,9 +83,9 @@ extends LoadExecutorBase<T> {
 			}
 		}
 		//
-		return submitReqActually(request);
+		return submitTaskActually(request);
 	}
 	//
-	protected abstract Future<? extends IOTask<T>> submitReqActually(final IOTask<T> request)
+	protected abstract Future<? extends IOTask<T>> submitTaskActually(final IOTask<T> request)
 	throws RejectedExecutionException;
 }

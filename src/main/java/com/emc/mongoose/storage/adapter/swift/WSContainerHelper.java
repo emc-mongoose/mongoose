@@ -3,11 +3,12 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemContainer;
+import com.emc.mongoose.core.api.data.model.ContainerHelper;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
-import com.emc.mongoose.core.impl.data.model.WSContainerBase;
+import com.emc.mongoose.core.impl.data.model.WSContainerHelperBase;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -27,13 +28,13 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.03.15.
  */
-public final class WSContainerImpl<T extends WSObject>
-extends WSContainerBase<T>
-implements Container<T> {
+public final class WSContainerHelper<T extends WSObject, C extends Container<T>>
+extends WSContainerHelperBase<T, C>
+implements com.emc.mongoose.storage.adapter.swift.ContainerHelper<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public WSContainerImpl(
+	public WSContainerHelper(
 		final WSRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
 	) {
 		super(reqConf, name, versioningEnabled);
@@ -46,7 +47,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_HEAD, null, DataItemContainer.DEFAULT_PAGE_SIZE,
+				addr, WSRequestConfig.METHOD_HEAD, null, ContainerHelper.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
@@ -88,7 +89,7 @@ implements Container<T> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_PUT, null, DataItemContainer.DEFAULT_PAGE_SIZE,
+				addr, WSRequestConfig.METHOD_PUT, null, ContainerHelper.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
@@ -129,7 +130,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_DELETE, null, DataItemContainer.DEFAULT_PAGE_SIZE,
+				addr, WSRequestConfig.METHOD_DELETE, null, ContainerHelper.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
@@ -168,7 +169,7 @@ implements Container<T> {
 	public final void setVersioning(final String addr, final boolean enabledFlag) {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_POST, null, DataItemContainer.DEFAULT_PAGE_SIZE,
+				addr, WSRequestConfig.METHOD_POST, null, ContainerHelper.DEFAULT_PAGE_SIZE,
 				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {

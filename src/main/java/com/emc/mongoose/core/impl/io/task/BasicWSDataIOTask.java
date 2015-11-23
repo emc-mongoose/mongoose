@@ -8,12 +8,12 @@ import com.emc.mongoose.common.net.http.content.InputChannel;
 import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.WSDataIOTask;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.impl.data.BasicMutableDataItem;
 import com.emc.mongoose.core.impl.data.BasicDataItem;
@@ -46,8 +46,9 @@ import java.nio.charset.StandardCharsets;
 /**
  Created by kurila on 06.06.14.
  */
-public class BasicWSDataIOTask<T extends WSObject>
-extends BasicDataIOTask<T>
+public class BasicWSDataIOTask<
+	T extends WSObject, C extends Container<T>, X extends WSRequestConfig<T, C>
+> extends BasicDataIOTask<T, C, X>
 implements WSDataIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -55,9 +56,7 @@ implements WSDataIOTask<T> {
 	private volatile OutputChannel chanOut = null;
 	private volatile InputChannel chanIn = null;
 	//
-	public BasicWSDataIOTask(
-		final T dataObject, final String nodeAddr, final WSRequestConfig<T> reqConf
-	) {
+	public BasicWSDataIOTask(final T dataObject, final String nodeAddr, final X reqConf) {
 		super(dataObject, nodeAddr, reqConf);
 	}
 	/**
@@ -76,7 +75,7 @@ implements WSDataIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final HttpHost getTarget() {
-		return ((WSRequestConfig) reqConf).getNodeHost(nodeAddr);
+		return ((WSRequestConfig) ioConfig).getNodeHost(nodeAddr);
 	}
 	//
 	@Override
@@ -84,7 +83,7 @@ implements WSDataIOTask<T> {
 	throws IOException, HttpException {
 		final HttpEntityEnclosingRequest httpRequest;
 		try {
-			 httpRequest = ((WSRequestConfig) reqConf).createDataRequest(item, nodeAddr);
+			 httpRequest = ioConfig.createDataRequest(item, nodeAddr);
 		} catch(final URISyntaxException e) {
 			throw new HttpException("Failed to generate the request", e);
 		}
@@ -171,12 +170,12 @@ implements WSDataIOTask<T> {
 				if(item.isCurrLayerRangeUpdating(currRangeIdx)) {
 					currRange = new BasicDataItem(
 						item.getOffset() + nextRangeOffset, currRangeSize,
-						currDataLayerIdx + 1, reqConf.getContentSource()
+						currDataLayerIdx + 1, ioConfig.getContentSource()
 					);
 				} else if(item.isNextLayerRangeUpdating(currRangeIdx)) {
 					currRange = new BasicDataItem(
 						item.getOffset() + nextRangeOffset, currRangeSize,
-						currDataLayerIdx + 2, reqConf.getContentSource()
+						currDataLayerIdx + 2, ioConfig.getContentSource()
 					);
 				} else {
 					countBytesSkipped += currRangeSize;
@@ -225,12 +224,12 @@ implements WSDataIOTask<T> {
 			if(item.isCurrLayerRangeUpdated(currRangeIdx)) {
 				currRange = new BasicDataItem(
 					item.getOffset() + prevSize, contentSize, currDataLayerIdx + 1,
-					reqConf.getContentSource()
+					ioConfig.getContentSource()
 				);
 			} else {
 				currRange = new BasicDataItem(
 					item.getOffset() + prevSize, contentSize, currDataLayerIdx,
-					reqConf.getContentSource()
+					ioConfig.getContentSource()
 				);
 			}
 		}
@@ -362,7 +361,7 @@ implements WSDataIOTask<T> {
 			}
 		} else {
 			this.status = Status.SUCC;
-			((WSRequestConfig<T>) reqConf).applySuccResponseToObject(response, item);
+			ioConfig.applySuccResponseToObject(response, item);
 		}
 	}
 	//
@@ -378,7 +377,7 @@ implements WSDataIOTask<T> {
 				// check for the content corruption
 				if(Type.READ.equals(ioType)) {
 					// just consume quietly if marked as corrupted once
-					if(!Status.RESP_FAIL_CORRUPT.equals(status) && reqConf.getVerifyContentFlag()) {
+					if(!Status.RESP_FAIL_CORRUPT.equals(status) && ioConfig.getVerifyContentFlag()) {
 						// should verify the content
 						consumeAndVerifyContent(decoder, ioCtl);
 					} else { // consume quietly
@@ -394,7 +393,7 @@ implements WSDataIOTask<T> {
 			status = Status.CANCELLED;
 			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
 		} catch(final IOException e) {
-			if(!reqConf.isClosed()) {
+			if(!ioConfig.isClosed()) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during content consuming");
 			}
 		}
@@ -426,12 +425,12 @@ implements WSDataIOTask<T> {
 					if(item.isCurrLayerRangeUpdated(currRangeIdx)) {
 						currRange = new BasicDataItem(
 							item.getOffset() + nextRangeOffset, currRangeSize,
-							currDataLayerIdx + 1, reqConf.getContentSource()
+							currDataLayerIdx + 1, ioConfig.getContentSource()
 						);
 					} else {
 						currRange = new BasicDataItem(
 							item.getOffset() + nextRangeOffset, currRangeSize,
-							currDataLayerIdx, reqConf.getContentSource()
+							currDataLayerIdx, ioConfig.getContentSource()
 						);
 					}
 					currRangeIdx ++;

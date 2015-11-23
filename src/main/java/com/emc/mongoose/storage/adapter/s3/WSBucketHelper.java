@@ -3,11 +3,12 @@ package com.emc.mongoose.storage.adapter.s3;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemContainer;
+import com.emc.mongoose.core.api.data.model.ContainerHelper;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
-import com.emc.mongoose.core.impl.data.model.WSContainerBase;
+import com.emc.mongoose.core.impl.data.model.WSContainerHelperBase;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -31,9 +32,9 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.10.14.
  */
-public class WSBucketImpl<T extends WSObject>
-extends WSContainerBase<T>
-implements Bucket<T> {
+public class WSBucketHelper<T extends WSObject, C extends Container<T>>
+extends WSContainerHelperBase<T, C>
+implements BucketHelper<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static byte
@@ -46,8 +47,8 @@ implements Bucket<T> {
 				"<Status>Suspended</Status></VersioningConfiguration>"
 			).getBytes(StandardCharsets.UTF_8);
 	//
-	public WSBucketImpl(
-		final WSRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
+	public WSBucketHelper(
+		final WSRequestConfigImpl<T, C> reqConf, final String name, final boolean versioningEnabled
 	) {
 		super(reqConf, name, versioningEnabled);
 	}
@@ -57,7 +58,7 @@ implements Bucket<T> {
 		final String addr, final String method, final long timeOut, final TimeUnit timeUnit
 	)
 	throws IOException {
-		return execute(addr, method, null, DataItemContainer.DEFAULT_PAGE_SIZE, timeOut, timeUnit);
+		return execute(addr, method, null, ContainerHelper.DEFAULT_PAGE_SIZE, timeOut, timeUnit);
 	}
 	//
 	HttpResponse execute(final String addr, final String method, final boolean versioning)

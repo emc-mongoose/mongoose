@@ -2,7 +2,7 @@ package com.emc.mongoose.core.api.load.builder;
 //
 import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
+import com.emc.mongoose.core.api.io.req.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-common
@@ -25,9 +25,9 @@ extends Closeable {
 	LoadBuilder<T, U> setProperties(final RunTimeConfig props)
 	throws IllegalStateException, RemoteException;
 	//
-	RequestConfig<T> getRequestConfig()
+	IOConfig<T> getIOConfig()
 	throws RemoteException;
-	LoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
+	LoadBuilder<T, U> setIOConfig(final IOConfig<T> reqConf)
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> setLoadType(final IOTask.Type loadType)

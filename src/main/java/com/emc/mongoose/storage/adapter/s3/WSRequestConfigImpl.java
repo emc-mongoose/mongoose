@@ -8,6 +8,7 @@ import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.container.BasicContainer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 //
@@ -35,8 +36,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSRequestConfigImpl<T extends WSObject>
-extends WSRequestConfigBase<T> {
+public final class WSRequestConfigImpl<T extends WSObject, C extends Container<T>>
+extends WSRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -46,26 +47,23 @@ extends WSRequestConfigBase<T> {
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
 	private final String authPrefixValue;
 	//
-	private WSBucketImpl<T> bucket;
-	//
 	public WSRequestConfigImpl()
 	throws NoSuchAlgorithmException {
 		this(null);
 	}
 	//
-	protected WSRequestConfigImpl(final WSRequestConfigImpl<T> reqConf2Clone)
+	protected WSRequestConfigImpl(final WSRequestConfigImpl<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		authPrefixValue = runTimeConfig.getApiS3AuthPrefix() + " ";
 		if(reqConf2Clone != null) {
-			setBucket(reqConf2Clone.getBucket());
 			setNameSpace(reqConf2Clone.getNameSpace());
 		}
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
-	public WSRequestConfigImpl<T> clone() {
-		WSRequestConfigImpl<T> copy = null;
+	public WSRequestConfigImpl<T, C> clone() {
+		WSRequestConfigImpl<T, C> copy = null;
 		try {
 			copy = new WSRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
@@ -74,18 +72,8 @@ extends WSRequestConfigBase<T> {
 		return copy;
 	}
 	//
-	public final WSBucketImpl<T> getBucket() {
-		return bucket;
-	}
-	//
-	public final WSRequestConfigImpl<T> setBucket(final WSBucketImpl<T> bucket) {
-		LOG.debug(Markers.MSG, "Req conf instance #{}: set bucket \"{}\"", hashCode(), bucket);
-		this.bucket = bucket;
-		return this;
-	}
-	//
 	@Override
-	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
+	public final WSRequestConfigBase<T, C> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		//if(nameSpace == null || nameSpace.length() < 1) {
 			LOG.debug(Markers.MSG, "Using empty namespace");
@@ -96,15 +84,11 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+	public final WSRequestConfigImpl<T, C> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
 		try {
-			final WSBucketImpl<T> bucket = new WSBucketImpl<>(
-				this, this.runTimeConfig.getString(KEY_BUCKET_NAME),
-				this.runTimeConfig.getDataVersioningEnabled()
-			);
-			setBucket(bucket);
+			setContainer((C) new BasicContainer<T>(this.runTimeConfig.getString(KEY_BUCKET_NAME)));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET_NAME);
 		}
@@ -112,33 +96,17 @@ extends WSRequestConfigBase<T> {
 		return this;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	public final void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		final String bucketName = String.class.cast(in.readObject());
-		LOG.debug(Markers.MSG, "Note: bucket {} has been got from load client side", bucketName);
-		setBucket(new WSBucketImpl<>(this, bucketName, runTimeConfig.getDataVersioningEnabled()));
-	}
-	//
-	@Override
-	public final void writeExternal(final ObjectOutput out)
-	throws IOException {
-		super.writeExternal(out);
-		out.writeObject(bucket.getName());
-	}
-	//
 	@Override
 	protected final String getDataUriPath(final T dataItem)
 	throws IllegalStateException, URISyntaxException {
-		if(bucket == null) {
+		if(container == null) {
 			throw new IllegalArgumentException(MSG_NO_BUCKET);
 		}
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		applyObjectId(dataItem, null);
-		return "/" + bucket + getFilePathFor(dataItem);
+		return getContainerUriPath(container) + getFilePathFor(dataItem);
 	}
 	//
 	@Override
@@ -202,7 +170,7 @@ extends WSRequestConfigBase<T> {
 		//
 		final String uri = httpRequest.getRequestLine().getUri();
 		canonical.append('\n');
-		if(uri.contains("?") && !uri.endsWith("?" + Bucket.URL_ARG_VERSIONING)) {
+		if(uri.contains("?") && !uri.endsWith("?" + BucketHelper.URL_ARG_VERSIONING)) {
 			canonical.append(uri.substring(0, uri.indexOf("?")));
 		} else {
 			canonical.append(uri);
@@ -218,12 +186,15 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final void configureStorage(final String[] storageNodeAddrs)
 	throws IllegalStateException {
-		if(bucket == null) {
+		if(container == null) {
 			throw new IllegalStateException("Bucket is not specified");
 		} else {
-			LOG.debug(Markers.MSG, "Configure storage w/ bucket \"{}\"", bucket);
+			LOG.debug(Markers.MSG, "Configure storage w/ bucket \"{}\"", container);
 		}
-		final String bucketName = bucket.getName();
+		final String bucketName = container.getName();
+		final WSBucketHelper<T, C> bucket = new WSBucketHelper<>(
+			this, container.getName(), getVersioning()
+		);
 		if(bucket.exists(storageNodeAddrs[0])) {
 			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
 		} else {
@@ -246,7 +217,7 @@ extends WSRequestConfigBase<T> {
 	@Override
 	protected final void createDirectoryPath(final String nodeAddr, final String dirPath)
 	throws IllegalStateException {
-		final String bucketName = bucket.getName();
+		final String bucketName = container.getName();
 		final HttpEntityEnclosingRequest createDirReq = createGenericRequest(
 			METHOD_PUT, "/" + bucketName + "/" + dirPath + "/"
 		);
@@ -299,6 +270,9 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
-		return new WSBucketItemSrc<>(bucket, addr, (Class<T>) BasicWSObject.class, maxCount);
+		return new WSBucketItemSrc<>(
+			new WSBucketHelper<>(this, container.getName(), getVersioning()),
+			addr, getItemClass(), maxCount
+		);
 	}
 }

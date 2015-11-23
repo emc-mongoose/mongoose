@@ -1,22 +1,24 @@
 package com.emc.mongoose.core.impl.io.task;
 //
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 //
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.container.Container;
+import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicIOTask<T extends Item>
+public class BasicIOTask<T extends Item, C extends Container<?>, X extends IOConfig<?, C>>
 implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final RequestConfig reqConf;
+	protected final X ioConfig;
 	protected final IOTask.Type ioType;
 	protected final T item;
 	protected final String nodeAddr;
@@ -27,11 +29,9 @@ implements IOTask<T> {
 		respTimeStart = 0, respDataTimeStart = 0, respTimeDone = 0,
 		countBytesDone = 0;
 	//
-	public BasicIOTask(
-		final T item, final String nodeAddr, final RequestConfig reqConf
-	) {
-		this.reqConf = reqConf;
-		this.ioType = reqConf.getLoadType();
+	public BasicIOTask(final T item, final String nodeAddr, final X ioConfig) {
+		this.ioConfig = ioConfig;
+		this.ioType = ioConfig.getLoadType();
 		this.item = item;
 		this.nodeAddr = nodeAddr;
 	}

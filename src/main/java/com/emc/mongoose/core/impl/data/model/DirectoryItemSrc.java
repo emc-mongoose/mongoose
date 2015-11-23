@@ -1,9 +1,10 @@
 package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.log.LogUtil;
+//
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -37,14 +38,17 @@ extends GenericContainerItemSrcBase<T, C> {
 	//
 	private final DirectoryStream<Path> dirStream;
 	private final int batchSize;
+	private final ContentSource contentSrc;
+	//
 	private Iterator<Path> dirIterator;
 	//
 	public DirectoryItemSrc(
-		final C dir, final String nodeAddr, final Class<T> itemCls, final long maxCount,
-		final int batchSize
+		final C dir, final Class<T> itemCls, final long maxCount,
+		final int batchSize, final ContentSource contentSrc
 	) throws IllegalStateException {
-		super(dir, nodeAddr, itemCls, maxCount);
+		super(dir, itemCls, maxCount);
 		this.batchSize = batchSize;
+		this.contentSrc = contentSrc;
 		try {
 			dirStream = Files.newDirectoryStream(
 				Paths.get(dir.getName()), DEFAULT_DIRECTORY_STREAM_FILTER
@@ -59,16 +63,21 @@ extends GenericContainerItemSrcBase<T, C> {
 	protected final void loadNextPage()
 	throws EOFException, IOException {
 		Path nextFilePath;
+		String nextFileName;
+		long nextContentSrcOffset;
 		T nextFileItem;
 		try {
 			for(int i = 0; i < batchSize; i++) {
 				nextFilePath = dirIterator.next();
+				nextFileName = nextFilePath.getFileName().toString();
+				try {
+					nextContentSrcOffset = Long.parseLong(nextFileName, Character.MAX_RADIX);
+				} catch(final NumberFormatException e) {
+					nextContentSrcOffset = 0;
+				}
 				nextFileItem = itemConstructor.newInstance(
-					nextFilePath.getFileName().toString(),
-					0, // TODO offset
-					nextFilePath.toFile().length(),
-					0, // layer
-					ContentSourceBase.DEFAULT // TODO content source
+					nextFileName, nextContentSrcOffset, nextFilePath.toFile().length(), 0,
+					contentSrc
 				);
 				items.add(nextFileItem);
 			}
@@ -80,7 +89,9 @@ extends GenericContainerItemSrcBase<T, C> {
 	}
 	//
 	@Override
-	public final void reset() {
+	public final void reset()
+	throws IOException {
+		super.reset();
 		dirIterator = dirStream.iterator();
 	}
 }

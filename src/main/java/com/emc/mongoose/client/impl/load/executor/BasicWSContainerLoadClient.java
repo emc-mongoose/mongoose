@@ -38,7 +38,7 @@ implements WSContainerLoadClient<T, C, W> {
 	//
 	@Override
 	protected WSContainerIOTask<T, C> getIOTask(final C item, final String nodeAddr) {
-		return new BasicWSContainerTask<>(item, nodeAddr, (WSRequestConfig) reqConfigCopy);
+		return new BasicWSContainerTask<>(item, nodeAddr, (WSRequestConfig) ioConfigCopy);
 	}
 	//
 }

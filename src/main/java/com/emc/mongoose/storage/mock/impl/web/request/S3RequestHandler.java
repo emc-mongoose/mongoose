@@ -6,9 +6,9 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.MutableDataItem;
-import com.emc.mongoose.core.api.data.model.DataItemContainer;
+import com.emc.mongoose.core.api.data.model.ContainerHelper;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-import com.emc.mongoose.storage.adapter.s3.Bucket;
+import com.emc.mongoose.storage.adapter.s3.BucketHelper;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
@@ -57,9 +57,9 @@ extends WSRequestHandlerBase<T> {
 	private final static Pattern
 		PATTERN_URI = Pattern.compile("/(?<" + BUCKET + ">[^/^\\?]+)/?(?<" + OBJ_ID + ">[^\\?]+)?"),
 		PATTERN_MAX_KEYS = Pattern.compile(
-			Bucket.URL_ARG_MAX_KEYS + "=(?<" + MAX_KEYS +  ">[\\d]+)&?"
+			BucketHelper.URL_ARG_MAX_KEYS + "=(?<" + MAX_KEYS +  ">[\\d]+)&?"
 		),
-		PATTERN_MARKER = Pattern.compile(Bucket.URL_ARG_MARKER + "=(?<" + MARKER + ">[a-z\\d]+)&?");
+		PATTERN_MARKER = Pattern.compile(BucketHelper.URL_ARG_MARKER + "=(?<" + MARKER + ">[a-z\\d]+)&?");
 	//
 	public S3RequestHandler(final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage) {
 		super(runTimeConfig, sharedStorage);
@@ -129,7 +129,7 @@ extends WSRequestHandlerBase<T> {
 		final HttpRequest req, final HttpResponse resp, final String name, final String dataId
 	) {
 		final String uri = req.getRequestLine().getUri();
-		int maxCount = DataItemContainer.DEFAULT_PAGE_SIZE;
+		int maxCount = ContainerHelper.DEFAULT_PAGE_SIZE;
 		String marker = null;
 		final Matcher maxKeysMatcher = PATTERN_MAX_KEYS.matcher(uri);
 		if(maxKeysMatcher.find()) {

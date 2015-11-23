@@ -3,9 +3,12 @@ package com.emc.mongoose.core.impl.data.model;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemContainer;
+import com.emc.mongoose.core.api.data.model.ContainerHelper;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+//
+import com.emc.mongoose.core.impl.container.BasicContainer;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,18 +20,20 @@ import java.util.Date;
 /**
  Created by kurila on 10.07.15.
  */
-public abstract class WSContainerBase<T extends WSObject>
-implements DataItemContainer<T> {
+public abstract class WSContainerHelperBase<T extends WSObject, C extends Container<T>>
+extends BasicContainer<T>
+implements ContainerHelper<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final WSRequestConfig<T> reqConf;
+	protected final WSRequestConfig<T, C> reqConf;
 	protected final String name, idPrefix;
 	protected final int idPrefixLen;
 	protected final boolean fsAccess, verifyContent;
 	//
-	protected WSContainerBase(
-		final WSRequestConfig<T> reqConf, final String name, final boolean versioningEnabled
+	protected WSContainerHelperBase(
+		final WSRequestConfig<T, C> reqConf, final String name,
+		final boolean versioningEnabled
 	) {
 		this.reqConf = reqConf;
 		if(name == null || name.length() == 0) {
@@ -41,16 +46,6 @@ implements DataItemContainer<T> {
 		this.idPrefix = reqConf.getNamePrefix();
 		idPrefixLen = idPrefix == null ? 0 : idPrefix.length();
 		this.verifyContent = reqConf.getVerifyContentFlag();
-	}
-	//
-	@Override
-	public final String getName() {
-		return toString();
-	}
-	//
-	@Override
-	public final String toString() {
-		return name;
 	}
 	//
 	@Override
