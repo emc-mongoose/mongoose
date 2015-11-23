@@ -3,14 +3,15 @@ require(["./requirejs/conf"], function() {
 	//  App entry point
 	require([
 		"jquery",
-		"./controllers/defaultController",
+		"./controllers/mainController",
 		"./util/pace/loading",
 		"bootstrap",
 		"./util/bootstrap/tabs"
-	], function($, defaultController) {
+	], function($, mainController) {
 		$.get("/main", function(rtConfig) {
-			if (rtConfig) {
-				defaultController.start(rtConfig.properties);
+			var props = rtConfig.properties; //  root element of mongoose.json file ("properties")
+			if(props) {
+				mainController.start(props);
 			}
 		});
 	});

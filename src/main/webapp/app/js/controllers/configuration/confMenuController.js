@@ -5,50 +5,45 @@ define([
 	"./baseConfController",
 	"./extendedConfController"
 ], function(
-		$, Handlebars, confMenuTemplate,
-		baseConfController, extendedConfController
+	$,
+	Handlebars,
+	confMenuTemplate,
+	baseConfController,
+	extendedConfController
 ) {
-
-	function start(rtConfig) {
-
-		//  default run.mode from rtConfig should be overridden here
+	//
+	function start(props) {
+		//  default run.mode ("webui") from rtConfig should be overridden here
 		var run = {
-			mode: "standalone"
+			mode: "standalone" // possible: ["standalone", "client", "server", "cinderella"]
 		};
-
+		//  render configuration menu panel
 		render();
-
 		//  some settings for configuration menu
 		setDefaultRunMode(run.mode);
-		bindMenuEvents(rtConfig);
-
+		bindMenuEvents(props);
 	}
-
-
+	//
 	function render() {
-
 		var compiled = Handlebars.compile(confMenuTemplate);
-
 		document.querySelector("#configuration")
 			.insertAdjacentHTML("afterbegin", compiled());
-
 	}
-
+	//
 	function setDefaultRunMode(runMode) {
-
 		var select = document.querySelector("#run-mode");
 		var options = select.options;
-		for (var option in options) {
-			if (options.hasOwnProperty(option)) {
+		for(var option in options) {
+			if(options.hasOwnProperty(option)) {
 				option = options[option];
-				if (option.value == runMode) {
+				if(option.value == runMode) {
 					select.value = option.value;
 				}
 			}
 		}
 	}
-
-	function bindMenuEvents(rtConfig) {
+	//
+	function bindMenuEvents(props) {
 		//  config mode change
 		var configTypes = {
 			"base": baseConfController,
@@ -59,7 +54,7 @@ define([
 		configModeSelect.on("change", function() {
 			var activeOptionValue = this.options[this.selectedIndex].value;
 			//  start baseConfController or extendedConfController
-			configTypes[activeOptionValue].start();
+			configTypes[activeOptionValue].start(props);
 		});
 		//  activate
 		configModeSelect.trigger("change");
@@ -67,7 +62,7 @@ define([
 
 		////////////////////////////////////////////////////////////////////////////////////////////
 
-		//  run mode change
+		//  run mode change (show base conf fields only for selected run mode)
 		var runModeSelect = $("#run-mode");
 		runModeSelect.on("change", function() {
 			var valueSelected = this.options[this.selectedIndex].value;
@@ -82,7 +77,7 @@ define([
 
 		////////////////////////////////////////////////////////////////////////////////////////////
 
-		//  show input for reading cfg from file
+		//  show input field for reading cfg from file
 		var fileCheckbox = $("#file-checkbox");
 		fileCheckbox.on("change", function() {
 			var file = document.querySelector("#config-file");
@@ -120,7 +115,7 @@ define([
 		var fileInput = $("#config-file");
 		fileInput.change(function() {
 			var input = $(this).get(0);
-			loadPropertiesFromFile(rtConfig, input.files[0]);
+			loadPropertiesFromFile(props, input.files[0]);
 		});
 	}
 

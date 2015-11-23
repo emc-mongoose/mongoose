@@ -4,10 +4,15 @@ define([
 	"text!../../../templates/configuration/baseConf.hbs",
 	"text!../../../templates/modals/scenarioWindow.hbs",
 	"text!../../../templates/modals/apiWindow.hbs"
-], function(Handlebars, baseConfModel, baseConfTemplate, scenarioWindow, apiWindow) {
-
-	function start(rtConfig) {
-
+], function(
+	Handlebars,
+	baseConfModel,
+	baseConfTemplate,
+	scenarioWindow,
+	apiWindow
+) {
+	//
+	function start(props) {
 		//  render empty fields on HTML page
 		render();
 
@@ -15,7 +20,7 @@ define([
 		addApiModalWindow();
 
 		//  fill these fields w/ values from trConfig
-		traverseJsonTree(rtConfig);
+		traverseJsonTree(props);
 
 		bindEventsOnAliasingProps();
 
@@ -96,7 +101,9 @@ define([
 		var compiled = Handlebars.compile(baseConfTemplate);
 		var html = compiled(JSON.parse(baseConfModel));
 
-		document.querySelector("#main-content").insertAdjacentHTML("afterbegin", html);
+		//  show base configuration fields
+		document.querySelector("#main-content")
+			.insertAdjacentHTML("afterbegin", html);
 	}
 
 	function traverseJsonTree(jsonObject, fieldPrefix) {
