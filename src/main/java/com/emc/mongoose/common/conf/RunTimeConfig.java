@@ -389,8 +389,8 @@ implements Externalizable {
 		return getBoolean(KEY_ITEM_SRC_CIRCULAR);
 	}
 	//
-	public final long getItemQueueMaxSize() {
-		return getLong(KEY_ITEM_QUEUE_MAX_SIZE);
+	public final int getItemQueueMaxSize() {
+		return getInt(KEY_ITEM_QUEUE_MAX_SIZE);
 	}
 	//
 	public final String getRunName() {
