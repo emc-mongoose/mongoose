@@ -12,9 +12,20 @@ define([
 	apiWindow
 ) {
 	//
-	function start(props) {
+	var SCENARIO_FIELD_KEY = "scenario.name",
+		API_FIELD_KEY = "api.name";
+	//
+	function setup(props) {
+		//  render empty configuration fields on HTML page
+		render();
+		//  render modal windows
+		renderScenarioModalWindow(scenarioWindow);
+		//renderApiModalWindow();
+	}
+	//
+	function run(props) {
 		//
-		$("#extended").remove();
+		/*$("#extended").remove();
 		var folders = $(".folders");
 		folders.children().remove();
 		folders.hide();
@@ -99,18 +110,53 @@ define([
 			if (dataPointer) {
 				document.getElementById(dataPointer).value = this.value;
 			}
-		});
+		});*/
 	}
-
+	//
 	function render() {
 		var compiled = Handlebars.compile(baseConfTemplate);
 		var html = compiled(JSON.parse(baseConfModel));
-
 		//  show base configuration fields
 		document.querySelector("#main-content")
 			.insertAdjacentHTML("afterbegin", html);
 	}
+	//
+	function renderScenarioModalWindow(scenarioWindow) {
+		var compiled = Handlebars.compile(scenarioWindow);
+		var html = compiled();
+		document.getElementById(SCENARIO_FIELD_KEY)
+			.parentNode.insertAdjacentHTML("afterend", html);
+		//  load hint for scenarios
+		/*changeLoadHint("single");
+		//
+		$("#single").find("select").on("change", function() {
+			changeLoadHint("single");
+		});
+		//
+		$("#chain").find("input").on("change", function() {
+			changeLoadHint("chain");
+		});
+		//
+		document.getElementById("scenario.name").addEventListener("change", function() {
+			var valueSelected = this.value;
+			document.querySelector("#scenario-button")
+				.setAttribute("data-target", "#" + valueSelected);
+			changeLoadHint(valueSelected);
+		});
 
+		$("#chain-load").click(function() {
+			$("#chain").modal('show').css("z-index", 5000);
+		});*/
+	}
+	//
+	function changeLoadHint(value) {
+		var loadHint = $("#scenario-load");
+		var scenarioLoad = document
+			.getElementById("scenario.type." + value + ".load").value;
+		if(scenarioLoad) {
+			loadHint.text("Load: [" + scenarioLoad + "]");
+		}
+	}
 	function traverseJsonTree(jsonObject, fieldPrefix) {
 		for (var key in jsonObject) {
 			if (jsonObject.hasOwnProperty(key)) {
@@ -314,28 +360,11 @@ define([
 		});
 	}
 
-	function changeLoadHint(value) {
-		var loadHint = $("#scenario-load");
-		//
-		var scenarioTypeSingleLoad = document.getElementById("scenario.type.single.load").value;
-		var scenarioTypeChainLoad = document.getElementById("scenario.type.chain.load").value;
-		switch (value) {
-			case "single":
-				loadHint.text("Load: [" + scenarioTypeSingleLoad + "]");
-				break;
-			case "chain":
-				loadHint.text("Load: [" + scenarioTypeChainLoad + "]");
-				break;
-			case "rampup":
-				loadHint.text("Load: [" + scenarioTypeChainLoad + "]");
-				break;
-		}
-	}
-
 	return {
 		fillConfigField: fillConfigField,
 		fillComplexConfigField: fillComplexConfigField,
-		start: start
+		run: run,
+		setup: setup
 	};
 
 });

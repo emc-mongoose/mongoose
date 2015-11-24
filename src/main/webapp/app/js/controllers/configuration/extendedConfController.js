@@ -4,11 +4,15 @@ define([
 ],
 function(Handlebars, extendedConf) {
 	//
-	function start(props) {
+	function run(props) {
 		//
-		$("#base").remove();
+		/*$("#base").remove();
 		//
-		render(props);
+		render(props);*/
+	}
+	//
+	function setup() {
+		console.log("Extended");
 	}
 	//
 	function render(props) {
@@ -30,23 +34,22 @@ function(Handlebars, extendedConf) {
 				text: "id"
 			}));
 		//
+		shortPropsMap["run.id"] = "";
 		buildDivBlocksByPropertyNames(shortPropsMap);
 		bindEvents();
 	}
 	//
 	function bindEvents() {
 		$(".folders a, .folders label").click(function(e) {
-			if ($(this).is("a")) {
-				e.preventDefault();
+			e.preventDefault();
+			if($(this).is("a")) {
+				onMenuItemClick($(this));
 			}
-			//
-			onMenuItemClick($(this));
 		});
 	}
 	//
 	function onMenuItemClick(element) {
 		resetParams();
-		element.css("color", "#CC0033");
 		if (element.is("a")) {
 			var id = element.attr("href").replace(/\./g, "\\.");
 			var block = $(id);
@@ -56,7 +59,6 @@ function(Handlebars, extendedConf) {
 	}
 	//
 	function resetParams() {
-		$("a, label").css("color", "");
 		$("#configuration-content").children().hide();
 	}
 	//
@@ -131,6 +133,7 @@ function(Handlebars, extendedConf) {
 	}
 	//
 	return {
-		start: start
+		run: run,
+		setup: setup
 	};
 });

@@ -1,4 +1,4 @@
-// Load RequireJS configuration before any other actions
+//  Load RequireJS configuration before any other actions
 require(["./requirejs/conf"], function() {
 	//  App entry point
 	require([
@@ -8,10 +8,14 @@ require(["./requirejs/conf"], function() {
 		"bootstrap",
 		"./util/bootstrap/tabs"
 	], function($, mainController) {
+		//  get all properties from runTimeConfig
 		$.get("/main", function(rtConfig) {
-			var props = rtConfig.properties; //  root element of mongoose.json file ("properties")
+			//  root element ("properties") of mongoose.json configuration file
+			var props = rtConfig.properties;
 			if(props) {
-				mainController.start(props);
+				mainController.run(props);
+			} else {
+				alert("Failed to load the configuration");
 			}
 		});
 	});

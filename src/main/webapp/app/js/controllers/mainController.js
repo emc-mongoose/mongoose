@@ -10,30 +10,35 @@ define([
 	tabsTemplate
 ) {
 	//
-	function start(props) {
-		var run = {
-			version: props.run.version || "unknown"
-		};
+	function run(props) {
 		//  render navbar and tabs before any other interactions
-		render(run);
-		//
-		confMenuController.start(props);
+		render(props);
+		confMenuController.run(props);
 	}
 	//
-	function render(content) {
-		var compiled = Handlebars.compile(navbarTemplate);
-		var navbar = compiled(content);
+	function render(props) {
+		renderNavbar(props.run.version || "unknown");
+		renderTabs();
+	}
+	//
+	function renderNavbar(runVersion) {
+		var run = {
+			version: runVersion
+		};
 		//
-		var tabs = Handlebars.compile(tabsTemplate);
-		//  Navbar
+		var compiled = Handlebars.compile(navbarTemplate);
+		var navbar = compiled(run);
 		document.querySelector("body")
 			.insertAdjacentHTML("afterbegin", navbar);
-		//  Tabs
+	}
+	//
+	function renderTabs() {
+		var tabs = Handlebars.compile(tabsTemplate);
 		document.querySelector("#app")
 			.insertAdjacentHTML("afterbegin", tabs());
 	}
 	//
 	return {
-		start: start
+		run: run
 	};
 });

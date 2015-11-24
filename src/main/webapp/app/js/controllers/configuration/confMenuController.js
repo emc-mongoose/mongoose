@@ -8,17 +8,19 @@ define([
 	$,
 	Handlebars,
 	confMenuTemplate,
-	baseConfController,
-	extendedConfController
+    baseConfController,
+    extendedConfController
 ) {
 	//
-	function start(props) {
+	function run(props) {
 		//  default run.mode ("webui") from rtConfig should be overridden here
 		var run = {
 			mode: "standalone" // possible: ["standalone", "client", "server", "cinderella"]
 		};
 		//  render configuration menu panel
 		render();
+		baseConfController.setup(props);
+		extendedConfController.setup(props);
 		//  some settings for configuration menu
 		setDefaultRunMode(run.mode);
 		bindMenuEvents(props);
@@ -49,16 +51,14 @@ define([
 			"base": baseConfController,
 			"extended": extendedConfController
 		};
-
 		var configModeSelect = $("#config-type");
 		configModeSelect.on("change", function() {
 			var activeOptionValue = this.options[this.selectedIndex].value;
 			//  start baseConfController or extendedConfController
-			configTypes[activeOptionValue].start(props);
+			configTypes[activeOptionValue].run(props);
 		});
 		//  activate
 		configModeSelect.trigger("change");
-
 
 		////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -81,7 +81,7 @@ define([
 		var fileCheckbox = $("#file-checkbox");
 		fileCheckbox.on("change", function() {
 			var file = document.querySelector("#config-file");
-			if (this.checked) {
+			if(this.checked) {
 				file.style.display = "block";
 			} else {
 				file.style.display = "none";
@@ -90,12 +90,12 @@ define([
 
 		////////////////////////////////////////////////////////////////////////////////////////////
 
-		var serializedForm = $("#main-form").serialize();
+		var fields = $("#main-form").serialize();
 
 		//  update config file (save button click)
-		var saveConfig = $("#save-config");
-		saveConfig.click(function() {
-			$.post("/save", serializedForm, function() {
+		var updateConfig = $("#save-config");
+		updateConfig.click(function() {
+			$.post("/save", fields, function() {
 				alert("Config was successfully saved");
 			});
 		});
@@ -104,7 +104,7 @@ define([
 		var saveInFile = $("#save-file");
 		saveInFile.click(function(e) {
 			e.preventDefault();
-			$.get("/save", serializedForm, function() {
+			$.get("/save", fields, function() {
 				window.location.href = "/save/config.txt";
 			});
 		});
@@ -119,19 +119,19 @@ define([
 		});
 	}
 
-	function loadPropertiesFromFile(rtConfig, fileName) {
+	function loadPropertiesFromFile(props, fileName) {
 		var reader = new FileReader();
 		reader.onload = function() {
 			var result = reader.result;
 			var lines = result.split("\n");
 			var key, value;
-			for (var i = 0;i < lines.length; i++) {
+			for(var i = 0;i < lines.length; i++) {
 				var splitLine = lines[i].split(" = ");
 				//  key and value
-				if (splitLine.length == 2) {
+				if(splitLine.length == 2) {
 					key = splitLine[0];
 					value = splitLine[1];
-					index(rtConfig, key, value);
+					index(props, key, value);
 				} else {
 					return;
 				}
@@ -142,11 +142,11 @@ define([
 
 	function index(obj,is, value) {
 		try {
-			if (typeof is == 'string')
+			if(typeof is == 'string')
 				return index(obj, is.split('.'), value);
-			else if (is.length == 1 && value !== undefined)
+			else if(is.length == 1 && value !== undefined)
 				return obj[is[0]] = value;
-			else if (is.length == 0)
+			else if(is.length == 0)
 				return obj;
 			else
 				return index(obj[is[0]], is.slice(1), value);
@@ -156,6 +156,6 @@ define([
 	}
 
 	return {
-		start: start
+		run: run
 	};
 });
