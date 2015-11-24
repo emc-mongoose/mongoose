@@ -13,6 +13,11 @@ define([
 ) {
 	//
 	function start(props) {
+		//
+		$("#extended").remove();
+		var folders = $(".folders");
+		folders.children().remove();
+		folders.hide();
 		//  render empty fields on HTML page
 		render();
 

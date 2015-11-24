@@ -67,3 +67,26 @@
 	padding-left: 0;
 }
 
+#main-content {
+	height: calc(100vh - 114px); /* looks ugly */
+	border-left: 1px solid #ccc;
+	overflow: auto;
+}
+
+/* Media Selectors */
+@media (max-width: 768px) {
+	#main-content {
+		overflow: visible;
+		height: auto;
+	}
+	.folders {
+		display: none;
+	}
+	#log-pills li {
+		width: 90%;
+	}
+	#chart-pills li {
+		width: 90%;
+	}
+}
+

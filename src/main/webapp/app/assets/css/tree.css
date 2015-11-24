@@ -6,6 +6,7 @@
 
 .folders {
 	display: none;
+	padding-left: 40px;
 	border-bottom: 1px solid #ccc;
 	margin-top: 15px;
 	padding-bottom: 15px;
