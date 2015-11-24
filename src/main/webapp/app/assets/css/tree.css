@@ -1,0 +1,73 @@
+#menu li {
+	position: relative;
+	margin-left: -15px;
+	list-style: none;
+}
+
+.folders {
+	display: none;
+	border-bottom: 1px solid #ccc;
+	margin-top: 15px;
+	padding-bottom: 15px;
+	overflow: auto;
+	height: calc(100vh - 430px);
+}
+
+.props {
+	background: url('../img/document.png') 15px 1px no-repeat;
+	padding-left: 37px;
+	text-decoration: none;
+	display: block;
+}
+
+.property {
+	display: block;
+	margin-left: 20px;
+}
+
+#menu li input {
+	position: absolute;
+	left: 0;
+	margin-left: 0;
+	opacity: 0;
+	z-index: 2;
+	cursor: pointer;
+	height: 1em;
+	width: 1em;
+	top: 0;
+}
+
+li input + ul {
+	background: url('../img/toggle-small-expand.png') 40px 0 no-repeat;
+	margin: -1.67em 0 0 -44px;
+	height: 1em;
+}
+
+li input + ul > li {
+	display: none;
+	margin-left: -14px !important;
+	padding-left: 1px;
+}
+
+li label {
+	background: url('../img/folder.png') 15px 1px no-repeat;
+	cursor: pointer;
+	display: block;
+	padding-left: 37px;
+}
+
+li input:checked + ul {
+	background: url('../img/toggle-small.png') 40px 5px no-repeat;
+	margin: -2em 0 0 -44px;
+	padding: 1.563em 0 0 80px;
+	height: auto;
+}
+
+li input:checked + ul > li {
+	display: block;
+	margin: 0 0 0.125em;
+}
+
+li input:checked + ul > li:last-child {
+	margin: 0 0 0.063em;
+}
