@@ -56,7 +56,7 @@ extends LoadExecutorBase<T> {
 	}
 	//
 	@Override
-	public Future<? extends IOTask<T>> submitReq(final IOTask<T> request)
+	public <A extends IOTask<T>> Future<A> submitReq(final A request)
 	throws RejectedExecutionException {
 		// manual delay
 		if(manualTaskSleepMicroSecs > 0) {
@@ -86,6 +86,6 @@ extends LoadExecutorBase<T> {
 		return submitTaskActually(request);
 	}
 	//
-	protected abstract Future<? extends IOTask<T>> submitTaskActually(final IOTask<T> request)
+	protected abstract <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)
 	throws RejectedExecutionException;
 }

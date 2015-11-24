@@ -14,4 +14,11 @@ implements FileIOTask<T> {
 	public BasicFileIOTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
 	}
+	//
+	@Override
+	public void run()
+	throws Exception {
+		System.out.println(ioType + " \"" + item.getName() + "\"");
+	}
+	//
 }

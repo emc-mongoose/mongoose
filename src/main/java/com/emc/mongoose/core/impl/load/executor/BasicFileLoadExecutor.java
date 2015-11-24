@@ -53,7 +53,6 @@ extends MutableDataLoadExecutorBase<T> {
 	@Override
 	public int submitTasks(final List<? extends IOTask<T>> tasks, final int from, final int to)
 	throws RemoteException, RejectedExecutionException {
-		ioTaskExecutor.invokeAny(tasks)
 		int n = 0;
 		for(int i = from; i < to; i ++) {
 			if(null != submitReq(tasks.get(i))) {
@@ -66,8 +65,8 @@ extends MutableDataLoadExecutorBase<T> {
 	}
 	//
 	@Override
-	protected Future<? extends FileIOTask<T>> submitTaskActually(final IOTask<T> ioTask)
+	protected <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)
 	throws RejectedExecutionException {
-		return null;
+		return (Future<A>) ioTaskExecutor.<FileIOTask<T>>submit((FileIOTask<T>) ioTask);
 	}
 }
