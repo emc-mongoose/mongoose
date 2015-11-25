@@ -75,7 +75,7 @@ implements WSDataIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final HttpHost getTarget() {
-		return ((WSRequestConfig) ioConfig).getNodeHost(nodeAddr);
+		return ioConfig.getNodeHost(nodeAddr);
 	}
 	//
 	@Override
