@@ -1,14 +1,14 @@
 <!-- Modal window button -->
 <button type="button" id="scenario-button" class="btn btn-primary"
         data-toggle="modal"
-        data-target="#single">
+        data-target="#modal-single">
 	Details...
 </button>
 
 <i id="scenario-load"></i>
 
 <!-- Single -->
-<div class="modal" id="single" tabindex="-1" role="dialog" aria-labelledby="singleLabel"
+<div class="modal" id="modal-single" tabindex="-1" role="dialog" aria-labelledby="singleLabel"
      aria-hidden="true">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -22,58 +22,58 @@
 
 			<div class="modal-body">
 				<div class="form-group">
-					<label for="scenario.type.single.load"
+					<label for="duplicate-scenario.type.single.load"
 					       class="col-sm-6 control-label">Load type</label>
 					<div class="col-sm-6">
-						<select id="scenario.type.single.load"
-					        name="scenario.type.single.load">
-							<option value="create">create</option>
-							<option value="read">read</option>
-							<option value="update">update</option>
-							<option value="delete">delete</option>
-							<option value="append">append</option>
+						<select id="duplicate-scenario.type.single.load"
+						        data-pointer="scenario.type.single.load">
+							<option value="duplicate-create">create</option>
+							<option value="duplicate-read">read</option>
+							<option value="duplicate-update">update</option>
+							<option value="duplicate-delete">delete</option>
+							<option value="duplicate-append">append</option>
 						</select>
 					</div>
 				</div>
 
 				<hr/>
 
-				<div id="create">
+				<div id="duplicate-create">
 					<fieldset>
 						<legend>Create</legend>
 						<div class="form-group">
-							<label class="col-sm-6 control-label" for="load.type.create.connections">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.create.connections">
 								Connection count
 							</label>
 							<div class="col-sm-6">
-								<input type="text" id="load.type.create.connections"
+								<input type="text" id="duplicate-load.type.create.connections"
 								       class="form-control"
-								       name="load.type.create.connections"/>
+								       data-pointer="load.type.create.connections"/>
 							</div>
 						</div>
 					</fieldset>
 				</div>
 
-				<div id="read">
+				<div id="duplicate-read">
 					<fieldset>
 						<legend>Read</legend>
 						<div class="form-group">
-							<label class="col-sm-6 control-label" for="load.type.read.connections">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.read.connections">
 								Connection count
 							</label>
 							<div class="col-sm-6">
-								<input type="text" id="load.type.read.connections"
+								<input type="text" id="duplicate-load.type.read.connections"
 								       class="form-control"
-								       name="load.type.read.connections"/>
+								       data-pointer="load.type.read.connections"/>
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label for="load.type.read.verifyContent"
+							<label for="duplicate-load.type.read.verifyContent"
 							       class="col-sm-6 control-label">Verify content</label>
 							<div class="col-sm-6">
-								<select id="load.type.read.verifyContent" class="form-select"
-										name="load.type.read.verifyContent">
+								<select id="duplicate-load.type.read.verifyContent" class="form-select"
+										data-pointer="load.type.read.verifyContent">
 									<option>true</option>
 									<option>false</option>
 								</select>
@@ -82,60 +82,60 @@
 					</fieldset>
 				</div>
 
-				<div id="update">
+				<div id="duplicate-update">
 					<fieldset>
 						<legend>Update</legend>
 						<div class="form-group">
-							<label class="col-sm-6 control-label" for="load.type.update.connections">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.update.connections">
 								Connection count
 							</label>
 							<div class="col-sm-6">
-								<input type="text" id="load.type.update.connections"
+								<input type="text" id="duplicate-load.type.update.connections"
 								       class="form-control"
-								       name="load.type.update.connections"/>
+								       data-pointer="load.type.update.connections"/>
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label class="col-sm-6 control-label" for="load.type.update.perItem">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.update.perItem">
 								Update per item count
 							</label>
 							<div class="col-sm-6">
-								<input type="text" id="load.type.update.perItem"
+								<input type="text" id="duplicate-load.type.update.perItem"
 								       class="form-control"
-								       name="load.type.update.perItem"/>
+								       data-pointer="load.type.update.perItem"/>
 							</div>
 						</div>
 					</fieldset>
 				</div>
 
-				<div id="delete">
+				<div id="duplicate-delete">
 					<fieldset>
 						<legend>Delete</legend>
 						<div class="form-group">
-							<label class="col-sm-6 control-label" for="load.type.delete.connections">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.delete.connections">
 								Connection count
 							</label>
 							<div class="col-sm-6">
-								<input type="text" id="load.type.delete.connections"
+								<input type="text" id="duplicate-load.type.delete.connections"
 								       class="form-control"
-								       name="load.type.delete.connections"/>
+								       data-pointer="load.type.delete.connections"/>
 							</div>
 						</div>
 					</fieldset>
 				</div>
 
-				<div id="append">
+				<div id="duplicate-append">
 					<fieldset>
 						<legend>Append</legend>
 						<div class="form-group">
-							<label class="col-sm-6 control-label" for="load.type.append.connections">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.append.connections">
 								Connection count
 							</label>
 							<div class="col-sm-6">
-								<input type="text" id="load.type.append.connections"
+								<input type="text" id="duplicate-load.type.append.connections"
 								       class="form-control"
-								       name="load.type.append.connections"/>
+								       data-pointer="load.type.append.connections"/>
 							</div>
 						</div>
 					</fieldset>
@@ -150,7 +150,7 @@
 </div>
 
 <!-- Chain -->
-<div class="modal" id="chain" tabindex="-1" role="dialog" aria-labelledby="chainLabel"
+<div class="modal" id="modal-chain" tabindex="-1" role="dialog" aria-labelledby="chainLabel"
      aria-hidden="true">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -164,12 +164,12 @@
 
 			<div class="modal-body">
 				<div class="form-group">
-					<label for="scenario.type.chain.load" class="col-sm-6 control-label">
+					<label for="duplicate-scenario.type.chain.load" class="col-sm-6 control-label">
 						Load types
 					</label>
 					<div class="col-sm-6">
-						<input type="text" class="form-control" id="scenario.type.chain.load"
-						       name="scenario.type.chain.load"/>
+						<input type="text" class="form-control" id="duplicate-scenario.type.chain.load"
+						       data-pointer="scenario.type.chain.load"/>
 					</div>
 				</div>
 
@@ -211,33 +211,33 @@
 						<div role="tabpanel" class="tab-pane active" id="tab-create">
 							<div class="form-group">
 								<label class="col-sm-6 control-label"
-								       for="duplicate-load.type.create.connections">
+								       for="chain-load.type.create.connections">
 									Connection count
 								</label>
 								<div class="col-sm-6">
-									<input type="text" id="duplicate-load.type.create.connections"
+									<input type="text" id="chain-load.type.create.connections"
 									       class="form-control" data-pointer="load.type.create.connections"/>
 								</div>
 							</div>
 						</div>
 						<div role="tabpanel" class="tab-pane" id="tab-read">
 							<div class="form-group">
-								<label class="col-sm-6 control-label" for="duplicate-load.type.read.connections">
+								<label class="col-sm-6 control-label" for="chain-load.type.read.connections">
 									Connection count
 								</label>
 								<div class="col-sm-6">
-									<input type="text" id="duplicate-load.type.read.connections"
+									<input type="text" id="chain-load.type.read.connections"
 									       class="form-control" data-pointer="load.type.read.connections"/>
 								</div>
 							</div>
 
 							<div class="form-group">
-								<label for="duplicate-load.type.read.verifyContent"
+								<label for="chain-load.type.read.verifyContent"
 								       class="col-sm-6 control-label">
 									Verify content
 								</label>
 								<div class="col-sm-6">
-									<select id="duplicate-load.type.read.verifyContent" class="form-select"
+									<select id="chain-load.type.read.verifyContent" class="form-select"
 											data-pointer="load.type.read.verifyContent">
 										<option>true</option>
 										<option>false</option>
@@ -248,46 +248,47 @@
 						<div role="tabpanel" class="tab-pane" id="tab-update">
 							<div class="form-group">
 								<label class="col-sm-6 control-label"
-								       for="duplicate-load.type.update.connections">
+								       for="chain-load.type.update.connections">
 									Connection count
 								</label>
 								<div class="col-sm-6">
-									<input type="text" id="duplicate-load.type.update.connections"
+									<input type="text" id="chain-load.type.update.connections"
 									       class="form-control" data-pointer="load.type.update.connections"/>
 								</div>
 							</div>
 
 							<div class="form-group">
 								<label class="col-sm-6 control-label"
-								       for="duplicate-load.type.update.perItem">
+								       for="chain-load.type.update.perItem">
 									Update per item count
 								</label>
 								<div class="col-sm-6">
-									<input type="text" id="duplicate-load.type.update.perItem"
-								       class="form-control" data-pointer="duplicate-load.type.update.perItem"/>
+									<input type="text" id="chain-load.type.update.perItem"
+								       class="form-control" data-pointer="load.type.update.perItem"/>
 								</div>
 							</div>
 						</div>
 						<div role="tabpanel" class="tab-pane" id="tab-delete">
 							<div class="form-group">
 								<label class="col-sm-6 control-label"
-								       for="duplicate-load.type.delete.connections">
+								       for="chain-load.type.delete.connections">
 									Connection count
 								</label>
 								<div class="col-sm-6">
 									<input type="text" class="form-control"
-								       id="duplicate-load.type.delete.connections" data-pointer="load.type.delete.connections"/>
+								       id="chain-load.type.delete.connections"
+								           data-pointer="load.type.delete.connections"/>
 								</div>
 							</div>
 						</div>
 						<div role="tabpanel" class="tab-pane" id="tab-append">
 							<div class="form-group">
 								<label class="col-sm-6 control-label"
-								       for="duplicate-load.type.append.connections">
+								       for="chain-load.type.append.connections">
 									Connection count
 								</label>
 								<div class="col-sm-6">
-									<input type="text" id="duplicate-load.type.append.connections"
+									<input type="text" id="chain-load.type.append.connections"
 									       class="form-control" data-pointer="load.type.append.connections"/>
 								</div>
 							</div>
@@ -298,12 +299,12 @@
 				<hr/>
 
 				<div class="form-group">
-					<label for="scenario.type.chain.concurrent"
+					<label for="duplicate-scenario.type.chain.concurrent"
 					       class="col-sm-6 control-label">
 						Simultaneous
 					</label>
 					<div class="col-sm-6">
-						<select id="scenario.type.chain.concurrent" class="form-select">
+						<select id="duplicate-scenario.type.chain.concurrent" class="form-select">
 							<option>true</option>
 							<option>false</option>
 						</select>
@@ -319,7 +320,7 @@
 </div>
 
 <!-- Rampup -->
-<div class="modal" id="rampup" tabindex="-1"
+<div class="modal" id="modal-rampup" tabindex="-1"
      role="dialog" aria-labelledby="rampupLabel"
      aria-hidden="true">
 	<div class="modal-dialog">
@@ -342,24 +343,24 @@
 					</div>
 				</div>
 				<div class="form-group">
-					<label for="scenario.type.rampup.connCounts"
+					<label for="duplicate-scenario.type.rampup.connCounts"
 					       class="col-sm-4 control-label">
 						Connection count
 					</label>
 					<div class="col-sm-8">
-						<input type="text" id="scenario.type.rampup.connCounts"
+						<input type="text" id="duplicate-scenario.type.rampup.connCounts"
 						       class="form-control"
-						       name="scenario.type.rampup.connCounts"/>
+						       data-pointer="scenario.type.rampup.connCounts"/>
 					</div>
 				</div>
 
 				<div class="form-group">
-					<label for="scenario.type.rampup.sizes" class="col-sm-4 control-label">
+					<label for="duplicate-scenario.type.rampup.sizes" class="col-sm-4 control-label">
 						Objects' sizes
 					</label>
 					<div class="col-sm-8">
-						<input type="text" id="scenario.type.rampup.sizes" class="form-control"
-						       name="scenario.type.rampup.sizes"/>
+						<input type="text" id="duplicate-scenario.type.rampup.sizes" class="form-control"
+						       data-pointer="scenario.type.rampup.sizes"/>
 					</div>
 				</div>
 			</div>

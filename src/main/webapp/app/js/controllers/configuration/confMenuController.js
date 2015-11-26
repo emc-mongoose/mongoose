@@ -54,8 +54,8 @@ define([
 		var configModeSelect = $("#config-type");
 		configModeSelect.on("change", function() {
 			var activeOptionValue = this.options[this.selectedIndex].value;
-			//  start baseConfController or extendedConfController
-			configTypes[activeOptionValue].run(props);
+			//  activate baseConfController or extendedConfController
+			configTypes[activeOptionValue].activate();
 		});
 		//  activate
 		configModeSelect.trigger("change");

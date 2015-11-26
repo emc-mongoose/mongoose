@@ -7,13 +7,13 @@
 					<legend>{{title}}</legend>
 					{{#each fields}}
 						<div class="form-group {{classes}}">
-							<label for="{{id}}" class="col-sm-3 control-label">
+							<label for="duplicate-{{id}}" class="col-sm-3 control-label">
 								{{label}}
 							</label>
 							<div class="col-sm-9">
 
 								{{#if complexField}}
-									<div id="{{id}}" class="complex">
+									<div id="duplicate-{{id}}" class="complex" data-pointer="{{id}}">
 
 										<div class="col-xs-5 no-padding">
 											<input type="text" id="{{textField.id}}" class="form-control" title=""/>
@@ -27,18 +27,17 @@
 											</select>
 										</div>
 
-										<input type="hidden" name="{{id}}"/>
 									</div>
 
 								{{else}}
 									{{#if textField}}
-										<input type="text" id="{{id}}" class="form-control"
-										       placeholder="{{placeholder}}" name="{{id}}"/>
+										<input type="text" id="duplicate-{{id}}" class="form-control"
+										       placeholder="{{placeholder}}" data-pointer="{{id}}"/>
 									{{/if}}
 
 									{{#if selectField}}
 										<div class="col-xs-5 col-sm-4 col-lg-3 form-select">
-											<select id="{{id}}" name="{{id}}" class="form-control">
+											<select id="duplicate-{{id}}" class="form-control" data-pointer="{{id}}">
 												{{#each values}}
 													<option value="{{this}}">{{this}}</option>
 												{{/each}}

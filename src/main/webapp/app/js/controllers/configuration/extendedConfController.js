@@ -4,15 +4,14 @@ define([
 ],
 function(Handlebars, extendedConf) {
 	//
-	function run(props) {
-		//
-		/*$("#base").remove();
-		//
-		render(props);*/
+	function activate() {
+		$("#base").hide();
+		$(".folders").show();
+		$("#configuration-content").find(".activate").css("display", "block");
 	}
 	//
-	function setup() {
-		console.log("Extended");
+	function setup(props) {
+		//render(props);
 	}
 	//
 	function render(props) {
@@ -37,15 +36,8 @@ function(Handlebars, extendedConf) {
 		shortPropsMap["run.id"] = "";
 		buildDivBlocksByPropertyNames(shortPropsMap);
 		bindEvents();
-	}
-	//
-	function bindEvents() {
-		$(".folders a, .folders label").click(function(e) {
-			e.preventDefault();
-			if($(this).is("a")) {
-				onMenuItemClick($(this));
-			}
-		});
+		//
+		$("#run-mode").trigger("change");
 	}
 	//
 	function onMenuItemClick(element) {
@@ -53,13 +45,16 @@ function(Handlebars, extendedConf) {
 		if (element.is("a")) {
 			var id = element.attr("href").replace(/\./g, "\\.");
 			var block = $(id);
+			block.addClass("activate");
 			block.show();
 			block.children().show();
 		}
 	}
 	//
 	function resetParams() {
-		$("#configuration-content").children().hide();
+		var content = $("#configuration-content");
+		content.children().removeClass("activate");
+		content.children().hide();
 	}
 	//
 	function walkTreeMap(map, ul, shortsPropsMap, fullKeyName) {
@@ -109,10 +104,6 @@ function(Handlebars, extendedConf) {
 				var keyDiv = $("<div>").addClass("form-group");
 				keyDiv.attr("id", key);
 				keyDiv.css("display", "none");
-				var placeHolder = "";
-				if (key === "data.src.fpath") {
-					placeHolder = "Format: log/<run.mode>/<run.id>/<filename>";
-				}
 				keyDiv.append($("<label>", {
 					for: key,
 					class: "col-sm-3 control-label",
@@ -125,15 +116,80 @@ function(Handlebars, extendedConf) {
 						class: "form-control",
 						name: key,
 						value: shortPropsMap[key],
-						placeholder: "Enter '" + key + "' property. " + placeHolder
+						placeholder: "Enter '" + key + "' property. "
 					})));
 				keyDiv.appendTo("#configuration-content");
 			}
 		}
 	}
 	//
+	function bindEvents() {
+		$(".folders a, .folders label").click(function(e) {
+			e.preventDefault();
+			if($(this).is("a")) {
+				onMenuItemClick($(this));
+			}
+		});
+		//
+		var extended = $("#extended");
+		//
+		extended.find("input").on("change", function() {
+			var value = this.value;
+			var parentIdAttr = $(this).parent().parent().attr("id");
+			//  find duplicated elements
+			var div = $("#duplicate-" + parentIdAttr.replace(/\./g, "\\."));
+			if(div.is("div")) {
+				var regExpPattern = /^([0-9]*)([a-zA-Z]+)$/;
+				if(regExpPattern.test(value)) {
+					var matcher = regExpPattern.exec(value);
+					var inputField = div.find("input");
+					inputField.val(matcher[1]);
+					inputField.trigger("change");
+					//
+					var selectableElement = div.find("select").get(0);
+					var options = selectableElement.options;
+					for(var option in options) {
+						if(options.hasOwnProperty(option)) {
+							option = options[option];
+							var searchPattern = new RegExp('^' + matcher[2]);
+							if(searchPattern.test(option.innerText)) {
+								selectableElement.value = option.innerText;
+								$(selectableElement).trigger("change");
+							}
+						}
+					}
+				}
+			}
+			//
+			var input = $('input[data-pointer="' + parentIdAttr + '"]');
+			input.val(value);
+			input.trigger("change");
+			//
+			var select = $('select[data-pointer="' + parentIdAttr + '"]');
+			select.val(value);
+			try {
+				if (select.find('option[value=modal-"' + value + '"]').length > 0) {
+					select.val("modal-" + value);
+				}
+			} catch(err) {
+
+			}
+			select.trigger("change");
+			//
+		});
+		//
+		//
+		extended.find("input").each(function() {
+			$(this).trigger("change");
+		});
+		//
+		$("#run-mode").on("change", function() {
+			$("#configuration-content").find("#hidden-run\\.mode").val($(this).val());
+		});
+	}
+	//
 	return {
-		run: run,
-		setup: setup
+		setup: setup,
+		activate: activate
 	};
 });

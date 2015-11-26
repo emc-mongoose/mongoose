@@ -11,56 +11,129 @@ define([
 	scenarioWindow,
 	apiWindow
 ) {
-	//
-	var SCENARIO_FIELD_KEY = "scenario.name",
-		API_FIELD_KEY = "api.name";
+	//  variables for modal windows
+	var SCENARIO_FIELD_KEY = "duplicate-scenario.name",
+		API_FIELD_KEY = "duplicate-api.name";
+	//  scenarios
+	var SINGLE_SCENARIO = "single",
+		CHAIN_SCENARIO = "chain",
+		RAMPUP_SCENARIO = "rampup";
+	//  modal prefix
+	var MODAL_SINGLE_SCENARIO = "modal-single",
+		MODAL_CHAIN_SCENARIO = "modal-chain";
 	//
 	function setup(props) {
-		//  render empty configuration fields on HTML page
-		render();
-		//  render modal windows
-		renderScenarioModalWindow(scenarioWindow);
-		//renderApiModalWindow();
+		render(); //  render empty fields on HTML page
+		renderScenarioModalWindow();
+		renderApiModalWindow();
+		//
+		bindEvents();
 	}
 	//
-	function run(props) {
+	function activate() {
+		//  show base configuration fields
+		$("#base").show();
+		//  hide extended configuration fields
+		$(".folders").hide();
+		$("#configuration-content").children().hide();
+	}
+	//
+	function render() {
+		var compiled = Handlebars.compile(baseConfTemplate);
+		var html = compiled(JSON.parse(baseConfModel));
+		document.querySelector("#main-content")
+			.insertAdjacentHTML("afterbegin", html);
+	}
+	//
+	function renderScenarioModalWindow() {
+		var compiled = Handlebars.compile(scenarioWindow);
+		var html = compiled();
+		document.getElementById(SCENARIO_FIELD_KEY)
+			.parentNode.insertAdjacentHTML("afterend", html);
 		//
-		/*$("#extended").remove();
-		var folders = $(".folders");
-		folders.children().remove();
-		folders.hide();
-		//  render empty fields on HTML page
-		render();
-
-		addModalWindows();
-		addApiModalWindow();
-
-		//  fill these fields w/ values from trConfig
-		traverseJsonTree(props);
-
-		bindEventsOnAliasingProps();
-
+		changeLoadHint(SINGLE_SCENARIO);
+		//
+		$("#" + MODAL_SINGLE_SCENARIO)
+			.find("select").on("change", function() {
+				changeLoadHint(SINGLE_SCENARIO);
+		});
+		$("#" + MODAL_CHAIN_SCENARIO)
+			.find("input").on("change", function() {
+				changeLoadHint(CHAIN_SCENARIO);
+		});
+		$("#chain-load").click(function() {
+			$("#modal-chain").modal('show').css("z-index", 5000);
+		});
+		//
+		$("#" + SCENARIO_FIELD_KEY.replace(/\./g, "\\."))
+			.on("change", function() {
+				var valueSelected = this.value;
+				document.querySelector("#scenario-button")
+					.setAttribute("data-target", "#modal-" + valueSelected);
+				changeLoadHint(valueSelected);
+		});
+	}
+	//
+	function renderApiModalWindow() {
+		var compiled = Handlebars.compile(apiWindow);
+		var html = compiled();
+		document.getElementById(API_FIELD_KEY)
+			.parentNode.insertAdjacentHTML("afterend", html);
+		//
+		$("#" + API_FIELD_KEY.replace(/\./g, "\\.")).on("change", function() {
+			var valueSelected = this.value;
+			document.querySelector("#api-button")
+				.setAttribute("data-target", "#modal-" + valueSelected);
+		});
+	}
+	//
+	function changeLoadHint(value) {
+		var loadHint = $("#scenario-load");
+		var scenarioLoad;
+		var element;
+		switch(value) {
+			case SINGLE_SCENARIO:
+				element = document
+					.getElementById("duplicate-scenario.type." + value + ".load");
+				scenarioLoad = element.options[element.selectedIndex].text;
+				break;
+			case CHAIN_SCENARIO:
+			case RAMPUP_SCENARIO:
+				element = document
+					.getElementById("duplicate-scenario.type." + CHAIN_SCENARIO + ".load");
+				scenarioLoad = element.value;
+				break;
+		}
+		//
+		loadHint.text("Load: [" + scenarioLoad + "]");
+	}
+	//
+	function bindEvents() {
 		var select = $("select");
-
+		//
 		select.each(function() {
 			var notSelected = $("option:not(:selected)", this);
 			notSelected.each(function() {
 				var current = $("#" + $(this).val());
-				if (current.is("div")) {
+				if(current.is("div")) {
 					current.hide();
 				}
 			});
-			var duplicate = document.getElementById("duplicate-" + this.id);
-			if (duplicate) {
-				duplicate.value = this.value;
-				return;
-			}
+			var value = this.value;
+			//
+			var select = $('select[data-pointer="' + this.id.replace(/\./g, "\\.") + '"]');
+			select.val(value);
+			select.trigger("change");
+			//
 			var dataPointer = $(this).attr("data-pointer");
-			if (dataPointer) {
-				document.getElementById(dataPointer).value = this.value;
+			if(dataPointer) {
+				var element = $("#" + dataPointer.replace(/\./g, "\\.")).find("input");
+				if(element) {
+					element.val(value);
+				}
 			}
 		});
-
+		//
 		select.on("change", function() {
 			var valueSelected = this.value;
 			var notSelected = $("option:not(:selected)", this);
@@ -74,297 +147,60 @@ define([
 			if (selectedElement.is("div") && !selectedElement.hasClass("modal")) {
 				selectedElement.show();
 			} else {
-				var duplicate = document.getElementById("duplicate-" + this.id);
-				if (duplicate) {
-					duplicate.value = this.value;
-					return;
-				}
+				var value = this.value;
+				//
+				var select = $('select[data-pointer="' + this.id.replace(/\./g, "\\.") + '"]');
+				select.val(value);
+				select.trigger("change");
+				//
 				var dataPointer = $(this).attr("data-pointer");
-				if (dataPointer) {
-					document.getElementById(dataPointer).value = this.value;
+				if(dataPointer) {
+					var element = $("#" + dataPointer.replace(/\./g, "\\.")).find("input");
+					if(element) {
+						element.val(value);
+					}
 				}
 			}
 		});
-
+		//
 		var input = $("input");
-
+		//
 		input.each(function() {
-			var duplicate = document.getElementById("duplicate-" + this.id);
-			if (duplicate) {
-				duplicate.value = this.value;
-				return;
-			}
-			var dataPointer = $(this).attr("data-pointer");
-			if (dataPointer) {
-				document.getElementById(dataPointer).value = this.value;
-			}
-		});
-
-		input.on("change", function() {
-			var duplicate = document.getElementById("duplicate-" + this.id);
-			if (duplicate) {
-				duplicate.value = this.value;
-				return;
-			}
-			var dataPointer = $(this).attr("data-pointer");
-			if (dataPointer) {
-				document.getElementById(dataPointer).value = this.value;
-			}
-		});*/
-	}
-	//
-	function render() {
-		var compiled = Handlebars.compile(baseConfTemplate);
-		var html = compiled(JSON.parse(baseConfModel));
-		//  show base configuration fields
-		document.querySelector("#main-content")
-			.insertAdjacentHTML("afterbegin", html);
-	}
-	//
-	function renderScenarioModalWindow(scenarioWindow) {
-		var compiled = Handlebars.compile(scenarioWindow);
-		var html = compiled();
-		document.getElementById(SCENARIO_FIELD_KEY)
-			.parentNode.insertAdjacentHTML("afterend", html);
-		//  load hint for scenarios
-		/*changeLoadHint("single");
-		//
-		$("#single").find("select").on("change", function() {
-			changeLoadHint("single");
-		});
-		//
-		$("#chain").find("input").on("change", function() {
-			changeLoadHint("chain");
-		});
-		//
-		document.getElementById("scenario.name").addEventListener("change", function() {
-			var valueSelected = this.value;
-			document.querySelector("#scenario-button")
-				.setAttribute("data-target", "#" + valueSelected);
-			changeLoadHint(valueSelected);
-		});
-
-		$("#chain-load").click(function() {
-			$("#chain").modal('show').css("z-index", 5000);
-		});*/
-	}
-	//
-	function changeLoadHint(value) {
-		var loadHint = $("#scenario-load");
-		var scenarioLoad = document
-			.getElementById("scenario.type." + value + ".load").value;
-		if(scenarioLoad) {
-			loadHint.text("Load: [" + scenarioLoad + "]");
-		}
-	}
-	function traverseJsonTree(jsonObject, fieldPrefix) {
-		for (var key in jsonObject) {
-			if (jsonObject.hasOwnProperty(key)) {
-				var propertyName = "";
-				if (fieldPrefix != null) {
-					if (fieldPrefix.length > 0) {
-						propertyName = fieldPrefix + "." + key;
-					} else {
-						propertyName = key;
-					}
-				}
-
-				if (!(typeof jsonObject[key] === "object")) {
-					var domElement = document.getElementById(propertyName);
-					if (domElement) {
-						if (domElement.classList.contains("complex")) {
-							fillComplexConfigField(domElement, jsonObject[key]);
-						}
-						fillConfigField(domElement, jsonObject[key]);
-					}
-				} else {
-					traverseJsonTree(jsonObject[key], propertyName);
-				}
-			}
-		}
-	}
-
-	function fillConfigField(domeElement, value) {
-		domeElement.value = value;
-		$(domeElement).trigger("change");
-	}
-
-	function fillComplexConfigField(domElement, value) {
-		var regExpPattern = /^([0-9]*)([a-zA-Z]+)$/;
-		if (regExpPattern.test(value)) {
-			var matcher = regExpPattern.exec(value);
-			var inputField = domElement.querySelector("input");
-			inputField.value = matcher[1];
-			$(inputField).trigger("change");
-			//
-			var selectableElement = domElement.querySelector("select");
-			var options = selectableElement.options;
-			for (var option in options) {
-				if (options.hasOwnProperty(option)) {
-					option = options[option];
-					var searchPattern = new RegExp('^' + matcher[2]);
-					if (searchPattern.test(option.innerText)) {
-						selectableElement.value = option.innerText;
-						$(selectableElement).trigger("change");
-						domElement.querySelector('input[type="hidden"]').value
-								= matcher[1] + matcher[2];
-					}
-				}
-			}
-			//
-			inputField.addEventListener("change", function () {
-				var parentDiv = findAncestor(this, "complex");
-				var selectableElement = parentDiv.querySelector("select");
-				parentDiv.querySelector('input[type="hidden"]').value =
-						this.value + selectableElement.options[selectableElement.selectedIndex].value;
-			});
-			//
-			selectableElement.addEventListener("change", function () {
-				var parentDiv = findAncestor(this, "complex");
-				var inputElement = parentDiv.querySelector("input");
-				parentDiv.querySelector('input[type="hidden"]').value =
-						inputElement.value + this.options[this.selectedIndex].value;
-			});
-		}
-	}
-
-	function findAncestor(el, cls) {
-		while ((el = el.parentElement) && !el.classList.contains(cls));
-		return el;
-	}
-
-	function bindEventsOnAliasingProps() {
-
-		var dataSize = {
-			id: "data.size",
-			aliasFor: [
-				"data.size.min",
-				"data.size.max"
-			]
-		};
-
-		$("#base").find("form")
-				.append("<input type='hidden' " +
-				"name='" + dataSize.aliasFor[0] +
-				"' id='" + dataSize.aliasFor[0] + "'/>");
-
-		$("#base").find("form")
-				.append("<input type='hidden' " +
-				"name='" + dataSize.aliasFor[1] +
-				"' id='" + dataSize.aliasFor[1] + "'/>");
-
-		var loadConnections = {
-			id: "load.connections",
-			aliasFor: [
-				"load.type.create.connections",
-				"load.type.read.connections",
-				"load.type.update.connections",
-				"load.type.delete.connections",
-				"load.type.append.connections"
-			]
-		};
-		//
-		fillComplexConfigField(
-			document.getElementById(dataSize.id), document.getElementById(dataSize.aliasFor[0]).value
-		);
-		//
-		fillConfigField(
-			document.getElementById(loadConnections.id),
-			document.getElementById(loadConnections.aliasFor[0]).value
-		);
-		//
-		var parentDiv = document.getElementById(dataSize.id);
-		//
-		parentDiv.querySelector("input").addEventListener("change", function() {
-			var parentDiv = findAncestor(this, "complex");
-			var selectableElement = parentDiv.querySelector("select");
-			parentDiv.querySelector('input[type="hidden"]').value =
-				this.value + selectableElement.options[selectableElement.selectedIndex].value;
-		});
-		//
-		parentDiv.querySelector("select").addEventListener("change", function() {
-			var parentDiv = findAncestor(this, "complex");
-			var inputElement = parentDiv.querySelector("input");
-			//
-			var value = inputElement.value + this.options[this.selectedIndex].value;
-			//
-			parentDiv.querySelector('input[type="hidden"]').value =
-				value;
-			for (var element in dataSize.aliasFor) {
-				if (dataSize.aliasFor.hasOwnProperty(element)) {
-					var current = document.getElementById(dataSize.aliasFor[element]);
-					/*if (!current) {
-
-					}*/
-					document.getElementById(
-						dataSize.aliasFor[element]
-					).value = value;
-				}
-			}
-		});
-		//
-
-
-		document.getElementById(loadConnections.id).addEventListener("change", function() {
 			var value = this.value;
-			for (var element in loadConnections.aliasFor) {
-				if (loadConnections.aliasFor.hasOwnProperty(element)) {
-					document.getElementById(
-						loadConnections.aliasFor[element]
-					).value = value;
+			//
+			var input = $('input[data-pointer="' + this.id.replace(/\./g, "\\.") + '"]');
+			input.val(value);
+			input.trigger("change");
+			//
+			var dataPointer = $(this).attr("data-pointer");
+			if(dataPointer) {
+				var element = $("#" + dataPointer.replace(/\./g, "\\.")).find("input");
+				if(element) {
+					element.val(value);
 				}
 			}
-		})
-	}
-
-	function addModalWindows() {
-		var compiled = Handlebars.compile(scenarioWindow);
-		var html = compiled();
-		document.getElementById("scenario.name")
-			.parentNode.insertAdjacentHTML("afterend", html);
-		changeLoadHint("single");
-		//
-		$("#single").find("select").on("change", function() {
-			changeLoadHint("single");
 		});
 		//
-		$("#chain").find("input").on("change", function() {
-			changeLoadHint("chain");
-		});
-		//
-		document.getElementById("scenario.name").addEventListener("change", function() {
-			var valueSelected = this.value;
-			document.querySelector("#scenario-button")
-				.setAttribute("data-target", "#" + valueSelected);
-			changeLoadHint(valueSelected);
-		});
-
-
-		$("#chain-load").click(function() {
-			$("#chain").modal('show').css("z-index", 5000);
-		});
-
-	}
-
-	function addApiModalWindow() {
-		var compiled = Handlebars.compile(apiWindow);
-		var html = compiled();
-		document.getElementById("api.name")
-			.parentNode.insertAdjacentHTML("afterend", html);
-
-		//
-		document.getElementById("api.name").addEventListener("change", function() {
-			var valueSelected = this.value;
-			document.querySelector("#api-button")
-				.setAttribute("data-target", "#" + valueSelected);
+		input.on("change", function() {
+			var value = this.value;
+			//
+			var input = $('input[data-pointer="' + this.id.replace(/\./g, "\\.") + '"]');
+			input.val(value);
+			input.trigger("change");
+			//
+			var dataPointer = $(this).attr("data-pointer");
+			if(dataPointer) {
+				var element = $("#" + dataPointer.replace(/\./g, "\\.")).find("input");
+				if(element) {
+					element.val(value);
+				}
+			}
 		});
 	}
 
 	return {
-		fillConfigField: fillConfigField,
-		fillComplexConfigField: fillComplexConfigField,
-		run: run,
-		setup: setup
+		setup: setup,
+		activate: activate
 	};
 
 });
