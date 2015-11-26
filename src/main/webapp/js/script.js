@@ -694,7 +694,8 @@ require(["./requirejs/conf"], function() {
 			};
 			var CHART_TYPES = {
 				TP: "throughput",
-				BW: "bandwidth"
+				BW: "bandwidth",
+				LAT: "latency"
 			};
 			var AVG = {
 					id: "avg",
@@ -703,6 +704,14 @@ require(["./requirejs/conf"], function() {
 				LAST = {
 					id: "last",
 					text: "last 10 sec"
+				},
+				MIN = {
+					id: "min",
+					text: "min"
+				},
+				MAX = {
+					id: "max",
+					text: "max"
 				};
 			var SCALE_TYPES = ["Linear Scale", "Log Scale"];
 			var SCALE_ORIENTATION = ["x", "y"];
@@ -871,6 +880,17 @@ require(["./requirejs/conf"], function() {
 				};
 			}
 			//
+			function drawLatencyCharts(data, json, sec) {
+				var updateFunction = drawChart(data, json, "t[seconds]", "Latency[s]",
+					"#lat-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
+					sec);
+				return {
+					update: function(json) {
+						updateFunction(CHART_TYPES.LAT, json.message.formattedMessage);
+					}
+				};
+			}
+			//
 			function parsePerfAvgLogEvent(chartType, value) {
 				var result = null;
 				switch(chartType) {
@@ -883,6 +903,11 @@ require(["./requirejs/conf"], function() {
 						var bwPattern = "[\\s]+BW\\[MB/s]=\\(([\\.\\d]+)/([\\.\\d]+)\\)";
 						var bwArray = value.match(bwPattern);
 						result = bwArray.slice(1, bwArray.length);
+						break;
+					case CHART_TYPES.LAT:
+						var latPattern = "[\\s]+latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)\\);";
+						var latArray = value.match(latPattern);
+						result = latArray.slice(1, latArray.length);
 						break;
 				}
 				//
@@ -1373,8 +1398,28 @@ require(["./requirejs/conf"], function() {
 						}
 					];
 					//
+					var latencyData = [
+						{
+							name: AVG,
+							values: [
+								{x: 0, y: 0}
+							]
+						}, {
+							name: MIN,
+							values: [
+								{x: 0, y: 0}
+							]
+						}, {
+							name: MAX,
+							values: [
+								{x: 0, y: 0}
+							]
+						}
+					];
+					//
 					var throughput = $.extend(true, [], data);
 					var bandwidth = $.extend(true, [], data);
+					var latency = $.extend(true, [], latencyData)
 					//
 					function initializeDataArray(destArray, dataArray, chartType) {
 						return simplifyChart(destArray, dataArray, chartType, runMetricsPeriodSec);
@@ -1386,39 +1431,38 @@ require(["./requirejs/conf"], function() {
 						});
 						bandwidth.forEach(function(d) {
 							return d.values.shift();
-						})
+						});
+						latency.forEach(function(d) {
+							return d.values.shift();
+						});
 					}
 					//
 					if ((array !== undefined) && (array.length > 0)) {
 						clearArrays();
 						var tpSec = initializeDataArray(throughput, array, CHART_TYPES.TP);
 						var bwSec = initializeDataArray(bandwidth, array, CHART_TYPES.BW);
+						var latSec = initializeDataArray(latency, array, CHART_TYPES.LAT);
 						chartsArray.push(getScenarioChartObject(runId, runScenarioName,
 							[drawThroughputCharts(throughput, json, tpSec),
-								drawBandwidthCharts(bandwidth, json, bwSec)]));
+								drawBandwidthCharts(bandwidth, json, bwSec),
+									drawLatencyCharts(latency, json, latSec)]));
 					} else {
 						//
 						chartsArray.push(getScenarioChartObject(runId, runScenarioName,
 							[drawThroughputCharts(throughput, json),
-								drawBandwidthCharts(bandwidth, json)]));
+								drawBandwidthCharts(bandwidth, json),
+									drawLatencyCharts(latency, json)]));
 					}
 				},
 				chain: function(runId, runMetricsPeriodSec, loadType, array) {
 					//
-					var AVG = {
-							id: "avg",
-							text: "total average"
-						},
-						LAST = {
-							id: "last",
-							text: "last " + runMetricsPeriodSec + " sec"
-						};
-					//
 					var TP_MODES = [AVG, LAST];
+					var LAT_MODES = [AVG, MIN, MAX];
 					//
 					var CHART_TYPES = {
 						TP: "throughput",
-						BW: "bandwidth"
+						BW: "bandwidth",
+						LAT: "latency"
 					};
 					//
 					var data = [
@@ -1441,8 +1485,34 @@ require(["./requirejs/conf"], function() {
 						}
 					];
 					//
+					var latencyData = [
+						{
+							loadType: loadType,
+							charts: [
+								{
+									name: AVG,
+									values: [
+										{x: 0, y: 0}
+									]
+								}, {
+									name: MIN,
+									values: [
+										{x: 0, y: 0}
+									]
+								}, {
+									name: MAX,
+									values: [
+										{x: 0, y: 0}
+									]
+								}
+							],
+							currentRunMetricsPeriodSec: 0
+						}
+					];
+					//
 					var throughput = $.extend(true, [], data);
 					var bandwidth = $.extend(true, [], data);
+					var latency = $.extend(true, [], latencyData);
 					//
 					function initializeDataArray(destArray, dataArray, chartType) {
 						//
@@ -1495,6 +1565,11 @@ require(["./requirejs/conf"], function() {
 							});
 							d.currentRunMetricsPeriodSec = -parseInt(runMetricsPeriodSec);
 						});
+						latency.forEach(function(d) {
+							d.charts.forEach(function(c) {
+								c.values.shift();
+							})
+						})
 					}
 					//
 					if ((array !== undefined) && (array.length > 0)) {
@@ -1502,6 +1577,7 @@ require(["./requirejs/conf"], function() {
 						//
 						initializeDataArray(throughput, array, CHART_TYPES.TP);
 						initializeDataArray(bandwidth, array, CHART_TYPES.BW);
+						initializeDataArray(latency, array, CHART_TYPES.LAT);
 					}
 					//
 					chartsArray.push({
@@ -1509,12 +1585,13 @@ require(["./requirejs/conf"], function() {
 						"run.scenario.name": SCENARIO.chain,
 						"charts": [
 							drawThroughputChart(throughput),
-							drawBandwidthChart(bandwidth)
+							drawBandwidthChart(bandwidth),
+							drawLatencyChart(latency)
 						]
 					});
 					//
 					function drawThroughputChart(data) {
-						var updateFunction = drawChart(data, "Throughput[obj/s]", "t[seconds]", "Rate[op/s]", "#tp-" + runId.split(".").join("_"));
+						var updateFunction = drawChart(data, "Throughput[obj/s]", "t[seconds]", "Rate[op/s]", "#tp-" + runId.split(".").join("_"), false);
 						return {
 							update: function(json) {
 								updateFunction(CHART_TYPES.TP, json);
@@ -1523,7 +1600,7 @@ require(["./requirejs/conf"], function() {
 					}
 					//
 					function drawBandwidthChart(data) {
-						var updateFunction = drawChart(data, "Bandwidth[MB/s]", "t[seconds]", "Rate[MB/s]", "#bw-" + runId.split(".").join("_"));
+						var updateFunction = drawChart(data, "Bandwidth[MB/s]", "t[seconds]", "Rate[MB/s]", "#bw-" + runId.split(".").join("_"), false);
 						return {
 							update: function(json) {
 								updateFunction(CHART_TYPES.BW, json);
@@ -1531,7 +1608,16 @@ require(["./requirejs/conf"], function() {
 						};
 					}
 					//
-					function drawChart(data, chartTitle, xAxisLabel, yAxisLabel, path) {
+					function drawLatencyChart(data) {
+						var updateFunction = drawChart(data, "Latency[s]", "t[seconds]", "Rate[s]", "#lat-" + runId.split(".").join("_"), true);
+						return {
+							update: function(json) {
+								updateFunction(CHART_TYPES.LAT, json);
+							}
+						};
+					}
+					//
+					function drawChart(data, chartTitle, xAxisLabel, yAxisLabel, path, isLatencyChart) {
 						//
 						var currXScale = SCALE_TYPES[0];
 						var currYScale = SCALE_TYPES[0];
@@ -1674,10 +1760,12 @@ require(["./requirejs/conf"], function() {
 								switch (c.name.id) {
 									case AVG.id:
 										return "0,0";
-										break;
 									case LAST.id:
 										return "3,3";
-										break;
+									case MIN.id:
+										return "6,6";
+									case MAX.id:
+										return "12,12";
 								}
 							})
 							.attr("id", function(c) {
@@ -1708,8 +1796,15 @@ require(["./requirejs/conf"], function() {
 								}
 							});
 						//
+						var modes;
+						if(isLatencyChart) {
+							modes = LAT_MODES;
+						} else {
+							modes = TP_MODES;
+						}
+						//
 						svg.selectAll(".bottom-foreign")
-							.data(TP_MODES).enter()
+							.data(modes).enter()
 							.append("foreignObject")
 							.attr("class", "foreign bottom-foreign")
 							.attr("width", 18)
@@ -1765,7 +1860,7 @@ require(["./requirejs/conf"], function() {
 							.text(function(d) { return d.loadType; });
 						//
 						var bottomLegend = svg.selectAll(".bottom-legend")
-							.data(TP_MODES).enter()
+							.data(modes).enter()
 							.append("g")
 							.attr("class", "bottom-legend")
 							.attr("stroke", "black")
@@ -1778,20 +1873,24 @@ require(["./requirejs/conf"], function() {
 								switch(d.id) {
 									case AVG.id:
 										return "M20 0 L110 0";
-										break;
 									case LAST.id:
 										return "M20 0 L115 0";
-										break;
+									case MIN.id:
+										return "M20 0 L120 0";
+									case MAX.id:
+										return "M20 0 L125 0";
 								}
 							})
 							.attr("stroke-dasharray", function(d, i) {
 								switch (d.id) {
 									case AVG.id:
 										return "0,0";
-										break;
 									case LAST.id:
 										return "3,3";
-										break;
+									case MIN.id:
+										return "6,6";
+									case MAX.id:
+										return "12,12"
 								}
 							});
 						bottomLegend.append("text")
@@ -1914,10 +2013,12 @@ require(["./requirejs/conf"], function() {
 									switch (c.name.id) {
 										case AVG.id:
 											return "0,0";
-											break;
 										case LAST.id:
 											return "3,3";
-											break;
+										case MIN.id:
+											return "6,6";
+										case MAX.id:
+											return "12,12";
 									}
 								})
 								.attr("fill", "none");
@@ -2086,6 +2187,31 @@ require(["./requirejs/conf"], function() {
 									],
 									currentRunMetricsPeriodSec: 0
 								};
+								//
+								if(isLatencyChart) {
+									d = {
+										loadType: loadType,
+										charts: [
+											{
+												name: AVG,
+												values: [
+													{x: 0, y: 0}
+												]
+											}, {
+												name: MIN,
+												values: [
+													{x: 0, y: 0}
+												]
+											}, {
+												name: MAX,
+												values: [
+													{x: 0, y: 0}
+												]
+											}
+										],
+										currentRunMetricsPeriodSec: 0
+									};
+								}
 								/*d.charts.forEach(function(c, i) {
 								 c.values.push({x: c.values.length * 10, y: parseFloat(value[i])})
 								 });*/
