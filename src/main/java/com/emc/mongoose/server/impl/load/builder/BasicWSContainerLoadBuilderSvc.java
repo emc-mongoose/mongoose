@@ -61,7 +61,7 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws RemoteException {
-		final WSContainerLoadSvc<T, C> loadSvc = build();
+		final U loadSvc = build();
 		ServiceUtil.create(loadSvc);
 		if(configTable != null) {
 			LOG.info(Markers.MSG, configTable);

@@ -3,10 +3,10 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-//
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ContainerHelper;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+//
 import com.emc.mongoose.core.impl.data.model.GenericContainerItemSrcBase;
 //
 import com.fasterxml.jackson.core.JsonFactory;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public class WSContainerItemSrc<T extends WSObject, C extends WSContainerHelper<T>>
+public class WSContainerItemSrc<T extends WSObject, C extends ContainerHelper<T>>
 extends GenericContainerItemSrcBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -39,7 +39,6 @@ extends GenericContainerItemSrcBase<T, C> {
 	private final String nodeAddr;
 	//
 	private boolean isInsideObjectToken = false, eof = false;
-	private String lastId = null;
 	private long lastSize = -1, doneCount = 0;
 	//
 	public WSContainerItemSrc(

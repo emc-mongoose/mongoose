@@ -8,6 +8,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
+import com.emc.mongoose.core.api.io.req.IOConfig;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
@@ -67,9 +68,9 @@ implements Runnable {
 		//
 		String loadTypeStr;
 		LoadExecutor nextLoadJob, prevLoadJob = null;
-		final RequestConfig reqConf;
+		final IOConfig ioConf;
 		try {
-			reqConf = loadBuilder.getIOConfig();
+			ioConf = loadBuilder.getIOConfig();
 		} catch(final RemoteException e) {
 			throw new RuntimeException(e);
 		}
@@ -93,7 +94,7 @@ implements Runnable {
 						loadBuilder.useNoneItemSrc();
 					} else {
 						itemDst = new ItemCSVFileDst(
-							reqConf.getItemClass(), reqConf.getContentSource()
+							ioConf.getItemClass(), ioConf.getContentSource()
 						);
 						loadBuilder.setItemSrc(itemDst.getItemSrc());
 					}

@@ -8,7 +8,6 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.container.BasicContainer;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 //
 import org.apache.http.Header;

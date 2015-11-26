@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 //
@@ -28,10 +29,12 @@ implements AuthToken<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final WSRequestConfigImpl<T> reqConf;
+	private final WSRequestConfigImpl<T, ? extends Container<T>> reqConf;
 	private String value = null;
 	//
-	public WSAuthTokenImpl(final WSRequestConfigImpl<T> reqConf, final String value) {
+	public WSAuthTokenImpl(
+		final WSRequestConfigImpl<T, ? extends Container<T>> reqConf, final String value
+	) {
 		this.reqConf = reqConf;
 		this.value = value;
 	}

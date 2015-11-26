@@ -56,7 +56,7 @@ implements FileLoadBuilderSvc<T, U> {
 	@Override
 	public String buildRemotely()
 	throws RemoteException {
-		final FileLoadSvc<T> loadSvc = build();
+		final U loadSvc = build();
 		ServiceUtil.create(loadSvc);
 		if(configTable != null) {
 			LOG.info(Markers.MSG, configTable);
@@ -72,8 +72,6 @@ implements FileLoadBuilderSvc<T, U> {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final IOConfig<T, ? extends Directory<T>>
-			fileIoConfig = (IOConfig<T, ? extends Directory<T>>) ioConfig;
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		rtConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
@@ -94,7 +92,7 @@ implements FileLoadBuilderSvc<T, U> {
 			);
 		//
 		return (U) new BasicFileLoadSvc<>(
-			rtConfig, fileIoConfig, storageNodeAddrs, connPerNode, minThreadCount,
+			rtConfig, (IOConfig) ioConfig, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
 			manualTaskSleepMicroSecs, rateLimit, updatesPerItem

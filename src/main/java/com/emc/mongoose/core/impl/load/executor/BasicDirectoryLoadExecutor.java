@@ -29,10 +29,9 @@ extends LimitedRateLoadExecutorBase<C> {
 	//
 	public BasicDirectoryLoadExecutor(
 		final RunTimeConfig rtConfig,
-		final IOConfig<? extends FileItem, ? extends Directory<? extends FileItem>> ioConfig,
-		final String[] addrs, final int connCountPerNode, final int threadCount,
-		final ItemSrc<C> itemSrc, final long maxCount,
-		final int manualTaskSleepMicroSecs, final float rateLimit
+		final IOConfig<T, C> ioConfig, final String[] addrs,
+		final int connCountPerNode, final int threadCount, final ItemSrc<C> itemSrc,
+		final long maxCount, final int manualTaskSleepMicroSecs, final float rateLimit
 	) throws ClassCastException {
 		super(
 			rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,

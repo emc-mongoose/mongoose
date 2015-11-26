@@ -35,7 +35,8 @@ implements com.emc.mongoose.storage.adapter.swift.ContainerHelper<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public WSContainerHelper(
-		final WSRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
+		final WSRequestConfigImpl<T, C> reqConf,
+		final String name, final boolean versioningEnabled
 	) {
 		super(reqConf, name, versioningEnabled);
 	}

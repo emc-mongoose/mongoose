@@ -36,7 +36,7 @@ implements FileLoadSvc<T> {
 	//
 	public BasicFileLoadSvc(
 		final RunTimeConfig rtConfig,
-		final IOConfig<T, ? extends Directory<? extends FileItem>> ioConfig,
+		final IOConfig<T, ? extends Directory<T>> ioConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,

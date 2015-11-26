@@ -87,8 +87,8 @@ extends DataLoadBuilderBase<T, U> {
 		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int threadCount = loadTypeConnPerNode.get(loadType);
 		return (U) new BasicFileLoadExecutor<>(
-			RunTimeConfig.getContext(), ioConfig, null, 0, threadCount,
-			itemSrc == null ? getDefaultItemSource() : itemSrc,
+			RunTimeConfig.getContext(), (IOConfig<T, ? extends Directory<T>>) ioConfig,
+			null, 0, threadCount, itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
 			manualTaskSleepMicroSecs, rateLimit, updatesPerItem
 		);

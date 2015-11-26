@@ -60,7 +60,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws RemoteException {
-		final WSDataLoadSvc<T> loadSvc = build();
+		final U loadSvc = build();
 		ServiceUtil.create(loadSvc);
 		if(configTable != null) {
 			LOG.info(Markers.MSG, configTable);

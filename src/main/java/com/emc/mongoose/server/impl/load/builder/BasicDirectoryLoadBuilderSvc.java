@@ -37,7 +37,8 @@ public class BasicDirectoryLoadBuilderSvc<
 	T extends FileItem,
 	C extends Directory<T>,
 	U extends DirectoryLoadSvc<T, C>
-> extends BasicDirectoryLoadBuilder<T, C, U>
+>
+extends BasicDirectoryLoadBuilder<T, C, U>
 implements DirectoryLoadBuilderSvc<T, C, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -54,8 +55,10 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	) {
 		super.setProperties(clientConfig);
 		final String runMode = clientConfig.getRunMode();
-		if (!runMode.equals(Constants.RUN_MODE_SERVER)
-			&& !runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)) {
+		if(
+			!runMode.equals(Constants.RUN_MODE_SERVER) &&
+			!runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)
+		) {
 			configTable = clientConfig.toString();
 		}
 		RunTimeConfig.getContext();
@@ -65,7 +68,7 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	@Override
 	public String buildRemotely()
 	throws RemoteException {
-		DirectoryLoadSvc<T, C> loadSvc = build();
+		U loadSvc = build();
 		ServiceUtil.create(loadSvc);
 		if(configTable != null) {
 			LOG.info(Markers.MSG, configTable);
@@ -81,8 +84,6 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final IOConfig<T, ? extends Directory<T>>
-			fileIoConfig = (IOConfig<T, ? extends Directory<T>>) ioConfig;
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		rtConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
@@ -95,7 +96,7 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 			);
 		//
 		return (U) new BasicDirectoryLoadSvc<>(
-			rtConfig, fileIoConfig, storageNodeAddrs, connPerNode, minThreadCount,
+			rtConfig, (IOConfig<T, C>) ioConfig, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, manualTaskSleepMicroSecs, rateLimit
 		);

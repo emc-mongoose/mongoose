@@ -28,8 +28,7 @@ extends MutableDataLoadExecutorBase<T> {
 	private final ExecutorService ioTaskExecutor;
 	//
 	public BasicFileLoadExecutor(
-		final RunTimeConfig rtConfig,
-		final IOConfig<? extends FileItem, ? extends Directory<? extends FileItem>> ioConfig,
+		final RunTimeConfig rtConfig, final IOConfig<T, ? extends Directory<T>> ioConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,

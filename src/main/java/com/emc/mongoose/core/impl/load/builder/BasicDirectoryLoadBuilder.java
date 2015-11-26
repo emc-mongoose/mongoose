@@ -84,7 +84,7 @@ public class BasicDirectoryLoadBuilder<
 		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int threadCount = loadTypeConnPerNode.get(loadType);
 		return (U) new BasicDirectoryLoadExecutor<>(
-			RunTimeConfig.getContext(), ioConfig, null, 0, threadCount,
+			RunTimeConfig.getContext(), (IOConfig<T, C>) ioConfig, null, 0, threadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, manualTaskSleepMicroSecs, rateLimit
 		);

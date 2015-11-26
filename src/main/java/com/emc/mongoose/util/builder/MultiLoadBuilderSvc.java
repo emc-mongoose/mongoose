@@ -8,6 +8,8 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.impl.container.BasicDirectory;
+import com.emc.mongoose.core.impl.data.BasicFileItem;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
 import com.emc.mongoose.server.impl.load.builder.BasicDirectoryLoadBuilderSvc;
@@ -15,6 +17,7 @@ import com.emc.mongoose.server.impl.load.builder.BasicFileLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSContainerLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 //
+import com.emc.mongoose.server.impl.load.executor.BasicDirectoryLoadSvc;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
@@ -35,10 +38,16 @@ implements LoadBuilderSvc {
 	private final List<LoadBuilderSvc> loadBuilderSvcs = new ArrayList<>();
 	//
 	public MultiLoadBuilderSvc(final RunTimeConfig rtConfig) {
-		loadBuilderSvcs.add(new BasicDirectoryLoadBuilderSvc<>(rtConfig));
-		loadBuilderSvcs.add(new BasicFileLoadBuilderSvc<>(rtConfig));
 		loadBuilderSvcs.add(new BasicWSContainerLoadBuilderSvc(rtConfig));
 		loadBuilderSvcs.add(new BasicWSDataLoadBuilderSvc(rtConfig));
+		loadBuilderSvcs.add(
+			new BasicDirectoryLoadBuilderSvc<
+//				BasicFileItem,
+//				BasicDirectory<BasicFileItem>,
+//				BasicDirectoryLoadSvc<BasicFileItem, BasicDirectory<BasicFileItem>>
+			>(rtConfig)
+		);
+		loadBuilderSvcs.add(new BasicFileLoadBuilderSvc<>(rtConfig));
 	}
 	//
 	@Override
@@ -240,6 +249,12 @@ implements LoadBuilderSvc {
 			loadBuilderSvc.useNoneItemSrc();
 		}
 		return null;
+	}
+	//
+	@Override
+	public void invokePreConditions()
+	throws RemoteException, IllegalStateException {
+		throw new RemoteException("Method shouldn't be invoked");
 	}
 	//
 	@Override
