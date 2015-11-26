@@ -952,14 +952,17 @@
 											<c:when test="${chartsMap[mode] eq 'single'}">
 												<li class="active"><a href="#tp-${correctMode}" data-toggle="pill">Throughput[obj/s]</a></li>
 												<li><a href="#bw-${correctMode}" data-toggle="pill">Bandwidth[mb/s]</a></li>
+												<li><a href="#lat-${correctMode}" data-toggle="pill">Latency[s]</a></li>
 											</c:when>
 											<c:when test="${chartsMap[mode] eq 'chain'}">
 												<li class="active"><a href="#tp-${correctMode}" data-toggle="pill">Throughput[obj/s]</a></li>
 												<li><a href="#bw-${correctMode}" data-toggle="pill">Bandwidth[mb/s]</a></li>
+												<li><a href="#lat-${correctMode}" data-toggle="pill">Latency[s]</a></li>
 											</c:when>
 											<c:when test="${chartsMap[mode] eq 'rampup'}">
 												<li class="active"><a href="#tp-${correctMode}" data-toggle="pill">Throughput[obj/s]</a></li>
 												<li><a href="#bw-${correctMode}" data-toggle="pill">Bandwidth[mb/s]</a></li>
+												<li><a href="#lat-${correctMode}" data-toggle="pill">Latency[s]</a></li>
 											</c:when>
 										</c:choose>
 									</ul>
@@ -972,6 +975,9 @@
 												<div class="tab-pane" id="bw-${correctMode}">
 
 												</div>
+												<div class="tab-pane" id="lat-${correctMode}">
+
+												</div>
 											</c:when>
 											<c:when test="${chartsMap[mode] eq 'chain'}">
 												<div class="tab-pane active" id="tp-${correctMode}">
@@ -980,12 +986,18 @@
 												<div class="tab-pane" id="bw-${correctMode}">
 
 												</div>
+												<div class="tab-pane" id="lat-${correctMode}">
+
+												</div>
 											</c:when>
 											<c:when test="${chartsMap[mode] eq 'rampup'}">
 												<div class="tab-pane active" id="tp-${correctMode}">
 
 												</div>
 												<div class="tab-pane" id="bw-${correctMode}">
+
+												</div>
+												<div class="tab-pane" id="lat-${correctMode}">
 
 												</div>
 											</c:when>
