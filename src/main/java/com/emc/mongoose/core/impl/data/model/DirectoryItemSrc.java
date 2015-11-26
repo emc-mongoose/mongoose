@@ -27,7 +27,7 @@ extends GenericContainerItemSrcBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static DirectoryStream.Filter<Path>
+	public final static DirectoryStream.Filter<Path>
 		DEFAULT_DIRECTORY_STREAM_FILTER = new DirectoryStream.Filter<Path>() {
 			@Override
 			public final boolean accept(final Path entry)
