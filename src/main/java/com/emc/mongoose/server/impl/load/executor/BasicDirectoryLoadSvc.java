@@ -6,15 +6,14 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.container.Directory;
+import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.IOConfig;
 //
-import com.emc.mongoose.core.impl.load.executor.BasicWSContainerLoadExecutor;
-//
-import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;
+import com.emc.mongoose.core.impl.load.executor.BasicDirectoryLoadExecutor;
+import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -25,30 +24,31 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
-
 /**
- Created by kurila on 21.10.15.
+ Created by kurila on 26.11.15.
  */
-public class BasicWSContainerLoadSvc<T extends WSObject, C extends Container<T>>
-extends BasicWSContainerLoadExecutor<T, C>
-implements WSContainerLoadSvc<T, C> {
+public class BasicDirectoryLoadSvc<T extends FileItem, C extends Directory<T>>
+extends BasicDirectoryLoadExecutor<T, C>
+implements DirectoryLoadSvc<T, C> {
+	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSContainerLoadSvc(
-		final RunTimeConfig runTimeConfig, final WSRequestConfig reqConfig, final String[] addrs,
+	public BasicDirectoryLoadSvc(
+		final RunTimeConfig runTimeConfig, final IOConfig<T, C> ioConfig, final String[] addrs,
 		final int connPerNode, final int threadsPerNode,
 		final ItemSrc<C> itemSrc, final long maxCount,
 		final int manualTaskSleepMicroSecs, final float rateLimit
 	) {
 		super(
-			runTimeConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
+			runTimeConfig, ioConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
 			manualTaskSleepMicroSecs, rateLimit
 		);
 	}
 	//
+	//
 	@Override
 	protected void closeActually()
-		throws IOException {
+	throws IOException {
 		try {
 			super.closeActually();
 		} finally {

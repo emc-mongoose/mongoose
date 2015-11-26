@@ -6,15 +6,15 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.container.Directory;
+import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.IOConfig;
 //
-import com.emc.mongoose.core.impl.load.executor.BasicWSContainerLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.BasicFileLoadExecutor;
 //
-import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;
+import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -25,30 +25,29 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
-
 /**
- Created by kurila on 21.10.15.
+ Created by kurila on 26.11.15.
  */
-public class BasicWSContainerLoadSvc<T extends WSObject, C extends Container<T>>
-extends BasicWSContainerLoadExecutor<T, C>
-implements WSContainerLoadSvc<T, C> {
+public class BasicFileLoadSvc<T extends FileItem>
+extends BasicFileLoadExecutor<T>
+implements FileLoadSvc<T> {
+	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSContainerLoadSvc(
-		final RunTimeConfig runTimeConfig, final WSRequestConfig reqConfig, final String[] addrs,
-		final int connPerNode, final int threadsPerNode,
-		final ItemSrc<C> itemSrc, final long maxCount,
-		final int manualTaskSleepMicroSecs, final float rateLimit
-	) {
-		super(
-			runTimeConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
-			manualTaskSleepMicroSecs, rateLimit
-		);
+	public BasicFileLoadSvc(
+		final RunTimeConfig rtConfig,
+		final IOConfig<T, ? extends Directory<? extends FileItem>> ioConfig,
+		final String[] addrs, final int connCountPerNode, final int threadCount,
+		final ItemSrc<T> itemSrc, final long maxCount,
+		final long sizeMin, final long sizeMax, final float sizeBias,
+		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
+	) throws ClassCastException {
+		super(rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount, sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq);
 	}
 	//
 	@Override
 	protected void closeActually()
-		throws IOException {
+	throws IOException {
 		try {
 			super.closeActually();
 		} finally {
@@ -64,7 +63,7 @@ implements WSContainerLoadSvc<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final void setItemDst(final ItemDst<C> itemDst) {
+	public final void setItemDst(final ItemDst<T> itemDst) {
 		LOG.debug(
 			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
 			itemDst, getName()
@@ -82,7 +81,7 @@ implements WSContainerLoadSvc<T, C> {
 						remoteSvcName
 					);
 				} else {
-					super.setItemDst((ItemDst<C>) localSvc);
+					super.setItemDst((ItemDst<T>) localSvc);
 					LOG.debug(
 						Markers.MSG,
 						"Successfully resolved local service and appended it as consumer"
@@ -105,7 +104,7 @@ implements WSContainerLoadSvc<T, C> {
 	}
 	//
 	@Override
-	protected void passUniqueItemsFinally(final List<C> items) {
+	protected final void passUniqueItemsFinally(final List<T> items) {
 		if(consumer != null) {
 			int n = items.size();
 			if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -143,9 +142,15 @@ implements WSContainerLoadSvc<T, C> {
 	}
 	//
 	@Override
-	public final List<C> getProcessedItems()
+	public int getInstanceNum()
 	throws RemoteException {
-		List<C> itemsBuff = null;
+		return instanceNum;
+	}
+	//
+	@Override
+	public List<T> getProcessedItems()
+	throws RemoteException {
+		List<T> itemsBuff = null;
 		try {
 			itemsBuff = new ArrayList<>(DEFAULT_RESULTS_QUEUE_SIZE);
 			itemOutBuff.get(itemsBuff, DEFAULT_RESULTS_QUEUE_SIZE);
@@ -153,11 +158,6 @@ implements WSContainerLoadSvc<T, C> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");
 		}
 		return itemsBuff;
-	}
-	//
-	@Override
-	public final int getInstanceNum() {
-		return instanceNum;
 	}
 	//
 	@Override

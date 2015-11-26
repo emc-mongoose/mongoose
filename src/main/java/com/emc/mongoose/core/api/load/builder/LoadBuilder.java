@@ -25,9 +25,9 @@ extends Closeable {
 	LoadBuilder<T, U> setProperties(final RunTimeConfig props)
 	throws IllegalStateException, RemoteException;
 	//
-	IOConfig<T> getIOConfig()
+	IOConfig<?, ?> getIOConfig()
 	throws RemoteException;
-	LoadBuilder<T, U> setIOConfig(final IOConfig<T> reqConf)
+	LoadBuilder<T, U> setIOConfig(final IOConfig<?, ?> reqConf)
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> setLoadType(final IOTask.Type loadType)

@@ -60,7 +60,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws RemoteException {
-		final WSDataLoadSvc<T> loadSvc = (WSDataLoadSvc<T>) build();
+		final WSDataLoadSvc<T> loadSvc = build();
 		ServiceUtil.create(loadSvc);
 		if(configTable != null) {
 			LOG.info(Markers.MSG, configTable);
@@ -90,11 +90,11 @@ implements WSDataLoadBuilderSvc<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()
 	throws IllegalStateException {
-		if(reqConf == null) {
+		if(ioConfig == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(reqConf);
+		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(ioConfig);
 		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		localRunTimeConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
@@ -107,7 +107,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 			);
 		}
 		//
-		final IOTask.Type loadType = reqConf.getLoadType();
+		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
 			minThreadCount = getMinIOThreadCount(

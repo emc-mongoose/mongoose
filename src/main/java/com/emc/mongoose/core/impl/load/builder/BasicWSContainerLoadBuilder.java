@@ -45,7 +45,7 @@ implements WSContainerLoadBuilder<T, C, U> {
 		//
 		final String paramName = RunTimeConfig.KEY_STORAGE_SCHEME;
 		try {
-			WSRequestConfig.class.cast(reqConf).setScheme(rtConfig.getStorageProto());
+			WSRequestConfig.class.cast(ioConfig).setScheme(rtConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -60,7 +60,7 @@ implements WSContainerLoadBuilder<T, C, U> {
 	throws CloneNotSupportedException {
 		final BasicWSContainerLoadBuilder<T, C, U> lb
 			= (BasicWSContainerLoadBuilder<T, C, U>) super.clone();
-		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
+		LOG.debug(Markers.MSG, "Cloning request config for {}", ioConfig.toString());
 		return lb;
 	}
 	//
@@ -73,14 +73,14 @@ implements WSContainerLoadBuilder<T, C, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected U buildActually() {
-		if(reqConf == null) {
+		if(ioConfig == null) {
 			throw new IllegalStateException("Should specify request builder instance");
 		}
 		//
-		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(reqConf);
+		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(ioConfig);
 		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		//
-		final IOTask.Type loadType = reqConf.getLoadType();
+		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
 			minThreadCount = getMinIOThreadCount(

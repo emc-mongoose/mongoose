@@ -45,8 +45,8 @@ implements ContainerLoadBuilder<T, C, U>{
 			try {
 				setItemSrc(
 					new ItemCSVFileSrc<>(
-						Paths.get(listFilePathStr), reqConf.getContainerClass(),
-						reqConf.getContentSource()
+						Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
+						ioConfig.getContentSource()
 					)
 				);
 			} catch(final IOException | NoSuchMethodException e) {
@@ -62,14 +62,14 @@ implements ContainerLoadBuilder<T, C, U>{
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
+				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
 					return new NewContainerSrc<>(
-						reqConf.getContainerClass()
+						ioConfig.getContainerClass()
 					);
 				}
 			} else if(flagUseNewItemSrc) {
 				return  new NewContainerSrc<>(
-					reqConf.getContainerClass()
+					ioConfig.getContainerClass()
 				);
 			}
 		} catch(final NoSuchMethodException e) {

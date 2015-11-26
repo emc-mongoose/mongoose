@@ -11,7 +11,6 @@ import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -85,7 +84,7 @@ implements WSDataLoadExecutor<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public BasicWSDataLoadExecutor(
-		final RunTimeConfig rtConfig, final WSRequestConfig<T, Container<T>> reqConfig,
+		final RunTimeConfig rtConfig, final WSRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
@@ -243,7 +242,7 @@ implements WSDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected final Future<? extends WSDataIOTask<T>> submitTaskActually(final IOTask<T> ioTask)
+	protected <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)
 	throws RejectedExecutionException {
 		//
 		final WSDataIOTask<T> wsTask = (WSDataIOTask<T>) ioTask;
@@ -264,7 +263,7 @@ implements WSDataLoadExecutor<T> {
 		} catch(final Exception e) {
 			throw new RejectedExecutionException(e);
 		}
-		return futureResult;
+		return (Future<A>) futureResult;
 	}
 	//
 	private final FutureCallback<WSDataIOTask<T>> futureCallback = new FutureCallback<WSDataIOTask<T>>() {

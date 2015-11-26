@@ -35,7 +35,7 @@ public class LoadBuilderFactory {
 		LoadBuilder loadBuilderInstance;
 		try {
 			final Class loadBuilderImplClass = getLoadBuilderClass(
-				rtConfig.getRunMode(), rtConfig.getApiName(), rtConfig.getLoadItemClass()
+				rtConfig.getRunMode(), rtConfig.getLoadItemClass()
 			);
 			final Constructor constructor = loadBuilderImplClass.getConstructor(RunTimeConfig.class);
 			loadBuilderInstance = (LoadBuilder) constructor.newInstance(rtConfig);
@@ -48,19 +48,9 @@ public class LoadBuilderFactory {
 	//
 	@SuppressWarnings("unchecked")
 	private static Class<LoadBuilder> getLoadBuilderClass(
-		final String runMode, final String apiName, final String itemClass
+			final String runMode, final String itemClass
 	) throws ClassNotFoundException {
-		String itemClassName = WordUtils.capitalize(itemClass);
-		//
-		if (
-			apiName.equals(Constants.API_TYPE_S3) ||
-			apiName.equals(Constants.API_TYPE_ATMOS) ||
-			apiName.equals(Constants.API_TYPE_SWIFT)
-		) {
-			itemClassName = WS_PREFIX + itemClassName;
-		}
-		//
-		itemClassName = BASIC_PREFIX + itemClassName + LOAD_BUILDER_POSTFIX;
+		String itemClassName = BASIC_PREFIX + WordUtils.capitalize(itemClass) + LOAD_BUILDER_POSTFIX;
 		final String itemClassFQN;
 		// don't append anything if run.mode is standalone
 		switch(runMode) {
@@ -82,6 +72,12 @@ public class LoadBuilderFactory {
 				);
 		}
 		//
-		return (Class<LoadBuilder>) Class.forName(itemClassFQN);
+		Class<LoadBuilder> loadBuilderCls;
+		try {
+			loadBuilderCls = (Class<LoadBuilder>) Class.forName(itemClassFQN);
+		} catch(final ClassNotFoundException e) {
+			loadBuilderCls = (Class<LoadBuilder>) Class.forName(WS_PREFIX + itemClassFQN);
+		}
+		return loadBuilderCls;
 	}
 }

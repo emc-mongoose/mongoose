@@ -1,67 +1,67 @@
 package com.emc.mongoose.server.impl.load.builder;
-
+//
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.container.Directory;
+import com.emc.mongoose.core.api.data.FileItem;
+import com.emc.mongoose.core.api.io.req.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
-import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
-import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;
-import com.emc.mongoose.server.impl.load.executor.BasicWSContainerLoadSvc;
+import com.emc.mongoose.core.impl.load.builder.BasicDirectoryLoadBuilder;
+import com.emc.mongoose.server.api.load.builder.DirectoryLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
+import com.emc.mongoose.server.impl.load.executor.BasicDirectoryLoadSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
-
 /**
- * Created by gusakk on 22.10.15.
+ Created by kurila on 26.11.15.
  */
-public class BasicWSContainerLoadBuilderSvc<
-	T extends WSObject,
-	C extends Container<T>,
-	U extends WSContainerLoadSvc<T, C>
->
-extends BasicWSContainerLoadBuilder<T, C, U>
-implements WSContainerLoadBuilderSvc<T, C, U> {
+public class BasicDirectoryLoadBuilderSvc<
+	T extends FileItem,
+	C extends Directory<T>,
+	U extends DirectoryLoadSvc<T, C>
+> extends BasicDirectoryLoadBuilder<T, C, U>
+implements DirectoryLoadBuilderSvc<T, C, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private String configTable = null;
 	//
-	public BasicWSContainerLoadBuilderSvc(final RunTimeConfig runTimeConfig) {
-		super(runTimeConfig);
+	public BasicDirectoryLoadBuilderSvc(final RunTimeConfig rtConfig) {
+		super(rtConfig);
 	}
 	//
 	@Override
-	public final BasicWSContainerLoadBuilderSvc<T, C, U>
-	setProperties(final RunTimeConfig clientConfig) {
+	public final BasicDirectoryLoadBuilderSvc<T, C, U> setProperties(
+		final RunTimeConfig clientConfig
+	) {
 		super.setProperties(clientConfig);
 		final String runMode = clientConfig.getRunMode();
 		if (!runMode.equals(Constants.RUN_MODE_SERVER)
-				&& !runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)) {
+			&& !runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)) {
 			configTable = clientConfig.toString();
 		}
 		RunTimeConfig.getContext();
 		return this;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	public final String buildRemotely()
+	@Override
+	public String buildRemotely()
 	throws RemoteException {
-		final WSContainerLoadSvc<T, C> loadSvc = build();
+		DirectoryLoadSvc<T, C> loadSvc = build();
 		ServiceUtil.create(loadSvc);
 		if(configTable != null) {
 			LOG.info(Markers.MSG, configTable);
@@ -70,24 +70,6 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 		return loadSvc.getName();
 	}
 	//
-	@Override
-	public final String getName() {
-		return getClass().getName();
-	}
-	//
-	@Override
-	public final int getNextInstanceNum(final String runId) {
-		return LoadExecutor.NEXT_INSTANCE_NUM.get();
-	}
-	//
-	@Override
-	public final void setNextInstanceNum(final String runId, final int instanceN) {
-		LoadExecutor.NEXT_INSTANCE_NUM.set(instanceN);
-	}
-	//
-	@Override
-	protected final void invokePreConditions() {} // discard any precondition invocations in load server mode
-	//
 	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()
 	throws IllegalStateException {
@@ -95,10 +77,12 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(ioConfig);
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+		final IOConfig<T, ? extends Directory<T>>
+			fileIoConfig = (IOConfig<T, ? extends Directory<T>>) ioConfig;
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		// the statement below fixes hi-level API distributed mode usage and tests
-		localRunTimeConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
+		rtConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
+		//
 		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
@@ -106,19 +90,38 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
-		return (U) new BasicWSContainerLoadSvc<>(
-			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
+		return (U) new BasicDirectoryLoadSvc<>(
+			rtConfig, fileIoConfig, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, manualTaskSleepMicroSecs, rateLimit
 		);
 	}
 	//
-	public final void start()
+	@Override
+	public int getNextInstanceNum(final String runId)
 	throws RemoteException {
+		return LoadExecutor.NEXT_INSTANCE_NUM.get();
+	}
+	//
+	@Override
+	public void setNextInstanceNum(final String runId, final int instanceN)
+	throws RemoteException {
+		LoadExecutor.NEXT_INSTANCE_NUM.set(instanceN);
+	}
+	//
+	@Override
+	public String getName()
+	throws RemoteException {
+		return getClass().getName();
+	}
+	//
+	@Override
+	public void start()
+	throws RemoteException, IllegalThreadStateException {
 		LOG.debug(Markers.MSG, "Load builder service instance created");
 		try {
 		/*final RemoteStub stub = */
-		ServiceUtil.create(this);
+			ServiceUtil.create(this);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
 		} catch (final DuplicateSvcNameException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");
@@ -144,8 +147,7 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
-	public void interrupt()
-	throws RemoteException {
+	public void interrupt() throws RemoteException {
 	}
 	//
 	@Override

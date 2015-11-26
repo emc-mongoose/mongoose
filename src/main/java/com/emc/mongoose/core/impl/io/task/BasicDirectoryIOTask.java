@@ -9,6 +9,7 @@ import com.emc.mongoose.core.api.io.req.IOConfig;
 import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
 //
 import com.emc.mongoose.core.impl.data.model.DirectoryItemSrc;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,8 +32,8 @@ implements DirectoryIOTask<T, C> {
 	//
 	private final Path fPath;
 	//
-	public BasicDirectoryIOTask(final C item, final String nodeAddr, final X ioConfig) {
-		super(item, nodeAddr, ioConfig);
+	public BasicDirectoryIOTask(final C item, final X ioConfig) {
+		super(item, null, ioConfig);
 		//
 		fPath = Paths.get(ioConfig.getNamePrefix(), item.getName());
 	}

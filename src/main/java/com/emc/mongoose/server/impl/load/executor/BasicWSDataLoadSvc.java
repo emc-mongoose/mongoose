@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
@@ -22,7 +23,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.LockSupport;
 
@@ -36,8 +36,9 @@ implements WSDataLoadSvc<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicWSDataLoadSvc(
-		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
-		final int connPerNode, final int threadsPerNode,
+		final RunTimeConfig runTimeConfig,
+		final WSRequestConfig<T, ? extends Container<T>> reqConfig,
+		final String[] addrs, final int connPerNode, final int threadsPerNode,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
@@ -145,6 +146,11 @@ implements WSDataLoadSvc<T> {
 	}
 	//
 	@Override
+	public final int getInstanceNum() {
+		return instanceNum;
+	}
+	//
+	@Override
 	public final List<T> getProcessedItems()
 	throws RemoteException {
 		List<T> itemsBuff = null;
@@ -155,11 +161,6 @@ implements WSDataLoadSvc<T> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to get the buffered items");
 		}
 		return itemsBuff;
-	}
-	//
-	@Override
-	public final int getInstanceNum() {
-		return instanceNum;
 	}
 	//
 	@Override

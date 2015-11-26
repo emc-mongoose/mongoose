@@ -1,15 +1,22 @@
 package com.emc.mongoose.util.builder;
-
+//
 import com.emc.mongoose.common.conf.RunTimeConfig;
+//
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
+import com.emc.mongoose.core.api.io.req.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+//
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
+//
+import com.emc.mongoose.server.impl.load.builder.BasicDirectoryLoadBuilderSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicFileLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSContainerLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
+//
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -28,6 +35,8 @@ implements LoadBuilderSvc {
 	private final List<LoadBuilderSvc> loadBuilderSvcs = new ArrayList<>();
 	//
 	public MultiLoadBuilderSvc(final RunTimeConfig rtConfig) {
+		loadBuilderSvcs.add(new BasicDirectoryLoadBuilderSvc<>(rtConfig));
+		loadBuilderSvcs.add(new BasicFileLoadBuilderSvc<>(rtConfig));
 		loadBuilderSvcs.add(new BasicWSContainerLoadBuilderSvc(rtConfig));
 		loadBuilderSvcs.add(new BasicWSDataLoadBuilderSvc(rtConfig));
 	}
@@ -115,16 +124,15 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final RequestConfig getIOConfig()
+	public final IOConfig getIOConfig()
 	throws RemoteException {
 		throw new RemoteException("Method shouldn't be invoked");
 	}
-	//
 	@Override
-	public final LoadBuilderSvc setRequestConfig(final RequestConfig reqConf)
+	public LoadBuilder setIOConfig(final IOConfig ioConfig)
 	throws RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setIOConfig(reqConf);
+			loadBuilderSvc.setIOConfig(ioConfig);
 		}
 		return this;
 	}
