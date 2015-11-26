@@ -1,5 +1,6 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 // mongoose-server-api.jar
@@ -44,7 +45,7 @@ implements WSDataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig<T> getDefaultIOConfig() {
+	protected WSRequestConfig<T, ? extends Container<T>> getDefaultIOConfig() {
 		return WSRequestConfigBase.getInstance();
 	}
 	//
@@ -71,12 +72,12 @@ implements WSDataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	protected final void invokePreConditions()
+	public final void invokePreConditions()
 	throws IllegalStateException {
-		ioConfig.configureStorage(storageNodeAddrs);
+		((WSRequestConfig) ioConfig).configureStorage(storageNodeAddrs);
 	}
 	//
-	@Override  @SuppressWarnings("unchecked")
+	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()
 	throws RemoteException {
 		//

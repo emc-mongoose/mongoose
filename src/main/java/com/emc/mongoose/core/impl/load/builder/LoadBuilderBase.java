@@ -366,7 +366,7 @@ implements LoadBuilder<T, U> {
 	public final U build() {
 		try {
 			invokePreConditions();
-		} catch(final IllegalStateException e) {
+		} catch(final RemoteException | IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
 		try {
@@ -375,9 +375,6 @@ implements LoadBuilder<T, U> {
 			resetItemSrc();
 		}
 	}
-	//
-	protected abstract void invokePreConditions()
-	throws IllegalStateException;
 	//
 	protected final int getMinIOThreadCount(
 		final int threadCount, final int nodeCount, final int connCountPerNode

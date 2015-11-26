@@ -63,7 +63,7 @@ implements WSDataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	protected void invokePreConditions()
+	public void invokePreConditions()
 	throws IllegalStateException {
 		((WSRequestConfig) ioConfig).configureStorage(storageNodeAddrs);
 	}

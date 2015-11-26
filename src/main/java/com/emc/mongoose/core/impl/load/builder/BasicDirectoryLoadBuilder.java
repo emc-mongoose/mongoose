@@ -34,7 +34,7 @@ public class BasicDirectoryLoadBuilder<
 	}
 	//
 	@Override
-	protected void invokePreConditions()
+	public void invokePreConditions()
 	throws IllegalStateException {
 		// check the filesystem
 		final File parentPath = Paths.get("").toFile();

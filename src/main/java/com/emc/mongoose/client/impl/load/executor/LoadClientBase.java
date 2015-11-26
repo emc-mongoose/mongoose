@@ -9,8 +9,8 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.io.req.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
@@ -173,13 +173,13 @@ implements LoadClient<T, W> {
 	}
 	@SuppressWarnings("unchecked")
 	public LoadClientBase(
-		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
+		final RunTimeConfig rtConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		super(
-			rtConfig, reqConfig, addrs, connCountPerNode, threadCount,
+			rtConfig, ioConfig, addrs, connCountPerNode, threadCount,
 			// suppress new data items generation on the client side
 			itemSrc instanceof NewDataItemSrc ? null : itemSrc, maxCount,
 			// get any load server last job number
@@ -582,7 +582,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final Future<? extends IOTask<T>> submitReq(final IOTask<T> request)
+	public final <A extends IOTask<T>> Future<A> submitReq(final A request)
 	throws RemoteException {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (remotePutExecutor.getTaskCount() % loadSvcAddrs.length)])

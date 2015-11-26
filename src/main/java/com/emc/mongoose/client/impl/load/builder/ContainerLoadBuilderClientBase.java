@@ -55,7 +55,7 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 			try {
 				setItemSrc(
 					new ItemCSVFileSrc<>(
-						Paths.get(listFilePathStr), ioConfig.getContainerClass(),
+						Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
 						ioConfig.getContentSource()
 					)
 				);

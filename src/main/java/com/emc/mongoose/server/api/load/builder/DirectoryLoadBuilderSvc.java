@@ -8,5 +8,5 @@ import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
  */
 public interface DirectoryLoadBuilderSvc<
 	T extends FileItem, C extends Directory<T>, U extends DirectoryLoadSvc<T, C>
-> extends DirectoryLoadBuilder<T, C, U>, LoadBuilderSvc<C, U> {
+> extends DirectoryLoadBuilder<T, C, U>, ContainerLoadBuilderSvc<T, C, U> {
 }

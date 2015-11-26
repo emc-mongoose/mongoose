@@ -65,7 +65,7 @@ implements WSContainerLoadBuilder<T, C, U> {
 	}
 	//
 	@Override
-	protected void invokePreConditions()
+	public void invokePreConditions()
 	throws IllegalStateException {
 		//  do nothing
 		//  ioConfig.configureStorage(storageNodeAddrs);

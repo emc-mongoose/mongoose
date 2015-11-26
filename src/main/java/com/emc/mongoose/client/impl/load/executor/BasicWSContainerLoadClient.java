@@ -21,8 +21,7 @@ import java.util.Map;
  */
 public class BasicWSContainerLoadClient<
 	T extends WSObject, C extends Container<T>, W extends WSContainerLoadSvc<T, C>
-> extends LoadClientBase<C, W>
-implements WSContainerLoadClient<T, C, W> {
+> extends LoadClientBase<C, W> implements WSContainerLoadClient<T, C, W> {
 	//
 	public BasicWSContainerLoadClient(
 		final RunTimeConfig rtConfig, final WSRequestConfig reqConfig, final String addrs[],

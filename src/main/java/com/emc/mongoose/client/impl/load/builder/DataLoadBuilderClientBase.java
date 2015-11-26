@@ -164,7 +164,7 @@ implements DataLoadBuilderClient<T, W, U> {
 						nextBuilder.useNoneItemSrc();
 					}
 					//
-					return ioConfig.getContainerListInput(maxCount, storageNodeAddrs[0]);
+					return (ItemSrc<T>) ioConfig.getContainerListInput(maxCount, storageNodeAddrs[0]);
 				}
 			} else if(flagUseNewItemSrc) {
 				// enable new data item generation on the load servers side
@@ -183,7 +183,7 @@ implements DataLoadBuilderClient<T, W, U> {
 					nextBuilder.useNoneItemSrc();
 				}
 				//
-				return ioConfig.getContainerListInput(maxCount, storageNodeAddrs[0]);
+				return (ItemSrc<T>) ioConfig.getContainerListInput(maxCount, storageNodeAddrs[0]);
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to change the remote data items source");

@@ -51,7 +51,7 @@ implements LoadBuilderClient<T, W, U> {
 	protected ItemSrc<T> itemSrc;
 	protected String storageNodeAddrs[] = null, loadSvcAddrs[] = null;
 	protected volatile RunTimeConfig rtConfig;
-	protected volatile IOConfig<T> ioConfig = getDefaultIOConfig();
+	protected volatile IOConfig<?, ?> ioConfig = getDefaultIOConfig();
 	protected long maxCount = 0;
 	//
 	protected boolean
@@ -91,7 +91,7 @@ implements LoadBuilderClient<T, W, U> {
 		}
 	}
 	//
-	protected abstract IOConfig<T> getDefaultIOConfig();
+	protected abstract IOConfig<?, ?> getDefaultIOConfig();
 	//
 	protected abstract V resolve(final String serverAddr)
 	throws IOException;
@@ -189,7 +189,8 @@ implements LoadBuilderClient<T, W, U> {
 			if (itemsFileExists(listFile)) {
 				setItemSrc(
 					new ItemCSVFileSrc<>(
-						Paths.get(listFile), ioConfig.getItemClass(), ioConfig.getContentSource()
+						Paths.get(listFile), (Class<T>) ioConfig.getItemClass(),
+						ioConfig.getContentSource()
 					)
 				);
 				// disable file-based item sources on the load servers side
@@ -224,12 +225,12 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final IOConfig<T> getIOConfig() {
+	public final IOConfig<?, ?> getIOConfig() {
 		return ioConfig;
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, W, U> setIOConfig(final IOConfig<T> ioConfig)
+	public final LoadBuilderClient<T, W, U> setIOConfig(final IOConfig<?, ?> ioConfig)
 	throws ClassCastException, RemoteException {
 		if(this.ioConfig.equals(ioConfig)) {
 			return this;
@@ -413,9 +414,6 @@ implements LoadBuilderClient<T, W, U> {
 		}
 		return client;
 	}
-	//
-	protected abstract void invokePreConditions()
-	throws IllegalStateException;
 	//
 	protected abstract U buildActually()
 	throws RemoteException, DuplicateSvcNameException;

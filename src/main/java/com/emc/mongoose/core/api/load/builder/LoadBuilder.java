@@ -66,6 +66,9 @@ extends Closeable {
 	LoadBuilder<T, U> useNoneItemSrc()
 	throws RemoteException;
 	//
+	void invokePreConditions()
+	throws RemoteException, IllegalStateException;
+	//
 	U build()
 	throws IOException;
 	//

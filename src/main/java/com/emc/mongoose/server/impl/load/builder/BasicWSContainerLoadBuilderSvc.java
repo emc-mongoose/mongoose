@@ -86,7 +86,7 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
-	protected final void invokePreConditions() {} // discard any precondition invocations in load server mode
+	public final void invokePreConditions() {} // discard any precondition invocations in load server mode
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()

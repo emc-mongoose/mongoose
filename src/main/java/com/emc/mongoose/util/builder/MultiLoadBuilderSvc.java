@@ -131,10 +131,7 @@ implements LoadBuilderSvc {
 	@Override
 	public LoadBuilder setIOConfig(final IOConfig ioConfig)
 	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setIOConfig(ioConfig);
-		}
-		return this;
+		throw new RemoteException("Method shouldn't be invoked");
 	}
 	//
 	@Override
