@@ -9,7 +9,7 @@ import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.FileIOTask;
 //
 import com.emc.mongoose.core.impl.data.BasicDataItem;
@@ -31,8 +31,9 @@ import java.nio.file.StandardOpenOption;
 /**
  Created by kurila on 23.11.15.
  */
-public class BasicFileIOTask<T extends FileItem, C extends Directory<T>, X extends IOConfig<T, C>>
-extends BasicDataIOTask<T, C, X>
+public class BasicFileIOTask<
+	T extends FileItem, C extends Directory<T>, X extends FileIOConfig<T, C>
+> extends BasicDataIOTask<T, C, X>
 implements FileIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

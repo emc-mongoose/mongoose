@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
@@ -28,10 +28,10 @@ extends LimitedRateLoadExecutorBase<C> {
 	private final ExecutorService ioTaskExecutor;
 	//
 	public BasicDirectoryLoadExecutor(
-		final RunTimeConfig rtConfig,
-		final IOConfig<T, C> ioConfig, final String[] addrs,
-		final int connCountPerNode, final int threadCount, final ItemSrc<C> itemSrc,
-		final long maxCount, final int manualTaskSleepMicroSecs, final float rateLimit
+			final RunTimeConfig rtConfig,
+			final FileIOConfig<T, C> ioConfig, final String[] addrs,
+			final int connCountPerNode, final int threadCount, final ItemSrc<C> itemSrc,
+			final long maxCount, final int manualTaskSleepMicroSecs, final float rateLimit
 	) throws ClassCastException {
 		super(
 			rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
@@ -45,7 +45,7 @@ extends LimitedRateLoadExecutorBase<C> {
 	//
 	@Override
 	protected DirectoryIOTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
-		return new BasicDirectoryIOTask<>(item, (IOConfig<T, C>) ioConfigCopy);
+		return new BasicDirectoryIOTask<>(item, (FileIOConfig<T, C>) ioConfigCopy);
 	}
 	//
 	@Override

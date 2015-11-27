@@ -12,7 +12,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.MutableDataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import org.apache.logging.log4j.Level;

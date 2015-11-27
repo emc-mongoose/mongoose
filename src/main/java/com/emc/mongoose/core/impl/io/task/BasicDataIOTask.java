@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.io.task;
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.MutableDataItem;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.DataIOTask;
 //
 import org.apache.logging.log4j.LogManager;

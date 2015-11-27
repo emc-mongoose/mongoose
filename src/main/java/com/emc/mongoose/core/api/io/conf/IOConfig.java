@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.io.req;
+package com.emc.mongoose.core.api.io.conf;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //

@@ -10,7 +10,7 @@ import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 //
 import com.emc.mongoose.core.impl.load.executor.BasicFileLoadExecutor;
 //
@@ -36,7 +36,7 @@ implements FileLoadSvc<T> {
 	//
 	public BasicFileLoadSvc(
 		final RunTimeConfig rtConfig,
-		final IOConfig<T, ? extends Directory<T>> ioConfig,
+		final FileIOConfig<T, ? extends Directory<T>> ioConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,

@@ -10,9 +10,9 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 //
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 //
 import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;

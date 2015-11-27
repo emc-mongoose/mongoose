@@ -7,8 +7,7 @@ import com.emc.mongoose.common.net.http.ContentUtil;
 //
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.WSContainerIOTask;
 //
 import org.apache.http.ConnectionClosedException;

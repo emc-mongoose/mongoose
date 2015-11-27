@@ -2,22 +2,24 @@ package com.emc.mongoose.util.builder;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.core.api.container.Directory;
+import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.container.BasicDirectory;
-import com.emc.mongoose.core.impl.data.BasicFileItem;
+import com.emc.mongoose.core.impl.load.builder.BasicDirectoryLoadBuilder;
+import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
+import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicDirectoryLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicFileLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSContainerLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 //
-import com.emc.mongoose.server.impl.load.executor.BasicDirectoryLoadSvc;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
@@ -42,9 +44,8 @@ implements LoadBuilderSvc {
 		loadBuilderSvcs.add(new BasicWSDataLoadBuilderSvc(rtConfig));
 		loadBuilderSvcs.add(
 			new BasicDirectoryLoadBuilderSvc<
-//				BasicFileItem,
-//				BasicDirectory<BasicFileItem>,
-//				BasicDirectoryLoadSvc<BasicFileItem, BasicDirectory<BasicFileItem>>
+				FileItem, Directory<FileItem>,
+				DirectoryLoadSvc<FileItem, Directory<FileItem>>
 			>(rtConfig)
 		);
 		loadBuilderSvcs.add(new BasicFileLoadBuilderSvc<>(rtConfig));

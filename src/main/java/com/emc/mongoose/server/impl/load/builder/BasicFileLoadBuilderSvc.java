@@ -7,9 +7,8 @@ import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.load.builder.BasicFileLoadBuilder;
@@ -92,7 +91,7 @@ implements FileLoadBuilderSvc<T, U> {
 			);
 		//
 		return (U) new BasicFileLoadSvc<>(
-			rtConfig, (IOConfig) ioConfig, storageNodeAddrs, connPerNode, minThreadCount,
+			rtConfig, (FileIOConfig) ioConfig, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
 			manualTaskSleepMicroSecs, rateLimit, updatesPerItem

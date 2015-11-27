@@ -7,7 +7,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.io.task.BasicFileIOTask;
@@ -24,7 +24,7 @@ extends LoadClientBase<T, W>
 implements FileLoadClient<T, W> {
 	//
 	public BasicFileLoadClient(
-		final RunTimeConfig rtConfig, final IOConfig<T, ? extends Directory<T>> ioConfig,
+		final RunTimeConfig rtConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount, final Map<String, W> remoteLoadMap
 	) throws RemoteException {
@@ -37,7 +37,7 @@ implements FileLoadClient<T, W> {
 	@Override
 	protected IOTask<T> getIOTask(final T item, final String nextNodeAddr) {
 		return new BasicFileIOTask<>(
-			item, (IOConfig<T, ? extends Directory<T>>) ioConfigCopy
+			item, (FileIOConfig<T, ? extends Directory<T>>) ioConfigCopy
 		);
 	}
 }

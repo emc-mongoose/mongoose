@@ -1,11 +1,13 @@
-package com.emc.mongoose.core.impl.io.req;
+package com.emc.mongoose.core.impl.io.conf;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 //
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.impl.container.BasicDirectory;
 import com.emc.mongoose.core.impl.data.BasicFileItem;
 import com.emc.mongoose.core.impl.data.model.DirectoryItemSrc;
@@ -14,8 +16,9 @@ import java.io.IOException;
 /**
  Created by kurila on 23.11.15.
  */
-public class BasicFileIOConfig<T extends FileItem, C extends Directory<T>>
-extends IOConfigBase<T, C> {
+public class BasicFileIOConfig<F extends FileItem, D extends Directory<F>>
+extends IOConfigBase<F, D>
+implements FileIOConfig<F, D> {
 	//
 	private int batchSize = RunTimeConfig.getContext().getBatchSize();
 	//
@@ -23,32 +26,32 @@ extends IOConfigBase<T, C> {
 		super();
 	}
 	//
-	public BasicFileIOConfig(final BasicFileIOConfig<T, C> another) {
+	public BasicFileIOConfig(final BasicFileIOConfig<F, D> another) {
 		super(another);
 	}
 	//
 	@Override
-	public BasicFileIOConfig<T, C> setProperties(final RunTimeConfig rtConfig) {
+	public BasicFileIOConfig<F, D> setProperties(final RunTimeConfig rtConfig) {
 		super.setProperties(rtConfig);
 		batchSize = rtConfig.getBatchSize();
 		return this;
 	}
 	//
 	@Override
-	public ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
+	public ItemSrc<F> getContainerListInput(final long maxCount, final String addr) {
 		return new DirectoryItemSrc<>(
 			container, getItemClass(), maxCount, batchSize, contentSrc
 		);
 	}
 	//
-	@Override
-	public Class<C> getContainerClass() {
-		return (Class<C>) BasicDirectory.class;
+	@Override @SuppressWarnings("unchecked")
+	public Class<D> getContainerClass() {
+		return (Class) BasicDirectory.class;
 	}
 	//
-	@Override
-	public Class<T> getItemClass() {
-		return (Class<T>) BasicFileItem.class;
+	@Override @SuppressWarnings("unchecked")
+	public Class<F> getItemClass() {
+		return (Class<F>) BasicFileItem.class;
 	}
 	//
 	@Override

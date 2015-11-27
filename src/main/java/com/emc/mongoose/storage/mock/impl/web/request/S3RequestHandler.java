@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.MutableDataItem;
 import com.emc.mongoose.core.api.data.model.ContainerHelper;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.s3.BucketHelper;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;

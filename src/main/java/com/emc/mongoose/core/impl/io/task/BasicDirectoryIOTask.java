@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
 //
 import com.emc.mongoose.core.impl.data.model.DirectoryItemSrc;
@@ -24,7 +24,7 @@ import java.nio.file.Paths;
  Created by kurila on 23.11.15.
  */
 public class BasicDirectoryIOTask<
-	T extends FileItem, C extends Directory<T>, X extends IOConfig<T, C>
+	T extends FileItem, C extends Directory<T>, X extends FileIOConfig<T, C>
 > extends BasicIOTask<C, C, X>
 implements DirectoryIOTask<T, C> {
 	//

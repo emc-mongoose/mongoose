@@ -2,7 +2,7 @@ package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
 // mongoose-common.jar
@@ -10,7 +10,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 // mongoose-client.jar
 import com.emc.mongoose.client.impl.load.executor.BasicWSDataLoadClient;
 import com.emc.mongoose.client.api.load.builder.WSDataLoadBuilderClient;

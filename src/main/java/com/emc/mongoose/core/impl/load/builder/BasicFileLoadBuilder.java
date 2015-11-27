@@ -5,11 +5,11 @@ import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 //
-import com.emc.mongoose.core.impl.io.req.BasicFileIOConfig;
+import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
 import com.emc.mongoose.core.impl.load.executor.BasicFileLoadExecutor;
 
 import java.io.File;
@@ -27,7 +27,7 @@ extends DataLoadBuilderBase<T, U> {
 	}
 	//
 	@Override
-	protected IOConfig<T, ? extends Directory<T>> getDefaultRequestConfig() {
+	protected FileIOConfig<T, ? extends Directory<T>> getDefaultRequestConfig() {
 		return new BasicFileIOConfig<>();
 	}
 	//
@@ -87,7 +87,7 @@ extends DataLoadBuilderBase<T, U> {
 		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int threadCount = loadTypeConnPerNode.get(loadType);
 		return (U) new BasicFileLoadExecutor<>(
-			RunTimeConfig.getContext(), (IOConfig<T, ? extends Directory<T>>) ioConfig,
+			RunTimeConfig.getContext(), (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
 			null, 0, threadCount, itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
 			manualTaskSleepMicroSecs, rateLimit, updatesPerItem

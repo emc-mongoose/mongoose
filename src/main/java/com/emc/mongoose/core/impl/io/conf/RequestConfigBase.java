@@ -1,11 +1,11 @@
-package com.emc.mongoose.core.impl.io.req;
+package com.emc.mongoose.core.impl.io.conf;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
+import com.emc.mongoose.core.api.io.conf.RequestConfig;
 // mongoose-core-impl.jar
 import org.apache.commons.lang.StringUtils;
 //
@@ -49,7 +49,7 @@ implements RequestConfig<T, C> {
 			setScheme(reqConf2Clone.getScheme());
 			secret = reqConf2Clone.getSecret();
 			LOG.debug(
-				Markers.MSG, "Forked req conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
+				Markers.MSG, "Forked conf conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
 			);
 		}
 	}
@@ -65,7 +65,7 @@ implements RequestConfig<T, C> {
 			.setScheme(scheme);
 		requestConfigBranch.secret = secret;
 		LOG.debug(
-			Markers.MSG, "Forked req conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
+			Markers.MSG, "Forked conf conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
 		);
 		return requestConfigBranch;
 	}

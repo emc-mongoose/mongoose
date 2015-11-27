@@ -8,8 +8,8 @@ import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.io.req.IOConfig;
-import com.emc.mongoose.core.impl.io.req.BasicFileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
 import com.emc.mongoose.server.api.load.builder.FileLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 
@@ -36,7 +36,7 @@ implements FileLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected IOConfig<T, ? extends Directory<T>> getDefaultIOConfig() {
+	protected FileIOConfig<T, ? extends Directory<T>> getDefaultIOConfig() {
 		return new BasicFileIOConfig<>();
 	}
 	//
@@ -96,7 +96,7 @@ implements FileLoadBuilderClient<T, W, U> {
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
 		//
 		return (U) new BasicFileLoadClient<>(
-			rtConfig, (IOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
+			rtConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
 			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
 			itemSrc, maxCount, remoteLoadMap
 		);

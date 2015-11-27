@@ -11,9 +11,9 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 //
-import com.emc.mongoose.core.impl.io.req.BasicFileIOConfig;
+import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
 //
 import com.emc.mongoose.server.api.load.builder.DirectoryLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
@@ -47,7 +47,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected IOConfig<T, C> getDefaultIOConfig() {
+	protected FileIOConfig<T, C> getDefaultIOConfig() {
 		return new BasicFileIOConfig();
 	}
 	//
@@ -113,7 +113,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
 		//
 		return (U) new BasicDirectoryLoadClient<>(
-			rtConfig, (IOConfig) ioConfig, storageNodeAddrs,
+			rtConfig, (FileIOConfig) ioConfig, storageNodeAddrs,
 			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
 			itemSrc, maxCount, remoteLoadMap
 		);

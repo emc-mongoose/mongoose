@@ -10,7 +10,7 @@ import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 //
 import com.emc.mongoose.core.impl.load.executor.BasicDirectoryLoadExecutor;
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
@@ -34,7 +34,7 @@ implements DirectoryLoadSvc<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicDirectoryLoadSvc(
-		final RunTimeConfig runTimeConfig, final IOConfig<T, C> ioConfig, final String[] addrs,
+		final RunTimeConfig runTimeConfig, final FileIOConfig<T, C> ioConfig, final String[] addrs,
 		final int connPerNode, final int threadsPerNode,
 		final ItemSrc<C> itemSrc, final long maxCount,
 		final int manualTaskSleepMicroSecs, final float rateLimit

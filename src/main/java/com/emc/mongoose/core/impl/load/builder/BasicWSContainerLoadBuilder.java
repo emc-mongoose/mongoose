@@ -4,11 +4,11 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.WSContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSContainerLoadExecutor;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.load.executor.BasicWSContainerLoadExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +34,7 @@ implements WSContainerLoadBuilder<T, C, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig getDefaultRequestConfig() {
+	protected WSRequestConfig<T, C> getDefaultRequestConfig() {
 		return WSRequestConfigBase.getInstance();
 	}
 	//

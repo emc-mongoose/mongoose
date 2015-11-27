@@ -9,8 +9,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.container.BasicContainer;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -26,9 +25,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -83,7 +79,7 @@ extends WSRequestConfigBase<T, C> {
 		return this;
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public final WSRequestConfigImpl<T, C> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//

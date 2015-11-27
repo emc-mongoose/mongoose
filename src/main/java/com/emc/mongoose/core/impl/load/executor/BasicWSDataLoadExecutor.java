@@ -15,7 +15,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSDataIOTask;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.task.BasicWSDataIOTask;

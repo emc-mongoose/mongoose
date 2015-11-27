@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.IOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.FileIOTask;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
@@ -28,7 +28,7 @@ extends MutableDataLoadExecutorBase<T> {
 	private final ExecutorService ioTaskExecutor;
 	//
 	public BasicFileLoadExecutor(
-		final RunTimeConfig rtConfig, final IOConfig<T, ? extends Directory<T>> ioConfig,
+		final RunTimeConfig rtConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
@@ -46,7 +46,7 @@ extends MutableDataLoadExecutorBase<T> {
 	//
 	@Override
 	protected FileIOTask<T> getIOTask(final T item, final String nextNodeAddr) {
-		return new BasicFileIOTask<>(item, (IOConfig<T, Directory<T>>) ioConfigCopy);
+		return new BasicFileIOTask<>(item, (FileIOConfig<T, Directory<T>>) ioConfigCopy);
 	}
 	//
 	@Override

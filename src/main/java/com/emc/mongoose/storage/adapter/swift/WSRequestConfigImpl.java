@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.container.BasicContainer;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
@@ -45,6 +45,7 @@ extends WSRequestConfigBase<T, C> {
 		this(null);
 	}
 	//
+	@SuppressWarnings("unchecked")
 	protected WSRequestConfigImpl(final WSRequestConfigImpl<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
@@ -130,7 +131,7 @@ extends WSRequestConfigBase<T, C> {
 		return copy;
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public WSRequestConfigImpl<T, C> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
@@ -206,7 +207,7 @@ extends WSRequestConfigBase<T, C> {
 		final String authTokenValue = authToken == null ? null : authToken.getValue();
 		if(authTokenValue != null && authTokenValue.length() > 0) {
 			if(!httpRequest.containsHeader(KEY_X_AUTH_TOKEN)) {
-				if(headerAuthToken == null || headerAuthToken.getValue() != authTokenValue) {
+				if(headerAuthToken == null || !authTokenValue.equals(headerAuthToken.getValue())) {
 					headerAuthToken = new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue);
 				}
 				httpRequest.setHeader(headerAuthToken);
@@ -320,8 +321,7 @@ extends WSRequestConfigBase<T, C> {
 		}*/
 	}
 	//
-	@Override
-	@SuppressWarnings("unchecked")
+	@Override @SuppressWarnings("unchecked")
 	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
 		return new WSContainerItemSrc<>(
 			new WSContainerHelper<>(this, container.getName(), getVersioning()),
