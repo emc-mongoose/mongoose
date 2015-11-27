@@ -27,8 +27,7 @@ implements ItemFileSrc<T> {
 	 @param itemCls the particular data item implementation class used to parse the records
 	 @throws java.io.IOException
 	 @throws NoSuchMethodException */
-	public
-	ItemCSVFileSrc(
+	public ItemCSVFileSrc(
 		final Path itemsFilePath, final Class<? extends T> itemCls, final ContentSource contentSrc
 	) throws IOException, NoSuchMethodException {
 		super(Files.newInputStream(itemsFilePath, StandardOpenOption.READ), itemCls, contentSrc);

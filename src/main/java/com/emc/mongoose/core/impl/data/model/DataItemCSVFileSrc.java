@@ -29,8 +29,7 @@ implements DataItemFileSrc<T> {
 	 @param contentSrc
 	 @throws IOException
 	 @throws NoSuchMethodException */
-	public
-	DataItemCSVFileSrc(
+	public DataItemCSVFileSrc(
 		final Path itemsFilePath, final Class<? extends T> itemCls, final ContentSource contentSrc
 	) throws IOException, NoSuchMethodException {
 		super(itemsFilePath, itemCls, contentSrc);

@@ -84,14 +84,10 @@ implements FileLoadBuilderSvc<T, U> {
 		}
 		//
 		final IOTask.Type loadType = ioConfig.getLoadType();
-		final int
-			connPerNode = loadTypeConnPerNode.get(loadType),
-			minThreadCount = getMinIOThreadCount(
-				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
-			);
+		final int connPerNode = loadTypeConnPerNode.get(loadType);
 		//
 		return (U) new BasicFileLoadSvc<>(
-			rtConfig, (FileIOConfig) ioConfig, storageNodeAddrs, connPerNode, minThreadCount,
+			rtConfig, (FileIOConfig) ioConfig, storageNodeAddrs, connPerNode, connPerNode,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
 			manualTaskSleepMicroSecs, rateLimit, updatesPerItem

@@ -2,6 +2,8 @@ package com.emc.mongoose.core.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
@@ -11,6 +13,8 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.task.BasicFileIOTask;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
 import java.util.List;
@@ -18,6 +22,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 /**
@@ -26,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 public class BasicFileLoadExecutor<T extends FileItem>
 extends MutableDataLoadExecutorBase<T>
 implements FileLoadExecutor<T> {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final ExecutorService ioTaskExecutor;
 	//
@@ -42,8 +49,22 @@ implements FileLoadExecutor<T> {
 		);
 		ioTaskExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(maxItemQueueSize)
-		);
+			new ArrayBlockingQueue<Runnable>(maxItemQueueSize), new IOWorker.Factory(getName())
+		) {
+			@Override @SuppressWarnings("unchecked")
+			protected final <V> RunnableFuture<V> newTaskFor(final Runnable task, final V value) {
+				return (RunnableFuture<V>) task;
+			}
+			//
+			@Override @SuppressWarnings("unchecked")
+			protected final void afterExecute(final Runnable task, final Throwable throwable) {
+				if(throwable == null) {
+					ioTaskCompleted((FileIOTask<T>) task);
+				} else {
+					ioTaskFailed(1, throwable);
+				}
+			}
+		};
 	}
 	//
 	@Override
@@ -69,5 +90,17 @@ implements FileLoadExecutor<T> {
 	protected <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)
 	throws RejectedExecutionException {
 		return (Future<A>) ioTaskExecutor.<FileIOTask<T>>submit((FileIOTask<T>) ioTask);
+	}
+	//
+	@Override
+	protected void shutdownActually() {
+		ioTaskExecutor.shutdown();
+		super.shutdownActually();
+	}
+	//
+	@Override
+	protected void interruptActually() {
+		LOG.debug(Markers.MSG, "Dropped {} active I/O tasks", ioTaskExecutor.shutdownNow().size());
+		super.interruptActually();
 	}
 }

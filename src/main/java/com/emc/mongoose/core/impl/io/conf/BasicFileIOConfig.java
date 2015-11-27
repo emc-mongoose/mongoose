@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.io.conf;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
@@ -30,9 +29,10 @@ implements FileIOConfig<F, D> {
 		super(another);
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public BasicFileIOConfig<F, D> setProperties(final RunTimeConfig rtConfig) {
 		super.setProperties(rtConfig);
+		setContainer((D) new BasicDirectory<F>(getNamePrefix()));
 		batchSize = rtConfig.getBatchSize();
 		return this;
 	}

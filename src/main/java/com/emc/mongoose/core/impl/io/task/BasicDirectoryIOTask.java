@@ -20,6 +20,11 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 /**
  Created by kurila on 23.11.15.
  */
@@ -31,11 +36,13 @@ implements DirectoryIOTask<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final Path fPath;
+	private final RunnableFuture<BasicDirectoryIOTask<T, C, X>> future;
 	//
 	public BasicDirectoryIOTask(final C item, final X ioConfig) {
 		super(item, null, ioConfig);
 		//
 		fPath = Paths.get(ioConfig.getNamePrefix(), item.getName());
+		future = new FutureTask<>(this, this);
 	}
 	//
 	@Override
@@ -51,12 +58,6 @@ implements DirectoryIOTask<T, C> {
 				case DELETE:
 					runDelete();
 					break;
-				case UPDATE:
-					status = Status.RESP_FAIL_CLIENT;
-					break;
-				case APPEND:
-					status = Status.RESP_FAIL_CLIENT;
-					break;
 			}
 		} catch(final NoSuchFileException e) {
 			status = Status.RESP_FAIL_NOT_FOUND;
@@ -71,6 +72,7 @@ implements DirectoryIOTask<T, C> {
 	protected void runWrite()
 	throws IOException {
 		Files.createDirectories(fPath);
+		status = Status.SUCC;
 	}
 	//
 	protected void runRead()
@@ -89,11 +91,40 @@ implements DirectoryIOTask<T, C> {
 					LOG.trace(Markers.MSG, nextFilePath.toAbsolutePath());
 				}
 			}
+			status = Status.SUCC;
 		}
 	}
 	//
 	protected void runDelete()
 	throws IOException {
 		Files.delete(fPath);
+		status = Status.SUCC;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final boolean cancel(final boolean mayInterruptIfRunning) {
+		return future.cancel(mayInterruptIfRunning);
+	}
+	//
+	@Override
+	public final boolean isCancelled() {
+		return future.isCancelled();
+	}
+	//
+	@Override
+	public final boolean isDone() {
+		return future.isDone();
+	}
+	//
+	@Override
+	public final DirectoryIOTask<T, C> get()
+	throws InterruptedException, ExecutionException {
+		return future.get();
+	}
+	//
+	@Override
+	public final DirectoryIOTask<T, C> get(final long timeout, final TimeUnit unit)
+	throws InterruptedException, ExecutionException, TimeoutException {
+		return future.get(timeout, unit);
 	}
 }

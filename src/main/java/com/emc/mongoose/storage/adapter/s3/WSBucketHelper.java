@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class WSBucketHelper<T extends WSObject, C extends Container<T>>
 extends WSContainerHelperBase<T, C>
-implements BucketHelper<T> {
+implements BucketHelper<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static byte
@@ -47,24 +47,22 @@ implements BucketHelper<T> {
 				"<Status>Suspended</Status></VersioningConfiguration>"
 			).getBytes(StandardCharsets.UTF_8);
 	//
-	public WSBucketHelper(
-		final WSRequestConfigImpl<T, C> reqConf, final String name, final boolean versioningEnabled
-	) {
-		super(reqConf, name, versioningEnabled);
+	public WSBucketHelper(final WSRequestConfigImpl<T, C> reqConf, final C container) {
+		super(reqConf, container);
 	}
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
 	HttpResponse execute(
 		final String addr, final String method, final long timeOut, final TimeUnit timeUnit
-	)
-	throws IOException {
+	) throws IOException {
 		return execute(addr, method, null, ContainerHelper.DEFAULT_PAGE_SIZE, timeOut, timeUnit);
 	}
 	//
 	HttpResponse execute(final String addr, final String method, final boolean versioning)
 	throws IOException {
-		final HttpEntityEnclosingRequest
-			httpReq = reqConf.createGenericRequest(method, "/" + name + "?" + URL_ARG_VERSIONING);
+		final HttpEntityEnclosingRequest httpReq = reqConf.createGenericRequest(
+				method, "/" + container.getName() + "?" + URL_ARG_VERSIONING
+		);
 		//
 		httpReq.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_XML.getMimeType());
 		if(versioning) {
@@ -93,6 +91,7 @@ implements BucketHelper<T> {
 		}
 		//
 		final HttpEntityEnclosingRequest httpReq;
+		final String name = container.getName();
 		if(WSRequestConfig.METHOD_PUT.equals(method)) {
 			httpReq = reqConf.createGenericRequest(method, "/" + name);
 			if(reqConf.getFileAccessEnabled()) {
@@ -139,6 +138,7 @@ implements BucketHelper<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
+					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
 						flagExists = true;
@@ -177,6 +177,7 @@ implements BucketHelper<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
+					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(
 							Markers.MSG, "Bucket \"{}\" versioning {}",
@@ -223,6 +224,7 @@ implements BucketHelper<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
+					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(Markers.MSG, "Bucket \"{}\" created", name);
 					} else {
@@ -266,6 +268,7 @@ implements BucketHelper<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
+					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(Markers.MSG, "Bucket \"{}\" deleted", name);
 					} else {

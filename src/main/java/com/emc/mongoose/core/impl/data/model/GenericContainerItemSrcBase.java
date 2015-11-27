@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.api.data.model.ContainerHelper;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 //
 import org.apache.logging.log4j.LogManager;
@@ -24,17 +25,17 @@ implements ItemSrc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final C container;
+	protected final ContainerHelper<T, C> containerHelper;
 	protected final Constructor<T> itemConstructor;
 	protected final long maxCount;
 	//
 	protected String lastItemId = null;
 	//
 	protected GenericContainerItemSrcBase(
-		final C container, final Class<T> itemCls, final long maxCount
+		final ContainerHelper<T, C> containerHelper, final Class<T> itemCls, final long maxCount
 	) throws IllegalStateException {
 		super(new ArrayList<T>(RunTimeConfig.getContext().getBatchSize()));
-		this.container = container;
+		this.containerHelper = containerHelper;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		try {
 			this.itemConstructor = itemCls.getConstructor(
@@ -112,6 +113,6 @@ implements ItemSrc<T> {
 	//
 	@Override
 	public String toString() {
-		return "containerItemInput<" + container.getName() + ">";
+		return "containerItemInput<" + containerHelper + ">";
 	}
 }

@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.adapter.s3;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ContainerHelper;
 //
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public final class WSBucketItemSrc<T extends WSObject, C extends ContainerHelper<T>>
+public final class WSBucketItemSrc<T extends WSObject, C extends Container<T>>
 extends GenericContainerItemSrcBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -46,7 +47,7 @@ extends GenericContainerItemSrcBase<T, C> {
 	private long doneCount = 0;
 	//
 	public WSBucketItemSrc(
-		final C bucket, final String nodeAddr, final Class<T> itemCls,
+		final BucketHelper<T, C> bucket, final String nodeAddr, final Class<T> itemCls,
 		final long maxCount
 	) throws IllegalStateException {
 		super(bucket, itemCls, maxCount);
@@ -58,7 +59,7 @@ extends GenericContainerItemSrcBase<T, C> {
 		}
 	}
 	//
-	private final static class PageContentHandler<T extends WSObject>
+	private final static class PageContentHandler<T extends WSObject, C extends Container<T>>
 	extends DefaultHandler {
 		private final static String
 			QNAME_ITEM = "Contents",
@@ -68,7 +69,7 @@ extends GenericContainerItemSrcBase<T, C> {
 		//
 		private final List<T> itemsBuffer;
 		private final Constructor<T> itemConstructor;
-		private final ContainerHelper<T> containerHelper;
+		private final ContainerHelper<T, C> containerHelper;
 		private int count = 0;
 		private boolean
 			isInsideItem = false,
@@ -81,7 +82,7 @@ extends GenericContainerItemSrcBase<T, C> {
 		//
 		private PageContentHandler(
 			final List<T> itemsBuffer, final Constructor<T> itemConstructor,
-			final ContainerHelper<T> containerHelper
+			final ContainerHelper<T, C> containerHelper
 		) {
 			this.itemsBuffer = itemsBuffer;
 			this.itemConstructor = itemConstructor;
@@ -169,7 +170,7 @@ extends GenericContainerItemSrcBase<T, C> {
 			throw new EOFException();
 		}
 		// execute the request
-		final HttpResponse resp = WSBucketHelper.class.cast(container).execute(
+		final HttpResponse resp = WSBucketHelper.class.cast(containerHelper).execute(
 			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit,
 			WSRequestConfig.REQUEST_WITH_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 		);
@@ -183,7 +184,7 @@ extends GenericContainerItemSrcBase<T, C> {
 		}
 		final int statusCode = status.getStatusCode();
 		if(statusCode < 200 || statusCode > 300) {
-			throw new IOException("Listing bucket \"" + container + "\" response: " + status);
+			throw new IOException("Listing bucket \"" + containerHelper + "\" response: " + status);
 		}
 		final HttpEntity respEntity = resp.getEntity();
 		if(respEntity == null) {
@@ -198,8 +199,8 @@ extends GenericContainerItemSrcBase<T, C> {
 		// parse the response content
 		parser.reset();
 		try(final InputStream in = respEntity.getContent()) {
-			final PageContentHandler<T> pageContentHandler = new PageContentHandler<>(
-				items, itemConstructor, container
+			final PageContentHandler<T, C> pageContentHandler = new PageContentHandler<>(
+				items, itemConstructor, containerHelper
 			);
 			parser.parse(in, pageContentHandler);
 			lastItemId = pageContentHandler.oid;

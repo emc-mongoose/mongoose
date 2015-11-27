@@ -78,7 +78,7 @@ implements LoadExecutor<T> {
 	protected IOStats ioStats;
 	protected volatile IOStats.Snapshot lastStats = null;
 	// STATES section //////////////////////////////////////////////////////////////////////////////
-	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
+	private Map<String, AtomicInteger> activeTasksStats;
 	private LoadState<T> loadedPrevState = null;
 	protected final AtomicBoolean
 		isStarted = new AtomicBoolean(false),
@@ -245,6 +245,7 @@ implements LoadExecutor<T> {
 		// prepare the nodes array
 		storageNodeAddrs = addrs == null ? null : addrs.clone();
 		if(storageNodeAddrs != null) {
+			activeTasksStats = new HashMap<>(storageNodeCount);
 			for(final String addr : storageNodeAddrs) {
 				activeTasksStats.put(addr, new AtomicInteger(0));
 			}
@@ -277,7 +278,7 @@ implements LoadExecutor<T> {
 			Integer.toString(instanceNum) + '-' +
 				StringUtils.capitalize(ioConfig.getLoadType().toString().toLowerCase()) +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
-				Integer.toString(connCountPerNode) +
+				Integer.toString(connCountPerNode > 0 ? connCountPerNode : threadCount) +
 				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
 		);
 	}
@@ -538,7 +539,9 @@ implements LoadExecutor<T> {
 				throw new RejectedExecutionException("Null future returned");
 			}
 			counterSubm.incrementAndGet();
-			activeTasksStats.get(nextNodeAddr).incrementAndGet(); // increment node's usage counter
+			if(activeTasksStats != null) {
+				activeTasksStats.get(nextNodeAddr).incrementAndGet(); // increment node's usage counter
+			}
 		} catch(final RejectedExecutionException e) {
 			if(!isInterrupted.get()) {
 				countRej.incrementAndGet();
@@ -589,8 +592,10 @@ implements LoadExecutor<T> {
 							n += m;
 						}
 						counterSubm.addAndGet(m);
-						// increment node's usage counter
-						activeTasksStats.get(nextNodeAddr).addAndGet(m);
+						if(activeTasksStats != null) {
+							// increment node's usage counter
+							activeTasksStats.get(nextNodeAddr).addAndGet(m);
+						}
 					} catch(final RejectedExecutionException e) {
 						if(isInterrupted.get()) {
 							throw new InterruptedIOException(getName() + " is interrupted");
@@ -674,7 +679,9 @@ implements LoadExecutor<T> {
 		final String nodeAddr = ioTask.getNodeAddr();
 		// update the metrics
 		ioTask.mark(ioStats);
-		activeTasksStats.get(nodeAddr).decrementAndGet();
+		if(activeTasksStats != null) {
+			activeTasksStats.get(nodeAddr).decrementAndGet();
+		}
 		if(status == IOTask.Status.SUCC) {
 			lastItem = item;
 			// put into the output buffer
@@ -706,8 +713,13 @@ implements LoadExecutor<T> {
 		//
 		final int n = to - from;
 		if(n > 0) {
-			final String nodeAddr = ioTasks.get(from).getNodeAddr();
-			activeTasksStats.get(nodeAddr).addAndGet(-n);
+			final String nodeAddr;
+			if(storageNodeAddrs != null) {
+				nodeAddr = ioTasks.get(from).getNodeAddr();
+				activeTasksStats.get(nodeAddr).addAndGet(-n);
+			} else {
+				nodeAddr = null;
+			}
 			//
 			IOTask<T> ioTask;
 			T item;
@@ -719,7 +731,9 @@ implements LoadExecutor<T> {
 				status = ioTask.getStatus();
 				// update the metrics
 				ioTask.mark(ioStats);
-				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
+				if(nodeAddr != null) {
+					activeTasksStats.get(nodeAddr).decrementAndGet();
+				}
 				if(status == IOTask.Status.SUCC) {
 					lastItem = item;
 					// pass data item to a consumer
@@ -753,7 +767,7 @@ implements LoadExecutor<T> {
 		counterResults.addAndGet(n);
 	}
 	//
-	protected final void ioTaskFailed(final int n, final Exception e) {
+	protected final void ioTaskFailed(final int n, final Throwable e) {
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
 		if(!isClosed.get() && !isInterrupted.get()) {

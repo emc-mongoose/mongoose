@@ -53,6 +53,8 @@
 			"data.src.random": "item.src.random",
 			"data.src.batchSize": "item.src.batchSize",
 
+			"data.prefix": "item.prefix",
+
 			"http.sign.method": "http.signMethod",
 
 			"load.type.append.threads": "load.type.append.connections",
@@ -171,7 +173,6 @@
 				"fpath": ""
 			},
 			"fsAccess": false,
-			"prefix": null,
 			"versioning": false
 		},
 		"http": {
@@ -194,7 +195,8 @@
 			},
 			"queue": {
 				"maxSize": 500000
-			}
+			},
+			"prefix": null
 		},
 		"load": {
 			"limit": {
@@ -258,10 +260,10 @@
 			"mock": {
 				"headCount": 1,
 				"workersPerSocket": 0,
-				"capacity": 10000000,
+				"capacity": 1000000,
 				"container": {
-					"capacity": 10000000,
-					"countLimit": 10000000
+					"capacity": 1000000,
+					"countLimit": 1000000
 				},
 				"fault": {
 					"minConnLifeMilliSec": 0,

@@ -28,6 +28,13 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 /**
  Created by kurila on 23.11.15.
  */
@@ -39,42 +46,47 @@ implements FileIOTask<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final Path fPath;
-	private final OpenOption openOption;
+	private final Set<OpenOption> openOptions = new HashSet<>();
+	private final RunnableFuture<BasicFileIOTask<T, C, X>> future;
 	//
 	public BasicFileIOTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
 		//
-		fPath = Paths.get(ioConfig.getNamePrefix(), item.getName());
+		final String parentPath = ioConfig.getNamePrefix();
+		if(parentPath != null && !parentPath.isEmpty()) {
+			fPath = Paths.get(ioConfig.getNamePrefix(), item.getName()).toAbsolutePath();
+		} else {
+			fPath = Paths.get(item.getName()).toAbsolutePath();
+		}
 		//
 		switch(ioType) {
 			case CREATE:
-				openOption = StandardOpenOption.CREATE_NEW;
+				openOptions.add(StandardOpenOption.CREATE_NEW);
+				openOptions.add(StandardOpenOption.WRITE);
+				openOptions.add(StandardOpenOption.TRUNCATE_EXISTING);
 				break;
 			case READ:
-				openOption = StandardOpenOption.READ;
-				break;
-			case DELETE:
-				openOption = null;
+				openOptions.add(StandardOpenOption.READ);
 				break;
 			case UPDATE:
-				openOption = StandardOpenOption.WRITE;
+				openOptions.add(StandardOpenOption.WRITE);
 				break;
 			case APPEND:
-				openOption = StandardOpenOption.APPEND;
+				openOptions.add(StandardOpenOption.APPEND);
 				break;
-			default:
-				openOption = null;
 		}
+		//
+		future = new FutureTask<>(this, this);
 	}
 	//
 	@Override
 	public void run() {
 		item.reset();
-		if(openOption == null) { // delete
+		if(openOptions.isEmpty()) { // delete
 			runDelete();
 		} else { // work w/ a content
-			try(final SeekableByteChannel byteChannel = Files.newByteChannel(fPath, openOption)) {
-				if(openOption == StandardOpenOption.READ) {
+			try(final SeekableByteChannel byteChannel = Files.newByteChannel(fPath, openOptions)) {
+				if(openOptions.contains(StandardOpenOption.READ)) {
 					runRead(byteChannel);
 				} else {
 					if(item.hasScheduledUpdates()) {
@@ -98,6 +110,7 @@ implements FileIOTask<T> {
 	protected void runDelete() {
 		try {
 			Files.delete(fPath);
+			status = Status.SUCC;
 		} catch(final NoSuchFileException e) {
 			status = Status.RESP_FAIL_NOT_FOUND;
 		} catch(final IOException e) {
@@ -172,6 +185,7 @@ implements FileIOTask<T> {
 					}
 				}
 			}
+			status = Status.SUCC;
 		} catch(final DataSizeException e) {
 			countBytesDone += e.offset;
 			LOG.warn(
@@ -199,11 +213,13 @@ implements FileIOTask<T> {
 		while(countBytesDone < contentSize) {
 			countBytesDone += item.write(byteChannel, contentSize - countBytesDone);
 		}
+		status = Status.SUCC;
 		item.resetUpdates();
 	}
 	//
 	protected void runWriteCurrRange(final SeekableByteChannel byteChannel)
 	throws IOException {
+		byteChannel.position(nextRangeOffset);
 		long n = 0;
 		while(n < currRangeSize) {
 			n += currRange.write(byteChannel, currRangeSize - n);
@@ -225,6 +241,7 @@ implements FileIOTask<T> {
 				runWriteCurrRange(byteChannel);
 			}
 		}
+		status = Status.SUCC;
 	}
 	//
 	protected void runAppend(final SeekableByteChannel byteChannel)
@@ -244,5 +261,33 @@ implements FileIOTask<T> {
 		}
 		//
 		runWriteCurrRange(byteChannel);
+		status = Status.SUCC;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final boolean cancel(final boolean mayInterruptIfRunning) {
+		return future.cancel(mayInterruptIfRunning);
+	}
+	//
+	@Override
+	public final boolean isCancelled() {
+		return future.isCancelled();
+	}
+	//
+	@Override
+	public final boolean isDone() {
+		return future.isDone();
+	}
+	//
+	@Override
+	public final FileIOTask<T> get()
+	throws InterruptedException, ExecutionException {
+		return future.get();
+	}
+	//
+	@Override
+	public final FileIOTask<T> get(final long timeout, final TimeUnit unit)
+	throws InterruptedException, ExecutionException, TimeoutException {
+		return future.get(timeout, unit);
 	}
 }

@@ -50,21 +50,23 @@ public class LoadBuilderFactory {
 	private static Class<LoadBuilder> getLoadBuilderClass(
 			final String runMode, final String itemClass
 	) throws ClassNotFoundException {
-		String itemClassName = BASIC_PREFIX + WordUtils.capitalize(itemClass) + LOAD_BUILDER_POSTFIX;
-		final String itemClassFQN;
+		String
+			itemClassName = WordUtils.capitalize(itemClass) + LOAD_BUILDER_POSTFIX,
+			itemClassPackage;
 		// don't append anything if run.mode is standalone
 		switch(runMode) {
 			case Constants.RUN_MODE_COMPAT_CLIENT:
 			case Constants.RUN_MODE_CLIENT:
 				itemClassName = itemClassName + CLIENT_POSTFIX;
-				itemClassFQN = BUILDER_CLIENT_PACKAGE_BASE + "." + itemClassName;
+				itemClassPackage = BUILDER_CLIENT_PACKAGE_BASE;
 				break;
 			case Constants.RUN_MODE_STANDALONE:
-				itemClassFQN = BUILDER_CORE_PACKAGE_BASE + "." + itemClassName;
+				itemClassPackage = BUILDER_CORE_PACKAGE_BASE;
 				break;
 			case Constants.RUN_MODE_COMPAT_SERVER:
 			case Constants.RUN_MODE_SERVER:
-				itemClassFQN = MultiLoadBuilderSvc.class.getCanonicalName();
+				itemClassName = MultiLoadBuilderSvc.class.getSimpleName();
+				itemClassPackage = MultiLoadBuilderSvc.class.getPackage().getName();
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -74,9 +76,13 @@ public class LoadBuilderFactory {
 		//
 		Class<LoadBuilder> loadBuilderCls;
 		try {
-			loadBuilderCls = (Class<LoadBuilder>) Class.forName(itemClassFQN);
+			loadBuilderCls = (Class<LoadBuilder>) Class.forName(
+				itemClassPackage + "." + BASIC_PREFIX + itemClassName
+			);
 		} catch(final ClassNotFoundException e) {
-			loadBuilderCls = (Class<LoadBuilder>) Class.forName(WS_PREFIX + itemClassFQN);
+			loadBuilderCls = (Class<LoadBuilder>) Class.forName(
+				itemClassPackage + "." + BASIC_PREFIX + WS_PREFIX + itemClassName
+			);
 		}
 		return loadBuilderCls;
 	}

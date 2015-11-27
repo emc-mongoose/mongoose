@@ -44,7 +44,7 @@ implements IOConfig<T, C> {
 		contentSrc = ContentSourceBase.getDefault();
 		verifyContentFlag = runTimeConfig.getReadVerifyContent();
 		nameSpace = runTimeConfig.getStorageNameSpace();
-		namePrefix = runTimeConfig.getDataPrefix();
+		namePrefix = runTimeConfig.getNamePrefix();
 		buffSize = (int) runTimeConfig.getIOBufferSizeMin();
 		reqSleepMilliSec = runTimeConfig.getLoadLimitReqSleepMilliSec();
 	}
@@ -55,6 +55,7 @@ implements IOConfig<T, C> {
 			setContentSource(ioConf2Clone.getContentSource());
 			setVerifyContentFlag(ioConf2Clone.getVerifyContentFlag());
 			setLoadType(ioConf2Clone.getLoadType());
+			setContainer(ioConf2Clone.getContainer());
 			setNameSpace(ioConf2Clone.getNameSpace());
 			setNamePrefix(ioConf2Clone.getNamePrefix());
 			setBuffSize(ioConf2Clone.getBuffSize());
@@ -183,7 +184,7 @@ implements IOConfig<T, C> {
 	public IOConfigBase<T, C> setProperties(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
-		setNamePrefix(this.runTimeConfig.getDataPrefix());
+		setNamePrefix(this.runTimeConfig.getNamePrefix());
 		setVerifyContentFlag(this.runTimeConfig.getReadVerifyContent());
 		setBuffSize((int) this.runTimeConfig.getIOBufferSizeMin());
 		reqSleepMilliSec = runTimeConfig.getLoadLimitReqSleepMilliSec();

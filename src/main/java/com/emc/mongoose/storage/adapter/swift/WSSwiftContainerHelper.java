@@ -28,17 +28,14 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.03.15.
  */
-public final class WSContainerHelper<T extends WSObject, C extends Container<T>>
+public final class WSSwiftContainerHelper<T extends WSObject, C extends Container<T>>
 extends WSContainerHelperBase<T, C>
-implements com.emc.mongoose.storage.adapter.swift.ContainerHelper<T> {
+implements SwiftContainerHelper<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public WSContainerHelper(
-		final WSRequestConfigImpl<T, C> reqConf,
-		final String name, final boolean versioningEnabled
-	) {
-		super(reqConf, name, versioningEnabled);
+	public WSSwiftContainerHelper(final WSRequestConfigImpl<T, C> reqConf, final C container) {
+		super(reqConf, container);
 	}
 	//
 	@Override
@@ -58,6 +55,7 @@ implements com.emc.mongoose.storage.adapter.swift.ContainerHelper<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
+					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.debug(Markers.MSG, "Container \"{}\" exists", name);
 						flagExists = true;
@@ -100,6 +98,7 @@ implements com.emc.mongoose.storage.adapter.swift.ContainerHelper<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
+					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(Markers.MSG, "Container \"{}\" created", name);
 					} else {
@@ -141,6 +140,7 @@ implements com.emc.mongoose.storage.adapter.swift.ContainerHelper<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
+					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(Markers.MSG, "Container \"{}\" deleted", name);
 					} else {
@@ -180,6 +180,7 @@ implements com.emc.mongoose.storage.adapter.swift.ContainerHelper<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
+					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(Markers.MSG, "Container \"{}\" created", name);
 					} else {
@@ -217,6 +218,7 @@ implements com.emc.mongoose.storage.adapter.swift.ContainerHelper<T> {
 		}
 		//
 		final HttpEntityEnclosingRequest httpReq;
+		final String name = container.getName();
 		//
 		switch(method) {
 			case WSRequestConfig.METHOD_GET:

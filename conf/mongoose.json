@@ -53,6 +53,8 @@
 			"data.src.random": "item.src.random",
 			"data.src.batchSize": "item.src.batchSize",
 
+			"data.prefix": "item.prefix",
+
 			"http.sign.method": "http.signMethod",
 
 			"load.type.append.threads": "load.type.append.connections",
@@ -171,7 +173,6 @@
 				"fpath": ""
 			},
 			"fsAccess": false,
-			"prefix": null,
 			"versioning": false
 		},
 		"http": {
@@ -194,7 +195,8 @@
 			},
 			"queue": {
 				"maxSize": 500000
-			}
+			},
+			"prefix": null
 		},
 		"load": {
 			"limit": {

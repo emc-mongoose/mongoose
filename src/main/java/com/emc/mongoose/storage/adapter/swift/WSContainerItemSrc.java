@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ContainerHelper;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public class WSContainerItemSrc<T extends WSObject, C extends ContainerHelper<T>>
+public class WSContainerItemSrc<T extends WSObject, C extends Container<T>>
 extends GenericContainerItemSrcBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -42,7 +43,7 @@ extends GenericContainerItemSrcBase<T, C> {
 	private long lastSize = -1, doneCount = 0;
 	//
 	public WSContainerItemSrc(
-		final C container, final String nodeAddr, final Class<T> itemCls,
+		final SwiftContainerHelper<T, C> container, final String nodeAddr, final Class<T> itemCls,
 		final long maxCount
 	) throws IllegalStateException {
 		super(container, itemCls, maxCount);
@@ -59,7 +60,7 @@ extends GenericContainerItemSrcBase<T, C> {
 			throw new EOFException();
 		}
 		// execute the request
-		final HttpResponse resp = WSContainerHelper.class.cast(container).execute(
+		final HttpResponse resp = WSSwiftContainerHelper.class.cast(containerHelper).execute(
 			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit,
 			WSRequestConfig.REQUEST_WITH_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 		);
@@ -77,7 +78,7 @@ extends GenericContainerItemSrcBase<T, C> {
 		}
 		if(statusCode < 200 || statusCode > 300) {
 			throw new IOException(
-				"Listing container \"" + container + "\" response: " + status
+				"Listing container \"" + containerHelper + "\" response: " + status
 			);
 		}
 		final HttpEntity respEntity = resp.getEntity();
@@ -133,7 +134,7 @@ extends GenericContainerItemSrcBase<T, C> {
 							if(isInsideObjectToken) {
 								if(lastItemId != null && lastSize > -1) {
 									try {
-										nextItem = container.buildItem(
+										nextItem = containerHelper.buildItem(
 											itemConstructor, lastItemId, lastSize
 										);
 										if(nextItem != null) {

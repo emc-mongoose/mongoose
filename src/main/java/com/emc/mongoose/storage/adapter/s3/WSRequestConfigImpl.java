@@ -188,9 +188,7 @@ extends WSRequestConfigBase<T, C> {
 			LOG.debug(Markers.MSG, "Configure storage w/ bucket \"{}\"", container);
 		}
 		final String bucketName = container.getName();
-		final WSBucketHelper<T, C> bucket = new WSBucketHelper<>(
-			this, container.getName(), getVersioning()
-		);
+		final WSBucketHelper<T, C> bucket = new WSBucketHelper<>(this, container);
 		if(bucket.exists(storageNodeAddrs[0])) {
 			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
 		} else {
@@ -267,8 +265,7 @@ extends WSRequestConfigBase<T, C> {
 	@Override @SuppressWarnings("unchecked")
 	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
 		return new WSBucketItemSrc<>(
-			new WSBucketHelper<>(this, container.getName(), getVersioning()),
-			addr, getItemClass(), maxCount
+			new WSBucketHelper<>(this, container), addr, getItemClass(), maxCount
 		);
 	}
 }

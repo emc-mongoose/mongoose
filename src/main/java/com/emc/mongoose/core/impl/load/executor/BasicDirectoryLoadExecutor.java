@@ -2,6 +2,8 @@ package com.emc.mongoose.core.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.container.Directory;
 import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
@@ -11,6 +13,8 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.DirectoryLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.task.BasicDirectoryIOTask;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
 import java.util.List;
@@ -18,6 +22,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 /**
@@ -26,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 public class BasicDirectoryLoadExecutor<T extends FileItem, C extends Directory<T>>
 extends LimitedRateLoadExecutorBase<C>
 implements DirectoryLoadExecutor<T, C> {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final ExecutorService ioTaskExecutor;
 	//
@@ -41,8 +48,23 @@ implements DirectoryLoadExecutor<T, C> {
 		);
 		ioTaskExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(maxItemQueueSize)
-		);
+			new ArrayBlockingQueue<Runnable>(maxItemQueueSize), new IOWorker.Factory(getName())
+		) {
+			@Override @SuppressWarnings("unchecked")
+			protected final <V> RunnableFuture<V> newTaskFor(final Runnable task, final V value) {
+				return (RunnableFuture<V>) task;
+			}
+			//
+			@Override @SuppressWarnings("unchecked")
+			protected final void afterExecute(final Runnable task, final Throwable throwable) {
+				final DirectoryIOTask<T, C> ioTask = (DirectoryIOTask<T, C>) task;
+				if(throwable == null) {
+					ioTaskCompleted(ioTask);
+				} else {
+					ioTaskFailed(1, throwable);
+				}
+			}
+		};
 	}
 	//
 	@Override
@@ -64,10 +86,22 @@ implements DirectoryLoadExecutor<T, C> {
 		return n;
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	protected <A extends IOTask<C>> Future<A> submitTaskActually(final A ioTask)
 	throws RejectedExecutionException {
 		return (Future<A>) ioTaskExecutor
 			.<DirectoryIOTask<T, C>>submit((DirectoryIOTask<T, C>) ioTask);
+	}
+	//
+	@Override
+	protected void shutdownActually() {
+		ioTaskExecutor.shutdown();
+		super.shutdownActually();
+	}
+	//
+	@Override
+	protected void interruptActually() {
+		LOG.debug(Markers.MSG, "Dropped {} active I/O tasks", ioTaskExecutor.shutdownNow().size());
+		super.interruptActually();
 	}
 }

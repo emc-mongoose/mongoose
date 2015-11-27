@@ -8,8 +8,6 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ContainerHelper;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 //
-import com.emc.mongoose.core.impl.container.BasicContainer;
-//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -21,31 +19,32 @@ import java.util.Date;
  Created by kurila on 10.07.15.
  */
 public abstract class WSContainerHelperBase<T extends WSObject, C extends Container<T>>
-extends BasicContainer<T>
-implements ContainerHelper<T> {
+implements ContainerHelper<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final WSRequestConfig<T, C> reqConf;
-	protected final String name, idPrefix;
+	protected final C container;
+	protected final String idPrefix;
 	protected final int idPrefixLen;
 	protected final boolean fsAccess, verifyContent;
 	//
-	protected WSContainerHelperBase(
-		final WSRequestConfig<T, C> reqConf, final String name,
-		final boolean versioningEnabled
-	) {
+	protected WSContainerHelperBase(final WSRequestConfig<T, C> reqConf, final C container) {
 		this.reqConf = reqConf;
+		this.container = container;
+		final String name = container.getName();
 		if(name == null || name.length() == 0) {
 			final Date dt = Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime();
-			this.name = Constants.MONGOOSE_PREFIX + LogUtil.FMT_DT.format(dt);
-		} else {
-			this.name = name;
+			container.setName(Constants.MONGOOSE_PREFIX + LogUtil.FMT_DT.format(dt));
 		}
 		this.fsAccess = reqConf.getFileAccessEnabled();
 		this.idPrefix = reqConf.getNamePrefix();
 		idPrefixLen = idPrefix == null ? 0 : idPrefix.length();
 		this.verifyContent = reqConf.getVerifyContentFlag();
+	}
+	//
+	public final String toString() {
+		return container.getName();
 	}
 	//
 	@Override

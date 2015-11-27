@@ -243,10 +243,8 @@ extends WSRequestConfigBase<T, C> {
 		if(container == null) {
 			throw new IllegalStateException("Container is not specified");
 		}
+		final WSSwiftContainerHelper<T, C> containerHelper = new WSSwiftContainerHelper<>(this, container);
 		final String containerName = container.getName();
-		final WSContainerHelper<T, C> containerHelper = new WSContainerHelper<>(
-			this, containerName, getVersioning()
-		);
 		if(containerHelper.exists(storageNodeAddrs[0])) {
 			LOG.info(Markers.MSG, "Container \"{}\" already exists", containerName);
 		} else {
@@ -324,8 +322,7 @@ extends WSRequestConfigBase<T, C> {
 	@Override @SuppressWarnings("unchecked")
 	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
 		return new WSContainerItemSrc<>(
-			new WSContainerHelper<>(this, container.getName(), getVersioning()),
-			addr, getItemClass(), maxCount
+			new WSSwiftContainerHelper<>(this, container), addr, getItemClass(), maxCount
 		);
 	}
 	//

@@ -58,6 +58,7 @@ implements DataLoadBuilder<T, U> {
 		return lb;
 	}
 	//
+	@SuppressWarnings("unchecked")
 	protected ItemSrc<T> getDefaultItemSource() {
 		try {
 			if(flagUseNoneItemSrc) {
@@ -69,8 +70,9 @@ implements DataLoadBuilder<T, U> {
 						minObjSize, maxObjSize, objSizeBias
 					);
 				} else {
-					return (ItemSrc<T>) ioConfig
-						.getContainerListInput(maxCount, storageNodeAddrs[0]);
+					return (ItemSrc<T>) ioConfig.getContainerListInput(
+						maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+					);
 				}
 			} else if(flagUseNewItemSrc) {
 				return new NewDataItemSrc<>(
@@ -78,7 +80,9 @@ implements DataLoadBuilder<T, U> {
 					minObjSize, maxObjSize, objSizeBias
 				);
 			} else if(flagUseContainerItemSrc) {
-				return (ItemSrc<T>) ioConfig.getContainerListInput(maxCount, storageNodeAddrs[0]);
+				return (ItemSrc<T>) ioConfig.getContainerListInput(
+					maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+				);
 			}
 		} catch(final NoSuchMethodException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");

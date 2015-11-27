@@ -89,14 +89,10 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 		rtConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
 		final IOTask.Type loadType = ioConfig.getLoadType();
-		final int
-			connPerNode = loadTypeConnPerNode.get(loadType),
-			minThreadCount = getMinIOThreadCount(
-				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
-			);
+		final int connPerNode = loadTypeConnPerNode.get(loadType);
 		//
 		return (U) new BasicDirectoryLoadSvc<>(
-			rtConfig, (FileIOConfig<T, C>) ioConfig, storageNodeAddrs, connPerNode, minThreadCount,
+			rtConfig, (FileIOConfig<T, C>) ioConfig, storageNodeAddrs, connPerNode, connPerNode,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, manualTaskSleepMicroSecs, rateLimit
 		);

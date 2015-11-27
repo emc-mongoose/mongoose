@@ -66,7 +66,7 @@ implements Externalizable {
 		KEY_DATA_SIZE_MAX = "data.size.max",
 		KEY_DATA_SIZE_BIAS = "data.size.bias",
 		KEY_DATA_FS_ACCESS = "data.fsAccess",
-		KEY_DATA_PREFIX = "data.prefix",
+		KEY_ITEM_PREFIX = "item.prefix",
 		KEY_DATA_VERSIONING = "data.versioning",
 		//
 		KEY_HTTP_PIPELINING = "http.pipelining",
@@ -377,8 +377,8 @@ implements Externalizable {
 		return getBoolean(KEY_DATA_FS_ACCESS);
 	}
 	//
-	public final String getDataPrefix() {
-		return getString(KEY_DATA_PREFIX);
+	public final String getNamePrefix() {
+		return getString(KEY_ITEM_PREFIX);
 	}
 	//
 	public final boolean getDataVersioningEnabled() {

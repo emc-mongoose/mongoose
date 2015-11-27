@@ -180,7 +180,7 @@ implements StorageClientBuilder<T, U> {
 		) {
 			throw new IllegalArgumentException("Path shouldn't begin or end with \"/\"");
 		}
-		rtConfig.set(RunTimeConfig.KEY_DATA_PREFIX, path);
+		rtConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, path);
 		return this;
 	}
 	//

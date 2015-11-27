@@ -37,8 +37,7 @@ implements ItemSrc<T> {
 	 @throws IOException
 	 @throws NoSuchMethodException
 	 */
-	public
-	ItemCSVSrc(
+	public ItemCSVSrc(
 		final InputStream in, final Class<? extends T> itemCls, final ContentSource contentSrc
 	) throws IOException, NoSuchMethodException {
 		this(
