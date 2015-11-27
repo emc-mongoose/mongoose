@@ -11,8 +11,7 @@ import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
 import com.emc.mongoose.core.impl.load.executor.BasicFileLoadExecutor;
-
-import java.io.File;
+//
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;

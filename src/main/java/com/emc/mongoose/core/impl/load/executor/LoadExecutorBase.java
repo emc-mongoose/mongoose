@@ -275,7 +275,8 @@ implements LoadExecutor<T> {
 			Integer.toString(instanceNum) + '-' +
 				StringUtils.capitalize(ioConfig.getLoadType().toString().toLowerCase()) +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
-				Integer.toString(connCountPerNode) + 'x' + Integer.toString(addrs.length)
+				Integer.toString(connCountPerNode) +
+				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
 		);
 	}
 	//
