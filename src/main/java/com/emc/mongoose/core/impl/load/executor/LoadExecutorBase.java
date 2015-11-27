@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -86,7 +87,7 @@ implements LoadExecutor<T> {
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
-	private T lastDataItem;
+	protected T lastItem;
 	protected final Object state = new Object();
 	protected final ItemBuffer<T> itemOutBuff;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,12 +172,21 @@ implements LoadExecutor<T> {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("resultsDispatcher<" + getName() + ">");
 			try {
+				if(isCircular) {
+					while(!areAllItemsProduced) {
+						LockSupport.parkNanos(1000000);
+						Thread.yield();
+					}
+				}
 				while(!currThread.isInterrupted()) {
 					passItems();
 					Thread.yield();
 					LockSupport.parkNanos(1000);
 				}
-			} catch(final InterruptedException ignored) {
+			} catch(final InterruptedException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
+			} finally {
+				LOG.debug(Markers.MSG, "{}: results dispatched finished", getName());
 			}
 		}
 	}
@@ -189,8 +199,8 @@ implements LoadExecutor<T> {
 	) {
 		super(
 			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE,
-			rtConfig.getBatchSize(), rtConfig.isItemSrcCircularEnabled(),
-			rtConfig.isShuffleItemsEnabled()
+			DEFAULT_INTERNAL_BATCH_SIZE, rtConfig.isItemSrcCircularEnabled(),
+			rtConfig.isShuffleItemsEnabled(), rtConfig.getItemQueueMaxSize()
 		);
 		try {
 			super.setItemDst(this);
@@ -209,7 +219,9 @@ implements LoadExecutor<T> {
 		storageNodeCount = addrs.length;
 		//
 		setName(name);
-		LOG.debug(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
+		if(itemSrc != null) {
+			LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
+		}
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
 		activeTaskCountLimit = 2 * totalConnCount + 1000;
@@ -445,6 +457,15 @@ implements LoadExecutor<T> {
 		//
 		mgmtExecutor.shutdownNow();
 		LOG.debug(Markers.MSG, "{}: service threads executor shut down", getName());
+		//
+		if(isCircular) {
+			final List<T> itemsList = Collections.list(
+				Collections.enumeration(uniqueItems.values())
+			);
+			passUniqueItemsFinally(itemsList);
+		}
+		uniqueItems.clear();
+		//
 		if(consumer instanceof LifeCycle) {
 			try {
 				((LifeCycle) consumer).shutdown();
@@ -493,7 +514,7 @@ implements LoadExecutor<T> {
 		int activeTaskCount;
 		do {
 			activeTaskCount = (int) (counterSubm.get() - counterResults.get());
-			if(isShutdown.get() || isInterrupted.get()) {
+			if(isInterrupted.get() || (isShutdown.get() && !isCircular)) {
 				throw new InterruptedIOException(
 					getName() + ": submit failed, shut down already or interrupted"
 				);
@@ -501,7 +522,7 @@ implements LoadExecutor<T> {
 			if(activeTaskCount < activeTaskCountLimit) {
 				break;
 			}
-			Thread.yield(); LockSupport.parkNanos(1);
+			LockSupport.parkNanos(1000); Thread.yield();
 		} while(true);
 		//
 		try {
@@ -541,7 +562,7 @@ implements LoadExecutor<T> {
 					// don't fill the connection pool as fast as possible, this may cause a failure
 					do {
 						activeTaskCount = (int) (counterSubm.get() - counterResults.get());
-						if(isShutdown.get() || isInterrupted.get()) {
+						if(isInterrupted.get() || (isShutdown.get() && !isCircular)) {
 							throw new InterruptedIOException(
 								getName() + ": submit failed, shut down already or interrupted"
 							);
@@ -549,7 +570,7 @@ implements LoadExecutor<T> {
 						if(activeTaskCount < activeTaskCountLimit) {
 							break;
 						}
-						Thread.yield(); LockSupport.parkNanos(1);
+						LockSupport.parkNanos(1000); Thread.yield();
 					} while(true);
 					//
 					try {
@@ -564,7 +585,7 @@ implements LoadExecutor<T> {
 						activeTasksStats.get(nextNodeAddr).addAndGet(m);
 					} catch(final RejectedExecutionException e) {
 						if(isInterrupted.get()) {
-							throw new IOException(getName() + " is interrupted");
+							throw new InterruptedIOException(getName() + " is interrupted");
 						} else {
 							m = srcLimit - n;
 							countRej.addAndGet(m);
@@ -636,21 +657,25 @@ implements LoadExecutor<T> {
 			return;
 		}
 		//
-		final T dataItem = ioTask.getItem();
+		final T item = ioTask.getItem();
+		//
 		final IOTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
 		// update the metrics
 		ioTask.mark(ioStats);
 		activeTasksStats.get(nodeAddr).decrementAndGet();
 		if(status == IOTask.Status.SUCC) {
-			lastDataItem = dataItem;
+			lastItem = item;
 			// put into the output buffer
 			try {
-				itemOutBuff.put(dataItem);
+				itemOutBuff.put(item);
+				if(isCircular) {
+					uniqueItems.putIfAbsent(item.getName(), item);
+				}
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e,
-					"{}: failed to put the data item into the output buffer", getName()
+					"{}: failed to put the item into the output buffer", getName()
 				);
 			}
 		} else {
@@ -674,24 +699,28 @@ implements LoadExecutor<T> {
 			activeTasksStats.get(nodeAddr).addAndGet(-n);
 			//
 			IOTask<T> ioTask;
-			T dataItem;
+			T item;
 			IOTask.Status status;
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
-				dataItem = ioTask.getItem();
+				item = ioTask.getItem();
+				//
 				status = ioTask.getStatus();
 				// update the metrics
 				ioTask.mark(ioStats);
 				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 				if(status == IOTask.Status.SUCC) {
-					lastDataItem = dataItem;
+					lastItem = item;
 					// pass data item to a consumer
 					try {
-						itemOutBuff.put(dataItem);
+						itemOutBuff.put(item);
+						if(isCircular) {
+							uniqueItems.putIfAbsent(item.getName(), item);
+						}
 					} catch(final IOException e) {
 						LogUtil.exception(
 							LOG, Level.DEBUG, e,
-							"{}: failed to put the data item into the output buffer", getName()
+							"{}: failed to put the item into the output buffer", getName()
 						);
 					}
 				} else {
@@ -730,33 +759,20 @@ implements LoadExecutor<T> {
 			final List<T> items = new ArrayList<>(batchSize);
 			final int n = itemOutBuff.get(items, batchSize);
 			if(n > 0) {
-				// is this an end of consumer-producer chain?
-				if(consumer == null) {
-					for(int i = 0; i < n; i ++) {
-						if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
-							LOG.info(Markers.ITEM_LIST, items.get(i));
-						}
-					}
-				} else { // put to the consumer
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "Going to put {} items to the consumer {}",
-							n, consumer
-						);
-					}
-					int m = 0;
+				if(isCircular) {
+					int m = 0, k;
 					while(m < n) {
+						k = put(items, m, n);
+						if(k > 0) {
+							m += k;
+						} else {
+							break;
+						}
 						Thread.yield();
 						LockSupport.parkNanos(1);
-						m += consumer.put(items, m, n);
 					}
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG,
-							"{} items were passed to the consumer {} successfully",
-							n, consumer
-						);
-					}
+				} else {
+					passUniqueItemsFinally(items);
 				}
 			}
 		} catch(final IOException e) {
@@ -766,6 +782,50 @@ implements LoadExecutor<T> {
 		} catch(final RejectedExecutionException e) {
 			if(LOG.isTraceEnabled(Markers.ERR)) {
 				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the items", consumer);
+			}
+		}
+	}
+	//
+	protected void passUniqueItemsFinally(final List<T> items) {
+		// is this an end of consumer-producer chain?
+		if(consumer == null) {
+			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
+				for(final Item item : items) {
+					LOG.info(Markers.ITEM_LIST, item);
+				}
+			}
+		} else { // put to the consumer
+			int n = items.size();
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Going to put {} items to the consumer {}",
+					n, consumer
+				);
+			}
+			try {
+				if(!items.isEmpty()) {
+					int m = 0, k;
+					while(m < n) {
+						k = consumer.put(items, m, n);
+						if(k > 0) {
+							m += k;
+						}
+						Thread.yield();
+						LockSupport.parkNanos(1);
+					}
+				}
+				items.clear();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
+				);
+			}
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG,
+					"{} items were passed to the consumer {} successfully",
+					n, consumer
+				);
 			}
 		}
 	}
@@ -833,7 +893,7 @@ implements LoadExecutor<T> {
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(rtConfig)
 			.setStatsSnapshot(lastStats)
-			.setLastDataItem(lastDataItem)
+			.setLastDataItem(lastItem)
 			.build();
 	}
 	//
@@ -846,7 +906,7 @@ implements LoadExecutor<T> {
 		return counterResults.get() >= maxCount;
 	}
 	//
-	private void updateDataItemCount(final long itemsCount) {
+	private void setCountLimitConfig(final long itemsCount) {
 		if(isDoneAllSubm() && (maxCount > itemsCount)) {
 			rtConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, itemsCount);
 		} else {
@@ -883,6 +943,9 @@ implements LoadExecutor<T> {
 	//
 	protected void shutdownActually() {
 		super.interrupt(); // stop the source producing right now
+		if(isCircular) {
+			areAllItemsProduced = true; //  unblock ResultsDispatcher thread
+		}
 		LOG.debug(Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"", itemSrc, getName());
 	}
 	//
@@ -924,8 +987,10 @@ implements LoadExecutor<T> {
 				break;
 			}
 			if(isDoneAllSubm()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
-				break;
+				if(!isCircular) {
+					LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
+					break;
+				}
 			}
 			if(isDoneMaxCount()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to max count done state", getName());
@@ -967,6 +1032,7 @@ implements LoadExecutor<T> {
 		} finally {
 			if(consumer != null && !(consumer instanceof LifeCycle)) {
 				try {
+					//
 					consumer.close();
 					LOG.debug(
 						Markers.MSG, "{}: closed the consumer \"{}\" successfully",
@@ -979,7 +1045,7 @@ implements LoadExecutor<T> {
 					);
 				}
 			}
-			updateDataItemCount(counterResults.get());
+			setCountLimitConfig(counterResults.get());
 			LoadCloseHook.del(this);
 			if(loadedPrevState != null) {
 				if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {

@@ -95,6 +95,11 @@ implements LoadClient<T, W> {
 									);
 								}
 								counterResults.addAndGet(n);
+								if(isCircular) {
+									for(final T item : frame) {
+										uniqueItems.put(item.getName(), item);
+									}
+								}
 								for(int m = 0; m < n && !currThread.isInterrupted();) {
 									m += itemOutBuff.put(frame, m, n);
 									LockSupport.parkNanos(1);
@@ -175,7 +180,7 @@ implements LoadClient<T, W> {
 	) throws RemoteException {
 		super(
 			rtConfig, reqConfig, addrs, connCountPerNode, threadCount,
-			// supress new data items generation on the client side
+			// suppress new data items generation on the client side
 			itemSrc instanceof NewDataItemSrc ? null : itemSrc, maxCount,
 			// get any load server last job number
 			remoteLoadMap.values().iterator().next().getInstanceNum(),
@@ -351,7 +356,11 @@ implements LoadClient<T, W> {
 		@Override
 		public final void run() {
 			String loadSvcAddr;
-			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
+			for(
+				int tryCount = 0;
+				tryCount < Short.MAX_VALUE;
+				tryCount ++
+			) {
 				try {
 					loadSvcAddr = loadSvcAddrs[
 						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)
@@ -411,23 +420,27 @@ implements LoadClient<T, W> {
 			String loadSvcAddr;
 			W loadSvc;
 			int m = 0;
-			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
+			for(
+				int tryCount = 0;
+				tryCount < Short.MAX_VALUE;
+				tryCount ++
+			) {
 				try {
 					loadSvcAddr = loadSvcAddrs[
 						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)
 					];
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
-					while(true) {
+					do {
 						m += loadSvc.put(dataItems, from + m, to);
 						if(m < n) {
 							LockSupport.parkNanos(1);
 						} else {
 							break;
 						}
-					}
+					} while(!remotePutExecutor.isShutdown());
 					counterSubm.addAndGet(n);
 					break;
-				} catch(final RejectedExecutionException | IOException e) {
+				} catch(final IOException e) {
 					if(remotePutExecutor.isTerminated()) {
 						break;
 					} else {
@@ -530,36 +543,38 @@ implements LoadClient<T, W> {
 		} finally {
 			LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 			//
-			final long timeOut = rtConfig.getLoadLimitTimeValue();
-			final TimeUnit timeUnit = rtConfig.getLoadLimitTimeUnit();
-			remotePutExecutor.shutdown();
-			try {
-				if(
-					!remotePutExecutor.awaitTermination(
-						timeOut > 0 ? timeOut : Long.MAX_VALUE,
-						timeUnit == null ? TimeUnit.DAYS : timeUnit
-					)
-				) {
-					LOG.debug(
-						Markers.ERR,
-						"Timeout while submitting all the remaining data items to the load servers"
-					);
-				}
-			} catch(final InterruptedException e) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
-			} finally {
-				LOG.debug(
-					Markers.MSG, "Submitted {} items to the load servers",
-					remotePutExecutor.getCompletedTaskCount()
-				);
-				for(final String addr : remoteLoadMap.keySet()) {
-					try {
-						remoteLoadMap.get(addr).shutdown();
-					} catch(final NoSuchObjectException ignored) {
-					} catch(final RemoteException e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to shut down remote load service"
+			if(!isCircular) {
+				final long timeOut = rtConfig.getLoadLimitTimeValue();
+				final TimeUnit timeUnit = rtConfig.getLoadLimitTimeUnit();
+				remotePutExecutor.shutdown();
+				try {
+					if(
+						!remotePutExecutor.awaitTermination(
+							timeOut > 0 ? timeOut : Long.MAX_VALUE,
+							timeUnit == null ? TimeUnit.DAYS : timeUnit
+						)
+					) {
+						LOG.debug(
+							Markers.ERR,
+							"Timeout while submitting all the remaining data items to the load servers"
 						);
+					}
+				} catch(final InterruptedException e) {
+					LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
+				} finally {
+					LOG.debug(
+						Markers.MSG, "Submitted {} items to the load servers",
+						remotePutExecutor.getCompletedTaskCount()
+					);
+					for(final String addr : remoteLoadMap.keySet()) {
+						try {
+							remoteLoadMap.get(addr).shutdown();
+						} catch(final NoSuchObjectException ignored) {
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e, "Failed to shut down remote load service"
+							);
+						}
 					}
 				}
 			}
@@ -586,6 +601,7 @@ implements LoadClient<T, W> {
 	@Override
 	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
+		//
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size() + 1,
 			new GroupThreadFactory(String.format("awaitWorker<%s>", getName()))

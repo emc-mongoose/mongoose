@@ -129,6 +129,7 @@ implements Externalizable {
 		KEY_ITEM_SRC_CIRCULAR = "item.src.circular",
 		KEY_ITEM_SRC_RANDOM = "item.src.random",
 		KEY_ITEM_SRC_BATCH_SIZE = "item.src.batchSize",
+		KEY_ITEM_QUEUE_MAX_SIZE = "item.queue.maxSize",
 		//
 		FNAME_CONF = "mongoose.json";
 	//
@@ -386,6 +387,10 @@ implements Externalizable {
 	//
 	public final boolean isItemSrcCircularEnabled() {
 		return getBoolean(KEY_ITEM_SRC_CIRCULAR);
+	}
+	//
+	public final long getItemQueueMaxSize() {
+		return getLong(KEY_ITEM_QUEUE_MAX_SIZE);
 	}
 	//
 	public final String getRunName() {

@@ -196,6 +196,7 @@ implements StorageClient<T> {
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setItemSrc(src)
 				.setLoadType(IOTask.Type.APPEND)
+				.setMaxCount(maxCount)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.APPEND)
 				.build()
 		) {

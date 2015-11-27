@@ -94,8 +94,8 @@ extends StandaloneClientTestBase {
 						break;
 					}
 				}
-				Assert.assertFalse(
-					"Non-zero bytes have been found in the updated object", nonZeroByte
+				Assert.assertTrue(
+					"Non-zero bytes have not been found in the updated object", nonZeroByte
 				);
 			}
 		}

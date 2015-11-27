@@ -28,11 +28,8 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
@@ -42,9 +39,9 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIENT;
 
 /**
- * Created by gusakk on 07.10.15.
+ * Created by gusakk on 19.11.15.
  */
-public class CircularReadTest
+public class CircularUpdateTest
 extends DistributedClientTestBase {
 	//
 	private static final Logger LOG = LogManager.getLogger();
@@ -54,20 +51,19 @@ extends DistributedClientTestBase {
 	private static final String DATA_SIZE = "128B";
 	//
 	private static final int WRITE_COUNT = 1234;
-	private static final int READ_COUNT = 12340;
+	private static final int UPDATE_COUNT = 24680;
 	//
-	private static final int COUNT_OF_DUPLICATES = 11;
+	private static final int COUNT_OF_UPDATES = 20;
+	private static final int LAYER_NUMBER_INDEX = 2;
 	//
+	private static long COUNT_WRITTEN, COUNT_UPDATED;
 	private static byte[] STD_OUT_CONTENT;
-	private static long COUNT_WRITTEN, COUNT_READ;
-	//
-	private static final String RUN_ID = CircularReadTest.class.getCanonicalName();
 	//
 	@BeforeClass
 	public static void setUpClass() {
 		try {
 			System.setProperty(
-				RunTimeConfig.KEY_RUN_ID, RUN_ID
+				RunTimeConfig.KEY_RUN_ID, CircularUpdateTest.class.getCanonicalName()
 			);
 			DistributedClientTestBase.setUpClass();
 			//
@@ -99,9 +95,9 @@ extends DistributedClientTestBase {
 				) {
 					stdOutInterceptorStream.reset();
 					if (COUNT_WRITTEN > 0) {
-						COUNT_READ = client.read(writeOutput.getItemSrc(), null, READ_COUNT, 10, true);
+						COUNT_UPDATED = client.update(writeOutput.getItemSrc(), null, UPDATE_COUNT, 10, 1);
 					} else {
-						throw new IllegalStateException("Failed to read");
+						throw new IllegalStateException("Failed to update");
 					}
 					TimeUnit.SECONDS.sleep(1);
 					STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
@@ -125,59 +121,25 @@ extends DistributedClientTestBase {
 	}
 	//
 	@Test
-	public void checkItemsFileExists()
+	public void checkUpdatedCount()
 	throws Exception {
-		final Map<String, Long> items = new HashMap<>();
-		try(
+		Assert.assertEquals(
+			COUNT_WRITTEN * COUNT_OF_UPDATES, COUNT_UPDATED, (COUNT_UPDATED * 5) / 100
+		);
+	}
+	//
+	@Test
+	public void checkLayerNumberIndex()
+	throws Exception {
+		try (
 			final BufferedReader
 				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			String id;
-			for(final CSVRecord nextRec : recIter) {
-				long count = 1;
-				id = nextRec.get(0);
-				if(items.containsKey(id)) {
-					count = items.get(id);
-					count++;
-				}
-				items.put(id, count);
-			}
-			//
-			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
-		}
-	}
-	//
-	@Test
-	public void checkPerfTraceFileContainsDuplicates()
-	throws  Exception {
-		final Map<String, Long> items = new HashMap<>();
-		boolean firstRow = true;
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(FILE_LOG_PERF_TRACE.toPath(), StandardCharsets.UTF_8)
-		) {
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			String id;
-			for(final CSVRecord nextRec : recIter) {
-				if(firstRow) {
-					firstRow = false;
-				} else {
-					long count = 1;
-					id = nextRec.get(2);
-					if(items.containsKey(id)) {
-						count = items.get(id);
-						count++;
-					}
-					items.put(id, count);
-				}
-			}
-			//
-			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
-			for(final Map.Entry<String, Long> entry : items.entrySet()) {
+			for (final CSVRecord nextRec : recIter) {
 				Assert.assertEquals(
-					"perf.trace.csv doesn't contain necessary count of duplicated items" ,
-					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES), 2);
+					LAYER_NUMBER_INDEX, Integer.parseInt(nextRec.get(3).split("/")[0])
+				);
 			}
 		}
 	}
@@ -202,14 +164,14 @@ extends DistributedClientTestBase {
 					m = CONSOLE_METRICS_AVG_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.READ.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + IOTask.Type.UPDATE.name() + ": " + m.group("typeLoad"),
+							IOTask.Type.UPDATE.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
 							nextFailCount = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Next read items count " + nextSuccCount +
+							"Next updated items count " + nextSuccCount +
 								" is less than previous: " + lastSuccCount,
 							nextSuccCount >= lastSuccCount
 						);
@@ -244,8 +206,8 @@ extends DistributedClientTestBase {
 					m = CONSOLE_METRICS_SUM_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.READ.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + IOTask.Type.UPDATE.name() + ": " + m.group("typeLoad"),
+							IOTask.Type.UPDATE.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long countFail = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue("There are failures reported", countFail == 0);

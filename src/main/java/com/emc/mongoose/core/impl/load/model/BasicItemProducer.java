@@ -19,7 +19,12 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  Created by kurila on 19.06.15.
  */
@@ -29,6 +34,7 @@ implements ItemProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	protected final ConcurrentHashMap<String, T> uniqueItems;
 	protected final ItemSrc<T> itemSrc;
 	protected final long maxCount;
 	protected volatile ItemDst<T> itemDst = null;
@@ -37,17 +43,21 @@ implements ItemProducer<T> {
 	protected T lastDataItem;
 	protected boolean isCircular;
 	protected boolean isShuffling;
+	protected long maxItemQueueSize;
+	//
+	protected volatile boolean areAllItemsProduced = false;
+	protected volatile long producedItemsCount = 0;
 	//
 	protected BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
-		final boolean isCircular, final boolean isShuffling
+		final boolean isCircular, final boolean isShuffling, final long maxItemQueueSize
 	) {
-		this(itemSrc, maxCount, batchSize, isCircular, isShuffling, 0, null);
+		this(itemSrc, maxCount, batchSize, isCircular, isShuffling, maxItemQueueSize, 0, null);
 	}
 	//
 	private BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
-		final boolean isCircular, final boolean isShuffling,
+		final boolean isCircular, final boolean isShuffling, final long maxItemQueueSize,
 		final long skipCount, final T lastDataItem
 	) {
 		this.itemSrc = itemSrc;
@@ -57,6 +67,9 @@ implements ItemProducer<T> {
 		this.lastDataItem = lastDataItem;
 		this.isCircular = isCircular;
 		this.isShuffling = isShuffling;
+		this.maxItemQueueSize = maxItemQueueSize;
+		//
+		this.uniqueItems = new ConcurrentHashMap<>((int) maxItemQueueSize);
 	}
 	//
 	@Override
@@ -103,11 +116,10 @@ implements ItemProducer<T> {
 			LOG.debug(Markers.MSG, "No item source for the producing, exiting");
 			return;
 		}
-		long count = 0;
 		int n = 0, m = 0;
 		try {
 			List<T> buff;
-			while(!isInterrupted && count < maxCount) {
+			while(!isInterrupted && producedItemsCount < maxCount) {
 				try {
 					buff = new ArrayList<>(batchSize);
 					n = itemSrc.get(buff, batchSize);
@@ -122,32 +134,32 @@ implements ItemProducer<T> {
 							m += itemDst.put(buff, m, n);
 							LockSupport.parkNanos(1);
 						}
-						count += n;
+						producedItemsCount += n;
 					} else {
 						if(isInterrupted) {
 							break;
 						}
 					}
-				} catch(final EOFException e) {
-					if(isCircular) {
-						reset();
-					} else {
+					//
+					if(isCircular && producedItemsCount >= maxItemQueueSize) {
 						break;
 					}
+				} catch(final EOFException e) {
+					break;
 				} catch(final ClosedByInterruptException | IllegalStateException e) {
 					break;
 				} catch(final IOException e) {
 					LogUtil.exception(
 						LOG, Level.DEBUG, e,
 						"Failed to transfer the data items, " +
-						"count = {}, batch size = {}, batch offset = {}", count, n, m
+						"count = {}, batch size = {}, batch offset = {}", producedItemsCount, n, m
 					);
 				}
 			}
 		} finally {
 			LOG.debug(
-				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-				getName(), count, itemSrc, itemDst
+					Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
+					getName(), producedItemsCount, itemSrc, itemDst
 			);
 			try {
 				itemSrc.close();

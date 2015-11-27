@@ -27,7 +27,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface LoadExecutor<T extends Item>
 extends ItemDst<T>, LifeCycle, ItemProducer<T> {
 	//
-	int DEFAULT_RESULTS_QUEUE_SIZE = 0x10000;
+	int
+		DEFAULT_INTERNAL_BATCH_SIZE = 0x80,
+		DEFAULT_RESULTS_QUEUE_SIZE = 0x10000;
 	//
 	AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
 	//

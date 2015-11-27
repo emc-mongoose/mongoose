@@ -1,7 +1,8 @@
 package com.emc.mongoose.integ.core.single;
-
+//
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemDst;
@@ -13,153 +14,157 @@ import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+//
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
-
+//
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_AVG;
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM;
-
+//
 /**
- * Created by gusakk on 07.10.15.
+ * Created by gusakk on 03.11.15.
  */
-public class CircularRandomReadTest
+public class CircularReadAfterUpdateTest
 extends StandaloneClientTestBase {
 	//
-	private static final int WRITE_COUNT = 100;
-	private static final int READ_COUNT = 1000;
+	private static final Logger LOG = LogManager.getLogger();
 	//
-	private static final int COUNT_OF_DUPLICATES = 10;
+	private static final int ITEM_MAX_QUEUE_SIZE = 65536;
+	private static final int BATCH_SIZE = 100;
+	private static final String DATA_SIZE = "128B";
 	//
-	@SuppressWarnings("FieldCanBeLocal")
-	private static long COUNT_WRITTEN, COUNT_READ;
+	private static final int WRITE_COUNT = 1234;
+	private static final int UPDATE_COUNT = 12340;
+	//
+	private static final int COUNT_OF_DUPLICATES = 21;
+	//
 	private static byte[] STD_OUT_CONTENT;
+	private static long COUNT_WRITTEN, COUNT_READ, COUNT_UPDATED;
 	//
 	@BeforeClass
-	public static void setUpClass()
-	throws Exception {
-		System.setProperty(
-			RunTimeConfig.KEY_RUN_ID, CircularRandomReadTest.class.getCanonicalName()
-		);
-		StandaloneClientTestBase.setUpClass();
-		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
-		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_RANDOM, true);
-		RunTimeConfig.setContext(rtConfig);
-		//
-		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
-				.setAPI("s3")
-				.setLimitTime(0, TimeUnit.SECONDS)
-				.setLimitCount(WRITE_COUNT)
-				.build()
-		) {
-			final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
-				BasicWSObject.class, ContentSourceBase.getDefault()
+	public static void setUpClass() {
+		try {
+			System.setProperty(
+				RunTimeConfig.KEY_RUN_ID, CircularReadAfterUpdateTest.class.getCanonicalName()
 			);
-			COUNT_WRITTEN = client.write(
-				null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize("1MB")
-			);
-			TimeUnit.SECONDS.sleep(10);
+			StandaloneClientTestBase.setUpClass();
+			//
+			final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+			rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
+			rtConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
+			rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
+			RunTimeConfig.setContext(rtConfig);
 			//
 			try (
-				final BufferingOutputStream
-					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+				final StorageClient<WSObject> client = CLIENT_BUILDER
+					.setAPI("s3")
+					.setLimitTime(0, TimeUnit.SECONDS)
+					.setLimitCount(WRITE_COUNT)
+					.build()
 			) {
-				stdOutInterceptorStream.reset();
+				final ItemDst<WSObject> writeOutput = new CSVFileItemDst<WSObject>(
+					BasicWSObject.class, ContentSourceBase.getDefault()
+				);
+				COUNT_WRITTEN = client.write(
+					null, writeOutput, WRITE_COUNT, 10, SizeUtil.toSize(DATA_SIZE)
+				);
+				TimeUnit.SECONDS.sleep(1);
+				RunIdFileManager.flushAll();
+				//
+				final ItemDst<WSObject> updateOutput = new CSVFileItemDst<WSObject>(
+					BasicWSObject.class, ContentSourceBase.getDefault()
+				);
 				if (COUNT_WRITTEN > 0) {
-					COUNT_READ = client.read(writeOutput.getItemSrc(), null, READ_COUNT, 1, true);
+					COUNT_UPDATED = client.update(
+						writeOutput.getItemSrc(), updateOutput, UPDATE_COUNT, 10, 1
+					);
 				} else {
-					throw new IllegalStateException("Failed to write");
+					throw new IllegalStateException("Failed to update");
 				}
 				TimeUnit.SECONDS.sleep(1);
-				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
+				RunIdFileManager.flushAll();
+				//
+				try (
+					final BufferingOutputStream
+						stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+				) {
+					stdOutInterceptorStream.reset();
+					if (COUNT_UPDATED > 0) {
+						COUNT_READ = client.read(
+							updateOutput.getItemSrc(), null, COUNT_UPDATED, 10, true
+						);
+					} else {
+						throw new IllegalStateException("Failed to read");
+					}
+					TimeUnit.SECONDS.sleep(1);
+					STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
+				}
 			}
+			//
+			RunIdFileManager.flushAll();
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed");
 		}
-		//
-		RunIdFileManager.flushAll();
 	}
 	//
 	@AfterClass
-	public static void tearDownClass()
-	throws Exception {
-		StdOutInterceptorTestSuite.reset();
-		StandaloneClientTestBase.tearDownClass();
+	public static void tearDownClass() {
+		try {
+			StdOutInterceptorTestSuite.reset();
+			StandaloneClientTestBase.tearDownClass();
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed");
+		}
 	}
 	//
 	@Test
-	public void checkItemsFileContainsDuplicates()
+	public void checkPerfTraceFileContainsDuplicates()
 	throws  Exception {
 		final Map<String, Long> items = new HashMap<>();
-		try(
+		boolean firstRow = true;
+		try (
 			final BufferedReader
-				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(FILE_LOG_PERF_TRACE.toPath(), StandardCharsets.UTF_8)
 		) {
-			String line;
-			while ((line = in.readLine()) != null) {
-				long count = 1;
-				if (items.containsKey(line)) {
-					count = items.get(line);
-					count++;
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			String id;
+			for (final CSVRecord nextRec : recIter) {
+				if (firstRow) {
+					firstRow = false;
+				} else {
+					long count = 1;
+					id = nextRec.get(2);
+					if (items.containsKey(id)) {
+						count = items.get(id);
+						count++;
+					}
+					items.put(id, count);
 				}
-				items.put(line, count);
 			}
+			//
 			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
 			for (final Map.Entry<String, Long> entry : items.entrySet()) {
 				Assert.assertEquals(
-					"data.items.csv doesn't contain necessary count of duplicated items" ,
-					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES));
+					"perf.trace.csv doesn't contain necessary count of duplicated items" ,
+					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES), 2);
 			}
 		}
-	}
-	//
-	@Test
-	public void checkItemDuplicatesRandomOrder()
-	throws Exception {
-		boolean passed = false;
-		//
-		final Map<String, Integer> items = new HashMap<>();
-		try (
-			final LineNumberReader in = new LineNumberReader(
-				Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
-			)
-		) {
-			long uniqueItems = 0;
-			String line;
-			while ((line = in.readLine()) != null) {
-				if (uniqueItems < WRITE_COUNT) {
-					items.put(line, in.getLineNumber());
-					uniqueItems++;
-				} else {
-					Assert.assertTrue(items.containsKey(line));
-					final int expected;
-					if (in.getLineNumber() % WRITE_COUNT == 0) {
-						expected = WRITE_COUNT;
-					} else {
-						expected = in.getLineNumber() % WRITE_COUNT;
-					}
-					//
-					if (!Integer.valueOf(expected).equals(items.get(line))) {
-						passed = true;
-					}
-				}
-			}
-		}
-		//
-		Assert.assertTrue("Data items haven't been shuffled", passed);
 	}
 	//
 	@Test
@@ -189,7 +194,7 @@ extends StandaloneClientTestBase {
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
 							nextFailCount = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Next deleted items count " + nextSuccCount +
+							"Next read items count " + nextSuccCount +
 								" is less than previous: " + lastSuccCount,
 							nextSuccCount >= lastSuccCount
 						);
@@ -232,7 +237,7 @@ extends StandaloneClientTestBase {
 							countSucc = Long.parseLong(m.group("countSucc")),
 							countFail = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Deleted items count " + countSucc +
+							"Read items count " + countSucc +
 								" is not equal to the limit: " + countLimit,
 							countSucc == countLimit
 						);
@@ -247,5 +252,4 @@ extends StandaloneClientTestBase {
 			"Summary metrics line matching the pattern was not met in the stdout", passed
 		);
 	}
-
 }

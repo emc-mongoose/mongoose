@@ -22,7 +22,10 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.locks.LockSupport;
+
 /**
  Created by kurila on 16.12.14.
  */
@@ -100,6 +103,44 @@ implements WSDataLoadSvc<T> {
 	throws InterruptedException {
 		if(consumer != null) {
 			super.passItems();
+		}
+	}
+	//
+	@Override
+	protected final void passUniqueItemsFinally(final List<T> items) {
+		if(consumer != null) {
+			int n = items.size();
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Going to put {} items to the consumer {}",
+					n, consumer
+				);
+			}
+			try {
+				if(!items.isEmpty()) {
+					int m = 0, k;
+					while(m < n) {
+						k = consumer.put(items, m, n);
+						if(k > 0) {
+							m += k;
+						}
+						Thread.yield();
+						LockSupport.parkNanos(1);
+					}
+				}
+				items.clear();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
+				);
+			}
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG,
+					"{} items were passed to the consumer {} successfully",
+					n, consumer
+				);
+			}
 		}
 	}
 	//

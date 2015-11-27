@@ -5,8 +5,8 @@ import com.emc.mongoose.common.log.LogUtil;
 //
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.BasicFuture;
-//
 import org.apache.http.concurrent.FutureCallback;
+//
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.nio.NHttpClientConnection;
@@ -23,21 +23,24 @@ import java.util.concurrent.RunnableFuture;
 /**
  Created by kurila on 15.10.15.
  */
-public final class SequencedConnPool
-extends BasicNIOConnPool {
+public final class FixedRouteSequencingConnPool
+extends BasicNIOConnPool
+implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final Sequencer connPoolSequencer;
+	private final HttpHost route;
 	//
-	public SequencedConnPool(
-		final ConnectingIOReactor ioReactor,
+	public FixedRouteSequencingConnPool(
+		final ConnectingIOReactor ioReactor, final HttpHost route,
 		final NIOConnFactory<HttpHost, NHttpClientConnection> connFactory,
 		final int connectTimeout, final int batchSize
 	) {
 		super(ioReactor, connFactory, connectTimeout);
+		this.route = route;
 		connPoolSequencer = new Sequencer(
-			"connPoolSequencer#" + hashCode() + ">", false, batchSize
+			"connPoolSequencer<" + route.toHostString() + ">", false, batchSize
 		);
 		connPoolSequencer.start();
 	}
@@ -57,23 +60,24 @@ extends BasicNIOConnPool {
 	extends BasicFuture<BasicNIOPoolEntry>
 	implements RunnableFuture<BasicNIOPoolEntry> {
 		//
-		private final HttpHost route;
 		private final Object state;
 		private final FutureCallback<BasicNIOPoolEntry> callback;
 		//
-		public ConnLeaseTask(
-			final HttpHost route, final Object state,
-			final FutureCallback<BasicNIOPoolEntry> callback
-		) {
+		public ConnLeaseTask(final Object state, final FutureCallback<BasicNIOPoolEntry> callback) {
 			super(null);
-			this.route = route;
 			this.state = state;
 			this.callback = callback;
 		}
 		//
 		@Override
 		public void run() {
-			SequencedConnPool.super.lease(route, state, callback);
+			try {
+				FixedRouteSequencingConnPool.super.lease(route, state, callback);
+			} catch(final Exception e) {
+				if(!FixedRouteSequencingConnPool.super.isShutdown()) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to lease the connection");
+				}
+			}
 		}
 	}
 	//
@@ -82,7 +86,7 @@ extends BasicNIOConnPool {
 		final HttpHost route, final Object state, final FutureCallback<BasicNIOPoolEntry> callback
 	) {
 		try {
-			return connPoolSequencer.submit(new ConnLeaseTask(route, state, callback));
+			return connPoolSequencer.submit(new ConnLeaseTask(state, callback));
 		} catch(final InterruptedException e) {
 			throw new RuntimeException(e);
 		}
@@ -105,7 +109,13 @@ extends BasicNIOConnPool {
 		//
 		@Override
 		public void run() {
-			SequencedConnPool.super.release(entry, reusable);
+			try {
+				FixedRouteSequencingConnPool.super.release(entry, reusable);
+			} catch(final Exception e) {
+				if(!FixedRouteSequencingConnPool.super.isShutdown()) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to release the connection");
+				}
+			}
 		}
 	}
 	//

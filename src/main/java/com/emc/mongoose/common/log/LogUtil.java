@@ -8,9 +8,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.io.IoBuilder;
 //
 import java.io.File;
@@ -24,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -81,6 +85,7 @@ public final class LogUtil {
 		PATH_LOG_DIR = String.format("%s%slog", RunTimeConfig.DIR_ROOT, File.separator);
 	//
 	private static LoggerContext LOG_CTX = null;
+	private static volatile boolean STDOUT_COLORING_ENABLED = false;
 	private final static Lock LOG_CTX_LOCK = new ReentrantLock();
 	static {
 		init();
@@ -90,6 +95,23 @@ public final class LogUtil {
 		return LogUtil.FMT_DT.format(
 			Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime()
 		);
+	}
+	//
+	private static boolean isStdOutColoringEnabledByConfig() {
+		if(LOG_CTX != null) {
+			final Appender consoleAppender = LOG_CTX.getConfiguration().getAppender("stdout");
+			if(consoleAppender != null) {
+				final Layout consoleAppenderLayout = consoleAppender.getLayout();
+				if(consoleAppenderLayout instanceof PatternLayout) {
+					final String pattern =
+						((PatternLayout)consoleAppenderLayout).getConversionPattern();
+					if(pattern != null && pattern.contains("%highlight")) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 	//
 	public static void init() {
@@ -134,6 +156,14 @@ public final class LogUtil {
 						LogManager.getLogger().info(
 							Markers.MSG, "Logging subsystem is configured successfully"
 						);
+						/*Runtime.getRuntime().addShutdownHook(
+							new Thread("logCtxShutDownHook") {
+								@Override
+								public final void run() {
+									shutdown();
+								}
+							}
+						);*/
 					}
 					final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);
 					System.setErr(
@@ -149,9 +179,49 @@ public final class LogUtil {
 				}
 			}
 		} finally {
+			STDOUT_COLORING_ENABLED = isStdOutColoringEnabledByConfig();
 			LOG_CTX_LOCK.unlock();
 		}
 	}
+	//
+	public static boolean isConsoleColoringEnabled() {
+		return STDOUT_COLORING_ENABLED;
+	}
+	//
+	/*public static void shutdown() {
+		final Logger LOG = LogManager.getLogger();
+		try {
+			if(LOAD_HOOKS_COUNT.get() != 0) {
+				LOG.debug(Markers.MSG, "Not all loads are closed, blocking the logging subsystem shutdown");
+				if(HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
+					try {
+						if(HOOKS_COND.await(10, TimeUnit.SECONDS)) {
+							LOG.debug(Markers.MSG, "All load executors are closed");
+						} else {
+							LOG.debug(Markers.ERR, "Timeout while waiting the load executors to be closed");
+						}
+					} finally {
+						HOOKS_LOCK.unlock();
+					}
+				} else {
+					LOG.debug(Markers.ERR, "Failed to acquire the lock for the del method");
+				}
+			} else {
+				LOG.debug(Markers.MSG, "There's no unclosed loads, forcing logging subsystem shutdown");
+			}
+		} catch (final InterruptedException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Shutdown method was interrupted");
+		} finally {
+			LOG_CTX_LOCK.lock();
+			try {
+				if(LOG_CTX != null && !LOG_CTX.isStopped()) {
+					LOG_CTX.stop();
+				}
+			} finally {
+				LOG_CTX_LOCK.unlock();
+			}
+		}
+	}*/
 	//
 	public static void exception(
 		final Logger logger, final Level level, final Throwable e,

@@ -1,16 +1,18 @@
 package com.emc.mongoose.integ.suite;
 //
 //
+import com.emc.mongoose.integ.core.chain.CircularSequentialChainTest;
 import com.emc.mongoose.integ.core.chain.ConcurrentChainCRUDTest;
 import com.emc.mongoose.integ.core.chain.CustomChainScenarioTest;
 import com.emc.mongoose.integ.core.chain.DefaultChainScenarioTest;
 import com.emc.mongoose.integ.core.chain.SequentialChainCRUDTest;
 import com.emc.mongoose.integ.core.rampup.CustomRampupTest;
 import com.emc.mongoose.integ.core.rampup.DefaultRampupTest;
-import com.emc.mongoose.integ.core.single.CircularRandomReadTest;
+import com.emc.mongoose.integ.core.single.CircularAppendTest;
+import com.emc.mongoose.integ.core.single.CircularReadAfterUpdateTest;
 import com.emc.mongoose.integ.core.single.CircularReadFromBucketTest;
 import com.emc.mongoose.integ.core.single.CircularReadTest;
-import com.emc.mongoose.integ.core.single.CircularSingleDataItemReadTest;
+import com.emc.mongoose.integ.core.single.CircularUpdateTest;
 import com.emc.mongoose.integ.core.single.DefaultWriteTest;
 import com.emc.mongoose.integ.core.single.DeleteManyBucketsConcurrentlyTest;
 import com.emc.mongoose.integ.core.single.InfiniteWriteTest;
@@ -62,10 +64,12 @@ import org.junit.runners.Suite;
 	CustomRampupTest.class,
 	DefaultRampupTest.class,
 	InfiniteWriteTest.class,
+	CircularAppendTest.class,
+	CircularReadAfterUpdateTest.class,
 	CircularReadTest.class,
-	CircularSingleDataItemReadTest.class,
 	CircularReadFromBucketTest.class,
-	CircularRandomReadTest.class,
+	CircularUpdateTest.class,
+	CircularSequentialChainTest.class,
 	WriteZeroBytesTest.class,
 	ReadZeroBytesTest.class,
 	UpdateZeroBytesTest.class,
