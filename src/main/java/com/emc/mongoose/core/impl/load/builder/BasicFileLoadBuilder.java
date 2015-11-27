@@ -36,11 +36,6 @@ extends DataLoadBuilderBase<T, U> {
 	throws IllegalStateException {
 		// check the filesystem
 		final File parentPath = Paths.get("").toFile();
-		if(!parentPath.isDirectory()) {
-			throw new IllegalStateException(
-				"\"" + parentPath.getAbsolutePath() + "\" is not a directory"
-			);
-		}
 		final IOTask.Type loadType = ioConfig.getLoadType();
 		switch(loadType) {
 			case CREATE:
