@@ -7,12 +7,9 @@ import io.netty.util.AbstractReferenceCounted;
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 
-/**
- * Created by ilya on 25.11.15.
- */
 public class DataItemFileRegion
-extends AbstractReferenceCounted
-implements FileRegion {
+		extends AbstractReferenceCounted
+		implements FileRegion {
 
 	private final DataItem dataItem;
 	private final long dataSize;
@@ -26,7 +23,6 @@ implements FileRegion {
 
 	@Override
 	protected void deallocate() {
-
 	}
 
 	@Override
@@ -46,7 +42,7 @@ implements FileRegion {
 
 	@Override
 	public long transferTo(WritableByteChannel target, long position)
-	throws IOException {
+			throws IOException {
 		dataItem.setRelativeOffset(position);
 		long n = dataItem.write(target, dataSize - position);
 		doneByteCount += n;

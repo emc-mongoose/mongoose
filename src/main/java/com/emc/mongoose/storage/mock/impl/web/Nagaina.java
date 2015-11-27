@@ -28,9 +28,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
-/**
- * Created by ilya on 21.10.15.
- */
 public class Nagaina<T extends WSObjectMock>
 		extends StorageMockBase<T>
 		implements WSMock<T> {
@@ -78,7 +75,7 @@ public class Nagaina<T extends WSObjectMock>
 				storageCapacity, containerCapacity, containerCountLimit, batchSize, dataSrcPath, metricsPeriodSec,
 				jmxServeFlag);
 		this.portStart = portStart;
-		dispatchGroup = new NioEventLoopGroup(headCount, new DefaultThreadFactory("123")); // TODO check does it equal headCount?
+		dispatchGroup = new NioEventLoopGroup(headCount, new DefaultThreadFactory("dispatcher")); // TODO check does it equal headCount?
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
 		workerGroup = new NioEventLoopGroup();
 		protocolHandler = new NagainaBasicHandler(RunTimeConfig.getContext(), this);

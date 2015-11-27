@@ -11,9 +11,9 @@ import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.stream.ChunkedNioStream;
 import io.netty.util.AttributeKey;
 import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.Level;
@@ -30,7 +30,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -40,9 +39,6 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
 
-/**
- * Created by Ilia on 30.10.2015.
- */
 @Sharable
 public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelInboundHandler<Object> {
 
@@ -268,7 +264,6 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 			LogUtil.exception(LOG, Level.ERROR, ex, "Failed to build bucket XML listing");
 			return;
 		}
-		// todo know what does it mean
 		byte[] content = bos.toByteArray();
 		ctx.attr(ctxWriteFlagKey).set(false);
 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
