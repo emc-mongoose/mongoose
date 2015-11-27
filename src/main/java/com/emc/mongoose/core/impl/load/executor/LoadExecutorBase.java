@@ -220,7 +220,7 @@ implements LoadExecutor<T> {
 		//
 		this.rtConfig = rtConfig;
 		this.instanceNum = instanceNum;
-		storageNodeCount = addrs.length;
+		storageNodeCount = addrs == null ? 0 : addrs.length;
 		//
 		setName(name);
 		if(itemSrc != null) {
@@ -243,9 +243,11 @@ implements LoadExecutor<T> {
 		metricsPeriodSec = rtConfig.getLoadMetricsPeriodSec();
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the nodes array
-		storageNodeAddrs = addrs.clone();
-		for(final String addr : storageNodeAddrs) {
-			activeTasksStats.put(addr, new AtomicInteger(0));
+		storageNodeAddrs = addrs == null ? null : addrs.clone();
+		if(storageNodeAddrs != null) {
+			for(final String addr : storageNodeAddrs) {
+				activeTasksStats.put(addr, new AtomicInteger(0));
+			}
 		}
 		dataSrc = ioConfig.getContentSource();
 		//
@@ -642,6 +644,9 @@ implements LoadExecutor<T> {
 		return storageNodeAddrs[rountRobinCounter.incrementAndGet() % storageNodeCount];
 	}*/
 	protected String getNextNode() {
+		if(storageNodeAddrs == null) {
+			return null;
+		}
 		String bestNode = null;
 		//final StringBuilder sb = new StringBuilder("Active tasks stats: ");
 		int minActiveTaskCount = Integer.MAX_VALUE, nextActiveTaskCount;
