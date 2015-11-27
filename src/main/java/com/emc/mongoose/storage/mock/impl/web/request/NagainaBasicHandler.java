@@ -11,12 +11,10 @@ import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.stream.ChunkedNioStream;
 import io.netty.util.AttributeKey;
-import io.netty.util.CharsetUtil;
 import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -32,9 +30,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.netty.channel.ChannelHandler.*;
@@ -65,18 +63,19 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 		this.ioStats = sharedStorage.getStats();
 	}
 
-	private AttributeKey<HttpRequest> currentHttpRequestKey = AttributeKey.valueOf("currentHttpRequestKey");
-	private AttributeKey<FullHttpResponse> currentHttpResponseKey = AttributeKey.valueOf("currentHttpResponseKey");
-	private AttributeKey<String> containerNameKey = AttributeKey.valueOf("containerNameKey");
-	private AttributeKey<String> objIdKey = AttributeKey.valueOf("objIdKey");
+
+	private AttributeKey<HttpRequest> requestKey = AttributeKey.valueOf("requestKey");
+	private AttributeKey<HttpResponseStatus> responseStatusKey = AttributeKey.valueOf("responseStatusKey");
 	private AttributeKey<Long> contentLengthKey = AttributeKey.valueOf("contentLengthKey");
+	private AttributeKey<Boolean> ctxWriteFlagKey = AttributeKey.valueOf("ctxWriteFlagKey");
 
 	private final static DocumentBuilder DOM_BUILDER;
 	private final static TransformerFactory TF = TransformerFactory.newInstance();
+
 	static {
 		try {
 			DOM_BUILDER = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-		} catch(final ParserConfigurationException e) {
+		} catch (final ParserConfigurationException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -86,66 +85,71 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 		ctx.flush();
 	}
 
-	@Override
-	protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
-		if (msg instanceof HttpRequest) {
-			HttpRequest request = (HttpRequest) msg;
-			ctx.attr(currentHttpRequestKey).set(request);
-			if (request.headers().contains(CONTENT_LENGTH)) {
-				ctx.attr(contentLengthKey).set(Long.parseLong(request.headers().get(CONTENT_LENGTH)));
-			}
-			QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.getUri());
-			String[] pathChunks = queryStringDecoder.path().split("/");
-			if (pathChunks.length == 2) {
-				ctx.attr(containerNameKey).set(pathChunks[1]);
-			} else if (pathChunks.length >= 3) {
-				ctx.attr(containerNameKey).set(pathChunks[1]);
-				ctx.attr(objIdKey).set(pathChunks[2]);
-			}
+	private String[] getContainerNameAndObjectId(String uri) {
+		QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
+		String[] pathChunks = queryStringDecoder.path().split("/");
+		String[] result = new String[2];
+		if (pathChunks.length == 2) {
+			result[0] = pathChunks[1];
+			result[1] = null;
+		} else if (pathChunks.length >= 3) {
+			result[0] = pathChunks[1];
+			result[1] = pathChunks[2];
 		}
+		return result;
+	}
 
-		if (msg instanceof HttpContent) {
-			HttpContent httpContent = (HttpContent) msg;
-			ByteBuf content = httpContent.content();
-			if (ctx.attr(contentLengthKey) == null) {
-				Long currentContentSize = ctx.attr(contentLengthKey).get();
-				ctx.attr(contentLengthKey).set(currentContentSize + content.readableBytes());
-			}
-		}
-
-		if (msg instanceof LastHttpContent) {
-			LastHttpContent trailer = (LastHttpContent) msg;
-			if (!handle(trailer, ctx)) {
-				ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-			}
+	private void processHttpRequest(ChannelHandlerContext ctx, HttpRequest request) {
+		ctx.attr(requestKey).set(request);
+		if (request.headers().contains(CONTENT_LENGTH)) {
+			ctx.attr(contentLengthKey).set(Long.parseLong(request.headers().get(CONTENT_LENGTH)));
 		}
 	}
 
-	public final boolean handle(HttpObject currentObj, ChannelHandlerContext ctx) {
+	private void processHttpContent(ChannelHandlerContext ctx, HttpContent httpContent) {
+		ByteBuf content = httpContent.content();
+		if (ctx.attr(contentLengthKey) == null) {
+			Long currentContentSize = ctx.attr(contentLengthKey).get();
+			ctx.attr(contentLengthKey).set(currentContentSize + content.readableBytes());
+		}
+	}
+
+	@Override
+	protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
+		if (msg instanceof HttpRequest) {
+			processHttpRequest(ctx, (HttpRequest) msg);
+		}
+
+		if (msg instanceof HttpContent) {
+			processHttpContent(ctx, (HttpContent) msg);
+		}
+
+		if (msg instanceof LastHttpContent) {
+			handle(ctx);
+		}
+	}
+
+	public final void handle(ChannelHandlerContext ctx) {
 		if (rateLimit > 0) {
 			if (ioStats.getWriteRate() + ioStats.getReadRate() + ioStats.getDeleteRate() > rateLimit) {
 				try {
 					Thread.sleep(lastMilliDelay.incrementAndGet());
 				} catch (InterruptedException e) {
-					return false;
 				}
 			} else if (lastMilliDelay.get() > 0) {
 				lastMilliDelay.decrementAndGet();
 			}
 		}
 		handleActually(ctx);
-		return true;
 	}
 
 	public void handleActually(ChannelHandlerContext ctx) {
-		HttpRequest request = ctx.attr(currentHttpRequestKey).get();
-		String method = request.getMethod().toString().toUpperCase();
-		String containerName = ctx.attr(containerNameKey).get();
-		String objId = ctx.attr(objIdKey).get();
+		String method = ctx.attr(requestKey).get().getMethod().toString().toUpperCase();
+		String[] namesArr = getContainerNameAndObjectId(ctx.attr(requestKey).get().getUri());
+		String containerName = namesArr[0];
+		String objId = namesArr[1];
 		Long size = ctx.attr(contentLengthKey).get();
-		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
-		response.headers().set(CONTENT_LENGTH, 0);
-		ctx.attr(currentHttpResponseKey).set(response);
+		ctx.attr(ctxWriteFlagKey).set(true);
 		if (containerName != null) {
 			if (objId != null) {
 				long offset;
@@ -162,9 +166,14 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 				handleGenericContainerReq(method, containerName, ctx);
 			}
 		} else {
-			changeHttpResponseStatusInContext(ctx, BAD_REQUEST);
+			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
-		ctx.write(ctx.attr(currentHttpResponseKey).get());
+		if (ctx.attr(ctxWriteFlagKey).get()) {
+			HttpResponseStatus status = ctx.attr(responseStatusKey).get();
+			FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, status != null ? status : OK);
+			HttpHeaders.setContentLength(response, 0);
+			ctx.write(response);
+		}
 	}
 
 	protected void handleGenericContainerReq(String method, String containerName, ChannelHandlerContext ctx) {
@@ -173,6 +182,7 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 				break;
 			case WSRequestConfig.METHOD_HEAD:
 				handleContainerExists(containerName, ctx);
+				break;
 			case WSRequestConfig.METHOD_PUT:
 				handleContainerCreate(containerName);
 				break;
@@ -184,7 +194,7 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 
 	private void handleContainerExists(String containerName, ChannelHandlerContext ctx) {
 		if (sharedStorage.getContainer(containerName) == null) {
-			changeHttpResponseStatusInContext(ctx, NOT_FOUND);
+			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 		}
 	}
 
@@ -193,15 +203,13 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 	}
 
 	protected void handleContainerList(String containerName, ChannelHandlerContext ctx) {
-		FullHttpResponse response;
 		int maxCount = DataItemContainer.DEFAULT_PAGE_SIZE;
 		String marker = null;
-		String uri = ctx.attr(currentHttpRequestKey).get().getUri();
+		String uri = ctx.attr(requestKey).get().getUri();
 		QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
 		if (queryStringDecoder.parameters().containsKey("max-keys")) {
 			maxCount = Integer.parseInt(queryStringDecoder.parameters().get("max-keys").get(0));
-		}
-		else {
+		} else {
 			LOG.warn(Markers.ERR, "Failed to parse max keys argument value in the URI: " + uri);
 		}
 		if (queryStringDecoder.parameters().containsKey("marker")) {
@@ -211,22 +219,19 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 		T lastObj;
 		try {
 			lastObj = sharedStorage.listObjects(containerName, marker, buff, maxCount);
-			if(LOG.isTraceEnabled(Markers.MSG)) {
+			if (LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 						Markers.MSG, "Bucket \"{}\": generated list of {} objects, last one is \"{}\"",
 						containerName, buff.size(), lastObj
 				);
 			}
 		} catch (ContainerMockNotFoundException e) {
-			changeHttpResponseStatusInContext(ctx, NOT_FOUND);
+			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			return;
 		} catch (ContainerMockException e) {
-			changeHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
+			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			return;
 		}
-		// todo check this line
-		response = ctx.attr(currentHttpResponseKey).get();
-		response.headers().set(CONTENT_TYPE, ContentType.APPLICATION_XML.getMimeType());
 		Document doc = DOM_BUILDER.newDocument();
 		Element eRoot = doc.createElementNS(
 				"http://s3.amazonaws.com/doc/2006-03-01/", "ListBucketResult"
@@ -244,7 +249,7 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 		e = doc.createElement("MaxKeys");
 		e.appendChild(doc.createTextNode(Integer.toString(buff.size())));
 		eRoot.appendChild(e);
-		for(T dataObject : buff) {
+		for (T dataObject : buff) {
 			e = doc.createElement("Contents");
 			ee = doc.createElement("Key");
 			ee.appendChild(doc.createTextNode(dataObject.getName()));
@@ -258,14 +263,18 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 		final StreamResult r = new StreamResult(bos);
 		try {
 			TF.newTransformer().transform(new DOMSource(doc), r);
-		} catch(TransformerException ex) {
-			changeHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
+		} catch (TransformerException ex) {
+			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.ERROR, ex, "Failed to build bucket XML listing");
 			return;
 		}
 		// todo know what does it mean
-		response.content().setBytes(0, bos.toByteArray());
-		ctx.attr(currentHttpResponseKey).set(response);
+		byte[] content = bos.toByteArray();
+		ctx.attr(ctxWriteFlagKey).set(false);
+		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.copiedBuffer(content));
+		response.headers().set(CONTENT_TYPE, ContentType.APPLICATION_XML.getMimeType());
+		HttpHeaders.setContentLength(response, content.length);
+		ctx.write(response);
 	}
 
 	protected void handleGenericDataReq(String method, String containerName, String objId,
@@ -281,32 +290,31 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 				handleRead(containerName, objId, offset, ctx);
 				break;
 			case WSRequestConfig.METHOD_HEAD:
-				changeHttpResponseStatusInContext(ctx, OK);
+				setHttpResponseStatusInContext(ctx, OK);
 				break;
 		}
 	}
 
 	private void handleWrite(String containerName, String objId,
-	                                 Long offset, Long size, ChannelHandlerContext ctx) {
+	                         Long offset, Long size, ChannelHandlerContext ctx) {
 		// TODO check usage of RANGE header
-		List<String> rangeHeaders = ctx.attr(currentHttpRequestKey).get().headers().getAll(RANGE);
+		List<String> rangeHeaders = ctx.attr(requestKey).get().headers().getAll(RANGE);
 		try {
-			if (rangeHeaders.size() != 0) {
+			if (rangeHeaders.size() == 0 || rangeHeaders == null) {
 				sharedStorage.createObject(containerName, objId,
 						offset, size);
 				ioStats.markWrite(true, size);
-			}
-			else {
+			} else {
 				ioStats.markWrite(
 						handlePartialWrite(containerName, objId, rangeHeaders, size),
 						size
 				);
 			}
 		} catch (ContainerMockNotFoundException e) {
-			changeHttpResponseStatusInContext(ctx, NOT_FOUND);
+			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			ioStats.markWrite(false, size);
 		} catch (StorageMockCapacityLimitReachedException e) {
-			changeHttpResponseStatusInContext(ctx, INSUFFICIENT_STORAGE);
+			setHttpResponseStatusInContext(ctx, INSUFFICIENT_STORAGE);
 			ioStats.markWrite(false, size);
 		}
 	}
@@ -315,39 +323,42 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 	                                   List<String> rangeHeaders, Long size) {
 		String rangeHeaderValue, rangeValuePairs[], rangeValue[];
 		long offset;
-		for (String rangeHeader: rangeHeaders) {
+		for (String rangeHeader : rangeHeaders) {
 
 		}
 		return true;
 	}
 
 	private void handleRead(String containerName, String objId,
-	                   Long offset, ChannelHandlerContext ctx) {
-		FullHttpResponse response;
+	                        Long offset, ChannelHandlerContext ctx) {
+		HttpResponse response;
 		try {
-			T objData = sharedStorage.getObject(containerName, objId, offset, 0);
-			if (objData != null) {
-				ioStats.markRead(true, objData.getSize());
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.MSG, "Send data object with ID: {}", objData);
+			T obj = sharedStorage.getObject(containerName, objId, offset, 0);
+			if (obj != null) {
+				final long objSize = obj.getSize();
+				ioStats.markRead(true, objSize);
+				if (LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(Markers.MSG, "Send data object with ID: {}", obj);
 				}
-				//todo solve a problem with a type of objData (T extends WSObjMock)
-				response = new DefaultFullHttpResponse(HTTP_1_1, OK,
-						Unpooled.copiedBuffer(objData.toString(), CharsetUtil.UTF_8));
-				response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
-				ctx.attr(currentHttpResponseKey).set(response);
-
+				ctx.attr(ctxWriteFlagKey).set(false);
+				response = new DefaultHttpResponse(HTTP_1_1, OK);
+				HttpHeaders.setContentLength(response, objSize);
+				ctx.write(response);
+				ctx.write(new DataItemFileRegion(obj));
+				ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 			} else {
-				changeHttpResponseStatusInContext(ctx, NOT_FOUND);
+				setHttpResponseStatusInContext(ctx, NOT_FOUND);
 				ioStats.markRead(false, 0);
 			}
 		} catch (ContainerMockException e) {
-			e.printStackTrace();
+			setHttpResponseStatusInContext(ctx, INTERNAL_SERVER_ERROR);
+			LogUtil.exception(LOG, Level.WARN, e, "Container \"{}\" failure", containerName);
+			ioStats.markRead(false, 0);
 		}
 	}
 
-	private void changeHttpResponseStatusInContext(ChannelHandlerContext ctx, HttpResponseStatus status) {
-		ctx.attr(currentHttpResponseKey).set(ctx.attr(currentHttpResponseKey).get().setStatus(status));
+	private void setHttpResponseStatusInContext(ChannelHandlerContext ctx, HttpResponseStatus status) {
+		ctx.attr(responseStatusKey).set(status);
 	}
 
 	@Override
