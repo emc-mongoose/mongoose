@@ -8,6 +8,7 @@ import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
 import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.load.executor.DirectoryLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.task.BasicDirectoryIOTask;
 //
@@ -23,7 +24,8 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 23.11.15.
  */
 public class BasicDirectoryLoadExecutor<T extends FileItem, C extends Directory<T>>
-extends LimitedRateLoadExecutorBase<C> {
+extends LimitedRateLoadExecutorBase<C>
+implements DirectoryLoadExecutor<T, C> {
 	//
 	private final ExecutorService ioTaskExecutor;
 	//

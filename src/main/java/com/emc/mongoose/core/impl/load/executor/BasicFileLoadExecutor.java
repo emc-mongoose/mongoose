@@ -8,6 +8,7 @@ import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.FileIOTask;
 import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.task.BasicFileIOTask;
 //
@@ -23,7 +24,8 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 23.11.15.
  */
 public class BasicFileLoadExecutor<T extends FileItem>
-extends MutableDataLoadExecutorBase<T> {
+extends MutableDataLoadExecutorBase<T>
+implements FileLoadExecutor<T> {
 	//
 	private final ExecutorService ioTaskExecutor;
 	//
