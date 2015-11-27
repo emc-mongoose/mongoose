@@ -34,28 +34,6 @@ extends DataLoadBuilderBase<T, U> {
 	@Override
 	public void invokePreConditions()
 	throws IllegalStateException {
-		// check the filesystem
-		final File parentPath = Paths.get("").toFile();
-		final IOTask.Type loadType = ioConfig.getLoadType();
-		switch(loadType) {
-			case CREATE:
-			case DELETE:
-			case UPDATE:
-			case APPEND:
-				if(!parentPath.canWrite()) {
-					throw new IllegalStateException(
-						"Parent directory \"" + parentPath.getAbsolutePath() + " is not writable"
-					);
-				}
-				break;
-			case READ:
-				if(!parentPath.canRead()) {
-					throw new IllegalStateException(
-						"Parent directory \"" + parentPath.getAbsolutePath() + " is not readable"
-					);
-				}
-				break;
-		}
 		// create parent directories
 		final String parentDirectories = ioConfig.getNamePrefix();
 		if(parentDirectories != null && !parentDirectories.isEmpty()) {
