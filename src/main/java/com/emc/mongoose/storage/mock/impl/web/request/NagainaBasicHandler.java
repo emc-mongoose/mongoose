@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.emc.mongoose.core.api.io.req.WSRequestConfig.VALUE_RANGE_CONCAT;
+import static com.emc.mongoose.core.api.io.req.WSRequestConfig.VALUE_RANGE_PREFIX;
 import static io.netty.channel.ChannelHandler.*;
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
@@ -174,8 +176,6 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 
 	protected void handleGenericContainerReq(String method, String containerName, ChannelHandlerContext ctx) {
 		switch (method) {
-			case WSRequestConfig.METHOD_POST:
-				break;
 			case WSRequestConfig.METHOD_HEAD:
 				handleContainerExists(containerName, ctx);
 				break;
@@ -185,7 +185,14 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 			case WSRequestConfig.METHOD_GET:
 				handleContainerList(containerName, ctx);
 				break;
+			case WSRequestConfig.METHOD_DELETE:
+				handleContainerDelete(containerName);
+				break;
 		}
+	}
+
+	private void handleContainerDelete(String containerName) {
+		sharedStorage.deleteContainer(containerName); // todo check is it necessary here to send OK response (send by default)
 	}
 
 	private void handleContainerExists(String containerName, ChannelHandlerContext ctx) {
@@ -276,8 +283,6 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 	                                    Long offset, Long size, ChannelHandlerContext ctx) {
 		switch (method) {
 			case WSRequestConfig.METHOD_POST:
-				handleWrite(containerName, objId, offset, size, ctx);
-				break;
 			case WSRequestConfig.METHOD_PUT:
 				handleWrite(containerName, objId, offset, size, ctx);
 				break;
@@ -287,39 +292,82 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 			case WSRequestConfig.METHOD_HEAD:
 				setHttpResponseStatusInContext(ctx, OK);
 				break;
+			case WSRequestConfig.METHOD_DELETE:
+				handleDelete(containerName, objId, offset, ctx);
+				break;
+		}
+	}
+
+	private void handleDelete(String containerName, String objId,
+	                          Long offset, ChannelHandlerContext ctx) {
+		try {
+			sharedStorage.deleteObject(containerName, objId, offset, -1);
+			if (LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Delete data object with ID: {}", objId);
+			}
+			ioStats.markDelete(true);
+		} catch (ContainerMockNotFoundException e) {
+			ioStats.markDelete(false);
+			setHttpResponseStatusInContext(ctx, NOT_FOUND);
+			if (LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.ERR, "No such container: {}", objId);
+			}
 		}
 	}
 
 	private void handleWrite(String containerName, String objId,
 	                         Long offset, Long size, ChannelHandlerContext ctx) {
-		// TODO check usage of RANGE header
-		List<String> rangeHeaders = ctx.attr(requestKey).get().headers().getAll(RANGE);
+		List<String> rangeHeadersValues = ctx.attr(requestKey).get().headers().getAll(RANGE);
 		try {
-			if (rangeHeaders.size() == 0 || rangeHeaders == null) {
+			if (rangeHeadersValues.size() == 0 || rangeHeadersValues == null) {
 				sharedStorage.createObject(containerName, objId,
 						offset, size);
 				ioStats.markWrite(true, size);
 			} else {
 				ioStats.markWrite(
-						handlePartialWrite(containerName, objId, rangeHeaders, size),
+						handlePartialWrite(containerName, objId, rangeHeadersValues, size),
 						size
 				);
 			}
-		} catch (ContainerMockNotFoundException e) {
+		} catch (ContainerMockNotFoundException | ObjectMockNotFoundException e) {
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			ioStats.markWrite(false, size);
-		} catch (StorageMockCapacityLimitReachedException e) {
+		} catch (StorageMockCapacityLimitReachedException | ContainerMockException e) {
 			setHttpResponseStatusInContext(ctx, INSUFFICIENT_STORAGE);
 			ioStats.markWrite(false, size);
 		}
 	}
 
 	private boolean handlePartialWrite(String containerName, String objId,
-	                                   List<String> rangeHeaders, Long size) {
-		String rangeHeaderValue, rangeValuePairs[], rangeValue[];
-		long offset;
-		for (String rangeHeader : rangeHeaders) {
+	                                   List<String> rangeHeadersValues, Long size) throws ContainerMockException, ObjectMockNotFoundException {
+		for (String rangeValues : rangeHeadersValues) {
+			if (rangeValues.startsWith(VALUE_RANGE_PREFIX)) {
+				rangeValues = rangeValues.substring(
+						VALUE_RANGE_PREFIX.length(), rangeValues.length()
+				);
+				String[] ranges = rangeValues.split(RunTimeConfig.LIST_SEP);
+				for (String range : ranges) {
+					String[] rangeBorders = range.split(VALUE_RANGE_CONCAT);
+					if (rangeBorders.length == 1) {
+						sharedStorage.appendObject(containerName, objId, Long.parseLong(rangeBorders[0]), size);
+					} else if (rangeBorders.length == 2) {
+						long offset = Long.parseLong(rangeBorders[0]);
+						sharedStorage.updateObject(
+								containerName, objId, offset, Long.parseLong(rangeBorders[1]) - offset + 1
+						);
+					} else {
+						LOG.warn(
+								Markers.ERR, "Invalid range header value: \"{}\"", rangeValues
+						);
+						return false;
+					}
 
+				}
+			}
+			else {
+				LOG.warn(Markers.ERR, "Invalid range header value: \"{}\"", rangeValues);
+				return false;
+			}
 		}
 		return true;
 	}
