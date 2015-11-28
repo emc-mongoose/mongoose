@@ -220,7 +220,7 @@ implements WSDataLoadExecutor<T> {
 					);
 				} finally {
 					try {
-						nextConnPool.shutdown(0);
+						nextConnPool.shutdown(1);
 						LOG.debug(Markers.MSG, "{}: connection pool has been shut down", getName());
 					} catch(final IOException e) {
 						LogUtil.exception(

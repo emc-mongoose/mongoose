@@ -2,32 +2,54 @@ package com.emc.mongoose.integ.suite;
 /**
  Created by kurila on 15.07.15.
  */
+import com.emc.mongoose.integ.feature.distributed.CircularAppendTest;
+import com.emc.mongoose.integ.feature.distributed.CircularAppendZeroSizeItems;
+import com.emc.mongoose.integ.feature.distributed.CircularReadTest;
+import com.emc.mongoose.integ.feature.distributed.CircularSequentialChainTest;
+import com.emc.mongoose.integ.feature.distributed.CircularUpdateTest;
+import com.emc.mongoose.integ.feature.distributed.DeleteLoggingTest;
+import com.emc.mongoose.integ.feature.distributed.DeleteManyBucketsConcurrentlyTest;
+import com.emc.mongoose.integ.feature.distributed.RampupTest;
+import com.emc.mongoose.integ.feature.distributed.ReadBucketsWithManyObjects;
+import com.emc.mongoose.integ.feature.distributed.ReadFewBucketsTest;
+import com.emc.mongoose.integ.feature.distributed.ReadLoggingTest;
+import com.emc.mongoose.integ.feature.distributed.SequentialLoadTest;
+import com.emc.mongoose.integ.feature.distributed.SimultaneousLoadTest;
+import com.emc.mongoose.integ.feature.distributed.UpdateLoggingTest;
+import com.emc.mongoose.integ.feature.distributed.UpdateZeroBytesTest;
+import com.emc.mongoose.integ.feature.distributed.WriteByCountTest;
+import com.emc.mongoose.integ.feature.distributed.WriteByTimeTest;
+import com.emc.mongoose.integ.feature.distributed.WriteFewBucketsTest;
+import com.emc.mongoose.integ.feature.distributed.WriteLoggingTest;
+import com.emc.mongoose.integ.feature.distributed.WriteManyBucketsConcurrentlyTest;
+import com.emc.mongoose.integ.feature.distributed.WriteManyObjectsToFewBucketsTest;
+import com.emc.mongoose.integ.feature.distributed.WriteRikkiTikkiTaviTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 //
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	com.emc.mongoose.integ.distributed.single.WriteByCountTest.class,
-	com.emc.mongoose.integ.distributed.single.WriteByTimeTest.class,
-	com.emc.mongoose.integ.distributed.single.WriteLoggingTest.class,
-	com.emc.mongoose.integ.distributed.single.ReadLoggingTest.class,
-	com.emc.mongoose.integ.distributed.single.DeleteLoggingTest.class,
-	com.emc.mongoose.integ.distributed.single.UpdateLoggingTest.class,
-	com.emc.mongoose.integ.distributed.chain.SequentialLoadTest.class,
-	com.emc.mongoose.integ.distributed.chain.SimultaneousLoadTest.class,
-	com.emc.mongoose.integ.distributed.rampup.RampupTest.class,
-	com.emc.mongoose.integ.distributed.single.CircularReadTest.class,
-	com.emc.mongoose.integ.distributed.single.CircularAppendTest.class,
-	com.emc.mongoose.integ.distributed.single.CircularAppendZeroSizeItems.class,
-	com.emc.mongoose.integ.distributed.single.CircularUpdateTest.class,
-	com.emc.mongoose.integ.distributed.chain.CircularSequentialChainTest.class,
-	com.emc.mongoose.integ.distributed.single.UpdateZeroBytesTest.class,
-	com.emc.mongoose.integ.distributed.single.WriteRikkiTikkiTaviTest.class,
-	com.emc.mongoose.integ.distributed.single.WriteFewBucketsTest.class,
-	com.emc.mongoose.integ.distributed.single.WriteManyBucketsConcurrentlyTest.class,
-	com.emc.mongoose.integ.distributed.single.ReadFewBucketsTest.class,
-	com.emc.mongoose.integ.distributed.single.DeleteManyBucketsConcurrentlyTest.class,
-	com.emc.mongoose.integ.distributed.single.WriteManyObjectsToFewBucketsTest.class,
-	com.emc.mongoose.integ.distributed.single.ReadBucketsWithManyObjects.class,
+	WriteByCountTest.class,
+	WriteByTimeTest.class,
+	WriteLoggingTest.class,
+	ReadLoggingTest.class,
+	DeleteLoggingTest.class,
+	UpdateLoggingTest.class,
+	SequentialLoadTest.class,
+	SimultaneousLoadTest.class,
+	RampupTest.class,
+	CircularReadTest.class,
+	CircularAppendTest.class,
+	CircularAppendZeroSizeItems.class,
+	CircularUpdateTest.class,
+	CircularSequentialChainTest.class,
+	UpdateZeroBytesTest.class,
+	WriteRikkiTikkiTaviTest.class,
+	WriteFewBucketsTest.class,
+	WriteManyBucketsConcurrentlyTest.class,
+	ReadFewBucketsTest.class,
+	DeleteManyBucketsConcurrentlyTest.class,
+	WriteManyObjectsToFewBucketsTest.class,
+	ReadBucketsWithManyObjects.class,
 })
 public class DistributedLoadTestSuite {}
