@@ -2,7 +2,9 @@ package com.emc.mongoose.integ.feature.storage.web.swift;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.impl.container.BasicContainer;
 import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.swift.SwiftContainerHelper;
@@ -25,7 +27,7 @@ extends StandaloneClientTestBase {
 	private final static String RUN_ID = SwiftUsePreExistingContainerTest.class.getCanonicalName();
 	//
 	private static long COUNT_WRITTEN;
-	private static SwiftContainerHelper<WSObject> CONTAINER;
+	private static SwiftContainerHelper<WSObject, Container<WSObject>> CONTAINER_HELPER;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -37,9 +39,9 @@ extends StandaloneClientTestBase {
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
 			.newInstanceFor("swift")
 			.setProperties(RunTimeConfig.getContext());
-		CONTAINER = new WSSwiftContainerHelper<>(reqConf, RUN_ID, false);
-		CONTAINER.create("127.0.0.1");
-		if(!CONTAINER.exists("127.0.0.1")) {
+		CONTAINER_HELPER = new WSSwiftContainerHelper<>(reqConf, new BasicContainer(RUN_ID));
+		CONTAINER_HELPER.create("127.0.0.1");
+		if(!CONTAINER_HELPER.exists("127.0.0.1")) {
 			Assert.fail("Failed to pre-create the bucket for test");
 		}
 		//
@@ -48,7 +50,7 @@ extends StandaloneClientTestBase {
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("swift")
-				.setSwiftContainer(CONTAINER.getName())
+				.setSwiftContainer(CONTAINER_HELPER.toString())
 				.build()
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
@@ -60,7 +62,7 @@ extends StandaloneClientTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		CONTAINER.delete(RunTimeConfig.getContext().getStorageAddrs()[0]);
+		CONTAINER_HELPER.delete(RunTimeConfig.getContext().getStorageAddrs()[0]);
 		StandaloneClientTestBase.tearDownClass();
 	}
 	//

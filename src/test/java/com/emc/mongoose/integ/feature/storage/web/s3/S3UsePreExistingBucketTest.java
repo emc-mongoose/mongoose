@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.impl.container.BasicContainer;
 import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.s3.BucketHelper;
@@ -44,7 +45,7 @@ extends StandaloneClientTestBase {
 			.setProperties(RunTimeConfig.getContext());
 		reqConf.setProperties(RunTimeConfig.getContext());
 		bucketHelper = new WSBucketHelper(
-			reqConf, S3UsePreExistingBucketTest.class.getSimpleName(), false
+			reqConf, new BasicContainer(S3UsePreExistingBucketTest.class.getSimpleName())
 		);
 		bucketHelper.create("127.0.0.1");
 		if(!bucketHelper.exists("127.0.0.1")) {
@@ -56,7 +57,7 @@ extends StandaloneClientTestBase {
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("s3")
-				.setS3Bucket(bucketHelper.getName())
+				.setS3Bucket(bucketHelper.toString())
 				.build()
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
