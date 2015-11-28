@@ -39,7 +39,9 @@ extends StandaloneClientTestBase {
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
 			.newInstanceFor("swift")
 			.setProperties(RunTimeConfig.getContext());
-		CONTAINER_HELPER = new WSSwiftContainerHelper<>(reqConf, new BasicContainer(RUN_ID));
+		CONTAINER_HELPER = new WSSwiftContainerHelper<WSObject, Container<WSObject>>(
+				reqConf, new BasicContainer(RUN_ID)
+		);
 		CONTAINER_HELPER.create("127.0.0.1");
 		if(!CONTAINER_HELPER.exists("127.0.0.1")) {
 			Assert.fail("Failed to pre-create the bucket for test");
