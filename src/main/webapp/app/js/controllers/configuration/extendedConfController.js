@@ -4,6 +4,10 @@ define([
 ],
 function(Handlebars, extendedConf) {
 	//
+	var KEY_FIELD_RUN_ID = "run.id",
+		KEY_FIELD_LOAD_LIMIT_TIME = "load.limit.time",
+		KEY_RUN_MODE = "run.mode";
+	//
 	function activate() {
 		$("#base").hide();
 		$(".folders").show();
@@ -11,7 +15,7 @@ function(Handlebars, extendedConf) {
 	}
 	//
 	function setup(props) {
-		//render(props);
+		render(props);
 	}
 	//
 	function render(props) {
@@ -19,12 +23,11 @@ function(Handlebars, extendedConf) {
 		var html = compiled();
 		document.querySelector("#main-content")
 			.insertAdjacentHTML("beforeend", html);
-		//
-		var shortPropsMap = {};
+		var propsMap = {};
+		//  show hidden folders on menu panel
 		var ul = $(".folders");
 		ul.show();
-		//
-		walkTreeMap(props, ul, shortPropsMap);
+		walkTreeMap(props, ul, propsMap);
 		$("<li>").appendTo($("#run").parent().find("ul").first())
 			.addClass("file")
 			.append($("<a>", {
@@ -32,12 +35,10 @@ function(Handlebars, extendedConf) {
 				href: "#" + "run.id",
 				text: "id"
 			}));
-		//
-		shortPropsMap["run.id"] = "";
-		buildDivBlocksByPropertyNames(shortPropsMap);
+		//  add empty field which doesn't contain in rtConfig
+		propsMap[KEY_FIELD_RUN_ID] = "";
+		buildDivBlocksByPropertyNames(propsMap);
 		bindEvents();
-		//
-		$("#run-mode").trigger("change");
 	}
 	//
 	function onMenuItemClick(element) {
@@ -57,7 +58,7 @@ function(Handlebars, extendedConf) {
 		content.children().hide();
 	}
 	//
-	function walkTreeMap(map, ul, shortsPropsMap, fullKeyName) {
+	function walkTreeMap(map, ul, propsMap, fullKeyName) {
 		$.each(map, function(key, value) {
 			var element;
 			var currKeyName = "";
@@ -78,7 +79,7 @@ function(Handlebars, extendedConf) {
 						href: "#" + currKeyName,
 						text: key
 					}));
-				shortsPropsMap[currKeyName] = value;
+				propsMap[currKeyName] = value;
 			} else {
 				element = $("<ul>").appendTo(
 					$("<li>").prependTo(ul)
@@ -91,14 +92,14 @@ function(Handlebars, extendedConf) {
 							id: key
 						}))
 					);
-				walkTreeMap(value, element, shortsPropsMap, currKeyName);
+				walkTreeMap(value, element, propsMap, currKeyName);
 			}
 		});
 	}
 	//
-	function buildDivBlocksByPropertyNames(shortPropsMap) {
-		for(var key in shortPropsMap) {
-			if(shortPropsMap.hasOwnProperty(key)) {
+	function buildDivBlocksByPropertyNames(propsMap) {
+		for(var key in propsMap) {
+			if(propsMap.hasOwnProperty(key)) {
 				if(key === "run.mode")
 					continue;
 				var keyDiv = $("<div>").addClass("form-group");
@@ -115,7 +116,7 @@ function(Handlebars, extendedConf) {
 						type: "text",
 						class: "form-control",
 						name: key,
-						value: shortPropsMap[key],
+						value: propsMap[key],
 						placeholder: "Enter '" + key + "' property. "
 					})));
 				keyDiv.appendTo("#configuration-content");
@@ -130,61 +131,53 @@ function(Handlebars, extendedConf) {
 				onMenuItemClick($(this));
 			}
 		});
-		//
 		var extended = $("#extended");
 		//
 		extended.find("input").on("change", function() {
-			var value = this.value;
 			var parentIdAttr = $(this).parent().parent().attr("id");
-			//  find duplicated elements
-			var div = $("#duplicate-" + parentIdAttr.replace(/\./g, "\\."));
-			if(div.is("div")) {
-				var regExpPattern = /^([0-9]*)([a-zA-Z]+)$/;
-				if(regExpPattern.test(value)) {
-					var matcher = regExpPattern.exec(value);
-					var inputField = div.find("input");
-					inputField.val(matcher[1]);
-					inputField.trigger("change");
-					//
-					var selectableElement = div.find("select").get(0);
-					var options = selectableElement.options;
-					for(var option in options) {
-						if(options.hasOwnProperty(option)) {
-							option = options[option];
-							var searchPattern = new RegExp('^' + matcher[2]);
-							if(searchPattern.test(option.innerText)) {
-								selectableElement.value = option.innerText;
-								$(selectableElement).trigger("change");
-							}
-						}
+			var patternTime = /^([0-9]*)([smhdSMHD]?)$/;
+			var numStr = "0", unitStr = "seconds";
+			var timeUnitShortCuts = {
+				"s" : "seconds",
+				"m" : "minutes",
+				"h" : "hours",
+				"d" : "days"
+			};
+			if(parentIdAttr == KEY_FIELD_LOAD_LIMIT_TIME) {
+				var rawValue = $(this).val();
+				if (patternTime.test(rawValue)) {
+					var matcher = patternTime.exec(rawValue);
+					numStr = matcher[1];
+					if (matcher[2] != null && matcher[2].length > 0) {
+						unitStr = timeUnitShortCuts[matcher[2].toLowerCase()];
 					}
+				} else if (rawValue.indexOf('.') > 0) {
+					var splitValue = rawValue.split('.');
+					numStr = splitValue[0];
+					unitStr = splitValue[1];
 				}
+				// ok, going further
+				$("#load\\.limit\\.time\\.value").val(numStr);
+				$("#load\\.limit\\.time\\.unit").val(unitStr);
+			} else if (parentIdAttr == KEY_RUN_MODE) {
+				var runModeElement = $("#run-mode");
+				runModeElement.val($(this).val());
+				runModeElement.trigger("change");
+			} else {
+				var input = $('input[data-pointer="' + parentIdAttr + '"]')
+					.val($(this).val());
+				var select = $('select[data-pointer="' + parentIdAttr + '"] option:contains(' + $(this)
+					.val() + ')')
+					.attr('selected', 'selected');
 			}
-			//
-			var input = $('input[data-pointer="' + parentIdAttr + '"]');
-			input.val(value);
-			input.trigger("change");
-			//
-			var select = $('select[data-pointer="' + parentIdAttr + '"]');
-			select.val(value);
-			try {
-				if (select.find('option[value=modal-"' + value + '"]').length > 0) {
-					select.val("modal-" + value);
-				}
-			} catch(err) {
-
-			}
-			select.trigger("change");
-			//
-		});
-		//
-		//
-		extended.find("input").each(function() {
-			$(this).trigger("change");
 		});
 		//
 		$("#run-mode").on("change", function() {
 			$("#configuration-content").find("#hidden-run\\.mode").val($(this).val());
+		});
+		//  activate extended onChange event
+		extended.find("input").each(function() {
+			$(this).trigger("change");
 		});
 	}
 	//

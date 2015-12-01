@@ -56,4 +56,14 @@
 		<url-pattern>/save/*</url-pattern>
 	</servlet-mapping>
 
+	<servlet>
+		<servlet-name>StateServlet</servlet-name>
+		<servlet-class>com.emc.mongoose.webui.StateServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>StateServlet</servlet-name>
+		<url-pattern>/state/*</url-pattern>
+	</servlet-mapping>
+
 </web-app>

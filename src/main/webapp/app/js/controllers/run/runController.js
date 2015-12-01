@@ -1,38 +1,49 @@
 define([
 	"jquery",
 	"handlebars",
-	"./configuration/confMenuController",
-	"./websockets/webSocketController",
-	"text!../../templates/navbar.hbs",
-	"text!../../templates/tabs.hbs",
-	"text!../../templates/run/tab-header.hbs",
-	"text!../../templates/run/tab-content.hbs"
+	"text!../../../templates/run/tab-header.hbs",
+	"text!../../../templates/run/tab-content.hbs"
 ], function(
 	$,
 	Handlebars,
-	confMenuController,
-	webSocketController,
-	navbarTemplate,
-	tabsTemplate,
     tabHeaderTemplate,
     tabContentTemplate
 ) {
 	var runIdArray = [];
 	//
-	function run(props) {
-		//
-		webSocketController.start(props);
-		//  render navbar and tabs before any other interactions
-		render(props);
-		confMenuController.run(props);
-		//
-		$.post("/state", function(response) {
-			$.each(response, function(index, runId) {
-				if(runIdArray.indexOf(runId) < 0) {
-					runIdArray.push(runId);
-					renderTabByRunId(runId);
+	function start() {
+		var runId = document.getElementById("duplicate-run.id");
+		runId.value = runId.defaultValue;
+		onStartButtonPressed();
+	}
+	//
+	function onStartButtonPressed() {
+		$.post("/start", $("#main-form").serialize(), function(data, status) {
+			if (data) {
+				if (confirm("Are you sure? " + data) === true) {
+					$.post("/stop", { "run.id" : $("#run\\.id").find("input").val(), "type" : "remove" },
+						function(data, status) {
+							if (status) {
+								onStartButtonPressed();
+							}
+						}).fail(function() {
+							alert("Internal Server Error");
+						});
 				}
-			});
+			} else {
+				$('#config-type').find('option').prop('selected', function() {
+					return this.defaultSelected;
+				});
+				//
+				$.post("/state", function(response) {
+					$.each(response, function(index, runId) {
+						if(runIdArray.indexOf(runId) < 0) {
+							runIdArray.push(runId);
+							renderTabByRunId(runId);
+						}
+					});
+				});
+			}
 		});
 	}
 	//
@@ -90,29 +101,7 @@ define([
 
 	}
 	//
-	function render(props) {
-		renderNavbar(props.run.version || "unknown");
-		renderTabs();
-	}
-	//
-	function renderNavbar(runVersion) {
-		var run = {
-			version: runVersion
-		};
-		//
-		var compiled = Handlebars.compile(navbarTemplate);
-		var navbar = compiled(run);
-		document.querySelector("body")
-			.insertAdjacentHTML("afterbegin", navbar);
-	}
-	//
-	function renderTabs() {
-		var tabs = Handlebars.compile(tabsTemplate);
-		document.querySelector("#app")
-			.insertAdjacentHTML("afterbegin", tabs());
-	}
-	//
 	return {
-		run: run
+		start: start
 	};
 });

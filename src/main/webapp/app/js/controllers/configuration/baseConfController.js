@@ -74,19 +74,6 @@ define([
 		});
 	}
 	//
-	function renderApiModalWindow() {
-		var compiled = Handlebars.compile(apiWindow);
-		var html = compiled();
-		document.getElementById(API_FIELD_KEY)
-			.parentNode.insertAdjacentHTML("afterend", html);
-		//
-		$("#" + API_FIELD_KEY.replace(/\./g, "\\.")).on("change", function() {
-			var valueSelected = this.value;
-			document.querySelector("#api-button")
-				.setAttribute("data-target", "#modal-" + valueSelected);
-		});
-	}
-	//
 	function changeLoadHint(value) {
 		var loadHint = $("#scenario-load");
 		var scenarioLoad;
@@ -108,93 +95,99 @@ define([
 		loadHint.text("Load: [" + scenarioLoad + "]");
 	}
 	//
-	function bindEvents() {
-		var select = $("select");
+	function renderApiModalWindow() {
+		var compiled = Handlebars.compile(apiWindow);
+		var html = compiled();
+		document.getElementById(API_FIELD_KEY)
+			.parentNode.insertAdjacentHTML("afterend", html);
 		//
+		$("#" + API_FIELD_KEY.replace(/\./g, "\\.")).on("change", function() {
+			var valueSelected = this.value;
+			document.querySelector("#api-button")
+				.setAttribute("data-target", "#modal-" + valueSelected);
+		});
+	}
+	//
+	function bindEvents() {
+		//
+		var select = $("select");
 		select.each(function() {
 			var notSelected = $("option:not(:selected)", this);
 			notSelected.each(function() {
-				var current = $("#" + $(this).val());
-				if(current.is("div")) {
-					current.hide();
+				var element = $("#" + $(this).val());
+				if (element.is("div")) {
+					element.hide();
 				}
 			});
-			var value = this.value;
-			//
-			var select = $('select[data-pointer="' + this.id.replace(/\./g, "\\.") + '"]');
-			select.val(value);
-			select.trigger("change");
-			//
-			var dataPointer = $(this).attr("data-pointer");
-			if(dataPointer) {
-				var element = $("#" + dataPointer.replace(/\./g, "\\.")).find("input");
-				if(element) {
-					element.val(value);
-				}
-			}
 		});
 		//
 		select.on("change", function() {
 			var valueSelected = this.value;
 			var notSelected = $("option:not(:selected)", this);
 			notSelected.each(function() {
-				var current = $("#" + $(this).val());
-				if (current.is("div")) {
-					current.hide();
+				var element = $("#" + $(this).val());
+				if (element.is("div")) {
+					element.hide();
 				}
 			});
 			var selectedElement = $("#" + valueSelected);
 			if (selectedElement.is("div") && !selectedElement.hasClass("modal")) {
 				selectedElement.show();
-			} else {
-				var value = this.value;
-				//
-				var select = $('select[data-pointer="' + this.id.replace(/\./g, "\\.") + '"]');
-				select.val(value);
-				select.trigger("change");
-				//
-				var dataPointer = $(this).attr("data-pointer");
-				if(dataPointer) {
-					var element = $("#" + dataPointer.replace(/\./g, "\\.")).find("input");
+			}
+		});
+		//
+		$("#base input, #base select").on("change", function() {
+			var currElement = $(this);
+			//
+			var currDataPointer = currElement.attr("data-pointer");
+			if(currDataPointer != null && currDataPointer.length > 0) {
+				var element = $("#" + currElement.attr("data-pointer").replace(/\./g, "\\.") + " input");
+				if(currElement.is("select")) {
+					var valueSelected = currElement.children("option").filter(":selected").text().trim();
+					$('select[data-pointer="'+currElement.attr("data-pointer")+'"]')
+						.val(currElement.val());
 					if(element) {
-						element.val(value);
+						element.val(valueSelected);
+					}
+				} else {
+					$('input[data-pointer="' + currElement.attr("data-pointer") + '"]')
+						.val(currElement.val());
+					if(element) {
+						element.val(currElement.val());
 					}
 				}
 			}
 		});
-		//
-		var input = $("input");
-		//
-		input.each(function() {
-			var value = this.value;
+		//  special event for time field
+		$('#duplicate-load\\.limit\\.time input, #duplicate-load\\.limit\\.time select')
+			.on("change", function() {
+				var strValue = $("#load\\.limit\\.time\\.value").val() +
+					$("#load\\.limit\\.time\\.unit").val().charAt(0);
+			$("#load\\.limit\\.time").find("input").val(strValue);
+		});
+		//  aliasing section
+		$("#duplicate-data\\.size").on("change", function() {
 			//
-			var input = $('input[data-pointer="' + this.id.replace(/\./g, "\\.") + '"]');
-			input.val(value);
-			input.trigger("change");
-			//
-			var dataPointer = $(this).attr("data-pointer");
-			if(dataPointer) {
-				var element = $("#" + dataPointer.replace(/\./g, "\\.")).find("input");
-				if(element) {
-					element.val(value);
-				}
-			}
+			var strValue = $("#data\\.size\\.input").val() +
+				$("#data\\.size\\.select").val();
+			$("#data\\.size\\.min").find("input").val(strValue);
+			$("#data\\.size\\.max").find("input").val(strValue);
 		});
 		//
-		input.on("change", function() {
-			var value = this.value;
+		$("#duplicate-load\\.connections").on("change", function() {
+			var currentValue = this.value;
+			var keys2Override = [
+				"#duplicate-load\\.type\\.append\\.connections",
+				"#duplicate-load\\.type\\.create\\.connections",
+				"#duplicate-load\\.type\\.read\\.connections",
+				"#duplicate-load\\.type\\.update\\.connections",
+				"#duplicate-load\\.type\\.delete\\.connections"
+			];
+			keys2Override.forEach(function(d) {
+				$(d).val(currentValue).change();
+			});
 			//
-			var input = $('input[data-pointer="' + this.id.replace(/\./g, "\\.") + '"]');
-			input.val(value);
-			input.trigger("change");
-			//
-			var dataPointer = $(this).attr("data-pointer");
-			if(dataPointer) {
-				var element = $("#" + dataPointer.replace(/\./g, "\\.")).find("input");
-				if(element) {
-					element.val(value);
-				}
-			}
+			$("#load\\.connections").val(this.value);
 		});
 	}
 

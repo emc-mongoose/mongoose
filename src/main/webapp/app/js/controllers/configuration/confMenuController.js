@@ -3,13 +3,15 @@ define([
 	"handlebars",
 	"text!../../../templates/configuration/confMenu.hbs",
 	"./baseConfController",
-	"./extendedConfController"
+	"./extendedConfController",
+	"../run/runController"
 ], function(
 	$,
 	Handlebars,
 	confMenuTemplate,
     baseConfController,
-    extendedConfController
+    extendedConfController,
+    runController
 ) {
 	//
 	function run(props) {
@@ -46,6 +48,11 @@ define([
 	}
 	//
 	function bindMenuEvents(props) {
+		//
+		$("#start").on("click", function(e) {
+			e.preventDefault();
+			runController.start();
+		});
 		//  config mode change
 		var configTypes = {
 			"base": baseConfController,
