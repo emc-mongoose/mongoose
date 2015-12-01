@@ -1,24 +1,24 @@
 package com.emc.mongoose.storage.mock.impl.web.request;
 
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import io.netty.channel.FileRegion;
 import io.netty.util.AbstractReferenceCounted;
 
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 
-public class DataItemFileRegion
+public class DataItemFileRegion<T extends MutableDataItemMock>
 		extends AbstractReferenceCounted
 		implements FileRegion {
 
-	private final DataItem dataItem;
-	private final long dataSize;
 
-	private long doneByteCount = 0;
+	protected final T dataObject;
+	protected final long dataSize;
+	protected long doneByteCount = 0;
 
-	public DataItemFileRegion(final DataItem dataItem) {
-		this.dataItem = dataItem;
-		this.dataSize = dataItem.getSize();
+	public DataItemFileRegion(final T dataObject) {
+		this.dataObject = dataObject;
+		this.dataSize = dataObject.getSize();
 	}
 
 	@Override
@@ -43,9 +43,8 @@ public class DataItemFileRegion
 	@Override
 	public long transferTo(WritableByteChannel target, long position)
 			throws IOException {
-		dataItem.setRelativeOffset(position);
-		long n = dataItem.write(target, dataSize - position);
-		doneByteCount += n;
-		return n;
+//		dataObject.setRelativeOffset(position);
+		doneByteCount += dataObject.write(target, dataSize - position);
+		return doneByteCount;
 	}
 }

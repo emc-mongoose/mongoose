@@ -387,7 +387,11 @@ public class NagainaBasicHandler<T extends WSObjectMock> extends SimpleChannelIn
 				response = new DefaultHttpResponse(HTTP_1_1, OK);
 				HttpHeaders.setContentLength(response, objSize);
 				ctx.write(response);
-				ctx.write(new DataItemFileRegion(obj));
+				if(obj.hasBeenUpdated()) {
+					ctx.write(new UpdatedDataItemFileRegion(obj));
+				} else {
+					ctx.write(new DataItemFileRegion(obj));
+				}
 				ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 			} else {
 				setHttpResponseStatusInContext(ctx, NOT_FOUND);
