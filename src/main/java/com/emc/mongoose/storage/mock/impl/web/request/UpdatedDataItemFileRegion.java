@@ -9,11 +9,8 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 
-/**
- * Created by ilya on 01.12.15.
- */
 public class UpdatedDataItemFileRegion<T extends MutableDataItemMock> extends DataItemFileRegion<T> {
-	
+
 	private BasicDataItem currRange;
 	private long currRangeSize, nextRangeOffset;
 	private int currRangeIdx, currDataLayerIdx;
