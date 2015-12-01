@@ -1,4 +1,9 @@
-define(function() {
+define([
+	"../../charts/main",
+	"../../charts/util/common"
+], function(
+	chartBase, common
+) {
 	//
 	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
 	var TABLE_ROWS_COUNT = 100;
@@ -50,9 +55,9 @@ define(function() {
 				}
 			});
 			if(!isContains) {
-				if(json.contextMap["scenario.name"] == RUN_SCENARIO_NAME.rampup) {
-					//charts(chartsArray).rampup(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes);
-				}
+				/*if(json.contextMap["scenario.name"] == RUN_SCENARIO_NAME.rampup) {
+					common.charts(chartsArray).rampup(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes);
+				}*/
 			}
 			switch (json.marker.name) {
 				case MARKERS.ERR:
@@ -87,11 +92,12 @@ define(function() {
 					if (!isFound) {
 						switch(json.contextMap["scenario.name"]) {
 							case RUN_SCENARIO_NAME.single:
-								//charts(chartsArray).single(json);
+								chartBase.charts(chartsArray).single(json);
+								//chartBase.charts(chartsArray).single(json, undefined, chartsArray);
 								break;
 							case RUN_SCENARIO_NAME.chain:
-								json.threadName = json.threadName.match(getThreadNamePattern())[0];
-								//charts(chartsArray).chain(runId, runMetricsPeriodSec, json.threadName);
+								json.threadName = json.threadName.match(common.getThreadNamePattern())[0];
+								chartBase.charts(chartsArray).chain(runId, runMetricsPeriodSec, json.threadName);
 								break;
 						}
 					}
@@ -129,14 +135,15 @@ define(function() {
 						filtered = points.filter(function(d) {
 							return d.marker.name === MARKERS.PERF_AVG;
 						});
-						//charts(chartsArray).single(filtered[0], filtered);
+						chartBase.charts(chartsArray).single(filtered);
+						//chartBase.charts(chartsArray).single(filtered[0], filtered, chartsArray);
 						break;
 					case RUN_SCENARIO_NAME.chain:
 						filtered = points.filter(function(d) {
 							return d.marker.name === MARKERS.PERF_AVG;
 						});
 						var runMetricsPeriodSec = logEventsArray[0].contextMap["load.metricsPeriodSec"];
-						//charts(chartsArray).chain(runId, runMetricsPeriodSec, null, filtered);
+						chartBase.charts(chartsArray).chain(runId, runMetricsPeriodSec, null, filtered);
 						break;
 					case RUN_SCENARIO_NAME.rampup:
 						filtered = points.filter(function(d) {

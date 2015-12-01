@@ -8,7 +8,8 @@ requirejs.config({
 		"bootstrap": "../../app/libs/js/bootstrap",
 		"handlebars": "../../app/libs/js/handlebars",
 		"text": "../../app/libs/js/text",
-		"pace": "../../app/libs/js/pace"
+		"pace": "../../app/libs/js/pace",
+		"d3js": "../../app/libs/js/d3js"
 	},
 
 	"shim": {
