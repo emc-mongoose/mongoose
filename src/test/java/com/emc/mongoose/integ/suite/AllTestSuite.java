@@ -10,8 +10,8 @@ import org.junit.runners.Suite;
 	//CambridgeLabDistributedTestSuite.class,
 	//CoreTestSuite.class,
 	DistributedLoadTestSuite.class,
-	StorageAdapterTestSuite.class,
-	ContainersTestSuite.class,
+	//StorageAdapterTestSuite.class,
+	//ContainersTestSuite.class,
 })
 public class AllTestSuite {
 }

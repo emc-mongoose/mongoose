@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.feature.distributed;
+package com.emc.mongoose.integ.feature.containers;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 /**
  Created by andrey on 23.10.15.
  */
-public class WriteManyObjectsToFewBucketsTest
+public class WriteManyObjectsToFewBucketsDistributedTest
 extends DistributedLoadBuilderTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
@@ -33,7 +33,7 @@ extends DistributedLoadBuilderTestBase {
 		LIMIT_COUNT_OBJ = 1000,
 		LIMIT_COUNT_CONTAINER = 100;
 	//
-	private static String RUN_ID_BASE = WriteManyObjectsToFewBucketsTest.class.getCanonicalName();
+	private static String RUN_ID_BASE = WriteManyObjectsToFewBucketsDistributedTest.class.getCanonicalName();
 	private static int countContainerCreated = 0;
 	//
 	@BeforeClass

@@ -1,10 +1,11 @@
-package com.emc.mongoose.integ.feature.distributed;
+package com.emc.mongoose.integ.feature.containers;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
+import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogValidator;
@@ -21,6 +22,7 @@ import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,17 +33,17 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.10.15.
  */
-public class WriteManyBucketsConcurrentlyTest
+public class DeleteManyBucketsConcurrentlyDistributedTest
 extends DistributedLoadBuilderTestBase {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
 	private static final int LIMIT_COUNT = 100000;
-	private static String RUN_ID = WriteManyBucketsConcurrentlyTest.class.getCanonicalName();
+	private static String RUN_ID = DeleteManyBucketsConcurrentlyDistributedTest.class.getCanonicalName();
 
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID + "Write");
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
 		DistributedLoadBuilderTestBase.setUpClass();
@@ -52,6 +54,21 @@ extends DistributedLoadBuilderTestBase {
 		RunTimeConfig.setContext(rtConfig);
 		//
 		final Logger logger = LogManager.getLogger();
+		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		new ScriptMockRunner().run();
+		//  Wait for "Scenario end" message
+		TimeUnit.SECONDS.sleep(5);
+		RunIdFileManager.flushAll();
+		//
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		LoggingTestBase.setUpClass();
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_DELETE);
+		rtConfig.set(
+			RunTimeConfig.KEY_ITEM_SRC_FILE,
+			LogValidator.getItemsListFile(RUN_ID + "Write").getPath()
+		);
+		RunTimeConfig.setContext(rtConfig);
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
 		try(
@@ -165,7 +182,35 @@ extends DistributedLoadBuilderTestBase {
 	}
 
 	@Test
-	public void shouldReportCorrectWrittenCountToSummaryLogFile()
+	public void shouldReportScenarioEndToMessageLogFile()
+	throws Exception {
+		//  Read the message file and search for "Scenario end"
+		final File messageFile = LogValidator.getMessageFile(RUN_ID);
+		Assert.assertTrue(
+			"messages.log file doesn't exist",
+			messageFile.exists()
+		);
+		//
+		try (final BufferedReader bufferedReader =
+				 new BufferedReader(new FileReader(messageFile))) {
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
+					break;
+				}
+			}
+			Assert.assertNotNull(
+				"Line with information about end of scenario must not be equal null ", line
+			);
+			Assert.assertTrue(
+				"Information about end of scenario doesn't contain in message.log file",
+				line.contains(TestConstants.SCENARIO_END_INDICATOR)
+			);
+		}
+	}
+
+	@Test
+	public void shouldReportCorrectCountToSummaryLogFile()
 	throws Exception {
 		//  Read perf.summary file
 		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);

@@ -46,6 +46,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	DefaultWriteTest.class,
+	InfiniteWriteTest.class,
 	WriteRandomSizedItemsTest.class,
 	ReadZeroSizeItemsTest.class,
 	Read10BItemsTest.class,
@@ -57,30 +58,26 @@ import org.junit.runners.Suite;
 	WriteByTimeTest.class,
 	ReadVerificationTest.class,
 	WriteByCountTest.class,
+	//
 	CustomChainScenarioTest.class,
 	SequentialChainCRUDTest.class,
 	ConcurrentChainCRUDTest.class,
 	DefaultChainScenarioTest.class,
 	CustomRampupTest.class,
 	DefaultRampupTest.class,
-	InfiniteWriteTest.class,
+	//
 	CircularAppendTest.class,
 	CircularReadAfterUpdateTest.class,
 	CircularReadTest.class,
 	CircularReadFromBucketTest.class,
 	CircularUpdateTest.class,
 	CircularSequentialChainTest.class,
+	//
 	WriteZeroBytesTest.class,
 	ReadZeroBytesTest.class,
 	UpdateZeroBytesTest.class,
 	WriteRikkiTikkiTaviTest.class,
 	ReadRikkiTikkiTaviTest.class,
 	UpdateRikkiTikkiTaviTest.class,
-	WriteFewBucketsTest.class,
-	WriteManyBucketsConcurrentlyTest.class,
-	ReadFewBucketsTest.class,
-	DeleteManyBucketsConcurrentlyTest.class,
-	WriteManyObjectsToFewBucketsTest.class,
-	ReadBucketsWithManyObjects.class,
 })
 public class CoreTestSuite {}

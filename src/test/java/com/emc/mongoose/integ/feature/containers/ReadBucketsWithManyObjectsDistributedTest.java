@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.feature.distributed;
+package com.emc.mongoose.integ.feature.containers;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -23,14 +23,14 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 23.10.15.
  */
-public class ReadBucketsWithManyObjects
+public class ReadBucketsWithManyObjectsDistributedTest
 extends DistributedLoadBuilderTestBase {
 	//
 	private static final int
 		LIMIT_COUNT_OBJ = 1000,
 		LIMIT_COUNT_CONTAINER = 100;
 	//
-	private static String RUN_ID_BASE = ReadBucketsWithManyObjects.class.getCanonicalName();
+	private static String RUN_ID_BASE = ReadBucketsWithManyObjectsDistributedTest.class.getCanonicalName();
 	private static int countContainerCreated = 0;
 	//
 	@BeforeClass

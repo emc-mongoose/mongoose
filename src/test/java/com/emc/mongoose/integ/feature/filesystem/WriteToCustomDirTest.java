@@ -6,7 +6,6 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -23,11 +22,11 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 14.07.15.
  */
-public final class WriteByCountTest
+public final class WriteToCustomDirTest
 extends StandaloneClientTestBase {
 	//
 	private final static long COUNT_TO_WRITE = 100000;
-	private final static String RUN_ID = WriteByCountTest.class.getCanonicalName();
+	private final static String RUN_ID = WriteToCustomDirTest.class.getCanonicalName();
 	//
 	private static long countWritten;
 	//
