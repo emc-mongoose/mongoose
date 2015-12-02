@@ -23,7 +23,6 @@ public class UpdatedDataItemFileRegion<T extends MutableDataItemMock> extends Da
 		contentSource = ContentSourceBase.getDefault();
 	}
 
-	// todo doneByteCount sometimes much more than dataSize
 	@Override
 	public long transferTo(WritableByteChannel target, long position)
 			throws IOException {
