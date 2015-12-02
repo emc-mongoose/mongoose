@@ -59,7 +59,7 @@ define([
 	}
 
 	function drawLatencyCharts(data, json, sec) {
-		var updateFunction = drawChart(data, json, "t[seconds]", "Latency[s]",
+		var updateFunction = drawChart(data, json, "t[seconds]", "Latency[mcSec]",
 			"#lat-" + json.contextMap[constants.getCfgConstants().runId].split(".").join("_"),
 				sec);
 		return {
@@ -70,7 +70,7 @@ define([
 	}
 
 	function drawDurationCharts(data, json, sec) {
-		var updateFunction = drawChart(data, json, "t[seconds]", "Duration[s]",
+		var updateFunction = drawChart(data, json, "t[seconds]", "Duration[mcSec]",
 			"#dur-" + json.contextMap[constants.getCfgConstants().runId].split(".").join("_"),
 				sec);
 		return {

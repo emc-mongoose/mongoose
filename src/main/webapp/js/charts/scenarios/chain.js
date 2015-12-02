@@ -85,7 +85,7 @@ define([
 
 	function drawLatencyChart(data, runId, metricsSec) {
 		var updateFunction = drawChart(
-			data, "Latency[s]", "t[seconds]", "Rate[s]", "#lat-" + runId.split(".").join("_"), metricsSec, true
+			data, "Latency[mcSec]", "t[seconds]", "Rate[s]", "#lat-" + runId.split(".").join("_"), metricsSec, true
 		);
 		return {
 			update: function(json) {
@@ -96,7 +96,7 @@ define([
 
 	function drawDurationChart(data, runId, metricsSec) {
 		var updateFunction = drawChart(
-			data, "Duration[s]", "t[seconds]", "Rate[s]", "#dur-" + runId.split(".").join("_"), metricsSec, true
+			data, "Duration[mcSec]", "t[seconds]", "Rate[s]", "#dur-" + runId.split(".").join("_"), metricsSec, true
 		);
 		return {
 			update: function(json) {
