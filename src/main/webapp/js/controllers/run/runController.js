@@ -47,7 +47,7 @@ define([
 	}
 
 	function generateTabsWithRunningScenarios() {
-		$.post("/state", function(response) {
+		$.get("/state", function(response) {
 			$.each(response, function(index, runId) {
 				if(runIdArray.indexOf(runId) < 0) {
 					runIdArray.push(runId);
@@ -99,7 +99,8 @@ define([
 			runId: newId,
 			runIdText: runIdText,
 			tables: tables,
-			charts: charts
+			charts: charts,
+			active: true
 		};
 		var ul = $(".scenario-tabs");
 		//  render tab header

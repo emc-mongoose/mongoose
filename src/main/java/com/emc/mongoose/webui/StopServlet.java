@@ -5,6 +5,8 @@ import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.appenders.WebUIAppender;
 //
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 //
+import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by gusakk on 03/10/14.
@@ -31,6 +34,20 @@ public final class StopServlet extends CommonServlet {
 		super.init();
 		threadsMap = THREADS_MAP;
 		stoppedRunModes = STOPPED_RUN_MODES;
+	}
+	//
+	@Override
+	public final void doGet(
+		final HttpServletRequest request, final HttpServletResponse response
+	) {
+		try {
+			response.setContentType(ContentType.APPLICATION_JSON.toString());
+			final ObjectMapper mapper = new ObjectMapper();
+			response.getWriter().write(mapper.writeValueAsString(stoppedRunModes));
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to write in response");
+		}
+		response.setStatus(HttpServletResponse.SC_OK);
 	}
 	//
 	@Override

@@ -32,7 +32,7 @@ public class StateServlet extends CommonServlet {
 		chartsMap = CHARTS_MAP;
 	}
 	@Override
-	public void doPost(
+	public void doGet(
 		final HttpServletRequest request, final HttpServletResponse response
 	) {
 		try {

@@ -14,30 +14,36 @@ define([
 	webSocketController,
 	navbarTemplate,
 	tabsTemplate,
-    tabHeaderTemplate,
-    tabContentTemplate
+	tabHeaderTemplate,
+	tabContentTemplate
 ) {
 	var runIdArray = [];
 	//
 	function run(props) {
-		$.post("/state", function(response) {
-			$.each(response, function(index, runId) {
-				if(runIdArray.indexOf(runId) < 0) {
-					runIdArray.push(runId);
-					renderTabByRunId(runId);
-					bindEvents(runId);
-				}
-			});
-			//
-		});
 		//  render navbar and tabs before any other interactions
 		render(props);
 		confMenuController.run(props, runIdArray);
 		//
-		webSocketController.start(props);
+		$.get("/stop", function(stopped) {
+			$.get("/state", function(response) {
+				$.each(response, function(index, runId) {
+					if(runIdArray.indexOf(runId) < 0) {
+						runIdArray.push(runId);
+						if(stopped[runId]) {
+							renderTabByRunId(runId, false);
+						} else {
+							renderTabByRunId(runId, true);
+						}
+						bindEvents(runId);
+					}
+				});
+				//
+				webSocketController.start(props);
+			});
+		});
 	}
 	//
-	function renderTabByRunId(runId) {
+	function renderTabByRunId(runId, active) {
 		var runIdText = runId;
 		var newId = runId.replace(/\./g, "_");
 		var tables = [
@@ -78,7 +84,8 @@ define([
 			runId: newId,
 			runIdText: runIdText,
 			tables: tables,
-			charts: charts
+			charts: charts,
+			active: active
 		};
 		var ul = $(".scenario-tabs");
 		//  render tab header
@@ -93,8 +100,6 @@ define([
 	}
 
 	function bindEvents(runId) {
-		//
-		$('a[href="#' + runId.replace(/\./g, "_") + '-tab"]').tab('show');
 		//
 		var element = $("#" + runId.replace(/\./g, "_") + "-tab");
 		element.find(".stop").click(function() {

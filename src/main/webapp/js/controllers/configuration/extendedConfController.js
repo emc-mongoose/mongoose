@@ -166,9 +166,11 @@ function(Handlebars, extendedConf) {
 			} else {
 				var input = $('input[data-pointer="' + parentIdAttr + '"]')
 					.val($(this).val());
+				input.trigger("change");
 				var select = $('select[data-pointer="' + parentIdAttr + '"] option:contains(' + $(this)
 					.val() + ')')
 					.attr('selected', 'selected');
+				select.trigger("change");
 			}
 		});
 		//

@@ -67,7 +67,9 @@ define([
 		//
 		$("#" + SCENARIO_FIELD_KEY.replace(/\./g, "\\."))
 			.on("change", function() {
+				alert("changed");
 				var valueSelected = this.value;
+				alert(valueSelected);
 				document.querySelector("#scenario-button")
 					.setAttribute("data-target", "#modal-" + valueSelected);
 				changeLoadHint(valueSelected);
