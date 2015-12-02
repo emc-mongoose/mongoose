@@ -219,7 +219,7 @@ implements WSDataLoadExecutor<T> {
 					);
 				} finally {
 					try {
-						nextConnPool.shutdown(0);
+						nextConnPool.shutdown(1);
 						LOG.debug(Markers.MSG, "{}: connection pool has been shut down", getName());
 					} catch(final IOException e) {
 						LogUtil.exception(
@@ -230,7 +230,7 @@ implements WSDataLoadExecutor<T> {
 			}
 			//
 			try {
-				ioReactor.shutdown(1);
+				ioReactor.shutdown();
 				LOG.debug(Markers.MSG, "{}: I/O reactor has been shut down", getName());
 			} catch(final IOException e) {
 				LogUtil.exception(
