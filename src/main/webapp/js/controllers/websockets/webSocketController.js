@@ -154,7 +154,7 @@ define([
 						var scenarioChainLoad = filtered[0].contextMap["scenario.type.chain.load"];
 						var rampupConnCounts = filtered[0].contextMap["scenario.type.rampup.connCounts"];
 						var loadRampupSizes = filtered[0].contextMap["scenario.type.rampup.sizes"];
-						charts(chartsArray).rampup(
+						chartBase.charts(chartsArray).rampup(
 							runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes
 						);
 						chartsArray.forEach(function(d) {

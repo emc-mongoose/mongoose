@@ -11,6 +11,8 @@ define([
 	scenarioWindow,
 	apiWindow
 ) {
+	var hasBeenSetup = false;
+	var props;
 	//  variables for modal windows
 	var SCENARIO_FIELD_KEY = "duplicate-scenario.name",
 		API_FIELD_KEY = "duplicate-api.name";
@@ -22,15 +24,18 @@ define([
 	var MODAL_SINGLE_SCENARIO = "modal-single",
 		MODAL_CHAIN_SCENARIO = "modal-chain";
 	//
-	function setup(props) {
+	function setup(properties) {
+		props = properties;
 		render(); //  render empty fields on HTML page
 		renderScenarioModalWindow();
 		renderApiModalWindow();
 		//
 		bindEvents();
+		changeLoadHint(SINGLE_SCENARIO);
 	}
 	//
 	function activate() {
+		hasBeenSetup = true;
 		//  show base configuration fields
 		$("#base").show();
 		//  hide extended configuration fields
@@ -51,8 +56,6 @@ define([
 		document.getElementById(SCENARIO_FIELD_KEY)
 			.parentNode.insertAdjacentHTML("afterend", html);
 		//
-		changeLoadHint(SINGLE_SCENARIO);
-		//
 		$("#" + MODAL_SINGLE_SCENARIO)
 			.find("select").on("change", function() {
 				changeLoadHint(SINGLE_SCENARIO);
@@ -67,9 +70,7 @@ define([
 		//
 		$("#" + SCENARIO_FIELD_KEY.replace(/\./g, "\\."))
 			.on("change", function() {
-				alert("changed");
 				var valueSelected = this.value;
-				alert(valueSelected);
 				document.querySelector("#scenario-button")
 					.setAttribute("data-target", "#modal-" + valueSelected);
 				changeLoadHint(valueSelected);
@@ -80,6 +81,9 @@ define([
 		var loadHint = $("#scenario-load");
 		var scenarioLoad;
 		var element;
+		if(!hasBeenSetup) {
+			value = props.scenario.name;
+		}
 		switch(value) {
 			case SINGLE_SCENARIO:
 				element = document
