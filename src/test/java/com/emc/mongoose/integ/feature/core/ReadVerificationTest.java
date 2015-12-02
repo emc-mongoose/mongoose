@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
-import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
+import com.emc.mongoose.integ.tools.StdOutUtil;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -87,7 +87,7 @@ extends WSMockTestBase {
 		//  read
 		try(
 			final BufferingOutputStream
-				stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+				stdOutStream = StdOutUtil.getStdOutBufferingStream()
 		) {
 			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message

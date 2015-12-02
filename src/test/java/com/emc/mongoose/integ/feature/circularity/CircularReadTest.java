@@ -11,7 +11,7 @@ import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.core.impl.data.model.ItemCSVFileDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
-import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
+import com.emc.mongoose.integ.tools.StdOutUtil;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.apache.commons.csv.CSVFormat;
@@ -92,7 +92,7 @@ extends StandaloneClientTestBase {
 				//
 				try (
 					final BufferingOutputStream
-						stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+						stdOutInterceptorStream = StdOutUtil.getStdOutBufferingStream()
 				) {
 					stdOutInterceptorStream.reset();
 					if (COUNT_WRITTEN > 0) {
@@ -114,7 +114,7 @@ extends StandaloneClientTestBase {
 	@AfterClass
 	public static void tearDownClass() {
 		try {
-			StdOutInterceptorTestSuite.reset();
+			StdOutUtil.reset();
 			StandaloneClientTestBase.tearDownClass();
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed");

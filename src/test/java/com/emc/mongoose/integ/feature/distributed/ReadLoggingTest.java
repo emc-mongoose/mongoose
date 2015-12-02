@@ -13,7 +13,7 @@ import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
-import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
+import com.emc.mongoose.integ.tools.StdOutUtil;
 import static com.emc.mongoose.integ.tools.LogPatterns.*;
 
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -68,12 +68,12 @@ extends DistributedClientTestBase {
 			);
 			try(
 				final BufferingOutputStream
-					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+					stdOutInterceptorStream = StdOutUtil.getStdOutBufferingStream()
 			) {
 				if(stdOutInterceptorStream == null) {
 					throw new IllegalStateException(
 						"Looks like the test case is not included in the \"" +
-							StdOutInterceptorTestSuite.class.getSimpleName() + "\" test suite, cannot run"
+							StdOutUtil.class.getSimpleName() + "\" test suite, cannot run"
 					);
 				}
 				stdOutInterceptorStream.reset(); // clear before using
@@ -96,7 +96,7 @@ extends DistributedClientTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		StdOutInterceptorTestSuite.reset();
+		StdOutUtil.reset();
 		DistributedClientTestBase.tearDownClass();
 	}
 	//

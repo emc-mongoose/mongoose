@@ -3,7 +3,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
-import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
+import com.emc.mongoose.integ.tools.StdOutUtil;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
@@ -72,7 +72,7 @@ extends DistributedLoadBuilderTestBase {
 		) {
 			try(
 				final BufferingOutputStream
-					stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+					stdOutStream = StdOutUtil.getStdOutBufferingStream()
 			) {
 				do {
 					nextContainer = in.readLine();

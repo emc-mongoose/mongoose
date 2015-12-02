@@ -8,7 +8,7 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
-import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
+import com.emc.mongoose.integ.tools.StdOutUtil;
 import static com.emc.mongoose.integ.tools.LogPatterns.*;
 //
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -58,7 +58,7 @@ extends DistributedClientTestBase {
 		) {
 			try(
 				final BufferingOutputStream
-					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+					stdOutInterceptorStream = StdOutUtil.getStdOutBufferingStream()
 			) {
 				countWritten = client.write(null, null, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
 				TimeUnit.SECONDS.sleep(10);

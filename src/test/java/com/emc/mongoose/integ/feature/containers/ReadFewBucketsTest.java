@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
-import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
+import com.emc.mongoose.integ.tools.StdOutUtil;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
@@ -71,7 +71,7 @@ extends WSMockTestBase {
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
 		try(
-			final BufferingOutputStream stdOutStream = StdOutInterceptorTestSuite
+			final BufferingOutputStream stdOutStream = StdOutUtil
 				.getStdOutBufferingStream()
 		) {
 			//  Run mongoose default scenario in standalone mode
