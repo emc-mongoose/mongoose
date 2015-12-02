@@ -50,6 +50,9 @@ ext {
 	webjars_jquery = ['org.webjars:jquery:2.1.4']
 	webjars_d3js = ['org.webjars:d3js:3.5.3']
 	webjars_require = ['org.webjars:requirejs:2.1.20']
+	webjars_handlebars = ['org.webjars:handlebars:4.0.2']
+	webjars_pace = ['org.webjars:pace:1.0.2']
+	webjars_requirejs_text = ['org.webjars:requirejs-text:2.0.14-1']
 
 	lmax_disruptor = [ "com.lmax:disruptor:3.3.0" ]
 
@@ -116,6 +119,9 @@ ext {
 		webjars_bootstrap,
 		webjars_jquery,
 		webjars_d3js,
-		webjars_require
+		webjars_require,
+		webjars_handlebars,
+		webjars_requirejs_text,
+		webjars_pace
 	]
 }
