@@ -65,11 +65,11 @@ public class NagainaS3RequestHandler<T extends WSObjectMock> extends NagainaRequ
 	public void handleActually(ChannelHandlerContext ctx) {
 		String method = ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey))
 				.get().getMethod().toString().toUpperCase();
-		String[] namesArr =
-				getContainerNameAndObjectId(ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey))
-						.get().getUri());
-		String containerName = namesArr[0];
-		String objId = namesArr[1];
+		String[] uriParams =
+				getUriParams(ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey))
+						.get().getUri(), 2);
+		String containerName = uriParams[0];
+		String objId = uriParams[1];
 		Long size = ctx.attr(AttributeKey.<Long>valueOf(contentLengthKey)).get();
 		ctx.attr(AttributeKey.<Boolean>valueOf(ctxWriteFlagKey)).set(true);
 		if (containerName != null) {

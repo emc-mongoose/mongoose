@@ -62,20 +62,6 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 		ctx.flush();
 	}
 
-	protected String[] getContainerNameAndObjectId(String uri) {
-		QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
-		String[] pathChunks = queryStringDecoder.path().split("/");
-		String[] result = new String[2];
-		if (pathChunks.length == 2) {
-			result[0] = pathChunks[1];
-			result[1] = null;
-		} else if (pathChunks.length >= 3) {
-			result[0] = pathChunks[1];
-			result[1] = pathChunks[2];
-		}
-		return result;
-	}
-
 	private void processHttpRequest(ChannelHandlerContext ctx, HttpRequest request) {
 		ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey)).set(request);
 		if (request.headers().contains(CONTENT_LENGTH)) {
@@ -119,6 +105,14 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 			}
 		}
 		handleActually(ctx);
+	}
+
+	protected String[] getUriParams(String uri, int maxNumberOfParams) {
+		String[] result = new String[maxNumberOfParams];
+		QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
+		String[] pathChunks = queryStringDecoder.path().split("/");
+		System.arraycopy(pathChunks, 1, result, 0, pathChunks.length - 1);
+		return result;
 	}
 
 	protected abstract void handleActually(ChannelHandlerContext ctx);
