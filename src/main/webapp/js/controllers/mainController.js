@@ -20,26 +20,27 @@ define([
 	var runIdArray = [];
 	//
 	function run(props) {
-		//  render navbar and tabs before any other interactions
-		render(props);
-		confMenuController.run(props);
-		//
 		$.post("/state", function(response) {
 			$.each(response, function(index, runId) {
 				if(runIdArray.indexOf(runId) < 0) {
 					runIdArray.push(runId);
 					renderTabByRunId(runId);
+					bindEvents(runId);
 				}
 			});
 			//
-			webSocketController.start(props);
 		});
+		//  render navbar and tabs before any other interactions
+		render(props);
+		confMenuController.run(props);
+		//
+		webSocketController.start(props);
 	}
 	//
 	function renderTabByRunId(runId) {
 		var runIdText = runId;
 		var newId = runId.replace(/\./g, "_");
-		var files= [
+		var tables = [
 			{
 				"id": newId + "-messages-csv",
 				"text": "messages.csv",
@@ -76,7 +77,7 @@ define([
 		var run = {
 			runId: newId,
 			runIdText: runIdText,
-			files: files,
+			tables: tables,
 			charts: charts
 		};
 		var ul = $(".scenario-tabs");
@@ -89,9 +90,43 @@ define([
 		compiled = Handlebars.compile(tabContentTemplate);
 		html = compiled(run);
 		div.append(html);
-
-
 	}
+
+	function bindEvents(runId) {
+		//
+		$('a[href="#' + runId.replace(/\./g, "_") + '-tab"]').tab('show');
+		//
+		var element = $("#" + runId.replace(/\./g, "_") + "-tab");
+		element.find(".stop").click(function() {
+			var currentRunId = $(this).val();
+			var currentButton = $(this);
+			currentButton.remove();
+			$.post("/stop", {
+				"run.id" : currentRunId,
+				"type" : "stop"
+			}, function() {
+				//  do nothing
+			}).fail(function() {
+				alert("Internal Server Error");
+			});
+		});
+
+		element.find(".kill").click(function() {
+			var currentButton = $(this);
+			var currentRunId = $(this).attr("value");
+			if (confirm("Please note that the test will be shut down if it's running.") === true) {
+				currentButton.remove();
+				$("#" + currentRunId.replace(/\./g, "_") + "-tab").remove();
+				$('a[href="#' + currentRunId.replace(/\./g, "_") + '-tab"]').remove();
+				$('a[href="#configuration"]').tab('show');
+				$.post("/stop", {
+					"run.id" : currentRunId,
+					"type" : "remove"
+				}, function() {});
+			}
+		});
+	}
+
 	//
 	function render(props) {
 		renderNavbar(props.run.version || "unknown");

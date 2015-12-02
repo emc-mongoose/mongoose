@@ -113,7 +113,9 @@ define([
 	}
 
 	function bindEvents(runId) {
-
+		//
+		$('a[href="#' + runId.replace(/\./g, "_") + '-tab"]').tab('show');
+		//
 		var element = $("#" + runId.replace(/\./g, "_") + "-tab");
 		element.find(".stop").click(function() {
 			var currentRunId = $(this).val();
@@ -130,16 +132,17 @@ define([
 		});
 
 		element.find(".kill").click(function() {
+			var currentButton = $(this);
 			var currentRunId = $(this).attr("value");
 			if (confirm("Please note that the test will be shut down if it's running.") === true) {
+				currentButton.remove();
+				$("#" + currentRunId.replace(/\./g, "_") + "-tab").remove();
+				$('a[href="#' + currentRunId.replace(/\./g, "_") + '-tab"]').remove();
+				$('a[href="#configuration"]').tab('show');
 				$.post("/stop", {
 					"run.id" : currentRunId,
 					"type" : "remove"
-				}, function() {
-					$("#" + currentRunId.replace(/\./g, "_") + "-tab").remove();
-					$('a[href="#' + currentRunId.replace(/\./g, "_") + '-tab"]').remove();
-					$('a[href="#configuration"]').tab('show');
-				});
+				}, function() {});
 			}
 		});
 	}

@@ -111,7 +111,7 @@ define([
 
 		function handleLogEventsArray(chartsArray, runId, logEventsArray) {
 			var entry = runId.split(".").join("_");
-			var scenarioName = logEventsArray[0].contextMap["scenario.name"];
+			var scenario = logEventsArray[0].contextMap["scenario.name"];
 			var points = [];
 			logEventsArray.forEach(function(element) {
 				switch (element.marker.name) {
@@ -133,7 +133,7 @@ define([
 			});
 			if (points.length > 0) {
 				var filtered = null;
-				switch (scenarioName) {
+				switch (scenario) {
 					case scenarioName.single:
 						filtered = points.filter(function(d) {
 							return d.marker.name === markers.PERF_AVG;

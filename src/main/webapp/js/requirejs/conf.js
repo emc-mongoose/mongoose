@@ -4,12 +4,12 @@
 requirejs.config({
 
 	"paths": {
-		"jquery": "../../app/libs/js/jquery",
-		"bootstrap": "../../app/libs/js/bootstrap",
-		"handlebars": "../../app/libs/js/handlebars",
-		"text": "../../app/libs/js/text",
-		"pace": "../../app/libs/js/pace",
-		"d3js": "../../app/libs/js/d3js"
+		"jquery": "../../libs/js/jquery",
+		"bootstrap": "../../libs/js/bootstrap",
+		"handlebars": "../../libs/js/handlebars",
+		"text": "../../libs/js/text",
+		"pace": "../../libs/js/pace",
+		"d3js": "../../libs/js/d3js"
 	},
 
 	"shim": {
