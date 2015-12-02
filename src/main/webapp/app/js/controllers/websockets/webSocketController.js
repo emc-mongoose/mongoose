@@ -1,25 +1,22 @@
 define([
 	"../../charts/main",
-	"../../charts/util/common"
+	"../../charts/util/common",
+	"../../util/constants"
 ], function(
-	chartBase, common
+	chartBase, common, constants
 ) {
 	//
-	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
-	var TABLE_ROWS_COUNT = 100;
+	var webSocketUrl = "ws://" + window.location.host + "/logs";
+	var maxTableRowsCount = 100;
 	//  some constants
-	var RUN_SCENARIO_NAME = {
-		single: "single",
-		chain: "chain",
-		rampup: "rampup"
-	};
-	var MARKERS = {
+	var scenarioName = constants.getScenarioConstant();
+	var markers = {
 		ERR: "err",
 		MSG: "msg",
 		PERF_SUM: "perfSum",
 		PERF_AVG: "perfAvg"
 	};
-	var LOG_FILES = {
+	var logFiles = {
 		ERR: "errors-log",
 		MSG: "messages-csv",
 		PERF_SUM: "perf-sum-csv",
@@ -30,45 +27,51 @@ define([
 	//
 	function start() {
 		configureWebSocketConnection(
-			WEBSOCKET_URL, TABLE_ROWS_COUNT
+			webSocketUrl, maxTableRowsCount
 		).connect(chartsArray);
 	}
 	//
 	function configureWebSocketConnection(location, countOfRecords) {
 		function processJsonLogEvents(chartsArray, json) {
-			var runId = json.contextMap["run.id"];
-			var runMetricsPeriodSec = json.contextMap["load.metricsPeriodSec"];
-			var scenarioChainLoad = json.contextMap["scenario.type.chain.load"];
-			var rampupConnCounts = json.contextMap["scenario.type.rampup.connCounts"];
-			var loadRampupSizes = json.contextMap["scenario.type.rampup.sizes"];
-			//
+			var runId = json.contextMap["run.id"],
+				runMetricsPeriodSec = json.contextMap["load.metricsPeriodSec"],
+				scenarioChainLoad = json.contextMap["scenario.type.chain.load"],
+				rampupConnCounts = json.contextMap["scenario.type.rampup.connCounts"],
+				loadRampupSizes = json.contextMap["scenario.type.rampup.sizes"];
+
 			var entry = runId.split(".").join("_");
+
 			if (!json.hasOwnProperty("marker") || !json.loggerName) {
 				return;
 			}
 			if (json.marker === null)
 				return;
+
 			var isContains = false;
 			chartsArray.forEach(function(d) {
 				if(d["run.id"] == runId) {
 					isContains = true;
 				}
 			});
+
 			if(!isContains) {
-				/*if(json.contextMap["scenario.name"] == RUN_SCENARIO_NAME.rampup) {
-					common.charts(chartsArray).rampup(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes);
-				}*/
+				if(json.contextMap["scenario.name"] == scenarioName.rampup) {
+					chartBase.charts(chartsArray).rampup(
+						runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes
+					);
+				}
 			}
+
 			switch (json.marker.name) {
-				case MARKERS.ERR:
-					appendMessageToTable(entry, LOG_FILES.ERR, countOfRecords, json);
+				case markers.ERR:
+					appendMessageToTable(entry, logFiles.ERR, countOfRecords, json);
 					break;
-				case MARKERS.MSG:
-					appendMessageToTable(entry, LOG_FILES.MSG, countOfRecords, json);
+				case markers.MSG:
+					appendMessageToTable(entry, logFiles.MSG, countOfRecords, json);
 					break;
-				case MARKERS.PERF_SUM:
-					appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
-					if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+				case markers.PERF_SUM:
+					appendMessageToTable(entry, logFiles.PERF_SUM, countOfRecords, json);
+					if (json.contextMap["scenario.name"] === scenarioName.rampup) {
 						chartsArray.forEach(function(d) {
 							if (d["run.id"] === runId) {
 								d.charts.forEach(function(c) {
@@ -78,8 +81,8 @@ define([
 						});
 					}
 					break;
-				case MARKERS.PERF_AVG:
-					appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
+				case markers.PERF_AVG:
+					appendMessageToTable(entry, logFiles.PERF_AVG, countOfRecords, json);
 					var isFound = false;
 					chartsArray.forEach(function(d) {
 						if (d["run.id"] === runId) {
@@ -91,39 +94,39 @@ define([
 					});
 					if (!isFound) {
 						switch(json.contextMap["scenario.name"]) {
-							case RUN_SCENARIO_NAME.single:
+							case scenarioName.single:
 								chartBase.charts(chartsArray).single(json);
-								//chartBase.charts(chartsArray).single(json, undefined, chartsArray);
 								break;
-							case RUN_SCENARIO_NAME.chain:
+							case scenarioName.chain:
 								json.threadName = json.threadName.match(common.getThreadNamePattern())[0];
-								chartBase.charts(chartsArray).chain(runId, runMetricsPeriodSec, json.threadName);
+								chartBase.charts(chartsArray).chain(
+									runId, runMetricsPeriodSec, json.threadName
+								);
 								break;
 						}
 					}
 				 break;
 			}
 		}
-		//
-		//
+
 		function handleLogEventsArray(chartsArray, runId, logEventsArray) {
 			var entry = runId.split(".").join("_");
 			var scenarioName = logEventsArray[0].contextMap["scenario.name"];
 			var points = [];
 			logEventsArray.forEach(function(element) {
 				switch (element.marker.name) {
-					case MARKERS.ERR:
-						appendMessageToTable(entry, LOG_FILES.ERR, countOfRecords, element);
+					case markers.ERR:
+						appendMessageToTable(entry, logFiles.ERR, countOfRecords, element);
 						break;
-					case MARKERS.MSG:
-						appendMessageToTable(entry, LOG_FILES.MSG, countOfRecords, element);
+					case markers.MSG:
+						appendMessageToTable(entry, logFiles.MSG, countOfRecords, element);
 						break;
-					case MARKERS.PERF_SUM:
-						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, element);
+					case markers.PERF_SUM:
+						appendMessageToTable(entry, logFiles.PERF_SUM, countOfRecords, element);
 						points.push(element);
 						break;
-					case MARKERS.PERF_AVG:
-						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, element);
+					case markers.PERF_AVG:
+						appendMessageToTable(entry, logFiles.PERF_AVG, countOfRecords, element);
 						points.push(element);
 						break;
 				}
@@ -131,28 +134,29 @@ define([
 			if (points.length > 0) {
 				var filtered = null;
 				switch (scenarioName) {
-					case RUN_SCENARIO_NAME.single:
+					case scenarioName.single:
 						filtered = points.filter(function(d) {
-							return d.marker.name === MARKERS.PERF_AVG;
+							return d.marker.name === markers.PERF_AVG;
 						});
 						chartBase.charts(chartsArray).single(filtered);
-						//chartBase.charts(chartsArray).single(filtered[0], filtered, chartsArray);
 						break;
-					case RUN_SCENARIO_NAME.chain:
+					case scenarioName.chain:
 						filtered = points.filter(function(d) {
-							return d.marker.name === MARKERS.PERF_AVG;
+							return d.marker.name === markers.PERF_AVG;
 						});
 						var runMetricsPeriodSec = logEventsArray[0].contextMap["load.metricsPeriodSec"];
 						chartBase.charts(chartsArray).chain(runId, runMetricsPeriodSec, null, filtered);
 						break;
-					case RUN_SCENARIO_NAME.rampup:
+					case scenarioName.rampup:
 						filtered = points.filter(function(d) {
-							return d.marker.name === MARKERS.PERF_SUM;
+							return d.marker.name === markers.PERF_SUM;
 						});
 						var scenarioChainLoad = filtered[0].contextMap["scenario.type.chain.load"];
 						var rampupConnCounts = filtered[0].contextMap["scenario.type.rampup.connCounts"];
 						var loadRampupSizes = filtered[0].contextMap["scenario.type.rampup.sizes"];
-						//charts(chartsArray).rampup(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes);
+						charts(chartsArray).rampup(
+							runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes
+						);
 						chartsArray.forEach(function(d) {
 							if (d["run.id"] === runId) {
 								d.charts.forEach(function(c) {
@@ -194,15 +198,14 @@ define([
 			}
 		};
 	}
-	//
-	//
+
 	function appendMessageToTable(entry, tableName, countOfRows, message) {
 		if ($("#" + entry + "-" +tableName + " table tbody tr").length > countOfRows) {
 			$("#" + entry + "-" + tableName + " table tbody tr:first-child").remove();
 		}
 		$("#" + entry + "-" + tableName +" table tbody").append(getTableRowByMessage(message));
 	}
-	//
+
 	function getTableRowByMessage(json) {
 		return '<tr>\
 			<td>' + json.level.standardLevel + '</td>\
@@ -212,7 +215,7 @@ define([
 			<td>' + json.message.formattedMessage + '</td>\
 			</tr>';
 	}
-	//
+
 	return {
 		start: start
 	};

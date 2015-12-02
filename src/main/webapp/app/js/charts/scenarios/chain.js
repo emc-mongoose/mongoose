@@ -51,14 +51,8 @@ define([
 		});
 	}
 	//
-	function clearArrays(throughput, bandwidth, metricsPeriodSec) {
-		throughput.forEach(function(d) {
-			d.charts.forEach(function(c) {
-				c.values.shift();
-			});
-			d.currentRunMetricsPeriodSec = -parseInt(metricsPeriodSec);
-		});
-		bandwidth.forEach(function(d) {
+	function clearArrays(array, metricsPeriodSec) {
+		array.forEach(function(d) {
 			d.charts.forEach(function(c) {
 				c.values.shift();
 			});
@@ -68,7 +62,9 @@ define([
 
 	//
 	function drawThroughputChart(data, runId, metricsSec) {
-		var updateFunction = drawChart(data, "Throughput[obj/s]", "t[seconds]", "Rate[op/s]", "#tp-" + runId.split(".").join("_"), metricsSec);
+		var updateFunction = drawChart(
+			data, "Throughput[obj/s]", "t[seconds]", "Rate[op/s]", "#tp-" + runId.split(".").join("_"), metricsSec, false
+		);
 		return {
 			update: function(json) {
 				updateFunction(constants.getChartTypes().TP, json);
@@ -77,7 +73,9 @@ define([
 	}
 	//
 	function drawBandwidthChart(data, runId, metricsSec) {
-		var updateFunction = drawChart(data, "Bandwidth[MB/s]", "t[seconds]", "Rate[MB/s]", "#bw-" + runId.split(".").join("_"), metricsSec);
+		var updateFunction = drawChart(
+			data, "Bandwidth[MB/s]", "t[seconds]", "Rate[MB/s]", "#bw-" + runId.split(".").join("_"), metricsSec, false
+		);
 		return {
 			update: function(json) {
 				updateFunction(constants.getChartTypes().BW, json);
@@ -85,8 +83,31 @@ define([
 		};
 	}
 
-	function drawChart(data, chartTitle, xAxisLabel, yAxisLabel, path, metricsSec) {
+	function drawLatencyChart(data, runId, metricsSec) {
+		var updateFunction = drawChart(
+			data, "Latency[s]", "t[seconds]", "Rate[s]", "#lat-" + runId.split(".").join("_"), metricsSec, true
+		);
+		return {
+			update: function(json) {
+				updateFunction(constants.getChartTypes().LAT, json);
+			}
+		};
+	}
+
+	function drawDurationChart(data, runId, metricsSec) {
+		var updateFunction = drawChart(
+			data, "Duration[s]", "t[seconds]", "Rate[s]", "#dur-" + runId.split(".").join("_"), metricsSec, true
+		);
+		return {
+			update: function(json) {
+				updateFunction(constants.getChartTypes().DUR, json);
+			}
+		};
+	}
+
+	function drawChart(data, chartTitle, xAxisLabel, yAxisLabel, path, metricsSec, isLatencyChart) {
 		//
+		var LAT_MODES = [constants.getAvgConstant(), constants.getMinConstant(), constants.getMaxConstant()];
 		var TP_MODES = [constants.getAvgConstant(), constants.getLastConstant()];
 		var scaleTypes = constants.getScaleTypes();
 		var scalesOrientation = constants.getScaleOrientations();
@@ -233,10 +254,12 @@ define([
 				switch (c.name.id) {
 					case constants.getAvgConstant().id:
 						return "0,0";
-						break;
 					case constants.getLastConstant().id:
 						return "3,3";
-						break;
+					case constants.getMinConstant().id:
+						return "6,6";
+					case constants.getMaxConstant().id:
+						return "12,12";
 				}
 			})
 			.attr("id", function(c) {
@@ -269,8 +292,14 @@ define([
 				}
 			});
 		//
+		var modes;
+		if(isLatencyChart) {
+			modes = LAT_MODES;
+		} else {
+			modes = TP_MODES;
+		}
 		svg.selectAll(".bottom-foreign")
-			.data(TP_MODES).enter()
+			.data(modes).enter()
 			.append("foreignObject")
 			.attr("class", "foreign bottom-foreign")
 			.attr("width", 18)
@@ -326,7 +355,7 @@ define([
 			.text(function(d) { return d.loadType; });
 		//
 		var bottomLegend = svg.selectAll(".bottom-legend")
-			.data(TP_MODES).enter()
+			.data(modes).enter()
 			.append("g")
 			.attr("class", "bottom-legend")
 			.attr("stroke", "black")
@@ -339,20 +368,24 @@ define([
 				switch(d.id) {
 					case constants.getAvgConstant().id:
 						return "M20 0 L110 0";
-						break;
 					case constants.getLastConstant().id:
 						return "M20 0 L115 0";
-						break;
+					case constants.getMinConstant().id:
+						return "M20 0 L120 0";
+					case constants.getMaxConstant().id:
+						return "M20 0 L125 0";
 				}
 			})
 			.attr("stroke-dasharray", function(d, i) {
 				switch (d.id) {
 					case constants.getAvgConstant().id:
 						return "0,0";
-						break;
 					case constants.getLastConstant().id:
 						return "3,3";
-						break;
+					case constants.getMinConstant().id:
+						return "6,6";
+					case constants.getMaxConstant().id:
+						return "12,12"
 				}
 			});
 		bottomLegend.append("text")
@@ -475,10 +508,12 @@ define([
 					switch (c.name.id) {
 						case constants.getAvgConstant().id:
 							return "0,0";
-							break;
 						case constants.getLastConstant().id:
 							return "3,3";
-							break;
+						case constants.getMinConstant().id:
+							return "6,6";
+						case constants.getMaxConstant().id:
+							return "12,12";
 					}
 				})
 				.attr("fill", "none");
@@ -647,9 +682,31 @@ define([
 					],
 					currentRunMetricsPeriodSec: 0
 				};
-				/*d.charts.forEach(function(c, i) {
-				 c.values.push({x: c.values.length * 10, y: parseFloat(value[i])})
-				 });*/
+				//
+				if(isLatencyChart) {
+					d = {
+						loadType: loadType,
+						charts: [
+							{
+								name: constants.getAvgConstant(),
+								values: [
+									{x: 0, y: 0}
+								]
+							}, {
+								name: constants.getMinConstant(),
+								values: [
+									{x: 0, y: 0}
+								]
+							}, {
+								name: constants.getMaxConstant(),
+								values: [
+									{x: 0, y: 0}
+								]
+							}
+						],
+						currentRunMetricsPeriodSec: 0
+					};
+				}
 				data.push(d);
 
 				var levels = svg.selectAll(".level")
@@ -739,6 +796,8 @@ define([
 		initDataArray: initDataArray,
 		clearArrays: clearArrays,
 		drawThroughputChart: drawThroughputChart,
-		drawBandwidthChart: drawBandwidthChart
+		drawBandwidthChart: drawBandwidthChart,
+		drawLatencyChart: drawLatencyChart,
+		drawDurationChart: drawDurationChart
 	}
 });

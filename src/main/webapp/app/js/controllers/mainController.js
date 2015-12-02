@@ -67,6 +67,9 @@ define([
 			}, {
 				"id": "lat-" + newId,
 				"text": "Latency[s]"
+			}, {
+				"id": "dur-" + newId,
+				"text": "Duration[s]"
 			}
 		];
 		//

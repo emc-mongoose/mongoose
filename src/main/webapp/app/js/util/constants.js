@@ -87,7 +87,7 @@ define(function() {
 		max = {
 			id: "max",
 			text: "max"
-		}
+		};
 	//  max count of points on one chart
 	var chartPointsLimit = 1000;
 	//

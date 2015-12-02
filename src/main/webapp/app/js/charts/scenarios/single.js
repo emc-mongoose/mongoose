@@ -30,22 +30,10 @@ define([
 	}
 
 
-	function clearArrays(throughput, bandwidth, latency, duration) {
-		throughput.forEach(function(d) {
+	function clearArrays(array) {
+		array.forEach(function(d) {
 			return d.values.shift();
 		});
-
-		bandwidth.forEach(function(d) {
-			return d.values.shift();
-		})
-
-		/*latency.forEach(function(d) {
-			return d.values.shift();
-		})
-
-		duration.forEach(function(d) {
-			return d.values.shift();
-		})*/
 	}
 
 	function drawThroughputCharts(data, json, sec) {
@@ -70,6 +58,28 @@ define([
 		};
 	}
 
+	function drawLatencyCharts(data, json, sec) {
+		var updateFunction = drawChart(data, json, "t[seconds]", "Latency[s]",
+			"#lat-" + json.contextMap[constants.getCfgConstants().runId].split(".").join("_"),
+				sec);
+		return {
+			update: function(json) {
+				updateFunction(constants.getChartTypes().LAT, json.message.formattedMessage);
+			}
+		};
+	}
+
+	function drawDurationCharts(data, json, sec) {
+		var updateFunction = drawChart(data, json, "t[seconds]", "Duration[s]",
+			"#dur-" + json.contextMap[constants.getCfgConstants().runId].split(".").join("_"),
+				sec);
+		return {
+			update: function(json) {
+				updateFunction(constants.getChartTypes().DUR, json.message.formattedMessage);
+			}
+		};
+	}
+
 	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath, sec) {
 		var scaleTypes = constants.getScaleTypes();
 		var scalesOrientation = constants.getScaleOrientations();
@@ -85,7 +95,6 @@ define([
 		if (sec !== undefined) {
 			currentMetricsPeriodSec = sec;
 		}
-		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
 		//
 		var currTimeUnit = constants.getTimeLimit().seconds;
 		//
@@ -489,6 +498,8 @@ define([
 		simplifyChart: simplifyChart,
 		clearArrays: clearArrays,
 		drawThroughputCharts: drawThroughputCharts,
-		drawBandwidthCharts: drawBandwidthCharts
+		drawBandwidthCharts: drawBandwidthCharts,
+		drawLatencyCharts: drawLatencyCharts,
+		drawDurationCharts: drawDurationCharts
 	};
-})
+});

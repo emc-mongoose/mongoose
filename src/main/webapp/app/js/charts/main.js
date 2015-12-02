@@ -3,9 +3,10 @@ define([
 	"../util/constants",
 	"../charts/util/common",
 	"../charts/scenarios/single",
-	"../charts/scenarios/chain"
+	"../charts/scenarios/chain",
+	"../charts/scenarios/rampup"
 ], function(
-	$, constants, common, single, chain
+	$, constants, common, single, chain, rampup
 ) {
 
 	var avg = constants.getAvgConstant(),
@@ -46,7 +47,7 @@ define([
 					{x: 0, y: 0}
 				]
 			}
-		]
+		];
 
 		var latAndDurData = [
 			{
@@ -73,18 +74,34 @@ define([
 			duration = $.extend(true, [], latAndDurData);
 
 		if ((jsonValue !== undefined) && (jsonValue.length > 0)) {
-			single.clearArrays(throughput, bandwidth);
-			var tpSec = single.initDataArray(throughput, jsonValue, constants.getChartTypes().TP, runMetricsPeriodSec);
-			var bwSec = single.initDataArray(bandwidth, jsonValue, constants.getChartTypes().BW, runMetricsPeriodSec);
-			console.log(tpSec + " " + bwSec);
+			single.clearArrays(throughput);
+			single.clearArrays(bandwidth);
+			single.clearArrays(latency);
+			single.clearArrays(duration);
+			var tpSec = single.initDataArray(
+				throughput, jsonValue, constants.getChartTypes().TP, runMetricsPeriodSec
+			);
+			var bwSec = single.initDataArray(
+				bandwidth, jsonValue, constants.getChartTypes().BW, runMetricsPeriodSec
+			);
+			var latSec = single.initDataArray(
+				latency, jsonValue, constants.getChartTypes().LAT, runMetricsPeriodSec
+			);
+			var durSec = single.initDataArray(
+				duration, jsonValue, constants.getChartTypes().DUR, runMetricsPeriodSec
+			);
 			chartsArray.push(common.getScenarioChartObject(runId, runScenarioName,
 				[single.drawThroughputCharts(throughput, jsonValue[0], tpSec),
-					single.drawBandwidthCharts(bandwidth, jsonValue[0], bwSec)]));
+					single.drawBandwidthCharts(bandwidth, jsonValue[0], bwSec),
+						single.drawLatencyCharts(latency, jsonValue[0], latSec),
+							single.drawDurationCharts(duration, jsonValue[0], durSec)]));
 		} else {
 			//
 			chartsArray.push(common.getScenarioChartObject(runId, runScenarioName,
 				[single.drawThroughputCharts(throughput, jsonValue),
-					single.drawBandwidthCharts(bandwidth, jsonValue)]));
+					single.drawBandwidthCharts(bandwidth, jsonValue),
+						single.drawLatencyCharts(latency, jsonValue),
+							single.drawDurationCharts(duration, jsonValue)]));
 		}
 	}
 
@@ -110,15 +127,47 @@ define([
 				currentRunMetricsPeriodSec: 0
 			}
 		];
-		//
+
+		var latencyData = [
+			{
+				loadType: loadType,
+				charts: [
+					{
+						name: avg,
+						values: [
+							{x: 0, y: 0}
+						]
+					}, {
+						name: min,
+						values: [
+							{x: 0, y: 0}
+						]
+					}, {
+						name: max,
+						values: [
+							{x: 0, y: 0}
+						]
+					}
+				],
+				currentRunMetricsPeriodSec: 0
+			}
+		];
+
 		var throughput = $.extend(true, [], data),
-			bandwidth = $.extend(true, [], data);
+			bandwidth = $.extend(true, [], data),
+			latency = $.extend(true, [], latencyData),
+			duration = $.extend(true, [], latencyData);
 		//
 		if ((array !== undefined) && (array.length > 0)) {
-			chain.clearArrays(throughput, bandwidth, runMetricsPeriodSec);
+			chain.clearArrays(throughput, runMetricsPeriodSec);
+			chain.clearArrays(bandwidth, runMetricsPeriodSec);
+			chain.clearArrays(latency, runMetricsPeriodSec);
+			chain.clearArrays(duration, runMetricsPeriodSec);
 			//
 			chain.initDataArray(throughput, array, constants.getChartTypes().TP, runMetricsPeriodSec);
-			chain.initDataArray(throughput, array, constants.getChartTypes().BW, runMetricsPeriodSec);
+			chain.initDataArray(bandwidth, array, constants.getChartTypes().BW, runMetricsPeriodSec);
+			chain.initDataArray(latency, array, constants.getChartTypes().LAT, runMetricsPeriodSec);
+			chain.initDataArray(duration, array, constants.getChartTypes().DUR, runMetricsPeriodSec);
 		}
 		//
 		chartsArray.push({
@@ -126,13 +175,39 @@ define([
 			"run.scenario.name": "chain",
 			"charts": [
 				chain.drawThroughputChart(throughput, runId, runMetricsPeriodSec),
-				chain.drawBandwidthChart(bandwidth, runId, runMetricsPeriodSec)
+				chain.drawBandwidthChart(bandwidth, runId, runMetricsPeriodSec),
+				chain.drawLatencyChart(latency, runId, runMetricsPeriodSec),
+				chain.drawDurationChart(duration, runId, runMetricsPeriodSec)
 			]
 		});
 	}
 
-	function drawRampupCharts(chartsArray) {
-
+	function drawRampupCharts(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes) {
+		//
+		var loadTypes = scenarioChainLoad.split(",");
+		var rampupConnCountsArray = rampupConnCounts.split(",").map(function(item) {
+			return parseInt(item, 10);
+		});
+		var loadRampupSizesArray = loadRampupSizes.split(",").map(function(item) {
+			return item.trim();
+		});
+		var AVG = "total average";
+		//
+		var CHART_TYPES = {
+			TP: "throughput",
+			BW: "bandwidth"
+		};
+		//
+		var TP_MODES = [AVG];
+		//
+		chartsArray.push({
+			"run.id": runId,
+			"run.scenario.name": "rampup",
+			"charts": [
+				rampup.drawThroughputCharts(runId, loadTypes, loadRampupSizesArray, rampupConnCountsArray),
+				rampup.drawBandwidthCharts(runId, loadTypes, loadRampupSizesArray, rampupConnCountsArray)
+			]
+		});
 	}
 
 	return {

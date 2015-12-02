@@ -2,8 +2,11 @@
      aria-labelledby="{{runId}}-tab">
 	<ul id="scenario-tab" class="nav nav-tabs" role="presentation">
 		<li class="hidden-xs">
-			<button type="button" class="btn btn-danger stop" value="{{runId}}">
+			<button type="button" class="btn btn-danger stop" value="{{runIdText}}">
 				Stop
+			</button>
+			<button type="button" class="btn btn-danger kill" value="{{runIdText}}">
+				Close tab
 			</button>
 		</li>
 		<li class="active">
@@ -22,11 +25,14 @@
 		<div class="tab-pane active" id="{{runId}}-logs">
 			<ul id="log-pills" class="nav nav-pills">
 				<li class="hidden-sm hidden-md hidden-lg stop-block-xs">
-					<button type="button" class="btn btn-danger stop" value="{{runId}}">
+					<button type="button" class="btn btn-danger stop" value="{{runIdText}}">
 						Stop
 					</button>
+					<button type="button" class="btn btn-danger kill" value="{{runIdText}}">
+						Close tab
+					</button>
 				</li>
-				{{#each files}}
+				{{#each tables}}
 					{{#if active}}
 						<li class="active">
 							<a href="#{{id}}" data-toggle="pill">
@@ -44,7 +50,7 @@
 			</ul>
 
 			<div id="log-wrapper" class="tab-content">
-				{{#each files}}
+				{{#each tables}}
 					{{#if active}}
 						<div class="tab-pane active" id="{{id}}">
 							<div class="table-content">
@@ -93,8 +99,11 @@
 		<div class="tab-pane" id="{{runId}}-charts">
 			<ul id="chart-pills" class="nav nav-pills">
 				<li class="hidden-sm hidden-md hidden-lg stop-block-xs">
-					<button type="button" class="btn btn-danger stop" value="{{runId}}">
+					<button type="button" class="btn btn-danger stop" value="{{runIdText}}">
 						Stop
+					</button>
+					<button type="button" class="btn btn-danger kill" value="{{runIdText}}">
+						Close tab
 					</button>
 				</li>
 				{{#each charts}}
