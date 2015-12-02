@@ -17,7 +17,7 @@ import com.emc.mongoose.integ.feature.distributed.SequentialLoadTest;
 import com.emc.mongoose.integ.feature.distributed.SimultaneousLoadTest;
 import com.emc.mongoose.integ.feature.distributed.UpdateLoggingTest;
 import com.emc.mongoose.integ.feature.distributed.UpdateZeroBytesTest;
-import com.emc.mongoose.integ.feature.distributed.WriteByCountTest;
+import com.emc.mongoose.integ.feature.filesystem.WriteByCountTest;
 import com.emc.mongoose.integ.feature.distributed.WriteByTimeTest;
 import com.emc.mongoose.integ.feature.distributed.WriteFewBucketsTest;
 import com.emc.mongoose.integ.feature.distributed.WriteLoggingTest;

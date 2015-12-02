@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.feature.distributed;
+package com.emc.mongoose.integ.feature.filesystem;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
@@ -7,9 +7,11 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
+import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -22,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 14.07.15.
  */
 public final class WriteByCountTest
-extends DistributedClientTestBase {
+extends StandaloneClientTestBase {
 	//
 	private final static long COUNT_TO_WRITE = 100000;
 	private final static String RUN_ID = WriteByCountTest.class.getCanonicalName();
@@ -33,18 +35,26 @@ extends DistributedClientTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		DistributedClientTestBase.setUpClass();
+		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
+		StandaloneClientTestBase.setUpClass();
 		try(
 			final StorageClient<WSObject> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
-				.setAPI("s3")
+				.setItemClass("file")
 				.build()
 		) {
 			countWritten = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
 			//
 			RunIdFileManager.flushAll();
 		}
+	}
+	//
+	@AfterClass
+	public static void tearDownClass()
+	throws Exception {
+		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "");
+		StandaloneClientTestBase.tearDownClass();
 	}
 	//
 	@Test
