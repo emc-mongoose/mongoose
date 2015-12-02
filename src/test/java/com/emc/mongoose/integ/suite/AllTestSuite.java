@@ -9,8 +9,8 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
 	//CambridgeLabDistributedTestSuite.class,
 	//CoreTestSuite.class,
-	//DistributedLoadTestSuite.class,
-	//StorageAdapterTestSuite.class,
+	DistributedLoadTestSuite.class,
+	StorageAdapterTestSuite.class,
 	ContainersTestSuite.class,
 })
 public class AllTestSuite {
