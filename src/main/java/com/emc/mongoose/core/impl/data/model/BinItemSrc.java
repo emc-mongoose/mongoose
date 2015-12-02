@@ -1,30 +1,32 @@
 package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.log.Markers;
+//
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  The data item input implementation deserializing the data items from the specified stream
  */
-public class BinItemSrc<T extends DataItem>
-implements DataItemSrc<T> {
+public class BinItemSrc<T extends Item>
+implements ItemSrc<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	protected ObjectInputStream itemsSrc;
 	protected List<T> srcBuff = null;
 	protected int srcFrom = 0;
-	private DataItem lastItem = null;
+	private T lastItem = null;
 	//
 	public BinItemSrc(final ObjectInputStream itemsSrc) {
 		this.itemsSrc = itemsSrc;
@@ -42,9 +44,9 @@ implements DataItemSrc<T> {
 		} else {
 			try {
 				final Object o = itemsSrc.readUnshared();
-				if(o instanceof DataItem) {
+				if(o instanceof Item) {
 					return (T) o;
-				} else if(o instanceof DataItem[]) {
+				} else if(o instanceof Item[]) {
 					srcBuff = Arrays.asList((T[]) o);
 					srcFrom = 0;
 					return get();
@@ -76,14 +78,14 @@ implements DataItemSrc<T> {
 		//
 		try {
 			final Object o = itemsSrc.readUnshared();
-			if(o instanceof DataItem) { // there are single item has been got from the stream
+			if(o instanceof Item) { // there are single item has been got from the stream
 				if(dstCountLimit > 0) {
 					dstBuff.add((T) o);
 					return 1;
 				} else {
 					return 0;
 				}
-			} else if(o instanceof DataItem[]) { // there are a list of items has been got
+			} else if(o instanceof Item[]) { // there are a list of items has been got
 				srcBuff = Arrays.asList((T[]) o);
 				srcFrom = 0;
 				return get(dstBuff, dstCountLimit);
@@ -103,30 +105,30 @@ implements DataItemSrc<T> {
 	}
 	//
 	@Override
-	public DataItem getLastDataItem() {
+	public T getLastItem() {
 		return lastItem;
 	}
 	//
 	@Override
-	public void setLastDataItem(final T lastItem) {
+	public void setLastItem(final T lastItem) {
 		this.lastItem = lastItem;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_START, itemsCount);
+		LOG.info(Markers.MSG, ItemSrc.MSG_SKIP_START, itemsCount);
 		try {
 			Object o;
 			long i = 0;
 			while(i < itemsCount) {
 				o = itemsSrc.readUnshared();
-				if(o instanceof DataItem) {
+				if(o instanceof Item) {
 					if(o.equals(lastItem)) {
 						return;
 					}
 					i ++;
-				} else if(o instanceof DataItem[]) {
+				} else if(o instanceof Item[]) {
 					srcBuff = Arrays.asList((T[]) o);
 					if(srcBuff.size() > itemsCount - i) {
 						srcFrom = (int) (itemsCount - i);

@@ -1,9 +1,10 @@
 package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 // mongoose-common.jar
@@ -18,6 +19,8 @@ import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.NoHttpResponseException;
+import org.apache.http.StatusLine;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 //
@@ -26,12 +29,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.spec.SecretKeySpec;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 26.03.14.
  */
@@ -87,16 +92,16 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException {
+		if(fsAccess) {
+			super.applyObjectId(obj, null);
+		}
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
-			getHttpMethod(), getUriPath(obj)
+			getHttpMethod(), getDataUriPath(obj)
 		);
 		try {
 			applyHostHeader(request, nodeAddr);
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
-		}
-		if(fsAccess) {
-			super.applyObjectId(obj, null);
 		}
 		switch(loadType) {
 			case UPDATE:
@@ -112,6 +117,13 @@ extends WSRequestConfigBase<T> {
 		}
 		applyHeadersFinally(request);
 		return request;
+	}
+	//
+	@Override
+	public final HttpEntityEnclosingRequest createContainerRequest(
+		final Container<T> container, final String nodeAddr
+	) throws URISyntaxException {
+		throw new IllegalStateException("No container request is possible using Atmos API");
 	}
 	//
 	@Override
@@ -223,7 +235,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final DataItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
+	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
 		// TODO implement sub tenant listing producer
 		return null;
 	}
@@ -250,7 +262,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final String getUriPath(final T dataItem) {
+	protected final String getDataUriPath(final T dataItem) {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
@@ -260,13 +272,16 @@ extends WSRequestConfigBase<T> {
 			return uriBasePath;
 		}
 	}
+	@Override
+	protected final String getContainerUriPath(final Container<T> container)
+	throws IllegalArgumentException, URISyntaxException {
+		throw new IllegalStateException("No container request is possible using Atmos API");
+	}
 	//
 	private final static ThreadLocal<StringBuilder>
 		THR_LOC_METADATA_STR_BUILDER = new ThreadLocal<>();
-	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	protected final void applyMetaDataHeaders(final HttpEntityEnclosingRequest request) {
-		//
 		StringBuilder md = THR_LOC_METADATA_STR_BUILDER.get();
 		if(md == null) {
 			md = new StringBuilder();
@@ -281,6 +296,7 @@ extends WSRequestConfigBase<T> {
 				md.append("subtenant=").append(subTenant.getValue());
 			}
 		}
+		// the "offset" tag is required for WS mock
 		if(IOTask.Type.CREATE.equals(loadType)) {
 			final HttpEntity entity = request.getEntity();
 			if(entity != null && WSObject.class.isInstance(entity)) {
@@ -322,12 +338,12 @@ extends WSRequestConfigBase<T> {
 		//
 		for(final String headerName : HEADERS_CANONICAL) {
 			// support for multiple non-unique header keys
-			if(sharedHeaders.containsHeader(headerName)) {
-				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
-			} else if(httpRequest.containsHeader(headerName)) {
-				for(final Header header: httpRequest.getHeaders(headerName)) {
+			if(httpRequest.containsHeader(headerName)) {
+				for(final Header header : httpRequest.getHeaders(headerName)) {
 					canonical.append('\n').append(header.getValue());
 				}
+			} else if(sharedHeaders.containsHeader(headerName)) {
+				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
 			} else {
 				canonical.append('\n');
 			}
@@ -337,16 +353,16 @@ extends WSRequestConfigBase<T> {
 		canonical.append('\n').append(uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri);
 		//
 		for(final String emcHeaderName: HEADERS_CANONICAL_EMC) {
-			if(sharedHeaders.containsHeader(emcHeaderName)) {
-				canonical
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
-			} else {
+			if(httpRequest.containsHeader(emcHeaderName)) {
 				for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
 					canonical.append('\n').append(emcHeaderName.toLowerCase()).append(':').append(
 						emcHeader.getValue()
 					);
 				}
+			} else if(sharedHeaders.containsHeader(emcHeaderName)) {
+				canonical
+					.append('\n').append(emcHeaderName.toLowerCase())
+					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
 			}
 		}
 		//
@@ -372,7 +388,7 @@ extends WSRequestConfigBase<T> {
 			) {
 				final String oid = valueLocation.substring(uriBasePath.length() + 1);
 				if(oid.length() > 0) {
-					dataObject.setId(oid);
+					dataObject.setName(oid);
 				} else {
 					LOG.trace(Markers.ERR, "Got empty object id");
 				}
@@ -386,7 +402,7 @@ extends WSRequestConfigBase<T> {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Applied object \"{}\" id \"{}\" from the source \"{}\"",
-				Long.toHexString(dataObject.getOffset()), dataObject.getId(),
+				Long.toHexString(dataObject.getOffset()), dataObject.getName(),
 				httpResponse.getFirstHeader(HttpHeaders.LOCATION)
 			);
 		}
@@ -395,47 +411,6 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public void configureStorage(final String storageAddrs[])
 	throws IllegalStateException {
-		/* show interesting system info
-		try {
-			MutableWSRequest req = WSIOTask.HTTPMethod.GET
-				.createRequest()
-				.setUriPath("/rest/service");
-			applyHeadersFinally(req);
-			final HttpResponse resp = WSLoadExecutor.class.cast(client).execute(req);
-			if(resp != null) {
-				final StatusLine statusLine = resp.getStatusLine();
-				if(statusLine != null) {
-					final int statusCode = statusLine.getStatusCode();
-					if(statusCode >= 200 && statusCode < 300) {
-						final HttpEntity contentEntity = resp.getEntity();
-						if(contentEntity != null && contentEntity.getContentLength() > 0) {
-							try(
-								final BufferedReader streamReader = new BufferedReader(
-									new InputStreamReader(
-										contentEntity.getContent()
-									)
-								)
-							) {
-								final StrBuilder strBuilder = new StrBuilder();
-								String nextLine;
-								do {
-									nextLine = streamReader.readLine();
-									strBuilder.append(nextLine).appendNewLine();
-								} while(nextLine != null);
-								LOG.info(Markers.MSG, strBuilder.toString());
-							} catch(final IOException e) {
-								TraceLogger.failure(
-									LOG, Level.DEBUG, e,
-									"Atmos system info response content reading failure"
-								);
-							}
-						}
-					}
-				}
-			}
-		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Atmos system info request failure");
-		}*/
 		// create the subtenant if neccessary
 		final String subTenantValue = subTenant.getValue();
 		if(subTenantValue == null || subTenantValue.length() == 0) {
@@ -443,6 +418,13 @@ extends WSRequestConfigBase<T> {
 		}
 		/*re*/setSubTenant(subTenant);
 		runTimeConfig.set(RunTimeConfig.KEY_API_ATMOS_SUBTENANT, subTenant.getValue());
+		super.configureStorage(storageAddrs);
+	}
+	//
+	@Override
+	protected final void createDirectoryPath(final String nodeAddr, final String dirPath)
+	throws IllegalStateException {
+		LOG.info(Markers.MSG, "Using the storage directory \"{}\"", dirPath);
 	}
 	//
 	@Override

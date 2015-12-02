@@ -1,9 +1,9 @@
 package com.emc.mongoose.core.api.load.builder;
 //
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-common
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -15,7 +15,7 @@ import java.rmi.RemoteException;
  Created by kurila on 28.04.14.
  A builder pattern implementation which should help to instantiate a configured load executor.
  */
-public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>>
+public interface LoadBuilder<T extends Item, U extends LoadExecutor<T>>
 extends Closeable {
 	//
 	String
@@ -34,15 +34,6 @@ extends Closeable {
 	throws IllegalStateException, RemoteException;
 	//
 	LoadBuilder<T, U> setMaxCount(final long maxCount)
-	throws IllegalArgumentException, RemoteException;
-	//
-	LoadBuilder<T, U> setMinObjSize(final long minObjSize)
-	throws IllegalArgumentException, RemoteException;
-	//
-	LoadBuilder<T, U> setMaxObjSize(final long maxObjSize)
-	throws IllegalArgumentException, RemoteException;
-	//
-	LoadBuilder<T, U> setObjSizeBias(final float objSizeBias)
 	throws IllegalArgumentException, RemoteException;
 	//
 	LoadBuilder<T, U> setManualTaskSleepMicroSecs(final int manualTaskSleepMicroSec)
@@ -66,19 +57,13 @@ extends Closeable {
 	LoadBuilder<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setUpdatesPerItem(final int count)
-	throws RemoteException;
-	//
-	LoadBuilder<T, U> setItemSrc(final DataItemSrc<T> itemSrc)
+	LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> useNewItemSrc()
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> useNoneItemSrc()
-	throws RemoteException;
-	//
-	LoadBuilder<T, U> useContainerListingItemSrc()
 	throws RemoteException;
 	//
 	U build()

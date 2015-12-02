@@ -26,7 +26,8 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.artifactory'
 
-sourceCompatibility = '1.7'
+sourceCompatibility = JavaVersion.VERSION_1_7
+targetCompatibility = JavaVersion.VERSION_1_7
 
 distsDirName = 'dist'
 dependencyCacheDirName = 'tmp'
@@ -185,7 +186,7 @@ sourceSets {
 		compileClasspath += sourceSets.common.output + sourceSets.scenario.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
-		compileClasspath += sourceSets.storageMock.output
+		compileClasspath += sourceSets.storageMock.output + sourceSets.util.output
 		//
 		runtimeClasspath += sourceSets.client.output + sourceSets.storageMock.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
@@ -203,7 +204,7 @@ sourceSets {
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
 		compileClasspath += sourceSets.webserver.output + sourceSets.webui.output
-		compileClasspath += sourceSets.storageMock.output
+		compileClasspath += sourceSets.storageMock.output + sourceSets.util.output
 		//
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
@@ -369,6 +370,7 @@ dependencies {
 
 	scenarioCompile (
 		library.commons_configuration,
+		library.commons_collections4,
 		library.log4j_api,
 		library.httpcore
 	)
@@ -819,6 +821,7 @@ task webuiJar(type: Jar) {
 				serverApiJar.outputs.files.collect {it.name}.join(' '),
 				serverImplJar.outputs.files.collect {it.name}.join(' '),
 				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				utilJar.outputs.files.collect {it.name}.join(' '),
 				configurations.webuiRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
@@ -855,6 +858,7 @@ task cliJar(type: Jar) {
 				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
 				storageMockJar.outputs.files.collect {it.name}.join(' '),
 				scenarioJar.outputs.files.collect {it.name}.join(' '),
+				utilJar.outputs.files.collect {it.name}.join(' '),
 				webserverJar.outputs.files.collect {it.name}.join(' '),
 				webuiJar.outputs.files.collect {it.name}.join(' '),
 				configurations.cliRuntime.collect {
@@ -989,7 +993,7 @@ task dist(type: Tar) {
 idea {
 	module {
 		name = rootProject.name
-		jdkName = sourceCompatibility
+		//jdkName = sourceCompatibility
 		//
 		inheritOutputDirs = false
 		outputDir = sourceSets.common.output.resourcesDir
@@ -1004,7 +1008,7 @@ idea {
 			],
 		]
 		//for cleaning mongoose.iml
-		iml{
+		iml {
 			beforeMerged { module ->
 				//if you want skip merging exclude dirs
 				//module.excludeFolders.clear()
@@ -1035,7 +1039,10 @@ task integTest(type: Test, dependsOn: dist) {
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
-	jvmArgs '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
+	forkEvery = 1
+	minHeapSize = "5g"
+	maxHeapSize = "5g"
+	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
@@ -1097,7 +1104,7 @@ for(nextPublicJar in publicJars) {
 }
 
 artifactory {
-	contextUrl = "${artifactory_contextUrl}"   //The base Artifactory URL if not overridden by the publisher/resolver
+	contextUrl = "${artifactory_contextUrl}" //The base Artifactory URL if not overridden by the publisher/resolver
 	publish {
 		repository {
 			repoKey = 'vipr-dev-local'

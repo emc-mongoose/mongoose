@@ -4,15 +4,16 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-adapter-swift.jar
-import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.data.MutableDataItem;
+import com.emc.mongoose.core.api.data.model.DataItemContainer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -98,7 +99,7 @@ extends WSRequestHandlerBase<T> {
 							WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ||
 							WSRequestConfig.METHOD_POST.equalsIgnoreCase(method)
 						) {
-							offset = Long.parseLong(oid, DataObject.ID_RADIX);
+							offset = Long.parseLong(oid, MutableDataItem.ID_RADIX);
 						} else {
 							offset = -1;
 						}
@@ -149,7 +150,7 @@ extends WSRequestHandlerBase<T> {
 		}
 		//
 		if(maxCount <= 0) {
-			maxCount = batchSize;
+			maxCount = DataItemContainer.DEFAULT_PAGE_SIZE;
 		}
 		//
 		final List<T> buff = new ArrayList<>(maxCount);
@@ -176,7 +177,7 @@ extends WSRequestHandlerBase<T> {
 			ObjectNode node;
 			for(final T dataObject : buff) {
 				node = OBJ_MAPPER.createObjectNode();
-				node.put("name", dataObject.getId());
+				node.put("name", dataObject.getName());
 				node.put("bytes", dataObject.getSize());
 				((ArrayNode) nodeRoot).add(node);
 			}

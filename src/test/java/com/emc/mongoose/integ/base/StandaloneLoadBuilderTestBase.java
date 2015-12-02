@@ -3,9 +3,9 @@ package com.emc.mongoose.integ.base;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.builder.WSLoadBuilder;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
+import com.emc.mongoose.core.api.load.builder.WSDataLoadBuilder;
+import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
+import com.emc.mongoose.core.impl.load.builder.BasicWSDataLoadBuilder;
 //
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -15,7 +15,7 @@ import org.junit.BeforeClass;
 public abstract class StandaloneLoadBuilderTestBase
 extends WSMockTestBase {
 	//
-	protected static WSLoadBuilder<WSObject, WSLoadExecutor<WSObject>> LOAD_BUILDER;
+	protected static WSDataLoadBuilder<WSObject, WSDataLoadExecutor<WSObject>> LOAD_BUILDER;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -23,7 +23,7 @@ extends WSMockTestBase {
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
-		LOAD_BUILDER = new BasicWSLoadBuilder<>(RunTimeConfig.getContext())
+		LOAD_BUILDER = new BasicWSDataLoadBuilder<>(RunTimeConfig.getContext())
 			.setProperties(rtConfig);
 	}
 	//

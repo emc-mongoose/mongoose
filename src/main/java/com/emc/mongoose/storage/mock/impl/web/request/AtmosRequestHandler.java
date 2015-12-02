@@ -5,15 +5,15 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-storage-adapter-atmos.jar
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.data.model.DataItemContainer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 //
-import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import org.apache.commons.codec.binary.Hex;
 //
 import org.apache.http.HttpHeaders;
@@ -187,7 +187,7 @@ extends WSRequestHandlerBase<T> {
 	protected final void handleContainerList(
 		final HttpRequest req, final HttpResponse resp, final String subtenant, final String oid
 	) {
-		int maxCount = batchSize;
+		int maxCount = DataItemContainer.DEFAULT_PAGE_SIZE;
 		if(req.containsHeader(WSRequestConfig.KEY_EMC_LIMIT)) {
 			try {
 				maxCount = Integer.parseInt(
@@ -221,7 +221,7 @@ extends WSRequestHandlerBase<T> {
 		}
 		//
 		if(lastObj != null) {
-			resp.setHeader(WSRequestConfig.KEY_EMC_TOKEN, lastObj.getId());
+			resp.setHeader(WSRequestConfig.KEY_EMC_TOKEN, lastObj.getName());
 		}
 		//
 		final Document doc = DOM_BUILDER.newDocument();
@@ -232,7 +232,7 @@ extends WSRequestHandlerBase<T> {
 		for(final T dataObject : buff) {
 			e = doc.createElement("Object");
 			ee = doc.createElement("ObjectID");
-			ee.appendChild(doc.createTextNode(dataObject.getId()));
+			ee.appendChild(doc.createTextNode(dataObject.getName()));
 			e.appendChild(ee);
 			eRoot.appendChild(e);
 		}
@@ -288,13 +288,10 @@ extends WSRequestHandlerBase<T> {
 	}
 	//
 	@Override
-	protected final boolean handleContainerCreate(
+	protected final void handleContainerCreate(
 		final HttpRequest req, final HttpResponse resp, final String name
 	) {
-		final boolean created = super.handleContainerCreate(req, resp, name);
-		if(created) {
-			resp.setHeader(SubTenant.KEY_SUBTENANT_ID, name);
-		}
-		return created;
+		super.handleContainerCreate(req, resp, name);
+		resp.setHeader(SubTenant.KEY_SUBTENANT_ID, name);
 	}
 }

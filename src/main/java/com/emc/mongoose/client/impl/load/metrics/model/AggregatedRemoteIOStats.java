@@ -7,7 +7,7 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 //
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.model.metrics.IOStatsBase;
@@ -19,9 +19,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -31,12 +32,12 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 14.09.15.
  */
-public class AggregatedRemoteIOStats<T extends DataItem>
+public class AggregatedRemoteIOStats<T extends Item, W extends LoadSvc<T>>
 extends IOStatsBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final Map<String, LoadSvc<T>> loadSvcMap;
+	private final Map<String, W> loadSvcMap;
 	private final Map<String, Snapshot> loadStatsSnapshotMap;
 	private final ExecutorService statsLoader;
 	//
@@ -54,14 +55,15 @@ extends IOStatsBase {
 		failRateLast = 0,
 		byteRateMean = 0,
 		byteRateLast = 0;
-	private final Lock lock = new ReentrantLock();
+	private final Lock
+		lock = new ReentrantLock();
 	//
 	public AggregatedRemoteIOStats(
-		final String name, final int serveJmxPort, final Map<String, LoadSvc<T>> loadSvcMap
+		final String name, final int serveJmxPort, final Map<String, W> loadSvcMap
 	) {
 		super(name, serveJmxPort);
 		this.loadSvcMap = loadSvcMap;
-		this.loadStatsSnapshotMap = new HashMap<>(loadSvcMap.size());
+		this.loadStatsSnapshotMap = new ConcurrentHashMap<>(loadSvcMap.size());
 		statsLoader = Executors.newFixedThreadPool(
 			loadSvcMap.size(), new GroupThreadFactory("statsLoader<" + name + ">", true)
 		);
@@ -71,12 +73,18 @@ extends IOStatsBase {
 			new Gauge<Long>() {
 				@Override
 				public final Long getValue() {
-					lock.lock();
+					long x = 0;
 					try {
-						return countSucc;
-					} finally {
-						lock.unlock();
+						if(lock.tryLock(1, TimeUnit.SECONDS)) {
+							x = countSucc;
+							lock.unlock();
+						} else {
+							throw new IllegalStateException("Failed to acquire the lock in 1 sec");
+						}
+					} catch(final InterruptedException | IllegalStateException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "I/O stats is locked by aggregation");
 					}
+					return x;
 				}
 			}
 		);
@@ -85,12 +93,18 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
+					double x = 0;
 					try {
-						return succRateMean;
-					} finally {
-						lock.unlock();
+						if(lock.tryLock(1, TimeUnit.SECONDS)) {
+							x = succRateMean;
+							lock.unlock();
+						} else {
+							throw new IllegalStateException("Failed to acquire the lock in 1 sec");
+						}
+					} catch(final InterruptedException | IllegalStateException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "I/O stats is locked by aggregation");
 					}
+					return x;
 				}
 			}
 		);
@@ -99,12 +113,18 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
+					double x = 0;
 					try {
-						return succRateLast;
-					} finally {
-						lock.unlock();
+						if(lock.tryLock(1, TimeUnit.SECONDS)) {
+							x = succRateLast;
+							lock.unlock();
+						} else {
+							throw new IllegalStateException("Failed to acquire the lock in 1 sec");
+						}
+					} catch(final InterruptedException | IllegalStateException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "I/O stats is locked by aggregation");
 					}
+					return x;
 				}
 			}
 		);
@@ -113,12 +133,18 @@ extends IOStatsBase {
 			new Gauge<Long>() {
 				@Override
 				public final Long getValue() {
-					lock.lock();
+					long x = 0;
 					try {
-						return countFail;
-					} finally {
-						lock.unlock();
+						if(lock.tryLock(1, TimeUnit.SECONDS)) {
+							x = countFail;
+							lock.unlock();
+						} else {
+							throw new IllegalStateException("Failed to acquire the lock in 1 sec");
+						}
+					} catch(final InterruptedException | IllegalStateException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "I/O stats is locked by aggregation");
 					}
+					return x;
 				}
 			}
 		);
@@ -127,12 +153,18 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
+					double x = 0;
 					try {
-						return failRateMean;
-					} finally {
-						lock.unlock();
+						if(lock.tryLock(1, TimeUnit.SECONDS)) {
+							x = failRateMean;
+							lock.unlock();
+						} else {
+							throw new IllegalStateException("Failed to acquire the lock in 1 sec");
+						}
+					} catch(final InterruptedException | IllegalStateException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "I/O stats is locked by aggregation");
 					}
+					return x;
 				}
 			}
 		);
@@ -141,12 +173,18 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
+					double x = 0;
 					try {
-						return failRateLast;
-					} finally {
-						lock.unlock();
+						if(lock.tryLock(1, TimeUnit.SECONDS)) {
+							x = failRateLast;
+							lock.unlock();
+						} else {
+							throw new IllegalStateException("Failed to acquire the lock in 1 sec");
+						}
+					} catch(final InterruptedException | IllegalStateException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "I/O stats is locked by aggregation");
 					}
+					return x;
 				}
 			}
 		);
@@ -155,12 +193,18 @@ extends IOStatsBase {
 			new Gauge<Long>() {
 				@Override
 				public final Long getValue() {
-					lock.lock();
+					long x = 0;
 					try {
-						return countByte;
-					} finally {
-						lock.unlock();
+						if(lock.tryLock(1, TimeUnit.SECONDS)) {
+							x = countByte;
+							lock.unlock();
+						} else {
+							throw new IllegalStateException("Failed to acquire the lock in 1 sec");
+						}
+					} catch(final InterruptedException | IllegalStateException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "I/O stats is locked by aggregation");
 					}
+					return x;
 				}
 			}
 		);
@@ -169,12 +213,18 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
+					double x = 0;
 					try {
-						return byteRateMean;
-					} finally {
-						lock.unlock();
+						if(lock.tryLock(1, TimeUnit.SECONDS)) {
+							x = byteRateMean;
+							lock.unlock();
+						} else {
+							throw new IllegalStateException("Failed to acquire the lock in 1 sec");
+						}
+					} catch(final InterruptedException | IllegalStateException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "I/O stats is locked by aggregation");
 					}
+					return x;
 				}
 			}
 		);
@@ -183,12 +233,18 @@ extends IOStatsBase {
 			new Gauge<Double>() {
 				@Override
 				public final Double getValue() {
-					lock.lock();
+					double x = 0;
 					try {
-						return byteRateLast;
-					} finally {
-						lock.unlock();
+						if(lock.tryLock(1, TimeUnit.SECONDS)) {
+							x = byteRateLast;
+							lock.unlock();
+						} else {
+							throw new IllegalStateException("Failed to acquire the lock in 1 sec");
+						}
+					} catch(final InterruptedException | IllegalStateException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "I/O stats is locked by aggregation");
 					}
+					return x;
 				}
 			}
 		);
@@ -211,36 +267,35 @@ extends IOStatsBase {
 			final LoadSvc loadSvc = loadSvcMap.get(loadSvcAddr);
 			final Thread currThread = Thread.currentThread();
 			currThread.setName(currThread.getName() + "@" + loadSvcAddr);
-			int countFailed = 0;
-			try {
-				while(!currThread.isInterrupted()) {
-					try {
-						loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
-						if(loadSvcStatsSnapshot != null) {
-							loadStatsSnapshotMap.put(loadSvcAddr, loadSvcStatsSnapshot);
-							countFailed = 0; // reset
-						} else {
-							LOG.warn(
-								Markers.ERR,
-								"Failed to load the stats snapshot from the load server @ {}",
-								loadSvcAddr
+			while(!currThread.isInterrupted()) {
+				try {
+					loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
+					if(loadSvcStatsSnapshot != null) {
+						if(LOG.isTraceEnabled(Markers.MSG)) {
+							LOG.trace(
+								Markers.MSG, "Got metrics snapshot from {}: {}",
+								loadSvcAddr, loadSvcStatsSnapshot
 							);
 						}
-						Thread.sleep(1);
-					} catch(final RemoteException e) {
-						if(countFailed < COUNT_LIMIT_RETRIES) {
-							countFailed++;
-							TimeUnit.MILLISECONDS.sleep(countFailed);
-						} else {
-							LogUtil.exception(
-								LOG, Level.WARN, e,
-								"Failed to fetch the metrics snapshot from {}", loadSvcAddr
-							);
-							break;
-						}
+						loadStatsSnapshotMap.put(loadSvcAddr, loadSvcStatsSnapshot);
+					} else {
+						LOG.warn(
+							Markers.ERR, "Got null metrics snapshot from the load server @ {}",
+							loadSvcAddr
+						);
 					}
+					LockSupport.parkNanos(1);
+				} catch(final NoSuchObjectException e) {
+					LogUtil.exception(
+						LOG, Level.DEBUG, e,
+						"Failed to fetch the metrics snapshot from {}", loadSvcAddr
+					);
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e,
+						"Failed to fetch the metrics snapshot from {}", loadSvcAddr
+					);
 				}
-			} catch(final InterruptedException ignored) {
 			}
 		}
 	}
@@ -276,60 +331,39 @@ extends IOStatsBase {
 	//
 	@Override
 	public final Snapshot getSnapshot() {
-		//
-		lock.lock();
 		try {
-			countSucc = 0;
-			countFail = 0;
-			countByte = 0;
-			sumDurMicroSec = 0;
-			succRateMean = 0;
-			succRateLast = 0;
-			failRateMean = 0;
-			failRateLast = 0;
-			byteRateMean = 0;
-			byteRateLast = 0;
-			//
-			Snapshot loadStatsSnapshot;
-			for(final String addr : loadStatsSnapshotMap.keySet()) {
-				loadStatsSnapshot = loadStatsSnapshotMap.get(addr);
-				if(loadStatsSnapshot != null) {
-					countSucc += loadStatsSnapshot.getSuccCount();
-					countFail += loadStatsSnapshot.getFailCount();
-					countByte += loadStatsSnapshot.getByteCount();
-					sumDurMicroSec += loadStatsSnapshot.getDurationSum();
-					succRateMean += loadStatsSnapshot.getSuccRateMean();
-					succRateLast += loadStatsSnapshot.getSuccRateLast();
-					failRateMean += loadStatsSnapshot.getFailRateMean();
-					failRateLast += loadStatsSnapshot.getFailRateLast();
-					byteRateMean += loadStatsSnapshot.getByteRateMean();
-					byteRateLast += loadStatsSnapshot.getByteRateLast();
-					durationValues = loadStatsSnapshot.getDurationValues();
-					if(durationValues != null) {
-						for(final long duration : durationValues) {
-							reqDuration.update(duration);
+			if(lock.tryLock(1, TimeUnit.SECONDS)) {
+				try {
+					countSucc = 0;
+					countFail = 0;
+					countByte = 0;
+					sumDurMicroSec = 0;
+					succRateMean = 0;
+					succRateLast = 0;
+					failRateMean = 0;
+					failRateLast = 0;
+					byteRateMean = 0;
+					byteRateLast = 0;
+					//
+					Snapshot loadStatsSnapshot;
+					for(final String addr : loadStatsSnapshotMap.keySet()) {
+						loadStatsSnapshot = loadStatsSnapshotMap.get(addr);
+						if(loadStatsSnapshot != null) {
+							applyNextServerSnapshot(loadStatsSnapshot);
+						} else {
+							LOG.warn(
+								Markers.ERR, "No load stats snapshot is available for {}", addr
+							);
 						}
-					} else {
-						LOG.warn(
-							Markers.ERR, "No duration values snapshot is available for {}", addr
-						);
 					}
-					latencyValues = loadStatsSnapshot.getLatencyValues();
-					if(latencyValues != null) {
-						for(final long latency : latencyValues) {
-							respLatency.update(latency);
-						}
-					} else {
-						LOG.warn(
-							Markers.ERR, "No latency values snapshot is available for {}", addr
-						);
-					}
-				} else {
-					LOG.warn(Markers.ERR, "No load stats snapshot is available for {}", addr);
+				} finally {
+					lock.unlock();
 				}
+			} else {
+				throw new IllegalStateException("Failed to acquire the lock in 1 sec");
 			}
-		} finally {
-			lock.unlock();
+		} catch(final InterruptedException | IllegalStateException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Metrics aggregation failure");
 		}
 		//
 		final long currElapsedTime = tsStartMicroSec > 0 ?
@@ -339,6 +373,35 @@ extends IOStatsBase {
 			prevElapsedTimeMicroSec + currElapsedTime, sumDurMicroSec,
 			reqDuration.getSnapshot(), respLatency.getSnapshot()
 		);
+	}
+	//
+	private void applyNextServerSnapshot(final Snapshot loadStatsSnapshot) {
+		countSucc += loadStatsSnapshot.getSuccCount();
+		countFail += loadStatsSnapshot.getFailCount();
+		countByte += loadStatsSnapshot.getByteCount();
+		sumDurMicroSec += loadStatsSnapshot.getDurationSum();
+		succRateMean += loadStatsSnapshot.getSuccRateMean();
+		succRateLast += loadStatsSnapshot.getSuccRateLast();
+		failRateMean += loadStatsSnapshot.getFailRateMean();
+		failRateLast += loadStatsSnapshot.getFailRateLast();
+		byteRateMean += loadStatsSnapshot.getByteRateMean();
+		byteRateLast += loadStatsSnapshot.getByteRateLast();
+		durationValues = loadStatsSnapshot.getDurationValues();
+		if(durationValues != null) {
+			for(final long duration : durationValues) {
+				reqDuration.update(duration);
+			}
+		} else {
+			LOG.warn(Markers.ERR, "No duration values are available in the fetched snapshot");
+		}
+		latencyValues = loadStatsSnapshot.getLatencyValues();
+		if(latencyValues != null) {
+			for(final long latency : latencyValues) {
+				respLatency.update(latency);
+			}
+		} else {
+			LOG.warn(Markers.ERR, "No latency values are available in the fetched snapshot");
+		}
 	}
 	//
 	@Override

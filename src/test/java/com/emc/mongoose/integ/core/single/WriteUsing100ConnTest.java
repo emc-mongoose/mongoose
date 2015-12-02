@@ -74,28 +74,15 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  write
+		STD_OUTPUT_STREAM = StdOutInterceptorTestSuite.getStdOutBufferingStream();
 		SCENARIO_THREAD = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				try {
-					try(
-						final BufferingOutputStream
-							 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
-					) {
-						STD_OUTPUT_STREAM = stdOutStream;
-						new ScriptMockRunner().run();
-						TimeUnit.SECONDS.sleep(3);
-					} catch(final InterruptedException ignored) {
-					} finally {
-						RunIdFileManager.flushAll();
-					}
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to execute the load job");
-				}
+				new ScriptMockRunner().run();
 			}
 		}, "writeScenarioThread");
 		SCENARIO_THREAD.start();
-		SCENARIO_THREAD.join(30000);
+		SCENARIO_THREAD.join(10000);
 	}
 
 	@AfterClass
@@ -104,6 +91,7 @@ extends WSMockTestBase {
 		try {
 			SCENARIO_THREAD.interrupt();
 			TimeUnit.SECONDS.sleep(10);
+			RunIdFileManager.flushAll();
 			//
 			Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
 			//  Check that messages.log exists
@@ -114,7 +102,7 @@ extends WSMockTestBase {
 			expectedFile = LogValidator.getPerfTraceFile(RUN_ID).toPath();
 			//  Check that perf.trace.csv file exists
 			Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
-			expectedFile = LogValidator.getDataItemsFile(RUN_ID).toPath();
+			expectedFile = LogValidator.getItemsListFile(RUN_ID).toPath();
 			//  Check that data.items.csv file exists
 			Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
 			//
@@ -128,6 +116,7 @@ extends WSMockTestBase {
 			);
 			shouldReportScenarioEndToMessageLogFile();
 		} finally {
+			STD_OUTPUT_STREAM.close();
 			WSMockTestBase.tearDownClass();
 		}
 	}
@@ -135,7 +124,7 @@ extends WSMockTestBase {
 	public static void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getDataItemsFile(RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -222,7 +211,7 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectDataItemsFiles()
 	throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File dataItemFile = LogValidator.getDataItemsFile(RUN_ID);
+		final File dataItemFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
 		//
 		try(

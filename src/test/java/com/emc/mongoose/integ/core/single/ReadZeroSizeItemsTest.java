@@ -4,7 +4,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -66,7 +65,6 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  write
-		UniformDataSource.DEFAULT = new UniformDataSource();
 		new ScriptMockRunner().run();
 		//
 		RunIdFileManager.flushAll();
@@ -75,8 +73,8 @@ extends WSMockTestBase {
 		LoggingTestBase.setUpClass();
 		//
 		rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH,
-			LogValidator.getDataItemsFile(CREATE_RUN_ID).getPath());
+		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_FILE,
+			LogValidator.getItemsListFile(CREATE_RUN_ID).getPath());
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LIMIT_TIME_SEC) + "s");
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
@@ -84,9 +82,9 @@ extends WSMockTestBase {
 		//
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  read
-		UniformDataSource.DEFAULT = new UniformDataSource();
-		try (final BufferingOutputStream
-				 stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		try(
+			final BufferingOutputStream
+				stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
 			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
@@ -120,7 +118,7 @@ extends WSMockTestBase {
 	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(CREATE_RUN_ID);
 		Assert.assertTrue(
 			"data.items.csv file for create load doesn't exist", dataItemsFile.exists()
 		);
@@ -150,7 +148,7 @@ extends WSMockTestBase {
 	public void shouldGetAllDataItemsFromServerAndDataSizeIsCorrect()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -217,7 +215,7 @@ extends WSMockTestBase {
 		//  Check that perf.trace.csv file exists
 		Assert.assertTrue("perf.trace.csv file of create load doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogValidator.getDataItemsFile(CREATE_RUN_ID).toPath();
+		expectedFile = LogValidator.getItemsListFile(CREATE_RUN_ID).toPath();
 		//  Check that data.items.csv file exists
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", Files.exists(expectedFile));
 	}
@@ -241,7 +239,7 @@ extends WSMockTestBase {
 		//  Check that perf.trace.csv file is contained
 		Assert.assertTrue("perf.trace.csv file of read load doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogValidator.getDataItemsFile(READ_RUN_ID).toPath();
+		expectedFile = LogValidator.getItemsListFile(READ_RUN_ID).toPath();
 		//  Check that data.items.csv file is contained
 		Assert.assertTrue("data.items.csv file of read load doesn't exist", Files.exists(expectedFile));
 	}
@@ -250,7 +248,7 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectDataItemsFileAfterReadScenario()
 	throws Exception {
 		//  Get data.items.csv file of read scenario run
-		final File readDataItemFile = LogValidator.getDataItemsFile(READ_RUN_ID);
+		final File readDataItemFile = LogValidator.getItemsListFile(READ_RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", readDataItemFile.exists());
 		//
 		try(
@@ -310,7 +308,7 @@ extends WSMockTestBase {
 	public void shouldWriteAllDataItemsInCorrectSize()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -369,12 +367,12 @@ extends WSMockTestBase {
 	public void shouldReadDataItemsInSameOrderAsInFileOfWriteScenario()
 	throws Exception {
 		//  Get data.items.csv file of create run
-		final File dataItemsFileWrite = LogValidator.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFileWrite = LogValidator.getItemsListFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", dataItemsFileWrite.exists());
 		//
 		final byte[] bytesDataItemsFileWrite = Files.readAllBytes(dataItemsFileWrite.toPath());
 		//  Get data.items.csv file of read run
-		final File dataItemsFileRead = LogValidator.getDataItemsFile(READ_RUN_ID);
+		final File dataItemsFileRead = LogValidator.getItemsListFile(READ_RUN_ID);
 		Assert.assertTrue("data.items.csv file of read load doesn't exist", dataItemsFileRead.exists());
 		//
 		final byte[] bytesDataItemsFileRead = Files.readAllBytes(dataItemsFileRead.toPath());

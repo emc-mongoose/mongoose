@@ -4,7 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.GenericContainer;
+import com.emc.mongoose.core.api.data.model.DataItemContainer;
 //
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.impl.data.model.GenericContainerItemSrcBase;
@@ -65,7 +65,7 @@ extends GenericContainerItemSrcBase<T> {
 		//
 		private final List<T> itemsBuffer;
 		private final Constructor<T> itemConstructor;
-		private final GenericContainer<T> container;
+		private final DataItemContainer<T> container;
 		private int count = 0;
 		private boolean
 			isInsideItem = false,
@@ -78,7 +78,7 @@ extends GenericContainerItemSrcBase<T> {
 		//
 		private PageContentHandler(
 			final List<T> itemsBuffer, final Constructor<T> itemConstructor,
-			final GenericContainer<T> container
+			final DataItemContainer<T> container
 		) {
 			this.itemsBuffer = itemsBuffer;
 			this.itemConstructor = itemConstructor;
@@ -159,7 +159,9 @@ extends GenericContainerItemSrcBase<T> {
 	@Override
 	protected final void loadNextPage()
 	throws EOFException, IOException {
-		final int countLimit = (int) Math.min(container.getBatchSize(), maxCount - doneCount);
+		final int countLimit = (int) Math.min(
+			DataItemContainer.DEFAULT_PAGE_SIZE, maxCount - doneCount
+		);
 		if(eof || countLimit == 0) {
 			throw new EOFException();
 		}

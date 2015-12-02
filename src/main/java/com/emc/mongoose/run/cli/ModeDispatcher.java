@@ -6,26 +6,24 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 // mongoose-scenario.jar
 import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.run.scenario.Rampup;
 import com.emc.mongoose.run.scenario.Single;
-import com.emc.mongoose.run.cli.HumanFriendly;
 import com.emc.mongoose.run.webserver.WUIRunner;
 // mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
+import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.IOException;
+import java.rmi.RemoteException;
+import java.util.List;
 import java.util.Map;
 /**
  Created by kurila on 04.07.14.
@@ -60,16 +58,14 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
-				try(
-					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
-						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
-				) {
-					loadBuilderSvc.start();
-					loadBuilderSvc.await();
-				} catch(final IOException e) {
-					LogUtil.exception(rootLogger, Level.ERROR, e, "Load builder service failure");
-				} catch(InterruptedException e) {
-					rootLogger.debug(Markers.MSG, "Interrupted load builder service");
+				final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(RunTimeConfig.getContext());
+				try {
+					multiSvc.start();
+					multiSvc.await();
+				} catch(final RemoteException | InterruptedException e) {
+					LogUtil.exception(
+						rootLogger, Level.ERROR, e, "Failed to run the load builder services"
+					);
 				}
 				break;
 			case Constants.RUN_MODE_WEBUI:
@@ -97,7 +93,6 @@ public final class ModeDispatcher {
 		}
 		//
 		ServiceUtil.shutdown();
-		LogUtil.shutdown();
 	}
 
 	private static void runScenario() {

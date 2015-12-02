@@ -3,13 +3,13 @@ package com.emc.mongoose.core.impl.io.req;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataSource;
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.RequestConfig;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 //
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.LogManager;
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  Created by kurila on 06.06.14.
  The most common implementation of the shared request configuration.
  */
-public abstract class RequestConfigBase<T extends DataItem>
+public abstract class RequestConfigBase<T extends Item>
 implements RequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -33,14 +33,14 @@ implements RequestConfig<T> {
 		api, secret, userName;
 	protected IOTask.Type
 		loadType;
-	protected DataSource
-		dataSrc;
+	protected ContentSource
+		contentSrc;
 	protected volatile boolean
 		verifyContentFlag;
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 	protected volatile RunTimeConfig runTimeConfig;
 	protected volatile String
-		/*addr, */nameSpace, scheme/*, uriTemplate*/;
+		/*addr, */nameSpace, scheme/*, uriTemplate*/, namePrefix = null;
 	protected volatile int
 		port;
 	protected int buffSize;
@@ -53,11 +53,12 @@ implements RequestConfig<T> {
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();
 		loadType = IOTask.Type.CREATE;
-		dataSrc = UniformDataSource.DEFAULT;
+		contentSrc = ContentSourceBase.getDefault();
 		verifyContentFlag = runTimeConfig.getReadVerifyContent();
 		scheme = runTimeConfig.getStorageProto();
 		port = runTimeConfig.getApiTypePort(api);
 		nameSpace = runTimeConfig.getStorageNameSpace();
+		namePrefix = runTimeConfig.getDataPrefix();
 		buffSize = (int) runTimeConfig.getIOBufferSizeMin();
 		reqSleepMilliSec = runTimeConfig.getLoadLimitReqSleepMilliSec();
 	}
@@ -65,7 +66,7 @@ implements RequestConfig<T> {
 	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
 		this();
 		if(reqConf2Clone != null) {
-			setDataSource(reqConf2Clone.getDataSource());
+			setContentSource(reqConf2Clone.getContentSource());
 			setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
 			setAPI(reqConf2Clone.getAPI());
 			setUserName(reqConf2Clone.getUserName());
@@ -73,6 +74,7 @@ implements RequestConfig<T> {
 			setScheme(reqConf2Clone.getScheme());
 			setLoadType(reqConf2Clone.getLoadType());
 			setNameSpace(reqConf2Clone.getNameSpace());
+			setNamePrefix(reqConf2Clone.getNamePrefix());
 			secret = reqConf2Clone.getSecret();
 			setBuffSize(reqConf2Clone.getBuffSize());
 			LOG.debug(
@@ -86,7 +88,7 @@ implements RequestConfig<T> {
 	throws CloneNotSupportedException {
 		final RequestConfigBase<T> requestConfigBranch = (RequestConfigBase<T>) super.clone();
 		requestConfigBranch
-			.setDataSource(dataSrc)
+			.setContentSource(contentSrc)
 			.setVerifyContentFlag(verifyContentFlag)
 			.setAPI(api)
 			.setUserName(userName)
@@ -209,12 +211,23 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final DataSource getDataSource() {
-		return dataSrc;
+	public String getNamePrefix() {
+		return namePrefix;
+	}
+	//
+	@Override
+	public RequestConfigBase<T> setNamePrefix(final String namePrefix) {
+		this.namePrefix = namePrefix;
+		return this;
+	}
+	//
+	@Override
+	public final ContentSource getContentSource() {
+		return contentSrc;
 	}
 	@Override
-	public RequestConfigBase<T> setDataSource(final DataSource dataSrc) {
-		this.dataSrc = dataSrc;
+	public RequestConfigBase<T> setContentSource(final ContentSource dataSrc) {
+		this.contentSrc = dataSrc;
 		return this;
 	}
 	//
@@ -264,7 +277,8 @@ implements RequestConfig<T> {
 		out.writeObject(getUserName());
 		out.writeObject(getSecret());
 		out.writeObject(getNameSpace());
-		out.writeObject(getDataSource());
+		out.writeObject(getNamePrefix());
+		out.writeObject(getContentSource());
 		out.writeBoolean(getVerifyContentFlag());
 	}
 	//
@@ -284,9 +298,11 @@ implements RequestConfig<T> {
 		setSecret(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got secret {}", secret);
 		setNameSpace(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got namespace {}", secret);
-		setDataSource(DataSource.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
+		LOG.trace(Markers.MSG, "Got namespace {}", nameSpace);
+		setNamePrefix(String.class.cast(in.readObject()));
+		LOG.trace(Markers.MSG, "Got name prefix {}", namePrefix);
+		setContentSource(ContentSource.class.cast(in.readObject()));
+		LOG.trace(Markers.MSG, "Got data source {}", contentSrc);
 		setVerifyContentFlag(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got verify content flag {}", verifyContentFlag);
 	}

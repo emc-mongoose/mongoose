@@ -4,7 +4,6 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.LogPatterns;
@@ -73,7 +72,6 @@ extends WSMockTestBase {
 		try (final BufferingOutputStream
 				 stdOutStream =	StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
-			UniformDataSource.DEFAULT = new UniformDataSource();
 			//  Run mongoose default scenario in standalone mode
 			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
@@ -202,7 +200,7 @@ extends WSMockTestBase {
 		//  Check that perf.trace.csv file exists
 		Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogValidator.getDataItemsFile(RUN_ID).toPath();
+		expectedFile = LogValidator.getItemsListFile(RUN_ID).toPath();
 		//  Check that data.items.csv file exists
 		Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
 	}
@@ -256,7 +254,7 @@ extends WSMockTestBase {
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file
-		final File dataItemFile = LogValidator.getDataItemsFile(RUN_ID);
+		final File dataItemFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemFile.exists());
 		try(
 			final BufferedReader
@@ -269,7 +267,7 @@ extends WSMockTestBase {
 	@Test
 	public void shouldDataItemsMasksAreUpdate()
 	throws Exception {
-		final File dataItemsFile = LogValidator.getDataItemsFile(RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
 
 		try(

@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -45,7 +45,6 @@ extends WSMockTestBase {
 	private static final int LIMIT_COUNT = 10;
 	private static final String DATA_SIZE = "10B";
 	private static final String RUN_ID = ReadVerificationTest.class.getCanonicalName();
-	private static final String WRONG_SEED = "7a42d9c483244166";
 
 	private static final String
 		CREATE_RUN_ID = RUN_ID + TestConstants.LOAD_CREATE,
@@ -67,7 +66,6 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  write
-		UniformDataSource.DEFAULT = new UniformDataSource();
 		new ScriptMockRunner().run();
 		//
 		RunIdFileManager.flushAll();
@@ -76,19 +74,20 @@ extends WSMockTestBase {
 		LoggingTestBase.setUpClass();
 		//
 		rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_FPATH,
-			LogValidator.getDataItemsFile(CREATE_RUN_ID).getPath());
+		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_FILE,
+			LogValidator.getItemsListFile(CREATE_RUN_ID).getPath());
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD,
 			TestConstants.LOAD_READ.toLowerCase());
-		rtConfig.set(RunTimeConfig.KEY_DATA_SRC_RING_SEED, WRONG_SEED);
+		rtConfig.set(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "conf/content/zerobytes");
+		ContentSourceBase.DEFAULT = null;
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(rtConfig);
 		//
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  read
-		UniformDataSource.DEFAULT = new UniformDataSource();
-		try (final BufferingOutputStream
-				 stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+		try(
+			final BufferingOutputStream
+				stdOutStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 		) {
 			new ScriptMockRunner().run();
 			//  Wait for "Scenario end" message
@@ -142,7 +141,7 @@ extends WSMockTestBase {
 	public void shouldReportAboutFailedVerificationToConsole()
 	throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", dataItemsFile.exists());
 		//
 		try(
@@ -170,7 +169,7 @@ extends WSMockTestBase {
 	public void shouldReportAboutFailedVerificationToMessageFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = LogValidator.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(CREATE_RUN_ID);
 		Assert.assertTrue("data.items.csv file of create load doesn't exist", dataItemsFile.exists());
 		//
 		try(

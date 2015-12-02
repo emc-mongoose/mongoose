@@ -3,7 +3,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.impl.data.model.ListItemDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -45,20 +45,20 @@ extends StandaloneClientTestBase {
 				.setAPI("atmos")
 				.build()
 		) {
-			final DataItemDst<WSObject> writeOutput = new ListItemDst<>(BUFF_WRITE);
+			final ItemDst<WSObject> writeOutput = new ListItemDst<>(BUFF_WRITE);
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("1KB")
 			);
-			final DataItemDst<WSObject> updateOutput = new ListItemDst<>(BUFF_UPDATE);
+			final ItemDst<WSObject> updateOutput = new ListItemDst<>(BUFF_UPDATE);
 			if(COUNT_WRITTEN > 0) {
 				COUNT_UPDATED = client.update(
-					writeOutput.getDataItemSrc(), updateOutput, COUNT_WRITTEN, 10, 1
+					writeOutput.getItemSrc(), updateOutput, COUNT_WRITTEN, 10, 1
 				);
 			} else {
 				throw new IllegalStateException("Failed to write");
 			}
 			if(COUNT_UPDATED > 0) {
-				COUNT_READ = client.read(updateOutput.getDataItemSrc(), null, COUNT_UPDATED, 10, true);
+				COUNT_READ = client.read(updateOutput.getItemSrc(), null, COUNT_UPDATED, 10, true);
 			} else {
 				throw new IllegalStateException("Failed to update");
 			}

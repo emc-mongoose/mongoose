@@ -4,8 +4,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -260,7 +260,7 @@ extends DistributedClientTestBase {
 	//
 	@Test
 	public void checkDataItemsAreAggregatedByClient() {
-		final File dataItemsFile = LogValidator.getDataItemsFile(RUN_ID);
+		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue(dataItemsFile.exists());
 	}
 	//
@@ -272,7 +272,7 @@ extends DistributedClientTestBase {
 		int lineNum = 0;
 		try(
 			final BufferedReader in = Files.newBufferedReader(
-				LogValidator.getDataItemsFile(RUN_ID).toPath(), StandardCharsets.UTF_8
+				LogValidator.getItemsListFile(RUN_ID).toPath(), StandardCharsets.UTF_8
 			)
 		) {
 			while((nextLine = in.readLine()) != null) {

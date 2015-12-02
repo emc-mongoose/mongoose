@@ -2,8 +2,8 @@ package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemSrc;
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.data.model.ItemSrc;
 //
 import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import org.apache.logging.log4j.LogManager;
@@ -17,12 +17,12 @@ import java.util.concurrent.BlockingQueue;
  The blocking queue wrapped in order to act as data item output from the tail and as data item input
  from the head.
  */
-public class LimitedQueueItemBuffer<T extends DataItem>
+public class LimitedQueueItemBuffer<T extends Item>
 implements ItemBuffer<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
-	private DataItem lastItem = null;
+	private T lastItem = null;
 	protected final BlockingQueue<T> queue;
 	//
 	public LimitedQueueItemBuffer(final BlockingQueue<T> queue) {
@@ -68,7 +68,7 @@ implements ItemBuffer<T> {
 	 */
 	@Override
 	public
-	LimitedQueueItemBuffer<T> getDataItemSrc()
+	LimitedQueueItemBuffer<T> getItemSrc()
 	throws IOException {
 		return this;
 	}
@@ -100,25 +100,25 @@ implements ItemBuffer<T> {
 	}
 	//
 	@Override
-	public DataItem getLastDataItem() {
+	public T getLastItem() {
 		return lastItem;
 	}
 	//
 	@Override
-	public void setLastDataItem(final T lastItem) {
+	public void setLastItem(final T lastItem) {
 		this.lastItem = lastItem;
 	}
 	//
 	@Override
 	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_START, itemsCount);
+		LOG.info(Markers.MSG, ItemSrc.MSG_SKIP_START, itemsCount);
 		try {
 			T item;
 			for(int i = 0; i < itemsCount; i++) {
 				item = queue.take();
 				if (item.equals(lastItem)) {
-					LOG.info(Markers.MSG, DataItemSrc.MSG_SKIP_END);
+					LOG.info(Markers.MSG, ItemSrc.MSG_SKIP_END);
 					return;
 				}
 			}
@@ -130,6 +130,11 @@ implements ItemBuffer<T> {
 	@Override
 	public final boolean isEmpty() {
 		return queue.isEmpty();
+	}
+	//
+	@Override
+	public final int size() {
+		return queue.size();
 	}
 	/**
 	 Does nothing

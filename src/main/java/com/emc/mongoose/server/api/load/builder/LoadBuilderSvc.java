@@ -1,17 +1,18 @@
 package com.emc.mongoose.server.api.load.builder;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.common.net.Service;
+//
+import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //
 import java.rmi.RemoteException;
 /**
  Created by kurila on 09.05.14.
  A remote/server-side load builder.
  */
-public interface LoadBuilderSvc<T extends DataItem, U extends LoadExecutor<T>>
+public interface LoadBuilderSvc<T extends Item, U extends LoadSvc<T>>
 extends LoadBuilder<T, U>, Service {
 	//
 	String buildRemotely()

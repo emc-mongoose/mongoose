@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.util.shared.WSLoadBuilderFactory;
+import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +34,7 @@ implements Runnable {
 	private final TimeUnit timeUnit;
 	//
 	public Single(final RunTimeConfig rtConfig) {
-		final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig);
+		final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance(rtConfig);
 		final IOTask.Type loadType = IOTask.Type.valueOf(
 			rtConfig.getString(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD).toUpperCase()
 		);
@@ -71,10 +71,14 @@ implements Runnable {
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Load job \"{}\" was interrupted", loadJob);
 		} finally {
-			try {
-				loadJob.close();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job: {}", loadJob);
+			if(loadJob != null) {
+				try {
+					loadJob.close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to close the load job: {}", loadJob
+					);
+				}
 			}
 		}
 	}

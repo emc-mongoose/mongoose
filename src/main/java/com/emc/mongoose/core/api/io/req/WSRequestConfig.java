@@ -1,8 +1,9 @@
 package com.emc.mongoose.core.api.io.req;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.model.DataSource;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
@@ -19,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  An HTTP request shared configuration.
  */
 public interface WSRequestConfig<T extends WSObject>
-extends ObjectRequestConfig<T> {
+extends RequestConfig<T> {
 	//
 	String
 		KEY_EMC_ACCEPT = "x-emc-accept",
@@ -64,6 +65,10 @@ extends ObjectRequestConfig<T> {
 	HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException;
 	//
+	HttpEntityEnclosingRequest createContainerRequest(
+		final Container<T> container, final String nodeAddr
+	) throws URISyntaxException;
+	//
 	HttpEntityEnclosingRequest createGenericRequest(final String method, final String uri);
 	//
 	String getHttpMethod();
@@ -81,7 +86,7 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setSecret(final String secret);
 	//
 	@Override
-	WSRequestConfig<T> setDataSource(final DataSource dataSrc);
+	WSRequestConfig<T> setContentSource(final ContentSource dataSrc);
 	//
 	String getNameSpace();
 	WSRequestConfig<T> setNameSpace(final String ns);

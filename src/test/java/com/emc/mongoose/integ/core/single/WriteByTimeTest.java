@@ -200,7 +200,7 @@ extends WSMockTestBase {
 		//  Check that perf.trace.csv file exists
 		Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
 
-		expectedFile = LogValidator.getDataItemsFile(RUN_ID).toPath();
+		expectedFile = LogValidator.getItemsListFile(RUN_ID).toPath();
 		//  Check that data.items.csv file exists
 		Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
 	}

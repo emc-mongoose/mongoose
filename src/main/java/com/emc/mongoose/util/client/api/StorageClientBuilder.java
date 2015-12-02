@@ -1,12 +1,12 @@
 package com.emc.mongoose.util.client.api;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 //
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 17.06.15.
  */
-public interface StorageClientBuilder<T extends DataItem, U extends StorageClient<T>> {
+public interface StorageClientBuilder<T extends Item, U extends StorageClient<T>> {
 	/**
 	 Set the storage API to use.
 	 @param api The value should match to any child package name from the
@@ -107,6 +107,40 @@ public interface StorageClientBuilder<T extends DataItem, U extends StorageClien
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	StorageClientBuilder<T, U> setLimitRate(final float rate)
+	throws IllegalArgumentException;
+
+	/**
+	 Set the load subject class
+	 @param itemCls may one of the predefined values ("data", "container", ...)
+	 @return self.
+	 @throws IllegalArgumentException if the argument value is not one of the predefined values
+	 */
+	StorageClientBuilder<T, U> setItemClass(final String itemCls)
+	throws IllegalArgumentException;
+
+	/**
+	 Enable/disable the versioning
+	 @param enabledFlag enable the versioning if true
+	 @return self.
+	 */
+	StorageClientBuilder<T, U> setVersioning(final boolean enabledFlag)
+	throws IllegalArgumentException;
+
+	/**
+	 Set the file access mode.
+	 @param enabledFlag enable/disable file access mode flag
+	 @return self.
+	 */
+	StorageClientBuilder<T, U> setFileAccess(final boolean enabledFlag)
+	throws IllegalArgumentException;
+
+	/**
+	 Set the storage directory for writing data items to/reading data items from it
+	 @param path the storage side path, shouldn't begin or end with "/"
+	 @return self.
+	 @throws IllegalArgumentException if the path begins or ends with "/"
+	 */
+	StorageClientBuilder<T, U> setPath(final String path)
 	throws IllegalArgumentException;
 
 	/**

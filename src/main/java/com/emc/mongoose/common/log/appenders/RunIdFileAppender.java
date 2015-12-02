@@ -79,7 +79,7 @@ extends AbstractAppender {
 		super.stop();
 		manager.release();
 		manager.close();
-		if (advertiser != null) {
+		if(advertiser != null) {
 			advertiser.unadvertise(advertisement);
 		}
 	}
@@ -162,10 +162,10 @@ extends AbstractAppender {
 		if(buff.length > 0) {
 			try {
 				manager.write(currRunId, buff);
-				if (flagFlush || event.isEndOfBatch()) {
+				if(flagFlush || event.isEndOfBatch()) {
 					manager.flush();
 				}
-			}catch(final AppenderLoggingException ex) {
+			} catch(final AppenderLoggingException ex) {
 				error("Unable to write to stream " + manager.getName() + " for appender " + getName());
 				throw ex;
 			}

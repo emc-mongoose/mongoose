@@ -1,14 +1,18 @@
 package com.emc.mongoose.storage.mock.impl.web;
 // mongoose-common.jar
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
+
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+//
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
-import com.emc.mongoose.storage.mock.impl.base.ObjectStorageMockBase;
+import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import com.emc.mongoose.storage.mock.impl.web.net.BasicSocketEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.web.request.APIRequestHandlerMapper;
 import com.emc.mongoose.storage.mock.impl.web.net.BasicWSMockConnFactory;
@@ -40,7 +44,7 @@ import java.io.IOException;
  * Created by olga on 28.01.15.
  */
 public final class Cinderella<T extends WSObjectMock>
-extends ObjectStorageMockBase<T>
+extends StorageMockBase<T>
 implements WSMock<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -59,13 +63,13 @@ implements WSMock<T> {
 	throws IOException {
 		this(
 			rtConfig.getStorageMockHeadCount(),
-			ioThreadCount > 0 ?
-				ioThreadCount : Math.max(1, Runtime.getRuntime().availableProcessors()),
+			ioThreadCount > 0 ? ioThreadCount : ThreadUtil.getWorkerCount(),
 			rtConfig.getApiTypePort(rtConfig.getApiName()),
 			rtConfig.getStorageMockCapacity(),
 			rtConfig.getStorageMockContainerCapacity(),
 			rtConfig.getStorageMockContainerCountLimit(),
-			rtConfig.getDataSrcFPath(),
+			rtConfig.getBatchSize(),
+			rtConfig.getItemSrcFile(),
 			rtConfig.getLoadMetricsPeriodSec(),
 			rtConfig.getFlagServeJMX(),
 			rtConfig.getStorageMockMinConnLifeMilliSec(),
@@ -73,16 +77,16 @@ implements WSMock<T> {
 		);
 	}
 	//
+	@SuppressWarnings("unchecked")
 	public Cinderella(
 		final int headCount, final int ioThreadCount, final int portStart,
 		final int storageCapacity, final int containerCapacity, final int containerCountLimit,
-		final String dataSrcPath, final int metricsPeriodSec, final boolean jmxServeFlag,
-	    final int minConnLifeMilliSec, final int maxConnLifeMilliSec
+		final int batchSize, final String dataSrcPath, final int metricsPeriodSec,
+		final boolean jmxServeFlag, final int minConnLifeMilliSec, final int maxConnLifeMilliSec
 	) throws IOException {
 		super(
-			(Class<T>) BasicWSObjectMock.class,
-			storageCapacity, containerCapacity, containerCountLimit,
-			headCount * ioThreadCount,
+			(Class<T>) BasicWSObjectMock.class, ContentSourceBase.getDefault(),
+			storageCapacity, containerCapacity, containerCountLimit, batchSize,
 			dataSrcPath, metricsPeriodSec, jmxServeFlag
 		);
 		this.portStart = portStart;
@@ -154,8 +158,9 @@ implements WSMock<T> {
 	}
 	//
 	@Override
+	@SuppressWarnings("unchecked")
 	protected final T newDataObject(final String id, final long offset, final long size) {
-		return (T) new BasicWSObjectMock(id, offset, size);
+		return (T) new BasicWSObjectMock(id, offset, size, 0, contentSrc);
 	}
 	//
 	@Override

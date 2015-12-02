@@ -9,7 +9,7 @@ public interface Markers {
 	//
 	Marker MSG = MarkerManager.getMarker("msg");
 	Marker ERR = MarkerManager.getMarker("err");
-	Marker DATA_LIST = MarkerManager.getMarker("dataList");
+	Marker ITEM_LIST = MarkerManager.getMarker("dataList");
 	Marker PERF_AVG = MarkerManager.getMarker("perfAvg");
 	Marker PERF_SUM = MarkerManager.getMarker("perfSum");
 	Marker PERF_TRACE = MarkerManager.getMarker("perfTrace");

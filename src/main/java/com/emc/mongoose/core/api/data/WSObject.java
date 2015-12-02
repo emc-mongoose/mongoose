@@ -12,7 +12,7 @@ import org.apache.http.protocol.HTTP;
  Web storage data object.
  */
 public interface WSObject
-extends DataObject, HttpEntity {
+extends MutableDataItem, HttpEntity {
 	//
 	Header HEADER_CONTENT_TYPE = new BasicHeader(
 		HTTP.CONTENT_TYPE, RunTimeConfig.getContext().getHttpContentType()

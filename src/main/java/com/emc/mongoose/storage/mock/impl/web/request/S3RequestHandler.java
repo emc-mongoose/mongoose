@@ -5,15 +5,16 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.data.MutableDataItem;
+import com.emc.mongoose.core.api.data.model.DataItemContainer;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.s3.Bucket;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
@@ -93,7 +94,7 @@ extends WSRequestHandlerBase<T> {
 							WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ||
 							WSRequestConfig.METHOD_POST.equalsIgnoreCase(method)
 						) {
-							offset = Long.parseLong(objId, DataObject.ID_RADIX);
+							offset = Long.parseLong(objId, MutableDataItem.ID_RADIX);
 						} else {
 							offset = -1;
 						}
@@ -128,7 +129,7 @@ extends WSRequestHandlerBase<T> {
 		final HttpRequest req, final HttpResponse resp, final String name, final String dataId
 	) {
 		final String uri = req.getRequestLine().getUri();
-		int maxCount = batchSize;
+		int maxCount = DataItemContainer.DEFAULT_PAGE_SIZE;
 		String marker = null;
 		final Matcher maxKeysMatcher = PATTERN_MAX_KEYS.matcher(uri);
 		if(maxKeysMatcher.find()) {
@@ -186,7 +187,7 @@ extends WSRequestHandlerBase<T> {
 		for(final T dataObject : buff) {
 			e = doc.createElement("Contents");
 			ee = doc.createElement("Key");
-			ee.appendChild(doc.createTextNode(dataObject.getId()));
+			ee.appendChild(doc.createTextNode(dataObject.getName()));
 			e.appendChild(ee);
 			ee = doc.createElement("Size");
 			ee.appendChild(doc.createTextNode(Long.toString(dataObject.getSize())));

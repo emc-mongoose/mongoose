@@ -10,14 +10,16 @@ import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
+import com.emc.mongoose.core.api.container.Container;
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataSource;
+import com.emc.mongoose.core.api.data.MutableDataItem;
+import com.emc.mongoose.core.api.data.content.ContentSource;
 // mongoose-core-impl
-import static com.emc.mongoose.core.impl.data.RangeLayerData.getRangeOffset;
+import static com.emc.mongoose.core.impl.data.BasicMutableDataItem.getRangeOffset;
 
+import com.emc.mongoose.core.impl.container.BasicContainer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
@@ -85,7 +87,7 @@ import java.util.concurrent.TimeoutException;
  Created by kurila on 09.06.14.
  */
 public abstract class WSRequestConfigBase<T extends WSObject>
-extends ObjectRequestConfigBase<T>
+extends RequestConfigBase<T>
 implements WSRequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -240,7 +242,7 @@ implements WSRequestConfig<T> {
 	public HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
-			getHttpMethod(), getUriPath(obj)
+			getHttpMethod(), getDataUriPath(obj)
 		);
 		try {
 			applyHostHeader(request, nodeAddr);
@@ -257,6 +259,37 @@ implements WSRequestConfig<T> {
 			case READ:
 			case DELETE:
 				applyPayLoad(request, null);
+				break;
+		}
+		applyHeadersFinally(request);
+		return request;
+	}
+	//
+	@Override
+	public HttpEntityEnclosingRequest createContainerRequest(
+		final Container<T> container, final String nodeAddr
+	) throws URISyntaxException {
+		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
+			getHttpMethod(), getContainerUriPath(container)
+		);
+		try {
+			applyHostHeader(request, nodeAddr);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
+		}
+		switch(loadType) {
+			case UPDATE:
+				// TODO update container, toggle the versioning for example
+				break;
+			case APPEND:
+				throw new IllegalStateException(
+					"Append operation is not supported for the containers"
+				);
+			case CREATE:
+				break;
+			case READ:
+				break;
+			case DELETE:
 				break;
 		}
 		applyHeadersFinally(request);
@@ -282,8 +315,8 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setDataSource(final DataSource dataSrc) {
-		super.setDataSource(dataSrc);
+	public final WSRequestConfigBase<T> setContentSource(final ContentSource dataSrc) {
+		super.setContentSource(dataSrc);
 		return this;
 	}
 	//
@@ -389,8 +422,14 @@ implements WSRequestConfig<T> {
 		return this;
 	}
 	//
+	@Override
+	@SuppressWarnings("unchecked")
+	public Class getContainerClass() {
+		return BasicContainer.class;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
-	public Class<T> getDataItemClass() {
+	public Class<T> getItemClass() {
 		return (Class<T>) BasicWSObject.class;
 	}
 	//
@@ -455,12 +494,12 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {
-		final String oldOid = dataItem.getId();
+		final String oldOid = dataItem.getName();
 		if(
 			oldOid == null || oldOid.isEmpty() ||
 			(verifyContentFlag && IOTask.Type.READ.equals(loadType)) || fsAccess
 		) {
-			dataItem.setId(Long.toString(dataItem.getOffset(), DataObject.ID_RADIX));
+			dataItem.setName(Long.toString(dataItem.getOffset(), MutableDataItem.ID_RADIX));
 		}
 	}
 	//
@@ -503,14 +542,17 @@ implements WSRequestConfig<T> {
 		}
 	}
 	//
-	protected abstract String getUriPath(final T dataItem)
+	protected abstract String getDataUriPath(final T dataItem)
+	throws IllegalArgumentException, URISyntaxException;
+	//
+	protected abstract String getContainerUriPath(final Container<T> container)
 	throws IllegalArgumentException, URISyntaxException;
 	//
 	protected final String getFilePathFor(final T dataItem) {
-		if(fsAccess && idPrefix != null && !idPrefix.isEmpty()) {
-			return "/" + idPrefix + "/" + dataItem.getId();
+		if(fsAccess && namePrefix != null && !namePrefix.isEmpty()) {
+			return "/" + namePrefix + "/" + dataItem.getName();
 		} else {
-			return "/" + dataItem.getId();
+			return "/" + dataItem.getName();
 		}
 	}
 	//
@@ -656,6 +698,17 @@ implements WSRequestConfig<T> {
 		ioReactor.shutdown(1);
 		LOG.debug(Markers.MSG, "Closed web storage client");
 	}
+	//
+	@Override
+	public void configureStorage(final String storageNodeAddrs[])
+	throws IllegalStateException {
+		if(fsAccess && namePrefix != null && !namePrefix.isEmpty()) {
+			createDirectoryPath(storageNodeAddrs[0], namePrefix);
+		}
+	}
+	//
+	protected abstract void createDirectoryPath(final String node, final String path)
+	throws IllegalStateException;
 	//
 	@Override
 	public final HttpResponse execute(

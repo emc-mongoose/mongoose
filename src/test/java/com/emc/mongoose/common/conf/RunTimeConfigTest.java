@@ -82,20 +82,16 @@ public class RunTimeConfigTest {
 
 		Assert.assertArrayEquals(mapOverride.get("data.page.size"),
 			new String[] { "io.buffer.size.min" });
-		Assert.assertArrayEquals(mapOverride.get("data.ring.seed"),
-			new String[] { "data.src.ring.seed" });
-		Assert.assertArrayEquals(mapOverride.get("data.ring.size"),
-			new String[] { "data.src.ring.size" });
 		Assert.assertArrayEquals(mapOverride.get("data.buffer.size"),
 			new String[] { "io.buffer.size.min" });
 		Assert.assertArrayEquals(mapOverride.get("data.buffer.ring.seed"),
-			new String[] { "data.src.ring.seed" });
+			new String[] { "data.ring.seed" });
 		Assert.assertArrayEquals(mapOverride.get("data.buffer.ring.size"),
-			new String[] { "data.src.ring.size" });
+			new String[] { "data.ring.size" });
 		Assert.assertArrayEquals(mapOverride.get("data.src.random.enabled"),
-			new String[] { "data.src.random" });
+			new String[] { "item.src.random" });
 		Assert.assertArrayEquals(mapOverride.get("data.src.random.batchSize"),
-			new String[] { "data.src.batchSize" });
+			new String[] { "item.src.batchSize" });
 
 		Assert.assertArrayEquals(mapOverride.get("http.sign.method"),
 			new String[] { "http.signMethod" });
@@ -115,9 +111,9 @@ public class RunTimeConfigTest {
 		Assert.assertArrayEquals(mapOverride.get("load.append.threads"),
 			new String[] { "load.type.append.connections" });
 		Assert.assertArrayEquals(mapOverride.get("load.tasks.shuffle"),
-			new String[] { "data.src.random" });
+			new String[] { "item.src.random" });
 		Assert.assertArrayEquals(mapOverride.get("load.tasks.batchSize"),
-			new String[] { "data.src.batchSize" });
+			new String[] { "item.src.batchSize" });
 
 		Assert.assertArrayEquals(mapOverride.get("load.time"),
 			new String[] { "load.limit.time" });

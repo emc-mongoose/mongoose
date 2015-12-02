@@ -85,7 +85,9 @@ extends DefaultNHttpServerConnectionFactory {
 					public final void run() {
 						try {
 							Thread.sleep(
-								ThreadLocalRandom.current().nextInt(minConnLifeMilliSec, maxConnLifeMilliSec)
+								ThreadLocalRandom
+									.current()
+									.nextInt(minConnLifeMilliSec, maxConnLifeMilliSec)
 							);
 							conn.close();
 						} catch(final IOException | InterruptedException ignored) {

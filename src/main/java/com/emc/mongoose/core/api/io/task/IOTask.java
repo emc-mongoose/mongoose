@@ -1,11 +1,12 @@
 package com.emc.mongoose.core.api.io.task;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
  */
-public interface IOTask<T extends DataItem> {
+public interface IOTask<T extends Item> {
 	//
 	enum Type {
 		CREATE, READ, DELETE, UPDATE, APPEND
@@ -34,17 +35,9 @@ public interface IOTask<T extends DataItem> {
 	//
 	String getNodeAddr();
 	//
-	T getDataItem();
-	//
-	long getCountBytesDone();
+	T getItem();
 	//
 	Status getStatus();
 	//
-	long getReqTimeStart();
-	//
-	long getReqTimeDone();
-	//
-	long getRespTimeStart();
-	//
-	long getRespTimeDone();
+	void mark(final IOStats ioStats);
 }

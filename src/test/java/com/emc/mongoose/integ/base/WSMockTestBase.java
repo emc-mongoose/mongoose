@@ -3,6 +3,7 @@ package com.emc.mongoose.integ.base;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
@@ -26,10 +27,7 @@ extends LoggingTestBase {
 		LoggingTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_API_NAME, "s3"); // reset the ports beginning
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, 1000000);
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, 1000000);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_WORKERS_PER_SOCKET, 5);
 		WS_MOCK = new Cinderella<>(rtConfig);
 		WS_MOCK_THREAD = new Thread(WS_MOCK, "wsMock");
 		WS_MOCK_THREAD.setDaemon(true);
@@ -45,5 +43,6 @@ extends LoggingTestBase {
 		WS_MOCK.close();
 		LOG.info(Markers.MSG, "Cinderella stopped");
 		LoggingTestBase.tearDownClass();
+		ContentSourceBase.DEFAULT = null; // reset the content source
 	}
 }

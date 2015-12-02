@@ -8,13 +8,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.io.IoBuilder;
 //
 import java.io.File;
-import java.io.PrintStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +47,12 @@ public final class LogUtil {
 		//
 		KEY_THREAD_CTX_INHERIT = "isThreadContextMapInheritable",
 		VALUE_THREAD_CTX_INHERIT = Boolean.toString(true),
+		//
+		KEY_WAIT_STRATEGY = "AsyncLogger.WaitStrategy",
+		VALUE_WAIT_STRATEGY = "Block",
+		//
+		KEY_CLOCK = "log4j.Clock",
+		VALUE_CLOCK = "CoarseCachedClock",
 		//
 		FNAME_LOG_CONF = "logging.json",
 		//
@@ -77,6 +85,7 @@ public final class LogUtil {
 		PATH_LOG_DIR = String.format("%s%slog", RunTimeConfig.DIR_ROOT, File.separator);
 	//
 	private static LoggerContext LOG_CTX = null;
+	private static volatile boolean STDOUT_COLORING_ENABLED = false;
 	private final static Lock LOG_CTX_LOCK = new ReentrantLock();
 	static {
 		init();
@@ -88,6 +97,23 @@ public final class LogUtil {
 		);
 	}
 	//
+	private static boolean isStdOutColoringEnabledByConfig() {
+		if(LOG_CTX != null) {
+			final Appender consoleAppender = LOG_CTX.getConfiguration().getAppender("stdout");
+			if(consoleAppender != null) {
+				final Layout consoleAppenderLayout = consoleAppender.getLayout();
+				if(consoleAppenderLayout instanceof PatternLayout) {
+					final String pattern =
+						((PatternLayout)consoleAppenderLayout).getConversionPattern();
+					if(pattern != null && pattern.contains("%highlight")) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	//
 	public static void init() {
 		LOG_CTX_LOCK.lock();
 		try {
@@ -97,6 +123,10 @@ public final class LogUtil {
 				System.setProperty(KEY_LOG4J_CTX_SELECTOR, VALUE_LOG4J_CTX_ASYNC_SELECTOR);
 				// connect JUL to Log4J2
 				System.setProperty(KEY_JUL_MANAGER, VALUE_JUL_MANAGER);
+				//
+				System.setProperty(KEY_WAIT_STRATEGY, VALUE_WAIT_STRATEGY);
+				//
+				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
 				// set "run.id" property with timestamp value if not set before
 				String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
@@ -126,14 +156,14 @@ public final class LogUtil {
 						LogManager.getLogger().info(
 							Markers.MSG, "Logging subsystem is configured successfully"
 						);
-						Runtime.getRuntime().addShutdownHook(
+						/*Runtime.getRuntime().addShutdownHook(
 							new Thread("logCtxShutDownHook") {
 								@Override
 								public final void run() {
 									shutdown();
 								}
 							}
-						);
+						);*/
 					}
 					final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);
 					System.setErr(
@@ -149,11 +179,16 @@ public final class LogUtil {
 				}
 			}
 		} finally {
+			STDOUT_COLORING_ENABLED = isStdOutColoringEnabledByConfig();
 			LOG_CTX_LOCK.unlock();
 		}
 	}
 	//
-	public static void shutdown() {
+	public static boolean isConsoleColoringEnabled() {
+		return STDOUT_COLORING_ENABLED;
+	}
+	//
+	/*public static void shutdown() {
 		final Logger LOG = LogManager.getLogger();
 		try {
 			if(LOAD_HOOKS_COUNT.get() != 0) {
@@ -186,7 +221,7 @@ public final class LogUtil {
 				LOG_CTX_LOCK.unlock();
 			}
 		}
-	}
+	}*/
 	//
 	public static void exception(
 		final Logger logger, final Level level, final Throwable e,

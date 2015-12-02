@@ -11,6 +11,7 @@ import com.emc.mongoose.run.scenario.Chain;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -63,11 +64,11 @@ extends DistributedLoadBuilderTestBase {
 			DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000;
 			chainScenario.run();
 			DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEC;
+			TimeUnit.SECONDS.sleep(10);
 			STD_OUT_CONTENT = stdOutBuffer.toByteArray();
 		}
 		//
 		RunIdFileManager.flushAll();
-		TimeUnit.SECONDS.sleep(10);
 	}
 	//
 	@Test public void checkTotalDuration()

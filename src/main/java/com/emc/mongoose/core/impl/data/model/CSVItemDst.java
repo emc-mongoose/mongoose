@@ -1,8 +1,9 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.Item;
 //
-import com.emc.mongoose.core.api.data.model.DataItemDst;
+import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.api.data.model.ItemDst;
 //
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -14,16 +15,19 @@ import java.util.List;
  The data item output writing into the specified file human-readable data item records using the CSV
  format
  */
-public abstract class CSVItemDst<T extends DataItem>
-implements DataItemDst<T> {
+public abstract class CSVItemDst<T extends Item>
+implements ItemDst<T> {
 	//
 	protected final Class<? extends T> itemCls;
+	protected final ContentSource contentSrc;
 	protected final BufferedWriter itemsDst;
 	//
-	protected CSVItemDst(final OutputStream out, final Class<? extends T> itemCls)
-	throws IOException {
+	protected CSVItemDst(
+		final OutputStream out, final Class<? extends T> itemCls, final ContentSource contentSrc
+	) throws IOException {
 		itemsDst = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
 		this.itemCls = itemCls;
+		this.contentSrc = contentSrc;
 	}
 	//
 	@Override

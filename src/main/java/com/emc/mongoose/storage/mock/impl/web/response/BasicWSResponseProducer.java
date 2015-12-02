@@ -5,12 +5,12 @@ import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-storage-mock.jar
 //
-import com.emc.mongoose.core.impl.data.RangeLayerData;
+import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.impl.data.BasicMutableDataItem;
 //
-import com.emc.mongoose.core.impl.data.UniformData;
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
+import com.emc.mongoose.core.impl.data.BasicDataItem;
+//
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
-//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.entity.NByteArrayEntity;
@@ -41,9 +41,15 @@ implements HttpAsyncResponseProducer {
 	//
 	private volatile long countBytesDone = 0, contentSize = 0;
 	//
-	private volatile UniformData currRange = null;
+	private volatile BasicDataItem currRange = null;
 	private volatile long currRangeSize = 0, nextRangeOffset = 0;
 	private volatile int currRangeIdx = 0, currDataLayerIdx = 0;
+	//
+	private final ContentSource contentSrc;
+	//
+	public BasicWSResponseProducer(final ContentSource contentSrc) {
+		this.contentSrc = contentSrc;
+	}
 	//
 	public final void setResponse(final HttpResponse response) {
 		this.response = response;
@@ -119,18 +125,18 @@ implements HttpAsyncResponseProducer {
 		if(countBytesDone == nextRangeOffset) {
 			currRangeSize = dataObject.getRangeSize(currRangeIdx);
 			if(dataObject.isCurrLayerRangeUpdated(currRangeIdx)) {
-				currRange = new UniformData(
+				currRange = new BasicDataItem(
 					dataObject.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx + 1,
-					UniformDataSource.DEFAULT
+					contentSrc
 				);
 			} else {
-				currRange = new UniformData(
+				currRange = new BasicDataItem(
 					dataObject.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx,
-					UniformDataSource.DEFAULT
+					contentSrc
 				);
 			}
 			currRangeIdx ++;
-			nextRangeOffset = RangeLayerData.getRangeOffset(currRangeIdx);
+			nextRangeOffset = BasicMutableDataItem.getRangeOffset(currRangeIdx);
 		}
 		if(currRangeSize > 0) {
 			countBytesDone += currRange.write(

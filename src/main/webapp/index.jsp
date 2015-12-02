@@ -767,13 +767,13 @@
 
 												<div class="client">
 													<div class="form-group">
-														<label for="backup-load.servers" class="col-sm-3 control-label">
+														<label for="backup-load.server.addrs" class="col-sm-3 control-label">
 															Load servers
 														</label>
 														<div class="col-sm-9">
-															<input type="text" id="backup-load.servers" class="form-control"
-															       data-pointer="load.servers"
-															       value="${rt:getString(runTimeConfig, 'load.servers')}"/>
+															<input type="text" id="backup-load.server.addrs" class="form-control"
+															       data-pointer="load.server.addrs"
+															       value="${rt:getString(runTimeConfig, 'load.server.addrs')}"/>
 														</div>
 													</div>
 												</div>
@@ -792,13 +792,13 @@
 												</div>
 
 												<div class="form-group">
-													<label for="backup-data.src.fpath" class="col-sm-3 control-label">
+													<label for="backup-item.src.file" class="col-sm-3 control-label">
 														Input items list file
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-data.src.fpath" class="form-control"
-														       data-pointer="data.src.fpath"
-														       value="${rt:getString(runTimeConfig, 'data.src.fpath')}"
+														<input type="text" id="backup-item.src.file" class="form-control"
+														       data-pointer="item.src.file"
+														       value="${rt:getString(runTimeConfig, 'item.src.file')}"
 														       placeholder="Enter path to the list of objects on remote host. Format: ${runTimeConfig.runName}-${runTimeConfig.runVersion}/log/<run.id>/<filename>"/>
 													</div>
 												</div>
@@ -953,14 +953,17 @@
 											<c:when test="${chartsMap[mode] eq 'single'}">
 												<li class="active"><a href="#tp-${correctMode}" data-toggle="pill">Throughput[obj/s]</a></li>
 												<li><a href="#bw-${correctMode}" data-toggle="pill">Bandwidth[mb/s]</a></li>
+												<li><a href="#lat-${correctMode}" data-toggle="pill">Latency[s]</a></li>
 											</c:when>
 											<c:when test="${chartsMap[mode] eq 'chain'}">
 												<li class="active"><a href="#tp-${correctMode}" data-toggle="pill">Throughput[obj/s]</a></li>
 												<li><a href="#bw-${correctMode}" data-toggle="pill">Bandwidth[mb/s]</a></li>
+												<li><a href="#lat-${correctMode}" data-toggle="pill">Latency[s]</a></li>
 											</c:when>
 											<c:when test="${chartsMap[mode] eq 'rampup'}">
 												<li class="active"><a href="#tp-${correctMode}" data-toggle="pill">Throughput[obj/s]</a></li>
 												<li><a href="#bw-${correctMode}" data-toggle="pill">Bandwidth[mb/s]</a></li>
+												<li><a href="#lat-${correctMode}" data-toggle="pill">Latency[s]</a></li>
 											</c:when>
 										</c:choose>
 									</ul>
@@ -973,6 +976,9 @@
 												<div class="tab-pane" id="bw-${correctMode}">
 
 												</div>
+												<div class="tab-pane" id="lat-${correctMode}">
+
+												</div>
 											</c:when>
 											<c:when test="${chartsMap[mode] eq 'chain'}">
 												<div class="tab-pane active" id="tp-${correctMode}">
@@ -981,12 +987,18 @@
 												<div class="tab-pane" id="bw-${correctMode}">
 
 												</div>
+												<div class="tab-pane" id="lat-${correctMode}">
+
+												</div>
 											</c:when>
 											<c:when test="${chartsMap[mode] eq 'rampup'}">
 												<div class="tab-pane active" id="tp-${correctMode}">
 
 												</div>
 												<div class="tab-pane" id="bw-${correctMode}">
+
+												</div>
+												<div class="tab-pane" id="lat-${correctMode}">
 
 												</div>
 											</c:when>

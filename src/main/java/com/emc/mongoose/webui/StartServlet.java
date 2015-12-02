@@ -8,12 +8,9 @@ import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 // mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
@@ -21,6 +18,7 @@ import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.run.scenario.Rampup;
 import com.emc.mongoose.run.scenario.Single;
 //
+import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,6 +29,8 @@ import javax.servlet.http.HttpServletResponse;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by gusakk on 01/10/14.
@@ -97,9 +97,11 @@ public final class StartServlet extends CommonServlet {
 	}
 	//
 	private void startServer(final String message) {
+		//
 		final Thread thread = new Thread() {
-			LoadBuilderSvc loadBuilderSvc;
 			RunTimeConfig localRunTimeConfig;
+			LoadBuilderSvc multiSvc;
+			//
 			@Override
 			public void run() {
 				localRunTimeConfig = runTimeConfig;
@@ -109,24 +111,27 @@ public final class StartServlet extends CommonServlet {
 				LOG.debug(Markers.MSG, message);
 				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				//
-				loadBuilderSvc = new BasicWSLoadBuilderSvc(localRunTimeConfig);
-				//
+				multiSvc = new MultiLoadBuilderSvc(localRunTimeConfig);
 				try {
-					loadBuilderSvc.setProperties(runTimeConfig);
-					loadBuilderSvc.start();
-				} catch (final RemoteException e) {
-					LogUtil.exception(LOG, Level.ERROR, e, "Failed to start load builder service");
+					multiSvc.start();
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "Failed to start the load builder services"
+					);
 				}
 			}
+			//
 			@Override
 			public void interrupt() {
 				RunTimeConfig.setContext(localRunTimeConfig);
 				try {
-					ServiceUtil.close(loadBuilderSvc);
-				} catch(final RemoteException e) {
+					multiSvc.interrupt();
+					multiSvc.close();
+				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Networking failure");
+				} finally {
+					super.interrupt();
 				}
-				super.interrupt();
 			}
 		};
 		thread.start();
