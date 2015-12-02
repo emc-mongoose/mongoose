@@ -33,9 +33,6 @@ ext {
 
 	jetty_http = [ "org.eclipse.jetty:jetty-http:9.3.0.M1" ]
 	jetty_io = [ "org.eclipse.jetty:jetty-io:9.3.0.M1" ]
-	jetty_jsp = [ "org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127" ]
-	jetty_jsp_api = [ "org.mortbay.jetty:jsp-api-2.1-glassfish:2.1.v20100127" ]
-	jetty_jstl = [ "jstl:jstl:1.2" ]
 	jetty_security = [ "org.eclipse.jetty:jetty-security:9.3.0.M1" ]
 	jetty_server = [ "org.eclipse.jetty:jetty-server:9.3.0.M1" ]
 	jetty_servlet = [ "org.eclipse.jetty:jetty-servlet:9.3.0.M1" ]
@@ -43,8 +40,6 @@ ext {
 	jetty_util = [ "org.eclipse.jetty:jetty-util:9.3.0.M1" ]
 	jetty_webapp = [ "org.eclipse.jetty:jetty-webapp:9.3.0.M1" ]
 	jetty_xml = [ "org.eclipse.jetty:jetty-xml:9.3.0.M1" ]
-
-	jstl = [ "javax.servlet:jstl:1.2" ]
 
 	webjars_bootstrap = ['org.webjars:bootstrap:3.3.2-1']
 	webjars_jquery = ['org.webjars:jquery:2.1.4']
@@ -91,9 +86,6 @@ ext {
 
 	runtime_jetty = [
 		jetty_io,
-		jetty_jsp,
-		jetty_jsp_api,
-		jetty_jstl,
 		jetty_servlet,
 		jetty_servlet_api,
 		jetty_util,
@@ -114,7 +106,6 @@ ext {
 	]
 
 	runtime_webapp = [
-		jetty_jstl,
 		log4j_web,
 		webjars_bootstrap,
 		webjars_jquery,

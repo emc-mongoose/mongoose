@@ -398,17 +398,15 @@ dependencies {
 		library.log4j_api_plus_core,
 		library.websockets,
 		library.httpcore,
+		library.websocket_client,
+		library.websocket_common,
+		library.websocket_core,
+		library.websocket_server,
 	)
 	webuiRuntime (
 		library.runtime_logging,
 		library.runtime_jetty,
 		library.runtime_webapp,
-		library.ecj,
-		library.ant,
-		library.websocket_client,
-		library.websocket_common,
-		library.websocket_core,
-		library.websocket_server,
 	)
 
 	// launcher
@@ -478,7 +476,6 @@ configurations {
 		scenarioRuntime,
 		serverImplRuntime,
 		storageMockRuntime,
-		webuiRuntime,
 		cliRuntime,
 		utilRuntime,
 	)
