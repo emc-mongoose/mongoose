@@ -196,7 +196,7 @@ implements RequestConfig<T, C> {
 	//
 	@Override
 	public final String toString() {
-		return StringUtils.capitalize(getAPI()) + '.' +
+		return StringUtils.capitalize(getAPI()) + '-' +
 			StringUtils.capitalize(loadType.name().toLowerCase())/* +
 			((addr==null || addr.length()==0) ? "" : "@"+addr)*/;
 	}

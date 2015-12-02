@@ -14,6 +14,7 @@ import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -275,8 +276,7 @@ implements LoadExecutor<T> {
 		this(
 			rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			instanceNum,
-			Integer.toString(instanceNum) + '-' +
-				StringUtils.capitalize(ioConfig.getLoadType().toString().toLowerCase()) +
+			Integer.toString(instanceNum) + '-' + ioConfig.toString() +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
 				Integer.toString(connCountPerNode > 0 ? connCountPerNode : threadCount) +
 				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
