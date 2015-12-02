@@ -10,9 +10,10 @@ define([
     tabContentTemplate
 ) {
 
-	var runIdArray = [];
+	var runIdArray;
 
-	function start() {
+	function start(array) {
+		runIdArray = array;
 		var runId = document.getElementById("run.id");
 		//  reset run id field
 		runId.value = runId.defaultValue;

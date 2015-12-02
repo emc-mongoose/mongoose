@@ -32,7 +32,7 @@ define([
 		});
 		//  render navbar and tabs before any other interactions
 		render(props);
-		confMenuController.run(props);
+		confMenuController.run(props, runIdArray);
 		//
 		webSocketController.start(props);
 	}

@@ -14,7 +14,7 @@ define([
     runController
 ) {
 	//
-	function run(props) {
+	function run(props, runIdArray) {
 		//  default run.mode ("webui") from rtConfig should be overridden here
 		var run = {
 			mode: "standalone" // possible: ["standalone", "client", "server", "cinderella"]
@@ -25,7 +25,7 @@ define([
 		extendedConfController.setup(props);
 		//  some settings for configuration menu
 		setDefaultRunMode(run.mode);
-		bindMenuEvents(props);
+		bindMenuEvents(props, runIdArray);
 	}
 	//
 	function render() {
@@ -47,11 +47,11 @@ define([
 		}
 	}
 	//
-	function bindMenuEvents(props) {
+	function bindMenuEvents(props, runIdArray) {
 		//
 		$("#start").on("click", function(e) {
 			e.preventDefault();
-			runController.start();
+			runController.start(runIdArray);
 		});
 		//  config mode change
 		var configTypes = {
