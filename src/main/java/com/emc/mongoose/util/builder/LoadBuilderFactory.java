@@ -7,6 +7,7 @@ import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import org.apache.commons.lang.WordUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,9 +51,10 @@ public class LoadBuilderFactory {
 	private static Class<LoadBuilder> getLoadBuilderClass(
 			final String runMode, final String itemClass
 	) throws ClassNotFoundException {
+		Class<LoadBuilder> loadBuilderCls = null;
 		String
 			itemClassName = WordUtils.capitalize(itemClass) + LOAD_BUILDER_POSTFIX,
-			itemClassPackage;
+			itemClassPackage = null;
 		// don't append anything if run.mode is standalone
 		switch(runMode) {
 			case Constants.RUN_MODE_COMPAT_CLIENT:
@@ -65,8 +67,7 @@ public class LoadBuilderFactory {
 				break;
 			case Constants.RUN_MODE_COMPAT_SERVER:
 			case Constants.RUN_MODE_SERVER:
-				itemClassName = MultiLoadBuilderSvc.class.getSimpleName();
-				itemClassPackage = MultiLoadBuilderSvc.class.getPackage().getName();
+				loadBuilderCls = (Class) MultiLoadBuilderSvc.class;
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -74,15 +75,16 @@ public class LoadBuilderFactory {
 				);
 		}
 		//
-		Class<LoadBuilder> loadBuilderCls;
-		try {
-			loadBuilderCls = (Class<LoadBuilder>) Class.forName(
-				itemClassPackage + "." + BASIC_PREFIX + itemClassName
-			);
-		} catch(final ClassNotFoundException e) {
-			loadBuilderCls = (Class<LoadBuilder>) Class.forName(
-				itemClassPackage + "." + BASIC_PREFIX + WS_PREFIX + itemClassName
-			);
+		if(loadBuilderCls == null) {
+			try {
+				loadBuilderCls = (Class<LoadBuilder>) Class.forName(
+					itemClassPackage + "." + BASIC_PREFIX + itemClassName
+				);
+			} catch(final ClassNotFoundException e) {
+				loadBuilderCls = (Class<LoadBuilder>) Class.forName(
+					itemClassPackage + "." + BASIC_PREFIX + WS_PREFIX + itemClassName
+				);
+			}
 		}
 		return loadBuilderCls;
 	}
