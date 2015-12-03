@@ -2,9 +2,12 @@ package com.emc.mongoose.integ.feature.filesystem;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.data.FileItem;
+import com.emc.mongoose.core.api.data.model.ItemBuffer;
+import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.integ.base.FileSystemTestBase;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -19,17 +22,18 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 14.07.15.
  */
-public final class WriteToCustomDirTest
+public final class ReadFromCustomDirTest
 extends FileSystemTestBase {
 	//
-	private final static long COUNT_TO_WRITE = 100000;
-	private final static String RUN_ID = WriteToCustomDirTest.class.getCanonicalName();
+	private final static int COUNT_TO_WRITE = 10000;
+	private final static String RUN_ID = ReadFromCustomDirTest.class.getCanonicalName();
 	//
-	private static long countWritten;
+	private static long countWritten, countRead;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -37,6 +41,9 @@ extends FileSystemTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
 		FileSystemTestBase.setUpClass();
+		final ItemBuffer<FileItem> itemBuff = new LimitedQueueItemBuffer<>(
+			new ArrayBlockingQueue<FileItem>(COUNT_TO_WRITE)
+		);
 		try(
 			final StorageClient<FileItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
@@ -44,8 +51,10 @@ extends FileSystemTestBase {
 				.setItemClass("file")
 				.build()
 		) {
-			countWritten = client.write(null, null, COUNT_TO_WRITE, 100, 0);
-			//
+			countWritten = client.write(null, itemBuff, COUNT_TO_WRITE, 10, SizeUtil.toSize("8KB"));
+			TimeUnit.SECONDS.sleep(1);
+			countRead = client.read(itemBuff, null, countWritten, 10, true);
+			TimeUnit.SECONDS.sleep(1);
 			RunIdFileManager.flushAll();
 		}
 	}
@@ -64,7 +73,7 @@ extends FileSystemTestBase {
 	//
 	@Test
 	public void checkReturnedCount() {
-		Assert.assertEquals(COUNT_TO_WRITE, countWritten);
+		Assert.assertEquals(countWritten, countRead);
 	}
 	//
 	@Test
@@ -81,8 +90,8 @@ extends FileSystemTestBase {
 			}
 		}
 		Assert.assertEquals(
-			"Expected " + countWritten + " in the output CSV file, but got " + itemsCount,
-			itemsCount, countWritten
+			"Expected " + countRead + " in the output CSV file, but got " + itemsCount,
+			itemsCount, countRead
 		);
 	}
 }

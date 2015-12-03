@@ -126,7 +126,7 @@ implements Externalizable {
 		//
 		KEY_ITEM_CLASS = "item.class",
 		KEY_ITEM_SRC_FILE = "item.src.file",
-		KEY_ITEM_SRC_CIRCULAR = "item.src.circular",
+		KEY_LOAD_CIRCULAR = "load.circular",
 		KEY_ITEM_SRC_RANDOM = "item.src.random",
 		KEY_ITEM_SRC_BATCH_SIZE = "item.src.batchSize",
 		KEY_ITEM_QUEUE_MAX_SIZE = "item.queue.maxSize",
@@ -385,8 +385,8 @@ implements Externalizable {
 		return getBoolean(KEY_DATA_VERSIONING);
 	}
 	//
-	public final boolean isItemSrcCircularEnabled() {
-		return getBoolean(KEY_ITEM_SRC_CIRCULAR);
+	public final boolean isLoadCircular() {
+		return getBoolean(KEY_LOAD_CIRCULAR);
 	}
 	//
 	public final int getItemQueueMaxSize() {

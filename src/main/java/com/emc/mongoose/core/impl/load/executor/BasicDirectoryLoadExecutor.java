@@ -95,7 +95,9 @@ implements DirectoryLoadExecutor<T, C> {
 	//
 	@Override
 	protected void shutdownActually() {
-		ioTaskExecutor.shutdown();
+		if(!isCircular) {
+			ioTaskExecutor.shutdown();
+		}
 		super.shutdownActually();
 	}
 	//

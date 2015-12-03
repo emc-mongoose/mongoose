@@ -14,7 +14,6 @@ import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemBuffer;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
-import com.emc.mongoose.core.api.io.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.content.ContentSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -27,7 +26,6 @@ import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
 //
-import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -204,7 +202,7 @@ implements LoadExecutor<T> {
 	) {
 		super(
 			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE,
-			DEFAULT_INTERNAL_BATCH_SIZE, rtConfig.isItemSrcCircularEnabled(),
+			DEFAULT_INTERNAL_BATCH_SIZE, rtConfig.isLoadCircular(),
 			rtConfig.isShuffleItemsEnabled(), rtConfig.getItemQueueMaxSize()
 		);
 		try {

@@ -64,7 +64,7 @@ extends DistributedClientTestBase {
 			DistributedClientTestBase.setUpClass();
 			//
 			final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-			rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_CIRCULAR, true);
+			rtConfig.set(RunTimeConfig.KEY_LOAD_CIRCULAR, true);
 			rtConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
 			rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
 			RunTimeConfig.setContext(rtConfig);

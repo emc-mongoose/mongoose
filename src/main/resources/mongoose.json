@@ -49,13 +49,15 @@
 
 			"data.src.fpath": "item.src.file",
 			"data.src.separator": "item.src.separator",
-			"data.src.circular": "item.src.circular",
+			"data.src.circular": "load.circular",
 			"data.src.random": "item.src.random",
 			"data.src.batchSize": "item.src.batchSize",
 
 			"data.prefix": "item.prefix",
 
 			"http.sign.method": "http.signMethod",
+
+			"item.src.circular": "load.circular",
 
 			"load.type.append.threads": "load.type.append.connections",
 			"load.append.threads": "load.type.append.connections",
@@ -189,7 +191,6 @@
 			"src": {
 				"file": "",
 				"separator": ",",
-				"circular": false,
 				"random": false,
 				"batchSize": 4096
 			},
@@ -199,6 +200,7 @@
 			"prefix": null
 		},
 		"load": {
+			"circular": false,
 			"limit": {
 				"count": 0,
 				"time": "0s",

@@ -94,7 +94,9 @@ implements FileLoadExecutor<T> {
 	//
 	@Override
 	protected void shutdownActually() {
-		ioTaskExecutor.shutdown();
+		if(!isCircular) {
+			ioTaskExecutor.shutdown();
+		}
 		super.shutdownActually();
 	}
 	//
