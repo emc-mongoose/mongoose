@@ -397,7 +397,6 @@ dependencies {
 		library.jackson_databind,
 		library.log4j_api_plus_core,
 		library.websockets,
-		library.httpcore,
 		library.websocket_client,
 		library.websocket_common,
 		library.websocket_core,

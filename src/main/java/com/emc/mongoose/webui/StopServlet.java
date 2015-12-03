@@ -6,10 +6,10 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.WebUIAppender;
 //
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.jetty.http.MimeTypes;
 //
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -41,7 +41,7 @@ public final class StopServlet extends CommonServlet {
 		final HttpServletRequest request, final HttpServletResponse response
 	) {
 		try {
-			response.setContentType(ContentType.APPLICATION_JSON.toString());
+			response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
 			final ObjectMapper mapper = new ObjectMapper();
 			response.getWriter().write(mapper.writeValueAsString(stoppedRunModes));
 		} catch(final IOException e) {

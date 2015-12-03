@@ -1,15 +1,14 @@
 package com.emc.mongoose.webui;
 //
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.jetty.http.MimeTypes;
 //
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -37,7 +36,7 @@ extends HttpServlet {
 			walkTree(rootNode);
 		}
 
-		response.setContentType(ContentType.APPLICATION_JSON.toString());
+		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
 		try {
 			response.getWriter().write(rootNode.toString());
 		} catch (final IOException e) {
