@@ -10,7 +10,7 @@ import org.eclipse.jetty.http.MimeTypes;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 /**
  * Created by kirill_gusakov on 30.11.15.
@@ -20,9 +20,9 @@ public class StateServlet extends CommonServlet {
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String RUN_MODES = "runmodes";
 	//
-	private ConcurrentHashMap<String, Thread> threadsMap;
-	private ConcurrentHashMap<String, Boolean> stoppedRunModes;
-	private ConcurrentHashMap<String, String> chartsMap;
+	private Map<String, Thread> threadsMap;
+	private Map<String, Boolean> stoppedRunModes;
+	private Map<String, String> chartsMap;
 	//
 	@Override
 	public final void init() {
