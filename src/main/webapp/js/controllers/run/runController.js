@@ -88,10 +88,10 @@ define([
 				"text": "Bandwidth[mb/s]"
 			}, {
 				"id": "lat-" + newId,
-				"text": "Latency[s]"
+				"text": "Latency[us]"
 			}, {
 				"id": "dur-" + newId,
-				"text": "Duration[s]"
+				"text": "Duration[us]"
 			}
 		];
 		//

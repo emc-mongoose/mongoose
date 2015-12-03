@@ -142,7 +142,7 @@ define([
 					.append("div")
 					.attr("class", "svg-container")
 					.append("svg")
-					.attr("width", width + margin.left + margin.right)
+					.attr("width", width + (margin.left + 30) + margin.right)
 					.attr("height", height + margin.top + margin.bottom)
 					.attr("id", path.replace("#", "") + "-" + d.loadType)
 					.append("g")
@@ -177,7 +177,7 @@ define([
 			//  Axis Y Label
 			svg.append("text")
 					.attr("transform", "rotate(-90)")
-					.attr("y", -57)
+					.attr("y", -80)
 					.attr("x", -(height/2) + 30)
 					.attr("dy", ".71em")
 					.style("text-anchor", "end")

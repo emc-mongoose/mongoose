@@ -207,7 +207,7 @@ define([
 			.attr("width", width + margin.left + margin.right)
 			.attr("height", height + margin.top + margin.bottom + 40)
 			.append("g")
-			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+			.attr("transform", "translate(" + (margin.left + 30) + "," + margin.top + ")")
 			.style("font", "12px sans-serif")
 			.style("overflow-x", "auto");
 
@@ -406,7 +406,7 @@ define([
 		//  Axis Y Label
 		svg.append("text")
 			.attr("transform", "rotate(-90)")
-			.attr("y", -50)
+			.attr("y", -150)
 			.attr("x", -(height/2) + 30)
 			.attr("dy", ".71em")
 			.style("text-anchor", "end")
