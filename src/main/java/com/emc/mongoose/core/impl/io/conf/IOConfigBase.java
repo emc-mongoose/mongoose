@@ -12,6 +12,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 //
 import org.apache.commons.lang.StringUtils;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -30,7 +31,7 @@ implements IOConfig<T, C> {
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 	//
 	protected IOTask.Type loadType;
-	protected C container;
+	protected C container = null;
 	protected ContentSource contentSrc;
 	protected volatile boolean verifyContentFlag;
 	protected volatile RunTimeConfig runTimeConfig;
@@ -72,6 +73,7 @@ implements IOConfig<T, C> {
 			.setContentSource(contentSrc)
 			.setVerifyContentFlag(verifyContentFlag)
 			.setLoadType(loadType)
+			.setContainer(container)
 			.setNameSpace(nameSpace)
 			.setNamePrefix(namePrefix)
 			.setBuffSize(buffSize)
@@ -195,6 +197,7 @@ implements IOConfig<T, C> {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		out.writeObject(getLoadType());
+		out.writeObject(getContainer());
 		out.writeObject(getNameSpace());
 		out.writeObject(getNamePrefix());
 		out.writeObject(getContentSource());
@@ -203,11 +206,13 @@ implements IOConfig<T, C> {
 		out.writeInt(reqSleepMilliSec);
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		setLoadType(IOTask.Type.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
+		setContainer((C) in.readObject());
+		LOG.trace(Markers.MSG, "Got container {}", container);
 		setNameSpace(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got namespace {}", nameSpace);
 		setNamePrefix(String.class.cast(in.readObject()));
