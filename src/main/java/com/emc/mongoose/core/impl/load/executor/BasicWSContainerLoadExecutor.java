@@ -221,7 +221,7 @@ implements WSContainerLoadExecutor<T, C> {
 			}
 			//
 			try {
-				ioReactor.shutdown(1);
+				ioReactor.shutdown();
 				LOG.debug(Markers.MSG, "{}: I/O reactor has been shut down", getName());
 			} catch(final IOException e) {
 				LogUtil.exception(

@@ -61,7 +61,7 @@ implements BucketHelper<T, C> {
 	HttpResponse execute(final String addr, final String method, final boolean versioning)
 	throws IOException {
 		final HttpEntityEnclosingRequest httpReq = reqConf.createGenericRequest(
-				method, "/" + container.getName() + "?" + URL_ARG_VERSIONING
+			method, "/" + container.getName() + "?" + URL_ARG_VERSIONING
 		);
 		//
 		httpReq.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_XML.getMimeType());

@@ -90,7 +90,6 @@ extends DistributedClientTestBase {
 					final BufferingOutputStream
 						stdOutInterceptorStream = StdOutUtil.getStdOutBufferingStream()
 				) {
-					stdOutInterceptorStream.reset();
 					if (COUNT_WRITTEN > 0) {
 						COUNT_APPENDED = client.append(writeOutput.getItemSrc(), null, APPEND_COUNT, 10,
 							SizeUtil.toSize(DATA_SIZE));
