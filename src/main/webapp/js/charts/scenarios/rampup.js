@@ -142,11 +142,11 @@ define([
 					.append("div")
 					.attr("class", "svg-container")
 					.append("svg")
-					.attr("width", width + (margin.left + 30) + margin.right)
+					.attr("width", width + (margin.left) + margin.right)
 					.attr("height", height + margin.top + margin.bottom)
 					.attr("id", path.replace("#", "") + "-" + d.loadType)
 					.append("g")
-					.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+					.attr("transform", "translate(" + (margin.left + 30) + "," + margin.top + ")")
 					.style("font", "10px sans-serif")
 					.style("overflow-x", "auto");
 			//
