@@ -147,7 +147,7 @@ define([
 					.attr("id", path.replace("#", "") + "-" + d.loadType)
 					.append("g")
 					.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-					.style("font", "12px sans-serif")
+					.style("font", "10px sans-serif")
 					.style("overflow-x", "auto");
 			//
 			var xAxisGroup = svg.append("g")
