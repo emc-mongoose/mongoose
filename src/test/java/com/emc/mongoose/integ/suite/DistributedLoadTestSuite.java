@@ -5,7 +5,6 @@ package com.emc.mongoose.integ.suite;
 import com.emc.mongoose.integ.feature.distributed.DeleteLoggingTest;
 import com.emc.mongoose.integ.feature.distributed.ReadLoggingTest;
 import com.emc.mongoose.integ.feature.distributed.UpdateLoggingTest;
-import com.emc.mongoose.integ.feature.filesystem.WriteToCustomDirTest;
 import com.emc.mongoose.integ.feature.distributed.WriteByTimeTest;
 import com.emc.mongoose.integ.feature.distributed.WriteLoggingTest;
 import org.junit.runner.RunWith;
@@ -13,7 +12,6 @@ import org.junit.runners.Suite;
 //
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	WriteToCustomDirTest.class,
 	WriteByTimeTest.class,
 	WriteLoggingTest.class,
 	ReadLoggingTest.class,
