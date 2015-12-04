@@ -13,7 +13,8 @@ import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.FileIOTask;
 //
 import com.emc.mongoose.core.impl.data.BasicDataItem;
-import com.emc.mongoose.core.impl.data.BasicMutableDataItem;
+import static com.emc.mongoose.core.impl.data.BasicMutableDataItem.getRangeCount;
+import static com.emc.mongoose.core.impl.data.BasicMutableDataItem.getRangeOffset;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
@@ -153,7 +154,7 @@ implements FileIOTask<T> {
 								currDataLayerIdx, ioConfig.getContentSource()
 							);
 						}
-						nextRangeOffset = BasicMutableDataItem.getRangeOffset(currRangeIdx);
+						nextRangeOffset = getRangeOffset(currRangeIdx);
 						// read the bytes range
 						if(currRangeSize > 0) {
 							while(countBytesDone < contentSize) {
@@ -224,16 +225,6 @@ implements FileIOTask<T> {
 		item.resetUpdates();
 	}
 	//
-	protected void runWriteCurrRange(final SeekableByteChannel byteChannel)
-	throws IOException {
-		byteChannel.position(nextRangeOffset);
-		long n = 0;
-		while(n < currRangeSize) {
-			n += currRange.write(byteChannel, currRangeSize - n);
-		}
-		countBytesDone += n;
-	}
-	//
 	protected void runWriteUpdatedRanges(final SeekableByteChannel byteChannel)
 	throws IOException {
 		final int rangeCount = item.getCountRangesTotal();
@@ -245,23 +236,54 @@ implements FileIOTask<T> {
 					item.getOffset() + nextRangeOffset, currRangeSize,
 					currDataLayerIdx + 1, contentSource
 				);
-				runWriteCurrRange(byteChannel);
+				nextRangeOffset = getRangeOffset(currRangeIdx);
+				runWriteCurrRange(byteChannel, 0);
 			}
 		}
 		status = Status.SUCC;
 	}
 	//
+	protected void runWriteCurrRange(
+		final SeekableByteChannel byteChannel, final long rangeOffset
+	) throws IOException {
+		byteChannel.position(nextRangeOffset);
+		currRange.setRelativeOffset(rangeOffset);
+		long n = 0;
+		while(n < currRangeSize - rangeOffset && n < contentSize - countBytesDone) {
+			n += currRange.write(byteChannel, currRangeSize - rangeOffset - n);
+		}
+		countBytesDone += n;
+	}
+	//
 	protected void runAppend(final SeekableByteChannel byteChannel)
 	throws IOException {
-		final long prevSize = item.getSize();
-		currRangeIdx = prevSize > 0 ? BasicMutableDataItem.getRangeCount(prevSize) - 1 : 0;
-		if(item.isCurrLayerRangeUpdated(currRangeIdx)) {
-
-		} else {
-
+		final long
+			prevSize = item.getSize(),
+			newSize = prevSize + contentSize;
+		// work w/ start range if there's anything to append
+		if(newSize > prevSize) {
+			final int startRangeIdx = prevSize > 0 ? getRangeCount(prevSize) - 1 : 0;
+			nextRangeOffset = getRangeOffset(startRangeIdx);
+			currRangeSize = getRangeOffset(startRangeIdx + 1) - nextRangeOffset;
+			currRange = new BasicDataItem(
+				item.getOffset() + nextRangeOffset, currRangeSize,
+				item.isCurrLayerRangeUpdated(startRangeIdx) ?
+					currDataLayerIdx + 1 : currDataLayerIdx,
+				ioConfig.getContentSource()
+			);
+			runWriteCurrRange(byteChannel, prevSize - nextRangeOffset);
+			// work w/ remaining ranges if any
+			final int lastRangeIdx = newSize > 0 ? getRangeCount(newSize) - 1 : 0;
+			if(startRangeIdx < lastRangeIdx) {
+				nextRangeOffset = getRangeOffset(startRangeIdx + 1);
+				currRangeSize = getRangeOffset(lastRangeIdx + 1) - nextRangeOffset;
+				currRange = new BasicDataItem(
+					item.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx,
+					ioConfig.getContentSource()
+				);
+				runWriteCurrRange(byteChannel, 0);
+			}
 		}
-		//
-		runWriteCurrRange(byteChannel);
 		status = Status.SUCC;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
