@@ -1,0 +1,37 @@
+<!-- Tabs -->
+<div class="tabs-wrapper">
+	<div class="container-fluid tab-header">
+		<div class="bs-tabs" role="tabpanel" data-example-id="togglable-tabs">
+
+			<!-- Tabs header -->
+			<ul id="tab-list" class="nav nav-tabs nav-tabs-responsive" role="tablist">
+				<li role="presentation" class="active">
+					<a href="#configuration" id="main-tab" role="tab" data-toggle="tab"
+					   aria-controls="configuration" aria-expanded="true">
+						<span class="text">New run...</span>
+					</a>
+				</li>
+				<li role="presentation" class="dropdown next">
+					<a href="#" id="drop-tab" class="dropdown-toggle" data-toggle="dropdown"
+					   aria-controls="drop-tab-contents">
+						<span class="text">Running scenarios</span>
+						<span class="caret"></span>
+					</a>
+					<ul class="dropdown-menu pull-xs-right scenario-tabs" role="menu"
+					    aria-labelledby="drop-tab"
+					    id="drop-tab-contents">
+					</ul>
+				</li>
+			</ul>
+
+			<!-- Tabs content -->
+			<div id="tabs-content" class="tab-content scenarios-content">
+
+				<div role="tabpanel" class="tab-pane fade in active" id="configuration"
+				     aria-labelledby="main-tab">
+
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,373 @@
+<!-- Modal window button -->
+<button type="button" id="scenario-button" class="btn btn-primary"
+        data-toggle="modal"
+        data-target="#modal-single">
+	Details...
+</button>
+
+<i id="scenario-load"></i>
+
+<!-- Single -->
+<div class="modal" id="modal-single" tabindex="-1" role="dialog" aria-labelledby="singleLabel"
+     aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">
+					<span aria-hidden="true">&times;</span>
+					<span class="sr-only">Close</span>
+				</button>
+				<h4 class="modal-title" id="singleLabel">Single</h4>
+			</div>
+
+			<div class="modal-body">
+				<div class="form-group">
+					<label for="duplicate-scenario.type.single.load"
+					       class="col-sm-6 control-label">Load type</label>
+					<div class="col-sm-6">
+						<select id="duplicate-scenario.type.single.load"
+						        data-pointer="scenario.type.single.load">
+							<option value="duplicate-create">create</option>
+							<option value="duplicate-read">read</option>
+							<option value="duplicate-update">update</option>
+							<option value="duplicate-delete">delete</option>
+							<option value="duplicate-append">append</option>
+						</select>
+					</div>
+				</div>
+
+				<hr/>
+
+				<div id="duplicate-create">
+					<fieldset>
+						<legend>Create</legend>
+						<div class="form-group">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.create.connections">
+								Connection count
+							</label>
+							<div class="col-sm-6">
+								<input type="text" id="duplicate-load.type.create.connections"
+								       class="form-control"
+								       data-pointer="load.type.create.connections"/>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+
+				<div id="duplicate-read">
+					<fieldset>
+						<legend>Read</legend>
+						<div class="form-group">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.read.connections">
+								Connection count
+							</label>
+							<div class="col-sm-6">
+								<input type="text" id="duplicate-load.type.read.connections"
+								       class="form-control"
+								       data-pointer="load.type.read.connections"/>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label for="duplicate-load.type.read.verifyContent"
+							       class="col-sm-6 control-label">Verify content</label>
+							<div class="col-sm-6">
+								<select id="duplicate-load.type.read.verifyContent" class="form-select"
+										data-pointer="load.type.read.verifyContent">
+									<option>true</option>
+									<option>false</option>
+								</select>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+
+				<div id="duplicate-update">
+					<fieldset>
+						<legend>Update</legend>
+						<div class="form-group">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.update.connections">
+								Connection count
+							</label>
+							<div class="col-sm-6">
+								<input type="text" id="duplicate-load.type.update.connections"
+								       class="form-control"
+								       data-pointer="load.type.update.connections"/>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.update.perItem">
+								Update per item count
+							</label>
+							<div class="col-sm-6">
+								<input type="text" id="duplicate-load.type.update.perItem"
+								       class="form-control"
+								       data-pointer="load.type.update.perItem"/>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+
+				<div id="duplicate-delete">
+					<fieldset>
+						<legend>Delete</legend>
+						<div class="form-group">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.delete.connections">
+								Connection count
+							</label>
+							<div class="col-sm-6">
+								<input type="text" id="duplicate-load.type.delete.connections"
+								       class="form-control"
+								       data-pointer="load.type.delete.connections"/>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+
+				<div id="duplicate-append">
+					<fieldset>
+						<legend>Append</legend>
+						<div class="form-group">
+							<label class="col-sm-6 control-label" for="duplicate-load.type.append.connections">
+								Connection count
+							</label>
+							<div class="col-sm-6">
+								<input type="text" id="duplicate-load.type.append.connections"
+								       class="form-control"
+								       data-pointer="load.type.append.connections"/>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+			</div>
+
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Chain -->
+<div class="modal" id="modal-chain" tabindex="-1" role="dialog" aria-labelledby="chainLabel"
+     aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">
+					<span aria-hidden="true">&times;</span>
+					<span class="sr-only">Close</span>
+				</button>
+				<h4 class="modal-title" id="chainLabel">Chain</h4>
+			</div>
+
+			<div class="modal-body">
+				<div class="form-group">
+					<label for="duplicate-scenario.type.chain.load" class="col-sm-6 control-label">
+						Load types
+					</label>
+					<div class="col-sm-6">
+						<input type="text" class="form-control" id="duplicate-scenario.type.chain.load"
+						       data-pointer="scenario.type.chain.load"/>
+					</div>
+				</div>
+
+				<div role="tabpanel">
+					<ul class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active">
+							<a href="#tab-create" aria-controls="tab-create"
+							   role="tab" data-toggle="tab">
+								Create
+							</a>
+						</li>
+						<li role="presentation">
+							<a href="#tab-read" aria-controls="tab-read"
+							   role="tab" data-toggle="tab">
+								Read
+							</a>
+						</li>
+						<li role="presentation">
+							<a href="#tab-update" aria-controls="tab-update"
+							   role="tab" data-toggle="tab">
+								Update
+							</a>
+						</li>
+						<li role="presentation">
+							<a href="#tab-delete" aria-controls="tab-delete"
+							   role="tab" data-toggle="tab">
+								Delete
+							</a>
+						</li>
+						<li role="presentation">
+							<a href="#tab-append" aria-controls="tab-append"
+							   role="tab" data-toggle="tab">
+								Append
+							</a>
+						</li>
+					</ul>
+
+					<div class="tab-content modal-tabs">
+						<div role="tabpanel" class="tab-pane active" id="tab-create">
+							<div class="form-group">
+								<label class="col-sm-6 control-label"
+								       for="chain-load.type.create.connections">
+									Connection count
+								</label>
+								<div class="col-sm-6">
+									<input type="text" id="chain-load.type.create.connections"
+									       class="form-control" data-pointer="load.type.create.connections"/>
+								</div>
+							</div>
+						</div>
+						<div role="tabpanel" class="tab-pane" id="tab-read">
+							<div class="form-group">
+								<label class="col-sm-6 control-label" for="chain-load.type.read.connections">
+									Connection count
+								</label>
+								<div class="col-sm-6">
+									<input type="text" id="chain-load.type.read.connections"
+									       class="form-control" data-pointer="load.type.read.connections"/>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label for="chain-load.type.read.verifyContent"
+								       class="col-sm-6 control-label">
+									Verify content
+								</label>
+								<div class="col-sm-6">
+									<select id="chain-load.type.read.verifyContent" class="form-select"
+											data-pointer="load.type.read.verifyContent">
+										<option>true</option>
+										<option>false</option>
+									</select>
+								</div>
+							</div>
+						</div>
+						<div role="tabpanel" class="tab-pane" id="tab-update">
+							<div class="form-group">
+								<label class="col-sm-6 control-label"
+								       for="chain-load.type.update.connections">
+									Connection count
+								</label>
+								<div class="col-sm-6">
+									<input type="text" id="chain-load.type.update.connections"
+									       class="form-control" data-pointer="load.type.update.connections"/>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-sm-6 control-label"
+								       for="chain-load.type.update.perItem">
+									Update per item count
+								</label>
+								<div class="col-sm-6">
+									<input type="text" id="chain-load.type.update.perItem"
+								       class="form-control" data-pointer="load.type.update.perItem"/>
+								</div>
+							</div>
+						</div>
+						<div role="tabpanel" class="tab-pane" id="tab-delete">
+							<div class="form-group">
+								<label class="col-sm-6 control-label"
+								       for="chain-load.type.delete.connections">
+									Connection count
+								</label>
+								<div class="col-sm-6">
+									<input type="text" class="form-control"
+								       id="chain-load.type.delete.connections"
+								           data-pointer="load.type.delete.connections"/>
+								</div>
+							</div>
+						</div>
+						<div role="tabpanel" class="tab-pane" id="tab-append">
+							<div class="form-group">
+								<label class="col-sm-6 control-label"
+								       for="chain-load.type.append.connections">
+									Connection count
+								</label>
+								<div class="col-sm-6">
+									<input type="text" id="chain-load.type.append.connections"
+									       class="form-control" data-pointer="load.type.append.connections"/>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<hr/>
+
+				<div class="form-group">
+					<label for="duplicate-scenario.type.chain.concurrent"
+					       class="col-sm-6 control-label">
+						Simultaneous
+					</label>
+					<div class="col-sm-6">
+						<select id="duplicate-scenario.type.chain.concurrent" class="form-select">
+							<option>true</option>
+							<option>false</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Rampup -->
+<div class="modal" id="modal-rampup" tabindex="-1"
+     role="dialog" aria-labelledby="rampupLabel"
+     aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">
+					<span aria-hidden="true">&times;</span>
+					<span class="sr-only">Close</span>
+				</button>
+				<h4 class="modal-title" id="rampupLabel">Rampup</h4>
+			</div>
+
+			<div class="modal-body">
+
+				<div class="form-group">
+					<div class="col-sm-6">
+						<button type="button" class="btn btn-default" id="chain-load">
+							Chain load details
+						</button>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="duplicate-scenario.type.rampup.connCounts"
+					       class="col-sm-4 control-label">
+						Connection count
+					</label>
+					<div class="col-sm-8">
+						<input type="text" id="duplicate-scenario.type.rampup.connCounts"
+						       class="form-control"
+						       data-pointer="scenario.type.rampup.connCounts"/>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="duplicate-scenario.type.rampup.sizes" class="col-sm-4 control-label">
+						Objects' sizes
+					</label>
+					<div class="col-sm-8">
+						<input type="text" id="duplicate-scenario.type.rampup.sizes" class="form-control"
+						       data-pointer="scenario.type.rampup.sizes"/>
+					</div>
+				</div>
+			</div>
+
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+			</div>
+		</div>
+	</div>
+</div>

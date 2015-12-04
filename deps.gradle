@@ -10,8 +10,6 @@ ext {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
-	ant = [ "ant:ant:1.6.5" ]
-
 	commons_cli = [ "commons-cli:commons-cli:1.2" ]
 	commons_codec = [ "commons-codec:commons-codec:1.10" ]
 	commons_collections4 = [ "org.apache.commons:commons-collections4:4.0" ]
@@ -19,8 +17,6 @@ ext {
 	commons_csv = [ "org.apache.commons:commons-csv:1.1" ]
 	commons_lang = [ "commons-lang:commons-lang:2.6" ]
 	commons_logging = [ "commons-logging:commons-logging:1.2" ]
-
-	ecj = [ "org.eclipse.jdt.core.compiler:ecj:3.5.1" ]
 
 	httpcore = [ "org.apache.httpcomponents:httpcore-nio:4.4.4" ]
 	httpcore_nio = [ "org.apache.httpcomponents:httpcore-nio:4.4.4" ]
@@ -33,23 +29,19 @@ ext {
 
 	jetty_http = [ "org.eclipse.jetty:jetty-http:9.3.0.M1" ]
 	jetty_io = [ "org.eclipse.jetty:jetty-io:9.3.0.M1" ]
-	jetty_jsp = [ "org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127" ]
-	jetty_jsp_api = [ "org.mortbay.jetty:jsp-api-2.1-glassfish:2.1.v20100127" ]
-	jetty_jstl = [ "jstl:jstl:1.2" ]
-	jetty_security = [ "org.eclipse.jetty:jetty-security:9.3.0.M1" ]
 	jetty_server = [ "org.eclipse.jetty:jetty-server:9.3.0.M1" ]
 	jetty_servlet = [ "org.eclipse.jetty:jetty-servlet:9.3.0.M1" ]
 	jetty_servlet_api = [ "javax.servlet:javax.servlet-api:2.5.0" ]
 	jetty_util = [ "org.eclipse.jetty:jetty-util:9.3.0.M1" ]
 	jetty_webapp = [ "org.eclipse.jetty:jetty-webapp:9.3.0.M1" ]
-	jetty_xml = [ "org.eclipse.jetty:jetty-xml:9.3.0.M1" ]
-
-	jstl = [ "javax.servlet:jstl:1.2" ]
 
 	webjars_bootstrap = ['org.webjars:bootstrap:3.3.2-1']
 	webjars_jquery = ['org.webjars:jquery:2.1.4']
 	webjars_d3js = ['org.webjars:d3js:3.5.3']
 	webjars_require = ['org.webjars:requirejs:2.1.20']
+	webjars_handlebars = ['org.webjars:handlebars:4.0.2']
+	webjars_pace = ['org.webjars:pace:1.0.2']
+	webjars_requirejs_text = ['org.webjars:requirejs-text:2.0.14-1']
 
 	lmax_disruptor = [ "com.lmax:disruptor:3.3.0" ]
 
@@ -88,9 +80,6 @@ ext {
 
 	runtime_jetty = [
 		jetty_io,
-		jetty_jsp,
-		jetty_jsp_api,
-		jetty_jstl,
 		jetty_servlet,
 		jetty_servlet_api,
 		jetty_util,
@@ -98,8 +87,6 @@ ext {
 	runtime_jetty_svc = [
 		runtime_jetty,
 		jetty_http,
-		jetty_security,
-		jetty_xml
 	]
 
 	runtime_logging = [
@@ -111,11 +98,13 @@ ext {
 	]
 
 	runtime_webapp = [
-		jetty_jstl,
 		log4j_web,
 		webjars_bootstrap,
 		webjars_jquery,
 		webjars_d3js,
-		webjars_require
+		webjars_require,
+		webjars_handlebars,
+		webjars_requirejs_text,
+		webjars_pace
 	]
 }
