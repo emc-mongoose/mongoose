@@ -53,11 +53,11 @@ implements IOTask<T> {
 	//
 	protected final static ThreadLocal<StringBuilder>
 		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
-		@Override
-		protected final StringBuilder initialValue() {
-			return new StringBuilder();
-		}
-	};
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 	//
 	@Override
 	public final void mark(final IOStats ioStats) {
@@ -66,29 +66,27 @@ implements IOTask<T> {
 			reqDuration = (int) (respTimeDone - reqTimeStart),
 			respLatency = (int) (respTimeStart - reqTimeDone),
 			respDataLatency = (int) (respDataTimeStart - reqTimeDone);
-		if(respLatency > 0 && reqDuration > respLatency) {
-			if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
-				StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
-				if(strBuilder == null) {
-					strBuilder = new StringBuilder();
-					PERF_TRACE_MSG_BUILDER.set(strBuilder);
-				} else {
-					strBuilder.setLength(0); // clear/reset
-				}
-				LOG.info(
-					Markers.PERF_TRACE,
-					strBuilder
-						.append(nodeAddr).append(',')
-						.append(item.getName()).append(',')
-						.append(countBytesDone).append(',')
-						.append(status.code).append(',')
-						.append(reqTimeStart).append(',')
-						.append(respLatency).append(',')
-						.append(respDataTimeStart > 0 ? respDataLatency : -1).append(',')
-						.append(reqDuration)
-						.toString()
-				);
+		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
+			StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
+			if(strBuilder == null) {
+				strBuilder = new StringBuilder();
+				PERF_TRACE_MSG_BUILDER.set(strBuilder);
+			} else {
+				strBuilder.setLength(0); // clear/reset
 			}
+			LOG.info(
+				Markers.PERF_TRACE,
+				strBuilder
+					.append(nodeAddr).append(',')
+					.append(item.getName()).append(',')
+					.append(countBytesDone).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(respLatency > 0 ? respLatency : 0).append(',')
+					.append(respDataTimeStart > 0 ? respDataLatency : -1).append(',')
+					.append(reqDuration)
+					.toString()
+			);
 		}
 		// stats refreshing
 		if(status == IOTask.Status.SUCC) {

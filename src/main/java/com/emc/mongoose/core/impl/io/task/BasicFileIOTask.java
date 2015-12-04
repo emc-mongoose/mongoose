@@ -21,6 +21,7 @@ import org.apache.logging.log4j.LogManager;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -82,35 +83,33 @@ implements FileIOTask<T> {
 	@Override
 	public void run() {
 		item.reset();
-		if(openOptions.isEmpty()) { // delete
-			runDelete();
-		} else { // work w/ a content
-			try(final SeekableByteChannel byteChannel = Files.newByteChannel(fPath, openOptions)) {
-				if(openOptions.contains(StandardOpenOption.READ)) {
-					runRead(byteChannel);
-				} else {
-					if(item.hasScheduledUpdates()) {
-						runWriteUpdatedRanges(byteChannel);
-					} else if(item.isAppending()) {
-						runAppend(byteChannel);
+		reqTimeStart = reqTimeDone = respTimeStart = System.nanoTime() / 1000;
+		try {
+			if(openOptions.isEmpty()) { // delete
+				runDelete();
+			} else { // work w/ a content
+				try(
+					final SeekableByteChannel byteChannel = Files.newByteChannel(fPath, openOptions)
+				) {
+					if(openOptions.contains(StandardOpenOption.READ)) {
+						runRead(byteChannel);
 					} else {
-						runWriteFully(byteChannel);
+						if(item.hasScheduledUpdates()) {
+							runWriteUpdatedRanges(byteChannel);
+						} else if(item.isAppending()) {
+							runAppend(byteChannel);
+						} else {
+							runWriteFully(byteChannel);
+						}
 					}
 				}
-			} catch(final IOException e) {
-				status = Status.FAIL_IO;
-				LogUtil.exception(
-					LOG, Level.WARN, e,
-					"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), fPath
-				);
 			}
-		}
-	}
-	//
-	protected void runDelete() {
-		try {
-			Files.delete(fPath);
-			status = Status.SUCC;
+		} catch(final ClosedByInterruptException e) {
+			if(ioConfig.isClosed()) {
+				status = Status.CANCELLED;
+			} else {
+				status = Status.FAIL_TIMEOUT;
+			}
 		} catch(final NoSuchFileException e) {
 			status = Status.RESP_FAIL_NOT_FOUND;
 		} catch(final IOException e) {
@@ -119,7 +118,15 @@ implements FileIOTask<T> {
 				LOG, Level.WARN, e,
 				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), fPath
 			);
+		} finally {
+			respTimeDone = System.nanoTime() / 1000;
 		}
+	}
+	//
+	protected void runDelete()
+	throws IOException {
+		Files.delete(fPath);
+		status = Status.SUCC;
 	}
 	//
 	protected void runRead(final SeekableByteChannel byteChannel)
@@ -249,15 +256,9 @@ implements FileIOTask<T> {
 		final long prevSize = item.getSize();
 		currRangeIdx = prevSize > 0 ? BasicMutableDataItem.getRangeCount(prevSize) - 1 : 0;
 		if(item.isCurrLayerRangeUpdated(currRangeIdx)) {
-			currRange = new BasicDataItem(
-				item.getOffset() + prevSize, contentSize, currDataLayerIdx + 1,
-				ioConfig.getContentSource()
-			);
+
 		} else {
-			currRange = new BasicDataItem(
-				item.getOffset() + prevSize, contentSize, currDataLayerIdx,
-				ioConfig.getContentSource()
-			);
+
 		}
 		//
 		runWriteCurrRange(byteChannel);
