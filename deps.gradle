@@ -10,8 +10,6 @@ ext {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
-	ant = [ "ant:ant:1.6.5" ]
-
 	commons_cli = [ "commons-cli:commons-cli:1.2" ]
 	commons_codec = [ "commons-codec:commons-codec:1.10" ]
 	commons_collections4 = [ "org.apache.commons:commons-collections4:4.0" ]
@@ -19,8 +17,6 @@ ext {
 	commons_csv = [ "org.apache.commons:commons-csv:1.1" ]
 	commons_lang = [ "commons-lang:commons-lang:2.6" ]
 	commons_logging = [ "commons-logging:commons-logging:1.2" ]
-
-	ecj = [ "org.eclipse.jdt.core.compiler:ecj:3.5.1" ]
 
 	httpcore = [ "org.apache.httpcomponents:httpcore-nio:4.4.4" ]
 	httpcore_nio = [ "org.apache.httpcomponents:httpcore-nio:4.4.4" ]
@@ -94,7 +90,6 @@ ext {
 		runtime_jetty,
 		jetty_http,
 		jetty_security,
-		jetty_xml
 	]
 
 	runtime_logging = [
