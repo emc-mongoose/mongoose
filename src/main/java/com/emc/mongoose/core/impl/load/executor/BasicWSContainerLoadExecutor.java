@@ -211,7 +211,7 @@ implements WSContainerLoadExecutor<T, C> {
 					);
 				} finally {
 					try {
-						nextConnPool.shutdown(0);
+						nextConnPool.shutdown(1);
 						LOG.debug(Markers.MSG, "{}: connection pool has been shut down", getName());
 					} catch(final IOException e) {
 						LogUtil.exception(
@@ -222,7 +222,7 @@ implements WSContainerLoadExecutor<T, C> {
 			}
 			//
 			try {
-				ioReactor.shutdown(1);
+				ioReactor.shutdown();
 				LOG.debug(Markers.MSG, "{}: I/O reactor has been shut down", getName());
 			} catch(final IOException e) {
 				LogUtil.exception(

@@ -1,0 +1,132 @@
+{
+	"sections": [
+		{
+			"title": "Run",
+			"classes": "standalone client cinderella server",
+			"fields": [
+				{
+					"id": "run.id",
+					"label": "Run id",
+					"placeholder": null,
+					"textField": true,
+					"classes": "standalone client cinderella server"
+				}, {
+					"id": "scenario.name",
+					"label": "Scenario",
+					"values": ["single", "chain", "rampup"],
+					"selectField": true,
+					"classes": "standalone client"
+				}
+			]
+		}, {
+			"title": "Storage",
+			"classes": "standalone client",
+			"fields": [
+				{
+					"id": "storage.addrs",
+					"label": "Nodes (comma-separated list)",
+					"placeholder": null,
+					"textField": true,
+					"classes": "standalone client"
+				}, {
+					"id": "api.name",
+					"label": "API",
+					"values": ["s3", "swift", "atmos"],
+					"selectField": true,
+					"classes": "standalone client"
+				}
+			]
+		}, {
+			"title": "Authentication",
+			"classes": "standalone client",
+			"fields": [
+				{
+					"id": "auth.id",
+					"label": "User id",
+					"placeholder": null,
+					"textField": true,
+					"classes": "standalone client"
+				}, {
+					"id": "auth.secret",
+					"label": "Secret",
+					"placeholder": null,
+					"textField": true,
+					"classes": "standalone client"
+				}
+			]
+		}, {
+			"title": "Load",
+			"classes": "standalone client",
+			"fields": [
+				{
+					"id": "load.connections",
+					"label": "Connection count",
+					"placeholder": null,
+					"textField": true,
+					"classes": "standalone client"
+				}, {
+					"id": "load.limit.count",
+					"label": "Items count limit",
+					"placeholder": null,
+					"textField": true,
+					"classes": "standalone client"
+				}, {
+					"id": "load.limit.time",
+					"label": "Time limit",
+					"complexField": true,
+					"classes": "standalone client",
+					"textField": {
+						"id": "load.limit.time.value",
+						"label": null,
+						"placeholder": null
+					},
+					"selectField": {
+						"id": "load.limit.time.unit",
+						"label": null,
+						"values": ["seconds", "minutes", "hours", "days"]
+					}
+				}, {
+					"id": "load.limit.rate",
+					"label": "Rate limit",
+					"placeholder": null,
+					"textField": true,
+					"classes": "standalone client"
+				}, {
+					"id": "load.server.addrs",
+					"label": "Load servers",
+					"placeholder": null,
+					"textField": true,
+					"classes": "client"
+				}
+			]
+		}, {
+			"title": "Data",
+			"classes": "standalone client",
+			"fields": [
+				{
+					"id": "data.size",
+					"label": "Items size",
+					"placeholder": null,
+					"complexField": true,
+					"classes": "standalone client",
+					"textField": {
+						"id": "data.size.input",
+						"label": null,
+						"placeholder": null
+					},
+					"selectField": {
+						"id": "data.size.select",
+						"label": null,
+						"values": ["B", "KB", "MB", "GB"]
+					}
+				}, {
+					"id": "data.src.fpath",
+					"label": "Input items list file",
+					"placeholder": "Enter path to the list of objects on remote host. Format: mongoose-1.0.0/log/<run.id>/<filename>",
+					"textField": true,
+					"classes": "standalone client"
+				}
+			]
+		}
+	]
+}

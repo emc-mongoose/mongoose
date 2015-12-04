@@ -220,7 +220,7 @@ implements LoadExecutor<T> {
 		//
 		setName(name);
 		if(itemSrc != null) {
-			LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc);
+			LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc.toString());
 		}
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;

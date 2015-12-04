@@ -1,0 +1,72 @@
+#scenario-tab,
+#log-pills,
+#chart-pills {
+	margin-top: 20px;
+	text-align: center;
+}
+
+#scenario-tab > li,
+#log-pills > li,
+#chart-pills > li {
+	float: none;
+	display: inline-block;
+}
+
+#scenario-tab li:nth-child(1) {
+	position: absolute;
+	top: 140px;
+	left: 0;
+}
+
+#log-pills {
+	padding-bottom: 5px;
+}
+
+#log-pills {
+	padding-bottom: 5px;
+}
+
+.table-responsive table {
+	font: 14px sans-serif;
+}
+
+.table-content {
+	height: calc(100vh - 255px);
+	overflow-y: auto;
+}
+
+#log-wrapper {
+	border: 5px solid #ccc;
+	border-radius: 5px;
+}
+
+#run-modes div, #config div {
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 10px;
+}
+
+#start {
+	margin-left: 15px;
+	width: 130px;
+	height: 40px;
+	float: right;
+}
+
+#save-config {
+	margin-bottom: 5px;
+}
+
+.save-buttons {
+	margin-left: 30px !important;
+}
+
+.kill {
+	margin-left: 10px;
+	vertical-align: top;
+}
+
+.kill:hover {
+	color: #D43F3A;
+	cursor: pointer;
+}

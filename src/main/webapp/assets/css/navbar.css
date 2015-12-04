@@ -1,0 +1,12 @@
+.navbar-brand {
+	padding-top: 0;
+}
+
+#logo {
+	padding-right: 10px;
+}
+
+.disable-collapse {
+	-webkit-transition: none;
+	transition: none;
+}

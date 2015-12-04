@@ -47,7 +47,7 @@ implements Externalizable {
 		LIST_SEP = ",",
 		STORAGE_PORT_SEP = ":",
 		//
-		PREFIX_KEY_ALIASING = "aliasing.",
+		PREFIX_KEY_ALIASING = "aliasing",
 		//
 		KEY_AUTH_ID = "auth.id",
 		KEY_AUTH_SECRET = "auth.secret",

@@ -1,0 +1,64 @@
+<div class="container-fluid">
+	<div class="row">
+
+		<!-- Left menu panel -->
+		<div id="menu" class="col-xs-12 col-sm-5 col-md-4 col-lg-3 no-padding">
+			<div id="run-modes">
+				<div>
+					<label for="run-mode" class="block">
+						Run mode
+					</label>
+					<select id="run-mode" class="form-control">
+						<option value="standalone">standalone</option>
+						<option value="client">load client</option>
+						<option value="server">load server</option>
+						<option value="cinderella">cinderella</option>
+					</select>
+				</div>
+				<div>
+					<button type="button" id="start" class="btn btn-success">
+						Start
+					</button>
+				</div>
+			</div>
+
+			<div id="config">
+				<div>
+					<label for="config-type" class="block">
+						Config mode
+					</label>
+					<select id="config-type" class="form-control">
+						<option value="base">basic</option>
+						<option value="extended">extended</option>
+					</select>
+				</div>
+				<div class="save-buttons">
+					<button type="button" class="btn btn-default" id="save-config">
+						Save
+					</button>
+					<br/>
+					<a href="#save" class="btn btn-default" id="save-file">
+						Save As...
+					</a>
+				</div>
+				<br/>
+				<div id="file-visibility">
+					<input type="checkbox" id="file-checkbox"/>
+					<label for="file-checkbox">
+						Read config from file
+					</label>
+				</div>
+				<input type="file" accept=".txt" id="config-file"/>
+			</div>
+
+			<ul class="folders">
+
+			</ul>
+
+		</div>
+
+		<div id="main-content" class="col-xs-12 col-sm-7 col-md-8 col-lg-9 no-padding">
+			<!-- Configuration fields -->
+		</div>
+	</div>
+</div>

@@ -1,7 +1,6 @@
 /**
  * Created by gusakk on 18.09.15.
  */
-
 /*
 	Simplifying charts using Visvalingam's algorithm. More info: http://bost.ocks.org/mike/simplify/
  */
