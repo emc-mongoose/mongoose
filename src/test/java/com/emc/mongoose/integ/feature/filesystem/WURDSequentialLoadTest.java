@@ -27,6 +27,7 @@ import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -100,6 +101,14 @@ extends LoggingTestBase {
 	public  static void tearDownClass()
 	throws Exception {
 		LoggingTestBase.tearDownClass();
+		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "data");
+		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "");
+		LoggingTestBase.tearDownClass();
+		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
+		for(final File f : tgtDir.listFiles()) {
+			f.delete();
+		}
+		tgtDir.delete();
 	}
 
 	@Test
@@ -341,7 +350,7 @@ extends LoggingTestBase {
 			boolean firstRow = true;
 			Matcher matcher;
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			int actualNodesCount, actualConnectionsCount;
+			String actualNodesCount; int actualConnectionsCount;
 			for(final CSVRecord nextRec : recIter) {
 				if (firstRow) {
 					firstRow = false;
@@ -357,10 +366,13 @@ extends LoggingTestBase {
 					Assert.assertEquals(
 						"Count of connections is wrong: " + nextRec.toString(), LOAD_CONNS, actualConnectionsCount
 					);
-					actualNodesCount = Integer.valueOf(nextRec.get(5));
-					Assert.assertEquals(
-						"Count of nodes is wrong: " + nextRec.toString(), 1, actualNodesCount
-					);
+					actualNodesCount = nextRec.get(5);
+					if(actualNodesCount != null && !actualNodesCount.isEmpty()) {
+						Assert.assertEquals(
+							"Count of nodes is wrong: " + nextRec.toString(),
+							0, Integer.valueOf(actualNodesCount).intValue()
+						);
+					}
 				}
 			}
 		}

@@ -27,6 +27,7 @@ import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,6 +103,14 @@ extends LoggingTestBase {
 	public  static void tearDownClass()
 	throws Exception {
 		LoggingTestBase.tearDownClass();
+		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "data");
+		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "");
+		LoggingTestBase.tearDownClass();
+		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
+		for(final File f : tgtDir.listFiles()) {
+			f.delete();
+		}
+		tgtDir.delete();
 	}
 
 	@Test

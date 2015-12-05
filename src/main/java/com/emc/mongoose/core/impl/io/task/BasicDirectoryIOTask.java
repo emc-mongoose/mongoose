@@ -64,9 +64,16 @@ implements DirectoryIOTask<T, C> {
 			status = Status.RESP_FAIL_NOT_FOUND;
 		} catch(final IOException e) {
 			status = Status.FAIL_IO;
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to {} the directory \"{}\"",
+				ioType.toString().toLowerCase(), fPath
+			);
 		} catch(final Exception e) {
 			status = Status.FAIL_UNKNOWN;
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to create the directory \"{}\"", fPath);
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to {} the directory \"{}\"",
+				ioType.toString().toLowerCase(), fPath
+			);
 		} finally {
 			respTimeDone = System.nanoTime() / 1000;
 		}

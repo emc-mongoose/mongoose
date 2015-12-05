@@ -154,10 +154,10 @@ implements FileIOTask<T> {
 								currDataLayerIdx, ioConfig.getContentSource()
 							);
 						}
-						nextRangeOffset = getRangeOffset(currRangeIdx);
+						nextRangeOffset = getRangeOffset(currRangeIdx + 1);
 						// read the bytes range
 						if(currRangeSize > 0) {
-							while(countBytesDone < contentSize) {
+							while(countBytesDone < contentSize && countBytesDone < nextRangeOffset) {
 								buffIn = ((IOWorker) Thread.currentThread())
 									.getThreadLocalBuff(nextRangeOffset - countBytesDone);
 								n = currRange.readAndVerify(byteChannel, buffIn);
@@ -199,7 +199,7 @@ implements FileIOTask<T> {
 			LOG.warn(
 				Markers.MSG,
 				"{}: content size mismatch, expected: {}, actual: {}",
-				item.getName(), item.getSize(), e.offset
+				item.getName(), item.getSize(), countBytesDone
 			);
 			status = Status.RESP_FAIL_CORRUPT;
 		} catch(final DataCorruptionException e) {
@@ -207,7 +207,7 @@ implements FileIOTask<T> {
 			LOG.warn(
 				Markers.MSG,
 				"{}: content mismatch @ offset {}, expected: {}, actual: {}",
-				item.getName(), e.offset,
+				item.getName(), countBytesDone,
 				String.format(
 					"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
 				)
@@ -230,13 +230,13 @@ implements FileIOTask<T> {
 		final int rangeCount = item.getCountRangesTotal();
 		final ContentSource contentSource = ioConfig.getContentSource();
 		for(currRangeIdx = 0; currRangeIdx < rangeCount; currRangeIdx ++) {
-			if(item.isCurrLayerRangeUpdated(currRangeIdx)) {
+			if(item.isCurrLayerRangeUpdating(currRangeIdx)) {
 				currRangeSize = item.getRangeSize(currRangeIdx);
+				nextRangeOffset = getRangeOffset(currRangeIdx);
 				currRange = new BasicDataItem(
 					item.getOffset() + nextRangeOffset, currRangeSize,
 					currDataLayerIdx + 1, contentSource
 				);
-				nextRangeOffset = getRangeOffset(currRangeIdx);
 				runWriteCurrRange(byteChannel, 0);
 			}
 		}

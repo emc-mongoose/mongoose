@@ -18,7 +18,6 @@ import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -41,6 +40,7 @@ extends FileSystemTestBase {
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
+		//System.setProperty(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "conf/content/zerobytes");
 		FileSystemTestBase.setUpClass();
 		final List<FileItem>
 			itemBuffWritten = new ArrayList<>(COUNT_TO_WRITE),
@@ -53,12 +53,12 @@ extends FileSystemTestBase {
 				.build()
 		) {
 			countWritten = client.write(
-				null, new ListItemDst<>(itemBuffWritten), COUNT_TO_WRITE, 10, SizeUtil.toSize("1MB")
+				null, new ListItemDst<>(itemBuffWritten), COUNT_TO_WRITE, 10, SizeUtil.toSize("10B")
 			);
 			TimeUnit.SECONDS.sleep(1);
 			countUpdated = client.update(
 				new ListItemSrc<>(itemBuffWritten), new ListItemDst<>(itemBuffUpdated),
-				countWritten, 10, 10
+				countWritten, 1, 1
 			);
 			TimeUnit.SECONDS.sleep(1);
 			countRead = client.read(
@@ -73,6 +73,7 @@ extends FileSystemTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "");
+		//System.setProperty(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "");
 		FileSystemTestBase.tearDownClass();
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
 		for(final File f : tgtDir.listFiles()) {

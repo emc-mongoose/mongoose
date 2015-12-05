@@ -39,36 +39,6 @@ implements DirectoryLoadBuilder<T, C, U> {
 	@Override
 	public void invokePreConditions()
 	throws IllegalStateException {
-		// check the filesystem
-		final File parentPath = Paths.get("").toFile();
-		if(!parentPath.isDirectory()) {
-			throw new IllegalStateException(
-				"\"" + parentPath.getAbsolutePath() + "\" is not a directory"
-			);
-		}
-		final IOTask.Type loadType = ioConfig.getLoadType();
-		switch(loadType) {
-			case CREATE:
-			case DELETE:
-				if(!parentPath.canWrite()) {
-					throw new IllegalStateException(
-						"Parent directory \"" + parentPath.getAbsolutePath() + " is not writable"
-					);
-				}
-				break;
-			case READ:
-				if(!parentPath.canRead()) {
-					throw new IllegalStateException(
-						"Parent directory \"" + parentPath.getAbsolutePath() + " is not readable"
-					);
-				}
-				break;
-			case UPDATE:
-			case APPEND:
-				throw new IllegalStateException(
-					loadType.name() + " operation is not supported for directory items"
-				);
-		}
 		// create parent directories
 		final String parentDirectories = ioConfig.getNamePrefix();
 		if(parentDirectories != null && !parentDirectories.isEmpty()) {

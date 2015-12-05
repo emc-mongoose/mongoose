@@ -101,12 +101,13 @@ implements StorageClient<T> {
 	) throws IllegalStateException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
-				.useContainerListingItemSrc().setItemSrc(src)
+				.useContainerListingItemSrc()
 				.getIOConfig().setVerifyContentFlag(verifyContentFlag);
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(IOTask.Type.READ)
+				.setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.READ)
 				.build()
@@ -127,11 +128,12 @@ implements StorageClient<T> {
 		final long maxCount, final int connPerNodeCount
 	) throws IllegalStateException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
-			((DataLoadBuilder) loadBuilder).useContainerListingItemSrc().setItemSrc(src);
+			((DataLoadBuilder) loadBuilder).useContainerListingItemSrc();
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(IOTask.Type.DELETE)
+				.setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.DELETE)
 				.build()
@@ -156,8 +158,8 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setItemSrc(src)
 				.setLoadType(IOTask.Type.UPDATE)
+				.setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setConnPerNodeFor(connPerNodeCount, IOTask.Type.UPDATE)
 				.build()

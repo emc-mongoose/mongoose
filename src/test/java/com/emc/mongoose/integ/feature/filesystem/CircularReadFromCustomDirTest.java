@@ -66,7 +66,9 @@ extends FileSystemTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "data");
 		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "");
+		System.setProperty(RunTimeConfig.KEY_LOAD_CIRCULAR, "false");
 		FileSystemTestBase.tearDownClass();
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
 		for(final File f : tgtDir.listFiles()) {
