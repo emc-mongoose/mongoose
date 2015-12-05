@@ -240,6 +240,7 @@ implements FileIOTask<T> {
 				runWriteCurrRange(byteChannel, 0);
 			}
 		}
+		item.commitUpdatedRanges();
 		status = Status.SUCC;
 	}
 	//
@@ -290,6 +291,7 @@ implements FileIOTask<T> {
 				runWriteCurrRange(byteChannel, 0);
 			}
 		}
+		item.commitAppend();
 		status = Status.SUCC;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

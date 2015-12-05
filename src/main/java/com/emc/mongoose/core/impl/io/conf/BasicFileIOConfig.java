@@ -10,6 +10,7 @@ import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.impl.container.BasicDirectory;
 import com.emc.mongoose.core.impl.data.BasicFileItem;
 import com.emc.mongoose.core.impl.data.model.DirectoryItemSrc;
+import org.apache.commons.lang.StringUtils;
 //
 import java.io.IOException;
 /**
@@ -57,5 +58,10 @@ implements FileIOConfig<F, D> {
 	@Override
 	public void close()
 	throws IOException {
+	}
+	//
+	@Override
+	public String toString() {
+	return "FS-" + StringUtils.capitalize(loadType.name().toLowerCase());
 	}
 }

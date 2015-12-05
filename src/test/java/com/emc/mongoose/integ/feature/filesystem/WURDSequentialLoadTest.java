@@ -1,10 +1,10 @@
-package com.emc.mongoose.integ.feature.chain;
+package com.emc.mongoose.integ.feature.filesystem;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.integ.base.WSMockTestBase;
+import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.tools.StdOutUtil;
 import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
@@ -27,15 +27,8 @@ import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -45,20 +38,19 @@ import java.util.regex.Matcher;
  * TC #12 (name: "CRUD - sequential chain scenario.", steps: all) in Mongoose Core Functional Testing
  * HLUC: 1.4.2.2, 1.5.4.5
  */
-public class SequentialChainCRUDTest
-extends WSMockTestBase {
+public class WURDSequentialLoadTest
+extends LoggingTestBase {
 
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static String RUN_ID = com.emc.mongoose.integ.feature.chain.SequentialChainCRUDTest.class.getCanonicalName();
+	private static String RUN_ID = WURDSequentialLoadTest.class.getCanonicalName();
 	private static final String
-		DATA_SIZE = "10MB",
-		LIMIT_TIME = "1.minutes",
+		DATA_SIZE = "64KB",
 		SCENARIO_NAME = "chain",
 		CHAIN_LOADS =
 			TestConstants.LOAD_CREATE.toLowerCase() + "," +
-			TestConstants.LOAD_READ.toLowerCase() + "," +
 			TestConstants.LOAD_UPDATE.toLowerCase() + "," +
+			TestConstants.LOAD_READ.toLowerCase() + "," +
 			TestConstants.LOAD_DELETE.toLowerCase();
 	private static final long LOAD_CONNS = 10;
 	private static final long LOADS_COUNT = 4;
@@ -68,12 +60,14 @@ extends WSMockTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		WSMockTestBase.setUpClass();
+		LoggingTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "file");
+		rtConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 10000);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, SCENARIO_NAME);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, CHAIN_LOADS);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, String.valueOf(CHAIN_CONCURRENT));
@@ -90,7 +84,7 @@ extends WSMockTestBase {
 		//
 		try(
 			final BufferingOutputStream
-				 stdOutStream =	StdOutUtil.getStdOutBufferingStream()
+				stdOutStream =	StdOutUtil.getStdOutBufferingStream()
 		) {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptMockRunner().run();
@@ -105,7 +99,7 @@ extends WSMockTestBase {
 	@AfterClass
 	public  static void tearDownClass()
 	throws Exception {
-		WSMockTestBase.tearDownClass();
+		LoggingTestBase.tearDownClass();
 	}
 
 	@Test
@@ -130,7 +124,7 @@ extends WSMockTestBase {
 		);
 		//
 		try (final BufferedReader bufferedReader =
-			new BufferedReader(new FileReader(messageFile))
+			     new BufferedReader(new FileReader(messageFile))
 		) {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
@@ -186,12 +180,6 @@ extends WSMockTestBase {
 					);
 				}
 			}
-			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_TIME)) {
-				Assert.assertTrue(
-					"Information about limit time in configuration table is wrong",
-					confParam.contains(LIMIT_TIME)
-				);
-			}
 			if (confParam.contains(RunTimeConfig.KEY_SCENARIO_NAME)) {
 				Assert.assertTrue(
 					"Information about scenario name in configuration table is wrong",
@@ -209,7 +197,7 @@ extends WSMockTestBase {
 
 	@Test
 	public void shouldCreateAllFilesWithLogs()
-		throws Exception {
+	throws Exception {
 		Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
@@ -298,7 +286,7 @@ extends WSMockTestBase {
 		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
 		//
 		try (final BufferedReader
-			bufferedReader = new BufferedReader(new FileReader(perfSumFile))
+			     bufferedReader = new BufferedReader(new FileReader(perfSumFile))
 		) {
 			//  read header of csv file
 			bufferedReader.readLine();
@@ -312,19 +300,19 @@ extends WSMockTestBase {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
 				if (line.contains(TestConstants.LOAD_CREATE)
-						&& loadsSet.contains(TestConstants.LOAD_CREATE)) {
+					&& loadsSet.contains(TestConstants.LOAD_CREATE)) {
 					loadsSet.remove(TestConstants.LOAD_CREATE);
 				}
 				if (line.contains(TestConstants.LOAD_READ)
-						&& loadsSet.contains(TestConstants.LOAD_READ)) {
+					&& loadsSet.contains(TestConstants.LOAD_READ)) {
 					loadsSet.remove(TestConstants.LOAD_READ);
 				}
 				if (line.contains(TestConstants.LOAD_UPDATE)
-						&& loadsSet.contains(TestConstants.LOAD_UPDATE)) {
+					&& loadsSet.contains(TestConstants.LOAD_UPDATE)) {
 					loadsSet.remove(TestConstants.LOAD_UPDATE);
 				}
 				if (line.contains(TestConstants.LOAD_DELETE)
-						&& loadsSet.contains(TestConstants.LOAD_DELETE)) {
+					&& loadsSet.contains(TestConstants.LOAD_DELETE)) {
 					loadsSet.remove(TestConstants.LOAD_DELETE);
 				}
 				countLinesOfSumInfo++;
@@ -359,7 +347,7 @@ extends WSMockTestBase {
 					firstRow = false;
 				} else {
 					Assert.assertEquals(
-						"Storage API is wrong: " + nextRec.toString(), TestConstants.API_S3, nextRec.get(2).toLowerCase()
+						"Storage API is wrong: " + nextRec.toString(), "fs", nextRec.get(2).toLowerCase()
 					);
 					matcher = LogPatterns.TYPE_LOAD.matcher(nextRec.get(3));
 					Assert.assertTrue(
@@ -409,140 +397,10 @@ extends WSMockTestBase {
 	}
 
 	@Test
-	public void shouldGeneralStatusOfTheRunIsRegularlyReports()
-	throws Exception {
-		final int precisionMillis = 3000;
-		// Get perf.avg.csv file
-		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue("perf.avg.csv file doesn't exist", perfAvgFile.exists());
-		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			boolean firstRow = true;
-			Matcher matcher;
-			// map by load type
-			final Map<String, ArrayList<Date>> mapReports = new HashMap<>(4);
-			final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
-			//
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for (final CSVRecord nextRec : recIter) {
-				if (firstRow) {
-					firstRow = false;
-				} else {
-					matcher = LogPatterns.DATE_TIME_ISO8601.matcher(nextRec.get(0));
-					if (matcher.find()) {
-						// load type = nextRec.get(3)
-						if (mapReports.containsKey(nextRec.get(3))) {
-							final List<Date> listReports = mapReports.get(nextRec.get(3));
-							listReports.add(format.parse(matcher.group("time")));
-							mapReports.put(nextRec.get(3), (ArrayList<Date>) listReports);
-						} else {
-							mapReports.put(nextRec.get(3), new ArrayList<>(
-									Arrays.asList(format.parse(matcher.group("time")))
-								)
-							);
-						}
-					} else {
-						Assert.fail("Data and time record in line has got wrong format");
-					}
-				}
-			}
-			// Check period of reports is correct
-			long firstTime, nextTime;
-			// Period must be equal 10 sec
-			final int period = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
-			// period must be equal 10 seconds = 10000 milliseconds
-			Assert.assertEquals("Wrong load.metrics.periodSec in configuration", 10, period);
-
-			for (final String mapLoadType : mapReports.keySet()) {
-				final List<Date> listReports = mapReports.get(mapLoadType);
-				for (int i = 0; i < listReports.size() - 1; i++) {
-					firstTime = listReports.get(i).getTime();
-					nextTime = listReports.get(i + 1).getTime();
-					// period must be equal 10 seconds = 10000 milliseconds
-					Assert.assertEquals(
-						"Load metrics period is wrong", 10000, nextTime - firstTime, precisionMillis
-					);
-				}
-			}
-		}
-	}
-
-	@Test
-	public void shouldCreateLoadMustRunFor60Seconds()
-	throws Exception {
-		Date startTimeLoad = null,	finishTimeLoad = null;
-		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
-		Matcher matcher;
-		// Get start times of loads
-		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			boolean firstRow = true;
-			//
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for (final CSVRecord nextRec : recIter) {
-				if (firstRow) {
-					firstRow = false;
-				} else if (TestConstants.LOAD_CREATE.toLowerCase().equals(nextRec.get(3).toLowerCase())) {
-					matcher = LogPatterns.DATE_TIME_ISO8601.matcher(nextRec.get(0));
-					if (matcher.find()) {
-						startTimeLoad = format.parse(matcher.group("time"));
-					} else {
-						Assert.fail("Data and time record in line has got wrong format");
-					}
-					break;
-				}
-			}
-		}
-
-		// Get finish times of loads
-		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
-		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			boolean firstRow = true;
-			//
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for (final CSVRecord nextRec : recIter) {
-				if (firstRow) {
-					firstRow = false;
-				} else if (TestConstants.LOAD_CREATE.toLowerCase().equals(nextRec.get(3).toLowerCase())) {
-					matcher = LogPatterns.DATE_TIME_ISO8601.matcher(nextRec.get(0));
-					if (matcher.find()) {
-						finishTimeLoad = format.parse(matcher.group("time"));
-					} else {
-						Assert.fail("Data and time record in line has got wrong format");
-					}
-					break;
-				}
-			}
-		}
-
-		Assert.assertNotNull("There isn't load with type create", startTimeLoad);
-		Assert.assertNotNull("There isn't load with type create", finishTimeLoad);
-		// Check time limitation
-		// 1.minutes = 60000.milliseconds
-		final int precisionMillis = 5000, loadLimitTimeMillis = 60000;
-		long differenceTime = finishTimeLoad.getTime() - startTimeLoad.getTime();
-		Assert.assertEquals(
-			"Time load limitation is wrong", loadLimitTimeMillis,
-			differenceTime, precisionMillis
-		);
-	}
-
-	@Test
 	public void checkItemsMasksUpdated()
 	throws Exception {
 		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
-		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
+		Assert.assertTrue("items.csv file doesn't exist", dataItemsFile.exists());
 
 		try(
 			final BufferedReader

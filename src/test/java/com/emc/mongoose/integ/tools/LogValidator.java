@@ -122,9 +122,12 @@ public final class LogValidator {
 				Assert.assertTrue(
 					"Count of connection is not correct", LogValidator.isInteger(nextRec.get(4))
 				);
-				Assert.assertTrue(
-					"Count of node is not correct", LogValidator.isInteger(nextRec.get(5))
-				);
+				final String node = nextRec.get(5);
+				if(node != null && !node.isEmpty()) {
+					Assert.assertTrue(
+						"Count of node is not correct", LogValidator.isInteger(nextRec.get(5))
+					);
+				}
 				Assert.assertTrue(
 					"There are not load servers in run", nextRec.get(6).isEmpty()
 				);
@@ -241,9 +244,12 @@ public final class LogValidator {
 				Assert.assertTrue(
 					"Count of connection is not correct", LogValidator.isInteger(nextRec.get(4))
 				);
-				Assert.assertTrue(
-					"Count of node is not correct", LogValidator.isInteger(nextRec.get(5))
-				);
+				final String node = nextRec.get(5);
+				if(node != null && !node.isEmpty()) {
+					Assert.assertTrue(
+						"Count of node is not correct", LogValidator.isInteger(nextRec.get(5))
+					);
+				}
 				Assert.assertTrue(
 					"There are no load servers in run, but value is: " + nextRec.get(6),
 					nextRec.get(6).isEmpty()
@@ -346,9 +352,12 @@ public final class LogValidator {
 				Assert.assertTrue(
 					"Thread name format is not correct", nextRec.get(0).matches(LogPatterns.THREAD_NAME.pattern())
 				);
-				Assert.assertTrue(
-					"Target node is not correct", nextRec.get(1).matches(LogPatterns.TARGET_NODE.pattern())
-				);
+				final String node = nextRec.get(1);
+				if(node != null && !node.isEmpty()) {
+					Assert.assertTrue(
+						"Target node is not correct", nextRec.get(1).matches(LogPatterns.TARGET_NODE.pattern())
+					);
+				}
 				Assert.assertTrue(
 					"Data ID format is not correct", nextRec.get(2).matches(LogPatterns.DATA_ID.pattern())
 				);

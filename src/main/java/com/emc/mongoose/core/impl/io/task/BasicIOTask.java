@@ -77,7 +77,7 @@ implements IOTask<T> {
 			LOG.info(
 				Markers.PERF_TRACE,
 				strBuilder
-					.append(nodeAddr).append(',')
+					.append(nodeAddr == null ? "" : nodeAddr).append(',')
 					.append(item.getName()).append(',')
 					.append(countBytesDone).append(',')
 					.append(status.code).append(',')

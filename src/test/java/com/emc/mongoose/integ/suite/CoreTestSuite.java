@@ -1,12 +1,6 @@
 package com.emc.mongoose.integ.suite;
 //
 //
-import com.emc.mongoose.integ.feature.chain.ConcurrentChainCRUDTest;
-import com.emc.mongoose.integ.feature.chain.CustomChainScenarioTest;
-import com.emc.mongoose.integ.feature.chain.DefaultChainScenarioTest;
-import com.emc.mongoose.integ.feature.chain.SequentialChainCRUDTest;
-import com.emc.mongoose.integ.feature.rampup.CustomRampupTest;
-import com.emc.mongoose.integ.feature.rampup.DefaultRampupTest;
 import com.emc.mongoose.integ.feature.core.DefaultWriteTest;
 import com.emc.mongoose.integ.feature.core.InfiniteWriteTest;
 import com.emc.mongoose.integ.feature.core.Read10BItemsTest;
