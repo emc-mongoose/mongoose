@@ -264,7 +264,10 @@ implements FileIOTask<T> {
 		if(newSize > prevSize) {
 			final int startRangeIdx = prevSize > 0 ? getRangeCount(prevSize) - 1 : 0;
 			nextRangeOffset = getRangeOffset(startRangeIdx);
-			currRangeSize = getRangeOffset(startRangeIdx + 1) - nextRangeOffset;
+			currRangeSize = Math.min(
+				contentSize,
+				getRangeOffset(startRangeIdx + 1) - nextRangeOffset
+			);
 			currRange = new BasicDataItem(
 				item.getOffset() + nextRangeOffset, currRangeSize,
 				item.isCurrLayerRangeUpdated(startRangeIdx) ?
@@ -276,7 +279,10 @@ implements FileIOTask<T> {
 			final int lastRangeIdx = newSize > 0 ? getRangeCount(newSize) - 1 : 0;
 			if(startRangeIdx < lastRangeIdx) {
 				nextRangeOffset = getRangeOffset(startRangeIdx + 1);
-				currRangeSize = getRangeOffset(lastRangeIdx + 1) - nextRangeOffset;
+				currRangeSize = Math.min(
+					contentSize - countBytesDone,
+					getRangeOffset(lastRangeIdx + 1) - nextRangeOffset
+				);
 				currRange = new BasicDataItem(
 					item.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx,
 					ioConfig.getContentSource()

@@ -47,6 +47,7 @@ implements DirectoryIOTask<T, C> {
 	//
 	@Override
 	public void run() {
+		reqTimeStart = reqTimeDone = respTimeStart = System.nanoTime() / 1000;
 		try {
 			switch(ioType) {
 				case CREATE:
@@ -66,6 +67,8 @@ implements DirectoryIOTask<T, C> {
 		} catch(final Exception e) {
 			status = Status.FAIL_UNKNOWN;
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to create the directory \"{}\"", fPath);
+		} finally {
+			respTimeDone = System.nanoTime() / 1000;
 		}
 	}
 	//
