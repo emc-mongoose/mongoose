@@ -12,11 +12,16 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Map;
@@ -98,7 +103,14 @@ implements ContentSource {
 		zeroByteLayer.clear(); // reset
 		zeroByteLayer.get(buff);
 		out.writeInt(buff.length);
-		out.write(buff);
+		final int k = buff.length / 8192;
+		for(int i = 0; i < k; i ++) {
+			try {
+				out.write(buff, i * 8192, Math.min(buff.length, (i + 1) * 8192));
+			} catch(final IOException e) {
+				throw e;
+			}
+		}
 	}
 	//
 	@Override

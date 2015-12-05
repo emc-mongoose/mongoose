@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  * Created by olga on 22.07.15.
  * HLUC: 1.4.4.1, 1.5.3.3, 1.5.4.9, 1.5.6.5
  */
-public class FileRampupTest
+public class DistributedFileRampupTest
 extends DistributedLoadBuilderTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
