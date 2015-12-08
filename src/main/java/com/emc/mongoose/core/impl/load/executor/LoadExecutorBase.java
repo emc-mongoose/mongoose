@@ -29,6 +29,7 @@ import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
 //
 //
+import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -94,36 +95,6 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final List<Runnable> mgmtTasks = new LinkedList<>();
 	private final ThreadPoolExecutor mgmtExecutor;
-	//
-	private final static class LogMetricsTask
-	implements Runnable {
-		//
-		private final LoadExecutor loadExecutor;
-		private final int metricsPeriodSec;
-		//
-		private LogMetricsTask(final LoadExecutor loadExecutor, final int metricsPeriodSec) {
-			this.loadExecutor = loadExecutor;
-			this.metricsPeriodSec = metricsPeriodSec;
-		}
-		//
-		@Override
-		public final
-		void run() {
-			final Thread currThread = Thread.currentThread();
-			try {
-				currThread.setName(loadExecutor.getName() + "-metrics");
-				try {
-					while(!currThread.isInterrupted()) {
-						loadExecutor.logMetrics(Markers.PERF_AVG);
-						Thread.yield(); TimeUnit.SECONDS.sleep(metricsPeriodSec);
-					}
-				} catch(final InterruptedException e) {
-					LOG.debug(Markers.MSG, "{}: interrupted", loadExecutor.getName());
-				}
-			} catch(final RemoteException ignored) {
-			}
-		}
-	}
 	//
 	private final class StatsRefreshTask
 	implements Runnable {
@@ -1051,7 +1022,7 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	protected final void finalize()
-		throws Throwable {
+	throws Throwable {
 		try {
 			if(!isClosed.get()) {
 				close();
