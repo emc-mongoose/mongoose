@@ -99,34 +99,16 @@ implements ContentSource {
 		zeroByteLayer.clear(); // reset
 		zeroByteLayer.get(buff);
 		out.writeInt(buff.length);
-		final int k = buff.length / BUFF_SIZE_LO;
-		for(int i = 0; i < k; i ++) {
-			try {
-				out.write(
-					buff,
-					i * BUFF_SIZE_LO,
-					Math.min(buff.length - 1, (i + 1) * BUFF_SIZE_LO - 1)
-				);
-			} catch(final IOException e) {
-				throw e;
-			}
-		}
+		out.write(buff);
 	}
 	//
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		seed = in.readLong();
-		int size = in.readInt(), k;
+		int size = in.readInt();
 		final byte buff[] = new byte[size];
-		for(int i = 0; i < size; ) {
-			k = in.read(buff, i, size - i);
-			if(k < 0) {
-				throw new EOFException();
-			} else {
-				i += k;
-			}
-		}
+		in.read(buff);
 		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
 		byteLayersMap = new LRUMap<>(
 			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
