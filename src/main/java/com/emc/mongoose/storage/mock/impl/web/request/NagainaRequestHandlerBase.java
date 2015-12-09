@@ -262,7 +262,7 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 
 	protected abstract void handleContainerList(String containerName, ChannelHandlerContext ctx);
 
-	private void handleContainerCreate(String containerName) {
+	protected void handleContainerCreate(String containerName) {
 		sharedStorage.createContainer(containerName);
 	}
 

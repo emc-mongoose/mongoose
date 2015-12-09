@@ -79,7 +79,7 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 
 	@Override
 	protected void handleActually(ChannelHandlerContext ctx) {
-		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
+ 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
 		HttpRequest request = ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey)).get();
 		String[] metaDataList = null;
 		if (request.headers().contains(WSRequestConfig.KEY_EMC_TAGS)) {
@@ -134,7 +134,7 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 			} else {
 				subtenant = getSubtenant(request.headers(), uri);
 			}
-			handleGenericContainerReq(method, subtenant, ctx);
+			handleGenericContainerReq(response, method, subtenant, ctx);
 		} else {
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
@@ -256,5 +256,21 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 		final byte buff[] = new byte[0x10];
 		ThreadLocalRandom.current().nextBytes(buff);
 		return Hex.encodeHexString(buff);
+	}
+
+	private void handleGenericContainerReq(HttpResponse response, String method, String containerName, ChannelHandlerContext ctx) {
+		switch (method) {
+			case WSRequestConfig.METHOD_PUT:
+				handleContainerCreate(response, containerName, ctx);
+				break;
+			default:
+				super.handleGenericContainerReq(method, containerName, ctx);
+		}
+	}
+
+	private void handleContainerCreate(HttpResponse response, String containerName, ChannelHandlerContext ctx)
+	{
+		super.handleContainerCreate(containerName);
+		response.headers().set(SubTenant.KEY_SUBTENANT_ID, containerName);
 	}
 }

@@ -11,8 +11,8 @@ import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 
+import com.emc.mongoose.storage.mock.impl.web.request.NagainaAtmosRequestHandler;
 import com.emc.mongoose.storage.mock.impl.web.request.NagainaRequestHandlerBase;
-import com.emc.mongoose.storage.mock.impl.web.request.NagainaS3RequestHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -79,7 +79,7 @@ public class Nagaina<T extends WSObjectMock>
 		dispatchGroup = new NioEventLoopGroup(headCount, new DefaultThreadFactory("dispatcher")); // TODO check does it equal headCount?
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
 		workerGroup = new NioEventLoopGroup();
-		protocolHandler = new NagainaS3RequestHandler<>(RunTimeConfig.getContext(), this);
+		protocolHandler = new NagainaAtmosRequestHandler<>(RunTimeConfig.getContext(), this);
 	}
 
 
