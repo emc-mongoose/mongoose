@@ -527,8 +527,8 @@ implements LoadExecutor<T> {
 				return put(srcBuff, from, from + (int) dstLimit);
 			} else {
 				// select the target node
-				final String nextNodeAddr = storageNodeCount == 1 ?
-					storageNodeAddrs[0] : nodeBalancer.getNext();
+				final String nextNodeAddr = storageNodeAddrs == null ?
+					null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 				// prepare the I/O tasks list (make the link between the data item and load type)
 				final List<IOTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
 				if(srcLimit > getIOTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr)) {
