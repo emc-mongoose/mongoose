@@ -96,6 +96,7 @@ implements RequestConfig<T> {
 			.setScheme(scheme)
 			.setLoadType(loadType)
 			.setNameSpace(nameSpace)
+			.setNamePrefix(namePrefix)
 			.setBuffSize(buffSize);
 		requestConfigBranch.secret = secret;
 		LOG.debug(
@@ -252,6 +253,7 @@ implements RequestConfig<T> {
 		setUserName(this.runTimeConfig.getAuthId());
 		setSecret(this.runTimeConfig.getAuthSecret());
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
+		setNamePrefix(this.runTimeConfig.getDataPrefix());
 		setBuffSize((int)this.runTimeConfig.getIOBufferSizeMin());
 		return this;
 	}
