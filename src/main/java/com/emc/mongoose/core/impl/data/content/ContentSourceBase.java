@@ -108,7 +108,14 @@ implements ContentSource {
 		seed = in.readLong();
 		int size = in.readInt();
 		final byte buff[] = new byte[size];
-		in.read(buff);
+		for(int i, j = 0; j < size; ) {
+			i = in.read(buff, j, size - j);
+			if(i == -1) {
+				break;
+			} else {
+				j += j;
+			}
+		}
 		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
 		byteLayersMap = new LRUMap<>(
 			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
