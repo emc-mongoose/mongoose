@@ -2,7 +2,7 @@ package com.emc.mongoose.core.api.load.balancer;
 /**
  Created by kurila on 08.12.15.
  */
-public interface Balancer<S extends Object> {
+public interface Balancer<S> {
 	//
 	void markTaskStart(final S subject)
 	throws NullPointerException;
