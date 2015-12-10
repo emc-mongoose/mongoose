@@ -96,7 +96,7 @@ implements LoadBuilderClient<T, W, U> {
 		final RunTimeConfig srcConf, final Map<String, RunTimeConfig> dstConfMap,
 		final String loadSvcAddrs[], final String nodeAddrs[]
 	) throws IllegalStateException {
-		if(loadSvcAddrs.length > 1 || nodeAddrs.length > 1) {
+		if(loadSvcAddrs != null && (loadSvcAddrs.length > 1 || nodeAddrs.length > 1)) {
 			final int nStep = MathUtil.gcd(loadSvcAddrs.length, nodeAddrs.length);
 			if(nStep > 0) {
 				final int
