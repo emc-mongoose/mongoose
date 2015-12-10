@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.rmi.UnmarshalException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -175,7 +176,13 @@ implements LoadBuilderClient<T, W, U> {
 					Markers.MSG, "Applying the specific configuration to server @ \"{}\"...", addr
 				);
 			}
-			nextBuilder.setProperties(nextLoadSvcConfig);
+			try {
+				nextBuilder.setProperties(nextLoadSvcConfig);
+			} catch(final UnmarshalException e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to set the configuration for the server @ {}", addr
+				);
+			}
 		}
 		//
 		setMaxCount(rtConfig.getLoadLimitCount());
