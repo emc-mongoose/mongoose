@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 /**
@@ -37,25 +38,22 @@ implements LoadBuilder<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected long maxCount = 0;
-	protected volatile IOConfig<?, ?> ioConfig;
+	protected volatile IOConfig<?, ?> ioConfig = getDefaultIOConfig();
 	protected float rateLimit;
 	protected int manualTaskSleepMicroSecs, updatesPerItem;
 	protected ItemSrc itemSrc;
 	protected String storageNodeAddrs[];
-	protected final HashMap<IOTask.Type, Integer> loadTypeWorkerCount, loadTypeConnPerNode;
+	protected final Map<IOTask.Type, Integer>
+		loadTypeWorkerCount = new HashMap<>(),
+		loadTypeConnPerNode = new HashMap<>();
 	protected boolean flagUseNewItemSrc, flagUseNoneItemSrc;
 	//
-	{
-		loadTypeWorkerCount = new HashMap<>();
-		loadTypeConnPerNode = new HashMap<>();
-		try {
-			ioConfig = getDefaultIOConfig();
-			setProperties(RunTimeConfig.getContext());
-		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply configuration");
-		}
-	}
 	protected abstract IOConfig<?, ?> getDefaultIOConfig();
+	//
+	public LoadBuilderBase()
+	throws RemoteException {
+		this(RunTimeConfig.getContext());
+	}
 	//
 	public LoadBuilderBase(final RunTimeConfig runTimeConfig)
 	throws RemoteException {

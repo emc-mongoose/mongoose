@@ -52,8 +52,8 @@ implements LoadBuilderClient<T, W, U> {
 	protected boolean
 		flagAssignLoadSvcToNode = false,
 		flagUseNewItemSrc, flagUseNoneItemSrc;
-	protected final Map<String, V> loadSvcMap;;
-	protected final Map<String, RunTimeConfig> loadSvcConfMap;
+	protected final Map<String, V> loadSvcMap = new HashMap<>();
+	protected final Map<String, RunTimeConfig> loadSvcConfMap = new HashMap<>();
 	//
 	public LoadBuilderClientBase()
 	throws IOException {
@@ -62,10 +62,7 @@ implements LoadBuilderClient<T, W, U> {
 	//
 	public LoadBuilderClientBase(final RunTimeConfig rtConfig)
 	throws IOException {
-		//
 		super(rtConfig);
-		loadSvcMap = new HashMap<>(rtConfig.getLoadServerAddrs().length);
-		loadSvcConfMap = new HashMap<>(rtConfig.getLoadServerAddrs().length);
 		loadSvcAddrs = rtConfig.getLoadServerAddrs();
 		//
 		V loadBuilderSvc;
@@ -78,6 +75,7 @@ implements LoadBuilderClient<T, W, U> {
 				maxLastInstanceN = nextInstanceN;
 			}
 			loadSvcMap.put(serverAddr, loadBuilderSvc);
+			loadSvcConfMap.put(serverAddr, rtConfig);
 		}
 		//
 		resetItemSrc();
@@ -155,20 +153,22 @@ implements LoadBuilderClient<T, W, U> {
 		//
 		V nextBuilder;
 		RunTimeConfig nextLoadSvcConfig;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextLoadSvcConfig = loadSvcConfMap.get(addr);
-			if(nextLoadSvcConfig == null) {
-				nextLoadSvcConfig = rtConfig; // use default
-				LOG.debug(
-					Markers.MSG, "Applying the common configuration to server @ \"{}\"...", addr
-				);
-			} else {
-				LOG.debug(
-					Markers.MSG, "Applying the specific configuration to server @ \"{}\"...", addr
-				);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextLoadSvcConfig = loadSvcConfMap.get(addr);
+				if(nextLoadSvcConfig == null) {
+					nextLoadSvcConfig = rtConfig; // use default
+					LOG.debug(
+							Markers.MSG, "Applying the common configuration to server @ \"{}\"...", addr
+					);
+				} else {
+					LOG.debug(
+							Markers.MSG, "Applying the specific configuration to server @ \"{}\"...", addr
+					);
+				}
+				nextBuilder.setProperties(nextLoadSvcConfig);
 			}
-			nextBuilder.setProperties(nextLoadSvcConfig);
 		}
 		//
 		setMaxCount(rtConfig.getLoadLimitCount());
@@ -206,9 +206,11 @@ implements LoadBuilderClient<T, W, U> {
 	throws IllegalStateException, RemoteException {
 		super.setLoadType(loadType);
 		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setLoadType(loadType);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setLoadType(loadType);
+			}
 		}
 		return this;
 	}
@@ -218,9 +220,11 @@ implements LoadBuilderClient<T, W, U> {
 	throws IllegalArgumentException, RemoteException {
 		super.setMaxCount(maxCount);
 		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setMaxCount(maxCount);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setMaxCount(maxCount);
+			}
 		}
 		return this;
 	}
@@ -231,9 +235,11 @@ implements LoadBuilderClient<T, W, U> {
 	) throws IllegalArgumentException, RemoteException {
 		super.setManualTaskSleepMicroSecs(manualTaskSleepMicroSecs);
 		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setRateLimit(manualTaskSleepMicroSecs);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setRateLimit(manualTaskSleepMicroSecs);
+			}
 		}
 		return this;
 	}
@@ -243,9 +249,11 @@ implements LoadBuilderClient<T, W, U> {
 	throws IllegalArgumentException, RemoteException {
 		super.setRateLimit(rateLimit);
 		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setRateLimit(rateLimit);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setRateLimit(rateLimit);
+			}
 		}
 		return this;
 	}
@@ -255,9 +263,11 @@ implements LoadBuilderClient<T, W, U> {
 	throws IllegalArgumentException, RemoteException {
 		super.setWorkerCountDefault(threadCount);
 		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setWorkerCountDefault(threadCount);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setWorkerCountDefault(threadCount);
+			}
 		}
 		return this;
 	}
@@ -268,9 +278,11 @@ implements LoadBuilderClient<T, W, U> {
 	) throws IllegalArgumentException, RemoteException {
 		super.setWorkerCountFor(threadCount, loadType);
 		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setWorkerCountFor(threadCount, loadType);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setWorkerCountFor(threadCount, loadType);
+			}
 		}
 		return this;
 	}
@@ -280,9 +292,11 @@ implements LoadBuilderClient<T, W, U> {
 	throws IllegalArgumentException, RemoteException {
 		super.setConnPerNodeDefault(connCount);
 		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setConnPerNodeDefault(connCount);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setConnPerNodeDefault(connCount);
+			}
 		}
 		return this;
 	}
@@ -293,9 +307,11 @@ implements LoadBuilderClient<T, W, U> {
 	) throws IllegalArgumentException, RemoteException {
 		super.setConnPerNodeFor(connCount, loadType);
 		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setConnPerNodeFor(connCount, loadType);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setConnPerNodeFor(connCount, loadType);
+			}
 		}
 		return this;
 	}
@@ -313,11 +329,13 @@ implements LoadBuilderClient<T, W, U> {
 			}
 			//
 			V nextBuilder;
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setDataNodeAddrs(
-					loadSvcConfMap.get(addr).getStorageAddrs()
-				);
+			if(loadSvcMap != null) {
+				for(final String addr : loadSvcMap.keySet()) {
+					nextBuilder = loadSvcMap.get(addr);
+					nextBuilder.setDataNodeAddrs(
+						loadSvcConfMap.get(addr).getStorageAddrs()
+					);
+				}
 			}
 		}
 		return this;

@@ -64,9 +64,11 @@ implements DataLoadBuilderClient<T, W, U> {
 	throws IllegalArgumentException, RemoteException {
 		this.minObjSize = minObjSize;
 		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setMinObjSize(minObjSize);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setMinObjSize(minObjSize);
+			}
 		}
 		return this;
 	}
@@ -76,9 +78,11 @@ implements DataLoadBuilderClient<T, W, U> {
 	throws IllegalArgumentException, RemoteException {
 		this.objSizeBias = objSizeBias;
 		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setObjSizeBias(objSizeBias);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setObjSizeBias(objSizeBias);
+			}
 		}
 		return this;
 	}
@@ -87,10 +91,12 @@ implements DataLoadBuilderClient<T, W, U> {
 	public final DataLoadBuilderClient<T, W, U> setMaxObjSize(final long maxObjSize)
 	throws IllegalArgumentException, RemoteException {
 		this.maxObjSize = maxObjSize;
-		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setMaxObjSize(maxObjSize);
+		if(loadSvcMap != null) {
+			V nextBuilder;
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setMaxObjSize(maxObjSize);
+			}
 		}
 		return this;
 	}
@@ -98,10 +104,12 @@ implements DataLoadBuilderClient<T, W, U> {
 	@Override
 	public final DataLoadBuilderClient<T, W, U> setUpdatesPerItem(int count)
 	throws RemoteException {
-		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setUpdatesPerItem(count);
+		if(loadSvcMap != null) {
+			V nextBuilder;
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setUpdatesPerItem(count);
+			}
 		}
 		return this;
 	}
