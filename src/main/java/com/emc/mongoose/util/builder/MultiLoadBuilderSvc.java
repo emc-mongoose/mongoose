@@ -50,6 +50,11 @@ implements LoadBuilderSvc {
 		);
 		loadBuilderSvcs.add(new BasicFileLoadBuilderSvc<>(rtConfig));
 	}
+	@Override
+	public boolean lockUntilSvcBuilt(final long timeOut, final TimeUnit timeUnit)
+	throws RemoteException {
+		throw new RemoteException("Method shouldn't be invoked");
+	}
 	//
 	@Override
 	public final String buildRemotely()

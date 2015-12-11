@@ -70,12 +70,16 @@ implements LoadBuilderClient<T, W, U> {
 		for(final String serverAddr : loadSvcAddrs) {
 			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
 			loadBuilderSvc = resolve(serverAddr);
-			nextInstanceN = loadBuilderSvc.getNextInstanceNum(rtConfig.getRunId());
-			if(nextInstanceN > maxLastInstanceN) {
-				maxLastInstanceN = nextInstanceN;
+			if(loadBuilderSvc.lockUntilSvcBuilt(10, TimeUnit.SECONDS)) {
+				nextInstanceN = loadBuilderSvc.getNextInstanceNum(rtConfig.getRunId());
+				if(nextInstanceN > maxLastInstanceN) {
+					maxLastInstanceN = nextInstanceN;
+				}
+				loadSvcMap.put(serverAddr, loadBuilderSvc);
+				loadSvcConfMap.put(serverAddr, (RunTimeConfig)rtConfig.clone());
+			} else {
+				LOG.warn(Markers.ERR, "Failed to lock load builder service @ {}", serverAddr);
 			}
-			loadSvcMap.put(serverAddr, loadBuilderSvc);
-			loadSvcConfMap.put(serverAddr, (RunTimeConfig) rtConfig.clone());
 		}
 		//
 		resetItemSrc();

@@ -30,6 +30,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 26.11.15.
  */
@@ -43,7 +45,7 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private String configTable = null;
+	private final Lock remoteLock = new ReentrantLock();
 	//
 	public BasicDirectoryLoadBuilderSvc(final RunTimeConfig rtConfig)
 	throws RemoteException {
@@ -51,30 +53,26 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
-	public final BasicDirectoryLoadBuilderSvc<T, C, U> setRunTimeConfig(
-		final RunTimeConfig clientConfig
-	) throws RemoteException {
-		super.setRunTimeConfig(clientConfig);
-		final String runMode = clientConfig.getRunMode();
-		if(
-			!runMode.equals(Constants.RUN_MODE_SERVER) &&
-			!runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)
-		) {
-			configTable = clientConfig.toString();
+	public final boolean lockUntilSvcBuilt(final long timeOut, final TimeUnit timeUnit)
+	throws RemoteException {
+		try {
+			return remoteLock.tryLock(timeOut, timeUnit);
+		} catch(final InterruptedException e) {
+			throw new RemoteException(e.toString());
 		}
-		RunTimeConfig.getContext();
-		return this;
 	}
 	//
 	@Override
 	public String buildRemotely()
 	throws RemoteException {
-		U loadSvc = build();
-		ServiceUtil.create(loadSvc);
-		if(configTable != null) {
-			LOG.info(Markers.MSG, configTable);
-			configTable = null;
+		U loadSvc;
+		try {
+			LOG.info(Markers.MSG, rtConfig.toString());
+			loadSvc = build();
+		} finally {
+			remoteLock.unlock();
 		}
+		ServiceUtil.create(loadSvc);
 		return loadSvc.getName();
 	}
 	//

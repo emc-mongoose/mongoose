@@ -15,17 +15,19 @@ import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;
 import com.emc.mongoose.server.impl.load.executor.BasicWSContainerLoadSvc;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
-
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by gusakk on 22.10.15.
  */
@@ -39,7 +41,7 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private String configTable = null;
+	private final Lock remoteLock = new ReentrantLock();
 	//
 	public BasicWSContainerLoadBuilderSvc(final RunTimeConfig runTimeConfig)
 	throws RemoteException {
@@ -47,27 +49,26 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
-	public final BasicWSContainerLoadBuilderSvc<T, C, U> setRunTimeConfig(final RunTimeConfig clientConfig)
+	public final boolean lockUntilSvcBuilt(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException {
-		super.setRunTimeConfig(clientConfig);
-		final String runMode = clientConfig.getRunMode();
-		if (!runMode.equals(Constants.RUN_MODE_SERVER)
-				&& !runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)) {
-			configTable = clientConfig.toString();
+		try {
+			return remoteLock.tryLock(timeOut, timeUnit);
+		} catch(final InterruptedException e) {
+			throw new RemoteException(e.toString());
 		}
-		RunTimeConfig.getContext();
-		return this;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	public final String buildRemotely()
+	@Override
+	public String buildRemotely()
 	throws RemoteException {
-		final U loadSvc = build();
-		ServiceUtil.create(loadSvc);
-		if(configTable != null) {
-			LOG.info(Markers.MSG, configTable);
-			configTable = null;
+		U loadSvc;
+		try {
+			LOG.info(Markers.MSG, rtConfig.toString());
+			loadSvc = build();
+		} finally {
+			remoteLock.unlock();
 		}
+		ServiceUtil.create(loadSvc);
 		return loadSvc.getName();
 	}
 	//

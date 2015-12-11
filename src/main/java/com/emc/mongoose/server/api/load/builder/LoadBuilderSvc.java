@@ -8,12 +8,16 @@ import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //
 import java.rmi.RemoteException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 09.05.14.
  A remote/server-side load builder.
  */
 public interface LoadBuilderSvc<T extends Item, U extends LoadSvc<T>>
 extends LoadBuilder<T, U>, Service {
+	//
+	boolean lockUntilSvcBuilt(final long timeOut, final TimeUnit timeUnit)
+	throws RemoteException;
 	//
 	String buildRemotely()
 	throws RemoteException;
