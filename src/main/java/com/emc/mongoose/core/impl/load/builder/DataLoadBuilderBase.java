@@ -98,9 +98,9 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public DataLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
+	public DataLoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
-		super.setProperties(rtConfig);
+		super.setRunTimeConfig(rtConfig);
 		//
 		String paramName = RunTimeConfig.KEY_DATA_SIZE_MIN;
 		try {

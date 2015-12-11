@@ -51,10 +51,10 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
-	public final BasicDirectoryLoadBuilderSvc<T, C, U> setProperties(
+	public final BasicDirectoryLoadBuilderSvc<T, C, U> setRunTimeConfig(
 		final RunTimeConfig clientConfig
 	) throws RemoteException {
-		super.setProperties(clientConfig);
+		super.setRunTimeConfig(clientConfig);
 		final String runMode = clientConfig.getRunMode();
 		if(
 			!runMode.equals(Constants.RUN_MODE_SERVER) &&

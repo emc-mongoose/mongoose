@@ -80,7 +80,7 @@ implements LoadBuilderClient<T, W, U> {
 		//
 		resetItemSrc();
 		// set properties should be invoked only after the map is filled already
-		setProperties(rtConfig);
+		setRunTimeConfig(rtConfig);
 		//
 		for(final String serverAddr : loadSvcAddrs) {
 			loadSvcMap.get(serverAddr).setNextInstanceNum(rtConfig.getRunId(), maxLastInstanceN);
@@ -137,10 +137,10 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public LoadBuilderClient<T, W, U> setProperties(final RunTimeConfig rtConfig)
+	public LoadBuilderClient<T, W, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
 		//
-		super.setProperties(rtConfig);
+		super.setRunTimeConfig(rtConfig);
 		//
 		final String newNodeAddrs[] = rtConfig.getStorageAddrsWithPorts();
 		if(newNodeAddrs.length > 0) {
@@ -167,7 +167,7 @@ implements LoadBuilderClient<T, W, U> {
 							Markers.MSG, "Applying the specific configuration to server @ \"{}\"...", addr
 					);
 				}
-				nextBuilder.setProperties(nextLoadSvcConfig);
+				nextBuilder.setRunTimeConfig(nextLoadSvcConfig);
 			}
 		}
 		//
@@ -323,9 +323,7 @@ implements LoadBuilderClient<T, W, U> {
 		if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
 			this.storageNodeAddrs = dataNodeAddrs;
 			if(flagAssignLoadSvcToNode) {
-				assignNodesToLoadSvcs(
-					RunTimeConfig.getContext(), loadSvcConfMap, loadSvcAddrs, storageNodeAddrs
-				);
+				assignNodesToLoadSvcs(rtConfig, loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
 			}
 			//
 			V nextBuilder;
@@ -369,7 +367,7 @@ implements LoadBuilderClient<T, W, U> {
 		final StringBuilder strBuilder = new StringBuilder(ioConfig.toString());
 		try {
 			strBuilder.append('.').append(loadSvcMap.get(loadSvcMap.keySet().iterator().next())
-				.getNextInstanceNum(RunTimeConfig.getContext().getRunId()));
+				.getNextInstanceNum(rtConfig.getRunId()));
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to make load builder string");
 		}

@@ -42,9 +42,9 @@ implements FileLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public final BasicFileLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig)
+	public final BasicFileLoadBuilderSvc<T, U> setRunTimeConfig(final RunTimeConfig clientConfig)
 	throws RemoteException {
-		super.setProperties(clientConfig);
+		super.setRunTimeConfig(clientConfig);
 		final String runMode = clientConfig.getRunMode();
 		if (!runMode.equals(Constants.RUN_MODE_SERVER)
 			&& !runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)) {

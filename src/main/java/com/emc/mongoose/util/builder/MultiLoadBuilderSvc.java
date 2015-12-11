@@ -11,8 +11,6 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.load.builder.BasicDirectoryLoadBuilder;
-import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
@@ -129,10 +127,10 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setProperties(final RunTimeConfig props)
+	public final LoadBuilderSvc setRunTimeConfig(final RunTimeConfig props)
 	throws IllegalStateException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setProperties(props);
+			loadBuilderSvc.setRunTimeConfig(props);
 		}
 		return this;
 	}

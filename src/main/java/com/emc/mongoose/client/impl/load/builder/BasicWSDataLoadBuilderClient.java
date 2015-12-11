@@ -100,7 +100,6 @@ implements WSDataLoadBuilderClient<T, W, U> {
 		}
 		//
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
 		return (U) new BasicWSDataLoadClient<>(
 			rtConfig, (WSRequestConfig) ioConfig, storageNodeAddrs,

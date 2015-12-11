@@ -41,14 +41,13 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	protected ContainerLoadBuilderClientBase(final RunTimeConfig rtConfig)
 	throws IOException {
 		super(rtConfig);
-		setProperties(rtConfig);
+		setRunTimeConfig(rtConfig);
 	}
 	//
 	@Override
-	public ContainerLoadBuilderClientBase<T, C, W, U, V>
-	setProperties(final RunTimeConfig rtConfig)
+	public ContainerLoadBuilderClientBase<T, C, W, U, V> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws RemoteException {
-		super.setProperties(rtConfig);
+		super.setRunTimeConfig(rtConfig);
 		//
 		final String listFilePathStr = rtConfig.getItemSrcFile();
 		if (itemsFileExists(listFilePathStr)) {

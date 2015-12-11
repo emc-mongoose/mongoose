@@ -50,9 +50,9 @@ implements DataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, W, U> setProperties(final RunTimeConfig rtConfig)
+	public final DataLoadBuilderClient<T, W, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
-		super.setProperties(rtConfig);
+		super.setRunTimeConfig(rtConfig);
 		setMinObjSize(rtConfig.getDataSizeMin());
 		setMaxObjSize(rtConfig.getDataSizeMax());
 		setObjSizeBias(rtConfig.getDataSizeBias());
@@ -130,7 +130,7 @@ implements DataLoadBuilderClient<T, W, U> {
 			// calculate approx average data item size
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-				RunTimeConfig.getContext().getBatchSize()
+				rtConfig.getBatchSize()
 			);
 			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?

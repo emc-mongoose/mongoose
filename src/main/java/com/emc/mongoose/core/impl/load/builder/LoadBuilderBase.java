@@ -37,6 +37,7 @@ implements LoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	protected volatile RunTimeConfig rtConfig;
 	protected long maxCount = 0;
 	protected volatile IOConfig<?, ?> ioConfig = getDefaultIOConfig();
 	protected float rateLimit;
@@ -58,7 +59,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilderBase(final RunTimeConfig runTimeConfig)
 	throws RemoteException {
 		resetItemSrc();
-		setProperties(runTimeConfig);
+		setRunTimeConfig(runTimeConfig);
 	}
 	//
 	protected void resetItemSrc() {
@@ -68,9 +69,9 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
+	public LoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
-		RunTimeConfig.setContext(rtConfig);
+		this.rtConfig = rtConfig;
 		if(ioConfig != null) {
 			ioConfig.setProperties(rtConfig);
 		} else {
