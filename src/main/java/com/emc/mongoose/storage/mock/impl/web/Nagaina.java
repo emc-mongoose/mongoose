@@ -34,8 +34,6 @@ public class Nagaina<T extends WSObjectMock>
 
 	private final static Logger LOG = LogManager.getLogger();
 
-	private final static int HEAD_COUNT_DEFAULT = 1;
-	private final static int PORT_START_DEFAULT = 9020;
 	private final EventLoopGroup dispatchGroup;
 	private final EventLoopGroup workerGroup;
 	private final NagainaHandlerMapper protocolHandlerMapper;
@@ -49,10 +47,8 @@ public class Nagaina<T extends WSObjectMock>
 	private Nagaina(RunTimeConfig rtConfig, int ioThreadCount) {
 		this(
 				rtConfig.getStorageMockHeadCount(),
-//				HEAD_COUNT_DEFAULT,
 				ioThreadCount > 0 ? ioThreadCount : ThreadUtil.getWorkerCount(),
 				rtConfig.getApiTypePort(rtConfig.getApiName()),
-//				PORT_START_DEFAULT,
 				rtConfig.getStorageMockCapacity(),
 				rtConfig.getStorageMockContainerCapacity(),
 				rtConfig.getStorageMockContainerCountLimit(),

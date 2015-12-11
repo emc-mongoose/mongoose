@@ -19,14 +19,17 @@ public class NagainaHandlerMapper<T extends WSObjectMock> extends ChannelInbound
 			S3_AUTH_PREFIX = RunTimeConfig.getContext().getApiS3AuthPrefix() + " ",
 			ATMOS_URI_BASE_PATH = "/rest";
 
-	private final RunTimeConfig runTimeConfig;
-	private final WSMock<T> sharedStorage;
+
 	private final String apiBasePathSwift;
+	private final NagainaRequestHandlerBase<T> s3RequestHandler;
+	private final NagainaRequestHandlerBase<T> swiftRequestHandler;
+	private final NagainaRequestHandlerBase<T> atmosRequestHandler;
 
 	public NagainaHandlerMapper(RunTimeConfig runTimeConfig, WSMock<T> sharedStorage) {
-		this.runTimeConfig = runTimeConfig;
-		this.sharedStorage = sharedStorage;
 		apiBasePathSwift = runTimeConfig.getString(WSRequestConfigImpl.KEY_CONF_SVC_BASEPATH);
+		s3RequestHandler = new NagainaS3RequestHandler<>(runTimeConfig, sharedStorage);
+		swiftRequestHandler = new NagainaSwiftRequestHandler<>(runTimeConfig, sharedStorage);
+		atmosRequestHandler = new NagainaAtmosRequestHandler<>(runTimeConfig, sharedStorage);
 	}
 
 	private boolean checkS3(HttpRequest request) {
@@ -47,18 +50,17 @@ public class NagainaHandlerMapper<T extends WSObjectMock> extends ChannelInbound
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		if (msg instanceof HttpRequest) {
 			if (checkS3((HttpRequest) msg)) {
-				addHandler(ctx, new NagainaS3RequestHandler<>(runTimeConfig, sharedStorage));
+				addHandler(ctx, s3RequestHandler);
 			}
 			if (checkSwift((HttpRequest) msg)) {
-				addHandler(ctx, new NagainaSwiftRequestHandler<>(runTimeConfig, sharedStorage));
+				addHandler(ctx, swiftRequestHandler);
 			}
 			if (checkAtmos((HttpRequest) msg)) {
-				addHandler(ctx, new NagainaAtmosRequestHandler<>(runTimeConfig, sharedStorage));
+				addHandler(ctx, atmosRequestHandler);
 			}
 			ctx.pipeline().remove(this);
 			ctx.fireChannelRead(msg);
 		}
-
 	}
 
 	private void addHandler(ChannelHandlerContext ctx, NagainaRequestHandlerBase<T> handler) {
