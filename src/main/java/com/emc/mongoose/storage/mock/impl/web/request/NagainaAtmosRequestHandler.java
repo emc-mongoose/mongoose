@@ -3,8 +3,8 @@ package com.emc.mongoose.storage.mock.impl.web.request;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.data.model.DataItemContainer;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.data.model.ContainerHelper;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
@@ -168,7 +168,7 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 	}
 
 	private void handleContainerList(String subtenant, String objId, ChannelHandlerContext ctx) {
-		int maxCount = DataItemContainer.DEFAULT_PAGE_SIZE;
+		int maxCount = ContainerHelper.DEFAULT_PAGE_SIZE;
 		HttpHeaders headers = ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey)).get().headers();
 		if (headers.contains(WSRequestConfig.KEY_EMC_LIMIT)) {
 			try {
