@@ -8,7 +8,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
+import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
@@ -64,9 +64,11 @@ implements DataLoadBuilderClient<T, W, U> {
 	throws IllegalArgumentException, RemoteException {
 		this.minObjSize = minObjSize;
 		V nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.setMinObjSize(minObjSize);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setMinObjSize(minObjSize);
+			}
 		}
 		return this;
 	}
@@ -76,9 +78,11 @@ implements DataLoadBuilderClient<T, W, U> {
 	throws IllegalArgumentException, RemoteException {
 		this.objSizeBias = objSizeBias;
 		V nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.setObjSizeBias(objSizeBias);
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setObjSizeBias(objSizeBias);
+			}
 		}
 		return this;
 	}
@@ -87,10 +91,12 @@ implements DataLoadBuilderClient<T, W, U> {
 	public final DataLoadBuilderClient<T, W, U> setMaxObjSize(final long maxObjSize)
 	throws IllegalArgumentException, RemoteException {
 		this.maxObjSize = maxObjSize;
-		V nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.setMaxObjSize(maxObjSize);
+		if(loadSvcMap != null) {
+			V nextBuilder;
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setMaxObjSize(maxObjSize);
+			}
 		}
 		return this;
 	}
@@ -98,10 +104,12 @@ implements DataLoadBuilderClient<T, W, U> {
 	@Override
 	public final DataLoadBuilderClient<T, W, U> setUpdatesPerItem(int count)
 	throws RemoteException {
-		V nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.setUpdatesPerItem(count);
+		if(loadSvcMap != null) {
+			V nextBuilder;
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setUpdatesPerItem(count);
+			}
 		}
 		return this;
 	}
@@ -118,13 +126,13 @@ implements DataLoadBuilderClient<T, W, U> {
 	throws RemoteException {
 		super.setItemSrc(itemSrc);
 		//
-		if(itemSrc instanceof FileDataItemSrc) {
+		if(itemSrc instanceof DataItemFileSrc) {
 			// calculate approx average data item size
-			final FileDataItemSrc<T> fileInput = (FileDataItemSrc<T>) itemSrc;
+			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-				rtConfig.getBatchSize()
+				RunTimeConfig.getContext().getBatchSize()
 			);
-			reqConf.setBuffSize(
+			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
 					Constants.BUFF_SIZE_LO :
 					approxDataItemsSize > Constants.BUFF_SIZE_HI ?
@@ -140,18 +148,18 @@ implements DataLoadBuilderClient<T, W, U> {
 			if(flagUseNoneItemSrc) {
 				// disable any item source usage on the load servers side
 				V nextBuilder;
-				for(final String addr : keySet()) {
-					nextBuilder = get(addr);
+				for(final String addr : loadSvcMap.keySet()) {
+					nextBuilder = loadSvcMap.get(addr);
 					nextBuilder.useNoneItemSrc();
 				}
 				//
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
+				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
 					// enable new data item generation on the load servers side
 					V nextBuilder;
-					for(final String addr : keySet()) {
-						nextBuilder = get(addr);
+					for(final String addr : loadSvcMap.keySet()) {
+						nextBuilder = loadSvcMap.get(addr);
 						nextBuilder.useNewItemSrc();
 					}
 					//
@@ -159,18 +167,18 @@ implements DataLoadBuilderClient<T, W, U> {
 				} else {
 					// disable any item source usage on the load servers side
 					V nextBuilder;
-					for(final String addr : keySet()) {
-						nextBuilder = get(addr);
+					for(final String addr : loadSvcMap.keySet()) {
+						nextBuilder = loadSvcMap.get(addr);
 						nextBuilder.useNoneItemSrc();
 					}
 					//
-					return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+					return (ItemSrc<T>) ioConfig.getContainerListInput(maxCount, storageNodeAddrs[0]);
 				}
 			} else if(flagUseNewItemSrc) {
 				// enable new data item generation on the load servers side
 				V nextBuilder;
-				for(final String addr : keySet()) {
-					nextBuilder = get(addr);
+				for(final String addr : loadSvcMap.keySet()) {
+					nextBuilder = loadSvcMap.get(addr);
 					nextBuilder.useNewItemSrc();
 				}
 				//
@@ -178,12 +186,12 @@ implements DataLoadBuilderClient<T, W, U> {
 			} else if(flagUseContainerItemSrc) {
 				// disable any item source usage on the load servers side
 				V nextBuilder;
-				for(final String addr : keySet()) {
-					nextBuilder = get(addr);
+				for(final String addr : loadSvcMap.keySet()) {
+					nextBuilder = loadSvcMap.get(addr);
 					nextBuilder.useNoneItemSrc();
 				}
 				//
-				return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+				return (ItemSrc<T>) ioConfig.getContainerListInput(maxCount, storageNodeAddrs[0]);
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to change the remote data items source");

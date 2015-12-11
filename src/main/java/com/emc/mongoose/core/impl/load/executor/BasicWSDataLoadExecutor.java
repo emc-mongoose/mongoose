@@ -10,11 +10,12 @@ import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSDataIOTask;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.task.BasicWSDataIOTask;
@@ -74,7 +75,7 @@ implements WSDataLoadExecutor<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
-	private final WSRequestConfig<T> wsReqConfigCopy;
+	private final WSRequestConfig<T, Container<T>> wsReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
 	private final AtomicLong
@@ -83,8 +84,8 @@ implements WSDataLoadExecutor<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public BasicWSDataLoadExecutor(
-		final RunTimeConfig rtConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final int threadCount,
+		final RunTimeConfig rtConfig, final WSRequestConfig<T, ? extends Container<T>> reqConfig,
+		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
@@ -93,7 +94,7 @@ implements WSDataLoadExecutor<T> {
 			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
 		);
-		wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
+		wsReqConfigCopy = (WSRequestConfig<T, Container<T>>) ioConfigCopy;
 		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
 		//
 		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
@@ -241,7 +242,7 @@ implements WSDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected final Future<? extends WSDataIOTask<T>> submitReqActually(final IOTask<T> ioTask)
+	protected <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)
 	throws RejectedExecutionException {
 		//
 		final WSDataIOTask<T> wsTask = (WSDataIOTask<T>) ioTask;
@@ -262,7 +263,7 @@ implements WSDataLoadExecutor<T> {
 		} catch(final Exception e) {
 			throw new RejectedExecutionException(e);
 		}
-		return futureResult;
+		return (Future<A>) futureResult;
 	}
 	//
 	private final FutureCallback<WSDataIOTask<T>> futureCallback = new FutureCallback<WSDataIOTask<T>>() {
@@ -281,7 +282,7 @@ implements WSDataLoadExecutor<T> {
 	};
 	//
 	@Override
-	public final int submitReqs(final List<? extends IOTask<T>> ioTasks, int from, int to)
+	public final int submitTasks(final List<? extends IOTask<T>> ioTasks, int from, int to)
 	throws RejectedExecutionException {
 		int n = 0;
 		if(isPipeliningEnabled) {

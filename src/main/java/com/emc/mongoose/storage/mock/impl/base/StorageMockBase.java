@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.content.ContentSource;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileSrc;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
@@ -538,8 +538,8 @@ implements StorageMock<T> {
 			);
 			//
 			try(
-				final CSVFileItemSrc<T>
-					csvFileItemInput = new CSVFileItemSrc<>(dataFilePath, itemCls, contentSrc)
+				final ItemCSVFileSrc<T>
+					csvFileItemInput = new ItemCSVFileSrc<>(dataFilePath, itemCls, contentSrc)
 			) {
 				displayProgressThread.start();
 				do {

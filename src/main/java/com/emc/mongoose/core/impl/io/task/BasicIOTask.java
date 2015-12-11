@@ -1,22 +1,24 @@
 package com.emc.mongoose.core.impl.io.task;
 //
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 //
+import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.container.Container;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicIOTask<T extends Item>
+public class BasicIOTask<T extends Item, C extends Container<?>, X extends IOConfig<?, C>>
 implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final RequestConfig reqConf;
+	protected final X ioConfig;
 	protected final IOTask.Type ioType;
 	protected final T item;
 	protected final String nodeAddr;
@@ -27,11 +29,9 @@ implements IOTask<T> {
 		respTimeStart = 0, respDataTimeStart = 0, respTimeDone = 0,
 		countBytesDone = 0;
 	//
-	public BasicIOTask(
-		final T item, final String nodeAddr, final RequestConfig reqConf
-	) {
-		this.reqConf = reqConf;
-		this.ioType = reqConf.getLoadType();
+	public BasicIOTask(final T item, final String nodeAddr, final X ioConfig) {
+		this.ioConfig = ioConfig;
+		this.ioType = ioConfig.getLoadType();
 		this.item = item;
 		this.nodeAddr = nodeAddr;
 	}
@@ -53,11 +53,11 @@ implements IOTask<T> {
 	//
 	protected final static ThreadLocal<StringBuilder>
 		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
-		@Override
-		protected final StringBuilder initialValue() {
-			return new StringBuilder();
-		}
-	};
+			@Override
+			protected final StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 	//
 	@Override
 	public final void mark(final IOStats ioStats) {
@@ -66,29 +66,27 @@ implements IOTask<T> {
 			reqDuration = (int) (respTimeDone - reqTimeStart),
 			respLatency = (int) (respTimeStart - reqTimeDone),
 			respDataLatency = (int) (respDataTimeStart - reqTimeDone);
-		if(respLatency > 0 && reqDuration > respLatency) {
-			if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
-				StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
-				if(strBuilder == null) {
-					strBuilder = new StringBuilder();
-					PERF_TRACE_MSG_BUILDER.set(strBuilder);
-				} else {
-					strBuilder.setLength(0); // clear/reset
-				}
-				LOG.info(
-					Markers.PERF_TRACE,
-					strBuilder
-						.append(nodeAddr).append(',')
-						.append(item.getName()).append(',')
-						.append(countBytesDone).append(',')
-						.append(status.code).append(',')
-						.append(reqTimeStart).append(',')
-						.append(respLatency).append(',')
-						.append(respDataTimeStart > 0 ? respDataLatency : -1).append(',')
-						.append(reqDuration)
-						.toString()
-				);
+		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
+			StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
+			if(strBuilder == null) {
+				strBuilder = new StringBuilder();
+				PERF_TRACE_MSG_BUILDER.set(strBuilder);
+			} else {
+				strBuilder.setLength(0); // clear/reset
 			}
+			LOG.info(
+				Markers.PERF_TRACE,
+				strBuilder
+					.append(nodeAddr == null ? "" : nodeAddr).append(',')
+					.append(item.getName()).append(',')
+					.append(countBytesDone).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(respLatency > 0 ? respLatency : 0).append(',')
+					.append(respDataTimeStart > 0 ? respDataLatency : -1).append(',')
+					.append(reqDuration)
+					.toString()
+			);
 		}
 		// stats refreshing
 		if(status == IOTask.Status.SUCC) {

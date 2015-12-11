@@ -7,19 +7,20 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.FileDataItemSrc;
+import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
@@ -37,7 +38,8 @@ implements DataLoadBuilder<T, U> {
 	protected float objSizeBias;
 	protected boolean flagUseContainerItemSrc;
 	//
-	public DataLoadBuilderBase(final RunTimeConfig rtConfig) {
+	public DataLoadBuilderBase(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		super(rtConfig);
 	}
 	//
@@ -57,26 +59,31 @@ implements DataLoadBuilder<T, U> {
 		return lb;
 	}
 	//
+	@SuppressWarnings("unchecked")
 	protected ItemSrc<T> getDefaultItemSource() {
 		try {
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
+				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
 					return new NewDataItemSrc<>(
-						reqConf.getItemClass(), reqConf.getContentSource(),
+						(Class<T>) ioConfig.getItemClass(), ioConfig.getContentSource(),
 						minObjSize, maxObjSize, objSizeBias
 					);
 				} else {
-					return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+					return (ItemSrc<T>) ioConfig.getContainerListInput(
+						maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+					);
 				}
 			} else if(flagUseNewItemSrc) {
 				return new NewDataItemSrc<>(
-					reqConf.getItemClass(), reqConf.getContentSource(),
+					(Class<T>) ioConfig.getItemClass(), ioConfig.getContentSource(),
 					minObjSize, maxObjSize, objSizeBias
 				);
 			} else if(flagUseContainerItemSrc) {
-				return reqConf.getContainerListInput(maxCount, storageNodeAddrs[0]);
+				return (ItemSrc<T>) ioConfig.getContainerListInput(
+					maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+				);
 			}
 		} catch(final NoSuchMethodException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
@@ -92,7 +99,7 @@ implements DataLoadBuilder<T, U> {
 	//
 	@Override
 	public DataLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
-	throws IllegalStateException {
+	throws IllegalStateException, RemoteException {
 		super.setProperties(rtConfig);
 		//
 		String paramName = RunTimeConfig.KEY_DATA_SIZE_MIN;
@@ -135,9 +142,9 @@ implements DataLoadBuilder<T, U> {
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(
-					new CSVFileItemSrc<>(
-						Paths.get(listFilePathStr), reqConf.getItemClass(),
-						reqConf.getContentSource()
+					new ItemCSVFileSrc<>(
+						Paths.get(listFilePathStr), (Class<T>) ioConfig.getItemClass(),
+						ioConfig.getContentSource()
 					)
 				);
 			} catch(final IOException | NoSuchMethodException e) {
@@ -149,14 +156,15 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setItemSrc(ItemSrc<T> itemSrc) {
+	public LoadBuilder<T, U> setItemSrc(ItemSrc<T> itemSrc)
+	throws RemoteException {
 		super.setItemSrc(itemSrc);
-		if(itemSrc instanceof FileDataItemSrc) {
-			final FileDataItemSrc<T> fileInput = (FileDataItemSrc<T>) itemSrc;
+		if(itemSrc instanceof DataItemFileSrc) {
+			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
 					RunTimeConfig.getContext().getBatchSize()
 			);
-			reqConf.setBuffSize(
+			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
 					Constants.BUFF_SIZE_LO :
 					approxDataItemsSize > Constants.BUFF_SIZE_HI ?

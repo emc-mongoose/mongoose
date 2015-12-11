@@ -1,15 +1,28 @@
 package com.emc.mongoose.util.builder;
-
+//
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+//
+import com.emc.mongoose.core.api.container.Directory;
+import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+//
+import com.emc.mongoose.core.impl.load.builder.BasicDirectoryLoadBuilder;
+import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
+//
+import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicDirectoryLoadBuilderSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicFileLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSContainerLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
+//
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -27,9 +40,17 @@ implements LoadBuilderSvc {
 	//
 	private final List<LoadBuilderSvc> loadBuilderSvcs = new ArrayList<>();
 	//
-	public MultiLoadBuilderSvc(final RunTimeConfig rtConfig) {
+	public MultiLoadBuilderSvc(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		loadBuilderSvcs.add(new BasicWSContainerLoadBuilderSvc(rtConfig));
 		loadBuilderSvcs.add(new BasicWSDataLoadBuilderSvc(rtConfig));
+		loadBuilderSvcs.add(
+			new BasicDirectoryLoadBuilderSvc<
+				FileItem, Directory<FileItem>,
+				DirectoryLoadSvc<FileItem, Directory<FileItem>>
+			>(rtConfig)
+		);
+		loadBuilderSvcs.add(new BasicFileLoadBuilderSvc<>(rtConfig));
 	}
 	//
 	@Override
@@ -75,7 +96,9 @@ implements LoadBuilderSvc {
 	@Override
 	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
-		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(loadBuilderSvcs.size());
+		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
+			loadBuilderSvcs.size(), new GroupThreadFactory("loadSvcAwaitExecutor", true)
+		);
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			awaitExecutor.submit(
 				new Runnable() {
@@ -115,18 +138,14 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final RequestConfig getRequestConfig()
+	public final IOConfig getIOConfig()
 	throws RemoteException {
 		throw new RemoteException("Method shouldn't be invoked");
 	}
-	//
 	@Override
-	public final LoadBuilderSvc setRequestConfig(final RequestConfig reqConf)
+	public LoadBuilder setIOConfig(final IOConfig ioConfig)
 	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setRequestConfig(reqConf);
-		}
-		return this;
+		throw new RemoteException("Method shouldn't be invoked");
 	}
 	//
 	@Override
@@ -235,6 +254,12 @@ implements LoadBuilderSvc {
 			loadBuilderSvc.useNoneItemSrc();
 		}
 		return null;
+	}
+	//
+	@Override
+	public void invokePreConditions()
+	throws RemoteException, IllegalStateException {
+		throw new RemoteException("Method shouldn't be invoked");
 	}
 	//
 	@Override

@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.data.content;
 //
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -105,14 +106,14 @@ implements ContentSource {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		seed = in.readLong();
-		int size = in.readInt(), k;
+		int size = in.readInt();
 		final byte buff[] = new byte[size];
-		for(int i = 0; i < size; ) {
-			k = in.read(buff, i, size - i);
-			if(k < 0) {
-				throw new EOFException();
+		for(int i, j = 0; j < size;) {
+			i = in.read(buff, j, size - j);
+			if(i == -1) {
+				break;
 			} else {
-				i += k;
+				j += i;
 			}
 		}
 		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);

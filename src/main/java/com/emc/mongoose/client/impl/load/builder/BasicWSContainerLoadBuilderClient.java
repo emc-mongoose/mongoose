@@ -10,9 +10,9 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 //
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 //
 import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;
@@ -47,7 +47,7 @@ public class BasicWSContainerLoadBuilderClient<
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig getDefaultRequestConfig() {
+	protected WSRequestConfig getDefaultIOConfig() {
 		return WSRequestConfigBase.getInstance();
 	}
 	//
@@ -79,17 +79,17 @@ public class BasicWSContainerLoadBuilderClient<
 	}
 	//
 	@Override
-	protected final void invokePreConditions()
+	public final void invokePreConditions()
 	throws IllegalStateException {
 		//  do nothing
-		//  reqConf.configureStorage(storageNodeAddrs);
+		//  ioConfig.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override  @SuppressWarnings("unchecked")
 	protected final U buildActually()
-		throws RemoteException {
+	throws RemoteException {
 		//
-		final Map<String, WSContainerLoadSvc<T, C>> remoteLoadMap = new ConcurrentHashMap<>();
+		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
 		//
 		WSContainerLoadBuilderSvc<T, C, W> nextBuilder;
 		W nextLoad;
@@ -98,19 +98,20 @@ public class BasicWSContainerLoadBuilderClient<
 			itemSrc = getDefaultItemSource(); // affects load service builders
 		}
 		//
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.setRequestConfig(reqConf); // should upload req conf right before instancing
+		for(final String addr : loadSvcMap.keySet()) {
+			nextBuilder = loadSvcMap.get(addr);
+			nextBuilder.setIOConfig(ioConfig); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final String loadTypeStr = reqConf.getLoadType().name().toLowerCase();
+		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
 		return (U) new BasicWSContainerLoadClient<>(
-			rtConfig, (WSRequestConfig) reqConf, storageNodeAddrs,
+			rtConfig, (WSRequestConfig) ioConfig, storageNodeAddrs,
 			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
 			itemSrc, maxCount, remoteLoadMap
 		);

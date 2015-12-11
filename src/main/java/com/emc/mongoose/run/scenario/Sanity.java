@@ -11,12 +11,13 @@ import com.emc.mongoose.core.api.data.model.ItemDst;
 //
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-import com.emc.mongoose.core.impl.data.model.BinFileItemDst;
-import com.emc.mongoose.core.impl.data.model.CSVFileItemDst;
+import com.emc.mongoose.core.impl.data.model.ItemBinFileDst;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileDst;
 //
 import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.data.model.ListItemDst;
 //
+import com.emc.mongoose.core.impl.data.model.ListItemSrc;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 /**
@@ -43,7 +45,7 @@ implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 2, DEFAULT_CONN_PER_NODE = 200;
 	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("10MB");
-	private final static int DEFAULT_DATA_COUNT_MAX = 1000;
+	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -58,24 +60,23 @@ implements Runnable {
 	//
 	public void run() {
 		try {
+			final List<WSObject> itemBuff = new ArrayList<>(DEFAULT_DATA_COUNT_MAX);
 			// create new items
-			final ItemDst<WSObject> dataDstW = new ListItemDst<>(
-				new ArrayList<WSObject>(DEFAULT_DATA_COUNT_MAX)
-			);
 			LOG.info(Markers.MSG, "Start writing");
 			final long nWritten = client.write(
-				null, dataDstW, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
+				null, new ListItemDst<>(itemBuff), DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE,
+				DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
 			// update the created items
-			LOG.info(Markers.MSG, "Start updating");
-			final ItemDst<WSObject> dataDstU = new BinFileItemDst<>();
+			LOG.info(Markers.MSG, "Start updating {} items", itemBuff.size());
+			final ItemDst<WSObject> dataDstU = new ItemBinFileDst<>();
 			final long nUpdated = client.update(
-				dataDstW.getItemSrc(), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
+				new ListItemSrc<>(itemBuff), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
-			final ItemDst<WSObject> dataDstR = new CSVFileItemDst<>(
+			final ItemDst<WSObject> dataDstR = new ItemCSVFileDst<>(
 				(Class<? extends WSObject>) BasicWSObject.class, ContentSourceBase.getDefault()
 			);
 			final long nRead = client.read(
@@ -93,7 +94,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
 			// update again the appended data items
 			final Path fileTmpItems0 = Files.createTempFile("reUpdatedItems", ".csv"); // do not delete on exit
-			final ItemDst<WSObject> dataDstU2 = new CSVFileItemDst<>(
+			final ItemDst<WSObject> dataDstU2 = new ItemCSVFileDst<>(
 				fileTmpItems0, (Class<? extends WSObject>) BasicWSObject.class,
 				ContentSourceBase.getDefault()
 			);
@@ -107,12 +108,13 @@ implements Runnable {
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
 			// recreate the items
-			final ItemDst<WSObject> dataDstW2 = new CSVFileItemDst<>(
+			final ItemDst<WSObject> dataDstW2 = new ItemCSVFileDst<>(
 				(Class<? extends WSObject>) BasicWSObject.class,
 				ContentSourceBase.getDefault()
 			);
 			final long nReWritten = client.write(
-				dataDstW.getItemSrc(), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
+				new ListItemSrc<>(itemBuff), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE,
+				DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
 			// read and verify the rewritten data items
@@ -122,7 +124,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
 			// delete all created data items
 			final long nDeleted = client.delete(
-				dataDstW.getItemSrc(), null, nWritten, DEFAULT_CONN_PER_NODE
+				new ListItemSrc<>(itemBuff), null, nWritten, DEFAULT_CONN_PER_NODE
 			);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
 		} catch(final Exception e) {

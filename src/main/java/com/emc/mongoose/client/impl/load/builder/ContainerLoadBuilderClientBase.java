@@ -8,7 +8,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileSrc;
 import com.emc.mongoose.server.api.load.builder.ContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.ContainerLoadSvc;
 import org.apache.logging.log4j.Level;
@@ -54,9 +54,9 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 		if (itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(
-					new CSVFileItemSrc<>(
-						Paths.get(listFilePathStr), reqConf.getContainerClass(),
-						reqConf.getContentSource()
+					new ItemCSVFileSrc<>(
+						Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
+						ioConfig.getContentSource()
 					)
 				);
 			} catch(final IOException | NoSuchMethodException e) {

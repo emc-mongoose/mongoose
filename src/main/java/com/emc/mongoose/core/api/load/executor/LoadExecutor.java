@@ -51,9 +51,9 @@ extends ItemDst<T>, LifeCycle, ItemProducer<T> {
 	void logMetrics(Marker marker)
 	throws RemoteException;
 	//
-	Future<? extends IOTask<T>> submitReq(final IOTask<T> request)
+	<A extends IOTask<T>> Future<A> submitReq(final A request)
 	throws RemoteException, RejectedExecutionException;
 	//
-	int submitReqs(final List<? extends IOTask<T>> requests, final int from, final int to)
+	int submitTasks(final List<? extends IOTask<T>> requests, final int from, final int to)
 	throws RemoteException, RejectedExecutionException;
 }

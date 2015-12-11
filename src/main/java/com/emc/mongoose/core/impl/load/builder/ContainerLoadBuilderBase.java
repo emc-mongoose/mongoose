@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
-import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
+import com.emc.mongoose.core.impl.data.model.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.data.model.NewContainerSrc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 //
 /**
  * Created by gusakk on 21.10.15.
@@ -32,21 +33,23 @@ implements ContainerLoadBuilder<T, C, U>{
 	//
 	protected boolean flagUseContainerItemSrc;
 	//
-	public ContainerLoadBuilderBase(final RunTimeConfig rtConfig) {
+	public ContainerLoadBuilderBase(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		super(rtConfig);
 	}
 	//
 	@Override
-	public ContainerLoadBuilderBase<T, C, U> setProperties(final RunTimeConfig rtConfig) {
+	public ContainerLoadBuilderBase<T, C, U> setProperties(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		super.setProperties(rtConfig);
 		//
 		final String listFilePathStr = rtConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(
-					new CSVFileItemSrc<>(
-						Paths.get(listFilePathStr), reqConf.getContainerClass(),
-						reqConf.getContentSource()
+					new ItemCSVFileSrc<>(
+						Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
+						ioConfig.getContentSource()
 					)
 				);
 			} catch(final IOException | NoSuchMethodException e) {
@@ -62,14 +65,14 @@ implements ContainerLoadBuilder<T, C, U>{
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.CREATE.equals(reqConf.getLoadType())) {
+				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
 					return new NewContainerSrc<>(
-						reqConf.getContainerClass()
+						ioConfig.getContainerClass()
 					);
 				}
 			} else if(flagUseNewItemSrc) {
 				return  new NewContainerSrc<>(
-					reqConf.getContainerClass()
+					ioConfig.getContainerClass()
 				);
 			}
 		} catch(final NoSuchMethodException e) {

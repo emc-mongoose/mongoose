@@ -31,7 +31,7 @@ public class BinItemSrcTest {
 			.thenReturn(dataItem)
 			.thenThrow(new RuntimeException());
 
-		final BinItemSrc<DataItem> itemInput = new BinItemSrc<>(itemSrc);
+		final ItemBinSrc<DataItem> itemInput = new ItemBinSrc<>(itemSrc);
 		Assert.assertEquals(itemInput.get(), dataItem);
 	}
 
@@ -48,7 +48,7 @@ public class BinItemSrcTest {
 		int maxCount = 5;
 		final List<DataItem> buffer = new ArrayList<>(maxCount);
 
-		final BinItemSrc<DataItem> itemInput = new BinItemSrc<>(itemSrc);
+		final ItemBinSrc<DataItem> itemInput = new ItemBinSrc<>(itemSrc);
 
 		Assert.assertEquals(itemInput.get(buffer, maxCount), dataItems.length);
 		Assert.assertEquals(buffer, Arrays.asList(dataItems));
@@ -72,7 +72,7 @@ public class BinItemSrcTest {
 		int maxCount = 5;
 		final List<DataItem> buffer = new ArrayList<>(maxCount);
 
-		final BinItemSrc<DataItem> itemInput = new BinItemSrc<>(itemSrc);
+		final ItemBinSrc<DataItem> itemInput = new ItemBinSrc<>(itemSrc);
 
 		Assert.assertEquals(itemInput.get(buffer, maxCount), dataItems.length);
 		Assert.assertEquals(buffer, Arrays.asList(dataItems));
@@ -96,7 +96,7 @@ public class BinItemSrcTest {
 		int startCount = 2;
 		final List<DataItem> buffer = new ArrayList<>(startCount);
 
-		final BinItemSrc<DataItem> itemInput = new BinItemSrc<>(itemSrc);
+		final ItemBinSrc<DataItem> itemInput = new ItemBinSrc<>(itemSrc);
 
 		Assert.assertEquals(itemInput.get(buffer, startCount), startCount);
 		Assert.assertEquals(buffer, Arrays.asList(dataItems).subList(0, startCount));
@@ -114,7 +114,7 @@ public class BinItemSrcTest {
 	throws Exception {
 		Mockito.doThrow(new IOException()).when(itemSrc).reset();
 
-		final BinItemSrc<DataItem> itemInput = new BinItemSrc<>(itemSrc);
+		final ItemBinSrc<DataItem> itemInput = new ItemBinSrc<>(itemSrc);
 		itemInput.reset();
 	}
 
@@ -139,7 +139,7 @@ public class BinItemSrcTest {
 			.thenThrow(new RuntimeException());
 
 		final int countOfSkippedItems = 3;
-		final BinItemSrc<DataItem> itemInput = new BinItemSrc<>(itemSrc);
+		final ItemBinSrc<DataItem> itemInput = new ItemBinSrc<>(itemSrc);
 		itemInput.skip(countOfSkippedItems);
 
 		Assert.assertEquals(itemInput.get(), dataItems[countOfSkippedItems]);
@@ -166,14 +166,14 @@ public class BinItemSrcTest {
 				.thenThrow(new IOException());
 
 		final int countOfSkippedItems = 6;
-		final BinItemSrc<DataItem> itemInput = new BinItemSrc<>(itemSrc);
+		final ItemBinSrc<DataItem> itemInput = new ItemBinSrc<>(itemSrc);
 		itemInput.skip(countOfSkippedItems);
 	}
 
 	@Test
 	public void shouldClose()
 	throws Exception {
-		final BinItemSrc<DataItem> itemInput = new BinItemSrc<>(itemSrc);
+		final ItemBinSrc<DataItem> itemInput = new ItemBinSrc<>(itemSrc);
 		itemInput.close();
 
 		Mockito.verify(itemSrc).close();

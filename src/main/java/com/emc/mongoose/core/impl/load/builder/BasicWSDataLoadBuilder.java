@@ -4,18 +4,20 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.load.executor.BasicWSDataLoadExecutor;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.WSDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.rmi.RemoteException;
 import java.util.NoSuchElementException;
 /**
  Created by kurila on 05.05.14.
@@ -26,24 +28,26 @@ implements WSDataLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSDataLoadBuilder(final RunTimeConfig runTimeConfig) {
+	public BasicWSDataLoadBuilder(final RunTimeConfig runTimeConfig)
+	throws RemoteException {
 		super(runTimeConfig);
 		setProperties(runTimeConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig<T> getDefaultRequestConfig() {
+	protected WSRequestConfig<T, ? extends Container<T>> getDefaultIOConfig() {
 		return WSRequestConfigBase.getInstance();
 	}
 	//
 	@Override
-	public BasicWSDataLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig) {
+	public BasicWSDataLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		//
 		super.setProperties(rtConfig);
 		//
 		final String paramName = RunTimeConfig.KEY_STORAGE_SCHEME;
 		try {
-			WSRequestConfig.class.cast(reqConf).setScheme(rtConfig.getStorageProto());
+			WSRequestConfig.class.cast(ioConfig).setScheme(rtConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -57,23 +61,23 @@ implements WSDataLoadBuilder<T, U> {
 	public final BasicWSDataLoadBuilder<T, U> clone()
 	throws CloneNotSupportedException {
 		final BasicWSDataLoadBuilder<T, U> lb = (BasicWSDataLoadBuilder<T, U>) super.clone();
-		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
+		LOG.debug(Markers.MSG, "Cloning request config for {}", ioConfig.toString());
 		return lb;
 	}
 	//
 	@Override
-	protected void invokePreConditions()
+	public void invokePreConditions()
 	throws IllegalStateException {
-		reqConf.configureStorage(storageNodeAddrs);
+		((WSRequestConfig) ioConfig).configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected U buildActually() {
-		if(reqConf == null) {
-			throw new IllegalStateException("Should specify request builder instance");
+		if(ioConfig == null) {
+			throw new IllegalStateException("No I/O configuration instance available");
 		}
 		//
-		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(reqConf);
+		final WSRequestConfig wsReqConf = (WSRequestConfig) ioConfig;
 		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		if(minObjSize > maxObjSize) {
 			throw new IllegalStateException(
@@ -84,7 +88,7 @@ implements WSDataLoadBuilder<T, U> {
 			);
 		}
 		//
-		final IOTask.Type loadType = reqConf.getLoadType();
+		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
 			minThreadCount = getMinIOThreadCount(

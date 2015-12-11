@@ -1,17 +1,19 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.MutableDataItem;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
-//
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.DataIOTask;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
  Created by andrey on 12.10.14.
  */
-public class BasicDataIOTask<T extends MutableDataItem>
-extends BasicIOTask<T>
+public class BasicDataIOTask<
+	T extends MutableDataItem, C extends Container<T>, X extends IOConfig<T, C>
+> extends BasicIOTask<T, C, X>
 implements DataIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -22,8 +24,8 @@ implements DataIOTask<T> {
 	protected volatile long currRangeSize = 0, nextRangeOffset = 0;
 	protected volatile int currRangeIdx = 0, currDataLayerIdx = 0;
 	//
-	public BasicDataIOTask(final T item, final String nodeAddr, final RequestConfig<T> reqConf) {
-		super(item, nodeAddr, reqConf);
+	public BasicDataIOTask(final T item, final String nodeAddr, final X ioConfig) {
+		super(item, nodeAddr, ioConfig);
 		item.reset();
 		currDataLayerIdx = item.getCurrLayerIndex();
 		switch(ioType) {

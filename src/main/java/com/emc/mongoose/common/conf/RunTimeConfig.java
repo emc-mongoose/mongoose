@@ -66,7 +66,7 @@ implements Externalizable {
 		KEY_DATA_SIZE_MAX = "data.size.max",
 		KEY_DATA_SIZE_BIAS = "data.size.bias",
 		KEY_DATA_FS_ACCESS = "data.fsAccess",
-		KEY_DATA_PREFIX = "data.prefix",
+		KEY_ITEM_PREFIX = "item.prefix",
 		KEY_DATA_VERSIONING = "data.versioning",
 		//
 		KEY_HTTP_PIPELINING = "http.pipelining",
@@ -126,7 +126,7 @@ implements Externalizable {
 		//
 		KEY_ITEM_CLASS = "item.class",
 		KEY_ITEM_SRC_FILE = "item.src.file",
-		KEY_ITEM_SRC_CIRCULAR = "item.src.circular",
+		KEY_LOAD_CIRCULAR = "load.circular",
 		KEY_ITEM_SRC_RANDOM = "item.src.random",
 		KEY_ITEM_SRC_BATCH_SIZE = "item.src.batchSize",
 		KEY_ITEM_QUEUE_MAX_SIZE = "item.queue.maxSize",
@@ -377,20 +377,20 @@ implements Externalizable {
 		return getBoolean(KEY_DATA_FS_ACCESS);
 	}
 	//
-	public final String getDataPrefix() {
-		return getString(KEY_DATA_PREFIX);
+	public final String getNamePrefix() {
+		return getString(KEY_ITEM_PREFIX);
 	}
 	//
 	public final boolean getDataVersioningEnabled() {
 		return getBoolean(KEY_DATA_VERSIONING);
 	}
 	//
-	public final boolean isItemSrcCircularEnabled() {
-		return getBoolean(KEY_ITEM_SRC_CIRCULAR);
+	public final boolean isLoadCircular() {
+		return getBoolean(KEY_LOAD_CIRCULAR);
 	}
 	//
-	public final long getItemQueueMaxSize() {
-		return getLong(KEY_ITEM_QUEUE_MAX_SIZE);
+	public final int getItemQueueMaxSize() {
+		return getInt(KEY_ITEM_QUEUE_MAX_SIZE);
 	}
 	//
 	public final String getRunName() {

@@ -8,25 +8,28 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.container.Container;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemDst;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.data.model.ItemBuffer;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
 import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.api.load.balancer.Balancer;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
+import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
 //
-import org.apache.commons.lang.StringUtils;
-//
 import org.apache.logging.log4j.Level;
+import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
@@ -36,16 +39,13 @@ import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 /**
@@ -63,7 +63,8 @@ implements LoadExecutor<T> {
 	protected final RunTimeConfig rtConfig;
 	//
 	protected final ContentSource dataSrc;
-	protected final RequestConfig<T> reqConfigCopy;
+	protected final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>>
+		ioConfigCopy;
 	protected final IOTask.Type loadType;
 	//
 	protected volatile ItemDst<T> consumer = null;
@@ -75,7 +76,7 @@ implements LoadExecutor<T> {
 	protected IOStats ioStats;
 	protected volatile IOStats.Snapshot lastStats = null;
 	// STATES section //////////////////////////////////////////////////////////////////////////////
-	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
+	private Balancer<String> nodeBalancer = null;
 	private LoadState<T> loadedPrevState = null;
 	protected final AtomicBoolean
 		isStarted = new AtomicBoolean(false),
@@ -93,36 +94,6 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final List<Runnable> mgmtTasks = new LinkedList<>();
 	private final ThreadPoolExecutor mgmtExecutor;
-	//
-	private final static class LogMetricsTask
-	implements Runnable {
-		//
-		private final LoadExecutor loadExecutor;
-		private final int metricsPeriodSec;
-		//
-		private LogMetricsTask(final LoadExecutor loadExecutor, final int metricsPeriodSec) {
-			this.loadExecutor = loadExecutor;
-			this.metricsPeriodSec = metricsPeriodSec;
-		}
-		//
-		@Override
-		public final
-		void run() {
-			final Thread currThread = Thread.currentThread();
-			try {
-				currThread.setName(loadExecutor.getName() + "-metrics");
-				try {
-					while(!currThread.isInterrupted()) {
-						loadExecutor.logMetrics(Markers.PERF_AVG);
-						Thread.yield(); TimeUnit.SECONDS.sleep(metricsPeriodSec);
-					}
-				} catch(final InterruptedException e) {
-					LOG.debug(Markers.MSG, "{}: interrupted", loadExecutor.getName());
-				}
-			} catch(final RemoteException ignored) {
-			}
-		}
-	}
 	//
 	private final class StatsRefreshTask
 	implements Runnable {
@@ -192,14 +163,15 @@ implements LoadExecutor<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
-		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
-		final int connCountPerNode, final int threadCount,
+		final RunTimeConfig rtConfig,
+		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String addrs[], final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final int instanceNum, final String name
 	) {
 		super(
 			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE,
-			DEFAULT_INTERNAL_BATCH_SIZE, rtConfig.isItemSrcCircularEnabled(),
+			DEFAULT_INTERNAL_BATCH_SIZE, rtConfig.isLoadCircular(),
 			rtConfig.isShuffleItemsEnabled(), rtConfig.getItemQueueMaxSize()
 		);
 		try {
@@ -216,7 +188,7 @@ implements LoadExecutor<T> {
 		//
 		this.rtConfig = rtConfig;
 		this.instanceNum = instanceNum;
-		storageNodeCount = addrs.length;
+		storageNodeCount = addrs == null ? 0 : addrs.length;
 		//
 		setName(name);
 		if(itemSrc != null) {
@@ -226,24 +198,24 @@ implements LoadExecutor<T> {
 		totalConnCount = connCountPerNode * storageNodeCount;
 		activeTaskCountLimit = 2 * totalConnCount + 1000;
 		//
-		RequestConfig<T> reqConfigClone = null;
+		IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> reqConfigClone = null;
 		try {
-			reqConfigClone = reqConfig.clone();
+			reqConfigClone = ioConfig.clone();
 		} catch(final CloneNotSupportedException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the request config");
 		} finally {
-			this.reqConfigCopy = reqConfigClone;
+			this.ioConfigCopy = reqConfigClone;
 		}
-		loadType = reqConfig.getLoadType();
+		loadType = ioConfig.getLoadType();
 		//
 		metricsPeriodSec = rtConfig.getLoadMetricsPeriodSec();
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the nodes array
-		storageNodeAddrs = addrs.clone();
-		for(final String addr : storageNodeAddrs) {
-			activeTasksStats.put(addr, new AtomicInteger(0));
+		storageNodeAddrs = addrs == null ? null : addrs.clone();
+		if(storageNodeAddrs != null) {
+			nodeBalancer = new BasicNodeBalancer(storageNodeAddrs);
 		}
-		dataSrc = reqConfig.getContentSource();
+		dataSrc = ioConfig.getContentSource();
 		//
 		mgmtExecutor = new ThreadPoolExecutor(
 			1, 1, 0, TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(batchSize),
@@ -260,28 +232,29 @@ implements LoadExecutor<T> {
 	}
 	//
 	private LoadExecutorBase(
-		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
-		final int connCountPerNode, final int threadCount,
+		final RunTimeConfig rtConfig,
+		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String addrs[], final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount, final int instanceNum
 	) {
 		this(
-			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			instanceNum,
-			Integer.toString(instanceNum) + '-' +
-				StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
-				StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
+			Integer.toString(instanceNum) + '-' + ioConfig.toString() +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
-				Integer.toString(connCountPerNode) + 'x' + Integer.toString(addrs.length)
+				Integer.toString(connCountPerNode > 0 ? connCountPerNode : threadCount) +
+				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
 		);
 	}
 	//
 	protected LoadExecutorBase(
-		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String addrs[],
-		final int connCountPerNode, final int threadCount,
+		final RunTimeConfig rtConfig,
+		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String addrs[], final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount
 	) {
 		this(
-			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			NEXT_INSTANCE_NUM.getAndIncrement()
 		);
 	}
@@ -417,7 +390,7 @@ implements LoadExecutor<T> {
 			shutdownActually();
 		}
 		try {
-			reqConfigCopy.close(); // disables connection drop failures
+			ioConfigCopy.close(); // disables connection drop failures
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
 		}
@@ -508,7 +481,8 @@ implements LoadExecutor<T> {
 			return;
 		}
 		// prepare the I/O task instance (make the link between the data item and load type)
-		final String nextNodeAddr = storageNodeCount == 1 ? storageNodeAddrs[0] : getNextNode();
+		final String nextNodeAddr = storageNodeAddrs == null ?
+			null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 		final IOTask<T> ioTask = getIOTask(dataItem, nextNodeAddr);
 		// don't fill the connection pool as fast as possible, this may cause a failure
 		int activeTaskCount;
@@ -530,7 +504,9 @@ implements LoadExecutor<T> {
 				throw new RejectedExecutionException("Null future returned");
 			}
 			counterSubm.incrementAndGet();
-			activeTasksStats.get(nextNodeAddr).incrementAndGet(); // increment node's usage counter
+			if(nodeBalancer != null) {
+				nodeBalancer.markTaskStart(nextNodeAddr);
+			}
 		} catch(final RejectedExecutionException e) {
 			if(!isInterrupted.get()) {
 				countRej.incrementAndGet();
@@ -550,8 +526,8 @@ implements LoadExecutor<T> {
 				return put(srcBuff, from, from + (int) dstLimit);
 			} else {
 				// select the target node
-				final String nextNodeAddr = storageNodeCount == 1 ?
-					storageNodeAddrs[0] : getNextNode();
+				final String nextNodeAddr = storageNodeAddrs == null ?
+					null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 				// prepare the I/O tasks list (make the link between the data item and load type)
 				final List<IOTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
 				if(srcLimit > getIOTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr)) {
@@ -574,7 +550,7 @@ implements LoadExecutor<T> {
 					} while(true);
 					//
 					try {
-						m = submitReqs(ioTaskBuff, n, srcLimit);
+						m = submitTasks(ioTaskBuff, n, srcLimit);
 						if(m < 1) {
 							throw new RejectedExecutionException("No I/O tasks submitted");
 						} else {
@@ -582,7 +558,9 @@ implements LoadExecutor<T> {
 						}
 						counterSubm.addAndGet(m);
 						// increment node's usage counter
-						activeTasksStats.get(nextNodeAddr).addAndGet(m);
+						if(nodeBalancer != null) {
+							nodeBalancer.markTasksStart(nextNodeAddr, m);
+						}
 					} catch(final RejectedExecutionException e) {
 						if(isInterrupted.get()) {
 							throw new InterruptedIOException(getName() + " is interrupted");
@@ -627,29 +605,6 @@ implements LoadExecutor<T> {
 		}
 		return to - from;
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// Balancing implementation
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// round-robin variant:
-	/*private final AtomicInteger rountRobinCounter = new AtomicInteger(0);
-	protected String getNextNode() {
-		return storageNodeAddrs[rountRobinCounter.incrementAndGet() % storageNodeCount];
-	}*/
-	protected String getNextNode() {
-		String bestNode = null;
-		//final StringBuilder sb = new StringBuilder("Active tasks stats: ");
-		int minActiveTaskCount = Integer.MAX_VALUE, nextActiveTaskCount;
-		for(final String nextNode : storageNodeAddrs) {
-			nextActiveTaskCount = activeTasksStats.get(nextNode).get();
-			//sb.append(nextNode).append("=").append(nextActiveTaskCount).append(", ");
-			if(nextActiveTaskCount < minActiveTaskCount) {
-				minActiveTaskCount = nextActiveTaskCount;
-				bestNode = nextNode;
-			}
-		}
-		//LOG.trace(LogUtil.MSG, sb.append("best: ").append(bestNode).toString());
-		return bestNode;
-	}
 	//
 	protected final void ioTaskCompleted(final IOTask<T> ioTask) {
 		// producing was interrupted?
@@ -663,7 +618,9 @@ implements LoadExecutor<T> {
 		final String nodeAddr = ioTask.getNodeAddr();
 		// update the metrics
 		ioTask.mark(ioStats);
-		activeTasksStats.get(nodeAddr).decrementAndGet();
+		if(nodeBalancer != null) {
+			nodeBalancer.markTaskFinish(nodeAddr);
+		}
 		if(status == IOTask.Status.SUCC) {
 			lastItem = item;
 			// put into the output buffer
@@ -695,8 +652,10 @@ implements LoadExecutor<T> {
 		//
 		final int n = to - from;
 		if(n > 0) {
-			final String nodeAddr = ioTasks.get(from).getNodeAddr();
-			activeTasksStats.get(nodeAddr).addAndGet(-n);
+			if(storageNodeAddrs != null) {
+				final String nodeAddr = ioTasks.get(from).getNodeAddr();
+				nodeBalancer.markTasksFinish(nodeAddr, n);
+			}
 			//
 			IOTask<T> ioTask;
 			T item;
@@ -708,7 +667,6 @@ implements LoadExecutor<T> {
 				status = ioTask.getStatus();
 				// update the metrics
 				ioTask.mark(ioStats);
-				activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 				if(status == IOTask.Status.SUCC) {
 					lastItem = item;
 					// pass data item to a consumer
@@ -742,7 +700,7 @@ implements LoadExecutor<T> {
 		counterResults.addAndGet(n);
 	}
 	//
-	protected final void ioTaskFailed(final int n, final Exception e) {
+	protected final void ioTaskFailed(final int n, final Throwable e) {
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
 		if(!isClosed.get() && !isInterrupted.get()) {
@@ -1058,7 +1016,7 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	protected final void finalize()
-		throws Throwable {
+	throws Throwable {
 		try {
 			if(!isClosed.get()) {
 				close();

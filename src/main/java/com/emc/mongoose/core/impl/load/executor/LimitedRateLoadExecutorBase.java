@@ -5,10 +5,12 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.container.Container;
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
-//
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,12 +32,13 @@ extends LoadExecutorBase<T> {
 	private final int manualTaskSleepMicroSecs, tgtDurMicroSecs;
 	//
 	protected LimitedRateLoadExecutorBase(
-		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int connCountPerNode, final int threadCount,
+		final RunTimeConfig runTimeConfig,
+		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final int manualTaskSleepMicroSecs, final float rateLimit
 	) throws ClassCastException {
-		super(runTimeConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount);
+		super(runTimeConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount);
 		//
 		this.manualTaskSleepMicroSecs = manualTaskSleepMicroSecs;
 		if(rateLimit < 0) {
@@ -53,7 +56,7 @@ extends LoadExecutorBase<T> {
 	}
 	//
 	@Override
-	public Future<? extends IOTask<T>> submitReq(final IOTask<T> request)
+	public <A extends IOTask<T>> Future<A> submitReq(final A request)
 	throws RejectedExecutionException {
 		// manual delay
 		if(manualTaskSleepMicroSecs > 0) {
@@ -80,9 +83,9 @@ extends LoadExecutorBase<T> {
 			}
 		}
 		//
-		return submitReqActually(request);
+		return submitTaskActually(request);
 	}
 	//
-	protected abstract Future<? extends IOTask<T>> submitReqActually(final IOTask<T> request)
+	protected abstract <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)
 	throws RejectedExecutionException;
 }

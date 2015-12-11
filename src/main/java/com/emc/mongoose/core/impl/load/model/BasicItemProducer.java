@@ -20,10 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  Created by kurila on 19.06.15.
@@ -43,21 +40,21 @@ implements ItemProducer<T> {
 	protected T lastDataItem;
 	protected boolean isCircular;
 	protected boolean isShuffling;
-	protected long maxItemQueueSize;
+	protected int maxItemQueueSize;
 	//
 	protected volatile boolean areAllItemsProduced = false;
 	protected volatile long producedItemsCount = 0;
 	//
 	protected BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
-		final boolean isCircular, final boolean isShuffling, final long maxItemQueueSize
+		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize
 	) {
 		this(itemSrc, maxCount, batchSize, isCircular, isShuffling, maxItemQueueSize, 0, null);
 	}
 	//
 	private BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
-		final boolean isCircular, final boolean isShuffling, final long maxItemQueueSize,
+		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
 		final long skipCount, final T lastDataItem
 	) {
 		this.itemSrc = itemSrc;
@@ -68,8 +65,7 @@ implements ItemProducer<T> {
 		this.isCircular = isCircular;
 		this.isShuffling = isShuffling;
 		this.maxItemQueueSize = maxItemQueueSize;
-		//
-		this.uniqueItems = new ConcurrentHashMap<>((int) maxItemQueueSize);
+		this.uniqueItems = new ConcurrentHashMap<>(maxItemQueueSize);
 	}
 	//
 	@Override
@@ -130,7 +126,7 @@ implements ItemProducer<T> {
 						break;
 					}
 					if(n > 0) {
-						for(m = 0; m < n && !isInterrupted;) {
+						for(m = 0; m < n && !isInterrupted; ) {
 							m += itemDst.put(buff, m, n);
 							LockSupport.parkNanos(1);
 						}
@@ -149,11 +145,8 @@ implements ItemProducer<T> {
 				} catch(final ClosedByInterruptException | IllegalStateException e) {
 					break;
 				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.DEBUG, e,
-						"Failed to transfer the data items, " +
-						"count = {}, batch size = {}, batch offset = {}", producedItemsCount, n, m
-					);
+					LogUtil.exception(LOG, Level.DEBUG, e, "Failed to transfer the data items, " +
+						"count = {}, batch size = {}, batch offset = {}", producedItemsCount, n, m);
 				}
 			}
 		} finally {

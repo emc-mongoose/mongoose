@@ -1,43 +1,33 @@
 package com.emc.mongoose.storage.adapter.swift;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.container.BasicContainer;
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 //
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.NoHttpResponseException;
-import org.apache.http.StatusLine;
 import org.apache.http.message.BasicHeader;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.TimeUnit;
 //
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSRequestConfigImpl<T extends WSObject>
-extends WSRequestConfigBase<T> {
+public final class WSRequestConfigImpl<T extends WSObject, C extends Container<T>>
+extends WSRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String KEY_CONF_SVC_BASEPATH = "api.type.swift.serviceBasepath";
@@ -49,14 +39,14 @@ extends WSRequestConfigBase<T> {
 	//
 	private String uriSvcBasePath = null, uriSvcBaseContainerPath = null;
 	private WSAuthTokenImpl<T> authToken = null;
-	private WSContainerImpl<T> container = null;
 	//
 	public WSRequestConfigImpl()
 	throws NoSuchAlgorithmException {
 		this(null);
 	}
 	//
-	protected WSRequestConfigImpl(final WSRequestConfigImpl<T> reqConf2Clone)
+	@SuppressWarnings("unchecked")
+	protected WSRequestConfigImpl(final WSRequestConfigImpl<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		//
@@ -80,9 +70,8 @@ extends WSRequestConfigBase<T> {
 		}
 		if(container == null) {
 			setContainer(
-				new WSContainerImpl<>(
-					this, localConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER),
-					localConfig.getDataVersioningEnabled()
+				(C) new BasicContainer<T>(
+					localConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER)
 				)
 			);
 		}
@@ -115,7 +104,7 @@ extends WSRequestConfigBase<T> {
 		return authToken;
 	}
 	//
-	public final WSRequestConfigImpl<T> setAuthToken(final WSAuthTokenImpl<T> authToken)
+	public final WSRequestConfigImpl<T, C> setAuthToken(final WSAuthTokenImpl<T> authToken)
 	throws IllegalArgumentException {
 		if(authToken == null) {
 			throw new IllegalArgumentException("Setting <null> auth token is illegal");
@@ -124,30 +113,16 @@ extends WSRequestConfigBase<T> {
 		return this;
 	}
 	//
-	public final WSContainerImpl<T> getContainer() {
-		return container;
-	}
-	//
-	public final WSRequestConfigImpl<T> setContainer(final WSContainerImpl<T> container)
-	throws IllegalArgumentException, IllegalStateException {
-		if(container == null) {
-			throw new IllegalArgumentException("Setting <null> container is illegal");
-		}
-		this.container = container;
-		refreshContainerPath();
-		return this;
-	}
-	//
 	@Override
-	public final WSRequestConfigImpl<T> setNameSpace(final String nameSpace) {
+	public final WSRequestConfigImpl<T, C> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		refreshContainerPath();
 		return this;
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
-	public WSRequestConfigImpl<T> clone() {
-		WSRequestConfigImpl<T> copy = null;
+	public WSRequestConfigImpl<T, C> clone() {
+		WSRequestConfigImpl<T, C> copy = null;
 		try {
 			copy = new WSRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
@@ -156,8 +131,8 @@ extends WSRequestConfigBase<T> {
 		return copy;
 	}
 	//
-	@Override
-	public WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+	@Override @SuppressWarnings("unchecked")
+	public WSRequestConfigImpl<T, C> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
 		if(runTimeConfig.containsKey(KEY_CONF_SVC_BASEPATH)) {
@@ -173,9 +148,10 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		if(runTimeConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_CONTAINER)) {
-			container = new WSContainerImpl<>(
-				this, runTimeConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER),
-				runTimeConfig.getDataVersioningEnabled()
+			setContainer(
+				(C) new BasicContainer<T>(
+					runTimeConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER)
+				)
 			);
 		} else {
 			LOG.error(Markers.ERR, "Swift container is not specified");
@@ -196,16 +172,6 @@ extends WSRequestConfigBase<T> {
 		} else {
 			LOG.debug(Markers.MSG, "Note: no auth token has been got from load client side");
 		}
-		t = in.readObject();
-		if(t != null) {
-			setContainer(
-				new WSContainerImpl<>(
-					this, String.class.cast(t), runTimeConfig.getDataVersioningEnabled()
-				)
-			);
-		} else {
-			LOG.debug(Markers.MSG, "Note: no container has been got from load client side");
-		}
 	}
 	//
 	@Override
@@ -214,7 +180,6 @@ extends WSRequestConfigBase<T> {
 		super.writeExternal(out);
 		out.writeObject(uriSvcBasePath);
 		out.writeObject(authToken == null ? null : authToken.getValue());
-		out.writeObject(container == null ? null : container.getName());
 	}
 	//
 	@Override
@@ -242,7 +207,7 @@ extends WSRequestConfigBase<T> {
 		final String authTokenValue = authToken == null ? null : authToken.getValue();
 		if(authTokenValue != null && authTokenValue.length() > 0) {
 			if(!httpRequest.containsHeader(KEY_X_AUTH_TOKEN)) {
-				if(headerAuthToken == null || headerAuthToken.getValue() != authTokenValue) {
+				if(headerAuthToken == null || !authTokenValue.equals(headerAuthToken.getValue())) {
 					headerAuthToken = new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue);
 				}
 				httpRequest.setHeader(headerAuthToken);
@@ -278,21 +243,21 @@ extends WSRequestConfigBase<T> {
 		if(container == null) {
 			throw new IllegalStateException("Container is not specified");
 		}
-		final String containerName = container.getName();
-		if(container.exists(storageNodeAddrs[0])) {
-			LOG.info(Markers.MSG, "Container \"{}\" already exists", containerName);
+		final WSSwiftContainerHelper<T, C> containerHelper = new WSSwiftContainerHelper<>(this, container);
+		if(containerHelper.exists(storageNodeAddrs[0])) {
+			LOG.info(Markers.MSG, "Container \"{}\" already exists", container);
 		} else {
-			container.create(storageNodeAddrs[0]);
-			if(container.exists(storageNodeAddrs[0])) {
-				runTimeConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, containerName);
+			containerHelper.create(storageNodeAddrs[0]);
+			if(containerHelper.exists(storageNodeAddrs[0])) {
+				runTimeConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, container.getName());
 			} else {
 				throw new IllegalStateException(
-					String.format("Container \"%s\" still doesn't exist", containerName)
+					String.format("Container \"%s\" still doesn't exist", container)
 				);
 			}
 		}
 		if(versioning) {
-			container.setVersioning(storageNodeAddrs[0], true);
+			containerHelper.setVersioning(storageNodeAddrs[0], true);
 		}
 		super.configureStorage(storageNodeAddrs);
 	}
@@ -353,10 +318,11 @@ extends WSRequestConfigBase<T> {
 		}*/
 	}
 	//
-	@Override
-	@SuppressWarnings("unchecked")
+	@Override @SuppressWarnings("unchecked")
 	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
-		return new WSContainerItemSrc<>(container, addr, (Class<T>) BasicWSObject.class, maxCount);
+		return new WSContainerItemSrc<>(
+			new WSSwiftContainerHelper<>(this, container), addr, getItemClass(), maxCount
+		);
 	}
 	//
 }

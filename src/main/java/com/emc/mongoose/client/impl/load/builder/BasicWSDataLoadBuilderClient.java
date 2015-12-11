@@ -1,7 +1,8 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
 // mongoose-common.jar
@@ -9,7 +10,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 // mongoose-client.jar
 import com.emc.mongoose.client.impl.load.executor.BasicWSDataLoadClient;
 import com.emc.mongoose.client.api.load.builder.WSDataLoadBuilderClient;
@@ -44,7 +45,7 @@ implements WSDataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig<T> getDefaultRequestConfig() {
+	protected WSRequestConfig<T, ? extends Container<T>> getDefaultIOConfig() {
 		return WSRequestConfigBase.getInstance();
 	}
 	//
@@ -71,12 +72,12 @@ implements WSDataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	protected final void invokePreConditions()
+	public final void invokePreConditions()
 	throws IllegalStateException {
-		reqConf.configureStorage(storageNodeAddrs);
+		((WSRequestConfig) ioConfig).configureStorage(storageNodeAddrs);
 	}
 	//
-	@Override  @SuppressWarnings("unchecked")
+	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()
 	throws RemoteException {
 		//
@@ -89,19 +90,20 @@ implements WSDataLoadBuilderClient<T, W, U> {
 			itemSrc = getDefaultItemSource(); // affects load service builders
 		}
 		//
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.setRequestConfig(reqConf); // should upload req conf right before instancing
+		for(final String addr : loadSvcMap.keySet()) {
+			nextBuilder = loadSvcMap.get(addr);
+			nextBuilder.setIOConfig(ioConfig); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final String loadTypeStr = reqConf.getLoadType().name().toLowerCase();
+		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
 		return (U) new BasicWSDataLoadClient<>(
-			rtConfig, (WSRequestConfig) reqConf, storageNodeAddrs,
+			rtConfig, (WSRequestConfig) ioConfig, storageNodeAddrs,
 			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
 			itemSrc, maxCount, remoteLoadMap
 		);

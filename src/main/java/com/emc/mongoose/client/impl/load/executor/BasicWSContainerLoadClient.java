@@ -7,7 +7,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.WSContainerIOTask;
 //
 import com.emc.mongoose.core.impl.io.task.BasicWSContainerTask;
@@ -21,8 +21,7 @@ import java.util.Map;
  */
 public class BasicWSContainerLoadClient<
 	T extends WSObject, C extends Container<T>, W extends WSContainerLoadSvc<T, C>
-> extends LoadClientBase<C, W>
-implements WSContainerLoadClient<T, C, W> {
+> extends LoadClientBase<C, W> implements WSContainerLoadClient<T, C, W> {
 	//
 	public BasicWSContainerLoadClient(
 		final RunTimeConfig rtConfig, final WSRequestConfig reqConfig, final String addrs[],
@@ -38,7 +37,7 @@ implements WSContainerLoadClient<T, C, W> {
 	//
 	@Override
 	protected WSContainerIOTask<T, C> getIOTask(final C item, final String nodeAddr) {
-		return new BasicWSContainerTask<>(item, nodeAddr, (WSRequestConfig) reqConfigCopy);
+		return new BasicWSContainerTask<>(item, nodeAddr, (WSRequestConfig) ioConfigCopy);
 	}
 	//
 }

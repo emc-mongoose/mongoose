@@ -3,8 +3,9 @@ package com.emc.mongoose.storage.adapter.atmos;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -30,10 +31,12 @@ implements SubTenant<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	@SuppressWarnings("FieldCanBeLocal")
-	private final WSRequestConfigImpl<T> reqConf;
+	private final WSRequestConfigImpl<T, ? extends Container<T>> reqConf;
 	private String value = null;
 	//
-	public WSSubTenantImpl(final WSRequestConfigImpl<T> reqConf, final String value) {
+	public WSSubTenantImpl(
+		final WSRequestConfigImpl<T, ? extends Container<T>> reqConf, final String value
+	) {
 		this.reqConf = reqConf;
 		this.value = value;
 	}

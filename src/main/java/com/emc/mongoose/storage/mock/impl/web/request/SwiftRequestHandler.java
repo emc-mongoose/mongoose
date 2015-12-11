@@ -5,8 +5,8 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-adapter-swift.jar
 import com.emc.mongoose.core.api.data.MutableDataItem;
-import com.emc.mongoose.core.api.data.model.DataItemContainer;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.data.model.ContainerHelper;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
@@ -150,7 +150,7 @@ extends WSRequestHandlerBase<T> {
 		}
 		//
 		if(maxCount <= 0) {
-			maxCount = DataItemContainer.DEFAULT_PAGE_SIZE;
+			maxCount = ContainerHelper.DEFAULT_PAGE_SIZE;
 		}
 		//
 		final List<T> buff = new ArrayList<>(maxCount);

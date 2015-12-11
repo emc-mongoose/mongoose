@@ -3,10 +3,11 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-//
+import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.DataItemContainer;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.data.model.ContainerHelper;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+//
 import com.emc.mongoose.core.impl.data.model.GenericContainerItemSrcBase;
 //
 import com.fasterxml.jackson.core.JsonFactory;
@@ -29,35 +30,37 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public class WSContainerItemSrc<T extends WSObject>
-extends GenericContainerItemSrcBase<T> {
+public class WSContainerItemSrc<T extends WSObject, C extends Container<T>>
+extends GenericContainerItemSrcBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static JsonFactory JSON_FACTORY = new JsonFactory();
 	private final static String KEY_SIZE = "bytes", KEY_ID = "name";
 	//
+	private final String nodeAddr;
+	//
 	private boolean isInsideObjectToken = false, eof = false;
-	private String lastId = null;
 	private long lastSize = -1, doneCount = 0;
 	//
 	public WSContainerItemSrc(
-		final WSContainerImpl<T> container, final String nodeAddr, final Class<T> itemCls,
+		final SwiftContainerHelper<T, C> container, final String nodeAddr, final Class<T> itemCls,
 		final long maxCount
 	) throws IllegalStateException {
-		super(container, nodeAddr, itemCls, maxCount);
+		super(container, itemCls, maxCount);
+		this.nodeAddr = nodeAddr;
 	}
 	//
 	@Override
 	protected final void loadNextPage()
 	throws EOFException, IOException {
 		final int countLimit = (int) Math.min(
-			DataItemContainer.DEFAULT_PAGE_SIZE, maxCount - doneCount
+			ContainerHelper.DEFAULT_PAGE_SIZE, maxCount - doneCount
 		);
 		if(eof || countLimit == 0) {
 			throw new EOFException();
 		}
 		// execute the request
-		final HttpResponse resp = WSContainerImpl.class.cast(container).execute(
+		final HttpResponse resp = WSSwiftContainerHelper.class.cast(containerHelper).execute(
 			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit,
 			WSRequestConfig.REQUEST_WITH_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 		);
@@ -75,7 +78,7 @@ extends GenericContainerItemSrcBase<T> {
 		}
 		if(statusCode < 200 || statusCode > 300) {
 			throw new IOException(
-				"Listing container \"" + container + "\" response: " + status
+				"Listing container \"" + containerHelper + "\" response: " + status
 			);
 		}
 		final HttpEntity respEntity = resp.getEntity();
@@ -131,7 +134,7 @@ extends GenericContainerItemSrcBase<T> {
 							if(isInsideObjectToken) {
 								if(lastItemId != null && lastSize > -1) {
 									try {
-										nextItem = container.buildItem(
+										nextItem = containerHelper.buildItem(
 											itemConstructor, lastItemId, lastSize
 										);
 										if(nextItem != null) {

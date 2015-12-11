@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by gusakk on 21.10.15.
@@ -18,14 +17,21 @@ import java.util.concurrent.atomic.AtomicLong;
 public class NewContainerSrc<T extends Container>
 implements ItemSrc<T> {
 	//
-	private static AtomicLong
-		LAST_OFFSET = new AtomicLong(
-		Math.abs(
+	private static volatile long
+		LAST_SEED = Math.abs(
 			Long.reverse(System.currentTimeMillis()) ^
 			Long.reverseBytes(System.nanoTime()) ^
 			ServiceUtil.getHostAddrCode()
-		)
-	);
+		);
+	//
+	public static String nextName() {
+		final long nextSeed;
+		synchronized(NewContainerSrc.class) {
+			LAST_SEED = Math.abs(ContentSourceBase.nextWord(LAST_SEED ^ System.nanoTime()));
+			nextSeed = LAST_SEED;
+		}
+		return Long.toString(nextSeed, DataItem.ID_RADIX);
+	}
 	//
 	private final Constructor<T> itemConstructor;
 	private T lastItem = null;
@@ -40,7 +46,7 @@ implements ItemSrc<T> {
 	public final T get()
 	throws IOException {
 		try {
-			return itemConstructor.newInstance(nextName(LAST_OFFSET));
+			return itemConstructor.newInstance(nextName());
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
 		}
@@ -51,22 +57,12 @@ implements ItemSrc<T> {
 	throws IOException {
 		try {
 			for(int i = 0; i < maxCount; i ++) {
-				buffer.add(itemConstructor.newInstance(nextName(LAST_OFFSET)));
+				buffer.add(itemConstructor.newInstance(nextName()));
 			}
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
 		}
 		return maxCount;
-	}
-	//
-	public String nextName(final AtomicLong lastOffset) {
-		long newOffset = lastOffset.getAndSet(
-			Math.abs(
-				ContentSourceBase.nextWord(lastOffset.get()) ^ System.nanoTime()
-			)
-		);
-		//
-		return Long.toString(newOffset, DataItem.ID_RADIX);
 	}
 	//
 	@Override
@@ -98,7 +94,7 @@ implements ItemSrc<T> {
 	//
 	@Override
 	public final String toString() {
-		return "newDataItemInput<" + itemConstructor.getDeclaringClass().getSimpleName() + ">";
+		return "newContainerSrc<" + itemConstructor.getDeclaringClass().getSimpleName() + ">";
 	}
 
 }

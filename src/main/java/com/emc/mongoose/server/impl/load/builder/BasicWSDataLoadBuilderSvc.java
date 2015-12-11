@@ -11,7 +11,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 //mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
 import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
@@ -41,12 +41,14 @@ implements WSDataLoadBuilderSvc<T, U> {
 	//
 	private String configTable = null;
 	//
-	public BasicWSDataLoadBuilderSvc(final RunTimeConfig runTimeConfig) {
+	public BasicWSDataLoadBuilderSvc(final RunTimeConfig runTimeConfig)
+	throws RemoteException {
 		super(runTimeConfig);
 	}
 	//
 	@Override
-	public final BasicWSDataLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
+	public final BasicWSDataLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig)
+	throws RemoteException {
 		super.setProperties(clientConfig);
 		final String runMode = clientConfig.getRunMode();
 		if (!runMode.equals(Constants.RUN_MODE_SERVER)
@@ -60,7 +62,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws RemoteException {
-		final WSDataLoadSvc<T> loadSvc = (WSDataLoadSvc<T>) build();
+		final U loadSvc = build();
 		ServiceUtil.create(loadSvc);
 		if(configTable != null) {
 			LOG.info(Markers.MSG, configTable);
@@ -85,16 +87,16 @@ implements WSDataLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	protected final void invokePreConditions() {} // discard any precondition invocations in load server mode
+	public final void invokePreConditions() {} // discard any precondition invocations in load server mode
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()
 	throws IllegalStateException {
-		if(reqConf == null) {
+		if(ioConfig == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(reqConf);
+		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(ioConfig);
 		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		localRunTimeConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
@@ -107,7 +109,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 			);
 		}
 		//
-		final IOTask.Type loadType = reqConf.getLoadType();
+		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
 			minThreadCount = getMinIOThreadCount(
@@ -160,6 +162,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 	@Override
 	public final void close()
 	throws IOException {
+		super.close();
 		ServiceUtil.close(this);
 	}
 	//

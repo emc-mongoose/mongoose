@@ -7,12 +7,12 @@ import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemSrc;
 import org.apache.commons.configuration.ConversionException;
 //
 import org.apache.logging.log4j.Level;
@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 /**
@@ -36,28 +37,26 @@ implements LoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected long maxCount;
-	protected RequestConfig<T> reqConf;
+	protected long maxCount = 0;
+	protected volatile IOConfig<?, ?> ioConfig = getDefaultIOConfig();
 	protected float rateLimit;
 	protected int manualTaskSleepMicroSecs, updatesPerItem;
 	protected ItemSrc itemSrc;
 	protected String storageNodeAddrs[];
-	protected final HashMap<IOTask.Type, Integer> loadTypeWorkerCount, loadTypeConnPerNode;
+	protected final Map<IOTask.Type, Integer>
+		loadTypeWorkerCount = new HashMap<>(),
+		loadTypeConnPerNode = new HashMap<>();
 	protected boolean flagUseNewItemSrc, flagUseNoneItemSrc;
 	//
-	{
-		loadTypeWorkerCount = new HashMap<>();
-		loadTypeConnPerNode = new HashMap<>();
-		try {
-			reqConf = getDefaultRequestConfig();
-			setProperties(RunTimeConfig.getContext());
-		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply configuration");
-		}
-	}
-	protected abstract RequestConfig<T> getDefaultRequestConfig();
+	protected abstract IOConfig<?, ?> getDefaultIOConfig();
 	//
-	public LoadBuilderBase(final RunTimeConfig runTimeConfig) {
+	public LoadBuilderBase()
+	throws RemoteException {
+		this(RunTimeConfig.getContext());
+	}
+	//
+	public LoadBuilderBase(final RunTimeConfig runTimeConfig)
+	throws RemoteException {
 		resetItemSrc();
 		setProperties(runTimeConfig);
 	}
@@ -70,10 +69,10 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
-	throws IllegalStateException {
+	throws IllegalStateException, RemoteException {
 		RunTimeConfig.setContext(rtConfig);
-		if(reqConf != null) {
-			reqConf.setProperties(rtConfig);
+		if(ioConfig != null) {
+			ioConfig.setProperties(rtConfig);
 		} else {
 			throw new IllegalStateException("Shared request config is not initialized");
 		}
@@ -136,20 +135,23 @@ implements LoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		paramName = RunTimeConfig.KEY_STORAGE_ADDRS;
-		try {
-			setDataNodeAddrs(rtConfig.getStorageAddrsWithPorts());
-		} catch(final NoSuchElementException|ConversionException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
-		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
-		}
-		//
-		paramName = RunTimeConfig.getApiPortParamName(reqConf.getAPI().toLowerCase());
-		try {
-			reqConf.setPort(rtConfig.getApiTypePort(reqConf.getAPI().toLowerCase()));
-		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+		if(ioConfig instanceof RequestConfig) {
+			final RequestConfig reqConfig = (RequestConfig) ioConfig;
+			paramName = RunTimeConfig.KEY_STORAGE_ADDRS;
+			try {
+				setDataNodeAddrs(rtConfig.getStorageAddrsWithPorts());
+			} catch(final NoSuchElementException | ConversionException e) {
+				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			} catch(final IllegalArgumentException e) {
+				LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			}
+			//
+			paramName = RunTimeConfig.getApiPortParamName(reqConfig.getAPI().toLowerCase());
+			try {
+				reqConfig.setPort(rtConfig.getApiTypePort(reqConfig.getAPI().toLowerCase()));
+			} catch(final NoSuchElementException e) {
+				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			}
 		}
 		//
 		return this;
@@ -178,46 +180,46 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public RequestConfig<T> getRequestConfig() {
-		return reqConf;
+	public final IOConfig<?, ?> getIOConfig() {
+		return ioConfig;
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
-	throws ClassCastException {
-		if(this.reqConf.equals(reqConf)) {
+	public final LoadBuilder<T, U> setIOConfig(final IOConfig<?, ?> ioConfig)
+	throws ClassCastException, RemoteException {
+		if(this.ioConfig.equals(ioConfig)) {
 			return this;
 		}
-		LOG.debug(Markers.MSG, "Set request builder: {}", reqConf.toString());
+		LOG.debug(Markers.MSG, "Set request builder: {}", ioConfig.toString());
 		try {
-			this.reqConf.close(); // see jira ticket #437
+			this.ioConfig.close(); // see jira ticket #437
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to close the replacing req config instance #{}",
+				LOG, Level.WARN, e, "Failed to close the replacing conf config instance #{}",
 				hashCode()
 			);
 		}
-		this.reqConf = reqConf;
+		this.ioConfig = ioConfig;
 		return this;
 	}
 	//
 	@Override
 	public LoadBuilder<T, U> setLoadType(final IOTask.Type loadType)
-	throws IllegalStateException {
+	throws IllegalStateException, RemoteException {
 		LOG.debug(Markers.MSG, "Set load type: {}", loadType);
-		if(reqConf == null) {
+		if(ioConfig == null) {
 			throw new IllegalStateException(
 				"Request builder should be specified before setting an I/O loadType"
 			);
 		} else {
-			reqConf.setLoadType(loadType);
+			ioConfig.setLoadType(loadType);
 		}
 		return this;
 	}
 	//
 	@Override
 	public LoadBuilder<T, U> setMaxCount(final long maxCount)
-	throws IllegalArgumentException {
+	throws IllegalArgumentException, RemoteException {
 		LOG.debug(Markers.MSG, "Set max data item count: {}", maxCount);
 		if(maxCount < 0) {
 			throw new IllegalArgumentException("Count should be >= 0");
@@ -228,7 +230,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setRateLimit(final float rateLimit)
-	throws IllegalArgumentException {
+	throws IllegalArgumentException, RemoteException {
 		LOG.debug(Markers.MSG, "Set rate limit to: {}", rateLimit);
 		if(rateLimit < 0) {
 			throw new IllegalArgumentException("Rate limit should not be negative");
@@ -241,7 +243,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setManualTaskSleepMicroSecs(final int manualTaskSleepMicroSecs)
-	throws IllegalArgumentException {
+	throws IllegalArgumentException, RemoteException {
 		LOG.debug(Markers.MSG, "Set manual I/O tasks sleep to: {}[us]", manualTaskSleepMicroSecs);
 		if(rateLimit < 0) {
 			throw new IllegalArgumentException("Tasks sleep time shouldn't be negative");
@@ -255,7 +257,8 @@ implements LoadBuilder<T, U> {
 
 	//
 	@Override
-	public LoadBuilder<T, U> setWorkerCountDefault(final int workersPerNode) {
+	public LoadBuilder<T, U> setWorkerCountDefault(final int workersPerNode)
+	throws RemoteException {
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
 			setWorkerCountFor(workersPerNode, loadType);
 		}
@@ -265,7 +268,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setWorkerCountFor(
 		final int workersPerNode, final IOTask.Type loadType
-	) {
+	) throws RemoteException {
 		if(workersPerNode > 0) {
 			loadTypeWorkerCount.put(loadType, workersPerNode);
 		} else {
@@ -280,7 +283,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setConnPerNodeDefault(final int connPerNode)
-	throws IllegalArgumentException {
+	throws IllegalArgumentException, RemoteException {
 		LOG.debug(Markers.MSG, "Set default connection count per node: {}", connPerNode);
 		for(final IOTask.Type loadType : IOTask.Type.values()) {
 			setConnPerNodeFor(connPerNode, loadType);
@@ -291,7 +294,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setConnPerNodeFor(
 		final int connPerNode, final IOTask.Type loadType
-	) throws IllegalArgumentException {
+	) throws IllegalArgumentException, RemoteException {
 		if(connPerNode < 1) {
 			throw new IllegalArgumentException("Concurrency level should not be less than 1");
 		}
@@ -306,7 +309,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setDataNodeAddrs(
 		final String[] dataNodeAddrs
-	) throws IllegalArgumentException {
+	) throws IllegalArgumentException, RemoteException {
 		LOG.debug(Markers.MSG, "Set storage nodes: {}", Arrays.toString(dataNodeAddrs));
 		if(dataNodeAddrs == null || dataNodeAddrs.length == 0) {
 			throw new IllegalArgumentException("Data node address list should not be empty");
@@ -316,10 +319,10 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc) {
+	public LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
+	throws RemoteException {
 		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
 		this.itemSrc = itemSrc;
-		//
 		return this;
 	}
 	//
@@ -327,8 +330,8 @@ implements LoadBuilder<T, U> {
 	public LoadBuilderBase<T, U> clone()
 	throws CloneNotSupportedException {
 		final LoadBuilderBase<T, U> lb = (LoadBuilderBase<T, U>) super.clone();
-		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
-		lb.reqConf = reqConf.clone();
+		LOG.debug(Markers.MSG, "Cloning request config for {}", ioConfig.toString());
+		lb.ioConfig = ioConfig.clone();
 		lb.maxCount = maxCount;
 		for(final IOTask.Type loadType : loadTypeWorkerCount.keySet()) {
 			lb.loadTypeWorkerCount.put(loadType, loadTypeWorkerCount.get(loadType));
@@ -360,10 +363,11 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final U build() {
+	public final U build()
+	throws RemoteException {
 		try {
 			invokePreConditions();
-		} catch(final IllegalStateException e) {
+		} catch(final RemoteException | IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
 		try {
@@ -373,26 +377,24 @@ implements LoadBuilder<T, U> {
 		}
 	}
 	//
-	protected abstract void invokePreConditions()
-	throws IllegalStateException;
-	//
 	protected final int getMinIOThreadCount(
 		final int threadCount, final int nodeCount, final int connCountPerNode
 	) {
 		return Math.min(Math.max(threadCount, nodeCount), nodeCount * connCountPerNode);
 	}
 	//
-	protected abstract U buildActually();
+	protected abstract U buildActually()
+	throws RemoteException;
 	//
 	@Override
 	public String toString() {
-		return reqConf.toString() + "." +
+		return ioConfig.toString() + "." +
 			loadTypeConnPerNode.get(loadTypeConnPerNode.keySet().iterator().next());
 	}
 	//
 	@Override
 	public void close()
 	throws IOException {
-		reqConf.close();
+		ioConfig.close();
 	}
 }

@@ -6,7 +6,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
@@ -19,8 +19,6 @@ import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.NoHttpResponseException;
-import org.apache.http.StatusLine;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 //
@@ -29,19 +27,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.spec.SecretKeySpec;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
-import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSRequestConfigImpl<T extends WSObject>
-extends WSRequestConfigBase<T> {
+public final class WSRequestConfigImpl<T extends WSObject, C extends Container<T>>
+extends WSRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -59,7 +55,7 @@ extends WSRequestConfigBase<T> {
 		this(null);
 	}
 	//
-	protected WSRequestConfigImpl(final WSRequestConfigImpl<T> reqConf2Clone)
+	protected WSRequestConfigImpl(final WSRequestConfigImpl<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		//
@@ -79,8 +75,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
-	public WSRequestConfigImpl<T> clone() {
-		WSRequestConfigImpl<T> copy = null;
+	public WSRequestConfigImpl<T, C> clone() {
+		WSRequestConfigImpl<T, C> copy = null;
 		try {
 			copy = new WSRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
@@ -121,7 +117,7 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public final HttpEntityEnclosingRequest createContainerRequest(
-		final Container<T> container, final String nodeAddr
+		final C container, final String nodeAddr
 	) throws URISyntaxException {
 		throw new IllegalStateException("No container request is possible using Atmos API");
 	}
@@ -144,7 +140,7 @@ extends WSRequestConfigBase<T> {
 		return subTenant;
 	}
 	//
-	public final WSRequestConfigImpl<T> setSubTenant(final WSSubTenantImpl<T> subTenant)
+	public final WSRequestConfigImpl<T, C> setSubTenant(final WSSubTenantImpl<T> subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
 		if(sharedHeaders != null && userName != null) {
@@ -160,7 +156,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setUserName(final String userName)
+	public final WSRequestConfigImpl<T, C> setUserName(final String userName)
 	throws IllegalStateException {
 		if(userName == null) {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
@@ -182,7 +178,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setSecret(final String secret) {
+	public final WSRequestConfigBase<T, C> setSecret(final String secret) {
 		super.setSecret(secret);
 		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		secretKey = new SecretKeySpec(Base64.decodeBase64(secret), signMethod);
@@ -190,7 +186,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
+	public final WSRequestConfigBase<T, C> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		//if(nameSpace == null || nameSpace.length() < 1) {
 			LOG.debug(Markers.MSG, "Using empty namespace");
@@ -201,7 +197,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setFileAccessEnabled(final boolean flag) {
+	public final WSRequestConfigImpl<T, C> setFileAccessEnabled(final boolean flag) {
 		super.setFileAccessEnabled(flag);
 		if(flag) {
 			uriBasePath = PREFIX_URI + API_TYPE_FS;
@@ -212,7 +208,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+	public final WSRequestConfigImpl<T, C> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
 		try {
@@ -399,7 +395,7 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		if(LOG.isTraceEnabled(Markers.MSG)) {
+		if(httpResponse != null && LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Applied object \"{}\" id \"{}\" from the source \"{}\"",
 				Long.toHexString(dataObject.getOffset()), dataObject.getName(),

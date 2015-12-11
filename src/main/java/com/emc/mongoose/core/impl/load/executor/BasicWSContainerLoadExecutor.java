@@ -13,10 +13,10 @@ import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
-import com.emc.mongoose.core.api.io.req.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSContainerIOTask;
+import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.load.executor.WSContainerLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.task.BasicWSContainerTask;
@@ -76,11 +76,11 @@ implements WSContainerLoadExecutor<T, C> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
-	private final WSRequestConfig wsReqConfigCopy;
+	private final WSRequestConfig<T, C> wsReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
 	public BasicWSContainerLoadExecutor(
-		final RunTimeConfig rtConfig, final RequestConfig<C> reqConfig, final String[] addrs,
+		final RunTimeConfig rtConfig, final WSRequestConfig<T, C> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount, final ItemSrc<C> itemSrc,
 		final long maxCount, final int manualTaskSleepMicroSecs, final float rateLimit
 	) throws ClassCastException {
@@ -90,7 +90,7 @@ implements WSContainerLoadExecutor<T, C> {
 		);
 		//
 		this.loadType = reqConfig.getLoadType();
-		wsReqConfigCopy = (WSRequestConfig) reqConfigCopy;
+		wsReqConfigCopy = (WSRequestConfig<T, C>) ioConfigCopy;
 		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
 		//
 		if(IOTask.Type.READ.equals(loadType)) {
@@ -169,7 +169,6 @@ implements WSContainerLoadExecutor<T, C> {
 			DirectByteBufferAllocator.INSTANCE, connConfig
 		);
 		//
-		//
 		connPoolMap = new HashMap<>(storageNodeCount);
 		HttpHost nextRoute;
 		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
@@ -191,7 +190,7 @@ implements WSContainerLoadExecutor<T, C> {
 	//
 	@Override
 	protected WSContainerIOTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
-		return new BasicWSContainerTask<>(item, nextNodeAddr, reqConfigCopy);
+		return new BasicWSContainerTask<>(item, nextNodeAddr, wsReqConfigCopy);
 	}
 	//
 	@Override
@@ -233,22 +232,22 @@ implements WSContainerLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	protected Future<? extends WSContainerIOTask<T, C>> submitReqActually(final IOTask<C> ioTask)
+	protected <A extends IOTask<C>> Future<A> submitTaskActually(final A ioTask)
 	throws RejectedExecutionException {
 		//
-		final WSContainerIOTask<T, C> wsTask = (WSContainerIOTask<T, C>) ioTask;
+		final WSIOTask wsIoTask = (WSIOTask) ioTask;
 		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
-			connPool = connPoolMap.get(wsTask.getTarget());
+			connPool = connPoolMap.get(wsIoTask.getTarget());
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");
 		}
 		//
-		final Future<WSContainerIOTask<T, C>> futureResult;
+		final Future futureResult;
 		try {
-			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, futureCallback);
+			futureResult = client.execute(wsIoTask, wsIoTask, connPool, wsIoTask, futureCallback);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					Markers.MSG, "I/O task #{} has been submitted for execution", wsTask.hashCode()
+					Markers.MSG, "I/O task #{} has been submitted for execution", ioTask.hashCode()
 				);
 			}
 		} catch(final Exception e) {
@@ -257,23 +256,24 @@ implements WSContainerLoadExecutor<T, C> {
 		return futureResult;
 	}
 	//
-	private final FutureCallback<WSContainerIOTask<T, C>> futureCallback = new FutureCallback<WSContainerIOTask<T, C>>() {
-		@Override
-		public final void completed(final WSContainerIOTask<T, C> ioTask) {
-			ioTaskCompleted(ioTask);
-		}
-		//
-		public final void cancelled() {
-			ioTaskCancelled(1);
-		}
-		//
-		public final void failed(final Exception e) {
-			ioTaskFailed(1, e);
-		}
-	};
+	private final FutureCallback<WSContainerIOTask<T, C>>
+		futureCallback = new FutureCallback<WSContainerIOTask<T, C>>() {
+			@Override
+			public final void completed(final WSContainerIOTask<T, C> ioTask) {
+				ioTaskCompleted(ioTask);
+			}
+			//
+			public final void cancelled() {
+				ioTaskCancelled(1);
+			}
+			//
+			public final void failed(final Exception e) {
+				ioTaskFailed(1, e);
+			}
+		};
 	//
 	@Override
-	public int submitReqs(final List<? extends IOTask<C>> ioTasks, final int from, final int to)
+	public int submitTasks(final List<? extends IOTask<C>> ioTasks, final int from, final int to)
 	throws RemoteException, RejectedExecutionException {
 		int n = 0;
 		if(isPipeliningEnabled) {

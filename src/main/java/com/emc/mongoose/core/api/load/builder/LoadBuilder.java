@@ -2,7 +2,7 @@ package com.emc.mongoose.core.api.load.builder;
 //
 import com.emc.mongoose.core.api.Item;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.io.req.RequestConfig;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-common
@@ -25,9 +25,9 @@ extends Closeable {
 	LoadBuilder<T, U> setProperties(final RunTimeConfig props)
 	throws IllegalStateException, RemoteException;
 	//
-	RequestConfig<T> getRequestConfig()
+	IOConfig<?, ?> getIOConfig()
 	throws RemoteException;
-	LoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
+	LoadBuilder<T, U> setIOConfig(final IOConfig<?, ?> reqConf)
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> setLoadType(final IOTask.Type loadType)
@@ -49,10 +49,10 @@ extends Closeable {
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> setConnPerNodeDefault(final int connCount)
-		throws IllegalArgumentException, RemoteException;
+	throws IllegalArgumentException, RemoteException;
 	//
 	LoadBuilder<T, U> setConnPerNodeFor(final int connCount, final IOTask.Type loadType)
-		throws IllegalArgumentException, RemoteException;
+	throws IllegalArgumentException, RemoteException;
 	//
 	LoadBuilder<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException;
@@ -65,6 +65,9 @@ extends Closeable {
 	//
 	LoadBuilder<T, U> useNoneItemSrc()
 	throws RemoteException;
+	//
+	void invokePreConditions()
+	throws RemoteException, IllegalStateException;
 	//
 	U build()
 	throws IOException;
