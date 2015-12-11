@@ -75,7 +75,7 @@ implements LoadBuilderClient<T, W, U> {
 				maxLastInstanceN = nextInstanceN;
 			}
 			loadSvcMap.put(serverAddr, loadBuilderSvc);
-			loadSvcConfMap.put(serverAddr, rtConfig);
+			loadSvcConfMap.put(serverAddr, (RunTimeConfig) rtConfig.clone());
 		}
 		//
 		resetItemSrc();
@@ -93,7 +93,7 @@ implements LoadBuilderClient<T, W, U> {
 	throws IOException;
 	//
 	protected static void assignNodesToLoadSvcs(
-		final RunTimeConfig srcConf, final Map<String, RunTimeConfig> dstConfMap,
+		final Map<String, RunTimeConfig> dstConfMap,
 		final String loadSvcAddrs[], final String nodeAddrs[]
 	) throws IllegalStateException {
 		if(loadSvcAddrs != null && (loadSvcAddrs.length > 1 || nodeAddrs.length > 1)) {
@@ -115,10 +115,6 @@ implements LoadBuilderClient<T, W, U> {
 					for(j = 0; j < nLoadSvcPerStep; j ++) {
 						nextLoadSvcAddr = loadSvcAddrs[i * nLoadSvcPerStep + j];
 						nextConfig = dstConfMap.get(nextLoadSvcAddr);
-						if(nextConfig == null) {
-							nextConfig = (RunTimeConfig) srcConf.clone();
-							dstConfMap.put(nextLoadSvcAddr, nextConfig);
-						}
 						LOG.info(
 							Markers.MSG, "Load server @ " + nextLoadSvcAddr +
 							" will use the following storage nodes: " + nextNodeAddrs
@@ -148,7 +144,7 @@ implements LoadBuilderClient<T, W, U> {
 		}
 		flagAssignLoadSvcToNode = rtConfig.getFlagAssignLoadServerToNode();
 		if(flagAssignLoadSvcToNode) {
-			assignNodesToLoadSvcs(rtConfig, loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
+			assignNodesToLoadSvcs(loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
 		}
 		//
 		V nextBuilder;
@@ -323,7 +319,7 @@ implements LoadBuilderClient<T, W, U> {
 		if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
 			this.storageNodeAddrs = dataNodeAddrs;
 			if(flagAssignLoadSvcToNode) {
-				assignNodesToLoadSvcs(rtConfig, loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
+				assignNodesToLoadSvcs(loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
 			}
 			//
 			V nextBuilder;
