@@ -28,9 +28,8 @@ import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
 //
-//
-import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 import org.apache.logging.log4j.Level;
+import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
@@ -482,8 +481,8 @@ implements LoadExecutor<T> {
 			return;
 		}
 		// prepare the I/O task instance (make the link between the data item and load type)
-		final String nextNodeAddr = storageNodeCount == 1 ?
-				storageNodeAddrs[0] : nodeBalancer.getNext();
+		final String nextNodeAddr = storageNodeAddrs == null ?
+			null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 		final IOTask<T> ioTask = getIOTask(dataItem, nextNodeAddr);
 		// don't fill the connection pool as fast as possible, this may cause a failure
 		int activeTaskCount;
@@ -558,6 +557,7 @@ implements LoadExecutor<T> {
 							n += m;
 						}
 						counterSubm.addAndGet(m);
+						// increment node's usage counter
 						if(nodeBalancer != null) {
 							nodeBalancer.markTasksStart(nextNodeAddr, m);
 						}
@@ -652,12 +652,9 @@ implements LoadExecutor<T> {
 		//
 		final int n = to - from;
 		if(n > 0) {
-			final String nodeAddr;
 			if(storageNodeAddrs != null) {
-				nodeAddr = ioTasks.get(from).getNodeAddr();
+				final String nodeAddr = ioTasks.get(from).getNodeAddr();
 				nodeBalancer.markTasksFinish(nodeAddr, n);
-			} else {
-				nodeAddr = null;
 			}
 			//
 			IOTask<T> ioTask;
@@ -670,9 +667,6 @@ implements LoadExecutor<T> {
 				status = ioTask.getStatus();
 				// update the metrics
 				ioTask.mark(ioStats);
-				if(nodeAddr != null) {
-					nodeBalancer.markTaskFinish(nodeAddr);
-				}
 				if(status == IOTask.Status.SUCC) {
 					lastItem = item;
 					// pass data item to a consumer

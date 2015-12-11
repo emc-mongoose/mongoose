@@ -52,7 +52,6 @@
 			"data.src.circular": "load.circular",
 			"data.src.random": "item.src.random",
 			"data.src.batchSize": "item.src.batchSize",
-
 			"data.prefix": "item.prefix",
 
 			"http.sign.method": "http.signMethod",
