@@ -49,10 +49,10 @@ extends Closeable {
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> setConnPerNodeDefault(final int connCount)
-		throws IllegalArgumentException, RemoteException;
+	throws IllegalArgumentException, RemoteException;
 	//
 	LoadBuilder<T, U> setConnPerNodeFor(final int connCount, final IOTask.Type loadType)
-		throws IllegalArgumentException, RemoteException;
+	throws IllegalArgumentException, RemoteException;
 	//
 	LoadBuilder<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException;

@@ -244,16 +244,15 @@ extends WSRequestConfigBase<T, C> {
 			throw new IllegalStateException("Container is not specified");
 		}
 		final WSSwiftContainerHelper<T, C> containerHelper = new WSSwiftContainerHelper<>(this, container);
-		final String containerName = container.getName();
 		if(containerHelper.exists(storageNodeAddrs[0])) {
-			LOG.info(Markers.MSG, "Container \"{}\" already exists", containerName);
+			LOG.info(Markers.MSG, "Container \"{}\" already exists", container);
 		} else {
 			containerHelper.create(storageNodeAddrs[0]);
 			if(containerHelper.exists(storageNodeAddrs[0])) {
-				runTimeConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, containerName);
+				runTimeConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, container.getName());
 			} else {
 				throw new IllegalStateException(
-					String.format("Container \"%s\" still doesn't exist", containerName)
+					String.format("Container \"%s\" still doesn't exist", container)
 				);
 			}
 		}

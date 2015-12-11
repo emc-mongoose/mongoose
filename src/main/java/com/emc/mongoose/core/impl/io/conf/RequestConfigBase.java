@@ -171,18 +171,24 @@ implements RequestConfig<T, C> {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
+		LOG.trace(Markers.MSG, "Written I/O base configuration \"" + nameSpace + "\"");
 		out.writeObject(getAPI());
+		LOG.trace(Markers.MSG, "Written API type \"" + api + "\"");
 		out.writeObject(getScheme());
+		LOG.trace(Markers.MSG, "Written scheme \"" + scheme + "\"");
 		out.writeInt(getPort());
+		LOG.trace(Markers.MSG, "Written port num \"" + port + "\"");
 		out.writeObject(getUserName());
+		LOG.trace(Markers.MSG, "Written user name \"" + userName + "\"");
 		out.writeObject(getSecret());
+		LOG.trace(Markers.MSG, "Written secret key \"" + secret + "\"");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setAPI(String.class.cast(in.readObject()));
+		setAPI((String) in.readObject());
 		LOG.trace(Markers.MSG, "Got API {}", api);
 		setScheme(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got scheme {}", scheme);

@@ -187,18 +187,17 @@ extends WSRequestConfigBase<T, C> {
 		} else {
 			LOG.debug(Markers.MSG, "Configure storage w/ bucket \"{}\"", container);
 		}
-		final String bucketName = container.getName();
 		final WSBucketHelper<T, C> bucket = new WSBucketHelper<>(this, container);
 		if(bucket.exists(storageNodeAddrs[0])) {
-			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
+			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", container);
 		} else {
-			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", bucketName);
+			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", container);
 			bucket.create(storageNodeAddrs[0]);
 			if(bucket.exists(storageNodeAddrs[0])) {
-				runTimeConfig.set(KEY_BUCKET_NAME, bucketName);
+				runTimeConfig.set(KEY_BUCKET_NAME, container.getName());
 			} else {
 				throw new IllegalStateException(
-					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, bucketName)
+					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, container.getName())
 				);
 			}
 		}

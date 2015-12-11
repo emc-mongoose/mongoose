@@ -40,7 +40,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		super(ioReactor, connFactory, connectTimeout);
 		this.route = route;
 		connPoolSequencer = new Sequencer(
-			"connPoolSequencer<" + route.toHostString() + ">", false, batchSize
+			"connPoolSequencer<" + route.toHostString() + ">", true, batchSize
 		);
 		connPoolSequencer.start();
 	}

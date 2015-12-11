@@ -197,13 +197,21 @@ implements IOConfig<T, C> {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		out.writeObject(getLoadType());
+		LOG.trace(Markers.MSG, "Written load type \"" + loadType + "\"");
 		out.writeObject(getContainer());
+		LOG.trace(Markers.MSG, "Written container \"" + container + "\"");
 		out.writeObject(getNameSpace());
+		LOG.trace(Markers.MSG, "Written namespace \"" + nameSpace + "\"");
 		out.writeObject(getNamePrefix());
+		LOG.trace(Markers.MSG, "Written name prefix \"" + namePrefix + "\"");
 		out.writeObject(getContentSource());
+		LOG.trace(Markers.MSG, "Written content src \"" + contentSrc + "\"");
 		out.writeBoolean(getVerifyContentFlag());
+		LOG.trace(Markers.MSG, "Written flag");
 		out.writeInt(getBuffSize());
+		LOG.trace(Markers.MSG, "Written buffer size \"" + buffSize + "\"");
 		out.writeInt(reqSleepMilliSec);
+		LOG.trace(Markers.MSG, "Written req sleep time \"" + reqSleepMilliSec + "\"");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
