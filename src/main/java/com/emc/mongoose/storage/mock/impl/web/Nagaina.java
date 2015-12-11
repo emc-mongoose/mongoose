@@ -48,11 +48,11 @@ public class Nagaina<T extends WSObjectMock>
 
 	private Nagaina(RunTimeConfig rtConfig, int ioThreadCount) {
 		this(
-//				rtConfig.getStorageMockHeadCount(),  TODO check how many is head count?
-				HEAD_COUNT_DEFAULT,
+				rtConfig.getStorageMockHeadCount(),
+//				HEAD_COUNT_DEFAULT,
 				ioThreadCount > 0 ? ioThreadCount : ThreadUtil.getWorkerCount(),
-//				rtConfig.getApiTypePort(rtConfig.getApiName()), TODO check what is portStart?,
-				PORT_START_DEFAULT,
+				rtConfig.getApiTypePort(rtConfig.getApiName()),
+//				PORT_START_DEFAULT,
 				rtConfig.getStorageMockCapacity(),
 				rtConfig.getStorageMockContainerCapacity(),
 				rtConfig.getStorageMockContainerCountLimit(),
@@ -75,7 +75,7 @@ public class Nagaina<T extends WSObjectMock>
 				storageCapacity, containerCapacity, containerCountLimit, batchSize, dataSrcPath, metricsPeriodSec,
 				jmxServeFlag);
 		this.portStart = portStart;
-		dispatchGroup = new NioEventLoopGroup(headCount, new DefaultThreadFactory("dispatcher")); // TODO check does it equal headCount?
+		dispatchGroup = new NioEventLoopGroup(headCount, new DefaultThreadFactory("dispatcher"));
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
 		workerGroup = new NioEventLoopGroup();
 		protocolHandlerMapper = new NagainaHandlerMapper<>(RunTimeConfig.getContext(), this);
