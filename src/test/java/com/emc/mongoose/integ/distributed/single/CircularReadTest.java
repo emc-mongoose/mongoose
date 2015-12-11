@@ -122,28 +122,26 @@ extends DistributedClientTestBase {
 	public void checkItemDuplicatesOrder()
 	throws Exception {
 		final Map<String, Integer> items = new HashMap<>();
-		try (
+		try(
 			final LineNumberReader in = new LineNumberReader(
 				Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
 			)
 		) {
 			long uniqueItems = 0;
+			int expected;
 			String line;
-			while ((line = in.readLine()) != null) {
-				if (uniqueItems < WRITE_COUNT) {
+			while((line = in.readLine()) != null) {
+				if(uniqueItems < WRITE_COUNT) {
 					items.put(line, in.getLineNumber());
-					uniqueItems++;
+					uniqueItems ++;
 				} else {
 					Assert.assertTrue(items.containsKey(line));
-					final int expected;
-					if (in.getLineNumber() % WRITE_COUNT == 0) {
+					if(in.getLineNumber() % WRITE_COUNT == 0) {
 						expected = WRITE_COUNT;
 					} else {
 						expected = in.getLineNumber() % WRITE_COUNT;
 					}
-					Assert.assertEquals(
-						Integer.valueOf(expected), items.get(line)
-					);
+					Assert.assertEquals(Integer.valueOf(expected), items.get(line));
 				}
 			}
 		}
