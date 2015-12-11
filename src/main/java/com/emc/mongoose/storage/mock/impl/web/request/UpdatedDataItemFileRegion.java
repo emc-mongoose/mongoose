@@ -26,6 +26,7 @@ public class UpdatedDataItemFileRegion<T extends MutableDataItemMock> extends Da
 	@Override
 	public long transferTo(WritableByteChannel target, long position)
 			throws IOException {
+		dataObject.setRelativeOffset(position); // TODO check is it necessary
 		if (doneByteCount == nextRangeOffset) {
 			currRangeSize = dataObject.getRangeSize(currRangeIdx);
 			if (dataObject.isCurrLayerRangeUpdated(currRangeIdx)) {

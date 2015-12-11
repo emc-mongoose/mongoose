@@ -11,8 +11,7 @@ import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 
-import com.emc.mongoose.storage.mock.impl.web.request.NagainaAtmosRequestHandler;
-import com.emc.mongoose.storage.mock.impl.web.request.NagainaRequestHandlerBase;
+import com.emc.mongoose.storage.mock.impl.web.request.*;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -39,7 +38,7 @@ public class Nagaina<T extends WSObjectMock>
 	private final static int PORT_START_DEFAULT = 9020;
 	private final EventLoopGroup dispatchGroup;
 	private final EventLoopGroup workerGroup;
-	private final NagainaRequestHandlerBase protocolHandler;
+	private final NagainaHandlerMapper protocolHandlerMapper;
 	private final int portStart;
 	private Channel channel;
 
@@ -79,7 +78,7 @@ public class Nagaina<T extends WSObjectMock>
 		dispatchGroup = new NioEventLoopGroup(headCount, new DefaultThreadFactory("dispatcher")); // TODO check does it equal headCount?
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
 		workerGroup = new NioEventLoopGroup();
-		protocolHandler = new NagainaAtmosRequestHandler<>(RunTimeConfig.getContext(), this);
+		protocolHandlerMapper = new NagainaHandlerMapper<>(RunTimeConfig.getContext(), this);
 	}
 
 
@@ -99,7 +98,7 @@ public class Nagaina<T extends WSObjectMock>
 						              protected void initChannel(SocketChannel socketChannel) throws Exception {
 							              ChannelPipeline pipeline = socketChannel.pipeline();
 							              pipeline.addLast(new HttpServerCodec());
-							              pipeline.addLast(protocolHandler);
+							              pipeline.addLast(protocolHandlerMapper);
 						              }
 					              }
 					);

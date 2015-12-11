@@ -18,7 +18,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.AttributeKey;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.http.entity.ContentType;
@@ -32,7 +37,13 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static io.netty.channel.ChannelHandler.Sharable;
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
-import static io.netty.handler.codec.http.HttpResponseStatus.*;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpResponseStatus.CREATED;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 @Sharable
@@ -43,12 +54,8 @@ public class NagainaSwiftRequestHandler<T extends WSObjectMock> extends NagainaR
 	private final static String
 			AUTH = "auth";
 
-
-	private final String apiBasePathSwift;
-
 	public NagainaSwiftRequestHandler(RunTimeConfig rtConfig, WSMock<T> sharedStorage) {
 		super(rtConfig, sharedStorage);
-		apiBasePathSwift = rtConfig.getString(WSRequestConfigImpl.KEY_CONF_SVC_BASEPATH);
 	}
 
 	@Override

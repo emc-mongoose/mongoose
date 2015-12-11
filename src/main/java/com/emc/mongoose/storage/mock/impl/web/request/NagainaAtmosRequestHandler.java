@@ -12,7 +12,13 @@ import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.*;
+
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.AttributeKey;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.http.entity.ContentType;
@@ -261,14 +267,14 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 	private void handleGenericContainerReq(HttpResponse response, String method, String containerName, ChannelHandlerContext ctx) {
 		switch (method) {
 			case WSRequestConfig.METHOD_PUT:
-				handleContainerCreate(response, containerName, ctx);
+				handleContainerCreate(response, containerName);
 				break;
 			default:
 				super.handleGenericContainerReq(method, containerName, ctx);
 		}
 	}
 
-	private void handleContainerCreate(HttpResponse response, String containerName, ChannelHandlerContext ctx)
+	private void handleContainerCreate(HttpResponse response, String containerName)
 	{
 		super.handleContainerCreate(containerName);
 		response.headers().set(SubTenant.KEY_SUBTENANT_ID, containerName);

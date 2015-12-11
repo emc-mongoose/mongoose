@@ -4,12 +4,25 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.io.req.WSRequestConfig;
-import com.emc.mongoose.storage.mock.api.*;
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.storage.mock.api.StorageIOStats;
+import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
+import com.emc.mongoose.storage.mock.api.ContainerMockException;
+import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
+import com.emc.mongoose.storage.mock.api.StorageMockCapacityLimitReachedException;
 import io.netty.buffer.ByteBuf;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.AttributeKey;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -82,10 +95,10 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 		if (msg instanceof HttpRequest) {
 			processHttpRequest(ctx, (HttpRequest) msg);
 		}
-
-		if (msg instanceof HttpContent) {
-			processHttpContent(ctx, (HttpContent) msg);
-		}
+//		Calculation of the content size if the request does not have such header (excessively)
+//		if (msg instanceof HttpContent) {
+//			processHttpContent(ctx, (HttpContent) msg);
+//		}
 
 		if (msg instanceof LastHttpContent) {
 			handle(ctx);
@@ -198,7 +211,7 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 	                        Long offset, ChannelHandlerContext ctx) {
 		HttpResponse response;
 		try {
-			T obj = sharedStorage.getObject(containerName, objId, offset, 0);
+		T obj = sharedStorage.getObject(containerName, objId, offset, 0);
 			if (obj != null) {
 				final long objSize = obj.getSize();
 				ioStats.markRead(true, objSize);
