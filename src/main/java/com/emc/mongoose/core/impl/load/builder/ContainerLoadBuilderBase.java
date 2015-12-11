@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 //
 /**
  * Created by gusakk on 21.10.15.
@@ -32,12 +33,14 @@ implements ContainerLoadBuilder<T, C, U>{
 	//
 	protected boolean flagUseContainerItemSrc;
 	//
-	public ContainerLoadBuilderBase(final RunTimeConfig rtConfig) {
+	public ContainerLoadBuilderBase(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		super(rtConfig);
 	}
 	//
 	@Override
-	public ContainerLoadBuilderBase<T, C, U> setProperties(final RunTimeConfig rtConfig) {
+	public ContainerLoadBuilderBase<T, C, U> setProperties(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		super.setProperties(rtConfig);
 		//
 		final String listFilePathStr = rtConfig.getItemSrcFile();

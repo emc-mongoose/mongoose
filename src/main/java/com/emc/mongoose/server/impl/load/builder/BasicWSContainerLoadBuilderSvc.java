@@ -41,13 +41,15 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	//
 	private String configTable = null;
 	//
-	public BasicWSContainerLoadBuilderSvc(final RunTimeConfig runTimeConfig) {
+	public BasicWSContainerLoadBuilderSvc(final RunTimeConfig runTimeConfig)
+	throws RemoteException {
 		super(runTimeConfig);
 	}
 	//
 	@Override
 	public final BasicWSContainerLoadBuilderSvc<T, C, U>
-	setProperties(final RunTimeConfig clientConfig) {
+	setProperties(final RunTimeConfig clientConfig)
+	throws RemoteException {
 		super.setProperties(clientConfig);
 		final String runMode = clientConfig.getRunMode();
 		if (!runMode.equals(Constants.RUN_MODE_SERVER)
@@ -151,6 +153,7 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	@Override
 	public final void close()
 	throws IOException {
+		super.close();
 		ServiceUtil.close(this);
 	}
 	//

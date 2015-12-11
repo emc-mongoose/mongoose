@@ -36,8 +36,8 @@ implements LoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected long maxCount;
-	protected IOConfig<?, ?> ioConfig;
+	protected long maxCount = 0;
+	protected volatile IOConfig<?, ?> ioConfig;
 	protected float rateLimit;
 	protected int manualTaskSleepMicroSecs, updatesPerItem;
 	protected ItemSrc itemSrc;
@@ -49,15 +49,16 @@ implements LoadBuilder<T, U> {
 		loadTypeWorkerCount = new HashMap<>();
 		loadTypeConnPerNode = new HashMap<>();
 		try {
-			ioConfig = getDefaultRequestConfig();
+			ioConfig = getDefaultIOConfig();
 			setProperties(RunTimeConfig.getContext());
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply configuration");
 		}
 	}
-	protected abstract IOConfig<?, ?> getDefaultRequestConfig();
+	protected abstract IOConfig<?, ?> getDefaultIOConfig();
 	//
-	public LoadBuilderBase(final RunTimeConfig runTimeConfig) {
+	public LoadBuilderBase(final RunTimeConfig runTimeConfig)
+	throws RemoteException {
 		resetItemSrc();
 		setProperties(runTimeConfig);
 	}
@@ -70,7 +71,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
-	throws IllegalStateException {
+	throws IllegalStateException, RemoteException {
 		RunTimeConfig.setContext(rtConfig);
 		if(ioConfig != null) {
 			ioConfig.setProperties(rtConfig);
@@ -181,13 +182,13 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public IOConfig<?, ?> getIOConfig() {
+	public final IOConfig<?, ?> getIOConfig() {
 		return ioConfig;
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setIOConfig(final IOConfig<?, ?> ioConfig)
-	throws ClassCastException {
+	public final LoadBuilder<T, U> setIOConfig(final IOConfig<?, ?> ioConfig)
+	throws ClassCastException, RemoteException {
 		if(this.ioConfig.equals(ioConfig)) {
 			return this;
 		}
@@ -206,7 +207,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setLoadType(final IOTask.Type loadType)
-	throws IllegalStateException {
+	throws IllegalStateException, RemoteException {
 		LOG.debug(Markers.MSG, "Set load type: {}", loadType);
 		if(ioConfig == null) {
 			throw new IllegalStateException(
@@ -220,7 +221,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setMaxCount(final long maxCount)
-	throws IllegalArgumentException {
+	throws IllegalArgumentException, RemoteException {
 		LOG.debug(Markers.MSG, "Set max data item count: {}", maxCount);
 		if(maxCount < 0) {
 			throw new IllegalArgumentException("Count should be >= 0");
@@ -231,7 +232,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setRateLimit(final float rateLimit)
-	throws IllegalArgumentException {
+	throws IllegalArgumentException, RemoteException {
 		LOG.debug(Markers.MSG, "Set rate limit to: {}", rateLimit);
 		if(rateLimit < 0) {
 			throw new IllegalArgumentException("Rate limit should not be negative");
@@ -244,7 +245,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setManualTaskSleepMicroSecs(final int manualTaskSleepMicroSecs)
-	throws IllegalArgumentException {
+	throws IllegalArgumentException, RemoteException {
 		LOG.debug(Markers.MSG, "Set manual I/O tasks sleep to: {}[us]", manualTaskSleepMicroSecs);
 		if(rateLimit < 0) {
 			throw new IllegalArgumentException("Tasks sleep time shouldn't be negative");
@@ -258,7 +259,8 @@ implements LoadBuilder<T, U> {
 
 	//
 	@Override
-	public LoadBuilder<T, U> setWorkerCountDefault(final int workersPerNode) {
+	public LoadBuilder<T, U> setWorkerCountDefault(final int workersPerNode)
+	throws RemoteException {
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
 			setWorkerCountFor(workersPerNode, loadType);
 		}
@@ -268,7 +270,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setWorkerCountFor(
 		final int workersPerNode, final IOTask.Type loadType
-	) {
+	) throws RemoteException {
 		if(workersPerNode > 0) {
 			loadTypeWorkerCount.put(loadType, workersPerNode);
 		} else {
@@ -283,7 +285,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setConnPerNodeDefault(final int connPerNode)
-	throws IllegalArgumentException {
+	throws IllegalArgumentException, RemoteException {
 		LOG.debug(Markers.MSG, "Set default connection count per node: {}", connPerNode);
 		for(final IOTask.Type loadType : IOTask.Type.values()) {
 			setConnPerNodeFor(connPerNode, loadType);
@@ -294,7 +296,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setConnPerNodeFor(
 		final int connPerNode, final IOTask.Type loadType
-	) throws IllegalArgumentException {
+	) throws IllegalArgumentException, RemoteException {
 		if(connPerNode < 1) {
 			throw new IllegalArgumentException("Concurrency level should not be less than 1");
 		}
@@ -309,7 +311,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setDataNodeAddrs(
 		final String[] dataNodeAddrs
-	) throws IllegalArgumentException {
+	) throws IllegalArgumentException, RemoteException {
 		LOG.debug(Markers.MSG, "Set storage nodes: {}", Arrays.toString(dataNodeAddrs));
 		if(dataNodeAddrs == null || dataNodeAddrs.length == 0) {
 			throw new IllegalArgumentException("Data node address list should not be empty");
@@ -319,10 +321,10 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc) {
+	public LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
+	throws RemoteException {
 		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
 		this.itemSrc = itemSrc;
-		//
 		return this;
 	}
 	//
@@ -363,7 +365,8 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final U build() {
+	public final U build()
+	throws RemoteException {
 		try {
 			invokePreConditions();
 		} catch(final RemoteException | IllegalStateException e) {
@@ -382,7 +385,8 @@ implements LoadBuilder<T, U> {
 		return Math.min(Math.max(threadCount, nodeCount), nodeCount * connCountPerNode);
 	}
 	//
-	protected abstract U buildActually();
+	protected abstract U buildActually()
+	throws RemoteException;
 	//
 	@Override
 	public String toString() {

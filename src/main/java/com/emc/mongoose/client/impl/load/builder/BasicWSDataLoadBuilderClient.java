@@ -90,8 +90,8 @@ implements WSDataLoadBuilderClient<T, W, U> {
 			itemSrc = getDefaultItemSource(); // affects load service builders
 		}
 		//
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
+		for(final String addr : loadSvcMap.keySet()) {
+			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setIOConfig(ioConfig); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
@@ -100,6 +100,7 @@ implements WSDataLoadBuilderClient<T, W, U> {
 		}
 		//
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
 		return (U) new BasicWSDataLoadClient<>(
 			rtConfig, (WSRequestConfig) ioConfig, storageNodeAddrs,

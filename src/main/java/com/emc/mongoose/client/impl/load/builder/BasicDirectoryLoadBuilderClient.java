@@ -82,8 +82,8 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	public final void invokePreConditions()
 	throws IllegalStateException, RemoteException {
 		DirectoryLoadBuilderSvc<T, C, W> nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
+		for(final String addr : loadSvcMap.keySet()) {
+			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.invokePreConditions();
 		}
 	}
@@ -101,8 +101,8 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 			itemSrc = getDefaultItemSource(); // affects load service builders
 		}
 		//
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
+		for(final String addr : loadSvcMap.keySet()) {
+			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setIOConfig(ioConfig); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
@@ -111,6 +111,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		}
 		//
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
 		return (U) new BasicDirectoryLoadClient<>(
 			rtConfig, (FileIOConfig) ioConfig, storageNodeAddrs,

@@ -87,7 +87,7 @@ public class BasicWSContainerLoadBuilderClient<
 	//
 	@Override  @SuppressWarnings("unchecked")
 	protected final U buildActually()
-		throws RemoteException {
+	throws RemoteException {
 		//
 		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
 		//
@@ -98,8 +98,8 @@ public class BasicWSContainerLoadBuilderClient<
 			itemSrc = getDefaultItemSource(); // affects load service builders
 		}
 		//
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
+		for(final String addr : loadSvcMap.keySet()) {
+			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setIOConfig(ioConfig); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
@@ -108,6 +108,7 @@ public class BasicWSContainerLoadBuilderClient<
 		}
 		//
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
 		return (U) new BasicWSContainerLoadClient<>(
 			rtConfig, (WSRequestConfig) ioConfig, storageNodeAddrs,

@@ -108,8 +108,8 @@ public final class StartServlet extends CommonServlet {
 				LOG.debug(Markers.MSG, message);
 				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				//
-				multiSvc = new MultiLoadBuilderSvc(localRunTimeConfig);
 				try {
+					multiSvc = new MultiLoadBuilderSvc(localRunTimeConfig);
 					multiSvc.start();
 				} catch(final RemoteException e) {
 					LogUtil.exception(

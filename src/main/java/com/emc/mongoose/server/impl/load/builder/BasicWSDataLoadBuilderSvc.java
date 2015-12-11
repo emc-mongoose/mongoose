@@ -41,12 +41,14 @@ implements WSDataLoadBuilderSvc<T, U> {
 	//
 	private String configTable = null;
 	//
-	public BasicWSDataLoadBuilderSvc(final RunTimeConfig runTimeConfig) {
+	public BasicWSDataLoadBuilderSvc(final RunTimeConfig runTimeConfig)
+	throws RemoteException {
 		super(runTimeConfig);
 	}
 	//
 	@Override
-	public final BasicWSDataLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
+	public final BasicWSDataLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig)
+	throws RemoteException {
 		super.setProperties(clientConfig);
 		final String runMode = clientConfig.getRunMode();
 		if (!runMode.equals(Constants.RUN_MODE_SERVER)
@@ -160,6 +162,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 	@Override
 	public final void close()
 	throws IOException {
+		super.close();
 		ServiceUtil.close(this);
 	}
 	//

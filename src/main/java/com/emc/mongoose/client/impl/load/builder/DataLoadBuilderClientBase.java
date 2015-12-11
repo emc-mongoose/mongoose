@@ -64,8 +64,8 @@ implements DataLoadBuilderClient<T, W, U> {
 	throws IllegalArgumentException, RemoteException {
 		this.minObjSize = minObjSize;
 		V nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
+		for(final String addr : loadSvcMap.keySet()) {
+			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setMinObjSize(minObjSize);
 		}
 		return this;
@@ -76,8 +76,8 @@ implements DataLoadBuilderClient<T, W, U> {
 	throws IllegalArgumentException, RemoteException {
 		this.objSizeBias = objSizeBias;
 		V nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
+		for(final String addr : loadSvcMap.keySet()) {
+			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setObjSizeBias(objSizeBias);
 		}
 		return this;
@@ -88,8 +88,8 @@ implements DataLoadBuilderClient<T, W, U> {
 	throws IllegalArgumentException, RemoteException {
 		this.maxObjSize = maxObjSize;
 		V nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
+		for(final String addr : loadSvcMap.keySet()) {
+			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setMaxObjSize(maxObjSize);
 		}
 		return this;
@@ -99,8 +99,8 @@ implements DataLoadBuilderClient<T, W, U> {
 	public final DataLoadBuilderClient<T, W, U> setUpdatesPerItem(int count)
 	throws RemoteException {
 		V nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
+		for(final String addr : loadSvcMap.keySet()) {
+			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setUpdatesPerItem(count);
 		}
 		return this;
@@ -122,7 +122,7 @@ implements DataLoadBuilderClient<T, W, U> {
 			// calculate approx average data item size
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-				rtConfig.getBatchSize()
+				RunTimeConfig.getContext().getBatchSize()
 			);
 			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
@@ -140,8 +140,8 @@ implements DataLoadBuilderClient<T, W, U> {
 			if(flagUseNoneItemSrc) {
 				// disable any item source usage on the load servers side
 				V nextBuilder;
-				for(final String addr : keySet()) {
-					nextBuilder = get(addr);
+				for(final String addr : loadSvcMap.keySet()) {
+					nextBuilder = loadSvcMap.get(addr);
 					nextBuilder.useNoneItemSrc();
 				}
 				//
@@ -150,8 +150,8 @@ implements DataLoadBuilderClient<T, W, U> {
 				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
 					// enable new data item generation on the load servers side
 					V nextBuilder;
-					for(final String addr : keySet()) {
-						nextBuilder = get(addr);
+					for(final String addr : loadSvcMap.keySet()) {
+						nextBuilder = loadSvcMap.get(addr);
 						nextBuilder.useNewItemSrc();
 					}
 					//
@@ -159,8 +159,8 @@ implements DataLoadBuilderClient<T, W, U> {
 				} else {
 					// disable any item source usage on the load servers side
 					V nextBuilder;
-					for(final String addr : keySet()) {
-						nextBuilder = get(addr);
+					for(final String addr : loadSvcMap.keySet()) {
+						nextBuilder = loadSvcMap.get(addr);
 						nextBuilder.useNoneItemSrc();
 					}
 					//
@@ -169,8 +169,8 @@ implements DataLoadBuilderClient<T, W, U> {
 			} else if(flagUseNewItemSrc) {
 				// enable new data item generation on the load servers side
 				V nextBuilder;
-				for(final String addr : keySet()) {
-					nextBuilder = get(addr);
+				for(final String addr : loadSvcMap.keySet()) {
+					nextBuilder = loadSvcMap.get(addr);
 					nextBuilder.useNewItemSrc();
 				}
 				//
@@ -178,8 +178,8 @@ implements DataLoadBuilderClient<T, W, U> {
 			} else if(flagUseContainerItemSrc) {
 				// disable any item source usage on the load servers side
 				V nextBuilder;
-				for(final String addr : keySet()) {
-					nextBuilder = get(addr);
+				for(final String addr : loadSvcMap.keySet()) {
+					nextBuilder = loadSvcMap.get(addr);
 					nextBuilder.useNoneItemSrc();
 				}
 				//

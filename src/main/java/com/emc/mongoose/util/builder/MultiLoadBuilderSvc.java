@@ -40,7 +40,8 @@ implements LoadBuilderSvc {
 	//
 	private final List<LoadBuilderSvc> loadBuilderSvcs = new ArrayList<>();
 	//
-	public MultiLoadBuilderSvc(final RunTimeConfig rtConfig) {
+	public MultiLoadBuilderSvc(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		loadBuilderSvcs.add(new BasicWSContainerLoadBuilderSvc(rtConfig));
 		loadBuilderSvcs.add(new BasicWSDataLoadBuilderSvc(rtConfig));
 		loadBuilderSvcs.add(

@@ -36,12 +36,14 @@ implements FileLoadBuilderSvc<T, U> {
 	//
 	private String configTable = null;
 	//
-	public BasicFileLoadBuilderSvc(final RunTimeConfig rtConfig) {
+	public BasicFileLoadBuilderSvc(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		super(rtConfig);
 	}
 	//
 	@Override
-	public final BasicFileLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
+	public final BasicFileLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig)
+	throws RemoteException {
 		super.setProperties(clientConfig);
 		final String runMode = clientConfig.getRunMode();
 		if (!runMode.equals(Constants.RUN_MODE_SERVER)
@@ -151,6 +153,7 @@ implements FileLoadBuilderSvc<T, U> {
 	@Override
 	public final void close()
 	throws IOException {
+		super.close();
 		ServiceUtil.close(this);
 	}
 	//

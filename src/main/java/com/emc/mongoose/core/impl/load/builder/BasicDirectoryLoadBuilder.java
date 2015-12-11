@@ -12,10 +12,10 @@ import com.emc.mongoose.core.api.load.executor.DirectoryLoadExecutor;
 import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
 import com.emc.mongoose.core.impl.load.executor.BasicDirectoryLoadExecutor;
 //
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 /**
  Created by kurila on 26.11.15.
  */
@@ -27,12 +27,13 @@ public class BasicDirectoryLoadBuilder<
 extends ContainerLoadBuilderBase<T, C, U>
 implements DirectoryLoadBuilder<T, C, U> {
 	//
-	public BasicDirectoryLoadBuilder(final RunTimeConfig rtConfig) {
+	public BasicDirectoryLoadBuilder(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		super(rtConfig);
 	}
 	//
 	@Override
-	protected FileIOConfig<T, C> getDefaultRequestConfig() {
+	protected FileIOConfig<T, C> getDefaultIOConfig() {
 		return new BasicFileIOConfig<>();
 	}
 	//

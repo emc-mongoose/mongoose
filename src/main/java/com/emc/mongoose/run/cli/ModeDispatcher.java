@@ -58,8 +58,10 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
-				final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(RunTimeConfig.getContext());
 				try {
+					final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(
+						RunTimeConfig.getContext()
+					);
 					multiSvc.start();
 					multiSvc.await();
 				} catch(final RemoteException | InterruptedException e) {

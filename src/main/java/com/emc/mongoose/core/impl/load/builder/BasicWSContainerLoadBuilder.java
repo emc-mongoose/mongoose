@@ -13,6 +13,7 @@ import com.emc.mongoose.core.impl.load.executor.BasicWSContainerLoadExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.rmi.RemoteException;
 import java.util.NoSuchElementException;
 
 /**
@@ -28,18 +29,20 @@ implements WSContainerLoadBuilder<T, C, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSContainerLoadBuilder(final RunTimeConfig runTimeConfig) {
+	public BasicWSContainerLoadBuilder(final RunTimeConfig runTimeConfig)
+	throws RemoteException {
 		super(runTimeConfig);
 		setProperties(runTimeConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig<T, C> getDefaultRequestConfig() {
+	protected WSRequestConfig<T, C> getDefaultIOConfig() {
 		return WSRequestConfigBase.getInstance();
 	}
 	//
 	@Override
-	public BasicWSContainerLoadBuilder<T, C, U> setProperties(final RunTimeConfig rtConfig) {
+	public BasicWSContainerLoadBuilder<T, C, U> setProperties(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		//
 		super.setProperties(rtConfig);
 		//

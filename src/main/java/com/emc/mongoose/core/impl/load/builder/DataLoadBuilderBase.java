@@ -38,7 +38,8 @@ implements DataLoadBuilder<T, U> {
 	protected float objSizeBias;
 	protected boolean flagUseContainerItemSrc;
 	//
-	public DataLoadBuilderBase(final RunTimeConfig rtConfig) {
+	public DataLoadBuilderBase(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		super(rtConfig);
 	}
 	//
@@ -98,7 +99,7 @@ implements DataLoadBuilder<T, U> {
 	//
 	@Override
 	public DataLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
-	throws IllegalStateException {
+	throws IllegalStateException, RemoteException {
 		super.setProperties(rtConfig);
 		//
 		String paramName = RunTimeConfig.KEY_DATA_SIZE_MIN;
@@ -155,7 +156,8 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setItemSrc(ItemSrc<T> itemSrc) {
+	public LoadBuilder<T, U> setItemSrc(ItemSrc<T> itemSrc)
+	throws RemoteException {
 		super.setItemSrc(itemSrc);
 		if(itemSrc instanceof DataItemFileSrc) {
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;

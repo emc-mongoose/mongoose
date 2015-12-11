@@ -45,14 +45,15 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	//
 	private String configTable = null;
 	//
-	public BasicDirectoryLoadBuilderSvc(final RunTimeConfig rtConfig) {
+	public BasicDirectoryLoadBuilderSvc(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		super(rtConfig);
 	}
 	//
 	@Override
 	public final BasicDirectoryLoadBuilderSvc<T, C, U> setProperties(
 		final RunTimeConfig clientConfig
-	) {
+	) throws RemoteException {
 		super.setProperties(clientConfig);
 		final String runMode = clientConfig.getRunMode();
 		if(
@@ -154,6 +155,7 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	@Override
 	public final void close()
 	throws IOException {
+		super.close();
 		ServiceUtil.close(this);
 	}
 	//

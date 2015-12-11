@@ -17,6 +17,7 @@ import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.rmi.RemoteException;
 import java.util.NoSuchElementException;
 /**
  Created by kurila on 05.05.14.
@@ -27,18 +28,20 @@ implements WSDataLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSDataLoadBuilder(final RunTimeConfig runTimeConfig) {
+	public BasicWSDataLoadBuilder(final RunTimeConfig runTimeConfig)
+	throws RemoteException {
 		super(runTimeConfig);
 		setProperties(runTimeConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig<T, ? extends Container<T>> getDefaultRequestConfig() {
+	protected WSRequestConfig<T, ? extends Container<T>> getDefaultIOConfig() {
 		return WSRequestConfigBase.getInstance();
 	}
 	//
 	@Override
-	public BasicWSDataLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig) {
+	public BasicWSDataLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		//
 		super.setProperties(rtConfig);
 		//

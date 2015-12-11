@@ -15,18 +15,20 @@ import com.emc.mongoose.core.impl.load.executor.BasicFileLoadExecutor;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 /**
  Created by kurila on 26.11.15.
  */
 public class BasicFileLoadBuilder<T extends FileItem, U extends FileLoadExecutor<T>>
 extends DataLoadBuilderBase<T, U> {
 	//
-	public BasicFileLoadBuilder(final RunTimeConfig rtConfig) {
+	public BasicFileLoadBuilder(final RunTimeConfig rtConfig)
+	throws RemoteException {
 		super(rtConfig);
 	}
 	//
 	@Override
-	protected FileIOConfig<T, ? extends Directory<T>> getDefaultRequestConfig() {
+	protected FileIOConfig<T, ? extends Directory<T>> getDefaultIOConfig() {
 		return new BasicFileIOConfig<>();
 	}
 	//
