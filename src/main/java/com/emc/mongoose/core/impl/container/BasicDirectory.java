@@ -10,6 +10,10 @@ public class BasicDirectory<T extends FileItem>
 extends BasicContainer<T>
 implements Directory<T> {
 	//
+	public BasicDirectory() {
+		super();
+	}
+	//
 	public BasicDirectory(final String name) {
 		super(name);
 	}

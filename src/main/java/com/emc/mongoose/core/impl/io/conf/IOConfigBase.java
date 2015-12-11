@@ -232,6 +232,7 @@ implements IOConfig<T, C> {
 		setBuffSize(in.readInt());
 		LOG.trace(Markers.MSG, "Got buff size {}", buffSize);
 		reqSleepMilliSec = in.readInt();
+		LOG.trace(Markers.MSG, "Got request interval {}", reqSleepMilliSec);
 	}
 	//
 	@Override

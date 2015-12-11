@@ -126,7 +126,7 @@ implements ItemProducer<T> {
 						break;
 					}
 					if(n > 0) {
-						for(m = 0; m < n && !isInterrupted;) {
+						for(m = 0; m < n && !isInterrupted; ) {
 							m += itemDst.put(buff, m, n);
 							LockSupport.parkNanos(1);
 						}
@@ -145,11 +145,8 @@ implements ItemProducer<T> {
 				} catch(final ClosedByInterruptException | IllegalStateException e) {
 					break;
 				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.DEBUG, e,
-						"Failed to transfer the data items, " +
-						"count = {}, batch size = {}, batch offset = {}", producedItemsCount, n, m
-					);
+					LogUtil.exception(LOG, Level.DEBUG, e, "Failed to transfer the data items, " +
+						"count = {}, batch size = {}, batch offset = {}", producedItemsCount, n, m);
 				}
 			}
 		} finally {
