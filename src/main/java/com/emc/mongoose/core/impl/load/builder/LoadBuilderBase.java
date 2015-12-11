@@ -72,8 +72,9 @@ implements LoadBuilder<T, U> {
 	public LoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
 		this.rtConfig = rtConfig;
+		RunTimeConfig.setContext(rtConfig);
 		if(ioConfig != null) {
-			ioConfig.setProperties(rtConfig);
+			ioConfig.setRunTimeConfig(rtConfig);
 		} else {
 			throw new IllegalStateException("Shared request config is not initialized");
 		}

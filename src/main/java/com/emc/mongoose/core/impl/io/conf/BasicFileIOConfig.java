@@ -31,8 +31,8 @@ implements FileIOConfig<F, D> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public BasicFileIOConfig<F, D> setProperties(final RunTimeConfig rtConfig) {
-		super.setProperties(rtConfig);
+	public BasicFileIOConfig<F, D> setRunTimeConfig(final RunTimeConfig rtConfig) {
+		super.setRunTimeConfig(rtConfig);
 		setContainer((D) new BasicDirectory<F>(getNamePrefix()));
 		batchSize = rtConfig.getBatchSize();
 		return this;

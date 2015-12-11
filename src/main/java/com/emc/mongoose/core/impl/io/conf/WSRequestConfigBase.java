@@ -379,7 +379,7 @@ implements WSRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T, C> setProperties(final RunTimeConfig runTimeConfig) {
+	public WSRequestConfigBase<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
 		//
 		try {
 			setScheme(this.runTimeConfig.getStorageProto());
@@ -413,7 +413,7 @@ implements WSRequestConfig<T, C> {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_HTTP_PIPELINING);
 		}
 		//
-		super.setProperties(runTimeConfig);
+		super.setRunTimeConfig(runTimeConfig);
 		//
 		return this;
 	}

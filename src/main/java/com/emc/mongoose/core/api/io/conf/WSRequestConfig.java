@@ -103,7 +103,7 @@ extends RequestConfig<T, C> {
 	boolean getPipelining();
 	//
 	@Override
-	WSRequestConfig<T, C> setProperties(final RunTimeConfig props);
+	WSRequestConfig<T, C> setRunTimeConfig(final RunTimeConfig props);
 	//
 	HeaderGroup getSharedHeaders();
 	//

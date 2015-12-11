@@ -42,8 +42,8 @@ extends StandaloneClientTestBase {
 		//
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
 			.newInstanceFor("s3")
-			.setProperties(RunTimeConfig.getContext());
-		reqConf.setProperties(RunTimeConfig.getContext());
+			.setRunTimeConfig(RunTimeConfig.getContext());
+		reqConf.setRunTimeConfig(RunTimeConfig.getContext());
 		bucketHelper = new WSBucketHelper(
 			reqConf, new BasicContainer(S3UsePreExistingBucketTest.class.getSimpleName())
 		);

@@ -80,8 +80,8 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final WSRequestConfigImpl<T, C> setProperties(final RunTimeConfig runTimeConfig) {
-		super.setProperties(runTimeConfig);
+	public final WSRequestConfigImpl<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
+		super.setRunTimeConfig(runTimeConfig);
 		//
 		try {
 			setContainer((C) new BasicContainer<T>(this.runTimeConfig.getString(KEY_BUCKET_NAME)));

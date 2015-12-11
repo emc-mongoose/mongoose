@@ -40,7 +40,7 @@ extends IOConfig<T, C>, Closeable {
 	RequestConfig<T, C> setSecret(final String secret);
 	//
 	@Override
-	RequestConfig<T, C> setProperties(final RunTimeConfig props);
+	RequestConfig<T, C> setRunTimeConfig(final RunTimeConfig props);
 	//
 	void configureStorage(final String storageAddrs[])
 	throws IllegalStateException;

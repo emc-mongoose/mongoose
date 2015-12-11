@@ -39,8 +39,8 @@ extends StandaloneClientTestBase {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
 			.newInstanceFor("atmos")
-			.setProperties(rtConfig);
-		reqConf.setProperties(RunTimeConfig.getContext());
+			.setRunTimeConfig(rtConfig);
+		reqConf.setRunTimeConfig(RunTimeConfig.getContext());
 		SUBTENANT = new WSSubTenantImpl(
 			reqConf, AtmosRequestHandler.generateSubtenant()
 		);
