@@ -706,11 +706,12 @@ implements Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public synchronized void loadJsonProps(final Path filePath) {
 		final Logger log = LogManager.getLogger();
+		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
 		new JsonConfigLoader(this).loadPropsFromJsonCfgFile(filePath);
 		log.debug(Markers.MSG, "Going to override the aliasing section");
 		for(final String key : mongooseKeys) {
-			if(key.startsWith(PREFIX_KEY_ALIASING)) {
-				final String correctKey = key.replaceAll(PREFIX_KEY_ALIASING, "");
+			if(key.startsWith(prefixKeyAliasingWithDot)) {
+				final String correctKey = key.replaceAll(prefixKeyAliasingWithDot, "");
 				log.trace(
 					Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
 				);

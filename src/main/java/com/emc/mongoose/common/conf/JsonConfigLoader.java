@@ -94,8 +94,9 @@ public class JsonConfigLoader {
 				if(action.equals(JsonConfigLoaderActions.UPDATE)) {
 					final Object value = rtConfig.getProperty(propertyName);
 					if(!propertyName.startsWith(RunTimeConfig.PREFIX_KEY_ALIASING)) {
-						LOG.trace(Markers.MSG, "Update property: \"{}\" = {}",
-							propertyName, value);
+						LOG.trace(
+							Markers.MSG, "Update property: \"{}\" = {}", propertyName, value
+						);
 					}
 					rtConfig.setProperty(propertyName, value);
 					putJsonFormatValue(jsonNode, jsonField, propertyName);
@@ -103,8 +104,9 @@ public class JsonConfigLoader {
 					// load configuration from mongoose.json
 					final JsonNode nodeValue = jsonNode.get(jsonField);
 					if(!propertyName.startsWith(RunTimeConfig.PREFIX_KEY_ALIASING)) {
-						LOG.trace(Markers.MSG, "Read property: \"{}\" = {}",
-							propertyName, nodeValue);
+						LOG.trace(
+							Markers.MSG, "Read property: \"{}\" = {}", propertyName, nodeValue
+						);
 					}
 					//
 					if(!nodeValue.isNull()) {
