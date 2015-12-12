@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
@@ -69,6 +70,7 @@ implements Externalizable {
 		KEY_ITEM_PREFIX = "item.prefix",
 		KEY_DATA_VERSIONING = "data.versioning",
 		//
+		KEY_HTTP_CUSTOM_HEADERS = "http.customHeaders",
 		KEY_HTTP_PIPELINING = "http.pipelining",
 		//
 		KEY_LOAD_CONNS = "load.connections",
@@ -349,6 +351,10 @@ implements Externalizable {
 	//
 	public final boolean getHttpContentChunked() {
 		return getBoolean("http.content.chunked");
+	}
+	//
+	public final Configuration getHttpCustomHeaders() {
+		return subset(KEY_HTTP_CUSTOM_HEADERS);
 	}
 	//
 	public final boolean getHttpPipeliningFlag() {

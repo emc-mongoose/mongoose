@@ -152,14 +152,6 @@
 			"id": "wuser1@sanity.local",
 			"secret": "uwXSy4kD+N8pmltfOC2JxtrJ+Tg7/yBswV6jMu6h"
 		},
-		"io": {
-			"buffer": {
-				"size": {
-					"min": "4KB",
-					"max": "1MB"
-				}
-			}
-		},
 		"data": {
 			"size": {
 				"min": "1MB",
@@ -182,6 +174,10 @@
 				"type": "application/octet-stream",
 				"repeatable": true
 			},
+			"customHeaders": {
+				"Connection" : "keep-alive",
+				"User-Agent" : "mongoose/next"
+			},
 			"pipelining": false,
 			"signMethod": "HmacSHA1"
 		},
@@ -197,6 +193,14 @@
 				"maxSize": 500000
 			},
 			"prefix": null
+		},
+		"io": {
+			"buffer": {
+				"size": {
+					"min": "4KB",
+					"max": "1MB"
+				}
+			}
 		},
 		"load": {
 			"circular": false,
