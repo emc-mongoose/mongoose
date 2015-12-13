@@ -50,7 +50,7 @@ implements Runnable {
 	//
 	public Chain(final RunTimeConfig rtConfig) {
 		this(
-			(DataLoadBuilder) LoadBuilderFactory.getInstance(rtConfig),
+			rtConfig,
 			rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit(),
 			rtConfig.getScenarioChainLoad(), rtConfig.getScenarioChainConcurrentFlag()
 		);
@@ -58,7 +58,7 @@ implements Runnable {
 	//
 	@SuppressWarnings("unchecked")
 	public Chain(
-		final DataLoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
+		final RunTimeConfig rtConfig, final long timeOut, final TimeUnit timeUnit,
 		final String[] loadTypeSeq, final boolean isParallel
 	) {
 		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
@@ -68,53 +68,56 @@ implements Runnable {
 		String loadTypeStr;
 		LoadExecutor nextLoadJob, prevLoadJob = null;
 		final IOConfig ioConf;
-		try {
+		try(
+			final DataLoadBuilder
+				loadBuilder = (DataLoadBuilder) LoadBuilderFactory.getInstance(rtConfig)
+		) {
 			ioConf = loadBuilder.getIOConfig();
-		} catch(final RemoteException e) {
-			throw new RuntimeException(e);
-		}
-		ItemDst itemDst = null;
-		IOTask.Type loadType;
-		for(int i = 0; i < loadTypeSeq.length; i ++) {
-			loadTypeStr = loadTypeSeq[i];
-			loadType = IOTask.Type.valueOf(loadTypeStr.toUpperCase());
-			LOG.debug(Markers.MSG, "Building the load job #{}, type is \"{}\"", i, loadTypeStr);
-			try {
-				loadBuilder.setLoadType(loadType);
-				// determine the items source for the next load job
-				if(prevLoadJob == null) {
-					if(IOTask.Type.CREATE.equals(loadType)) {
-						loadBuilder.useNewItemSrc();
+			ItemDst itemDst = null;
+			IOTask.Type loadType;
+			for(int i = 0; i < loadTypeSeq.length; i++) {
+				loadTypeStr = loadTypeSeq[i];
+				loadType = IOTask.Type.valueOf(loadTypeStr.toUpperCase());
+				LOG.debug(Markers.MSG, "Building the load job #{}, type is \"{}\"", i, loadTypeStr);
+				try {
+					loadBuilder.setLoadType(loadType);
+					// determine the items source for the next load job
+					if(prevLoadJob == null) {
+						if(IOTask.Type.CREATE.equals(loadType)) {
+							loadBuilder.useNewItemSrc();
+						} else {
+							loadBuilder.useContainerListingItemSrc();
+						}
 					} else {
-						loadBuilder.useContainerListingItemSrc();
+						if(isParallel) {
+							loadBuilder.useNoneItemSrc();
+						} else {
+							itemDst = new ItemCSVFileDst(
+								ioConf.getItemClass(), ioConf.getContentSource()
+							);
+							loadBuilder.setItemSrc(itemDst.getItemSrc());
+						}
 					}
-				} else {
-					if(isParallel) {
-						loadBuilder.useNoneItemSrc();
-					} else {
-						itemDst = new ItemCSVFileDst(
-							ioConf.getItemClass(), ioConf.getContentSource()
-						);
-						loadBuilder.setItemSrc(itemDst.getItemSrc());
+					// build the job
+					nextLoadJob = loadBuilder.build();
+					// determine the items destination for the next load job
+					if(prevLoadJob != null) {
+						if(isParallel) {
+							itemDst = nextLoadJob;
+						}
+						prevLoadJob.setItemDst(itemDst);
 					}
+					// add the built job into the chain
+					loadJobSeq.add(nextLoadJob);
+					prevLoadJob = nextLoadJob;
+				} catch(final RemoteException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to apply the property remotely");
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to build the load job");
 				}
-				// build the job
-				nextLoadJob = loadBuilder.build();
-				// determine the items destination for the next load job
-				if(prevLoadJob != null) {
-					if(isParallel) {
-						itemDst = nextLoadJob;
-					}
-					prevLoadJob.setItemDst(itemDst);
-				}
-				// add the built job into the chain
-				loadJobSeq.add(nextLoadJob);
-				prevLoadJob = nextLoadJob;
-			} catch(final RemoteException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to apply the property remotely");
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to build the load job");
 			}
+		} catch(final IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 	//
@@ -139,7 +142,9 @@ implements Runnable {
 				loadJobSeq.size(), new GroupThreadFactory("chainFinishAwait")
 			);
 			for(final LoadExecutor nextLoadJob : loadJobSeq) {
-				chainWaitExecSvc.submit(new AwaitAndCloseLoadJobTask(nextLoadJob, timeOut, timeUnit));
+				chainWaitExecSvc.submit(
+					new AwaitAndCloseLoadJobTask(nextLoadJob, timeOut, timeUnit)
+				);
 			}
 			chainWaitExecSvc.shutdown();
 			try {
@@ -160,7 +165,8 @@ implements Runnable {
 						nextLoadJob.interrupt();
 					} catch(final IOException e) {
 						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to interrupt the load job \"{}\"", nextLoadJob
+							LOG, Level.WARN, e, "Failed to interrupt the load job \"{}\"",
+							nextLoadJob
 						);
 					}
 				}

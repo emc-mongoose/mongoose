@@ -55,21 +55,10 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	protected DirectoryLoadBuilderSvc<T, C, W> resolve(final String serverAddr)
 	throws IOException {
 		DirectoryLoadBuilderSvc<T, C, W> rlb;
-		final Service remoteSvc = ServiceUtil.getRemoteSvc(
-			"//" + serverAddr + '/'
-				+ getClass().getName()
-				.replace("client", "server").replace("Client", "Svc")
-		);
-		if(remoteSvc == null) {
-			throw new IOException("No remote load builder was resolved from " + serverAddr);
-		} else if(remoteSvc instanceof DirectoryLoadBuilderSvc) {
-			rlb = (DirectoryLoadBuilderSvc<T, C, W>) remoteSvc;
-		} else {
-			throw new IOException(
-				"Illegal class " + remoteSvc.getClass().getCanonicalName() +
-					" of the instance resolved from " + serverAddr
-			);
-		}
+		final String svcUri = "//" + serverAddr + '/' +
+			getClass().getName().replace("client", "server").replace("Client", "Svc");
+		rlb = (DirectoryLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri);
+		rlb = (DirectoryLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());
 		return rlb;
 	}
 	//

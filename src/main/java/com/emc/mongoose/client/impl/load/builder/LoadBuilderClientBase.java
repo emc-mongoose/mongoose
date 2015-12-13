@@ -46,12 +46,9 @@ implements LoadBuilderClient<T, W, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected ItemSrc<T> itemSrc;
-	protected String storageNodeAddrs[] = null, loadSvcAddrs[] = null;
+	protected String loadSvcAddrs[] = null;
 	//
-	protected boolean
-		flagAssignLoadSvcToNode = false,
-		flagUseNewItemSrc, flagUseNoneItemSrc;
+	protected boolean flagAssignLoadSvcToNode = false;
 	protected final Map<String, V> loadSvcMap = new HashMap<>();
 	protected final Map<String, RunTimeConfig> loadSvcConfMap = new HashMap<>();
 	//
@@ -68,17 +65,22 @@ implements LoadBuilderClient<T, W, U> {
 		V loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
 		for(final String serverAddr : loadSvcAddrs) {
-			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
-			loadBuilderSvc = resolve(serverAddr);
-			if(loadBuilderSvc.lockUntilSvcBuilt(10, TimeUnit.SECONDS)) {
+			try {
+				loadBuilderSvc = resolve(serverAddr);
+				LOG.info(
+					Markers.MSG, "Resolved service \"{}\" @ {}",
+					loadBuilderSvc.getName(), serverAddr
+				);
 				nextInstanceN = loadBuilderSvc.getNextInstanceNum(rtConfig.getRunId());
 				if(nextInstanceN > maxLastInstanceN) {
 					maxLastInstanceN = nextInstanceN;
 				}
 				loadSvcMap.put(serverAddr, loadBuilderSvc);
 				loadSvcConfMap.put(serverAddr, (RunTimeConfig)rtConfig.clone());
-			} else {
-				LOG.warn(Markers.ERR, "Failed to lock load builder service @ {}", serverAddr);
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to lock load builder service @ {}", serverAddr
+				);
 			}
 		}
 		//
@@ -372,5 +374,24 @@ implements LoadBuilderClient<T, W, U> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to make load builder string");
 		}
 		return strBuilder.toString();
+	}
+	//
+	@Override
+	public void close()
+	throws IOException {
+		V nextLoadBuilderSvc;
+		for(final String loadSvcAddr : loadSvcAddrs) {
+			nextLoadBuilderSvc = loadSvcMap.get(loadSvcAddr);
+			if(nextLoadBuilderSvc != null) {
+				try {
+					nextLoadBuilderSvc.close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to close the load builder service @ {}",
+						loadSvcAddr
+					);
+				}
+			}
+		}
 	}
 }

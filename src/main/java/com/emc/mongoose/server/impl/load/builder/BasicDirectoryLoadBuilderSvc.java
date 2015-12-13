@@ -30,8 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 26.11.15.
  */
@@ -44,8 +43,9 @@ extends BasicDirectoryLoadBuilder<T, C, U>
 implements DirectoryLoadBuilderSvc<T, C, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static AtomicInteger FORK_COUNTER = new AtomicInteger(0);
 	//
-	private final Lock remoteLock = new ReentrantLock();
+	private String name = getClass().getName();
 	//
 	public BasicDirectoryLoadBuilderSvc(final RunTimeConfig rtConfig)
 	throws RemoteException {
@@ -53,11 +53,17 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
-	public final boolean lockUntilSvcBuilt(final long timeOut, final TimeUnit timeUnit)
+	public final int fork()
 	throws RemoteException {
 		try {
-			return remoteLock.tryLock(timeOut, timeUnit);
-		} catch(final InterruptedException e) {
+			final BasicDirectoryLoadBuilderSvc<T, C, U>
+				forkedSvc = (BasicDirectoryLoadBuilderSvc<T, C, U>) clone();
+			final int forkNum = FORK_COUNTER.getAndIncrement();
+			forkedSvc.name = name + forkNum;
+			start();
+			LOG.info(Markers.MSG, "Service \"" + name + "\" started");
+			return forkNum;
+		} catch(final CloneNotSupportedException e) {
 			throw new RemoteException(e.toString());
 		}
 	}
@@ -65,13 +71,8 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	@Override
 	public String buildRemotely()
 	throws RemoteException {
-		U loadSvc;
-		try {
-			LOG.info(Markers.MSG, rtConfig.toString());
-			loadSvc = build();
-		} finally {
-			remoteLock.unlock();
-		}
+		U loadSvc = build();
+		LOG.info(Markers.MSG, rtConfig.toString());
 		ServiceUtil.create(loadSvc);
 		return loadSvc.getName();
 	}
@@ -155,6 +156,7 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	throws IOException {
 		super.close();
 		ServiceUtil.close(this);
+		LOG.info(Markers.MSG, "Service \"{}\" closed", name);
 	}
 	//
 	@Override

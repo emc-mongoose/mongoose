@@ -44,21 +44,10 @@ implements FileLoadBuilderClient<T, W, U> {
 	protected FileLoadBuilderSvc<T, W> resolve(final String serverAddr)
 	throws IOException {
 		FileLoadBuilderSvc<T, W> rlb;
-		final Service remoteSvc = ServiceUtil.getRemoteSvc(
-			"//" + serverAddr + '/'
-				+ getClass().getName()
-				.replace("client", "server").replace("Client", "Svc")
-		);
-		if(remoteSvc == null) {
-			throw new IOException("No remote load builder was resolved from " + serverAddr);
-		} else if(remoteSvc instanceof FileLoadBuilderSvc) {
-			rlb = (FileLoadBuilderSvc<T, W>) remoteSvc;
-		} else {
-			throw new IOException(
-				"Illegal class " + remoteSvc.getClass().getCanonicalName() +
-					" of the instance resolved from " + serverAddr
-			);
-		}
+		final String svcUri = "//" + serverAddr + '/' +
+			getClass().getName().replace("client", "server").replace("Client", "Svc");
+		rlb = (FileLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri);
+		rlb = (FileLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());
 		return rlb;
 	}
 	//

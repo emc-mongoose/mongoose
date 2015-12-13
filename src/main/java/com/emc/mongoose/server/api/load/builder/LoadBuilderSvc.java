@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 public interface LoadBuilderSvc<T extends Item, U extends LoadSvc<T>>
 extends LoadBuilder<T, U>, Service {
 	//
-	boolean lockUntilSvcBuilt(final long timeOut, final TimeUnit timeUnit)
+	int fork()
 	throws RemoteException;
 	//
 	String buildRemotely()

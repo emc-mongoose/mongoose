@@ -41,7 +41,7 @@ implements LoadBuilder<T, U> {
 	protected long maxCount = 0;
 	protected volatile IOConfig<?, ?> ioConfig = getDefaultIOConfig();
 	protected float rateLimit;
-	protected int manualTaskSleepMicroSecs, updatesPerItem;
+	protected int manualTaskSleepMicroSecs;
 	protected ItemSrc itemSrc;
 	protected String storageNodeAddrs[];
 	protected final Map<IOTask.Type, Integer>
@@ -332,6 +332,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilderBase<T, U> clone()
 	throws CloneNotSupportedException {
 		final LoadBuilderBase<T, U> lb = (LoadBuilderBase<T, U>) super.clone();
+		lb.rtConfig = (RunTimeConfig) rtConfig.clone();
 		LOG.debug(Markers.MSG, "Cloning request config for {}", ioConfig.toString());
 		lb.ioConfig = ioConfig.clone();
 		lb.maxCount = maxCount;
@@ -345,6 +346,8 @@ implements LoadBuilder<T, U> {
 		lb.itemSrc = itemSrc;
 		lb.rateLimit = rateLimit;
 		lb.manualTaskSleepMicroSecs = manualTaskSleepMicroSecs;
+		lb.flagUseNewItemSrc = flagUseNewItemSrc;
+		lb.flagUseNoneItemSrc = flagUseNoneItemSrc;
 		return lb;
 	}
 	//

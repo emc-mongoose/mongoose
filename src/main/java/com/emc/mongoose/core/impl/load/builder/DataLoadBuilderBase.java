@@ -35,6 +35,7 @@ implements DataLoadBuilder<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected long minObjSize, maxObjSize;
+	protected int updatesPerItem;
 	protected float objSizeBias;
 	protected boolean flagUseContainerItemSrc;
 	//
@@ -55,7 +56,9 @@ implements DataLoadBuilder<T, U> {
 		final DataLoadBuilderBase<T, U> lb = (DataLoadBuilderBase<T, U>) super.clone();
 		lb.minObjSize = minObjSize;
 		lb.maxObjSize = maxObjSize;
+		lb.updatesPerItem = updatesPerItem;
 		lb.objSizeBias = objSizeBias;
+		lb.flagUseContainerItemSrc = flagUseContainerItemSrc;
 		return lb;
 	}
 	//
