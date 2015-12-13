@@ -14,7 +14,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
 	WriteByTimeTest.class,
 	WriteLoggingTest.class,
-	//ReadLoggingTest.class,
+	ReadLoggingTest.class,
 	DeleteLoggingTest.class,
 	UpdateLoggingTest.class,
 })
