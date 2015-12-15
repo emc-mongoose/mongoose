@@ -60,7 +60,7 @@ public class NagainaSwiftRequestHandler<T extends WSObjectMock> extends NagainaR
 
 	@Override
 	protected void handleActually(ChannelHandlerContext ctx) {
-		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
+		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.EMPTY_BUFFER, false);
 		String uri = ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey))
 				.get().getUri();
 		String method = ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey))
