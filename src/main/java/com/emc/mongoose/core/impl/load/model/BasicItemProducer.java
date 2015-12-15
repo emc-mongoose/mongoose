@@ -151,8 +151,8 @@ implements ItemProducer<T> {
 			}
 		} finally {
 			LOG.debug(
-					Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-					getName(), producedItemsCount, itemSrc, itemDst
+				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
+				getName(), producedItemsCount, itemSrc, itemDst
 			);
 			try {
 				itemSrc.close();

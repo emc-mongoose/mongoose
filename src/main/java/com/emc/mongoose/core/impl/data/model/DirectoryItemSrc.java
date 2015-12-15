@@ -68,6 +68,10 @@ extends GenericContainerItemSrcBase<F, D> {
 		) throws IllegalStateException {
 			return null;
 		}
+		@Override
+		public void close()
+		throws IOException {
+		}
 	}
 	//
 	public DirectoryItemSrc(
@@ -119,5 +123,11 @@ extends GenericContainerItemSrcBase<F, D> {
 	throws IOException {
 		super.reset();
 		dirIterator = dirStream.iterator();
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		dirStream.close();
 	}
 }

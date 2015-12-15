@@ -9,6 +9,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
@@ -74,7 +75,7 @@ implements DataLoadBuilder<T, U> {
 						minObjSize, maxObjSize, objSizeBias
 					);
 				} else {
-					return (ItemSrc<T>) ioConfig.getContainerListInput(
+					return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
 						maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
 					);
 				}
@@ -84,12 +85,14 @@ implements DataLoadBuilder<T, U> {
 					minObjSize, maxObjSize, objSizeBias
 				);
 			} else if(flagUseContainerItemSrc) {
-				return (ItemSrc<T>) ioConfig.getContainerListInput(
+				return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
 					maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
 				);
 			}
 		} catch(final NoSuchMethodException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the I/O config instance");
 		}
 		return null;
 	}

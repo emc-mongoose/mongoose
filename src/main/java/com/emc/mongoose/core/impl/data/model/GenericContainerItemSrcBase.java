@@ -109,6 +109,7 @@ implements ItemSrc<T> {
 	@Override
 	public void close()
 	throws IOException {
+		containerHelper.close();
 	}
 	//
 	@Override

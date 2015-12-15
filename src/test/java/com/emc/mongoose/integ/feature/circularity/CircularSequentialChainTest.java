@@ -55,7 +55,7 @@ extends StandaloneClientTestBase {
 	//
 	private final static String
 		RUN_ID = CircularSequentialChainTest.class.getCanonicalName(),
-		LOAD_SEQ[] = {  "read", "update" };
+		LOAD_SEQ[] = { "read", "update" };
 	private static final int COUNT_STEPS = LOAD_SEQ.length;
 	//
 	private static byte STD_OUT_CONTENT[] = null;

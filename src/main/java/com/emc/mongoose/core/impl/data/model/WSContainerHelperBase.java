@@ -11,6 +11,7 @@ import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Calendar;
@@ -91,5 +92,11 @@ implements ContainerHelper<T, C> {
 		}
 		//
 		return item;
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		reqConf.close();
 	}
 }
