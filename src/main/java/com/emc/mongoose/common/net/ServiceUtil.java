@@ -166,7 +166,9 @@ public abstract class ServiceUtil {
 			stub = UnicastRemoteObject.exportObject(svc, 0);
 			LOG.debug(Markers.MSG, "Exported service object successfully");
 		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.FATAL, e, "Failed to export service object");
+			LogUtil.exception(
+				LOG, Level.FATAL, e, "Failed to export service object \"{}\"", svc.getName()
+			);
 		}
 		//
 		if(stub != null) {

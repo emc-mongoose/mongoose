@@ -8,7 +8,6 @@ import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //
 import java.rmi.RemoteException;
-import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 09.05.14.
  A remote/server-side load builder.

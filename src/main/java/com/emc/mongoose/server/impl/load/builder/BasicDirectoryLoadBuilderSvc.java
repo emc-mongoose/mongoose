@@ -60,7 +60,7 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 				forkedSvc = (BasicDirectoryLoadBuilderSvc<T, C, U>) clone();
 			final int forkNum = FORK_COUNTER.getAndIncrement();
 			forkedSvc.name = name + forkNum;
-			start();
+			forkedSvc.start();
 			LOG.info(Markers.MSG, "Service \"" + name + "\" started");
 			return forkNum;
 		} catch(final CloneNotSupportedException e) {
@@ -110,12 +110,11 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 		LoadExecutor.NEXT_INSTANCE_NUM.set(instanceN);
 	}
 	//
-	@Override
-	public String getName()
-	throws RemoteException {
-		return getClass().getName();
-	}
 	//
+	@Override
+	public final String getName() {
+		return name;
+	}
 	@Override
 	public void start()
 	throws RemoteException, IllegalThreadStateException {

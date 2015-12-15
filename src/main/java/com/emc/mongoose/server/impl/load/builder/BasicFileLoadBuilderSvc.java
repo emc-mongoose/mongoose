@@ -52,7 +52,7 @@ implements FileLoadBuilderSvc<T, U> {
 				forkedSvc = (BasicFileLoadBuilderSvc<T, U>) clone();
 			final int forkNum = FORK_COUNTER.getAndIncrement();
 			forkedSvc.name = name + forkNum;
-			start();
+			forkedSvc.start();
 			LOG.info(Markers.MSG, "Service \"" + name + "\" started");
 			return forkNum;
 		} catch(final CloneNotSupportedException e) {
@@ -112,9 +112,8 @@ implements FileLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public String getName()
-	throws RemoteException {
-		return getClass().getName();
+	public final String getName() {
+		return name;
 	}
 	//
 	@Override

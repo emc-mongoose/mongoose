@@ -62,9 +62,7 @@ extends DistributedClientTestBase {
 	@BeforeClass
 	public static void setUpClass() {
 		try {
-			System.setProperty(
-				RunTimeConfig.KEY_RUN_ID, RUN_ID
-			);
+			System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 			DistributedClientTestBase.setUpClass();
 			//
 			final RunTimeConfig rtConfig = RunTimeConfig.getContext();

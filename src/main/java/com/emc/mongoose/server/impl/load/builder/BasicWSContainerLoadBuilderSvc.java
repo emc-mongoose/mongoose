@@ -56,7 +56,7 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 				forkedSvc = (BasicWSContainerLoadBuilderSvc<T, C, U>) clone();
 			final int forkNum = FORK_COUNTER.getAndIncrement();
 			forkedSvc.name = name + forkNum;
-			start();
+			forkedSvc.start();
 			LOG.info(Markers.MSG, "Service \"" + name + "\" started");
 			return forkNum;
 		} catch(final CloneNotSupportedException e) {
@@ -75,7 +75,7 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	//
 	@Override
 	public final String getName() {
-		return getClass().getName();
+		return name;
 	}
 	//
 	@Override
@@ -120,9 +120,9 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	throws RemoteException {
 		LOG.debug(Markers.MSG, "Load builder service instance created");
 		try {
-		/*final RemoteStub stub = */
-		ServiceUtil.create(this);
-		/*LOG.debug(Markers.MSG, stub.toString());*/
+			/*final RemoteStub stub = */
+			ServiceUtil.create(this);
+			/*LOG.debug(Markers.MSG, stub.toString());*/
 		} catch (final DuplicateSvcNameException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");
 		}
