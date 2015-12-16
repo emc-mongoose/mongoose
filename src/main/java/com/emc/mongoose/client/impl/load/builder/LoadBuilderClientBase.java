@@ -61,8 +61,6 @@ implements LoadBuilderClient<T, W, U> {
 	throws IOException {
 		super(rtConfig);
 		loadSvcAddrs = rtConfig.getLoadServerAddrs();
-		setRunTimeConfig(rtConfig);
-		//
 		V loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
 		for(final String serverAddr : loadSvcAddrs) {
