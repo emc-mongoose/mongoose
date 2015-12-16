@@ -38,17 +38,10 @@ implements DataLoadBuilder<T, U> {
 	protected long minObjSize, maxObjSize;
 	protected int updatesPerItem;
 	protected float objSizeBias;
-	protected boolean flagUseContainerItemSrc;
 	//
 	public DataLoadBuilderBase(final RunTimeConfig rtConfig)
 	throws RemoteException {
 		super(rtConfig);
-	}
-	//
-	@Override
-	protected void resetItemSrc() {
-		super.resetItemSrc();
-		flagUseContainerItemSrc = true;
 	}
 	//
 	@Override
@@ -59,7 +52,6 @@ implements DataLoadBuilder<T, U> {
 		lb.maxObjSize = maxObjSize;
 		lb.updatesPerItem = updatesPerItem;
 		lb.objSizeBias = objSizeBias;
-		lb.flagUseContainerItemSrc = flagUseContainerItemSrc;
 		return lb;
 	}
 	//
@@ -227,13 +219,6 @@ implements DataLoadBuilder<T, U> {
 			throw new IllegalArgumentException("Update count per item should not be less than 0");
 		}
 		this.updatesPerItem = count;
-		return this;
-	}
-	//
-	@Override
-	public DataLoadBuilder<T, U> useContainerListingItemSrc()
-	throws RemoteException {
-		flagUseContainerItemSrc = true;
 		return this;
 	}
 }

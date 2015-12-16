@@ -21,8 +21,4 @@ extends LoadBuilder<T, U> {
 	//
 	DataLoadBuilder<T, U> setUpdatesPerItem(final int count)
 	throws RemoteException;
-	//
-	DataLoadBuilder<T, U> useContainerListingItemSrc()
-	throws RemoteException;
-	//
 }

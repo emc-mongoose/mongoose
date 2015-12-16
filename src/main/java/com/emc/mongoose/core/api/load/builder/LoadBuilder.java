@@ -66,6 +66,9 @@ extends Closeable, Cloneable {
 	LoadBuilder<T, U> useNoneItemSrc()
 	throws RemoteException;
 	//
+	LoadBuilder<T, U> useContainerListingItemSrc()
+	throws RemoteException;
+	//
 	void invokePreConditions()
 	throws RemoteException, IllegalStateException;
 	//
