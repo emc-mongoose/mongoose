@@ -38,7 +38,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	//
 	public BasicDirectoryLoadBuilderClient()
 	throws IOException {
-		super();
+		this(RunTimeConfig.getContext());
 	}
 	//
 	public BasicDirectoryLoadBuilderClient(final RunTimeConfig runTimeConfig)

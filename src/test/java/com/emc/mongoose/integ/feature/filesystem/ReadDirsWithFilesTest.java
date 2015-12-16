@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 public final class ReadDirsWithFilesTest
 extends FileSystemTestBase {
 	//
-	private final static long COUNT_TO_WRITE = 1000;
+	private final static long COUNT_TO_WRITE = 100;
 	private final static String RUN_ID = ReadDirsWithFilesTest.class.getCanonicalName();
 	//
 	private static long countWritten, countRead;
@@ -74,7 +74,7 @@ extends FileSystemTestBase {
 						RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID + "/" + nextDirName
 					);
 					nextDirClient = CLIENT_BUILDER.build();
-					nextDirClient.write(null, null, COUNT_TO_WRITE, 100, 1);
+					nextDirClient.write(null, null, COUNT_TO_WRITE, 100, 10);
 				}
 			} while(true);
 		}

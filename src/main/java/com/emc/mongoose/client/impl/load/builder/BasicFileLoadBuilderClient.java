@@ -27,7 +27,7 @@ implements FileLoadBuilderClient<T, W, U> {
 	//
 	public BasicFileLoadBuilderClient()
 	throws IOException {
-		super();
+		this(RunTimeConfig.getContext());
 	}
 	//
 	public BasicFileLoadBuilderClient(final RunTimeConfig rtConfig)

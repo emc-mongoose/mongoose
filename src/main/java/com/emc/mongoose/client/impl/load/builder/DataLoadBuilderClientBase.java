@@ -40,12 +40,12 @@ implements DataLoadBuilderClient<T, W, U> {
 	protected float objSizeBias;
 	protected boolean flagUseContainerItemSrc;
 	//
-	public DataLoadBuilderClientBase()
+	protected DataLoadBuilderClientBase()
 	throws IOException {
-		super(RunTimeConfig.getContext());
+		this(RunTimeConfig.getContext());
 	}
 	//
-	public DataLoadBuilderClientBase(final RunTimeConfig rtConfig)
+	protected DataLoadBuilderClientBase(final RunTimeConfig rtConfig)
 	throws IOException {
 		super(rtConfig);
 	}

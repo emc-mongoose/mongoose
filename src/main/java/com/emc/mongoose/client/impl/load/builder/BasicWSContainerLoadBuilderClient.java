@@ -38,7 +38,7 @@ public class BasicWSContainerLoadBuilderClient<
 	//
 	public BasicWSContainerLoadBuilderClient()
 	throws IOException {
-		super();
+		this(RunTimeConfig.getContext());
 	}
 	//
 	public BasicWSContainerLoadBuilderClient(final RunTimeConfig runTimeConfig)

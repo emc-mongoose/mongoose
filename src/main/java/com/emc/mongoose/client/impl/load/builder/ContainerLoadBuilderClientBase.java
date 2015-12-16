@@ -41,7 +41,6 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	protected ContainerLoadBuilderClientBase(final RunTimeConfig rtConfig)
 	throws IOException {
 		super(rtConfig);
-		setRunTimeConfig(rtConfig);
 	}
 	//
 	@Override
@@ -50,7 +49,7 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 		super.setRunTimeConfig(rtConfig);
 		//
 		final String listFilePathStr = rtConfig.getItemSrcFile();
-		if (itemsFileExists(listFilePathStr)) {
+		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(
 					new ItemCSVFileSrc<>(

@@ -37,7 +37,7 @@ implements WSDataLoadBuilderClient<T, W, U> {
 	//
 	public BasicWSDataLoadBuilderClient()
 	throws IOException {
-		super();
+		this(RunTimeConfig.getContext());
 	}
 	//
 	public BasicWSDataLoadBuilderClient(final RunTimeConfig runTimeConfig)

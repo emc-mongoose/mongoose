@@ -46,21 +46,22 @@ implements LoadBuilderClient<T, W, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected String loadSvcAddrs[] = null;
+	protected final String loadSvcAddrs[];
 	//
 	protected boolean flagAssignLoadSvcToNode = false;
 	protected final Map<String, V> loadSvcMap = new HashMap<>();
 	protected final Map<String, RunTimeConfig> loadSvcConfMap = new HashMap<>();
 	//
-	public LoadBuilderClientBase()
+	protected LoadBuilderClientBase()
 	throws IOException {
 		this(RunTimeConfig.getContext());
 	}
 	//
-	public LoadBuilderClientBase(final RunTimeConfig rtConfig)
+	protected LoadBuilderClientBase(final RunTimeConfig rtConfig)
 	throws IOException {
 		super(rtConfig);
 		loadSvcAddrs = rtConfig.getLoadServerAddrs();
+		setRunTimeConfig(rtConfig);
 		//
 		V loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
@@ -68,8 +69,8 @@ implements LoadBuilderClient<T, W, U> {
 			try {
 				loadBuilderSvc = resolve(serverAddr);
 				LOG.info(
-					Markers.MSG, "Resolved service \"{}\" @ {}",
-					loadBuilderSvc.getName(), serverAddr
+						Markers.MSG, "Resolved service \"{}\" @ {}",
+						loadBuilderSvc.getName(), serverAddr
 				);
 				nextInstanceN = loadBuilderSvc.getNextInstanceNum(rtConfig.getRunId());
 				if(nextInstanceN > maxLastInstanceN) {
@@ -79,7 +80,7 @@ implements LoadBuilderClient<T, W, U> {
 				loadSvcConfMap.put(serverAddr, (RunTimeConfig)rtConfig.clone());
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to lock load builder service @ {}", serverAddr
+						LOG, Level.ERROR, e, "Failed to lock load builder service @ {}", serverAddr
 				);
 			}
 		}
@@ -181,7 +182,7 @@ implements LoadBuilderClient<T, W, U> {
 		//
 		try {
 			final String listFile = rtConfig.getItemSrcFile();
-			if (itemsFileExists(listFile)) {
+			if(itemsFileExists(listFile) && loadSvcMap != null) {
 				setItemSrc(
 					new ItemCSVFileSrc<>(
 						Paths.get(listFile), (Class<T>) ioConfig.getItemClass(),
@@ -345,7 +346,7 @@ implements LoadBuilderClient<T, W, U> {
 	public LoadBuilderClient<T, W, U> setItemSrc(final ItemSrc<T> itemSrc)
 	throws RemoteException {
 		super.setItemSrc(itemSrc);
-		if(itemSrc != null) {
+		if(itemSrc != null && loadSvcMap != null) {
 			// disable any item source usage on the load servers side
 			V nextBuilder;
 			for(final String addr : loadSvcMap.keySet()) {
