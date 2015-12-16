@@ -115,13 +115,6 @@ implements DataLoadBuilderClient<T, W, U> {
 		return this;
 	}
 	//
-	@Override
-	public DataLoadBuilderClient<T, W, U> useContainerListingItemSrc()
-	throws RemoteException {
-		flagUseContainerItemSrc = true;
-		return this;
-	}
-	//
 	@Override @SuppressWarnings("unchecked")
 	public DataLoadBuilderClient<T, W, U> setItemSrc(final ItemSrc<T> itemSrc)
 	throws RemoteException {

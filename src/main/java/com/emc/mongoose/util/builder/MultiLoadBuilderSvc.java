@@ -257,7 +257,16 @@ implements LoadBuilderSvc {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.useNoneItemSrc();
 		}
-		return null;
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilderSvc useContainerListingItemSrc()
+	throws RemoteException {
+		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
+			loadBuilderSvc.useContainerListingItemSrc();
+		}
+		return this;
 	}
 	//
 	@Override
