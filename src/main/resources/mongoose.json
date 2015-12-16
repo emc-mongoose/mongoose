@@ -304,7 +304,7 @@
 		},
 		"run": {
 			"name": "mongoose",
-			"version": "next",
+			"version": "1.2.0",
 			"mode": "standalone",
 			"resume": {
 				"enabled" : false

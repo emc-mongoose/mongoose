@@ -66,8 +66,9 @@ extends DistributedLoadBuilderTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
-		try (final BufferingOutputStream
-			     stdOutStream =	StdOutUtil.getStdOutBufferingStream()
+		try(
+			final BufferingOutputStream
+				stdOutStream = StdOutUtil.getStdOutBufferingStream()
 		) {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptMockRunner().run();
