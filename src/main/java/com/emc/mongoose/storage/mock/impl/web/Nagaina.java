@@ -41,13 +41,8 @@ public class Nagaina<T extends WSObjectMock>
 	private Channel channel;
 
 	public Nagaina(RunTimeConfig rtConfig) {
-		this(rtConfig, rtConfig.getStorageMockWorkersPerSocket());
-	}
-
-	private Nagaina(RunTimeConfig rtConfig, int ioThreadCount) {
 		this(
 				rtConfig.getStorageMockHeadCount(),
-				ioThreadCount > 0 ? ioThreadCount : ThreadUtil.getWorkerCount(),
 				rtConfig.getApiTypePort(rtConfig.getApiName()),
 				rtConfig.getStorageMockCapacity(),
 				rtConfig.getStorageMockContainerCapacity(),
@@ -61,11 +56,12 @@ public class Nagaina<T extends WSObjectMock>
 		);
 	}
 
+	@SuppressWarnings("unchecked")
 	public Nagaina(
-			final int headCount, final int ioThreadCount, final int portStart,
+			final int headCount, final int portStart,
 			final int storageCapacity, final int containerCapacity, final int containerCountLimit,
 			final int batchSize, final String dataSrcPath, final int metricsPeriodSec,
-			final boolean jmxServeFlag, final int minConnLifeMilliSec, final int maxConnLifeMilliSec
+			final boolean jmxServeFlag, final int minConnLifeMilliSec, final int maxConnLifeMilliSec //todo use connections vars
 	) {
 		super((Class<T>) BasicWSObjectMock.class, ContentSourceBase.getDefault(),
 				storageCapacity, containerCapacity, containerCountLimit, batchSize, dataSrcPath, metricsPeriodSec,
@@ -77,7 +73,7 @@ public class Nagaina<T extends WSObjectMock>
 		protocolHandlerMapper = new NagainaHandlerMapper<>(RunTimeConfig.getContext(), this);
 	}
 
-
+	@SuppressWarnings("unchecked")
 	@Override
 	protected T newDataObject(String id, long offset, long size) {
 		return (T) new BasicWSObjectMock(id, offset, size, 0, contentSrc);
