@@ -8,10 +8,12 @@ define(["./min-heap"], function(minHeap) {
 
 	function simplify(points, pointsToRemove) {
 
+		// pointsToRemove - лимит, равный числу в 5 раз меньшему количества точек
 		if (!pointsToRemove) {
 			pointsToRemove = points.length / 5;
 		}
 
+		// Инициализация переменных. Элементы в бинарной куче сравниваются по весам точек
 		var heap = minHeap.getHeap(compare),
 			triangles = [],
 			triangle = null,
@@ -23,6 +25,9 @@ define(["./min-heap"], function(minHeap) {
 		}
 
 		var i;
+		// Перебираем массив точек, составляем треугольники из трех последовательных точек,
+		// записываем вес (, равный площади треугольника) средним точкам в треугольнике,
+		// добавляем треугольники в список треугольников и в кучу
 		for (i = 1; i < points.length - 1; i++) {
 			triangle = points.slice(i - 1, i + 2);
 
@@ -32,12 +37,17 @@ define(["./min-heap"], function(minHeap) {
 			}
 		}
 
+		// Перебираем список треугольников и добавляем поля prev и next к объекту "треугольник",
+		// соответственно равные предыдущему и следующему элементу в массиве треугольников
 		for (i = 0; i < triangles.length; i++) {
 			triangle = triangles[i];
 			triangle.next = triangles[i + 1];
 			triangle.prev = triangles[i - 1];
 		}
 
+		// Пока количество удаленных точек меньше лимита и остались треугольники в куче,
+		// проверяем, если вес средней точки в треугольнике меньше maxArea, то вес данной точки равен maxArea,
+		// иначе maxArea равна данному весу
 		while ((deleted <= pointsToRemove) && (triangle = heap.pop())) {
 			if (triangle[1][2] < maxArea) {
 				triangle[1][2] = maxArea;
