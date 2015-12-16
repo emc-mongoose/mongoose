@@ -1,7 +1,7 @@
 define(function() {
 
 	//  scales constants
-	var scaleTypes = ["Linear Scale", "Log Scale"],
+	var scaleTypes = ["Log Scale", "Linear Scale"],
 		scaleOrientation = ["x", "y"];
 	var scales = [
 		{
