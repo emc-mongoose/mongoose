@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.WSMockTestBase;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
-import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
+import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -51,7 +51,7 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		// create the buckets
-		new ScriptMockRunner().run();
+		new ScenarioRunner().run();
 		TimeUnit.SECONDS.sleep(1);
 		RunIdFileManager.flushAll();
 		//
@@ -75,7 +75,7 @@ extends WSMockTestBase {
 					countContainerCreated++;
 					rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, nextContainer);
 					RunTimeConfig.setContext(rtConfig);
-					new ScriptMockRunner().run();
+					new ScenarioRunner().run();
 					TimeUnit.SECONDS.sleep(1);
 				}
 			} while(true);
@@ -89,7 +89,7 @@ extends WSMockTestBase {
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);
 		RunTimeConfig.setContext(rtConfig);
 		//
-		new ScriptMockRunner().run();
+		new ScenarioRunner().run();
 		TimeUnit.SECONDS.sleep(1);
 		//
 		RunIdFileManager.flushAll();

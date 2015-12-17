@@ -23,13 +23,14 @@ implements Runnable {
 	}
 	//
 	private final RunTimeConfig rtConfig;
-	private final long timeOut;
+	private final long timeOut, unChangedCountLimit;
 	private final TimeUnit timeUnit;
 	private final String loadTypeSeq[], sizeSeq[], connCountSeq[];
 	//
 	public Rampup(final RunTimeConfig rtConfig) {
 		this.rtConfig = rtConfig;
 		this.timeOut = rtConfig.getLoadLimitTimeValue();
+		this.unChangedCountLimit = rtConfig.getLoadLimitCount();
 		this.timeUnit = rtConfig.getLoadLimitTimeUnit();
 		this.loadTypeSeq = rtConfig.getScenarioChainLoad();
 		this.sizeSeq = rtConfig.getScenarioRampupSizes();
@@ -49,6 +50,8 @@ implements Runnable {
 				ThreadContext.put("currentConnCount", nextConnCountStr);
 				final String nextStepName = nextConnCountStr + "x" + nextSizeStr;
 				LOG.debug(Markers.MSG, "Build the next step load chain: \"{}\"", nextStepName);
+				// each finished load job affects global count limitation, should be reset
+				rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, unChangedCountLimit);
 				rtConfig.set(RunTimeConfig.KEY_DATA_SIZE, nextSizeStr);
 				rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, nextSizeStr);
 				rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, nextSizeStr);

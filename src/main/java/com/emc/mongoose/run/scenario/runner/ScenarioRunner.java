@@ -14,8 +14,7 @@ import org.apache.logging.log4j.Logger;
  Created by kurila on 12.05.14.
  A scenario runner utility class.
  */
-@Deprecated
-public final class ScriptMockRunner
+public final class ScenarioRunner
 implements Runnable {
 	//
 	private static final Logger LOG = LogManager.getLogger();
