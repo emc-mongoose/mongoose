@@ -2,9 +2,9 @@ package com.emc.mongoose.util.client.impl;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.data.model.ItemDst;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;

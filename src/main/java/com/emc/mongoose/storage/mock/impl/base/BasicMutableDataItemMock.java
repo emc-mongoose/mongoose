@@ -2,9 +2,9 @@ package com.emc.mongoose.storage.mock.impl.base;
 //
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.api.item.data.ContentSource;
 //
-import com.emc.mongoose.core.impl.data.BasicMutableDataItem;
+import com.emc.mongoose.core.impl.item.data.BasicMutableDataItem;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 //
 import org.apache.logging.log4j.LogManager;
@@ -26,6 +26,12 @@ implements MutableDataItemMock {
 	//
 	public BasicMutableDataItemMock(final String metaInfo, final ContentSource contentSrc) {
 		super(metaInfo, contentSrc);
+	}
+	//
+	public BasicMutableDataItemMock(
+		final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		super(offset, size, contentSrc);
 	}
 	//
 	public BasicMutableDataItemMock(

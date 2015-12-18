@@ -3,7 +3,7 @@ package com.emc.mongoose.util.builder;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -35,7 +35,7 @@ public class LoadBuilderFactory {
 		LoadBuilder loadBuilderInstance;
 		try {
 			final Class loadBuilderImplClass = getLoadBuilderClass(
-				rtConfig.getRunMode(), rtConfig.getLoadItemClass()
+				rtConfig.getRunMode(), rtConfig.getItemClass()
 			);
 			final Constructor constructor = loadBuilderImplClass.getConstructor(RunTimeConfig.class);
 			loadBuilderInstance = (LoadBuilder) constructor.newInstance(rtConfig);

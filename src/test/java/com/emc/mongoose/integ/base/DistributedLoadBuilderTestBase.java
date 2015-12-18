@@ -1,18 +1,10 @@
 package com.emc.mongoose.integ.base;
 //
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
-import com.emc.mongoose.client.api.load.builder.WSDataLoadBuilderClient;
-import com.emc.mongoose.client.api.load.executor.LoadClient;
-import com.emc.mongoose.client.api.load.executor.WSDataLoadClient;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.WSObject;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
 //
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //

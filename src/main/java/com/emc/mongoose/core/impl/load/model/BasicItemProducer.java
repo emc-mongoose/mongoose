@@ -3,9 +3,9 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.model.ItemDst;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.base.ItemDst;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.load.model.ItemProducer;
 //
 import org.apache.logging.log4j.Level;

@@ -3,13 +3,13 @@ package com.emc.mongoose.core.impl.io.conf;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.DataItem;
+import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
-import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 //
 import org.apache.commons.lang.StringUtils;
 //

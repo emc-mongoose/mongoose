@@ -3,8 +3,8 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 //
 import org.apache.http.HttpEntity;

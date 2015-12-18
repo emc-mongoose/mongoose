@@ -5,15 +5,15 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.model.ItemDst;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.data.model.ItemFileSrc;
+import com.emc.mongoose.core.api.item.base.ItemDst;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.core.api.item.base.ItemFileSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.data.model.ItemCSVFileDst;
+import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
 import com.emc.mongoose.util.builder.LoadBuilderFactory;

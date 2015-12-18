@@ -4,10 +4,10 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.ItemDst;
+import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.base.ItemDst;
 //
-import com.emc.mongoose.core.impl.data.model.ListItemDst;
+import com.emc.mongoose.core.impl.item.base.ListItemDst;
 //
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 //

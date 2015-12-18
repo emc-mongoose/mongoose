@@ -4,9 +4,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
 import com.emc.mongoose.core.api.io.task.IOTask;

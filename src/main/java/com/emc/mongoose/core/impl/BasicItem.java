@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl;
 //
-import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 //
 import java.io.IOException;
 import java.io.ObjectInput;

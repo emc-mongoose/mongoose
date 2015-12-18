@@ -1,6 +1,6 @@
 package com.emc.mongoose.server.api.load.builder;
 //
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.api.load.builder.WSDataLoadBuilder;
 import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
 /**

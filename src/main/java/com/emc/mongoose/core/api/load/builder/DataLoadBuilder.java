@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.api.load.builder;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 
 import java.rmi.RemoteException;

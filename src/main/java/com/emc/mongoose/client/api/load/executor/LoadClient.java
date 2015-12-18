@@ -1,6 +1,6 @@
 package com.emc.mongoose.client.api.load.executor;
 // mongoose-common.jar
-import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;

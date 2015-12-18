@@ -5,15 +5,15 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.math.MathUtil;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 //
-import com.emc.mongoose.core.impl.data.model.ItemCSVFileSrc;
+import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;

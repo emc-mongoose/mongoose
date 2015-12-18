@@ -4,12 +4,11 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
-import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.impl.container.BasicDirectory;
-import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-import com.emc.mongoose.core.impl.data.model.DataItemCSVFileSrc;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.impl.item.container.BasicDirectory;
+import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.DataItemCSVFileSrc;
 import com.emc.mongoose.integ.base.DistributedFileSystemTestBase;
-import com.emc.mongoose.integ.base.FileSystemTestBase;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.util.client.api.StorageClient;
 //

@@ -7,9 +7,9 @@ import com.emc.mongoose.common.log.Markers;
 import static com.emc.mongoose.core.api.io.conf.WSRequestConfig.VALUE_RANGE_PREFIX;
 import static com.emc.mongoose.core.api.io.conf.WSRequestConfig.VALUE_RANGE_CONCAT;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
-import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;

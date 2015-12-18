@@ -5,8 +5,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.MutableDataItem;
-import com.emc.mongoose.core.api.data.model.ContainerHelper;
+import com.emc.mongoose.core.api.item.data.MutableDataItem;
+import com.emc.mongoose.core.api.item.data.ContainerHelper;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.s3.BucketHelper;
 //

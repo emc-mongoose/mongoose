@@ -1,8 +1,8 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.MutableDataItem;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.DataItem;
+import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.DataIOTask;
 //

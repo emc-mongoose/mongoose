@@ -3,12 +3,12 @@ package com.emc.mongoose.core.impl.io.task;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.FileItem;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
 //
-import com.emc.mongoose.core.impl.data.model.DirectoryItemSrc;
+import com.emc.mongoose.core.impl.item.data.DirectoryItemSrc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
