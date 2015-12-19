@@ -19,6 +19,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.net.NoRouteToHostException;
+import java.rmi.ConnectIOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -267,9 +269,11 @@ extends IOStatsBase {
 			final LoadSvc loadSvc = loadSvcMap.get(loadSvcAddr);
 			final Thread currThread = Thread.currentThread();
 			currThread.setName(currThread.getName() + "@" + loadSvcAddr);
+			int retryCount = 0;
 			while(!currThread.isInterrupted()) {
 				try {
 					loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
+					retryCount = 0; // reset
 					if(loadSvcStatsSnapshot != null) {
 						if(LOG.isTraceEnabled(Markers.MSG)) {
 							LOG.trace(
@@ -285,11 +289,23 @@ extends IOStatsBase {
 						);
 					}
 					LockSupport.parkNanos(1);
-				} catch(final NoSuchObjectException e) {
-					LogUtil.exception(
-						LOG, Level.DEBUG, e,
-						"Failed to fetch the metrics snapshot from {}", loadSvcAddr
-					);
+					Thread.yield();
+				} catch(final NoSuchObjectException | ConnectIOException e) {
+					if(retryCount < COUNT_LIMIT_RETRIES) {
+						retryCount ++;
+						LogUtil.exception(
+							LOG, Level.DEBUG, e,
+							"Failed to fetch the metrics snapshot from {} {} times",
+							loadSvcAddr, retryCount
+						);
+					} else {
+						LogUtil.exception(
+							LOG, Level.ERROR, e,
+							"Failed to fetch the metrics from {} {} times, stopping the task",
+							loadSvcAddr, retryCount
+						);
+						break;
+					}
 				} catch(final RemoteException e) {
 					LogUtil.exception(
 						LOG, Level.WARN, e,
