@@ -74,11 +74,12 @@ implements LoadClient<T, W> {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("dataItemsBatchLoader<" + getName() + ">");
 			//
-			int failCount = 0;
+			int retryCount = 0;
 			try {
 				while(!currThread.isInterrupted()) {
 					try {
 						List<T> frame = loadSvc.getProcessedItems();
+						retryCount = 0; // reset
 						if(frame == null) {
 							LOG.debug(
 								Markers.ERR, "No data items frame from the load server @ {}",
@@ -120,15 +121,14 @@ implements LoadClient<T, W> {
 								}
 							}
 						}
-						failCount = 0; // reset
-						Thread.yield();
+						Thread.yield(); LockSupport.parkNanos(1);
 					} catch(final IOException e) {
-						if(failCount < COUNT_LIMIT_RETRY) {
-							failCount ++;
-							TimeUnit.MILLISECONDS.sleep(failCount);
+						if(retryCount < COUNT_LIMIT_RETRY) {
+							retryCount ++;
+							TimeUnit.MILLISECONDS.sleep(retryCount);
 						} else {
 							LogUtil.exception(
-								LOG, Level.WARN, e,
+								LOG, Level.ERROR, e,
 								"Failed to load the processed items from the load server @ {}",
 								loadSvc
 							);
@@ -478,33 +478,6 @@ implements LoadClient<T, W> {
 		return to - from;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	protected void checkForBadState() {
-		if(
-			lastStats.getFailCount() > MAX_FAIL_COUNT &&
-			// the difference between overriden method and this one is taking into account the load
-			// server count, which protects the load client in case of one load service is exited
-			// due to its bad state
-			lastStats.getFailRateLast() * loadSvcAddrs.length > lastStats.getSuccRateLast()
-		) {
-			LOG.fatal(
-				Markers.ERR,
-				"There's a more than {} of failures and the failure rate is higher " +
-					"than success rate for at least last {}[sec]. Exiting in order to " +
-					"avoid the memory exhaustion. Please check your environment.",
-				MAX_FAIL_COUNT, metricsPeriodSec
-			);
-			try {
-				close();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
-			} finally {
-				Thread.currentThread().interrupt();
-			}
-		}
-	}
-
-	//
 	@Override
 	public void setLoadState(final LoadState<T> state) {
 		if(state != null) {
