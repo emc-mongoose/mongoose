@@ -805,9 +805,9 @@ implements LoadExecutor<T> {
 				MAX_FAIL_COUNT, metricsPeriodSec
 			);
 			try {
-				close();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
+				interrupt();
+			} catch(final Exception e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt the load job");
 			} finally {
 				Thread.currentThread().interrupt();
 			}
