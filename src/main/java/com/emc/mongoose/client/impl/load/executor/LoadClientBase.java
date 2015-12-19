@@ -477,6 +477,33 @@ implements LoadClient<T, W> {
 		}
 		return to - from;
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	protected void checkForBadState() {
+		if(
+			lastStats.getFailCount() > MAX_FAIL_COUNT &&
+			// the difference between overriden method and this one is taking into account the load
+			// server count, which protects the load client in case of one load service is exited
+			// due to its bad state
+			lastStats.getFailRateLast() * loadSvcAddrs.length > lastStats.getSuccRateLast()
+		) {
+			LOG.fatal(
+				Markers.ERR,
+				"There's a more than {} of failures and the failure rate is higher " +
+					"than success rate for at least last {}[sec]. Exiting in order to " +
+					"avoid the memory exhaustion. Please check your environment.",
+				MAX_FAIL_COUNT, metricsPeriodSec
+			);
+			try {
+				close();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
+			} finally {
+				Thread.currentThread().interrupt();
+			}
+		}
+	}
+
 	//
 	@Override
 	public void setLoadState(final LoadState<T> state) {
@@ -484,7 +511,7 @@ implements LoadClient<T, W> {
 			LOG.warn(Markers.MSG, "Failed to resume run in distributed mode. See jira ticket #411");
 		}
 	}
-	//
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void closeActually()
 	throws IOException {

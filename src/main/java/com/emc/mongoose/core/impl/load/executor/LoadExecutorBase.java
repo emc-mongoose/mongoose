@@ -792,7 +792,7 @@ implements LoadExecutor<T> {
 		lastStats = ioStats.getSnapshot();
 	}
 	//
-	private void checkForBadState() {
+	protected void checkForBadState() {
 		if(
 			lastStats.getFailCount() > MAX_FAIL_COUNT &&
 			lastStats.getFailRateLast() > lastStats.getSuccRateLast()
