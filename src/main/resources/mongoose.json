@@ -175,7 +175,7 @@
 				"repeatable": true
 			},
 			"customHeaders": {
-				"User-Agent" : "mongoose/next",
+				"User-Agent" : "mongoose/1.2.0",
 				"Connection" : "keep-alive"
 			},
 			"pipelining": false,
