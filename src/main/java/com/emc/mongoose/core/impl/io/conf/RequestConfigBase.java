@@ -26,15 +26,13 @@ implements RequestConfig<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//protected final static String FMT_URI_ADDR = "%s://%s:%s";
 	//
-	protected String api, secret, userName;
+	protected String api;
 	protected volatile String /*addr, */scheme/*, uriTemplate*/;
 	protected volatile int port;
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
 		api = runTimeConfig.getApiName();
-		secret = runTimeConfig.getAuthSecret();
-		userName = runTimeConfig.getAuthId();
 		scheme = runTimeConfig.getStorageProto();
 		port = runTimeConfig.getApiTypePort(api);
 
@@ -43,11 +41,7 @@ implements RequestConfig<T, C> {
 	protected RequestConfigBase(final RequestConfigBase<T, C> reqConf2Clone) {
 		super(reqConf2Clone);
 		if(reqConf2Clone != null) {
-			setAPI(reqConf2Clone.getAPI());
-			setUserName(reqConf2Clone.getUserName());
 			setPort(reqConf2Clone.getPort());
-			setScheme(reqConf2Clone.getScheme());
-			secret = reqConf2Clone.getSecret();
 			LOG.debug(
 				Markers.MSG, "Forked conf conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
 			);
@@ -58,12 +52,7 @@ implements RequestConfig<T, C> {
 	public RequestConfigBase<T, C> clone()
 	throws CloneNotSupportedException {
 		final RequestConfigBase<T, C> requestConfigBranch = (RequestConfigBase<T, C>) super.clone();
-		requestConfigBranch
-			.setAPI(api)
-			.setUserName(userName)
-			.setPort(port)
-			.setScheme(scheme);
-		requestConfigBranch.secret = secret;
+		requestConfigBranch.setPort(port);
 		LOG.debug(
 			Markers.MSG, "Forked conf conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
 		);
@@ -135,33 +124,11 @@ implements RequestConfig<T, C> {
 	}
 	//
 	@Override
-	public final String getUserName() {
-		return userName;
-	}
-	@Override
-	public RequestConfigBase<T, C> setUserName(final String userName) {
-		this.userName = userName;
-		return this;
-	}
-	//
-	@Override
-	public final String getSecret() {
-		return secret;
-	}
-	@Override
-	public RequestConfigBase<T, C> setSecret(final String secret) {
-		this.secret = secret;
-		return this;
-	}
-	//
-	@Override
 	public RequestConfigBase<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
 		super.setRunTimeConfig(runTimeConfig);
 		final String api = runTimeConfig.getApiName();
 		setAPI(api);
 		setPort(this.runTimeConfig.getApiTypePort(api));
-		setUserName(this.runTimeConfig.getAuthId());
-		setSecret(this.runTimeConfig.getAuthSecret());
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		setBuffSize((int) this.runTimeConfig.getIOBufferSizeMin());
 		return this;

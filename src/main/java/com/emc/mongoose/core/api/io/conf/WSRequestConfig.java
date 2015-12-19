@@ -20,9 +20,11 @@ import java.util.concurrent.TimeUnit;
  An HTTP request shared configuration.
  */
 public interface WSRequestConfig<T extends WSObject, C extends Container<T>>
-extends RequestConfig<T, C> {
+extends SecureRequestConfig<T, C> {
 	//
 	String
+		PACKAGE_IMPL_BASE = "com.emc.mongoose.storage.adapter",
+		//
 		KEY_EMC_ACCEPT = "x-emc-accept",
 		KEY_EMC_FS_ACCESS = "x-emc-file-system-access-enabled",
 		KEY_EMC_DATE = "x-emc-date",
@@ -72,7 +74,6 @@ extends RequestConfig<T, C> {
 	//
 	String getHttpMethod();
 	//
-	@Override
 	WSRequestConfig<T, C> setAPI(final String api);
 	//
 	@Override
@@ -92,6 +93,9 @@ extends RequestConfig<T, C> {
 	//
 	@Override
 	WSRequestConfig<T, C> setNamePrefix(final String prefix);
+	//
+	String getScheme();
+	RequestConfig<T, C> setScheme(final String scheme);
 	//
 	WSRequestConfig<T, C> setFileAccessEnabled(final boolean fsAccessFlag);
 	boolean getFileAccessEnabled();
