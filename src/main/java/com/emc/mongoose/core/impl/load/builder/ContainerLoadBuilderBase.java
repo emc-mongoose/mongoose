@@ -69,7 +69,7 @@ implements ContainerLoadBuilder<T, C, U>{
 		ItemNamingScheme.Type namingSchemeType = ItemNamingScheme.Type.RANDOM;
 		if(ns != null && !ns.isEmpty()) {
 			try {
-				namingSchemeType = ItemNamingScheme.Type.valueOf(ns);
+				namingSchemeType = ItemNamingScheme.Type.valueOf(ns.toUpperCase());
 			} catch(final IllegalArgumentException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e,
