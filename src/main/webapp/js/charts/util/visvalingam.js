@@ -23,7 +23,7 @@ define(["./min-heap"], function(minHeap) {
 		}
 
 		var i;
-		
+
 		for (i = 1; i < points.length - 1; i++) {
 			triangle = points.slice(i - 1, i + 2);
 

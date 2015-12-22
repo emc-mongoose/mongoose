@@ -15,11 +15,9 @@ public class VSimplifier {
 
 	public void simplify(int simplificationsNum) {
 		for (int i = 0; i < simplificationsNum; i++) {
-			System.out.println(line); // for debug
-			line.removeAndWeigh(queue.poll());
+			line.removeAndWeigh(queue.peek());
+			queue.poll();
 		}
-		System.out.println(line); //for debug
-
 	}
 
 }
