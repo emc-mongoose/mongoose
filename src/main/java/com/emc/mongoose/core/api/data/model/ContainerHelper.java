@@ -3,11 +3,13 @@ package com.emc.mongoose.core.api.data.model;
 import com.emc.mongoose.core.api.container.Container;
 import com.emc.mongoose.core.api.data.DataItem;
 //
+import java.io.Closeable;
 import java.lang.reflect.Constructor;
 /**
  Created by kurila on 03.07.15.
  */
-public interface ContainerHelper<T extends DataItem, C extends Container<T>> {
+public interface ContainerHelper<T extends DataItem, C extends Container<T>>
+extends Closeable {
 	//
 	int DEFAULT_PAGE_SIZE = 0x1000;
 	//

@@ -31,7 +31,7 @@ implements WSDataLoadBuilder<T, U> {
 	public BasicWSDataLoadBuilder(final RunTimeConfig runTimeConfig)
 	throws RemoteException {
 		super(runTimeConfig);
-		setProperties(runTimeConfig);
+		setRunTimeConfig(runTimeConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -40,10 +40,10 @@ implements WSDataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public BasicWSDataLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
+	public BasicWSDataLoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws RemoteException {
 		//
-		super.setProperties(rtConfig);
+		super.setRunTimeConfig(rtConfig);
 		//
 		final String paramName = RunTimeConfig.KEY_STORAGE_SCHEME;
 		try {

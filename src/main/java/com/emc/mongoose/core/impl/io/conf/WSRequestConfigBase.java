@@ -24,6 +24,7 @@ import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.commons.codec.binary.Base64;
 //
+import org.apache.commons.configuration.Configuration;
 import org.apache.http.ExceptionLogger;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -77,6 +78,7 @@ import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
@@ -92,7 +94,7 @@ implements WSRequestConfig<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static long serialVersionUID = 42L;
-	protected final String userAgent, signMethod;
+	protected final String signMethod;
 	protected boolean fsAccess, versioning, pipelining;
 	protected SecretKeySpec secretKey;
 	//
@@ -136,12 +138,18 @@ implements WSRequestConfig<T, C> {
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		signMethod = runTimeConfig.getHttpSignMethod();
-		final String runName = runTimeConfig.getRunName(),
-			runVersion = runTimeConfig.getRunVersion();
-		userAgent = runName + '/' + runVersion;
-		//
-		sharedHeaders.updateHeader(new BasicHeader(HttpHeaders.USER_AGENT, userAgent));
-		sharedHeaders.updateHeader(new BasicHeader(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE));
+		final Configuration customHeaders = runTimeConfig.getHttpCustomHeaders();
+		if(customHeaders != null) {
+			final Iterator<String> customHeadersIterator = customHeaders.getKeys();
+			if(customHeadersIterator != null) {
+				String nextKey, nextValue;
+				while(customHeadersIterator.hasNext()) {
+					nextKey = customHeadersIterator.next();
+					nextValue = customHeaders.getString(nextKey);
+					sharedHeaders.updateHeader(new BasicHeader(nextKey, nextValue));
+				}
+			}
+		}
 		sharedHeaders.updateHeader(
 			new BasicHeader(
 				HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_OCTET_STREAM.getMimeType()
@@ -165,8 +173,6 @@ implements WSRequestConfig<T, C> {
 			.add(new SharedHeadersAdder(sharedHeaders))
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
-			.add(new RequestUserAgent(userAgent))
-				//.add(new RequestExpectContinue(true))
 			.add(new RequestContent(false))
 			.build();
 		client = new HttpAsyncRequester(
@@ -379,7 +385,7 @@ implements WSRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T, C> setProperties(final RunTimeConfig runTimeConfig) {
+	public WSRequestConfigBase<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
 		//
 		try {
 			setScheme(this.runTimeConfig.getStorageProto());
@@ -413,7 +419,7 @@ implements WSRequestConfig<T, C> {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_HTTP_PIPELINING);
 		}
 		//
-		super.setProperties(runTimeConfig);
+		super.setRunTimeConfig(runTimeConfig);
 		//
 		return this;
 	}

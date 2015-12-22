@@ -15,6 +15,9 @@ import java.rmi.RemoteException;
 public interface LoadBuilderSvc<T extends Item, U extends LoadSvc<T>>
 extends LoadBuilder<T, U>, Service {
 	//
+	int fork()
+	throws RemoteException;
+	//
 	String buildRemotely()
 	throws RemoteException;
 	//

@@ -39,9 +39,9 @@ implements ContainerLoadBuilder<T, C, U>{
 	}
 	//
 	@Override
-	public ContainerLoadBuilderBase<T, C, U> setProperties(final RunTimeConfig rtConfig)
+	public ContainerLoadBuilderBase<T, C, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws RemoteException {
-		super.setProperties(rtConfig);
+		super.setRunTimeConfig(rtConfig);
 		//
 		final String listFilePathStr = rtConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {

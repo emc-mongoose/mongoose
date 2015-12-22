@@ -183,7 +183,7 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public IOConfigBase<T, C> setProperties(final RunTimeConfig runTimeConfig) {
+	public IOConfigBase<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		setNamePrefix(this.runTimeConfig.getNamePrefix());

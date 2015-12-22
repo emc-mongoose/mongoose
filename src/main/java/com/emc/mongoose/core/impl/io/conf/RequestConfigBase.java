@@ -155,8 +155,8 @@ implements RequestConfig<T, C> {
 	}
 	//
 	@Override
-	public RequestConfigBase<T, C> setProperties(final RunTimeConfig runTimeConfig) {
-		super.setProperties(runTimeConfig);
+	public RequestConfigBase<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
+		super.setRunTimeConfig(runTimeConfig);
 		final String api = runTimeConfig.getApiName();
 		setAPI(api);
 		setPort(this.runTimeConfig.getApiTypePort(api));

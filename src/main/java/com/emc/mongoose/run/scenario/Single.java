@@ -29,33 +29,24 @@ implements Runnable {
 		LOG = LogManager.getLogger();
 	}
 	//
-	private final LoadExecutor loadJob;
-	private final long timeOut;
-	private final TimeUnit timeUnit;
+	private LoadExecutor loadJob;
+	private long timeOut;
+	private TimeUnit timeUnit;
 	//
 	public Single(final RunTimeConfig rtConfig) {
-		final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance(rtConfig);
-		final IOTask.Type loadType = IOTask.Type.valueOf(
-			rtConfig.getString(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD).toUpperCase()
-		);
-		//
-		try {
+		try(final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance(rtConfig)) {
+			final IOTask.Type loadType = IOTask.Type.valueOf(
+				rtConfig.getString(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD).toUpperCase());
 			LOG.debug(Markers.MSG, "Using load type: {}", loadType.name());
 			loadBuilder.setLoadType(loadType);
-		} catch (final RemoteException e) {
-			LogUtil.exception(LOG, Level.FATAL, e,
-				"Failed to set load type for \"{}\"", loadBuilder);
-		}
-		//
-		final long timeOut = rtConfig.getLoadLimitTimeValue();
-		//
-		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
-		this.timeUnit = timeOut > 0 ? rtConfig.getLoadLimitTimeUnit() : TimeUnit.DAYS;
-		try {
+			//
+			final long timeOut = rtConfig.getLoadLimitTimeValue();
+			//
+			this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
+			this.timeUnit = timeOut > 0 ? rtConfig.getLoadLimitTimeUnit() : TimeUnit.DAYS;
 			this.loadJob = loadBuilder.build();
-		} catch (final IOException e) {
+		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.FATAL, e, "Failed to build the load job");
-			throw new IllegalStateException(e);
 		}
 	}
 	//

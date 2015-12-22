@@ -9,6 +9,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
@@ -35,6 +36,7 @@ implements DataLoadBuilder<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected long minObjSize, maxObjSize;
+	protected int updatesPerItem;
 	protected float objSizeBias;
 	protected boolean flagUseContainerItemSrc;
 	//
@@ -55,7 +57,9 @@ implements DataLoadBuilder<T, U> {
 		final DataLoadBuilderBase<T, U> lb = (DataLoadBuilderBase<T, U>) super.clone();
 		lb.minObjSize = minObjSize;
 		lb.maxObjSize = maxObjSize;
+		lb.updatesPerItem = updatesPerItem;
 		lb.objSizeBias = objSizeBias;
+		lb.flagUseContainerItemSrc = flagUseContainerItemSrc;
 		return lb;
 	}
 	//
@@ -71,7 +75,7 @@ implements DataLoadBuilder<T, U> {
 						minObjSize, maxObjSize, objSizeBias
 					);
 				} else {
-					return (ItemSrc<T>) ioConfig.getContainerListInput(
+					return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
 						maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
 					);
 				}
@@ -81,12 +85,14 @@ implements DataLoadBuilder<T, U> {
 					minObjSize, maxObjSize, objSizeBias
 				);
 			} else if(flagUseContainerItemSrc) {
-				return (ItemSrc<T>) ioConfig.getContainerListInput(
+				return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
 					maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
 				);
 			}
 		} catch(final NoSuchMethodException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the I/O config instance");
 		}
 		return null;
 	}
@@ -98,9 +104,9 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public DataLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
+	public DataLoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
-		super.setProperties(rtConfig);
+		super.setRunTimeConfig(rtConfig);
 		//
 		String paramName = RunTimeConfig.KEY_DATA_SIZE_MIN;
 		try {

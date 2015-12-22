@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 public final class OverwriteCircularlyTest
 extends FileSystemTestBase {
 	//
-	private final static int COUNT_TO_WRITE = 4096, COUNT_TO_OVERWRITE = 4096 * 4096;
+	private final static int COUNT_TO_WRITE = 1000, COUNT_TO_OVERWRITE = 1000000;
 	private final static String RUN_ID = OverwriteCircularlyTest.class.getCanonicalName();
 	//
 	private static long countWritten, countOverwritten;

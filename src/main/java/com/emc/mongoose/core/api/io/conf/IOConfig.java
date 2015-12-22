@@ -44,7 +44,7 @@ extends Externalizable, Cloneable, Closeable {
 	C getContainer();
 	IOConfig<T, C> setContainer(final C container);
 	//
-	IOConfig<T, C> setProperties(final RunTimeConfig props);
+	IOConfig<T, C> setRunTimeConfig(final RunTimeConfig props);
 	//
 	ItemSrc<T> getContainerListInput(final long maxCount, final String addr);
 	//

@@ -38,7 +38,7 @@ extends StandaloneClientTestBase {
 		//
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
 			.newInstanceFor("swift")
-			.setProperties(RunTimeConfig.getContext());
+			.setRunTimeConfig(RunTimeConfig.getContext());
 		CONTAINER_HELPER = new WSSwiftContainerHelper<WSObject, Container<WSObject>>(
 				reqConf, new BasicContainer(RUN_ID)
 		);

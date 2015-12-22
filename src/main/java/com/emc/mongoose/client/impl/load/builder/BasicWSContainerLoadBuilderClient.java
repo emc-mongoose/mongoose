@@ -38,7 +38,7 @@ public class BasicWSContainerLoadBuilderClient<
 	//
 	public BasicWSContainerLoadBuilderClient()
 	throws IOException {
-		super();
+		this(RunTimeConfig.getContext());
 	}
 	//
 	public BasicWSContainerLoadBuilderClient(final RunTimeConfig runTimeConfig)
@@ -55,21 +55,10 @@ public class BasicWSContainerLoadBuilderClient<
 	protected WSContainerLoadBuilderSvc<T, C, W> resolve(final String serverAddr)
 	throws IOException {
 		WSContainerLoadBuilderSvc<T, C, W> rlb;
-		final Service remoteSvc = ServiceUtil.getRemoteSvc(
-			"//" + serverAddr + '/'
-				+ getClass().getName()
-					.replace("client", "server").replace("Client", "Svc")
-		);
-		if(remoteSvc == null) {
-			throw new IOException("No remote load builder was resolved from " + serverAddr);
-		} else if(remoteSvc instanceof WSContainerLoadBuilderSvc) {
-			rlb = (WSContainerLoadBuilderSvc<T, C, W>) remoteSvc;
-		} else {
-			throw new IOException(
-				"Illegal class " + remoteSvc.getClass().getCanonicalName() +
-					" of the instance resolved from " + serverAddr
-			);
-		}
+		final String svcUri = "//" + serverAddr + '/' +
+			getClass().getName().replace("client", "server").replace("Client", "Svc");
+		rlb = (WSContainerLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri);
+		rlb = (WSContainerLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());
 		return rlb;
 	}
 	//
@@ -108,7 +97,6 @@ public class BasicWSContainerLoadBuilderClient<
 		}
 		//
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
 		return (U) new BasicWSContainerLoadClient<>(
 			rtConfig, (WSRequestConfig) ioConfig, storageNodeAddrs,

@@ -128,6 +128,7 @@ implements Runnable {
 			);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
 		} catch(final Exception e) {
+			e.printStackTrace(System.out);
 			LogUtil.exception(LOG, Level.ERROR, e, "Sanity failure");
 		}
 	}

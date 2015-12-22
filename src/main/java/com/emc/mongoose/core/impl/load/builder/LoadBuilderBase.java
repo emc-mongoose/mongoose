@@ -37,10 +37,11 @@ implements LoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	protected volatile RunTimeConfig rtConfig;
 	protected long maxCount = 0;
 	protected volatile IOConfig<?, ?> ioConfig = getDefaultIOConfig();
 	protected float rateLimit;
-	protected int manualTaskSleepMicroSecs, updatesPerItem;
+	protected int manualTaskSleepMicroSecs;
 	protected ItemSrc itemSrc;
 	protected String storageNodeAddrs[];
 	protected final Map<IOTask.Type, Integer>
@@ -58,7 +59,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilderBase(final RunTimeConfig runTimeConfig)
 	throws RemoteException {
 		resetItemSrc();
-		setProperties(runTimeConfig);
+		setRunTimeConfig(runTimeConfig);
 	}
 	//
 	protected void resetItemSrc() {
@@ -68,11 +69,12 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
+	public LoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
+		this.rtConfig = rtConfig;
 		RunTimeConfig.setContext(rtConfig);
 		if(ioConfig != null) {
-			ioConfig.setProperties(rtConfig);
+			ioConfig.setRunTimeConfig(rtConfig);
 		} else {
 			throw new IllegalStateException("Shared request config is not initialized");
 		}
@@ -330,6 +332,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilderBase<T, U> clone()
 	throws CloneNotSupportedException {
 		final LoadBuilderBase<T, U> lb = (LoadBuilderBase<T, U>) super.clone();
+		lb.rtConfig = (RunTimeConfig) rtConfig.clone();
 		LOG.debug(Markers.MSG, "Cloning request config for {}", ioConfig.toString());
 		lb.ioConfig = ioConfig.clone();
 		lb.maxCount = maxCount;
@@ -343,6 +346,8 @@ implements LoadBuilder<T, U> {
 		lb.itemSrc = itemSrc;
 		lb.rateLimit = rateLimit;
 		lb.manualTaskSleepMicroSecs = manualTaskSleepMicroSecs;
+		lb.flagUseNewItemSrc = flagUseNewItemSrc;
+		lb.flagUseNoneItemSrc = flagUseNoneItemSrc;
 		return lb;
 	}
 	//

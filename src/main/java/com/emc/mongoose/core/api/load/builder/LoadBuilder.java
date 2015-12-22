@@ -16,13 +16,13 @@ import java.rmi.RemoteException;
  A builder pattern implementation which should help to instantiate a configured load executor.
  */
 public interface LoadBuilder<T extends Item, U extends LoadExecutor<T>>
-extends Closeable {
+extends Closeable, Cloneable {
 	//
 	String
 		MSG_TMPL_NOT_SPECIFIED = "\"{}\" parameter is not specified nor in configuration files neither in command line",
 		MSG_TMPL_INVALID_VALUE = "illegal value specified for \"{}\" parameter: {}";
 	//
-	LoadBuilder<T, U> setProperties(final RunTimeConfig props)
+	LoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig props)
 	throws IllegalStateException, RemoteException;
 	//
 	IOConfig<?, ?> getIOConfig()

@@ -10,11 +10,12 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
 import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
-//
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,20 +40,20 @@ implements DataLoadBuilderClient<T, W, U> {
 	protected float objSizeBias;
 	protected boolean flagUseContainerItemSrc;
 	//
-	public DataLoadBuilderClientBase()
+	protected DataLoadBuilderClientBase()
 	throws IOException {
-		super(RunTimeConfig.getContext());
+		this(RunTimeConfig.getContext());
 	}
 	//
-	public DataLoadBuilderClientBase(final RunTimeConfig rtConfig)
+	protected DataLoadBuilderClientBase(final RunTimeConfig rtConfig)
 	throws IOException {
 		super(rtConfig);
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, W, U> setProperties(final RunTimeConfig rtConfig)
+	public final DataLoadBuilderClient<T, W, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
-		super.setProperties(rtConfig);
+		super.setRunTimeConfig(rtConfig);
 		setMinObjSize(rtConfig.getDataSizeMin());
 		setMaxObjSize(rtConfig.getDataSizeMax());
 		setObjSizeBias(rtConfig.getDataSizeBias());
@@ -130,7 +131,7 @@ implements DataLoadBuilderClient<T, W, U> {
 			// calculate approx average data item size
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-				RunTimeConfig.getContext().getBatchSize()
+				rtConfig.getBatchSize()
 			);
 			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
@@ -142,7 +143,7 @@ implements DataLoadBuilderClient<T, W, U> {
 		return this;
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	protected ItemSrc<T> getDefaultItemSource() {
 		try {
 			if(flagUseNoneItemSrc) {
@@ -172,7 +173,9 @@ implements DataLoadBuilderClient<T, W, U> {
 						nextBuilder.useNoneItemSrc();
 					}
 					//
-					return (ItemSrc<T>) ioConfig.getContainerListInput(maxCount, storageNodeAddrs[0]);
+					return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
+						maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+					);
 				}
 			} else if(flagUseNewItemSrc) {
 				// enable new data item generation on the load servers side
@@ -191,10 +194,14 @@ implements DataLoadBuilderClient<T, W, U> {
 					nextBuilder.useNoneItemSrc();
 				}
 				//
-				return (ItemSrc<T>) ioConfig.getContainerListInput(maxCount, storageNodeAddrs[0]);
+				return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
+					maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+				);
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to change the remote data items source");
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the I/O config instance");
 		}
 		return null;
 	}

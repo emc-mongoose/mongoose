@@ -24,7 +24,7 @@ extends WSMockTestBase {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
 		LOAD_BUILDER = new BasicWSDataLoadBuilder<>(RunTimeConfig.getContext())
-			.setProperties(rtConfig);
+			.setRunTimeConfig(rtConfig);
 	}
 	//
 	@AfterClass
