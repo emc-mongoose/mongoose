@@ -12,7 +12,7 @@ import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.PortListener;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
+import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -75,7 +75,7 @@ extends WSMockTestBase {
 		SCENARIO_THREAD = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				new ScriptMockRunner().run();
+				new ScenarioRunner().run();
 			}
 		}, "writeScenarioThread");
 		SCENARIO_THREAD.start();

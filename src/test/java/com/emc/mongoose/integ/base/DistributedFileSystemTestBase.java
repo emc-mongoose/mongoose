@@ -1,12 +1,8 @@
 package com.emc.mongoose.integ.base;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.core.api.data.FileItem;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
-import com.emc.mongoose.util.client.api.StorageClient;
-import com.emc.mongoose.util.client.impl.BasicStorageClientBuilder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 

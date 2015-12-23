@@ -183,6 +183,7 @@
 		},
 		"item": {
 			"class": "data",
+			"naming" : "random",
 			"src": {
 				"file": "",
 				"separator": ",",

@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
-import com.emc.mongoose.core.api.data.MutableDataItem;
+import com.emc.mongoose.core.api.item.data.MutableDataItem;
 /**
  Created by kurila on 03.03.15.
  */

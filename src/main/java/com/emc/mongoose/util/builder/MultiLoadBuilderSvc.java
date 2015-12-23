@@ -3,9 +3,9 @@ package com.emc.mongoose.util.builder;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
@@ -257,7 +257,16 @@ implements LoadBuilderSvc {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.useNoneItemSrc();
 		}
-		return null;
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilderSvc useContainerListingItemSrc()
+	throws RemoteException {
+		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
+			loadBuilderSvc.useContainerListingItemSrc();
+		}
+		return this;
 	}
 	//
 	@Override

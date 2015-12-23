@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 //
-import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import com.emc.mongoose.util.client.api.StorageClient;

@@ -10,8 +10,7 @@ import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
-import org.apache.commons.codec.binary.Hex;
+import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -31,7 +30,6 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -90,7 +88,7 @@ extends LoggingTestBase {
 				stdOutStream =	StdOutUtil.getStdOutBufferingStream()
 		) {
 			//  Run mongoose default scenario in standalone mode
-			new ScriptMockRunner().run();
+			new ScenarioRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(1);
 			STD_OUTPUT_STREAM = stdOutStream;

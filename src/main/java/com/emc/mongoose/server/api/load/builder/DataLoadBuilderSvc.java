@@ -1,6 +1,6 @@
 package com.emc.mongoose.server.api.load.builder;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
 /**

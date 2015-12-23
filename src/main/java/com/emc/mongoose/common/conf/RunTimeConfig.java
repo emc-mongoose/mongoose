@@ -127,6 +127,7 @@ implements Externalizable {
 		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
 		//
 		KEY_ITEM_CLASS = "item.class",
+		KEY_ITEM_NAMING = "item.naming",
 		KEY_ITEM_SRC_FILE = "item.src.file",
 		KEY_LOAD_CIRCULAR = "load.circular",
 		KEY_ITEM_SRC_RANDOM = "item.src.random",
@@ -423,8 +424,12 @@ implements Externalizable {
 		return getInt(KEY_LOAD_LIMIT_REQSLEEP_MILLISEC);
 	}
 	//
-	public final String getLoadItemClass() {
+	public final String getItemClass() {
 		return getString(KEY_ITEM_CLASS);
+	}
+	//
+	public final String getItemNaming() {
+		return getString(KEY_ITEM_NAMING);
 	}
 	//
 	public final long getDataSizeMin() {

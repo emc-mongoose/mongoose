@@ -1,6 +1,6 @@
 package com.emc.mongoose.client.api.load.executor;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
 /**

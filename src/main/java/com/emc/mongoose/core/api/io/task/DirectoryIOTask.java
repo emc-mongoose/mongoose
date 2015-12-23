@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.api.io.task;
 //
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.FileItem;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
 //
 import java.util.concurrent.RunnableFuture;
 /**

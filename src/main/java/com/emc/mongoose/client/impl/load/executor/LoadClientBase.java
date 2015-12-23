@@ -6,14 +6,14 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.model.ItemDst;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.base.ItemDst;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
+import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 // mongoose-server-api.jar
@@ -74,11 +74,12 @@ implements LoadClient<T, W> {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("dataItemsBatchLoader<" + getName() + ">");
 			//
-			int failCount = 0;
+			int retryCount = 0;
 			try {
 				while(!currThread.isInterrupted()) {
 					try {
 						List<T> frame = loadSvc.getProcessedItems();
+						retryCount = 0; // reset
 						if(frame == null) {
 							LOG.debug(
 								Markers.ERR, "No data items frame from the load server @ {}",
@@ -120,15 +121,14 @@ implements LoadClient<T, W> {
 								}
 							}
 						}
-						failCount = 0; // reset
-						Thread.yield();
+						Thread.yield(); LockSupport.parkNanos(1);
 					} catch(final IOException e) {
-						if(failCount < COUNT_LIMIT_RETRY) {
-							failCount ++;
-							TimeUnit.MILLISECONDS.sleep(failCount);
+						if(retryCount < COUNT_LIMIT_RETRY) {
+							retryCount ++;
+							TimeUnit.MILLISECONDS.sleep(retryCount);
 						} else {
 							LogUtil.exception(
-								LOG, Level.WARN, e,
+								LOG, Level.ERROR, e,
 								"Failed to load the processed items from the load server @ {}",
 								loadSvc
 							);
@@ -477,14 +477,14 @@ implements LoadClient<T, W> {
 		}
 		return to - from;
 	}
-	//
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public void setLoadState(final LoadState<T> state) {
 		if(state != null) {
 			LOG.warn(Markers.MSG, "Failed to resume run in distributed mode. See jira ticket #411");
 		}
 	}
-	//
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void closeActually()
 	throws IOException {

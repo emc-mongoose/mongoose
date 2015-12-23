@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.mock.api;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.core.api.data.model.ItemBuffer;
 //
 import java.util.Collection;
 import java.util.Map;

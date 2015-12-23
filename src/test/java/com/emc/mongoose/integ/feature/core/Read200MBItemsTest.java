@@ -11,7 +11,7 @@ import com.emc.mongoose.integ.tools.ContentGetter;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
+import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -66,7 +66,7 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//  write
-		new ScriptMockRunner().run();
+		new ScenarioRunner().run();
 		//
 		RunIdFileManager.flushAll();
 		//
@@ -87,7 +87,7 @@ extends WSMockTestBase {
 			final BufferingOutputStream
 				stdOutStream = StdOutUtil.getStdOutBufferingStream()
 		) {
-			new ScriptMockRunner().run();
+			new ScenarioRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;

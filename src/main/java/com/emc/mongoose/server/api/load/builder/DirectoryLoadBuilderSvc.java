@@ -1,6 +1,6 @@
 package com.emc.mongoose.server.api.load.builder;
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.FileItem;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.builder.DirectoryLoadBuilder;
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
 /**

@@ -7,7 +7,7 @@ import com.emc.mongoose.integ.tools.StdOutUtil;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
-import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
+import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -55,7 +55,7 @@ extends WSMockTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
-		new ScriptMockRunner().run();
+		new ScenarioRunner().run();
 		TimeUnit.SECONDS.sleep(1);
 		//
 		RunIdFileManager.flushAll();
@@ -85,7 +85,7 @@ extends WSMockTestBase {
 						rtConfig.set(RunTimeConfig.KEY_RUN_ID, nextRunId);
 						rtConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, nextContainer);
 						RunTimeConfig.setContext(rtConfig);
-						new ScriptMockRunner().run();
+						new ScenarioRunner().run();
 						TimeUnit.SECONDS.sleep(1);
 						RunIdFileManager.closeAll(nextRunId);
 					}

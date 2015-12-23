@@ -5,8 +5,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -47,7 +47,7 @@ implements LoadBuilder<T, U> {
 	protected final Map<IOTask.Type, Integer>
 		loadTypeWorkerCount = new HashMap<>(),
 		loadTypeConnPerNode = new HashMap<>();
-	protected boolean flagUseNewItemSrc, flagUseNoneItemSrc;
+	protected boolean flagUseNewItemSrc, flagUseNoneItemSrc, flagUseContainerItemSrc;
 	//
 	protected abstract IOConfig<?, ?> getDefaultIOConfig();
 	//
@@ -65,6 +65,7 @@ implements LoadBuilder<T, U> {
 	protected void resetItemSrc() {
 		flagUseNewItemSrc = true;
 		flagUseNoneItemSrc = false;
+		flagUseContainerItemSrc = true;
 		itemSrc = null;
 	}
 	//
@@ -348,6 +349,7 @@ implements LoadBuilder<T, U> {
 		lb.manualTaskSleepMicroSecs = manualTaskSleepMicroSecs;
 		lb.flagUseNewItemSrc = flagUseNewItemSrc;
 		lb.flagUseNoneItemSrc = flagUseNoneItemSrc;
+		lb.flagUseContainerItemSrc = flagUseContainerItemSrc;
 		return lb;
 	}
 	//
@@ -364,6 +366,13 @@ implements LoadBuilder<T, U> {
 	public LoadBuilderBase<T, U> useNoneItemSrc()
 	throws RemoteException {
 		flagUseNoneItemSrc = true;
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilderBase<T, U> useContainerListingItemSrc()
+	throws RemoteException {
+		flagUseContainerItemSrc = true;
 		return this;
 	}
 	//

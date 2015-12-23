@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.api.io.task;
 //
-import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 //
 import org.apache.http.protocol.HttpContext;
 //

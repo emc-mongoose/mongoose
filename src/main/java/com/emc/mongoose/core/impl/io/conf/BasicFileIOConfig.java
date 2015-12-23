@@ -2,14 +2,14 @@ package com.emc.mongoose.core.impl.io.conf;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
-import com.emc.mongoose.core.impl.container.BasicDirectory;
-import com.emc.mongoose.core.impl.data.BasicFileItem;
-import com.emc.mongoose.core.impl.data.model.DirectoryItemSrc;
+import com.emc.mongoose.core.impl.item.container.BasicDirectory;
+import com.emc.mongoose.core.impl.item.data.BasicFileItem;
+import com.emc.mongoose.core.impl.item.data.DirectoryItemSrc;
 import org.apache.commons.lang.StringUtils;
 //
 import java.io.IOException;

@@ -2,8 +2,8 @@ package com.emc.mongoose.core.impl.io.task;
 //
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.container.Container;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;

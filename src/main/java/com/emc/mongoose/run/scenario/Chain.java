@@ -5,15 +5,15 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.model.ItemDst;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
+import com.emc.mongoose.core.api.item.base.ItemDst;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.core.api.item.base.ItemFileSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
+import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.data.model.ItemCSVFileDst;
+import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.core.impl.load.tasks.AwaitAndCloseLoadJobTask;
 //
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
@@ -69,8 +69,7 @@ implements Runnable {
 		LoadExecutor nextLoadJob, prevLoadJob = null;
 		final IOConfig ioConf;
 		try(
-			final DataLoadBuilder
-				loadBuilder = (DataLoadBuilder) LoadBuilderFactory.getInstance(rtConfig)
+			final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance(rtConfig)
 		) {
 			ioConf = loadBuilder.getIOConfig();
 			ItemDst itemDst = null;
@@ -210,8 +209,8 @@ implements Runnable {
 				//
 				try {
 					final ItemSrc itemSrc = nextLoadJob.getItemSrc();
-					if(itemSrc instanceof DataItemFileSrc) {
-						((DataItemFileSrc) itemSrc).delete();
+					if(itemSrc instanceof ItemFileSrc) {
+						((ItemFileSrc) itemSrc).delete();
 					}
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to delete source items file");

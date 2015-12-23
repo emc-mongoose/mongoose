@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.api.load.builder;
 //
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 
 import java.rmi.RemoteException;
@@ -21,8 +21,4 @@ extends LoadBuilder<T, U> {
 	//
 	DataLoadBuilder<T, U> setUpdatesPerItem(final int count)
 	throws RemoteException;
-	//
-	DataLoadBuilder<T, U> useContainerListingItemSrc()
-	throws RemoteException;
-	//
 }

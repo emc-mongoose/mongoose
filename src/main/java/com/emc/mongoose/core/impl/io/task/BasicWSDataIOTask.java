@@ -8,15 +8,15 @@ import com.emc.mongoose.common.net.http.content.InputChannel;
 import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.DataCorruptionException;
-import com.emc.mongoose.core.api.data.DataSizeException;
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.DataCorruptionException;
+import com.emc.mongoose.core.api.item.data.DataSizeException;
+import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.WSDataIOTask;
 // mongoose-core-impl
-import com.emc.mongoose.core.impl.data.BasicMutableDataItem;
-import com.emc.mongoose.core.impl.data.BasicDataItem;
+import com.emc.mongoose.core.impl.item.data.BasicMutableDataItem;
+import com.emc.mongoose.core.impl.item.data.BasicDataItem;
 //
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpEntityEnclosingRequest;

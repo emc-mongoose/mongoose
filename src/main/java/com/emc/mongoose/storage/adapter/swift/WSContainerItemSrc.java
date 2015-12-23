@@ -3,12 +3,12 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.ContainerHelper;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.ContainerHelper;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 //
-import com.emc.mongoose.core.impl.data.model.GenericContainerItemSrcBase;
+import com.emc.mongoose.core.impl.item.data.GenericContainerItemSrcBase;
 //
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;

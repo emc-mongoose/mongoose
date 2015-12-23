@@ -7,21 +7,21 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.ItemDst;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.data.model.ItemBuffer;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.DataItem;
+import com.emc.mongoose.core.api.item.base.ItemDst;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.core.api.item.base.ItemBuffer;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
+import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
@@ -792,7 +792,7 @@ implements LoadExecutor<T> {
 		lastStats = ioStats.getSnapshot();
 	}
 	//
-	private void checkForBadState() {
+	protected void checkForBadState() {
 		if(
 			lastStats.getFailCount() > MAX_FAIL_COUNT &&
 			lastStats.getFailRateLast() > lastStats.getSuccRateLast()
@@ -805,9 +805,9 @@ implements LoadExecutor<T> {
 				MAX_FAIL_COUNT, metricsPeriodSec
 			);
 			try {
-				close();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job");
+				interrupt();
+			} catch(final Exception e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt the load job");
 			} finally {
 				Thread.currentThread().interrupt();
 			}

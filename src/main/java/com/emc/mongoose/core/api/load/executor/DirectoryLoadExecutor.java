@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.api.load.executor;
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
 /**
  Created by andrey on 22.11.15.
  */
