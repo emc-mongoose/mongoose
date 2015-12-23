@@ -55,24 +55,34 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 	protected final WSMock<T> sharedStorage;
 	private final StorageIOStats ioStats;
 
+	protected final NagainaRequestHandlerMapper mapper;
 	protected final String requestKey = "requestKey";
 	protected final String responseStatusKey = "responseStatusKey";
 	protected final String contentLengthKey = "contentLengthKey";
 	protected final String ctxWriteFlagKey = "ctxWriteFlagKey";
+	protected final String handlerStatus = "handlerStatus";
 
 	public NagainaRequestHandlerBase(RunTimeConfig rtConfig, WSMock<T> sharedStorage) {
 		this.rateLimit = rtConfig.getLoadLimitRate();
 		this.batchSize = rtConfig.getBatchSize();
 		this.sharedStorage = sharedStorage;
 		this.ioStats = sharedStorage.getStats();
+		mapper = new NagainaRequestHandlerMapper(rtConfig);
 		AttributeKey.<HttpRequest>valueOf(requestKey);
 		AttributeKey.<HttpResponseStatus>valueOf(responseStatusKey);
 		AttributeKey.<Long>valueOf(contentLengthKey);
 		AttributeKey.<Boolean>valueOf(ctxWriteFlagKey);
+		AttributeKey.<Boolean>valueOf(handlerStatus);
 	}
+
+	abstract protected boolean checkProtocol(HttpRequest request);
 
 	@Override
 	public void channelReadComplete(ChannelHandlerContext ctx) {
+		if (!ctx.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).get()) {
+			ctx.fireChannelReadComplete();
+			return;
+		}
 		ctx.flush();
 	}
 
@@ -94,13 +104,24 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
 		if (msg instanceof HttpRequest) {
+			if (!checkProtocol((HttpRequest) msg)) {
+				ctx.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).set(false);
+				ctx.fireChannelRead(msg);
+				return;
+			}
+			ctx.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).set(true);
 			processHttpRequest(ctx, (HttpRequest) msg);
+			return;
+		}
+		if (!ctx.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).get()) {
+			ctx.fireChannelRead(msg);
+			return;
 		}
 //		Calculation of the content size if the request does not have such header (excessively)
 //		if (msg instanceof HttpContent) {
 //			processHttpContent(ctx, (HttpContent) msg);
 //		}
-
+		// TODO not enter here when receive a content from mongoose via not S3 protocol
 		if (msg instanceof LastHttpContent) {
 			handle(ctx);
 		}

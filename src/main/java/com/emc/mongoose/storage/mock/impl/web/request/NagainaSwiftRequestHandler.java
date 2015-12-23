@@ -51,11 +51,15 @@ public class NagainaSwiftRequestHandler<T extends WSObjectMock> extends NagainaR
 
 	private final static Logger LOG = LogManager.getLogger();
 	private final static ObjectMapper OBJ_MAPPER = new ObjectMapper();
-	private final static String
-			AUTH = "auth";
+	private final static String AUTH = "auth";
 
 	public NagainaSwiftRequestHandler(RunTimeConfig rtConfig, WSMock<T> sharedStorage) {
 		super(rtConfig, sharedStorage);
+	}
+
+	@Override
+	protected boolean checkProtocol(HttpRequest request) {
+		return mapper.checkSwift(request);
 	}
 
 	@Override

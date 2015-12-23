@@ -36,7 +36,10 @@ public class Nagaina<T extends WSObjectMock>
 
 	private final EventLoopGroup dispatchGroup;
 	private final EventLoopGroup workerGroup;
-	private final NagainaHandlerMapper protocolHandlerMapper;
+//	private final NagainaHandlerMapper protocolHandlerMapper;
+	private final NagainaRequestHandlerBase s3RequestHandler;
+	private final NagainaRequestHandlerBase swiftRequestHandler;
+	private final NagainaRequestHandlerBase atmosRequestHandler;
 	private final int portStart;
 	private Channel channel;
 
@@ -70,7 +73,10 @@ public class Nagaina<T extends WSObjectMock>
 		dispatchGroup = new NioEventLoopGroup(headCount, new DefaultThreadFactory("dispatcher"));
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
 		workerGroup = new NioEventLoopGroup();
-		protocolHandlerMapper = new NagainaHandlerMapper<>(RunTimeConfig.getContext(), this);
+//		protocolHandlerMapper = new NagainaHandlerMapper<>(RunTimeConfig.getContext(), this);
+		s3RequestHandler = new NagainaS3RequestHandler<>(RunTimeConfig.getContext(), this);
+		swiftRequestHandler = new NagainaSwiftRequestHandler<>(RunTimeConfig.getContext(), this);
+		atmosRequestHandler = new NagainaAtmosRequestHandler<>(RunTimeConfig.getContext(), this);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -90,7 +96,10 @@ public class Nagaina<T extends WSObjectMock>
 						              protected void initChannel(SocketChannel socketChannel) throws Exception {
 							              ChannelPipeline pipeline = socketChannel.pipeline();
 							              pipeline.addLast(new HttpServerCodec());
-							              pipeline.addLast(protocolHandlerMapper);
+//							              pipeline.addLast(protocolHandlerMapper);
+							              pipeline.addLast(s3RequestHandler);
+							              pipeline.addLast(swiftRequestHandler);
+							              pipeline.addLast(atmosRequestHandler);
 						              }
 					              }
 					);

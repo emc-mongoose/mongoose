@@ -32,17 +32,17 @@ public class NagainaHandlerMapper<T extends WSObjectMock> extends ChannelInbound
 		atmosRequestHandler = new NagainaAtmosRequestHandler<>(runTimeConfig, sharedStorage);
 	}
 
-	private boolean checkS3(HttpRequest request) {
+	public boolean checkS3(HttpRequest request) {
 		String auth = request.headers().get(AUTHORIZATION);
 		return auth != null && auth.startsWith(S3_AUTH_PREFIX);
 	}
 
-	private boolean checkSwift(HttpRequest request) {
+	public boolean checkSwift(HttpRequest request) {
 		String uri = request.getUri();
 		return uri.startsWith(SWIFT_AUTH, 1) || uri.startsWith(apiBasePathSwift, 1);
 	}
 
-	private boolean checkAtmos(HttpRequest request) {
+	public boolean checkAtmos(HttpRequest request) {
 		return request.getUri().startsWith(ATMOS_URI_BASE_PATH);
 	}
 

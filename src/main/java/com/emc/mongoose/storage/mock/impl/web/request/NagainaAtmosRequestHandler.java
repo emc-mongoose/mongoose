@@ -69,6 +69,11 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 		super(rtConfig, sharedStorage);
 	}
 
+	@Override
+	protected boolean checkProtocol(HttpRequest request) {
+		return mapper.checkAtmos(request);
+	}
+
 	private String processMetaDataList(String[] metaDataList, String key) {
 		if (metaDataList != null) {
 			String entry[];

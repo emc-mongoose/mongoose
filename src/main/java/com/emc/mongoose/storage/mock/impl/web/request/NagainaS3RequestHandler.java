@@ -50,7 +50,6 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class NagainaS3RequestHandler<T extends WSObjectMock> extends NagainaRequestHandlerBase<T> {
 
 	private final static Logger LOG = LogManager.getLogger();
-
 	private final static DocumentBuilder DOM_BUILDER;
 	private final static TransformerFactory TF = TransformerFactory.newInstance();
 
@@ -64,6 +63,11 @@ public class NagainaS3RequestHandler<T extends WSObjectMock> extends NagainaRequ
 
 	public NagainaS3RequestHandler(RunTimeConfig rtConfig, WSMock<T> sharedStorage) {
 		super(rtConfig, sharedStorage);
+	}
+
+	@Override
+	protected boolean checkProtocol(HttpRequest request) {
+		return mapper.checkS3(request);
 	}
 
 	@Override
