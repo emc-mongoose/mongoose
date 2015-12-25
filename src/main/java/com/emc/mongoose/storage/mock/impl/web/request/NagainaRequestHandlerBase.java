@@ -15,6 +15,7 @@ import io.netty.buffer.ByteBuf;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
@@ -25,6 +26,8 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.AttributeKey;
+import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +47,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.INSUFFICIENT_STORAG
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 @Sharable
-public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends SimpleChannelInboundHandler<Object> {
+public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends ChannelInboundHandlerAdapter {
 
 	private final static Logger LOG = LogManager.getLogger();
 
@@ -102,7 +105,7 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 	}
 
 	@Override
-	protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
+	public void channelRead(ChannelHandlerContext ctx, Object msg) {
 		if (msg instanceof HttpRequest) {
 			if (!checkProtocol((HttpRequest) msg)) {
 				ctx.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).set(false);
@@ -111,6 +114,7 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 			}
 			ctx.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).set(true);
 			processHttpRequest(ctx, (HttpRequest) msg);
+			ReferenceCountUtil.release(msg);
 			return;
 		}
 		if (!ctx.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).get()) {
@@ -121,10 +125,9 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 //		if (msg instanceof HttpContent) {
 //			processHttpContent(ctx, (HttpContent) msg);
 //		}
-		// TODO not enter here when handle a content not with the first handler in a chain
-		// TODO !!!!!!IMPORTANT!!!!!! Probably the problem is an automatic resources releasing in SimpleChannelInboundHandler!
 		if (msg instanceof LastHttpContent) {
 			handle(ctx);
+			ReferenceCountUtil.release(msg);
 		}
 	}
 

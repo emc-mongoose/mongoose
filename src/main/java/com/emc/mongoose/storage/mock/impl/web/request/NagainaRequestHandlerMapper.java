@@ -6,10 +6,7 @@ import io.netty.handler.codec.http.HttpRequest;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.AUTHORIZATION;
 
-/**
- * Created by ilya on 23.12.15.
- */
-public class NagainaRequestHandlerMapper {
+public final class NagainaRequestHandlerMapper {
 
 	private final static String
 			SWIFT_AUTH = "auth",

@@ -21,6 +21,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -91,12 +93,12 @@ public class Nagaina<T extends WSObjectMock>
 			ServerBootstrap bootstrap = new ServerBootstrap();
 			bootstrap.group(dispatchGroup, workerGroup)
 					.channel(NioServerSocketChannel.class)
+//					.handler(new LoggingHandler(LogLevel.WARN))
 					.childHandler(new ChannelInitializer<SocketChannel>() {
 						              @Override
 						              protected void initChannel(SocketChannel socketChannel) throws Exception {
 							              ChannelPipeline pipeline = socketChannel.pipeline();
 							              pipeline.addLast(new HttpServerCodec());
-//							              pipeline.addLast(protocolHandlerMapper);
 							              pipeline.addLast(swiftRequestHandler);
 							              pipeline.addLast(s3RequestHandler);
 							              pipeline.addLast(atmosRequestHandler);
