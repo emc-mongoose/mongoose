@@ -121,7 +121,8 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 //		if (msg instanceof HttpContent) {
 //			processHttpContent(ctx, (HttpContent) msg);
 //		}
-		// TODO not enter here when receive a content from mongoose via not S3 protocol
+		// TODO not enter here when handle a content not with the first handler in a chain
+		// TODO !!!!!!IMPORTANT!!!!!! Probably the problem is an automatic resources releasing in SimpleChannelInboundHandler!
 		if (msg instanceof LastHttpContent) {
 			handle(ctx);
 		}

@@ -97,8 +97,8 @@ public class Nagaina<T extends WSObjectMock>
 							              ChannelPipeline pipeline = socketChannel.pipeline();
 							              pipeline.addLast(new HttpServerCodec());
 //							              pipeline.addLast(protocolHandlerMapper);
-							              pipeline.addLast(s3RequestHandler);
 							              pipeline.addLast(swiftRequestHandler);
+							              pipeline.addLast(s3RequestHandler);
 							              pipeline.addLast(atmosRequestHandler);
 						              }
 					              }
