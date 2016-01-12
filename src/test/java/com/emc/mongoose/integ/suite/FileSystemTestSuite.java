@@ -17,17 +17,17 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	WriteToCustomDirTest.class,
+	/*WriteToCustomDirTest.class,
 	ReadFromCustomDirTest.class,
 	OverwriteCircularlyTest.class,
 	AppendTest.class,
 	CircularReadFromCustomDirTest.class,
 	UpdateAndVerifyTest.class,
 	WRADParallelLoadTest.class,
-	WURDSequentialLoadTest.class,
+	WURDSequentialLoadTest.class,*/
 	FileRampupTest.class,
-	WriteDirsToCustomDirTest.class,
-	ReadDirsWithFilesTest.class,
+	/*WriteDirsToCustomDirTest.class,
+	ReadDirsWithFilesTest.class,*/
 })
 public class FileSystemTestSuite {
 }
