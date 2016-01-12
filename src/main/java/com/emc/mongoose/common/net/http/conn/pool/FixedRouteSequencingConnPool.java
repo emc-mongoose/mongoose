@@ -111,10 +111,10 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		public void run() {
 			try {
 				FixedRouteSequencingConnPool.super.release(entry, reusable);
+			} catch(final IllegalStateException e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to release the connection");
 			} catch(final Exception e) {
-				if(!FixedRouteSequencingConnPool.super.isShutdown()) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to release the connection");
-				}
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to release the connection");
 			}
 		}
 	}
