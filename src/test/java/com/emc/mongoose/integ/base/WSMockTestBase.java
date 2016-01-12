@@ -8,6 +8,7 @@ import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
+import com.emc.mongoose.storage.mock.impl.web.Nagaina;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -28,12 +29,12 @@ extends LoggingTestBase {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_API_NAME, "s3"); // reset the ports beginning
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
-		WS_MOCK = new Cinderella<>(rtConfig);
+		WS_MOCK = new Nagaina<>(rtConfig);
 		WS_MOCK_THREAD = new Thread(WS_MOCK, "wsMock");
 		WS_MOCK_THREAD.setDaemon(true);
 		WS_MOCK_THREAD.start();
 		TimeUnit.SECONDS.sleep(1);
-		LOG.info(Markers.MSG, "Cinderella started");
+		LOG.info(Markers.MSG, "Nagaina started");
 	}
 	//
 	@AfterClass
