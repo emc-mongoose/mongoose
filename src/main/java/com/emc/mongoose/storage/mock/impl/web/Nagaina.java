@@ -5,8 +5,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
+//import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
 
+import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
