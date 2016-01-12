@@ -127,8 +127,8 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 //		}
 		if (msg instanceof LastHttpContent) {
 			handle(ctx);
-			ReferenceCountUtil.release(msg);
 		}
+		ReferenceCountUtil.release(msg);
 	}
 
 	public final void handle(ChannelHandlerContext ctx) {
