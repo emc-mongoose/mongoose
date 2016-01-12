@@ -85,7 +85,6 @@ class WeighedLine {
 				lastPoint));
 	}
 
-	// todo queue needs to be updated
 	public void removeAndWeigh(WeighedPoint point) {
 		int index = points.indexOf(point);
 		points.remove(index);

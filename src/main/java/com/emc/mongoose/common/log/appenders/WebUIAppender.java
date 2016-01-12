@@ -3,6 +3,7 @@ package com.emc.mongoose.common.log.appenders;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 //
+import com.emc.mongoose.common.log.appenders.processors.VSimplifierLogAdapter;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
 import org.apache.logging.log4j.ThreadContext;
@@ -33,12 +34,14 @@ extends AbstractAppender {
 	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
 	//
 	private final static ConcurrentHashMap<String, CircularFifoQueue<LogEvent>>
-		LOG_EVENTS_MAP = new ConcurrentHashMap<>();
+			LOG_EVENTS_MAP = new ConcurrentHashMap<>();
+	private final static ConcurrentHashMap<String, CircularFifoQueue<LogEvent>>
+			OBJ_LOG_EVENTS_MAP = new ConcurrentHashMap<>();
 	private final static List<WebSocketLogListener>
-		LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
+			LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
 	//
 	private final static Layout<? extends Serializable>
-		DEFAULT_LAYOUT = SerializedLayout.createLayout();
+			DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	//
 	private final String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
 	//
@@ -106,7 +109,21 @@ extends AbstractAppender {
 						currRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST)
 					);
 				}
+				if(!OBJ_LOG_EVENTS_MAP.containsKey(currRunId)) {
+					OBJ_LOG_EVENTS_MAP.put(
+							currRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST)
+					);
+				}
 				LOG_EVENTS_MAP.get(currRunId).add(event);
+				if (event.getMessage().toString().contains("ObjectMessage")) {
+					OBJ_LOG_EVENTS_MAP.get(currRunId).add(event);
+					System.out.println("Event added");
+				}
+				if (OBJ_LOG_EVENTS_MAP.get(currRunId).size() == 4) {
+					LogEvent[] logEventsArr = new LogEvent[4];
+					OBJ_LOG_EVENTS_MAP.get(currRunId).toArray(logEventsArr);
+					new VSimplifierLogAdapter(logEventsArr);
+				}
 				for (final WebSocketLogListener listener : LISTENERS) {
 					listener.sendMessage(event);
 				}
