@@ -9,14 +9,14 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
 	//AtmosSuite.class,
 	// CambridgeLabDistributedTestSuite.class, // unstable/experimental
-	/*ChainScenarioSuite.class,
+	//ChainScenarioSuite.class,
 	CircularitySuite.class,
-	ContainersTestSuite.class,
-	ContentSuite.class,
+	//ContainersTestSuite.class,
+	//ContentSuite.class,
 	CoreTestSuite.class,
-	DistributedLoadTestSuite.class,*/
+	/*DistributedLoadTestSuite.class,
 	FileSystemTestSuite.class,
-	/*RampupScenarioSuite.class,
+	RampupScenarioSuite.class,
 	S3Suite.class,
 	SwiftSuite.class,*/
 })
