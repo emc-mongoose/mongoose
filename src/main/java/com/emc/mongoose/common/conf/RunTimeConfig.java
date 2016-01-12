@@ -134,6 +134,10 @@ implements Externalizable {
 		KEY_ITEM_SRC_BATCH_SIZE = "item.src.batchSize",
 		KEY_ITEM_QUEUE_MAX_SIZE = "item.queue.maxSize",
 		//
+		KEY_API_TYPE_SS_PORT = "api.type.ss.port",
+		KEY_API_TYPE_SS_PARTITION_START = "api.type.ss.partition.start",
+		KEY_API_TYPE_SS_PARTITION_END = "api.type.ss.partition.end",
+		//
 		FNAME_CONF = "mongoose.json";
 	//
 	private static InheritableThreadLocal<RunTimeConfig>
@@ -630,6 +634,18 @@ implements Externalizable {
 	//
 	public final boolean isRunResumeEnabled() {
 		return getBoolean(KEY_RUN_RESUME_ENABLED);
+	}
+	//
+	public final int getSSPort() {
+		return getInt(KEY_API_TYPE_SS_PORT);
+	}
+	//
+	public final int getSSPartitionStart() {
+		return getInt(KEY_API_TYPE_SS_PARTITION_START);
+	}
+	//
+	public final int getSSPartitionEnd() {
+		return getInt(KEY_API_TYPE_SS_PARTITION_END);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

@@ -25,6 +25,7 @@ import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.ExceptionLogger;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -87,7 +88,7 @@ import java.util.concurrent.TimeoutException;
  Created by kurila on 09.06.14.
  */
 public abstract class WSRequestConfigBase<T extends WSObject, C extends Container<T>>
-extends RequestConfigBase<T, C>
+extends SecureRequestConfigBase<T, C>
 implements WSRequestConfig<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -96,6 +97,7 @@ implements WSRequestConfig<T, C> {
 	protected final String signMethod;
 	protected boolean fsAccess, versioning, pipelining;
 	protected SecretKeySpec secretKey;
+	protected String api, scheme;
 	//
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
@@ -130,6 +132,9 @@ implements WSRequestConfig<T, C> {
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException, IOReactorException {
 		this(null);
+		api = runTimeConfig.getApiName();
+		scheme = runTimeConfig.getStorageProto();
+		port = runTimeConfig.getApiTypePort(api);
 	}
 	//
 	@SuppressWarnings({"unchecked", "SynchronizeOnNonFinalField"})
@@ -315,8 +320,18 @@ implements WSRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T, C> setAPI(final String api) {
-		super.setAPI(api);
+	public WSRequestConfigBase<T, C> setAPI(final String api) {
+		this.api = api;
+		return this;
+	}
+	//
+	@Override
+	public final String getScheme() {
+		return scheme;
+	}
+	@Override
+	public final WSRequestConfigBase<T, C> setScheme(final String scheme) {
+		this.scheme = scheme;
 		return this;
 	}
 	//
@@ -482,13 +497,34 @@ implements WSRequestConfig<T, C> {
 		return nodeHost;
 	}
 	//
+	//
+	@Override @SuppressWarnings("unchecked")
+	public WSRequestConfigBase<T, C> clone()
+	throws CloneNotSupportedException {
+		final WSRequestConfigBase<T, C>
+			requestConfigBranch = (WSRequestConfigBase<T, C>) super.clone();
+		requestConfigBranch.setScheme(scheme);
+		requestConfigBranch.setAPI(api);
+		requestConfigBranch.sharedHeaders = (HeaderGroup) sharedHeaders.clone();
+		requestConfigBranch.setNameSpace(getNameSpace());
+		requestConfigBranch.setFileAccessEnabled(getFileAccessEnabled());
+		requestConfigBranch.setVersioning(getVersioning());
+		requestConfigBranch.setPipelining(getPipelining());
+		LOG.debug(
+			Markers.MSG, "Forked conf conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
+		);
+		return requestConfigBranch;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		sharedHeaders = HeaderGroup.class.cast(in.readObject());
+		setScheme((String) in.readObject());
+		setAPI((String) in.readObject());
+		sharedHeaders = (HeaderGroup) in.readObject();
 		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
-		setNameSpace(String.class.cast(in.readObject()));
+		setNameSpace((String) in.readObject());
 		setFileAccessEnabled(in.readBoolean());
 		setVersioning(in.readBoolean());
 		setPipelining(in.readBoolean());
@@ -498,6 +534,8 @@ implements WSRequestConfig<T, C> {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
+		out.writeObject(scheme);
+		out.writeObject(api);
 		out.writeObject(sharedHeaders);
 		out.writeObject(getNameSpace());
 		out.writeBoolean(getFileAccessEnabled());
@@ -505,6 +543,11 @@ implements WSRequestConfig<T, C> {
 		out.writeBoolean(getPipelining());
 	}
 	//
+	@Override
+	public String toString() {
+		return StringUtils.capitalize(api) + '-' + super.toString();
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {
 		final String oldOid = dataItem.getName();
 		if(

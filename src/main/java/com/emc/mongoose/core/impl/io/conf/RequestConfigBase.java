@@ -25,17 +25,10 @@ implements RequestConfig<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//protected final static String FMT_URI_ADDR = "%s://%s:%s";
+	protected volatile int port = 0;
 	//
-	protected String api;
-	protected volatile String /*addr, */scheme/*, uriTemplate*/;
-	protected volatile int port;
-	//
-	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		api = runTimeConfig.getApiName();
-		scheme = runTimeConfig.getStorageProto();
-		port = runTimeConfig.getApiTypePort(api);
-
+		super();
 	}
 	//
 	protected RequestConfigBase(final RequestConfigBase<T, C> reqConf2Clone) {
@@ -57,26 +50,6 @@ implements RequestConfig<T, C> {
 			Markers.MSG, "Forked conf conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
 		);
 		return requestConfigBranch;
-	}
-	//
-	@Override
-	public final String getAPI() {
-		return api;
-	}
-	@Override
-	public RequestConfigBase<T, C> setAPI(final String api) {
-		this.api = api;
-		return this;
-	}
-	//
-	@Override
-	public final String getScheme() {
-		return scheme;
-	}
-	@Override
-	public final RequestConfigBase<T, C> setScheme(final String scheme) {
-		this.scheme = scheme;
-		return this;
 	}
 	/*
 	@Override
@@ -127,7 +100,6 @@ implements RequestConfig<T, C> {
 	public RequestConfigBase<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
 		super.setRunTimeConfig(runTimeConfig);
 		final String api = runTimeConfig.getApiName();
-		setAPI(api);
 		setPort(this.runTimeConfig.getApiTypePort(api));
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		setBuffSize((int) this.runTimeConfig.getIOBufferSizeMin());
@@ -139,38 +111,20 @@ implements RequestConfig<T, C> {
 	throws IOException {
 		super.writeExternal(out);
 		LOG.trace(Markers.MSG, "Written I/O base configuration \"" + nameSpace + "\"");
-		out.writeObject(getAPI());
-		LOG.trace(Markers.MSG, "Written API type \"" + api + "\"");
-		out.writeObject(getScheme());
-		LOG.trace(Markers.MSG, "Written scheme \"" + scheme + "\"");
 		out.writeInt(getPort());
 		LOG.trace(Markers.MSG, "Written port num \"" + port + "\"");
-		out.writeObject(getUserName());
-		LOG.trace(Markers.MSG, "Written user name \"" + userName + "\"");
-		out.writeObject(getSecret());
-		LOG.trace(Markers.MSG, "Written secret key \"" + secret + "\"");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setAPI((String) in.readObject());
-		LOG.trace(Markers.MSG, "Got API {}", api);
-		setScheme(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got scheme {}", scheme);
 		setPort(in.readInt());
 		LOG.trace(Markers.MSG, "Got port {}", port);
-		setUserName(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got user name {}", userName);
-		setSecret(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got secret {}", secret);
 	}
 	//
 	@Override
-	public final String toString() {
-		return StringUtils.capitalize(getAPI()) + '-' +
-			StringUtils.capitalize(loadType.name().toLowerCase())/* +
-			((addr==null || addr.length()==0) ? "" : "@"+addr)*/;
+	public String toString() {
+		return super.toString() + ":" + port;
 	}
 }

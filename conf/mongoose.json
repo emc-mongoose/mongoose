@@ -145,6 +145,13 @@
 					"serviceBasepath": "v1",
 					"authToken": "",
 					"container": ""
+				},
+				"ss": {
+					"port": 9099,
+					"partition": {
+						"start": 0,
+						"end": 1
+					}
 				}
 			}
 		},
