@@ -4,17 +4,17 @@ import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.DataCorruptionException;
-import com.emc.mongoose.core.api.data.DataSizeException;
-import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.DataCorruptionException;
+import com.emc.mongoose.core.api.item.data.DataSizeException;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.FileIOTask;
 //
-import com.emc.mongoose.core.impl.data.BasicDataItem;
-import static com.emc.mongoose.core.impl.data.BasicMutableDataItem.getRangeCount;
-import static com.emc.mongoose.core.impl.data.BasicMutableDataItem.getRangeOffset;
+import com.emc.mongoose.core.impl.item.data.BasicDataItem;
+import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeCount;
+import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;

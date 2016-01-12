@@ -7,8 +7,8 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.FileItem;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 26.11.15.
  */
@@ -42,8 +43,9 @@ extends BasicDirectoryLoadBuilder<T, C, U>
 implements DirectoryLoadBuilderSvc<T, C, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static AtomicInteger FORK_COUNTER = new AtomicInteger(0);
 	//
-	private String configTable = null;
+	private String name = getClass().getName();
 	//
 	public BasicDirectoryLoadBuilderSvc(final RunTimeConfig rtConfig)
 	throws RemoteException {
@@ -51,30 +53,27 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
-	public final BasicDirectoryLoadBuilderSvc<T, C, U> setProperties(
-		final RunTimeConfig clientConfig
-	) throws RemoteException {
-		super.setProperties(clientConfig);
-		final String runMode = clientConfig.getRunMode();
-		if(
-			!runMode.equals(Constants.RUN_MODE_SERVER) &&
-			!runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)
-		) {
-			configTable = clientConfig.toString();
+	public final int fork()
+	throws RemoteException {
+		try {
+			final BasicDirectoryLoadBuilderSvc<T, C, U>
+				forkedSvc = (BasicDirectoryLoadBuilderSvc<T, C, U>) clone();
+			final int forkNum = FORK_COUNTER.getAndIncrement();
+			forkedSvc.name = name + forkNum;
+			forkedSvc.start();
+			LOG.info(Markers.MSG, "Service \"" + name + "\" started");
+			return forkNum;
+		} catch(final CloneNotSupportedException e) {
+			throw new RemoteException(e.toString());
 		}
-		RunTimeConfig.getContext();
-		return this;
 	}
 	//
 	@Override
 	public String buildRemotely()
 	throws RemoteException {
 		U loadSvc = build();
+		LOG.info(Markers.MSG, rtConfig.toString());
 		ServiceUtil.create(loadSvc);
-		if(configTable != null) {
-			LOG.info(Markers.MSG, configTable);
-			configTable = null;
-		}
 		return loadSvc.getName();
 	}
 	//
@@ -111,12 +110,11 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 		LoadExecutor.NEXT_INSTANCE_NUM.set(instanceN);
 	}
 	//
-	@Override
-	public String getName()
-	throws RemoteException {
-		return getClass().getName();
-	}
 	//
+	@Override
+	public final String getName() {
+		return name;
+	}
 	@Override
 	public void start()
 	throws RemoteException, IllegalThreadStateException {
@@ -157,6 +155,7 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	throws IOException {
 		super.close();
 		ServiceUtil.close(this);
+		LOG.info(Markers.MSG, "Service \"{}\" closed", name);
 	}
 	//
 	@Override

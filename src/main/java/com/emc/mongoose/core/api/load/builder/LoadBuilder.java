@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.api.load.builder;
 //
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -16,13 +16,13 @@ import java.rmi.RemoteException;
  A builder pattern implementation which should help to instantiate a configured load executor.
  */
 public interface LoadBuilder<T extends Item, U extends LoadExecutor<T>>
-extends Closeable {
+extends Closeable, Cloneable {
 	//
 	String
 		MSG_TMPL_NOT_SPECIFIED = "\"{}\" parameter is not specified nor in configuration files neither in command line",
 		MSG_TMPL_INVALID_VALUE = "illegal value specified for \"{}\" parameter: {}";
 	//
-	LoadBuilder<T, U> setProperties(final RunTimeConfig props)
+	LoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig props)
 	throws IllegalStateException, RemoteException;
 	//
 	IOConfig<?, ?> getIOConfig()
@@ -64,6 +64,9 @@ extends Closeable {
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> useNoneItemSrc()
+	throws RemoteException;
+	//
+	LoadBuilder<T, U> useContainerListingItemSrc()
 	throws RemoteException;
 	//
 	void invokePreConditions()

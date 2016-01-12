@@ -1,6 +1,6 @@
 package com.emc.mongoose.util.client.api;
 //
-import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 //
 import java.util.concurrent.TimeUnit;
 /**

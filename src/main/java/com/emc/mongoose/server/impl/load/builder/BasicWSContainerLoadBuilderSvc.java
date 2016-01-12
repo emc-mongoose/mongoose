@@ -6,8 +6,8 @@ import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -15,17 +15,18 @@ import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;
 import com.emc.mongoose.server.impl.load.executor.BasicWSContainerLoadSvc;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
-
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by gusakk on 22.10.15.
  */
@@ -38,8 +39,9 @@ extends BasicWSContainerLoadBuilder<T, C, U>
 implements WSContainerLoadBuilderSvc<T, C, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static AtomicInteger FORK_COUNTER = new AtomicInteger(0);
 	//
-	private String configTable = null;
+	private String name = getClass().getName();
 	//
 	public BasicWSContainerLoadBuilderSvc(final RunTimeConfig runTimeConfig)
 	throws RemoteException {
@@ -47,34 +49,33 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
-	public final BasicWSContainerLoadBuilderSvc<T, C, U>
-	setProperties(final RunTimeConfig clientConfig)
+	public final int fork()
 	throws RemoteException {
-		super.setProperties(clientConfig);
-		final String runMode = clientConfig.getRunMode();
-		if (!runMode.equals(Constants.RUN_MODE_SERVER)
-				&& !runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)) {
-			configTable = clientConfig.toString();
+		try {
+			final BasicWSContainerLoadBuilderSvc<T, C, U>
+				forkedSvc = (BasicWSContainerLoadBuilderSvc<T, C, U>) clone();
+			final int forkNum = FORK_COUNTER.getAndIncrement();
+			forkedSvc.name = name + forkNum;
+			forkedSvc.start();
+			LOG.info(Markers.MSG, "Service \"" + name + "\" started");
+			return forkNum;
+		} catch(final CloneNotSupportedException e) {
+			throw new RemoteException(e.toString());
 		}
-		RunTimeConfig.getContext();
-		return this;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	public final String buildRemotely()
+	@Override
+	public String buildRemotely()
 	throws RemoteException {
-		final U loadSvc = build();
+		U loadSvc = build();
+		LOG.info(Markers.MSG, rtConfig.toString());
 		ServiceUtil.create(loadSvc);
-		if(configTable != null) {
-			LOG.info(Markers.MSG, configTable);
-			configTable = null;
-		}
 		return loadSvc.getName();
 	}
 	//
 	@Override
 	public final String getName() {
-		return getClass().getName();
+		return name;
 	}
 	//
 	@Override
@@ -119,9 +120,9 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	throws RemoteException {
 		LOG.debug(Markers.MSG, "Load builder service instance created");
 		try {
-		/*final RemoteStub stub = */
-		ServiceUtil.create(this);
-		/*LOG.debug(Markers.MSG, stub.toString());*/
+			/*final RemoteStub stub = */
+			ServiceUtil.create(this);
+			/*LOG.debug(Markers.MSG, stub.toString());*/
 		} catch (final DuplicateSvcNameException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");
 		}
@@ -155,6 +156,7 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	throws IOException {
 		super.close();
 		ServiceUtil.close(this);
+		LOG.info(Markers.MSG, "Service \"{}\" closed", name);
 	}
 	//
 	@Override

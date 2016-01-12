@@ -5,12 +5,11 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.DistributedLoadBuilderTestBase;
-import com.emc.mongoose.integ.base.LoggingTestBase;
 import com.emc.mongoose.integ.tools.StdOutUtil;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
-import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
+import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -66,11 +65,12 @@ extends DistributedLoadBuilderTestBase {
 		final Logger logger = LogManager.getLogger();
 		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
-		try (final BufferingOutputStream
-			     stdOutStream =	StdOutUtil.getStdOutBufferingStream()
+		try(
+			final BufferingOutputStream
+				stdOutStream = StdOutUtil.getStdOutBufferingStream()
 		) {
 			//  Run mongoose default scenario in standalone mode
-			new ScriptMockRunner().run();
+			new ScenarioRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;

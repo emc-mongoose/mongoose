@@ -26,6 +26,7 @@ extends Thread {
 	//
 	private IOWorker(final Runnable task, final String name) {
 		super(task, name);
+		setDaemon(true);
 		//setPriority(Thread.MAX_PRIORITY);
 	}
 	//

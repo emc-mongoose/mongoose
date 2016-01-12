@@ -2,9 +2,9 @@ package com.emc.mongoose.integ.feature.swift;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.container.BasicContainer;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.swift.SwiftContainerHelper;
@@ -38,7 +38,7 @@ extends StandaloneClientTestBase {
 		//
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
 			.newInstanceFor("swift")
-			.setProperties(RunTimeConfig.getContext());
+			.setRunTimeConfig(RunTimeConfig.getContext());
 		CONTAINER_HELPER = new WSSwiftContainerHelper<WSObject, Container<WSObject>>(
 				reqConf, new BasicContainer(RUN_ID)
 		);

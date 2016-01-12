@@ -1,8 +1,8 @@
 package com.emc.mongoose.util.client.api;
 //
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
-import com.emc.mongoose.core.api.data.model.ItemDst;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.core.api.item.base.ItemDst;
 //
 import java.io.Closeable;
 import java.io.IOException;

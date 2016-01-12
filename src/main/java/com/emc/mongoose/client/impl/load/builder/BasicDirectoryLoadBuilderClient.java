@@ -5,12 +5,11 @@ import com.emc.mongoose.client.api.load.executor.DirectoryLoadClient;
 import com.emc.mongoose.client.impl.load.executor.BasicDirectoryLoadClient;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 //
 import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
@@ -38,7 +37,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	//
 	public BasicDirectoryLoadBuilderClient()
 	throws IOException {
-		super();
+		this(RunTimeConfig.getContext());
 	}
 	//
 	public BasicDirectoryLoadBuilderClient(final RunTimeConfig runTimeConfig)
@@ -55,21 +54,10 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	protected DirectoryLoadBuilderSvc<T, C, W> resolve(final String serverAddr)
 	throws IOException {
 		DirectoryLoadBuilderSvc<T, C, W> rlb;
-		final Service remoteSvc = ServiceUtil.getRemoteSvc(
-			"//" + serverAddr + '/'
-				+ getClass().getName()
-				.replace("client", "server").replace("Client", "Svc")
-		);
-		if(remoteSvc == null) {
-			throw new IOException("No remote load builder was resolved from " + serverAddr);
-		} else if(remoteSvc instanceof DirectoryLoadBuilderSvc) {
-			rlb = (DirectoryLoadBuilderSvc<T, C, W>) remoteSvc;
-		} else {
-			throw new IOException(
-				"Illegal class " + remoteSvc.getClass().getCanonicalName() +
-					" of the instance resolved from " + serverAddr
-			);
-		}
+		final String svcUri = "//" + serverAddr + '/' +
+			getClass().getName().replace("client", "server").replace("Client", "Svc");
+		rlb = (DirectoryLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri);
+		rlb = (DirectoryLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());
 		return rlb;
 	}
 	//

@@ -8,7 +8,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 30.05.14.
  */
@@ -38,8 +39,9 @@ extends BasicWSDataLoadBuilder<T, U>
 implements WSDataLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static AtomicInteger FORK_COUNTER = new AtomicInteger(0);
 	//
-	private String configTable = null;
+	private String name = getClass().getName();
 	//
 	public BasicWSDataLoadBuilderSvc(final RunTimeConfig runTimeConfig)
 	throws RemoteException {
@@ -47,33 +49,33 @@ implements WSDataLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public final BasicWSDataLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig)
+	public final int fork()
 	throws RemoteException {
-		super.setProperties(clientConfig);
-		final String runMode = clientConfig.getRunMode();
-		if (!runMode.equals(Constants.RUN_MODE_SERVER)
-			&& !runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)) {
-			configTable = clientConfig.toString();
+		try {
+			final BasicWSDataLoadBuilderSvc<T, U>
+				forkedSvc = (BasicWSDataLoadBuilderSvc<T, U>) clone();
+			final int forkNum = FORK_COUNTER.getAndIncrement();
+			forkedSvc.name = name + forkNum;
+			forkedSvc.start();
+			LOG.info(Markers.MSG, "Service \"" + name + "\" started");
+			return forkNum;
+		} catch(final CloneNotSupportedException e) {
+			throw new RemoteException(e.toString());
 		}
-		RunTimeConfig.getContext();
-		return this;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	public final String buildRemotely()
+	@Override
+	public String buildRemotely()
 	throws RemoteException {
-		final U loadSvc = build();
+		U loadSvc = build();
+		LOG.info(Markers.MSG, rtConfig.toString());
 		ServiceUtil.create(loadSvc);
-		if(configTable != null) {
-			LOG.info(Markers.MSG, configTable);
-			configTable = null;
-		}
 		return loadSvc.getName();
 	}
 	//
 	@Override
 	public final String getName() {
-		return getClass().getName();
+		return name;
 	}
 	//
 	@Override
@@ -164,6 +166,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 	throws IOException {
 		super.close();
 		ServiceUtil.close(this);
+		LOG.info(Markers.MSG, "Service \"{}\" closed", name);
 	}
 	//
 	@Override

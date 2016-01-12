@@ -3,11 +3,11 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.container.BasicContainer;
+import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 //
 import org.apache.http.Header;
@@ -132,8 +132,8 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public WSRequestConfigImpl<T, C> setProperties(final RunTimeConfig runTimeConfig) {
-		super.setProperties(runTimeConfig);
+	public WSRequestConfigImpl<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
+		super.setRunTimeConfig(runTimeConfig);
 		//
 		if(runTimeConfig.containsKey(KEY_CONF_SVC_BASEPATH)) {
 			uriSvcBasePath = runTimeConfig.getString(KEY_CONF_SVC_BASEPATH);

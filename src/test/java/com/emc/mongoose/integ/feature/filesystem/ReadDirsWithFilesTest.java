@@ -4,10 +4,10 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
-import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.impl.container.BasicDirectory;
-import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-import com.emc.mongoose.core.impl.data.model.DataItemCSVFileSrc;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.impl.item.container.BasicDirectory;
+import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.DataItemCSVFileSrc;
 import com.emc.mongoose.integ.base.FileSystemTestBase;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 public final class ReadDirsWithFilesTest
 extends FileSystemTestBase {
 	//
-	private final static long COUNT_TO_WRITE = 1000;
+	private final static long COUNT_TO_WRITE = 100;
 	private final static String RUN_ID = ReadDirsWithFilesTest.class.getCanonicalName();
 	//
 	private static long countWritten, countRead;
@@ -74,7 +74,7 @@ extends FileSystemTestBase {
 						RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID + "/" + nextDirName
 					);
 					nextDirClient = CLIENT_BUILDER.build();
-					nextDirClient.write(null, null, COUNT_TO_WRITE, 100, 1);
+					nextDirClient.write(null, null, COUNT_TO_WRITE, 100, 10);
 				}
 			} while(true);
 		}

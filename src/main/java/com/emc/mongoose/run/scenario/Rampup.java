@@ -1,20 +1,14 @@
 package com.emc.mongoose.run.scenario;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-//
-import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
-//
-import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 //
-import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 11.06.15.
@@ -28,14 +22,15 @@ implements Runnable {
 		LOG = LogManager.getLogger();
 	}
 	//
-	private final DataLoadBuilder loadBuilder;
-	private final long timeOut;
+	private final RunTimeConfig rtConfig;
+	private final long timeOut, unChangedCountLimit;
 	private final TimeUnit timeUnit;
 	private final String loadTypeSeq[], sizeSeq[], connCountSeq[];
 	//
 	public Rampup(final RunTimeConfig rtConfig) {
-		this.loadBuilder = (DataLoadBuilder) LoadBuilderFactory.getInstance(rtConfig);
+		this.rtConfig = rtConfig;
 		this.timeOut = rtConfig.getLoadLimitTimeValue();
+		this.unChangedCountLimit = rtConfig.getLoadLimitCount();
 		this.timeUnit = rtConfig.getLoadLimitTimeUnit();
 		this.loadTypeSeq = rtConfig.getScenarioChainLoad();
 		this.sizeSeq = rtConfig.getScenarioRampupSizes();
@@ -53,24 +48,24 @@ implements Runnable {
 			for(final String nextConnCountStr : connCountSeq) {
 				ThreadContext.put("currentSize", nextSizeStr + "-" + i);
 				ThreadContext.put("currentConnCount", nextConnCountStr);
-				final long nextSize = SizeUtil.toSize(nextSizeStr);
 				final String nextStepName = nextConnCountStr + "x" + nextSizeStr;
 				LOG.debug(Markers.MSG, "Build the next step load chain: \"{}\"", nextStepName);
-				try {
-					loadBuilder
-						.setMinObjSize(nextSize)
-						.setMaxObjSize(nextSize)
-						.setConnPerNodeDefault(Integer.parseInt(nextConnCountStr));
-					nextLoadSeq = new Chain(
-						loadBuilder, timeOut, timeUnit, loadTypeSeq, false
-					);
-					LOG.info(Markers.PERF_SUM, "---- Step {} start ----", nextStepName);
-					nextLoadSeq.run();
-					if (nextLoadSeq.isInterrupted()) {
-						return;
-					}
-				} catch(final RemoteException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to apply rampup params remotely");
+				// each finished load job affects global count limitation, should be reset
+				rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, unChangedCountLimit);
+				rtConfig.set(RunTimeConfig.KEY_DATA_SIZE, nextSizeStr);
+				rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, nextSizeStr);
+				rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, nextSizeStr);
+				rtConfig.set(RunTimeConfig.KEY_LOAD_CONNS, nextConnCountStr);
+				rtConfig.set(RunTimeConfig.KEY_APPEND_CONNS, nextConnCountStr);
+				rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, nextConnCountStr);
+				rtConfig.set(RunTimeConfig.KEY_DELETE_CONNS, nextConnCountStr);
+				rtConfig.set(RunTimeConfig.KEY_READ_CONNS, nextConnCountStr);
+				rtConfig.set(RunTimeConfig.KEY_UPDATE_CONNS, nextConnCountStr);
+				nextLoadSeq = new Chain(rtConfig, timeOut, timeUnit, loadTypeSeq, false);
+				LOG.info(Markers.PERF_SUM, "---- Step {} start ----", nextStepName);
+				nextLoadSeq.run();
+				if(nextLoadSeq.isInterrupted()) {
+					return;
 				}
 			}
 		}

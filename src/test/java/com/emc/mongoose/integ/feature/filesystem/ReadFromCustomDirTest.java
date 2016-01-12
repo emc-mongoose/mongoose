@@ -5,9 +5,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
-import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.data.model.ItemBuffer;
-import com.emc.mongoose.core.impl.data.model.LimitedQueueItemBuffer;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.api.item.base.ItemBuffer;
+import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.integ.base.FileSystemTestBase;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.util.client.api.StorageClient;

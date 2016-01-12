@@ -4,11 +4,11 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.ItemDst;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-import com.emc.mongoose.core.impl.data.model.ItemCSVFileDst;
+import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.base.ItemDst;
+import com.emc.mongoose.core.impl.item.data.BasicWSObject;
+import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.integ.tools.StdOutUtil;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
@@ -55,7 +55,7 @@ extends StandaloneClientTestBase {
 	//
 	private final static String
 		RUN_ID = CircularSequentialChainTest.class.getCanonicalName(),
-		LOAD_SEQ[] = {  "read", "update" };
+		LOAD_SEQ[] = { "read", "update" };
 	private static final int COUNT_STEPS = LOAD_SEQ.length;
 	//
 	private static byte STD_OUT_CONTENT[] = null;

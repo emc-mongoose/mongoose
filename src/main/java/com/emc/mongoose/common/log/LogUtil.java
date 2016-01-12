@@ -14,6 +14,8 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.apache.logging.log4j.core.util.Cancellable;
+import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.io.IoBuilder;
 //
 import java.io.File;
@@ -27,7 +29,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -36,7 +37,14 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 06.05.14.
  */
-public final class LogUtil {
+public final class LogUtil
+implements ShutdownCallbackRegistry {
+	//
+	@Override
+	public final Cancellable addShutdownCallback(final Runnable callback) {
+		return null;
+	}
+	//
 	private final static String
 		//
 		KEY_LOG4J_CTX_SELECTOR = "Log4jContextSelector",
@@ -53,6 +61,9 @@ public final class LogUtil {
 		//
 		KEY_CLOCK = "log4j.Clock",
 		VALUE_CLOCK = "CoarseCachedClock",
+		//
+		KEY_SHUTDOWN_CALLBACK_REGISTRY = "log4j.shutdownCallbackRegistry",
+		VALUE_SHUTDOWN_CALLBACK_REGISTRY = LogUtil.class.getCanonicalName(),
 		//
 		FNAME_LOG_CONF = "logging.json",
 		//
@@ -127,6 +138,8 @@ public final class LogUtil {
 				System.setProperty(KEY_WAIT_STRATEGY, VALUE_WAIT_STRATEGY);
 				//
 				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
+				//
+				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, VALUE_SHUTDOWN_CALLBACK_REGISTRY);
 				// set "run.id" property with timestamp value if not set before
 				String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
@@ -187,6 +200,7 @@ public final class LogUtil {
 	public static boolean isConsoleColoringEnabled() {
 		return STDOUT_COLORING_ENABLED;
 	}
+	//
 	//
 	/*public static void shutdown() {
 		final Logger LOG = LogManager.getLogger();

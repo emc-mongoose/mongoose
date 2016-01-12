@@ -4,8 +4,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.impl.load.executor.BasicWSDataLoadExecutor;
 import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 // mongoose-core-api.jar
@@ -31,7 +31,7 @@ implements WSDataLoadBuilder<T, U> {
 	public BasicWSDataLoadBuilder(final RunTimeConfig runTimeConfig)
 	throws RemoteException {
 		super(runTimeConfig);
-		setProperties(runTimeConfig);
+		setRunTimeConfig(runTimeConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -40,10 +40,10 @@ implements WSDataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public BasicWSDataLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
+	public BasicWSDataLoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws RemoteException {
 		//
-		super.setProperties(rtConfig);
+		super.setRunTimeConfig(rtConfig);
 		//
 		final String paramName = RunTimeConfig.KEY_STORAGE_SCHEME;
 		try {

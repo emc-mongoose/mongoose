@@ -9,7 +9,7 @@ import com.emc.mongoose.integ.tools.StdOutUtil;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
-import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
+import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -38,9 +38,9 @@ extends WSMockTestBase{
 	//
 	private static String RUN_ID = CustomRampupTest.class.getCanonicalName();
 	private static final String
-		LIMIT_TIME = "15s",
-		RAMPUP_SIZES = "10KB,100MB,1MB",
-		RAMPUP_CONN_COUNTS = "1,10,100",
+		LIMIT_TIME = "20s",
+		RAMPUP_SIZES = "10B,10MB,100KB",
+		RAMPUP_CONN_COUNTS = "1,100,10",
 		RAMPUP_LOAD_CHAIN = "create,read,delete";
 	private static final int COUNT_STEPS = 3*3;
 
@@ -66,7 +66,7 @@ extends WSMockTestBase{
 			stdOutStream =	StdOutUtil.getStdOutBufferingStream()
 		) {
 			//  Run mongoose default scenario in standalone mode
-			new ScriptMockRunner().run();
+			new ScenarioRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;

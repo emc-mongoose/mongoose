@@ -5,10 +5,10 @@ import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-storage-mock.jar
 //
-import com.emc.mongoose.core.api.data.content.ContentSource;
-import com.emc.mongoose.core.impl.data.BasicMutableDataItem;
+import com.emc.mongoose.core.api.item.data.ContentSource;
+import com.emc.mongoose.core.impl.item.data.BasicMutableDataItem;
 //
-import com.emc.mongoose.core.impl.data.BasicDataItem;
+import com.emc.mongoose.core.impl.item.data.BasicDataItem;
 //
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import org.apache.http.HttpEntity;

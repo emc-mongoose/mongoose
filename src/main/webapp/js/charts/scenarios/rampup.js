@@ -369,7 +369,7 @@ define([
 					if (scaleType === scaleTypes[0]) {
 						if (scaleOrientation === scalesOrientation[0]) {
 							x = d3.scale.linear()
-									.domain([0, d3.max(rampupConnCountsArray)])
+									.domain([d3.min(rampupConnCountsArray), d3.max(rampupConnCountsArray)])
 									.nice()
 									.range([0, width]);
 							currXScale = scaleTypes[0];
@@ -388,7 +388,7 @@ define([
 					} else {
 						if (scaleOrientation === scalesOrientation[0]) {
 							x = d3.scale.log()
-									.domain([1, d3.max(rampupConnCountsArray)])
+									.domain([d3.min(rampupConnCountsArray), d3.max(rampupConnCountsArray)])
 									.nice()
 									.range([0, width]);
 							currXScale = scaleTypes[1];
@@ -447,9 +447,10 @@ define([
 						//
 					});
 					//
-					x.domain([(isNaN(x(0))) ? 1 : 0, d3.max(rampupConnCountsArray)])
-							.nice()
-							.range([0, width]);
+					x
+						.domain([d3.min(rampupConnCountsArray), d3.max(rampupConnCountsArray)])
+						.nice()
+						.range([0, width]);
 					y.domain([
 						(currYScale !== scaleTypes[1]) ? 0 : d3.min(currentSizes, function (c) {
 							return d3.min(c.charts, function (v) {

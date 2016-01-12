@@ -2,7 +2,7 @@ package com.emc.mongoose.client.api.load.builder;
 // mongoose-core-api.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 //
-import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
 import com.emc.mongoose.server.api.load.executor.LoadSvc;

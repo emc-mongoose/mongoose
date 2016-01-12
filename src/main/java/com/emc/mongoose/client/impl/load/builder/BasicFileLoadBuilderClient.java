@@ -1,18 +1,23 @@
 package com.emc.mongoose.client.impl.load.builder;
+//
 import com.emc.mongoose.client.api.load.builder.FileLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.FileLoadClient;
+//
 import com.emc.mongoose.client.impl.load.executor.BasicFileLoadClient;
+//
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
-import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.FileItem;
+//
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+//
 import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
+//
 import com.emc.mongoose.server.api.load.builder.FileLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
-
+//
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -27,7 +32,7 @@ implements FileLoadBuilderClient<T, W, U> {
 	//
 	public BasicFileLoadBuilderClient()
 	throws IOException {
-		super();
+		this(RunTimeConfig.getContext());
 	}
 	//
 	public BasicFileLoadBuilderClient(final RunTimeConfig rtConfig)
@@ -40,25 +45,14 @@ implements FileLoadBuilderClient<T, W, U> {
 		return new BasicFileIOConfig<>();
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	protected FileLoadBuilderSvc<T, W> resolve(final String serverAddr)
 	throws IOException {
 		FileLoadBuilderSvc<T, W> rlb;
-		final Service remoteSvc = ServiceUtil.getRemoteSvc(
-			"//" + serverAddr + '/'
-				+ getClass().getName()
-				.replace("client", "server").replace("Client", "Svc")
-		);
-		if(remoteSvc == null) {
-			throw new IOException("No remote load builder was resolved from " + serverAddr);
-		} else if(remoteSvc instanceof FileLoadBuilderSvc) {
-			rlb = (FileLoadBuilderSvc<T, W>) remoteSvc;
-		} else {
-			throw new IOException(
-				"Illegal class " + remoteSvc.getClass().getCanonicalName() +
-					" of the instance resolved from " + serverAddr
-			);
-		}
+		final String svcUri = "//" + serverAddr + '/' +
+			getClass().getName().replace("client", "server").replace("Client", "Svc");
+		rlb = (FileLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri);
+		rlb = (FileLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());
 		return rlb;
 	}
 	//

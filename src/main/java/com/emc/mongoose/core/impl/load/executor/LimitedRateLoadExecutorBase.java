@@ -4,10 +4,10 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.DataItem;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //

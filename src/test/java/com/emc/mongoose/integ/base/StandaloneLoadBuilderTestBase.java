@@ -2,7 +2,7 @@ package com.emc.mongoose.integ.base;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.api.load.builder.WSDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 import com.emc.mongoose.core.impl.load.builder.BasicWSDataLoadBuilder;
@@ -24,7 +24,7 @@ extends WSMockTestBase {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
 		LOAD_BUILDER = new BasicWSDataLoadBuilder<>(RunTimeConfig.getContext())
-			.setProperties(rtConfig);
+			.setRunTimeConfig(rtConfig);
 	}
 	//
 	@AfterClass

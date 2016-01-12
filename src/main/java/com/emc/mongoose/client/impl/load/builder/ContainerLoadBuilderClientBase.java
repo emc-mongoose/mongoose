@@ -5,10 +5,10 @@ import com.emc.mongoose.client.api.load.executor.ContainerLoadClient;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.DataItem;
 //
-import com.emc.mongoose.core.impl.data.model.ItemCSVFileSrc;
+import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.server.api.load.builder.ContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.ContainerLoadSvc;
 import org.apache.logging.log4j.Level;
@@ -41,17 +41,15 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	protected ContainerLoadBuilderClientBase(final RunTimeConfig rtConfig)
 	throws IOException {
 		super(rtConfig);
-		setProperties(rtConfig);
 	}
 	//
 	@Override
-	public ContainerLoadBuilderClientBase<T, C, W, U, V>
-	setProperties(final RunTimeConfig rtConfig)
+	public ContainerLoadBuilderClientBase<T, C, W, U, V> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws RemoteException {
-		super.setProperties(rtConfig);
+		super.setRunTimeConfig(rtConfig);
 		//
 		final String listFilePathStr = rtConfig.getItemSrcFile();
-		if (itemsFileExists(listFilePathStr)) {
+		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(
 					new ItemCSVFileSrc<>(

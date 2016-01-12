@@ -6,16 +6,19 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.model.DataItemFileSrc;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.base.ItemNamingScheme;
+import com.emc.mongoose.core.api.item.data.DataItem;
+import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.data.model.ItemCSVFileSrc;
-import com.emc.mongoose.core.impl.data.model.NewDataItemSrc;
+import com.emc.mongoose.core.impl.item.base.BasicItemNamingScheme;
+import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
+import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -24,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 /**
  Created by kurila on 20.10.15.
@@ -35,18 +39,12 @@ implements DataLoadBuilder<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected long minObjSize, maxObjSize;
+	protected int updatesPerItem;
 	protected float objSizeBias;
-	protected boolean flagUseContainerItemSrc;
 	//
 	public DataLoadBuilderBase(final RunTimeConfig rtConfig)
 	throws RemoteException {
 		super(rtConfig);
-	}
-	//
-	@Override
-	protected void resetItemSrc() {
-		super.resetItemSrc();
-		flagUseContainerItemSrc = true;
 	}
 	//
 	@Override
@@ -55,38 +53,60 @@ implements DataLoadBuilder<T, U> {
 		final DataLoadBuilderBase<T, U> lb = (DataLoadBuilderBase<T, U>) super.clone();
 		lb.minObjSize = minObjSize;
 		lb.maxObjSize = maxObjSize;
+		lb.updatesPerItem = updatesPerItem;
 		lb.objSizeBias = objSizeBias;
 		return lb;
 	}
 	//
 	@SuppressWarnings("unchecked")
+	private ItemSrc<T> getNewItemSrc()
+	throws NoSuchMethodException {
+		final String ns = rtConfig.getItemNaming();
+		ItemNamingScheme.Type namingSchemeType = ItemNamingScheme.Type.RANDOM;
+		if(ns != null && !ns.isEmpty()) {
+			try {
+				namingSchemeType = ItemNamingScheme.Type.valueOf(ns.toUpperCase());
+			} catch(final IllegalArgumentException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e,
+					"Failed to parse the naming scheme \"{}\", acceptable values are: {}",
+					ns, Arrays.toString(ItemNamingScheme.Type.values())
+				);
+			}
+		}
+		return new NewDataItemSrc<>(
+			(Class<T>) ioConfig.getItemClass(), new BasicItemNamingScheme(namingSchemeType),
+			ioConfig.getContentSource(), minObjSize, maxObjSize, objSizeBias
+		);
+	}
+	//
+	@SuppressWarnings("unchecked")
+	private ItemSrc<T> getContainerItemSrc()
+	throws CloneNotSupportedException {
+		return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
+			maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+		);
+	}
+	//
 	protected ItemSrc<T> getDefaultItemSource() {
 		try {
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
 				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
-					return new NewDataItemSrc<>(
-						(Class<T>) ioConfig.getItemClass(), ioConfig.getContentSource(),
-						minObjSize, maxObjSize, objSizeBias
-					);
+					return getNewItemSrc();
 				} else {
-					return (ItemSrc<T>) ioConfig.getContainerListInput(
-						maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
-					);
+					return getContainerItemSrc();
 				}
 			} else if(flagUseNewItemSrc) {
-				return new NewDataItemSrc<>(
-					(Class<T>) ioConfig.getItemClass(), ioConfig.getContentSource(),
-					minObjSize, maxObjSize, objSizeBias
-				);
+				return getNewItemSrc();
 			} else if(flagUseContainerItemSrc) {
-				return (ItemSrc<T>) ioConfig.getContainerListInput(
-					maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
-				);
+				return getContainerItemSrc();
 			}
 		} catch(final NoSuchMethodException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the I/O config instance");
 		}
 		return null;
 	}
@@ -98,9 +118,9 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public DataLoadBuilder<T, U> setProperties(final RunTimeConfig rtConfig)
+	public DataLoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig rtConfig)
 	throws IllegalStateException, RemoteException {
-		super.setProperties(rtConfig);
+		super.setRunTimeConfig(rtConfig);
 		//
 		String paramName = RunTimeConfig.KEY_DATA_SIZE_MIN;
 		try {
@@ -221,13 +241,6 @@ implements DataLoadBuilder<T, U> {
 			throw new IllegalArgumentException("Update count per item should not be less than 0");
 		}
 		this.updatesPerItem = count;
-		return this;
-	}
-	//
-	@Override
-	public DataLoadBuilder<T, U> useContainerListingItemSrc()
-	throws RemoteException {
-		flagUseContainerItemSrc = true;
 		return this;
 	}
 }

@@ -1,13 +1,12 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
@@ -36,7 +35,7 @@ implements WSDataLoadBuilderClient<T, W, U> {
 	//
 	public BasicWSDataLoadBuilderClient()
 	throws IOException {
-		super();
+		this(RunTimeConfig.getContext());
 	}
 	//
 	public BasicWSDataLoadBuilderClient(final RunTimeConfig runTimeConfig)
@@ -53,21 +52,10 @@ implements WSDataLoadBuilderClient<T, W, U> {
 	protected WSDataLoadBuilderSvc<T, W> resolve(final String serverAddr)
 	throws IOException {
 		WSDataLoadBuilderSvc<T, W> rlb;
-		final Service remoteSvc = ServiceUtil.getRemoteSvc(
-			"//" + serverAddr + '/'
-				+ getClass().getName()
-					.replace("client", "server").replace("Client", "Svc")
-		);
-		if(remoteSvc == null) {
-			throw new IOException("No remote load builder was resolved from " + serverAddr);
-		} else if(remoteSvc instanceof WSDataLoadBuilderSvc) {
-			rlb = (WSDataLoadBuilderSvc<T, W>) remoteSvc;
-		} else {
-			throw new IOException(
-				"Illegal class " + remoteSvc.getClass().getCanonicalName() +
-				" of the instance resolved from " + serverAddr
-			);
-		}
+		final String svcUri = "//" + serverAddr + '/' +
+			getClass().getName().replace("client", "server").replace("Client", "Svc");
+		rlb = (WSDataLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri);
+		rlb = (WSDataLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());
 		return rlb;
 	}
 	//
@@ -100,7 +88,6 @@ implements WSDataLoadBuilderClient<T, W, U> {
 		}
 		//
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
 		return (U) new BasicWSDataLoadClient<>(
 			rtConfig, (WSRequestConfig) ioConfig, storageNodeAddrs,

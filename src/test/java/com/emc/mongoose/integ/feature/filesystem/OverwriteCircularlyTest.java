@@ -4,9 +4,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
-import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.impl.data.model.ListItemDst;
-import com.emc.mongoose.core.impl.data.model.ListItemSrc;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.impl.item.base.ListItemDst;
+import com.emc.mongoose.core.impl.item.base.ListItemSrc;
 import com.emc.mongoose.integ.base.FileSystemTestBase;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 public final class OverwriteCircularlyTest
 extends FileSystemTestBase {
 	//
-	private final static int COUNT_TO_WRITE = 4096, COUNT_TO_OVERWRITE = 4096 * 4096;
+	private final static int COUNT_TO_WRITE = 1000, COUNT_TO_OVERWRITE = 1000000;
 	private final static String RUN_ID = OverwriteCircularlyTest.class.getCanonicalName();
 	//
 	private static long countWritten, countOverwritten;

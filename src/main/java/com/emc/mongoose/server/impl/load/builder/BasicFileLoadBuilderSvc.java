@@ -7,7 +7,7 @@ import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.core.api.data.FileItem;
+import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -15,16 +15,18 @@ import com.emc.mongoose.core.impl.load.builder.BasicFileLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.FileLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 import com.emc.mongoose.server.impl.load.executor.BasicFileLoadSvc;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 26.11.15.
  */
@@ -33,8 +35,9 @@ extends BasicFileLoadBuilder<T, U>
 implements FileLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static AtomicInteger FORK_COUNTER = new AtomicInteger(0);
 	//
-	private String configTable = null;
+	private String name = getClass().getName();
 	//
 	public BasicFileLoadBuilderSvc(final RunTimeConfig rtConfig)
 	throws RemoteException {
@@ -42,27 +45,27 @@ implements FileLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public final BasicFileLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig)
+	public final int fork()
 	throws RemoteException {
-		super.setProperties(clientConfig);
-		final String runMode = clientConfig.getRunMode();
-		if (!runMode.equals(Constants.RUN_MODE_SERVER)
-			&& !runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)) {
-			configTable = clientConfig.toString();
+		try {
+			final BasicFileLoadBuilderSvc<T, U>
+				forkedSvc = (BasicFileLoadBuilderSvc<T, U>) clone();
+			final int forkNum = FORK_COUNTER.getAndIncrement();
+			forkedSvc.name = name + forkNum;
+			forkedSvc.start();
+			LOG.info(Markers.MSG, "Service \"" + name + "\" started");
+			return forkNum;
+		} catch(final CloneNotSupportedException e) {
+			throw new RemoteException(e.toString());
 		}
-		RunTimeConfig.getContext();
-		return this;
 	}
 	//
 	@Override
 	public String buildRemotely()
 	throws RemoteException {
-		final U loadSvc = build();
+		U loadSvc = build();
+		LOG.info(Markers.MSG, rtConfig.toString());
 		ServiceUtil.create(loadSvc);
-		if(configTable != null) {
-			LOG.info(Markers.MSG, configTable);
-			configTable = null;
-		}
 		return loadSvc.getName();
 	}
 	//
@@ -109,9 +112,8 @@ implements FileLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public String getName()
-	throws RemoteException {
-		return getClass().getName();
+	public final String getName() {
+		return name;
 	}
 	//
 	@Override
@@ -155,6 +157,7 @@ implements FileLoadBuilderSvc<T, U> {
 	throws IOException {
 		super.close();
 		ServiceUtil.close(this);
+		LOG.info(Markers.MSG, "Service \"{}\" closed", name);
 	}
 	//
 	@Override

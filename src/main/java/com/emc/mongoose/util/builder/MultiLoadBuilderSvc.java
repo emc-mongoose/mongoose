@@ -3,16 +3,14 @@ package com.emc.mongoose.util.builder;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.container.Directory;
-import com.emc.mongoose.core.api.data.FileItem;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.load.builder.BasicDirectoryLoadBuilder;
-import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
@@ -51,6 +49,12 @@ implements LoadBuilderSvc {
 			>(rtConfig)
 		);
 		loadBuilderSvcs.add(new BasicFileLoadBuilderSvc<>(rtConfig));
+	}
+	//
+	@Override
+	public int fork()
+	throws RemoteException {
+		throw new RemoteException("Method shouldn't be invoked");
 	}
 	//
 	@Override
@@ -129,10 +133,10 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setProperties(final RunTimeConfig props)
+	public final LoadBuilderSvc setRunTimeConfig(final RunTimeConfig props)
 	throws IllegalStateException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setProperties(props);
+			loadBuilderSvc.setRunTimeConfig(props);
 		}
 		return this;
 	}
@@ -253,7 +257,16 @@ implements LoadBuilderSvc {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.useNoneItemSrc();
 		}
-		return null;
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilderSvc useContainerListingItemSrc()
+	throws RemoteException {
+		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
+			loadBuilderSvc.useContainerListingItemSrc();
+		}
+		return this;
 	}
 	//
 	@Override

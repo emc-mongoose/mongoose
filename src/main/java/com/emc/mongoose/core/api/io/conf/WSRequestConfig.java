@@ -1,8 +1,8 @@
 package com.emc.mongoose.core.api.io.conf;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.content.ContentSource;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -103,7 +103,7 @@ extends RequestConfig<T, C> {
 	boolean getPipelining();
 	//
 	@Override
-	WSRequestConfig<T, C> setProperties(final RunTimeConfig props);
+	WSRequestConfig<T, C> setRunTimeConfig(final RunTimeConfig props);
 	//
 	HeaderGroup getSharedHeaders();
 	//

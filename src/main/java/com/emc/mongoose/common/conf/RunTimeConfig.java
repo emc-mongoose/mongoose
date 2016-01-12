@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
@@ -69,6 +70,7 @@ implements Externalizable {
 		KEY_ITEM_PREFIX = "item.prefix",
 		KEY_DATA_VERSIONING = "data.versioning",
 		//
+		KEY_HTTP_CUSTOM_HEADERS = "http.customHeaders",
 		KEY_HTTP_PIPELINING = "http.pipelining",
 		//
 		KEY_LOAD_CONNS = "load.connections",
@@ -125,6 +127,7 @@ implements Externalizable {
 		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
 		//
 		KEY_ITEM_CLASS = "item.class",
+		KEY_ITEM_NAMING = "item.naming",
 		KEY_ITEM_SRC_FILE = "item.src.file",
 		KEY_LOAD_CIRCULAR = "load.circular",
 		KEY_ITEM_SRC_RANDOM = "item.src.random",
@@ -351,6 +354,10 @@ implements Externalizable {
 		return getBoolean("http.content.chunked");
 	}
 	//
+	public final Configuration getHttpCustomHeaders() {
+		return subset(KEY_HTTP_CUSTOM_HEADERS);
+	}
+	//
 	public final boolean getHttpPipeliningFlag() {
 		return getBoolean(KEY_HTTP_PIPELINING);
 	}
@@ -417,8 +424,12 @@ implements Externalizable {
 		return getInt(KEY_LOAD_LIMIT_REQSLEEP_MILLISEC);
 	}
 	//
-	public final String getLoadItemClass() {
+	public final String getItemClass() {
 		return getString(KEY_ITEM_CLASS);
+	}
+	//
+	public final String getItemNaming() {
+		return getString(KEY_ITEM_NAMING);
 	}
 	//
 	public final long getDataSizeMin() {
@@ -706,11 +717,12 @@ implements Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public synchronized void loadJsonProps(final Path filePath) {
 		final Logger log = LogManager.getLogger();
+		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
 		new JsonConfigLoader(this).loadPropsFromJsonCfgFile(filePath);
 		log.debug(Markers.MSG, "Going to override the aliasing section");
 		for(final String key : mongooseKeys) {
-			if(key.startsWith(PREFIX_KEY_ALIASING)) {
-				final String correctKey = key.replaceAll(PREFIX_KEY_ALIASING, "");
+			if(key.startsWith(prefixKeyAliasingWithDot)) {
+				final String correctKey = key.replaceAll(prefixKeyAliasingWithDot, "");
 				log.trace(
 					Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
 				);

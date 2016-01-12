@@ -2,8 +2,8 @@ package com.emc.mongoose.core.api.load.executor;
 //
 import com.emc.mongoose.common.concurrent.LifeCycle;
 //
-import com.emc.mongoose.core.api.Item;
-import com.emc.mongoose.core.api.data.model.ItemDst;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.ItemProducer;

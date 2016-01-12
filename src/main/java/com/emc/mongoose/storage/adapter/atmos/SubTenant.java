@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.adapter.atmos;
 //
-import com.emc.mongoose.core.api.data.MutableDataItem;
+import com.emc.mongoose.core.api.item.data.MutableDataItem;
 /**
  Created by kurila on 02.10.14.
  */

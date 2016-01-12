@@ -2,7 +2,7 @@ package com.emc.mongoose.integ.feature.atmos;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
@@ -39,8 +39,8 @@ extends StandaloneClientTestBase {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
 			.newInstanceFor("atmos")
-			.setProperties(rtConfig);
-		reqConf.setProperties(RunTimeConfig.getContext());
+			.setRunTimeConfig(rtConfig);
+		reqConf.setRunTimeConfig(RunTimeConfig.getContext());
 		SUBTENANT = new WSSubTenantImpl(
 			reqConf, AtmosRequestHandler.generateSubtenant()
 		);

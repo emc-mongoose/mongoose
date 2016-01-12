@@ -4,11 +4,11 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.container.BasicContainer;
+import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 //
 import org.apache.http.Header;
@@ -80,8 +80,8 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final WSRequestConfigImpl<T, C> setProperties(final RunTimeConfig runTimeConfig) {
-		super.setProperties(runTimeConfig);
+	public final WSRequestConfigImpl<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
+		super.setRunTimeConfig(runTimeConfig);
 		//
 		try {
 			setContainer((C) new BasicContainer<T>(this.runTimeConfig.getString(KEY_BUCKET_NAME)));

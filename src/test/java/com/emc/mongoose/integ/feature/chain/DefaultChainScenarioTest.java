@@ -10,7 +10,7 @@ import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.run.scenario.runner.ScriptMockRunner;
+import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
@@ -73,7 +73,7 @@ extends WSMockTestBase {
 				 stdOutStream =	StdOutUtil.getStdOutBufferingStream()
 		) {
 			//  Run mongoose default scenario in standalone mode
-			new ScriptMockRunner().run();
+			new ScenarioRunner().run();
 			//  Wait for "Scenario end" message
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;

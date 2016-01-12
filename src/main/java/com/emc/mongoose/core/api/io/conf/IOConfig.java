@@ -2,10 +2,10 @@ package com.emc.mongoose.core.api.io.conf;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.container.Container;
-import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.content.ContentSource;
-import com.emc.mongoose.core.api.data.model.ItemSrc;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.DataItem;
+import com.emc.mongoose.core.api.item.data.ContentSource;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import java.io.Closeable;
@@ -44,7 +44,7 @@ extends Externalizable, Cloneable, Closeable {
 	C getContainer();
 	IOConfig<T, C> setContainer(final C container);
 	//
-	IOConfig<T, C> setProperties(final RunTimeConfig props);
+	IOConfig<T, C> setRunTimeConfig(final RunTimeConfig props);
 	//
 	ItemSrc<T> getContainerListInput(final long maxCount, final String addr);
 	//

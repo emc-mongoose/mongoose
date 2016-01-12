@@ -1,5 +1,5 @@
 package com.emc.mongoose.client.api.load.executor;
-import com.emc.mongoose.core.api.data.FileItem;
+import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 /**

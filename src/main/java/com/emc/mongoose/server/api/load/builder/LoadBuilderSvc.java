@@ -1,6 +1,6 @@
 package com.emc.mongoose.server.api.load.builder;
 //
-import com.emc.mongoose.core.api.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
 import com.emc.mongoose.common.net.Service;
@@ -14,6 +14,9 @@ import java.rmi.RemoteException;
  */
 public interface LoadBuilderSvc<T extends Item, U extends LoadSvc<T>>
 extends LoadBuilder<T, U>, Service {
+	//
+	int fork()
+	throws RemoteException;
 	//
 	String buildRemotely()
 	throws RemoteException;
