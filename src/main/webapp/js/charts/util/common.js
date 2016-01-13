@@ -31,7 +31,7 @@ define([
 	}
 
 	function getThreadNamePattern() {
-		return /([\d]+)-([A-Za-z0-9]+)-([CreateRdDlUpAn]+)[\d]*-([\d]*)x([\d]*)x?([\d]*)/gi;
+		return /([\d]+)-([A-Za-z0-9]+)-([CreateRdDlUpAn]+)[\d]*-([\d]*)x?([\d]*)x?([\d]*)/gi;
 	}
 
 	function isTimeLimitReached(domainMaxValue, currTimeUnit) {
