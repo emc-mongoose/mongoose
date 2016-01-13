@@ -6,8 +6,8 @@ import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.DataIOTask;
 //
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+//import org.apache.logging.log4j.LogManager;
+//import org.apache.logging.log4j.Logger;
 /**
  Created by andrey on 12.10.14.
  */
@@ -15,8 +15,6 @@ public class BasicDataIOTask<
 	T extends MutableDataItem, C extends Container<T>, X extends IOConfig<T, C>
 > extends BasicIOTask<T, C, X>
 implements DataIOTask<T> {
-	//
-	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final long contentSize;
 	protected volatile long countBytesSkipped = 0;
