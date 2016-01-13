@@ -13,10 +13,8 @@ import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.StorageMockCapacityLimitReachedException;
 import io.netty.buffer.ByteBuf;
 
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
@@ -27,7 +25,6 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
-import io.netty.util.ReferenceCounted;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

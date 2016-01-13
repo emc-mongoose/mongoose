@@ -42,7 +42,7 @@ extends LoggingTestBase {
 	throws Exception {
 		WS_MOCK_THREAD.interrupt();
 		WS_MOCK.close();
-		LOG.info(Markers.MSG, "Cinderella stopped");
+		LOG.info(Markers.MSG, "Nagaina stopped");
 		LoggingTestBase.tearDownClass();
 		ContentSourceBase.DEFAULT = null; // reset the content source
 	}

@@ -1,10 +1,5 @@
 package com.emc.mongoose.storage.mock.impl.web.request;
 
-//import com.emc.mongoose.core.api.data.content.ContentSource;
-//import com.emc.mongoose.core.impl.data.BasicDataItem;
-//import com.emc.mongoose.core.impl.data.BasicMutableDataItem;
-//import com.emc.mongoose.core.impl.data.content.ContentSourceBase;
-
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.impl.item.data.BasicDataItem;
 import com.emc.mongoose.core.impl.item.data.BasicMutableDataItem;
@@ -31,7 +26,7 @@ public class UpdatedDataItemFileRegion<T extends MutableDataItemMock> extends Da
 	@Override
 	public long transferTo(WritableByteChannel target, long position)
 			throws IOException {
-		dataObject.setRelativeOffset(position); // TODO check is it necessary
+		dataObject.setRelativeOffset(position);
 		if (doneByteCount == nextRangeOffset) {
 			currRangeSize = dataObject.getRangeSize(currRangeIdx);
 			if (dataObject.isCurrLayerRangeUpdated(currRangeIdx)) {

@@ -43,7 +43,7 @@ public class DataItemFileRegion<T extends MutableDataItemMock>
 	@Override
 	public long transferTo(WritableByteChannel target, long position)
 			throws IOException {
-		dataObject.setRelativeOffset(position); // TODO check is it necessary
+		dataObject.setRelativeOffset(position);
 		doneByteCount += dataObject.write(target, dataSize - position);
 		return doneByteCount;
 	}
