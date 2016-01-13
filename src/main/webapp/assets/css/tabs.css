@@ -99,6 +99,16 @@
 		right: 0;
 	}
 }
+.btn-inactive {
+	color: #fff;
+	background-color: #a5a0a3;
+	border-color: #908b8e;
+}
+.dropdown-menu>li>.btn-inactive:active,
+.dropdown-menu>li>.btn-inactive:focus,
+.dropdown-menu>li>.btn-inactive:hover {
+	background-color: #a5a0a3;
+}
 
 .tabs-wrapper .tab-header {
 	padding-left: 0;

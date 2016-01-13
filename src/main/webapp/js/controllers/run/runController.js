@@ -60,6 +60,7 @@ define([
 	}
 	function renderTabByRunId(runId) {
 		var runIdText = runId;
+		var btnHighlight = "btn btn-inactive";
 		var newId = runId.replace(/\./g, "_");
 		var tables = [
 			{
@@ -100,7 +101,8 @@ define([
 			runIdText: runIdText,
 			tables: tables,
 			charts: charts,
-			active: true
+			active: true,
+			btnHighlight: btnHighlight
 		};
 		var ul = $(".scenario-tabs");
 		//  render tab header

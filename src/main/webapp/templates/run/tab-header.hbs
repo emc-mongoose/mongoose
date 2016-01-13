@@ -1,6 +1,11 @@
 <li>
-	<a href="#{{runId}}-tab" tabindex="-1" role="tab" id="tab"
-	   data-toggle="tab" aria-controls="{{runId}}">
-		<span>{{runIdText}}</span>
-	</a>
+    <a
+        {{#if active}}
+        {{else}}
+        class="{{btnHighlight}}"
+        {{/if}}
+        href="#{{runId}}-tab" tabindex="-1" role="tab" id="tab"
+        data-toggle="tab" aria-controls="{{runId}}">
+        <span>{{runIdText}}</span>
+    </a>
 </li>
