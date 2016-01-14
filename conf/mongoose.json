@@ -176,7 +176,7 @@
 			},
 			"customHeaders": {
 				"Connection" : "keep-alive",
-				"User-Agent" : "mongoose/1.2.0"
+				"User-Agent" : "mongoose/1.2.1"
 			},
 			"pipelining": false,
 			"signMethod": "HmacSHA1"

@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -42,7 +43,19 @@ implements ShutdownCallbackRegistry {
 	//
 	@Override
 	public final Cancellable addShutdownCallback(final Runnable callback) {
-		return null;
+		return new Cancellable() {
+			//
+			@Override
+			public void cancel() {
+			}
+			//
+			@Override
+			public void run() {
+				if(callback != null) {
+					callback.run();
+				}
+			}
+		};
 	}
 	//
 	private final static String
@@ -75,9 +88,10 @@ implements ShutdownCallbackRegistry {
 	//
 	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
 	public static final Locale LOCALE_DEFAULT = Locale.ROOT;
-	public static final DateFormat FMT_DT = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS",LOCALE_DEFAULT) {
-		{ setTimeZone(TZ_UTC); }
-	};
+	public static final DateFormat
+		FMT_DT = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS",LOCALE_DEFAULT) {
+			{ setTimeZone(TZ_UTC); }
+		};
 	// console colors
 	public static final String
 		RESET = "\u001B[0m",
@@ -169,14 +183,14 @@ implements ShutdownCallbackRegistry {
 						LogManager.getLogger().info(
 							Markers.MSG, "Logging subsystem is configured successfully"
 						);
-						/*Runtime.getRuntime().addShutdownHook(
+						Runtime.getRuntime().addShutdownHook(
 							new Thread("logCtxShutDownHook") {
 								@Override
 								public final void run() {
 									shutdown();
 								}
 							}
-						);*/
+						);
 					}
 					final IoBuilder logStreamBuilder = IoBuilder.forLogger(DriverManager.class);
 					System.setErr(
@@ -201,8 +215,7 @@ implements ShutdownCallbackRegistry {
 		return STDOUT_COLORING_ENABLED;
 	}
 	//
-	//
-	/*public static void shutdown() {
+	public static void shutdown() {
 		final Logger LOG = LogManager.getLogger();
 		try {
 			if(LOAD_HOOKS_COUNT.get() != 0) {
@@ -235,7 +248,7 @@ implements ShutdownCallbackRegistry {
 				LOG_CTX_LOCK.unlock();
 			}
 		}
-	}*/
+	}
 	//
 	public static void exception(
 		final Logger logger, final Level level, final Throwable e,
