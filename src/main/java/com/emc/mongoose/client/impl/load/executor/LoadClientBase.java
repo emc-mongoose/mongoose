@@ -255,16 +255,19 @@ implements LoadClient<T, W> {
 			try {
 				loadSvc.shutdown();
 				// wait until all processed items are received from the load server
-				for(
-					int n = loadSvc.getProcessedItemsCount();
-					n > 0;
-					n = loadSvc.getProcessedItemsCount()
-				) {
-					TimeUnit.MILLISECONDS.sleep(10);
-				}
-				LOG.debug(
-					Markers.MSG, "All processed items have been received from load service @ {}",
-					addr
+				int n;
+				do {
+					n = loadSvc.getProcessedItemsCount();
+					if(n > 0) {
+						LOG.info(Markers.MSG, "{}: {} processed items remaining", addr, n);
+						TimeUnit.MILLISECONDS.sleep(10);
+					} else {
+						break;
+					}
+				} while(true);
+				LOG.info(
+					Markers.MSG, "All {} processed items have been received from load service @ {}",
+					n, addr
 				);
 			} catch(final InterruptedException | RemoteException e) {
 				LogUtil.exception(
