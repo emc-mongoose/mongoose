@@ -107,16 +107,6 @@ extends DistributedClientTestBase {
 		}
 	}
 	//
-	@AfterClass
-	public static void tearDownClass() {
-		try {
-			StdOutUtil.reset();
-			DistributedClientTestBase.tearDownClass();
-		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed");
-		}
-	}
-	//
 	@Test
 	public void checkUpdatedCount()
 	throws Exception {
