@@ -7,9 +7,9 @@ import org.junit.runners.Suite;
 //
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	//AtmosSuite.class,
+	AtmosSuite.class,
 	// CambridgeLabDistributedTestSuite.class, // unstable/experimental
-	//ChainScenarioSuite.class,
+	ChainScenarioSuite.class,
 	CircularitySuite.class,
 	//ContainersTestSuite.class,
 	//ContentSuite.class,
