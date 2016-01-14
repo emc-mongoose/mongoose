@@ -114,8 +114,8 @@ implements ShutdownCallbackRegistry {
 			if(consoleAppender != null) {
 				final Layout consoleAppenderLayout = consoleAppender.getLayout();
 				if(consoleAppenderLayout instanceof PatternLayout) {
-					final String pattern =
-						((PatternLayout)consoleAppenderLayout).getConversionPattern();
+					final String pattern = ((PatternLayout) consoleAppenderLayout)
+						.getConversionPattern();
 					if(pattern != null && pattern.contains("%highlight")) {
 						return true;
 					}

@@ -259,15 +259,17 @@ implements LoadClient<T, W> {
 				do {
 					n = loadSvc.getProcessedItemsCount();
 					if(n > 0) {
-						LOG.info(Markers.MSG, "{}: {} processed items remaining", addr, n);
+						if(LOG.isTraceEnabled(Markers.MSG)) {
+							LOG.trace(Markers.MSG, "{}: {} processed items remaining", addr, n);
+						}
 						TimeUnit.MILLISECONDS.sleep(10);
 					} else {
 						break;
 					}
 				} while(true);
-				LOG.info(
-					Markers.MSG, "All {} processed items have been received from load service @ {}",
-					n, addr
+				LOG.debug(
+					Markers.MSG, "All processed items have been received from load service @ {}",
+					addr
 				);
 			} catch(final InterruptedException | RemoteException e) {
 				LogUtil.exception(
