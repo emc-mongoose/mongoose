@@ -161,7 +161,7 @@ extends DistributedClientTestBase {
 					id = nextRec.get(2);
 					if(items.containsKey(id)) {
 						count = items.get(id);
-						count++;
+						count ++;
 					}
 					items.put(id, count);
 				}
@@ -170,8 +170,9 @@ extends DistributedClientTestBase {
 			Assert.assertEquals("Data haven't been read fully", items.size(), WRITE_COUNT);
 			for(final Map.Entry<String, Long> entry : items.entrySet()) {
 				Assert.assertEquals(
-					"perf.trace.csv doesn't contain necessary count of duplicated items" ,
-					entry.getValue(), Long.valueOf(COUNT_OF_DUPLICATES), 2);
+					"perf.trace.csv doesn't contain necessary count of duplicates for item \"" + entry.getKey() + "\"",
+					COUNT_OF_DUPLICATES, entry.getValue(), 2
+				);
 			}
 		}
 	}
