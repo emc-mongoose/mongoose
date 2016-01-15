@@ -38,11 +38,11 @@ public class Nagaina<T extends WSObjectMock>
 
 	private final EventLoopGroup[] dispatchGroups;
 	private final EventLoopGroup[] workerGroups;
+	private final Channel[] channels;
 	private final NagainaRequestHandlerBase s3RequestHandler;
 	private final NagainaRequestHandlerBase swiftRequestHandler;
 	private final NagainaRequestHandlerBase atmosRequestHandler;
 	private final int portStart;
-	private Channel channel;
 
 	public Nagaina(RunTimeConfig rtConfig) {
 		this(
@@ -73,6 +73,7 @@ public class Nagaina<T extends WSObjectMock>
 		this.portStart = portStart;
 		dispatchGroups = new NioEventLoopGroup[headCount];
 		workerGroups = new NioEventLoopGroup[headCount];
+		channels = new Channel[headCount];
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
 		s3RequestHandler = new NagainaS3RequestHandler<>(RunTimeConfig.getContext(), this);
 		swiftRequestHandler = new NagainaSwiftRequestHandler<>(RunTimeConfig.getContext(), this);
@@ -87,9 +88,7 @@ public class Nagaina<T extends WSObjectMock>
 
 	@Override
 	protected final void startListening() {
-		int nextPort = portStart;
 		for (int i = 0; i < dispatchGroups.length; i++) {
-			nextPort += i;
 			try {
 				// the first arg is a number of threads (0 as default)
 				dispatchGroups[i] = new NioEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
@@ -109,10 +108,10 @@ public class Nagaina<T extends WSObjectMock>
 							              }
 						              }
 						);
-				channel = bootstrap.bind(nextPort).sync().channel();
+				channels[i] = bootstrap.bind(portStart + i).sync().channel();
 			} catch (InterruptedException e) {
 				LogUtil.exception(
-						LOG, Level.ERROR, e, "Failed to start the head at port #{}", nextPort
+						LOG, Level.ERROR, e, "Failed to start the head at port #{}", portStart + i
 				);
 			}
 		}
@@ -126,10 +125,12 @@ public class Nagaina<T extends WSObjectMock>
 
 	@Override
 	protected final void await() {
-		try {
-			channel.closeFuture().sync();
-		} catch (InterruptedException e) {
-			LOG.info(Markers.MSG, "Interrupting Nagaina");
+		for (Channel channel : channels) {
+			try {
+				channel.closeFuture().sync();
+			} catch (InterruptedException e) {
+				LOG.info(Markers.MSG, "Interrupting the Nagaina");
+			}
 		}
 	}
 

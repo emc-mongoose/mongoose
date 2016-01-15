@@ -58,8 +58,8 @@ public class NagainaSwiftRequestHandler<T extends WSObjectMock> extends NagainaR
 	}
 
 	@Override
-	protected boolean checkProtocol(HttpRequest request) {
-		return mapper.checkSwift(request);
+	protected boolean checkProtocolMatch(HttpRequest request) {
+		return matcher.matchesSwift(request);
 	}
 
 	@Override

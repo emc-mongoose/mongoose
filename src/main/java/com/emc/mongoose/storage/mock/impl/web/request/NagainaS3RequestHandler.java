@@ -66,8 +66,8 @@ public class NagainaS3RequestHandler<T extends WSObjectMock> extends NagainaRequ
 	}
 
 	@Override
-	protected boolean checkProtocol(HttpRequest request) {
-		return mapper.checkS3(request);
+	protected boolean checkProtocolMatch(HttpRequest request) {
+		return matcher.matchesS3(request);
 	}
 
 	@Override

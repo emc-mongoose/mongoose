@@ -6,7 +6,7 @@ import io.netty.handler.codec.http.HttpRequest;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.AUTHORIZATION;
 
-public final class NagainaRequestHandlerMapper {
+public final class NagainaProtocolMatcher {
 
 	private final static String
 			SWIFT_AUTH = "auth",
@@ -15,21 +15,21 @@ public final class NagainaRequestHandlerMapper {
 
 	private final String apiBasePathSwift;
 
-	public NagainaRequestHandlerMapper(RunTimeConfig runTimeConfig) {
+	public NagainaProtocolMatcher(RunTimeConfig runTimeConfig) {
 		apiBasePathSwift = runTimeConfig.getString(WSRequestConfigImpl.KEY_CONF_SVC_BASEPATH);
 	}
 
-	public boolean checkS3(HttpRequest request) {
+	public boolean matchesS3(HttpRequest request) {
 		String auth = request.headers().get(AUTHORIZATION);
 		return auth != null && auth.startsWith(S3_AUTH_PREFIX);
 	}
 
-	public boolean checkSwift(HttpRequest request) {
+	public boolean matchesSwift(HttpRequest request) {
 		String uri = request.getUri();
 		return uri.startsWith(SWIFT_AUTH, 1) || uri.startsWith(apiBasePathSwift, 1);
 	}
 
-	public boolean checkAtmos(HttpRequest request) {
+	public boolean matchesAtmos(HttpRequest request) {
 		return request.getUri().startsWith(ATMOS_URI_BASE_PATH);
 	}
 

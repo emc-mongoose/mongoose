@@ -55,7 +55,7 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 	protected final WSMock<T> sharedStorage;
 	private final StorageIOStats ioStats;
 
-	protected final NagainaRequestHandlerMapper mapper;
+	protected final NagainaProtocolMatcher matcher;
 	protected final String requestKey = "requestKey";
 	protected final String responseStatusKey = "responseStatusKey";
 	protected final String contentLengthKey = "contentLengthKey";
@@ -67,7 +67,7 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 		this.batchSize = rtConfig.getBatchSize();
 		this.sharedStorage = sharedStorage;
 		this.ioStats = sharedStorage.getStats();
-		mapper = new NagainaRequestHandlerMapper(rtConfig);
+		matcher = new NagainaProtocolMatcher(rtConfig);
 		AttributeKey.<HttpRequest>valueOf(requestKey);
 		AttributeKey.<HttpResponseStatus>valueOf(responseStatusKey);
 		AttributeKey.<Long>valueOf(contentLengthKey);
@@ -75,7 +75,7 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 		AttributeKey.<Boolean>valueOf(handlerStatus);
 	}
 
-	abstract protected boolean checkProtocol(HttpRequest request);
+	abstract protected boolean checkProtocolMatch(HttpRequest request);
 
 	@Override
 	public void channelReadComplete(ChannelHandlerContext ctx) {
@@ -104,7 +104,7 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) {
 		if (msg instanceof HttpRequest) {
-			if (!checkProtocol((HttpRequest) msg)) {
+			if (!checkProtocolMatch((HttpRequest) msg)) {
 				ctx.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).set(false);
 				ctx.fireChannelRead(msg);
 				return;
