@@ -27,7 +27,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.ByteArrayOutputStream;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 26.03.14.
@@ -38,6 +40,7 @@ extends WSRequestConfigBase<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static String
+		CANONICAL_AMZ_HEADER_PREFIX = "x-amz-",
 		KEY_BUCKET_NAME = "api.type.s3.bucket",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
@@ -149,7 +152,25 @@ extends WSRequestConfigBase<T, C> {
 				canonical.append('\n');
 			}
 		}
-		//
+		// x-amz-*
+		String amzHeaderName;
+		Map<String, String> sortedAmzHeaders = new TreeMap<>();
+		for(final Header header : sharedHeaders.getAllHeaders()) {
+			amzHeaderName = header.getName().toLowerCase();
+			if(amzHeaderName.startsWith(CANONICAL_AMZ_HEADER_PREFIX)) {
+				sortedAmzHeaders.put(amzHeaderName, header.getValue());
+			}
+		}
+		for(final Header header : httpRequest.getAllHeaders()) {
+			amzHeaderName = header.getName().toLowerCase();
+			if(amzHeaderName.startsWith(CANONICAL_AMZ_HEADER_PREFIX)) {
+				sortedAmzHeaders.put(amzHeaderName, header.getValue());
+			}
+		}
+		for(final String k : sortedAmzHeaders.keySet()) {
+			canonical.append('\n').append(k).append(':').append(sortedAmzHeaders.get(k));
+		}
+		// x-emc-*
 		for(final String emcHeaderName : HEADERS_CANONICAL_EMC) {
 			if(httpRequest.containsHeader(emcHeaderName)) {
 				for(final Header emcHeader : httpRequest.getHeaders(emcHeaderName)) {
