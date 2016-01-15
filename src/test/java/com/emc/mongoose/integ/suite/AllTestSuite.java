@@ -15,7 +15,7 @@ import org.junit.runners.Suite;
 	ContentSuite.class,
 	CoreTestSuite.class,
 	DistributedLoadTestSuite.class,
-	FileSystemTestSuite.class,
+//	FileSystemTestSuite.class,
 	RampupScenarioSuite.class,
 	S3Suite.class,
 	SwiftSuite.class,
