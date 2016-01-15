@@ -108,6 +108,7 @@ public class Nagaina<T extends WSObjectMock>
 							              }
 						              }
 						);
+				// todo check if there should be used just using of THE ONLY ONE bootstrap and several channels
 				channels[i] = bootstrap.bind(portStart + i).sync().channel();
 			} catch (InterruptedException e) {
 				LogUtil.exception(
@@ -127,7 +128,7 @@ public class Nagaina<T extends WSObjectMock>
 	protected final void await() {
 		for (Channel channel : channels) {
 			try {
-				channel.closeFuture().sync();
+				channel.closeFuture().await(); // todo check if it should execute in different threads or some similar way
 			} catch (InterruptedException e) {
 				LOG.info(Markers.MSG, "Interrupting the Nagaina");
 			}
@@ -137,9 +138,28 @@ public class Nagaina<T extends WSObjectMock>
 	@Override
 	public void close() throws IOException {
 		for (int i = 0; i < dispatchGroups.length; i++) {
-			dispatchGroups[i].shutdownGracefully();
-			workerGroups[i].shutdownGracefully();
+			closeEventLoopGroup(dispatchGroups[i]);
+			closeEventLoopGroup(workerGroups[i]);
 		}
 		super.close();
 	}
+
+	private void closeEventLoopGroup(EventLoopGroup group) {
+		if (group != null) {
+			try {
+				group.shutdownGracefully();
+				LOG.debug(
+						Markers.MSG, "EventLoopGroup \"{}\" shutted down successfully",
+						group
+				);
+			} catch (Exception e) {
+				LogUtil.exception(
+						LOG, Level.WARN, e, "Closing EventLoopGroup \"{}\" failure",
+						group
+				);
+			}
+		}
+	}
+
 }
+
