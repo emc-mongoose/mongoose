@@ -306,7 +306,10 @@ implements LoadClient<T, W> {
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 		} finally {
-			interruptExecutor.shutdownNow();
+			final List<Runnable> tasksLeft = interruptExecutor.shutdownNow();
+			for(final Runnable task : tasksLeft) {
+				LOG.debug(Markers.ERR, "The interrupt task is not finished in time: {}", task);
+			}
 		}
 	}
 	//
