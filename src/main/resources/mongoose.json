@@ -175,7 +175,7 @@
 				"repeatable": true
 			},
 			"customHeaders": {
-				"User-Agent" : "mongoose/1.2.1",
+				"User-Agent" : "mongoose/next",
 				"Connection" : "keep-alive"
 			},
 			"pipelining": false,
@@ -305,7 +305,7 @@
 		},
 		"run": {
 			"name": "mongoose",
-			"version": "1.2.1",
+			"version": "next",
 			"mode": "standalone",
 			"resume": {
 				"enabled" : false
