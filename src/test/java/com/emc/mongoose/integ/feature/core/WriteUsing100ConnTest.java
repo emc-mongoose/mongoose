@@ -50,7 +50,7 @@ extends WSMockTestBase {
 
 	private static String RUN_ID = WriteUsing100ConnTest.class.getCanonicalName();
 	private static final String DATA_SIZE = "0B";
-	private static final int LIMIT_COUNT = 1000000, LOAD_CONNS = 100;
+	private static final int LIMIT_TIME = 40, LOAD_CONNS = 100;
 
 	private static Thread SCENARIO_THREAD;
 
@@ -61,7 +61,7 @@ extends WSMockTestBase {
 		WSMockTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Integer.toString(LIMIT_TIME));
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, Integer.toString(LOAD_CONNS));
@@ -176,6 +176,7 @@ extends WSMockTestBase {
 	public void shouldBeActiveAllConnections()
 	throws Exception {
 		for (int i = 0; i < 3; i++) {
+			Thread.sleep(10000);
 			int countConnections = PortListener
 				.getCountConnectionsOnPort(TestConstants.PORT_INDICATOR);
 			// Check that actual connection count = (LOAD_CONNS * 2 + 5) because cinderella is run local
