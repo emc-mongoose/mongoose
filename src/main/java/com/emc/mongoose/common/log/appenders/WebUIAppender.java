@@ -3,7 +3,10 @@ package com.emc.mongoose.common.log.appenders;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 //
+import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.log.appenders.processors.VSimplifier;
 import com.emc.mongoose.common.log.appenders.processors.VSimplifierLogAdapter;
+import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
 import org.apache.logging.log4j.ThreadContext;
@@ -19,24 +22,19 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
 //
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 23.10.14.
  */
 @Plugin(name="WebUI", category="Core", elementType="appender", printObject=true)
 public final class WebUIAppender
-extends AbstractAppender {
+		extends AbstractAppender {
 	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
+	private final static int SIMPLIFICATION_LIMIT = 4;
 	//
-	private final static ConcurrentHashMap<String, CircularFifoQueue<LogEvent>>
+	private final static ConcurrentHashMap<String, HashMap<String, List<LogEvent>>>
 			LOG_EVENTS_MAP = new ConcurrentHashMap<>();
-	private final static ConcurrentHashMap<String, CircularFifoQueue<LogEvent>>
-			OBJ_LOG_EVENTS_MAP = new ConcurrentHashMap<>();
 	private final static List<WebSocketLogListener>
 			LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
 	//
@@ -48,18 +46,18 @@ extends AbstractAppender {
 	private static boolean ENABLED_FLAG;
 	//
 	private WebUIAppender(
-		final String name, final Filter filter, final Layout<? extends Serializable> layout,
-		final boolean ignoreExceptions
+			final String name, final Filter filter, final Layout<? extends Serializable> layout,
+			final boolean ignoreExceptions
 	) {
 		super(name, filter, layout, ignoreExceptions);
 	}
 	//
 	@PluginFactory
 	public static WebUIAppender createAppender(
-		final @PluginAttribute("name") String name,
-		final @PluginAttribute("ignoreExceptions") boolean ignoreExceptions,
-		final @PluginAttribute("enabled") Boolean enabled,
-		final @PluginElement("Filters") Filter filter
+			final @PluginAttribute("name") String name,
+			final @PluginAttribute("ignoreExceptions") boolean ignoreExceptions,
+			final @PluginAttribute("enabled") Boolean enabled,
+			final @PluginElement("Filters") Filter filter
 	) {
 		if(name == null) {
 			LOGGER.error("No name provided for CustomAppender");
@@ -84,9 +82,11 @@ extends AbstractAppender {
 	//
 	public synchronized static void sendPreviousLogs(final WebSocketLogListener listener) {
 		final List<LogEvent> previousLogs = new ArrayList<>();
-		for (final CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
-			for (final LogEvent logEvent : queue) {
-				previousLogs.add(logEvent);
+		for (final Map<String, List<LogEvent>> map: LOG_EVENTS_MAP.values()) {
+			for (List<LogEvent> list: map.values()) {
+				for (final LogEvent logEvent : list) {
+					previousLogs.add(logEvent);
+				}
 			}
 		}
 		listener.sendMessage(previousLogs);
@@ -104,25 +104,20 @@ extends AbstractAppender {
 			}
 			//
 			if(currRunId != null) {
-				if(!LOG_EVENTS_MAP.containsKey(currRunId)) {
-					LOG_EVENTS_MAP.put(
-						currRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST)
-					);
-				}
-				if(!OBJ_LOG_EVENTS_MAP.containsKey(currRunId)) {
-					OBJ_LOG_EVENTS_MAP.put(
-							currRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST)
-					);
-				}
-				LOG_EVENTS_MAP.get(currRunId).add(event);
-				if (event.getMessage().toString().contains("ObjectMessage")) {
-					OBJ_LOG_EVENTS_MAP.get(currRunId).add(event);
-					System.out.println("Event added");
-				}
-				if (OBJ_LOG_EVENTS_MAP.get(currRunId).size() == 4) {
-					LogEvent[] logEventsArr = new LogEvent[4];
-					OBJ_LOG_EVENTS_MAP.get(currRunId).toArray(logEventsArr);
-					new VSimplifierLogAdapter(logEventsArr);
+				if (event.getMarker().equals(Markers.PERF_AVG)) {
+					if (!LOG_EVENTS_MAP.containsKey(currRunId)) {
+						LOG_EVENTS_MAP.put(currRunId, new HashMap<String, List<LogEvent>>());
+					}
+					Map<String, List<LogEvent>> loadJobMap = LOG_EVENTS_MAP.get(currRunId);
+					String loadJobName = ThreadContext.get(LogMetricsTask.LOAD_JOB_NAME);
+					if (!loadJobMap.containsKey(loadJobName)) {
+						loadJobMap.put(loadJobName, new ArrayList<LogEvent>());
+					}
+					List<LogEvent> events = loadJobMap.get(loadJobName);
+					events.add(event);
+					if (events.size() >= SIMPLIFICATION_LIMIT) {
+						loadJobMap.put(loadJobName, removeExtraLogEvents(events));
+					}
 				}
 				for (final WebSocketLogListener listener : LISTENERS) {
 					listener.sendMessage(event);
@@ -130,6 +125,14 @@ extends AbstractAppender {
 			} // else silently skip
 		}
 	}
+
+	private List<LogEvent> removeExtraLogEvents(List<LogEvent> events) {
+		LogEvent[] logEventsArr = new LogEvent[SIMPLIFICATION_LIMIT];
+		// TODO a filling of array should be here
+		VSimplifierLogAdapter simplifier = new VSimplifierLogAdapter(logEventsArr);
+		return simplifier.simplify(0); // TODO a number of simplifications should be here
+	}
+
 	//
 	public static void removeRunId(final String runId) {
 		if (ENABLED_FLAG) {

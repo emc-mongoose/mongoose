@@ -3,6 +3,7 @@ package com.emc.mongoose.common.log.appenders.processors;
 import org.apache.logging.log4j.core.LogEvent;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class VSimplifierLogAdapter {
@@ -38,6 +39,10 @@ public class VSimplifierLogAdapter {
 				counter++;
 			}
 		}
+	}
+
+	public ArrayList<LogEvent> simplify(int simplificationsNum) {
+		return new ArrayList<>();
 	}
 
 	/***
