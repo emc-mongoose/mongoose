@@ -50,7 +50,7 @@ extends WSMockTestBase {
 
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static String RUN_ID = com.emc.mongoose.integ.feature.chain.SequentialChainCRUDTest.class.getCanonicalName();
+	private static String RUN_ID = SequentialChainCRUDTest.class.getCanonicalName();
 	private static final String
 		DATA_SIZE = "10MB",
 		LIMIT_TIME = "1.minutes",

@@ -726,8 +726,7 @@ implements LoadExecutor<T> {
 						} else {
 							break;
 						}
-						Thread.yield();
-						LockSupport.parkNanos(1);
+						Thread.yield(); LockSupport.parkNanos(1);
 					}
 				} else {
 					passUniqueItemsFinally(items);
@@ -747,9 +746,17 @@ implements LoadExecutor<T> {
 	protected void passUniqueItemsFinally(final List<T> items) {
 		// is this an end of consumer-producer chain?
 		if(consumer == null) {
+			LOG.debug(Markers.MSG, "{}: going to dump out {} items", getName(), items.size());
 			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
-				for(final Item item : items) {
-					LOG.info(Markers.ITEM_LIST, item);
+				try {
+					for(final Item item : items) {
+						LOG.info(Markers.ITEM_LIST, item);
+					}
+				} catch(final Throwable e) {
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "{}: failed to dump out {} items",
+						getName(), items.size()
+					);
 				}
 			}
 		} else { // put to the consumer

@@ -45,7 +45,9 @@ extends DistributedLoadBuilderTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, SimultaneousDistributedLoadTest.class.getCanonicalName());
+		System.setProperty(
+			RunTimeConfig.KEY_RUN_ID, SimultaneousDistributedLoadTest.class.getCanonicalName()
+		);
 		DistributedLoadBuilderTestBase.setUpClass();
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();

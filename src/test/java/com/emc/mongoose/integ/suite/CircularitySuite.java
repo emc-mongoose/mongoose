@@ -4,7 +4,7 @@ package com.emc.mongoose.integ.suite;
  */
 import com.emc.mongoose.integ.feature.circularity.CircularAppendDistributedTest;
 import com.emc.mongoose.integ.feature.circularity.CircularAppendTest;
-import com.emc.mongoose.integ.feature.circularity.CircularAppendZeroSizeDistributedItems;
+import com.emc.mongoose.integ.feature.circularity.CircularAppendZeroSizeDistributedTest;
 import com.emc.mongoose.integ.feature.circularity.CircularReadAfterUpdateTest;
 import com.emc.mongoose.integ.feature.circularity.CircularReadDistributedTest;
 import com.emc.mongoose.integ.feature.circularity.CircularReadFromBucketTest;
@@ -27,7 +27,7 @@ import org.junit.runners.Suite;
 	//
 	CircularReadDistributedTest.class,
 	CircularAppendDistributedTest.class,
-	CircularAppendZeroSizeDistributedItems.class,
+	CircularAppendZeroSizeDistributedTest.class,
 	CircularUpdateDistributedTest.class,
 	CircularSequentialChainDistributedTest.class,
 })

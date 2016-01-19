@@ -171,6 +171,7 @@ implements LoadClient<T, W> {
 			}
 		}
 	}
+	//
 	@SuppressWarnings("unchecked")
 	public LoadClientBase(
 		final RunTimeConfig rtConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
@@ -254,13 +255,18 @@ implements LoadClient<T, W> {
 			try {
 				loadSvc.shutdown();
 				// wait until all processed items are received from the load server
-				for(
-					int n = loadSvc.getProcessedItemsCount();
-					n > 0;
-					n = loadSvc.getProcessedItemsCount()
-				) {
-					TimeUnit.MILLISECONDS.sleep(10);
-				}
+				int n;
+				do {
+					n = loadSvc.getProcessedItemsCount();
+					if(n > 0) {
+						if(LOG.isTraceEnabled(Markers.MSG)) {
+							LOG.trace(Markers.MSG, "{}: {} processed items remaining", addr, n);
+						}
+						TimeUnit.MILLISECONDS.sleep(10);
+					} else {
+						break;
+					}
+				} while(true);
 				LOG.debug(
 					Markers.MSG, "All processed items have been received from load service @ {}",
 					addr
@@ -300,7 +306,10 @@ implements LoadClient<T, W> {
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 		} finally {
-			interruptExecutor.shutdownNow();
+			final List<Runnable> tasksLeft = interruptExecutor.shutdownNow();
+			for(final Runnable task : tasksLeft) {
+				LOG.debug(Markers.ERR, "The interrupt task is not finished in time: {}", task);
+			}
 		}
 	}
 	//
