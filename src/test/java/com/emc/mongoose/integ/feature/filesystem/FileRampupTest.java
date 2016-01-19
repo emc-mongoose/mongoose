@@ -134,12 +134,6 @@ extends DistributedLoadBuilderTestBase {
 					confParam.contains("127.0.0.1")
 				);
 			}
-			if (confParam.contains(RunTimeConfig.KEY_RUN_MODE)) {
-				Assert.assertTrue(
-					"Information about run mode must be correct in configuration table",
-					confParam.contains(Constants.RUN_MODE_STANDALONE)
-				);
-			}
 			if (confParam.contains(RunTimeConfig.KEY_RUN_ID)) {
 				if (RUN_ID.length() >= 64) {
 					Assert.assertTrue(confParam.contains(RUN_ID.substring(0, 63).trim()));
@@ -225,42 +219,6 @@ extends DistributedLoadBuilderTestBase {
 				in = Files.newBufferedReader(perfTraceFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			LogValidator.assertCorrectPerfTraceCSV(in);
-		}
-	}
-
-	@Test
-	public void shouldContainInformationAboutAllLoadsByStep()
-	throws Exception {
-		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
-		Assert.assertTrue("perf.sum.csv file must be exist", perfSumFile.exists());
-		//
-		try(
-			final BufferedReader
-				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
-		) {
-			boolean firstRow = true;
-			int loadJobCount = 0, stepsCount = 0;
-			final String loadChain[] = RAMPUP_LOAD_CHAIN.split(",");
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			String loadTypeExpected, loadTypeActual;
-			for(final CSVRecord nextRec : recIter) {
-				if(firstRow) {
-					firstRow = false;
-				} else if(nextRec.size() == 25) {
-					loadTypeExpected = loadChain[loadJobCount % loadChain.length];
-					loadTypeActual = nextRec.get(3);
-					Assert.assertTrue(
-						"Load type is \"" + loadTypeActual + "\" but expected " + loadTypeExpected,
-						loadTypeActual.equalsIgnoreCase(loadTypeExpected)
-					);
-					loadJobCount ++;
-				} else {
-					stepsCount ++;
-				}
-			}
-			Assert.assertEquals(
-				"Steps counts must be equal to " + COUNT_STEPS, COUNT_STEPS, stepsCount
-			);
 		}
 	}
 }

@@ -179,8 +179,9 @@ public class JsonConfigLoader {
 			final String stringValue = rtConfig.getProperty(propertyName).toString();
 			objectNode.put(jsonField, getFormattedValue(stringValue));
 		} catch(final NullPointerException e) {
-			LogUtil.exception(LOG, Level.WARN, e,
-				"rtConfig doesn't contain \"{}\" property", propertyName);
+			LogUtil.exception(
+				LOG, Level.WARN, e, "rtConfig doesn't contain \"{}\" property", propertyName
+			);
 		}
 	}
 	//

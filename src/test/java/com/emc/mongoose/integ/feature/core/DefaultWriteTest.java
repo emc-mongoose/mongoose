@@ -59,6 +59,7 @@ extends WSMockTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_DATA_SIZE, DATA_SIZE);
 		WSMockTestBase.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);

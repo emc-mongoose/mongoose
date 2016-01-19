@@ -38,7 +38,7 @@ import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIEN
 /**
  * Created by gusakk on 05.11.15.
  */
-public class CircularAppendZeroSizeDistributedItems
+public class CircularAppendZeroSizeDistributedTest
 extends DistributedClientTestBase {
 	//
 	private static final Logger LOG = LogManager.getLogger();
@@ -59,7 +59,7 @@ extends DistributedClientTestBase {
 	public static void setUpClass() {
 		try {
 			System.setProperty(
-				RunTimeConfig.KEY_RUN_ID, CircularAppendZeroSizeDistributedItems.class.getCanonicalName()
+				RunTimeConfig.KEY_RUN_ID, CircularAppendZeroSizeDistributedTest.class.getCanonicalName()
 			);
 			DistributedClientTestBase.setUpClass();
 			//
@@ -90,9 +90,11 @@ extends DistributedClientTestBase {
 						stdOutInterceptorStream = StdOutUtil.getStdOutBufferingStream()
 				) {
 					stdOutInterceptorStream.reset();
-					if (COUNT_WRITTEN > 0) {
-						COUNT_APPENDED = client.append(writeOutput.getItemSrc(), null, APPEND_COUNT, 10,
-							SizeUtil.toSize("128B"));
+					if(COUNT_WRITTEN > 0) {
+						COUNT_APPENDED = client.append(
+							writeOutput.getItemSrc(), null, APPEND_COUNT, 10,
+							SizeUtil.toSize("128B")
+						);
 					} else {
 						throw new IllegalStateException("Failed to append");
 					}
@@ -134,7 +136,10 @@ extends DistributedClientTestBase {
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
-				Assert.assertTrue(Integer.parseInt(nextRec.get(2)) >= MIN_SIZE_AFTER_APPEND);
+				Assert.assertTrue(
+					"Expected size more than " + MIN_SIZE_AFTER_APPEND + " but got " + nextRec.get(2),
+					Integer.parseInt(nextRec.get(2)) >= MIN_SIZE_AFTER_APPEND
+				);
 			}
 		}
 	}
