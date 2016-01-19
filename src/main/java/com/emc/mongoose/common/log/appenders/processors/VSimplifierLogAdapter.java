@@ -2,11 +2,15 @@ package com.emc.mongoose.common.log.appenders.processors;
 
 import org.apache.logging.log4j.core.LogEvent;
 
+import java.sql.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public class VSimplifierLogAdapter {
+
+	private List<LogEvent> logEventList;
 
 	VSimplifier durationMinSr, durationMaxSr, durationAvgSr,
 				latencyMinSr, latencyMaxSr, latencyAvgSr,
@@ -23,6 +27,7 @@ public class VSimplifierLogAdapter {
 			bwAvgList, bwAvgLastList;
 
 	public VSimplifierLogAdapter(LogEvent ... events) {
+		logEventList = Arrays.asList(events);
 		initiateLists();
 		int counter = 0; //todo this is a temp decision
 		for (LogEvent event: events) {
@@ -41,8 +46,28 @@ public class VSimplifierLogAdapter {
 		}
 	}
 
-	public ArrayList<LogEvent> simplify(int simplificationsNum) {
-		return new ArrayList<>();
+	public VSimplifierLogAdapter(List<LogEvent> events) {
+		logEventList = events;
+		initiateLists();
+		int counter = 0; //todo this is a temp decision
+		for (LogEvent event: events) {
+			String[] splitMsg = event.getMessage().toString().split(";");
+			while (counter * NUMBER_OF_METRICS <= splitMsg.length) {
+				addPointsToLists(counter, parseMsgValues(splitMsg[1]),
+						durationMinList, durationMaxList, durationAvgList);
+				addPointsToLists(counter, parseMsgValues(splitMsg[2]),
+						latencyMinList, latencyMaxList, latencyAvgList);
+				addPointsToLists(counter, parseMsgValues(splitMsg[3]),
+						tpAvgList, tpAvgLastList);
+				addPointsToLists(counter, parseMsgValues(splitMsg[4]),
+						bwAvgList, bwAvgLastList);
+				counter++;
+			}
+		}
+	}
+
+	public List<LogEvent> simplify(int simplificationsNum) {
+		return logEventList;
 	}
 
 	/***

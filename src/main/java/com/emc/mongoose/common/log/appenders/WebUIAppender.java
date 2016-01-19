@@ -3,12 +3,11 @@ package com.emc.mongoose.common.log.appenders;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 //
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.processors.VSimplifier;
-import com.emc.mongoose.common.log.appenders.processors.VSimplifierLogAdapter;
-import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
-import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
+import com.emc.mongoose.common.log.appenders.processors.VSimplifierLogAdapter;
 import org.apache.logging.log4j.ThreadContext;
 //
 import org.apache.logging.log4j.core.Filter;
@@ -32,8 +31,10 @@ public final class WebUIAppender
 		extends AbstractAppender {
 	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
 	private final static int SIMPLIFICATION_LIMIT = 4;
+	private final static int NUMBER_OF_SIMPLIFICATIONS = 1;
+	private final static String NON_SIMPLIFIABLE_EVENTS_KEY = "other";
 	//
-	private final static ConcurrentHashMap<String, HashMap<String, List<LogEvent>>>
+	private final static ConcurrentHashMap<String, Map<String, List<LogEvent>>>
 			LOG_EVENTS_MAP = new ConcurrentHashMap<>();
 	private final static List<WebSocketLogListener>
 			LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
@@ -104,20 +105,25 @@ public final class WebUIAppender
 			}
 			//
 			if(currRunId != null) {
+				Map<String, List<LogEvent>> loadJobMap;
+				if (!LOG_EVENTS_MAP.containsKey(currRunId)) {
+					loadJobMap = new HashMap<>();
+					loadJobMap.put(NON_SIMPLIFIABLE_EVENTS_KEY, new ArrayList<LogEvent>());
+					LOG_EVENTS_MAP.put(currRunId, loadJobMap);
+				}
+				loadJobMap = LOG_EVENTS_MAP.get(currRunId);
 				if (event.getMarker().equals(Markers.PERF_AVG)) {
-					if (!LOG_EVENTS_MAP.containsKey(currRunId)) {
-						LOG_EVENTS_MAP.put(currRunId, new HashMap<String, List<LogEvent>>());
-					}
-					Map<String, List<LogEvent>> loadJobMap = LOG_EVENTS_MAP.get(currRunId);
-					String loadJobName = ThreadContext.get(LogMetricsTask.LOAD_JOB_NAME);
+					String loadJobName = evtCtxMap.get(LogUtil.LOAD_JOB_NAME);
 					if (!loadJobMap.containsKey(loadJobName)) {
 						loadJobMap.put(loadJobName, new ArrayList<LogEvent>());
 					}
-					List<LogEvent> events = loadJobMap.get(loadJobName);
-					events.add(event);
-					if (events.size() >= SIMPLIFICATION_LIMIT) {
-						loadJobMap.put(loadJobName, removeExtraLogEvents(events));
+					List<LogEvent> perfAvgEvents = loadJobMap.get(loadJobName);
+					perfAvgEvents.add(event);
+					if (perfAvgEvents.size() >= SIMPLIFICATION_LIMIT) {
+						loadJobMap.put(loadJobName, removeExtraLogEvents(perfAvgEvents));
 					}
+				} else {
+					loadJobMap.get(NON_SIMPLIFIABLE_EVENTS_KEY).add(event);
 				}
 				for (final WebSocketLogListener listener : LISTENERS) {
 					listener.sendMessage(event);
@@ -127,10 +133,8 @@ public final class WebUIAppender
 	}
 
 	private List<LogEvent> removeExtraLogEvents(List<LogEvent> events) {
-		LogEvent[] logEventsArr = new LogEvent[SIMPLIFICATION_LIMIT];
-		// TODO a filling of array should be here
-		VSimplifierLogAdapter simplifier = new VSimplifierLogAdapter(logEventsArr);
-		return simplifier.simplify(0); // TODO a number of simplifications should be here
+		VSimplifierLogAdapter simplifier = new VSimplifierLogAdapter(events);
+		return simplifier.simplify(NUMBER_OF_SIMPLIFICATIONS);
 	}
 
 	//

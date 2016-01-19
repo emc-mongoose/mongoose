@@ -82,6 +82,8 @@ implements ShutdownCallbackRegistry {
 		//
 		MONGOOSE = "mongoose";
 	//
+	public static final String LOAD_JOB_NAME = "loadJobName";
+	//
 	public static final Lock HOOKS_LOCK = new ReentrantLock();
 	public static final Condition HOOKS_COND = HOOKS_LOCK.newCondition();
 	public static final AtomicInteger LOAD_HOOKS_COUNT = new AtomicInteger(0);

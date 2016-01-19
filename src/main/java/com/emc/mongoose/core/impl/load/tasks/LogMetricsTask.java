@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.tasks;
 //
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -17,7 +18,6 @@ public final class LogMetricsTask
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	public final static String LOAD_JOB_NAME = "loadJobName";
 	//
 	private final LoadExecutor loadExecutor;
 	private final int metricsPeriodSec;
@@ -32,7 +32,7 @@ implements Runnable {
 	void run() {
 		final Thread currThread = Thread.currentThread();
 		try {
-			ThreadContext.put(LOAD_JOB_NAME, loadExecutor.getName());
+			ThreadContext.put(LogUtil.LOAD_JOB_NAME, loadExecutor.getName());
 		} catch (RemoteException ignored) {;
 		}
 		try {
