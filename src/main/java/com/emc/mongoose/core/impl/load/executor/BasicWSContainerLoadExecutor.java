@@ -11,7 +11,7 @@ import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 //
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -65,7 +65,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicWSContainerLoadExecutor<T extends WSObject, C extends Container<T>>
+public class BasicWSContainerLoadExecutor<T extends HttpDataItem, C extends Container<T>>
 extends LimitedRateLoadExecutorBase<C>
 implements WSContainerLoadExecutor<T, C> {
 	//

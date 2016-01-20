@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
@@ -31,7 +31,7 @@ extends DistributedClientTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, WriteByTimeTest.class.getCanonicalName());
 		DistributedClientTestBase.setUpClass();
 		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
+			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 				.setLimitTime(TIME_TO_WRITE_SEC, TimeUnit.SECONDS)
 				.setLimitCount(0)
 				.setAPI("atmos")

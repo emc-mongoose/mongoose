@@ -7,7 +7,7 @@ import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
@@ -29,7 +29,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 21.10.15.
  */
-public class BasicWSContainerLoadSvc<T extends WSObject, C extends Container<T>>
+public class BasicWSContainerLoadSvc<T extends HttpDataItem, C extends Container<T>>
 extends BasicWSContainerLoadExecutor<T, C>
 implements WSContainerLoadSvc<T, C> {
 	private final static Logger LOG = LogManager.getLogger();

@@ -4,7 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
 //
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public final class WSBucketItemSrc<T extends WSObject, C extends Container<T>>
+public final class WSBucketItemSrc<T extends HttpDataItem, C extends Container<T>>
 extends GenericContainerItemSrcBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -59,7 +59,7 @@ extends GenericContainerItemSrcBase<T, C> {
 		}
 	}
 	//
-	private final static class PageContentHandler<T extends WSObject, C extends Container<T>>
+	private final static class PageContentHandler<T extends HttpDataItem, C extends Container<T>>
 	extends DefaultHandler {
 		private final static String
 			QNAME_ITEM = "Contents",
@@ -170,7 +170,7 @@ extends GenericContainerItemSrcBase<T, C> {
 			throw new EOFException();
 		}
 		// execute the request
-		final HttpResponse resp = WSBucketHelper.class.cast(containerHelper).execute(
+		final HttpResponse resp = HttpBucketHelper.class.cast(containerHelper).execute(
 			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit,
 			WSRequestConfig.REQUEST_WITH_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 		);

@@ -5,12 +5,12 @@ import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.s3.BucketHelper;
-import com.emc.mongoose.storage.adapter.s3.WSBucketHelper;
+import com.emc.mongoose.storage.adapter.s3.HttpBucketHelper;
 import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
@@ -44,7 +44,7 @@ extends StandaloneClientTestBase {
 			.newInstanceFor("s3")
 			.setRunTimeConfig(RunTimeConfig.getContext());
 		reqConf.setRunTimeConfig(RunTimeConfig.getContext());
-		bucketHelper = new WSBucketHelper(
+		bucketHelper = new HttpBucketHelper(
 			reqConf, new BasicContainer(S3UsePreExistingBucketTest.class.getSimpleName())
 		);
 		bucketHelper.create("127.0.0.1");
@@ -53,7 +53,7 @@ extends StandaloneClientTestBase {
 		}
 		//
 		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
+			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("s3")

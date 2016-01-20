@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by gusakk on 22.10.15.
  */
 public class BasicWSContainerLoadBuilderSvc<
-	T extends WSObject,
+	T extends HttpDataItem,
 	C extends Container<T>,
 	U extends WSContainerLoadSvc<T, C>
 >

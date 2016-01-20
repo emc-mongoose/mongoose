@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.ContentUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.WSContainerIOTask;
 //
@@ -42,7 +42,7 @@ import java.nio.charset.StandardCharsets;
  Created by kurila on 20.10.15.
  */
 public class BasicWSContainerTask<
-	T extends WSObject, C extends Container<T>, X extends WSRequestConfig<T, C>
+	T extends HttpDataItem, C extends Container<T>, X extends WSRequestConfig<T, C>
 > extends BasicIOTask<C, C, X>
 implements WSContainerIOTask<T, C> {
 	//
@@ -255,7 +255,7 @@ implements WSContainerIOTask<T, C> {
 	//
 	@Override
 	public final boolean isRepeatable() {
-		return WSObject.IS_CONTENT_REPEATABLE;
+		return HttpDataItem.IS_CONTENT_REPEATABLE;
 	}
 	//
 	@Override

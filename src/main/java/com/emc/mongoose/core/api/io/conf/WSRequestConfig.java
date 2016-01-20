@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.api.io.conf;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-common.jar
@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 29.09.14.
  An HTTP request shared configuration.
  */
-public interface WSRequestConfig<T extends WSObject, C extends Container<T>>
+public interface WSRequestConfig<T extends HttpDataItem, C extends Container<T>>
 extends RequestConfig<T, C> {
 	//
 	String

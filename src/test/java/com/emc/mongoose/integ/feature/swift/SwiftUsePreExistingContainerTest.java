@@ -3,12 +3,12 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.swift.SwiftContainerHelper;
-import com.emc.mongoose.storage.adapter.swift.WSSwiftContainerHelper;
+import com.emc.mongoose.storage.adapter.swift.HttpSwiftContainerHelper;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.AfterClass;
@@ -27,7 +27,7 @@ extends StandaloneClientTestBase {
 	private final static String RUN_ID = SwiftUsePreExistingContainerTest.class.getCanonicalName();
 	//
 	private static long COUNT_WRITTEN;
-	private static SwiftContainerHelper<WSObject, Container<WSObject>> CONTAINER_HELPER;
+	private static SwiftContainerHelper<HttpDataItem, Container<HttpDataItem>> CONTAINER_HELPER;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -39,7 +39,7 @@ extends StandaloneClientTestBase {
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
 			.newInstanceFor("swift")
 			.setRunTimeConfig(RunTimeConfig.getContext());
-		CONTAINER_HELPER = new WSSwiftContainerHelper<WSObject, Container<WSObject>>(
+		CONTAINER_HELPER = new HttpSwiftContainerHelper<HttpDataItem, Container<HttpDataItem>>(
 				reqConf, new BasicContainer(RUN_ID)
 		);
 		CONTAINER_HELPER.create("127.0.0.1");
@@ -48,7 +48,7 @@ extends StandaloneClientTestBase {
 		}
 		//
 		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
+			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("swift")

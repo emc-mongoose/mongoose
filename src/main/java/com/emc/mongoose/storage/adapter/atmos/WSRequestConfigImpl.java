@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-core-impl.jar
@@ -36,7 +36,7 @@ import java.util.NoSuchElementException;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSRequestConfigImpl<T extends WSObject, C extends Container<T>>
+public final class WSRequestConfigImpl<T extends HttpDataItem, C extends Container<T>>
 extends WSRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -295,7 +295,7 @@ extends WSRequestConfigBase<T, C> {
 		// the "offset" tag is required for WS mock
 		if(IOTask.Type.CREATE.equals(loadType)) {
 			final HttpEntity entity = request.getEntity();
-			if(entity != null && WSObject.class.isInstance(entity)) {
+			if(entity != null && HttpDataItem.class.isInstance(entity)) {
 				if(md.length() > 0) {
 					md.append(',');
 				}

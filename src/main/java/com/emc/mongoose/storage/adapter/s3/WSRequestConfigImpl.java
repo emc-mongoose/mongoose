@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSRequestConfigImpl<T extends WSObject, C extends Container<T>>
+public final class WSRequestConfigImpl<T extends HttpDataItem, C extends Container<T>>
 extends WSRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -208,7 +208,7 @@ extends WSRequestConfigBase<T, C> {
 		} else {
 			LOG.debug(Markers.MSG, "Configure storage w/ bucket \"{}\"", container);
 		}
-		final WSBucketHelper<T, C> bucket = new WSBucketHelper<>(this, container);
+		final HttpBucketHelper<T, C> bucket = new HttpBucketHelper<>(this, container);
 		if(bucket.exists(storageNodeAddrs[0])) {
 			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", container);
 		} else {
@@ -285,7 +285,7 @@ extends WSRequestConfigBase<T, C> {
 	@Override @SuppressWarnings("unchecked")
 	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
 		return new WSBucketItemSrc<>(
-			new WSBucketHelper<>(this, container), addr, getItemClass(), maxCount
+			new HttpBucketHelper<>(this, container), addr, getItemClass(), maxCount
 		);
 	}
 }

@@ -7,7 +7,7 @@ import org.apache.http.nio.protocol.HttpAsyncRequestHandler;
 /**
  Created by andrey on 03.08.15.
  */
-public interface ReqURIMatchingHandler<T extends WSObjectMock>
+public interface ReqURIMatchingHandler<T extends HttpDataItemMock>
 extends HttpAsyncRequestHandler<HttpRequest> {
 	/**
 	 Try to determine briefly if the specified URI matches this handler or not

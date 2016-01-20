@@ -6,10 +6,10 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 //
-import com.emc.mongoose.core.impl.item.data.BasicWSObject;
+import com.emc.mongoose.core.impl.item.data.BasicHttpObject;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.core.impl.item.base.ItemBinFileDst;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
@@ -52,15 +52,15 @@ implements Runnable {
 		LOG = LogManager.getLogger();
 	}
 	//
-	private final StorageClient<WSObject> client;
+	private final StorageClient<HttpDataItem> client;
 	//
-	public Sanity(final StorageClient<WSObject> client) {
+	public Sanity(final StorageClient<HttpDataItem> client) {
 		this.client = client;
 	}
 	//
 	public void run() {
 		try {
-			final List<WSObject> itemBuff = new ArrayList<>(DEFAULT_DATA_COUNT_MAX);
+			final List<HttpDataItem> itemBuff = new ArrayList<>(DEFAULT_DATA_COUNT_MAX);
 			// create new items
 			LOG.info(Markers.MSG, "Start writing");
 			final long nWritten = client.write(
@@ -70,22 +70,22 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
 			// update the created items
 			LOG.info(Markers.MSG, "Start updating {} items", itemBuff.size());
-			final ItemDst<WSObject> dataDstU = new ItemBinFileDst<>();
+			final ItemDst<HttpDataItem> dataDstU = new ItemBinFileDst<>();
 			final long nUpdated = client.update(
 				new ListItemSrc<>(itemBuff), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
-			final ItemDst<WSObject> dataDstR = new ItemCSVFileDst<>(
-				(Class<? extends WSObject>) BasicWSObject.class, ContentSourceBase.getDefault()
+			final ItemDst<HttpDataItem> dataDstR = new ItemCSVFileDst<>(
+				(Class<? extends HttpDataItem>) BasicHttpObject.class, ContentSourceBase.getDefault()
 			);
 			final long nRead = client.read(
 				dataDstU.getItemSrc(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead);
 			// variable-sized appending of the verified data items
-			final ItemDst<WSObject> dataDstA = new LimitedQueueItemBuffer<>(
-				new ArrayBlockingQueue<WSObject>(DEFAULT_DATA_COUNT_MAX)
+			final ItemDst<HttpDataItem> dataDstA = new LimitedQueueItemBuffer<>(
+				new ArrayBlockingQueue<HttpDataItem>(DEFAULT_DATA_COUNT_MAX)
 			);
 			final long nAppended = client.append(
 				dataDstR.getItemSrc(), dataDstA, nRead, DEFAULT_CONN_PER_NODE,
@@ -94,8 +94,8 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
 			// update again the appended data items
 			final Path fileTmpItems0 = Files.createTempFile("reUpdatedItems", ".csv"); // do not delete on exit
-			final ItemDst<WSObject> dataDstU2 = new ItemCSVFileDst<>(
-				fileTmpItems0, (Class<? extends WSObject>) BasicWSObject.class,
+			final ItemDst<HttpDataItem> dataDstU2 = new ItemCSVFileDst<>(
+				fileTmpItems0, (Class<? extends HttpDataItem>) BasicHttpObject.class,
 				ContentSourceBase.getDefault()
 			);
 			final long nUpdated2 = client.update(
@@ -108,8 +108,8 @@ implements Runnable {
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
 			// recreate the items
-			final ItemDst<WSObject> dataDstW2 = new ItemCSVFileDst<>(
-				(Class<? extends WSObject>) BasicWSObject.class,
+			final ItemDst<HttpDataItem> dataDstW2 = new ItemCSVFileDst<>(
+				(Class<? extends HttpDataItem>) BasicHttpObject.class,
 				ContentSourceBase.getDefault()
 			);
 			final long nReWritten = client.write(
@@ -150,7 +150,7 @@ implements Runnable {
 		wsMockThread.start();
 		//
 		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 10);
-		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
+		final StorageClientBuilder<HttpDataItem, StorageClient<HttpDataItem>>
 			clientBuilder = new BasicStorageClientBuilder<>();
 		final String storageNodes[] = new String[DEFAULT_NODE_COUNT];
 		for(int i = 0; i < DEFAULT_NODE_COUNT; i++) {
@@ -163,7 +163,7 @@ implements Runnable {
 			.setLimitTime(0, TimeUnit.SECONDS)
 			.setLimitRate(10000);
 		// standalone
-		try(final StorageClient<WSObject> client = clientBuilder.build()) {
+		try(final StorageClient<HttpDataItem> client = clientBuilder.build()) {
 			final Thread sanityThread1 = new Thread(new Sanity(client), "sanityStandalone");
 			sanityThread1.start();
 			LOG.info(Markers.MSG, "Standalone sanity started");
@@ -178,7 +178,7 @@ implements Runnable {
 		multiSvc.start();
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_MONITOR, 1299);
 		try(
-			final StorageClient<WSObject> client = clientBuilder
+			final StorageClient<HttpDataItem> client = clientBuilder
 				.setClientMode(new String[] {ServiceUtil.getHostAddr()})
 				.build()
 		) {

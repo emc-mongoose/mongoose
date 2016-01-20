@@ -1,7 +1,7 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  Created by kurila on 08.05.14.
  */
 public final class BasicWSDataLoadBuilderClient<
-	T extends WSObject, W extends WSDataLoadSvc<T>, U extends WSDataLoadClient<T, W>
+	T extends HttpDataItem, W extends WSDataLoadSvc<T>, U extends WSDataLoadClient<T, W>
 > extends DataLoadBuilderClientBase<T, W, U, WSDataLoadBuilderSvc<T, W>>
 implements WSDataLoadBuilderClient<T, W, U> {
 	//

@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 //
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
@@ -29,7 +29,7 @@ public final class AtmosMultiRangeUpdateTest
 extends StandaloneClientTestBase {
 	//
 	private final static int COUNT_TO_WRITE = 1000;
-	private final static List<WSObject>
+	private final static List<HttpDataItem>
 		BUFF_WRITE = new ArrayList<>(COUNT_TO_WRITE),
 		BUFF_UPDATE0 = new ArrayList<>(COUNT_TO_WRITE),
 		BUFF_UPDATE1 = new ArrayList<>(COUNT_TO_WRITE);
@@ -46,18 +46,18 @@ extends StandaloneClientTestBase {
 		StandaloneClientTestBase.setUpClass();
 		//
 		try(
-			final StorageClient<WSObject>
+			final StorageClient<HttpDataItem>
 				client = CLIENT_BUILDER
 					.setLimitTime(0, TimeUnit.SECONDS)
 					.setLimitCount(COUNT_TO_WRITE)
 					.setAPI("atmos")
 					.build()
 		) {
-			final ItemDst<WSObject> writeOutput = new ListItemDst<>(BUFF_WRITE);
+			final ItemDst<HttpDataItem> writeOutput = new ListItemDst<>(BUFF_WRITE);
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB")
 			);
-			final ItemDst<WSObject> updateOutput0 = new ListItemDst<>(BUFF_UPDATE0);
+			final ItemDst<HttpDataItem> updateOutput0 = new ListItemDst<>(BUFF_UPDATE0);
 			if(COUNT_WRITTEN > 0) {
 				COUNT_UPDATED0 = client.update(
 					writeOutput.getItemSrc(), updateOutput0, COUNT_UPDATED0, 10, 10
@@ -70,7 +70,7 @@ extends StandaloneClientTestBase {
 			} else {
 				throw new IllegalStateException("Failed to update the 1st time");
 			}
-			final ItemDst<WSObject> updateOutput1 = new ListItemDst<>(BUFF_UPDATE0);
+			final ItemDst<HttpDataItem> updateOutput1 = new ListItemDst<>(BUFF_UPDATE0);
 			COUNT_UPDATED1 = client.update(
 				writeOutput.getItemSrc(), updateOutput1, COUNT_UPDATED0, 10, 10
 			);
@@ -94,7 +94,7 @@ extends StandaloneClientTestBase {
 		int layer, mask, size;
 		String s;
 		Matcher m;
-		for(final WSObject obj : BUFF_UPDATE1) {
+		for(final HttpDataItem obj : BUFF_UPDATE1) {
 			s = obj.toString();
 			m = PATTERN_OBJ_METAINFO.matcher(s);
 			if(m.find()) {

@@ -3,7 +3,7 @@ package com.emc.mongoose.client.impl.load.executor;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 // mongoose-server-api.jar
@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  Created by kurila on 08.05.14.
  */
-public class BasicWSDataLoadClient<T extends WSObject, W extends WSDataLoadSvc<T>>
+public class BasicWSDataLoadClient<T extends HttpDataItem, W extends WSDataLoadSvc<T>>
 extends LoadClientBase<T, W>
 implements WSDataLoadClient<T, W> {
 	//

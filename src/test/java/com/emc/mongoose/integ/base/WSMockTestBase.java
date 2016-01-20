@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.StorageMock;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import org.junit.AfterClass;
@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class WSMockTestBase
 extends LoggingTestBase {
 	//
-	private static StorageMock<WSObjectMock> WS_MOCK;
+	private static StorageMock<HttpDataItemMock> WS_MOCK;
 	private static Thread WS_MOCK_THREAD;
 	//
 	@BeforeClass

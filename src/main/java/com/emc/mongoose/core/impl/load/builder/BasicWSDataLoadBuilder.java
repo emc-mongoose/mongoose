@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.load.executor.BasicWSDataLoadExecutor;
 import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 // mongoose-core-api.jar
@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
 /**
  Created by kurila on 05.05.14.
  */
-public class BasicWSDataLoadBuilder<T extends WSObject, U extends WSDataLoadExecutor<T>>
+public class BasicWSDataLoadBuilder<T extends HttpDataItem, U extends WSDataLoadExecutor<T>>
 extends DataLoadBuilderBase<T, U>
 implements WSDataLoadBuilder<T, U> {
 	//

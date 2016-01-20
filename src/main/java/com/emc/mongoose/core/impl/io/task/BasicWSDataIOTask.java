@@ -11,7 +11,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataSizeException;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.WSDataIOTask;
 // mongoose-core-impl
@@ -47,7 +47,7 @@ import java.nio.charset.StandardCharsets;
  Created by kurila on 06.06.14.
  */
 public class BasicWSDataIOTask<
-	T extends WSObject, C extends Container<T>, X extends WSRequestConfig<T, C>
+	T extends HttpDataItem, C extends Container<T>, X extends WSRequestConfig<T, C>
 > extends BasicDataIOTask<T, C, X>
 implements WSDataIOTask<T> {
 	//
@@ -266,7 +266,7 @@ implements WSDataIOTask<T> {
 	//
 	@Override
 	public final boolean isRepeatable() {
-		return WSObject.IS_CONTENT_REPEATABLE;
+		return HttpDataItem.IS_CONTENT_REPEATABLE;
 	}
 	//
 	@Override

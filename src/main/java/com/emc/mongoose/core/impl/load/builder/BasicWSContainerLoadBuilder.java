@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.load.builder;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.WSContainerLoadBuilder;
@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
  * Created by gusakk on 21.10.15.
  */
 public class BasicWSContainerLoadBuilder<
-	T extends WSObject,
+	T extends HttpDataItem,
 	C extends Container<T>,
 	U extends WSContainerLoadExecutor<T, C>
 >

@@ -4,10 +4,10 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.impl.item.data.BasicWSObject;
+import com.emc.mongoose.core.impl.item.data.BasicHttpObject;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
@@ -72,14 +72,14 @@ extends StandaloneClientTestBase {
 			RunTimeConfig.setContext(rtConfig);
 			//
 			try (
-				final StorageClient<WSObject> client = CLIENT_BUILDER
+				final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 					.setAPI("s3")
 					.setLimitTime(0, TimeUnit.SECONDS)
 					.setLimitCount(WRITE_COUNT)
 					.build()
 			) {
-				final ItemDst<WSObject> writeOutput = new ItemCSVFileDst<WSObject>(
-					BasicWSObject.class, ContentSourceBase.getDefault()
+				final ItemDst<HttpDataItem> writeOutput = new ItemCSVFileDst<HttpDataItem>(
+					BasicHttpObject.class, ContentSourceBase.getDefault()
 				);
 				COUNT_WRITTEN = client.write(
 					null, writeOutput, WRITE_COUNT, 10, SizeUtil.toSize(DATA_SIZE)
@@ -87,8 +87,8 @@ extends StandaloneClientTestBase {
 				TimeUnit.SECONDS.sleep(1);
 				RunIdFileManager.flushAll();
 				//
-				final ItemDst<WSObject> updateOutput = new ItemCSVFileDst<WSObject>(
-					BasicWSObject.class, ContentSourceBase.getDefault()
+				final ItemDst<HttpDataItem> updateOutput = new ItemCSVFileDst<HttpDataItem>(
+					BasicHttpObject.class, ContentSourceBase.getDefault()
 				);
 				if (COUNT_WRITTEN > 0) {
 					COUNT_UPDATED = client.update(

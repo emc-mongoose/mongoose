@@ -17,7 +17,7 @@ import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.ReqURIMatchingHandler;
 import com.emc.mongoose.storage.mock.api.StorageMockCapacityLimitReachedException;
 import com.emc.mongoose.storage.mock.api.WSMock;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.emc.mongoose.storage.mock.impl.web.response.BasicWSResponseProducer;
 //
 import org.apache.commons.codec.binary.Hex;
@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by andrey on 13.05.15.
  */
-public abstract class WSRequestHandlerBase<T extends WSObjectMock>
+public abstract class WSRequestHandlerBase<T extends HttpDataItemMock>
 implements ReqURIMatchingHandler<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

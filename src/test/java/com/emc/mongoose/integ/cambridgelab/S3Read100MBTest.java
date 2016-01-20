@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 //
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
@@ -50,8 +50,8 @@ extends CambridgeLabDistributedClientTestBase {
 					.build()
 			) {
 				try(
-					final ItemDst<WSObject>
-						writtenItems = new ListItemDst<>(new ArrayList<WSObject>())
+					final ItemDst<HttpDataItem>
+						writtenItems = new ListItemDst<>(new ArrayList<HttpDataItem>())
 				) {
 					countWritten = client.write(null, writtenItems, 0, 2, SizeUtil.toSize("100MB"));
 					TimeUnit.SECONDS.sleep(1);
@@ -85,8 +85,8 @@ extends CambridgeLabDistributedClientTestBase {
 				.setItemClass("container")
 				.build()
 		) {
-			final List<Container<WSObject>> containers2delete = new ArrayList<>();
-			containers2delete.add(new BasicContainer<WSObject>(RUN_ID));
+			final List<Container<HttpDataItem>> containers2delete = new ArrayList<>();
+			containers2delete.add(new BasicContainer<HttpDataItem>(RUN_ID));
 			client.delete(new ListItemSrc<>(containers2delete), null, 1, 1);
 			TimeUnit.SECONDS.sleep(1);
 		} catch(final IOException | InterruptedException e) {

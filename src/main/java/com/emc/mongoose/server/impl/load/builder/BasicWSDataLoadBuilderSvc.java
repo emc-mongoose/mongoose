@@ -8,7 +8,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //mongoose-core-api.jar
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 30.05.14.
  */
-public class BasicWSDataLoadBuilderSvc<T extends WSObject, U extends WSDataLoadSvc<T>>
+public class BasicWSDataLoadBuilderSvc<T extends HttpDataItem, U extends WSDataLoadSvc<T>>
 extends BasicWSDataLoadBuilder<T, U>
 implements WSDataLoadBuilderSvc<T, U> {
 	//

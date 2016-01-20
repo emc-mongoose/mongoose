@@ -7,7 +7,7 @@ import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
@@ -29,7 +29,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 16.12.14.
  */
-public final class BasicWSDataLoadSvc<T extends WSObject>
+public final class BasicWSDataLoadSvc<T extends HttpDataItem>
 extends BasicWSDataLoadExecutor<T>
 implements WSDataLoadSvc<T> {
 	//

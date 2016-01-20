@@ -2,7 +2,7 @@ package com.emc.mongoose.integ.feature.content;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
 import com.emc.mongoose.core.impl.item.base.ListItemSrc;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
@@ -27,7 +27,7 @@ extends DistributedClientTestBase {
 	private final static String
 		RUN_ID = UpdateZeroBytesDistributedTest.class.getCanonicalName(),
 		BASE_URL = "http://127.0.0.1:9020/" + UpdateZeroBytesDistributedTest.class.getSimpleName() + "/";
-	private final static List<WSObject>
+	private final static List<HttpDataItem>
 		OBJ_BUFF_WRITTEN = new ArrayList<>(COUNT_TO_WRITE),
 		OBJ_BUFF_UPDATED = new ArrayList<>(COUNT_TO_WRITE);
 	//
@@ -40,7 +40,7 @@ extends DistributedClientTestBase {
 		System.setProperty(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "conf/content/zerobytes");
 		DistributedClientTestBase.setUpClass();
 		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
+			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("s3")
@@ -70,7 +70,7 @@ extends DistributedClientTestBase {
 		Assert.assertEquals(COUNT_TO_WRITE, OBJ_BUFF_UPDATED.size());
 		URL nextObjURL;
 		final byte buff[] = new byte[OBJ_SIZE];
-		WSObject nextObj;
+		HttpDataItem nextObj;
 		for(int i = 0; i < OBJ_BUFF_UPDATED.size(); i ++) {
 			nextObj = OBJ_BUFF_UPDATED.get(i);
 			nextObjURL = new URL(BASE_URL + nextObj.getName());

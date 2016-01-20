@@ -2,7 +2,7 @@ package com.emc.mongoose.integ.feature.s3;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -21,7 +21,7 @@ extends StandaloneClientTestBase {
 	//
 	private final static int COUNT_TO_WRITE = 10000;
 	private final static String BUCKET_NAME = S3ReadZeroSizedItemsFromBucket.class.getSimpleName();
-	private final static List<WSObject> BUFF_READ = new ArrayList<>(COUNT_TO_WRITE);
+	private final static List<HttpDataItem> BUFF_READ = new ArrayList<>(COUNT_TO_WRITE);
 	//
 	private static long COUNT_WRITTEN, COUNT_READ;
 	//
@@ -35,7 +35,7 @@ extends StandaloneClientTestBase {
 		StandaloneClientTestBase.setUpClass();
 		//
 		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
+			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("s3")
@@ -63,7 +63,7 @@ extends StandaloneClientTestBase {
 	//
 	@Test
 	public void checkReadItemsAreZeroSized() {
-		for(final WSObject obj : BUFF_READ) {
+		for(final HttpDataItem obj : BUFF_READ) {
 			Assert.assertEquals(0, obj.getSize());
 		}
 	}

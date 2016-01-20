@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
@@ -52,14 +52,14 @@ extends DistributedClientTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, ReadLoggingTest.class.getCanonicalName());
 		DistributedClientTestBase.setUpClass();
 		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
+			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_LIMIT)
 				.setAPI("atmos")
 				.build()
 		) {
-			final BlockingQueue<WSObject> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
-			final LimitedQueueItemBuffer<WSObject> itemsIO = new LimitedQueueItemBuffer<>(itemsQueue);
+			final BlockingQueue<HttpDataItem> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
+			final LimitedQueueItemBuffer<HttpDataItem> itemsIO = new LimitedQueueItemBuffer<>(itemsQueue);
 			countWritten = client.write(null, itemsIO, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
 			TimeUnit.SECONDS.sleep(10);
 			Assert.assertEquals(

@@ -10,7 +10,7 @@ import com.emc.mongoose.core.impl.item.data.BasicMutableDataItem;
 //
 import com.emc.mongoose.core.impl.item.data.BasicDataItem;
 //
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.entity.NByteArrayEntity;
@@ -36,7 +36,7 @@ implements HttpAsyncResponseProducer {
 	private volatile HttpResponse response = null;
 	private volatile OutputChannel chanOut = null;
 	//
-	private volatile WSObjectMock dataObject = null;
+	private volatile HttpDataItemMock dataObject = null;
 	private volatile NByteArrayEntity contentBytes = null;
 	//
 	private volatile long countBytesDone = 0, contentSize = 0;
@@ -56,8 +56,8 @@ implements HttpAsyncResponseProducer {
 		final HttpEntity contentEntity = response.getEntity();
 		if(contentEntity != null) {
 			contentSize = contentEntity.getContentLength();
-			if(contentEntity instanceof WSObjectMock) {
-				dataObject = (WSObjectMock) contentEntity;
+			if(contentEntity instanceof HttpDataItemMock) {
+				dataObject = (HttpDataItemMock) contentEntity;
 				dataObject.reset();
 				currDataLayerIdx = dataObject.getCurrLayerIndex();
 				contentBytes = null;

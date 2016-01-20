@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 //
@@ -19,7 +19,7 @@ import java.util.Date;
 /**
  Created by kurila on 10.07.15.
  */
-public abstract class WSContainerHelperBase<T extends WSObject, C extends Container<T>>
+public abstract class HttpContainerHelperBase<T extends HttpDataItem, C extends Container<T>>
 implements ContainerHelper<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -30,7 +30,7 @@ implements ContainerHelper<T, C> {
 	protected final int idPrefixLen;
 	protected final boolean fsAccess, verifyContent;
 	//
-	protected WSContainerHelperBase(final WSRequestConfig<T, C> reqConf, final C container) {
+	protected HttpContainerHelperBase(final WSRequestConfig<T, C> reqConf, final C container) {
 		this.reqConf = reqConf;
 		this.container = container;
 		final String name = container.getName();

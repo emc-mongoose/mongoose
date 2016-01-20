@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
@@ -47,16 +47,16 @@ extends CambridgeLabDistributedClientTestBase {
 					.build()
 			) {
 				try(
-					final ItemDst<WSObject>
-						writtenItems = new ListItemDst<>(new ArrayList<WSObject>())
+					final ItemDst<HttpDataItem>
+						writtenItems = new ListItemDst<>(new ArrayList<HttpDataItem>())
 				) {
 					countWritten = client.write(
 						null, writtenItems, COUNT_LIMIT, 10, SizeUtil.toSize("1KB")
 					);
 					TimeUnit.SECONDS.sleep(1);
 					try(
-						final ItemDst<WSObject>
-							updatedItems = new ListItemDst<>(new ArrayList<WSObject>())
+						final ItemDst<HttpDataItem>
+							updatedItems = new ListItemDst<>(new ArrayList<HttpDataItem>())
 					) {
 						countUpdated = client.update(
 							writtenItems.getItemSrc(), updatedItems, countWritten, 10, 1
@@ -94,8 +94,8 @@ extends CambridgeLabDistributedClientTestBase {
 				.setItemClass("container")
 				.build()
 		) {
-			final List<Container<WSObject>> containers2delete = new ArrayList<>();
-			containers2delete.add(new BasicContainer<WSObject>(RUN_ID));
+			final List<Container<HttpDataItem>> containers2delete = new ArrayList<>();
+			containers2delete.add(new BasicContainer<HttpDataItem>(RUN_ID));
 			client.delete(new ListItemSrc<>(containers2delete), null, 1, 1);
 			TimeUnit.SECONDS.sleep(1);
 		} catch(final IOException | InterruptedException e) {

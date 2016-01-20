@@ -11,7 +11,7 @@ import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSDataIOTask;
@@ -65,7 +65,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 02.12.14.
  */
-public class BasicWSDataLoadExecutor<T extends WSObject>
+public class BasicWSDataLoadExecutor<T extends HttpDataItem>
 extends MutableDataLoadExecutorBase<T>
 implements WSDataLoadExecutor<T> {
 	//

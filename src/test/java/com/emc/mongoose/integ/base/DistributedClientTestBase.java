@@ -1,7 +1,7 @@
 package com.emc.mongoose.integ.base;
 //
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicStorageClientBuilder;
@@ -13,14 +13,14 @@ import org.junit.BeforeClass;
 public abstract class DistributedClientTestBase
 extends DistributedTestBase {
 	//
-	protected static StorageClientBuilder<WSObject, StorageClient<WSObject>>
+	protected static StorageClientBuilder<HttpDataItem, StorageClient<HttpDataItem>>
 		CLIENT_BUILDER;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
 		DistributedTestBase.setUpClass();
-		CLIENT_BUILDER = new BasicStorageClientBuilder<WSObject, StorageClient<WSObject>>()
+		CLIENT_BUILDER = new BasicStorageClientBuilder<HttpDataItem, StorageClient<HttpDataItem>>()
 			.setClientMode(new String[] {ServiceUtil.getHostAddr()});
 	}
 	//

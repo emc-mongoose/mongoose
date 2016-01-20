@@ -5,7 +5,7 @@ import com.emc.mongoose.client.api.load.executor.WSContainerLoadClient;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.WSContainerIOTask;
@@ -20,7 +20,7 @@ import java.util.Map;
  Created by kurila on 21.10.15.
  */
 public class BasicWSContainerLoadClient<
-	T extends WSObject, C extends Container<T>, W extends WSContainerLoadSvc<T, C>
+	T extends HttpDataItem, C extends Container<T>, W extends WSContainerLoadSvc<T, C>
 > extends LoadClientBase<C, W> implements WSContainerLoadClient<T, C, W> {
 	//
 	public BasicWSContainerLoadClient(

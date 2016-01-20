@@ -4,7 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 //
 import org.apache.http.HttpEntity;
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.10.14.
  */
-public class WSSubTenantImpl<T extends WSObject>
+public class WSSubTenantImpl<T extends HttpDataItem>
 implements SubTenant<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

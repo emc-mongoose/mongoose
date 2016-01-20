@@ -3,7 +3,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
 import com.emc.mongoose.integ.base.CambridgeLabDistributedClientTestBase;
@@ -41,8 +41,8 @@ extends CambridgeLabDistributedClientTestBase {
 					.build()
 			) {
 				try(
-					final ItemDst<WSObject>
-						writtenItems = new ListItemDst<>(new ArrayList<WSObject>())
+					final ItemDst<HttpDataItem>
+						writtenItems = new ListItemDst<>(new ArrayList<HttpDataItem>())
 				) {
 					countWritten = client.write(
 						null, writtenItems, COUNT_LIMIT, 10, SizeUtil.toSize("8KB")

@@ -6,7 +6,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.storage.mock.api.ReqURIMatchingHandler;
 import com.emc.mongoose.storage.mock.api.WSMock;
 //
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import org.apache.http.HttpRequest;
 //
 import org.apache.http.nio.protocol.HttpAsyncRequestHandler;
@@ -17,7 +17,7 @@ import org.apache.http.nio.protocol.HttpAsyncRequestHandlerMapper;
 /**
  Created by andrey on 13.05.15.
  */
-public final class APIRequestHandlerMapper<T extends WSObjectMock>
+public final class APIRequestHandlerMapper<T extends HttpDataItemMock>
 implements HttpAsyncRequestHandlerMapper {
 	//
 	//private final static Logger LOG = LogManager.getLogger();

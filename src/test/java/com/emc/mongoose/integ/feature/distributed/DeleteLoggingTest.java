@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
@@ -51,14 +51,14 @@ extends DistributedClientTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, DeleteLoggingTest.class.getCanonicalName());
 		DistributedClientTestBase.setUpClass();
 		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
+			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 				.setAPI("s3")
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_LIMIT)
 				.build()
 		) {
-			final BlockingQueue<WSObject> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
-			final LimitedQueueItemBuffer<WSObject> itemIO = new LimitedQueueItemBuffer<>(itemsQueue);
+			final BlockingQueue<HttpDataItem> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
+			final LimitedQueueItemBuffer<HttpDataItem> itemIO = new LimitedQueueItemBuffer<>(itemsQueue);
 			COUNT_WRITTEN = client.write(
 				null, itemIO, COUNT_LIMIT, 10, SizeUtil.toSize("10KB")
 			);

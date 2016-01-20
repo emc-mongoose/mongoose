@@ -2,7 +2,7 @@ package com.emc.mongoose.integ.feature.atmos;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
@@ -23,7 +23,7 @@ public class AtmosSingleRangeUpdateTest
 extends StandaloneClientTestBase {
 	//
 	private final static int COUNT_TO_WRITE = 10000;
-	private final static List<WSObject>
+	private final static List<HttpDataItem>
 		BUFF_WRITE = new ArrayList<>(COUNT_TO_WRITE),
 		BUFF_UPDATE = new ArrayList<>(COUNT_TO_WRITE);
 	//
@@ -39,17 +39,17 @@ extends StandaloneClientTestBase {
 		StandaloneClientTestBase.setUpClass();
 		//
 		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
+			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("atmos")
 				.build()
 		) {
-			final ItemDst<WSObject> writeOutput = new ListItemDst<>(BUFF_WRITE);
+			final ItemDst<HttpDataItem> writeOutput = new ListItemDst<>(BUFF_WRITE);
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("1KB")
 			);
-			final ItemDst<WSObject> updateOutput = new ListItemDst<>(BUFF_UPDATE);
+			final ItemDst<HttpDataItem> updateOutput = new ListItemDst<>(BUFF_UPDATE);
 			if(COUNT_WRITTEN > 0) {
 				COUNT_UPDATED = client.update(
 					writeOutput.getItemSrc(), updateOutput, COUNT_WRITTEN, 10, 1
@@ -77,7 +77,7 @@ extends StandaloneClientTestBase {
 		int layer, mask, size;
 		String s;
 		Matcher m;
-		for(final WSObject obj : BUFF_UPDATE) {
+		for(final HttpDataItem obj : BUFF_UPDATE) {
 			s = obj.toString();
 			m = PATTERN_OBJ_METAINFO.matcher(s);
 			if(m.find()) {

@@ -3,7 +3,7 @@ package com.emc.mongoose.integ.feature.content;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -29,7 +29,7 @@ extends DistributedClientTestBase {
 	private final static String
 		RUN_ID = WriteRikkiTikkiTaviDistributedTest.class.getCanonicalName(),
 		BASE_URL = "http://127.0.0.1:9020/" + WriteRikkiTikkiTaviDistributedTest.class.getSimpleName() + "/";
-	private final static List<WSObject> OBJ_BUFF = new ArrayList<>(COUNT_TO_WRITE);
+	private final static List<HttpDataItem> OBJ_BUFF = new ArrayList<>(COUNT_TO_WRITE);
 	//
 	private static long countWritten;
 	//
@@ -40,7 +40,7 @@ extends DistributedClientTestBase {
 		System.setProperty(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "conf/content/textexample");
 		DistributedClientTestBase.setUpClass();
 		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
+			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("s3")

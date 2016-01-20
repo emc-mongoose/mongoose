@@ -13,7 +13,7 @@ import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
 //
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import org.apache.commons.codec.binary.Hex;
 //
 import org.apache.http.HttpHeaders;
@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
 /**
  Created by andrey on 13.05.15.
  */
-public final class AtmosRequestHandler<T extends WSObjectMock>
+public final class AtmosRequestHandler<T extends HttpDataItemMock>
 extends WSRequestHandlerBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

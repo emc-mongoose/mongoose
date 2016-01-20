@@ -11,7 +11,7 @@ import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.MutableDataItem;
@@ -19,7 +19,7 @@ import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
-import com.emc.mongoose.core.impl.item.data.BasicWSObject;
+import com.emc.mongoose.core.impl.item.data.BasicHttpObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -86,7 +86,7 @@ import java.util.concurrent.TimeoutException;
 /**
  Created by kurila on 09.06.14.
  */
-public abstract class WSRequestConfigBase<T extends WSObject, C extends Container<T>>
+public abstract class WSRequestConfigBase<T extends HttpDataItem, C extends Container<T>>
 extends RequestConfigBase<T, C>
 implements WSRequestConfig<T, C> {
 	//
@@ -102,12 +102,12 @@ implements WSRequestConfig<T, C> {
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
 	//
-	public static <T extends WSObject, C extends Container<T>> WSRequestConfig<T, C> getInstance() {
+	public static <T extends HttpDataItem, C extends Container<T>> WSRequestConfig<T, C> getInstance() {
 		return newInstanceFor(RunTimeConfig.getContext().getApiName());
 	}
 	//
 	@SuppressWarnings("unchecked")
-	public static <T extends WSObject, C extends Container<T>> WSRequestConfig<T, C> newInstanceFor(
+	public static <T extends HttpDataItem, C extends Container<T>> WSRequestConfig<T, C> newInstanceFor(
 		final String api
 	) {
 		final WSRequestConfig<T, C> reqConf;
@@ -442,7 +442,7 @@ implements WSRequestConfig<T, C> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public Class<T> getItemClass() {
-		return (Class<T>) BasicWSObject.class;
+		return (Class<T>) BasicHttpObject.class;
 	}
 	//
 	@Override

@@ -13,7 +13,7 @@ import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
 //
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 /**
  Created by andrey on 13.05.15.
  */
-public final class SwiftRequestHandler<T extends WSObjectMock>
+public final class SwiftRequestHandler<T extends HttpDataItemMock>
 extends WSRequestHandlerBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

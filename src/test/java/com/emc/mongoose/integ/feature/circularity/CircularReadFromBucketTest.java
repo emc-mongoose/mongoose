@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
@@ -73,15 +73,15 @@ extends StandaloneClientTestBase {
 			RunTimeConfig.setContext(rtConfig);
 			//
 			try (
-				final StorageClient<WSObject> client = CLIENT_BUILDER
+				final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 					.setAPI("s3")
 					.setLimitTime(0, TimeUnit.SECONDS)
 					.setLimitCount(WRITE_COUNT)
 					.setS3Bucket(RUN_ID)
 					.build()
 			) {
-				final BlockingQueue<WSObject> itemsQueue = new ArrayBlockingQueue<>(WRITE_COUNT);
-				final LimitedQueueItemBuffer<WSObject> itemsIO
+				final BlockingQueue<HttpDataItem> itemsQueue = new ArrayBlockingQueue<>(WRITE_COUNT);
+				final LimitedQueueItemBuffer<HttpDataItem> itemsIO
 					= new LimitedQueueItemBuffer<>(itemsQueue);
 				COUNT_WRITTEN = client.write(
 					null, itemsIO, WRITE_COUNT, 1, SizeUtil.toSize(DATA_SIZE)

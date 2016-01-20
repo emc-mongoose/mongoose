@@ -17,6 +17,7 @@ import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
 import com.emc.mongoose.server.api.load.builder.DirectoryLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
 //
+import org.apache.commons.configuration.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -40,7 +41,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		this(RunTimeConfig.getContext());
 	}
 	//
-	public BasicDirectoryLoadBuilderClient(final RunTimeConfig runTimeConfig)
+	public BasicDirectoryLoadBuilderClient(final Configuration runTimeConfig)
 	throws IOException {
 		super(runTimeConfig);
 	}

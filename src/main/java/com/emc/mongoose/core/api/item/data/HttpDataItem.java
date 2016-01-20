@@ -11,7 +11,7 @@ import org.apache.http.protocol.HTTP;
  Created by kurila on 29.09.14.
  Web storage data object.
  */
-public interface WSObject
+public interface HttpDataItem
 extends MutableDataItem, HttpEntity {
 	//
 	Header HEADER_CONTENT_TYPE = new BasicHeader(

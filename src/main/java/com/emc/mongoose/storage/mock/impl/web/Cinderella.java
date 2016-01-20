@@ -11,7 +11,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.WSMock;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import com.emc.mongoose.storage.mock.impl.web.net.BasicSocketEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.web.request.APIRequestHandlerMapper;
@@ -43,7 +43,7 @@ import java.io.IOException;
 /**
  * Created by olga on 28.01.15.
  */
-public final class Cinderella<T extends WSObjectMock>
+public final class Cinderella<T extends HttpDataItemMock>
 extends StorageMockBase<T>
 implements WSMock<T> {
 	//
@@ -85,7 +85,7 @@ implements WSMock<T> {
 		final boolean jmxServeFlag, final int minConnLifeMilliSec, final int maxConnLifeMilliSec
 	) throws IOException {
 		super(
-			(Class<T>) BasicWSObjectMock.class, ContentSourceBase.getDefault(),
+			(Class<T>) BasicHttpObjectMock.class, ContentSourceBase.getDefault(),
 			storageCapacity, containerCapacity, containerCountLimit, batchSize,
 			dataSrcPath, metricsPeriodSec, jmxServeFlag
 		);
@@ -160,7 +160,7 @@ implements WSMock<T> {
 	@Override
 	@SuppressWarnings("unchecked")
 	protected final T newDataObject(final String id, final long offset, final long size) {
-		return (T) new BasicWSObjectMock(id, offset, size, 0, contentSrc);
+		return (T) new BasicHttpObjectMock(id, offset, size, 0, contentSrc);
 	}
 	//
 	@Override

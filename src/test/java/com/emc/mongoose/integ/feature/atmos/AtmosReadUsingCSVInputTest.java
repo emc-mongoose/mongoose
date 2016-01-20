@@ -3,9 +3,9 @@ package com.emc.mongoose.integ.feature.atmos;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.impl.item.data.BasicWSObject;
+import com.emc.mongoose.core.impl.item.data.BasicHttpObject;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
@@ -34,14 +34,14 @@ extends StandaloneClientTestBase {
 		StandaloneClientTestBase.setUpClass();
 		//
 		try(
-			final StorageClient<WSObject> client = CLIENT_BUILDER
+			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("atmos")
 				.build()
 		) {
-			final ItemDst<WSObject> writeOutput = new ItemCSVFileDst<>(
-				(Class) BasicWSObject.class, ContentSourceBase.getDefault()
+			final ItemDst<HttpDataItem> writeOutput = new ItemCSVFileDst<>(
+				(Class) BasicHttpObject.class, ContentSourceBase.getDefault()
 			);
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("10MB")

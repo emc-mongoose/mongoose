@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.WSObject;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.base.ListItemSrc;
 import com.emc.mongoose.integ.base.CambridgeLabDistributedClientTestBase;
@@ -79,8 +79,8 @@ extends CambridgeLabDistributedClientTestBase {
 				.setItemClass("container")
 				.build()
 		) {
-			final List<Container<WSObject>> containers2delete = new ArrayList<>();
-			containers2delete.add(new BasicContainer<WSObject>(RUN_ID));
+			final List<Container<HttpDataItem>> containers2delete = new ArrayList<>();
+			containers2delete.add(new BasicContainer<HttpDataItem>(RUN_ID));
 			client.delete(new ListItemSrc<>(containers2delete), null, 1, 1);
 			TimeUnit.SECONDS.sleep(1);
 		} catch(final Exception e) {
