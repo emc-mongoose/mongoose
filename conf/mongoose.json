@@ -176,7 +176,7 @@
 			},
 			"customHeaders": {
 				"Connection" : "keep-alive",
-				"User-Agent" : "mongoose/next"
+				"User-Agent" : "mongoose/1.2.2"
 			},
 			"pipelining": false,
 			"signMethod": "HmacSHA1"
@@ -305,7 +305,7 @@
 		},
 		"run": {
 			"name": "mongoose",
-			"version": "next",
+			"version": "1.2.2",
 			"mode": "standalone",
 			"resume": {
 				"enabled" : false
