@@ -3,8 +3,9 @@ package com.emc.mongoose.core.impl.item.data;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
-//
+import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.log.Markers;
+//
 import com.emc.mongoose.core.api.item.data.ContentSource;
 //
 import org.apache.commons.collections4.map.LRUMap;
@@ -43,7 +44,7 @@ implements ContentSource {
 	//
 	protected ContentSourceBase(final ByteBuffer zeroByteLayer) {
 		this.zeroByteLayer = zeroByteLayer;
-		this.seed = nextWord(zeroByteLayer.getLong());
+		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
 		zeroByteLayer.clear();
 		//
 		byteLayersMap = new LRUMap<>(
@@ -55,7 +56,7 @@ implements ContentSource {
 	protected ContentSourceBase(final ReadableByteChannel zeroLayerSrcChan, final int size)
 	throws IOException {
 		this.zeroByteLayer = ByteBuffer.allocateDirect(size);
-		this.seed = nextWord(zeroByteLayer.getLong());
+		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
 		zeroByteLayer.clear();
 		byteLayersMap = new LRUMap<>(
 			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
@@ -76,16 +77,6 @@ implements ContentSource {
 	public final int getSize() {
 		return zeroByteLayer.capacity();
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// See for details: http://xorshift.di.unimi.it/murmurhash3.c //////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	public static long nextWord(long word) {
-		word ^= (word << A);
-		word ^= (word >>> B);
-		word ^= (word << C);
-		return word;
-	}
-	//
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Binary serialization implementation /////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -158,7 +149,7 @@ implements ContentSource {
 						"No ring buffer source file available for reading, " +
 						"falling back to use the random data ring buffer"
 					);
-					DEFAULT = new UniformContentSource();
+					DEFAULT = new SeedContentSource();
 				}
 			}
 		} catch(final Exception e) {
@@ -211,7 +202,7 @@ implements ContentSource {
 		byteLayer.clear();
 		for(i = 0; i < countWords; i ++) {
 			byteLayer.putLong(word);
-			word = nextWord(word);
+			word = MathUtil.xorShift(word);
 		}
 		// tail bytes\
 		final ByteBuffer tailBytes = ByteBuffer.allocateDirect(countWordBytes);

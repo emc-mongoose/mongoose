@@ -2,14 +2,14 @@ package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.core.api.item.base.ItemNamingScheme;
+import com.emc.mongoose.common.conf.ItemNamingScheme;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
-import com.emc.mongoose.core.impl.item.base.BasicItemNamingScheme;
+import com.emc.mongoose.common.conf.BasicItemNamingScheme;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.item.data.NewContainerSrc;
 import org.apache.logging.log4j.Level;

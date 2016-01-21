@@ -15,13 +15,13 @@ import java.nio.ByteBuffer;
  A uniform data source for producing uniform data items.
  Implemented as finite buffer of pseudorandom bytes.
  */
-public final class UniformContentSource
+public final class SeedContentSource
 extends ContentSourceBase
 implements ContentSource {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public UniformContentSource()
+	public SeedContentSource()
 	throws NumberFormatException {
 		this(
 			Long.parseLong(RunTimeConfig.getContext().getDataRingSeed(), 0x10),
@@ -29,7 +29,7 @@ implements ContentSource {
 		);
 	}
 	//
-	public UniformContentSource(final long seed, final int size) {
+	public SeedContentSource(final long seed, final int size) {
 		super(ByteBuffer.allocateDirect(size));
 		this.seed = seed;
 		generateData(zeroByteLayer, seed);
@@ -45,11 +45,11 @@ implements ContentSource {
 			Integer.toHexString(zeroByteLayer.capacity());
 	}
 	//
-	public static UniformContentSource fromString(final String metaInfo)
+	public static SeedContentSource fromString(final String metaInfo)
 		throws IllegalArgumentException, IOException {
 		final String values[] = metaInfo.split(RunTimeConfig.LIST_SEP);
 		if(values.length == 2) {
-			return new UniformContentSource(
+			return new SeedContentSource(
 				Long.parseLong(values[0], 0x10), Integer.parseInt(values[1], 0x10)
 			);
 		} else {

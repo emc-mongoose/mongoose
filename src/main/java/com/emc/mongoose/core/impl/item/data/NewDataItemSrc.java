@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.item.data;
 //
-import com.emc.mongoose.core.api.item.base.ItemNamingScheme;
+import com.emc.mongoose.common.conf.ItemNamingScheme;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.item.base.ItemSrc;

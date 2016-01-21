@@ -1,10 +1,9 @@
-package com.emc.mongoose.core.impl.item.base;
+package com.emc.mongoose.common.conf;
 //
+import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.item.base.ItemNamingScheme;
-//
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.common.conf.ItemNamingScheme;
 /**
  Created by kurila on 18.12.15.
  */
@@ -41,7 +40,7 @@ implements ItemNamingScheme {
 		final long next = lastSeed;
 		switch(type) {
 			case RANDOM:
-				lastSeed = Math.abs(ContentSourceBase.nextWord(lastSeed ^ System.nanoTime()));
+				lastSeed = Math.abs(MathUtil.xorShift(lastSeed ^ System.nanoTime()));
 				break;
 			case ASC:
 				lastSeed ++;

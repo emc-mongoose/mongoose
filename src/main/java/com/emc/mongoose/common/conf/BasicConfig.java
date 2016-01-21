@@ -1,15 +1,20 @@
 package com.emc.mongoose.common.conf;
 //
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemNamingScheme;
-import com.emc.mongoose.core.api.item.data.ContentSource;
+import com.emc.mongoose.common.log.Markers;
 import org.apache.commons.configuration.BaseConfiguration;
-
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.SystemConfiguration;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+//
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Map;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Iterator;
 /**
  Created by kurila on 20.01.16.
  */
@@ -19,309 +24,373 @@ implements AppConfig {
 	//
 	@Override
 	public String getName() {
-		return getString("config.name");
+		return getString(CONFIG_ROOT + KEY_NAME);
 	}
 	//
 	@Override
 	public String getVersion() {
-		return getString("config.version");
+		return getString(CONFIG_ROOT + KEY_VERSION);
 	}
 	//
 	@Override
 	public String getMode() {
-		return null;
+		return getString(CONFIG_ROOT + KEY_MODE);
 	}
 	//
 	@Override
 	public String getAuthId() {
-		return null;
+		return getString(CONFIG_ROOT + KEY_AUTH_ID);
 	}
 	//
 	@Override
 	public String getAuthSecret() {
-		return null;
+		return getString(CONFIG_ROOT + KEY_AUTH_SECRET);
 	}
 	//
 	@Override
 	public String getAuthToken() {
-		return null;
+		return getString(CONFIG_ROOT + KEY_AUTH_TOKEN);
 	}
 	//
 	@Override
-	public int getIOBufferSizeMin() {
-		return 0;
+	public int getIoBufferSizeMin() {
+		return (int) SizeUtil.toSize(getString(CONFIG_ROOT + KEY_IO_BUFFER_SIZE_MIN));
 	}
 	//
 	@Override
 	public int getIoBufferSizeMax() {
-		return 0;
+		return (int) SizeUtil.toSize(getString(CONFIG_ROOT + KEY_IO_BUFFER_SIZE_MAX));
 	}
 	//
 	@Override
-	public Class<? extends Item> getItemClass() {
-		return null;
+	public ItemImpl getItemClass() {
+		return ItemImpl.valueOf(getString(CONFIG_ROOT + KEY_ITEM_CLASS).toUpperCase());
 	}
 	//
 	@Override
 	public String getItemContainerName() {
-		return null;
+		return getString(CONFIG_ROOT + KEY_ITEM_CONTAINER_NAME);
 	}
 	//
 	@Override
-	public Class<? extends ContentSource> getItemDataContentClass() {
-		return null;
+	public ContentSourceImpl getItemDataContentClass() {
+		return ContentSourceImpl
+			.valueOf(getString(CONFIG_ROOT + KEY_ITEM_DATA_CONTENT_CLASS).toUpperCase());
 	}
 	//
 	@Override
 	public String getItemDataContentFile() {
-		return null;
+		return getString(CONFIG_ROOT + KEY_ITEM_DATA_CONTENT_FILE);
 	}
 	//
 	@Override
-	public long getItemDataContentRingSeed() {
-		return 0;
+	public String getItemDataContentSeed() {
+		return getString(CONFIG_ROOT + KEY_ITEM_DATA_CONTENT_SEED);
 	}
 	//
 	@Override
-	public int getItemDataContentRingSize() {
-		return 0;
+	public int getItemDataContentSize() {
+		return getInt(CONFIG_ROOT + KEY_ITEM_DATA_CONTENT_SIZE);
 	}
 	//
 	@Override
 	public DataRangesScheme getItemDataRangesClass() {
-		return null;
+		return DataRangesScheme
+			.valueOf(getString(CONFIG_ROOT + KEY_ITEM_DATA_RANGES_CLASS).toUpperCase());
 	}
 	//
 	@Override
 	public String getItemDataRangesFixedBytes() {
-		return null;
+		return getString(CONFIG_ROOT + KEY_ITEM_DATA_RANGES_FIXED_BYTES);
 	}
 	//
 	@Override
 	public int getItemDataContentRangesRandomCount() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_ITEM_DATA_RANGES_RANDOM_COUNT);
 	}
 	//
 	@Override
 	public DataSizeScheme getItemDataSizeClass() {
-		return null;
+		return DataSizeScheme
+			.valueOf(getString(CONFIG_ROOT + KEY_ITEM_DATA_SIZE_CLASS).toUpperCase());
 	}
 	//
 	@Override
 	public long getItemDataSizeFixed() {
-		return 0;
+		return SizeUtil.toSize(getString(CONFIG_ROOT + KEY_ITEM_DATA_SIZE_FIXED));
 	}
 	//
 	@Override
 	public long getItemDataSizeRandomMin() {
-		return 0;
+		return SizeUtil.toSize(getString(CONFIG_ROOT + KEY_ITEM_DATA_SIZE_RANDOM_MIN));
 	}
 	//
 	@Override
 	public long getItemDataSizeRandomMax() {
-		return 0;
+		return SizeUtil.toSize(getString(CONFIG_ROOT + KEY_ITEM_DATA_SIZE_RANDOM_MAX));
 	}
 	//
 	@Override
 	public double getItemDataSizeRandomBias() {
-		return 0;
+		return getDouble(CONFIG_ROOT + KEY_ITEM_DATA_SIZE_RANDOM_BIAS);
 	}
 	//
 	@Override
 	public boolean getItemDataVerify() {
-		return false;
+		return getBoolean(CONFIG_ROOT + KEY_ITEM_DATA_VERIFY);
 	}
 	//
 	@Override
 	public String getItemInputFile() {
-		return null;
+		return getString(CONFIG_ROOT + KEY_ITEM_INPUT_FILE);
 	}
 	//
 	@Override
 	public int getItemInputBatchSize() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_ITEM_INPUT_BATCH_SIZE);
 	}
 	//
 	@Override
-	public ItemNamingScheme getItemNamingClass() {
-		return null;
+	public ItemNamingScheme getItemNaming() {
+		return new BasicItemNamingScheme(
+			ItemNamingScheme.Type.valueOf(
+				getString(CONFIG_ROOT + KEY_ITEM_NAMING).toUpperCase()
+			)
+		);
 	}
 	//
 	@Override
 	public int getItemQueueSizeLimit() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_ITEM_QUEUE_SIZE_LIMIT);
 	}
 	//
 	@Override
 	public boolean getLoadCircular() {
-		return false;
+		return getBoolean(CONFIG_ROOT + KEY_LOAD_CIRCULAR);
 	}
 	//
 	@Override
-	public IOTask.Type getLoadClass() {
-		return null;
+	public LoadType getLoadClass() {
+		return LoadType.valueOf(getString(CONFIG_ROOT + KEY_LOAD_CLASS).toUpperCase());
 	}
 	//
 	@Override
 	public int getLoadThreads() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_LOAD_THREADS);
 	}
 	//
 	@Override
 	public long getLoadLimitCount() {
-		return 0;
+		return getLong(CONFIG_ROOT + KEY_LOAD_LIMIT_COUNT);
 	}
 	//
 	@Override
 	public double getLoadLimitRate() {
-		return 0;
+		return getDouble(CONFIG_ROOT + KEY_LOAD_LIMIT_RATE);
 	}
 	//
 	@Override
 	public long getLoadLimitTime() {
-		return 0;
+		final String rawValue = getString(CONFIG_ROOT + KEY_LOAD_LIMIT_TIME);
+		return TimeUtil.getTimeUnit(rawValue).toSeconds(TimeUtil.getTimeValue(rawValue));
 	}
 	//
 	@Override
 	public int getLoadMetricsPeriod() {
-		return 0;
+		final String rawValue = getString(CONFIG_ROOT + KEY_LOAD_METRICS_PERIOD);
+		return (int) TimeUtil.getTimeUnit(rawValue).toSeconds(TimeUtil.getTimeValue(rawValue));
 	}
 	//
 	@Override
 	public String[] getLoadServerAddrs() {
-		return new String[0];
+		return getStringArray(CONFIG_ROOT + KEY_LOAD_SERVER_ADDRS);
 	}
 	//
 	@Override
 	public boolean getLoadServerAssignToNode() {
-		return false;
+		return getBoolean(CONFIG_ROOT + KEY_LOAD_SERVER_ASSIGN_TO_NODE);
 	}
 	//
 	@Override
-	public String getStorageClass() {
-		return null;
+	public StorageType getStorageClass() {
+		return StorageType.valueOf(getString(CONFIG_ROOT + KEY_STORAGE_CLASS));
 	}
 	//
 	@Override
 	public String[] getStorageHttpAddrs() {
-		return new String[0];
+		return getStringArray(CONFIG_ROOT + KEY_STORAGE_HTTP_ADDRS);
 	}
 	//
 	@Override
 	public String getStorageHttpApiClass() {
-		return null;
+		return getString(CONFIG_ROOT + KEY_STORAGE_HTTP_API_CLASS);
 	}
 	//
 	@Override
 	public int getStorageHttpApiS3Port() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_API_S3_PORT);
 	}
 	//
 	@Override
 	public int getStorageHttpApiAtmosPort() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_API_ATMOS_PORT);
 	}
 	//
 	@Override
 	public int getStorageHttpApiSwiftPort() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_API_SWIFT_PORT);
 	}
 	//
 	@Override
 	public boolean getStroageHttpFsAccess() {
-		return false;
+		return getBoolean(CONFIG_ROOT + KEY_STORAGE_HTTP_FS_ACCESS);
 	}
 	//
 	@Override
-	public Map<String, String> getStorageHttpHeaders() {
-		return null;
+	public Configuration getStorageHttpHeaders() {
+		return subset(CONFIG_ROOT + KEY_STORAGE_HTTP_HEADERS);
 	}
 	//
 	@Override
 	public String getStorageHttpNamespace() {
-		return null;
+		return getString(CONFIG_ROOT + KEY_STORAGE_HTTP_NAMESPACE);
 	}
 	//
 	@Override
 	public boolean getStorageHttpVersioning() {
-		return false;
+		return getBoolean(CONFIG_ROOT + KEY_STORAGE_HTTP_VERSIONING);
 	}
 	//
 	@Override
 	public int getStorageHttpMockHeadCount() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_HEAD_COUNT);
 	}
 	//
 	@Override
 	public int getStorageHttpMockWorkersPerSocket() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_WORKERS_PER_SOCKET);
 	}
 	//
 	@Override
 	public int getStorageHttpMockCapacity() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_CAPACITY);
 	}
 	//
 	@Override
 	public int getStorageHttpMockContainerCapacity() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_CONTAINER_CAPACITY);
 	}
 	//
 	@Override
 	public int getStorageHttpMockContainerCountLimit() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_CONTAINER_COUNT_LIMIT);
 	}
 	//
 	@Override
 	public boolean getNetworkServeJmx() {
-		return false;
+		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SERVE_JMX);
 	}
 	//
 	@Override
 	public int getNetworkSocketTimeoutMilliSec() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_TIMEOUT_MILLISEC);
 	}
 	//
 	@Override
 	public boolean getNetworkSocketReuseAddr() {
-		return false;
+		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_REUSE_ADDR);
 	}
 	//
 	@Override
 	public boolean getNetworkSocketKeepAlive() {
-		return false;
+		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_KEEP_ALIVE);
 	}
 	//
 	@Override
 	public boolean getNetworkSocketTcpNoDelay() {
-		return false;
+		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_TCP_NO_DELAY);
 	}
 	//
 	@Override
 	public int getNetworkSocketLinger() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_LINGER);
 	}
 	//
 	@Override
 	public int getNetworkSocketBindBacklogSize() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_BIND_BACKLOG_SIZe);
 	}
 	//
 	@Override
 	public boolean getNetworkSocketInterestOpQueued() {
-		return false;
+		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_INTEREST_OP_QUEUED);
 	}
 	//
 	@Override
 	public int getNetworkSocketSelectInterval() {
-		return 0;
+		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_SELECT_INTERVAL);
 	}
-	//
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public void writeExternal(final ObjectOutput out) throws IOException {
 	}
 	//
 	@Override
 	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	String DIR_ROOT;
+	{
+		String dirRoot = System.getProperty("user.dir");
+		try {
+			dirRoot = new File(
+				Constants.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+			).getParent();
+		} catch(final URISyntaxException e) {
+			synchronized(System.err) {
+				System.err.println("Failed to determine the executable path:");
+				e.printStackTrace(System.err);
+			}
+		}
+		DIR_ROOT = dirRoot;
+	}
+	//
+	public void load() {
+		loadFromJson(
+			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF)
+		);
+		loadFromEnv();
+	}
+	//
+	public void loadFromJson(final Path filePath) {
+		final Logger log = LogManager.getLogger();
+		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
+		new JsonConfigLoader(this).loadPropsFromJsonCfgFile(filePath);
+		log.debug(Markers.MSG, "Going to override the aliasing section");
+		for(final String key : mongooseKeys) {
+			if(key.startsWith(prefixKeyAliasingWithDot)) {
+				final String correctKey = key.replaceAll(prefixKeyAliasingWithDot, "");
+				log.trace(
+					Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
+				);
+				MAP_OVERRIDE.put(correctKey, getStringArray(key));
+			}
+		}
+	}
+	//
+	public void loadFromEnv() {
+		final Logger log = LogManager.getLogger();
+		final SystemConfiguration sysProps = new SystemConfiguration();
+		String key;
+		Object sharedValue;
+		for(final Iterator<String> keyIter = sysProps.getKeys(); keyIter.hasNext();) {
+			key = keyIter.next();
+			log.trace(
+				Markers.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
+				key, getProperty(key), sysProps.getProperty(key)
+			);
+			sharedValue = sysProps.getProperty(key);
+			setProperty(key, sharedValue);
+		}
 	}
 }

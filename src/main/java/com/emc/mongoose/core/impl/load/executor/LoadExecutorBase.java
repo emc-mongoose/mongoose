@@ -746,7 +746,9 @@ implements LoadExecutor<T> {
 	protected void passUniqueItemsFinally(final List<T> items) {
 		// is this an end of consumer-producer chain?
 		if(consumer == null) {
-			LOG.debug(Markers.MSG, "{}: going to dump out {} items", getName(), items.size());
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "{}: going to dump out {} items", getName(), items.size());
+			}
 			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
 				try {
 					for(final Item item : items) {

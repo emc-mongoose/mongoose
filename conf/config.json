@@ -23,18 +23,16 @@
 			},
 			"data": {
 				"content": {
-					"class": "ring",
-					"file": null,
-					"ring": {
-						"seed": "7a42d9c483244167",
-						"size": "4MB"
-					}
+					"class" : "seed",
+					"file" : null,
+					"seed" : "7a42d9c483244167",
+					"size" : "4MB"
 				},
 				"ranges": {
 					"class": "random",
 					"fixed": {
 						"bytes": null
-					},
+					},T
 					"random": {
 						"count": 0
 					}
@@ -43,9 +41,9 @@
 					"class": "fixed",
 					"fixed": "1MB",
 					"random": {
-						"min": "0",
+						"bias": 1,
 						"max": "1MB",
-						"bias": 1
+						"min": "0"
 					}
 				},
 				"verify": true
@@ -77,22 +75,16 @@
 			}
 		},
 		"storage": {
-			"class": "ws",
+			"class": "http",
 			"fs": {
 			},
 			"http": {
 				"addrs": "127.0.0.1",
 				"api": {
 					"class": "s3",
-					"s3": {
-						"port": 9020
-					},
-					"atmos": {
-						"port": 9022
-					},
-					"swift": {
-						"port": 9024
-					}
+					"s3": { "port": 9020 },
+					"atmos": { "port": 9022 },
+					"swift": { "port": 9024 }
 				},
 				"fsAccess": false,
 				"headers": {
