@@ -28,7 +28,10 @@ public class JsonConfigLoader {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
+	@Deprecated
 	private final RunTimeConfig rtConfig;
+	//
+	private final AppConfig appConfig;
 	private final Set<String> mongooseKeys;
 	//
 	public enum JsonConfigLoaderActions {
@@ -39,10 +42,15 @@ public class JsonConfigLoader {
 	}
 	private JsonConfigLoaderActions action = JsonConfigLoaderActions.LOAD;
 	//
+	@Deprecated
 	public JsonConfigLoader(final RunTimeConfig rtConfig) {
 		this.rtConfig = rtConfig;
 		final Set<String> keys = rtConfig.getMongooseKeys();
 		mongooseKeys = keys.isEmpty() ? keys : new HashSet<String>();
+	}
+	//
+	public JsonConfigLoader(final AppConfig appConfig) {
+		this.appConfig = appConfig;
 	}
 	//
 	public void loadPropsFromJsonCfgFile(final Path filePath) {
@@ -70,6 +78,33 @@ public class JsonConfigLoader {
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to load properties from \"{}\"", cfgFile
+			);
+		}
+	}
+	//
+	public void loadPropsFromJsonByteArray(final byte buff[]) {
+		final ObjectMapper jsonMapper = new ObjectMapper();
+		//
+		try {
+			JsonNode rootNode;
+			if(buff != null && buff.length > 0){
+				rootNode = jsonMapper.readTree(buff);
+			} else {
+				final ClassLoader cl = JsonConfigLoader.class.getClassLoader();
+				final InputStream bundledConf = cl.getResourceAsStream(RunTimeConfig.FNAME_CONF);
+				LOG.debug(
+					Markers.MSG, "Load the bundled config", cl.getResource(RunTimeConfig.FNAME_CONF)
+				);
+				rootNode = jsonMapper.readTree(bundledConf);
+			}
+			//
+			action = JsonConfigLoaderActions.LOAD;
+			walkJsonTree(rootNode);
+			rtConfig.setMongooseKeys(mongooseKeys);
+			rtConfig.setJsonNode(rootNode);
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to load properties from empty byte buffer"
 			);
 		}
 	}

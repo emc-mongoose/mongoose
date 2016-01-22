@@ -3,8 +3,6 @@ package com.emc.mongoose.common.conf;
 import org.apache.commons.configuration.Configuration;
 //
 import java.io.Externalizable;
-import java.io.File;
-import java.net.URISyntaxException;
 /**
  Created by kurila on 20.01.16.
  */
@@ -12,9 +10,7 @@ public interface AppConfig
 extends Configuration, Externalizable {
 
 	String CONFIG_ROOT = "config.";
-	String KEY_NAME = "name";
-	String KEY_VERSION = "version";
-	String KEY_MODE = "mode";
+
 	String KEY_AUTH_ID = "auth.id";
 	String KEY_AUTH_SECRET = "auth.secret";
 	String KEY_AUTH_TOKEN = "auth.token";
@@ -48,6 +44,11 @@ extends Configuration, Externalizable {
 	String KEY_LOAD_METRICS_PERIOD = "load.metricsPeriod";
 	String KEY_LOAD_SERVER_ADDRS = "load.server.addrs";
 	String KEY_LOAD_SERVER_ASSIGN_TO_NODE = "load.server.assignTo.node";
+	String KEY_RUN_ID = "run.id";
+	String KEY_RUN_MODE = "run.mode";
+	String KEY_RUN_NAME = "run.name";
+	String KEY_RUN_RESUME_ENABLED = "run.resume.enabled";
+	String KEY_RUN_VERSION = "run.version";
 	String KEY_STORAGE_CLASS = "storage.class";
 	String KEY_STORAGE_HTTP_ADDRS = "storage.http.addrs";
 	String KEY_STORAGE_HTTP_API_CLASS = "storage.http.api.class";
@@ -76,13 +77,6 @@ extends Configuration, Externalizable {
 	InheritableThreadLocal<AppConfig> CONTEXT_CONFIG = new InheritableThreadLocal<>();
 	String FNAME_CONF = CONFIG_ROOT + "json";
 	String PREFIX_KEY_ALIASING = "aliasing";
-	////////////////////////////////////////////////////////////////////////////////////////////////
-
-	String getName();
-
-	String getVersion();
-
-	String getMode();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -167,6 +161,38 @@ extends Configuration, Externalizable {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
+	boolean getNetworkServeJmx();
+
+	int getNetworkSocketTimeoutMilliSec();
+
+	boolean getNetworkSocketReuseAddr();
+
+	boolean getNetworkSocketKeepAlive();
+
+	boolean getNetworkSocketTcpNoDelay();
+
+	int getNetworkSocketLinger();
+
+	int getNetworkSocketBindBacklogSize();
+
+	boolean getNetworkSocketInterestOpQueued();
+
+	int getNetworkSocketSelectInterval();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+
+	String getRunId();
+
+	String getRunMode();
+
+	String getRunName();
+
+	boolean getRunResumeEnabled();
+
+	String getRunVersion();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+
 	enum StorageType { FS, HTTP }
 	StorageType getStorageClass();
 
@@ -200,21 +226,5 @@ extends Configuration, Externalizable {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
-	boolean getNetworkServeJmx();
-
-	int getNetworkSocketTimeoutMilliSec();
-
-	boolean getNetworkSocketReuseAddr();
-
-	boolean getNetworkSocketKeepAlive();
-
-	boolean getNetworkSocketTcpNoDelay();
-
-	int getNetworkSocketLinger();
-
-	int getNetworkSocketBindBacklogSize();
-
-	boolean getNetworkSocketInterestOpQueued();
-
-	int getNetworkSocketSelectInterval();
+	String toFormattedString();
 }

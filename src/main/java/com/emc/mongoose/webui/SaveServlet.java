@@ -74,8 +74,9 @@ extends CommonServlet {
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 	//
+	@Deprecated
 	private void saveConfigInSeparateFile() {
-		if (!DIR_WEBAPP_CONF.mkdirs()) {
+		/*if (!DIR_WEBAPP_CONF.mkdirs()) {
 			if (!DIR_WEBAPP_CONF.exists()) {
 				LOG.error(Markers.ERR, "Failed to create folders for ui config");
 				return;
@@ -93,6 +94,6 @@ extends CommonServlet {
 			}
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to write properties to ui config file");
-		}
+		}*/
 	}
 }

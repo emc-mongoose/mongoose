@@ -1,8 +1,5 @@
 {
 	"config": {
-		"name": "mongoose",
-		"version": "2.0.0",
-		"mode": "standalone",
 		"auth": {
 			"id": null,
 			"secret": null,
@@ -32,7 +29,7 @@
 					"class": "random",
 					"fixed": {
 						"bytes": null
-					},T
+					},
 					"random": {
 						"count": 0
 					}
@@ -74,6 +71,28 @@
 				}
 			}
 		},
+		"network": {
+			"serveJMX": false,
+			"socket": {
+				"timeoutMilliSec": 1000000,
+				"reuseAddr": true,
+				"keepalive": true,
+				"tcpNoDelay": true,
+				"linger": 0,
+				"bindBacklogSize": 0,
+				"interestOpQueued": false,
+				"selectInterval": 100
+			}
+		},
+		"run" : {
+			"id" : null,
+			"mode": "standalone",
+			"name": "mongoose",
+			"resume" : {
+				"enabled" : false
+			},
+			"version": "next"
+		},
 		"storage": {
 			"class": "http",
 			"fs": {
@@ -89,7 +108,7 @@
 				"fsAccess": false,
 				"headers": {
 					"Connection": "keep-alive",
-					"User-Agent": "mongoose/2.0.0"
+					"User-Agent": "mongoose/next"
 				},
 				"namespace": null,
 				"versioning": false,
@@ -102,19 +121,6 @@
 						"countLimit": 1000000
 					}
 				}
-			}
-		},
-		"network": {
-			"serveJMX": false,
-			"socket": {
-				"timeoutMilliSec": 1000000,
-				"reuseAddr": true,
-				"keepalive": true,
-				"tcpNoDelay": true,
-				"linger": 0,
-				"bindBacklogSize": 0,
-				"interestOpQueued": false,
-				"selectInterval": 100
 			}
 		}
 	}

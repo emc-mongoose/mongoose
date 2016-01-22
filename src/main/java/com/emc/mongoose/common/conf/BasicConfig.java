@@ -1,9 +1,22 @@
 package com.emc.mongoose.common.conf;
 //
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import org.apache.commons.configuration.BaseConfiguration;
+//
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+//
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
+import org.apache.commons.configuration.tree.DefaultExpressionEngine;
+//
+import org.apache.commons.lang.text.StrBuilder;
+//
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -19,22 +32,11 @@ import java.util.Iterator;
  Created by kurila on 20.01.16.
  */
 public class BasicConfig
-extends BaseConfiguration
+extends HierarchicalConfiguration
 implements AppConfig {
 	//
-	@Override
-	public String getName() {
-		return getString(CONFIG_ROOT + KEY_NAME);
-	}
-	//
-	@Override
-	public String getVersion() {
-		return getString(CONFIG_ROOT + KEY_VERSION);
-	}
-	//
-	@Override
-	public String getMode() {
-		return getString(CONFIG_ROOT + KEY_MODE);
+	static {
+		setDefaultExpressionEngine(new DefaultExpressionEngine());
 	}
 	//
 	@Override
@@ -212,6 +214,76 @@ implements AppConfig {
 	}
 	//
 	@Override
+	public boolean getNetworkServeJmx() {
+		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SERVE_JMX);
+	}
+	//
+	@Override
+	public int getNetworkSocketTimeoutMilliSec() {
+		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_TIMEOUT_MILLISEC);
+	}
+	//
+	@Override
+	public boolean getNetworkSocketReuseAddr() {
+		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_REUSE_ADDR);
+	}
+	//
+	@Override
+	public boolean getNetworkSocketKeepAlive() {
+		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_KEEP_ALIVE);
+	}
+	//
+	@Override
+	public boolean getNetworkSocketTcpNoDelay() {
+		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_TCP_NO_DELAY);
+	}
+	//
+	@Override
+	public int getNetworkSocketLinger() {
+		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_LINGER);
+	}
+	//
+	@Override
+	public int getNetworkSocketBindBacklogSize() {
+		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_BIND_BACKLOG_SIZe);
+	}
+	//
+	@Override
+	public boolean getNetworkSocketInterestOpQueued() {
+		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_INTEREST_OP_QUEUED);
+	}
+	//
+	@Override
+	public int getNetworkSocketSelectInterval() {
+		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_SELECT_INTERVAL);
+	}
+	//
+	@Override
+	public String getRunId() {
+		return getString(CONFIG_ROOT + KEY_RUN_ID);
+	}
+	//
+	@Override
+	public String getRunMode() {
+		return getString(CONFIG_ROOT + KEY_RUN_MODE);
+	}
+	//
+	@Override
+	public String getRunName() {
+		return getString(CONFIG_ROOT + KEY_RUN_NAME);
+	}
+	//
+	@Override
+	public boolean getRunResumeEnabled() {
+		return getBoolean(CONFIG_ROOT + KEY_RUN_RESUME_ENABLED);
+	}
+	//
+	@Override
+	public String getRunVersion() {
+		return getString(CONFIG_ROOT + KEY_RUN_VERSION);
+	}
+	//
+	@Override
 	public StorageType getStorageClass() {
 		return StorageType.valueOf(getString(CONFIG_ROOT + KEY_STORAGE_CLASS));
 	}
@@ -285,62 +357,89 @@ implements AppConfig {
 	public int getStorageHttpMockContainerCountLimit() {
 		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_CONTAINER_COUNT_LIMIT);
 	}
-	//
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Serialization and formatting section
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final static String
+		TABLE_BORDER = "\n+--------------------------------+----------------------------------------------------------------+",
+		TABLE_HEADER = "Configuration parameters:";
 	@Override
-	public boolean getNetworkServeJmx() {
-		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SERVE_JMX);
+	public String toString() {
+		String nextKey;
+		Object nextVal;
+		final StrBuilder strBuilder = new StrBuilder()
+			.append(TABLE_HEADER).append(TABLE_BORDER)
+			.appendNewLine().append("| ").appendFixedWidthPadRight("Key", 31, ' ')
+			.append("| ").appendFixedWidthPadRight("Value", 63, ' ').append('|')
+			.append(TABLE_BORDER);
+		for(
+			final Iterator<String> keyIterator = getKeys();
+			keyIterator.hasNext();
+		) {
+			nextKey = keyIterator.next();
+			nextVal = getProperty(nextKey);
+			switch(nextKey) {
+				case KEY_ITEM_CLASS:
+				case KEY_ITEM_CONTAINER_NAME:
+				case KEY_LOAD_CLASS:
+				case KEY_LOAD_THREADS:
+				case KEY_LOAD_LIMIT_COUNT:
+				case KEY_LOAD_LIMIT_TIME:
+				case KEY_RUN_ID:
+				case KEY_RUN_MODE:
+				case KEY_RUN_VERSION:
+				case KEY_STORAGE_CLASS:
+					strBuilder
+						.appendNewLine().append("| ")
+						.appendFixedWidthPadRight(nextKey, 31, ' ')
+						.append("| ")
+						.appendFixedWidthPadRight(nextVal, 63, ' ')
+						.append('|');
+					break;
+			}
+		}
+		return strBuilder.append(TABLE_BORDER).toString();
 	}
 	//
 	@Override
-	public int getNetworkSocketTimeoutMilliSec() {
-		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_TIMEOUT_MILLISEC);
+	public String toFormattedString() {
+		final Logger log = LogManager.getLogger();
+		//
+		final ObjectMapper
+			mapper = new ObjectMapper().configure(SerializationFeature.INDENT_OUTPUT, true);
+		//
+		final ObjectNode
+			rootNode = mapper.createObjectNode(),
+			configNode = mapper.createObjectNode();
+		rootNode.set(CONFIG_ROOT, configNode);
+		for(super.getKeys())
+		try {
+			return mapper.writeValueAsString(rootNode);
+		} catch(final JsonProcessingException e) {
+			LogUtil.exception(log, Level.WARN, e, "Failed to convert the configuration to JSON");
+		}
 	}
 	//
 	@Override
-	public boolean getNetworkSocketReuseAddr() {
-		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_REUSE_ADDR);
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		final byte jsonData[] = toFormattedString().getBytes();
+		out.writeInt(jsonData.length);
+		out.write(jsonData);
 	}
 	//
 	@Override
-	public boolean getNetworkSocketKeepAlive() {
-		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_KEEP_ALIVE);
-	}
-	//
-	@Override
-	public boolean getNetworkSocketTcpNoDelay() {
-		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_TCP_NO_DELAY);
-	}
-	//
-	@Override
-	public int getNetworkSocketLinger() {
-		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_LINGER);
-	}
-	//
-	@Override
-	public int getNetworkSocketBindBacklogSize() {
-		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_BIND_BACKLOG_SIZe);
-	}
-	//
-	@Override
-	public boolean getNetworkSocketInterestOpQueued() {
-		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_INTEREST_OP_QUEUED);
-	}
-	//
-	@Override
-	public int getNetworkSocketSelectInterval() {
-		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_SELECT_INTERVAL);
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		final int l = in.readInt();
+		final byte jsonData[] = new byte[l];
+		in.readFully(jsonData);
+		new JsonConfigLoader(this).loadPropsFromJsonByteArray(jsonData);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public void writeExternal(final ObjectOutput out) throws IOException {
-	}
-	//
-	@Override
-	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-	}
+	// Load from the external sources
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	String DIR_ROOT;
-	{
+	public void load() {
 		String dirRoot = System.getProperty("user.dir");
 		try {
 			dirRoot = new File(
@@ -352,12 +451,8 @@ implements AppConfig {
 				e.printStackTrace(System.err);
 			}
 		}
-		DIR_ROOT = dirRoot;
-	}
-	//
-	public void load() {
 		loadFromJson(
-			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF)
+			Paths.get(dirRoot, Constants.DIR_CONF).resolve(FNAME_CONF)
 		);
 		loadFromEnv();
 	}
@@ -367,14 +462,13 @@ implements AppConfig {
 		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
 		new JsonConfigLoader(this).loadPropsFromJsonCfgFile(filePath);
 		log.debug(Markers.MSG, "Going to override the aliasing section");
-		for(final String key : mongooseKeys) {
-			if(key.startsWith(prefixKeyAliasingWithDot)) {
-				final String correctKey = key.replaceAll(prefixKeyAliasingWithDot, "");
-				log.trace(
-					Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
-				);
-				MAP_OVERRIDE.put(correctKey, getStringArray(key));
-			}
+		String key, correctKey;
+		for(final Iterator<String> keyIter = getKeys(PREFIX_KEY_ALIASING); keyIter.hasNext();) {
+			key = keyIter.next();
+			correctKey = key.replaceAll(prefixKeyAliasingWithDot, "");
+			log.trace(
+				Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
+			);
 		}
 	}
 	//
@@ -393,4 +487,5 @@ implements AppConfig {
 			setProperty(key, sharedValue);
 		}
 	}
+	//
 }
