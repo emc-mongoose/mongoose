@@ -48,9 +48,6 @@ extends ItemDst<T>, LifeCycle, ItemProducer<T> {
 	IOStats.Snapshot getStatsSnapshot()
 	throws RemoteException;
 	//
-	void logMetrics(Marker marker)
-	throws RemoteException;
-	//
 	<A extends IOTask<T>> Future<A> submitReq(final A request)
 	throws RemoteException, RejectedExecutionException;
 	//

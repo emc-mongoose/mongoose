@@ -188,17 +188,6 @@ implements WSDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final void logMetrics(final Marker logMarker) {
-		super.logMetrics(logMarker);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "Connections: leased={}, released={}",
-				connLeaseCount.get(), connReleaseCount.get()
-			);
-		}
-	}
-	//
-	@Override
 	protected WSDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
 		return new BasicWSDataIOTask<>(item, nodeAddr, wsReqConfigCopy);
 	}

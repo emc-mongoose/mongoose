@@ -1,0 +1,182 @@
+package com.emc.mongoose.core.impl.load.tasks.processors;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.PriorityQueue;
+
+import static com.emc.mongoose.core.impl.load.tasks.processors.Point.distance;
+import static java.lang.Math.*;
+
+class Polyline {
+
+	private Point firstPoint, lastPoint;
+	private List<WeighedPoint> points = new ArrayList<>();
+	private PriorityQueue<WeighedPoint> queue = new PriorityQueue<>();
+
+//	public Polyline(Point... points) {
+//		this(Arrays.asList(points));
+//	}
+//
+//	public Polyline(List<Point> points) {
+//		firstPoint = points.get(0);
+//		int lastPointIndex = points.size() - 1;
+//		lastPoint = points.get(lastPointIndex);
+//		if (points.size() > 2) {
+//			for (int i = 1; i < lastPointIndex; i++) {
+//				this.points.add(new WeighedPoint(points.get(i),
+//						triangleArea(
+//								points.get(i - 1),
+//								points.get(i),
+//								points.get(i + 1))));
+//			}
+//		}
+//		queue.addAll(this.points);
+//	}
+
+
+
+	private double triangleArea(Point point1, Point point2, Point point3) {
+		double a = distance(point1, point2);
+		double b = distance(point2, point3);
+		double c = distance(point3, point1);
+		double p = (a + b + c) / 2;
+		return sqrt(p * (p - a) * (p - b) * (p - c));
+	}
+
+	private void setWeightForPoint(int pointIndex) {
+		int size = points.size();
+		if (size == 1) {
+			setWeightForOnlyOnePoint();
+		} else if (size == 2) {
+			setWeightForSecondPoint();
+			setWeightForPenultPoint();
+		} else {
+			if (pointIndex == 0) {
+				setWeightForSecondPoint();
+			} else if (pointIndex == points.size()) {
+				setWeightForPenultPoint();
+			} else {
+				setWeightForInternalPoint(pointIndex);
+				setWeightForInternalPoint(pointIndex + 1);
+			}
+		}
+	}
+
+	private void setWeightForInternalPoint(int pointIndex) {
+		points.get(pointIndex).setWeight(
+				computePointWeight(pointIndex));
+	}
+
+	private double computePointWeight(int pointIndex) {
+		return triangleArea(
+				points.get(pointIndex - 1).point(),
+				points.get(pointIndex).point(),
+				points.get(pointIndex + 1).point());
+	}
+
+	private void setWeightForOnlyOnePoint() {
+		points.get(0).setWeight(triangleArea(
+				firstPoint,
+				points.get(0).point(),
+				lastPoint));
+	}
+
+	private void setWeightForSecondPoint() {
+		WeighedPoint secondPoint = points.get(0);
+		secondPoint.setWeight(triangleArea(
+				firstPoint,
+				secondPoint.point(),
+				points.get(1).point()));
+	}
+
+	private void setWeightForPenultPoint() {
+		WeighedPoint penultPoint = points.get(points.size() - 1);
+		penultPoint.setWeight(triangleArea(
+				points.get(points.size() - 2).point(),
+				penultPoint.point(),
+				lastPoint));
+	}
+
+	private void removeAndWeigh(WeighedPoint point) {
+		int index = points.indexOf(point);
+		points.remove(index);
+		if (points.size() != 0) {
+			setWeightForPoint(index);
+		}
+	}
+
+	public void addPoint(Point newPoint) {
+		switch (numberOfPoints()) {
+			case 0:
+				firstPoint = newPoint;
+				break;
+			case 1:
+				lastPoint = newPoint;
+				break;
+			case 2:
+				addNewLastPoint(newPoint, firstPoint);
+				break;
+			default:
+				addNewLastPoint(newPoint, points.get(points.size() - 1).point());
+		}
+	}
+
+	private void addNewLastPoint(Point newPoint, Point penultPoint) {
+		WeighedPoint oldLastPoint = new WeighedPoint(lastPoint,
+				triangleArea(
+						penultPoint,
+						lastPoint,
+						newPoint
+				));
+		points.add(oldLastPoint);
+		queue.add(oldLastPoint);
+		lastPoint = newPoint;
+	}
+
+	public void simplify(int simplificationsNum) {
+		if (simplificationsNum >= 0 && simplificationsNum <= points.size()) {
+			for (int i = 0; i < simplificationsNum; i++) {
+				this.removeAndWeigh(queue.peek());
+				queue.poll();
+				System.out.printf("Simplification %d:\n%s\n", i + 1, this);
+			}
+		}
+	}
+
+	public int numberOfPoints() {
+		if (lastPoint != null) {
+			return points.size() + 2;
+		} else if (firstPoint != null) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		switch (numberOfPoints()) {
+			case 0:
+				builder.append("empty").append("\n");
+			case 1:
+				builder.append(firstPoint).append("\n");
+				break;
+			case 2:
+				builder.append(firstPoint).append("\n");
+				builder.append(lastPoint).append("\n");
+				break;
+			default:
+				builder.append(firstPoint).append("\n");
+				for (WeighedPoint point : points) {
+					builder.append(point).append("\n");
+				}
+				builder.append(lastPoint).append("\n");
+		}
+		return builder.toString();
+	}
+
+
+
+}

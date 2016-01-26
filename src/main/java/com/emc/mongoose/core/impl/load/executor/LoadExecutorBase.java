@@ -288,15 +288,6 @@ implements LoadExecutor<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public void logMetrics(final Marker logMarker) {
-		LOG.info(
-			logMarker,
-			Markers.PERF_SUM.equals(logMarker) ?
-				"\"" + getName() + "\" summary: " + lastStats.toSummaryString() : lastStats
-		);
-	}
-	//
-	@Override
 	public final void start()
 	throws IllegalStateException {
 		if(isClosed.get()) {
@@ -408,7 +399,7 @@ implements LoadExecutor<T> {
 			if(isStarted.get()) { // if was executing
 				lastStats = ioStats.getSnapshot();
 				ioStats.close();
-				logMetrics(Markers.PERF_SUM); // provide summary metrics
+				LOG.info(Markers.PERF_SUM, "\"" + getName() + "\" summary: " + lastStats.toSummaryString());
 				// calculate the efficiency and report
 				final float
 					loadDurMicroSec = lastStats.getElapsedTime(),

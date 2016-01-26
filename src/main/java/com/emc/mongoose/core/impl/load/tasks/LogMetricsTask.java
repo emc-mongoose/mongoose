@@ -33,13 +33,13 @@ implements Runnable {
 		final Thread currThread = Thread.currentThread();
 		try {
 			ThreadContext.put(LogUtil.LOAD_JOB_NAME, loadExecutor.getName());
-		} catch (RemoteException ignored) {;
+		} catch (RemoteException ignored) {
 		}
 		try {
 			currThread.setName(loadExecutor.getName() + "-metrics");
 			try {
 				while(!currThread.isInterrupted()) {
-					loadExecutor.logMetrics(Markers.PERF_AVG);
+					LOG.info(Markers.PERF_AVG, loadExecutor.getStatsSnapshot());
 					Thread.yield(); TimeUnit.SECONDS.sleep(metricsPeriodSec);
 				}
 			} catch(final InterruptedException e) {
