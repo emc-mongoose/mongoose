@@ -139,7 +139,7 @@ class Polyline {
 			for (int i = 0; i < simplificationsNum; i++) {
 				this.removeAndWeigh(queue.peek());
 				queue.poll();
-				System.out.printf("Simplification %d:\n%s\n", i + 1, this);
+//				System.out.printf("Simplification %d:\n%s\n", i + 1, this);
 			}
 		}
 	}
@@ -160,6 +160,7 @@ class Polyline {
 		switch (numberOfPoints()) {
 			case 0:
 				builder.append("empty").append("\n");
+				break;
 			case 1:
 				builder.append(firstPoint).append("\n");
 				break;
