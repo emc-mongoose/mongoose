@@ -157,6 +157,14 @@ implements IOStats {
 		}
 		//
 		@Override
+		public double getDurationAvg() {
+			if(durSnapshot == null) {
+				durSnapshot = new UniformSnapshot(durValues);
+			}
+			return durSnapshot.getMean();
+		}
+		//
+		@Override
 		public double getDurationMin() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
@@ -206,6 +214,15 @@ implements IOStats {
 			return durValues;
 		}
 		//
+
+		@Override
+		public double getLatencyAvg() {
+			if(latSnapshot == null) {
+				latSnapshot = new UniformSnapshot(latValues);
+			}
+			return latSnapshot.getMean();
+		}
+
 		@Override
 		public double getLatencyMin() {
 			if(latSnapshot == null) {

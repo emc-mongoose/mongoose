@@ -1,12 +1,11 @@
 package com.emc.mongoose.core.impl.load.tasks.processors;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
 
 import static com.emc.mongoose.core.impl.load.tasks.processors.Point.distance;
-import static java.lang.Math.*;
+import static java.lang.Math.sqrt;
 
 class Polyline {
 
@@ -44,6 +43,18 @@ class Polyline {
 		return sqrt(p * (p - a) * (p - b) * (p - c));
 	}
 
+	private double triangleArea(List<Point> trianglePoints) {
+		return triangleArea(trianglePoints.get(0), trianglePoints.get(1), trianglePoints.get(2));
+	}
+
+	private List<Point> getTriangle(int middlePointIndex) {
+		List<Point> result = new ArrayList<>();
+		for (WeighedPoint weighedPoint: points.subList(middlePointIndex - 1, middlePointIndex + 2)) {
+			result.add(weighedPoint.point());
+		}
+		return result;
+	}
+
 	private void setWeightForPoint(int pointIndex) {
 		int size = points.size();
 		if (size == 1) {
@@ -52,27 +63,21 @@ class Polyline {
 			setWeightForSecondPoint();
 			setWeightForPenultPoint();
 		} else {
-			if (pointIndex == 0) {
+			if (pointIndex == 0 || pointIndex == 1) {
 				setWeightForSecondPoint();
-			} else if (pointIndex == points.size()) {
+			} else if (pointIndex == size - 1 || pointIndex == size) {
 				setWeightForPenultPoint();
-			} else {
-				setWeightForInternalPoint(pointIndex);
-				setWeightForInternalPoint(pointIndex + 1);
+			}  else {
+				setWeightForInternalPoints(pointIndex);
 			}
 		}
 	}
 
-	private void setWeightForInternalPoint(int pointIndex) {
+	private void setWeightForInternalPoints(int pointIndex) {
 		points.get(pointIndex).setWeight(
-				computePointWeight(pointIndex));
-	}
-
-	private double computePointWeight(int pointIndex) {
-		return triangleArea(
-				points.get(pointIndex - 1).point(),
-				points.get(pointIndex).point(),
-				points.get(pointIndex + 1).point());
+				triangleArea(getTriangle(pointIndex)));
+		points.get(pointIndex + 1).setWeight(
+				triangleArea(getTriangle(pointIndex + 1)));
 	}
 
 	private void setWeightForOnlyOnePoint() {

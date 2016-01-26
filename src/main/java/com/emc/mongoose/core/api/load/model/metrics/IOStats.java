@@ -26,6 +26,7 @@ extends Closeable {
 		METRIC_NAME_RATE = "rate",
 		METRIC_NAME_MEAN = "mean",
 		METRIC_NAME_LAST = "last",
+		METRIC_NAME_AVG = "avg",
 		METRIC_NAME_MIN = "min",
 		METRIC_NAME_STDDEV = "stdDev",
 		METRIC_NAME_MAX = "max",
@@ -80,6 +81,7 @@ extends Closeable {
 		double getDurationMed();
 		double getDurationHiQ();
 		double getDurationMax();
+		double getDurationAvg();
 		long[] getDurationValues();
 		//
 		double getLatencyMin();
@@ -87,6 +89,7 @@ extends Closeable {
 		double getLatencyMed();
 		double getLatencyHiQ();
 		double getLatencyMax();
+		double getLatencyAvg();
 		long[] getLatencyValues();
 		//
 		String toSummaryString();
