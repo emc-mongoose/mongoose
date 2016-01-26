@@ -11,7 +11,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
 import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
@@ -43,7 +43,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 	//
 	private String name = getClass().getName();
 	//
-	public BasicWSDataLoadBuilderSvc(final RunTimeConfig runTimeConfig)
+	public BasicWSDataLoadBuilderSvc(final AppConfig appConfig)
 	throws RemoteException {
 		super(runTimeConfig);
 	}
@@ -68,7 +68,7 @@ implements WSDataLoadBuilderSvc<T, U> {
 	public String buildRemotely()
 	throws RemoteException {
 		U loadSvc = build();
-		LOG.info(Markers.MSG, rtConfig.toString());
+		LOG.info(Markers.MSG, appConfig.toString());
 		ServiceUtil.create(loadSvc);
 		return loadSvc.getName();
 	}
@@ -98,8 +98,8 @@ implements WSDataLoadBuilderSvc<T, U> {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(ioConfig);
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+		final HttpRequestConfig wsReqConf = HttpRequestConfig.class.cast(ioConfig);
+		final RunTimeConfig localRunTimeConfig = BasicConfig.CONTEXT_CONFIG.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		localRunTimeConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		if(minObjSize > maxObjSize) {

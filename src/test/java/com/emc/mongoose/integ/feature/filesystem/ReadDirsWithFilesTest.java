@@ -59,8 +59,8 @@ extends FileSystemTestBase {
 		CLIENT_BUILDER
 			.setItemClass("file")
 			.setLimitCount(COUNT_TO_WRITE);
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID + "_FilesWrite");
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID + "_FilesWrite");
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(dirListFile.toPath(), StandardCharsets.UTF_8)
@@ -70,7 +70,7 @@ extends FileSystemTestBase {
 				if(nextDirName == null) {
 					break;
 				} else {
-					rtConfig.setProperty(
+					appConfig.setProperty(
 						RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID + "/" + nextDirName
 					);
 					nextDirClient = CLIENT_BUILDER.build();
@@ -81,8 +81,8 @@ extends FileSystemTestBase {
 		//
 		TimeUnit.SECONDS.sleep(1);
 		//
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID + "_DirsRead");
-		rtConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
+		appConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID + "_DirsRead");
+		appConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
 		try(
 			final StorageClient<FileItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)

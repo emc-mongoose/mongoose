@@ -157,7 +157,7 @@ implements Externalizable {
 			instance.set(KEY_RUN_MODE, runMode);
 		}
 		setContext(instance);
-		log.info(Markers.CFG, RunTimeConfig.getContext().toFormattedString());
+		log.info(Markers.CFG, BasicConfig.THREAD_CONTEXT.get().toFormattedString());
 	}
 	//
 	public static RunTimeConfig getDefault() {

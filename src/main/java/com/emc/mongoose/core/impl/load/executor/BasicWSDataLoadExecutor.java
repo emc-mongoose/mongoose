@@ -15,7 +15,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSDataIOTask;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.task.BasicWSDataIOTask;
@@ -75,7 +75,7 @@ implements WSDataLoadExecutor<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
-	private final WSRequestConfig<T, Container<T>> wsReqConfigCopy;
+	private final HttpRequestConfig<T, Container<T>> wsReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
 	private final AtomicLong
@@ -84,21 +84,21 @@ implements WSDataLoadExecutor<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public BasicWSDataLoadExecutor(
-		final RunTimeConfig rtConfig, final WSRequestConfig<T, ? extends Container<T>> reqConfig,
+		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
 	) {
 		super(
-			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			appConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
 		);
-		wsReqConfigCopy = (WSRequestConfig<T, Container<T>>) ioConfigCopy;
+		wsReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
 		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
 		//
 		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
-		final String userAgent = rtConfig.getRunName() + "/" + rtConfig.getRunVersion();
+		final String userAgent = appConfig.getRunName() + "/" + appConfig.getRunVersion();
 		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
@@ -119,10 +119,10 @@ implements WSDataLoadExecutor<T> {
 			}
 		);
 		//
-		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
+		final RunTimeConfig thrLocalConfig = BasicConfig.CONTEXT_CONFIG.get();
 		final int buffSize = wsReqConfigCopy.getBuffSize();
-		final long timeOutMs = rtConfig.getLoadLimitTimeUnit().toMillis(
-			rtConfig.getLoadLimitTimeValue()
+		final long timeOutMs = appConfig.getLoadLimitTimeUnit().toMillis(
+			appConfig.getLoadLimitTimeValue()
 		);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()

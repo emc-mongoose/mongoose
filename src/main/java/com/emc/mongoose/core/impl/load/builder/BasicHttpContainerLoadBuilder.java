@@ -1,15 +1,17 @@
 package com.emc.mongoose.core.impl.load.builder;
 
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.builder.WSContainerLoadBuilder;
-import com.emc.mongoose.core.api.load.executor.WSContainerLoadExecutor;
-import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
-import com.emc.mongoose.core.impl.load.executor.BasicWSContainerLoadExecutor;
+import com.emc.mongoose.core.api.load.builder.HttpContainerLoadBuilder;
+import com.emc.mongoose.core.api.load.executor.HttpContainerLoadExecutor;
+import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
+import com.emc.mongoose.core.impl.load.executor.BasicHttpContainerLoadExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,36 +21,36 @@ import java.util.NoSuchElementException;
 /**
  * Created by gusakk on 21.10.15.
  */
-public class BasicWSContainerLoadBuilder<
+public class BasicHttpContainerLoadBuilder<
 	T extends HttpDataItem,
 	C extends Container<T>,
-	U extends WSContainerLoadExecutor<T, C>
+	U extends HttpContainerLoadExecutor<T, C>
 >
 extends ContainerLoadBuilderBase<T, C, U>
-implements WSContainerLoadBuilder<T, C, U> {
+implements HttpContainerLoadBuilder<T, C, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSContainerLoadBuilder(final RunTimeConfig runTimeConfig)
+	public BasicHttpContainerLoadBuilder(final AppConfig appConfig)
 	throws RemoteException {
-		super(runTimeConfig);
-		setRunTimeConfig(runTimeConfig);
+		super(appConfig);
+		setAppConfig(appConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig<T, C> getDefaultIOConfig() {
-		return WSRequestConfigBase.getInstance();
+	protected HttpRequestConfig<T, C> getDefaultIOConfig() {
+		return HttpRequestConfigBase.getInstance();
 	}
 	//
 	@Override
-	public BasicWSContainerLoadBuilder<T, C, U> setRunTimeConfig(final RunTimeConfig rtConfig)
+	public BasicHttpContainerLoadBuilder<T, C, U> setAppConfig(final AppConfig appConfig)
 	throws RemoteException {
 		//
-		super.setRunTimeConfig(rtConfig);
+		super.setAppConfig(appConfig);
 		//
 		final String paramName = RunTimeConfig.KEY_STORAGE_SCHEME;
 		try {
-			WSRequestConfig.class.cast(ioConfig).setScheme(rtConfig.getStorageProto());
+			HttpRequestConfig.class.cast(ioConfig).setScheme("http");
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -59,10 +61,10 @@ implements WSContainerLoadBuilder<T, C, U> {
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
-	public final BasicWSContainerLoadBuilder<T, C, U> clone()
+	public final BasicHttpContainerLoadBuilder<T, C, U> clone()
 	throws CloneNotSupportedException {
-		final BasicWSContainerLoadBuilder<T, C, U> lb
-			= (BasicWSContainerLoadBuilder<T, C, U>) super.clone();
+		final BasicHttpContainerLoadBuilder<T, C, U> lb
+			= (BasicHttpContainerLoadBuilder<T, C, U>) super.clone();
 		LOG.debug(Markers.MSG, "Cloning request config for {}", ioConfig.toString());
 		return lb;
 	}
@@ -80,8 +82,8 @@ implements WSContainerLoadBuilder<T, C, U> {
 			throw new IllegalStateException("Should specify request builder instance");
 		}
 		//
-		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(ioConfig);
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+		final HttpRequestConfig httpReqConf = HttpRequestConfig.class.cast(ioConfig);
+		final AppConfig localAppConfig = BasicConfig.THREAD_CONTEXT.get();
 		//
 		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int
@@ -90,8 +92,8 @@ implements WSContainerLoadBuilder<T, C, U> {
 				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
-		return (U) new BasicWSContainerLoadExecutor<>(
-			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
+		return (U) new BasicHttpContainerLoadExecutor<>(
+			localAppConfig, httpReqConf, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, manualTaskSleepMicroSecs, rateLimit
 		);

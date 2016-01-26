@@ -9,9 +9,9 @@ require(["./requirejs/conf"], function() {
 		"./util/bootstrap/tabs"
 	], function($, mainController) {
 		//  get all properties from runTimeConfig
-		$.get("/main", function(rtConfig) {
+		$.get("/main", function(appConfig) {
 			//  root element ("properties") of mongoose.json configuration file
-			var props = rtConfig.properties;
+			var props = appConfig.properties;
 			if(props) {
 				mainController.run(props);
 			} else {

@@ -3,10 +3,10 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
-import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
+import com.emc.mongoose.storage.adapter.atmos.HttpRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 import com.emc.mongoose.storage.mock.impl.web.request.AtmosRequestHandler;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -36,11 +36,11 @@ extends StandaloneClientTestBase {
 		);
 		StandaloneClientTestBase.setUpClass();
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final HttpRequestConfigImpl reqConf = (HttpRequestConfigImpl) HttpRequestConfigBase
 			.newInstanceFor("atmos")
-			.setRunTimeConfig(rtConfig);
-		reqConf.setRunTimeConfig(RunTimeConfig.getContext());
+			.setAppConfig(appConfig);
+		reqConf.setAppConfig(BasicConfig.CONTEXT_CONFIG.get());
 		SUBTENANT = new WSSubTenantImpl(
 			reqConf, AtmosRequestHandler.generateSubtenant()
 		);
@@ -66,7 +66,7 @@ extends StandaloneClientTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		SUBTENANT.delete(RunTimeConfig.getContext().getStorageAddrs()[0]);
+		SUBTENANT.delete(BasicConfig.CONTEXT_CONFIG.get().getStorageAddrs()[0]);
 		StandaloneClientTestBase.tearDownClass();
 	}
 	//

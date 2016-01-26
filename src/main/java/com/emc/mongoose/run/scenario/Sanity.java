@@ -137,19 +137,19 @@ implements Runnable {
 	public static void main(final String... args)
 	throws IOException, InterruptedException {
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
 		//
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, DEFAULT_DATA_COUNT_MAX);
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
-		//rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
+		appConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
+		appConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, DEFAULT_DATA_COUNT_MAX);
+		appConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
+		//appConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		Thread wsMockThread = new Thread(
-			new Cinderella(RunTimeConfig.getContext()), "wsMock"
+			new Cinderella(BasicConfig.CONTEXT_CONFIG.get()), "wsMock"
 		);
 		wsMockThread.setDaemon(true);
 		wsMockThread.start();
 		//
-		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 10);
+		appConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 10);
 		final StorageClientBuilder<HttpDataItem, StorageClient<HttpDataItem>>
 			clientBuilder = new BasicStorageClientBuilder<>();
 		final String storageNodes[] = new String[DEFAULT_NODE_COUNT];
@@ -171,12 +171,12 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
 		// distributed mode
-		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
+		appConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
 		ServiceUtil.init();
 		//
-		final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(rtConfig);
+		final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(appConfig);
 		multiSvc.start();
-		rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_MONITOR, 1299);
+		appConfig.set(RunTimeConfig.KEY_REMOTE_PORT_MONITOR, 1299);
 		try(
 			final StorageClient<HttpDataItem> client = clientBuilder
 				.setClientMode(new String[] {ServiceUtil.getHostAddr()})

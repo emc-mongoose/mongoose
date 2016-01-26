@@ -60,7 +60,7 @@ implements LoadExecutor<T> {
 	protected final int instanceNum, storageNodeCount;
 	protected final String storageNodeAddrs[];
 	//
-	protected final RunTimeConfig rtConfig;
+	protected final AppConfig appConfig;
 	//
 	protected final ContentSource dataSrc;
 	protected final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>>
@@ -163,7 +163,7 @@ implements LoadExecutor<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
-		final RunTimeConfig rtConfig,
+		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String addrs[], final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
@@ -171,8 +171,8 @@ implements LoadExecutor<T> {
 	) {
 		super(
 			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE,
-			DEFAULT_INTERNAL_BATCH_SIZE, rtConfig.isLoadCircular(),
-			rtConfig.isShuffleItemsEnabled(), rtConfig.getItemQueueMaxSize()
+			DEFAULT_INTERNAL_BATCH_SIZE, appConfig.isLoadCircular(),
+			appConfig.isShuffleItemsEnabled(), appConfig.getItemQueueMaxSize()
 		);
 		try {
 			super.setItemDst(this);
@@ -186,7 +186,7 @@ implements LoadExecutor<T> {
 			new ArrayBlockingQueue<T>(DEFAULT_RESULTS_QUEUE_SIZE)
 		);
 		//
-		this.rtConfig = rtConfig;
+		this.appConfig = appConfig;
 		this.instanceNum = instanceNum;
 		storageNodeCount = addrs == null ? 0 : addrs.length;
 		//
@@ -208,7 +208,7 @@ implements LoadExecutor<T> {
 		}
 		loadType = ioConfig.getLoadType();
 		//
-		metricsPeriodSec = rtConfig.getLoadMetricsPeriodSec();
+		metricsPeriodSec = appConfig.getLoadMetricsPeriodSec();
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the nodes array
 		storageNodeAddrs = addrs == null ? null : addrs.clone();
@@ -232,13 +232,13 @@ implements LoadExecutor<T> {
 	}
 	//
 	private LoadExecutorBase(
-		final RunTimeConfig rtConfig,
+		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String addrs[], final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount, final int instanceNum
 	) {
 		this(
-			rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			appConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			instanceNum,
 			Integer.toString(instanceNum) + '-' + ioConfig.toString() +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
@@ -248,13 +248,13 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected LoadExecutorBase(
-		final RunTimeConfig rtConfig,
+		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String addrs[], final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount
 	) {
 		this(
-			rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			appConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			NEXT_INSTANCE_NUM.getAndIncrement()
 		);
 	}
@@ -262,7 +262,7 @@ implements LoadExecutor<T> {
 	protected void initStats(final boolean flagServeJMX) {
 		if(flagServeJMX) {
 			ioStats = new BasicIOStats(
-				getName(), rtConfig.getRemotePortMonitor(), metricsPeriodSec
+				getName(), appConfig.getRemotePortMonitor(), metricsPeriodSec
 			);
 		} else {
 			ioStats = new BasicIOStats(getName(), 0, metricsPeriodSec);
@@ -314,16 +314,16 @@ implements LoadExecutor<T> {
 	//
 	protected void startActually() {
 		LOG.debug(Markers.MSG, "Starting {}", getName());
-		initStats(rtConfig.getFlagServeJMX());
+		initStats(appConfig.getFlagServeJMX());
 		ioStats.start();
 		//
-		if(rtConfig.isRunResumeEnabled()) {
-			if(rtConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
+		if(appConfig.isRunResumeEnabled()) {
+			if(appConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
 				try {
-					if(!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
-						BasicLoadState.restoreScenarioState(rtConfig);
+					if(!RESTORED_STATES_MAP.containsKey(appConfig.getRunId())) {
+						BasicLoadState.restoreScenarioState(appConfig);
 					}
-					setLoadState(BasicLoadState.<T>findStateByLoadNumber(instanceNum, rtConfig));
+					setLoadState(BasicLoadState.<T>findStateByLoadNumber(instanceNum, appConfig));
 				} catch (final Exception e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 				}
@@ -826,7 +826,7 @@ implements LoadExecutor<T> {
 	@Override
 	public void setLoadState(final LoadState<T> state) {
 		if(state != null) {
-			if(state.isLimitReached(rtConfig)) {
+			if(state.isLimitReached(appConfig)) {
 				isLimitReached = true;
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
 			}
@@ -858,7 +858,7 @@ implements LoadExecutor<T> {
 	throws RemoteException {
 		return new BasicLoadState.Builder<T, BasicLoadState<T>>()
 			.setLoadNumber(instanceNum)
-			.setRunTimeConfig(rtConfig)
+			.setRunTimeConfig(appConfig)
 			.setStatsSnapshot(lastStats)
 			.setLastDataItem(lastItem)
 			.build();
@@ -875,9 +875,9 @@ implements LoadExecutor<T> {
 	//
 	private void setCountLimitConfig(final long itemsCount) {
 		if(isDoneAllSubm() && (maxCount > itemsCount)) {
-			rtConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, itemsCount);
+			appConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, itemsCount);
 		} else {
-			rtConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, maxCount);
+			appConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, maxCount);
 		}
 	}
 	//
@@ -1015,8 +1015,8 @@ implements LoadExecutor<T> {
 			setCountLimitConfig(counterResults.get());
 			LoadCloseHook.del(this);
 			if(loadedPrevState != null) {
-				if(RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
-					RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(loadedPrevState);
+				if(RESTORED_STATES_MAP.containsKey(appConfig.getRunId())) {
+					RESTORED_STATES_MAP.get(appConfig.getRunId()).remove(loadedPrevState);
 				}
 			}
 		}

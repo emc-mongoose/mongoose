@@ -1,20 +1,21 @@
 package com.emc.mongoose.client.impl.load.builder;
 //
-import com.emc.mongoose.client.api.load.executor.WSContainerLoadClient;
+import com.emc.mongoose.client.api.load.executor.HttpContainerLoadClient;
 //
-import com.emc.mongoose.client.impl.load.executor.BasicWSContainerLoadClient;
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.client.impl.load.executor.BasicHttpContainerLoadClient;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
-import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 //
-import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
-import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;
+import com.emc.mongoose.server.api.load.builder.HttpContainerLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.HttpContainerLoadSvc;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,35 +30,35 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BasicWSContainerLoadBuilderClient<
 	T extends HttpDataItem,
 	C extends Container<T>,
-	W extends WSContainerLoadSvc<T, C>,
-	U extends WSContainerLoadClient<T, C, W>
-> extends ContainerLoadBuilderClientBase<T, C, W, U, WSContainerLoadBuilderSvc<T, C, W>> {
+	W extends HttpContainerLoadSvc<T, C>,
+	U extends HttpContainerLoadClient<T, C, W>
+> extends ContainerLoadBuilderClientBase<T, C, W, U, HttpContainerLoadBuilderSvc<T, C, W>> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicWSContainerLoadBuilderClient()
 	throws IOException {
-		this(RunTimeConfig.getContext());
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
-	public BasicWSContainerLoadBuilderClient(final RunTimeConfig runTimeConfig)
+	public BasicWSContainerLoadBuilderClient(final AppConfig appConfig)
 	throws IOException {
-		super(runTimeConfig);
+		super(appConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig getDefaultIOConfig() {
-		return WSRequestConfigBase.getInstance();
+	protected HttpRequestConfig getDefaultIOConfig() {
+		return HttpRequestConfigBase.getInstance();
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSContainerLoadBuilderSvc<T, C, W> resolve(final String serverAddr)
+	protected HttpContainerLoadBuilderSvc<T, C, W> resolve(final String serverAddr)
 	throws IOException {
-		WSContainerLoadBuilderSvc<T, C, W> rlb;
+		HttpContainerLoadBuilderSvc<T, C, W> rlb;
 		final String svcUri = "//" + serverAddr + '/' +
 			getClass().getName().replace("client", "server").replace("Client", "Svc");
-		rlb = (WSContainerLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri);
-		rlb = (WSContainerLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());
+		rlb = (HttpContainerLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri);
+		rlb = (HttpContainerLoadBuilderSvc<T, C, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());
 		return rlb;
 	}
 	//
@@ -79,7 +80,7 @@ public class BasicWSContainerLoadBuilderClient<
 		//
 		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
 		//
-		WSContainerLoadBuilderSvc<T, C, W> nextBuilder;
+		HttpContainerLoadBuilderSvc<T, C, W> nextBuilder;
 		W nextLoad;
 		//
 		if(itemSrc == null) {
@@ -97,9 +98,9 @@ public class BasicWSContainerLoadBuilderClient<
 		//
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
 		//
-		return (U) new BasicWSContainerLoadClient<>(
-			rtConfig, (WSRequestConfig) ioConfig, storageNodeAddrs,
-			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
+		return (U) new BasicHttpContainerLoadClient<>(
+			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs,
+			appConfig.getConnCountPerNodeFor(loadTypeStr), appConfig.getWorkerCountFor(loadTypeStr),
 			itemSrc, maxCount, remoteLoadMap
 		);
 	}

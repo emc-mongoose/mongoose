@@ -20,7 +20,7 @@ implements Runnable {
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	public void run() {
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+		final RunTimeConfig localRunTimeConfig = BasicConfig.CONTEXT_CONFIG.get();
 		if (localRunTimeConfig != null) {
 			final String scenarioName = localRunTimeConfig.getScenarioName();
 			//

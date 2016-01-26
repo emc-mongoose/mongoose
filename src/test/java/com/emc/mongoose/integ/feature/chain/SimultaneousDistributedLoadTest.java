@@ -50,14 +50,14 @@ extends DistributedLoadBuilderTestBase {
 		);
 		DistributedLoadBuilderTestBase.setUpClass();
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_API_NAME, "atmos");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LOAD_LIMIT_TIME_SEC + "s");
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, true);
-		RunTimeConfig.setContext(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_API_NAME, "atmos");
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LOAD_LIMIT_TIME_SEC + "s");
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, true);
+		RunTimeConfig.setContext(appConfig);
 		//
-		final Chain chainScenario = new Chain(rtConfig);
+		final Chain chainScenario = new Chain(appConfig);
 		try(
 			final BufferingOutputStream
 				stdOutBuffer = StdOutUtil.getStdOutBufferingStream()

@@ -3,7 +3,8 @@ package com.emc.mongoose.client.impl.load.builder;
 import com.emc.mongoose.client.api.load.builder.ContainerLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.ContainerLoadClient;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
@@ -35,20 +36,20 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	//
 	protected ContainerLoadBuilderClientBase()
 	throws IOException {
-		this(RunTimeConfig.getContext());
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
-	protected ContainerLoadBuilderClientBase(final RunTimeConfig rtConfig)
+	protected ContainerLoadBuilderClientBase(final AppConfig appConfig)
 	throws IOException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override
-	public ContainerLoadBuilderClientBase<T, C, W, U, V> setRunTimeConfig(final RunTimeConfig rtConfig)
+	public ContainerLoadBuilderClientBase<T, C, W, U, V> setAppConfig(final AppConfig appConfig)
 	throws RemoteException {
-		super.setRunTimeConfig(rtConfig);
+		super.setAppConfig(appConfig);
 		//
-		final String listFilePathStr = rtConfig.getItemSrcFile();
+		final String listFilePathStr = appConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(

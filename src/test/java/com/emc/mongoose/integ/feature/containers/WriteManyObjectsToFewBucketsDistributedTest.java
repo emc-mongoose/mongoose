@@ -45,14 +45,14 @@ extends DistributedLoadBuilderTestBase {
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		System.setProperty(RunTimeConfig.KEY_DATA_SIZE, "1KB");
 		DistributedLoadBuilderTestBase.setUpClass();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_CONTAINER));
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
-		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "25");
-		RunTimeConfig.setContext(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_CONTAINER));
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
+		appConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "25");
+		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
 		//
 		new ScenarioRunner().run();
 		TimeUnit.SECONDS.sleep(1);
@@ -63,9 +63,9 @@ extends DistributedLoadBuilderTestBase {
 		Assert.assertTrue("items list file doesn't exist", containerListFile.exists());
 		//
 		String nextContainer, nextRunId;
-		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "data");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_OBJ));
-		RunTimeConfig.setContext(rtConfig);
+		appConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "data");
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_OBJ));
+		RunTimeConfig.setContext(appConfig);
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(containerListFile.toPath(), StandardCharsets.UTF_8)
@@ -81,9 +81,9 @@ extends DistributedLoadBuilderTestBase {
 						break;
 					} else {
 						countContainerCreated++;
-						rtConfig.set(RunTimeConfig.KEY_RUN_ID, nextRunId);
-						rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, nextContainer);
-						RunTimeConfig.setContext(rtConfig);
+						appConfig.set(RunTimeConfig.KEY_RUN_ID, nextRunId);
+						appConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, nextContainer);
+						RunTimeConfig.setContext(appConfig);
 						new ScenarioRunner().run();
 						TimeUnit.SECONDS.sleep(1);
 						RunIdFileManager.closeAll(nextRunId);

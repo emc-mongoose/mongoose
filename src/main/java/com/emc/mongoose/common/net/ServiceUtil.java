@@ -74,16 +74,16 @@ public abstract class ServiceUtil {
 	}*/
 	//
 	private static void rmiRegistryInit() {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
 		REGISTRY_LOCK.lock();
 		try {
 			if(REGISTRY == null) {
 				try {
-					REGISTRY = LocateRegistry.createRegistry(rtConfig.getRemotePortControl());
+					REGISTRY = LocateRegistry.createRegistry(appConfig.getRemotePortControl());
 					LOG.debug(Markers.MSG, "RMI registry created");
 				} catch(final RemoteException e) {
 					try {
-						REGISTRY = LocateRegistry.getRegistry(rtConfig.getRemotePortControl());
+						REGISTRY = LocateRegistry.getRegistry(appConfig.getRemotePortControl());
 						LOG.info(Markers.MSG, "Reusing already existing RMI registry");
 					} catch(final RemoteException ee) {
 						LOG.fatal(Markers.ERR, "Failed to obtain a RMI registry", ee);
@@ -96,9 +96,9 @@ public abstract class ServiceUtil {
 	}
 	//
 	public static void mBeanServerInit() {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		if(rtConfig.getFlagServeJMX()) {
-			getMBeanServer(rtConfig.getRemotePortMonitor());
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		if(appConfig.getFlagServeJMX()) {
+			getMBeanServer(appConfig.getRemotePortMonitor());
 		}
 	}
 	//
@@ -160,7 +160,7 @@ public abstract class ServiceUtil {
 	//
 	public static Remote create(final Service svc)
 	throws RemoteException {
-		//final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		//final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		Remote stub = null;
 		try {
 			stub = UnicastRemoteObject.exportObject(svc, 0);

@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
-import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
@@ -26,8 +26,8 @@ import java.security.NoSuchAlgorithmException;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSRequestConfigImpl<T extends HttpDataItem, C extends Container<T>>
-extends WSRequestConfigBase<T, C> {
+public final class HttpRequestConfigImpl<T extends HttpDataItem, C extends Container<T>>
+extends HttpRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String KEY_CONF_SVC_BASEPATH = "api.type.swift.serviceBasepath";
@@ -40,13 +40,13 @@ extends WSRequestConfigBase<T, C> {
 	private String uriSvcBasePath = null, uriSvcBaseContainerPath = null;
 	private WSAuthTokenImpl<T> authToken = null;
 	//
-	public WSRequestConfigImpl()
+	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
 		this(null);
 	}
 	//
 	@SuppressWarnings("unchecked")
-	protected WSRequestConfigImpl(final WSRequestConfigImpl<T, C> reqConf2Clone)
+	protected HttpRequestConfigImpl(final HttpRequestConfigImpl<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		//
@@ -61,7 +61,7 @@ extends WSRequestConfigBase<T, C> {
 			setContainer(reqConf2Clone.getContainer());
 		}
 		//
-		final RunTimeConfig localConfig = RunTimeConfig.getContext();
+		final RunTimeConfig localConfig = BasicConfig.CONTEXT_CONFIG.get();
 		if(uriSvcBasePath == null) {
 			uriSvcBasePath = localConfig.getString(KEY_CONF_SVC_BASEPATH);
 		}
@@ -104,7 +104,7 @@ extends WSRequestConfigBase<T, C> {
 		return authToken;
 	}
 	//
-	public final WSRequestConfigImpl<T, C> setAuthToken(final WSAuthTokenImpl<T> authToken)
+	public final HttpRequestConfigImpl<T, C> setAuthToken(final WSAuthTokenImpl<T> authToken)
 	throws IllegalArgumentException {
 		if(authToken == null) {
 			throw new IllegalArgumentException("Setting <null> auth token is illegal");
@@ -114,17 +114,17 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T, C> setNameSpace(final String nameSpace) {
+	public final HttpRequestConfigImpl<T, C> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		refreshContainerPath();
 		return this;
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
-	public WSRequestConfigImpl<T, C> clone() {
-		WSRequestConfigImpl<T, C> copy = null;
+	public HttpRequestConfigImpl<T, C> clone() {
+		HttpRequestConfigImpl<T, C> copy = null;
 		try {
-			copy = new WSRequestConfigImpl<>(this);
+			copy = new HttpRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
 			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
@@ -132,25 +132,25 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public WSRequestConfigImpl<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
-		super.setRunTimeConfig(runTimeConfig);
+	public HttpRequestConfigImpl<T, C> setAppConfig(final AppConfig appConfig) {
+		super.setAppConfig(this.appConfig);
 		//
-		if(runTimeConfig.containsKey(KEY_CONF_SVC_BASEPATH)) {
-			uriSvcBasePath = runTimeConfig.getString(KEY_CONF_SVC_BASEPATH);
+		if(this.appConfig.containsKey(KEY_CONF_SVC_BASEPATH)) {
+			uriSvcBasePath = this.appConfig.getString(KEY_CONF_SVC_BASEPATH);
 		} else {
 			LOG.error(Markers.ERR, "Swift base uri path is not specified");
 		}
 		//
-		if(runTimeConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN)) {
-			authToken = new WSAuthTokenImpl<>(this, runTimeConfig.getString(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN));
+		if(this.appConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN)) {
+			authToken = new WSAuthTokenImpl<>(this, this.appConfig.getString(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN));
 		} else {
 			LOG.error(Markers.ERR, "Swift auth token is not specified");
 		}
 		//
-		if(runTimeConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_CONTAINER)) {
+		if(this.appConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_CONTAINER)) {
 			setContainer(
 				(C) new BasicContainer<T>(
-					runTimeConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER)
+					this.appConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER)
 				)
 			);
 		} else {
@@ -238,7 +238,7 @@ extends WSRequestConfigBase<T, C> {
 			throw new IllegalStateException("No auth token was created");
 		}
 		sharedHeaders.updateHeader(new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue));
-		runTimeConfig.set(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN, authTokenValue);
+		appConfig.set(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN, authTokenValue);
 		// configure a container
 		if(container == null) {
 			throw new IllegalStateException("Container is not specified");
@@ -249,7 +249,7 @@ extends WSRequestConfigBase<T, C> {
 		} else {
 			containerHelper.create(storageNodeAddrs[0]);
 			if(containerHelper.exists(storageNodeAddrs[0])) {
-				runTimeConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, container.getName());
+				appConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, container.getName());
 			} else {
 				throw new IllegalStateException(
 					String.format("Container \"%s\" still doesn't exist", container)

@@ -47,14 +47,14 @@ extends DistributedLoadBuilderTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		DistributedLoadBuilderTestBase.setUpClass();
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_API_NAME, "s3");
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LOAD_JOB_TIME_LIMIT_SEC + "s");
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
-		RunTimeConfig.setContext(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_API_NAME, "s3");
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LOAD_JOB_TIME_LIMIT_SEC + "s");
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
+		RunTimeConfig.setContext(appConfig);
 		//
-		final Chain chainScenario = new Chain(rtConfig);
+		final Chain chainScenario = new Chain(appConfig);
 		try(
 			final BufferingOutputStream
 				stdOutBuffer = StdOutUtil.getStdOutBufferingStream()

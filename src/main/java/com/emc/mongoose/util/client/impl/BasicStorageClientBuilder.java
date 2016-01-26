@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 public final class BasicStorageClientBuilder<T extends Item, U extends StorageClient<T>>
 implements StorageClientBuilder<T, U> {
 	//
-	private final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+	private final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setAPI(final String api)
@@ -32,7 +32,7 @@ implements StorageClientBuilder<T, U> {
 				Arrays.toString(Package.getPackages())
 			);
 		}*/
-		rtConfig.set(RunTimeConfig.KEY_API_NAME, api);
+		appConfig.set(RunTimeConfig.KEY_API_NAME, api);
 		return this;
 	}
 	//
@@ -49,14 +49,14 @@ implements StorageClientBuilder<T, U> {
 			}
 			addrListBuilder.append(nextAddr);
 		}
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, addrListBuilder.toString());
+		appConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, addrListBuilder.toString());
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setClientMode(final String loadServers[]) {
 		if(loadServers == null || loadServers.length < 1) {
-			rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
+			appConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
 		} else {
 			final StringBuilder addrListBuilder = new StringBuilder();
 			for(final String nextAddr : loadServers) {
@@ -65,46 +65,46 @@ implements StorageClientBuilder<T, U> {
 				}
 				addrListBuilder.append(nextAddr);
 			}
-			rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, addrListBuilder.toString());
-			rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
+			appConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, addrListBuilder.toString());
+			appConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
 		}
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setAuth(final String id, final String secret) {
-		rtConfig.set(RunTimeConfig.KEY_AUTH_ID, id);
-		rtConfig.set(RunTimeConfig.KEY_AUTH_SECRET, secret);
+		appConfig.set(RunTimeConfig.KEY_AUTH_ID, id);
+		appConfig.set(RunTimeConfig.KEY_AUTH_SECRET, secret);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setNamespace(final String value) {
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_NAMESPACE, value);
+		appConfig.set(RunTimeConfig.KEY_STORAGE_NAMESPACE, value);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setS3Bucket(final String value) {
-		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, value);
+		appConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, value);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setSwiftContainer(final String value) {
-		rtConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, value);
+		appConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, value);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setAtmosSubtenant(final String value) {
-		rtConfig.set(RunTimeConfig.KEY_API_ATMOS_SUBTENANT, value);
+		appConfig.set(RunTimeConfig.KEY_API_ATMOS_SUBTENANT, value);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setSwiftAuthToken(final String value) {
-		rtConfig.set(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN, value);
+		appConfig.set(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN, value);
 		return this;
 	}
 	//
@@ -114,7 +114,7 @@ implements StorageClientBuilder<T, U> {
 		if(count < 0) {
 			throw new IllegalArgumentException("Count limit shouldn' be negative");
 		}
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, count);
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, count);
 		return this;
 	}
 	//
@@ -133,7 +133,7 @@ implements StorageClientBuilder<T, U> {
 				tu = TimeUnit.SECONDS;
 			}
 		}
-		rtConfig.set(
+		appConfig.set(
 			RunTimeConfig.KEY_LOAD_LIMIT_TIME,
 			Long.toString(timeOut) + tu.name().toLowerCase().charAt(0)
 		);
@@ -146,28 +146,28 @@ implements StorageClientBuilder<T, U> {
 		if(rate < 0) {
 			throw new IllegalArgumentException("Rate limit should be >= 0");
 		}
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_RATE, rate);
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_RATE, rate);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setItemClass(final String itemCls)
 	throws IllegalArgumentException {
-		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, itemCls);
+		appConfig.set(RunTimeConfig.KEY_ITEM_CLASS, itemCls);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setVersioning(final boolean enabledFlag)
 	throws IllegalArgumentException {
-		rtConfig.set(RunTimeConfig.KEY_DATA_VERSIONING, enabledFlag);
+		appConfig.set(RunTimeConfig.KEY_DATA_VERSIONING, enabledFlag);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setFileAccess(final boolean enabledFlag)
 	throws IllegalArgumentException {
-		rtConfig.set(RunTimeConfig.KEY_DATA_FS_ACCESS, enabledFlag);
+		appConfig.set(RunTimeConfig.KEY_DATA_FS_ACCESS, enabledFlag);
 		return this;
 	}
 	//
@@ -180,7 +180,7 @@ implements StorageClientBuilder<T, U> {
 		) {
 			throw new IllegalArgumentException("Path shouldn't begin or end with \"/\"");
 		}
-		rtConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, path);
+		appConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, path);
 		return this;
 	}
 	//
@@ -189,15 +189,15 @@ implements StorageClientBuilder<T, U> {
 		if(milliSec < 0) {
 			throw new IllegalArgumentException("Request manual delay should be >= 0");
 		}
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_REQSLEEP_MILLISEC, milliSec);
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_REQSLEEP_MILLISEC, milliSec);
 		return this;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final U build() {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
 		return (U) new BasicStorageClient<>(
-			rtConfig, LoadBuilderFactory.<T, LoadExecutor<T>>getInstance(rtConfig)
+			appConfig, LoadBuilderFactory.<T, LoadExecutor<T>>getInstance(appConfig)
 		);
 	}
 }

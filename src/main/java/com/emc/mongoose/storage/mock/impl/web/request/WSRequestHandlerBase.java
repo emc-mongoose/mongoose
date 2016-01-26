@@ -4,11 +4,11 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import static com.emc.mongoose.core.api.io.conf.WSRequestConfig.VALUE_RANGE_PREFIX;
-import static com.emc.mongoose.core.api.io.conf.WSRequestConfig.VALUE_RANGE_CONCAT;
+import static com.emc.mongoose.core.api.io.conf.HttpRequestConfig.VALUE_RANGE_PREFIX;
+import static com.emc.mongoose.core.api.io.conf.HttpRequestConfig.VALUE_RANGE_CONCAT;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.core.api.item.data.ContentSource;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
@@ -59,7 +59,7 @@ implements ReqURIMatchingHandler<T> {
 	protected final int batchSize;
 	//
 	protected WSRequestHandlerBase(
-		final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage
+		final AppConfig appConfig, final WSMock<T> sharedStorage
 	) {
 		this.rateLimit = runTimeConfig.getLoadLimitRate();
 		this.batchSize = runTimeConfig.getBatchSize();
@@ -125,19 +125,19 @@ implements ReqURIMatchingHandler<T> {
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 		} else {
 			switch(method.toUpperCase()) {
-				case WSRequestConfig.METHOD_POST:
+				case HttpRequestConfig.METHOD_POST:
 					handleWrite(httpRequest, httpResponse, container, oid, offset);
 					break;
-				case WSRequestConfig.METHOD_PUT:
+				case HttpRequestConfig.METHOD_PUT:
 					handleWrite(httpRequest, httpResponse, container, oid, offset);
 					break;
-				case WSRequestConfig.METHOD_GET:
+				case HttpRequestConfig.METHOD_GET:
 					handleRead(httpResponse, container, oid, offset);
 					break;
-				case WSRequestConfig.METHOD_HEAD:
+				case HttpRequestConfig.METHOD_HEAD:
 					httpResponse.setStatusCode(HttpStatus.SC_OK);
 					break;
-				case WSRequestConfig.METHOD_DELETE:
+				case HttpRequestConfig.METHOD_DELETE:
 					handleDelete(httpResponse, container, oid, offset);
 					break;
 			}
@@ -278,19 +278,19 @@ implements ReqURIMatchingHandler<T> {
 		final String method, final String container, final String dataId
 	) {
 		switch(method.toUpperCase()) {
-			case WSRequestConfig.METHOD_POST:
+			case HttpRequestConfig.METHOD_POST:
 				// probably it's swift container versioning request, ignore
 				break;
-			case WSRequestConfig.METHOD_PUT:
+			case HttpRequestConfig.METHOD_PUT:
 				handleContainerCreate(httpRequest, httpResponse, container);
 				break;
-			case WSRequestConfig.METHOD_GET:
+			case HttpRequestConfig.METHOD_GET:
 				handleContainerList(httpRequest, httpResponse, container, dataId);
 				break;
-			case WSRequestConfig.METHOD_HEAD:
+			case HttpRequestConfig.METHOD_HEAD:
 				handleContainerExists(httpResponse, container);
 				break;
-			case WSRequestConfig.METHOD_DELETE:
+			case HttpRequestConfig.METHOD_DELETE:
 				handleContainerDelete(httpResponse, container);
 				break;
 		}

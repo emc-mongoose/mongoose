@@ -1,13 +1,12 @@
 package com.emc.mongoose.storage.mock.impl.web.request;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-adapter-swift.jar
 import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
-import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+import com.emc.mongoose.storage.adapter.swift.HttpRequestConfigImpl;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
@@ -57,10 +56,10 @@ extends WSRequestHandlerBase<T> {
 	private final String apiBasePathSwift;
 	//
 	public SwiftRequestHandler(
-		final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage
+		final AppConfig appConfig, final WSMock<T> sharedStorage
 	) {
 		super(runTimeConfig, sharedStorage);
-		apiBasePathSwift = runTimeConfig.getString(WSRequestConfigImpl.KEY_CONF_SVC_BASEPATH);
+		apiBasePathSwift = runTimeConfig.getString(HttpRequestConfigImpl.KEY_CONF_SVC_BASEPATH);
 	}
 	//
 	public boolean matches(final HttpRequest httpRequest) {
@@ -74,12 +73,12 @@ extends WSRequestHandlerBase<T> {
 		final String method, final String requestURI
 	) {
 		if(requestURI.startsWith(AUTH, 1)) { // auth token
-			if(WSRequestConfig.METHOD_GET.equalsIgnoreCase(method)) { // create
+			if(HttpRequestConfig.METHOD_GET.equalsIgnoreCase(method)) { // create
 				final String authToken = randomString(0x10);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, "Created auth token: {}", authToken);
 				}
-				httpResponse.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, authToken);
+				httpResponse.setHeader(HttpRequestConfigImpl.KEY_X_AUTH_TOKEN, authToken);
 				httpResponse.setStatusCode(HttpStatus.SC_CREATED);
 			} else {
 				httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
@@ -96,8 +95,8 @@ extends WSRequestHandlerBase<T> {
 					if(oid != null) {
 						final long offset;
 						if(
-							WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ||
-							WSRequestConfig.METHOD_POST.equalsIgnoreCase(method)
+							HttpRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ||
+							HttpRequestConfig.METHOD_POST.equalsIgnoreCase(method)
 						) {
 							offset = Long.parseLong(oid, MutableDataItem.ID_RADIX);
 						} else {

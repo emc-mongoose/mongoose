@@ -9,7 +9,7 @@ import java.util.Arrays;
  */
 public class Functions {
 
-	public static String getString(final RunTimeConfig runTimeConfig, final String key) {
+	public static String getString(final AppConfig appConfig, final String key) {
 		String[] stringArray = runTimeConfig.getStringArray(key);
 		if (runTimeConfig.getStringArray(key).length > 1) {
 			return convertArrayToString(stringArray);
@@ -20,12 +20,12 @@ public class Functions {
 		return stringArray[0];
 	}
 
-	public static String getTimeValue(final RunTimeConfig runTimeConfig, final String key) {
+	public static String getTimeValue(final AppConfig appConfig, final String key) {
 		final String rawValue = runTimeConfig.getString(key);
 		return Long.toString(TimeUtil.getTimeValue(rawValue));
 	}
 
-	public static String getTimeUnit(final RunTimeConfig runTimeConfig, final String key) {
+	public static String getTimeUnit(final AppConfig appConfig, final String key) {
 		final String rawValue = runTimeConfig.getString(key);
 		return TimeUtil.getTimeUnit(rawValue).toString().toLowerCase();
 	}

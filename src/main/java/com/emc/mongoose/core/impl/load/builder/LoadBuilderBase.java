@@ -1,7 +1,8 @@
 package com.emc.mongoose.core.impl.load.builder;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.ThreadUtil;
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
@@ -28,7 +29,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 20.10.14.
  */
@@ -37,7 +37,7 @@ implements LoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected volatile RunTimeConfig rtConfig;
+	protected volatile AppConfig appConfig;
 	protected long maxCount = 0;
 	protected volatile IOConfig<?, ?> ioConfig = getDefaultIOConfig();
 	protected float rateLimit;
@@ -53,13 +53,13 @@ implements LoadBuilder<T, U> {
 	//
 	public LoadBuilderBase()
 	throws RemoteException {
-		this(RunTimeConfig.getContext());
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
-	public LoadBuilderBase(final RunTimeConfig runTimeConfig)
+	public LoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
 		resetItemSrc();
-		setRunTimeConfig(runTimeConfig);
+		setAppConfig(appConfig);
 	}
 	//
 	protected void resetItemSrc() {
@@ -69,24 +69,21 @@ implements LoadBuilder<T, U> {
 		itemSrc = null;
 	}
 	//
-	@Override
-	public LoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig rtConfig)
+	public LoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
-		this.rtConfig = rtConfig;
-		RunTimeConfig.setContext(rtConfig);
+		this.appConfig = appConfig;
+		BasicConfig.THREAD_CONTEXT.set(appConfig);
 		if(ioConfig != null) {
-			ioConfig.setRunTimeConfig(rtConfig);
+			ioConfig.setAppConfig(appConfig);
 		} else {
 			throw new IllegalStateException("Shared request config is not initialized");
 		}
 		//
 		String paramName;
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
-			paramName = RunTimeConfig.getConnCountPerNodeParamName(loadType.name().toLowerCase());
+			paramName = AppConfig.KEY_LOAD_THREADS;
 			try {
-				setConnPerNodeFor(
-					rtConfig.getConnCountPerNodeFor(loadType.name().toLowerCase()), loadType
-				);
+				setConnPerNodeFor(appConfig.getLoadThreads(), loadType);
 			} catch(final NoSuchElementException e) {
 				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 			} catch(final IllegalArgumentException e) {
@@ -95,43 +92,21 @@ implements LoadBuilder<T, U> {
 		}
 		//
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
-			paramName = RunTimeConfig.getLoadWorkersParamName(loadType.name().toLowerCase());
-			try {
-				setWorkerCountFor(
-					rtConfig.getWorkerCountFor(loadType.name().toLowerCase()), loadType
-				);
-			} catch(final NoSuchElementException e) {
-				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
-			} catch(final IllegalArgumentException e) {
-				LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
-			}
+			setWorkerCountFor(0, loadType);
 		}
 		//
-		paramName = RunTimeConfig.KEY_DATA_ITEM_COUNT;
+		paramName = AppConfig.KEY_LOAD_LIMIT_COUNT;
 		try {
-			setMaxCount(rtConfig.getLoadLimitCount());
+			setMaxCount(appConfig.getLoadLimitCount());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		paramName = RunTimeConfig.KEY_LOAD_LIMIT_REQSLEEP_MILLISEC;
+		paramName = AppConfig.KEY_LOAD_LIMIT_RATE;
 		try {
-			setManualTaskSleepMicroSecs(
-				(int) TimeUnit.MILLISECONDS.toMicros(
-					rtConfig.getLoadLimitReqSleepMilliSec()
-				)
-			);
-		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
-		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
-		}
-		//
-		paramName = RunTimeConfig.KEY_LOAD_LIMIT_RATE;
-		try {
-			setRateLimit(rtConfig.getLoadLimitRate());
+			setRateLimit((float) appConfig.getLoadLimitRate());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -140,18 +115,18 @@ implements LoadBuilder<T, U> {
 		//
 		if(ioConfig instanceof RequestConfig) {
 			final RequestConfig reqConfig = (RequestConfig) ioConfig;
-			paramName = RunTimeConfig.KEY_STORAGE_ADDRS;
+			paramName = AppConfig.KEY_STORAGE_HTTP_ADDRS;
 			try {
-				setDataNodeAddrs(rtConfig.getStorageAddrsWithPorts());
+				setDataNodeAddrs(appConfig.getStorageHttpAddrsWithPorts());
 			} catch(final NoSuchElementException | ConversionException e) {
 				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 			} catch(final IllegalArgumentException e) {
 				LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 			}
 			//
-			paramName = RunTimeConfig.getApiPortParamName(reqConfig.getAPI().toLowerCase());
+			paramName = AppConfig.KEY_STORAGE_HTTP_API___PORT;
 			try {
-				reqConfig.setPort(rtConfig.getApiTypePort(reqConfig.getAPI().toLowerCase()));
+				reqConfig.setPort(appConfig.getStorageHttpApi_Port());
 			} catch(final NoSuchElementException e) {
 				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 			}
@@ -245,21 +220,6 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setManualTaskSleepMicroSecs(final int manualTaskSleepMicroSecs)
-	throws IllegalArgumentException, RemoteException {
-		LOG.debug(Markers.MSG, "Set manual I/O tasks sleep to: {}[us]", manualTaskSleepMicroSecs);
-		if(rateLimit < 0) {
-			throw new IllegalArgumentException("Tasks sleep time shouldn't be negative");
-		} else {
-			LOG.debug(Markers.MSG, "Using tasks sleep time: {}[us]", manualTaskSleepMicroSecs);
-		}
-		this.manualTaskSleepMicroSecs = manualTaskSleepMicroSecs;
-		return this;
-	}
-	//
-
-	//
-	@Override
 	public LoadBuilder<T, U> setWorkerCountDefault(final int workersPerNode)
 	throws RemoteException {
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
@@ -333,7 +293,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilderBase<T, U> clone()
 	throws CloneNotSupportedException {
 		final LoadBuilderBase<T, U> lb = (LoadBuilderBase<T, U>) super.clone();
-		lb.rtConfig = (RunTimeConfig) rtConfig.clone();
+		lb.appConfig = (AppConfig) appConfig.clone();
 		LOG.debug(Markers.MSG, "Cloning request config for {}", ioConfig.toString());
 		lb.ioConfig = ioConfig.clone();
 		lb.maxCount = maxCount;

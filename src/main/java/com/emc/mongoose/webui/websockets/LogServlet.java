@@ -14,7 +14,7 @@ extends WebSocketServlet {
 	//
 	@Override
 	public final void configure(final WebSocketServletFactory factory) {
-		final String[] websocketIdleTimeoutArray = RunTimeConfig.getContext()
+		final String[] websocketIdleTimeoutArray = BasicConfig.CONTEXT_CONFIG.get()
 			.getWebUIWSTimeout().split("\\.");
 		factory.register(LogSocket.class);
 		factory.getPolicy().setIdleTimeout(TimeUnit.valueOf(websocketIdleTimeoutArray[1].toUpperCase())

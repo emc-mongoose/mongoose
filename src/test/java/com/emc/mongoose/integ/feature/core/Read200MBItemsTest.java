@@ -56,15 +56,15 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, CREATE_RUN_ID);
 		WSMockTestBase.setUpClass();
 		//
-		RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
-		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
-		RunTimeConfig.setContext(rtConfig);
+		RunTimeConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
+		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
+		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
+		appConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
+		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
 		//  write
 		new ScenarioRunner().run();
 		//
@@ -73,15 +73,15 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, READ_RUN_ID);
 		LoggingTestBase.setUpClass();
 		//
-		rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(
+		appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(
 			RunTimeConfig.KEY_ITEM_SRC_FILE, LogValidator.getItemsListFile(CREATE_RUN_ID).getPath()
 		);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
-		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
-		RunTimeConfig.setContext(rtConfig);
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
+		appConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
+		RunTimeConfig.setContext(appConfig);
 		//
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
 		//  read
 		try(
 			final BufferingOutputStream

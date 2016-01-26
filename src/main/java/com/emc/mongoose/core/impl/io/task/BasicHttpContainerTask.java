@@ -7,8 +7,8 @@ import com.emc.mongoose.common.net.http.ContentUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
-import com.emc.mongoose.core.api.io.task.WSContainerIOTask;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.api.io.task.HttpContainerIOTask;
 //
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpEntity;
@@ -41,10 +41,10 @@ import java.nio.charset.StandardCharsets;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicWSContainerTask<
-	T extends HttpDataItem, C extends Container<T>, X extends WSRequestConfig<T, C>
+public class BasicHttpContainerTask<
+	T extends HttpDataItem, C extends Container<T>, X extends HttpRequestConfig<T, C>
 > extends BasicIOTask<C, C, X>
-implements WSContainerIOTask<T, C> {
+implements HttpContainerIOTask<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -53,7 +53,7 @@ implements WSContainerIOTask<T, C> {
 	@SuppressWarnings("FieldCanBeLocal")
 	private volatile int respStatusCode = -1;
 	//
-	public BasicWSContainerTask(
+	public BasicHttpContainerTask(
 		final C item, final String nodeAddr, final X reqConf
 	) {
 		super(item, nodeAddr, reqConf);
@@ -69,7 +69,7 @@ implements WSContainerIOTask<T, C> {
 	throws IOException, HttpException {
 		final HttpEntityEnclosingRequest httpRequest;
 		try {
-			httpRequest = ((WSRequestConfig) ioConfig).createContainerRequest(item, nodeAddr);
+			httpRequest = ((HttpRequestConfig) ioConfig).createContainerRequest(item, nodeAddr);
 			final HttpEntity httpEntity = httpRequest.getEntity();
 			if(httpEntity instanceof HttpAsyncContentProducer) {
 				contentProducer = (HttpAsyncContentProducer) httpEntity;
@@ -244,7 +244,7 @@ implements WSContainerIOTask<T, C> {
 	}
 	//
 	@Override
-	public final WSContainerIOTask<T, C> getResult() {
+	public final HttpContainerIOTask<T, C> getResult() {
 		return this;
 	}
 	//

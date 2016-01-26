@@ -23,13 +23,13 @@ implements StorageClient<T> {
 	//
 	protected final static int DEFAULT_CONN_PER_NODE_COUNT = 1;
 	//
-	protected RunTimeConfig rtConfig;
+	protected RunTimeConfig appConfig;
 	protected LoadBuilder<T, LoadExecutor<T>> loadBuilder;
 	//
 	public BasicStorageClient(
-		final RunTimeConfig rtConfig, final LoadBuilder<T, LoadExecutor<T>> loadBuilder
+		final AppConfig appConfig, final LoadBuilder<T, LoadExecutor<T>> loadBuilder
 	) {
-		this.rtConfig = rtConfig;
+		this.appConfig = appConfig;
 		this.loadBuilder = loadBuilder;
 	}
 	//
@@ -38,8 +38,8 @@ implements StorageClient<T> {
 	) throws InterruptedException, IOException {
 		loadExecutor.setItemDst(dst);
 		loadExecutor.start();
-		final long timeOut = rtConfig.getLoadLimitTimeValue();
-		final TimeUnit timeUnit = rtConfig.getLoadLimitTimeUnit();
+		final long timeOut = appConfig.getLoadLimitTimeValue();
+		final TimeUnit timeUnit = appConfig.getLoadLimitTimeUnit();
 		try {
 			loadExecutor.await(
 				timeOut == 0 ? Long.MAX_VALUE : timeOut, timeUnit == null ? TimeUnit.DAYS : timeUnit
@@ -91,7 +91,7 @@ implements StorageClient<T> {
 	@Override
 	public long read(final ItemSrc<T> src)
 	throws IllegalStateException, InterruptedException, IOException {
-		return read(src, null, 0, DEFAULT_CONN_PER_NODE_COUNT, rtConfig.getReadVerifyContent());
+		return read(src, null, 0, DEFAULT_CONN_PER_NODE_COUNT, appConfig.getReadVerifyContent());
 	}
 	//
 	@Override
@@ -145,7 +145,7 @@ implements StorageClient<T> {
 	@Override
 	public long update(final ItemSrc<T> src)
 	throws IllegalStateException, InterruptedException, IOException {
-		return update(src, null, 0, DEFAULT_CONN_PER_NODE_COUNT, rtConfig.getUpdateCountPerTime());
+		return update(src, null, 0, DEFAULT_CONN_PER_NODE_COUNT, appConfig.getUpdateCountPerTime());
 	}
 	//
 	@Override

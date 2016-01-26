@@ -37,14 +37,14 @@ implements FileLoadExecutor<T> {
 	private final ExecutorService ioTaskExecutor;
 	//
 	public BasicFileLoadExecutor(
-		final RunTimeConfig rtConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
+		final AppConfig appConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
 	) throws ClassCastException {
 		super(
-			rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			appConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
 		);
 		ioTaskExecutor = new ThreadPoolExecutor(

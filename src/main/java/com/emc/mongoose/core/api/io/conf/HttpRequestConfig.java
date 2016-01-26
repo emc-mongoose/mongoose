@@ -1,12 +1,11 @@
 package com.emc.mongoose.core.api.io.conf;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
-//
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -19,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 29.09.14.
  An HTTP request shared configuration.
  */
-public interface WSRequestConfig<T extends HttpDataItem, C extends Container<T>>
+public interface HttpRequestConfig<T extends HttpDataItem, C extends Container<T>>
 extends RequestConfig<T, C> {
 	//
 	String
@@ -73,37 +72,37 @@ extends RequestConfig<T, C> {
 	String getHttpMethod();
 	//
 	@Override
-	WSRequestConfig<T, C> setAPI(final String api);
+	HttpRequestConfig<T, C> setAPI(final String api);
 	//
 	@Override
-	WSRequestConfig<T, C> setLoadType(final IOTask.Type loadType);
+	HttpRequestConfig<T, C> setLoadType(final IOTask.Type loadType);
 	//
 	@Override
-	WSRequestConfig<T, C> setUserName(final String userName);
+	HttpRequestConfig<T, C> setUserName(final String userName);
 	//
 	@Override
-	WSRequestConfig<T, C> setSecret(final String secret);
+	HttpRequestConfig<T, C> setSecret(final String secret);
 	//
 	@Override
-	WSRequestConfig<T, C> setContentSource(final ContentSource dataSrc);
+	HttpRequestConfig<T, C> setContentSource(final ContentSource dataSrc);
 	//
 	@Override
-	WSRequestConfig<T, C> setNameSpace(final String ns);
+	HttpRequestConfig<T, C> setNameSpace(final String ns);
 	//
 	@Override
-	WSRequestConfig<T, C> setNamePrefix(final String prefix);
+	HttpRequestConfig<T, C> setNamePrefix(final String prefix);
 	//
-	WSRequestConfig<T, C> setFileAccessEnabled(final boolean fsAccessFlag);
+	HttpRequestConfig<T, C> setFileAccessEnabled(final boolean fsAccessFlag);
 	boolean getFileAccessEnabled();
 	//
-	WSRequestConfig<T, C> setVersioning(final boolean enabledFlag);
+	HttpRequestConfig<T, C> setVersioning(final boolean enabledFlag);
 	boolean getVersioning();
 	//
-	WSRequestConfig<T, C> setPipelining(final boolean enabledFlag);
+	HttpRequestConfig<T, C> setPipelining(final boolean enabledFlag);
 	boolean getPipelining();
 	//
 	@Override
-	WSRequestConfig<T, C> setRunTimeConfig(final RunTimeConfig props);
+	HttpRequestConfig<T, C> setAppConfig(final AppConfig appConfig);
 	//
 	HeaderGroup getSharedHeaders();
 	//

@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,13 +24,13 @@ implements ContainerHelper<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final WSRequestConfig<T, C> reqConf;
+	protected final HttpRequestConfig<T, C> reqConf;
 	protected final C container;
 	protected final String idPrefix;
 	protected final int idPrefixLen;
 	protected final boolean fsAccess, verifyContent;
 	//
-	protected HttpContainerHelperBase(final WSRequestConfig<T, C> reqConf, final C container) {
+	protected HttpContainerHelperBase(final HttpRequestConfig<T, C> reqConf, final C container) {
 		this.reqConf = reqConf;
 		this.container = container;
 		final String name = container.getName();

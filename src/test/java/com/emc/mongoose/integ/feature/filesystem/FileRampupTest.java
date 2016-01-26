@@ -1,6 +1,5 @@
 package com.emc.mongoose.integ.feature.filesystem;
 
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -10,8 +9,6 @@ import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -51,19 +48,19 @@ extends DistributedLoadBuilderTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		DistributedLoadBuilderTestBase.setUpClass();
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "file");
-		rtConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, RAMPUP_SIZES);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS, RAMPUP_CONN_COUNTS);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, RAMPUP_LOAD_CHAIN);
-		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
-		RunTimeConfig.setContext(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "file");
+		appConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, RAMPUP_SIZES);
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS, RAMPUP_CONN_COUNTS);
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, RAMPUP_LOAD_CHAIN);
+		appConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
+		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
 		//
 		try(
 			final BufferingOutputStream
@@ -120,7 +117,7 @@ extends DistributedLoadBuilderTestBase {
 	@Test
 	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
 	throws Exception {
-		final String[] runtimeConfCustomParam = RunTimeConfig.getContext().toString().split("\n");
+		final String[] runtimeConfCustomParam = BasicConfig.CONTEXT_CONFIG.get().toString().split("\n");
 		for (final String confParam : runtimeConfCustomParam) {
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_TIME)) {
 				Assert.assertTrue(

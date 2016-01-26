@@ -15,9 +15,9 @@ public interface HttpDataItem
 extends MutableDataItem, HttpEntity {
 	//
 	Header HEADER_CONTENT_TYPE = new BasicHeader(
-		HTTP.CONTENT_TYPE, RunTimeConfig.getContext().getHttpContentType()
+		HTTP.CONTENT_TYPE, BasicConfig.CONTEXT_CONFIG.get().getHttpContentType()
 	);
 	boolean
-		IS_CONTENT_CHUNKED = RunTimeConfig.getContext().getHttpContentChunked(),
-		IS_CONTENT_REPEATABLE = RunTimeConfig.getContext().getHttpContentRepeatable();
+		IS_CONTENT_CHUNKED = BasicConfig.CONTEXT_CONFIG.get().getHttpContentChunked(),
+		IS_CONTENT_REPEATABLE = BasicConfig.CONTEXT_CONFIG.get().getHttpContentRepeatable();
 }

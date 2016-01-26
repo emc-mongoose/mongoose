@@ -119,7 +119,7 @@ implements ContentSource {
 		try {
 			if(DEFAULT == null) {
 				try {
-					final String contentFilePath = RunTimeConfig.getContext().getDataContentFPath();
+					final String contentFilePath = BasicConfig.CONTEXT_CONFIG.get().getDataContentFPath();
 					if(contentFilePath != null && !contentFilePath.isEmpty()) {
 						final Path p = Paths.get(contentFilePath);
 						if(Files.exists(p) && !Files.isDirectory(p) && Files.isReadable(p)) {

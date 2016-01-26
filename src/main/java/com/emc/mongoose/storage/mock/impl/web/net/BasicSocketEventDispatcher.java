@@ -47,7 +47,7 @@ implements Runnable {
 	private final Thread executor;
 	//
 	public BasicSocketEventDispatcher(
-		final RunTimeConfig runTimeConfig,
+		final AppConfig appConfig,
 		final HttpAsyncService protocolHandler, final int port,
 		final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory,
 		final StorageIOStats ioStats

@@ -1,5 +1,7 @@
 package com.emc.mongoose.webui;
 //
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
@@ -21,49 +23,53 @@ public abstract class CommonServlet
 extends HttpServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private static volatile RunTimeConfig LAST_RUN_TIME_CONFIG;
-	private static final RunTimeConfig DEFAULT_CFG;
+	private final static AppConfig DEFAULT_CFG;
 	//
-	public static ConcurrentHashMap<String, Thread> THREADS_MAP;
-	public static ConcurrentHashMap<String, Boolean> STOPPED_RUN_MODES;
-	public static ConcurrentHashMap<String, String> CHARTS_MAP;
+	private static volatile AppConfig LAST_RUN_TIME_CONFIG = null;
+	public static Map<String, Thread> THREADS_MAP;
+	public static Map<String, Boolean> STOPPED_RUN_MODES;
+	public static Map<String, String> CHARTS_MAP;
 	//
-	protected RunTimeConfig runTimeConfig;
+	protected AppConfig appConfig;
 	//
 	static {
 		THREADS_MAP = new ConcurrentHashMap<>();
 		STOPPED_RUN_MODES = new ConcurrentHashMap<>();
 		CHARTS_MAP = new ConcurrentHashMap<>();
-		LAST_RUN_TIME_CONFIG = (RunTimeConfig) RunTimeConfig.getContext().clone();
-		DEFAULT_CFG = RunTimeConfig.getContext();
+		DEFAULT_CFG = BasicConfig.THREAD_CONTEXT.get();
+		try {
+			LAST_RUN_TIME_CONFIG = (AppConfig) DEFAULT_CFG.clone();
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.FATAL, e, "Failed to clone the configuration");
+		}
 	}
 	//
 	@Override
 	public void init() {
 		try {
 			super.init();
-			runTimeConfig = (RunTimeConfig) (
-				(RunTimeConfig) getServletContext().getAttribute("rtConfig")
+			appConfig = (AppConfig) (
+				(RunTimeConfig) getServletContext().getAttribute("appConfig")
 			).clone();
 		} catch (final ServletException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Interrupted servlet init method");
 		}
 	}
 	//
-	protected void setupRunTimeConfig(final HttpServletRequest request) {
+	protected void setupAppConfig(final HttpServletRequest request) {
 		for (final Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
 			if (entry.getValue()[0].trim().isEmpty()) {
 				final String[] defaultPropValue = DEFAULT_CFG.getStringArray(entry.getKey());
-				if (defaultPropValue.length > 0 && !entry.getKey().equals(RunTimeConfig.KEY_RUN_ID)) {
-					runTimeConfig.set(entry.getKey(), convertArrayToString(defaultPropValue));
+				if (defaultPropValue.length > 0 && !entry.getKey().equals(AppConfig.KEY_RUN_ID)) {
+					appConfig.setProperty(entry.getKey(), convertArrayToString(defaultPropValue));
 				}
 				continue;
 			}
 			if (entry.getValue().length > 1) {
-				runTimeConfig.set(entry.getKey(), convertArrayToString(entry.getValue()));
+				appConfig.setProperty(entry.getKey(), convertArrayToString(entry.getValue()));
 				continue;
 			}
-			runTimeConfig.set(entry.getKey(), entry.getValue()[0].trim());
+			appConfig.setProperty(entry.getKey(), entry.getValue()[0].trim());
 		}
 	}
 	//
@@ -75,11 +81,15 @@ extends HttpServlet {
 				.trim();
 	}
 	//
-	public static void updateLastRunTimeConfig(final RunTimeConfig runTimeConfig) {
-		LAST_RUN_TIME_CONFIG = (RunTimeConfig) runTimeConfig.clone();
+	public static void updateLastAppConfig(final AppConfig appConfig) {
+		try {
+			LAST_RUN_TIME_CONFIG = (AppConfig) appConfig.clone();
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the configuration");
+		}
 	}
 	//
-	public static RunTimeConfig getLastRunTimeConfig() {
+	public static AppConfig getLastAppConfig() {
 		return LAST_RUN_TIME_CONFIG;
 	}
 }

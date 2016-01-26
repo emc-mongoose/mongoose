@@ -66,11 +66,11 @@ extends StandaloneClientTestBase {
 			System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 			StandaloneClientTestBase.setUpClass();
 			//
-			final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-			rtConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
-			rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
-			rtConfig.set(RunTimeConfig.KEY_LOAD_CIRCULAR, true);
-			RunTimeConfig.setContext(rtConfig);
+			final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+			appConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
+			appConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
+			appConfig.set(RunTimeConfig.KEY_LOAD_CIRCULAR, true);
+			RunTimeConfig.setContext(appConfig);
 			//
 			try (
 				final StorageClient<HttpDataItem> client = CLIENT_BUILDER
@@ -90,14 +90,14 @@ extends StandaloneClientTestBase {
 				RunIdFileManager.flushAll();
 			}
 			//
-			RunTimeConfig newConfig = RunTimeConfig.getContext();
+			RunTimeConfig newConfig = BasicConfig.CONTEXT_CONFIG.get();
 			newConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
 			newConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
 			newConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, RUN_ID);
 			newConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, RESULTS_COUNT);
-			RunTimeConfig.setContext(rtConfig);
+			RunTimeConfig.setContext(appConfig);
 			//
-			final Chain chainScenario = new Chain(rtConfig);
+			final Chain chainScenario = new Chain(appConfig);
 			try (
 				final BufferingOutputStream
 					stdOutBuffer = StdOutUtil.getStdOutBufferingStream()

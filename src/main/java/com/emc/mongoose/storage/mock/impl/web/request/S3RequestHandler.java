@@ -1,13 +1,12 @@
 package com.emc.mongoose.storage.mock.impl.web.request;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.storage.adapter.s3.BucketHelper;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
@@ -53,7 +52,7 @@ extends WSRequestHandlerBase<T> {
 	private final static String
 		MAX_KEYS = "maxKeys", MARKER = "marker",
 		BUCKET = "bucket", OBJ_ID = "objId",
-		AUTH_PREFIX = RunTimeConfig.getContext().getApiS3AuthPrefix() + " ";
+		AUTH_PREFIX = BasicConfig.CONTEXT_CONFIG.get().getApiS3AuthPrefix() + " ";
 	private final static Pattern
 		PATTERN_URI = Pattern.compile("/(?<" + BUCKET + ">[^/^\\?]+)/?(?<" + OBJ_ID + ">[^\\?]+)?"),
 		PATTERN_MAX_KEYS = Pattern.compile(
@@ -61,7 +60,7 @@ extends WSRequestHandlerBase<T> {
 		),
 		PATTERN_MARKER = Pattern.compile(BucketHelper.URL_ARG_MARKER + "=(?<" + MARKER + ">[a-z\\d]+)&?");
 	//
-	public S3RequestHandler(final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage) {
+	public S3RequestHandler(final AppConfig appConfig, final WSMock<T> sharedStorage) {
 		super(runTimeConfig, sharedStorage);
 	}
 	//
@@ -91,8 +90,8 @@ extends WSRequestHandlerBase<T> {
 					} else {
 						final long offset;
 						if(
-							WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ||
-							WSRequestConfig.METHOD_POST.equalsIgnoreCase(method)
+							HttpRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ||
+							HttpRequestConfig.METHOD_POST.equalsIgnoreCase(method)
 						) {
 							offset = Long.parseLong(objId, MutableDataItem.ID_RADIX);
 						} else {

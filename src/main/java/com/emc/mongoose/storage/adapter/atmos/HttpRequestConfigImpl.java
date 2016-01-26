@@ -6,7 +6,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
@@ -36,8 +36,8 @@ import java.util.NoSuchElementException;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSRequestConfigImpl<T extends HttpDataItem, C extends Container<T>>
-extends WSRequestConfigBase<T, C> {
+public final class HttpRequestConfigImpl<T extends HttpDataItem, C extends Container<T>>
+extends HttpRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -50,12 +50,12 @@ extends WSRequestConfigBase<T, C> {
 	private WSSubTenantImpl<T> subTenant;
 	private String uriBasePath;
 	//
-	public WSRequestConfigImpl()
+	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
 		this(null);
 	}
 	//
-	protected WSRequestConfigImpl(final WSRequestConfigImpl<T, C> reqConf2Clone)
+	protected HttpRequestConfigImpl(final HttpRequestConfigImpl<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		//
@@ -75,10 +75,10 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
-	public WSRequestConfigImpl<T, C> clone() {
-		WSRequestConfigImpl<T, C> copy = null;
+	public HttpRequestConfigImpl<T, C> clone() {
+		HttpRequestConfigImpl<T, C> copy = null;
 		try {
-			copy = new WSRequestConfigImpl<>(this);
+			copy = new HttpRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
 			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
@@ -140,7 +140,7 @@ extends WSRequestConfigBase<T, C> {
 		return subTenant;
 	}
 	//
-	public final WSRequestConfigImpl<T, C> setSubTenant(final WSSubTenantImpl<T> subTenant)
+	public final HttpRequestConfigImpl<T, C> setSubTenant(final WSSubTenantImpl<T> subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
 		if(sharedHeaders != null && userName != null) {
@@ -156,7 +156,7 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T, C> setUserName(final String userName)
+	public final HttpRequestConfigImpl<T, C> setUserName(final String userName)
 	throws IllegalStateException {
 		if(userName == null) {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
@@ -178,7 +178,7 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T, C> setSecret(final String secret) {
+	public final HttpRequestConfigBase<T, C> setSecret(final String secret) {
 		super.setSecret(secret);
 		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		secretKey = new SecretKeySpec(Base64.decodeBase64(secret), signMethod);
@@ -186,7 +186,7 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T, C> setNameSpace(final String nameSpace) {
+	public final HttpRequestConfigBase<T, C> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		//if(nameSpace == null || nameSpace.length() < 1) {
 			LOG.debug(Markers.MSG, "Using empty namespace");
@@ -197,7 +197,7 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T, C> setFileAccessEnabled(final boolean flag) {
+	public final HttpRequestConfigImpl<T, C> setFileAccessEnabled(final boolean flag) {
 		super.setFileAccessEnabled(flag);
 		if(flag) {
 			uriBasePath = PREFIX_URI + API_TYPE_FS;
@@ -208,20 +208,20 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
-		super.setRunTimeConfig(runTimeConfig);
+	public final HttpRequestConfigImpl<T, C> setAppConfig(final AppConfig appConfig) {
+		super.setAppConfig(this.appConfig);
 		//
 		try {
 			setSubTenant(
 				new WSSubTenantImpl<>(
-					this, runTimeConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
+					this, this.appConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
 				)
 			);
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_API_ATMOS_SUBTENANT);
 		}
 		//
-		if(runTimeConfig.getDataFileAccessEnabled()) {
+		if(this.appConfig.getDataFileAccessEnabled()) {
 			uriBasePath = PREFIX_URI + API_TYPE_FS;
 		} else {
 			uriBasePath = PREFIX_URI + API_TYPE_OBJ;
@@ -413,7 +413,7 @@ extends WSRequestConfigBase<T, C> {
 			subTenant.create(storageAddrs[0]);
 		}
 		/*re*/setSubTenant(subTenant);
-		runTimeConfig.set(RunTimeConfig.KEY_API_ATMOS_SUBTENANT, subTenant.getValue());
+		appConfig.set(RunTimeConfig.KEY_API_ATMOS_SUBTENANT, subTenant.getValue());
 		super.configureStorage(storageAddrs);
 	}
 	//

@@ -4,7 +4,6 @@ import com.emc.mongoose.client.api.load.builder.DataLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.DataLoadClient;
 //
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
@@ -42,21 +41,21 @@ implements DataLoadBuilderClient<T, W, U> {
 	//
 	protected DataLoadBuilderClientBase()
 	throws IOException {
-		this(RunTimeConfig.getContext());
+		this(BasicConfig.CONTEXT_CONFIG.get());
 	}
 	//
-	protected DataLoadBuilderClientBase(final RunTimeConfig rtConfig)
+	protected DataLoadBuilderClientBase(final AppConfig appConfig)
 	throws IOException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, W, U> setRunTimeConfig(final RunTimeConfig rtConfig)
+	public final DataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
-		super.setRunTimeConfig(rtConfig);
-		setMinObjSize(rtConfig.getDataSizeMin());
-		setMaxObjSize(rtConfig.getDataSizeMax());
-		setObjSizeBias(rtConfig.getDataSizeBias());
+		super.setAppConfig(appConfig);
+		setMinObjSize(appConfig.getDataSizeMin());
+		setMaxObjSize(appConfig.getDataSizeMax());
+		setObjSizeBias(appConfig.getDataSizeBias());
 		return this;
 	}
 	//
@@ -124,7 +123,7 @@ implements DataLoadBuilderClient<T, W, U> {
 			// calculate approx average data item size
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-				rtConfig.getBatchSize()
+				appConfig.getBatchSize()
 			);
 			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?

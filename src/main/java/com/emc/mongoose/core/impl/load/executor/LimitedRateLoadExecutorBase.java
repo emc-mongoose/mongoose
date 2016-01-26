@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -32,7 +33,7 @@ extends LoadExecutorBase<T> {
 	private final int manualTaskSleepMicroSecs, tgtDurMicroSecs;
 	//
 	protected LimitedRateLoadExecutorBase(
-		final RunTimeConfig runTimeConfig,
+		final AppConfig runTimeConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,

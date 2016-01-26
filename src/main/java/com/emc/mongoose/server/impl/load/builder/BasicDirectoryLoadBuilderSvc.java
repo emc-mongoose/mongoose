@@ -47,9 +47,9 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	//
 	private String name = getClass().getName();
 	//
-	public BasicDirectoryLoadBuilderSvc(final RunTimeConfig rtConfig)
+	public BasicDirectoryLoadBuilderSvc(final AppConfig appConfig)
 	throws RemoteException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override
@@ -72,7 +72,7 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	public String buildRemotely()
 	throws RemoteException {
 		U loadSvc = build();
-		LOG.info(Markers.MSG, rtConfig.toString());
+		LOG.info(Markers.MSG, appConfig.toString());
 		ServiceUtil.create(loadSvc);
 		return loadSvc.getName();
 	}
@@ -84,15 +84,15 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
-		rtConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
+		appConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
 		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int connPerNode = loadTypeConnPerNode.get(loadType);
 		//
 		return (U) new BasicDirectoryLoadSvc<>(
-			rtConfig, (FileIOConfig<T, C>) ioConfig, storageNodeAddrs, connPerNode, connPerNode,
+			appConfig, (FileIOConfig<T, C>) ioConfig, storageNodeAddrs, connPerNode, connPerNode,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, manualTaskSleepMicroSecs, rateLimit
 		);

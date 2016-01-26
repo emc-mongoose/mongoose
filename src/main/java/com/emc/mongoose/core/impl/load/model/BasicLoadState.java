@@ -1,5 +1,7 @@
 package com.emc.mongoose.core.impl.load.model;
 //
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -36,7 +38,7 @@ public class BasicLoadState<T extends Item>
 implements LoadState<T> {
 	//
 	private final int loadNumber;
-	private final RunTimeConfig runTimeConfig;
+	private final AppConfig appConfig;
 	private final IOStats.Snapshot ioStatsSnapshot;
 	private final T lastDataItem;
 	//
@@ -46,8 +48,8 @@ implements LoadState<T> {
 	}
 	//
 	@Override
-	public RunTimeConfig getRunTimeConfig() {
-		return runTimeConfig;
+	public AppConfig getAppConfig() {
+		return appConfig;
 	}
 	//
 	@Override
@@ -61,26 +63,26 @@ implements LoadState<T> {
 	}
 	//
 	@Override
-	public boolean isLimitReached(final RunTimeConfig rtConfig) {
+	public boolean isLimitReached(final AppConfig appConfig) {
 		//  time limitations
-		final TimeUnit loadLimitTimeUnit = rtConfig.getLoadLimitTimeUnit();
-		final long loadLimitTimeValue = rtConfig.getLoadLimitTimeValue();
+		final TimeUnit loadLimitTimeUnit = TimeUnit.SECONDS;
+		final long loadLimitTimeValue = appConfig.getLoadLimitTime();
 		final long loadTimeMicroSec = loadLimitTimeValue > 0 ?
 			loadLimitTimeUnit.toMicros(loadLimitTimeValue) : Long.MAX_VALUE;
 		final long stateTimeMicroSec = ioStatsSnapshot.getElapsedTime();
 		//  count limitations
 		final long counterResults = ioStatsSnapshot.getSuccCount() + ioStatsSnapshot.getFailCount();
-		final long loadLimitCount = rtConfig.getLoadLimitCount();
+		final long loadLimitCount = appConfig.getLoadLimitCount();
 		final long maxCount = loadLimitCount > 0 ?
-			rtConfig.getLoadLimitCount() : Long.MAX_VALUE;
+			appConfig.getLoadLimitCount() : Long.MAX_VALUE;
 		return (counterResults >= maxCount) || (stateTimeMicroSec >= loadTimeMicroSec);
 	}
 	//
-	public static class Builder<T extends Item, U extends BasicLoadState<T>>
+	public static class Builder<T extends Item, U extends LoadState<T>>
 	implements LoadState.Builder<T, U> {
 		//
 		private int loadNumber;
-		private RunTimeConfig runTimeConfig;
+		private AppConfig appConfig;
 		private IOStats.Snapshot ioStatsSnapshot;
 		private T lastDataItem;
 		//
@@ -91,8 +93,8 @@ implements LoadState<T> {
 		}
 		//
 		@Override
-		public Builder<T, U> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
-			this.runTimeConfig = runTimeConfig;
+		public Builder<T, U> setAppConfig(final AppConfig appConfig) {
+			this.appConfig = appConfig;
 			return this;
 		}
 		//
@@ -111,50 +113,56 @@ implements LoadState<T> {
 		@Override
 		@SuppressWarnings("unchecked")
 		public U build() {
-			return (U) new BasicLoadState<>((Builder<T, BasicLoadState<T>>) this);
+			return (U) new BasicLoadState<>((Builder<T, LoadState<T>>) this);
 		}
 		//
 	}
 	//
-	private BasicLoadState(final Builder<T, BasicLoadState<T>> builder) {
+	private BasicLoadState(final Builder<T, LoadState<T>> builder) {
 		this.loadNumber = builder.loadNumber;
-		this.runTimeConfig = builder.runTimeConfig;
+		this.appConfig = builder.appConfig;
 		this.ioStatsSnapshot = builder.ioStatsSnapshot;
 		this.lastDataItem = builder.lastDataItem;
 	}
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
-	public static void restoreScenarioState(final RunTimeConfig rtConfig) {
+	public static void restoreScenarioState(final AppConfig appConfig) {
 		final String fullStateFileName = Paths.get(
-			RunTimeConfig.DIR_ROOT, Constants.DIR_LOG, rtConfig.getRunId()
+			BasicConfig.getRootDir(), Constants.DIR_LOG, appConfig.getRunId()
 		).resolve(Constants.STATES_FILE).toString();
 		//  if load states list is empty or file w/ load states doesn't exist, then init
 		//  map entry value w/ empty list
 		LoadExecutor.RESTORED_STATES_MAP.put(
-			rtConfig.getRunId(), new ArrayList<LoadState<? extends Item>>()
+			appConfig.getRunId(), new ArrayList<LoadState<? extends Item>>()
 		);
-		if(isSavedStateOfRunExists(rtConfig.getRunId())) {
+		if(isSavedStateOfRunExists(appConfig.getRunId())) {
 			final List<LoadState<? extends Item>>
-				loadStates = getRunStateFromFile(rtConfig.getRunId(), fullStateFileName);
+				loadStates = getRunStateFromFile(appConfig.getRunId(), fullStateFileName);
 			if(loadStates != null && !loadStates.isEmpty()) {
 				//  check if immutable params were changed for load executors
 				for(final LoadState state : loadStates) {
-					if(rtConfig.isImmutableParamsChanged(state.getRunTimeConfig())) {
+					if(
+						appConfig.getRunMode().equals(state.getAppConfig().getRunMode())
+							&&
+						appConfig.getRunVersion().equals(state.getAppConfig().getRunVersion())
+					) {
+
+					} else {
 						LOG.warn(
 							Markers.MSG,
 							"Run \"{}\": configuration immutability violated. Starting new run",
-							rtConfig.getRunId()
+							appConfig.getRunId()
 						);
 						return;
 					}
 				}
 				//  override load states list
-				LoadExecutor.RESTORED_STATES_MAP.put(rtConfig.getRunId(), loadStates);
-				LOG.info(Markers.MSG, "Run \"{}\" was resumed", rtConfig.getRunId());
+				LoadExecutor.RESTORED_STATES_MAP.put(appConfig.getRunId(), loadStates);
+				LOG.info(Markers.MSG, "Run \"{}\" was resumed", appConfig.getRunId());
 				//  don't remove state file if load executor has been already finished
 				for(final LoadState state : loadStates) {
-					if (state.isLimitReached(rtConfig))
+					if (state.isLimitReached(appConfig))
 						return;
 				}
 				//  remove state file when scenario's state was restored
@@ -162,13 +170,15 @@ implements LoadState<T> {
 			}
 		} else {
 			LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
-				rtConfig.getRunId());
+				appConfig.getRunId());
 		}
 	}
 	//
 	public static boolean isSavedStateOfRunExists(final String runId) {
-		final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, runId).resolve(Constants.STATES_FILE).toString();
+		final String fullStateFileName = Paths
+			.get(BasicConfig.getRootDir(), Constants.DIR_LOG, runId)
+			.resolve(Constants.STATES_FILE)
+			.toString();
 		final File stateFile = new File(fullStateFileName);
 		return stateFile.exists();
 	}
@@ -210,10 +220,10 @@ implements LoadState<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public static <T extends Item> LoadState<T> findStateByLoadNumber(
-		final int loadNumber, final RunTimeConfig rtConfig
+		final int loadNumber, final AppConfig appConfig
 	) {
 		final List<LoadState<?>>
-			loadStates = LoadExecutor.RESTORED_STATES_MAP.get(rtConfig.getRunId());
+			loadStates = LoadExecutor.RESTORED_STATES_MAP.get(appConfig.getRunId());
 		for(final LoadState<? extends Item> state : loadStates) {
 			if(state.getLoadNumber() == loadNumber) {
 				return (LoadState<T>) state;
@@ -222,15 +232,13 @@ implements LoadState<T> {
 		return null;
 	}
 	//
-	public static boolean isRunFinished(
-		final RunTimeConfig rtConfig, final List<LoadState> states
-	) {
-		final TimeUnit loadLimitTimeUnit = rtConfig.getLoadLimitTimeUnit();
-		final long loadLimitTimeValue = rtConfig.getLoadLimitTimeValue();
+	public static boolean isRunFinished(final AppConfig appConfig, final List<LoadState> states) {
+		final TimeUnit loadLimitTimeUnit = TimeUnit.SECONDS;
+		final long loadLimitTimeValue = appConfig.getLoadLimitTime();
 		final long timeLimitMicroSec = loadLimitTimeValue > 0 ?
-			loadLimitTimeUnit.toMicros(rtConfig.getLoadLimitTimeValue()) : Long.MAX_VALUE;
-		final long loadLimitCount = rtConfig.getLoadLimitCount() > 0 ?
-			rtConfig.getLoadLimitCount() : Long.MAX_VALUE;
+			loadLimitTimeUnit.toMicros(appConfig.getLoadLimitTime()) : Long.MAX_VALUE;
+		final long loadLimitCount = appConfig.getLoadLimitCount() > 0 ?
+			appConfig.getLoadLimitCount() : Long.MAX_VALUE;
 		//
 		for(final LoadState state : states) {
 			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
@@ -260,7 +268,7 @@ implements LoadState<T> {
 	//
 	public static void saveRunState(final String runId, final List<LoadState> loadStates) {
 		final String fullStateFileName = Paths
-			.get(RunTimeConfig.DIR_ROOT, Constants.DIR_LOG, runId)
+			.get(BasicConfig.getRootDir(), Constants.DIR_LOG, runId)
 			.resolve(Constants.STATES_FILE)
 			.toString();
 		try(final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {

@@ -34,7 +34,7 @@ implements DirectoryLoadSvc<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicDirectoryLoadSvc(
-		final RunTimeConfig runTimeConfig, final FileIOConfig<T, C> ioConfig, final String[] addrs,
+		final AppConfig appConfig, final FileIOConfig<T, C> ioConfig, final String[] addrs,
 		final int connPerNode, final int threadsPerNode,
 		final ItemSrc<C> itemSrc, final long maxCount,
 		final int manualTaskSleepMicroSecs, final float rateLimit

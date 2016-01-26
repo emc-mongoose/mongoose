@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.io.conf;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
@@ -32,11 +32,11 @@ implements RequestConfig<T, C> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		api = runTimeConfig.getApiName();
-		secret = runTimeConfig.getAuthSecret();
-		userName = runTimeConfig.getAuthId();
-		scheme = runTimeConfig.getStorageProto();
-		port = runTimeConfig.getApiTypePort(api);
+		api = appConfig.getApiName();
+		secret = appConfig.getAuthSecret();
+		userName = appConfig.getAuthId();
+		scheme = appConfig.getStorageProto();
+		port = appConfig.getApiTypePort(api);
 
 	}
 	//
@@ -155,15 +155,15 @@ implements RequestConfig<T, C> {
 	}
 	//
 	@Override
-	public RequestConfigBase<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
-		super.setRunTimeConfig(runTimeConfig);
-		final String api = runTimeConfig.getApiName();
+	public RequestConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
+		super.setAppConfig(appConfig);
+		final String api = appConfig.getStorageHttpApiClass();
 		setAPI(api);
-		setPort(this.runTimeConfig.getApiTypePort(api));
-		setUserName(this.runTimeConfig.getAuthId());
-		setSecret(this.runTimeConfig.getAuthSecret());
-		setNameSpace(this.runTimeConfig.getStorageNameSpace());
-		setBuffSize((int) this.runTimeConfig.getIOBufferSizeMin());
+		setPort(this.appConfig.getApiTypePort(api));
+		setUserName(this.appConfig.getAuthId());
+		setSecret(this.appConfig.getAuthSecret());
+		setNameSpace(this.appConfig.getStorageNameSpace());
+		setBuffSize((int) this.appConfig.getIOBufferSizeMin());
 		return this;
 	}
 	//

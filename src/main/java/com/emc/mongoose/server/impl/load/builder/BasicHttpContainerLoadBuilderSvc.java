@@ -8,13 +8,13 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.impl.load.builder.BasicWSContainerLoadBuilder;
-import com.emc.mongoose.server.api.load.builder.WSContainerLoadBuilderSvc;
-import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;
-import com.emc.mongoose.server.impl.load.executor.BasicWSContainerLoadSvc;
+import com.emc.mongoose.core.impl.load.builder.BasicHttpContainerLoadBuilder;
+import com.emc.mongoose.server.api.load.builder.HttpContainerLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.HttpContainerLoadSvc;
+import com.emc.mongoose.server.impl.load.executor.BasicHttpContainerLoadSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -30,20 +30,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by gusakk on 22.10.15.
  */
-public class BasicWSContainerLoadBuilderSvc<
+public class BasicHttpContainerLoadBuilderSvc<
 	T extends HttpDataItem,
 	C extends Container<T>,
-	U extends WSContainerLoadSvc<T, C>
+	U extends HttpContainerLoadSvc<T, C>
 >
-extends BasicWSContainerLoadBuilder<T, C, U>
-implements WSContainerLoadBuilderSvc<T, C, U> {
+extends BasicHttpContainerLoadBuilder<T, C, U>
+implements HttpContainerLoadBuilderSvc<T, C, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static AtomicInteger FORK_COUNTER = new AtomicInteger(0);
 	//
 	private String name = getClass().getName();
 	//
-	public BasicWSContainerLoadBuilderSvc(final RunTimeConfig runTimeConfig)
+	public BasicHttpContainerLoadBuilderSvc(final AppConfig appConfig)
 	throws RemoteException {
 		super(runTimeConfig);
 	}
@@ -52,8 +52,8 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	public final int fork()
 	throws RemoteException {
 		try {
-			final BasicWSContainerLoadBuilderSvc<T, C, U>
-				forkedSvc = (BasicWSContainerLoadBuilderSvc<T, C, U>) clone();
+			final BasicHttpContainerLoadBuilderSvc<T, C, U>
+				forkedSvc = (BasicHttpContainerLoadBuilderSvc<T, C, U>) clone();
 			final int forkNum = FORK_COUNTER.getAndIncrement();
 			forkedSvc.name = name + forkNum;
 			forkedSvc.start();
@@ -68,7 +68,7 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 	public String buildRemotely()
 	throws RemoteException {
 		U loadSvc = build();
-		LOG.info(Markers.MSG, rtConfig.toString());
+		LOG.info(Markers.MSG, appConfig.toString());
 		ServiceUtil.create(loadSvc);
 		return loadSvc.getName();
 	}
@@ -98,8 +98,8 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(ioConfig);
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+		final HttpRequestConfig wsReqConf = HttpRequestConfig.class.cast(ioConfig);
+		final RunTimeConfig localRunTimeConfig = BasicConfig.CONTEXT_CONFIG.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		localRunTimeConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		final IOTask.Type loadType = ioConfig.getLoadType();
@@ -109,7 +109,7 @@ implements WSContainerLoadBuilderSvc<T, C, U> {
 				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
-		return (U) new BasicWSContainerLoadSvc<>(
+		return (U) new BasicHttpContainerLoadSvc<>(
 			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, manualTaskSleepMicroSecs, rateLimit

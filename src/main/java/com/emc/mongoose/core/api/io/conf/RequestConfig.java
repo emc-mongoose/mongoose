@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.api.io.conf;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 // mongoose-common.jar
@@ -40,7 +41,7 @@ extends IOConfig<T, C>, Closeable {
 	RequestConfig<T, C> setSecret(final String secret);
 	//
 	@Override
-	RequestConfig<T, C> setRunTimeConfig(final RunTimeConfig props);
+	RequestConfig<T, C> setAppConfig(final AppConfig appConfig);
 	//
 	void configureStorage(final String storageAddrs[])
 	throws IllegalStateException;

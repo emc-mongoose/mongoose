@@ -27,7 +27,7 @@ implements HttpAsyncRequestHandlerMapper {
 	private final ReqURIMatchingHandler<T> reqHandlerSwift;
 	//
 	public APIRequestHandlerMapper(
-		final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage
+		final AppConfig appConfig, final WSMock<T> sharedStorage
 	) {
 		reqHandlerAtmos = new AtmosRequestHandler<>(runTimeConfig, sharedStorage);
 		reqHandlerS3 =  new S3RequestHandler<>(runTimeConfig, sharedStorage);

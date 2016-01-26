@@ -35,7 +35,7 @@ function(Handlebars, extendedConf) {
 				href: "#" + "run.id",
 				text: "id"
 			}));
-		//  add empty field which doesn't contain in rtConfig
+		//  add empty field which doesn't contain in appConfig
 		propsMap[KEY_FIELD_RUN_ID] = "";
 		buildDivBlocksByPropertyNames(propsMap);
 		bindEvents();

@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -29,11 +29,11 @@ implements AuthToken<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final WSRequestConfigImpl<T, ? extends Container<T>> reqConf;
+	private final HttpRequestConfigImpl<T, ? extends Container<T>> reqConf;
 	private String value = null;
 	//
 	public WSAuthTokenImpl(
-		final WSRequestConfigImpl<T, ? extends Container<T>> reqConf, final String value
+		final HttpRequestConfigImpl<T, ? extends Container<T>> reqConf, final String value
 	) {
 		this.reqConf = reqConf;
 		this.value = value;
@@ -54,8 +54,8 @@ implements AuthToken<T> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_GET,
-				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				addr, HttpRequestConfig.METHOD_GET,
+				HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -65,9 +65,9 @@ implements AuthToken<T> {
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						if(httpResp.containsHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN)) {
+						if(httpResp.containsHeader(HttpRequestConfigImpl.KEY_X_AUTH_TOKEN)) {
 							value = httpResp
-								.getFirstHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN)
+								.getFirstHeader(HttpRequestConfigImpl.KEY_X_AUTH_TOKEN)
 								.getValue();
 							LOG.info(Markers.MSG, "Created auth token \"{}\"", value);
 						} else {
@@ -109,8 +109,8 @@ implements AuthToken<T> {
 			method, "/auth/v1.0"
 		);
 		//
-		httpReq.setHeader(WSRequestConfigImpl.KEY_X_AUTH_USER, reqConf.getUserName());
-		httpReq.setHeader(WSRequestConfigImpl.KEY_X_AUTH_KEY, reqConf.getSecret());
+		httpReq.setHeader(HttpRequestConfigImpl.KEY_X_AUTH_USER, reqConf.getUserName());
+		httpReq.setHeader(HttpRequestConfigImpl.KEY_X_AUTH_KEY, reqConf.getSecret());
 		httpReq.setHeader(HttpHeaders.ACCEPT, "*/*");
 		//
 		reqConf.applyHeadersFinally(httpReq);

@@ -2,6 +2,7 @@ package com.emc.mongoose.client.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -174,13 +175,13 @@ implements LoadClient<T, W> {
 	//
 	@SuppressWarnings("unchecked")
 	public LoadClientBase(
-		final RunTimeConfig rtConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
+		final AppConfig appConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
 		final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		super(
-			rtConfig, ioConfig, addrs, connCountPerNode, threadCount,
+			appConfig, ioConfig, addrs, connCountPerNode, threadCount,
 			// suppress new data items generation on the client side
 			itemSrc instanceof NewDataItemSrc ? null : itemSrc, maxCount,
 			// get any load server last job number
@@ -209,7 +210,7 @@ implements LoadClient<T, W> {
 	protected final void initStats(final boolean flagServeJMX) {
 		if(flagServeJMX) {
 			ioStats = new AggregatedRemoteIOStats<>(
-				getName(), rtConfig.getRemotePortMonitor(), remoteLoadMap
+				getName(), appConfig.getRemotePortMonitor(), remoteLoadMap
 			);
 		} else {
 			ioStats = new AggregatedRemoteIOStats<>(getName(), 0, remoteLoadMap);
@@ -553,8 +554,8 @@ implements LoadClient<T, W> {
 			LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 			//
 			if(!isCircular) {
-				final long timeOut = rtConfig.getLoadLimitTimeValue();
-				final TimeUnit timeUnit = rtConfig.getLoadLimitTimeUnit();
+				final long timeOut = appConfig.getLoadLimitTimeValue();
+				final TimeUnit timeUnit = appConfig.getLoadLimitTimeUnit();
 				remotePutExecutor.shutdown();
 				try {
 					if(

@@ -1,6 +1,7 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.math.MathUtil;
@@ -31,7 +32,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 20.10.14.
  */
@@ -50,17 +50,17 @@ implements LoadBuilderClient<T, W, U> {
 	//
 	protected boolean flagAssignLoadSvcToNode = false;
 	protected final Map<String, V> loadSvcMap = new HashMap<>();
-	protected final Map<String, RunTimeConfig> loadSvcConfMap = new HashMap<>();
+	protected final Map<String, AppConfig> loadSvcConfMap = new HashMap<>();
 	//
 	protected LoadBuilderClientBase()
 	throws IOException {
-		this(RunTimeConfig.getContext());
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
-	protected LoadBuilderClientBase(final RunTimeConfig rtConfig)
+	protected LoadBuilderClientBase(final AppConfig appConfig)
 	throws IOException {
-		super(rtConfig);
-		loadSvcAddrs = rtConfig.getLoadServerAddrs();
+		super(appConfig);
+		loadSvcAddrs = appConfig.getLoadServerAddrs();
 		V loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
 		for(final String serverAddr : loadSvcAddrs) {
@@ -70,25 +70,27 @@ implements LoadBuilderClient<T, W, U> {
 						Markers.MSG, "Resolved service \"{}\" @ {}",
 						loadBuilderSvc.getName(), serverAddr
 				);
-				nextInstanceN = loadBuilderSvc.getNextInstanceNum(rtConfig.getRunId());
+				nextInstanceN = loadBuilderSvc.getNextInstanceNum(appConfig.getRunId());
 				if(nextInstanceN > maxLastInstanceN) {
 					maxLastInstanceN = nextInstanceN;
 				}
 				loadSvcMap.put(serverAddr, loadBuilderSvc);
-				loadSvcConfMap.put(serverAddr, (RunTimeConfig)rtConfig.clone());
+				loadSvcConfMap.put(serverAddr, (AppConfig) appConfig.clone());
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-						LOG, Level.ERROR, e, "Failed to lock load builder service @ {}", serverAddr
+					LOG, Level.ERROR, e, "Failed to lock load builder service @ {}", serverAddr
 				);
+			} catch(final CloneNotSupportedException e ) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the configuration");
 			}
 		}
 		//
 		resetItemSrc();
 		// set properties should be invoked only after the map is filled already
-		setRunTimeConfig(rtConfig);
+		setAppConfig(appConfig);
 		//
 		for(final String serverAddr : loadSvcAddrs) {
-			loadSvcMap.get(serverAddr).setNextInstanceNum(rtConfig.getRunId(), maxLastInstanceN);
+			loadSvcMap.get(serverAddr).setNextInstanceNum(appConfig.getRunId(), maxLastInstanceN);
 		}
 	}
 	//
@@ -98,7 +100,7 @@ implements LoadBuilderClient<T, W, U> {
 	throws IOException;
 	//
 	protected static void assignNodesToLoadSvcs(
-		final Map<String, RunTimeConfig> dstConfMap,
+		final Map<String, AppConfig> dstConfMap,
 		final String loadSvcAddrs[], final String nodeAddrs[]
 	) throws IllegalStateException {
 		if(loadSvcAddrs != null && (loadSvcAddrs.length > 1 || nodeAddrs.length > 1)) {
@@ -107,7 +109,7 @@ implements LoadBuilderClient<T, W, U> {
 				final int
 					nLoadSvcPerStep = loadSvcAddrs.length / nStep,
 					nNodesPerStep = nodeAddrs.length / nStep;
-				RunTimeConfig nextConfig;
+				AppConfig nextConfig;
 				String nextLoadSvcAddr, nextNodeAddrs;
 				int j;
 				for(int i = 0; i < nStep; i ++) {
@@ -124,7 +126,7 @@ implements LoadBuilderClient<T, W, U> {
 							Markers.MSG, "Load server @ " + nextLoadSvcAddr +
 							" will use the following storage nodes: " + nextNodeAddrs
 						);
-						nextConfig.setProperty(RunTimeConfig.KEY_STORAGE_ADDRS, nextNodeAddrs);
+						nextConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_ADDRS, nextNodeAddrs);
 					}
 				}
 			} else {
@@ -138,28 +140,25 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public LoadBuilderClient<T, W, U> setRunTimeConfig(final RunTimeConfig rtConfig)
+	public LoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
 		//
-		super.setRunTimeConfig(rtConfig);
+		super.setAppConfig(appConfig);
 		//
-		final String newNodeAddrs[] = rtConfig.getStorageAddrsWithPorts();
-		if(newNodeAddrs.length > 0) {
-			storageNodeAddrs = newNodeAddrs;
-		}
-		flagAssignLoadSvcToNode = rtConfig.getFlagAssignLoadServerToNode();
+		storageNodeAddrs = appConfig.getStorageHttpAddrsWithPorts();
+		flagAssignLoadSvcToNode = appConfig.getLoadServerAssignToNode();
 		if(flagAssignLoadSvcToNode) {
 			assignNodesToLoadSvcs(loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
 		}
 		//
 		V nextBuilder;
-		RunTimeConfig nextLoadSvcConfig;
+		AppConfig nextLoadSvcConfig;
 		if(loadSvcMap != null) {
 			for(final String addr : loadSvcMap.keySet()) {
 				nextBuilder = loadSvcMap.get(addr);
 				nextLoadSvcConfig = loadSvcConfMap.get(addr);
 				if(nextLoadSvcConfig == null) {
-					nextLoadSvcConfig = rtConfig; // use default
+					nextLoadSvcConfig = appConfig; // use default
 					LOG.debug(
 							Markers.MSG, "Applying the common configuration to server @ \"{}\"...", addr
 					);
@@ -168,18 +167,15 @@ implements LoadBuilderClient<T, W, U> {
 							Markers.MSG, "Applying the specific configuration to server @ \"{}\"...", addr
 					);
 				}
-				nextBuilder.setRunTimeConfig(nextLoadSvcConfig);
+				nextBuilder.setAppConfig(nextLoadSvcConfig);
 			}
 		}
 		//
-		setMaxCount(rtConfig.getLoadLimitCount());
-		setRateLimit(rtConfig.getLoadLimitRate());
-		setManualTaskSleepMicroSecs(
-			(int) TimeUnit.MILLISECONDS.toMicros(rtConfig.getLoadLimitReqSleepMilliSec())
-		);
+		setMaxCount(appConfig.getLoadLimitCount());
+		setRateLimit((float) appConfig.getLoadLimitRate());
 		//
 		try {
-			final String listFile = rtConfig.getItemSrcFile();
+			final String listFile = appConfig.getItemInputFile();
 			if(itemsFileExists(listFile) && loadSvcMap != null) {
 				setItemSrc(
 					new ItemCSVFileSrc<>(
@@ -225,21 +221,6 @@ implements LoadBuilderClient<T, W, U> {
 			for(final String addr : loadSvcMap.keySet()) {
 				nextBuilder = loadSvcMap.get(addr);
 				nextBuilder.setMaxCount(maxCount);
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderClient<T, W, U> setManualTaskSleepMicroSecs(
-		final int manualTaskSleepMicroSecs
-	) throws IllegalArgumentException, RemoteException {
-		super.setManualTaskSleepMicroSecs(manualTaskSleepMicroSecs);
-		V nextBuilder;
-		if(loadSvcMap != null) {
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setRateLimit(manualTaskSleepMicroSecs);
 			}
 		}
 		return this;
@@ -332,7 +313,7 @@ implements LoadBuilderClient<T, W, U> {
 				for(final String addr : loadSvcMap.keySet()) {
 					nextBuilder = loadSvcMap.get(addr);
 					nextBuilder.setDataNodeAddrs(
-						loadSvcConfMap.get(addr).getStorageAddrs()
+						loadSvcConfMap.get(addr).getStorageHttpAddrs()
 					);
 				}
 			}
@@ -368,7 +349,7 @@ implements LoadBuilderClient<T, W, U> {
 		final StringBuilder strBuilder = new StringBuilder(ioConfig.toString());
 		try {
 			strBuilder.append('.').append(loadSvcMap.get(loadSvcMap.keySet().iterator().next())
-				.getNextInstanceNum(rtConfig.getRunId()));
+				.getNextInstanceNum(appConfig.getRunId()));
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to make load builder string");
 		}

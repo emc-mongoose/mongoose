@@ -3,11 +3,11 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.swift.AuthToken;
 import com.emc.mongoose.storage.adapter.swift.WSAuthTokenImpl;
-import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
+import com.emc.mongoose.storage.adapter.swift.HttpRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -34,9 +34,9 @@ extends StandaloneClientTestBase {
 		);
 		StandaloneClientTestBase.setUpClass();
 		//
-		final WSRequestConfigImpl
-			reqConf = (WSRequestConfigImpl) WSRequestConfigBase.newInstanceFor("swift");
-		reqConf.setRunTimeConfig(RunTimeConfig.getContext());
+		final HttpRequestConfigImpl
+			reqConf = (HttpRequestConfigImpl) HttpRequestConfigBase.newInstanceFor("swift");
+		reqConf.setAppConfig(BasicConfig.CONTEXT_CONFIG.get());
 		AUTH_TOKEN = new WSAuthTokenImpl(
 			reqConf, SwiftUsePreExistingContainerTest.class.getSimpleName()
 		);

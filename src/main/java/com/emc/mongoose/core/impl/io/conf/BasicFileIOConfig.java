@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.io.conf;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 //
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -20,7 +21,7 @@ public class BasicFileIOConfig<F extends FileItem, D extends Directory<F>>
 extends IOConfigBase<F, D>
 implements FileIOConfig<F, D> {
 	//
-	private int batchSize = RunTimeConfig.getContext().getBatchSize();
+	private int batchSize = BasicConfig.THREAD_CONTEXT.get().getItemInputBatchSize();
 	//
 	public BasicFileIOConfig() {
 		super();
@@ -31,10 +32,10 @@ implements FileIOConfig<F, D> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public BasicFileIOConfig<F, D> setRunTimeConfig(final RunTimeConfig rtConfig) {
-		super.setRunTimeConfig(rtConfig);
+	public BasicFileIOConfig<F, D> setAppConfig(final AppConfig appConfig) {
+		super.setAppConfig(appConfig);
 		setContainer((D) new BasicDirectory<F>(getNamePrefix()));
-		batchSize = rtConfig.getBatchSize();
+		batchSize = appConfig.getItemInputBatchSize();
 		return this;
 	}
 	//

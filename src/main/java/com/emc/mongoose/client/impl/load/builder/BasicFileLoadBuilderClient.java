@@ -32,12 +32,12 @@ implements FileLoadBuilderClient<T, W, U> {
 	//
 	public BasicFileLoadBuilderClient()
 	throws IOException {
-		this(RunTimeConfig.getContext());
+		this(BasicConfig.CONTEXT_CONFIG.get());
 	}
 	//
-	public BasicFileLoadBuilderClient(final RunTimeConfig rtConfig)
+	public BasicFileLoadBuilderClient(final AppConfig appConfig)
 	throws IOException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -88,11 +88,11 @@ implements FileLoadBuilderClient<T, W, U> {
 		}
 		//
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
 		//
 		return (U) new BasicFileLoadClient<>(
-			rtConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
-			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
+			appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
+			appConfig.getConnCountPerNodeFor(loadTypeStr), appConfig.getWorkerCountFor(loadTypeStr),
 			itemSrc, maxCount, remoteLoadMap
 		);
 	}

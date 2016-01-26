@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
 import com.emc.mongoose.core.impl.item.data.GenericContainerItemSrcBase;
 //
@@ -61,8 +61,8 @@ extends GenericContainerItemSrcBase<T, C> {
 		}
 		// execute the request
 		final HttpResponse resp = HttpSwiftContainerHelper.class.cast(containerHelper).execute(
-			nodeAddr, WSRequestConfig.METHOD_GET, lastItemId, countLimit,
-			WSRequestConfig.REQUEST_WITH_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+			nodeAddr, HttpRequestConfig.METHOD_GET, lastItemId, countLimit,
+			HttpRequestConfig.REQUEST_WITH_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 		);
 		// response validation
 		if(resp == null) {

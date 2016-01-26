@@ -16,7 +16,7 @@ import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicDirectoryLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicFileLoadBuilderSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSContainerLoadBuilderSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicHttpContainerLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
 //
 import org.apache.logging.log4j.Logger;
@@ -38,17 +38,17 @@ implements LoadBuilderSvc {
 	//
 	private final List<LoadBuilderSvc> loadBuilderSvcs = new ArrayList<>();
 	//
-	public MultiLoadBuilderSvc(final RunTimeConfig rtConfig)
+	public MultiLoadBuilderSvc(final AppConfig appConfig)
 	throws RemoteException {
-		loadBuilderSvcs.add(new BasicWSContainerLoadBuilderSvc(rtConfig));
-		loadBuilderSvcs.add(new BasicWSDataLoadBuilderSvc(rtConfig));
+		loadBuilderSvcs.add(new BasicHttpContainerLoadBuilderSvc(appConfig));
+		loadBuilderSvcs.add(new BasicWSDataLoadBuilderSvc(appConfig));
 		loadBuilderSvcs.add(
 			new BasicDirectoryLoadBuilderSvc<
 				FileItem, Directory<FileItem>,
 				DirectoryLoadSvc<FileItem, Directory<FileItem>>
-			>(rtConfig)
+			>(appConfig)
 		);
-		loadBuilderSvcs.add(new BasicFileLoadBuilderSvc<>(rtConfig));
+		loadBuilderSvcs.add(new BasicFileLoadBuilderSvc<>(appConfig));
 	}
 	//
 	@Override
@@ -133,10 +133,10 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setRunTimeConfig(final RunTimeConfig props)
+	public final LoadBuilderSvc setAppConfig(final RunTimeConfig props)
 	throws IllegalStateException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setRunTimeConfig(props);
+			loadBuilderSvc.setAppConfig(props);
 		}
 		return this;
 	}

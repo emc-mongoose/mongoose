@@ -1,5 +1,7 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.IOWorker;
@@ -13,13 +15,13 @@ import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.task.WSContainerIOTask;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
-import com.emc.mongoose.core.api.load.executor.WSContainerLoadExecutor;
+import com.emc.mongoose.core.api.io.task.HttpContainerIOTask;
+import com.emc.mongoose.core.api.io.task.HttpIOTask;
+import com.emc.mongoose.core.api.load.executor.HttpContainerLoadExecutor;
 //
-import com.emc.mongoose.core.impl.io.task.BasicWSContainerTask;
+import com.emc.mongoose.core.impl.io.task.BasicHttpContainerTask;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.http.ExceptionLogger;
@@ -65,9 +67,9 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicWSContainerLoadExecutor<T extends HttpDataItem, C extends Container<T>>
+public class BasicHttpContainerLoadExecutor<T extends HttpDataItem, C extends Container<T>>
 extends LimitedRateLoadExecutorBase<C>
-implements WSContainerLoadExecutor<T, C> {
+implements HttpContainerLoadExecutor<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -76,21 +78,21 @@ implements WSContainerLoadExecutor<T, C> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
-	private final WSRequestConfig<T, C> wsReqConfigCopy;
+	private final HttpRequestConfig<T, C> wsReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
-	public BasicWSContainerLoadExecutor(
-		final RunTimeConfig rtConfig, final WSRequestConfig<T, C> reqConfig, final String[] addrs,
+	public BasicHttpContainerLoadExecutor(
+		final AppConfig appConfig, final HttpRequestConfig<T, C> reqConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount, final ItemSrc<C> itemSrc,
 		final long maxCount, final int manualTaskSleepMicroSecs, final float rateLimit
 	) throws ClassCastException {
 		super(
-			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			appConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			manualTaskSleepMicroSecs, rateLimit
 		);
 		//
 		this.loadType = reqConfig.getLoadType();
-		wsReqConfigCopy = (WSRequestConfig<T, C>) ioConfigCopy;
+		wsReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;
 		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
 		//
 		if(IOTask.Type.READ.equals(loadType)) {
@@ -100,7 +102,7 @@ implements WSContainerLoadExecutor<T, C> {
 		}
 		//
 		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
-		final String userAgent = rtConfig.getRunName() + "/" + rtConfig.getRunVersion();
+		final String userAgent = appConfig.getRunName() + "/" + appConfig.getRunVersion();
 		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
@@ -121,10 +123,8 @@ implements WSContainerLoadExecutor<T, C> {
 			}
 		);
 		//
-		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
-		final long timeOutMs = rtConfig.getLoadLimitTimeUnit().toMillis(
-			rtConfig.getLoadLimitTimeValue()
-		);
+		final AppConfig thrLocalConfig = BasicConfig.THREAD_CONTEXT.get();
+		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(threadCount)
@@ -189,8 +189,8 @@ implements WSContainerLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	protected WSContainerIOTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
-		return new BasicWSContainerTask<>(item, nextNodeAddr, wsReqConfigCopy);
+	protected HttpContainerIOTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
+		return new BasicHttpContainerTask<>(item, nextNodeAddr, wsReqConfigCopy);
 	}
 	//
 	@Override
@@ -235,7 +235,7 @@ implements WSContainerLoadExecutor<T, C> {
 	protected <A extends IOTask<C>> Future<A> submitTaskActually(final A ioTask)
 	throws RejectedExecutionException {
 		//
-		final WSIOTask wsIoTask = (WSIOTask) ioTask;
+		final HttpIOTask wsIoTask = (HttpIOTask) ioTask;
 		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
 			connPool = connPoolMap.get(wsIoTask.getTarget());
 		if(connPool.isShutdown()) {
@@ -256,10 +256,10 @@ implements WSContainerLoadExecutor<T, C> {
 		return futureResult;
 	}
 	//
-	private final FutureCallback<WSContainerIOTask<T, C>>
-		futureCallback = new FutureCallback<WSContainerIOTask<T, C>>() {
+	private final FutureCallback<HttpContainerIOTask<T, C>>
+		futureCallback = new FutureCallback<HttpContainerIOTask<T, C>>() {
 			@Override
-			public final void completed(final WSContainerIOTask<T, C> ioTask) {
+			public final void completed(final HttpContainerIOTask<T, C> ioTask) {
 				ioTaskCompleted(ioTask);
 			}
 			//
@@ -278,8 +278,8 @@ implements WSContainerLoadExecutor<T, C> {
 		int n = 0;
 		if(isPipeliningEnabled) {
 			if(ioTasks.size() > 0) {
-				final List<WSContainerIOTask<T, C>> wsIOTasks = (List<WSContainerIOTask<T, C>>) ioTasks;
-				final WSContainerIOTask<T, C> anyTask = wsIOTasks.get(0);
+				final List<HttpContainerIOTask<T, C>> wsIOTasks = (List<HttpContainerIOTask<T, C>>) ioTasks;
+				final HttpContainerIOTask<T, C> anyTask = wsIOTasks.get(0);
 				final HttpHost tgtHost = anyTask.getTarget();
 				if(
 					null == client.executePipelined(
@@ -303,16 +303,16 @@ implements WSContainerLoadExecutor<T, C> {
 	}
 	//
 	private final class BatchFutureCallback
-	implements FutureCallback<List<WSContainerIOTask<T, C>>> {
+	implements FutureCallback<List<HttpContainerIOTask<T, C>>> {
 		//
-		private final List<WSContainerIOTask<T, C>> tasks;
+		private final List<HttpContainerIOTask<T, C>> tasks;
 		//
-		private BatchFutureCallback(final List<WSContainerIOTask<T, C>> tasks) {
+		private BatchFutureCallback(final List<HttpContainerIOTask<T, C>> tasks) {
 			this.tasks = tasks;
 		}
 		//
 		@Override
-		public final void completed(final List<WSContainerIOTask<T, C>> result) {
+		public final void completed(final List<HttpContainerIOTask<T, C>> result) {
 			ioTaskCompletedBatch(result, 0, result.size());
 		}
 		//

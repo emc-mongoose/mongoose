@@ -51,18 +51,18 @@ extends DistributedLoadBuilderTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, DistributedRampupTest.class.getCanonicalName());
 		DistributedLoadBuilderTestBase.setUpClass();
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, "false");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, "0");
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
-		rtConfig.set(RunTimeConfig.KEY_API_NAME, "swift");
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, SIZE_SEQ);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS, THREAD_COUNT_SEQ);
-		RunTimeConfig.setContext(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, "false");
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s");
+		appConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, "0");
+		appConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
+		appConfig.set(RunTimeConfig.KEY_API_NAME, "swift");
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, SIZE_SEQ);
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS, THREAD_COUNT_SEQ);
+		RunTimeConfig.setContext(appConfig);
 		//
-		final Rampup rampupScenario = new Rampup(rtConfig);
+		final Rampup rampupScenario = new Rampup(appConfig);
 		//
 		try(
 			final BufferingOutputStream

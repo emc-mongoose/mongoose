@@ -15,7 +15,7 @@ define([
 ) {
 	//
 	function run(props, runIdArray) {
-		//  default run.mode ("webui") from rtConfig should be overridden here
+		//  default run.mode ("webui") from appConfig should be overridden here
 		var run = {
 			mode: "standalone" // possible: ["standalone", "client", "server", "cinderella"]
 		};

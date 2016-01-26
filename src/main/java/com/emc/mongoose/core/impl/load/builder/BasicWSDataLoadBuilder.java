@@ -7,12 +7,12 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.load.executor.BasicWSDataLoadExecutor;
-import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.WSDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,26 +28,26 @@ implements WSDataLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSDataLoadBuilder(final RunTimeConfig runTimeConfig)
+	public BasicWSDataLoadBuilder(final AppConfig appConfig)
 	throws RemoteException {
 		super(runTimeConfig);
-		setRunTimeConfig(runTimeConfig);
+		setAppConfig(runTimeConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig<T, ? extends Container<T>> getDefaultIOConfig() {
-		return WSRequestConfigBase.getInstance();
+	protected HttpRequestConfig<T, ? extends Container<T>> getDefaultIOConfig() {
+		return HttpRequestConfigBase.getInstance();
 	}
 	//
 	@Override
-	public BasicWSDataLoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig rtConfig)
+	public BasicWSDataLoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
 	throws RemoteException {
 		//
-		super.setRunTimeConfig(rtConfig);
+		super.setAppConfig(appConfig);
 		//
 		final String paramName = RunTimeConfig.KEY_STORAGE_SCHEME;
 		try {
-			WSRequestConfig.class.cast(ioConfig).setScheme(rtConfig.getStorageProto());
+			HttpRequestConfig.class.cast(ioConfig).setScheme(appConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -68,7 +68,7 @@ implements WSDataLoadBuilder<T, U> {
 	@Override
 	public void invokePreConditions()
 	throws IllegalStateException {
-		((WSRequestConfig) ioConfig).configureStorage(storageNodeAddrs);
+		((HttpRequestConfig) ioConfig).configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -77,8 +77,8 @@ implements WSDataLoadBuilder<T, U> {
 			throw new IllegalStateException("No I/O configuration instance available");
 		}
 		//
-		final WSRequestConfig wsReqConf = (WSRequestConfig) ioConfig;
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+		final HttpRequestConfig wsReqConf = (HttpRequestConfig) ioConfig;
+		final RunTimeConfig localRunTimeConfig = BasicConfig.CONTEXT_CONFIG.get();
 		if(minObjSize > maxObjSize) {
 			throw new IllegalStateException(
 				String.format(

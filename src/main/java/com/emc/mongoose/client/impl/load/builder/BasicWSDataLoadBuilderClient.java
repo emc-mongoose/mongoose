@@ -2,14 +2,13 @@ package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 // mongoose-client.jar
 import com.emc.mongoose.client.impl.load.executor.BasicWSDataLoadClient;
 import com.emc.mongoose.client.api.load.builder.WSDataLoadBuilderClient;
@@ -35,17 +34,17 @@ implements WSDataLoadBuilderClient<T, W, U> {
 	//
 	public BasicWSDataLoadBuilderClient()
 	throws IOException {
-		this(RunTimeConfig.getContext());
+		this(BasicConfig.CONTEXT_CONFIG.get());
 	}
 	//
-	public BasicWSDataLoadBuilderClient(final RunTimeConfig runTimeConfig)
+	public BasicWSDataLoadBuilderClient(final AppConfig appConfig)
 	throws IOException {
 		super(runTimeConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSRequestConfig<T, ? extends Container<T>> getDefaultIOConfig() {
-		return WSRequestConfigBase.getInstance();
+	protected HttpRequestConfig<T, ? extends Container<T>> getDefaultIOConfig() {
+		return HttpRequestConfigBase.getInstance();
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -62,7 +61,7 @@ implements WSDataLoadBuilderClient<T, W, U> {
 	@Override
 	public final void invokePreConditions()
 	throws IllegalStateException {
-		((WSRequestConfig) ioConfig).configureStorage(storageNodeAddrs);
+		((HttpRequestConfig) ioConfig).configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -90,8 +89,8 @@ implements WSDataLoadBuilderClient<T, W, U> {
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
 		//
 		return (U) new BasicWSDataLoadClient<>(
-			rtConfig, (WSRequestConfig) ioConfig, storageNodeAddrs,
-			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
+			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs,
+			appConfig.getConnCountPerNodeFor(loadTypeStr), appConfig.getWorkerCountFor(loadTypeStr),
 			itemSrc, maxCount, remoteLoadMap
 		);
 	}

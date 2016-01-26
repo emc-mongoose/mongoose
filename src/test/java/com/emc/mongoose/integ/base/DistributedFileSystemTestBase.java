@@ -21,14 +21,14 @@ extends FileSystemTestBase {
 	public static void setUpClass()
 	throws Exception {
 		FileSystemTestBase.setUpClass();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, ServiceUtil.getHostAddr());
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_SERVER);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, ServiceUtil.getHostAddr());
+		appConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_SERVER);
 		ServiceUtil.init();
-		LOAD_BUILDER_SVC = new MultiLoadBuilderSvc(rtConfig);
+		LOAD_BUILDER_SVC = new MultiLoadBuilderSvc(appConfig);
 		LOAD_BUILDER_SVC.start();
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_CLIENT);
-		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, false);
+		appConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_CLIENT);
+		appConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, false);
 		CLIENT_BUILDER.setClientMode(new String[] {ServiceUtil.getHostAddr()});
 	}
 	//
@@ -37,7 +37,7 @@ extends FileSystemTestBase {
 	throws Exception {
 		CLIENT_BUILDER.setClientMode(null);
 		LOAD_BUILDER_SVC.close();
-		RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_STANDALONE);
+		BasicConfig.CONTEXT_CONFIG.get().set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_STANDALONE);
 		FileSystemTestBase.tearDownClass();
 	}
 }

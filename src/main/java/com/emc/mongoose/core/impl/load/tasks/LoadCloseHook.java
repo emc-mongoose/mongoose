@@ -60,7 +60,7 @@ implements Runnable {
 				hookTask, String.format("loadCloseHook<%s>", hookTask.loadName)
 			);
 			Runtime.getRuntime().addShutdownHook(hookThread);
-			final String currRunId = RunTimeConfig.getContext().getRunId();
+			final String currRunId = BasicConfig.CONTEXT_CONFIG.get().getRunId();
 			synchronized(HOOKS_MAP) {
 				Map<LoadExecutor, Thread> runLoadHooks = HOOKS_MAP.get(currRunId);
 				if(runLoadHooks == null) {
@@ -83,9 +83,9 @@ implements Runnable {
 	public static void del(final LoadExecutor loadExecutor) {
 		String currRunId;
 		try {
-			currRunId = loadExecutor.getLoadState().getRunTimeConfig().getRunId();
+			currRunId = loadExecutor.getLoadState().getAppConfig().getRunId();
 		} catch (final RemoteException e) {
-			currRunId = RunTimeConfig.getContext().getRunId();
+			currRunId = BasicConfig.CONTEXT_CONFIG.get().getRunId();
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 		}
 		synchronized(HOOKS_MAP) {
@@ -118,9 +118,9 @@ implements Runnable {
 						}
 						//
 						if(runHooks.isEmpty()) {
-							final RunTimeConfig rtConfig = currState.getRunTimeConfig();
-							if(!BasicLoadState.isRunFinished(rtConfig, runLoadStates)) {
-								if(Constants.RUN_MODE_STANDALONE.equals(rtConfig.getRunMode())) {
+							final AppConfig appConfig = currState.getAppConfig();
+							if(!BasicLoadState.isRunFinished(appConfig, runLoadStates)) {
+								if(Constants.RUN_MODE_STANDALONE.equals(appConfig.getRunMode())) {
 									final int loadJobCount = runLoadStates.size();
 									if(loadJobCount == 1) {
 										BasicLoadState.saveRunState(currRunId, runLoadStates);
@@ -138,7 +138,7 @@ implements Runnable {
 									LOG.debug(
 										Markers.MSG,
 										"This is not standalone mode (but \"{}\"), will not save the states",
-										rtConfig.getRunMode().toLowerCase()
+										appConfig.getRunMode().toLowerCase()
 									);
 								}
 							} else {

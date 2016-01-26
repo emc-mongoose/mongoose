@@ -12,7 +12,7 @@ import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -86,9 +86,9 @@ import java.util.concurrent.TimeoutException;
 /**
  Created by kurila on 09.06.14.
  */
-public abstract class WSRequestConfigBase<T extends HttpDataItem, C extends Container<T>>
+public abstract class HttpRequestConfigBase<T extends HttpDataItem, C extends Container<T>>
 extends RequestConfigBase<T, C>
-implements WSRequestConfig<T, C> {
+implements HttpRequestConfig<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -102,20 +102,20 @@ implements WSRequestConfig<T, C> {
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
 	//
-	public static <T extends HttpDataItem, C extends Container<T>> WSRequestConfig<T, C> getInstance() {
-		return newInstanceFor(RunTimeConfig.getContext().getApiName());
+	public static <T extends HttpDataItem, C extends Container<T>> HttpRequestConfig<T, C> getInstance() {
+		return newInstanceFor(BasicConfig.CONTEXT_CONFIG.get().getApiName());
 	}
 	//
 	@SuppressWarnings("unchecked")
-	public static <T extends HttpDataItem, C extends Container<T>> WSRequestConfig<T, C> newInstanceFor(
+	public static <T extends HttpDataItem, C extends Container<T>> HttpRequestConfig<T, C> newInstanceFor(
 		final String api
 	) {
-		final WSRequestConfig<T, C> reqConf;
+		final HttpRequestConfig<T, C> reqConf;
 		final String apiImplClsFQN = PACKAGE_IMPL_BASE + "." + api.toLowerCase() + "." + ADAPTER_CLS;
 		try {
 			final Class apiImplCls = Class.forName(apiImplClsFQN);
-			final Constructor<WSRequestConfig<T, C>>
-				constructor = (Constructor<WSRequestConfig<T, C>>) apiImplCls.getConstructors()[0];
+			final Constructor<HttpRequestConfig<T, C>>
+				constructor = (Constructor<HttpRequestConfig<T, C>>) apiImplCls.getConstructors()[0];
 			reqConf = constructor.<T, C>newInstance();
 		} catch(final Exception e) {
 			e.printStackTrace(System.out);
@@ -127,17 +127,17 @@ implements WSRequestConfig<T, C> {
 	protected HeaderGroup sharedHeaders = new HeaderGroup();
 	protected static final ThreadLocal<Mac> THRLOC_MAC = new ThreadLocal<>();
 	//
-	public WSRequestConfigBase()
+	public HttpRequestConfigBase()
 	throws NoSuchAlgorithmException, IOReactorException {
 		this(null);
 	}
 	//
 	@SuppressWarnings({"unchecked", "SynchronizeOnNonFinalField"})
-	protected WSRequestConfigBase(final WSRequestConfigBase<T, C> reqConf2Clone)
+	protected HttpRequestConfigBase(final HttpRequestConfigBase<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		signMethod = runTimeConfig.getHttpSignMethod();
-		final Configuration customHeaders = runTimeConfig.getHttpCustomHeaders();
+		signMethod = appConfig.getHttpSignMethod();
+		final Configuration customHeaders = appConfig.getHttpCustomHeaders();
 		if(customHeaders != null) {
 			final Iterator<String> customHeadersIterator = customHeaders.getKeys();
 			if(customHeadersIterator != null) {
@@ -186,25 +186,25 @@ implements WSRequestConfig<T, C> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int) runTimeConfig.getIOBufferSizeMin())
+			.setBufferSize((int) appConfig.getIOBufferSizeMin())
 			.build();
-		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
-			runTimeConfig.getLoadLimitTimeValue()
+		final long timeOutMs = appConfig.getLoadLimitTimeUnit().toMillis(
+			appConfig.getLoadLimitTimeValue()
 		);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(1)
-			.setBacklogSize((int) runTimeConfig.getSocketBindBackLogSize())
-			.setInterestOpQueued(runTimeConfig.getSocketInterestOpQueued())
-			.setSelectInterval(runTimeConfig.getSocketSelectInterval())
-			.setShutdownGracePeriod(runTimeConfig.getSocketTimeOut())
-			.setSoKeepAlive(runTimeConfig.getSocketKeepAliveFlag())
-			.setSoLinger(runTimeConfig.getSocketLinger())
-			.setSoReuseAddress(runTimeConfig.getSocketReuseAddrFlag())
-			.setSoTimeout(runTimeConfig.getSocketTimeOut())
-			.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize((int) runTimeConfig.getIOBufferSizeMin())
-			.setSndBufSize((int) runTimeConfig.getIOBufferSizeMin())
+			.setBacklogSize((int) appConfig.getSocketBindBackLogSize())
+			.setInterestOpQueued(appConfig.getSocketInterestOpQueued())
+			.setSelectInterval(appConfig.getSocketSelectInterval())
+			.setShutdownGracePeriod(appConfig.getSocketTimeOut())
+			.setSoKeepAlive(appConfig.getSocketKeepAliveFlag())
+			.setSoLinger(appConfig.getSocketLinger())
+			.setSoReuseAddress(appConfig.getSocketReuseAddrFlag())
+			.setSoTimeout(appConfig.getSocketTimeOut())
+			.setTcpNoDelay(appConfig.getSocketTCPNoDelayFlag())
+			.setRcvBufSize((int) appConfig.getIOBufferSizeMin())
+			.setSndBufSize((int) appConfig.getIOBufferSizeMin())
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 			);
@@ -315,37 +315,37 @@ implements WSRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T, C> setAPI(final String api) {
+	public final HttpRequestConfigBase<T, C> setAPI(final String api) {
 		super.setAPI(api);
 		return this;
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T, C> setContentSource(final ContentSource dataSrc) {
+	public final HttpRequestConfigBase<T, C> setContentSource(final ContentSource dataSrc) {
 		super.setContentSource(dataSrc);
 		return this;
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T, C> setUserName(final String userName) {
+	public HttpRequestConfigBase<T, C> setUserName(final String userName) {
 		super.setUserName(userName);
 		return this;
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T, C> setNameSpace(final String nameSpace) {
+	public HttpRequestConfigBase<T, C> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		return this;
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T, C> setNamePrefix(final String prefix) {
+	public HttpRequestConfigBase<T, C> setNamePrefix(final String prefix) {
 		super.setNamePrefix(prefix);
 		return this;
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T, C> setLoadType(final IOTask.Type loadType) {
+	public final HttpRequestConfigBase<T, C> setLoadType(final IOTask.Type loadType) {
 		super.setLoadType(loadType);
 		return this;
 	}
@@ -356,19 +356,19 @@ implements WSRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T, C> setFileAccessEnabled(final boolean flag) {
+	public HttpRequestConfigBase<T, C> setFileAccessEnabled(final boolean flag) {
 		this.fsAccess = flag;
 		return this;
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T, C> setVersioning(final boolean flag) {
+	public HttpRequestConfigBase<T, C> setVersioning(final boolean flag) {
 		this.versioning = flag;
 		return this;
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T, C> setPipelining(final boolean flag) {
+	public HttpRequestConfigBase<T, C> setPipelining(final boolean flag) {
 		this.pipelining = flag;
 		return this;
 	}
@@ -384,16 +384,16 @@ implements WSRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
+	public HttpRequestConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		//
 		try {
-			setScheme(this.runTimeConfig.getStorageProto());
+			setScheme(this.appConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_SCHEME);
 		}
 		//
 		try {
-			setNameSpace(this.runTimeConfig.getStorageNameSpace());
+			setNameSpace(this.appConfig.getStorageNameSpace());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_NAMESPACE);
 		} catch(final IllegalStateException e) {
@@ -401,30 +401,30 @@ implements WSRequestConfig<T, C> {
 		}
 		//
 		try {
-			setFileAccessEnabled(runTimeConfig.getDataFileAccessEnabled());
+			setFileAccessEnabled(this.appConfig.getDataFileAccessEnabled());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_DATA_FS_ACCESS);
 		}
 		//
 		try {
-			setVersioning(runTimeConfig.getDataVersioningEnabled());
+			setVersioning(this.appConfig.getDataVersioningEnabled());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_DATA_FS_ACCESS);
 		}
 		//
 		try {
-			setPipelining(runTimeConfig.getHttpPipeliningFlag());
+			setPipelining(this.appConfig.getHttpPipeliningFlag());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_HTTP_PIPELINING);
 		}
 		//
-		super.setRunTimeConfig(runTimeConfig);
+		super.setAppConfig(this.appConfig);
 		//
 		return this;
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T, C> setSecret(final String secret) {
+	public HttpRequestConfigBase<T, C> setSecret(final String secret) {
 		super.setSecret(secret);
 		try {
 			secretKey = new SecretKeySpec(secret.getBytes(Constants.DEFAULT_ENC), signMethod);
@@ -747,7 +747,7 @@ implements WSRequestConfig<T, C> {
 				final String t[] = tgtAddr.split(":");
 				try {
 					tgtHost = new HttpHost(
-						t[0], Integer.parseInt(t[1]), runTimeConfig.getStorageProto()
+						t[0], Integer.parseInt(t[1]), appConfig.getStorageProto()
 					);
 				} catch(final Exception e) {
 					LogUtil.exception(
@@ -756,8 +756,8 @@ implements WSRequestConfig<T, C> {
 				}
 			} else {
 				tgtHost = new HttpHost(
-					tgtAddr, runTimeConfig.getApiTypePort(runTimeConfig.getApiName()),
-					runTimeConfig.getStorageProto()
+					tgtAddr, appConfig.getApiTypePort(appConfig.getApiName()),
+					appConfig.getStorageProto()
 				);
 			}
 		} else {

@@ -25,10 +25,10 @@ extends LoggingTestBase {
 	public static void setUpClass()
 	throws Exception {
 		LoggingTestBase.setUpClass();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_API_NAME, "s3"); // reset the ports beginning
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
-		WS_MOCK = new Cinderella<>(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_API_NAME, "s3"); // reset the ports beginning
+		appConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
+		WS_MOCK = new Cinderella<>(appConfig);
 		WS_MOCK_THREAD = new Thread(WS_MOCK, "wsMock");
 		WS_MOCK_THREAD.setDaemon(true);
 		WS_MOCK_THREAD.start();

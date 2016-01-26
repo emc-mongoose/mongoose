@@ -30,15 +30,15 @@ public class LoadBuilderFactory {
 	//
 	@SuppressWarnings("unchecked")
 	public static <T extends Item, U extends LoadExecutor<T>> LoadBuilder<T, U> getInstance(
-		final RunTimeConfig rtConfig
+		final AppConfig appConfig
 	) {
 		LoadBuilder loadBuilderInstance;
 		try {
 			final Class loadBuilderImplClass = getLoadBuilderClass(
-				rtConfig.getRunMode(), rtConfig.getItemClass()
+				appConfig.getRunMode(), appConfig.getItemClass()
 			);
 			final Constructor constructor = loadBuilderImplClass.getConstructor(RunTimeConfig.class);
-			loadBuilderInstance = (LoadBuilder) constructor.newInstance(rtConfig);
+			loadBuilderInstance = (LoadBuilder) constructor.newInstance(appConfig);
 		} catch(final Exception e) {
 			e.printStackTrace(System.out);
 			throw new RuntimeException(e);

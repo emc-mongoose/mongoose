@@ -5,7 +5,7 @@ import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -31,11 +31,11 @@ implements SubTenant<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	@SuppressWarnings("FieldCanBeLocal")
-	private final WSRequestConfigImpl<T, ? extends Container<T>> reqConf;
+	private final HttpRequestConfigImpl<T, ? extends Container<T>> reqConf;
 	private String value = null;
 	//
 	public WSSubTenantImpl(
-		final WSRequestConfigImpl<T, ? extends Container<T>> reqConf, final String value
+		final HttpRequestConfigImpl<T, ? extends Container<T>> reqConf, final String value
 	) {
 		this.reqConf = reqConf;
 		this.value = value;
@@ -64,19 +64,19 @@ implements SubTenant<T> {
 		}
 		//
 		final HttpEntityEnclosingRequest httpReq;
-		if(WSRequestConfig.METHOD_PUT.equals(method)) {
+		if(HttpRequestConfig.METHOD_PUT.equals(method)) {
 			httpReq = reqConf.createGenericRequest(
-				method, WSRequestConfigImpl.PREFIX_URI + SUBTENANT
+				method, HttpRequestConfigImpl.PREFIX_URI + SUBTENANT
 			);
 			httpReq.setHeader(
 				new BasicHeader(
-					WSRequestConfig.KEY_EMC_FS_ACCESS,
+					HttpRequestConfig.KEY_EMC_FS_ACCESS,
 					Boolean.toString(reqConf.getFileAccessEnabled())
 				)
 			);
 		} else {
 			httpReq = reqConf.createGenericRequest(
-				method, WSRequestConfigImpl.PREFIX_URI + SUBTENANT + "s/" + value
+				method, HttpRequestConfigImpl.PREFIX_URI + SUBTENANT + "s/" + value
 			);
 		}
 		//
@@ -92,8 +92,8 @@ implements SubTenant<T> {
 		if(value != null && value.length() > 0) {
 			try {
 				final HttpResponse httpResp = execute(
-					addr, WSRequestConfig.METHOD_HEAD,
-					WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+					addr, HttpRequestConfig.METHOD_HEAD,
+					HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 				);
 				if(httpResp != null) {
 					final HttpEntity httpEntity = httpResp.getEntity();
@@ -135,8 +135,8 @@ implements SubTenant<T> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_PUT,
-				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				addr, HttpRequestConfig.METHOD_PUT,
+				HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -180,8 +180,8 @@ implements SubTenant<T> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_DELETE,
-				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				addr, HttpRequestConfig.METHOD_DELETE,
+				HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();

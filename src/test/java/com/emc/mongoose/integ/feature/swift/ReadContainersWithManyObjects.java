@@ -42,15 +42,15 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		System.setProperty(RunTimeConfig.KEY_DATA_SIZE, "1");
 		WSMockTestBase.setUpClass();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_API_NAME, "swift");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_CONTAINER));
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
-		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "25");
-		RunTimeConfig.setContext(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_API_NAME, "swift");
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_CONTAINER));
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
+		appConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "25");
+		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
 		//
 		new ScenarioRunner().run();
 		TimeUnit.SECONDS.sleep(1);
@@ -61,10 +61,10 @@ extends WSMockTestBase {
 		Assert.assertTrue("items list file doesn't exist", containerListFile.exists());
 		//
 		String nextContainer, nextRunId;
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE + "Write");
-		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "data");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT_OBJ);
-		RunTimeConfig.setContext(rtConfig);
+		appConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE + "Write");
+		appConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "data");
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT_OBJ);
+		RunTimeConfig.setContext(appConfig);
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(containerListFile.toPath(), StandardCharsets.UTF_8)
@@ -75,21 +75,21 @@ extends WSMockTestBase {
 					break;
 				} else {
 					countContainerCreated++;
-					rtConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, nextContainer);
-					RunTimeConfig.setContext(rtConfig);
+					appConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, nextContainer);
+					RunTimeConfig.setContext(appConfig);
 					new ScenarioRunner().run();
 					TimeUnit.SECONDS.sleep(1);
 				}
 			} while(true);
 		}
 		//
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE + "Read");
-		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "container");
-		rtConfig.set(RunTimeConfig.KEY_ITEM_SRC_FILE, containerListFile.toString());
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, "read");
-		rtConfig.set(RunTimeConfig.KEY_READ_CONNS, "25");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);
-		RunTimeConfig.setContext(rtConfig);
+		appConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID_BASE + "Read");
+		appConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "container");
+		appConfig.set(RunTimeConfig.KEY_ITEM_SRC_FILE, containerListFile.toString());
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, "read");
+		appConfig.set(RunTimeConfig.KEY_READ_CONNS, "25");
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);
+		RunTimeConfig.setContext(appConfig);
 		//
 		new ScenarioRunner().run();
 		TimeUnit.SECONDS.sleep(5);

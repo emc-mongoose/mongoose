@@ -34,6 +34,6 @@ public interface Constants {
 	//
 	String MONGOOSE_PREFIX = "mongoose-";
 	//
-	int BUFF_SIZE_LO = (int) RunTimeConfig.getContext().getIOBufferSizeMin();
-	int BUFF_SIZE_HI = (int) RunTimeConfig.getContext().getIOBufferSizeMax();
+	int BUFF_SIZE_LO = (int) BasicConfig.THREAD_CONTEXT.get().getIOBufferSizeMin();
+	int BUFF_SIZE_HI = (int) BasicConfig.THREAD_CONTEXT.get().getIOBufferSizeMax();
 }

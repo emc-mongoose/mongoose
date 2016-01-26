@@ -42,9 +42,9 @@ implements DataLoadBuilder<T, U> {
 	protected int updatesPerItem;
 	protected float objSizeBias;
 	//
-	public DataLoadBuilderBase(final RunTimeConfig rtConfig)
+	public DataLoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override
@@ -61,7 +61,7 @@ implements DataLoadBuilder<T, U> {
 	@SuppressWarnings("unchecked")
 	private ItemSrc<T> getNewItemSrc()
 	throws NoSuchMethodException {
-		final String ns = rtConfig.getItemNaming();
+		final String ns = appConfig.getItemNaming();
 		ItemNamingScheme.Type namingSchemeType = ItemNamingScheme.Type.RANDOM;
 		if(ns != null && !ns.isEmpty()) {
 			try {
@@ -118,13 +118,13 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public DataLoadBuilder<T, U> setRunTimeConfig(final RunTimeConfig rtConfig)
+	public DataLoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
-		super.setRunTimeConfig(rtConfig);
+		super.setAppConfig(appConfig);
 		//
 		String paramName = RunTimeConfig.KEY_DATA_SIZE_MIN;
 		try {
-			setMinObjSize(rtConfig.getDataSizeMin());
+			setMinObjSize(appConfig.getDataSizeMin());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -133,7 +133,7 @@ implements DataLoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_DATA_SIZE_MAX;
 		try {
-			setMaxObjSize(rtConfig.getDataSizeMax());
+			setMaxObjSize(appConfig.getDataSizeMax());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -142,7 +142,7 @@ implements DataLoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_DATA_SIZE_BIAS;
 		try {
-			setObjSizeBias(rtConfig.getDataSizeBias());
+			setObjSizeBias(appConfig.getDataSizeBias());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -151,14 +151,14 @@ implements DataLoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_LOAD_UPDATE_PER_ITEM;
 		try {
-			setUpdatesPerItem(rtConfig.getInt(paramName));
+			setUpdatesPerItem(appConfig.getInt(paramName));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		final String listFilePathStr = rtConfig.getItemSrcFile();
+		final String listFilePathStr = appConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(
@@ -182,7 +182,7 @@ implements DataLoadBuilder<T, U> {
 		if(itemSrc instanceof DataItemFileSrc) {
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-					RunTimeConfig.getContext().getBatchSize()
+					BasicConfig.CONTEXT_CONFIG.get().getBatchSize()
 			);
 			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?

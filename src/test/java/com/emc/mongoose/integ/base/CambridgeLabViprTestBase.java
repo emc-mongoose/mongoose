@@ -16,16 +16,16 @@ extends LoggingTestBase {
 	public static void setUpClass()
 	throws Exception {
 		LoggingTestBase.setUpClass();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		STORAGE_ADDRS_DEFAULT = rtConfig.getString(RunTimeConfig.KEY_STORAGE_ADDRS);
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, "10.249.237.73,10.249.237.74,10.249.237.75");
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		STORAGE_ADDRS_DEFAULT = appConfig.getString(RunTimeConfig.KEY_STORAGE_ADDRS);
+		appConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, "10.249.237.73,10.249.237.74,10.249.237.75");
 	}
 	//
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
 		LoggingTestBase.tearDownClass();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, STORAGE_ADDRS_DEFAULT); // reset to default
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, STORAGE_ADDRS_DEFAULT); // reset to default
 	}
 }

@@ -37,7 +37,7 @@ extends LimitedRateLoadExecutorBase<T> {
 	private final float sizeBias;
 	//
 	protected MutableDataLoadExecutorBase(
-		final RunTimeConfig runTimeConfig,
+		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,

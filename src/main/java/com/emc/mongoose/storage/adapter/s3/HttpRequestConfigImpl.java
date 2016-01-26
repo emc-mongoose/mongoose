@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -9,7 +8,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
-import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -34,8 +33,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSRequestConfigImpl<T extends HttpDataItem, C extends Container<T>>
-extends WSRequestConfigBase<T, C> {
+public final class HttpRequestConfigImpl<T extends HttpDataItem, C extends Container<T>>
+extends HttpRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -46,25 +45,25 @@ extends WSRequestConfigBase<T, C> {
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
 	private final String authPrefixValue;
 	//
-	public WSRequestConfigImpl()
+	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
 		this(null);
 	}
 	//
-	protected WSRequestConfigImpl(final WSRequestConfigImpl<T, C> reqConf2Clone)
+	protected HttpRequestConfigImpl(final HttpRequestConfigImpl<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		authPrefixValue = runTimeConfig.getApiS3AuthPrefix() + " ";
+		authPrefixValue = appConfig.getApiS3AuthPrefix() + " ";
 		if(reqConf2Clone != null) {
 			setNameSpace(reqConf2Clone.getNameSpace());
 		}
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
-	public WSRequestConfigImpl<T, C> clone() {
-		WSRequestConfigImpl<T, C> copy = null;
+	public HttpRequestConfigImpl<T, C> clone() {
+		HttpRequestConfigImpl<T, C> copy = null;
 		try {
-			copy = new WSRequestConfigImpl<>(this);
+			copy = new HttpRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
 			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
@@ -72,7 +71,7 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T, C> setNameSpace(final String nameSpace) {
+	public final HttpRequestConfigBase<T, C> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		//if(nameSpace == null || nameSpace.length() < 1) {
 			LOG.debug(Markers.MSG, "Using empty namespace");
@@ -83,11 +82,11 @@ extends WSRequestConfigBase<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final WSRequestConfigImpl<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
-		super.setRunTimeConfig(runTimeConfig);
+	public final HttpRequestConfigImpl<T, C> setAppConfig(final AppConfig appConfig) {
+		super.setAppConfig(this.appConfig);
 		//
 		try {
-			setContainer((C) new BasicContainer<T>(this.runTimeConfig.getString(KEY_BUCKET_NAME)));
+			setContainer((C) new BasicContainer<T>(this.appConfig.getString(KEY_BUCKET_NAME)));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET_NAME);
 		}
@@ -215,7 +214,7 @@ extends WSRequestConfigBase<T, C> {
 			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", container);
 			bucket.create(storageNodeAddrs[0]);
 			if(bucket.exists(storageNodeAddrs[0])) {
-				runTimeConfig.set(KEY_BUCKET_NAME, container.getName());
+				appConfig.set(KEY_BUCKET_NAME, container.getName());
 			} else {
 				throw new IllegalStateException(
 					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, container.getName())

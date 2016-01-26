@@ -62,10 +62,10 @@ public final class StartServlet extends CommonServlet {
 			return;
 		}
 		//
-		runTimeConfig = (RunTimeConfig) runTimeConfig.clone();
-		runTimeConfig.setProperty(RunTimeConfig.KEY_RUN_ID, LogUtil.newRunId());
-		setupRunTimeConfig(request);
-		updateLastRunTimeConfig(runTimeConfig);
+		appConfig = (RunTimeConfig) appConfig.clone();
+		appConfig.setProperty(RunTimeConfig.KEY_RUN_ID, LogUtil.newRunId());
+		setupAppConfig(request);
+		updateLastAppConfig(appConfig);
 		//
 		switch(request.getParameter(RunTimeConfig.KEY_RUN_MODE)) {
 			case Constants.RUN_MODE_SERVER:
@@ -101,12 +101,12 @@ public final class StartServlet extends CommonServlet {
 			//
 			@Override
 			public void run() {
-				localRunTimeConfig = runTimeConfig;
+				localRunTimeConfig = appConfig;
 				RunTimeConfig.setContext(localRunTimeConfig);
-				setName("run<" + runTimeConfig.getRunId() + ">");
+				setName("run<" + appConfig.getRunId() + ">");
 				//
 				LOG.debug(Markers.MSG, message);
-				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
+				LOG.info(Markers.CFG, appConfig.toFormattedString());
 				//
 				try {
 					multiSvc = new MultiLoadBuilderSvc(localRunTimeConfig);
@@ -132,40 +132,40 @@ public final class StartServlet extends CommonServlet {
 			}
 		};
 		thread.start();
-		threadsMap.put(runTimeConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
+		threadsMap.put(appConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
 	}
 	//
 	private void startStandaloneOrClient(final String message) {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {
-				RunTimeConfig.setContext(runTimeConfig);
-				setName("run<" + runTimeConfig.getRunId() + ">");
-				ThreadContext.put(RunTimeConfig.KEY_SCENARIO_NAME, runTimeConfig.getScenarioName());
+				RunTimeConfig.setContext(appConfig);
+				setName("run<" + appConfig.getRunId() + ">");
+				ThreadContext.put(RunTimeConfig.KEY_SCENARIO_NAME, appConfig.getScenarioName());
 				ThreadContext.put(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC,
-					String.valueOf(runTimeConfig.getLoadMetricsPeriodSec()));
+					String.valueOf(appConfig.getLoadMetricsPeriodSec()));
 				//
-				final String scenarioName = runTimeConfig.getScenarioName();
-				chartsMap.put(runTimeConfig.getRunId(), scenarioName);
+				final String scenarioName = appConfig.getScenarioName();
+				chartsMap.put(appConfig.getRunId(), scenarioName);
 				//
 				LOG.debug(Markers.MSG, message);
-				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
+				LOG.info(Markers.CFG, appConfig.toFormattedString());
 				//
 				switch (scenarioName) {
 					case Constants.RUN_SCENARIO_SINGLE:
-						new Single(runTimeConfig).run();
+						new Single(appConfig).run();
 						break;
 					case Constants.RUN_SCENARIO_CHAIN:
-						new Chain(runTimeConfig).run();
+						new Chain(appConfig).run();
 						break;
 					case Constants.RUN_SCENARIO_RAMPUP:
 						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
-							convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
+							convertArrayToString(appConfig.getScenarioRampupSizes()));
 						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS,
-							convertArrayToString(runTimeConfig.getScenarioRampupConnCounts()));
+							convertArrayToString(appConfig.getScenarioRampupConnCounts()));
 						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD,
-							convertArrayToString(runTimeConfig.getScenarioChainLoad()));
-						new Rampup(runTimeConfig).run();
+							convertArrayToString(appConfig.getScenarioChainLoad()));
+						new Rampup(appConfig).run();
 						break;
 					default:
 						throw new IllegalArgumentException(
@@ -178,25 +178,25 @@ public final class StartServlet extends CommonServlet {
 			//
 			@Override
 			public void interrupt() {
-				LoadExecutor.RESTORED_STATES_MAP.remove(runTimeConfig.getRunId());
+				LoadExecutor.RESTORED_STATES_MAP.remove(appConfig.getRunId());
 				super.interrupt();
 			}
 		};
 		thread.start();
-		threadsMap.put(runTimeConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
+		threadsMap.put(appConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
 	}
 	//
 	private void startStorageMock(final String message) {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {
-				RunTimeConfig.setContext(runTimeConfig);
-				setName("run<" + runTimeConfig.getRunId() + ">");
+				RunTimeConfig.setContext(appConfig);
+				setName("run<" + appConfig.getRunId() + ">");
 				//
 				LOG.debug(Markers.MSG, message);
-				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
+				LOG.info(Markers.CFG, appConfig.toFormattedString());
 				try {
-					new Cinderella(runTimeConfig).run();
+					new Cinderella(appConfig).run();
 				} catch (final IOException e) {
 					LogUtil.exception(LOG, Level.FATAL, e, "Failed run Cinderella");
 				}
@@ -209,7 +209,7 @@ public final class StartServlet extends CommonServlet {
 		};
 
 		thread.start();
-		threadsMap.put(runTimeConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
+		threadsMap.put(appConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
 	}
 	//
 	public final boolean isRunIdFree(final String runId) {

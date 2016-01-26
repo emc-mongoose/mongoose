@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
 import com.emc.mongoose.core.impl.item.data.HttpContainerHelperBase;
 //
@@ -47,7 +47,7 @@ implements BucketHelper<T, C> {
 				"<Status>Suspended</Status></VersioningConfiguration>"
 			).getBytes(StandardCharsets.UTF_8);
 	//
-	public HttpBucketHelper(final WSRequestConfigImpl<T, C> reqConf, final C container) {
+	public HttpBucketHelper(final HttpRequestConfigImpl<T, C> reqConf, final C container) {
 		super(reqConf, container);
 	}
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
@@ -77,7 +77,7 @@ implements BucketHelper<T, C> {
 		reqConf.applyHeadersFinally(httpReq);
 		//
 		return reqConf.execute(
-			addr, httpReq, WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+			addr, httpReq, HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 		);
 	}
 	//
@@ -92,16 +92,16 @@ implements BucketHelper<T, C> {
 		//
 		final HttpEntityEnclosingRequest httpReq;
 		final String name = container.getName();
-		if(WSRequestConfig.METHOD_PUT.equals(method)) {
+		if(HttpRequestConfig.METHOD_PUT.equals(method)) {
 			httpReq = reqConf.createGenericRequest(method, "/" + name);
 			if(reqConf.getFileAccessEnabled()) {
 				httpReq.setHeader(
 					new BasicHeader(
-						WSRequestConfigImpl.KEY_EMC_FS_ACCESS, Boolean.toString(true)
+						HttpRequestConfigImpl.KEY_EMC_FS_ACCESS, Boolean.toString(true)
 					)
 				);
 			}
-		} else if(WSRequestConfig.METHOD_GET.equals(method)) {
+		} else if(HttpRequestConfig.METHOD_GET.equals(method)) {
 			if(marker == null) {
 				httpReq = reqConf.createGenericRequest(
 					method, "/" + name + "?" + URL_ARG_MAX_KEYS + "=" + limit
@@ -128,8 +128,8 @@ implements BucketHelper<T, C> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_HEAD,
-				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				addr, HttpRequestConfig.METHOD_HEAD,
+				HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -169,7 +169,7 @@ implements BucketHelper<T, C> {
 	//
 	public void setVersioning(final String addr, final boolean enabledFlag) {
 		try {
-			final HttpResponse httpResp = execute(addr, WSRequestConfig.METHOD_PUT, enabledFlag);
+			final HttpResponse httpResp = execute(addr, HttpRequestConfig.METHOD_PUT, enabledFlag);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -214,8 +214,8 @@ implements BucketHelper<T, C> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_PUT,
-				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				addr, HttpRequestConfig.METHOD_PUT,
+				HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -258,8 +258,8 @@ implements BucketHelper<T, C> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_DELETE,
-				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				addr, HttpRequestConfig.METHOD_DELETE,
+				HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();

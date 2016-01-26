@@ -100,7 +100,7 @@ implements StorageIOStats {
 		//
 		if(jmxServeFlag) {
 			final MBeanServer mBeanServer = ServiceUtil.getMBeanServer(
-				RunTimeConfig.getContext().getRemotePortMonitor()
+				BasicConfig.CONTEXT_CONFIG.get().getRemotePortMonitor()
 			);
 			jmxReporter = CustomJmxReporter.forRegistry(metricRegistry)
 				.convertDurationsTo(TimeUnit.SECONDS)

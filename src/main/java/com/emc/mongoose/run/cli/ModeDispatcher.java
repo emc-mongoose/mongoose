@@ -23,7 +23,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
-import java.util.List;
 import java.util.Map;
 /**
  Created by kurila on 04.07.14.
@@ -49,10 +48,10 @@ public final class ModeDispatcher {
 		RunTimeConfig.initContext();
 		if(properties != null && !properties.isEmpty()) {
 			rootLogger.debug(Markers.MSG, "Overriding properties {}", properties);
-			RunTimeConfig.getContext().overrideSystemProperties(properties);
+			BasicConfig.CONTEXT_CONFIG.get().overrideSystemProperties(properties);
 		}
 		//
-		rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		rootLogger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
 		//
 		switch(runMode) {
 			case Constants.RUN_MODE_SERVER:
@@ -60,7 +59,7 @@ public final class ModeDispatcher {
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try {
 					final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(
-						RunTimeConfig.getContext()
+						BasicConfig.CONTEXT_CONFIG.get()
 					);
 					multiSvc.start();
 					multiSvc.await();
@@ -72,13 +71,13 @@ public final class ModeDispatcher {
 				break;
 			case Constants.RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				new WUIRunner(RunTimeConfig.getContext()).run();
+				new WUIRunner(BasicConfig.CONTEXT_CONFIG.get()).run();
 				break;
 			case Constants.RUN_MODE_CINDERELLA:
 			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
-					new Cinderella(RunTimeConfig.getContext()).run();
+					new Cinderella(BasicConfig.CONTEXT_CONFIG.get()).run();
 				} catch (final Exception e) {
 					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init the cinderella");
 				}
@@ -98,18 +97,18 @@ public final class ModeDispatcher {
 	}
 
 	private static void runScenario() {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		if (rtConfig != null) {
-			final String scenarioName = rtConfig.getScenarioName();
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		if (appConfig != null) {
+			final String scenarioName = appConfig.getScenarioName();
 			switch (scenarioName) {
 				case Constants.RUN_SCENARIO_SINGLE:
-					new Single(rtConfig).run();
+					new Single(appConfig).run();
 					break;
 				case Constants.RUN_SCENARIO_CHAIN:
-					new Chain(rtConfig).run();
+					new Chain(appConfig).run();
 					break;
 				case Constants.RUN_SCENARIO_RAMPUP:
-					new Rampup(rtConfig).run();
+					new Rampup(appConfig).run();
 					break;
 				default:
 					throw new IllegalArgumentException(
@@ -119,7 +118,7 @@ public final class ModeDispatcher {
 			LogManager.getRootLogger().info(Markers.MSG, "Scenario end");
 		} else {
 			throw new NullPointerException(
-				"runTimeConfig hasn't been initialized"
+				"appConfig hasn't been initialized"
 			);
 		}
 	}

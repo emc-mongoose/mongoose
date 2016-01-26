@@ -4,11 +4,10 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-//
 import com.fasterxml.jackson.databind.node.ObjectNode;
+//
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
@@ -19,6 +18,7 @@ import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 //
 import java.io.File;
 import java.io.IOException;
@@ -35,8 +35,39 @@ public class BasicConfig
 extends HierarchicalConfiguration
 implements AppConfig {
 	//
+	public static final InheritableThreadLocal<AppConfig>
+		THREAD_CONTEXT = new InheritableThreadLocal<AppConfig>() {
+		@Override
+		protected final AppConfig initialValue() {
+			final BasicConfig instance = new BasicConfig();
+			instance.loadFromJson(Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF));
+			instance.loadFromEnv();
+			ThreadContext.put(KEY_RUN_ID, instance.getRunId());
+			ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
+			return instance;
+		}
+	};
+	//
 	static {
 		setDefaultExpressionEngine(new DefaultExpressionEngine());
+	}
+	//
+	private static String DIR_ROOT = null;
+	public static String getRootDir() {
+		if(DIR_ROOT == null) {
+			try {
+				DIR_ROOT = new File(
+					Constants.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+				).getParent();
+			} catch(final URISyntaxException e) {
+				synchronized(System.err) {
+					System.err.println("Failed to determine the executable path:");
+					e.printStackTrace(System.err);
+				}
+				DIR_ROOT = System.getProperty("user.dir");
+			}
+		}
+		return DIR_ROOT;
 	}
 	//
 	@Override
@@ -294,23 +325,29 @@ implements AppConfig {
 	}
 	//
 	@Override
+	public String[] getStorageHttpAddrsWithPorts() {
+		final String
+			nodeAddrs[] = getStorageHttpAddrs(),
+			nodeAddrsWithPorts[] = new String[nodeAddrs.length];
+		String nodeAddr;
+		int port = getStorageHttpApi_Port();
+		for(int i = 0; i < nodeAddrs.length; i ++) {
+			nodeAddr = nodeAddrs[i];
+			nodeAddrsWithPorts[i] = nodeAddr + (nodeAddr.contains(":") ? ":" + port : "");
+		}
+		return nodeAddrsWithPorts;
+	}
+	//
+	@Override
 	public String getStorageHttpApiClass() {
 		return getString(CONFIG_ROOT + KEY_STORAGE_HTTP_API_CLASS);
 	}
 	//
 	@Override
-	public int getStorageHttpApiS3Port() {
-		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_API_S3_PORT);
-	}
-	//
-	@Override
-	public int getStorageHttpApiAtmosPort() {
-		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_API_ATMOS_PORT);
-	}
-	//
-	@Override
-	public int getStorageHttpApiSwiftPort() {
-		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_API_SWIFT_PORT);
+	public int getStorageHttpApi_Port() {
+		return getInt(
+			CONFIG_ROOT + String.format(KEY_STORAGE_HTTP_API___PORT, getStorageHttpApiClass())
+		);
 	}
 	//
 	@Override
@@ -412,12 +449,44 @@ implements AppConfig {
 			rootNode = mapper.createObjectNode(),
 			configNode = mapper.createObjectNode();
 		rootNode.set(CONFIG_ROOT, configNode);
-		for(super.getKeys())
+		//
+		int i;
+		Object value;
+		String compositeKey, keyParts[];
+		ObjectNode currNode = rootNode, parentNode;
+		for(final Iterator<String> keyIter = super.getKeys(); keyIter.hasNext(); ) {
+			compositeKey = keyIter.next();
+			keyParts = compositeKey.split(DefaultExpressionEngine.DEFAULT_PROPERTY_DELIMITER);
+			for(i = 0; i < keyParts.length; i ++) {
+				parentNode = currNode;
+				currNode = (ObjectNode) currNode.get(keyParts[i]);
+				if(currNode == null) {
+					if(i == keyParts.length - 1) {
+						value = getProperty(compositeKey);
+						if(value instanceof Long) {
+							parentNode.put(keyParts[i], (Long) value);
+						} else if(value instanceof Boolean) {
+							parentNode.put(keyParts[i], (Boolean) value);
+						} else if(value instanceof Double) {
+							parentNode.put(keyParts[i], (Double) value);
+						} else if(value instanceof String) {
+							parentNode.put(keyParts[i], (String) value);
+						} else {
+							log.error(Markers.ERR, "");
+						}
+					} else {
+						currNode = mapper.createObjectNode();
+						parentNode.set(keyParts[i], currNode);
+					}
+				}
+			}
+		}
 		try {
 			return mapper.writeValueAsString(rootNode);
 		} catch(final JsonProcessingException e) {
 			LogUtil.exception(log, Level.WARN, e, "Failed to convert the configuration to JSON");
 		}
+		return null;
 	}
 	//
 	@Override
@@ -439,24 +508,6 @@ implements AppConfig {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Load from the external sources
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public void load() {
-		String dirRoot = System.getProperty("user.dir");
-		try {
-			dirRoot = new File(
-				Constants.class.getProtectionDomain().getCodeSource().getLocation().toURI()
-			).getParent();
-		} catch(final URISyntaxException e) {
-			synchronized(System.err) {
-				System.err.println("Failed to determine the executable path:");
-				e.printStackTrace(System.err);
-			}
-		}
-		loadFromJson(
-			Paths.get(dirRoot, Constants.DIR_CONF).resolve(FNAME_CONF)
-		);
-		loadFromEnv();
-	}
-	//
 	public void loadFromJson(final Path filePath) {
 		final Logger log = LogManager.getLogger();
 		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";

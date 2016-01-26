@@ -11,7 +11,7 @@ import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
  A HTTP request for performing an operation on data object.
  */
 public interface
-	WSIOTask<T extends Item, K extends WSIOTask<T, K>>
+HttpIOTask<T extends Item, K extends HttpIOTask<T, K>>
 extends
 	IOTask<T>,
 	HttpAsyncRequestProducer,

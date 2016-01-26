@@ -60,14 +60,14 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		WSMockTestBase.setUpClass();
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, SCENARIO_NAME);
-		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
-		RunTimeConfig.setContext(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, SCENARIO_NAME);
+		appConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
+		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
 		//
 		try (final BufferingOutputStream
 				 stdOutStream =	StdOutUtil.getStdOutBufferingStream()
@@ -131,7 +131,7 @@ extends WSMockTestBase {
 	@Test
 	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
 	throws Exception {
-		final String configTable = RunTimeConfig.getContext().toString();
+		final String configTable = BasicConfig.CONTEXT_CONFIG.get().toString();
 		final Set<String> params = new HashSet<>();
 		//  skip table header
 		int start = 126;
@@ -524,7 +524,7 @@ extends WSMockTestBase {
 		// Check period of reports is correct
 		long firstTime, nextTime;
 		// Period must be equal 10 sec
-		final int period = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
+		final int period = BasicConfig.CONTEXT_CONFIG.get().getLoadMetricsPeriodSec();
 		// period must be equal 10 seconds = 10000 milliseconds
 		Assert.assertEquals("Wrong metrics period", 10, period);
 		//

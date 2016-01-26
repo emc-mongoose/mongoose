@@ -1,12 +1,11 @@
 package com.emc.mongoose.storage.mock.impl.web.request;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 // mongoose-storage-adapter-atmos.jar
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
@@ -78,7 +77,7 @@ extends WSRequestHandlerBase<T> {
 				KEY_VERSIONING + ">versions)?"
 		);
 	//
-	public AtmosRequestHandler(final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage) {
+	public AtmosRequestHandler(final AppConfig appConfig, final WSMock<T> sharedStorage) {
 		super(runTimeConfig, sharedStorage);
 	}
 	//
@@ -92,8 +91,8 @@ extends WSRequestHandlerBase<T> {
 		final HttpRequest httpRequest, final HttpResponse httpResponse,
 		final String method, final String requestURI
 	) {
-		final String metaDataList[] = httpRequest.containsHeader(WSRequestConfig.KEY_EMC_TAGS) ?
-			httpRequest.getFirstHeader(WSRequestConfig.KEY_EMC_TAGS).getValue().split(",") :
+		final String metaDataList[] = httpRequest.containsHeader(HttpRequestConfig.KEY_EMC_TAGS) ?
+			httpRequest.getFirstHeader(HttpRequestConfig.KEY_EMC_TAGS).getValue().split(",") :
 			null;
 		if(requestURI.startsWith(OBJ_PATH)) {
 			final Matcher m = PATTERN_REQ_URI_OBJ.matcher(requestURI);
@@ -101,7 +100,7 @@ extends WSRequestHandlerBase<T> {
 				String oid = m.group(KEY_OID);
 				long offset = -1;
 				if(oid == null) {
-					if(WSRequestConfig.METHOD_POST.equalsIgnoreCase(method)) {
+					if(HttpRequestConfig.METHOD_POST.equalsIgnoreCase(method)) {
 						oid = generateId();
 						if(metaDataList != null) {
 							String keyValuePair[];
@@ -127,7 +126,7 @@ extends WSRequestHandlerBase<T> {
 						if(300 > httpResponse.getStatusLine().getStatusCode()) {
 							httpResponse.setHeader(HttpHeaders.LOCATION, OBJ_PATH + '/' + oid);
 						}
-					} else if(WSRequestConfig.METHOD_GET.equalsIgnoreCase(method)) {
+					} else if(HttpRequestConfig.METHOD_GET.equalsIgnoreCase(method)) {
 						String subtenant = null;
 						if(metaDataList != null) {
 							String keyValuePair[];
@@ -138,9 +137,9 @@ extends WSRequestHandlerBase<T> {
 								}
 							}
 						}
-						if(httpRequest.containsHeader(WSRequestConfig.KEY_EMC_TOKEN)) {
+						if(httpRequest.containsHeader(HttpRequestConfig.KEY_EMC_TOKEN)) {
 							oid = httpRequest
-								.getFirstHeader(WSRequestConfig.KEY_EMC_TOKEN)
+								.getFirstHeader(HttpRequestConfig.KEY_EMC_TOKEN)
 								.getValue();
 						}
 						handleContainerList(httpRequest, httpResponse, subtenant, oid);
@@ -158,11 +157,11 @@ extends WSRequestHandlerBase<T> {
 		} else if(requestURI.startsWith(AT_PATH)) {
 			httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
 		} else if(requestURI.startsWith(ST_PATH)) {
-			final String subtenant = WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ?
+			final String subtenant = HttpRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ?
 				generateSubtenant() : getSubtenant(httpRequest);
 			handleGenericContainerReq(
 				httpRequest, httpResponse, method,
-				WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ?
+				HttpRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ?
 					generateSubtenant() : subtenant,
 				null
 			);
@@ -188,15 +187,15 @@ extends WSRequestHandlerBase<T> {
 		final HttpRequest req, final HttpResponse resp, final String subtenant, final String oid
 	) {
 		int maxCount = ContainerHelper.DEFAULT_PAGE_SIZE;
-		if(req.containsHeader(WSRequestConfig.KEY_EMC_LIMIT)) {
+		if(req.containsHeader(HttpRequestConfig.KEY_EMC_LIMIT)) {
 			try {
 				maxCount = Integer.parseInt(
-					req.getFirstHeader(WSRequestConfig.KEY_EMC_LIMIT).getValue()
+					req.getFirstHeader(HttpRequestConfig.KEY_EMC_LIMIT).getValue()
 				);
 			} catch(final NumberFormatException e) {
 				LOG.warn(
 					Markers.ERR, "Limit header value is not a valid integer: {}",
-					req.getFirstHeader(WSRequestConfig.KEY_EMC_LIMIT).getValue()
+					req.getFirstHeader(HttpRequestConfig.KEY_EMC_LIMIT).getValue()
 				);
 			}
 		}
@@ -221,7 +220,7 @@ extends WSRequestHandlerBase<T> {
 		}
 		//
 		if(lastObj != null) {
-			resp.setHeader(WSRequestConfig.KEY_EMC_TOKEN, lastObj.getName());
+			resp.setHeader(HttpRequestConfig.KEY_EMC_TOKEN, lastObj.getName());
 		}
 		//
 		final Document doc = DOM_BUILDER.newDocument();
@@ -261,9 +260,9 @@ extends WSRequestHandlerBase<T> {
 		if(reqURI.startsWith(STS_PATH) && reqURI.length() > STS_PATH.length()) {
 			return reqURI.substring(STS_PATH.length());
 		}
-		if(httpRequest.containsHeader(WSRequestConfig.KEY_EMC_UID)) {
+		if(httpRequest.containsHeader(HttpRequestConfig.KEY_EMC_UID)) {
 			final String uidHeaderValue = httpRequest
-				.getFirstHeader(WSRequestConfig.KEY_EMC_UID)
+				.getFirstHeader(HttpRequestConfig.KEY_EMC_UID)
 				.getValue();
 			if(uidHeaderValue.contains("/")) {
 				return uidHeaderValue.split("/")[0];

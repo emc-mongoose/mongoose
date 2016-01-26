@@ -2,7 +2,6 @@ package com.emc.mongoose.server.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
@@ -10,7 +9,7 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.BasicWSDataLoadExecutor;
 // mongoose-server-api.jar
@@ -36,8 +35,8 @@ implements WSDataLoadSvc<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicWSDataLoadSvc(
-		final RunTimeConfig runTimeConfig,
-		final WSRequestConfig<T, ? extends Container<T>> reqConfig,
+		final AppConfig appConfig,
+		final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int connPerNode, final int threadsPerNode,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,

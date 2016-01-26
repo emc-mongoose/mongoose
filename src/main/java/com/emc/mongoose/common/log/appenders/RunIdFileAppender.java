@@ -2,8 +2,6 @@ package com.emc.mongoose.common.log.appenders;
 // mongoose-common.jar
 import static com.emc.mongoose.common.conf.RunTimeConfig.KEY_RUN_ID;
 //
-import com.emc.mongoose.common.log.Markers;
-import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.ThreadContext;
 //
 import org.apache.logging.log4j.core.Filter;
@@ -24,10 +22,6 @@ import org.apache.logging.log4j.core.util.Booleans;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  Created by andrey on 13.03.15.
  */

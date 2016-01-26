@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
 import com.emc.mongoose.core.impl.item.data.HttpContainerHelperBase;
 //
@@ -34,7 +34,7 @@ implements SwiftContainerHelper<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public HttpSwiftContainerHelper(final WSRequestConfigImpl<T, C> reqConf, final C container) {
+	public HttpSwiftContainerHelper(final HttpRequestConfigImpl<T, C> reqConf, final C container) {
 		super(reqConf, container);
 	}
 	//
@@ -45,8 +45,8 @@ implements SwiftContainerHelper<T, C> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_HEAD, null, ContainerHelper.DEFAULT_PAGE_SIZE,
-				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				addr, HttpRequestConfig.METHOD_HEAD, null, ContainerHelper.DEFAULT_PAGE_SIZE,
+				HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -88,8 +88,8 @@ implements SwiftContainerHelper<T, C> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_PUT, null, ContainerHelper.DEFAULT_PAGE_SIZE,
-				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				addr, HttpRequestConfig.METHOD_PUT, null, ContainerHelper.DEFAULT_PAGE_SIZE,
+				HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -130,8 +130,8 @@ implements SwiftContainerHelper<T, C> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_DELETE, null, ContainerHelper.DEFAULT_PAGE_SIZE,
-				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				addr, HttpRequestConfig.METHOD_DELETE, null, ContainerHelper.DEFAULT_PAGE_SIZE,
+				HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -170,8 +170,8 @@ implements SwiftContainerHelper<T, C> {
 	public final void setVersioning(final String addr, final boolean enabledFlag) {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, WSRequestConfig.METHOD_POST, null, ContainerHelper.DEFAULT_PAGE_SIZE,
-				WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				addr, HttpRequestConfig.METHOD_POST, null, ContainerHelper.DEFAULT_PAGE_SIZE,
+				HttpRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -221,56 +221,56 @@ implements SwiftContainerHelper<T, C> {
 		final String name = container.getName();
 		//
 		switch(method) {
-			case WSRequestConfig.METHOD_GET:
+			case HttpRequestConfig.METHOD_GET:
 				if(nextMarker == null) {
 					httpReq = reqConf.createGenericRequest(
 						method,
-						"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
+						"/" + HttpRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
 							reqConf.getNameSpace() + "/" + name + "?format=json&limit=" + maxCount
 					);
 				} else {
 					httpReq = reqConf.createGenericRequest(
 						method,
-						"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
+						"/" + HttpRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
 							reqConf.getNameSpace() + "/" + name + "?format=json&limit=" + maxCount +
 							"&marker=" + nextMarker
 					);
 				}
 				break;
-			case WSRequestConfig.METHOD_PUT:
+			case HttpRequestConfig.METHOD_PUT:
 				httpReq = reqConf.createGenericRequest(
 					method,
-					"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
+					"/" + HttpRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
 						reqConf.getNameSpace() + "/" + name
 				);
 				httpReq.setHeader(
 					new BasicHeader(
-						WSRequestConfig.KEY_EMC_FS_ACCESS,
+						HttpRequestConfig.KEY_EMC_FS_ACCESS,
 						Boolean.toString(reqConf.getFileAccessEnabled())
 					)
 				);
 				break;
-			case WSRequestConfig.METHOD_POST:
+			case HttpRequestConfig.METHOD_POST:
 				httpReq = reqConf.createGenericRequest(
 					method,
-					"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
+					"/" + HttpRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
 						reqConf.getNameSpace() + "/" + name
 				);
 				if(reqConf.getVersioning()) {
 					httpReq.setHeader(
 						new BasicHeader(
-							WSRequestConfigImpl.KEY_X_VERSIONING,
-							WSRequestConfigImpl.DEFAULT_VERSIONS_CONTAINER
+							HttpRequestConfigImpl.KEY_X_VERSIONING,
+							HttpRequestConfigImpl.DEFAULT_VERSIONS_CONTAINER
 						)
 					);
 				} else {
-					httpReq.setHeader(new BasicHeader(WSRequestConfigImpl.KEY_X_VERSIONING, ""));
+					httpReq.setHeader(new BasicHeader(HttpRequestConfigImpl.KEY_X_VERSIONING, ""));
 				}
 				break;
 			default:
 				httpReq = reqConf.createGenericRequest(
 					method,
-					"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
+					"/" + HttpRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
 						reqConf.getNameSpace() + "/" + name
 				);
 		}

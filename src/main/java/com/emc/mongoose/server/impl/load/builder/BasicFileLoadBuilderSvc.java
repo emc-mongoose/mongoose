@@ -39,9 +39,9 @@ implements FileLoadBuilderSvc<T, U> {
 	//
 	private String name = getClass().getName();
 	//
-	public BasicFileLoadBuilderSvc(final RunTimeConfig rtConfig)
+	public BasicFileLoadBuilderSvc(final AppConfig appConfig)
 	throws RemoteException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override
@@ -64,7 +64,7 @@ implements FileLoadBuilderSvc<T, U> {
 	public String buildRemotely()
 	throws RemoteException {
 		U loadSvc = build();
-		LOG.info(Markers.MSG, rtConfig.toString());
+		LOG.info(Markers.MSG, appConfig.toString());
 		ServiceUtil.create(loadSvc);
 		return loadSvc.getName();
 	}
@@ -76,9 +76,9 @@ implements FileLoadBuilderSvc<T, U> {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
-		rtConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
+		appConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		if(minObjSize > maxObjSize) {
 			throw new IllegalStateException(
 				String.format(
@@ -92,7 +92,7 @@ implements FileLoadBuilderSvc<T, U> {
 		final int connPerNode = loadTypeConnPerNode.get(loadType);
 		//
 		return (U) new BasicFileLoadSvc<>(
-			rtConfig, (FileIOConfig) ioConfig, storageNodeAddrs, connPerNode, connPerNode,
+			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, connPerNode, connPerNode,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
 			manualTaskSleepMicroSecs, rateLimit, updatesPerItem

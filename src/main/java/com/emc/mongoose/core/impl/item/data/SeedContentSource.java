@@ -24,8 +24,8 @@ implements ContentSource {
 	public SeedContentSource()
 	throws NumberFormatException {
 		this(
-			Long.parseLong(RunTimeConfig.getContext().getDataRingSeed(), 0x10),
-			(int) RunTimeConfig.getContext().getDataRingSize()
+			Long.parseLong(BasicConfig.CONTEXT_CONFIG.get().getDataRingSeed(), 0x10),
+			(int) BasicConfig.CONTEXT_CONFIG.get().getDataRingSize()
 		);
 	}
 	//

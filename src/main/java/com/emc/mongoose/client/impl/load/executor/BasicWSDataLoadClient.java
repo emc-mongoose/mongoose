@@ -1,11 +1,10 @@
 package com.emc.mongoose.client.impl.load.executor;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.api.io.task.WSDataIOTask;
 import com.emc.mongoose.core.impl.io.task.BasicWSDataIOTask;
@@ -29,13 +28,13 @@ implements WSDataLoadClient<T, W> {
 	//private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicWSDataLoadClient(
-		final RunTimeConfig rtConfig, final WSRequestConfig<T, ? extends Container<T>> reqConfig,
+		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String addrs[], final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		super(
-			rtConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			appConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			remoteLoadMap
 		);
 	}
@@ -43,7 +42,7 @@ implements WSDataLoadClient<T, W> {
 	@Override
 	protected WSDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
 		return new BasicWSDataIOTask<>(
-			item, nodeAddr,  (WSRequestConfig<T, ? extends Container<T>>) ioConfigCopy
+			item, nodeAddr,  (HttpRequestConfig<T, ? extends Container<T>>) ioConfigCopy
 		);
 	}
 	//

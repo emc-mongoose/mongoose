@@ -54,26 +54,26 @@ implements WSMock<T> {
 	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
 	private final int portStart;
 	//
-	public Cinderella(final RunTimeConfig rtConfig)
+	public Cinderella(final AppConfig appConfig)
 	throws IOException {
-		this(rtConfig, rtConfig.getStorageMockWorkersPerSocket());
+		this(appConfig, appConfig.getStorageMockWorkersPerSocket());
 	}
 	//
-	private Cinderella(final RunTimeConfig rtConfig, final int ioThreadCount)
+	private Cinderella(final AppConfig appConfig, final int ioThreadCount)
 	throws IOException {
 		this(
-			rtConfig.getStorageMockHeadCount(),
+			appConfig.getStorageMockHeadCount(),
 			ioThreadCount > 0 ? ioThreadCount : ThreadUtil.getWorkerCount(),
-			rtConfig.getApiTypePort(rtConfig.getApiName()),
-			rtConfig.getStorageMockCapacity(),
-			rtConfig.getStorageMockContainerCapacity(),
-			rtConfig.getStorageMockContainerCountLimit(),
-			rtConfig.getBatchSize(),
-			rtConfig.getItemSrcFile(),
-			rtConfig.getLoadMetricsPeriodSec(),
-			rtConfig.getFlagServeJMX(),
-			rtConfig.getStorageMockMinConnLifeMilliSec(),
-			rtConfig.getStorageMockMaxConnLifeMilliSec()
+			appConfig.getApiTypePort(appConfig.getApiName()),
+			appConfig.getStorageMockCapacity(),
+			appConfig.getStorageMockContainerCapacity(),
+			appConfig.getStorageMockContainerCountLimit(),
+			appConfig.getBatchSize(),
+			appConfig.getItemSrcFile(),
+			appConfig.getLoadMetricsPeriodSec(),
+			appConfig.getFlagServeJMX(),
+			appConfig.getStorageMockMinConnLifeMilliSec(),
+			appConfig.getStorageMockMaxConnLifeMilliSec()
 		);
 	}
 	//
@@ -118,7 +118,7 @@ implements WSMock<T> {
 			.add( // user-agent header
 				new ResponseServer(
 					Cinderella.class.getSimpleName() + "/" +
-					RunTimeConfig.getContext().getRunVersion()
+					BasicConfig.CONTEXT_CONFIG.get().getRunVersion()
 				)
 			)
 			.add(new ResponseContent())
@@ -126,7 +126,7 @@ implements WSMock<T> {
 			.build();
 		// Create request handler registry
 		final HttpAsyncRequestHandlerMapper apiReqHandlerMapper = new APIRequestHandlerMapper<>(
-			RunTimeConfig.getContext(), this
+			BasicConfig.CONTEXT_CONFIG.get(), this
 		);
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpProc, apiReqHandlerMapper);
@@ -139,7 +139,7 @@ implements WSMock<T> {
 			nextPort = portStart + i;
 			try {
 				sockEvtDispatchers[i] = new BasicSocketEventDispatcher(
-					RunTimeConfig.getContext(), protocolHandler, nextPort, connFactory, ioStats
+					BasicConfig.CONTEXT_CONFIG.get(), protocolHandler, nextPort, connFactory, ioStats
 				);
 				sockEvtDispatchers[i].start();
 			} catch(final IOReactorException e) {

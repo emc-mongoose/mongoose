@@ -29,8 +29,8 @@ extends CambridgeLabViprTestBase {
 	//
 	protected final static String LOAD_SVC_ADDRS_CUSTOM[] = {"10.249.237.76", "10.249.237.77"};
 	private final static String
-		GOOSE_NAME = RunTimeConfig.getContext().getRunName(),
-		GOOSE_VERSION = RunTimeConfig.getContext().getRunVersion(),
+		GOOSE_NAME = BasicConfig.CONTEXT_CONFIG.get().getRunName(),
+		GOOSE_VERSION = BasicConfig.CONTEXT_CONFIG.get().getRunVersion(),
 		GOOSE_REMOTE_PATH = "/workspace/" + GOOSE_NAME + "-" + GOOSE_VERSION + ".tgz",
 		SECRET_DEFAULT = "TLMer+7YMPKCNwS6VzSTbJBP173orXP7Pop2J8+e";
 	private final static File
@@ -41,7 +41,7 @@ extends CambridgeLabViprTestBase {
 	public static void setUpClass()
 	throws Exception {
 		CambridgeLabViprTestBase.setUpClass();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
 		final StringBuilder sb = new StringBuilder();
 		for(final String loadSvcAddr : LOAD_SVC_ADDRS_CUSTOM) {
 			if(sb.length() > 0) {
@@ -49,13 +49,13 @@ extends CambridgeLabViprTestBase {
 			}
 			sb.append(loadSvcAddr);
 		}
-		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, sb.toString());
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
-		rtConfig.set(RunTimeConfig.KEY_AUTH_SECRET, SECRET_DEFAULT);
+		appConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, sb.toString());
+		appConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
+		appConfig.set(RunTimeConfig.KEY_AUTH_SECRET, SECRET_DEFAULT);
 		if(!GOOSE_TGZ_FILE.exists()) {
 			Assert.fail("Mongoose tgz file not found @ " + GOOSE_TGZ_FILE.getAbsolutePath());
 		}
-		applyDeploymentOutputIfAny(rtConfig);
+		applyDeploymentOutputIfAny(appConfig);
 		final ExecutorService deployExecutor = Executors.newFixedThreadPool(
 			LOAD_SVC_ADDRS_CUSTOM.length
 		);
@@ -79,12 +79,12 @@ extends CambridgeLabViprTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		CambridgeLabViprTestBase.tearDownClass();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, "127.0.0.1");
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, "127.0.0.1");
+		appConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
 	}
 	//
-	private static void applyDeploymentOutputIfAny(final RunTimeConfig rtConfig) {
+	private static void applyDeploymentOutputIfAny(final AppConfig appConfig) {
 		// copy paste from HumanFriendly follows below
 		final String fileName = System.getenv("DevBranch");
 		final File file = new File(fileName + "/tools/cli/python/DeploymentOutput");
@@ -92,13 +92,13 @@ extends CambridgeLabViprTestBase {
 		try(final FileInputStream stream = new FileInputStream(file)){
 			props.load(stream);
 			LOG.info(Markers.MSG, "Using custom auth id: \"{}\"", props.getProperty("user"));
-			rtConfig.set(RunTimeConfig.KEY_AUTH_ID, props.getProperty("user"));
+			appConfig.set(RunTimeConfig.KEY_AUTH_ID, props.getProperty("user"));
 			LOG.info(Markers.MSG, "Using custom auth secret: \"{}\"", props.getProperty("secretkey"));
-			rtConfig.set(RunTimeConfig.KEY_AUTH_SECRET, props.getProperty("secretkey"));
+			appConfig.set(RunTimeConfig.KEY_AUTH_SECRET, props.getProperty("secretkey"));
 			final String dataNodes = System.getenv("DataNodes")
 				.replace('(', ' ').replace(')', ' ').trim().replace(' ', ',');
 			LOG.info(Markers.MSG, "Using custom nodes: \"{}\"", dataNodes);
-			rtConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, dataNodes);
+			appConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, dataNodes);
 		} catch(final FileNotFoundException e) {
 			LOG.info(Markers.ERR, "Deployment output file not found");
 		} catch(final IOException e) {

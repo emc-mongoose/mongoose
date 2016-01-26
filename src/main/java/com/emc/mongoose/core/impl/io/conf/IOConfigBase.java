@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.io.conf;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.container.Container;
@@ -34,20 +35,20 @@ implements IOConfig<T, C> {
 	protected C container = null;
 	protected ContentSource contentSrc;
 	protected volatile boolean verifyContentFlag;
-	protected volatile RunTimeConfig runTimeConfig;
-	protected volatile String nameSpace, namePrefix = null;
+	protected volatile AppConfig appConfig;
+	protected volatile String nameSpace;
+	@Deprecated protected volatile String namePrefix = null;
 	protected int buffSize;
-	protected int reqSleepMilliSec;
+	@Deprecated  protected int reqSleepMilliSec = 0;
 	//
 	protected IOConfigBase() {
-		runTimeConfig = RunTimeConfig.getContext();
+		appConfig = BasicConfig.THREAD_CONTEXT.get();
 		loadType = IOTask.Type.CREATE;
 		contentSrc = ContentSourceBase.getDefault();
-		verifyContentFlag = runTimeConfig.getReadVerifyContent();
-		nameSpace = runTimeConfig.getStorageNameSpace();
-		namePrefix = runTimeConfig.getNamePrefix();
-		buffSize = (int) runTimeConfig.getIOBufferSizeMin();
-		reqSleepMilliSec = runTimeConfig.getLoadLimitReqSleepMilliSec();
+		verifyContentFlag = appConfig.getItemDataVerify();
+		nameSpace = appConfig.getStorageHttpNamespace();
+		namePrefix = appConfig.getItemContainerName();
+		buffSize = appConfig.getIoBufferSizeMin();
 	}
 	//
 	protected IOConfigBase(final IOConfigBase<T, C> ioConf2Clone) {
@@ -182,14 +183,12 @@ implements IOConfig<T, C> {
 		return this;
 	}
 	//
-	@Override
-	public IOConfigBase<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
-		this.runTimeConfig = runTimeConfig;
-		setNameSpace(this.runTimeConfig.getStorageNameSpace());
-		setNamePrefix(this.runTimeConfig.getNamePrefix());
-		setVerifyContentFlag(this.runTimeConfig.getReadVerifyContent());
-		setBuffSize((int) this.runTimeConfig.getIOBufferSizeMin());
-		reqSleepMilliSec = runTimeConfig.getLoadLimitReqSleepMilliSec();
+	public IOConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
+		this.appConfig = appConfig;
+		setNameSpace(appConfig.getStorageHttpNamespace());
+		setNamePrefix(appConfig.getItemContainerName());
+		setVerifyContentFlag(appConfig.getItemDataVerify());
+		setBuffSize(appConfig.getIoBufferSizeMin());
 		return this;
 	}
 	//
@@ -210,8 +209,6 @@ implements IOConfig<T, C> {
 		LOG.trace(Markers.MSG, "Written flag");
 		out.writeInt(getBuffSize());
 		LOG.trace(Markers.MSG, "Written buffer size \"" + buffSize + "\"");
-		out.writeInt(reqSleepMilliSec);
-		LOG.trace(Markers.MSG, "Written req sleep time \"" + reqSleepMilliSec + "\"");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -231,8 +228,6 @@ implements IOConfig<T, C> {
 		LOG.trace(Markers.MSG, "Got verify content flag {}", verifyContentFlag);
 		setBuffSize(in.readInt());
 		LOG.trace(Markers.MSG, "Got buff size {}", buffSize);
-		reqSleepMilliSec = in.readInt();
-		LOG.trace(Markers.MSG, "Got request interval {}", reqSleepMilliSec);
 	}
 	//
 	@Override

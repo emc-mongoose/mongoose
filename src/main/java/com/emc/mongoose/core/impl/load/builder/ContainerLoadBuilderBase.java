@@ -1,17 +1,18 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.conf.ItemNamingScheme;
+//
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
-import com.emc.mongoose.common.conf.BasicItemNamingScheme;
+//
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.item.data.NewContainerSrc;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,8 +20,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.Arrays;
-//
 /**
  * Created by gusakk on 21.10.15.
  */
@@ -36,17 +35,17 @@ implements ContainerLoadBuilder<T, C, U>{
 	//
 	protected boolean flagUseContainerItemSrc;
 	//
-	public ContainerLoadBuilderBase(final RunTimeConfig rtConfig)
+	public ContainerLoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override
-	public ContainerLoadBuilderBase<T, C, U> setRunTimeConfig(final RunTimeConfig rtConfig)
+	public ContainerLoadBuilderBase<T, C, U> setAppConfig(final AppConfig appConfig)
 	throws RemoteException {
-		super.setRunTimeConfig(rtConfig);
+		super.setAppConfig(appConfig);
 		//
-		final String listFilePathStr = rtConfig.getItemSrcFile();
+		final String listFilePathStr = appConfig.getItemInputFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(
@@ -65,22 +64,7 @@ implements ContainerLoadBuilder<T, C, U>{
 	@SuppressWarnings("unchecked")
 	private ItemSrc getNewItemSrc()
 	throws NoSuchMethodException {
-		final String ns = rtConfig.getItemNaming();
-		ItemNamingScheme.Type namingSchemeType = ItemNamingScheme.Type.RANDOM;
-		if(ns != null && !ns.isEmpty()) {
-			try {
-				namingSchemeType = ItemNamingScheme.Type.valueOf(ns.toUpperCase());
-			} catch(final IllegalArgumentException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e,
-					"Failed to parse the naming scheme \"{}\", acceptable values are: {}",
-					ns, Arrays.toString(ItemNamingScheme.Type.values())
-				);
-			}
-		}
-		return new NewContainerSrc<>(
-			ioConfig.getContainerClass(), new BasicItemNamingScheme(namingSchemeType)
-		);
+		return new NewContainerSrc<>(ioConfig.getContainerClass(), appConfig.getItemNaming());
 	}
 	//
 	@SuppressWarnings("unchecked")

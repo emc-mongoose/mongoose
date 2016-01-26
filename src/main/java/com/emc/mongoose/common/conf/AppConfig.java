@@ -7,7 +7,7 @@ import java.io.Externalizable;
  Created by kurila on 20.01.16.
  */
 public interface AppConfig
-extends Configuration, Externalizable {
+extends Cloneable, Configuration, Externalizable {
 
 	String CONFIG_ROOT = "config.";
 
@@ -52,9 +52,7 @@ extends Configuration, Externalizable {
 	String KEY_STORAGE_CLASS = "storage.class";
 	String KEY_STORAGE_HTTP_ADDRS = "storage.http.addrs";
 	String KEY_STORAGE_HTTP_API_CLASS = "storage.http.api.class";
-	String KEY_STORAGE_HTTP_API_S3_PORT = "storage.http.api.s3.port";
-	String KEY_STORAGE_HTTP_API_ATMOS_PORT = "storage.http.api.atmos.port";
-	String KEY_STORAGE_HTTP_API_SWIFT_PORT = "storage.http.api.swift.port";
+	String KEY_STORAGE_HTTP_API___PORT = "storage.http.api.%s.port";
 	String KEY_STORAGE_HTTP_FS_ACCESS = "storage.http.fsAccess";
 	String KEY_STORAGE_HTTP_HEADERS = "storage.http.headers";
 	String KEY_STORAGE_HTTP_NAMESPACE = "storage.http.namespace";
@@ -73,8 +71,6 @@ extends Configuration, Externalizable {
 	String KEY_NETWORK_SOCKET_BIND_BACKLOG_SIZe = "network.socket.bindBacklogSize";
 	String KEY_NETWORK_SOCKET_INTEREST_OP_QUEUED = "network.socket.interestOpQueued";
 	String KEY_NETWORK_SOCKET_SELECT_INTERVAL = "network.socket.selectInterval";
-
-	InheritableThreadLocal<AppConfig> CONTEXT_CONFIG = new InheritableThreadLocal<>();
 	String FNAME_CONF = CONFIG_ROOT + "json";
 	String PREFIX_KEY_ALIASING = "aliasing";
 
@@ -197,14 +193,11 @@ extends Configuration, Externalizable {
 	StorageType getStorageClass();
 
 	String[] getStorageHttpAddrs();
+	String[] getStorageHttpAddrsWithPorts();
 
 	String getStorageHttpApiClass();
 
-	int getStorageHttpApiS3Port();
-
-	int getStorageHttpApiAtmosPort();
-
-	int getStorageHttpApiSwiftPort();
+	int getStorageHttpApi_Port();
 
 	boolean getStroageHttpFsAccess();
 
@@ -227,4 +220,7 @@ extends Configuration, Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	String toFormattedString();
+
+	Object clone()
+	throws CloneNotSupportedException;
 }

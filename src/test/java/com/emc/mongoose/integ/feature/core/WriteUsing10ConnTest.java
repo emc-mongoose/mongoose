@@ -62,16 +62,16 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		WSMockTestBase.setUpClass();
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
-		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
-		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, Integer.toString(LOAD_CONNS));
-		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
-		RunTimeConfig.setContext(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
+		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
+		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
+		appConfig.set(RunTimeConfig.KEY_CREATE_CONNS, Integer.toString(LOAD_CONNS));
+		appConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
+		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
 		//  write
 		STD_OUTPUT_STREAM = StdOutUtil.getStdOutBufferingStream();
 		SCENARIO_THREAD = new Thread(
@@ -261,7 +261,7 @@ extends WSMockTestBase {
 					);
 					Assert.assertEquals(
 						"Type load is wrong",
-						RunTimeConfig.getContext().getScenarioSingleLoad().toLowerCase(),
+						BasicConfig.CONTEXT_CONFIG.get().getScenarioSingleLoad().toLowerCase(),
 						nextRec.get(3).toLowerCase()
 					);
 					actualConnectionsCount = Integer.valueOf(nextRec.get(4));
@@ -310,7 +310,7 @@ extends WSMockTestBase {
 			// Check period of reports is correct
 			long firstTime, nextTime;
 			// Period must be equal 10 sec
-			final int period = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
+			final int period = BasicConfig.CONTEXT_CONFIG.get().getLoadMetricsPeriodSec();
 			// period must be equal 10 seconds = 10000 milliseconds
 			Assert.assertEquals("Wrong load.metrics.periodSec in configuration", 10, period);
 

@@ -1,6 +1,5 @@
 package com.emc.mongoose.server.impl.load.executor;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
@@ -10,11 +9,11 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
-import com.emc.mongoose.core.impl.load.executor.BasicWSContainerLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.BasicHttpContainerLoadExecutor;
 //
-import com.emc.mongoose.server.api.load.executor.WSContainerLoadSvc;
+import com.emc.mongoose.server.api.load.executor.HttpContainerLoadSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -29,13 +28,13 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 21.10.15.
  */
-public class BasicWSContainerLoadSvc<T extends HttpDataItem, C extends Container<T>>
-extends BasicWSContainerLoadExecutor<T, C>
-implements WSContainerLoadSvc<T, C> {
+public class BasicHttpContainerLoadSvc<T extends HttpDataItem, C extends Container<T>>
+extends BasicHttpContainerLoadExecutor<T, C>
+implements HttpContainerLoadSvc<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSContainerLoadSvc(
-		final RunTimeConfig runTimeConfig, final WSRequestConfig reqConfig, final String[] addrs,
+	public BasicHttpContainerLoadSvc(
+		final AppConfig appConfig, final HttpRequestConfig reqConfig, final String[] addrs,
 		final int connPerNode, final int threadsPerNode,
 		final ItemSrc<C> itemSrc, final long maxCount,
 		final int manualTaskSleepMicroSecs, final float rateLimit

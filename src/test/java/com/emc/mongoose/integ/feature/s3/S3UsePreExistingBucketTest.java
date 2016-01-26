@@ -7,11 +7,11 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
-import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.s3.BucketHelper;
 import com.emc.mongoose.storage.adapter.s3.HttpBucketHelper;
-import com.emc.mongoose.storage.adapter.s3.WSRequestConfigImpl;
+import com.emc.mongoose.storage.adapter.s3.HttpRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import org.junit.AfterClass;
@@ -40,10 +40,10 @@ extends StandaloneClientTestBase {
 		);
 		StandaloneClientTestBase.setUpClass();
 		//
-		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSRequestConfigBase
+		final HttpRequestConfigImpl reqConf = (HttpRequestConfigImpl) HttpRequestConfigBase
 			.newInstanceFor("s3")
-			.setRunTimeConfig(RunTimeConfig.getContext());
-		reqConf.setRunTimeConfig(RunTimeConfig.getContext());
+			.setAppConfig(BasicConfig.CONTEXT_CONFIG.get());
+		reqConf.setAppConfig(BasicConfig.CONTEXT_CONFIG.get());
 		bucketHelper = new HttpBucketHelper(
 			reqConf, new BasicContainer(S3UsePreExistingBucketTest.class.getSimpleName())
 		);
@@ -69,7 +69,7 @@ extends StandaloneClientTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		bucketHelper.delete(RunTimeConfig.getContext().getStorageAddrs()[0]);
+		bucketHelper.delete(BasicConfig.CONTEXT_CONFIG.get().getStorageAddrs()[0]);
 		StandaloneClientTestBase.tearDownClass();
 	}
 	//

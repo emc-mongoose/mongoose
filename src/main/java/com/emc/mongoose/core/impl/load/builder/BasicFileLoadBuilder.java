@@ -22,9 +22,9 @@ import java.rmi.RemoteException;
 public class BasicFileLoadBuilder<T extends FileItem, U extends FileLoadExecutor<T>>
 extends DataLoadBuilderBase<T, U> {
 	//
-	public BasicFileLoadBuilder(final RunTimeConfig rtConfig)
+	public BasicFileLoadBuilder(final AppConfig appConfig)
 	throws RemoteException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override
@@ -61,7 +61,7 @@ extends DataLoadBuilderBase<T, U> {
 		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int threadCount = loadTypeConnPerNode.get(loadType);
 		return (U) new BasicFileLoadExecutor<>(
-			RunTimeConfig.getContext(), (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
+			BasicConfig.CONTEXT_CONFIG.get(), (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
 			null, 0, threadCount, itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
 			manualTaskSleepMicroSecs, rateLimit, updatesPerItem

@@ -51,15 +51,15 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		WSMockTestBase.setUpClass();
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
-		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE_MAX);
-		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE_MIN);
-		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
-		RunTimeConfig.setContext(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
+		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE_MAX);
+		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE_MIN);
+		appConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
+		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
 		//
 		try (final BufferingOutputStream
 				 stdOutStream =	StdOutUtil.getStdOutBufferingStream()

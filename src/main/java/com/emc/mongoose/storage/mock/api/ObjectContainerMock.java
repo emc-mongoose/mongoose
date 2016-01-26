@@ -10,7 +10,7 @@ import java.util.Map;
 public interface ObjectContainerMock<T extends MutableDataItemMock>
 extends Map<String, T>/*, ItemBuffer<T>*/ {
 	//
-	String DEFAULT_NAME = RunTimeConfig.getContext().getRunName();
+	String DEFAULT_NAME = BasicConfig.CONTEXT_CONFIG.get().getRunName();
 	//
 	int size();
 	//

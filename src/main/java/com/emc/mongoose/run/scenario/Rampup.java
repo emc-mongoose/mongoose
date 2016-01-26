@@ -22,22 +22,22 @@ implements Runnable {
 		LOG = LogManager.getLogger();
 	}
 	//
-	private final RunTimeConfig rtConfig;
+	private final AppConfig appConfig;
 	private final long timeOut, unChangedCountLimit;
 	private final TimeUnit timeUnit;
 	private final String loadTypeSeq[], sizeSeq[], connCountSeq[];
 	//
-	public Rampup(final RunTimeConfig rtConfig) {
-		this.rtConfig = rtConfig;
-		this.timeOut = rtConfig.getLoadLimitTimeValue();
-		this.unChangedCountLimit = rtConfig.getLoadLimitCount();
-		this.timeUnit = rtConfig.getLoadLimitTimeUnit();
-		this.loadTypeSeq = rtConfig.getScenarioChainLoad();
-		this.sizeSeq = rtConfig.getScenarioRampupSizes();
-		this.connCountSeq = rtConfig.getScenarioRampupConnCounts();
+	public Rampup(final AppConfig appConfig) {
+		this.appConfig = appConfig;
+		this.timeOut = appConfig.getLoadLimitTimeValue();
+		this.unChangedCountLimit = appConfig.getLoadLimitCount();
+		this.timeUnit = appConfig.getLoadLimitTimeUnit();
+		this.loadTypeSeq = appConfig.getScenarioChainLoad();
+		this.sizeSeq = appConfig.getScenarioRampupSizes();
+		this.connCountSeq = appConfig.getScenarioRampupConnCounts();
 		// adjust some defaults if necessary
 		LOG.debug(Markers.MSG, "Setting the metric update period to zero for chain scenario");
-		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
+		appConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 	}
 	//
 	@Override
@@ -51,17 +51,17 @@ implements Runnable {
 				final String nextStepName = nextConnCountStr + "x" + nextSizeStr;
 				LOG.debug(Markers.MSG, "Build the next step load chain: \"{}\"", nextStepName);
 				// each finished load job affects global count limitation, should be reset
-				rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, unChangedCountLimit);
-				rtConfig.set(RunTimeConfig.KEY_DATA_SIZE, nextSizeStr);
-				rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, nextSizeStr);
-				rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, nextSizeStr);
-				rtConfig.set(RunTimeConfig.KEY_LOAD_CONNS, nextConnCountStr);
-				rtConfig.set(RunTimeConfig.KEY_APPEND_CONNS, nextConnCountStr);
-				rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, nextConnCountStr);
-				rtConfig.set(RunTimeConfig.KEY_DELETE_CONNS, nextConnCountStr);
-				rtConfig.set(RunTimeConfig.KEY_READ_CONNS, nextConnCountStr);
-				rtConfig.set(RunTimeConfig.KEY_UPDATE_CONNS, nextConnCountStr);
-				nextLoadSeq = new Chain(rtConfig, timeOut, timeUnit, loadTypeSeq, false);
+				appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, unChangedCountLimit);
+				appConfig.set(RunTimeConfig.KEY_DATA_SIZE, nextSizeStr);
+				appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, nextSizeStr);
+				appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, nextSizeStr);
+				appConfig.set(RunTimeConfig.KEY_LOAD_CONNS, nextConnCountStr);
+				appConfig.set(RunTimeConfig.KEY_APPEND_CONNS, nextConnCountStr);
+				appConfig.set(RunTimeConfig.KEY_CREATE_CONNS, nextConnCountStr);
+				appConfig.set(RunTimeConfig.KEY_DELETE_CONNS, nextConnCountStr);
+				appConfig.set(RunTimeConfig.KEY_READ_CONNS, nextConnCountStr);
+				appConfig.set(RunTimeConfig.KEY_UPDATE_CONNS, nextConnCountStr);
+				nextLoadSeq = new Chain(appConfig, timeOut, timeUnit, loadTypeSeq, false);
 				LOG.info(Markers.PERF_SUM, "---- Step {} start ----", nextStepName);
 				nextLoadSeq.run();
 				if(nextLoadSeq.isInterrupted()) {
@@ -73,7 +73,7 @@ implements Runnable {
 	//
 	public static void main(final String... args) {
 		RunTimeConfig.initContext();
-		final RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
 		//
 		LOG.info(Markers.MSG, runTimeConfig);
 		//

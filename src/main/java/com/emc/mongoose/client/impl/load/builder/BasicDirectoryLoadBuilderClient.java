@@ -4,7 +4,8 @@ import com.emc.mongoose.client.api.load.builder.DirectoryLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.DirectoryLoadClient;
 import com.emc.mongoose.client.impl.load.executor.BasicDirectoryLoadClient;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Directory;
@@ -17,7 +18,6 @@ import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
 import com.emc.mongoose.server.api.load.builder.DirectoryLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
 //
-import org.apache.commons.configuration.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -38,10 +38,10 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	//
 	public BasicDirectoryLoadBuilderClient()
 	throws IOException {
-		this(RunTimeConfig.getContext());
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
-	public BasicDirectoryLoadBuilderClient(final Configuration runTimeConfig)
+	public BasicDirectoryLoadBuilderClient(final AppConfig runTimeConfig)
 	throws IOException {
 		super(runTimeConfig);
 	}
@@ -100,11 +100,11 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		}
 		//
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		//
 		return (U) new BasicDirectoryLoadClient<>(
-			rtConfig, (FileIOConfig) ioConfig, storageNodeAddrs,
-			rtConfig.getConnCountPerNodeFor(loadTypeStr), rtConfig.getWorkerCountFor(loadTypeStr),
+			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs,
+			appConfig.getConnCountPerNodeFor(loadTypeStr), appConfig.getWorkerCountFor(loadTypeStr),
 			itemSrc, maxCount, remoteLoadMap
 		);
 	}

@@ -47,29 +47,29 @@ extends DistributedLoadBuilderTestBase {
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "container");
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
 		DistributedLoadBuilderTestBase.setUpClass();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
-		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
-		rtConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "100");
-		RunTimeConfig.setContext(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
+		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
+		appConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "100");
+		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
 		new ScenarioRunner().run();
 		//  Wait for "Scenario end" message
 		TimeUnit.SECONDS.sleep(5);
 		RunIdFileManager.flushAll();
 		//
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		appConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		LoggingTestBase.setUpClass();
-		rtConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_DELETE);
-		rtConfig.set(
+		appConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_DELETE);
+		appConfig.set(
 			RunTimeConfig.KEY_ITEM_SRC_FILE,
 			LogValidator.getItemsListFile(RUN_ID + "Write").getPath()
 		);
-		RunTimeConfig.setContext(rtConfig);
-		logger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		RunTimeConfig.setContext(appConfig);
+		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
 		//
 		try(
 			final BufferingOutputStream stdOutStream = StdOutUtil
@@ -131,7 +131,7 @@ extends DistributedLoadBuilderTestBase {
 	@Test
 	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
 	throws Exception {
-		final String configTable = RunTimeConfig.getContext().toString();
+		final String configTable = BasicConfig.CONTEXT_CONFIG.get().toString();
 		final Set<String> params = new HashSet<>();
 		//  skip table header
 		int start = 126;

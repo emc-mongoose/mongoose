@@ -21,10 +21,10 @@ extends WSMockTestBase {
 	public static void setUpClass()
 	throws Exception {
 		WSMockTestBase.setUpClass();
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
-		LOAD_BUILDER = new BasicWSDataLoadBuilder<>(RunTimeConfig.getContext())
-			.setRunTimeConfig(rtConfig);
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
+		LOAD_BUILDER = new BasicWSDataLoadBuilder<>(BasicConfig.CONTEXT_CONFIG.get())
+			.setAppConfig(appConfig);
 	}
 	//
 	@AfterClass

@@ -48,17 +48,17 @@ implements Runnable {
 	//
 	private volatile boolean interrupted;
 	//
-	public Chain(final RunTimeConfig rtConfig) {
+	public Chain(final AppConfig appConfig) {
 		this(
-			rtConfig,
-			rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit(),
-			rtConfig.getScenarioChainLoad(), rtConfig.getScenarioChainConcurrentFlag()
+			appConfig,
+			appConfig.getLoadLimitTimeValue(), appConfig.getLoadLimitTimeUnit(),
+			appConfig.getScenarioChainLoad(), appConfig.getScenarioChainConcurrentFlag()
 		);
 	}
 	//
 	@SuppressWarnings("unchecked")
 	public Chain(
-		final RunTimeConfig rtConfig, final long timeOut, final TimeUnit timeUnit,
+		final AppConfig appConfig, final long timeOut, final TimeUnit timeUnit,
 		final String[] loadTypeSeq, final boolean isParallel
 	) {
 		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
@@ -69,7 +69,7 @@ implements Runnable {
 		LoadExecutor nextLoadJob, prevLoadJob = null;
 		final IOConfig ioConf;
 		try(
-			final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance(rtConfig)
+			final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance(appConfig)
 		) {
 			ioConf = loadBuilder.getIOConfig();
 			ItemDst itemDst = null;
@@ -231,7 +231,7 @@ implements Runnable {
 	//
 	public static void main(final String... args) {
 		RunTimeConfig.initContext();
-		final RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
+		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
 		//
 		LOG.info(Markers.MSG, runTimeConfig);
 		//
