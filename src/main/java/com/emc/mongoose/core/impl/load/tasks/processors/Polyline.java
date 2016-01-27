@@ -159,6 +159,16 @@ class Polyline {
 		}
 	}
 
+	public List<Point> getPoints() {
+		List<Point> points = new ArrayList<>();
+		points.add(firstPoint);
+		for (WeighedPoint weighedPoint: this.points) {
+			points.add(weighedPoint.point());
+		}
+		points.add(lastPoint);
+		return points;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();

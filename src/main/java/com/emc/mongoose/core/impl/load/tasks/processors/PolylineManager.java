@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.load.tasks.processors;
 
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 
+import java.util.List;
 
 public class PolylineManager {
 
@@ -51,7 +52,45 @@ public class PolylineManager {
 			polyline.simplify(MAX_NUM_OF_POINTS / 2);
 			polyline.addPoint(new Point(now, metricValue));
 		}
-
 	}
 
+	public List<Point> getBwLast() {
+		return bwLast.getPoints();
+	}
+
+	public List<Point> getBwAvg() {
+		return bwAvg.getPoints();
+	}
+
+	public List<Point> getTpLast() {
+		return tpLast.getPoints();
+	}
+
+	public List<Point> getTpAvg() {
+		return tpAvg.getPoints();
+	}
+
+	public List<Point> getLatAvg() {
+		return latAvg.getPoints();
+	}
+
+	public List<Point> getLatMax() {
+		return latMax.getPoints();
+	}
+
+	public List<Point> getLatMin() {
+		return latMin.getPoints();
+	}
+
+	public List<Point> getDurMax() {
+		return durMax.getPoints();
+	}
+
+	public List<Point> getDurAvg() {
+		return durAvg.getPoints();
+	}
+
+	public List<Point> getDurMin() {
+		return durMin.getPoints();
+	}
 }

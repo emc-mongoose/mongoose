@@ -34,6 +34,11 @@ public final class WebUIAppender
 	//
 	private final static ConcurrentHashMap<String, CircularFifoQueue<LogEvent>>
 			LOG_EVENTS_MAP = new ConcurrentHashMap<>();
+	//
+	public static List<WebSocketLogListener> listeners() {
+		return Collections.unmodifiableList(LISTENERS);
+	}
+	//
 	private final static List<WebSocketLogListener>
 			LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
 	//

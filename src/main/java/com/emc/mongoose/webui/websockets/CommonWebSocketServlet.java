@@ -9,15 +9,15 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by gusakk on 10/24/14.
  */
-public final class LogServlet
-extends WebSocketServlet {
+public final class CommonWebSocketServlet
+		extends WebSocketServlet {
 	//
 	@Override
 	public final void configure(final WebSocketServletFactory factory) {
 		final String[] websocketIdleTimeoutArray = RunTimeConfig.getContext()
-			.getWebUIWSTimeout().split("\\.");
-		factory.register(LogSocket.class);
+				.getWebUIWSTimeout().split("\\.");
+		factory.register(CommonWebSocketListener.class);
 		factory.getPolicy().setIdleTimeout(TimeUnit.valueOf(websocketIdleTimeoutArray[1].toUpperCase())
-			.toMillis(Integer.valueOf(websocketIdleTimeoutArray[0])));
+				.toMillis(Integer.valueOf(websocketIdleTimeoutArray[0])));
 	}
 }

@@ -37,12 +37,12 @@
 	</servlet-mapping>
 
 	<servlet>
-		<servlet-name>LogServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.webui.websockets.LogServlet</servlet-class>
+		<servlet-name>CommonWebSocketServlet</servlet-name>
+		<servlet-class>com.emc.mongoose.webui.websockets.CommonWebSocketServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
-		<servlet-name>LogServlet</servlet-name>
+		<servlet-name>CommonWebSocketServlet</servlet-name>
 		<url-pattern>/logs</url-pattern>
 	</servlet-mapping>
 

@@ -5,17 +5,15 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.WebSocketLogListener;
 import com.emc.mongoose.common.log.appenders.WebUIAppender;
 //
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 //
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import org.apache.logging.log4j.core.LogEvent;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
@@ -23,14 +21,15 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 //
 import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
  * Created by gusakk on 10/24/14.
  */
 @WebSocket
-public final class LogSocket
-implements WebSocketLogListener {
+public final class CommonWebSocketListener implements WebSocketLogListener {
 	//
 	private Session session;
 	private final static ObjectMapper mapper = new ObjectMapper();
@@ -38,23 +37,20 @@ implements WebSocketLogListener {
 	//
 	@OnWebSocketClose
 	public final void onClose(int statusCode, final String reason) {
-		WebUIAppender.unregister(this);
-		session.close();
+		unregisterListener();
 		LOG.trace(Markers.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
 	}
 	//
 	@OnWebSocketError
 	public final void onError(final Throwable t) {
-		WebUIAppender.unregister(this);
-		session.close();
+		unregisterListener();
 		LogUtil.exception(LOG, Level.DEBUG, t, "WebSocket failure");
 	}
 	//
 	@OnWebSocketConnect
 	public final void onConnect(final Session session) throws InterruptedException {
 		this.session = session;
-		//
-		WebUIAppender.register(this);
+		registerListener();
 		LOG.trace(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
 	}
 	//
@@ -73,4 +69,16 @@ implements WebSocketLogListener {
 			}
 		}
 	}
+
+	private void registerListener() {
+		WebUIAppender.register(this);
+		LogMetricsTask.setListeners(WebUIAppender.listeners());
+	}
+
+	private void unregisterListener() {
+		WebUIAppender.unregister(this);
+		session.close();
+		LogMetricsTask.setListeners(WebUIAppender.listeners());
+	}
+
 }

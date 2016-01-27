@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.load.tasks;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.common.log.appenders.WebSocketLogListener;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.load.tasks.processors.PolylineManager;
@@ -11,12 +12,19 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 //
 import java.rmi.RemoteException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 08.12.15.
  */
 public final class LogMetricsTask
 implements Runnable {
+	//
+	public static List<WebSocketLogListener> LISTENERS;
+	//
+	public static void setListeners(List<WebSocketLogListener> listeners) {
+		LogMetricsTask.LISTENERS = listeners;
+	}
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
