@@ -3,7 +3,6 @@ package com.emc.mongoose.core.impl.load.executor;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -110,7 +109,7 @@ implements HttpContainerLoadExecutor<T, C> {
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
-				//.add(new RequestExpectContinue(true))
+			//.add(new RequestExpectContinue(true))
 			.add(new RequestContent(false))
 			.build();
 		client = new HttpAsyncRequester(
@@ -128,15 +127,15 @@ implements HttpContainerLoadExecutor<T, C> {
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(threadCount)
-			.setBacklogSize((int) thrLocalConfig.getSocketBindBackLogSize())
-			.setInterestOpQueued(thrLocalConfig.getSocketInterestOpQueued())
-			.setSelectInterval(thrLocalConfig.getSocketSelectInterval())
-			.setShutdownGracePeriod(thrLocalConfig.getSocketTimeOut())
-			.setSoKeepAlive(thrLocalConfig.getSocketKeepAliveFlag())
-			.setSoLinger(thrLocalConfig.getSocketLinger())
-			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
-			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
-			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
+			.setBacklogSize(thrLocalConfig.getNetworkSocketBindBacklogSize())
+			.setInterestOpQueued(thrLocalConfig.getNetworkSocketInterestOpQueued())
+			.setSelectInterval(thrLocalConfig.getNetworkSocketSelectInterval())
+			.setShutdownGracePeriod(thrLocalConfig.getNetworkSocketTimeoutMilliSec())
+			.setSoKeepAlive(thrLocalConfig.getNetworkSocketKeepAlive())
+			.setSoLinger(thrLocalConfig.getNetworkSocketLinger())
+			.setSoReuseAddress(thrLocalConfig.getNetworkSocketReuseAddr())
+			.setSoTimeout(thrLocalConfig.getNetworkSocketTimeoutMilliSec())
+			.setTcpNoDelay(thrLocalConfig.getNetworkSocketTcpNoDelay())
 			.setRcvBufSize(Constants.BUFF_SIZE_LO)
 			.setSndBufSize(Constants.BUFF_SIZE_LO)
 			.setConnectTimeout(

@@ -1,12 +1,12 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.common.conf.ItemNamingScheme;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
@@ -16,7 +16,6 @@ import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.common.conf.BasicItemNamingScheme;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
 //
@@ -27,8 +26,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.Arrays;
-import java.util.NoSuchElementException;
 /**
  Created by kurila on 20.10.15.
  */
@@ -61,21 +58,8 @@ implements DataLoadBuilder<T, U> {
 	@SuppressWarnings("unchecked")
 	private ItemSrc<T> getNewItemSrc()
 	throws NoSuchMethodException {
-		final String ns = appConfig.getItemNaming();
-		ItemNamingScheme.Type namingSchemeType = ItemNamingScheme.Type.RANDOM;
-		if(ns != null && !ns.isEmpty()) {
-			try {
-				namingSchemeType = ItemNamingScheme.Type.valueOf(ns.toUpperCase());
-			} catch(final IllegalArgumentException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e,
-					"Failed to parse the naming scheme \"{}\", acceptable values are: {}",
-					ns, Arrays.toString(ItemNamingScheme.Type.values())
-				);
-			}
-		}
 		return new NewDataItemSrc<>(
-			(Class<T>) ioConfig.getItemClass(), new BasicItemNamingScheme(namingSchemeType),
+			(Class<T>) ioConfig.getItemClass(), appConfig.getItemNaming(),
 			ioConfig.getContentSource(), minObjSize, maxObjSize, objSizeBias
 		);
 	}
@@ -122,43 +106,33 @@ implements DataLoadBuilder<T, U> {
 	throws IllegalStateException, RemoteException {
 		super.setAppConfig(appConfig);
 		//
-		String paramName = RunTimeConfig.KEY_DATA_SIZE_MIN;
-		try {
-			setMinObjSize(appConfig.getDataSizeMin());
-		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
-		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+		final AppConfig.DataSizeScheme dataSizeScheme = appConfig.getItemDataSizeClass();
+		final long minSize, maxSize;
+		final double sizeBias;
+		if(AppConfig.DataSizeScheme.FIXED.equals(dataSizeScheme)) {
+			minSize = appConfig.getItemDataSizeFixed();
+			maxSize = minSize;
+			sizeBias = 0;
+		} else {
+			minSize = appConfig.getItemDataSizeRandomMin();
+			maxSize = appConfig.getItemDataSizeRandomMax();
+			sizeBias = appConfig.getItemDataSizeRandomBias();
 		}
 		//
-		paramName = RunTimeConfig.KEY_DATA_SIZE_MAX;
-		try {
-			setMaxObjSize(appConfig.getDataSizeMax());
-		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
-		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+		setMinObjSize(minSize);
+		setMaxObjSize(maxSize);
+		setObjSizeBias((float) sizeBias);
+		//
+		final AppConfig.DataRangesScheme dataRangesScheme = appConfig.getItemDataRangesClass();
+		if(AppConfig.DataRangesScheme.FIXED.equals(dataRangesScheme)) {
+			final String fixedRanges = appConfig.getItemDataRangesFixedBytes();
+			// TODO implement
+		} else {
+			final int randomCount = appConfig.getItemDataContentRangesRandomCount();
+			setUpdatesPerItem(randomCount);
 		}
 		//
-		paramName = RunTimeConfig.KEY_DATA_SIZE_BIAS;
-		try {
-			setObjSizeBias(appConfig.getDataSizeBias());
-		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
-		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
-		}
-		//
-		paramName = RunTimeConfig.KEY_LOAD_UPDATE_PER_ITEM;
-		try {
-			setUpdatesPerItem(appConfig.getInt(paramName));
-		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
-		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
-		}
-		//
-		final String listFilePathStr = appConfig.getItemSrcFile();
+		final String listFilePathStr = appConfig.getItemInputFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(
@@ -176,13 +150,13 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setItemSrc(ItemSrc<T> itemSrc)
+	public LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
 	throws RemoteException {
 		super.setItemSrc(itemSrc);
 		if(itemSrc instanceof DataItemFileSrc) {
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-					BasicConfig.CONTEXT_CONFIG.get().getBatchSize()
+				BasicConfig.THREAD_CONTEXT.get().getItemInputBatchSize()
 			);
 			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?

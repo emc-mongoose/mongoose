@@ -52,7 +52,7 @@ extends WSRequestHandlerBase<T> {
 	private final static String
 		MAX_KEYS = "maxKeys", MARKER = "marker",
 		BUCKET = "bucket", OBJ_ID = "objId",
-		AUTH_PREFIX = BasicConfig.CONTEXT_CONFIG.get().getApiS3AuthPrefix() + " ";
+		AUTH_PREFIX = BasicConfig.THREAD_CONTEXT.get().getApiS3AuthPrefix() + " ";
 	private final static Pattern
 		PATTERN_URI = Pattern.compile("/(?<" + BUCKET + ">[^/^\\?]+)/?(?<" + OBJ_ID + ">[^\\?]+)?"),
 		PATTERN_MAX_KEYS = Pattern.compile(

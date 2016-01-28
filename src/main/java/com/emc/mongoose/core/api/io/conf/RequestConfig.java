@@ -1,10 +1,9 @@
 package com.emc.mongoose.core.api.io.conf;
-// mongoose-core-api.jar
+//
 import com.emc.mongoose.common.conf.AppConfig;
+//
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
-// mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import java.io.Closeable;
 /**

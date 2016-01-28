@@ -36,7 +36,7 @@ extends StandaloneClientTestBase {
 		//
 		final HttpRequestConfigImpl
 			reqConf = (HttpRequestConfigImpl) HttpRequestConfigBase.newInstanceFor("swift");
-		reqConf.setAppConfig(BasicConfig.CONTEXT_CONFIG.get());
+		reqConf.setAppConfig(BasicConfig.THREAD_CONTEXT.get());
 		AUTH_TOKEN = new WSAuthTokenImpl(
 			reqConf, SwiftUsePreExistingContainerTest.class.getSimpleName()
 		);

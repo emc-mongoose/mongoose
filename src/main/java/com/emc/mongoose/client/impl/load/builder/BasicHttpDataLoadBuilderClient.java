@@ -4,17 +4,17 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 // mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.builder.HttpDataLoadBuilderSvc;
 // mongoose-common.jar
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 // mongoose-client.jar
-import com.emc.mongoose.client.impl.load.executor.BasicWSDataLoadClient;
-import com.emc.mongoose.client.api.load.builder.WSDataLoadBuilderClient;
-import com.emc.mongoose.client.api.load.executor.WSDataLoadClient;
+import com.emc.mongoose.client.impl.load.executor.BasicHttpDataLoadClient;
+import com.emc.mongoose.client.api.load.builder.HttpDataLoadBuilderClient;
+import com.emc.mongoose.client.api.load.executor.HttpDataLoadClient;
 //
-import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -25,19 +25,19 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 08.05.14.
  */
-public final class BasicWSDataLoadBuilderClient<
-	T extends HttpDataItem, W extends WSDataLoadSvc<T>, U extends WSDataLoadClient<T, W>
-> extends DataLoadBuilderClientBase<T, W, U, WSDataLoadBuilderSvc<T, W>>
-implements WSDataLoadBuilderClient<T, W, U> {
+public final class BasicHttpDataLoadBuilderClient<
+	T extends HttpDataItem, W extends HttpDataLoadSvc<T>, U extends HttpDataLoadClient<T, W>
+> extends DataLoadBuilderClientBase<T, W, U, HttpDataLoadBuilderSvc<T, W>>
+implements HttpDataLoadBuilderClient<T, W, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSDataLoadBuilderClient()
+	public BasicHttpDataLoadBuilderClient()
 	throws IOException {
-		this(BasicConfig.CONTEXT_CONFIG.get());
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
-	public BasicWSDataLoadBuilderClient(final AppConfig appConfig)
+	public BasicHttpDataLoadBuilderClient(final AppConfig appConfig)
 	throws IOException {
 		super(runTimeConfig);
 	}
@@ -48,13 +48,13 @@ implements WSDataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected WSDataLoadBuilderSvc<T, W> resolve(final String serverAddr)
+	protected HttpDataLoadBuilderSvc<T, W> resolve(final String serverAddr)
 	throws IOException {
-		WSDataLoadBuilderSvc<T, W> rlb;
+		HttpDataLoadBuilderSvc<T, W> rlb;
 		final String svcUri = "//" + serverAddr + '/' +
 			getClass().getName().replace("client", "server").replace("Client", "Svc");
-		rlb = (WSDataLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri);
-		rlb = (WSDataLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());
+		rlb = (HttpDataLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri);
+		rlb = (HttpDataLoadBuilderSvc<T, W>) ServiceUtil.getRemoteSvc(svcUri + rlb.fork());
 		return rlb;
 	}
 	//
@@ -70,7 +70,7 @@ implements WSDataLoadBuilderClient<T, W, U> {
 		//
 		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
 		//
-		WSDataLoadBuilderSvc<T, W> nextBuilder;
+		HttpDataLoadBuilderSvc<T, W> nextBuilder;
 		W nextLoad;
 		//
 		if(itemSrc == null) {
@@ -88,7 +88,7 @@ implements WSDataLoadBuilderClient<T, W, U> {
 		//
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
 		//
-		return (U) new BasicWSDataLoadClient<>(
+		return (U) new BasicHttpDataLoadClient<>(
 			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs,
 			appConfig.getConnCountPerNodeFor(loadTypeStr), appConfig.getWorkerCountFor(loadTypeStr),
 			itemSrc, maxCount, remoteLoadMap

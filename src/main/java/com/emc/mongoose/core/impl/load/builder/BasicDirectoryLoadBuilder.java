@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 //
 import com.emc.mongoose.core.api.item.container.Directory;

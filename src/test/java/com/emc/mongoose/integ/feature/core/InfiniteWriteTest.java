@@ -39,8 +39,8 @@ extends WSMockTestBase {
 		WSMockTestBase.setUpClass();
 		//
 		final String
-			gooseName = BasicConfig.CONTEXT_CONFIG.get().getRunName(),
-			gooseVersion = BasicConfig.CONTEXT_CONFIG.get().getRunVersion();
+			gooseName = BasicConfig.THREAD_CONTEXT.get().getRunName(),
+			gooseVersion = BasicConfig.THREAD_CONTEXT.get().getRunVersion();
 		final File
 			gooseTgzFile = Paths.get("build", "dist", gooseName + "-" + gooseVersion + ".tgz").toFile(),
 			gooseJarFile = Paths.get(gooseName + "-" + gooseVersion, gooseName + ".jar").toFile();

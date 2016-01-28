@@ -1,7 +1,7 @@
 package com.emc.mongoose.util.builder;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 //
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -17,7 +17,7 @@ import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicDirectoryLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicFileLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicHttpContainerLoadBuilderSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicHttpDataLoadBuilderSvc;
 //
 import org.apache.logging.log4j.Logger;
 //
@@ -41,7 +41,7 @@ implements LoadBuilderSvc {
 	public MultiLoadBuilderSvc(final AppConfig appConfig)
 	throws RemoteException {
 		loadBuilderSvcs.add(new BasicHttpContainerLoadBuilderSvc(appConfig));
-		loadBuilderSvcs.add(new BasicWSDataLoadBuilderSvc(appConfig));
+		loadBuilderSvcs.add(new BasicHttpDataLoadBuilderSvc(appConfig));
 		loadBuilderSvcs.add(
 			new BasicDirectoryLoadBuilderSvc<
 				FileItem, Directory<FileItem>,
@@ -133,7 +133,7 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setAppConfig(final RunTimeConfig props)
+	public final LoadBuilderSvc setAppConfig(final AppConfig props)
 	throws IllegalStateException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.setAppConfig(props);
@@ -166,15 +166,6 @@ implements LoadBuilderSvc {
 	throws IllegalArgumentException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.setMaxCount(maxCount);
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderSvc setManualTaskSleepMicroSecs(final int manualTaskSleepMicroSec)
-	throws IllegalArgumentException, RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setManualTaskSleepMicroSecs(manualTaskSleepMicroSec);
 		}
 		return this;
 	}

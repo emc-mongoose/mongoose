@@ -42,8 +42,8 @@ extends StandaloneClientTestBase {
 		//
 		final HttpRequestConfigImpl reqConf = (HttpRequestConfigImpl) HttpRequestConfigBase
 			.newInstanceFor("s3")
-			.setAppConfig(BasicConfig.CONTEXT_CONFIG.get());
-		reqConf.setAppConfig(BasicConfig.CONTEXT_CONFIG.get());
+			.setAppConfig(BasicConfig.THREAD_CONTEXT.get());
+		reqConf.setAppConfig(BasicConfig.THREAD_CONTEXT.get());
 		bucketHelper = new HttpBucketHelper(
 			reqConf, new BasicContainer(S3UsePreExistingBucketTest.class.getSimpleName())
 		);
@@ -69,7 +69,7 @@ extends StandaloneClientTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		bucketHelper.delete(BasicConfig.CONTEXT_CONFIG.get().getStorageAddrs()[0]);
+		bucketHelper.delete(BasicConfig.THREAD_CONTEXT.get().getStorageAddrs()[0]);
 		StandaloneClientTestBase.tearDownClass();
 	}
 	//

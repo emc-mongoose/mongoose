@@ -59,7 +59,7 @@ extends FileSystemTestBase {
 		CLIENT_BUILDER
 			.setItemClass("file")
 			.setLimitCount(COUNT_TO_WRITE);
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID + "_FilesWrite");
 		try(
 			final BufferedReader

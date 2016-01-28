@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.item.data;
 //
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -119,7 +118,7 @@ implements ContentSource {
 		try {
 			if(DEFAULT == null) {
 				try {
-					final String contentFilePath = BasicConfig.CONTEXT_CONFIG.get().getDataContentFPath();
+					final String contentFilePath = BasicConfig.THREAD_CONTEXT.get().getDataContentFPath();
 					if(contentFilePath != null && !contentFilePath.isEmpty()) {
 						final Path p = Paths.get(contentFilePath);
 						if(Files.exists(p) && !Files.isDirectory(p) && Files.isReadable(p)) {

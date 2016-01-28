@@ -51,7 +51,7 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		WSMockTestBase.setUpClass();
 		//
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
 		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE_MAX);
 		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE_MIN);
@@ -59,7 +59,7 @@ extends WSMockTestBase {
 		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
+		logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
 		//
 		try (final BufferingOutputStream
 				 stdOutStream =	StdOutUtil.getStdOutBufferingStream()

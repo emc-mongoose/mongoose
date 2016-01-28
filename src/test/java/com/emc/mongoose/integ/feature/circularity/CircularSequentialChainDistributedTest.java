@@ -12,7 +12,6 @@ import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.integ.tools.StdOutUtil;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-import com.emc.mongoose.run.scenario.Chain;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -66,7 +65,7 @@ extends DistributedClientTestBase {
 			System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 			DistributedClientTestBase.setUpClass();
 			//
-			final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+			final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 			appConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
 			appConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);
 			appConfig.set(RunTimeConfig.KEY_LOAD_CIRCULAR, true);
@@ -90,7 +89,7 @@ extends DistributedClientTestBase {
 				RunIdFileManager.flushAll();
 			}
 			//
-			RunTimeConfig newConfig = BasicConfig.CONTEXT_CONFIG.get();
+			RunTimeConfig newConfig = BasicConfig.THREAD_CONTEXT.get();
 			newConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD, LOAD_SEQ);
 			newConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
 			newConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, RUN_ID);

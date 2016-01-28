@@ -1,8 +1,7 @@
 package com.emc.mongoose.core.impl.load.builder;
-
+//
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
@@ -14,10 +13,7 @@ import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 import com.emc.mongoose.core.impl.load.executor.BasicHttpContainerLoadExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import java.rmi.RemoteException;
-import java.util.NoSuchElementException;
-
 /**
  * Created by gusakk on 21.10.15.
  */
@@ -45,18 +41,8 @@ implements HttpContainerLoadBuilder<T, C, U> {
 	@Override
 	public BasicHttpContainerLoadBuilder<T, C, U> setAppConfig(final AppConfig appConfig)
 	throws RemoteException {
-		//
 		super.setAppConfig(appConfig);
-		//
-		final String paramName = RunTimeConfig.KEY_STORAGE_SCHEME;
-		try {
-			HttpRequestConfig.class.cast(ioConfig).setScheme("http");
-		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
-		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
-		}
-		//
+		HttpRequestConfig.class.cast(ioConfig).setScheme("http");
 		return this;
 	}
 	//

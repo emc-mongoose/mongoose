@@ -1,5 +1,6 @@
 package com.emc.mongoose.server.impl.load.executor;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
@@ -11,9 +12,9 @@ import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.executor.BasicWSDataLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.BasicHttpDataLoadExecutor;
 // mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -28,22 +29,21 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 16.12.14.
  */
-public final class BasicWSDataLoadSvc<T extends HttpDataItem>
-extends BasicWSDataLoadExecutor<T>
-implements WSDataLoadSvc<T> {
+public final class BasicHttpDataLoadSvc<T extends HttpDataItem>
+extends BasicHttpDataLoadExecutor<T>
+implements HttpDataLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSDataLoadSvc(
-		final AppConfig appConfig,
-		final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
+	public BasicHttpDataLoadSvc(
+		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int connPerNode, final int threadsPerNode,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
 	) {
 		super(
-			runTimeConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
+			appConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
 		);
 	}

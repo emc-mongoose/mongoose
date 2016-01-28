@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.adapter.swift;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
@@ -30,14 +31,13 @@ public final class HttpRequestConfigImpl<T extends HttpDataItem, C extends Conta
 extends HttpRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	public final static String KEY_CONF_SVC_BASEPATH = "api.type.swift.serviceBasepath";
 	public final static String KEY_X_AUTH_TOKEN = "X-Auth-Token";
 	public final static String KEY_X_AUTH_USER = "X-Auth-User";
 	public final static String KEY_X_AUTH_KEY = "X-Auth-Key";
 	public final static String KEY_X_VERSIONING = "X-Versions-Location";
 	public final static String DEFAULT_VERSIONS_CONTAINER = "archive";
 	//
-	private String uriSvcBasePath = null, uriSvcBaseContainerPath = null;
+	private String uriSvcBasePath = "v1", uriSvcBaseContainerPath = null;
 	private WSAuthTokenImpl<T> authToken = null;
 	//
 	public HttpRequestConfigImpl()
@@ -61,17 +61,14 @@ extends HttpRequestConfigBase<T, C> {
 			setContainer(reqConf2Clone.getContainer());
 		}
 		//
-		final RunTimeConfig localConfig = BasicConfig.CONTEXT_CONFIG.get();
-		if(uriSvcBasePath == null) {
-			uriSvcBasePath = localConfig.getString(KEY_CONF_SVC_BASEPATH);
-		}
+		final AppConfig localConfig = BasicConfig.THREAD_CONTEXT.get();
 		if(authToken == null) {
-			setAuthToken(new WSAuthTokenImpl<>(this, localConfig.getString(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN)));
+			setAuthToken(new WSAuthTokenImpl<>(this, localConfig.getAuthToken()));
 		}
 		if(container == null) {
 			setContainer(
 				(C) new BasicContainer<T>(
-					localConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER)
+					localConfig.getItemContainerName()
 				)
 			);
 		}
@@ -126,7 +123,7 @@ extends HttpRequestConfigBase<T, C> {
 		try {
 			copy = new HttpRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
-			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
+			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", SIGN_METHOD);
 		}
 		return copy;
 	}
@@ -135,22 +132,16 @@ extends HttpRequestConfigBase<T, C> {
 	public HttpRequestConfigImpl<T, C> setAppConfig(final AppConfig appConfig) {
 		super.setAppConfig(this.appConfig);
 		//
-		if(this.appConfig.containsKey(KEY_CONF_SVC_BASEPATH)) {
-			uriSvcBasePath = this.appConfig.getString(KEY_CONF_SVC_BASEPATH);
-		} else {
-			LOG.error(Markers.ERR, "Swift base uri path is not specified");
-		}
-		//
-		if(this.appConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN)) {
-			authToken = new WSAuthTokenImpl<>(this, this.appConfig.getString(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN));
+		if(this.appConfig.containsKey(AppConfig.KEY_AUTH_TOKEN)) {
+			authToken = new WSAuthTokenImpl<>(this, this.appConfig.getAuthToken());
 		} else {
 			LOG.error(Markers.ERR, "Swift auth token is not specified");
 		}
 		//
-		if(this.appConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_CONTAINER)) {
+		if(this.appConfig.containsKey(AppConfig.KEY_ITEM_CONTAINER_NAME)) {
 			setContainer(
 				(C) new BasicContainer<T>(
-					this.appConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER)
+					this.appConfig.getItemContainerName()
 				)
 			);
 		} else {
@@ -238,18 +229,19 @@ extends HttpRequestConfigBase<T, C> {
 			throw new IllegalStateException("No auth token was created");
 		}
 		sharedHeaders.updateHeader(new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue));
-		appConfig.set(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN, authTokenValue);
+		appConfig.setProperty(AppConfig.KEY_AUTH_TOKEN, authTokenValue);
 		// configure a container
 		if(container == null) {
 			throw new IllegalStateException("Container is not specified");
 		}
-		final HttpSwiftContainerHelper<T, C> containerHelper = new HttpSwiftContainerHelper<>(this, container);
+		final HttpSwiftContainerHelper<T, C>
+			containerHelper = new HttpSwiftContainerHelper<>(this, container);
 		if(containerHelper.exists(storageNodeAddrs[0])) {
 			LOG.info(Markers.MSG, "Container \"{}\" already exists", container);
 		} else {
 			containerHelper.create(storageNodeAddrs[0]);
 			if(containerHelper.exists(storageNodeAddrs[0])) {
-				appConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, container.getName());
+				appConfig.setProperty(AppConfig.KEY_ITEM_CONTAINER_NAME, container.getName());
 			} else {
 				throw new IllegalStateException(
 					String.format("Container \"%s\" still doesn't exist", container)

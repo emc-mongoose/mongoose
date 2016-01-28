@@ -21,7 +21,7 @@ extends WSMockTestBase {
 	public static void setUpClass()
 	throws Exception {
 		WSMockTestBase.setUpClass();
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, ServiceUtil.getHostAddr());
 		appConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_SERVER);
 		ServiceUtil.init();
@@ -35,7 +35,7 @@ extends WSMockTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		LOAD_BUILDER_SVC.close();
-		BasicConfig.CONTEXT_CONFIG.get().set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_STANDALONE);
+		BasicConfig.THREAD_CONTEXT.get().set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_STANDALONE);
 		WSMockTestBase.tearDownClass();
 	}
 }

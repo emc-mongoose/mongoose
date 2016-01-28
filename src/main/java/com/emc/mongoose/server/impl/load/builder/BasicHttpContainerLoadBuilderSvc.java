@@ -1,7 +1,8 @@
 package com.emc.mongoose.server.impl.load.builder;
 
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -45,7 +46,7 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 	//
 	public BasicHttpContainerLoadBuilderSvc(final AppConfig appConfig)
 	throws RemoteException {
-		super(runTimeConfig);
+		super(appConfig);
 	}
 	//
 	@Override
@@ -99,9 +100,9 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 		}
 		//
 		final HttpRequestConfig wsReqConf = HttpRequestConfig.class.cast(ioConfig);
-		final RunTimeConfig localRunTimeConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig localAppConfig = BasicConfig.THREAD_CONTEXT.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
-		localRunTimeConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
+		localAppConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int
 			connPerNode = loadTypeConnPerNode.get(loadType),
@@ -110,7 +111,7 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 			);
 		//
 		return (U) new BasicHttpContainerLoadSvc<>(
-			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
+			localAppConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, manualTaskSleepMicroSecs, rateLimit
 		);

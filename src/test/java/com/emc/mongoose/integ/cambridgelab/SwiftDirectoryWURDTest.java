@@ -41,7 +41,7 @@ extends CambridgeLabDistributedClientTestBase {
 				final StorageClient client = CLIENT_BUILDER
 					.setLimitTime(100, TimeUnit.SECONDS)
 					.setAPI("swift")
-					.setSwiftContainer(RUN_ID)
+					.setContainer(RUN_ID)
 					.setFileAccess(true)
 					.setPath("subDir0")
 					.build()

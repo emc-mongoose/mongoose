@@ -38,7 +38,7 @@ extends StandaloneClientTestBase {
 		//
 		final HttpRequestConfigImpl reqConf = (HttpRequestConfigImpl) HttpRequestConfigBase
 			.newInstanceFor("swift")
-			.setAppConfig(BasicConfig.CONTEXT_CONFIG.get());
+			.setAppConfig(BasicConfig.THREAD_CONTEXT.get());
 		CONTAINER_HELPER = new HttpSwiftContainerHelper<HttpDataItem, Container<HttpDataItem>>(
 				reqConf, new BasicContainer(RUN_ID)
 		);
@@ -52,7 +52,7 @@ extends StandaloneClientTestBase {
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("swift")
-				.setSwiftContainer(CONTAINER_HELPER.toString())
+				.setContainer(CONTAINER_HELPER.toString())
 				.build()
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
@@ -64,7 +64,7 @@ extends StandaloneClientTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		CONTAINER_HELPER.delete(BasicConfig.CONTEXT_CONFIG.get().getStorageAddrs()[0]);
+		CONTAINER_HELPER.delete(BasicConfig.THREAD_CONTEXT.get().getStorageAddrs()[0]);
 		StandaloneClientTestBase.tearDownClass();
 	}
 	//

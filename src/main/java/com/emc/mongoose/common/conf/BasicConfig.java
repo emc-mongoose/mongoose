@@ -39,9 +39,9 @@ implements AppConfig {
 		THREAD_CONTEXT = new InheritableThreadLocal<AppConfig>() {
 		@Override
 		protected final AppConfig initialValue() {
-			final BasicConfig instance = new BasicConfig();
-			instance.loadFromJson(Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF));
-			instance.loadFromEnv();
+			final BasicConfig instance = new BasicConfig(
+				Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF)
+			);
 			ThreadContext.put(KEY_RUN_ID, instance.getRunId());
 			ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
 			return instance;
@@ -68,6 +68,13 @@ implements AppConfig {
 			}
 		}
 		return DIR_ROOT;
+	}
+	//
+	public BasicConfig(final Path cfgFilePath) {
+		final Logger log = LogManager.getLogger();
+		loadFromJson(cfgFilePath);
+		loadFromEnv();
+		log.info(Markers.CFG, BasicConfig.THREAD_CONTEXT.get().toFormattedString());
 	}
 	//
 	@Override

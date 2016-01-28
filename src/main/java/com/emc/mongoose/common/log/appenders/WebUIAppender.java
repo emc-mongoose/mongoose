@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.log.appenders;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 //
 //
 import org.apache.commons.collections4.queue.CircularFifoQueue;
@@ -39,8 +39,6 @@ extends AbstractAppender {
 	//
 	private final static Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
-	//
-	private final String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
 	//
 	private static boolean ENABLED_FLAG;
 	//
@@ -94,10 +92,10 @@ extends AbstractAppender {
 		if(ENABLED_FLAG) {
 			final String currRunId;
 			final Map<String, String> evtCtxMap = event.getContextMap();
-			if(evtCtxMap.containsKey(KEY_RUN_ID)) {
-				currRunId = evtCtxMap.get(KEY_RUN_ID);
+			if(evtCtxMap.containsKey(AppConfig.KEY_RUN_ID)) {
+				currRunId = evtCtxMap.get(AppConfig.KEY_RUN_ID);
 			} else {
-				currRunId = ThreadContext.get(KEY_RUN_ID);
+				currRunId = ThreadContext.get(AppConfig.KEY_RUN_ID);
 			}
 			//
 			if(currRunId != null) {

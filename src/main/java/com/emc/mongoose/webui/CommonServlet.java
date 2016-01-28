@@ -2,7 +2,6 @@ package com.emc.mongoose.webui;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import org.apache.logging.log4j.Level;
@@ -49,10 +48,12 @@ extends HttpServlet {
 		try {
 			super.init();
 			appConfig = (AppConfig) (
-				(RunTimeConfig) getServletContext().getAttribute("appConfig")
+				(AppConfig) getServletContext().getAttribute("appConfig")
 			).clone();
-		} catch (final ServletException e) {
+		} catch(final ServletException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Interrupted servlet init method");
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the configuration");
 		}
 	}
 	//

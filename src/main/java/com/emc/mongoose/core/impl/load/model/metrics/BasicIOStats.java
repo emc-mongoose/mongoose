@@ -21,9 +21,9 @@ extends IOStatsBase {
 	protected CustomMeter throughPutSucc, throughPutFail, reqBytes;
 	//
 	public BasicIOStats(
-		final String name, final int serveJmxPort, final int updateIntervalSec
+		final String name, final boolean serveJmxFlag, final int updateIntervalSec
 	) {
-		super(name, serveJmxPort);
+		super(name, serveJmxFlag);
 		this.updateIntervalSec = updateIntervalSec;
 	}
 	//

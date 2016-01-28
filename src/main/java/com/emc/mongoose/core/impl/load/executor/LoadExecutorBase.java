@@ -2,8 +2,8 @@ package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.concurrent.LifeCycle;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -170,9 +170,8 @@ implements LoadExecutor<T> {
 		final int instanceNum, final String name
 	) {
 		super(
-			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE,
-			DEFAULT_INTERNAL_BATCH_SIZE, appConfig.isLoadCircular(),
-			appConfig.isShuffleItemsEnabled(), appConfig.getItemQueueMaxSize()
+			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE, DEFAULT_INTERNAL_BATCH_SIZE,
+			appConfig.getLoadCircular(), false, appConfig.getItemQueueSizeLimit()
 		);
 		try {
 			super.setItemDst(this);
@@ -208,7 +207,7 @@ implements LoadExecutor<T> {
 		}
 		loadType = ioConfig.getLoadType();
 		//
-		metricsPeriodSec = appConfig.getLoadMetricsPeriodSec();
+		metricsPeriodSec = appConfig.getLoadMetricsPeriod();
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the nodes array
 		storageNodeAddrs = addrs == null ? null : addrs.clone();
@@ -260,13 +259,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected void initStats(final boolean flagServeJMX) {
-		if(flagServeJMX) {
-			ioStats = new BasicIOStats(
-				getName(), appConfig.getRemotePortMonitor(), metricsPeriodSec
-			);
-		} else {
-			ioStats = new BasicIOStats(getName(), 0, metricsPeriodSec);
-		}
+		ioStats = new BasicIOStats(getName(), flagServeJMX, metricsPeriodSec);
 		lastStats = ioStats.getSnapshot();
 	}
 	//
@@ -314,10 +307,10 @@ implements LoadExecutor<T> {
 	//
 	protected void startActually() {
 		LOG.debug(Markers.MSG, "Starting {}", getName());
-		initStats(appConfig.getFlagServeJMX());
+		initStats(appConfig.getNetworkServeJmx());
 		ioStats.start();
 		//
-		if(appConfig.isRunResumeEnabled()) {
+		if(appConfig.getRunResumeEnabled()) {
 			if(appConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
 				try {
 					if(!RESTORED_STATES_MAP.containsKey(appConfig.getRunId())) {
@@ -858,7 +851,7 @@ implements LoadExecutor<T> {
 	throws RemoteException {
 		return new BasicLoadState.Builder<T, BasicLoadState<T>>()
 			.setLoadNumber(instanceNum)
-			.setRunTimeConfig(appConfig)
+			.setAppConfig(appConfig)
 			.setStatsSnapshot(lastStats)
 			.setLastDataItem(lastItem)
 			.build();
@@ -875,9 +868,9 @@ implements LoadExecutor<T> {
 	//
 	private void setCountLimitConfig(final long itemsCount) {
 		if(isDoneAllSubm() && (maxCount > itemsCount)) {
-			appConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, itemsCount);
+			appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, itemsCount);
 		} else {
-			appConfig.set(RunTimeConfig.KEY_DATA_ITEM_COUNT, maxCount);
+			appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, maxCount);
 		}
 	}
 	//

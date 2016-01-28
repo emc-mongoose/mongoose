@@ -100,7 +100,7 @@ implements Externalizable {
 		KEY_REMOTE_PORT_WEBUI = "remote.port.webui",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
-		KEY_STORAGE_SCHEME = "storage.scheme",
+		KEY_STORAGE_SCHEME = "storage.SCHEME",
 		KEY_STORAGE_NAMESPACE = "storage.namespace",
 		//
 		KEY_STORAGE_MOCK_CAPACITY = "storage.mock.capacity",
@@ -373,7 +373,7 @@ implements Externalizable {
 	public final int getUpdateCountPerTime() { return getInt(KEY_LOAD_UPDATE_PER_ITEM); }
 	//
 	public final String getStorageProto() {
-		return getString("storage.scheme");
+		return getString("storage.SCHEME");
 	}
 	//
 	public final String getStorageNameSpace() {

@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -33,13 +32,13 @@ extends LoadExecutorBase<T> {
 	private final int manualTaskSleepMicroSecs, tgtDurMicroSecs;
 	//
 	protected LimitedRateLoadExecutorBase(
-		final AppConfig runTimeConfig,
+		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final int manualTaskSleepMicroSecs, final float rateLimit
 	) throws ClassCastException {
-		super(runTimeConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount);
+		super(appConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount);
 		//
 		this.manualTaskSleepMicroSecs = manualTaskSleepMicroSecs;
 		if(rateLimit < 0) {

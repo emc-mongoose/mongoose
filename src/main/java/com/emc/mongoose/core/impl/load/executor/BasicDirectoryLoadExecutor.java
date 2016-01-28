@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
@@ -38,8 +37,7 @@ implements DirectoryLoadExecutor<T, C> {
 	private final ExecutorService ioTaskExecutor;
 	//
 	public BasicDirectoryLoadExecutor(
-		final AppConfig appConfig,
-		final FileIOConfig<T, C> ioConfig, final String[] addrs,
+		final AppConfig appConfig, final FileIOConfig<T, C> ioConfig, final String[] addrs,
 		final int connCountPerNode, final int threadCount, final ItemSrc<C> itemSrc,
 		final long maxCount, final int manualTaskSleepMicroSecs, final float rateLimit
 	) throws ClassCastException {

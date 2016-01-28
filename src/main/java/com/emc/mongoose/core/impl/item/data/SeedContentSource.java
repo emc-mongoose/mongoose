@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.item.data;
 // mongoose-common
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -24,8 +24,8 @@ implements ContentSource {
 	public SeedContentSource()
 	throws NumberFormatException {
 		this(
-			Long.parseLong(BasicConfig.CONTEXT_CONFIG.get().getDataRingSeed(), 0x10),
-			(int) BasicConfig.CONTEXT_CONFIG.get().getDataRingSize()
+			Long.parseLong(BasicConfig.THREAD_CONTEXT.get().getItemDataContentSeed(), 0x10),
+			(int) BasicConfig.THREAD_CONTEXT.get().getItemDataContentSize()
 		);
 	}
 	//
@@ -40,14 +40,12 @@ implements ContentSource {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final String toString() {
-		return
-			Long.toHexString(seed) + RunTimeConfig.LIST_SEP +
-			Integer.toHexString(zeroByteLayer.capacity());
+		return Long.toHexString(seed) + ',' + Integer.toHexString(zeroByteLayer.capacity());
 	}
 	//
 	public static SeedContentSource fromString(final String metaInfo)
 		throws IllegalArgumentException, IOException {
-		final String values[] = metaInfo.split(RunTimeConfig.LIST_SEP);
+		final String values[] = metaInfo.split(",");
 		if(values.length == 2) {
 			return new SeedContentSource(
 				Long.parseLong(values[0], 0x10), Integer.parseInt(values[1], 0x10)

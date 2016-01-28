@@ -26,18 +26,16 @@ implements RequestConfig<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//protected final static String FMT_URI_ADDR = "%s://%s:%s";
 	//
+	protected final static String SCHEME = "http";
 	protected String api, secret, userName;
-	protected volatile String /*addr, */scheme/*, uriTemplate*/;
 	protected volatile int port;
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		api = appConfig.getApiName();
+		api = appConfig.getStorageHttpApiClass();
 		secret = appConfig.getAuthSecret();
 		userName = appConfig.getAuthId();
-		scheme = appConfig.getStorageProto();
-		port = appConfig.getApiTypePort(api);
-
+		port = appConfig.getStorageHttpApi_Port();
 	}
 	//
 	protected RequestConfigBase(final RequestConfigBase<T, C> reqConf2Clone) {
@@ -46,7 +44,7 @@ implements RequestConfig<T, C> {
 			setAPI(reqConf2Clone.getAPI());
 			setUserName(reqConf2Clone.getUserName());
 			setPort(reqConf2Clone.getPort());
-			setScheme(reqConf2Clone.getScheme());
+			//setScheme(reqConf2Clone.getScheme());
 			secret = reqConf2Clone.getSecret();
 			LOG.debug(
 				Markers.MSG, "Forked conf conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
@@ -62,7 +60,7 @@ implements RequestConfig<T, C> {
 			.setAPI(api)
 			.setUserName(userName)
 			.setPort(port)
-			.setScheme(scheme);
+			/*.setScheme(SCHEME)*/;
 		requestConfigBranch.secret = secret;
 		LOG.debug(
 			Markers.MSG, "Forked conf conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
@@ -82,36 +80,13 @@ implements RequestConfig<T, C> {
 	//
 	@Override
 	public final String getScheme() {
-		return scheme;
+		return SCHEME;
 	}
 	@Override
 	public final RequestConfigBase<T, C> setScheme(final String scheme) {
-		this.scheme = scheme;
+		//this.SCHEME = SCHEME;
 		return this;
 	}
-	/*
-	@Override
-	public final String getAddr() {
-		return addr;
-	}
-	@Override
-	public final RequestConfigBase<T> setAddr(final String addr) {
-		if(addr == null) {
-			throw new IllegalArgumentException("Attempted to set <null> address");
-		} else if(addr.contains(":")) {
-			final String[] hostAndPort = addr.split(":", 2);
-			setPort(Integer.parseInt(hostAndPort[1]));
-			this.addr = hostAndPort[0];
-		} else {
-			this.addr = addr;
-		}
-		uriTemplate = String.format(
-			FMT_URI_ADDR,
-			scheme == null ? "%s" : scheme, addr,
-			(port > 0 && port < 0x10000) ? Integer.toString(port) : "%s"
-		);
-		return this;
-	}*/
 	//
 	@Override
 	public final int getPort() {
@@ -123,11 +98,6 @@ implements RequestConfig<T, C> {
 		LOG.trace(Markers.MSG, "Using storage port: {}", port);
 		if(port > 0 || port < 0x10000) {
 			this.port = port;
-			/*uriTemplate = String.format(
-				FMT_URI_ADDR,
-				scheme == null ? "%s" : scheme, addr == null ? "%s" : addr,
-				Integer.toString(port)
-			);*/
 		} else {
 			throw new IllegalArgumentException("Port number value should be > 0");
 		}
@@ -159,11 +129,11 @@ implements RequestConfig<T, C> {
 		super.setAppConfig(appConfig);
 		final String api = appConfig.getStorageHttpApiClass();
 		setAPI(api);
-		setPort(this.appConfig.getApiTypePort(api));
+		setPort(this.appConfig.getStorageHttpApi_Port());
 		setUserName(this.appConfig.getAuthId());
 		setSecret(this.appConfig.getAuthSecret());
-		setNameSpace(this.appConfig.getStorageNameSpace());
-		setBuffSize((int) this.appConfig.getIOBufferSizeMin());
+		setNameSpace(this.appConfig.getStorageHttpNamespace());
+		setBuffSize((int) this.appConfig.getIoBufferSizeMin());
 		return this;
 	}
 	//
@@ -174,8 +144,6 @@ implements RequestConfig<T, C> {
 		LOG.trace(Markers.MSG, "Written I/O base configuration \"" + nameSpace + "\"");
 		out.writeObject(getAPI());
 		LOG.trace(Markers.MSG, "Written API type \"" + api + "\"");
-		out.writeObject(getScheme());
-		LOG.trace(Markers.MSG, "Written scheme \"" + scheme + "\"");
 		out.writeInt(getPort());
 		LOG.trace(Markers.MSG, "Written port num \"" + port + "\"");
 		out.writeObject(getUserName());
@@ -190,8 +158,6 @@ implements RequestConfig<T, C> {
 		super.readExternal(in);
 		setAPI((String) in.readObject());
 		LOG.trace(Markers.MSG, "Got API {}", api);
-		setScheme(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got scheme {}", scheme);
 		setPort(in.readInt());
 		LOG.trace(Markers.MSG, "Got port {}", port);
 		setUserName(String.class.cast(in.readObject()));

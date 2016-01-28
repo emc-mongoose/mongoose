@@ -5,7 +5,8 @@ import com.emc.mongoose.client.api.load.executor.FileLoadClient;
 //
 import com.emc.mongoose.client.impl.load.executor.BasicFileLoadClient;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
@@ -32,7 +33,7 @@ implements FileLoadBuilderClient<T, W, U> {
 	//
 	public BasicFileLoadBuilderClient()
 	throws IOException {
-		this(BasicConfig.CONTEXT_CONFIG.get());
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
 	public BasicFileLoadBuilderClient(final AppConfig appConfig)
@@ -87,13 +88,11 @@ implements FileLoadBuilderClient<T, W, U> {
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		//
 		return (U) new BasicFileLoadClient<>(
 			appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
-			appConfig.getConnCountPerNodeFor(loadTypeStr), appConfig.getWorkerCountFor(loadTypeStr),
-			itemSrc, maxCount, remoteLoadMap
+			appConfig.getLoadThreads(), 0, itemSrc, maxCount, remoteLoadMap
 		);
 	}
 }

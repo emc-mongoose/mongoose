@@ -56,7 +56,7 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, CREATE_RUN_ID);
 		WSMockTestBase.setUpClass();
 		//
-		RunTimeConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		RunTimeConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
 		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
@@ -64,7 +64,7 @@ extends WSMockTestBase {
 		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
+		logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
 		//  write
 		new ScenarioRunner().run();
 		//
@@ -73,7 +73,7 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, READ_RUN_ID);
 		LoggingTestBase.setUpClass();
 		//
-		appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_ITEM_SRC_FILE,
 			LogValidator.getItemsListFile(CREATE_RUN_ID).getPath());
 		appConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD,
@@ -83,7 +83,7 @@ extends WSMockTestBase {
 		appConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(appConfig);
 		//
-		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
+		logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
 		//  read
 		try(
 			final BufferingOutputStream

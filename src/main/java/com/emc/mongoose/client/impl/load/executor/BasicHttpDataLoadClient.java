@@ -6,11 +6,11 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.api.io.task.WSDataIOTask;
-import com.emc.mongoose.core.impl.io.task.BasicWSDataIOTask;
+import com.emc.mongoose.core.api.io.task.HttpDataIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicHttpDataIOTask;
 // mongoose-client.jar
-import com.emc.mongoose.client.api.load.executor.WSDataLoadClient;
-import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
+import com.emc.mongoose.client.api.load.executor.HttpDataLoadClient;
+import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 //
 //import org.apache.log.log4j.Level;
 //import org.apache.log.log4j.LogManager;
@@ -21,13 +21,13 @@ import java.util.Map;
 /**
  Created by kurila on 08.05.14.
  */
-public class BasicWSDataLoadClient<T extends HttpDataItem, W extends WSDataLoadSvc<T>>
+public class BasicHttpDataLoadClient<T extends HttpDataItem, W extends HttpDataLoadSvc<T>>
 extends LoadClientBase<T, W>
-implements WSDataLoadClient<T, W> {
+implements HttpDataLoadClient<T, W> {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSDataLoadClient(
+	public BasicHttpDataLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String addrs[], final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
@@ -40,8 +40,8 @@ implements WSDataLoadClient<T, W> {
 	}
 	//
 	@Override
-	protected WSDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
-		return new BasicWSDataIOTask<>(
+	protected HttpDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
+		return new BasicHttpDataIOTask<>(
 			item, nodeAddr,  (HttpRequestConfig<T, ? extends Container<T>>) ioConfigCopy
 		);
 	}

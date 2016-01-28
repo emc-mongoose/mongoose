@@ -5,7 +5,7 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 13.05.15.
  */
@@ -47,18 +48,15 @@ implements Runnable {
 	private final Thread executor;
 	//
 	public BasicSocketEventDispatcher(
-		final AppConfig appConfig,
-		final HttpAsyncService protocolHandler, final int port,
+		final AppConfig appConfig, final HttpAsyncService protocolHandler, final int port,
 		final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory,
 		final StorageIOStats ioStats
 	) throws IOReactorException {
 		super(protocolHandler, connFactory);
 		socketAddress = new InetSocketAddress(port);
 		// set I/O reactor configuration
-		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
-			runTimeConfig.getLoadLimitTimeValue()
-		);
-		int ioThreadCount = runTimeConfig.getStorageMockWorkersPerSocket();
+		final long timeOutSec = appConfig.getLoadLimitTime();
+		int ioThreadCount = appConfig.getStorageHttpMockWorkersPerSocket();
 		if(ioThreadCount == 0) {
 			ioThreadCount = ThreadUtil.getWorkerCount();
 		}
@@ -66,21 +64,23 @@ implements Runnable {
 			Markers.MSG, "Socket {}:{} will use {} I/O threads",
 			socketAddress.getHostString(), socketAddress.getPort(), ioThreadCount
 		);
+		final long timeOutMilliSec = TimeUnit.SECONDS.toMillis(timeOutSec);
 		ioReactorConf = IOReactorConfig.custom()
 			.setIoThreadCount(ioThreadCount)
-			.setBacklogSize((int) runTimeConfig.getSocketBindBackLogSize())
-			.setInterestOpQueued(runTimeConfig.getSocketInterestOpQueued())
-			.setSelectInterval(runTimeConfig.getSocketSelectInterval())
-			.setShutdownGracePeriod(runTimeConfig.getSocketTimeOut())
-			.setSoKeepAlive(runTimeConfig.getSocketKeepAliveFlag())
-			.setSoLinger(runTimeConfig.getSocketLinger())
-			.setSoReuseAddress(runTimeConfig.getSocketReuseAddrFlag())
-			.setSoTimeout(runTimeConfig.getSocketTimeOut())
-			.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
+			.setBacklogSize(appConfig.getNetworkSocketBindBacklogSize())
+			.setInterestOpQueued(appConfig.getNetworkSocketInterestOpQueued())
+			.setSelectInterval(appConfig.getNetworkSocketSelectInterval())
+			.setShutdownGracePeriod(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setSoKeepAlive(appConfig.getNetworkSocketKeepAlive())
+			.setSoLinger(appConfig.getNetworkSocketLinger())
+			.setSoReuseAddress(appConfig.getNetworkSocketReuseAddr())
+			.setSoTimeout(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setTcpNoDelay(appConfig.getNetworkSocketTcpNoDelay())
 			.setRcvBufSize(BUFF_SIZE_LO)
 			.setSndBufSize(BUFF_SIZE_LO)
 			.setConnectTimeout(
-				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
+				timeOutSec > 0 && timeOutMilliSec <= Integer.MAX_VALUE ?
+					(int) timeOutMilliSec : Integer.MAX_VALUE
 			)
 			.build();
 		// create the server-side I/O reactor

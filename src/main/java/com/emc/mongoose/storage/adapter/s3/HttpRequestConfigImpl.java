@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -40,10 +41,9 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	public final static String
 		CANONICAL_AMZ_HEADER_PREFIX = "x-amz-",
-		KEY_BUCKET_NAME = "api.type.s3.bucket",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
-	private final String authPrefixValue;
+	private final static String AUTH_PREFIX = "AWS ";
 	//
 	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
@@ -53,7 +53,6 @@ extends HttpRequestConfigBase<T, C> {
 	protected HttpRequestConfigImpl(final HttpRequestConfigImpl<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		authPrefixValue = appConfig.getApiS3AuthPrefix() + " ";
 		if(reqConf2Clone != null) {
 			setNameSpace(reqConf2Clone.getNameSpace());
 		}
@@ -65,7 +64,7 @@ extends HttpRequestConfigBase<T, C> {
 		try {
 			copy = new HttpRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
-			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
+			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", SIGN_METHOD);
 		}
 		return copy;
 	}
@@ -84,13 +83,7 @@ extends HttpRequestConfigBase<T, C> {
 	@Override @SuppressWarnings("unchecked")
 	public final HttpRequestConfigImpl<T, C> setAppConfig(final AppConfig appConfig) {
 		super.setAppConfig(this.appConfig);
-		//
-		try {
-			setContainer((C) new BasicContainer<T>(this.appConfig.getString(KEY_BUCKET_NAME)));
-		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET_NAME);
-		}
-		//
+		setContainer((C) new BasicContainer<T>(this.appConfig.getItemContainerName()));
 		return this;
 	}
 	//
@@ -117,7 +110,7 @@ extends HttpRequestConfigBase<T, C> {
 	protected final void applyAuthHeader(final HttpRequest httpRequest) {
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
-			authPrefixValue + userName + ":" + getSignature(getCanonical(httpRequest))
+			AUTH_PREFIX + userName + ":" + getSignature(getCanonical(httpRequest))
 		);
 	}
 	//
@@ -214,7 +207,7 @@ extends HttpRequestConfigBase<T, C> {
 			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", container);
 			bucket.create(storageNodeAddrs[0]);
 			if(bucket.exists(storageNodeAddrs[0])) {
-				appConfig.set(KEY_BUCKET_NAME, container.getName());
+				appConfig.setProperty(AppConfig.KEY_ITEM_CONTAINER_NAME, container.getName());
 			} else {
 				throw new IllegalStateException(
 					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, container.getName())

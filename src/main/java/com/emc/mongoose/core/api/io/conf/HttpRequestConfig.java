@@ -40,7 +40,7 @@ extends RequestConfig<T, C> {
 		MSG_NO_DATA_ITEM = "Data item is not specified",
 		MSG_NO_REQ = "No request specified to apply to",
 		//
-		ADAPTER_CLS = "WSRequestConfigImpl",
+		ADAPTER_CLS = "HttpRequestConfigImpl",
 		// canonicalized EMC headers, should be in alphabetical order
 		HEADERS_CANONICAL_EMC[] = {
 			KEY_EMC_ACCEPT,

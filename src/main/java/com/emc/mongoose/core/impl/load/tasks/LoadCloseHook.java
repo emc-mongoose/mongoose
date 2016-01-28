@@ -1,7 +1,8 @@
 package com.emc.mongoose.core.impl.load.tasks;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
@@ -60,7 +61,7 @@ implements Runnable {
 				hookTask, String.format("loadCloseHook<%s>", hookTask.loadName)
 			);
 			Runtime.getRuntime().addShutdownHook(hookThread);
-			final String currRunId = BasicConfig.CONTEXT_CONFIG.get().getRunId();
+			final String currRunId = BasicConfig.THREAD_CONTEXT.get().getRunId();
 			synchronized(HOOKS_MAP) {
 				Map<LoadExecutor, Thread> runLoadHooks = HOOKS_MAP.get(currRunId);
 				if(runLoadHooks == null) {
@@ -85,7 +86,7 @@ implements Runnable {
 		try {
 			currRunId = loadExecutor.getLoadState().getAppConfig().getRunId();
 		} catch (final RemoteException e) {
-			currRunId = BasicConfig.CONTEXT_CONFIG.get().getRunId();
+			currRunId = BasicConfig.THREAD_CONTEXT.get().getRunId();
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 		}
 		synchronized(HOOKS_MAP) {

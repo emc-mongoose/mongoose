@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.core.api.item.container.Directory;
@@ -61,7 +62,7 @@ extends DataLoadBuilderBase<T, U> {
 		final IOTask.Type loadType = ioConfig.getLoadType();
 		final int threadCount = loadTypeConnPerNode.get(loadType);
 		return (U) new BasicFileLoadExecutor<>(
-			BasicConfig.CONTEXT_CONFIG.get(), (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
+			BasicConfig.THREAD_CONTEXT.get(), (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
 			null, 0, threadCount, itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
 			manualTaskSleepMicroSecs, rateLimit, updatesPerItem

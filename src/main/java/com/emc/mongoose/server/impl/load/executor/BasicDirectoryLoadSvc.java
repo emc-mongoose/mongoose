@@ -1,6 +1,6 @@
 package com.emc.mongoose.server.impl.load.executor;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
@@ -40,7 +40,7 @@ implements DirectoryLoadSvc<T, C> {
 		final int manualTaskSleepMicroSecs, final float rateLimit
 	) {
 		super(
-			runTimeConfig, ioConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
+			appConfig, ioConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
 			manualTaskSleepMicroSecs, rateLimit
 		);
 	}

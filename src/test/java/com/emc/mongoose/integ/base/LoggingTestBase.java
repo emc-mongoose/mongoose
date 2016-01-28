@@ -46,7 +46,7 @@ extends ConfiguredTestBase {
 		FILE_LOG_PERF_AVG = LogValidator.getPerfAvgFile(runId);
 		FILE_LOG_DATA_ITEMS = LogValidator.getItemsListFile(runId);
 		FILE_LOG_PERF_TRACE = LogValidator.getPerfTraceFile(runId);
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_RUN_ID, runId);
 		RunTimeConfig.setContext(appConfig);
 		LOG = LogManager.getLogger();

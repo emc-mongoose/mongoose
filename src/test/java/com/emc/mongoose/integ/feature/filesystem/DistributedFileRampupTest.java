@@ -51,7 +51,7 @@ extends DistributedLoadBuilderTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		DistributedLoadBuilderTestBase.setUpClass();
 		//
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "file");
 		appConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
 		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
@@ -63,7 +63,7 @@ extends DistributedLoadBuilderTestBase {
 		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
+		logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
 		//
 		try (final BufferingOutputStream
 			     stdOutStream =	StdOutUtil.getStdOutBufferingStream()
@@ -119,7 +119,7 @@ extends DistributedLoadBuilderTestBase {
 	@Test
 	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
 	throws Exception {
-		final String[] runtimeConfCustomParam = BasicConfig.CONTEXT_CONFIG.get().toString().split("\n");
+		final String[] runtimeConfCustomParam = BasicConfig.THREAD_CONTEXT.get().toString().split("\n");
 		for (final String confParam : runtimeConfCustomParam) {
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_TIME)) {
 				Assert.assertTrue(

@@ -1,9 +1,9 @@
 package com.emc.mongoose.webui;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.JsonConfigLoader;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 //
@@ -66,7 +66,7 @@ extends CommonServlet {
 		new JsonConfigLoader(appConfig).updateJsonCfgFile(
 			Paths
 				.get(BasicConfig.getRootDir(), Constants.DIR_CONF)
-				.resolve(RunTimeConfig.FNAME_CONF).toFile()
+				.resolve(AppConfig.FNAME_CONF).toFile()
 		);
 		updateLastAppConfig(appConfig);
 		response.setStatus(HttpServletResponse.SC_OK);

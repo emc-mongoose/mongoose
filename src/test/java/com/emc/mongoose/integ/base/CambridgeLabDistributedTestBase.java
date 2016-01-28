@@ -29,8 +29,8 @@ extends CambridgeLabViprTestBase {
 	//
 	protected final static String LOAD_SVC_ADDRS_CUSTOM[] = {"10.249.237.76", "10.249.237.77"};
 	private final static String
-		GOOSE_NAME = BasicConfig.CONTEXT_CONFIG.get().getRunName(),
-		GOOSE_VERSION = BasicConfig.CONTEXT_CONFIG.get().getRunVersion(),
+		GOOSE_NAME = BasicConfig.THREAD_CONTEXT.get().getRunName(),
+		GOOSE_VERSION = BasicConfig.THREAD_CONTEXT.get().getRunVersion(),
 		GOOSE_REMOTE_PATH = "/workspace/" + GOOSE_NAME + "-" + GOOSE_VERSION + ".tgz",
 		SECRET_DEFAULT = "TLMer+7YMPKCNwS6VzSTbJBP173orXP7Pop2J8+e";
 	private final static File
@@ -41,7 +41,7 @@ extends CambridgeLabViprTestBase {
 	public static void setUpClass()
 	throws Exception {
 		CambridgeLabViprTestBase.setUpClass();
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		final StringBuilder sb = new StringBuilder();
 		for(final String loadSvcAddr : LOAD_SVC_ADDRS_CUSTOM) {
 			if(sb.length() > 0) {
@@ -79,7 +79,7 @@ extends CambridgeLabViprTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		CambridgeLabViprTestBase.tearDownClass();
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, "127.0.0.1");
 		appConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
 	}

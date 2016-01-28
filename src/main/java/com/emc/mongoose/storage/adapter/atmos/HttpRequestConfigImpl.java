@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
@@ -8,7 +9,6 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -80,7 +80,7 @@ extends HttpRequestConfigBase<T, C> {
 		try {
 			copy = new HttpRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
-			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
+			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", SIGN_METHOD);
 		}
 		return copy;
 	}
@@ -181,7 +181,7 @@ extends HttpRequestConfigBase<T, C> {
 	public final HttpRequestConfigBase<T, C> setSecret(final String secret) {
 		super.setSecret(secret);
 		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
-		secretKey = new SecretKeySpec(Base64.decodeBase64(secret), signMethod);
+		secretKey = new SecretKeySpec(Base64.decodeBase64(secret), SIGN_METHOD);
 		return this;
 	}
 	//
@@ -214,14 +214,14 @@ extends HttpRequestConfigBase<T, C> {
 		try {
 			setSubTenant(
 				new WSSubTenantImpl<>(
-					this, this.appConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
+					this, this.appConfig.getString(AppConfig.KEY_AUTH_TOKEN)
 				)
 			);
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_API_ATMOS_SUBTENANT);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, AppConfig.KEY_AUTH_TOKEN);
 		}
 		//
-		if(this.appConfig.getDataFileAccessEnabled()) {
+		if(this.appConfig.getStroageHttpFsAccess()) {
 			uriBasePath = PREFIX_URI + API_TYPE_FS;
 		} else {
 			uriBasePath = PREFIX_URI + API_TYPE_OBJ;
@@ -413,7 +413,7 @@ extends HttpRequestConfigBase<T, C> {
 			subTenant.create(storageAddrs[0]);
 		}
 		/*re*/setSubTenant(subTenant);
-		appConfig.set(RunTimeConfig.KEY_API_ATMOS_SUBTENANT, subTenant.getValue());
+		appConfig.setProperty(AppConfig.KEY_AUTH_TOKEN, subTenant.getValue());
 		super.configureStorage(storageAddrs);
 	}
 	//

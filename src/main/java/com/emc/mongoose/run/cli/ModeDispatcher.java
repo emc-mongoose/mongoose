@@ -1,15 +1,12 @@
 package com.emc.mongoose.run.cli;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
-// mongoose-scenario.jar
-import com.emc.mongoose.run.scenario.Chain;
-import com.emc.mongoose.run.scenario.Rampup;
-import com.emc.mongoose.run.scenario.Single;
 import com.emc.mongoose.run.webserver.WUIRunner;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
@@ -32,7 +29,7 @@ public final class ModeDispatcher {
 	//
 	public static void main(final String args[]) {
 		// load the config from CLI arguments
-		final Map<String, String> properties = HumanFriendly.parseCli(args);
+		//final Map<String, String> properties = HumanFriendly.parseCli(args);
 		//
 		final String runMode;
 		if(args == null || args.length == 0 || args[0].startsWith("-")) {
@@ -40,18 +37,11 @@ public final class ModeDispatcher {
 		} else {
 			runMode = args[0];
 		}
-		System.setProperty(RunTimeConfig.KEY_RUN_MODE, runMode);
+		System.setProperty(AppConfig.KEY_RUN_MODE, runMode);
 		LogUtil.init();
 		//
 		final Logger rootLogger = LogManager.getRootLogger();
-		//
-		RunTimeConfig.initContext();
-		if(properties != null && !properties.isEmpty()) {
-			rootLogger.debug(Markers.MSG, "Overriding properties {}", properties);
-			BasicConfig.CONTEXT_CONFIG.get().overrideSystemProperties(properties);
-		}
-		//
-		rootLogger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
+		rootLogger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
 		//
 		switch(runMode) {
 			case Constants.RUN_MODE_SERVER:
@@ -59,7 +49,7 @@ public final class ModeDispatcher {
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try {
 					final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(
-						BasicConfig.CONTEXT_CONFIG.get()
+						BasicConfig.THREAD_CONTEXT.get()
 					);
 					multiSvc.start();
 					multiSvc.await();
@@ -71,13 +61,13 @@ public final class ModeDispatcher {
 				break;
 			case Constants.RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				new WUIRunner(BasicConfig.CONTEXT_CONFIG.get()).run();
+				new WUIRunner(BasicConfig.THREAD_CONTEXT.get()).run();
 				break;
 			case Constants.RUN_MODE_CINDERELLA:
 			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
-					new Cinderella(BasicConfig.CONTEXT_CONFIG.get()).run();
+					new Cinderella(BasicConfig.THREAD_CONTEXT.get()).run();
 				} catch (final Exception e) {
 					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init the cinderella");
 				}
@@ -97,24 +87,9 @@ public final class ModeDispatcher {
 	}
 
 	private static void runScenario() {
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		if (appConfig != null) {
-			final String scenarioName = appConfig.getScenarioName();
-			switch (scenarioName) {
-				case Constants.RUN_SCENARIO_SINGLE:
-					new Single(appConfig).run();
-					break;
-				case Constants.RUN_SCENARIO_CHAIN:
-					new Chain(appConfig).run();
-					break;
-				case Constants.RUN_SCENARIO_RAMPUP:
-					new Rampup(appConfig).run();
-					break;
-				default:
-					throw new IllegalArgumentException(
-						String.format("Incorrect scenario: \"%s\"", scenarioName)
-					);
-			}
+			// TODO
 			LogManager.getRootLogger().info(Markers.MSG, "Scenario end");
 		} else {
 			throw new NullPointerException(

@@ -1,6 +1,6 @@
 package com.emc.mongoose.webui;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.fasterxml.jackson.databind.JsonNode;
@@ -30,7 +30,7 @@ extends HttpServlet {
 		final HttpServletRequest request, final HttpServletResponse response
 	) {
 
-		final ObjectNode rootNode = (ObjectNode) BasicConfig.CONTEXT_CONFIG.get().getJsonNode();
+		final ObjectNode rootNode = (ObjectNode) BasicConfig.THREAD_CONTEXT.get().getJsonNode();
 		final JsonNode aliasingSection = rootNode.findValue(RunTimeConfig.PREFIX_KEY_ALIASING);
 		if (aliasingSection != null) {
 			walkTree(rootNode);

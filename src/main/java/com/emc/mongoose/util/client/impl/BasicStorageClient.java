@@ -1,6 +1,6 @@
 package com.emc.mongoose.util.client.impl;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
@@ -23,7 +23,7 @@ implements StorageClient<T> {
 	//
 	protected final static int DEFAULT_CONN_PER_NODE_COUNT = 1;
 	//
-	protected RunTimeConfig appConfig;
+	protected AppConfig appConfig;
 	protected LoadBuilder<T, LoadExecutor<T>> loadBuilder;
 	//
 	public BasicStorageClient(
@@ -38,12 +38,9 @@ implements StorageClient<T> {
 	) throws InterruptedException, IOException {
 		loadExecutor.setItemDst(dst);
 		loadExecutor.start();
-		final long timeOut = appConfig.getLoadLimitTimeValue();
-		final TimeUnit timeUnit = appConfig.getLoadLimitTimeUnit();
+		final long timeOut = appConfig.getLoadLimitTime();
 		try {
-			loadExecutor.await(
-				timeOut == 0 ? Long.MAX_VALUE : timeOut, timeUnit == null ? TimeUnit.DAYS : timeUnit
-			);
+			loadExecutor.await(timeOut == 0 ? Long.MAX_VALUE : timeOut, TimeUnit.SECONDS);
 		} finally {
 			loadExecutor.interrupt();
 		}
@@ -91,7 +88,7 @@ implements StorageClient<T> {
 	@Override
 	public long read(final ItemSrc<T> src)
 	throws IllegalStateException, InterruptedException, IOException {
-		return read(src, null, 0, DEFAULT_CONN_PER_NODE_COUNT, appConfig.getReadVerifyContent());
+		return read(src, null, 0, DEFAULT_CONN_PER_NODE_COUNT, appConfig.getItemDataVerify());
 	}
 	//
 	@Override
@@ -145,7 +142,10 @@ implements StorageClient<T> {
 	@Override
 	public long update(final ItemSrc<T> src)
 	throws IllegalStateException, InterruptedException, IOException {
-		return update(src, null, 0, DEFAULT_CONN_PER_NODE_COUNT, appConfig.getUpdateCountPerTime());
+		return update(
+			src, null, 0, DEFAULT_CONN_PER_NODE_COUNT,
+			appConfig.getItemDataContentRangesRandomCount()
+		);
 	}
 	//
 	@Override

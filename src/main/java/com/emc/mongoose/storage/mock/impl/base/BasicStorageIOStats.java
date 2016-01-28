@@ -4,17 +4,17 @@ import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-//
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+//
 import com.emc.mongoose.core.impl.load.model.metrics.CustomJmxReporter;
 import com.emc.mongoose.core.impl.load.model.metrics.CustomMeter;
 import com.emc.mongoose.core.impl.load.model.metrics.CustomMetricRegistry;
 import com.emc.mongoose.core.impl.load.model.metrics.ResumableUserTimeClock;
+//
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
 //
@@ -99,9 +99,7 @@ implements StorageIOStats {
 		this.storage = storage;
 		//
 		if(jmxServeFlag) {
-			final MBeanServer mBeanServer = ServiceUtil.getMBeanServer(
-				BasicConfig.CONTEXT_CONFIG.get().getRemotePortMonitor()
-			);
+			final MBeanServer mBeanServer = ServiceUtil.getMBeanServer(1199);
 			jmxReporter = CustomJmxReporter.forRegistry(metricRegistry)
 				.convertDurationsTo(TimeUnit.SECONDS)
 				.convertRatesTo(TimeUnit.SECONDS)

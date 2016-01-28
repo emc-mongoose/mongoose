@@ -1,11 +1,12 @@
 package com.emc.mongoose.util.client.impl;
 //
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
-//
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+//
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public final class BasicStorageClientBuilder<T extends Item, U extends StorageClient<T>>
 implements StorageClientBuilder<T, U> {
 	//
-	private final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+	private final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setAPI(final String api)
@@ -32,7 +33,7 @@ implements StorageClientBuilder<T, U> {
 				Arrays.toString(Package.getPackages())
 			);
 		}*/
-		appConfig.set(RunTimeConfig.KEY_API_NAME, api);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_API_CLASS, api);
 		return this;
 	}
 	//
@@ -45,66 +46,54 @@ implements StorageClientBuilder<T, U> {
 		final StringBuilder addrListBuilder = new StringBuilder();
 		for(final String nextAddr : nodeAddrs) {
 			if(addrListBuilder.length() > 0) {
-				addrListBuilder.append(RunTimeConfig.LIST_SEP);
+				addrListBuilder.append(",");
 			}
 			addrListBuilder.append(nextAddr);
 		}
-		appConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, addrListBuilder.toString());
+		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_ADDRS, addrListBuilder.toString());
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setClientMode(final String loadServers[]) {
 		if(loadServers == null || loadServers.length < 1) {
-			appConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
+			appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
 		} else {
 			final StringBuilder addrListBuilder = new StringBuilder();
 			for(final String nextAddr : loadServers) {
 				if(addrListBuilder.length() > 0) {
-					addrListBuilder.append(RunTimeConfig.LIST_SEP);
+					addrListBuilder.append(",");
 				}
 				addrListBuilder.append(nextAddr);
 			}
-			appConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, addrListBuilder.toString());
-			appConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
+			appConfig.setProperty(AppConfig.KEY_LOAD_SERVER_ADDRS, addrListBuilder.toString());
+			appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
 		}
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setAuth(final String id, final String secret) {
-		appConfig.set(RunTimeConfig.KEY_AUTH_ID, id);
-		appConfig.set(RunTimeConfig.KEY_AUTH_SECRET, secret);
+		appConfig.setProperty(AppConfig.KEY_AUTH_ID, id);
+		appConfig.setProperty(AppConfig.KEY_AUTH_SECRET, secret);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setNamespace(final String value) {
-		appConfig.set(RunTimeConfig.KEY_STORAGE_NAMESPACE, value);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_NAMESPACE, value);
 		return this;
 	}
 	//
 	@Override
-	public final StorageClientBuilder<T, U> setS3Bucket(final String value) {
-		appConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, value);
+	public final StorageClientBuilder<T, U> setContainer(final String value) {
+		appConfig.setProperty(AppConfig.KEY_ITEM_CONTAINER_NAME, value);
 		return this;
 	}
 	//
 	@Override
-	public final StorageClientBuilder<T, U> setSwiftContainer(final String value) {
-		appConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, value);
-		return this;
-	}
-	//
-	@Override
-	public final StorageClientBuilder<T, U> setAtmosSubtenant(final String value) {
-		appConfig.set(RunTimeConfig.KEY_API_ATMOS_SUBTENANT, value);
-		return this;
-	}
-	//
-	@Override
-	public final StorageClientBuilder<T, U> setSwiftAuthToken(final String value) {
-		appConfig.set(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN, value);
+	public final StorageClientBuilder<T, U> setAuthToken(final String value) {
+		appConfig.setProperty(AppConfig.KEY_AUTH_TOKEN, value);
 		return this;
 	}
 	//
@@ -114,7 +103,7 @@ implements StorageClientBuilder<T, U> {
 		if(count < 0) {
 			throw new IllegalArgumentException("Count limit shouldn' be negative");
 		}
-		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, count);
+		appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, count);
 		return this;
 	}
 	//
@@ -133,8 +122,8 @@ implements StorageClientBuilder<T, U> {
 				tu = TimeUnit.SECONDS;
 			}
 		}
-		appConfig.set(
-			RunTimeConfig.KEY_LOAD_LIMIT_TIME,
+		appConfig.setProperty(
+			AppConfig.KEY_LOAD_LIMIT_TIME,
 			Long.toString(timeOut) + tu.name().toLowerCase().charAt(0)
 		);
 		return this;
@@ -146,28 +135,28 @@ implements StorageClientBuilder<T, U> {
 		if(rate < 0) {
 			throw new IllegalArgumentException("Rate limit should be >= 0");
 		}
-		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_RATE, rate);
+		appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_RATE, rate);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setItemClass(final String itemCls)
 	throws IllegalArgumentException {
-		appConfig.set(RunTimeConfig.KEY_ITEM_CLASS, itemCls);
+		appConfig.setProperty(AppConfig.KEY_ITEM_CLASS, itemCls);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setVersioning(final boolean enabledFlag)
 	throws IllegalArgumentException {
-		appConfig.set(RunTimeConfig.KEY_DATA_VERSIONING, enabledFlag);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_VERSIONING, enabledFlag);
 		return this;
 	}
 	//
 	@Override
 	public final StorageClientBuilder<T, U> setFileAccess(final boolean enabledFlag)
 	throws IllegalArgumentException {
-		appConfig.set(RunTimeConfig.KEY_DATA_FS_ACCESS, enabledFlag);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_FS_ACCESS, enabledFlag);
 		return this;
 	}
 	//
@@ -180,22 +169,13 @@ implements StorageClientBuilder<T, U> {
 		) {
 			throw new IllegalArgumentException("Path shouldn't begin or end with \"/\"");
 		}
-		appConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, path);
-		return this;
-	}
-	//
-	@Override
-	public final StorageClientBuilder<T, U> setReqThinkTime(final int milliSec) {
-		if(milliSec < 0) {
-			throw new IllegalArgumentException("Request manual delay should be >= 0");
-		}
-		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_REQSLEEP_MILLISEC, milliSec);
+		appConfig.setProperty(AppConfig.KEY_ITEM_CONTAINER_NAME, path);
 		return this;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final U build() {
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		return (U) new BasicStorageClient<>(
 			appConfig, LoadBuilderFactory.<T, LoadExecutor<T>>getInstance(appConfig)
 		);

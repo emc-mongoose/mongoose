@@ -1,7 +1,8 @@
 package com.emc.mongoose.core.impl.io.conf;
 // mongoose-common
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
@@ -93,7 +94,7 @@ implements HttpRequestConfig<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static long serialVersionUID = 42L;
-	protected final String signMethod;
+	protected final static String SIGN_METHOD = "HmacSHA1";
 	protected boolean fsAccess, versioning, pipelining;
 	protected SecretKeySpec secretKey;
 	//
@@ -103,7 +104,7 @@ implements HttpRequestConfig<T, C> {
 	private final Thread clientDaemon;
 	//
 	public static <T extends HttpDataItem, C extends Container<T>> HttpRequestConfig<T, C> getInstance() {
-		return newInstanceFor(BasicConfig.CONTEXT_CONFIG.get().getApiName());
+		return newInstanceFor(BasicConfig.THREAD_CONTEXT.get().getStorageHttpApiClass());
 	}
 	//
 	@SuppressWarnings("unchecked")
@@ -136,8 +137,7 @@ implements HttpRequestConfig<T, C> {
 	protected HttpRequestConfigBase(final HttpRequestConfigBase<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		signMethod = appConfig.getHttpSignMethod();
-		final Configuration customHeaders = appConfig.getHttpCustomHeaders();
+		final Configuration customHeaders = appConfig.getStorageHttpHeaders();
 		if(customHeaders != null) {
 			final Iterator<String> customHeadersIterator = customHeaders.getKeys();
 			if(customHeadersIterator != null) {
@@ -186,25 +186,23 @@ implements HttpRequestConfig<T, C> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int) appConfig.getIOBufferSizeMin())
+			.setBufferSize(appConfig.getIoBufferSizeMin())
 			.build();
-		final long timeOutMs = appConfig.getLoadLimitTimeUnit().toMillis(
-			appConfig.getLoadLimitTimeValue()
-		);
+		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(1)
-			.setBacklogSize((int) appConfig.getSocketBindBackLogSize())
-			.setInterestOpQueued(appConfig.getSocketInterestOpQueued())
-			.setSelectInterval(appConfig.getSocketSelectInterval())
-			.setShutdownGracePeriod(appConfig.getSocketTimeOut())
-			.setSoKeepAlive(appConfig.getSocketKeepAliveFlag())
-			.setSoLinger(appConfig.getSocketLinger())
-			.setSoReuseAddress(appConfig.getSocketReuseAddrFlag())
-			.setSoTimeout(appConfig.getSocketTimeOut())
-			.setTcpNoDelay(appConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize((int) appConfig.getIOBufferSizeMin())
-			.setSndBufSize((int) appConfig.getIOBufferSizeMin())
+			.setBacklogSize(appConfig.getNetworkSocketBindBacklogSize())
+			.setInterestOpQueued(appConfig.getNetworkSocketInterestOpQueued())
+			.setSelectInterval(appConfig.getNetworkSocketSelectInterval())
+			.setShutdownGracePeriod(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setSoKeepAlive(appConfig.getNetworkSocketKeepAlive())
+			.setSoLinger(appConfig.getNetworkSocketLinger())
+			.setSoReuseAddress(appConfig.getNetworkSocketReuseAddr())
+			.setSoTimeout(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setTcpNoDelay(appConfig.getNetworkSocketTcpNoDelay())
+			.setRcvBufSize(appConfig.getIoBufferSizeMin())
+			.setSndBufSize(appConfig.getIoBufferSizeMin())
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 			);
@@ -385,39 +383,11 @@ implements HttpRequestConfig<T, C> {
 	//
 	@Override
 	public HttpRequestConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
-		//
-		try {
-			setScheme(this.appConfig.getStorageProto());
-		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_SCHEME);
-		}
-		//
-		try {
-			setNameSpace(this.appConfig.getStorageNameSpace());
-		} catch(final NoSuchElementException e) {
-			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_NAMESPACE);
-		} catch(final IllegalStateException e) {
-			LOG.debug(Markers.ERR, "Failed to set the namespace", e);
-		}
-		//
-		try {
-			setFileAccessEnabled(this.appConfig.getDataFileAccessEnabled());
-		} catch(final NoSuchElementException e) {
-			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_DATA_FS_ACCESS);
-		}
-		//
-		try {
-			setVersioning(this.appConfig.getDataVersioningEnabled());
-		} catch(final NoSuchElementException e) {
-			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_DATA_FS_ACCESS);
-		}
-		//
-		try {
-			setPipelining(this.appConfig.getHttpPipeliningFlag());
-		} catch(final NoSuchElementException e) {
-			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_HTTP_PIPELINING);
-		}
-		//
+		// setScheme(...)
+		setNameSpace(this.appConfig.getStorageHttpNamespace());
+		setFileAccessEnabled(this.appConfig.getStroageHttpFsAccess());
+		setVersioning(this.appConfig.getStorageHttpVersioning());
+		// setPipelining(false);
 		super.setAppConfig(this.appConfig);
 		//
 		return this;
@@ -427,7 +397,7 @@ implements HttpRequestConfig<T, C> {
 	public HttpRequestConfigBase<T, C> setSecret(final String secret) {
 		super.setSecret(secret);
 		try {
-			secretKey = new SecretKeySpec(secret.getBytes(Constants.DEFAULT_ENC), signMethod);
+			secretKey = new SecretKeySpec(secret.getBytes(Constants.DEFAULT_ENC), SIGN_METHOD);
 		} catch(UnsupportedEncodingException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Configuration error");
 		}
@@ -596,7 +566,7 @@ implements HttpRequestConfig<T, C> {
 			for(int i = 0; i < rangeCount; i ++) {
 				if(dataItem.isCurrLayerRangeUpdating(i)) {
 					if(sb.length() > prefixLen) {
-						sb.append(RunTimeConfig.LIST_SEP);
+						sb.append(',');
 					}
 					nextRangeOffset = getRangeOffset(i);
 					sb
@@ -608,7 +578,7 @@ implements HttpRequestConfig<T, C> {
 			for(int i = 0; i < rangeCount; i ++) {
 				if(dataItem.isNextLayerRangeUpdating(i)) {
 					if(sb.length() > prefixLen) {
-						sb.append(RunTimeConfig.LIST_SEP);
+						sb.append(',');
 					}
 					nextRangeOffset = getRangeOffset(i);
 					sb
@@ -660,7 +630,7 @@ implements HttpRequestConfig<T, C> {
 		Mac mac = THRLOC_MAC.get();
 		if(mac == null) {
 			try {
-				mac = Mac.getInstance(signMethod);
+				mac = Mac.getInstance(SIGN_METHOD);
 				mac.init(secretKey);
 			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
 				e.printStackTrace(System.out);
@@ -746,19 +716,14 @@ implements HttpRequestConfig<T, C> {
 			if(tgtAddr.contains(":")) {
 				final String t[] = tgtAddr.split(":");
 				try {
-					tgtHost = new HttpHost(
-						t[0], Integer.parseInt(t[1]), appConfig.getStorageProto()
-					);
+					tgtHost = new HttpHost(t[0], Integer.parseInt(t[1]), SCHEME);
 				} catch(final Exception e) {
 					LogUtil.exception(
 						LOG, Level.WARN, e, "Failed to determine the request target host"
 					);
 				}
 			} else {
-				tgtHost = new HttpHost(
-					tgtAddr, appConfig.getApiTypePort(appConfig.getApiName()),
-					appConfig.getStorageProto()
-				);
+				tgtHost = new HttpHost(tgtAddr, appConfig.getStorageHttpApi_Port(), SCHEME);
 			}
 		} else {
 			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");

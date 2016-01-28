@@ -61,14 +61,14 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(RunTimeConfig.KEY_DATA_SIZE, DATA_SIZE);
 		WSMockTestBase.setUpClass();
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
 		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
 		appConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, TestConstants.BUCKET_NAME);
 		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
+		logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
 		//
 		try(
 			final BufferingOutputStream stdOutStream = StdOutUtil
@@ -128,7 +128,7 @@ extends WSMockTestBase {
 	@Test
 	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
 		throws Exception {
-		final String configTable = BasicConfig.CONTEXT_CONFIG.get().toString();
+		final String configTable = BasicConfig.THREAD_CONTEXT.get().toString();
 		final Set<String> params = new HashSet<>();
 		//  skip table header
 		int start = 126;

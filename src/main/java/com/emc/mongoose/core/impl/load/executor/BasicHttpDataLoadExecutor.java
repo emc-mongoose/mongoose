@@ -1,7 +1,8 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
@@ -14,11 +15,11 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.task.WSDataIOTask;
+import com.emc.mongoose.core.api.io.task.HttpDataIOTask;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
+import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.task.BasicWSDataIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicHttpDataIOTask;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.http.ExceptionLogger;
@@ -65,9 +66,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 02.12.14.
  */
-public class BasicWSDataLoadExecutor<T extends HttpDataItem>
+public class BasicHttpDataLoadExecutor<T extends HttpDataItem>
 extends MutableDataLoadExecutorBase<T>
-implements WSDataLoadExecutor<T> {
+implements HttpDataLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -75,7 +76,7 @@ implements WSDataLoadExecutor<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
-	private final HttpRequestConfig<T, Container<T>> wsReqConfigCopy;
+	private final HttpRequestConfig<T, Container<T>> httpReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
 	private final AtomicLong
@@ -83,7 +84,7 @@ implements WSDataLoadExecutor<T> {
 		connReleaseCount = new AtomicLong(0);
 	//
 	@SuppressWarnings("unchecked")
-	public BasicWSDataLoadExecutor(
+	public BasicHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
@@ -94,10 +95,10 @@ implements WSDataLoadExecutor<T> {
 			appConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
 			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
 		);
-		wsReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
-		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
+		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
+		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
 		//
-		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
+		final HeaderGroup sharedHeaders = httpReqConfigCopy.getSharedHeaders();
 		final String userAgent = appConfig.getRunName() + "/" + appConfig.getRunVersion();
 		//
 		httpProcessor = HttpProcessorBuilder
@@ -119,23 +120,21 @@ implements WSDataLoadExecutor<T> {
 			}
 		);
 		//
-		final RunTimeConfig thrLocalConfig = BasicConfig.CONTEXT_CONFIG.get();
-		final int buffSize = wsReqConfigCopy.getBuffSize();
-		final long timeOutMs = appConfig.getLoadLimitTimeUnit().toMillis(
-			appConfig.getLoadLimitTimeValue()
-		);
+		final AppConfig thrLocalConfig = BasicConfig.THREAD_CONTEXT.get();
+		final int buffSize = httpReqConfigCopy.getBuffSize();
+		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(threadCount)
-			.setBacklogSize((int) thrLocalConfig.getSocketBindBackLogSize())
-			.setInterestOpQueued(thrLocalConfig.getSocketInterestOpQueued())
-			.setSelectInterval(thrLocalConfig.getSocketSelectInterval())
-			.setShutdownGracePeriod(thrLocalConfig.getSocketTimeOut())
-			.setSoKeepAlive(thrLocalConfig.getSocketKeepAliveFlag())
-			.setSoLinger(thrLocalConfig.getSocketLinger())
-			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
-			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
-			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
+			.setBacklogSize(thrLocalConfig.getNetworkSocketBindBacklogSize())
+			.setInterestOpQueued(thrLocalConfig.getNetworkSocketInterestOpQueued())
+			.setSelectInterval(thrLocalConfig.getNetworkSocketSelectInterval())
+			.setShutdownGracePeriod(thrLocalConfig.getNetworkSocketTimeoutMilliSec())
+			.setSoKeepAlive(thrLocalConfig.getNetworkSocketKeepAlive())
+			.setSoLinger(thrLocalConfig.getNetworkSocketLinger())
+			.setSoReuseAddress(thrLocalConfig.getNetworkSocketReuseAddr())
+			.setSoTimeout(thrLocalConfig.getNetworkSocketTimeoutMilliSec())
+			.setTcpNoDelay(thrLocalConfig.getNetworkSocketTcpNoDelay())
 			.setRcvBufSize(IOTask.Type.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
 			.setSndBufSize(IOTask.Type.READ.equals(loadType) ? Constants.BUFF_SIZE_LO : buffSize)
 			.setConnectTimeout(
@@ -172,7 +171,7 @@ implements WSDataLoadExecutor<T> {
 		HttpHost nextRoute;
 		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
 		for(int i = 0; i < storageNodeCount; i ++) {
-			nextRoute = wsReqConfigCopy.getNodeHost(addrs[i]);
+			nextRoute = httpReqConfigCopy.getNodeHost(addrs[i]);
 			nextConnPool = new FixedRouteSequencingConnPool(
 				ioReactor, nextRoute, connFactory,
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ?
@@ -199,8 +198,8 @@ implements WSDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected WSDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
-		return new BasicWSDataIOTask<>(item, nodeAddr, wsReqConfigCopy);
+	protected HttpDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
+		return new BasicHttpDataIOTask<>(item, nodeAddr, httpReqConfigCopy);
 	}
 	//
 	@Override
@@ -245,14 +244,14 @@ implements WSDataLoadExecutor<T> {
 	protected <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)
 	throws RejectedExecutionException {
 		//
-		final WSDataIOTask<T> wsTask = (WSDataIOTask<T>) ioTask;
+		final HttpDataIOTask<T> wsTask = (HttpDataIOTask<T>) ioTask;
 		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
 			connPool = connPoolMap.get(wsTask.getTarget());
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");
 		}
 		//
-		final Future<WSDataIOTask<T>> futureResult;
+		final Future<HttpDataIOTask<T>> futureResult;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, futureCallback);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -266,9 +265,9 @@ implements WSDataLoadExecutor<T> {
 		return (Future<A>) futureResult;
 	}
 	//
-	private final FutureCallback<WSDataIOTask<T>> futureCallback = new FutureCallback<WSDataIOTask<T>>() {
+	private final FutureCallback<HttpDataIOTask<T>> futureCallback = new FutureCallback<HttpDataIOTask<T>>() {
 		@Override
-		public final void completed(final WSDataIOTask<T> ioTask) {
+		public final void completed(final HttpDataIOTask<T> ioTask) {
 			ioTaskCompleted(ioTask);
 		}
 		//
@@ -287,8 +286,8 @@ implements WSDataLoadExecutor<T> {
 		int n = 0;
 		if(isPipeliningEnabled) {
 			if(ioTasks.size() > 0) {
-				final List<WSDataIOTask<T>> wsIOTasks = (List<WSDataIOTask<T>>) ioTasks;
-				final WSDataIOTask<T> anyTask = wsIOTasks.get(0);
+				final List<HttpDataIOTask<T>> wsIOTasks = (List<HttpDataIOTask<T>>) ioTasks;
+				final HttpDataIOTask<T> anyTask = wsIOTasks.get(0);
 				final HttpHost tgtHost = anyTask.getTarget();
 				if(
 					null == client.executePipelined(
@@ -312,16 +311,16 @@ implements WSDataLoadExecutor<T> {
 	}
 	//
 	private final class BatchFutureCallback
-	implements FutureCallback<List<WSDataIOTask<T>>> {
+	implements FutureCallback<List<HttpDataIOTask<T>>> {
 		//
-		private final List<WSDataIOTask<T>> tasks;
+		private final List<HttpDataIOTask<T>> tasks;
 		//
-		private BatchFutureCallback(final List<WSDataIOTask<T>> tasks) {
+		private BatchFutureCallback(final List<HttpDataIOTask<T>> tasks) {
 			this.tasks = tasks;
 		}
 		//
 		@Override
-		public final void completed(final List<WSDataIOTask<T>> result) {
+		public final void completed(final List<HttpDataIOTask<T>> result) {
 			ioTaskCompletedBatch(result, 0, result.size());
 		}
 		//

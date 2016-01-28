@@ -3,6 +3,8 @@ package com.emc.mongoose.client.impl.load.builder;
 import com.emc.mongoose.client.api.load.builder.DataLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.DataLoadClient;
 //
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 //
@@ -41,7 +43,7 @@ implements DataLoadBuilderClient<T, W, U> {
 	//
 	protected DataLoadBuilderClientBase()
 	throws IOException {
-		this(BasicConfig.CONTEXT_CONFIG.get());
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
 	protected DataLoadBuilderClientBase(final AppConfig appConfig)

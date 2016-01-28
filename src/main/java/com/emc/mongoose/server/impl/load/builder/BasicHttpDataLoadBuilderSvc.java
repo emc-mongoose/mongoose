@@ -1,7 +1,8 @@
 package com.emc.mongoose.server.impl.load.builder;
 //mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
@@ -13,12 +14,12 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.executor.WSDataLoadSvc;
-import com.emc.mongoose.server.api.load.builder.WSDataLoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
+import com.emc.mongoose.server.api.load.builder.HttpDataLoadBuilderSvc;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.builder.BasicWSDataLoadBuilder;
+import com.emc.mongoose.core.impl.load.builder.BasicHttpDataLoadBuilder;
 // mongoose-server-impl.jar
-import com.emc.mongoose.server.impl.load.executor.BasicWSDataLoadSvc;
+import com.emc.mongoose.server.impl.load.executor.BasicHttpDataLoadSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -34,26 +35,26 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 30.05.14.
  */
-public class BasicWSDataLoadBuilderSvc<T extends HttpDataItem, U extends WSDataLoadSvc<T>>
-extends BasicWSDataLoadBuilder<T, U>
-implements WSDataLoadBuilderSvc<T, U> {
+public class BasicHttpDataLoadBuilderSvc<T extends HttpDataItem, U extends HttpDataLoadSvc<T>>
+extends BasicHttpDataLoadBuilder<T, U>
+implements HttpDataLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static AtomicInteger FORK_COUNTER = new AtomicInteger(0);
 	//
 	private String name = getClass().getName();
 	//
-	public BasicWSDataLoadBuilderSvc(final AppConfig appConfig)
+	public BasicHttpDataLoadBuilderSvc(final AppConfig appConfig)
 	throws RemoteException {
-		super(runTimeConfig);
+		super(appConfig);
 	}
 	//
 	@Override
 	public final int fork()
 	throws RemoteException {
 		try {
-			final BasicWSDataLoadBuilderSvc<T, U>
-				forkedSvc = (BasicWSDataLoadBuilderSvc<T, U>) clone();
+			final BasicHttpDataLoadBuilderSvc<T, U>
+				forkedSvc = (BasicHttpDataLoadBuilderSvc<T, U>) clone();
 			final int forkNum = FORK_COUNTER.getAndIncrement();
 			forkedSvc.name = name + forkNum;
 			forkedSvc.start();
@@ -98,10 +99,10 @@ implements WSDataLoadBuilderSvc<T, U> {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final HttpRequestConfig wsReqConf = HttpRequestConfig.class.cast(ioConfig);
-		final RunTimeConfig localRunTimeConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final HttpRequestConfig httpReqConf = HttpRequestConfig.class.cast(ioConfig);
+		final AppConfig localAppConfig = BasicConfig.THREAD_CONTEXT.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
-		localRunTimeConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
+		localAppConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		if(minObjSize > maxObjSize) {
 			throw new IllegalStateException(
 				String.format(
@@ -118,8 +119,8 @@ implements WSDataLoadBuilderSvc<T, U> {
 				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
 			);
 		//
-		return (U) new BasicWSDataLoadSvc<>(
-			localRunTimeConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
+		return (U) new BasicHttpDataLoadSvc<>(
+			localAppConfig, httpReqConf, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
 			manualTaskSleepMicroSecs, rateLimit, updatesPerItem

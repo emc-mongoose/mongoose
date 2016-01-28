@@ -1,6 +1,6 @@
 package com.emc.mongoose.webui;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.appenders.WebUIAppender;
@@ -52,7 +52,7 @@ public final class StopServlet extends CommonServlet {
 	//
 	@Override
 	public final void doPost(final HttpServletRequest request, final HttpServletResponse response) {
-		final String currentRunId = request.getParameter(RunTimeConfig.KEY_RUN_ID);
+		final String currentRunId = request.getParameter(AppConfig.KEY_RUN_ID);
 		try {
 			if (request.getParameter(STOP_TYPE).equals(TYPE_REMOVE)) {
 				stopMongoose(currentRunId, true);

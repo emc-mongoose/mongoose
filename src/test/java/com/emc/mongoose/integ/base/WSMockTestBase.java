@@ -25,7 +25,7 @@ extends LoggingTestBase {
 	public static void setUpClass()
 	throws Exception {
 		LoggingTestBase.setUpClass();
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_API_NAME, "s3"); // reset the ports beginning
 		appConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
 		WS_MOCK = new Cinderella<>(appConfig);

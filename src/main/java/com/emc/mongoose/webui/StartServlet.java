@@ -1,7 +1,8 @@
 package com.emc.mongoose.webui;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -13,9 +14,6 @@ import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
-import com.emc.mongoose.run.scenario.Chain;
-import com.emc.mongoose.run.scenario.Rampup;
-import com.emc.mongoose.run.scenario.Single;
 //
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
@@ -28,7 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 /**
  * Created by gusakk on 01/10/14.
  */
@@ -37,9 +35,9 @@ public final class StartServlet extends CommonServlet {
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String RUN_MODES = "runmodes";
 	//
-	private ConcurrentHashMap<String, Thread> threadsMap;
-	private ConcurrentHashMap<String, Boolean> stoppedRunModes;
-	private ConcurrentHashMap<String, String> chartsMap;
+	private Map<String, Thread> threadsMap;
+	private Map<String, Boolean> stoppedRunModes;
+	private Map<String, String> chartsMap;
 	//
 	@Override
 	public final void init() {
@@ -51,7 +49,7 @@ public final class StartServlet extends CommonServlet {
 	//
 	@Override
 	public final void doPost(final HttpServletRequest request, final HttpServletResponse response) {
-		final String runId = request.getParameter(RunTimeConfig.KEY_RUN_ID);
+		final String runId = request.getParameter(AppConfig.KEY_RUN_ID);
 		if (!isRunIdFree(runId)) {
 			try {
 				response.getWriter().write("Scenario with this id will " +
@@ -62,12 +60,16 @@ public final class StartServlet extends CommonServlet {
 			return;
 		}
 		//
-		appConfig = (RunTimeConfig) appConfig.clone();
-		appConfig.setProperty(RunTimeConfig.KEY_RUN_ID, LogUtil.newRunId());
+		try {
+			appConfig = (AppConfig) appConfig.clone();
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the configuration");
+		}
+		appConfig.setProperty(AppConfig.KEY_RUN_ID, LogUtil.newRunId());
 		setupAppConfig(request);
 		updateLastAppConfig(appConfig);
 		//
-		switch(request.getParameter(RunTimeConfig.KEY_RUN_MODE)) {
+		switch(request.getParameter(AppConfig.KEY_RUN_MODE)) {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
 				startServer("Starting the distributed load server");
@@ -85,7 +87,7 @@ public final class StartServlet extends CommonServlet {
 			default:
 				LOG.warn(
 					Markers.ERR, "Unsupported run mode \"{}\"",
-					request.getParameter(RunTimeConfig.KEY_RUN_MODE)
+					request.getParameter(AppConfig.KEY_RUN_MODE)
 				);
 		}
 		//  Add runModes to http session
@@ -96,20 +98,20 @@ public final class StartServlet extends CommonServlet {
 	private void startServer(final String message) {
 		//
 		final Thread thread = new Thread() {
-			RunTimeConfig localRunTimeConfig;
+			AppConfig localAppConfig;
 			LoadBuilderSvc multiSvc;
 			//
 			@Override
 			public void run() {
-				localRunTimeConfig = appConfig;
-				RunTimeConfig.setContext(localRunTimeConfig);
+				localAppConfig = appConfig;
+				BasicConfig.THREAD_CONTEXT.set(localAppConfig);
 				setName("run<" + appConfig.getRunId() + ">");
 				//
 				LOG.debug(Markers.MSG, message);
 				LOG.info(Markers.CFG, appConfig.toFormattedString());
 				//
 				try {
-					multiSvc = new MultiLoadBuilderSvc(localRunTimeConfig);
+					multiSvc = new MultiLoadBuilderSvc(localAppConfig);
 					multiSvc.start();
 				} catch(final RemoteException e) {
 					LogUtil.exception(
@@ -120,7 +122,7 @@ public final class StartServlet extends CommonServlet {
 			//
 			@Override
 			public void interrupt() {
-				RunTimeConfig.setContext(localRunTimeConfig);
+				BasicConfig.THREAD_CONTEXT.set(localAppConfig);
 				try {
 					multiSvc.interrupt();
 					multiSvc.close();
@@ -132,46 +134,18 @@ public final class StartServlet extends CommonServlet {
 			}
 		};
 		thread.start();
-		threadsMap.put(appConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
+		threadsMap.put(appConfig.getString(AppConfig.KEY_RUN_ID), thread);
 	}
 	//
 	private void startStandaloneOrClient(final String message) {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {
-				RunTimeConfig.setContext(appConfig);
+				BasicConfig.THREAD_CONTEXT.set(appConfig);
 				setName("run<" + appConfig.getRunId() + ">");
-				ThreadContext.put(RunTimeConfig.KEY_SCENARIO_NAME, appConfig.getScenarioName());
-				ThreadContext.put(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC,
-					String.valueOf(appConfig.getLoadMetricsPeriodSec()));
-				//
-				final String scenarioName = appConfig.getScenarioName();
-				chartsMap.put(appConfig.getRunId(), scenarioName);
-				//
-				LOG.debug(Markers.MSG, message);
-				LOG.info(Markers.CFG, appConfig.toFormattedString());
-				//
-				switch (scenarioName) {
-					case Constants.RUN_SCENARIO_SINGLE:
-						new Single(appConfig).run();
-						break;
-					case Constants.RUN_SCENARIO_CHAIN:
-						new Chain(appConfig).run();
-						break;
-					case Constants.RUN_SCENARIO_RAMPUP:
-						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
-							convertArrayToString(appConfig.getScenarioRampupSizes()));
-						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS,
-							convertArrayToString(appConfig.getScenarioRampupConnCounts()));
-						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD,
-							convertArrayToString(appConfig.getScenarioChainLoad()));
-						new Rampup(appConfig).run();
-						break;
-					default:
-						throw new IllegalArgumentException(
-							String.format("Incorrect scenario: \"%s\"", scenarioName)
-						);
-				}
+				ThreadContext.put(AppConfig.KEY_LOAD_METRICS_PERIOD,
+					String.valueOf(appConfig.getLoadMetricsPeriod()));
+				// TODO use scenario runner
 				LOG.info(Markers.MSG, "Scenario end");
 				//
 			}
@@ -183,14 +157,14 @@ public final class StartServlet extends CommonServlet {
 			}
 		};
 		thread.start();
-		threadsMap.put(appConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
+		threadsMap.put(appConfig.getString(AppConfig.KEY_RUN_ID), thread);
 	}
 	//
 	private void startStorageMock(final String message) {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {
-				RunTimeConfig.setContext(appConfig);
+				BasicConfig.THREAD_CONTEXT.set(appConfig);
 				setName("run<" + appConfig.getRunId() + ">");
 				//
 				LOG.debug(Markers.MSG, message);
@@ -209,7 +183,7 @@ public final class StartServlet extends CommonServlet {
 		};
 
 		thread.start();
-		threadsMap.put(appConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
+		threadsMap.put(appConfig.getString(AppConfig.KEY_RUN_ID), thread);
 	}
 	//
 	public final boolean isRunIdFree(final String runId) {

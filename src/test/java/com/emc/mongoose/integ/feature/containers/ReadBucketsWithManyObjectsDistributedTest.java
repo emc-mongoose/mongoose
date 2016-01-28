@@ -42,14 +42,14 @@ extends DistributedLoadBuilderTestBase {
 		System.setProperty(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		System.setProperty(RunTimeConfig.KEY_DATA_SIZE, "1");
 		DistributedLoadBuilderTestBase.setUpClass();
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		appConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_CREATE);
 		appConfig.set(RunTimeConfig.KEY_CREATE_CONNS, "10");
 		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
+		logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
 		//
 		new ScenarioRunner().run();
 		TimeUnit.SECONDS.sleep(1);

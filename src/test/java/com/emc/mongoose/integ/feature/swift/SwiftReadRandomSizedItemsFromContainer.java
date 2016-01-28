@@ -33,7 +33,7 @@ extends StandaloneClientTestBase {
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setAPI("swift")
-				.setSwiftContainer(runId)
+				.setContainer(runId)
 				.build()
 		) {
 			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, 0, 123456, 3);

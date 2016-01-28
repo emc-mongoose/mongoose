@@ -23,7 +23,7 @@ extends DistributedTestBase {
 	throws Exception {
 		DistributedTestBase.setUpClass();
 		LOAD_BUILDER_CLIENT = (LoadBuilderClient) LoadBuilderFactory
-			.getInstance(BasicConfig.CONTEXT_CONFIG.get());
+			.getInstance(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
 	@AfterClass

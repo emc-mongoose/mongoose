@@ -24,6 +24,7 @@ implements IOStats {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static double M = 1e6;
+	private final static int DEFAULT_JMX_PORT = 1199;
 	//
 	protected final String name;
 	protected final Clock clock = new ResumableUserTimeClock();
@@ -33,10 +34,10 @@ implements IOStats {
 	protected final Histogram reqDuration, respLatency;
 	protected volatile long tsStartMicroSec = -1, prevElapsedTimeMicroSec = 0;
 	//
-	protected IOStatsBase(final String name, final int serveJmxPort) {
+	protected IOStatsBase(final String name, final boolean serveJmxFlag) {
 		this.name = name;
-		if(serveJmxPort > 0) {
-			mBeanServer = ServiceUtil.getMBeanServer(serveJmxPort);
+		if(serveJmxFlag) {
+			mBeanServer = ServiceUtil.getMBeanServer(DEFAULT_JMX_PORT);
 			jmxReporter = CustomJmxReporter.forRegistry(metrics).registerWith(mBeanServer).build();
 		} else {
 			mBeanServer = null;

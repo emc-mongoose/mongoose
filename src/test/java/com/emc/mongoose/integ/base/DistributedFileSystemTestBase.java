@@ -21,7 +21,7 @@ extends FileSystemTestBase {
 	public static void setUpClass()
 	throws Exception {
 		FileSystemTestBase.setUpClass();
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_LOAD_SERVER_ADDRS, ServiceUtil.getHostAddr());
 		appConfig.set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_SERVER);
 		ServiceUtil.init();
@@ -37,7 +37,7 @@ extends FileSystemTestBase {
 	throws Exception {
 		CLIENT_BUILDER.setClientMode(null);
 		LOAD_BUILDER_SVC.close();
-		BasicConfig.CONTEXT_CONFIG.get().set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_STANDALONE);
+		BasicConfig.THREAD_CONTEXT.get().set(RunTimeConfig.KEY_RUN_MODE, RUN_MODE_STANDALONE);
 		FileSystemTestBase.tearDownClass();
 	}
 }

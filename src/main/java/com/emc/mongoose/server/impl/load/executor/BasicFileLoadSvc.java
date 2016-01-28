@@ -1,6 +1,6 @@
 package com.emc.mongoose.server.impl.load.executor;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
@@ -35,8 +35,7 @@ implements FileLoadSvc<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicFileLoadSvc(
-		final AppConfig appConfig,
-		final FileIOConfig<T, ? extends Directory<T>> ioConfig,
+		final AppConfig appConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,

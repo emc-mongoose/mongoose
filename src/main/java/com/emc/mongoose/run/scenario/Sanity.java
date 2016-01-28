@@ -1,6 +1,7 @@
 package com.emc.mongoose.run.scenario;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -137,19 +138,19 @@ implements Runnable {
 	public static void main(final String... args)
 	throws IOException, InterruptedException {
 		//
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		//
-		appConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
-		appConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, DEFAULT_DATA_COUNT_MAX);
-		appConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
-		//appConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_MOCK_CONTAINER_CAPACITY, DEFAULT_DATA_COUNT_MAX);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
+		//appConfig.setProperty(AppConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		Thread wsMockThread = new Thread(
-			new Cinderella(BasicConfig.CONTEXT_CONFIG.get()), "wsMock"
+			new Cinderella(BasicConfig.THREAD_CONTEXT.get()), "wsMock"
 		);
 		wsMockThread.setDaemon(true);
 		wsMockThread.start();
 		//
-		appConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 10);
+		appConfig.setProperty(AppConfig.KEY_LOAD_METRICS_PERIOD, 10);
 		final StorageClientBuilder<HttpDataItem, StorageClient<HttpDataItem>>
 			clientBuilder = new BasicStorageClientBuilder<>();
 		final String storageNodes[] = new String[DEFAULT_NODE_COUNT];
@@ -171,12 +172,11 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
 		// distributed mode
-		appConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_JMX, true);
+		appConfig.setProperty(AppConfig.KEY_NETWORK_SERVE_JMX, true);
 		ServiceUtil.init();
 		//
 		final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(appConfig);
 		multiSvc.start();
-		appConfig.set(RunTimeConfig.KEY_REMOTE_PORT_MONITOR, 1299);
 		try(
 			final StorageClient<HttpDataItem> client = clientBuilder
 				.setClientMode(new String[] {ServiceUtil.getHostAddr()})

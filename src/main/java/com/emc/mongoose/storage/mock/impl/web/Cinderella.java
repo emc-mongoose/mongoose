@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.mock.impl.web;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -118,7 +118,7 @@ implements WSMock<T> {
 			.add( // user-agent header
 				new ResponseServer(
 					Cinderella.class.getSimpleName() + "/" +
-					BasicConfig.CONTEXT_CONFIG.get().getRunVersion()
+					BasicConfig.THREAD_CONTEXT.get().getRunVersion()
 				)
 			)
 			.add(new ResponseContent())
@@ -126,7 +126,7 @@ implements WSMock<T> {
 			.build();
 		// Create request handler registry
 		final HttpAsyncRequestHandlerMapper apiReqHandlerMapper = new APIRequestHandlerMapper<>(
-			BasicConfig.CONTEXT_CONFIG.get(), this
+			BasicConfig.THREAD_CONTEXT.get(), this
 		);
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpProc, apiReqHandlerMapper);
@@ -139,7 +139,7 @@ implements WSMock<T> {
 			nextPort = portStart + i;
 			try {
 				sockEvtDispatchers[i] = new BasicSocketEventDispatcher(
-					BasicConfig.CONTEXT_CONFIG.get(), protocolHandler, nextPort, connFactory, ioStats
+					BasicConfig.THREAD_CONTEXT.get(), protocolHandler, nextPort, connFactory, ioStats
 				);
 				sockEvtDispatchers[i].start();
 			} catch(final IOReactorException e) {

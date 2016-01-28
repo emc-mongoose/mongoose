@@ -52,32 +52,18 @@ public interface StorageClientBuilder<T extends Item, U extends StorageClient<T>
 	StorageClientBuilder<T, U> setNamespace(final String value);
 
 	/**
-	 Set the target S3 bucket for writing to/reading from/etc.
-	 @param value The name of the bucket, for example "sanity-nh-bucket1"
-	 @return self.
-	 */
-	StorageClientBuilder<T, U> setS3Bucket(final String value);
-
-	/**
-	 Set the target Swift container for writing to/reading from/etc.
+	 Set the target bucket/container for writing to/reading from/etc.
 	 @param value The name of the container, for example "sanity-nh-container1"
 	 @return self.
 	 */
-	StorageClientBuilder<T, U> setSwiftContainer(final String value);
+	StorageClientBuilder<T, U> setContainer(final String value);
 
 	/**
-	 Set the Atmos-specific subtenant to use.
+	 Set the authentication token to use (subtenant if using Atmos).
 	 @param value The subtenant string value.
 	 @return self.
 	 */
-	StorageClientBuilder<T, U> setAtmosSubtenant(final String value);
-
-	/**
-	 Set the Swift-specific authentication token to use.
-	 @param value The authentication token string value
-	 @return self.
-	 */
-	StorageClientBuilder<T, U> setSwiftAuthToken(final String value);
+	StorageClientBuilder<T, U> setAuthToken(final String value);
 
 	/**
 	 Limit the storage I/O methods execution by data items count.
@@ -141,14 +127,6 @@ public interface StorageClientBuilder<T extends Item, U extends StorageClient<T>
 	 @throws IllegalArgumentException if the path begins or ends with "/"
 	 */
 	StorageClientBuilder<T, U> setPath(final String path)
-	throws IllegalArgumentException;
-
-	/**
-	 Set the manual delay between each two requests to the storage inside single thread/connection.
-	 @param milliSec the time in milliseconds
-	 @throws java.lang.IllegalArgumentException if negative value is passed
- 	 */
-	StorageClientBuilder<T, U> setReqThinkTime(final int milliSec)
 	throws IllegalArgumentException;
 
 	/** Build the storage client instance */

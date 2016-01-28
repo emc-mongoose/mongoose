@@ -66,7 +66,7 @@ extends StandaloneClientTestBase {
 			);
 			StandaloneClientTestBase.setUpClass();
 			//
-			final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+			final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 			appConfig.set(RunTimeConfig.KEY_LOAD_CIRCULAR, true);
 			appConfig.set(RunTimeConfig.KEY_ITEM_QUEUE_MAX_SIZE, ITEM_MAX_QUEUE_SIZE);
 			appConfig.set(RunTimeConfig.KEY_ITEM_SRC_BATCH_SIZE, BATCH_SIZE);

@@ -65,7 +65,7 @@ extends WSMockTestBase {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		WSMockTestBase.setUpClass();
 		//
-		final AppConfig appConfig = BasicConfig.CONTEXT_CONFIG.get();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		appConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 		appConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
@@ -80,7 +80,7 @@ extends WSMockTestBase {
 		RunTimeConfig.setContext(appConfig);
 		//
 		final Logger logger = LogManager.getLogger();
-		logger.info(Markers.MSG, BasicConfig.CONTEXT_CONFIG.get().toString());
+		logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
 		//
 		try (final BufferingOutputStream
 				 stdOutStream =	StdOutUtil.getStdOutBufferingStream()
@@ -144,7 +144,7 @@ extends WSMockTestBase {
 	@Test
 	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
 		throws Exception {
-		final String configTable = BasicConfig.CONTEXT_CONFIG.get().toString();
+		final String configTable = BasicConfig.THREAD_CONTEXT.get().toString();
 		final Set<String> params = new HashSet<>();
 		//  skip table header
 		int start = 126;
@@ -491,7 +491,7 @@ extends WSMockTestBase {
 		// Check period of reports is correct
 		long firstTime, nextTime;
 		// Period must be equal 10 sec
-		final int period = BasicConfig.CONTEXT_CONFIG.get().getLoadMetricsPeriodSec();
+		final int period = BasicConfig.THREAD_CONTEXT.get().getLoadMetricsPeriodSec();
 		// period must be equal 10 seconds = 10000 milliseconds
 		Assert.assertEquals("Wrong metrics period", 10, period);
 		//

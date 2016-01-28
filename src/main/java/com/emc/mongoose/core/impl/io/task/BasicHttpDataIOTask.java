@@ -13,7 +13,7 @@ import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataSizeException;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.WSDataIOTask;
+import com.emc.mongoose.core.api.io.task.HttpDataIOTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.impl.item.data.BasicMutableDataItem;
 import com.emc.mongoose.core.impl.item.data.BasicDataItem;
@@ -46,17 +46,17 @@ import java.nio.charset.StandardCharsets;
 /**
  Created by kurila on 06.06.14.
  */
-public class BasicWSDataIOTask<
+public class BasicHttpDataIOTask<
 	T extends HttpDataItem, C extends Container<T>, X extends HttpRequestConfig<T, C>
 > extends BasicDataIOTask<T, C, X>
-implements WSDataIOTask<T> {
+implements HttpDataIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile OutputChannel chanOut = null;
 	private volatile InputChannel chanIn = null;
 	//
-	public BasicWSDataIOTask(final T dataObject, final String nodeAddr, final X reqConf) {
+	public BasicHttpDataIOTask(final T dataObject, final String nodeAddr, final X reqConf) {
 		super(dataObject, nodeAddr, reqConf);
 	}
 	/**
@@ -486,7 +486,7 @@ implements WSDataIOTask<T> {
 	}
 	//
 	@Override
-	public final WSDataIOTask<T> getResult() {
+	public final HttpDataIOTask<T> getResult() {
 		return this;
 	}
 	//
