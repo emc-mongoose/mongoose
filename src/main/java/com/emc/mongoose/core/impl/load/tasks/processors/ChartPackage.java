@@ -5,6 +5,7 @@ import java.util.List;
 
 public class ChartPackage implements Serializable {
 
+	String name;
 	String runId;
 	String loadJobName;
 	List<Point> durMinChart, durMaxChart, durAvgChart,
@@ -13,6 +14,7 @@ public class ChartPackage implements Serializable {
 			bwAvgChart, bwLast;
 
 	public ChartPackage(String runId, String loadJobName, PolylineManager polylineManager) {
+		this.name = "chrtpckg";
 		this.runId = runId;
 		this.loadJobName = loadJobName;
 		this.durMinChart = polylineManager.getDurMin();

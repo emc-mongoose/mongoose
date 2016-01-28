@@ -83,6 +83,7 @@ define([
 					break;
 				case markers.PERF_AVG:
 					appendMessageToTable(entry, logFiles.PERF_AVG, countOfRecords, json);
+					// todo start of handling to change
 					var isFound = false;
 					chartsArray.forEach(function(d) {
 						if (d["run.id"] === runId) {
@@ -105,6 +106,7 @@ define([
 								break;
 						}
 					}
+					// todo finish of handling to change
 				 break;
 			}
 		}
@@ -175,24 +177,28 @@ define([
 				this.ws = new WebSocket(location);
 				this.ws.onmessage = function(message) {
 					var json = JSON.parse(message.data);
-					if ($.isArray(json)) {
-						var logEventsByRunId = {};
-						json.forEach(function(element) {
-							var runId = element.contextMap["run.id"];
-							if (element.marker !== null) {
-								if (!logEventsByRunId.hasOwnProperty(runId)) {
-									logEventsByRunId[runId] = [];
-								}
-								logEventsByRunId[runId].push(element);
-							}
-						});
-						for (var runId in logEventsByRunId) {
-							if (logEventsByRunId.hasOwnProperty(runId)) {
-								handleLogEventsArray(chartsArray, runId, logEventsByRunId[runId]);
-							}
-						}
+					if (json.name == "chrtpckg") {
+						//todo write chart handle code here
 					} else {
-						processJsonLogEvents(chartsArray, json);
+						if ($.isArray(json)) {
+							var logEventsByRunId = {};
+							json.forEach(function (element) {
+								var runId = element.contextMap["run.id"];
+								if (element.marker !== null) {
+									if (!logEventsByRunId.hasOwnProperty(runId)) {
+										logEventsByRunId[runId] = [];
+									}
+									logEventsByRunId[runId].push(element);
+								}
+							});
+							for (var runId in logEventsByRunId) {
+								if (logEventsByRunId.hasOwnProperty(runId)) {
+									handleLogEventsArray(chartsArray, runId, logEventsByRunId[runId]);
+								}
+							}
+						} else {
+							processJsonLogEvents(chartsArray, json);
+						}
 					}
 				};
 			}
