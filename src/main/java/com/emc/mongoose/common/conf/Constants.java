@@ -20,6 +20,7 @@ public interface Constants {
 	String RUN_MODE_COMPAT_SERVER = "driver";
 	String RUN_MODE_WEBUI = "webui";
 	String RUN_MODE_CINDERELLA = "cinderella";
+	String RUN_MODE_NAGAINA = "nagaina";
 	String RUN_MODE_WSMOCK = "wsmock";
 	String RUN_SCENARIO_SINGLE = "single";
 	String RUN_SCENARIO_CHAIN = "chain";

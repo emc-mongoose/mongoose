@@ -1,13 +1,12 @@
 package com.emc.mongoose.integ.base;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
-import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
+import com.emc.mongoose.storage.mock.impl.web.Nagaina;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -26,14 +25,14 @@ extends LoggingTestBase {
 	throws Exception {
 		LoggingTestBase.setUpClass();
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-		appConfig.set(RunTimeConfig.KEY_API_NAME, "s3"); // reset the ports beginning
-		appConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
-		WS_MOCK = new Cinderella<>(appConfig);
+		appConfig.setProperty(AppConfig.KEY_API_NAME, "s3"); // reset the ports beginning
+		appConfig.setProperty(AppConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
+		WS_MOCK = new Nagaina<>(appConfig);
 		WS_MOCK_THREAD = new Thread(WS_MOCK, "wsMock");
 		WS_MOCK_THREAD.setDaemon(true);
 		WS_MOCK_THREAD.start();
 		TimeUnit.SECONDS.sleep(1);
-		LOG.info(Markers.MSG, "Cinderella started");
+		LOG.info(Markers.MSG, "Nagaina started");
 	}
 	//
 	@AfterClass
@@ -41,7 +40,7 @@ extends LoggingTestBase {
 	throws Exception {
 		WS_MOCK_THREAD.interrupt();
 		WS_MOCK.close();
-		LOG.info(Markers.MSG, "Cinderella stopped");
+		LOG.info(Markers.MSG, "Nagaina stopped");
 		LoggingTestBase.tearDownClass();
 		ContentSourceBase.DEFAULT = null; // reset the content source
 	}

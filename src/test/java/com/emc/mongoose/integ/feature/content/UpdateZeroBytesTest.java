@@ -14,10 +14,14 @@ import org.junit.Test;
 
 import java.io.BufferedInputStream;
 import java.io.EOFException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static io.netty.handler.codec.http.HttpHeaders.Names.AUTHORIZATION;
+
 /**
  Created by kurila on 16.10.15.
  */
@@ -73,7 +77,9 @@ extends StandaloneClientTestBase {
 		final byte buff[] = new byte[OBJ_SIZE];
 		for(int i = 0; i < OBJ_BUFF_UPDATED.size(); i ++) {
 			nextObjURL = new URL(BASE_URL + OBJ_BUFF_UPDATED.get(i).getName());
-			try(final BufferedInputStream in = new BufferedInputStream(nextObjURL.openStream())) {
+			HttpURLConnection connection = (HttpURLConnection) nextObjURL.openConnection();
+			connection.addRequestProperty(AUTHORIZATION, "AWS wuser1@sanity.local:vegpRvQdGFKmIvwIH6qErb5ekd8=");
+			try(final BufferedInputStream in = new BufferedInputStream(connection.getInputStream())) {
 				int n = 0, m;
 				do {
 					m = in.read(buff, n, OBJ_SIZE - n);
