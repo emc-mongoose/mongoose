@@ -6,6 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.WebSocketLogListener;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.impl.load.tasks.processors.ChartPackage;
 import com.emc.mongoose.core.impl.load.tasks.processors.PolylineManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,8 +31,10 @@ implements Runnable {
 	//
 	private final LoadExecutor loadExecutor;
 	private final int metricsPeriodSec;
+	private String runId;
 	//
-	public LogMetricsTask(final LoadExecutor loadExecutor, final int metricsPeriodSec) {
+	public LogMetricsTask(final LoadExecutor loadExecutor, final int metricsPeriodSec, String runId) {
+		this.runId = runId;
 		this.loadExecutor = loadExecutor;
 		this.metricsPeriodSec = metricsPeriodSec;
 	}
@@ -41,8 +44,10 @@ implements Runnable {
 	void run() {
 		final Thread currThread = Thread.currentThread();
 		PolylineManager polylineManager = new PolylineManager();
+		String loadJobName = null;
 		try {
-			ThreadContext.put(LogUtil.LOAD_JOB_NAME, loadExecutor.getName());
+			loadJobName = loadExecutor.getName();
+			ThreadContext.put(LogUtil.LOAD_JOB_NAME, loadJobName);
 		} catch (RemoteException ignored) {
 		}
 		try {
@@ -51,12 +56,19 @@ implements Runnable {
 				while(!currThread.isInterrupted()) {
 					LOG.info(Markers.PERF_AVG, loadExecutor.getStatsSnapshot());
 					polylineManager.updatePolylines(loadExecutor.getStatsSnapshot());
+					sendCharts(loadJobName, polylineManager);
 					Thread.yield(); TimeUnit.SECONDS.sleep(metricsPeriodSec);
 				}
 			} catch(final InterruptedException e) {
 				LOG.debug(Markers.MSG, "{}: interrupted", loadExecutor.getName());
 			}
 		} catch(final RemoteException ignored) {
+		}
+	}
+
+	private void sendCharts(String loadJobName, PolylineManager polylineManager) {
+		for (WebSocketLogListener listener: LISTENERS) {
+				listener.sendMessage(new ChartPackage(runId, loadJobName, polylineManager));
 		}
 	}
 }

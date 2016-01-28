@@ -1,10 +1,12 @@
 package com.emc.mongoose.core.impl.load.tasks.processors;
 
-import static java.lang.Math.*;
+import static java.lang.Math.sqrt;
 
-class Point {
-	private double x;
-	private double y;
+import java.io.Serializable;
+
+class Point implements Serializable {
+	double x;
+	double y;
 
 	public Point(double x, double y) {
 		this.x = x;

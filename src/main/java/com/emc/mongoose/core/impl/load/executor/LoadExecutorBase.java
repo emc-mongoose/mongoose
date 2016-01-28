@@ -222,7 +222,7 @@ implements LoadExecutor<T> {
 			new GroupThreadFactory("mgmtWorker", true)
 		);
 		if(metricsPeriodSec > 0) {
-			mgmtTasks.add(new LogMetricsTask(this, metricsPeriodSec));
+			mgmtTasks.add(new LogMetricsTask(this, metricsPeriodSec, rtConfig.getRunId()));
 		}
 		mgmtTasks.add(new StatsRefreshTask());
 		mgmtTasks.add(new FailuresMonitorTask());

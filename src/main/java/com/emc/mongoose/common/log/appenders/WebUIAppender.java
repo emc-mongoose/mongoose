@@ -25,9 +25,9 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 /**
- Created by kurila on 23.10.14.
+ * Created by kurila on 23.10.14.
  */
-@Plugin(name="WebUI", category="Core", elementType="appender", printObject=true)
+@Plugin(name = "WebUI", category = "Core", elementType = "appender", printObject = true)
 public final class WebUIAppender
 		extends AbstractAppender {
 	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
@@ -47,7 +47,8 @@ public final class WebUIAppender
 	//
 	private final String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
 	//
-	private static boolean ENABLED_FLAG;
+	private static boolean ENABLED;
+
 	//
 	private WebUIAppender(
 			final String name, final Filter filter, final Layout<? extends Serializable> layout,
@@ -63,26 +64,29 @@ public final class WebUIAppender
 			final @PluginAttribute("enabled") Boolean enabled,
 			final @PluginElement("Filters") Filter filter
 	) {
-		if(name == null) {
+		if (name == null) {
 			LOGGER.error("No name provided for CustomAppender");
 			return null;
 		}
-		ENABLED_FLAG = enabled;
+		ENABLED = enabled;
 		return new WebUIAppender(name, filter, DEFAULT_LAYOUT, ignoreExceptions);
 	}
+
 	//
 	public static void register(final WebSocketLogListener listener) {
-		if(ENABLED_FLAG) {
+		if (ENABLED) {
 			sendPreviousLogs(listener);
 			LISTENERS.add(listener);
 		}
 	}
+
 	//
 	public static void unregister(final WebSocketLogListener listener) {
-		if(ENABLED_FLAG) {
+		if (ENABLED) {
 			LISTENERS.remove(listener);
 		}
 	}
+
 	//
 	public synchronized static void sendPreviousLogs(final WebSocketLogListener listener) {
 		final List<LogEvent> previousLogs = new ArrayList<>();
@@ -93,20 +97,21 @@ public final class WebUIAppender
 		}
 		listener.sendMessage(previousLogs);
 	}
+
 	//
 	@Override
 	public synchronized final void append(final LogEvent event) {
-		if(ENABLED_FLAG) {
+		if (ENABLED) {
 			final String currRunId;
 			final Map<String, String> evtCtxMap = event.getContextMap();
-			if(evtCtxMap.containsKey(KEY_RUN_ID)) {
+			if (evtCtxMap.containsKey(KEY_RUN_ID)) {
 				currRunId = evtCtxMap.get(KEY_RUN_ID);
 			} else {
 				currRunId = ThreadContext.get(KEY_RUN_ID);
 			}
 			//
-			if(currRunId != null) {
-				if(!LOG_EVENTS_MAP.containsKey(currRunId)) {
+			if (currRunId != null) {
+				if (!LOG_EVENTS_MAP.containsKey(currRunId)) {
 					LOG_EVENTS_MAP.put(
 							currRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST)
 					);
@@ -118,9 +123,10 @@ public final class WebUIAppender
 			} // else silently skip
 		}
 	}
+
 	//
 	public static void removeRunId(final String runId) {
-		if (ENABLED_FLAG) {
+		if (ENABLED) {
 			LOG_EVENTS_MAP.remove(runId);
 		}
 	}

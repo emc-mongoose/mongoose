@@ -6,6 +6,8 @@ import com.emc.mongoose.common.log.appenders.WebSocketLogListener;
 import com.emc.mongoose.common.log.appenders.WebUIAppender;
 //
 import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 //
 import org.apache.logging.log4j.Level;
@@ -25,15 +27,18 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by gusakk on 10/24/14.
- */
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.*;
+
 @WebSocket
 public final class CommonWebSocketListener implements WebSocketLogListener {
 	//
 	private Session session;
 	private final static ObjectMapper mapper = new ObjectMapper();
 	private final static Logger LOG = LogManager.getLogger();
+
+	static {
+		mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
+	}
 	//
 	@OnWebSocketClose
 	public final void onClose(int statusCode, final String reason) {
