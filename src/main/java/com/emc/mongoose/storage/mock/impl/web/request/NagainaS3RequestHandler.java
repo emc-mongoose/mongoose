@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static io.netty.channel.ChannelHandler.Sharable;
+import static io.netty.handler.codec.http.HttpHeaders.Names.AUTHORIZATION;
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
@@ -52,6 +53,7 @@ public class NagainaS3RequestHandler<T extends WSObjectMock> extends NagainaRequ
 	private final static Logger LOG = LogManager.getLogger();
 	private final static DocumentBuilder DOM_BUILDER;
 	private final static TransformerFactory TF = TransformerFactory.newInstance();
+	private final static String S3_AUTH_PREFIX = RunTimeConfig.getContext().getApiS3AuthPrefix() + " ";
 
 	static {
 		try {
@@ -67,7 +69,8 @@ public class NagainaS3RequestHandler<T extends WSObjectMock> extends NagainaRequ
 
 	@Override
 	protected boolean checkProtocolMatch(HttpRequest request) {
-		return matcher.matchesS3(request);
+		String auth = request.headers().get(AUTHORIZATION);
+		return auth != null && auth.startsWith(S3_AUTH_PREFIX);
 	}
 
 	@Override

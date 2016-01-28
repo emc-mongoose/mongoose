@@ -51,7 +51,7 @@ public class NagainaSwiftRequestHandler<T extends WSObjectMock> extends NagainaR
 
 	private final static Logger LOG = LogManager.getLogger();
 	private final static ObjectMapper OBJ_MAPPER = new ObjectMapper();
-	private final static String AUTH = "auth";
+	private final static String AUTH = "auth", API_BASE_PATH_SWIFT = "v1";
 
 	public NagainaSwiftRequestHandler(RunTimeConfig rtConfig, WSMock<T> sharedStorage) {
 		super(rtConfig, sharedStorage);
@@ -59,7 +59,8 @@ public class NagainaSwiftRequestHandler<T extends WSObjectMock> extends NagainaR
 
 	@Override
 	protected boolean checkProtocolMatch(HttpRequest request) {
-		return matcher.matchesSwift(request);
+		String uri = request.getUri();
+		return uri.startsWith(AUTH, 1) || uri.startsWith(API_BASE_PATH_SWIFT, 1);
 	}
 
 	@Override

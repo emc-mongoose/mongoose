@@ -55,7 +55,6 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 	protected final WSMock<T> sharedStorage;
 	private final StorageIOStats ioStats;
 
-	protected final NagainaProtocolMatcher matcher;
 	protected final String requestKey = "requestKey";
 	protected final String responseStatusKey = "responseStatusKey";
 	protected final String contentLengthKey = "contentLengthKey";
@@ -67,7 +66,6 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 		this.batchSize = rtConfig.getBatchSize();
 		this.sharedStorage = sharedStorage;
 		this.ioStats = sharedStorage.getStats();
-		matcher = new NagainaProtocolMatcher(rtConfig);
 		AttributeKey.<HttpRequest>valueOf(requestKey);
 		AttributeKey.<HttpResponseStatus>valueOf(responseStatusKey);
 		AttributeKey.<Long>valueOf(contentLengthKey);
