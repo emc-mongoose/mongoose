@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 21.10.15.
  */
-public class BasicWSContainerLoadBuilderClient<
+public class BasicHttpContainerLoadBuilderClient<
 	T extends HttpDataItem,
 	C extends Container<T>,
 	W extends HttpContainerLoadSvc<T, C>,
@@ -36,12 +36,12 @@ public class BasicWSContainerLoadBuilderClient<
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSContainerLoadBuilderClient()
+	public BasicHttpContainerLoadBuilderClient()
 	throws IOException {
 		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
-	public BasicWSContainerLoadBuilderClient(final AppConfig appConfig)
+	public BasicHttpContainerLoadBuilderClient(final AppConfig appConfig)
 	throws IOException {
 		super(appConfig);
 	}
@@ -99,9 +99,8 @@ public class BasicWSContainerLoadBuilderClient<
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
 		//
 		return (U) new BasicHttpContainerLoadClient<>(
-			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs,
-			appConfig.getConnCountPerNodeFor(loadTypeStr), appConfig.getWorkerCountFor(loadTypeStr),
-			itemSrc, maxCount, remoteLoadMap
+			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
+			0, itemSrc, maxCount, remoteLoadMap
 		);
 	}
 }

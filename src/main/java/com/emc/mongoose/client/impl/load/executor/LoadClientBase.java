@@ -207,13 +207,7 @@ implements LoadClient<T, W> {
 	//
 	@Override
 	protected final void initStats(final boolean flagServeJMX) {
-		if(flagServeJMX) {
-			ioStats = new AggregatedRemoteIOStats<>(
-				getName(), appConfig.getRemotePortMonitor(), remoteLoadMap
-			);
-		} else {
-			ioStats = new AggregatedRemoteIOStats<>(getName(), 0, remoteLoadMap);
-		}
+		ioStats = new AggregatedRemoteIOStats<>(getName(), flagServeJMX, remoteLoadMap);
 		lastStats = ioStats.getSnapshot();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -553,14 +547,12 @@ implements LoadClient<T, W> {
 			LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 			//
 			if(!isCircular) {
-				final long timeOut = appConfig.getLoadLimitTimeValue();
-				final TimeUnit timeUnit = appConfig.getLoadLimitTimeUnit();
+				final long timeOutSec = appConfig.getLoadLimitTime();
 				remotePutExecutor.shutdown();
 				try {
 					if(
 						!remotePutExecutor.awaitTermination(
-							timeOut > 0 ? timeOut : Long.MAX_VALUE,
-							timeUnit == null ? TimeUnit.DAYS : timeUnit
+							timeOutSec > 0 ? timeOutSec : Long.MAX_VALUE, TimeUnit.SECONDS
 						)
 					) {
 						LOG.debug(

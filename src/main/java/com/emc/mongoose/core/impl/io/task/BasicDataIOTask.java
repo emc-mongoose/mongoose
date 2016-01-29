@@ -27,20 +27,16 @@ implements DataIOTask<T> {
 		item.reset();
 		currDataLayerIdx = item.getCurrLayerIndex();
 		switch(ioType) {
-			case CREATE:
+			case WRITE:
+				// TODO update/append support
 				contentSize = item.getSize();
 				break;
 			case READ:
+				// TODO partial content support
 				contentSize = item.getSize();
 				break;
 			case DELETE:
 				contentSize = 0;
-				break;
-			case UPDATE:
-				contentSize = item.getUpdatingRangesSize();
-				break;
-			case APPEND:
-				contentSize = item.getAppendSize();
 				break;
 			default:
 				contentSize = 0;

@@ -103,8 +103,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		//
 		return (U) new BasicDirectoryLoadClient<>(
-			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs,
-			appConfig.getConnCountPerNodeFor(loadTypeStr), appConfig.getWorkerCountFor(loadTypeStr),
+			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(), 0,
 			itemSrc, maxCount, remoteLoadMap
 		);
 	}

@@ -49,7 +49,7 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	throws RemoteException {
 		super.setAppConfig(appConfig);
 		//
-		final String listFilePathStr = appConfig.getItemSrcFile();
+		final String listFilePathStr = appConfig.getItemInputFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(

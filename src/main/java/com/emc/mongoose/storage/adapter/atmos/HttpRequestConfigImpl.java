@@ -100,13 +100,12 @@ extends HttpRequestConfigBase<T, C> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
 		}
 		switch(loadType) {
-			case UPDATE:
-			case APPEND:
-				applyRangesHeaders(request, obj);
-			case CREATE:
+			case WRITE:
+				// TODO partial content support
 				applyPayLoad(request, obj);
 				break;
 			case READ:
+				// TODO partial content support
 			case DELETE:
 				applyPayLoad(request, null);
 				break;
@@ -125,7 +124,7 @@ extends HttpRequestConfigBase<T, C> {
 	@Override
 	public String getHttpMethod() {
 		switch(loadType) {
-			case CREATE:
+			case WRITE:
 				return METHOD_POST;
 			case READ:
 				return METHOD_GET;
@@ -262,7 +261,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		if(fsAccess || !IOTask.Type.CREATE.equals(loadType)) {
+		if(fsAccess || !IOTask.Type.WRITE.equals(loadType)) {
 			return uriBasePath + getFilePathFor(dataItem);
 		} else { // "/rest/objects"
 			return uriBasePath;
@@ -293,7 +292,7 @@ extends HttpRequestConfigBase<T, C> {
 			}
 		}
 		// the "offset" tag is required for WS mock
-		if(IOTask.Type.CREATE.equals(loadType)) {
+		if(IOTask.Type.WRITE.equals(loadType)) {
 			final HttpEntity entity = request.getEntity();
 			if(entity != null && HttpDataItem.class.isInstance(entity)) {
 				if(md.length() > 0) {
@@ -373,7 +372,7 @@ extends HttpRequestConfigBase<T, C> {
 	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
 		final Header locationHeader = httpResponse == null ?
 			null : httpResponse.getFirstHeader(HttpHeaders.LOCATION);
-		if(locationHeader != null && IOTask.Type.CREATE.equals(loadType)) {
+		if(locationHeader != null && IOTask.Type.WRITE.equals(loadType)) {
 			final String valueLocation = httpResponse
 				.getFirstHeader(HttpHeaders.LOCATION)
 				.getValue();

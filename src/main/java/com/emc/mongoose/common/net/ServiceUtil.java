@@ -1,5 +1,7 @@
 package com.emc.mongoose.common.net;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -78,11 +80,11 @@ public abstract class ServiceUtil {
 		try {
 			if(REGISTRY == null) {
 				try {
-					REGISTRY = LocateRegistry.createRegistry(appConfig.getRemotePortControl());
+					REGISTRY = LocateRegistry.createRegistry(1099);
 					LOG.debug(Markers.MSG, "RMI registry created");
 				} catch(final RemoteException e) {
 					try {
-						REGISTRY = LocateRegistry.getRegistry(appConfig.getRemotePortControl());
+						REGISTRY = LocateRegistry.getRegistry(1099);
 						LOG.info(Markers.MSG, "Reusing already existing RMI registry");
 					} catch(final RemoteException ee) {
 						LOG.fatal(Markers.ERR, "Failed to obtain a RMI registry", ee);
@@ -96,8 +98,8 @@ public abstract class ServiceUtil {
 	//
 	public static void mBeanServerInit() {
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-		if(appConfig.getFlagServeJMX()) {
-			getMBeanServer(appConfig.getRemotePortMonitor());
+		if(appConfig.getNetworkServeJmx()) {
+			getMBeanServer(1199);
 		}
 	}
 	//

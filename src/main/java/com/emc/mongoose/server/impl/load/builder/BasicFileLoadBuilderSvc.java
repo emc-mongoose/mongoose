@@ -96,7 +96,7 @@ implements FileLoadBuilderSvc<T, U> {
 			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, connPerNode, connPerNode,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
-			manualTaskSleepMicroSecs, rateLimit, updatesPerItem
+			manualTaskSleepMicroSecs, rateLimit, randomRangesCount
 		);
 	}
 	//

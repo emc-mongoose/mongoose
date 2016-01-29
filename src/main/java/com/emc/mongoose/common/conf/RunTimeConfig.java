@@ -246,8 +246,8 @@ implements Externalizable {
 	}
 	//
 	public String getJsonProps() {
-		rootNode = new JsonConfigLoader(this).updateJsonNode();
-		return rootNode.toString();
+		//rootNode = new JsonConfigLoader(this).updateJsonNode();
+		return null;// rootNode.toString();
 	}
 	//
 	public boolean isImmutableParamsChanged(final RunTimeConfig loadStateCfg) {
@@ -718,7 +718,7 @@ implements Externalizable {
 	public synchronized void loadJsonProps(final Path filePath) {
 		final Logger log = LogManager.getLogger();
 		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
-		new JsonConfigLoader(this).loadPropsFromJsonCfgFile(filePath);
+		//new JsonConfigLoader(this).loadPropsFromJsonCfgFile(filePath);
 		log.debug(Markers.MSG, "Going to override the aliasing section");
 		for(final String key : mongooseKeys) {
 			if(key.startsWith(prefixKeyAliasingWithDot)) {

@@ -1,5 +1,7 @@
 package com.emc.mongoose.core.impl.item.data;
 //
+import com.emc.mongoose.common.conf.BasicConfig;
+//
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -7,6 +9,7 @@ import com.emc.mongoose.core.api.item.data.ContainerHelper;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
 import com.emc.mongoose.core.impl.item.base.ListItemSrc;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -33,7 +36,7 @@ implements ItemSrc<T> {
 	protected GenericContainerItemSrcBase(
 		final ContainerHelper<T, C> containerHelper, final Class<T> itemCls, final long maxCount
 	) throws IllegalStateException {
-		super(new ArrayList<T>(BasicConfig.THREAD_CONTEXT.get().getBatchSize()));
+		super(new ArrayList<T>(BasicConfig.THREAD_CONTEXT.get().getItemInputBatchSize()));
 		this.containerHelper = containerHelper;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		try {

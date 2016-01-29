@@ -1,16 +1,16 @@
 package com.emc.mongoose.storage.mock.impl.web.request;
 
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
 import com.emc.mongoose.core.api.item.data.MutableDataItem;
-import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
+import com.emc.mongoose.storage.adapter.swift.HttpRequestConfigImpl;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
-import com.emc.mongoose.storage.mock.api.WSMock;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
+import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,14 +47,15 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 @Sharable
-public class NagainaSwiftRequestHandler<T extends WSObjectMock> extends NagainaRequestHandlerBase<T> {
+public class NagainaSwiftRequestHandler<T extends HttpDataItemMock>
+extends NagainaRequestHandlerBase<T> {
 
 	private final static Logger LOG = LogManager.getLogger();
 	private final static ObjectMapper OBJ_MAPPER = new ObjectMapper();
 	private final static String AUTH = "auth", API_BASE_PATH_SWIFT = "v1";
 
-	public NagainaSwiftRequestHandler(RunTimeConfig rtConfig, WSMock<T> sharedStorage) {
-		super(rtConfig, sharedStorage);
+	public NagainaSwiftRequestHandler(final AppConfig appConfig, HttpStorageMock<T> sharedStorage) {
+		super(appConfig, sharedStorage);
 	}
 
 	@Override
@@ -73,12 +74,12 @@ public class NagainaSwiftRequestHandler<T extends WSObjectMock> extends NagainaR
 		Long size = ctx.attr(AttributeKey.<Long>valueOf(contentLengthKey)).get();
 		ctx.attr(AttributeKey.<Boolean>valueOf(ctxWriteFlagKey)).set(true);
 		if (uri.startsWith(AUTH, 1)) {
-			if (method.equals(WSRequestConfig.METHOD_GET)) {
+			if (method.equals(HttpRequestConfig.METHOD_GET)) {
 				String authToken = randomString(0x10);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, "Created auth token: {}", authToken);
 				}
-				response.headers().set(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, authToken);
+				response.headers().set(HttpRequestConfigImpl.KEY_X_AUTH_TOKEN, authToken);
 				setHttpResponseStatusInContext(ctx, CREATED);
 			}
 			else {
@@ -94,8 +95,8 @@ public class NagainaSwiftRequestHandler<T extends WSObjectMock> extends NagainaR
 					if (objId != null) {
 						long offset;
 						switch (method) {
-							case WSRequestConfig.METHOD_POST:
-							case WSRequestConfig.METHOD_PUT:
+							case HttpRequestConfig.METHOD_POST:
+							case HttpRequestConfig.METHOD_PUT:
 								offset = Long.parseLong(objId, MutableDataItem.ID_RADIX);
 								break;
 							default:

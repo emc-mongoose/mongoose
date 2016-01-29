@@ -112,20 +112,14 @@ implements HttpDataIOTask<T> {
 		//
 		try {
 			switch(ioType) {
-				case CREATE:
+				case WRITE:
+					// TODO partial content support
 					produceObjectContent(ioCtl);
 					break;
 				case READ:
-					// TODO here is an ability to specify some content here
+					// TODO partial content support
 					break;
 				case DELETE:
-					// TODO here is an ability to specify some content here
-					break;
-				case UPDATE:
-					produceUpdatedRangesContent(ioCtl);
-					break;
-				case APPEND:
-					produceAugmentContent(ioCtl);
 					break;
 			}
 		} catch(final ClosedChannelException e) { // probably a manual interruption

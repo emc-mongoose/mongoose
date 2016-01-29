@@ -68,7 +68,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting nagaina");
 				try {
-					 new Nagaina(RunTimeConfig.getContext()).run();
+					new Nagaina(BasicConfig.THREAD_CONTEXT.get()).run();
 				} catch (final Exception e) {
 					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init nagaina");
 				}

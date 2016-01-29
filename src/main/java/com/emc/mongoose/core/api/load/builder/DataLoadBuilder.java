@@ -19,6 +19,9 @@ extends LoadBuilder<T, U> {
 	DataLoadBuilder<T, U> setObjSizeBias(final float objSizeBias)
 	throws IllegalArgumentException, RemoteException;
 	//
-	DataLoadBuilder<T, U> setUpdatesPerItem(final int count)
-	throws RemoteException;
+	DataLoadBuilder<T, U> setFixedByteRanges(final String byteRanges)
+	throws IllegalArgumentException, RemoteException;
+	//
+	DataLoadBuilder<T, U> setRandomRangesCount(final int count)
+	throws IllegalArgumentException, RemoteException;
 }

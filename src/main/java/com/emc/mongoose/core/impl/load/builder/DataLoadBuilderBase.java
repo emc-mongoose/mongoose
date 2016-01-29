@@ -36,8 +36,9 @@ implements DataLoadBuilder<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected long minObjSize, maxObjSize;
-	protected int updatesPerItem;
 	protected float objSizeBias;
+	protected int randomRangesCount;
+	protected String fixedByteRanges;
 	//
 	public DataLoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
@@ -50,7 +51,8 @@ implements DataLoadBuilder<T, U> {
 		final DataLoadBuilderBase<T, U> lb = (DataLoadBuilderBase<T, U>) super.clone();
 		lb.minObjSize = minObjSize;
 		lb.maxObjSize = maxObjSize;
-		lb.updatesPerItem = updatesPerItem;
+		lb.randomRangesCount = randomRangesCount;
+		lb.fixedByteRanges = fixedByteRanges;
 		lb.objSizeBias = objSizeBias;
 		return lb;
 	}
@@ -77,7 +79,7 @@ implements DataLoadBuilder<T, U> {
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
+				if(IOTask.Type.WRITE.equals(ioConfig.getLoadType())) {
 					return getNewItemSrc();
 				} else {
 					return getContainerItemSrc();
@@ -125,11 +127,9 @@ implements DataLoadBuilder<T, U> {
 		//
 		final AppConfig.DataRangesScheme dataRangesScheme = appConfig.getItemDataRangesClass();
 		if(AppConfig.DataRangesScheme.FIXED.equals(dataRangesScheme)) {
-			final String fixedRanges = appConfig.getItemDataRangesFixedBytes();
-			// TODO implement
+			setFixedByteRanges(appConfig.getItemDataRangesFixedBytes());
 		} else {
-			final int randomCount = appConfig.getItemDataContentRangesRandomCount();
-			setUpdatesPerItem(randomCount);
+			setRandomRangesCount(appConfig.getItemDataContentRangesRandomCount());
 		}
 		//
 		final String listFilePathStr = appConfig.getItemInputFile();
@@ -170,7 +170,7 @@ implements DataLoadBuilder<T, U> {
 	//
 	@Override
 	public DataLoadBuilder<T, U> setMinObjSize(final long minObjSize)
-		throws IllegalArgumentException {
+	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set min data item size: {}", SizeUtil.formatSize(minObjSize));
 		if(minObjSize >= 0) {
 			LOG.debug(Markers.MSG, "Using min object size: {}", SizeUtil.formatSize(minObjSize));
@@ -183,7 +183,7 @@ implements DataLoadBuilder<T, U> {
 	//
 	@Override
 	public DataLoadBuilder<T, U> setMaxObjSize(final long maxObjSize)
-		throws IllegalArgumentException {
+	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set max data item size: {}", SizeUtil.formatSize(maxObjSize));
 		if(maxObjSize >= 0) {
 			LOG.debug(Markers.MSG, "Using max object size: {}", SizeUtil.formatSize(maxObjSize));
@@ -196,7 +196,7 @@ implements DataLoadBuilder<T, U> {
 	//
 	@Override
 	public DataLoadBuilder<T, U> setObjSizeBias(final float objSizeBias)
-		throws IllegalArgumentException {
+	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set object size bias: {}", objSizeBias);
 		if(objSizeBias < 0) {
 			throw new IllegalArgumentException("Object size bias should not be negative");
@@ -208,13 +208,16 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public DataLoadBuilder<T, U> setUpdatesPerItem(final int count)
-		throws IllegalArgumentException {
-		LOG.debug(Markers.MSG, "Set updates count per data item: {}", count);
-		if(count<0) {
-			throw new IllegalArgumentException("Update count per item should not be less than 0");
-		}
-		this.updatesPerItem = count;
+	public DataLoadBuilder<T, U> setRandomRangesCount(final int count) {
+		LOG.debug(Markers.MSG, "Set random ranges count per data item: {}", count);
+		this.randomRangesCount = count;
+		return this;
+	}
+	//
+	@Override
+	public DataLoadBuilder<T, U> setFixedByteRanges(final String byteRanges) {
+		LOG.debug(Markers.MSG, "Set fixed byte ranges: {}", byteRanges);
+		this.fixedByteRanges = byteRanges;
 		return this;
 	}
 }

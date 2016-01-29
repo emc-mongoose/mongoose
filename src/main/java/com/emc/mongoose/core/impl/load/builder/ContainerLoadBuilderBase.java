@@ -73,7 +73,7 @@ implements ContainerLoadBuilder<T, C, U>{
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
+				if(IOTask.Type.WRITE.equals(ioConfig.getLoadType())) {
 					getNewItemSrc();
 				}
 			} else if(flagUseNewItemSrc) {

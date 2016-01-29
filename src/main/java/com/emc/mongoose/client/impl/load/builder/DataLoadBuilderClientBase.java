@@ -55,9 +55,16 @@ implements DataLoadBuilderClient<T, W, U> {
 	public final DataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
 		super.setAppConfig(appConfig);
-		setMinObjSize(appConfig.getDataSizeMin());
-		setMaxObjSize(appConfig.getDataSizeMax());
-		setObjSizeBias(appConfig.getDataSizeBias());
+		final AppConfig.DataSizeScheme dataSizeScheme = appConfig.getItemDataSizeClass();
+		if(AppConfig.DataSizeScheme.FIXED.equals(dataSizeScheme)) {
+			setMinObjSize(appConfig.getItemDataSizeFixed());
+			setMaxObjSize(appConfig.getItemDataSizeFixed());
+			setObjSizeBias(0);
+		} else {
+			setMinObjSize(appConfig.getItemDataSizeRandomMin());
+			setMaxObjSize(appConfig.getItemDataSizeRandomMax());
+			setObjSizeBias((float) appConfig.getItemDataSizeRandomBias());
+		}
 		return this;
 	}
 	//
@@ -104,13 +111,13 @@ implements DataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, W, U> setUpdatesPerItem(int count)
+	public final DataLoadBuilderClient<T, W, U> setRandomRangesCount(int count)
 	throws RemoteException {
 		if(loadSvcMap != null) {
 			V nextBuilder;
 			for(final String addr : loadSvcMap.keySet()) {
 				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setUpdatesPerItem(count);
+				nextBuilder.setRandomRangesCount(count);
 			}
 		}
 		return this;
@@ -125,7 +132,7 @@ implements DataLoadBuilderClient<T, W, U> {
 			// calculate approx average data item size
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-				appConfig.getBatchSize()
+				appConfig.getItemInputBatchSize()
 			);
 			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
@@ -150,7 +157,7 @@ implements DataLoadBuilderClient<T, W, U> {
 				//
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
+				if(IOTask.Type.WRITE.equals(ioConfig.getLoadType())) {
 					// enable new data item generation on the load servers side
 					V nextBuilder;
 					for(final String addr : loadSvcMap.keySet()) {

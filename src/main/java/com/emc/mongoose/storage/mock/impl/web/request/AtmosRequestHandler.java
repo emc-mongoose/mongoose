@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.mock.impl.web.request;
 // mongoose-common.jar
 //
 // mongoose-storage-adapter-atmos.jar
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
@@ -10,7 +11,7 @@ import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
-import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 //
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import org.apache.commons.codec.binary.Hex;
@@ -77,8 +78,8 @@ extends WSRequestHandlerBase<T> {
 				KEY_VERSIONING + ">versions)?"
 		);
 	//
-	public AtmosRequestHandler(final AppConfig appConfig, final WSMock<T> sharedStorage) {
-		super(runTimeConfig, sharedStorage);
+	public AtmosRequestHandler(final AppConfig appConfig, final HttpStorageMock<T> sharedStorage) {
+		super(appConfig, sharedStorage);
 	}
 	//
 	@Override

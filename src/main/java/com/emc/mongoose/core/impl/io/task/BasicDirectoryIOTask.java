@@ -50,7 +50,7 @@ implements DirectoryIOTask<T, C> {
 		reqTimeStart = reqTimeDone = respTimeStart = System.nanoTime() / 1000;
 		try {
 			switch(ioType) {
-				case CREATE:
+				case WRITE:
 					runWrite();
 					break;
 				case READ:

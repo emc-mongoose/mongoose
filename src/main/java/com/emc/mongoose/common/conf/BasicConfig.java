@@ -404,6 +404,51 @@ implements AppConfig {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Serialization and formatting section
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public ObjectNode toJsonTree(final ObjectMapper mapper) {
+		final ObjectNode
+			rootNode = mapper.createObjectNode(),
+			configNode = mapper.createObjectNode();
+		rootNode.set(CONFIG_ROOT, configNode);
+		//
+		int i;
+		Object value;
+		String compositeKey, keyParts[];
+		ObjectNode currNode = rootNode, parentNode;
+		for(final Iterator<String> keyIter = super.getKeys(); keyIter.hasNext(); ) {
+			compositeKey = keyIter.next();
+			keyParts = compositeKey.split(DefaultExpressionEngine.DEFAULT_PROPERTY_DELIMITER);
+			for(i = 0; i < keyParts.length; i ++) {
+				parentNode = currNode;
+				currNode = (ObjectNode) currNode.get(keyParts[i]);
+				if(currNode == null) {
+					if(i == keyParts.length - 1) {
+						value = getProperty(compositeKey);
+						if(value instanceof Long) {
+							parentNode.put(keyParts[i], (Long) value);
+						} else if(value instanceof Boolean) {
+							parentNode.put(keyParts[i], (Boolean) value);
+						} else if(value instanceof Double) {
+							parentNode.put(keyParts[i], (Double) value);
+						} else if(value instanceof String) {
+							parentNode.put(keyParts[i], (String) value);
+						} else {
+							throw new IllegalStateException(
+								"Invalud configuration value type: " +
+									(value == null ? null : value.getClass())
+							);
+						}
+					} else {
+						currNode = mapper.createObjectNode();
+						parentNode.set(keyParts[i], currNode);
+					}
+				}
+			}
+		}
+		//
+		return rootNode;
+	}
+	//
 	private final static String
 		TABLE_BORDER = "\n+--------------------------------+----------------------------------------------------------------+",
 		TABLE_HEADER = "Configuration parameters:";
@@ -448,48 +493,10 @@ implements AppConfig {
 	@Override
 	public String toFormattedString() {
 		final Logger log = LogManager.getLogger();
-		//
 		final ObjectMapper
 			mapper = new ObjectMapper().configure(SerializationFeature.INDENT_OUTPUT, true);
-		//
-		final ObjectNode
-			rootNode = mapper.createObjectNode(),
-			configNode = mapper.createObjectNode();
-		rootNode.set(CONFIG_ROOT, configNode);
-		//
-		int i;
-		Object value;
-		String compositeKey, keyParts[];
-		ObjectNode currNode = rootNode, parentNode;
-		for(final Iterator<String> keyIter = super.getKeys(); keyIter.hasNext(); ) {
-			compositeKey = keyIter.next();
-			keyParts = compositeKey.split(DefaultExpressionEngine.DEFAULT_PROPERTY_DELIMITER);
-			for(i = 0; i < keyParts.length; i ++) {
-				parentNode = currNode;
-				currNode = (ObjectNode) currNode.get(keyParts[i]);
-				if(currNode == null) {
-					if(i == keyParts.length - 1) {
-						value = getProperty(compositeKey);
-						if(value instanceof Long) {
-							parentNode.put(keyParts[i], (Long) value);
-						} else if(value instanceof Boolean) {
-							parentNode.put(keyParts[i], (Boolean) value);
-						} else if(value instanceof Double) {
-							parentNode.put(keyParts[i], (Double) value);
-						} else if(value instanceof String) {
-							parentNode.put(keyParts[i], (String) value);
-						} else {
-							log.error(Markers.ERR, "");
-						}
-					} else {
-						currNode = mapper.createObjectNode();
-						parentNode.set(keyParts[i], currNode);
-					}
-				}
-			}
-		}
 		try {
-			return mapper.writeValueAsString(rootNode);
+			return mapper.writeValueAsString(toJsonTree(mapper));
 		} catch(final JsonProcessingException e) {
 			LogUtil.exception(log, Level.WARN, e, "Failed to convert the configuration to JSON");
 		}

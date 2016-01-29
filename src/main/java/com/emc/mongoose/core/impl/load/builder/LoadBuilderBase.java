@@ -117,7 +117,7 @@ implements LoadBuilder<T, U> {
 			final RequestConfig reqConfig = (RequestConfig) ioConfig;
 			paramName = AppConfig.KEY_STORAGE_HTTP_ADDRS;
 			try {
-				setDataNodeAddrs(appConfig.getStorageHttpAddrsWithPorts());
+				setNodeAddrs(appConfig.getStorageHttpAddrsWithPorts());
 			} catch(final NoSuchElementException | ConversionException e) {
 				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 			} catch(final IllegalArgumentException e) {
@@ -245,7 +245,7 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setConnPerNodeDefault(final int connPerNode)
+	public LoadBuilder<T, U> setConnPerNode(final int connPerNode)
 	throws IllegalArgumentException, RemoteException {
 		LOG.debug(Markers.MSG, "Set default connection count per node: {}", connPerNode);
 		for(final IOTask.Type loadType : IOTask.Type.values()) {
@@ -270,14 +270,14 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setDataNodeAddrs(
-		final String[] dataNodeAddrs
+	public LoadBuilder<T, U> setNodeAddrs(
+		final String[] nodeAddrs
 	) throws IllegalArgumentException, RemoteException {
-		LOG.debug(Markers.MSG, "Set storage nodes: {}", Arrays.toString(dataNodeAddrs));
-		if(dataNodeAddrs == null || dataNodeAddrs.length == 0) {
+		LOG.debug(Markers.MSG, "Set storage nodes: {}", Arrays.toString(nodeAddrs));
+		if(nodeAddrs == null || nodeAddrs.length == 0) {
 			throw new IllegalArgumentException("Data node address list should not be empty");
 		}
-		this.storageNodeAddrs = dataNodeAddrs;
+		this.storageNodeAddrs = nodeAddrs;
 		return this;
 	}
 	//

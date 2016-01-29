@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.web.request;
 // mongoose-common.jar
 // mongoose-storage-mock.jar
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -11,7 +12,7 @@ import com.emc.mongoose.storage.adapter.s3.BucketHelper;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
-import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 //
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import org.apache.http.Header;
@@ -52,7 +53,7 @@ extends WSRequestHandlerBase<T> {
 	private final static String
 		MAX_KEYS = "maxKeys", MARKER = "marker",
 		BUCKET = "bucket", OBJ_ID = "objId",
-		AUTH_PREFIX = BasicConfig.THREAD_CONTEXT.get().getApiS3AuthPrefix() + " ";
+		AUTH_PREFIX = "AWS ";
 	private final static Pattern
 		PATTERN_URI = Pattern.compile("/(?<" + BUCKET + ">[^/^\\?]+)/?(?<" + OBJ_ID + ">[^\\?]+)?"),
 		PATTERN_MAX_KEYS = Pattern.compile(
@@ -60,8 +61,8 @@ extends WSRequestHandlerBase<T> {
 		),
 		PATTERN_MARKER = Pattern.compile(BucketHelper.URL_ARG_MARKER + "=(?<" + MARKER + ">[a-z\\d]+)&?");
 	//
-	public S3RequestHandler(final AppConfig appConfig, final WSMock<T> sharedStorage) {
-		super(runTimeConfig, sharedStorage);
+	public S3RequestHandler(final AppConfig appConfig, final HttpStorageMock<T> sharedStorage) {
+		super(appConfig, sharedStorage);
 	}
 	//
 	@Override

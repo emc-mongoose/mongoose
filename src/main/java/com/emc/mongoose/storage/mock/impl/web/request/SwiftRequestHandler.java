@@ -11,7 +11,7 @@ import com.emc.mongoose.storage.adapter.swift.HttpRequestConfigImpl;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
-import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 //
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -54,18 +54,17 @@ extends WSRequestHandlerBase<T> {
 		PATTERN_LIMIT = Pattern.compile(LIMIT + "=(?<" + LIMIT + ">[\\d]+)&?"),
 		PATTERN_MARKER = Pattern.compile(MARKER + "=(?<" + MARKER + ">[a-z\\d]+)&?");
 	//
-	private final String apiBasePathSwift;
+	private final static String API_BASE_PATH = "v1";
 	//
 	public SwiftRequestHandler(
-		final AppConfig appConfig, final WSMock<T> sharedStorage
+		final AppConfig appConfig, final HttpStorageMock<T> sharedStorage
 	) {
 		super(appConfig, sharedStorage);
-		apiBasePathSwift = appConfig.getString(HttpRequestConfigImpl.KEY_CONF_SVC_BASEPATH);
 	}
 	//
 	public boolean matches(final HttpRequest httpRequest) {
 		final String requestURI = httpRequest.getRequestLine().getUri();
-		return requestURI.startsWith(AUTH, 1) || requestURI.startsWith(apiBasePathSwift, 1);
+		return requestURI.startsWith(AUTH, 1) || requestURI.startsWith(API_BASE_PATH, 1);
 	}
 	//
 	@Override

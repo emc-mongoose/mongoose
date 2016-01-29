@@ -80,7 +80,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -254,10 +253,11 @@ implements HttpRequestConfig<T, C> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
 		}
 		switch(loadType) {
-			case UPDATE:
-			case APPEND:
-				applyRangesHeaders(request, obj);
-			case CREATE:
+			case WRITE:
+				// TODO
+				//if(/*item.data.ranges.class.random.count*/) {
+				//	applyRangesHeaders(request, obj);
+				//}
 				applyPayLoad(request, obj);
 				break;
 			case READ:
@@ -282,14 +282,7 @@ implements HttpRequestConfig<T, C> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
 		}
 		switch(loadType) {
-			case UPDATE:
-				// TODO update container, toggle the versioning for example
-				break;
-			case APPEND:
-				throw new IllegalStateException(
-					"Append operation is not supported for the containers"
-				);
-			case CREATE:
+			case WRITE:
 				break;
 			case READ:
 				break;

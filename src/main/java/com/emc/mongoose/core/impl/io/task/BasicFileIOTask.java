@@ -62,19 +62,15 @@ implements FileIOTask<T> {
 		}
 		//
 		switch(ioType) {
-			case CREATE:
+			case WRITE:
+				// TODO partial content support
 				openOptions.add(StandardOpenOption.CREATE);
 				openOptions.add(StandardOpenOption.WRITE);
 				openOptions.add(StandardOpenOption.TRUNCATE_EXISTING);
 				break;
 			case READ:
+				// TODO partial content support
 				openOptions.add(StandardOpenOption.READ);
-				break;
-			case UPDATE:
-				openOptions.add(StandardOpenOption.WRITE);
-				break;
-			case APPEND:
-				openOptions.add(StandardOpenOption.APPEND);
 				break;
 		}
 		//

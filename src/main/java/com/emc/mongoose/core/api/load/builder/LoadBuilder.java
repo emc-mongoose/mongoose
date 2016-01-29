@@ -39,19 +39,10 @@ extends Closeable, Cloneable {
 	LoadBuilder<T, U> setRateLimit(final float rateLimit)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setWorkerCountDefault(final int threadCount)
-	throws RemoteException;
-	//
-	LoadBuilder<T, U> setWorkerCountFor(final int threadCount, final IOTask.Type loadType)
-	throws RemoteException;
-	//
-	LoadBuilder<T, U> setConnPerNodeDefault(final int connCount)
+	LoadBuilder<T, U> setConnPerNode(final int connCount)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setConnPerNodeFor(final int connCount, final IOTask.Type loadType)
-	throws IllegalArgumentException, RemoteException;
-	//
-	LoadBuilder<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
+	LoadBuilder<T, U> setNodeAddrs(final String[] nodeAddrs)
 	throws IllegalArgumentException, RemoteException;
 	//
 	LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)

@@ -1,18 +1,18 @@
 package com.emc.mongoose.storage.mock.impl.web.request;
-
-import com.emc.mongoose.common.conf.RunTimeConfig;
+//
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
-import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
+import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.StorageMockCapacityLimitReachedException;
+//
 import io.netty.buffer.ByteBuf;
-
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.HttpRequest;
@@ -25,16 +25,17 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
+//
 import static io.netty.channel.ChannelHandler.Sharable;
-import static com.emc.mongoose.core.api.io.conf.WSRequestConfig.VALUE_RANGE_CONCAT;
-import static com.emc.mongoose.core.api.io.conf.WSRequestConfig.VALUE_RANGE_PREFIX;
+import static com.emc.mongoose.core.api.io.conf.HttpRequestConfig.VALUE_RANGE_CONCAT;
+import static com.emc.mongoose.core.api.io.conf.HttpRequestConfig.VALUE_RANGE_PREFIX;
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
 import static io.netty.handler.codec.http.HttpHeaders.Names.RANGE;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
@@ -42,9 +43,10 @@ import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpResponseStatus.INSUFFICIENT_STORAGE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-
+//
 @Sharable
-public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends ChannelInboundHandlerAdapter {
+public abstract class NagainaRequestHandlerBase<T extends HttpDataItemMock>
+extends ChannelInboundHandlerAdapter {
 
 	private final static Logger LOG = LogManager.getLogger();
 
@@ -52,7 +54,7 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 
-	protected final WSMock<T> sharedStorage;
+	protected final HttpStorageMock<T> sharedStorage;
 	private final StorageIOStats ioStats;
 
 	protected final String requestKey = "requestKey";
@@ -61,9 +63,9 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 	protected final String ctxWriteFlagKey = "ctxWriteFlagKey";
 	protected final String handlerStatus = "handlerStatus";
 
-	public NagainaRequestHandlerBase(RunTimeConfig rtConfig, WSMock<T> sharedStorage) {
-		this.rateLimit = rtConfig.getLoadLimitRate();
-		this.batchSize = rtConfig.getBatchSize();
+	public NagainaRequestHandlerBase(final AppConfig appConfig, final HttpStorageMock<T> sharedStorage) {
+		this.rateLimit = (float) appConfig.getLoadLimitRate();
+		this.batchSize = appConfig.getItemInputBatchSize();
 		this.sharedStorage = sharedStorage;
 		this.ioStats = sharedStorage.getStats();
 		AttributeKey.<HttpRequest>valueOf(requestKey);
@@ -154,17 +156,17 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 	protected void handleGenericDataReq(String method, String containerName, String objId,
 	                                    Long offset, Long size, ChannelHandlerContext ctx) {
 		switch (method) {
-			case WSRequestConfig.METHOD_POST:
-			case WSRequestConfig.METHOD_PUT:
+			case HttpRequestConfig.METHOD_POST:
+			case HttpRequestConfig.METHOD_PUT:
 				handleWrite(containerName, objId, offset, size, ctx);
 				break;
-			case WSRequestConfig.METHOD_GET:
+			case HttpRequestConfig.METHOD_GET:
 				handleRead(containerName, objId, offset, ctx);
 				break;
-			case WSRequestConfig.METHOD_HEAD:
+			case HttpRequestConfig.METHOD_HEAD:
 				setHttpResponseStatusInContext(ctx, OK);
 				break;
-			case WSRequestConfig.METHOD_DELETE:
+			case HttpRequestConfig.METHOD_DELETE:
 				handleDelete(containerName, objId, offset, ctx);
 				break;
 		}
@@ -201,7 +203,7 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 				rangeValues = rangeValues.substring(
 						VALUE_RANGE_PREFIX.length(), rangeValues.length()
 				);
-				String[] ranges = rangeValues.split(RunTimeConfig.LIST_SEP);
+				String[] ranges = rangeValues.split(",");
 				for (String range : ranges) {
 					String[] rangeBorders = range.split(VALUE_RANGE_CONCAT);
 					if (rangeBorders.length == 1) {
@@ -279,16 +281,16 @@ public abstract class NagainaRequestHandlerBase<T extends WSObjectMock> extends 
 
 	protected void handleGenericContainerReq(String method, String containerName, ChannelHandlerContext ctx) {
 		switch (method) {
-			case WSRequestConfig.METHOD_HEAD:
+			case HttpRequestConfig.METHOD_HEAD:
 				handleContainerExists(containerName, ctx);
 				break;
-			case WSRequestConfig.METHOD_PUT:
+			case HttpRequestConfig.METHOD_PUT:
 				handleContainerCreate(containerName);
 				break;
-			case WSRequestConfig.METHOD_GET:
+			case HttpRequestConfig.METHOD_GET:
 				handleContainerList(containerName, ctx);
 				break;
-			case WSRequestConfig.METHOD_DELETE:
+			case HttpRequestConfig.METHOD_DELETE:
 				handleContainerDelete(containerName);
 				break;
 		}

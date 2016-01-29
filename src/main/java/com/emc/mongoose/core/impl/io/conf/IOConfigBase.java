@@ -39,11 +39,11 @@ implements IOConfig<T, C> {
 	protected volatile String nameSpace;
 	@Deprecated protected volatile String namePrefix = null;
 	protected int buffSize;
-	@Deprecated  protected int reqSleepMilliSec = 0;
+	@Deprecated protected int reqSleepMilliSec = 0;
 	//
 	protected IOConfigBase() {
 		appConfig = BasicConfig.THREAD_CONTEXT.get();
-		loadType = IOTask.Type.CREATE;
+		loadType = IOTask.Type.WRITE;
 		contentSrc = ContentSourceBase.getDefault();
 		verifyContentFlag = appConfig.getItemDataVerify();
 		nameSpace = appConfig.getStorageHttpNamespace();

@@ -25,6 +25,7 @@ extends HttpServlet {
 	private final static AppConfig DEFAULT_CFG;
 	//
 	private static volatile AppConfig LAST_RUN_TIME_CONFIG = null;
+	//
 	public static Map<String, Thread> THREADS_MAP;
 	public static Map<String, Boolean> STOPPED_RUN_MODES;
 	public static Map<String, String> CHARTS_MAP;

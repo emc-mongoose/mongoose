@@ -1,5 +1,7 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -39,7 +41,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 	//
 	public BasicHttpDataLoadBuilderClient(final AppConfig appConfig)
 	throws IOException {
-		super(runTimeConfig);
+		super(appConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -89,9 +91,8 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
 		//
 		return (U) new BasicHttpDataLoadClient<>(
-			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs,
-			appConfig.getConnCountPerNodeFor(loadTypeStr), appConfig.getWorkerCountFor(loadTypeStr),
-			itemSrc, maxCount, remoteLoadMap
+			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
+			0, itemSrc, maxCount, remoteLoadMap
 		);
 	}
 }

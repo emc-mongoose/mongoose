@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
@@ -11,7 +10,6 @@ import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -29,18 +27,17 @@ extends LoadExecutorBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final float rateLimit;
-	private final int manualTaskSleepMicroSecs, tgtDurMicroSecs;
+	private final int tgtDurMicroSecs;
 	//
 	protected LimitedRateLoadExecutorBase(
 		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
-		final int manualTaskSleepMicroSecs, final float rateLimit
+		final float rateLimit
 	) throws ClassCastException {
 		super(appConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount);
 		//
-		this.manualTaskSleepMicroSecs = manualTaskSleepMicroSecs;
 		if(rateLimit < 0) {
 			throw new IllegalArgumentException("Frequency rate limit shouldn't be a negative value");
 		}
@@ -58,16 +55,6 @@ extends LoadExecutorBase<T> {
 	@Override
 	public <A extends IOTask<T>> Future<A> submitReq(final A request)
 	throws RejectedExecutionException {
-		// manual delay
-		if(manualTaskSleepMicroSecs > 0) {
-			try {
-				TimeUnit.MILLISECONDS.sleep(
-					TimeUnit.MICROSECONDS.toMillis(manualTaskSleepMicroSecs)
-				);
-			} catch(final InterruptedException e) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
-			}
-		}
 		// rate limit matching
 		if(rateLimit > 0 && lastStats.getSuccRateLast() > rateLimit) {
 			final int microDelay = (int) (

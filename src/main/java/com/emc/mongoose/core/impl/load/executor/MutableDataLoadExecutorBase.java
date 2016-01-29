@@ -32,9 +32,12 @@ extends LimitedRateLoadExecutorBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final IOTask.Type loadType;
-	private final int countUpdPerReq;
+	//
 	private final long sizeMin, sizeRange;
 	private final float sizeBias;
+	//
+	private final int randomRangeCount;
+	private final long fixedByteRanges[];
 	//
 	protected MutableDataLoadExecutorBase(
 		final AppConfig appConfig,
@@ -42,11 +45,12 @@ extends LimitedRateLoadExecutorBase<T> {
 		final String[] addrs, final int connCountPerNode, final int threadCount,
 		final ItemSrc<T> itemSrc, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
-		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
+		final int randomRangeCount, final String fixedByteRanges,
+		final float rateLimit
 	) throws ClassCastException {
 		super(
 			appConfig, ioConfig, addrs, connCountPerNode, threadCount,
-			itemSrc, maxCount, manualTaskSleepMicroSecs, rateLimit
+			itemSrc, maxCount, rateLimit
 		);
 		//
 		this.loadType = ioConfig.getLoadType();
@@ -90,8 +94,8 @@ extends LimitedRateLoadExecutorBase<T> {
 		this.ioConfigCopy.setBuffSize(buffSize);
 		//
 		switch(loadType) {
-			case APPEND:
-			case CREATE:
+			case WRITE:
+				// TODO partial content support
 				if(sizeMin < 0) {
 					throw new IllegalArgumentException(
 						"Min data item size is less than zero: " + SizeUtil.formatSize(sizeMin)
@@ -109,19 +113,15 @@ extends LimitedRateLoadExecutorBase<T> {
 					);
 				}
 				break;
-			case UPDATE:
-				if(countUpdPerReq < 0) {
-					throw new IllegalArgumentException(
-						"Invalid updates per request count: " + countUpdPerReq
-					);
-				}
-				break;
 		}
 		//
 		this.sizeMin = sizeMin;
 		sizeRange = sizeMax - sizeMin;
 		this.sizeBias = sizeBias;
-		this.countUpdPerReq = countUpdPerReq;
+		//
+		this.randomRangeCount = randomRangeCount;
+		//
+
 	}
 	//
 	private void scheduleAppend(final T dataItem) {
@@ -145,10 +145,10 @@ extends LimitedRateLoadExecutorBase<T> {
 	//
 	private void scheduleUpdate(final T dataItem) {
 		if(dataItem.getSize() > 0) {
-			dataItem.scheduleRandomUpdates(countUpdPerReq);
+			dataItem.scheduleRandomUpdates(randomRangeCount);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					Markers.MSG, "Modified {} ranges for object \"{}\"", countUpdPerReq, dataItem
+					Markers.MSG, "Modified {} ranges for object \"{}\"", randomRangeCount, dataItem
 				);
 			}
 		} else {
@@ -160,14 +160,7 @@ extends LimitedRateLoadExecutorBase<T> {
 	public final void put(final T dataItem)
 	throws IOException {
 		try {
-			switch(loadType) {
-				case APPEND:
-					scheduleAppend(dataItem);
-					break;
-				case UPDATE:
-					scheduleUpdate(dataItem);
-					break;
-			}
+			// TODO schedule partial write
 		} catch(final IllegalArgumentException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to schedule {} for the data item",
@@ -182,18 +175,7 @@ extends LimitedRateLoadExecutorBase<T> {
 	public final int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
 		try {
-			switch(loadType) {
-				case APPEND:
-					for(int i = from; i < to; i ++) {
-						scheduleAppend(dataItems.get(i));
-					}
-					break;
-				case UPDATE:
-					for(int i = from; i < to; i ++) {
-						scheduleUpdate(dataItems.get(i));
-					}
-					break;
-			}
+			// TODO schedule partial write
 		} catch(final IllegalArgumentException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to schedule {} for the data items",

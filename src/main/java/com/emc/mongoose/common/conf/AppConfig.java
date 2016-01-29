@@ -1,5 +1,7 @@
 package com.emc.mongoose.common.conf;
 //
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.configuration.Configuration;
 //
 import java.io.Externalizable;
@@ -218,6 +220,9 @@ extends Cloneable, Configuration, Externalizable {
 	int getStorageHttpMockContainerCountLimit();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
+
+	ObjectNode toJsonTree(final ObjectMapper mapper)
+	throws IllegalStateException;
 
 	String toFormattedString();
 

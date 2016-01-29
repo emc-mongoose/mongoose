@@ -65,7 +65,7 @@ extends DataLoadBuilderBase<T, U> {
 			BasicConfig.THREAD_CONTEXT.get(), (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
 			null, 0, threadCount, itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
-			manualTaskSleepMicroSecs, rateLimit, updatesPerItem
+			manualTaskSleepMicroSecs, rateLimit, randomRangesCount
 		);
 	}
 }

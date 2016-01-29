@@ -4,13 +4,14 @@ import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import com.emc.mongoose.storage.mock.impl.web.net.BasicSocketEventDispatcher;
@@ -45,7 +46,7 @@ import java.io.IOException;
  */
 public final class Cinderella<T extends HttpDataItemMock>
 extends StorageMockBase<T>
-implements WSMock<T> {
+implements HttpStorageMock<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -56,24 +57,23 @@ implements WSMock<T> {
 	//
 	public Cinderella(final AppConfig appConfig)
 	throws IOException {
-		this(appConfig, appConfig.getStorageMockWorkersPerSocket());
+		this(appConfig, appConfig.getStorageHttpMockWorkersPerSocket());
 	}
 	//
 	private Cinderella(final AppConfig appConfig, final int ioThreadCount)
 	throws IOException {
 		this(
-			appConfig.getStorageMockHeadCount(),
+			appConfig.getStorageHttpMockHeadCount(),
 			ioThreadCount > 0 ? ioThreadCount : ThreadUtil.getWorkerCount(),
-			appConfig.getApiTypePort(appConfig.getApiName()),
-			appConfig.getStorageMockCapacity(),
-			appConfig.getStorageMockContainerCapacity(),
-			appConfig.getStorageMockContainerCountLimit(),
-			appConfig.getBatchSize(),
-			appConfig.getItemSrcFile(),
-			appConfig.getLoadMetricsPeriodSec(),
-			appConfig.getFlagServeJMX(),
-			appConfig.getStorageMockMinConnLifeMilliSec(),
-			appConfig.getStorageMockMaxConnLifeMilliSec()
+			appConfig.getStorageHttpApi_Port(),
+			appConfig.getStorageHttpMockCapacity(),
+			appConfig.getStorageHttpMockContainerCapacity(),
+			appConfig.getStorageHttpMockContainerCountLimit(),
+			appConfig.getItemInputBatchSize(),
+			appConfig.getItemInputFile(),
+			appConfig.getLoadMetricsPeriod(),
+			appConfig.getNetworkServeJmx(),
+			0, 0
 		);
 	}
 	//

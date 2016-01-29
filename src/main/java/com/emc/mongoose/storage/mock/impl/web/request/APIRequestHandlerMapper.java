@@ -2,8 +2,9 @@ package com.emc.mongoose.storage.mock.impl.web.request;
 //
 //import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.storage.mock.api.ReqURIMatchingHandler;
-import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 //
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import org.apache.http.HttpRequest;
@@ -26,11 +27,11 @@ implements HttpAsyncRequestHandlerMapper {
 	private final ReqURIMatchingHandler<T> reqHandlerSwift;
 	//
 	public APIRequestHandlerMapper(
-		final AppConfig appConfig, final WSMock<T> sharedStorage
+		final AppConfig appConfig, final HttpStorageMock<T> sharedStorage
 	) {
-		reqHandlerAtmos = new AtmosRequestHandler<>(runTimeConfig, sharedStorage);
-		reqHandlerS3 =  new S3RequestHandler<>(runTimeConfig, sharedStorage);
-		reqHandlerSwift = new SwiftRequestHandler<>(runTimeConfig, sharedStorage);
+		reqHandlerAtmos = new AtmosRequestHandler<>(appConfig, sharedStorage);
+		reqHandlerS3 =  new S3RequestHandler<>(appConfig, sharedStorage);
+		reqHandlerSwift = new SwiftRequestHandler<>(appConfig, sharedStorage);
 	}
 	//
 	@Override

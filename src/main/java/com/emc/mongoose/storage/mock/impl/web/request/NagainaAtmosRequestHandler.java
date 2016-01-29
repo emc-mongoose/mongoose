@@ -1,15 +1,15 @@
 package com.emc.mongoose.storage.mock.impl.web.request;
 
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
-import com.emc.mongoose.storage.mock.api.WSMock;
-import com.emc.mongoose.storage.mock.api.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
+import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -54,7 +54,7 @@ import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERR
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 @Sharable
-public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaRequestHandlerBase<T> {
+public class NagainaAtmosRequestHandler<T extends HttpDataItemMock> extends NagainaRequestHandlerBase<T> {
 
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String
@@ -65,8 +65,8 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 			ST_PATH = URI_BASE_PATH + "/subtenant",
 			STS_PATH = ST_PATH + "s/";
 
-	public NagainaAtmosRequestHandler(RunTimeConfig rtConfig, WSMock<T> sharedStorage) {
-		super(rtConfig, sharedStorage);
+	public NagainaAtmosRequestHandler(final AppConfig appConfig, HttpStorageMock<T> sharedStorage) {
+		super(appConfig, sharedStorage);
 	}
 
 	@Override
@@ -93,8 +93,8 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
  		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
 		HttpRequest request = ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey)).get();
 		String[] metaDataList = null;
-		if (request.headers().contains(WSRequestConfig.KEY_EMC_TAGS)) {
-			metaDataList = request.headers().get(WSRequestConfig.KEY_EMC_TAGS).split(",");
+		if (request.headers().contains(HttpRequestConfig.KEY_EMC_TAGS)) {
+			metaDataList = request.headers().get(HttpRequestConfig.KEY_EMC_TAGS).split(",");
 		}
 		String uri = request.getUri();
 		String method = request.getMethod().toString().toUpperCase();
@@ -107,7 +107,7 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 			String objId = uriParams[2];
 			long offset = -1;
 			if (objId == null) {
-				if (method.equals(WSRequestConfig.METHOD_POST)) {
+				if (method.equals(HttpRequestConfig.METHOD_POST)) {
 					objId = generateId();
 					String processResult = processMetaDataList(metaDataList, "offset");
 					try {
@@ -126,10 +126,10 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 					if (statusCode < 300 && 200 <= statusCode) {
 						response.headers().set(LOCATION, OBJ_PATH + "/" + objId);
 					}
-				} else if (method.equals(WSRequestConfig.METHOD_GET)) {
+				} else if (method.equals(HttpRequestConfig.METHOD_GET)) {
 					String subtenant = processMetaDataList(metaDataList, "subtenant");
-					if (request.headers().contains(WSRequestConfig.KEY_EMC_TOKEN)) {
-						objId = request.headers().get(WSRequestConfig.KEY_EMC_TOKEN);
+					if (request.headers().contains(HttpRequestConfig.KEY_EMC_TOKEN)) {
+						objId = request.headers().get(HttpRequestConfig.KEY_EMC_TOKEN);
 					}
 					handleContainerList(subtenant, objId, ctx);
 				}
@@ -140,7 +140,7 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 			setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
 		} else if (uri.startsWith(ST_PATH)) {
 			String subtenant;
-			if (method.equals(WSRequestConfig.METHOD_PUT)) {
+			if (method.equals(HttpRequestConfig.METHOD_PUT)) {
 				subtenant = generateSubtenant();
 			} else {
 				subtenant = getSubtenant(request.headers(), uri);
@@ -175,13 +175,13 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 	private void handleContainerList(String subtenant, String objId, ChannelHandlerContext ctx) {
 		int maxCount = ContainerHelper.DEFAULT_PAGE_SIZE;
 		HttpHeaders headers = ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey)).get().headers();
-		if (headers.contains(WSRequestConfig.KEY_EMC_LIMIT)) {
+		if (headers.contains(HttpRequestConfig.KEY_EMC_LIMIT)) {
 			try {
-				maxCount = Integer.parseInt(headers.get(WSRequestConfig.KEY_EMC_LIMIT));
+				maxCount = Integer.parseInt(headers.get(HttpRequestConfig.KEY_EMC_LIMIT));
 			} catch (NumberFormatException e) {
 				LOG.warn(
 						Markers.ERR, "Limit header value is not a valid integer: {}",
-						headers.get(WSRequestConfig.KEY_EMC_LIMIT)
+						headers.get(HttpRequestConfig.KEY_EMC_LIMIT)
 				);
 			}
 		}
@@ -207,7 +207,7 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 
 		Map.Entry<String, String> header = null;
 		if (lastObj != null) {
-			header = new AbstractMap.SimpleEntry<>(WSRequestConfig.KEY_EMC_TOKEN, lastObj.getName());
+			header = new AbstractMap.SimpleEntry<>(HttpRequestConfig.KEY_EMC_TOKEN, lastObj.getName());
 		}
 		Document doc = DOM_BUILDER.newDocument();
 		Element eRoot = doc.createElement("ListObjectsResponse");
@@ -245,8 +245,8 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 		if (uri.startsWith(STS_PATH) && uri.length() > STS_PATH.length()) {
 			return uri.substring(STS_PATH.length());
 		}
-		if (headers.contains(WSRequestConfig.KEY_EMC_UID)) {
-			String uid = headers.get(WSRequestConfig.KEY_EMC_UID);
+		if (headers.contains(HttpRequestConfig.KEY_EMC_UID)) {
+			String uid = headers.get(HttpRequestConfig.KEY_EMC_UID);
 			if (uid.contains("/")) {
 				return uid.split("/")[0];
 			}
@@ -271,7 +271,7 @@ public class NagainaAtmosRequestHandler<T extends WSObjectMock> extends NagainaR
 
 	private void handleGenericContainerReq(HttpResponse response, String method, String containerName, ChannelHandlerContext ctx) {
 		switch (method) {
-			case WSRequestConfig.METHOD_PUT:
+			case HttpRequestConfig.METHOD_PUT:
 				handleContainerCreate(response, containerName);
 				break;
 			default:

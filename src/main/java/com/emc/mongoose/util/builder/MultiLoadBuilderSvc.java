@@ -198,10 +198,10 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setConnPerNodeDefault(final int connCount)
+	public final LoadBuilderSvc setConnPerNode(final int connCount)
 	throws IllegalArgumentException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setConnPerNodeDefault(connCount);
+			loadBuilderSvc.setConnPerNode(connCount);
 		}
 		return this;
 	}
@@ -216,10 +216,10 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setDataNodeAddrs(final String[] dataNodeAddrs)
+	public final LoadBuilderSvc setNodeAddrs(final String[] nodeAddrs)
 	throws IllegalArgumentException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setDataNodeAddrs(dataNodeAddrs);
+			loadBuilderSvc.setNodeAddrs(nodeAddrs);
 		}
 		return this;
 	}

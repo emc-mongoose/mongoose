@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 //
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 /**
  * Created by gusakk on 03/10/14.
  */
@@ -26,8 +26,8 @@ public final class StopServlet extends CommonServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private ConcurrentHashMap<String, Thread> threadsMap;
-	private ConcurrentHashMap<String, Boolean> stoppedRunModes;
+	private Map<String, Thread> threadsMap;
+	private Map<String, Boolean> stoppedRunModes;
 	//
 	@Override
 	public void init() {

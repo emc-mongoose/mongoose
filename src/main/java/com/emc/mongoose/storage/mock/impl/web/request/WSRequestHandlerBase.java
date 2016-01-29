@@ -16,7 +16,7 @@ import com.emc.mongoose.storage.mock.api.StorageIOStats;
 import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.ReqURIMatchingHandler;
 import com.emc.mongoose.storage.mock.api.StorageMockCapacityLimitReachedException;
-import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.emc.mongoose.storage.mock.impl.web.response.BasicWSResponseProducer;
 //
@@ -55,11 +55,11 @@ implements ReqURIMatchingHandler<T> {
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 	private final ContentSource contentSrc = ContentSourceBase.getDefault();
 	//
-	protected final WSMock<T> sharedStorage;
+	protected final HttpStorageMock<T> sharedStorage;
 	protected final int batchSize;
 	//
 	protected WSRequestHandlerBase(
-		final AppConfig appConfig, final WSMock<T> sharedStorage
+		final AppConfig appConfig, final HttpStorageMock<T> sharedStorage
 	) {
 		this.rateLimit = (float) appConfig.getLoadLimitRate();
 		this.batchSize = appConfig.getItemInputBatchSize();

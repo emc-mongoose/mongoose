@@ -81,7 +81,7 @@ implements HttpDataLoadBuilder<T, U> {
 			localAppConfig, httpReqConf, storageNodeAddrs, connPerNode, minThreadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, minObjSize, maxObjSize, objSizeBias,
-			manualTaskSleepMicroSecs, rateLimit, updatesPerItem
+			manualTaskSleepMicroSecs, rateLimit, randomRangesCount
 		);
 	}
 }

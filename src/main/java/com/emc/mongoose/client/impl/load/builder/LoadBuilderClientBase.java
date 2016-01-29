@@ -270,14 +270,14 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, W, U> setConnPerNodeDefault(final int connCount)
+	public final LoadBuilderClient<T, W, U> setConnPerNode(final int connCount)
 	throws IllegalArgumentException, RemoteException {
-		super.setConnPerNodeDefault(connCount);
+		super.setConnPerNode(connCount);
 		V nextBuilder;
 		if(loadSvcMap != null) {
 			for(final String addr : loadSvcMap.keySet()) {
 				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setConnPerNodeDefault(connCount);
+				nextBuilder.setConnPerNode(connCount);
 			}
 		}
 		return this;
@@ -299,11 +299,11 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, W, U> setDataNodeAddrs(final String[] dataNodeAddrs)
+	public final LoadBuilderClient<T, W, U> setNodeAddrs(final String[] nodeAddrs)
 	throws IllegalArgumentException, RemoteException {
-		super.setDataNodeAddrs(dataNodeAddrs);
-		if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
-			this.storageNodeAddrs = dataNodeAddrs;
+		super.setNodeAddrs(nodeAddrs);
+		if(nodeAddrs != null && nodeAddrs.length > 0) {
+			this.storageNodeAddrs = nodeAddrs;
 			if(flagAssignLoadSvcToNode) {
 				assignNodesToLoadSvcs(loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
 			}
@@ -312,7 +312,7 @@ implements LoadBuilderClient<T, W, U> {
 			if(loadSvcMap != null) {
 				for(final String addr : loadSvcMap.keySet()) {
 					nextBuilder = loadSvcMap.get(addr);
-					nextBuilder.setDataNodeAddrs(
+					nextBuilder.setNodeAddrs(
 						loadSvcConfMap.get(addr).getStorageHttpAddrs()
 					);
 				}
