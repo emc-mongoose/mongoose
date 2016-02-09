@@ -386,6 +386,10 @@ dependencies {
 		library.jackson_databind,
 		library.log4j_api,
 		library.metrics_core,
+		library.netty_handler,
+		library.netty_buffer,
+		library.netty_transport,
+		library.netty_codec_http,
 	)
 	storageMockRuntime (
 		library.runtime_logging,

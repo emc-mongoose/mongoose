@@ -55,6 +55,11 @@ ext {
 
 	metrics_core = [ "io.dropwizard.metrics:metrics-core:3.1.2" ]
 
+	netty_handler = [ "io.netty:netty-handler:4.0.32.Final" ]
+	netty_buffer = [ "io.netty:netty-buffer:4.0.32.Final" ]
+	netty_transport = [ "io.netty:netty-transport:4.0.32.Final" ]
+	netty_codec_http = [ "io.netty:netty-codec-http:4.0.32.Final" ]
+
 	slf4j_api = [ "org.slf4j:slf4j-api:1.7.7" ]
 
 	websocket_api = [ "org.eclipse.jetty.websocket:websocket-api:9.3.0.M1" ]
