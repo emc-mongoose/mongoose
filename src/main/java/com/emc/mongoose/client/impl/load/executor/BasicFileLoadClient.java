@@ -25,13 +25,10 @@ implements FileLoadClient<T, W> {
 	//
 	public BasicFileLoadClient(
 		final AppConfig appConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
-		final String[] addrs, final int connCountPerNode, final int threadCount,
-		final ItemSrc<T> itemSrc, final long maxCount, final Map<String, W> remoteLoadMap
+		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc,
+		final long maxCount, final Map<String, W> remoteLoadMap
 	) throws RemoteException {
-		super(
-			appConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
-			remoteLoadMap
-		);
+		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, remoteLoadMap);
 	}
 	//
 	@Override

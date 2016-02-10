@@ -36,7 +36,7 @@ implements ItemSrc<T> {
 	protected GenericContainerItemSrcBase(
 		final ContainerHelper<T, C> containerHelper, final Class<T> itemCls, final long maxCount
 	) throws IllegalStateException {
-		super(new ArrayList<T>(BasicConfig.THREAD_CONTEXT.get().getItemInputBatchSize()));
+		super(new ArrayList<T>(BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize()));
 		this.containerHelper = containerHelper;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		try {

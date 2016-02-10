@@ -86,15 +86,10 @@ implements HttpDataLoadExecutor<T> {
 	@SuppressWarnings("unchecked")
 	public BasicHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int connCountPerNode, final int threadCount,
-		final ItemSrc<T> itemSrc, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias,
-		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
+		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final float rateLimit
 	) {
-		super(
-			appConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
-			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
-		);
+		super(appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
 		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
 		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
 		//
@@ -178,8 +173,8 @@ implements HttpDataLoadExecutor<T> {
 					(int) timeOutMs : Integer.MAX_VALUE,
 				batchSize
 			);
-			nextConnPool.setDefaultMaxPerRoute(connCountPerNode);
-			nextConnPool.setMaxTotal(connCountPerNode);
+			nextConnPool.setDefaultMaxPerRoute(threadCount);
+			nextConnPool.setMaxTotal(threadCount);
 			connPoolMap.put(nextRoute, nextConnPool);
 		}
 		//

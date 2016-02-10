@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.cambridgelab;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
@@ -53,7 +52,7 @@ extends CambridgeLabDistributedClientTestBase {
 					final ItemDst<HttpDataItem>
 						writtenItems = new ListItemDst<>(new ArrayList<HttpDataItem>())
 				) {
-					countWritten = client.write(null, writtenItems, 0, 2, SizeUtil.toSize("100MB"));
+					countWritten = client.write(null, writtenItems, 0, 2, SizeInBytes.toFixedSize("100MB"));
 					TimeUnit.SECONDS.sleep(1);
 					countRead = client.read(writtenItems.getItemSrc(), null, countWritten, 2, true);
 					TimeUnit.SECONDS.sleep(1);

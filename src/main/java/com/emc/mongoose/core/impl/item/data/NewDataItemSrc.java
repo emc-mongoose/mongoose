@@ -1,10 +1,12 @@
 package com.emc.mongoose.core.impl.item.data;
 //
-import com.emc.mongoose.common.conf.ItemNamingScheme;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicItemIdGenerator;
+import com.emc.mongoose.common.conf.ItemIdGenerator;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-//
 //
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -18,41 +20,23 @@ public final class NewDataItemSrc<T extends DataItem>
 implements ItemSrc<T> {
 	//
 	private final Constructor<T> itemConstructor;
-	private final ItemNamingScheme namingScheme;
+	private final ItemIdGenerator itemIdGenerator;
 	private final ContentSource contentSrc;
-	private final long minObjSize, maxObjSize, sizeRange;
-	private final float objSizeBias;
-	private final ThreadLocalRandom thrLocalRnd = ThreadLocalRandom.current();
+	private final SizeInBytes dataSize;
 	private T lastItem = null;
 	//
 	public NewDataItemSrc(
-		final Class<T> dataCls, final ItemNamingScheme namingScheme, final ContentSource contentSrc,
-		final long minObjSize, final long maxObjSize, final float objSizeBias
+		final Class<T> dataCls, final AppConfig.ItemNamingType namingType,
+		final ContentSource contentSrc, final SizeInBytes dataSize
 	) throws NoSuchMethodException, IllegalArgumentException {
 		this.itemConstructor = dataCls.getConstructor(Long.class, Long.class, ContentSource.class);
-		this.namingScheme = namingScheme;
+		this.itemIdGenerator = new BasicItemIdGenerator(namingType);
 		this.contentSrc = contentSrc;
-		this.minObjSize = minObjSize;
-		this.maxObjSize = maxObjSize;
-		this.objSizeBias = objSizeBias;
-		sizeRange = maxObjSize - minObjSize;
-		if(sizeRange < 0) {
-			throw new IllegalArgumentException(
-				"Min size " + minObjSize + " is greater than max size " + maxObjSize
-			);
-		}
+		this.dataSize = dataSize;
 	}
 	//
-	private long nextSize() {
-		if(minObjSize == maxObjSize) {
-			return minObjSize;
-		} else {
-			if(objSizeBias == 1) {
-				return minObjSize + (long) (thrLocalRnd.nextDouble() * sizeRange);
-			} else {
-				return minObjSize + (long) Math.pow(thrLocalRnd.nextDouble(), objSizeBias) * sizeRange;
-			}
-		}
+	public SizeInBytes getDataSizeInfo() {
+		return dataSize;
 	}
 	//
 	@Override
@@ -60,7 +44,7 @@ implements ItemSrc<T> {
 	throws IOException {
 		try {
 			return itemConstructor.newInstance(
-				namingScheme.getNext(), nextSize(), contentSrc
+				itemIdGenerator.get(), dataSize.get(), contentSrc
 			);
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
@@ -74,7 +58,7 @@ implements ItemSrc<T> {
 			for(int i = 0; i < maxCount; i ++) {
 				buffer.add(
 					itemConstructor.newInstance(
-						namingScheme.getNext(), nextSize(), contentSrc
+						itemIdGenerator.get(), dataSize.get(), contentSrc
 					)
 				);
 			}

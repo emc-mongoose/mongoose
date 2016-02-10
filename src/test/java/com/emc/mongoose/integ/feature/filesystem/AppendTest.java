@@ -1,6 +1,5 @@
 package com.emc.mongoose.integ.feature.filesystem;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
@@ -49,12 +48,12 @@ extends FileSystemTestBase {
 		) {
 			countWritten = client.write(
 				null, new ListItemDst<>(itemBuffAppend), COUNT_TO_WRITE, 100,
-				SizeUtil.toSize("100KB")
+				SizeInBytes.toFixedSize("100KB")
 			);
 			TimeUnit.SECONDS.sleep(1);
 			countAppended = client.append(
 				new ListItemSrc<>(itemBuffAppend), null, countWritten, 100,
-				SizeUtil.toSize("100KB")
+				SizeInBytes.toFixedSize("100KB")
 			);
 			TimeUnit.SECONDS.sleep(1);
 			//
@@ -103,7 +102,7 @@ extends FileSystemTestBase {
 	@Test
 	public void checkAppendSize() {
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
-		final long expectedSize = SizeUtil.toSize("200KB");
+		final long expectedSize = SizeInBytes.toFixedSize("200KB");
 		for(final File f : tgtDir.listFiles()) {
 			Assert.assertEquals(expectedSize, f.length());
 		}

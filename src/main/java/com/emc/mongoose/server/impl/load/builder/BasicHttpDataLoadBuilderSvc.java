@@ -3,7 +3,6 @@ package com.emc.mongoose.server.impl.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -107,7 +106,7 @@ implements HttpDataLoadBuilderSvc<T, U> {
 			throw new IllegalStateException(
 				String.format(
 					LogUtil.LOCALE_DEFAULT, "Min object size %s should be less than upper bound %s",
-					SizeUtil.formatSize(minObjSize), SizeUtil.formatSize(maxObjSize)
+					SizeInBytes.formatFixedSize(minObjSize), SizeInBytes.formatFixedSize(maxObjSize)
 				)
 			);
 		}

@@ -242,7 +242,7 @@ implements Externalizable {
 	private JsonNode rootNode;
 	//
 	public long getSizeBytes(final String key) {
-		return SizeUtil.toSize(getString(key));
+		return SizeInBytes.toFixedSize(getString(key));
 	}
 	//
 	public String getJsonProps() {
@@ -311,11 +311,11 @@ implements Externalizable {
 	}
 	//
 	public final long getIOBufferSizeMin() {
-		return SizeUtil.toSize(getString(KEY_IO_BUFFER_SIZE_MIN));
+		return SizeInBytes.toFixedSize(getString(KEY_IO_BUFFER_SIZE_MIN));
 	}
 	//
 	public final long getIOBufferSizeMax() {
-		return SizeUtil.toSize(getString(KEY_IO_BUFFER_SIZE_MAX));
+		return SizeInBytes.toFixedSize(getString(KEY_IO_BUFFER_SIZE_MAX));
 	}
 	//
 	public final int getBatchSize() {
@@ -433,11 +433,11 @@ implements Externalizable {
 	}
 	//
 	public final long getDataSizeMin() {
-		return SizeUtil.toSize(getString(KEY_DATA_SIZE_MIN));
+		return SizeInBytes.toFixedSize(getString(KEY_DATA_SIZE_MIN));
 	}
 	//
 	public final long getDataSizeMax() {
-		return SizeUtil.toSize(getString(KEY_DATA_SIZE_MAX));
+		return SizeInBytes.toFixedSize(getString(KEY_DATA_SIZE_MAX));
 	}
 	//
 	public final float getDataSizeBias() {
@@ -575,7 +575,7 @@ implements Externalizable {
 	}
 	//
 	public final long getDataRingSize() {
-		return SizeUtil.toSize(getString(KEY_DATA_RING_SIZE));
+		return SizeInBytes.toFixedSize(getString(KEY_DATA_RING_SIZE));
 	}
 	//
 	public final String getDataContentFPath() {

@@ -37,7 +37,7 @@ implements DataItemFileSrc<T> {
 	}
 	//
 	@Override
-	public long getApproxDataItemsSize(final int maxCount) {
+	public long getAvgDataSize(final int maxCount) {
 		long sumSize = 0;
 		int actualCount = 0;
 		try(

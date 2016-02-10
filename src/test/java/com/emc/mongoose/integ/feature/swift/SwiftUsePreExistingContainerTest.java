@@ -1,6 +1,5 @@
 package com.emc.mongoose.integ.feature.swift;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
@@ -55,7 +54,7 @@ extends StandaloneClientTestBase {
 				.setContainer(CONTAINER_HELPER.toString())
 				.build()
 		) {
-			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
+			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10KB"));
 			//
 			RunIdFileManager.flushAll();
 		}

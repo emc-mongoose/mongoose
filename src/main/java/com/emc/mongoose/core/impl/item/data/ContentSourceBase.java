@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.item.data;
 //
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -48,7 +47,7 @@ implements ContentSource {
 		zeroByteLayer.clear();
 		//
 		byteLayersMap = new LRUMap<>(
-			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
+			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
 		);
 		byteLayersMap.put(0, zeroByteLayer);
 	}
@@ -59,7 +58,7 @@ implements ContentSource {
 		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
 		zeroByteLayer.clear();
 		byteLayersMap = new LRUMap<>(
-			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
+			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
 		);
 		byteLayersMap.put(0, zeroByteLayer);
 		int n = 0, m;
@@ -107,7 +106,7 @@ implements ContentSource {
 		}
 		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
 		byteLayersMap = new LRUMap<>(
-			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
+			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
 		);
 		byteLayersMap.put(0, zeroByteLayer);
 	}
@@ -198,7 +197,7 @@ implements ContentSource {
 		long word = seed;
 		int i;
 		double d = System.nanoTime();
-		LOG.debug(Markers.MSG, "Prepare {} of ring data...", SizeUtil.formatSize(ringBuffSize));
+		LOG.debug(Markers.MSG, "Prepare {} of ring data...", SizeInBytes.formatFixedSize(ringBuffSize));
 		// 64-bit words
 		byteLayer.clear();
 		for(i = 0; i < countWords; i ++) {

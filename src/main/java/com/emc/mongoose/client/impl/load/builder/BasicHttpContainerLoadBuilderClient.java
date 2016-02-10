@@ -96,11 +96,9 @@ public class BasicHttpContainerLoadBuilderClient<
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
-		//
 		return (U) new BasicHttpContainerLoadClient<>(
 			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
-			0, itemSrc, maxCount, remoteLoadMap
+			itemSrc, maxCount, remoteLoadMap
 		);
 	}
 }

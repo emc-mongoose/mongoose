@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.web;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
@@ -46,8 +45,8 @@ implements HttpStorageMock<T> {
 			appConfig.getStorageHttpMockCapacity(),
 			appConfig.getStorageHttpMockContainerCapacity(),
 			appConfig.getStorageHttpMockContainerCountLimit(),
-			appConfig.getItemInputBatchSize(),
-			appConfig.getItemInputFile(),
+			appConfig.getItemSrcBatchSize(),
+			appConfig.getItemSrcFile(),
 			appConfig.getLoadMetricsPeriod(),
 			appConfig.getNetworkServeJmx(),
 			0, 0

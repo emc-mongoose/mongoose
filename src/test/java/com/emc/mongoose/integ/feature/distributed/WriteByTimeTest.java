@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.distributed;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
@@ -38,7 +37,7 @@ extends DistributedClientTestBase {
 				.build()
 		) {
 			timeActualSec = System.currentTimeMillis() / 1000;
-			countWritten = client.write(null, null, 0, 10, SizeUtil.toSize("10KB"));
+			countWritten = client.write(null, null, 0, 10, SizeInBytes.toFixedSize("10KB"));
 			timeActualSec = System.currentTimeMillis() / 1000 - timeActualSec;
 			//
 			RunIdFileManager.flushAll();

@@ -35,14 +35,10 @@ implements DirectoryLoadSvc<T, C> {
 	//
 	public BasicDirectoryLoadSvc(
 		final AppConfig appConfig, final FileIOConfig<T, C> ioConfig, final String[] addrs,
-		final int connPerNode, final int threadsPerNode,
-		final ItemSrc<C> itemSrc, final long maxCount,
-		final int manualTaskSleepMicroSecs, final float rateLimit
+		final int threadsPerNode, final ItemSrc<C> itemSrc, final long maxCount,
+		final float rateLimit
 	) {
-		super(
-			appConfig, ioConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
-			manualTaskSleepMicroSecs, rateLimit
-		);
+		super(appConfig, ioConfig, addrs, threadsPerNode, itemSrc, maxCount, rateLimit);
 	}
 	//
 	//

@@ -103,17 +103,9 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 		final AppConfig localAppConfig = BasicConfig.THREAD_CONTEXT.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		localAppConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
-		final IOTask.Type loadType = ioConfig.getLoadType();
-		final int
-			connPerNode = loadTypeConnPerNode.get(loadType),
-			minThreadCount = getMinIOThreadCount(
-				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
-			);
-		//
 		return (U) new BasicHttpContainerLoadSvc<>(
-			localAppConfig, wsReqConf, storageNodeAddrs, connPerNode, minThreadCount,
-			itemSrc == null ? getDefaultItemSource() : itemSrc,
-			maxCount, manualTaskSleepMicroSecs, rateLimit
+			localAppConfig, wsReqConf, storageNodeAddrs, threadCount,
+			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
 		);
 	}
 	//

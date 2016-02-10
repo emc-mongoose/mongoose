@@ -82,13 +82,9 @@ implements HttpContainerLoadExecutor<T, C> {
 	//
 	public BasicHttpContainerLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, C> reqConfig, final String[] addrs,
-		final int connCountPerNode, final int threadCount, final ItemSrc<C> itemSrc,
-		final long maxCount, final int manualTaskSleepMicroSecs, final float rateLimit
+		final int threadCount, final ItemSrc<C> itemSrc, final long maxCount, final float rateLimit
 	) throws ClassCastException {
-		super(
-			appConfig, reqConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
-			manualTaskSleepMicroSecs, rateLimit
-		);
+		super(appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
 		//
 		this.loadType = reqConfig.getLoadType();
 		wsReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;
@@ -179,8 +175,8 @@ implements HttpContainerLoadExecutor<T, C> {
 					(int) timeOutMs : Integer.MAX_VALUE,
 				batchSize
 			);
-			nextConnPool.setDefaultMaxPerRoute(connCountPerNode);
-			nextConnPool.setMaxTotal(connCountPerNode);
+			nextConnPool.setDefaultMaxPerRoute(threadCount);
+			nextConnPool.setMaxTotal(threadCount);
 			connPoolMap.put(nextRoute, nextConnPool);
 		}
 		//

@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -35,10 +35,8 @@ implements DataLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected long minObjSize, maxObjSize;
-	protected float objSizeBias;
-	protected int randomRangesCount;
-	protected String fixedByteRanges;
+	protected SizeInBytes dataSize;
+	protected String rangesInfo;
 	//
 	public DataLoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
@@ -49,11 +47,8 @@ implements DataLoadBuilder<T, U> {
 	public DataLoadBuilderBase<T, U> clone()
 	throws CloneNotSupportedException {
 		final DataLoadBuilderBase<T, U> lb = (DataLoadBuilderBase<T, U>) super.clone();
-		lb.minObjSize = minObjSize;
-		lb.maxObjSize = maxObjSize;
-		lb.randomRangesCount = randomRangesCount;
-		lb.fixedByteRanges = fixedByteRanges;
-		lb.objSizeBias = objSizeBias;
+		lb.dataSize = dataSize;
+		lb.rangesInfo = rangesInfo;
 		return lb;
 	}
 	//
@@ -62,7 +57,7 @@ implements DataLoadBuilder<T, U> {
 	throws NoSuchMethodException {
 		return new NewDataItemSrc<>(
 			(Class<T>) ioConfig.getItemClass(), appConfig.getItemNaming(),
-			ioConfig.getContentSource(), minObjSize, maxObjSize, objSizeBias
+			ioConfig.getContentSource(), dataSize
 		);
 	}
 	//
@@ -99,40 +94,17 @@ implements DataLoadBuilder<T, U> {
 	//
 	@Override
 	public String toString() {
-		return super.toString() + "x" +
-			(minObjSize == maxObjSize ? minObjSize : minObjSize + "-" + maxObjSize);
+		return super.toString() + "x" + dataSize.toString();
 	}
 	//
 	@Override
 	public DataLoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
 		super.setAppConfig(appConfig);
+		setDataSize(new SizeInBytes(appConfig.getItemDataSize()));
+		setDataRanges(appConfig.getItemDataRanges());
 		//
-		final AppConfig.DataSizeScheme dataSizeScheme = appConfig.getItemDataSizeClass();
-		final long minSize, maxSize;
-		final double sizeBias;
-		if(AppConfig.DataSizeScheme.FIXED.equals(dataSizeScheme)) {
-			minSize = appConfig.getItemDataSizeFixed();
-			maxSize = minSize;
-			sizeBias = 0;
-		} else {
-			minSize = appConfig.getItemDataSizeRandomMin();
-			maxSize = appConfig.getItemDataSizeRandomMax();
-			sizeBias = appConfig.getItemDataSizeRandomBias();
-		}
-		//
-		setMinObjSize(minSize);
-		setMaxObjSize(maxSize);
-		setObjSizeBias((float) sizeBias);
-		//
-		final AppConfig.DataRangesScheme dataRangesScheme = appConfig.getItemDataRangesClass();
-		if(AppConfig.DataRangesScheme.FIXED.equals(dataRangesScheme)) {
-			setFixedByteRanges(appConfig.getItemDataRangesFixedBytes());
-		} else {
-			setRandomRangesCount(appConfig.getItemDataContentRangesRandomCount());
-		}
-		//
-		final String listFilePathStr = appConfig.getItemInputFile();
+		final String listFilePathStr = appConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(
@@ -155,8 +127,8 @@ implements DataLoadBuilder<T, U> {
 		super.setItemSrc(itemSrc);
 		if(itemSrc instanceof DataItemFileSrc) {
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
-			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-				BasicConfig.THREAD_CONTEXT.get().getItemInputBatchSize()
+			final long approxDataItemsSize = fileInput.getAvgDataSize(
+				BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize()
 			);
 			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
@@ -169,55 +141,16 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public DataLoadBuilder<T, U> setMinObjSize(final long minObjSize)
+	public DataLoadBuilder<T, U> setDataSize(final SizeInBytes dataSize)
 	throws IllegalArgumentException {
-		LOG.debug(Markers.MSG, "Set min data item size: {}", SizeUtil.formatSize(minObjSize));
-		if(minObjSize >= 0) {
-			LOG.debug(Markers.MSG, "Using min object size: {}", SizeUtil.formatSize(minObjSize));
-		} else {
-			throw new IllegalArgumentException("Min object size should not be less than min");
-		}
-		this.minObjSize = minObjSize;
+		LOG.debug(Markers.MSG, "Set data item size: {}", dataSize.toString());
+		this.dataSize = dataSize;
 		return this;
 	}
-	//
 	@Override
-	public DataLoadBuilder<T, U> setMaxObjSize(final long maxObjSize)
-	throws IllegalArgumentException {
-		LOG.debug(Markers.MSG, "Set max data item size: {}", SizeUtil.formatSize(maxObjSize));
-		if(maxObjSize >= 0) {
-			LOG.debug(Markers.MSG, "Using max object size: {}", SizeUtil.formatSize(maxObjSize));
-		} else {
-			throw new IllegalArgumentException("Max object size should not be less than min");
-		}
-		this.maxObjSize = maxObjSize;
-		return this;
-	}
-	//
-	@Override
-	public DataLoadBuilder<T, U> setObjSizeBias(final float objSizeBias)
-	throws IllegalArgumentException {
-		LOG.debug(Markers.MSG, "Set object size bias: {}", objSizeBias);
-		if(objSizeBias < 0) {
-			throw new IllegalArgumentException("Object size bias should not be negative");
-		} else {
-			LOG.debug(Markers.MSG, "Using object size bias: {}", objSizeBias);
-		}
-		this.objSizeBias = objSizeBias;
-		return this;
-	}
-	//
-	@Override
-	public DataLoadBuilder<T, U> setRandomRangesCount(final int count) {
-		LOG.debug(Markers.MSG, "Set random ranges count per data item: {}", count);
-		this.randomRangesCount = count;
-		return this;
-	}
-	//
-	@Override
-	public DataLoadBuilder<T, U> setFixedByteRanges(final String byteRanges) {
-		LOG.debug(Markers.MSG, "Set fixed byte ranges: {}", byteRanges);
-		this.fixedByteRanges = byteRanges;
+	public DataLoadBuilder<T, U> setDataRanges(final String dataRanges) {
+		LOG.debug(Markers.MSG, "Set fixed byte ranges: {}", dataRanges);
+		this.rangesInfo = dataRanges;
 		return this;
 	}
 }

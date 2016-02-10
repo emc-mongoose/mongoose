@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.atmos;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
@@ -55,7 +54,7 @@ extends StandaloneClientTestBase {
 		) {
 			final ItemDst<HttpDataItem> writeOutput = new ListItemDst<>(BUFF_WRITE);
 			COUNT_WRITTEN = client.write(
-				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB")
+				null, writeOutput, COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10KB")
 			);
 			final ItemDst<HttpDataItem> updateOutput0 = new ListItemDst<>(BUFF_UPDATE0);
 			if(COUNT_WRITTEN > 0) {

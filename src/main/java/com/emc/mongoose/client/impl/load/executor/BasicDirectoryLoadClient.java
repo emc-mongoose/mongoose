@@ -25,13 +25,10 @@ public class BasicDirectoryLoadClient<
 	//
 	public BasicDirectoryLoadClient(
 		final AppConfig appConfig, final FileIOConfig<T, C> ioConfig,
-		final String[] addrs, final int connCountPerNode, final int threadCount,
+		final String[] addrs, final int threadCount,
 		final ItemSrc<C> itemSrc, final long maxCount, final Map<String, W> remoteLoadMap
 	) throws RemoteException {
-		super(
-			appConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
-			remoteLoadMap
-		);
+		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, remoteLoadMap);
 	}
 	//
 	@Override

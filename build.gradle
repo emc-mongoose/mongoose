@@ -38,9 +38,9 @@ def confDirName = 'conf'
 def loadProjectVersionFrom(String sourceFileName) {
 	def inputFile = new File(sourceFileName)
 	def json = new JsonSlurper().parseText(inputFile.text)
-	ext.version = json.properties.run.version
+	ext.version = json.config.run.version
 }
-loadProjectVersionFrom confDirName + File.separator + project.name + ".json"
+loadProjectVersionFrom confDirName + File.separator + "defaults.json"
 
 version = ext.version
 group = "com.emc.${rootProject.name}"

@@ -37,15 +37,10 @@ implements HttpDataLoadSvc<T> {
 	//
 	public BasicHttpDataLoadSvc(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int connPerNode, final int threadsPerNode,
-		final ItemSrc<T> itemSrc, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias,
-		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
+		final String[] addrs, final int threadsPerNode, final ItemSrc<T> itemSrc,
+		final long maxCount, final float rateLimit
 	) {
-		super(
-			appConfig, reqConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
-			sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq
-		);
+		super(appConfig, reqConfig, addrs, threadsPerNode, itemSrc, maxCount, rateLimit);
 	}
 	//
 	@Override

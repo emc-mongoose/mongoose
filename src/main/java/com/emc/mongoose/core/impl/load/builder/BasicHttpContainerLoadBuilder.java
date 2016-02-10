@@ -6,7 +6,6 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.HttpContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.HttpContainerLoadExecutor;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
@@ -71,17 +70,9 @@ implements HttpContainerLoadBuilder<T, C, U> {
 		final HttpRequestConfig httpReqConf = HttpRequestConfig.class.cast(ioConfig);
 		final AppConfig localAppConfig = BasicConfig.THREAD_CONTEXT.get();
 		//
-		final IOTask.Type loadType = ioConfig.getLoadType();
-		final int
-			connPerNode = loadTypeConnPerNode.get(loadType),
-			minThreadCount = getMinIOThreadCount(
-				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
-			);
-		//
 		return (U) new BasicHttpContainerLoadExecutor<>(
-			localAppConfig, httpReqConf, storageNodeAddrs, connPerNode, minThreadCount,
-			itemSrc == null ? getDefaultItemSource() : itemSrc,
-			maxCount, manualTaskSleepMicroSecs, rateLimit
+			localAppConfig, httpReqConf, storageNodeAddrs, threadCount,
+			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
 		);
 	}
 }

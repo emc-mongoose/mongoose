@@ -77,7 +77,7 @@ implements StorageClient<T> {
 				.setLoadType(IOTask.Type.WRITE)
 				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
-				.setConnPerNode(connPerNodeCount)
+				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
 			return executeLoadJob(loadJobExecutor, dst);
@@ -97,7 +97,7 @@ implements StorageClient<T> {
 				.setLoadType(IOTask.Type.WRITE)
 				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
-				.setConnPerNode(connPerNodeCount)
+				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
 			return executeLoadJob(loadJobExecutor, dst);
@@ -110,14 +110,14 @@ implements StorageClient<T> {
 		final String fixedByteRanges
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
-			((DataLoadBuilder) loadBuilder).setFixedByteRanges(fixedByteRanges);
+			((DataLoadBuilder) loadBuilder).setDataRanges(fixedByteRanges);
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(IOTask.Type.WRITE)
 				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
-				.setConnPerNode(connPerNodeCount)
+				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
 			return executeLoadJob(loadJobExecutor, dst);
@@ -145,7 +145,7 @@ implements StorageClient<T> {
 				.setLoadType(IOTask.Type.READ)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
-				.setConnPerNode(connPerNodeCount)
+				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
 			return executeLoadJob(loadJobExecutor, dst);
@@ -168,7 +168,7 @@ implements StorageClient<T> {
 				.setLoadType(IOTask.Type.READ)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
-				.setConnPerNode(connPerNodeCount)
+				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
 			return executeLoadJob(loadJobExecutor, dst);
@@ -182,7 +182,7 @@ implements StorageClient<T> {
 	) throws IllegalStateException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
-				.setFixedByteRanges(fixedByteRanges)
+				.setDataRanges(fixedByteRanges)
 				.useContainerListingItemSrc()
 				.getIOConfig().setVerifyContentFlag(verifyContentFlag);
 		}
@@ -191,7 +191,7 @@ implements StorageClient<T> {
 				.setLoadType(IOTask.Type.READ)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
-				.setConnPerNode(connPerNodeCount)
+				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
 			return executeLoadJob(loadJobExecutor, dst);
@@ -217,7 +217,7 @@ implements StorageClient<T> {
 				.setLoadType(IOTask.Type.DELETE)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
-				.setConnPerNode(connPerNodeCount)
+				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
 			return executeLoadJob(loadJobExecutor, dst);

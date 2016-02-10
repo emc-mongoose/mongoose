@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.item.data;
 
-import com.emc.mongoose.common.conf.ItemNamingScheme;
+import com.emc.mongoose.common.conf.ItemIdGenerator;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
@@ -17,12 +17,12 @@ public class NewContainerSrc<T extends Container>
 implements ItemSrc<T> {
 	//
 	private final Constructor<T> itemConstructor;
-	private final ItemNamingScheme namingScheme;
+	private final ItemIdGenerator namingScheme;
 	//
 	private T lastItem = null;
 	//
 	public NewContainerSrc(
-		final Class<T> dataCls, final ItemNamingScheme namingScheme
+		final Class<T> dataCls, final ItemIdGenerator namingScheme
 	) throws NoSuchMethodException, IllegalArgumentException {
 		itemConstructor = dataCls.getConstructor(String.class);
 		this.namingScheme = namingScheme;
@@ -33,7 +33,7 @@ implements ItemSrc<T> {
 	throws IOException {
 		try {
 			return itemConstructor.newInstance(
-				Long.toString(namingScheme.getNext(), DataItem.ID_RADIX)
+				Long.toString(namingScheme.get(), DataItem.ID_RADIX)
 			);
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
@@ -47,7 +47,7 @@ implements ItemSrc<T> {
 			for(int i = 0; i < maxCount; i ++) {
 				buffer.add(
 					itemConstructor.newInstance(
-						Long.toString(namingScheme.getNext(), DataItem.ID_RADIX)
+						Long.toString(namingScheme.get(), DataItem.ID_RADIX)
 					)
 				);
 			}

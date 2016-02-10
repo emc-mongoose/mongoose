@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.s3;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
@@ -60,7 +59,7 @@ extends StandaloneClientTestBase {
 				.setS3Bucket(bucketHelper.toString())
 				.build()
 		) {
-			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
+			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10KB"));
 			//
 			RunIdFileManager.flushAll();
 		}

@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.distributed;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
@@ -60,7 +59,7 @@ extends DistributedClientTestBase {
 				final BufferingOutputStream
 					stdOutInterceptorStream = StdOutUtil.getStdOutBufferingStream()
 			) {
-				countWritten = client.write(null, null, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
+				countWritten = client.write(null, null, COUNT_LIMIT, 10, SizeInBytes.toFixedSize("10KB"));
 				TimeUnit.SECONDS.sleep(10);
 				stdOutContent = stdOutInterceptorStream.toByteArray();
 			}

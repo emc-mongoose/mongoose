@@ -21,7 +21,7 @@ public class BasicFileIOConfig<F extends FileItem, D extends Directory<F>>
 extends IOConfigBase<F, D>
 implements FileIOConfig<F, D> {
 	//
-	private int batchSize = BasicConfig.THREAD_CONTEXT.get().getItemInputBatchSize();
+	private int batchSize = BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize();
 	//
 	public BasicFileIOConfig() {
 		super();
@@ -35,7 +35,7 @@ implements FileIOConfig<F, D> {
 	public BasicFileIOConfig<F, D> setAppConfig(final AppConfig appConfig) {
 		super.setAppConfig(appConfig);
 		setContainer((D) new BasicDirectory<F>(getNamePrefix()));
-		batchSize = appConfig.getItemInputBatchSize();
+		batchSize = appConfig.getItemSrcBatchSize();
 		return this;
 	}
 	//

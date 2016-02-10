@@ -69,8 +69,8 @@ implements HttpStorageMock<T> {
 			appConfig.getStorageHttpMockCapacity(),
 			appConfig.getStorageHttpMockContainerCapacity(),
 			appConfig.getStorageHttpMockContainerCountLimit(),
-			appConfig.getItemInputBatchSize(),
-			appConfig.getItemInputFile(),
+			appConfig.getItemSrcBatchSize(),
+			appConfig.getItemSrcFile(),
 			appConfig.getLoadMetricsPeriod(),
 			appConfig.getNetworkServeJmx(),
 			0, 0

@@ -2,7 +2,6 @@ package com.emc.mongoose.storage.mock.impl.web.net;
 //
 import com.emc.mongoose.common.conf.Constants;
 //
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import org.apache.http.Header;
@@ -65,7 +64,7 @@ extends DefaultNHttpServerConnection {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "{}: max IN buffer size is {}", this,
-						SizeUtil.formatSize(maxInBuffSize)
+						SizeInBytes.formatFixedSize(maxInBuffSize)
 					);
 				}
 				socket.setReceiveBufferSize(Constants.BUFF_SIZE_LO); // reset back to the default
@@ -75,7 +74,7 @@ extends DefaultNHttpServerConnection {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "{}: max OUT buffer size is {}", this,
-						SizeUtil.formatSize(maxOutBuffSize)
+						SizeInBytes.formatFixedSize(maxOutBuffSize)
 					);
 				}
 				socket.setSendBufferSize(Constants.BUFF_SIZE_LO); // reset back to the default
@@ -128,7 +127,7 @@ extends DefaultNHttpServerConnection {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "{}: IN buffer size {} to {}", socket,
-						SizeUtil.formatSize(lastBuffSize), SizeUtil.formatSize(newBuffSize)
+						SizeInBytes.formatFixedSize(lastBuffSize), SizeInBytes.formatFixedSize(newBuffSize)
 					);
 				}
 				socket.setSendBufferSize(newBuffSize);
@@ -162,7 +161,7 @@ extends DefaultNHttpServerConnection {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "{}: OUT buffer size {} to {}", socket,
-						SizeUtil.formatSize(lastBuffSize), SizeUtil.formatSize(newBuffSize)
+						SizeInBytes.formatFixedSize(lastBuffSize), SizeInBytes.formatFixedSize(newBuffSize)
 					);
 				}
 				socket.setSendBufferSize(newBuffSize);

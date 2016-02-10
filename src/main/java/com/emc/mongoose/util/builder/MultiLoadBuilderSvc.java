@@ -198,10 +198,10 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setConnPerNode(final int connCount)
+	public final LoadBuilderSvc setThreadCount(final int threadCount)
 	throws IllegalArgumentException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setConnPerNode(connCount);
+			loadBuilderSvc.setThreadCount(threadCount);
 		}
 		return this;
 	}

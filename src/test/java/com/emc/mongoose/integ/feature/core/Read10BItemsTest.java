@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.core;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -133,7 +132,7 @@ extends WSMockTestBase {
 			for(final CSVRecord nextRec : recIter) {
 				Assert.assertEquals(
 					"Size of data item isn't correct",
-					Long.toString(SizeUtil.toSize(DATA_SIZE)), nextRec.get(2)
+					Long.toString(SizeInBytes.toFixedSize(DATA_SIZE)), nextRec.get(2)
 				);
 				countDataItems++;
 			}
@@ -162,7 +161,7 @@ extends WSMockTestBase {
 				try {
 					actualDataSize = ContentGetter.getDataSize(nextRec.get(0), TestConstants.BUCKET_NAME);
 					Assert.assertEquals(
-						"Size of data item isn't correct", SizeUtil.toSize(DATA_SIZE), actualDataSize
+						"Size of data item isn't correct", SizeInBytes.toFixedSize(DATA_SIZE), actualDataSize
 					);
 				} catch (final IOException e) {
 					Assert.fail(String.format("Failed to get data item %s from server", nextRec.get(0)));
@@ -321,7 +320,7 @@ extends WSMockTestBase {
 			for(final CSVRecord nextRec : recIter) {
 				Assert.assertEquals(
 					"Size of data item isn't correct",
-					Long.toString(SizeUtil.toSize(DATA_SIZE)), nextRec.get(2)
+					Long.toString(SizeInBytes.toFixedSize(DATA_SIZE)), nextRec.get(2)
 				);
 				countDataItems++;
 			}

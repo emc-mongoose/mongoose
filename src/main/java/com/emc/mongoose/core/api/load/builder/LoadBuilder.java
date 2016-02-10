@@ -39,7 +39,7 @@ extends Closeable, Cloneable {
 	LoadBuilder<T, U> setRateLimit(final float rateLimit)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setConnPerNode(final int connCount)
+	LoadBuilder<T, U> setThreadCount(final int threadCount)
 	throws IllegalArgumentException, RemoteException;
 	//
 	LoadBuilder<T, U> setNodeAddrs(final String[] nodeAddrs)

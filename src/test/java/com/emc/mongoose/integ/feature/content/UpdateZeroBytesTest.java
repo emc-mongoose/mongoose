@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.content;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
@@ -28,7 +27,7 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.AUTHORIZATION;
 public class UpdateZeroBytesTest
 extends StandaloneClientTestBase {
 	//
-	private final static int COUNT_TO_WRITE = 100, OBJ_SIZE = (int) SizeUtil.toSize("100KB");
+	private final static int COUNT_TO_WRITE = 100, OBJ_SIZE = (int) SizeInBytes.toFixedSize("100KB");
 	private final static String
 		RUN_ID = UpdateZeroBytesTest.class.getCanonicalName(),
 		BASE_URL = "http://127.0.0.1:9020/" + UpdateZeroBytesTest.class.getSimpleName() + "/";

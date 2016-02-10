@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.circularity;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
@@ -81,7 +80,7 @@ extends DistributedClientTestBase {
 					BasicHttpObject.class, ContentSourceBase.getDefault()
 				);
 				COUNT_WRITTEN = client.write(
-					null, writeOutput, WRITE_COUNT, 10, SizeUtil.toSize(DATA_SIZE)
+					null, writeOutput, WRITE_COUNT, 10, SizeInBytes.toFixedSize(DATA_SIZE)
 				);
 				TimeUnit.SECONDS.sleep(1);
 				RunIdFileManager.flushAll();
@@ -92,7 +91,7 @@ extends DistributedClientTestBase {
 				) {
 					if (COUNT_WRITTEN > 0) {
 						COUNT_APPENDED = client.append(writeOutput.getItemSrc(), null, APPEND_COUNT, 10,
-							SizeUtil.toSize(DATA_SIZE));
+							SizeInBytes.toFixedSize(DATA_SIZE));
 					} else {
 						throw new IllegalStateException("Failed to append");
 					}

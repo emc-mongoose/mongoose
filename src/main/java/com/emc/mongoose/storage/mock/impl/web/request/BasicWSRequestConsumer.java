@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.web.request;
 //
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.ContentUtil;
 import com.emc.mongoose.common.log.LogUtil;
@@ -57,7 +57,7 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Consumed next batch of bytes, {} left",
-					SizeUtil.formatSize(expectedContentSize)
+					SizeInBytes.formatFixedSize(expectedContentSize)
 				);
 			}
 		} catch(final Throwable e) {

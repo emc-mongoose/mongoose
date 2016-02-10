@@ -175,12 +175,11 @@ implements LoadClient<T, W> {
 	@SuppressWarnings("unchecked")
 	public LoadClientBase(
 		final AppConfig appConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
-		final int connCountPerNode, final int threadCount,
-		final ItemSrc<T> itemSrc, final long maxCount,
+		final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		super(
-			appConfig, ioConfig, addrs, connCountPerNode, threadCount,
+			appConfig, ioConfig, addrs, threadCount,
 			// suppress new data items generation on the client side
 			itemSrc instanceof NewDataItemSrc ? null : itemSrc, maxCount,
 			// get any load server last job number

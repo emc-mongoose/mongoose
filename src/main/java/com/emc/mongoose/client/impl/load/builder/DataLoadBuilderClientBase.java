@@ -6,6 +6,7 @@ import com.emc.mongoose.client.api.load.executor.DataLoadClient;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
@@ -14,6 +15,7 @@ import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
+import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
 //
@@ -37,8 +39,8 @@ implements DataLoadBuilderClient<T, W, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected long minObjSize, maxObjSize;
-	protected float objSizeBias;
+	protected SizeInBytes sizeInfo;
+	protected String rangesInfo = null;
 	protected boolean flagUseContainerItemSrc;
 	//
 	protected DataLoadBuilderClientBase()
@@ -55,71 +57,8 @@ implements DataLoadBuilderClient<T, W, U> {
 	public final DataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
 		super.setAppConfig(appConfig);
-		final AppConfig.DataSizeScheme dataSizeScheme = appConfig.getItemDataSizeClass();
-		if(AppConfig.DataSizeScheme.FIXED.equals(dataSizeScheme)) {
-			setMinObjSize(appConfig.getItemDataSizeFixed());
-			setMaxObjSize(appConfig.getItemDataSizeFixed());
-			setObjSizeBias(0);
-		} else {
-			setMinObjSize(appConfig.getItemDataSizeRandomMin());
-			setMaxObjSize(appConfig.getItemDataSizeRandomMax());
-			setObjSizeBias((float) appConfig.getItemDataSizeRandomBias());
-		}
-		return this;
-	}
-	//
-	@Override
-	public final DataLoadBuilderClient<T, W, U> setMinObjSize(final long minObjSize)
-	throws IllegalArgumentException, RemoteException {
-		this.minObjSize = minObjSize;
-		V nextBuilder;
-		if(loadSvcMap != null) {
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setMinObjSize(minObjSize);
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public final DataLoadBuilderClient<T, W, U> setObjSizeBias(final float objSizeBias)
-	throws IllegalArgumentException, RemoteException {
-		this.objSizeBias = objSizeBias;
-		V nextBuilder;
-		if(loadSvcMap != null) {
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setObjSizeBias(objSizeBias);
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public final DataLoadBuilderClient<T, W, U> setMaxObjSize(final long maxObjSize)
-	throws IllegalArgumentException, RemoteException {
-		this.maxObjSize = maxObjSize;
-		if(loadSvcMap != null) {
-			V nextBuilder;
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setMaxObjSize(maxObjSize);
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public final DataLoadBuilderClient<T, W, U> setRandomRangesCount(int count)
-	throws RemoteException {
-		if(loadSvcMap != null) {
-			V nextBuilder;
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setRandomRangesCount(count);
-			}
-		}
+		setDataSize(new SizeInBytes(appConfig.getItemDataSize()));
+		setDataRanges(appConfig.getItemDataRanges());
 		return this;
 	}
 	//
@@ -131,8 +70,8 @@ implements DataLoadBuilderClient<T, W, U> {
 		if(itemSrc instanceof DataItemFileSrc) {
 			// calculate approx average data item size
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
-			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-				appConfig.getItemInputBatchSize()
+			final long approxDataItemsSize = fileInput.getAvgDataSize(
+				appConfig.getItemSrcBatchSize()
 			);
 			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
@@ -211,5 +150,19 @@ implements DataLoadBuilderClient<T, W, U> {
 	protected final void resetItemSrc() {
 		super.resetItemSrc();
 		flagUseContainerItemSrc = true;
+	}
+	//
+	@Override
+	public DataLoadBuilder<T, U> setDataSize(final SizeInBytes dataSize)
+	throws IllegalArgumentException, RemoteException {
+		this.sizeInfo = dataSize;
+		return this;
+	}
+	//
+	@Override
+	public DataLoadBuilder<T, U> setDataRanges(final String dataRanges)
+	throws IllegalArgumentException, RemoteException {
+		this.rangesInfo = dataRanges;
+		return this;
 	}
 }

@@ -62,7 +62,7 @@ implements ReqURIMatchingHandler<T> {
 		final AppConfig appConfig, final HttpStorageMock<T> sharedStorage
 	) {
 		this.rateLimit = (float) appConfig.getLoadLimitRate();
-		this.batchSize = appConfig.getItemInputBatchSize();
+		this.batchSize = appConfig.getItemSrcBatchSize();
 		this.sharedStorage = sharedStorage;
 		this.ioStats = sharedStorage.getStats();
 	}

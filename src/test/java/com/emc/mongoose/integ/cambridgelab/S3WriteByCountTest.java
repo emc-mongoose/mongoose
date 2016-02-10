@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.cambridgelab;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -47,7 +46,7 @@ extends CambridgeLabDistributedClientTestBase {
 					.build()
 			) {
 				countWritten = client.write(
-					null, null, COUNT_TO_WRITE, 100, SizeUtil.toSize("100KB")
+					null, null, COUNT_TO_WRITE, 100, SizeInBytes.toFixedSize("100KB")
 				);
 				//
 				RunIdFileManager.flushAll();

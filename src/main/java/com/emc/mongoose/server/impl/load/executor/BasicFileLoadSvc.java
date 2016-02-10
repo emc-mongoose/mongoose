@@ -36,12 +36,10 @@ implements FileLoadSvc<T> {
 	//
 	public BasicFileLoadSvc(
 		final AppConfig appConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
-		final String[] addrs, final int connCountPerNode, final int threadCount,
-		final ItemSrc<T> itemSrc, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias,
-		final int manualTaskSleepMicroSecs, final float rateLimit, final int countUpdPerReq
+		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final float rateLimit
 	) throws ClassCastException {
-		super(appConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount, sizeMin, sizeMax, sizeBias, manualTaskSleepMicroSecs, rateLimit, countUpdPerReq);
+		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
 	}
 	//
 	@Override

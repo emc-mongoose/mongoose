@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.circularity;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
@@ -83,7 +82,7 @@ extends StandaloneClientTestBase {
 					BasicHttpObject.class, ContentSourceBase.getDefault()
 				);
 				COUNT_WRITTEN = client.write(
-					null, writeOutput, WRITE_COUNT, 1, SizeUtil.toSize(DATA_SIZE)
+					null, writeOutput, WRITE_COUNT, 1, SizeInBytes.toFixedSize(DATA_SIZE)
 				);
 				TimeUnit.SECONDS.sleep(1);
 				RunIdFileManager.flushAll();

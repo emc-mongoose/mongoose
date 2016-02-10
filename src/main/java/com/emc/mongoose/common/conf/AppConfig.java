@@ -24,17 +24,12 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_ITEM_DATA_CONTENT_FILE = "item.data.content.file";
 	String KEY_ITEM_DATA_CONTENT_SEED = "item.data.content.seed";
 	String KEY_ITEM_DATA_CONTENT_SIZE = "item.data.content.size";
-	String KEY_ITEM_DATA_RANGES_CLASS = "item.data.ranges.class";
-	String KEY_ITEM_DATA_RANGES_FIXED_BYTES = "item.data.ranges.fixed.bytes";
-	String KEY_ITEM_DATA_RANGES_RANDOM_COUNT = "item.data.ranges.random.count";
-	String KEY_ITEM_DATA_SIZE_CLASS = "item.data.size.class";
-	String KEY_ITEM_DATA_SIZE_FIXED = "item.data.size.fixed";
-	String KEY_ITEM_DATA_SIZE_RANDOM_BIAS = "item.data.size.random.bias";
-	String KEY_ITEM_DATA_SIZE_RANDOM_MAX = "item.data.size.random.max";
-	String KEY_ITEM_DATA_SIZE_RANDOM_MIN = "item.data.size.random.min";
+	String KEY_ITEM_DATA_RANGES = "item.data.ranges";
+	String KEY_ITEM_DATA_SIZE = "item.data.size";
 	String KEY_ITEM_DATA_VERIFY = "item.data.verify";
-	String KEY_ITEM_INPUT_FILE = "item.input.file";
-	String KEY_ITEM_INPUT_BATCH_SIZE = "item.input.batchSize";
+	String KEY_ITEM_DST_FILE = "item.dst.file";
+	String KEY_ITEM_SRC_FILE = "item.src.file";
+	String KEY_ITEM_SRC_BATCH_SIZE = "item.src.batchSize";
 	String KEY_ITEM_NAMING = "item.naming";
 	String KEY_ITEM_QUEUE_SIZE_LIMIT = "item.queue.sizeLimit";
 	String KEY_LOAD_CIRCULAR = "load.circular";
@@ -106,31 +101,20 @@ extends Cloneable, Configuration, Externalizable {
 
 	int getItemDataContentSize();
 
-	enum DataRangesScheme { FIXED, RANDOM }
-	DataRangesScheme getItemDataRangesClass();
+	String getItemDataRanges();
 
-	String getItemDataRangesFixedBytes();
-
-	int getItemDataContentRangesRandomCount();
-
-	enum DataSizeScheme { FIXED, RANDOM }
-	DataSizeScheme getItemDataSizeClass();
-
-	long getItemDataSizeFixed();
-
-	long getItemDataSizeRandomMin();
-
-	long getItemDataSizeRandomMax();
-
-	double getItemDataSizeRandomBias();
+	String getItemDataSize();
 
 	boolean getItemDataVerify();
 
-	String getItemInputFile();
+	String getItemDstFile();
 
-	int getItemInputBatchSize();
+	String getItemSrcFile();
 
-	ItemNamingScheme getItemNaming();
+	int getItemSrcBatchSize();
+
+	enum ItemNamingType { ASC, DESC, RANDOM }
+	ItemNamingType getItemNaming();
 
 	int getItemQueueSizeLimit();
 

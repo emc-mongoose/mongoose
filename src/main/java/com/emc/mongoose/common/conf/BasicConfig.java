@@ -94,12 +94,12 @@ implements AppConfig {
 	//
 	@Override
 	public int getIoBufferSizeMin() {
-		return (int) SizeUtil.toSize(getString(CONFIG_ROOT + KEY_IO_BUFFER_SIZE_MIN));
+		return (int) SizeInBytes.toFixedSize(getString(CONFIG_ROOT + KEY_IO_BUFFER_SIZE_MIN));
 	}
 	//
 	@Override
 	public int getIoBufferSizeMax() {
-		return (int) SizeUtil.toSize(getString(CONFIG_ROOT + KEY_IO_BUFFER_SIZE_MAX));
+		return (int) SizeInBytes.toFixedSize(getString(CONFIG_ROOT + KEY_IO_BUFFER_SIZE_MAX));
 	}
 	//
 	@Override
@@ -134,45 +134,13 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public DataRangesScheme getItemDataRangesClass() {
-		return DataRangesScheme
-			.valueOf(getString(CONFIG_ROOT + KEY_ITEM_DATA_RANGES_CLASS).toUpperCase());
+	public String getItemDataRanges() {
+		return getString(CONFIG_ROOT + KEY_ITEM_DATA_RANGES);
 	}
 	//
 	@Override
-	public String getItemDataRangesFixedBytes() {
-		return getString(CONFIG_ROOT + KEY_ITEM_DATA_RANGES_FIXED_BYTES);
-	}
-	//
-	@Override
-	public int getItemDataContentRangesRandomCount() {
-		return getInt(CONFIG_ROOT + KEY_ITEM_DATA_RANGES_RANDOM_COUNT);
-	}
-	//
-	@Override
-	public DataSizeScheme getItemDataSizeClass() {
-		return DataSizeScheme
-			.valueOf(getString(CONFIG_ROOT + KEY_ITEM_DATA_SIZE_CLASS).toUpperCase());
-	}
-	//
-	@Override
-	public long getItemDataSizeFixed() {
-		return SizeUtil.toSize(getString(CONFIG_ROOT + KEY_ITEM_DATA_SIZE_FIXED));
-	}
-	//
-	@Override
-	public long getItemDataSizeRandomMin() {
-		return SizeUtil.toSize(getString(CONFIG_ROOT + KEY_ITEM_DATA_SIZE_RANDOM_MIN));
-	}
-	//
-	@Override
-	public long getItemDataSizeRandomMax() {
-		return SizeUtil.toSize(getString(CONFIG_ROOT + KEY_ITEM_DATA_SIZE_RANDOM_MAX));
-	}
-	//
-	@Override
-	public double getItemDataSizeRandomBias() {
-		return getDouble(CONFIG_ROOT + KEY_ITEM_DATA_SIZE_RANDOM_BIAS);
+	public String getItemDataSize() {
+		return getString(CONFIG_ROOT + KEY_ITEM_DATA_SIZE);
 	}
 	//
 	@Override
@@ -181,21 +149,24 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public String getItemInputFile() {
-		return getString(CONFIG_ROOT + KEY_ITEM_INPUT_FILE);
+	public String getItemDstFile() {
+		return getString(CONFIG_ROOT + KEY_ITEM_DST_FILE);
 	}
 	//
 	@Override
-	public int getItemInputBatchSize() {
-		return getInt(CONFIG_ROOT + KEY_ITEM_INPUT_BATCH_SIZE);
+	public String getItemSrcFile() {
+		return getString(CONFIG_ROOT + KEY_ITEM_SRC_FILE);
 	}
 	//
 	@Override
-	public ItemNamingScheme getItemNaming() {
-		return new BasicItemNamingScheme(
-			ItemNamingScheme.Type.valueOf(
-				getString(CONFIG_ROOT + KEY_ITEM_NAMING).toUpperCase()
-			)
+	public int getItemSrcBatchSize() {
+		return getInt(CONFIG_ROOT + KEY_ITEM_SRC_BATCH_SIZE);
+	}
+	//
+	@Override
+	public ItemNamingType getItemNaming() {
+		return ItemNamingType.valueOf(
+			getString(CONFIG_ROOT + KEY_ITEM_NAMING).toUpperCase()
 		);
 	}
 	//

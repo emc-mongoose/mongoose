@@ -92,7 +92,7 @@ implements FileLoadBuilderClient<T, W, U> {
 		//
 		return (U) new BasicFileLoadClient<>(
 			appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
-			appConfig.getLoadThreads(), 0, itemSrc, maxCount, remoteLoadMap
+			appConfig.getLoadThreads(), itemSrc, maxCount, remoteLoadMap
 		);
 	}
 }

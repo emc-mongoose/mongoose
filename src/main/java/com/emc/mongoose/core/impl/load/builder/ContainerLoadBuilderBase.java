@@ -45,7 +45,7 @@ implements ContainerLoadBuilder<T, C, U>{
 	throws RemoteException {
 		super.setAppConfig(appConfig);
 		//
-		final String listFilePathStr = appConfig.getItemInputFile();
+		final String listFilePathStr = appConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setItemSrc(

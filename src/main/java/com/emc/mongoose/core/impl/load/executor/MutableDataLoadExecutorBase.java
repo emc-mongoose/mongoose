@@ -3,8 +3,7 @@ package com.emc.mongoose.core.impl.load.executor;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
@@ -15,14 +14,10 @@ import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
-import org.apache.logging.log4j.Level;
+import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 15.12.14.
  */
@@ -33,78 +28,58 @@ extends LimitedRateLoadExecutorBase<T> {
 	//
 	protected final IOTask.Type loadType;
 	//
-	private final long sizeMin, sizeRange;
-	private final float sizeBias;
-	//
-	private final int randomRangeCount;
-	private final long fixedByteRanges[];
-	//
 	protected MutableDataLoadExecutorBase(
 		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String[] addrs, final int connCountPerNode, final int threadCount,
-		final ItemSrc<T> itemSrc, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias,
-		final int randomRangeCount, final String fixedByteRanges,
+		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
 		final float rateLimit
 	) throws ClassCastException {
-		super(
-			appConfig, ioConfig, addrs, connCountPerNode, threadCount,
-			itemSrc, maxCount, rateLimit
-		);
+		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
 		//
 		this.loadType = ioConfig.getLoadType();
 		//
 		int buffSize;
 		if(itemSrc instanceof DataItemFileSrc) {
-			final long approxDataItemSize = ((DataItemFileSrc) itemSrc).getApproxDataItemsSize(
-				appConfig.getItemInputBatchSize()
+			final long avgDataSize = ((DataItemFileSrc) itemSrc).getAvgDataSize(
+				appConfig.getItemSrcBatchSize()
 			);
-			if(approxDataItemSize < Constants.BUFF_SIZE_LO) {
+			if(avgDataSize < Constants.BUFF_SIZE_LO) {
 				buffSize = Constants.BUFF_SIZE_LO;
-			} else if(approxDataItemSize > Constants.BUFF_SIZE_HI) {
+			} else if(avgDataSize > Constants.BUFF_SIZE_HI) {
 				buffSize = Constants.BUFF_SIZE_HI;
 			} else {
-				buffSize = (int) approxDataItemSize;
+				buffSize = (int) avgDataSize;
+			}
+		} else if(itemSrc instanceof NewDataItemSrc) {
+			final long avgDataSize = ((NewDataItemSrc) itemSrc).getDataSizeInfo().getAvgDataSize();
+			if(avgDataSize < Constants.BUFF_SIZE_LO) {
+				buffSize = Constants.BUFF_SIZE_LO;
+			} else if(avgDataSize > Constants.BUFF_SIZE_HI) {
+				buffSize = Constants.BUFF_SIZE_HI;
+			} else {
+				buffSize = (int) avgDataSize;
 			}
 		} else {
-			if(sizeMin == sizeMax) {
-				LOG.debug(Markers.MSG, "Fixed data item size: {}", SizeUtil.formatSize(sizeMin));
-				buffSize = sizeMin < Constants.BUFF_SIZE_HI ? (int) sizeMin : Constants.BUFF_SIZE_HI;
-			} else {
-				final long t = (sizeMin + sizeMax) / 2;
-				buffSize = t < Constants.BUFF_SIZE_HI ? (int) t : Constants.BUFF_SIZE_HI;
-				LOG.debug(
-					Markers.MSG, "Average data item size: {}",
-					SizeUtil.formatSize(buffSize)
-				);
-			}
-			if(buffSize < Constants.BUFF_SIZE_LO) {
-				LOG.debug(
-					Markers.MSG, "Buffer size {} is less than lower bound {}",
-					SizeUtil.formatSize(buffSize), SizeUtil.formatSize(Constants.BUFF_SIZE_LO)
-				);
-				buffSize = Constants.BUFF_SIZE_LO;
-			}
+			buffSize = Constants.BUFF_SIZE_LO;
 		}
 		LOG.debug(
 			Markers.MSG, "Determined buffer size of {} for \"{}\"",
-			SizeUtil.formatSize(buffSize), getName()
+			SizeInBytes.formatFixedSize(buffSize), getName()
 		);
 		this.ioConfigCopy.setBuffSize(buffSize);
-		//
+		/*
 		switch(loadType) {
 			case WRITE:
 				// TODO partial content support
 				if(sizeMin < 0) {
 					throw new IllegalArgumentException(
-						"Min data item size is less than zero: " + SizeUtil.formatSize(sizeMin)
+						"Min data item size is less than zero: " + SizeInBytes.formatFixedSize(sizeMin)
 					);
 				}
 				if(sizeMin > sizeMax) {
 					throw new IllegalArgumentException(
 						"Min object size shouldn't be more than max: " +
-						SizeUtil.formatSize(sizeMin) + ", " + SizeUtil.formatSize(sizeMax)
+						SizeInBytes.formatFixedSize(sizeMin) + ", " + SizeInBytes.formatFixedSize(sizeMax)
 					);
 				}
 				if(sizeBias < 0) {
@@ -119,11 +94,9 @@ extends LimitedRateLoadExecutorBase<T> {
 		sizeRange = sizeMax - sizeMin;
 		this.sizeBias = sizeBias;
 		//
-		this.randomRangeCount = randomRangeCount;
-		//
-
+		this.randomRangeCount = randomRangeCount;*/
 	}
-	//
+	/*
 	private void scheduleAppend(final T dataItem) {
 		final long nextSize = sizeMin +
 			(long) (Math.pow(ThreadLocalRandom.current().nextDouble(), sizeBias) * sizeRange);
@@ -138,7 +111,7 @@ extends LimitedRateLoadExecutorBase<T> {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Append the object \"{}\": +{}",
-				dataItem, SizeUtil.formatSize(nextSize)
+				dataItem, SizeInBytes.formatFixedSize(nextSize)
 			);
 		}
 	}
@@ -154,9 +127,9 @@ extends LimitedRateLoadExecutorBase<T> {
 		} else {
 			throw new RejectedExecutionException("It's impossible to update empty data item");
 		}
-	}
+	}*/
 	/** intercepts the data items which should be scheduled for update or append */
-	@Override
+	/*@Override
 	public final void put(final T dataItem)
 	throws IOException {
 		try {
@@ -184,5 +157,5 @@ extends LimitedRateLoadExecutorBase<T> {
 		}
 		//
 		return super.put(dataItems, from, to);
-	}
+	}*/
 }

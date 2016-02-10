@@ -175,7 +175,7 @@ implements LoadBuilderClient<T, W, U> {
 		setRateLimit((float) appConfig.getLoadLimitRate());
 		//
 		try {
-			final String listFile = appConfig.getItemInputFile();
+			final String listFile = appConfig.getItemSrcFile();
 			if(itemsFileExists(listFile) && loadSvcMap != null) {
 				setItemSrc(
 					new ItemCSVFileSrc<>(
@@ -241,58 +241,14 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, W, U> setWorkerCountDefault(final int threadCount)
+	public final LoadBuilderClient<T, W, U> setThreadCount(final int threadCount)
 	throws IllegalArgumentException, RemoteException {
-		super.setWorkerCountDefault(threadCount);
+		super.setThreadCount(threadCount);
 		V nextBuilder;
 		if(loadSvcMap != null) {
 			for(final String addr : loadSvcMap.keySet()) {
 				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setWorkerCountDefault(threadCount);
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderClient<T, W, U> setWorkerCountFor(
-		final int threadCount, final IOTask.Type loadType
-	) throws IllegalArgumentException, RemoteException {
-		super.setWorkerCountFor(threadCount, loadType);
-		V nextBuilder;
-		if(loadSvcMap != null) {
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setWorkerCountFor(threadCount, loadType);
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderClient<T, W, U> setConnPerNode(final int connCount)
-	throws IllegalArgumentException, RemoteException {
-		super.setConnPerNode(connCount);
-		V nextBuilder;
-		if(loadSvcMap != null) {
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setConnPerNode(connCount);
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderClient<T, W, U> setConnPerNodeFor(
-		final int connCount, final IOTask.Type loadType
-	) throws IllegalArgumentException, RemoteException {
-		super.setConnPerNodeFor(connCount, loadType);
-		V nextBuilder;
-		if(loadSvcMap != null) {
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setConnPerNodeFor(connCount, loadType);
+				nextBuilder.setThreadCount(threadCount);
 			}
 		}
 		return this;

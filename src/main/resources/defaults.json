@@ -1,0 +1,118 @@
+{
+	"config" : {
+		"auth": {
+			"id": null,
+			"secret": null,
+			"token": null
+		},
+		"io" : {
+			"buffer" : {
+				"size" : {
+					"min" : "4KB",
+					"max" : "1MB"
+				}
+			}
+		},
+		"item" : {
+			"class" : "data",
+			"container" : {
+				"name" : null
+			},
+			"data" : {
+				"content" : {
+					"class" : "ring",
+					"file" : null,
+					"ring" : {
+						"seed" : "7a42d9c483244167",
+						"size" : "4MB"
+					}
+				},
+				"ranges" : 0,
+				"size" : "1MB",
+				"verify" : true
+			},
+			"dst" : {
+				"file" : null
+			},
+			"src" : {
+				"file" : null,
+				"batchSize" : 4096
+			},
+			"naming" : "random",
+			"queue" : {
+				"sizeLimit" : 500000
+			}
+		},
+		"load" : {
+			"circular" : false,
+			"class" : "write",
+			"threads" : 1,
+			"limit" : {
+				"count" : 0,
+				"rate" : 0,
+				"time" : "0s"
+			},
+			"metricsPeriod" : "10s",
+			"server" : {
+				"addrs" : "127.0.0.1",
+				"assignTo" : {
+					"node" : false
+				}
+			}
+		},
+		"run" : {
+			"name": "mongoose",
+			"version": "next",
+			"mode": "standalone"
+		},
+		"storage" : {
+			"class" : "http",
+			"fs" : {
+			},
+			"http" : {
+				"addrs" : "127.0.0.1",
+				"api" : {
+					"class": "s3",
+					"s3": {
+						"port": 9020
+					},
+					"atmos": {
+						"port": 9022
+					},
+					"swift": {
+						"port": 9024
+					}
+				},
+				"fsAccess" : false,
+				"headers" : {
+					"Connection" : "keep-alive",
+					"User-Agent" : "mongoose/next"
+				},
+				"namespace" : null,
+				"versioning" : false,
+				"mock": {
+					"headCount": 1,
+					"workersPerSocket": 0,
+					"capacity": 1000000,
+					"container": {
+						"capacity": 1000000,
+						"countLimit": 1000000
+					}
+				}
+			}
+		},
+		"network" : {
+			"serveJMX": false,
+			"socket": {
+				"timeoutMilliSec": 1000000,
+				"reuseAddr": true,
+				"keepalive": true,
+				"tcpNoDelay": true,
+				"linger": 0,
+				"bindBacklogSize": 0,
+				"interestOpQueued": false,
+				"selectInterval": 100
+			}
+		}
+	}
+}

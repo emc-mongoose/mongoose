@@ -2,7 +2,6 @@ package com.emc.mongoose.integ.feature.core;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -138,7 +137,7 @@ extends WSMockTestBase {
 			for(final CSVRecord nextRec : recIter) {
 				Assert.assertEquals(
 					"Size of data item isn't correct",
-					Long.toString(SizeUtil.toSize(DATA_SIZE)), nextRec.get(2)
+					Long.toString(SizeInBytes.toFixedSize(DATA_SIZE)), nextRec.get(2)
 				);
 				countDataItems++;
 			}

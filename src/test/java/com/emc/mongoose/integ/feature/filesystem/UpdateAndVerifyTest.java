@@ -1,6 +1,5 @@
 package com.emc.mongoose.integ.feature.filesystem;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
@@ -53,7 +52,7 @@ extends FileSystemTestBase {
 				.build()
 		) {
 			countWritten = client.write(
-				null, new ListItemDst<>(itemBuffWritten), COUNT_TO_WRITE, 10, SizeUtil.toSize("10B")
+				null, new ListItemDst<>(itemBuffWritten), COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10B")
 			);
 			TimeUnit.SECONDS.sleep(1);
 			countUpdated = client.update(

@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.distributed;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -60,7 +59,7 @@ extends DistributedClientTestBase {
 			final BlockingQueue<HttpDataItem> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
 			final LimitedQueueItemBuffer<HttpDataItem> itemIO = new LimitedQueueItemBuffer<>(itemsQueue);
 			COUNT_WRITTEN = client.write(
-				null, itemIO, COUNT_LIMIT, 10, SizeUtil.toSize("10KB")
+				null, itemIO, COUNT_LIMIT, 10, SizeInBytes.toFixedSize("10KB")
 			);
 			TimeUnit.SECONDS.sleep(10);
 			Assert.assertEquals(

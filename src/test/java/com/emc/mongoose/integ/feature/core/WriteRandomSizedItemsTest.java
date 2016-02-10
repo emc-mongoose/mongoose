@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.core;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.integ.base.WSMockTestBase;
@@ -251,11 +250,11 @@ extends WSMockTestBase {
 			for(final CSVRecord nextRec : recIter) {
 				Assert.assertTrue(
 					"Size of data item less then min data size",
-					Long.valueOf(nextRec.get(2)) > SizeUtil.toSize(DATA_SIZE_MIN)
+					Long.valueOf(nextRec.get(2)) > SizeInBytes.toFixedSize(DATA_SIZE_MIN)
 				);
 				Assert.assertTrue(
 					"Size of data item more then max data size",
-					Long.valueOf(nextRec.get(2)) < SizeUtil.toSize(DATA_SIZE_MAX)
+					Long.valueOf(nextRec.get(2)) < SizeInBytes.toFixedSize(DATA_SIZE_MAX)
 				);
 				countDataItems++;
 			}

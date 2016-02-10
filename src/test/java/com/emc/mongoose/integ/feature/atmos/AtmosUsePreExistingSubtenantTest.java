@@ -1,6 +1,5 @@
 package com.emc.mongoose.integ.feature.atmos;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
@@ -57,7 +56,7 @@ extends StandaloneClientTestBase {
 				.setAuthToken(SUBTENANT.getValue())
 				.build()
 		) {
-			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
+			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10KB"));
 			//
 			RunIdFileManager.flushAll();
 		}

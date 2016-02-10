@@ -70,7 +70,7 @@ implements LoadExecutor<T> {
 	protected volatile ItemDst<T> consumer = null;
 	//
 	protected final long maxCount;
-	protected final int totalConnCount, activeTaskCountLimit;
+	protected final int totalThreadCount, activeTaskCountLimit;
 	// METRICS section
 	protected final int metricsPeriodSec;
 	protected IOStats ioStats;
@@ -165,8 +165,7 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int connCountPerNode, final int threadCount,
-		final ItemSrc<T> itemSrc, final long maxCount,
+		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
 		final int instanceNum, final String name
 	) {
 		super(
@@ -194,8 +193,8 @@ implements LoadExecutor<T> {
 			LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc.toString());
 		}
 		//
-		totalConnCount = connCountPerNode * storageNodeCount;
-		activeTaskCountLimit = 2 * totalConnCount + 1000;
+		totalThreadCount = threadCount * storageNodeCount;
+		activeTaskCountLimit = 2 * totalThreadCount + 1000;
 		//
 		IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> reqConfigClone = null;
 		try {
@@ -233,15 +232,14 @@ implements LoadExecutor<T> {
 	private LoadExecutorBase(
 		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int connCountPerNode, final int threadCount,
-		final ItemSrc<T> itemSrc, final long maxCount, final int instanceNum
+		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final int instanceNum
 	) {
 		this(
-			appConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount,
 			instanceNum,
 			Integer.toString(instanceNum) + '-' + ioConfig.toString() +
-				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
-				Integer.toString(connCountPerNode > 0 ? connCountPerNode : threadCount) +
+				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
 				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
 		);
 	}
@@ -249,11 +247,10 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int connCountPerNode, final int threadCount,
-		final ItemSrc<T> itemSrc, final long maxCount
+		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount
 	) {
 		this(
-			appConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount,
 			NEXT_INSTANCE_NUM.getAndIncrement()
 		);
 	}
@@ -405,7 +402,7 @@ implements LoadExecutor<T> {
 				// calculate the efficiency and report
 				final float
 					loadDurMicroSec = lastStats.getElapsedTime(),
-					eff = lastStats.getDurationSum() / loadDurMicroSec / totalConnCount;
+					eff = lastStats.getDurationSum() / loadDurMicroSec / totalThreadCount;
 				LOG.debug(
 					Markers.MSG,
 					String.format(

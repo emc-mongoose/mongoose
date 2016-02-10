@@ -6,5 +6,5 @@ import com.emc.mongoose.core.api.item.base.ItemFileSrc;
  */
 public interface DataItemFileSrc<T extends DataItem>
 extends ItemFileSrc<T> {
-	long getApproxDataItemsSize(final int maxCount);
+	long getAvgDataSize(final int maxCount);
 }

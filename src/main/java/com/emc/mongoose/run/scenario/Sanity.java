@@ -2,7 +2,6 @@ package com.emc.mongoose.run.scenario;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
@@ -45,7 +44,7 @@ public class Sanity
 implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 2, DEFAULT_CONN_PER_NODE = 200;
-	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("10MB");
+	private final static long DEFAULT_DATA_SIZE = SizeInBytes.toFixedSize("10MB");
 	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
 	public final static Logger LOG;
 	static {

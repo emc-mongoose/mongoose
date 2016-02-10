@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.load.builder;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.item.container.Container;
@@ -10,7 +9,6 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.load.executor.BasicHttpDataLoadExecutor;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.HttpDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -61,27 +59,11 @@ implements HttpDataLoadBuilder<T, U> {
 		//
 		final HttpRequestConfig httpReqConf = (HttpRequestConfig) ioConfig;
 		final AppConfig localAppConfig = BasicConfig.THREAD_CONTEXT.get();
-		if(minObjSize > maxObjSize) {
-			throw new IllegalStateException(
-				String.format(
-					"Min object size (%s) shouldn't be more than max (%s)",
-					SizeUtil.formatSize(minObjSize), SizeUtil.formatSize(maxObjSize)
-				)
-			);
-		}
-		//
-		final IOTask.Type loadType = ioConfig.getLoadType();
-		final int
-			connPerNode = loadTypeConnPerNode.get(loadType),
-			minThreadCount = getMinIOThreadCount(
-				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
-			);
 		//
 		return (U) new BasicHttpDataLoadExecutor<>(
-			localAppConfig, httpReqConf, storageNodeAddrs, connPerNode, minThreadCount,
+			localAppConfig, httpReqConf, storageNodeAddrs, threadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
-			maxCount, minObjSize, maxObjSize, objSizeBias,
-			manualTaskSleepMicroSecs, rateLimit, randomRangesCount
+			maxCount, rateLimit
 		);
 	}
 }

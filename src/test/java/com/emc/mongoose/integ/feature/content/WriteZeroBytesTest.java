@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.content;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
@@ -27,7 +26,7 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.AUTHORIZATION;
 public class WriteZeroBytesTest
 extends StandaloneClientTestBase {
 	//
-	private final static int COUNT_TO_WRITE = 1000, OBJ_SIZE = (int) SizeUtil.toSize("10KB");
+	private final static int COUNT_TO_WRITE = 1000, OBJ_SIZE = (int) SizeInBytes.toFixedSize("10KB");
 	private final static String
 		RUN_ID = WriteZeroBytesTest.class.getCanonicalName(),
 		BASE_URL = "http://127.0.0.1:9020/" + WriteZeroBytesTest.class.getSimpleName() + "/";
@@ -50,7 +49,7 @@ extends StandaloneClientTestBase {
 				.build()
 		) {
 			countWritten = client.write(
-				null, new ListItemDst<>(OBJ_BUFF), COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB")
+				null, new ListItemDst<>(OBJ_BUFF), COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10KB")
 			);
 			//
 			RunIdFileManager.flushAll();

@@ -3,14 +3,12 @@ package com.emc.mongoose.server.impl.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.load.builder.BasicFileLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.FileLoadBuilderSvc;
@@ -80,23 +78,10 @@ implements FileLoadBuilderSvc<T, U> {
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
-		if(minObjSize > maxObjSize) {
-			throw new IllegalStateException(
-				String.format(
-					LogUtil.LOCALE_DEFAULT, "Min object size %s should be less than upper bound %s",
-					SizeUtil.formatSize(minObjSize), SizeUtil.formatSize(maxObjSize)
-				)
-			);
-		}
-		//
-		final IOTask.Type loadType = ioConfig.getLoadType();
-		final int connPerNode = loadTypeConnPerNode.get(loadType);
 		//
 		return (U) new BasicFileLoadSvc<>(
-			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, connPerNode, connPerNode,
-			itemSrc == null ? getDefaultItemSource() : itemSrc,
-			maxCount, minObjSize, maxObjSize, objSizeBias,
-			manualTaskSleepMicroSecs, rateLimit, randomRangesCount
+			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, threadCount,
+			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
 		);
 	}
 	//

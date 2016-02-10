@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -51,21 +50,11 @@ extends DataLoadBuilderBase<T, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected U buildActually() {
-		if(minObjSize > maxObjSize) {
-			throw new IllegalStateException(
-				String.format(
-					"Min object size (%s) shouldn't be more than max (%s)",
-					SizeUtil.formatSize(minObjSize), SizeUtil.formatSize(maxObjSize)
-				)
-			);
-		}
 		final IOTask.Type loadType = ioConfig.getLoadType();
-		final int threadCount = loadTypeConnPerNode.get(loadType);
 		return (U) new BasicFileLoadExecutor<>(
 			BasicConfig.THREAD_CONTEXT.get(), (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
-			null, 0, threadCount, itemSrc == null ? getDefaultItemSource() : itemSrc,
-			maxCount, minObjSize, maxObjSize, objSizeBias,
-			manualTaskSleepMicroSecs, rateLimit, randomRangesCount
+			null, threadCount, itemSrc == null ? getDefaultItemSource() : itemSrc,
+			maxCount, rateLimit
 		);
 	}
 }

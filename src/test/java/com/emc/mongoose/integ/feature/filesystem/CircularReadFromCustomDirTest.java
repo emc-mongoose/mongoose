@@ -2,7 +2,6 @@ package com.emc.mongoose.integ.feature.filesystem;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -52,7 +51,7 @@ extends FileSystemTestBase {
 				.build()
 		) {
 			client.write(
-				null, new ListItemDst<>(itemBuff), COUNT_TO_WRITE, 10, SizeUtil.toSize("8KB")
+				null, new ListItemDst<>(itemBuff), COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("8KB")
 			);
 			TimeUnit.SECONDS.sleep(1);
 			countRead = client.read(new ListItemSrc<>(itemBuff), null, 0, 100, true);
