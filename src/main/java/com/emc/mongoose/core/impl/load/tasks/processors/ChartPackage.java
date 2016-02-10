@@ -8,24 +8,25 @@ public class ChartPackage implements Serializable {
 	String name;
 	String runId;
 	String loadJobName;
-	List<Point> durMinChart, durMaxChart, durAvgChart,
-			latMinChart, latMaxChart, latAvgChart,
-			tpAvgChart, tpLastChart,
-			bwAvgChart, bwLast;
+	List<Metric> duration, latency, thoughput, bandwidth;
 
 	public ChartPackage(String runId, String loadJobName, PolylineManager polylineManager) {
 		this.name = "chrtpckg";
 		this.runId = runId;
 		this.loadJobName = loadJobName;
-		this.durMinChart = polylineManager.getDurMin();
-		this.durMaxChart = polylineManager.getDurMax();
-		this.durAvgChart = polylineManager.getDurAvg();
-		this.latMinChart = polylineManager.getLatMin();
-		this.latMaxChart = polylineManager.getLatMax();
-		this.latAvgChart = polylineManager.getLatAvg();
-		this.tpAvgChart = polylineManager.getTpAvg();
-		this.tpLastChart = polylineManager.getTpLast();
-		this.bwAvgChart = polylineManager.getBwAvg();
-		this.bwLast = polylineManager.getBwLast();
+		this.duration = Metric.timeMetricFormat(
+				polylineManager.getDurAvg(),
+				polylineManager.getDurMin(),
+				polylineManager.getDurMax());
+		this.latency = Metric.timeMetricFormat(
+				polylineManager.getLatAvg(),
+				polylineManager.getLatMin(),
+				polylineManager.getLatMax());
+		this.thoughput = Metric.speedMetricFormat(
+				polylineManager.getTpAvg(),
+				polylineManager.getTpLast());
+		this.bandwidth = Metric.speedMetricFormat(
+				polylineManager.getBwAvg(),
+				polylineManager.getBwLast());
 	}
 }
