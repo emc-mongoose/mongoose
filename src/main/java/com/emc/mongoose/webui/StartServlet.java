@@ -9,6 +9,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-core-impl.jar
 // mongoose-server-api.jar
+import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
 // mongoose-storage-mock.jar
@@ -145,7 +146,7 @@ public final class StartServlet extends CommonServlet {
 				setName("run<" + appConfig.getRunId() + ">");
 				ThreadContext.put(AppConfig.KEY_LOAD_METRICS_PERIOD,
 					String.valueOf(appConfig.getLoadMetricsPeriod()));
-				// TODO use scenario runner
+				new ScenarioRunner().run();
 				LOG.info(Markers.MSG, "Scenario end");
 				//
 			}

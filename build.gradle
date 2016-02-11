@@ -372,7 +372,8 @@ dependencies {
 		library.commons_configuration,
 		library.commons_collections4,
 		library.log4j_api,
-		library.httpcore
+		library.httpcore,
+		library.jackson_databind,
 	)
 	scenarioRuntime (
 		library.runtime_logging,

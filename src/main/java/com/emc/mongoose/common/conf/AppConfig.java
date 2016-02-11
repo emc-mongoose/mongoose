@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.configuration.Configuration;
 //
 import java.io.Externalizable;
+import java.util.Map;
 /**
  Created by kurila on 20.01.16.
  */
@@ -44,8 +45,9 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_RUN_ID = "run.id";
 	String KEY_RUN_MODE = "run.mode";
 	String KEY_RUN_NAME = "run.name";
-	String KEY_RUN_RESUME_ENABLED = "run.resume.enabled";
 	String KEY_RUN_VERSION = "run.version";
+	String KEY_RUN_FILE = "run.file";
+	String KEY_RUN_RESUME_ENABLED = "run.resume.enabled";
 	String KEY_STORAGE_CLASS = "storage.class";
 	String KEY_STORAGE_HTTP_ADDRS = "storage.http.addrs";
 	String KEY_STORAGE_HTTP_API_CLASS = "storage.http.api.class";
@@ -68,6 +70,7 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_NETWORK_SOCKET_BIND_BACKLOG_SIZe = "network.socket.bindBacklogSize";
 	String KEY_NETWORK_SOCKET_INTEREST_OP_QUEUED = "network.socket.interestOpQueued";
 	String KEY_NETWORK_SOCKET_SELECT_INTERVAL = "network.socket.selectInterval";
+	//
 	String FNAME_CONF = "defaults.json";
 	String PREFIX_KEY_ALIASING = "aliasing";
 
@@ -169,9 +172,11 @@ extends Cloneable, Configuration, Externalizable {
 
 	String getRunName();
 
-	boolean getRunResumeEnabled();
-
 	String getRunVersion();
+
+	String getRunFile();
+
+	boolean getRunResumeEnabled();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -204,6 +209,8 @@ extends Cloneable, Configuration, Externalizable {
 	int getStorageHttpMockContainerCountLimit();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void override(final String branch, final Map<String, ?> tree);
 
 	ObjectNode toJsonTree(final ObjectMapper mapper)
 	throws IllegalStateException;

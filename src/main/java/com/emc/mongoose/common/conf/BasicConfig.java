@@ -28,6 +28,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.Map;
 /**
  Created by kurila on 20.01.16.
  */
@@ -283,13 +284,18 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public boolean getRunResumeEnabled() {
-		return getBoolean(CONFIG_ROOT + KEY_RUN_RESUME_ENABLED);
+	public String getRunVersion() {
+		return getString(CONFIG_ROOT + KEY_RUN_VERSION);
 	}
 	//
 	@Override
-	public String getRunVersion() {
-		return getString(CONFIG_ROOT + KEY_RUN_VERSION);
+	public String getRunFile() {
+		return getString(CONFIG_ROOT + KEY_RUN_FILE);
+	}
+	//
+	@Override
+	public boolean getRunResumeEnabled() {
+		return getBoolean(CONFIG_ROOT + KEY_RUN_RESUME_ENABLED);
 	}
 	//
 	@Override
@@ -371,6 +377,21 @@ implements AppConfig {
 	@Override
 	public int getStorageHttpMockContainerCountLimit() {
 		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_CONTAINER_COUNT_LIMIT);
+	}
+	//
+	@Override
+	public void override(final String configBranch, final Map<String, ?> configTree) {
+		Object v;
+		String compositeKey;
+		for(final String k : configTree.keySet()) {
+			v = configTree.get(k);
+			compositeKey = configBranch == null ? k : configBranch + getDefaultListDelimiter() + k;
+			if(v instanceof Map) {
+				override(compositeKey, (Map<String, ?>) v);
+			} else {
+				setProperty(compositeKey, v);
+			}
+		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Serialization and formatting section

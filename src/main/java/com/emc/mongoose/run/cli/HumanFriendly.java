@@ -41,7 +41,9 @@ public class HumanFriendly {
         CONNS("n", "Number of concurrent connections per storage node", true, AppConfig.KEY_LOAD_THREADS),
         HELP("h", "Displays this message", false, new NullOptionConverter()),
         RUN_ID("z", "Sets run id", true, new SystemOptionConverter(AppConfig.KEY_RUN_ID)),
-        USE_DEPLOYMENT_OUTPUT("o", "Use deployment output", false, new DeploymentOutputConverter());
+        USE_DEPLOYMENT_OUTPUT("o", "Use deployment output", false, new DeploymentOutputConverter()),
+
+        FILE("f", "Json scenario input file", true, AppConfig.KEY_RUN_FILE);
 
         private final String shortName;
         private final String description;
