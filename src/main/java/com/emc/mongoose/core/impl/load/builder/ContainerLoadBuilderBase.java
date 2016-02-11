@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicItemIdGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
@@ -64,7 +65,9 @@ implements ContainerLoadBuilder<T, C, U>{
 	@SuppressWarnings("unchecked")
 	private ItemSrc getNewItemSrc()
 	throws NoSuchMethodException {
-		return new NewContainerSrc<>(ioConfig.getContainerClass(), appConfig.getItemNaming());
+		return new NewContainerSrc<>(
+			ioConfig.getContainerClass(), new BasicItemIdGenerator(appConfig.getItemNaming())
+		);
 	}
 	//
 	@SuppressWarnings("unchecked")

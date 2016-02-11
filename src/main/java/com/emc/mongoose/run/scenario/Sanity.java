@@ -2,6 +2,7 @@ package com.emc.mongoose.run.scenario;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
@@ -68,7 +69,7 @@ implements Runnable {
 				DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
-			// update the created items
+			/* update the created items
 			LOG.info(Markers.MSG, "Start updating {} items", itemBuff.size());
 			final ItemDst<HttpDataItem> dataDstU = new ItemBinFileDst<>();
 			final long nUpdated = client.update(
@@ -106,7 +107,7 @@ implements Runnable {
 			final long nRead2 = client.read(
 				dataDstU2.getItemSrc(), null, nUpdated2, DEFAULT_CONN_PER_NODE, true
 			);
-			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
+			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);*/
 			// recreate the items
 			final ItemDst<HttpDataItem> dataDstW2 = new ItemCSVFileDst<>(
 				(Class<? extends HttpDataItem>) BasicHttpObject.class,

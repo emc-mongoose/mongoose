@@ -6,7 +6,6 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
@@ -50,7 +49,6 @@ extends DataLoadBuilderBase<T, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected U buildActually() {
-		final IOTask.Type loadType = ioConfig.getLoadType();
 		return (U) new BasicFileLoadExecutor<>(
 			BasicConfig.THREAD_CONTEXT.get(), (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
 			null, threadCount, itemSrc == null ? getDefaultItemSource() : itemSrc,

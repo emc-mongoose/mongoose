@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.item.data;
 //
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -197,7 +198,9 @@ implements ContentSource {
 		long word = seed;
 		int i;
 		double d = System.nanoTime();
-		LOG.debug(Markers.MSG, "Prepare {} of ring data...", SizeInBytes.formatFixedSize(ringBuffSize));
+		LOG.debug(
+			Markers.MSG, "Prepare {} of ring data...", SizeInBytes.formatFixedSize(ringBuffSize)
+		);
 		// 64-bit words
 		byteLayer.clear();
 		for(i = 0; i < countWords; i ++) {

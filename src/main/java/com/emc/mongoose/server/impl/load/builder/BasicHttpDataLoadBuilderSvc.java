@@ -102,27 +102,11 @@ implements HttpDataLoadBuilderSvc<T, U> {
 		final AppConfig localAppConfig = BasicConfig.THREAD_CONTEXT.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		localAppConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
-		if(minObjSize > maxObjSize) {
-			throw new IllegalStateException(
-				String.format(
-					LogUtil.LOCALE_DEFAULT, "Min object size %s should be less than upper bound %s",
-					SizeInBytes.formatFixedSize(minObjSize), SizeInBytes.formatFixedSize(maxObjSize)
-				)
-			);
-		}
 		//
-		final IOTask.Type loadType = ioConfig.getLoadType();
-		final int
-			connPerNode = loadTypeConnPerNode.get(loadType),
-			minThreadCount = getMinIOThreadCount(
-				loadTypeWorkerCount.get(loadType), storageNodeAddrs.length, connPerNode
-			);
 		//
 		return (U) new BasicHttpDataLoadSvc<>(
-			localAppConfig, httpReqConf, storageNodeAddrs, connPerNode, minThreadCount,
-			itemSrc == null ? getDefaultItemSource() : itemSrc,
-			maxCount, minObjSize, maxObjSize, objSizeBias,
-			manualTaskSleepMicroSecs, rateLimit, randomRangesCount
+			localAppConfig, httpReqConf, storageNodeAddrs, threadCount,
+			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
 		);
 	}
 	//

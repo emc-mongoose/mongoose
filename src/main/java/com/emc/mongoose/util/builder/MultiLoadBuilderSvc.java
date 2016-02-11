@@ -180,37 +180,10 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setWorkerCountDefault(final int threadCount)
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setWorkerCountDefault(threadCount);
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderSvc setWorkerCountFor(final int threadCount, final IOTask.Type loadType)
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setWorkerCountFor(threadCount, loadType);
-		}
-		return this;
-	}
-	//
-	@Override
 	public final LoadBuilderSvc setThreadCount(final int threadCount)
 	throws IllegalArgumentException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.setThreadCount(threadCount);
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderSvc setConnPerNodeFor(final int connCount, final IOTask.Type loadType)
-	throws IllegalArgumentException, RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setConnPerNodeFor(connCount, loadType);
 		}
 		return this;
 	}

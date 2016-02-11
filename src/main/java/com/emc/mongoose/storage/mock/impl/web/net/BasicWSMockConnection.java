@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.mock.impl.web.net;
 //
 import com.emc.mongoose.common.conf.Constants;
 //
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import org.apache.http.Header;
@@ -127,7 +128,8 @@ extends DefaultNHttpServerConnection {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "{}: IN buffer size {} to {}", socket,
-						SizeInBytes.formatFixedSize(lastBuffSize), SizeInBytes.formatFixedSize(newBuffSize)
+						SizeInBytes.formatFixedSize(lastBuffSize),
+						SizeInBytes.formatFixedSize(newBuffSize)
 					);
 				}
 				socket.setSendBufferSize(newBuffSize);
@@ -161,7 +163,8 @@ extends DefaultNHttpServerConnection {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "{}: OUT buffer size {} to {}", socket,
-						SizeInBytes.formatFixedSize(lastBuffSize), SizeInBytes.formatFixedSize(newBuffSize)
+						SizeInBytes.formatFixedSize(lastBuffSize),
+						SizeInBytes.formatFixedSize(newBuffSize)
 					);
 				}
 				socket.setSendBufferSize(newBuffSize);

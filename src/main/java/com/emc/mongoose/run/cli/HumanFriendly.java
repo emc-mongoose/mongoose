@@ -36,7 +36,7 @@ public class HumanFriendly {
         WRITE("w", "Perform object write", false, new CompositeOptionConverter(AppConfig.KEY_LOAD_CLASS, "create")),
         DELETE("d", "Perform object delete", false, new CompositeOptionConverter(AppConfig.KEY_LOAD_CLASS, "delete",
                 AppConfig.KEY_ITEM_SRC_FILE)),
-        LENGTH("l", "Size of the object to write", true, AppConfig.KEY_ITEM_DATA_SIZE_FIXED),
+        LENGTH("l", "Size of the object to write", true, AppConfig.KEY_ITEM_DATA_SIZE),
         COUNT("c", "Count of objects to write", true, AppConfig.KEY_LOAD_LIMIT_COUNT),
         CONNS("n", "Number of concurrent connections per storage node", true, AppConfig.KEY_LOAD_THREADS),
         HELP("h", "Displays this message", false, new NullOptionConverter()),

@@ -89,13 +89,9 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 		// the statement below fixes hi-level API distributed mode usage and tests
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
-		final IOTask.Type loadType = ioConfig.getLoadType();
-		final int connPerNode = loadTypeConnPerNode.get(loadType);
-		//
 		return (U) new BasicDirectoryLoadSvc<>(
-			appConfig, (FileIOConfig<T, C>) ioConfig, storageNodeAddrs, connPerNode, connPerNode,
-			itemSrc == null ? getDefaultItemSource() : itemSrc,
-			maxCount, manualTaskSleepMicroSecs, rateLimit
+			appConfig, (FileIOConfig<T, C>) ioConfig, storageNodeAddrs, threadCount,
+			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
 		);
 	}
 	//

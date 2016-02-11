@@ -2,6 +2,7 @@ package com.emc.mongoose.util.client.impl;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.base.ItemDst;
@@ -68,9 +69,7 @@ implements StorageClient<T> {
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
-				.setMinObjSize(minSize)
-				.setMaxObjSize(maxSize)
-				.setObjSizeBias(sizeBias);
+				.setDataSize(new SizeInBytes(minSize, maxSize, sizeBias));
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -90,7 +89,8 @@ implements StorageClient<T> {
 		final int randomRangesCount
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
-			((DataLoadBuilder) loadBuilder).setRandomRangesCount(randomRangesCount);
+			((DataLoadBuilder) loadBuilder)
+				.setDataRanges(Integer.toString(randomRangesCount));
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -159,7 +159,7 @@ implements StorageClient<T> {
 	) throws IllegalStateException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
-				.setRandomRangesCount(randomRangesCount)
+				.setDataRanges(Integer.toString(randomRangesCount))
 				.useContainerListingItemSrc()
 				.getIOConfig().setVerifyContentFlag(verifyContentFlag);
 		}
