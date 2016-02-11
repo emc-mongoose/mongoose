@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeInBytes;
-import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
+import com.emc.mongoose.common.date.AsyncDateGenerator;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
@@ -594,7 +594,7 @@ implements HttpRequestConfig<T, C> {
 	};*/
 	//
 	protected void applyDateHeader(final HttpRequest httpRequest) {
-		httpRequest.setHeader(HttpHeaders.DATE, LowPrecisionDateGenerator.getDateText());
+		httpRequest.setHeader(HttpHeaders.DATE, AsyncDateGenerator.INSTANCE.get());
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Apply date header \"{}\" to the request: \"{}\"",
