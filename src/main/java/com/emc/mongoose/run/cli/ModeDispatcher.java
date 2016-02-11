@@ -7,6 +7,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
+import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import com.emc.mongoose.run.webserver.WUIRunner;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
@@ -83,7 +84,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
-				runScenario();
+				new ScenarioRunner().run();
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -92,18 +93,6 @@ public final class ModeDispatcher {
 		}
 		//
 		ServiceUtil.shutdown();
-	}
-
-	private static void runScenario() {
-		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-		if (appConfig != null) {
-			// TODO
-			LogManager.getRootLogger().info(Markers.MSG, "Scenario end");
-		} else {
-			throw new NullPointerException(
-				"appConfig hasn't been initialized"
-			);
-		}
 	}
 }
 //

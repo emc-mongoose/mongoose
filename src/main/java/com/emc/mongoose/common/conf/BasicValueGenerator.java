@@ -29,7 +29,7 @@ implements ValueGenerator<T> {
 			lastValue = updateAction.call();
 		} catch(final Exception e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "The update action \"{}\" has failed", updateAction
+				LOG, Level.WARN, e, "Failed to execute the update action \"{}\"", updateAction
 			);
 		}
 		return lastValue;

@@ -1,5 +1,7 @@
 package com.emc.mongoose.common.conf;
 //
+import com.emc.mongoose.common.log.LogUtil;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -35,13 +37,20 @@ extends BasicValueGenerator<T> {
 		}
 	};
 	//
-	public AsyncValueGenerator(final T initialValue, final Callable<T> updateTask) {
+	public AsyncValueGenerator(final T initialValue, final Callable<T> updateAction) {
 		super(initialValue, null);
 		UPDATE_TASKS.add(
 			new Runnable() {
 				@Override
 				public final void run() {
-					lastValue = AsyncValueGenerator.super.get();
+					try {
+						lastValue = updateAction.call();
+					} catch(final Exception e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e,
+							"Failed to execute the update action \"{}\"", updateAction
+						);
+					}
 				}
 			}
 		);
