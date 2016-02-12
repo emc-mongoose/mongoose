@@ -109,7 +109,9 @@ extends WSRequestHandlerBase<T> {
 				httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 			}
 		} catch(final IllegalArgumentException | IllegalStateException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to parse the request URI: {}", requestURI);
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to parse the request URI: {}", requestURI
+			);
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 		}
 	}
