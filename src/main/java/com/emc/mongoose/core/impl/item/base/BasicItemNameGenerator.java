@@ -5,8 +5,6 @@ import com.emc.mongoose.common.math.MathUtil;
 //
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.base.ItemNamingType;
-
-import java.util.concurrent.Callable;
 /**
  Created by kurila on 18.12.15.
  */
@@ -14,20 +12,10 @@ public class BasicItemNameGenerator
 extends BasicValueGenerator<String> {
 	//
 	protected final ItemNamingType namingType;
-	protected final String prefix;
 	protected final int length, prefixLength, radix;
 	protected final StringBuilder strb = new StringBuilder();
 	//
-	protected long lastValue;
-	//
-	private final class UpdateAction
-	implements Callable<Long> {
-		@Override
-		public Long call()
-		throws Exception {
-			return lastValue ++;
-		}
-	}
+	protected volatile long lastValue;
 	//
 	public BasicItemNameGenerator(
 		final ItemNamingType namingType, final String prefix, final int length, final int radix,
@@ -42,7 +30,7 @@ extends BasicValueGenerator<String> {
 			this.namingType = ItemNamingType.RANDOM;
 		}
 		//
-		this.prefix = prefix;
+		strb.append(prefix);
 		//
 		if(prefix != null) {
 			this.prefixLength = prefix.length();
@@ -89,10 +77,21 @@ extends BasicValueGenerator<String> {
 		switch(namingType) {
 			case RANDOM:
 				lastValue = Math.abs(MathUtil.xorShift(lastValue ^ System.nanoTime()));
+				break;
 			case ASC:
-				lastValue ++;
+				if(lastValue < Long.MAX_VALUE) {
+					lastValue ++;
+				} else {
+					lastValue = 0;
+				}
+				break;
 			case DESC:
-				lastValue --;
+				if(lastValue > 0) {
+					lastValue --;
+				} else {
+					lastValue = Long.MAX_VALUE;
+				}
+				break;
 		}
 		//
 		final String numStr = Long.toString(lastValue, radix);
@@ -103,7 +102,7 @@ extends BasicValueGenerator<String> {
 			}
 			strb.append(numStr);
 		} else if(nZeros < 0) {
-			strb.append(numStr.substring(nZeros - 1));
+			strb.append(numStr.substring(-nZeros));
 		} else {
 			strb.append(numStr);
 		}

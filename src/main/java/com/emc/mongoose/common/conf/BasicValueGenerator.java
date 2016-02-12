@@ -15,7 +15,7 @@ implements ValueGenerator<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected T lastValue = null;
+	protected volatile T lastValue = null;
 	protected Callable<T> updateAction;
 	//
 	public BasicValueGenerator(final T initialValue, final Callable<T> updateAction) {

@@ -11,7 +11,7 @@ import java.util.concurrent.Callable;
  Created by kurila on 16.04.15.
  */
 public final class AsyncDateGenerator
-	extends AsyncValueGenerator<String> {
+extends AsyncValueGenerator<String> {
 	//
 	public final static AsyncDateGenerator INSTANCE = new AsyncDateGenerator();
 	public final static String PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
