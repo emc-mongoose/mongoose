@@ -14,7 +14,6 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
@@ -345,6 +344,12 @@ implements WSRequestConfig<T, C> {
 	}
 	//
 	@Override
+	public WSRequestConfigBase<T, C> setNameRadix(final int radix) {
+		super.setNameRadix(radix);
+		return this;
+	}
+	//
+	@Override
 	public final WSRequestConfigBase<T, C> setLoadType(final IOTask.Type loadType) {
 		super.setLoadType(loadType);
 		return this;
@@ -506,13 +511,13 @@ implements WSRequestConfig<T, C> {
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {
-		final String oldOid = dataItem.getName();
+		/*final String oldOid = dataItem.getName();
 		if(
 			oldOid == null || oldOid.isEmpty() ||
 			(verifyContentFlag && IOTask.Type.READ.equals(loadType)) || fsAccess
 		) {
 			dataItem.setName(Long.toString(dataItem.getOffset(), MutableDataItem.ID_RADIX));
-		}
+		}*/
 	}
 	//
 	@Override

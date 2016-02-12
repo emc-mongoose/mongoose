@@ -1,6 +1,5 @@
 package com.emc.mongoose.integ.feature.filesystem;
 
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -10,8 +9,6 @@ import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogValidator;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -53,7 +50,7 @@ extends DistributedLoadBuilderTestBase {
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "file");
-		rtConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "/tmp/" + RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, RAMPUP_SIZES);
@@ -83,7 +80,7 @@ extends DistributedLoadBuilderTestBase {
 	public  static void tearDownClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "data");
-		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "");
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "");
 		DistributedLoadBuilderTestBase.tearDownClass();
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
 		for(final File f : tgtDir.listFiles()) {

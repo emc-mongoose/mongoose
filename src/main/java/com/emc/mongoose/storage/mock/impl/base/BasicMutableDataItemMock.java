@@ -35,6 +35,12 @@ implements MutableDataItemMock {
 	}
 	//
 	public BasicMutableDataItemMock(
+		final String name, final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		super(name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicMutableDataItemMock(
 		final String name, final Long offset, final Long size, final Integer layerNum,
 		final ContentSource contentSrc
 	) {

@@ -32,6 +32,12 @@ implements WSObjectMock {
 	}
 	//
 	public BasicWSObjectMock(
+		final String name, final long offset, final long size, final ContentSource contentSrc
+	) {
+		super(name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicWSObjectMock(
 		final String name, final long offset, final long size, final int layerNum,
 		final ContentSource contentSrc
 	) {

@@ -53,7 +53,7 @@ extends DistributedLoadBuilderTestBase {
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "file");
-		rtConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "/tmp/" + RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_NAME, TestConstants.SCENARIO_RAMPUP);
 		rtConfig.set(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES, RAMPUP_SIZES);
@@ -82,7 +82,7 @@ extends DistributedLoadBuilderTestBase {
 	public  static void tearDownClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "data");
-		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "");
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "");
 		DistributedLoadBuilderTestBase.tearDownClass();
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
 		for(final File f : tgtDir.listFiles()) {

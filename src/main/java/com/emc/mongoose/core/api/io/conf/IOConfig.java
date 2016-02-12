@@ -32,6 +32,9 @@ extends Externalizable, Cloneable, Closeable {
 	String getNamePrefix();
 	IOConfig<T, C> setNamePrefix(final String namePrefix);
 	//
+	int getNameRadix();
+	IOConfig<T, C> setNameRadix(final int radix);
+	//
 	ContentSource getContentSource();
 	IOConfig<T, C> setContentSource(final ContentSource dataSrc);
 	//

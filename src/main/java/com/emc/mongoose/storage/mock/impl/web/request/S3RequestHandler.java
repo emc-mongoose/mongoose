@@ -94,7 +94,7 @@ extends WSRequestHandlerBase<T> {
 							WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ||
 							WSRequestConfig.METHOD_POST.equalsIgnoreCase(method)
 						) {
-							offset = Long.parseLong(objId, MutableDataItem.ID_RADIX);
+							offset = Long.parseLong(objId, Character.MAX_RADIX);
 						} else {
 							offset = -1;
 						}

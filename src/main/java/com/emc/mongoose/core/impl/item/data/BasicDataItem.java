@@ -70,7 +70,13 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(final Long offset, final Long size, final ContentSource contentSrc) {
-		this(Long.toString(offset, ID_RADIX), offset, size, 0, contentSrc);
+		this(Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
+	}
+	//
+	public BasicDataItem(
+		final String name, final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		this(name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
