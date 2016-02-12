@@ -43,12 +43,10 @@ public class HeaderFormatter {
 		return counter;
 	}
 
-	;
-
 	/**
 	 *
 	 * @param expression is a string which follows patternSymbol.
-	 * @return
+	 * @return presence of the range
 	 */
 	private boolean isRangePresented(StringBuilder expression) {
 		return expression.length() >= 2 && expression.charAt(1) == rangeSymbols[0];
