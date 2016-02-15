@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.conf;
+package com.emc.mongoose.common.generator;
 /**
  Created by kurila on 10.02.16.
  */

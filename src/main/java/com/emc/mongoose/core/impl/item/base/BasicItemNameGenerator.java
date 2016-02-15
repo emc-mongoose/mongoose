@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.item.base;
 //
-import com.emc.mongoose.common.conf.BasicValueGenerator;
+import com.emc.mongoose.common.generator.BasicValueGenerator;
 import com.emc.mongoose.common.math.MathUtil;
 //
 import com.emc.mongoose.common.net.ServiceUtil;

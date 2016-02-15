@@ -1,6 +1,5 @@
-package com.emc.mongoose.common.date;
+package com.emc.mongoose.common.generator;
 //
-import com.emc.mongoose.common.conf.AsyncValueGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import java.text.DateFormat;

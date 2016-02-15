@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.conf;
+package com.emc.mongoose.common.net.http.request.format;
 
 // todo add an empty string at the beginning or in the end of the pattern if it is necessary
 public class HeaderFormatter {
@@ -64,7 +64,7 @@ public class HeaderFormatter {
 			addRange(expression, index);
 		} else {
 			ranges[index] = null;
-			expression.delete(0, 2);
+			expression.delete(0, 1);
 		}
 	}
 
@@ -88,4 +88,15 @@ public class HeaderFormatter {
 		result.append("\n");
 		return result.toString();
 	}
+
+	public void format() {
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < segments.length - 1; i++) {
+			result.append(segments[i]).append("%temp%");
+		}
+		result.append(segments[segments.length - 1]);
+		System.out.println(result);
+	}
+
+
 }

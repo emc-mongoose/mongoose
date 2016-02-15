@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.conf;
+package com.emc.mongoose.common.generator;
 //
 import com.emc.mongoose.common.log.LogUtil;
 //
@@ -22,6 +22,10 @@ implements ValueGenerator<T> {
 		lastValue = initialValue;
 		this.updateAction = updateAction;
 	}
+
+	public BasicValueGenerator() {
+	}
+
 	//
 	@Override
 	public T get() {

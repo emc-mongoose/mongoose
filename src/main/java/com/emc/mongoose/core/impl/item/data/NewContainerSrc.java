@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.item.data;
 
-import com.emc.mongoose.common.conf.ValueGenerator;
+import com.emc.mongoose.common.generator.ValueGenerator;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.base.ItemSrc;

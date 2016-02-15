@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.conf;
+package com.emc.mongoose.common.generator;
 //
 import com.emc.mongoose.common.log.LogUtil;
 import org.apache.logging.log4j.Level;
@@ -55,6 +55,7 @@ extends BasicValueGenerator<T> {
 			}
 		);
 	}
+
 	//
 	@Override
 	public final T get() {

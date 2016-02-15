@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.conf;
+package com.emc.mongoose.common.net.http.request.format;
 
 public class HFDemo {
 
@@ -6,8 +6,9 @@ public class HFDemo {
 
 	public static void main(String[] args) {
 		HeaderFormatter formatter = new HeaderFormatter(pattern);
-		System.out.println(pattern);
-		System.out.println(formatter);
+		formatter.format();
+//		System.out.println(pattern);
+//		System.out.println(formatter);
 	}
 
 }
