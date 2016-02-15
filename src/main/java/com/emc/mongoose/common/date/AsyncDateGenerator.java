@@ -13,13 +13,13 @@ import java.util.concurrent.Callable;
 public final class AsyncDateGenerator
 extends AsyncValueGenerator<String> {
 	//
-	public final static AsyncDateGenerator INSTANCE = new AsyncDateGenerator();
 	public final static String PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
 	public final static DateFormat FMT_DATE = new SimpleDateFormat(
 		PATTERN_RFC1123, LogUtil.LOCALE_DEFAULT
 	) {{
 		setTimeZone(LogUtil.TZ_UTC);
 	}};
+	public final static AsyncDateGenerator INSTANCE = new AsyncDateGenerator();
 	//
 	private AsyncDateGenerator() {
 		super(
