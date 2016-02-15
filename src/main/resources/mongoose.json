@@ -188,7 +188,7 @@
 			"naming" : {
 				"type" : "random",
 				"prefix" : null,
-				"length" : 14,
+				"length" : 13,
 				"radix" : 36,
 				"offset" : 0
 			},

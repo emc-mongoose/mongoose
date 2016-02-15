@@ -4,7 +4,7 @@ import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
+import com.emc.mongoose.common.date.AsyncDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -109,9 +109,7 @@ implements WSMock<T> {
 					public void process(
 						final HttpResponse response, final HttpContext context
 					) throws HttpException, IOException {
-						response.setHeader(
-							HTTP.DATE_HEADER, LowPrecisionDateGenerator.getDateText()
-						);
+						response.setHeader(HTTP.DATE_HEADER, AsyncDateGenerator.INSTANCE.get());
 					}
 				}
 			)

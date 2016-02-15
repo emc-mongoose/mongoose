@@ -45,7 +45,7 @@ implements Runnable {
 			this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
 			this.timeUnit = timeOut > 0 ? rtConfig.getLoadLimitTimeUnit() : TimeUnit.DAYS;
 			this.loadJob = loadBuilder.build();
-		} catch(final IOException e) {
+		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.FATAL, e, "Failed to build the load job");
 		}
 	}

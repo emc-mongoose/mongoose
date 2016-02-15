@@ -12,6 +12,7 @@ import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -75,8 +76,11 @@ implements DataLoadBuilder<T, U> {
 			}
 		}
 		final BasicItemNameGenerator bing = new BasicItemNameGenerator(
-			namingType, rtConfig.getItemNamingPrefix(), rtConfig.getItemNamingLength(),
-			rtConfig.getItemNamingRadix(), rtConfig.getItemNamingOffset()
+			namingType,
+			FileItem.class.isAssignableFrom(ioConfig.getItemClass()) ?
+				null : rtConfig.getItemNamingPrefix(),
+			rtConfig.getItemNamingLength(), rtConfig.getItemNamingRadix(),
+			rtConfig.getItemNamingOffset()
 		);
 		return new NewDataItemSrc<>(
 			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(),

@@ -120,7 +120,7 @@ implements DataItem {
 	//
 	@Override
 	public final void setOffset(final long offset) {
-		this.offset = offset;
+		this.offset = offset < 0 ? Long.MAX_VALUE + offset + 1 : offset;
 		reset();
 	}
 	//
@@ -219,7 +219,7 @@ implements DataItem {
 		}
 		return strBuilder
 			.append(name).append(RunTimeConfig.LIST_SEP)
-			.append(Long.toHexString(offset)).append(RunTimeConfig.LIST_SEP)
+			.append(Long.toString(offset, 0x10)).append(RunTimeConfig.LIST_SEP)
 			.append(size).toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
