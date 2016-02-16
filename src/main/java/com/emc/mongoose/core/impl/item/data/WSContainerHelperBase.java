@@ -60,7 +60,7 @@ implements ContainerHelper<T, C> {
 		String name = null;
 		if(rawId != null && !rawId.isEmpty()) {
 			if(fsAccess) { // include the items which have the path matching to configured one
-				if(rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
+				if(idPrefix != null && rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
 					name = rawId.substring(idPrefixLen + 1);
 					if(name.contains("/")) { // doesn't include the items from the subdirectories
 						name = null;
@@ -71,8 +71,10 @@ implements ContainerHelper<T, C> {
 					}
 				}
 			} else {
-				if(rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
+				if(idPrefix != null && rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
 					name = rawId.substring(idPrefixLen);
+				} else {
+					name = rawId;
 				}
 			}
 		}

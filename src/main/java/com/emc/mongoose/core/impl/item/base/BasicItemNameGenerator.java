@@ -30,16 +30,14 @@ extends BasicValueGenerator<String> {
 			this.namingType = ItemNamingType.RANDOM;
 		}
 		//
-		strb.append(prefix);
-		//
 		if(prefix != null) {
+			strb.append(prefix);
 			this.prefixLength = prefix.length();
 			if(length > prefix.length()) {
 				this.length = length;
 			} else {
 				throw new IllegalArgumentException("Id length should be more than prefix length");
 			}
-
 		} else {
 			prefixLength = 0;
 			if(length > 0){

@@ -8,6 +8,7 @@ import com.emc.mongoose.core.impl.item.base.ListItemDst;
 import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -51,6 +52,16 @@ extends DistributedClientTestBase {
 			//
 			RunIdFileManager.flushAll();
 		}
+	}
+	//
+	@AfterClass
+	public static void tearDownClass()
+	throws Exception {
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "");
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_LENGTH, "13");
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_TYPE, ItemNamingType.RANDOM.name());
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_RADIX, Integer.toString(Character.MAX_RADIX));
+		DistributedClientTestBase.tearDownClass();
 	}
 	//
 	@Test
