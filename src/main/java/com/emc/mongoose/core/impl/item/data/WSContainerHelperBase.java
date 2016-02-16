@@ -73,6 +73,8 @@ implements ContainerHelper<T, C> {
 			} else {
 				if(idPrefix != null && rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
 					name = rawId.substring(idPrefixLen);
+				} else {
+					name = rawId;
 				}
 			}
 		}
