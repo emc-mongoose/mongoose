@@ -52,7 +52,7 @@ public class HeaderFormatter {
 		return expression.length() >= 2 && expression.charAt(1) == RANGE_SYMBOLS[0];
 	}
 
-	private String getRange(StringBuilder expression, int index) {
+	private String getRange(StringBuilder expression) {
 		int closingSymbolPos = expression.indexOf(String.valueOf(RANGE_SYMBOLS[1]));
 		String range = expression.substring(2, closingSymbolPos);
 		expression.delete(0, closingSymbolPos + 1);
@@ -62,7 +62,7 @@ public class HeaderFormatter {
 	private void addExpressionParams(StringBuilder expression, int index) {
 		char type = expression.charAt(0);
 		if (isRangePresented(expression)) {
-			generators[index] = HeaderValueGeneratorFactory.createGenerator(type, getRange(expression, index));
+			generators[index] = HeaderValueGeneratorFactory.createGenerator(type, getRange(expression));
 		} else {
 			generators[index] = HeaderValueGeneratorFactory.createGenerator(type);
 			expression.delete(0, 1);
