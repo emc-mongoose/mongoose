@@ -5,16 +5,15 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+
+import static com.emc.mongoose.common.generator.AsyncDateGenerator.FMT_DATE;
 
 public class AsyncStringDateGenerator extends AsyncRangeGeneratorBase<String> {
 
 	private final static Logger LOG = LogManager.getLogger();
-	public final static DateFormat FMT_DATE = new SimpleDateFormat("yyyy/MM/dd", LogUtil.LOCALE_DEFAULT); //todo temp
 
-	private AsyncDateGenerator dateGenerator = null;
+	private AsyncDateGenerator dateGenerator;
 
 	public AsyncStringDateGenerator(String minValue, String maxValue) {
 		super(minValue, maxValue);
@@ -23,7 +22,6 @@ public class AsyncStringDateGenerator extends AsyncRangeGeneratorBase<String> {
 							FMT_DATE.parse(minValue),
 							FMT_DATE.parse(maxValue));
 		} catch (ParseException e) {
-			e.printStackTrace();
 			LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to parse the date."
 			);
@@ -36,7 +34,6 @@ public class AsyncStringDateGenerator extends AsyncRangeGeneratorBase<String> {
 			dateGenerator = new AsyncDateGenerator(
 					FMT_DATE.parse(initialValue));
 		} catch (ParseException e) {
-			e.printStackTrace();
 			LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to parse the date."
 			);

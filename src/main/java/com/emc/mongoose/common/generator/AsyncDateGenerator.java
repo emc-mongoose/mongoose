@@ -1,8 +1,19 @@
 package com.emc.mongoose.common.generator;
 
+import com.emc.mongoose.common.log.LogUtil;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class AsyncDateGenerator extends AsyncRangeGeneratorBase<Date> {
+
+	private final static Logger LOG = LogManager.getLogger();
+	public final static DateFormat FMT_DATE = new SimpleDateFormat("yyyy/MM/dd", LogUtil.LOCALE_DEFAULT);
 
 	private AsyncLongGenerator longGenerator;
 
@@ -14,7 +25,14 @@ public class AsyncDateGenerator extends AsyncRangeGeneratorBase<Date> {
 
 	public AsyncDateGenerator(Date initialValue) {
 		super(initialValue);
-		longGenerator = new AsyncLongGenerator(initialValue.getTime());
+		try {
+			longGenerator = new AsyncLongGenerator(
+					FMT_DATE.parse("1970/01/01").getTime(), initialValue.getTime());
+		} catch (ParseException e) {
+			LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to parse the date."
+			);
+		}
 	}
 
 	@Override
@@ -29,12 +47,6 @@ public class AsyncDateGenerator extends AsyncRangeGeneratorBase<Date> {
 
 	@Override
 	protected Date singleValue() {
-		Date date = null;
-		try {
-			date = new Date(longGenerator.get());
-		} catch (Exception e) {
-			singleValue();
-		}
-		return date;
+		return new Date(longGenerator.get());
 	}
 }

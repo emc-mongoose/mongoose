@@ -5,7 +5,7 @@ import com.emc.mongoose.common.generator.ValueGenerator;
 public class HeaderFormatter {
 
 	public static final char PATTERN_SYMBOL = '%';
-	public static final char[] RANGE_SYMBOLS = {'[',']'};
+	public static final char[] RANGE_SYMBOLS = {'{','}'};
 	public static final char RANGE_DELIMITER = '-';
 
 	private String[] segments;

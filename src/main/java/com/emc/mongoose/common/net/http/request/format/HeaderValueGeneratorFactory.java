@@ -1,13 +1,12 @@
 package com.emc.mongoose.common.net.http.request.format;
 
-import com.emc.mongoose.common.generator.AsyncDoubleGenerator;
-import com.emc.mongoose.common.generator.AsyncLongGenerator;
-import com.emc.mongoose.common.generator.AsyncStringDateGenerator;
-import com.emc.mongoose.common.generator.ValueGenerator;
+import com.emc.mongoose.common.generator.*;
 
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.emc.mongoose.common.generator.AsyncDateGenerator.FMT_DATE;
 
 public class HeaderValueGeneratorFactory {
 
@@ -34,7 +33,7 @@ public class HeaderValueGeneratorFactory {
 			case 'd':
 				return new AsyncLongGenerator(47l);
 			case 'D':
-				return new AsyncStringDateGenerator(AsyncStringDateGenerator.FMT_DATE.format(new Date(System.currentTimeMillis())));
+				return new AsyncStringDateGenerator(FMT_DATE.format(new Date()));
 			default:
 				return null;
 		}
