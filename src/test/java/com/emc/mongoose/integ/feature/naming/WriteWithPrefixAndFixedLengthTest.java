@@ -2,10 +2,13 @@ package com.emc.mongoose.integ.feature.naming;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
+import com.emc.mongoose.core.api.item.base.ItemNamingType;
 import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
+import com.emc.mongoose.integ.base.DistributedClientTestBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -47,6 +50,16 @@ extends StandaloneClientTestBase {
 			//
 			RunIdFileManager.flushAll();
 		}
+	}
+	//
+	@AfterClass
+	public static void tearDownClass()
+	throws Exception {
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "");
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_LENGTH, "13");
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_TYPE, ItemNamingType.RANDOM.name());
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_RADIX, Integer.toString(Character.MAX_RADIX));
+		DistributedClientTestBase.tearDownClass();
 	}
 	//
 	@Test
