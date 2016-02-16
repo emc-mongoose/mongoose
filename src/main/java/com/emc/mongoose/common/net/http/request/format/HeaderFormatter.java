@@ -1,26 +1,26 @@
 package com.emc.mongoose.common.net.http.request.format;
 
-// todo add an empty string at the beginning or in the end of the pattern if it is necessary
+import com.emc.mongoose.common.generator.ValueGenerator;
+
 public class HeaderFormatter {
 
-	private static final char patternSymbol = '%';
-	private static final char[] rangeSymbols = {'[',']'};
+	public static final char PATTERN_SYMBOL = '%';
+	public static final char[] RANGE_SYMBOLS = {'[',']'};
+	public static final char RANGE_DELIMITER = '-';
 
-	char[] types;
-	String[] ranges;
-	String[] segments;
+	private String[] segments;
+	private ValueGenerator[] generators;
 
 	public HeaderFormatter(String pattern) {
 		int patternSymbolsNum = countPatternSymbols(pattern);
-		types = new char[patternSymbolsNum];
-		ranges = new String[patternSymbolsNum];
+		generators = new ValueGenerator[patternSymbolsNum];
 		segments = new String[patternSymbolsNum + 1];
 		StringBuilder segmentsBuilder = new StringBuilder();
 		StringBuilder patternBuilder = new StringBuilder(pattern);
 		int segmentCounter = 0;
 		for (int j = 0; j < patternSymbolsNum; j++) {
 			int i = 0;
-			while (patternBuilder.charAt(i) != patternSymbol) {
+			while (patternBuilder.charAt(i) != PATTERN_SYMBOL) {
 				segmentsBuilder.append(patternBuilder.charAt(i));
 				i++;
 			}
@@ -36,7 +36,7 @@ public class HeaderFormatter {
 	private int countPatternSymbols(String pattern) {
 		int counter = 0;
 		for (char each : pattern.toCharArray()) {
-			if (each == patternSymbol) {
+			if (each == PATTERN_SYMBOL) {
 				counter++;
 			}
 		}
@@ -45,25 +45,26 @@ public class HeaderFormatter {
 
 	/**
 	 *
-	 * @param expression is a string which follows patternSymbol.
+	 * @param expression is a string which follows PATTERN_SYMBOL.
 	 * @return presence of the range
 	 */
 	private boolean isRangePresented(StringBuilder expression) {
-		return expression.length() >= 2 && expression.charAt(1) == rangeSymbols[0];
+		return expression.length() >= 2 && expression.charAt(1) == RANGE_SYMBOLS[0];
 	}
 
-	private void addRange(StringBuilder expression, int index) {
-		int closingSymbolPos = expression.indexOf(String.valueOf(rangeSymbols[1]));
-		ranges[index] = expression.substring(2, closingSymbolPos);
+	private String getRange(StringBuilder expression, int index) {
+		int closingSymbolPos = expression.indexOf(String.valueOf(RANGE_SYMBOLS[1]));
+		String range = expression.substring(2, closingSymbolPos);
 		expression.delete(0, closingSymbolPos + 1);
+		return range;
 	}
 
 	private void addExpressionParams(StringBuilder expression, int index) {
-		types[index] = expression.charAt(0);
+		char type = expression.charAt(0);
 		if (isRangePresented(expression)) {
-			addRange(expression, index);
+			generators[index] = HeaderValueGeneratorFactory.createGenerator(type, getRange(expression, index));
 		} else {
-			ranges[index] = null;
+			generators[index] = HeaderValueGeneratorFactory.createGenerator(type);
 			expression.delete(0, 1);
 		}
 	}
@@ -71,14 +72,9 @@ public class HeaderFormatter {
 	@Override
 	public String toString() {
 		StringBuilder result = new StringBuilder();
-		result.append("Types: ");
-		for (char type: types) {
-			result.append(type).append(";");
-		}
-		result.append("\n");
-		result.append("Ranges: ");
-		for (String range: ranges) {
-			result.append(range).append(";");
+		result.append("Generators: ");
+		for (ValueGenerator generator: generators) {
+			result.append(generator.getClass().getName()).append(";");
 		}
 		result.append("\n");
 		result.append("Segments: ");
@@ -89,14 +85,16 @@ public class HeaderFormatter {
 		return result.toString();
 	}
 
-	public void format() {
+	public String format() {
 		StringBuilder result = new StringBuilder();
 		for (int i = 0; i < segments.length - 1; i++) {
-			result.append(segments[i]).append("%temp%");
+			result.append(segments[i]);
+			if (generators[i] != null) {
+				result.append(generators[i].get());
+			}
 		}
 		result.append(segments[segments.length - 1]);
-		System.out.println(result);
+		return result.toString();
 	}
-
 
 }

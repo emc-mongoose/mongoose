@@ -4,7 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -28,32 +28,36 @@ extends BasicValueGenerator<T> {
 		@Override
 		public final void run() {
 			while(!UPDATE_VALUES_WORKER.isInterrupted()) {
-				for(final Runnable updTask : UPDATE_TASKS) {
-					LockSupport.parkNanos(1);
-					updTask.run();
+				synchronized (UPDATE_TASKS) {
+					for (final Runnable updTask : UPDATE_TASKS) {
+						LockSupport.parkNanos(1);
+						updTask.run();
+					}
+					Thread.yield();
 				}
-				Thread.yield();
 			}
 		}
 	};
 	//
 	public AsyncValueGenerator(final T initialValue, final Callable<T> updateAction) {
 		super(initialValue, null);
-		UPDATE_TASKS.add(
-			new Runnable() {
-				@Override
-				public final void run() {
-					try {
-						lastValue = updateAction.call();
-					} catch(final Exception e) {
-						LogUtil.exception(
-							LOG, Level.WARN, e,
-							"Failed to execute the update action \"{}\"", updateAction
-						);
+		synchronized (UPDATE_TASKS) {
+			UPDATE_TASKS.add(
+				new Runnable() {
+					@Override
+					public final void run() {
+						try {
+							lastValue = updateAction.call();
+						} catch (final Exception e) {
+							LogUtil.exception(
+									LOG, Level.WARN, e,
+									"Failed to execute the update action \"{}\"", updateAction
+							);
+						}
 					}
 				}
-			}
-		);
+			);
+		}
 	}
 
 	//

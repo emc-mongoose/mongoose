@@ -1,11 +1,10 @@
 package com.emc.mongoose.common.generator;
 //
 import com.emc.mongoose.common.log.LogUtil;
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.util.concurrent.Callable;
 /**
  Created by kurila on 10.02.16.
@@ -23,9 +22,6 @@ implements ValueGenerator<T> {
 		this.updateAction = updateAction;
 	}
 
-	public BasicValueGenerator() {
-	}
-
 	//
 	@Override
 	public T get() {
@@ -34,8 +30,9 @@ implements ValueGenerator<T> {
 			lastValue = updateAction.call();
 		} catch(final Exception e) {
 			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to execute the update action \"{}\"", updateAction
+					LOG, Level.WARN, e, "Failed to execute the update action \"{}\"", updateAction
 			);
+			e.printStackTrace();
 		}
 		return prevValue;
 	}
