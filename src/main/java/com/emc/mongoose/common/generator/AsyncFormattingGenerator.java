@@ -2,22 +2,23 @@ package com.emc.mongoose.common.generator;
 
 import java.text.ParseException;
 
-public final class FormattingGenerator implements ValueGenerator<String> {
+public final class AsyncFormattingGenerator
+extends AsyncValueGenerator<String>
+implements ValueGenerator<String> {
 
 	public static final char PATTERN_SYMBOL = '%';
 	public static final char[] RANGE_SYMBOLS = {'[',']'};
 	public static final char RANGE_DELIMITER = '-';
 
-	private String[] segments;
-	private ValueGenerator[] generators;
+	private final String[] segments;
+	private final ValueGenerator<?>[] generators;
 
-	public FormattingGenerator(final String pattern)
+	public AsyncFormattingGenerator(final String pattern)
 	throws ParseException {
-		final int patternSymbolsNum = countPatternSymbols(pattern);
-		generators = new ValueGenerator[patternSymbolsNum];
-		segments = new String[patternSymbolsNum + 1];
+		this(countPatternSymbols(pattern), pattern);
 		StringBuilder segmentsBuilder = new StringBuilder();
 		StringBuilder patternBuilder = new StringBuilder(pattern);
+		final int patternSymbolsNum = segments.length - 1;
 		int segmentCounter = 0;
 		for (int j = 0; j < patternSymbolsNum; j++) {
 			int i = 0;
@@ -34,7 +35,45 @@ public final class FormattingGenerator implements ValueGenerator<String> {
 		segments[patternSymbolsNum] = patternBuilder.toString();
 	}
 
-	private int countPatternSymbols(final String pattern) {
+	private AsyncFormattingGenerator(final int patternSymbolsNum, final String pattern)
+	throws ParseException {
+		this(
+			new String[patternSymbolsNum + 1],
+			new ValueGenerator<?>[patternSymbolsNum]
+		);
+	}
+
+	private AsyncFormattingGenerator(
+		final String[] segments, final ValueGenerator<?>[] generators
+	) throws ParseException {
+		super(
+			null,
+			new InitCallable<String>() {
+				private final StringBuilder result = new StringBuilder();
+				@Override
+				public String call()
+				throws Exception {
+					result.setLength(0);
+					for (int i = 0; i < segments.length - 1; i++) {
+						result.append(segments[i]);
+						if (generators[i] != null) {
+							result.append(generators[i].get());
+						}
+					}
+					result.append(segments[segments.length - 1]);
+					return result.toString();
+				}
+				@Override
+				public boolean isInitialized() {
+					return true;
+				}
+			}
+		);
+		this.generators = generators;
+		this.segments = segments;
+	}
+
+	private static int countPatternSymbols(final String pattern) {
 		int counter = 0;
 		for (char each : pattern.toCharArray()) {
 			if (each == PATTERN_SYMBOL) {
@@ -85,22 +124,5 @@ public final class FormattingGenerator implements ValueGenerator<String> {
 		}
 		result.append("\n");
 		return result.toString();
-	}
-
-	public String format() {
-		final StringBuilder result = new StringBuilder();
-		for (int i = 0; i < segments.length - 1; i++) {
-			result.append(segments[i]);
-			if (generators[i] != null) {
-				result.append(generators[i].get());
-			}
-		}
-		result.append(segments[segments.length - 1]);
-		return result.toString();
-	}
-
-	@Override
-	public String get() {
-		return format();
 	}
 }

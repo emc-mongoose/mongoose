@@ -13,13 +13,13 @@ extends AsyncRangeGeneratorBase<Long> {
 
 	@Override
 	protected final Long computeRange(final Long minValue, final Long maxValue) {
-		return maxValue - minValue;
+		return maxValue - minValue + 1;
 	}
 
 
 	@Override
 	protected final Long rangeValue() {
-		return minValue() + (long) (random.nextDouble() * range()) + 1L;
+		return minValue() + (long) (random.nextDouble() * range());
 	}
 
 	@Override

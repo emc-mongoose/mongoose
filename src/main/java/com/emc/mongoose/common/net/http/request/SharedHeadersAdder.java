@@ -2,7 +2,7 @@ package com.emc.mongoose.common.net.http.request;
 //
 import com.emc.mongoose.common.generator.ValueGenerator;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.generator.FormattingGenerator;
+import com.emc.mongoose.common.generator.AsyncFormattingGenerator;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpException;
@@ -20,8 +20,9 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.LockSupport;
 
-import static com.emc.mongoose.common.generator.FormattingGenerator.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.generator.AsyncFormattingGenerator.PATTERN_SYMBOL;
 
 /**
 Created by kurila on 30.01.15.
@@ -47,12 +48,16 @@ implements HttpRequestInterceptor {
 			headerName = nextHeader.getName();
 			headerValue = nextHeader.getValue();
 			if(!request.containsHeader(headerName)) {
-				if (headerValue != null && headerValue.indexOf(PATTERN_SYMBOL) > 0) {
-					if (!headerFormatters.containsKey(nextHeader.getName())) {
+				if (headerValue != null && headerValue.indexOf(PATTERN_SYMBOL) > -1) {
+					if (!headerFormatters.containsKey(headerName)) {
 						try {
-							headerFormatters.put(
-								headerName, new FormattingGenerator(nextHeader.getValue())
-							);
+							final ValueGenerator<String>
+								formatter = new AsyncFormattingGenerator(headerValue);
+							while(null == formatter.get()) {
+								LockSupport.parkNanos(1);
+								Thread.yield();
+							}
+							headerFormatters.put(headerName, formatter);
 						} catch(final ParseException e) {
 							LogUtil.exception(
 								LOG, Level.ERROR, e, "Failed to parse the pattern \"{}\"",

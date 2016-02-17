@@ -22,7 +22,7 @@ public final class AsyncRangeGeneratorFactory {
 
 	// Pay attention to the escape symbols
 	private static String rangeRegExp(final String typeRegExp) {
-		return typeRegExp + FormattingGenerator.RANGE_DELIMITER + typeRegExp;
+		return typeRegExp + AsyncFormattingGenerator.RANGE_DELIMITER + typeRegExp;
 	}
 
 	public static ValueGenerator createGenerator(final char type)
