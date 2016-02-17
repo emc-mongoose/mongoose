@@ -467,7 +467,7 @@ implements Externalizable {
 		final List<String> nodes = new ArrayList<>();
 		for(String nodeAddr : getStorageAddrs()) {
 			if (!nodeAddr.contains(STORAGE_PORT_SEP)) {
-				nodeAddr = nodeAddr + STORAGE_PORT_SEP + getString(
+				nodeAddr = nodeAddr + STORAGE_PORT_SEP + getInt(
 					getApiPortParamName(getApiName().toLowerCase())
 				);
 			}
