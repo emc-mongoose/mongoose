@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.generator.AsyncDateGenerator.FMT_DATE;
 
-public class AsyncRangeGeneratorFactory {
+public final class AsyncRangeGeneratorFactory {
 
 	// pay attention to the matcher groups
 	private static final String doubleRegExp = "([-+]?\\d*\\.?\\d+)";
@@ -21,11 +21,11 @@ public class AsyncRangeGeneratorFactory {
 	}
 
 	// Pay attention to the escape symbols
-	private static String rangeRegExp(String typeRegExp) {
+	private static String rangeRegExp(final String typeRegExp) {
 		return typeRegExp + FormattingGenerator.RANGE_DELIMITER + typeRegExp;
 	}
 
-	public static ValueGenerator createGenerator(char type)
+	public static ValueGenerator createGenerator(final char type)
 	throws ParseException {
 		switch (type) {
 			case 'f':
@@ -39,9 +39,9 @@ public class AsyncRangeGeneratorFactory {
 		}
 	}
 
-	public static ValueGenerator createGenerator(char type, String range)
+	public static ValueGenerator createGenerator(final char type, final String range)
 	throws IllegalArgumentException, ParseException {
-		Matcher matcher;
+		final Matcher matcher;
 		switch (type) {
 			case 'f':
 				matcher = doublePattern.matcher(range);

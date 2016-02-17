@@ -18,7 +18,7 @@ extends AsyncRangeGeneratorBase<Double> {
 
 	@Override
 	protected final Double rangeValue() {
-		return minValue() + (random.nextDouble() * range());
+		return minValue() + (random.nextDouble() * range()) + 1.0;
 	}
 
 	@Override

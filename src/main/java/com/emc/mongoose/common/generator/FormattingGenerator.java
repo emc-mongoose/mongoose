@@ -1,10 +1,7 @@
 package com.emc.mongoose.common.generator;
 
-import com.emc.mongoose.common.generator.AsyncRangeGeneratorFactory;
-import com.emc.mongoose.common.generator.ValueGenerator;
-
 import java.text.ParseException;
-public class FormattingGenerator implements ValueGenerator<String> {
+public final class FormattingGenerator implements ValueGenerator<String> {
 
 	public static final char PATTERN_SYMBOL = '%';
 	public static final char[] RANGE_SYMBOLS = {'[',']'};
@@ -13,9 +10,9 @@ public class FormattingGenerator implements ValueGenerator<String> {
 	private String[] segments;
 	private ValueGenerator[] generators;
 
-	public FormattingGenerator(String pattern)
+	public FormattingGenerator(final String pattern)
 	throws ParseException {
-		int patternSymbolsNum = countPatternSymbols(pattern);
+		final int patternSymbolsNum = countPatternSymbols(pattern);
 		generators = new ValueGenerator[patternSymbolsNum];
 		segments = new String[patternSymbolsNum + 1];
 		StringBuilder segmentsBuilder = new StringBuilder();
@@ -36,7 +33,7 @@ public class FormattingGenerator implements ValueGenerator<String> {
 		segments[patternSymbolsNum] = patternBuilder.toString();
 	}
 
-	private int countPatternSymbols(String pattern) {
+	private int countPatternSymbols(final String pattern) {
 		int counter = 0;
 		for (char each : pattern.toCharArray()) {
 			if (each == PATTERN_SYMBOL) {
@@ -51,20 +48,20 @@ public class FormattingGenerator implements ValueGenerator<String> {
 	 * @param expression is a string which follows PATTERN_SYMBOL.
 	 * @return presence of the range
 	 */
-	private boolean isRangePresented(StringBuilder expression) {
+	private boolean isRangePresented(final StringBuilder expression) {
 		return expression.length() >= 2 && expression.charAt(1) == RANGE_SYMBOLS[0];
 	}
 
-	private String getRange(StringBuilder expression) {
-		int closingSymbolPos = expression.indexOf(String.valueOf(RANGE_SYMBOLS[1]));
+	private String getRange(final StringBuilder expression) {
+		final int closingSymbolPos = expression.indexOf(String.valueOf(RANGE_SYMBOLS[1]));
 		String range = expression.substring(2, closingSymbolPos);
 		expression.delete(0, closingSymbolPos + 1);
 		return range;
 	}
 
-	private void addExpressionParams(StringBuilder expression, int index)
+	private void addExpressionParams(final StringBuilder expression, final int index)
 	throws ParseException {
-		char type = expression.charAt(0);
+		final char type = expression.charAt(0);
 		if (isRangePresented(expression)) {
 			generators[index] = AsyncRangeGeneratorFactory.createGenerator(type, getRange(expression));
 		} else {
@@ -75,14 +72,14 @@ public class FormattingGenerator implements ValueGenerator<String> {
 
 	@Override
 	public String toString() {
-		StringBuilder result = new StringBuilder();
+		final StringBuilder result = new StringBuilder();
 		result.append("Generators: ");
-		for (ValueGenerator generator: generators) {
+		for (final ValueGenerator generator: generators) {
 			result.append(generator.getClass().getName()).append(";");
 		}
 		result.append("\n");
 		result.append("Segments: ");
-		for (String segment: segments) {
+		for (final String segment: segments) {
 			result.append(segment).append(";");
 		}
 		result.append("\n");
@@ -90,7 +87,7 @@ public class FormattingGenerator implements ValueGenerator<String> {
 	}
 
 	public String format() {
-		StringBuilder result = new StringBuilder();
+		final StringBuilder result = new StringBuilder();
 		for (int i = 0; i < segments.length - 1; i++) {
 			result.append(segments[i]);
 			if (generators[i] != null) {
