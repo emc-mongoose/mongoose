@@ -10,9 +10,9 @@ import static com.emc.mongoose.common.generator.AsyncDateGenerator.FMT_DATE;
 public final class AsyncRangeGeneratorFactory {
 
 	// pay attention to the matcher groups
-	private static final String doubleRegExp = "([-+]?\\d*\\.?\\d+)";
-	private static final String longRegExp = "([-+]?\\d+)";
-	private static final String dateRegExp = "(((19|20)[0-9][0-9])/(0?[1-9]|1[012])/(0?[1-9]|[12][0-9]|3[01]))";
+	public static final String doubleRegExp = "([-+]?\\d*\\.?\\d+)";
+	public static final String longRegExp = "([-+]?\\d+)";
+	public static final String dateRegExp = "(((19|20)[0-9][0-9])/(0?[1-9]|1[012])/(0?[1-9]|[12][0-9]|3[01]))";
 	private static final Pattern doublePattern = Pattern.compile(rangeRegExp(doubleRegExp));
 	private static final Pattern longPattern = Pattern.compile(rangeRegExp(longRegExp));
 	private static final Pattern datePattern = Pattern.compile(rangeRegExp(dateRegExp));
@@ -35,7 +35,7 @@ public final class AsyncRangeGeneratorFactory {
 			case 'D':
 				return new AsyncStringDateGenerator(FMT_DATE.format(new Date()));
 			default:
-				return null;
+				throw new IllegalArgumentException();
 		}
 	}
 
@@ -65,7 +65,7 @@ public final class AsyncRangeGeneratorFactory {
 					throw new IllegalArgumentException();
 				}
 			default:
-				return null;
+				throw new IllegalArgumentException();
 		}
 	}
 }
