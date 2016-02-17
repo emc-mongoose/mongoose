@@ -7,7 +7,7 @@ import java.text.ParseException;
 public class FormattingGenerator implements ValueGenerator<String> {
 
 	public static final char PATTERN_SYMBOL = '%';
-	public static final char[] RANGE_SYMBOLS = {'{','}'};
+	public static final char[] RANGE_SYMBOLS = {'[',']'};
 	public static final char RANGE_DELIMITER = '-';
 
 	private String[] segments;
