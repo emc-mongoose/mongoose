@@ -1,5 +1,6 @@
 package com.emc.mongoose.common.net.http.request;
 //
+import com.emc.mongoose.common.generator.ValueGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.generator.FormattingGenerator;
 //
@@ -31,7 +32,7 @@ implements HttpRequestInterceptor {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final HeaderGroup sharedHeaders;
-	private final Map<String, FormattingGenerator> headerFormatters;
+	private final Map<String, ValueGenerator<String>> headerFormatters;
 	//
 	public SharedHeadersAdder(final HeaderGroup sharedHeaders) {
 		this.sharedHeaders = sharedHeaders;
@@ -60,7 +61,7 @@ implements HttpRequestInterceptor {
 						}
 					}
 					request.setHeader(
-						new BasicHeader(headerName, headerFormatters.get(headerName).format())
+						new BasicHeader(headerName, headerFormatters.get(headerName).get())
 					);
 				} else {
 					request.setHeader(nextHeader);
