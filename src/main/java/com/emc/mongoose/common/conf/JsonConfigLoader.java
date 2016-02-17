@@ -110,11 +110,47 @@ public class JsonConfigLoader {
 					}
 					//
 					if(!nodeValue.isNull()) {
-						rtConfig.setProperty(
-							propertyName, getFormattedValue(nodeValue.toString())
-						);
+						switch(nodeValue.getNodeType()) {
+							case ARRAY:
+								rtConfig.set(propertyName, nodeValue.asText());
+								break;
+							case BINARY:
+								rtConfig.set(propertyName, nodeValue.asText());
+								break;
+							case BOOLEAN:
+								rtConfig.set(propertyName, nodeValue.asBoolean());
+								break;
+							case MISSING:
+								throw new IllegalStateException(
+									"No such value \"" + propertyName + "\""
+								);
+							case NULL:
+								rtConfig.set(propertyName, null);
+								break;
+							case NUMBER:
+								if(nodeValue.isDouble() || nodeValue.isFloat()) {
+									rtConfig.set(propertyName, nodeValue.asDouble());
+								} else if(nodeValue.isLong() || nodeValue.isInt()) {
+									rtConfig.set(propertyName, nodeValue.asLong());
+								} else if(nodeValue.isBigDecimal()){
+									rtConfig.set(propertyName, nodeValue.asText());
+								} else {
+									throw new IllegalStateException(
+										"Unexpected value type of \"" + propertyName + "\""
+									);
+								}
+								break;
+							case OBJECT:
+							case POJO:
+								throw new IllegalStateException(
+									"Unsupported value of \"" + propertyName + "\""
+								);
+							case STRING:
+								rtConfig.set(propertyName, nodeValue.asText());
+								break;
+						}
 					} else {
-						rtConfig.setProperty(propertyName, null);
+						rtConfig.set(propertyName, null);
 					}
 					mongooseKeys.add(propertyName);
 				}
@@ -158,7 +194,7 @@ public class JsonConfigLoader {
 		try {
 			if(property.isTextual()) {
 				final String stringValue = rtConfig.getProperty(propertyName).toString();
-				objectNode.put(jsonField, getFormattedValue(stringValue));
+				objectNode.put(jsonField, /*getFormattedValue(*/stringValue/*)*/);
 			} else if(property.isNumber()) {
 				objectNode.put(jsonField, rtConfig.getInt(propertyName));
 			} else if(property.isArray()) {
@@ -177,14 +213,14 @@ public class JsonConfigLoader {
 			}
 		} catch(final ConversionException e) {
 			final String stringValue = rtConfig.getProperty(propertyName).toString();
-			objectNode.put(jsonField, getFormattedValue(stringValue));
+			objectNode.put(jsonField, /*getFormattedValue(*/stringValue/*)*/);
 		} catch(final NullPointerException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "rtConfig doesn't contain \"{}\" property", propertyName
 			);
 		}
 	}
-	//
+	/*
 	private static String getFormattedValue(final String value) {
 		return value
 			.replace("[", "")
@@ -192,5 +228,5 @@ public class JsonConfigLoader {
 			.replace(" ", "")
 			.replace("\"", "")
 			.trim();
-	}
+	}*/
 }
