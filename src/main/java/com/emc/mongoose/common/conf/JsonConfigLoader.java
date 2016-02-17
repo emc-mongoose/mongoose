@@ -112,7 +112,13 @@ public class JsonConfigLoader {
 					if(!nodeValue.isNull()) {
 						switch(nodeValue.getNodeType()) {
 							case ARRAY:
-								rtConfig.set(propertyName, nodeValue.asText());
+								final Iterator<JsonNode> i = nodeValue.elements();
+								final StringBuilder strb = new StringBuilder();
+								while(i.hasNext()) {
+									strb.append(i.next().asText()).append(',');
+								}
+								strb.setLength(strb.length() - 1); // remove last comma
+								rtConfig.set(propertyName, strb.toString());
 								break;
 							case BINARY:
 								rtConfig.set(propertyName, nodeValue.asText());
