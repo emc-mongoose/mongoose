@@ -1,6 +1,4 @@
-package com.emc.mongoose.common.net.http.request.format;
-
-import com.emc.mongoose.common.generator.*;
+package com.emc.mongoose.common.generator;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -9,7 +7,7 @@ import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.generator.AsyncDateGenerator.FMT_DATE;
 
-public class HeaderValueGeneratorFactory {
+public class AsyncRangeGeneratorFactory {
 
 	// pay attention to the matcher groups
 	private static final String doubleRegExp = "([-+]?\\d*\\.?\\d+)";
@@ -19,12 +17,12 @@ public class HeaderValueGeneratorFactory {
 	private static final Pattern longPattern = Pattern.compile(rangeRegExp(longRegExp));
 	private static final Pattern datePattern = Pattern.compile(rangeRegExp(dateRegExp));
 
-	private HeaderValueGeneratorFactory() {
+	private AsyncRangeGeneratorFactory() {
 	}
 
 	// Pay attention to the escape symbols
 	private static String rangeRegExp(String typeRegExp) {
-		return typeRegExp + HeaderFormatter.RANGE_DELIMITER + typeRegExp;
+		return typeRegExp + FormattingGenerator.RANGE_DELIMITER + typeRegExp;
 	}
 
 	public static ValueGenerator createGenerator(char type)

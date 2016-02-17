@@ -1,9 +1,10 @@
-package com.emc.mongoose.common.net.http.request.format;
+package com.emc.mongoose.common.generator;
 
+import com.emc.mongoose.common.generator.AsyncRangeGeneratorFactory;
 import com.emc.mongoose.common.generator.ValueGenerator;
 
 import java.text.ParseException;
-public class HeaderFormatter {
+public class FormattingGenerator implements ValueGenerator<String> {
 
 	public static final char PATTERN_SYMBOL = '%';
 	public static final char[] RANGE_SYMBOLS = {'{','}'};
@@ -12,7 +13,7 @@ public class HeaderFormatter {
 	private String[] segments;
 	private ValueGenerator[] generators;
 
-	public HeaderFormatter(String pattern)
+	public FormattingGenerator(String pattern)
 	throws ParseException {
 		int patternSymbolsNum = countPatternSymbols(pattern);
 		generators = new ValueGenerator[patternSymbolsNum];
@@ -65,9 +66,9 @@ public class HeaderFormatter {
 	throws ParseException {
 		char type = expression.charAt(0);
 		if (isRangePresented(expression)) {
-			generators[index] = HeaderValueGeneratorFactory.createGenerator(type, getRange(expression));
+			generators[index] = AsyncRangeGeneratorFactory.createGenerator(type, getRange(expression));
 		} else {
-			generators[index] = HeaderValueGeneratorFactory.createGenerator(type);
+			generators[index] = AsyncRangeGeneratorFactory.createGenerator(type);
 			expression.delete(0, 1);
 		}
 	}
@@ -100,4 +101,8 @@ public class HeaderFormatter {
 		return result.toString();
 	}
 
+	@Override
+	public String get() {
+		return format();
+	}
 }

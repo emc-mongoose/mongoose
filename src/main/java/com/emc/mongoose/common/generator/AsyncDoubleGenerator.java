@@ -1,33 +1,33 @@
 package com.emc.mongoose.common.generator;
 
-public class AsyncDoubleGenerator
+public final class AsyncDoubleGenerator
 extends AsyncRangeGeneratorBase<Double> {
 
-	public AsyncDoubleGenerator(Double minValue, Double maxValue) {
+	public AsyncDoubleGenerator(final Double minValue, final Double maxValue) {
 		super(minValue, maxValue);
 	}
 
-	public AsyncDoubleGenerator(Double initialValue) {
+	public AsyncDoubleGenerator(final Double initialValue) {
 		super(initialValue);
 	}
 
 	@Override
-	protected Double computeRange(Double minValue, Double maxValue) {
+	protected final Double computeRange(final Double minValue, final Double maxValue) {
 		return maxValue - minValue;
 	}
 
 	@Override
-	protected Double rangeValue() {
+	protected final Double rangeValue() {
 		return minValue() + (random.nextDouble() * range());
 	}
 
 	@Override
-	protected Double singleValue() {
+	protected final Double singleValue() {
 		return random.nextDouble();
 	}
 
 	@Override
-	public boolean isInitialized() {
+	public final boolean isInitialized() {
 		return true;
 	}
 }

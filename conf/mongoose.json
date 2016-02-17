@@ -179,7 +179,7 @@
 			"customHeaders": {
 				"Connection" : "keep-alive",
 				"User-Agent" : "mongoose/next",
-			  	"dynamicValue" : "Dan %f %D"
+			  	"dynamicValue" : "Dan %d[1-5]"
 			},
 			"pipelining": false,
 			"signMethod": "HmacSHA1"

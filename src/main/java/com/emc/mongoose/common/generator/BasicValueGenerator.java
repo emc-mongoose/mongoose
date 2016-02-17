@@ -32,7 +32,6 @@ implements ValueGenerator<T> {
 			LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to execute the update action \"{}\"", updateAction
 			);
-			e.printStackTrace();
 		}
 		return prevValue;
 	}

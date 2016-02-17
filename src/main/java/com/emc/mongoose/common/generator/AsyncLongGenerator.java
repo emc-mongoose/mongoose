@@ -1,33 +1,34 @@
 package com.emc.mongoose.common.generator;
 
-public class AsyncLongGenerator
+public final class AsyncLongGenerator
 extends AsyncRangeGeneratorBase<Long> {
 
-	public AsyncLongGenerator(Long minValue, Long maxValue) {
+	public AsyncLongGenerator(final Long minValue, final Long maxValue) {
 		super(minValue, maxValue);
 	}
 
-	public AsyncLongGenerator(Long initialValue) {
+	public AsyncLongGenerator(final Long initialValue) {
 		super(initialValue);
 	}
 
 	@Override
-	protected Long computeRange(Long minValue, Long maxValue) {
+	protected final Long computeRange(final Long minValue, final Long maxValue) {
 		return maxValue - minValue;
 	}
 
+
 	@Override
-	protected Long rangeValue() {
+	protected final Long rangeValue() {
 		return minValue() + (long) (random.nextDouble() * range());
 	}
 
 	@Override
-	protected Long singleValue() {
+	protected final Long singleValue() {
 		return random.nextLong();
 	}
 
 	@Override
-	public boolean isInitialized() {
+	public final boolean isInitialized() {
 		return true;
 	}
 }

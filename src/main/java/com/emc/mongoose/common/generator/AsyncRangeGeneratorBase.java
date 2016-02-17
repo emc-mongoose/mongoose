@@ -8,11 +8,11 @@ public abstract class AsyncRangeGeneratorBase<T>
 implements Initializable, ValueGenerator<T> {
 
 	protected final Random random = new Random();
-	private T minValue;
-	private T range;
+	private final T minValue;
+	private final T range;
 	private final AsyncValueGenerator<T> generator;
 
-	public AsyncRangeGeneratorBase(T minValue, T maxValue) {
+	public AsyncRangeGeneratorBase(final T minValue, final T maxValue) {
 		this.minValue = minValue;
 		this.range = computeRange(minValue, maxValue);
 		this.generator = new AsyncValueGenerator<>(
@@ -32,7 +32,9 @@ implements Initializable, ValueGenerator<T> {
 		);
 	}
 
-	public AsyncRangeGeneratorBase(T initialValue) {
+	public AsyncRangeGeneratorBase(final T initialValue) {
+		this.minValue = initialValue;
+		this.range = null;
 		this.generator = new AsyncValueGenerator<>(
 			initialValue,
 			new InitCallable<T>() {
@@ -50,7 +52,7 @@ implements Initializable, ValueGenerator<T> {
 		);
 	}
 
-	protected abstract T computeRange(T minValue, T maxValue);
+	protected abstract T computeRange(final T minValue, final T maxValue);
 	protected abstract T rangeValue();
 	protected abstract T singleValue();
 

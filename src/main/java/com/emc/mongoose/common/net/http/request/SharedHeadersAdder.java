@@ -1,7 +1,7 @@
 package com.emc.mongoose.common.net.http.request;
 //
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.net.http.request.format.HeaderFormatter;
+import com.emc.mongoose.common.generator.FormattingGenerator;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpException;
@@ -20,7 +20,7 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.emc.mongoose.common.net.http.request.format.HeaderFormatter.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.generator.FormattingGenerator.PATTERN_SYMBOL;
 
 /**
 Created by kurila on 30.01.15.
@@ -31,7 +31,7 @@ implements HttpRequestInterceptor {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final HeaderGroup sharedHeaders;
-	private final Map<String, HeaderFormatter> headerFormatters;
+	private final Map<String, FormattingGenerator> headerFormatters;
 	//
 	public SharedHeadersAdder(final HeaderGroup sharedHeaders) {
 		this.sharedHeaders = sharedHeaders;
@@ -50,7 +50,7 @@ implements HttpRequestInterceptor {
 					if (!headerFormatters.containsKey(nextHeader.getName())) {
 						try {
 							headerFormatters.put(
-								headerName, new HeaderFormatter(nextHeader.getValue())
+								headerName, new FormattingGenerator(nextHeader.getValue())
 							);
 						} catch(final ParseException e) {
 							LogUtil.exception(
