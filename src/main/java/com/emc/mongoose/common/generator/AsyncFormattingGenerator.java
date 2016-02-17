@@ -75,9 +75,17 @@ implements ValueGenerator<String> {
 
 	private static int countPatternSymbols(final String pattern) {
 		int counter = 0;
-		for (char each : pattern.toCharArray()) {
-			if (each == PATTERN_SYMBOL) {
+		int lastPatternIndex = pattern.length() - 1;
+		if (pattern.charAt(lastPatternIndex) == PATTERN_SYMBOL) {
+			throw new IllegalArgumentException();
+		}
+		char[] patternChars = pattern.toCharArray();
+		for (int i = 0; i < lastPatternIndex; i++) {
+			if (patternChars[i] == PATTERN_SYMBOL) {
 				counter++;
+				if (patternChars[i + 1] == PATTERN_SYMBOL) {
+					throw new IllegalArgumentException();
+				}
 			}
 		}
 		return counter;
