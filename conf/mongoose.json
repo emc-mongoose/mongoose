@@ -178,8 +178,7 @@
 			},
 			"customHeaders": {
 				"Connection" : "keep-alive",
-				"User-Agent" : "mongoose/next",
-			  	"dynamicValue" : "%d[0-1]"
+				"User-Agent" : "mongoose/next"
 			},
 			"pipelining": false,
 			"signMethod": "HmacSHA1"
