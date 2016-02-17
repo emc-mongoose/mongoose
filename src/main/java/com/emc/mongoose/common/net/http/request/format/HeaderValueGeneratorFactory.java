@@ -2,6 +2,7 @@ package com.emc.mongoose.common.net.http.request.format;
 
 import com.emc.mongoose.common.generator.*;
 
+import java.text.ParseException;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,12 +27,13 @@ public class HeaderValueGeneratorFactory {
 		return typeRegExp + HeaderFormatter.RANGE_DELIMITER + typeRegExp;
 	}
 
-	public static ValueGenerator createGenerator(char type) {
+	public static ValueGenerator createGenerator(char type)
+	throws ParseException {
 		switch (type) {
 			case 'f':
 				return new AsyncDoubleGenerator(47.0);
 			case 'd':
-				return new AsyncLongGenerator(47l);
+				return new AsyncLongGenerator(47L);
 			case 'D':
 				return new AsyncStringDateGenerator(FMT_DATE.format(new Date()));
 			default:
@@ -39,7 +41,8 @@ public class HeaderValueGeneratorFactory {
 		}
 	}
 
-	public static ValueGenerator createGenerator(char type, String range) throws IllegalArgumentException {
+	public static ValueGenerator createGenerator(char type, String range)
+	throws IllegalArgumentException, ParseException {
 		Matcher matcher;
 		switch (type) {
 			case 'f':

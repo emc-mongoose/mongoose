@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.generator;
 
-public class AsyncLongGenerator extends AsyncRangeGeneratorBase<Long> {
+public class AsyncLongGenerator
+extends AsyncRangeGeneratorBase<Long> {
 
 	public AsyncLongGenerator(Long minValue, Long maxValue) {
 		super(minValue, maxValue);
@@ -25,4 +26,8 @@ public class AsyncLongGenerator extends AsyncRangeGeneratorBase<Long> {
 		return random.nextLong();
 	}
 
+	@Override
+	public boolean isInitialized() {
+		return true;
+	}
 }

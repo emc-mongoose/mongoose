@@ -2,6 +2,7 @@ package com.emc.mongoose.common.net.http.request.format;
 
 import com.emc.mongoose.common.generator.ValueGenerator;
 
+import java.text.ParseException;
 public class HeaderFormatter {
 
 	public static final char PATTERN_SYMBOL = '%';
@@ -11,7 +12,8 @@ public class HeaderFormatter {
 	private String[] segments;
 	private ValueGenerator[] generators;
 
-	public HeaderFormatter(String pattern) {
+	public HeaderFormatter(String pattern)
+	throws ParseException {
 		int patternSymbolsNum = countPatternSymbols(pattern);
 		generators = new ValueGenerator[patternSymbolsNum];
 		segments = new String[patternSymbolsNum + 1];
@@ -59,7 +61,8 @@ public class HeaderFormatter {
 		return range;
 	}
 
-	private void addExpressionParams(StringBuilder expression, int index) {
+	private void addExpressionParams(StringBuilder expression, int index)
+	throws ParseException {
 		char type = expression.charAt(0);
 		if (isRangePresented(expression)) {
 			generators[index] = HeaderValueGeneratorFactory.createGenerator(type, getRange(expression));

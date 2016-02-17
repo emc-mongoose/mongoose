@@ -5,7 +5,6 @@ import com.emc.mongoose.common.log.LogUtil;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.concurrent.Callable;
 /**
  Created by kurila on 16.04.15.
  */
@@ -23,7 +22,13 @@ extends AsyncValueGenerator<String> {
 	private AsyncCurrentDateGenerator() {
 		super(
 			FMT_DATE.format(new Date(System.currentTimeMillis())),
-			new Callable<String>() {
+			new InitCallable<String>() {
+				//
+				@Override
+				public boolean isInitialized() {
+					return true;
+				}
+				//
 				@Override
 				public final String call()
 				throws Exception {

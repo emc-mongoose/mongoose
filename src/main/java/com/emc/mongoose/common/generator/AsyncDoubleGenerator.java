@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.generator;
 
-public class AsyncDoubleGenerator extends AsyncRangeGeneratorBase<Double> {
+public class AsyncDoubleGenerator
+extends AsyncRangeGeneratorBase<Double> {
 
 	public AsyncDoubleGenerator(Double minValue, Double maxValue) {
 		super(minValue, maxValue);
@@ -25,4 +26,8 @@ public class AsyncDoubleGenerator extends AsyncRangeGeneratorBase<Double> {
 		return random.nextDouble();
 	}
 
+	@Override
+	public boolean isInitialized() {
+		return true;
+	}
 }
