@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.generator;
 
 import java.text.ParseException;
+
 public final class FormattingGenerator implements ValueGenerator<String> {
 
 	public static final char PATTERN_SYMBOL = '%';
