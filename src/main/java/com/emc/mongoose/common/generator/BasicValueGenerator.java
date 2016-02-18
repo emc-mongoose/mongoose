@@ -29,10 +29,11 @@ implements ValueGenerator<T> {
 		try {
 			lastValue = updateAction.call();
 		} catch(final Exception e) {
+			System.out.println();
 			LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to execute the update action \"{}\"", updateAction
 			);
 		}
-		return prevValue;
+		return prevValue ;
 	}
 }
