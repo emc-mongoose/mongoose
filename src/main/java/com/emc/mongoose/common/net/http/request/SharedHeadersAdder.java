@@ -18,8 +18,8 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.LockSupport;
 
 import static com.emc.mongoose.common.generator.AsyncFormattingGenerator.PATTERN_SYMBOL;
@@ -33,11 +33,11 @@ implements HttpRequestInterceptor {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final HeaderGroup sharedHeaders;
-	private final Map<String, ValueGenerator<String>> headerFormatters;
+	private final static Map<String, ValueGenerator<String>>
+		HEADER_FORMATTERS = new ConcurrentHashMap<>();
 	//
 	public SharedHeadersAdder(final HeaderGroup sharedHeaders) {
 		this.sharedHeaders = sharedHeaders;
-		this.headerFormatters = new HashMap<>();
 	}
 	//
 	@Override
@@ -49,15 +49,15 @@ implements HttpRequestInterceptor {
 			headerValue = nextHeader.getValue();
 			if(!request.containsHeader(headerName)) {
 				if (headerValue != null && headerValue.indexOf(PATTERN_SYMBOL) > -1) {
-					if (!headerFormatters.containsKey(headerName)) {
+					if (!HEADER_FORMATTERS.containsKey(headerName)) {
 						try {
 							final ValueGenerator<String>
 								formatter = new AsyncFormattingGenerator(headerValue);
-							/*while(null == formatter.get()) {
+							while(null == formatter.get()) {
 								LockSupport.parkNanos(1);
 								Thread.yield();
-							}*/
-							headerFormatters.put(headerName, formatter);
+							}
+							HEADER_FORMATTERS.put(headerName, formatter);
 						} catch(final ParseException e) {
 							LogUtil.exception(
 								LOG, Level.ERROR, e, "Failed to parse the pattern \"{}\"",
@@ -66,7 +66,7 @@ implements HttpRequestInterceptor {
 						}
 					}
 					request.setHeader(
-						new BasicHeader(headerName, headerFormatters.get(headerName).get())
+						new BasicHeader(headerName, HEADER_FORMATTERS.get(headerName).get())
 					);
 				} else {
 					request.setHeader(nextHeader);
