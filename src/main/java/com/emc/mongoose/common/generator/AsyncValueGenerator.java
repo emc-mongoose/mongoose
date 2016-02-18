@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 10.02.16.
  */
@@ -35,10 +34,9 @@ extends BasicValueGenerator<T> {
 						if(updTask.isInitialized()) {
 							updTask.run();
 						}
-						LockSupport.parkNanos(1);
 					}
-					Thread.yield();
 				}
+				Thread.yield();
 			}
 		}
 	};
