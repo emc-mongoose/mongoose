@@ -5,8 +5,9 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.generator.AsyncCurrentDateGenerator;
+import com.emc.mongoose.common.generator.AsyncFormattingGenerator;
+import com.emc.mongoose.common.generator.ValueGenerator;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
@@ -16,6 +17,7 @@ import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
+import static com.emc.mongoose.common.generator.AsyncFormattingGenerator.PATTERN_SYMBOL;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.BasicWSObject;
@@ -28,9 +30,11 @@ import org.apache.http.ExceptionLogger;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.entity.ContentType;
@@ -39,6 +43,7 @@ import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.HeaderGroup;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
@@ -75,13 +80,16 @@ import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 09.06.14.
  */
@@ -168,7 +176,7 @@ implements WSRequestConfig<T, C> {
 		// create HTTP client
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
 			.create()
-			.add(new SharedHeadersAdder(sharedHeaders))
+			.add(this)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestContent(false))
@@ -266,7 +274,6 @@ implements WSRequestConfig<T, C> {
 				applyPayLoad(request, null);
 				break;
 		}
-		applyHeadersFinally(request);
 		return request;
 	}
 	//
@@ -297,7 +304,6 @@ implements WSRequestConfig<T, C> {
 			case DELETE:
 				break;
 		}
-		applyHeadersFinally(request);
 		return request;
 	}
 	//
@@ -521,7 +527,7 @@ implements WSRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public void applyHeadersFinally(final HttpEntityEnclosingRequest httpRequest) {
+	public void applyHeadersFinally(final HttpRequest httpRequest) {
 		try {
 			applyDateHeader(httpRequest);
 		} catch(final Exception e) {
@@ -547,10 +553,13 @@ implements WSRequestConfig<T, C> {
 					.append(": ").append(header.getValue())
 					.append('\n');
 			}
-			if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
+			if(httpRequest instanceof HttpEntityEnclosingRequest) {
+				final long contentLength = ((HttpEntityEnclosingRequest) httpRequest)
+					.getEntity()
+					.getContentLength();
 				msgBuff
 					.append("\tcontent: ")
-					.append(SizeUtil.formatSize(httpRequest.getEntity().getContentLength()))
+					.append(SizeUtil.formatSize(contentLength))
 					.append(" bytes");
 			} else {
 				msgBuff.append("\t---- no content ----");
@@ -649,7 +658,7 @@ implements WSRequestConfig<T, C> {
 		httpRequest.setHeader(HttpHeaders.HOST, getNodeHost(nodeAddr).toHostString());
 	}
 	//
-	protected void applyMetaDataHeaders(final HttpEntityEnclosingRequest httpRequest) {
+	protected void applyMetaDataHeaders(final HttpRequest httpRequest) {
 	}
 	//
 	protected abstract void applyAuthHeader(final HttpRequest httpRequest);
@@ -796,5 +805,48 @@ implements WSRequestConfig<T, C> {
 		}
 		//
 		return response;
+	}
+	//
+	private final static Map<String, ValueGenerator<String>>
+		HEADER_FORMATTERS = new ConcurrentHashMap<>();
+	/**
+	Created by kurila on 30.01.15.
+	*/
+	@Override
+	public final void process(final HttpRequest request, final HttpContext context)
+	throws HttpException, IOException {
+		// add all the shared headers if missing
+		String headerName, headerValue;
+		for(final Header nextHeader : sharedHeaders.getAllHeaders()) {
+			headerName = nextHeader.getName();
+			headerValue = nextHeader.getValue();
+			if(!request.containsHeader(headerName)) {
+				if (headerValue != null && headerValue.indexOf(PATTERN_SYMBOL) > -1) {
+					if (!HEADER_FORMATTERS.containsKey(headerName)) {
+						try {
+							final ValueGenerator<String>
+								formatter = new AsyncFormattingGenerator(headerValue);
+							while(null == formatter.get()) {
+								LockSupport.parkNanos(1);
+								Thread.yield();
+							}
+							HEADER_FORMATTERS.put(headerName, formatter);
+						} catch(final ParseException e) {
+							LogUtil.exception(
+								LOG, Level.ERROR, e, "Failed to parse the pattern \"{}\"",
+								headerValue
+							);
+						}
+					}
+					request.setHeader(
+						new BasicHeader(headerName, HEADER_FORMATTERS.get(headerName).get())
+					);
+				} else {
+					request.setHeader(nextHeader);
+				}
+			}
+		}
+		// add all other required headers
+		applyHeadersFinally(request);
 	}
 }

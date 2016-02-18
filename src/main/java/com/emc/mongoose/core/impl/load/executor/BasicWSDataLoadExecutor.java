@@ -6,7 +6,6 @@ import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
 import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
-import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
@@ -18,6 +17,7 @@ import com.emc.mongoose.core.api.io.task.WSDataIOTask;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSDataLoadExecutor;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.io.task.BasicWSDataIOTask;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
@@ -102,7 +102,7 @@ implements WSDataLoadExecutor<T> {
 		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
-			.add(new SharedHeadersAdder(sharedHeaders))
+			.add(wsReqConfigCopy)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))

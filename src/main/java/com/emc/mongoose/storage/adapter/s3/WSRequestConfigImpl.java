@@ -235,7 +235,6 @@ extends WSRequestConfigBase<T, C> {
 		final HttpEntityEnclosingRequest createDirReq = createGenericRequest(
 			METHOD_PUT, "/" + bucketName + "/" + dirPath + "/"
 		);
-		applyHeadersFinally(createDirReq);
 		try {
 			final HttpResponse createDirResp = execute(
 				nodeAddr, createDirReq,
