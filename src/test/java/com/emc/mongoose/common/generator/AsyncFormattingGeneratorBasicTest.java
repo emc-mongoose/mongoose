@@ -1,10 +1,12 @@
 package com.emc.mongoose.common.generator;
 
+import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
+import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.generator.AsyncRangeGeneratorFactory.*;
@@ -12,11 +14,22 @@ import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class AsyncFormattingGeneratorBasicTest extends AsyncFormattingGeneratorTestBase {
+public class AsyncFormattingGeneratorBasicTest
+extends TestCase {
 
 	private final static Pattern DOUBLE_PATTERN = Pattern.compile(DOUBLE_REG_EXP);
 	private final static Pattern LONG_PATTERN = Pattern.compile(LONG_REG_EXP);
 	private final static Pattern DATE_PATTERN = Pattern.compile(DATE_REG_EXP);
+
+	protected ValueGenerator<String> formatter;
+
+	protected void initFormatter(String patternString) throws Exception {
+		formatter = new AsyncFormattingGenerator(patternString);
+		while (null == formatter.get()) {
+			LockSupport.parkNanos(1);
+			Thread.yield();
+		}
+	}
 
 	@Parameters
 	public static Iterable<Object[]> data() {
