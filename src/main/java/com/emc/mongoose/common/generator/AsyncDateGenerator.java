@@ -1,17 +1,13 @@
 package com.emc.mongoose.common.generator;
 
-import com.emc.mongoose.common.log.LogUtil;
-
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
 public final class AsyncDateGenerator
-extends AsyncRangeGeneratorBase<Date>
- {
+extends AsyncRangeGeneratorBase<Date> {
 
-	public final static DateFormat FMT_DATE = new SimpleDateFormat("yyyy/MM/dd", LogUtil.LOCALE_DEFAULT);
+	public final static DateFormat FMT_DATE = new SimpleDateFormat("yyyy/MM/dd");
 
 	private final AsyncLongGenerator longGenerator;
 

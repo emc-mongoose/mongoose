@@ -1,6 +1,5 @@
 package com.emc.mongoose.common.generator;
 
-import junit.framework.TestCase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,8 +9,6 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.generator.AsyncRangeGeneratorFactory.*;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
 import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
 
@@ -51,7 +48,8 @@ public class AsyncFormattingGeneratorBasicTest extends AsyncFormattingGeneratorT
 	public void checkFormatting() throws Exception {
 		initFormatter(patternString);
 		String result = formatter.get();
-		assertThat(resultPattern.matcher(result).find(), equalTo(true));
+		assertNotNull("Formatter returned null", result);
+		assertTrue(resultPattern.matcher(result).find());
 	}
 
 }
