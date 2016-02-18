@@ -15,36 +15,16 @@ implements ValueGenerator<String> {
 
 	public AsyncFormattingGenerator(final String pattern)
 	throws ParseException {
-		this(countPatternSymbols(pattern), pattern);
-		StringBuilder segmentsBuilder = new StringBuilder();
-		StringBuilder patternBuilder = new StringBuilder(pattern);
-		final int patternSymbolsNum = segments.length - 1;
-		int segmentCounter = 0;
-		for (int j = 0; j < patternSymbolsNum; j++) {
-			int i = 0;
-			while (patternBuilder.charAt(i) != PATTERN_SYMBOL) {
-				segmentsBuilder.append(patternBuilder.charAt(i));
-				i++;
-			}
-			segments[segmentCounter] = segmentsBuilder.toString();
-			segmentsBuilder.setLength(0);
-			patternBuilder.delete(0, i + 1);
-			addExpressionParams(patternBuilder, segmentCounter);
-			segmentCounter++;
-		}
-		segments[patternSymbolsNum] = patternBuilder.toString();
+		this(pattern, countPatternSymbols(pattern));
 	}
 
-	private AsyncFormattingGenerator(final int patternSymbolsNum, final String pattern)
+	private AsyncFormattingGenerator(final String pattern, final int patternSymbolsNum)
 	throws ParseException {
-		this(
-			new String[patternSymbolsNum + 1],
-			new ValueGenerator<?>[patternSymbolsNum]
-		);
+		this(pattern, new String[patternSymbolsNum + 1], new ValueGenerator<?>[patternSymbolsNum]);
 	}
 
 	private AsyncFormattingGenerator(
-		final String[] segments, final ValueGenerator<?>[] generators
+		final String pattern, final String[] segments, final ValueGenerator<?>[] generators
 	) throws ParseException {
 		super(
 			null,
@@ -65,12 +45,29 @@ implements ValueGenerator<String> {
 				}
 				@Override
 				public boolean isInitialized() {
-					return true;
+					return segments[segments.length - 1] != null;
 				}
 			}
 		);
 		this.generators = generators;
 		this.segments = segments;
+		StringBuilder segmentsBuilder = new StringBuilder();
+		StringBuilder patternBuilder = new StringBuilder(pattern);
+		final int patternSymbolsNum = segments.length - 1;
+		int segmentCounter = 0;
+		for (int j = 0; j < patternSymbolsNum; j++) {
+			int i = 0;
+			while (patternBuilder.charAt(i) != PATTERN_SYMBOL) {
+				segmentsBuilder.append(patternBuilder.charAt(i));
+				i++;
+			}
+			segments[segmentCounter] = segmentsBuilder.toString();
+			segmentsBuilder.setLength(0);
+			patternBuilder.delete(0, i + 1);
+			addExpressionParams(patternBuilder, segmentCounter);
+			segmentCounter++;
+		}
+		segments[patternSymbolsNum] = patternBuilder.toString();
 	}
 
 	private static int countPatternSymbols(final String pattern) {

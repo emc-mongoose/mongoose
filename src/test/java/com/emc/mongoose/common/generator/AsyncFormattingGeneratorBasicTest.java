@@ -25,8 +25,8 @@ public class AsyncFormattingGeneratorBasicTest extends AsyncFormattingGeneratorT
 				{"%d[1-5]", LONG_PATTERN},
 				{"%f", DOUBLE_PATTERN},
 				{"%f[0.1-5.0]", DOUBLE_PATTERN},
-//				{"%D", DATE_PATTERN},
-//				{"%D[1999/02/15-2014/08/22]", DATE_PATTERN},
+				{"%D", DATE_PATTERN},
+				{"%D[1999/02/15-2014/08/22]", DATE_PATTERN},
 				{"fdfdsfghfh %f[-987.0--785.5]gdghhfe", DOUBLE_PATTERN}
 		});
 	}
@@ -39,9 +39,8 @@ public class AsyncFormattingGeneratorBasicTest extends AsyncFormattingGeneratorT
 	@Test
 	public void checkFormattingResult() throws Exception {
 		initFormatter(patternString);
-		String result = formatter.get();
-		System.out.println("\t" + result);
-		assertTrue(resultPattern.matcher(result).find());
+		final String result = formatter.get();
+		assertTrue(result, resultPattern.matcher(result).find());
 	}
 
 }
