@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
 /**
  Created by kurila on 24.07.15.
  */
@@ -21,7 +21,7 @@ implements ItemSrc<T> {
 	private final ContentSource contentSrc;
 	private final long minObjSize, maxObjSize, sizeRange;
 	private final float objSizeBias;
-	private final ThreadLocalRandom thrLocalRnd = ThreadLocalRandom.current();
+	private final Random rnd = new Random();
 	private T lastItem = null;
 	//
 	public NewDataItemSrc(
@@ -50,9 +50,9 @@ implements ItemSrc<T> {
 			return minObjSize;
 		} else {
 			if(objSizeBias == 1) {
-				return minObjSize + (long) (thrLocalRnd.nextDouble() * sizeRange);
+				return minObjSize + (long) (rnd.nextDouble() * sizeRange);
 			} else {
-				return minObjSize + (long) Math.pow(thrLocalRnd.nextDouble(), objSizeBias) * sizeRange;
+				return minObjSize + (long) Math.pow(rnd.nextDouble(), objSizeBias) * sizeRange;
 			}
 		}
 	}

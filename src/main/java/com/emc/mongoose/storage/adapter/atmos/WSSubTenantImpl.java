@@ -80,7 +80,6 @@ implements SubTenant<T> {
 			);
 		}
 		//
-		reqConf.applyHeadersFinally(httpReq);
 		return reqConf.execute(addr, httpReq, timeOut, timeUnit);
 	}
 	//

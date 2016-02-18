@@ -8,7 +8,6 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
 import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
-import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.WSObject;
@@ -19,6 +18,7 @@ import com.emc.mongoose.core.api.io.task.WSContainerIOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.load.executor.WSContainerLoadExecutor;
 //
+import com.emc.mongoose.core.impl.io.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.io.task.BasicWSContainerTask;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
@@ -28,7 +28,6 @@ import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
-import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
@@ -99,12 +98,11 @@ implements WSContainerLoadExecutor<T, C> {
 			reqConfig.setBuffSize(Constants.BUFF_SIZE_LO);
 		}
 		//
-		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
 		final String userAgent = rtConfig.getRunName() + "/" + rtConfig.getRunVersion();
 		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
-			.add(new SharedHeadersAdder(sharedHeaders))
+			.add(wsReqConfigCopy)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
