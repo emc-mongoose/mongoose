@@ -36,7 +36,9 @@ extends BasicValueGenerator<T> {
 				try {
 					nextUpdateTask = UPDATE_TASKS.take();
 					try {
-						nextUpdateTask.run();
+						if(nextUpdateTask.isInitialized()) {
+							nextUpdateTask.run();
+						}
 						if(!UPDATE_TASKS.offer(nextUpdateTask)) {
 							LOG.warn(
 								Markers.ERR,
@@ -50,6 +52,7 @@ extends BasicValueGenerator<T> {
 							"exception, unregistering it"
 						);
 					}
+					Thread.yield();
 				} catch(final InterruptedException e) {
 					break;
 				}
