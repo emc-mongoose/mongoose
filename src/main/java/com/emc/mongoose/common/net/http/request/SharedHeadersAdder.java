@@ -53,10 +53,10 @@ implements HttpRequestInterceptor {
 						try {
 							final ValueGenerator<String>
 								formatter = new AsyncFormattingGenerator(headerValue);
-							while(null == formatter.get()) {
+							/*while(null == formatter.get()) {
 								LockSupport.parkNanos(1);
 								Thread.yield();
-							}
+							}*/
 							headerFormatters.put(headerName, formatter);
 						} catch(final ParseException e) {
 							LogUtil.exception(

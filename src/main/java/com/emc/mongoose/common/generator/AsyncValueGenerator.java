@@ -74,10 +74,6 @@ extends BasicValueGenerator<T> {
 	@Override
 	public final T get() {
 		// do not refresh on the request
-		while(lastValue == null) {
-			LockSupport.parkNanos(1);
-			Thread.yield();
-		}
 		return lastValue;
 	}
 }
