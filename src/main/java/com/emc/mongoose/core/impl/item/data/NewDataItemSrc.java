@@ -1,10 +1,9 @@
 package com.emc.mongoose.core.impl.item.data;
 //
-import com.emc.mongoose.core.api.item.base.ItemNamingScheme;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-//
+import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
 //
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -18,7 +17,7 @@ public final class NewDataItemSrc<T extends DataItem>
 implements ItemSrc<T> {
 	//
 	private final Constructor<T> itemConstructor;
-	private final ItemNamingScheme namingScheme;
+	private final BasicItemNameGenerator idGenerator;
 	private final ContentSource contentSrc;
 	private final long minObjSize, maxObjSize, sizeRange;
 	private final float objSizeBias;
@@ -26,11 +25,14 @@ implements ItemSrc<T> {
 	private T lastItem = null;
 	//
 	public NewDataItemSrc(
-		final Class<T> dataCls, final ItemNamingScheme namingScheme, final ContentSource contentSrc,
-		final long minObjSize, final long maxObjSize, final float objSizeBias
+		final Class<T> dataCls, final BasicItemNameGenerator idGenerator,
+		final ContentSource contentSrc, final long minObjSize, final long maxObjSize,
+		final float objSizeBias
 	) throws NoSuchMethodException, IllegalArgumentException {
-		this.itemConstructor = dataCls.getConstructor(Long.class, Long.class, ContentSource.class);
-		this.namingScheme = namingScheme;
+		this.itemConstructor = dataCls.getConstructor(
+			String.class, Long.class, Long.class, ContentSource.class
+		);
+		this.idGenerator = idGenerator;
 		this.contentSrc = contentSrc;
 		this.minObjSize = minObjSize;
 		this.maxObjSize = maxObjSize;
@@ -60,7 +62,7 @@ implements ItemSrc<T> {
 	throws IOException {
 		try {
 			return itemConstructor.newInstance(
-				namingScheme.getNext(), nextSize(), contentSrc
+				idGenerator.get(), idGenerator.getLastValue(), nextSize(), contentSrc
 			);
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
@@ -74,7 +76,7 @@ implements ItemSrc<T> {
 			for(int i = 0; i < maxCount; i ++) {
 				buffer.add(
 					itemConstructor.newInstance(
-						namingScheme.getNext(), nextSize(), contentSrc
+						idGenerator.get(), idGenerator.getLastValue(), nextSize(), contentSrc
 					)
 				);
 			}

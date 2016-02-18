@@ -65,7 +65,7 @@ extends LoggingTestBase {
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_ITEM_CLASS, "file");
-		rtConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "/tmp/" + RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 10000);
@@ -102,7 +102,7 @@ extends LoggingTestBase {
 	throws Exception {
 		LoggingTestBase.tearDownClass();
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "data");
-		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "");
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "");
 		LoggingTestBase.tearDownClass();
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
 		for(final File f : tgtDir.listFiles()) {

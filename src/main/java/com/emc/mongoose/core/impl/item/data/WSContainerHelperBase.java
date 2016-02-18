@@ -8,6 +8,7 @@ import com.emc.mongoose.core.api.item.data.WSObject;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -27,7 +28,7 @@ implements ContainerHelper<T, C> {
 	protected final WSRequestConfig<T, C> reqConf;
 	protected final C container;
 	protected final String idPrefix;
-	protected final int idPrefixLen;
+	protected final int idPrefixLen, idRadix;
 	protected final boolean fsAccess, verifyContent;
 	//
 	protected WSContainerHelperBase(final WSRequestConfig<T, C> reqConf, final C container) {
@@ -40,6 +41,7 @@ implements ContainerHelper<T, C> {
 		}
 		this.fsAccess = reqConf.getFileAccessEnabled();
 		this.idPrefix = reqConf.getNamePrefix();
+		this.idRadix = reqConf.getNameRadix();
 		idPrefixLen = idPrefix == null ? 0 : idPrefix.length();
 		this.verifyContent = reqConf.getVerifyContentFlag();
 	}
@@ -58,32 +60,36 @@ implements ContainerHelper<T, C> {
 		String name = null;
 		if(rawId != null && !rawId.isEmpty()) {
 			if(fsAccess) { // include the items which have the path matching to configured one
-				if(rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
+				if(idPrefix != null && rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
 					name = rawId.substring(idPrefixLen + 1);
 					if(name.contains("/")) { // doesn't include the items from the subdirectories
 						name = null;
 					}
+				} else {
+					if(!rawId.contains("/")) { // doesn't include the items from the directories
+						name = rawId;
+					}
 				}
 			} else {
-				if(!rawId.contains("/")) { // doesn't include the items from the directories
+				if(idPrefix != null && rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
+					name = rawId.substring(idPrefixLen);
+				} else {
 					name = rawId;
 				}
 			}
 		}
 		//
 		if(name != null) {
-			final long offset;
-			if(verifyContent) { // should parse the id into the ring buffer offset
-				try {
-					offset = Long.parseLong(name, T.ID_RADIX);
-				} catch(NumberFormatException e) {
-					throw new IllegalStateException(e);
-				}
-			} else { // ring buffer offset doesn't matter
-				offset = 0;
+			long offset = 0;
+			try {
+				offset = Long.parseLong(name, idRadix);
+			} catch(NumberFormatException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to parse the item id \"{}\"", rawId);
 			}
 			try {
-				item = itemConstructor.newInstance(name, offset, size, 0, reqConf.getContentSource());
+				item = itemConstructor.newInstance(
+					name, offset, size, 0, reqConf.getContentSource()
+				);
 			} catch(
 				final InstantiationException | IllegalAccessException | InvocationTargetException e
 			) {

@@ -70,7 +70,13 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(final Long offset, final Long size, final ContentSource contentSrc) {
-		this(Long.toString(offset, ID_RADIX), offset, size, 0, contentSrc);
+		this(Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
+	}
+	//
+	public BasicDataItem(
+		final String name, final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		this(name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
@@ -114,7 +120,7 @@ implements DataItem {
 	//
 	@Override
 	public final void setOffset(final long offset) {
-		this.offset = offset;
+		this.offset = offset < 0 ? Long.MAX_VALUE + offset + 1 : offset;
 		reset();
 	}
 	//
@@ -213,7 +219,7 @@ implements DataItem {
 		}
 		return strBuilder
 			.append(name).append(RunTimeConfig.LIST_SEP)
-			.append(Long.toHexString(offset)).append(RunTimeConfig.LIST_SEP)
+			.append(Long.toString(offset, 0x10)).append(RunTimeConfig.LIST_SEP)
 			.append(size).toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

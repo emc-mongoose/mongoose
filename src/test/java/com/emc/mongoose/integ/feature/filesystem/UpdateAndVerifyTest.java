@@ -39,7 +39,7 @@ extends FileSystemTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "/tmp/" + RUN_ID);
 		//System.setProperty(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "conf/content/zerobytes");
 		FileSystemTestBase.setUpClass();
 		final List<FileItem>
@@ -72,7 +72,7 @@ extends FileSystemTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "");
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "");
 		//System.setProperty(RunTimeConfig.KEY_DATA_CONTENT_FPATH, "");
 		FileSystemTestBase.tearDownClass();
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();

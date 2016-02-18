@@ -88,9 +88,9 @@ extends WSRequestConfigBase<T, C> {
 	@Override
 	public final HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException {
-		if(fsAccess) {
-			super.applyObjectId(obj, null);
-		}
+		//if(fsAccess) {
+		//	super.applyObjectId(obj, null);
+		//}
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
 			getHttpMethod(), getDataUriPath(obj)
 		);

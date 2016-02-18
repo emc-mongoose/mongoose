@@ -6,17 +6,18 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.item.base.ItemNamingScheme;
+import com.emc.mongoose.core.api.item.base.ItemNamingType;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.item.base.BasicItemNamingScheme;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
 //
@@ -61,22 +62,29 @@ implements DataLoadBuilder<T, U> {
 	@SuppressWarnings("unchecked")
 	private ItemSrc<T> getNewItemSrc()
 	throws NoSuchMethodException {
-		final String ns = rtConfig.getItemNaming();
-		ItemNamingScheme.Type namingSchemeType = ItemNamingScheme.Type.RANDOM;
+		final String ns = rtConfig.getItemNamingType();
+		ItemNamingType namingType = ItemNamingType.RANDOM;
 		if(ns != null && !ns.isEmpty()) {
 			try {
-				namingSchemeType = ItemNamingScheme.Type.valueOf(ns.toUpperCase());
+				namingType = ItemNamingType.valueOf(ns.toUpperCase());
 			} catch(final IllegalArgumentException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e,
 					"Failed to parse the naming scheme \"{}\", acceptable values are: {}",
-					ns, Arrays.toString(ItemNamingScheme.Type.values())
+					ns, Arrays.toString(ItemNamingType.values())
 				);
 			}
 		}
+		final BasicItemNameGenerator bing = new BasicItemNameGenerator(
+			namingType,
+			FileItem.class.isAssignableFrom(ioConfig.getItemClass()) ?
+				null : rtConfig.getItemNamingPrefix(),
+			rtConfig.getItemNamingLength(), rtConfig.getItemNamingRadix(),
+			rtConfig.getItemNamingOffset()
+		);
 		return new NewDataItemSrc<>(
-			(Class<T>) ioConfig.getItemClass(), new BasicItemNamingScheme(namingSchemeType),
-			ioConfig.getContentSource(), minObjSize, maxObjSize, objSizeBias
+			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(),
+			minObjSize, maxObjSize, objSizeBias
 		);
 	}
 	//

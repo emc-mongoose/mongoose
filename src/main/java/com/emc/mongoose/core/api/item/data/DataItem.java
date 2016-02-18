@@ -14,8 +14,6 @@ import java.nio.channels.WritableByteChannel;
 public interface DataItem
 extends Item, ReadableByteChannel, Externalizable {
 	//
-	int ID_RADIX = Character.MAX_RADIX;
-	//
 	void reset();
 	//
 	long getSize();

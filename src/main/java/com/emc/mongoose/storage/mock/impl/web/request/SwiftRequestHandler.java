@@ -54,13 +54,17 @@ extends WSRequestHandlerBase<T> {
 		PATTERN_LIMIT = Pattern.compile(LIMIT + "=(?<" + LIMIT + ">[\\d]+)&?"),
 		PATTERN_MARKER = Pattern.compile(MARKER + "=(?<" + MARKER + ">[a-z\\d]+)&?");
 	//
-	private final String apiBasePathSwift;
+	private final String apiBasePathSwift, prefix;
+	private final int prefixLength, idRadix;
 	//
 	public SwiftRequestHandler(
 		final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage
 	) {
 		super(runTimeConfig, sharedStorage);
 		apiBasePathSwift = runTimeConfig.getString(WSRequestConfigImpl.KEY_CONF_SVC_BASEPATH);
+		prefix = runTimeConfig.getItemNamingPrefix();
+		prefixLength = prefix == null ? 0 : prefix.length();
+		idRadix = runTimeConfig.getItemNamingRadix();
 	}
 	//
 	public boolean matches(final HttpRequest httpRequest) {
@@ -99,7 +103,11 @@ extends WSRequestHandlerBase<T> {
 							WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ||
 							WSRequestConfig.METHOD_POST.equalsIgnoreCase(method)
 						) {
-							offset = Long.parseLong(oid, MutableDataItem.ID_RADIX);
+							if(prefixLength > 0) {
+								offset = Long.parseLong(oid.substring(prefixLength), idRadix);
+							} else {
+								offset = Long.parseLong(oid, idRadix);
+							}
 						} else {
 							offset = -1;
 						}

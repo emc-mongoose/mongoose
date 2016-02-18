@@ -67,7 +67,7 @@ implements Externalizable {
 		KEY_DATA_SIZE_MAX = "data.size.max",
 		KEY_DATA_SIZE_BIAS = "data.size.bias",
 		KEY_DATA_FS_ACCESS = "data.fsAccess",
-		KEY_ITEM_PREFIX = "item.prefix",
+		KEY_ITEM_NAMING_PREFIX = "item.naming.prefix",
 		KEY_DATA_VERSIONING = "data.versioning",
 		//
 		KEY_HTTP_CUSTOM_HEADERS = "http.customHeaders",
@@ -127,7 +127,10 @@ implements Externalizable {
 		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
 		//
 		KEY_ITEM_CLASS = "item.class",
-		KEY_ITEM_NAMING = "item.naming",
+		KEY_ITEM_NAMING_TYPE = "item.naming.type",
+		KEY_ITEM_NAMING_LENGTH = "item.naming.length",
+		KEY_ITEM_NAMING_RADIX = "item.naming.radix",
+		KEY_ITEM_NAMING_OFFSET = "item.naming.offset",
 		KEY_ITEM_SRC_FILE = "item.src.file",
 		KEY_LOAD_CIRCULAR = "load.circular",
 		KEY_ITEM_SRC_RANDOM = "item.src.random",
@@ -384,8 +387,20 @@ implements Externalizable {
 		return getBoolean(KEY_DATA_FS_ACCESS);
 	}
 	//
-	public final String getNamePrefix() {
-		return getString(KEY_ITEM_PREFIX);
+	public final String getItemNamingPrefix() {
+		return getString(KEY_ITEM_NAMING_PREFIX);
+	}
+	//
+	public final int getItemNamingLength() {
+		return getInt(KEY_ITEM_NAMING_LENGTH);
+	}
+	//
+	public final int getItemNamingRadix() {
+		return getInt(KEY_ITEM_NAMING_RADIX);
+	}
+	//
+	public final long getItemNamingOffset() {
+		return getLong(KEY_ITEM_NAMING_OFFSET);
 	}
 	//
 	public final boolean getDataVersioningEnabled() {
@@ -428,8 +443,8 @@ implements Externalizable {
 		return getString(KEY_ITEM_CLASS);
 	}
 	//
-	public final String getItemNaming() {
-		return getString(KEY_ITEM_NAMING);
+	public final String getItemNamingType() {
+		return getString(KEY_ITEM_NAMING_TYPE);
 	}
 	//
 	public final long getDataSizeMin() {
@@ -452,7 +467,7 @@ implements Externalizable {
 		final List<String> nodes = new ArrayList<>();
 		for(String nodeAddr : getStorageAddrs()) {
 			if (!nodeAddr.contains(STORAGE_PORT_SEP)) {
-				nodeAddr = nodeAddr + STORAGE_PORT_SEP + getString(
+				nodeAddr = nodeAddr + STORAGE_PORT_SEP + getInt(
 					getApiPortParamName(getApiName().toLowerCase())
 				);
 			}

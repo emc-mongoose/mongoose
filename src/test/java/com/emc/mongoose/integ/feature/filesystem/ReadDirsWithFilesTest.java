@@ -38,7 +38,7 @@ extends FileSystemTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "/tmp/" + RUN_ID);
 		FileSystemTestBase.setUpClass();
 		try(
 			final StorageClient<FileItem> client = CLIENT_BUILDER
@@ -71,7 +71,7 @@ extends FileSystemTestBase {
 					break;
 				} else {
 					rtConfig.setProperty(
-						RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID + "/" + nextDirName
+						RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "/tmp/" + RUN_ID + "/" + nextDirName
 					);
 					nextDirClient = CLIENT_BUILDER.build();
 					nextDirClient.write(null, null, COUNT_TO_WRITE, 100, 10);
@@ -82,7 +82,7 @@ extends FileSystemTestBase {
 		TimeUnit.SECONDS.sleep(1);
 		//
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID + "_DirsRead");
-		rtConfig.set(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "/tmp/" + RUN_ID);
 		try(
 			final StorageClient<FileItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
@@ -105,7 +105,7 @@ extends FileSystemTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "data");
-		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "");
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "");
 		FileSystemTestBase.tearDownClass();
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
 		for(final File f : tgtDir.listFiles()) {

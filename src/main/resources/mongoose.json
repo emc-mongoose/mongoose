@@ -56,7 +56,9 @@
 
 			"http.sign.method": "http.signMethod",
 
-			"item.src.circular": "load.circular",
+			"item.src.circular" : "load.circular",
+			"item.naming" : "item.naming.type",
+			"item.prefix" : "item.naming.prefix",
 
 			"load.type.append.threads": "load.type.append.connections",
 			"load.append.threads": "load.type.append.connections",
@@ -175,15 +177,21 @@
 				"repeatable": true
 			},
 			"customHeaders": {
-				"User-Agent" : "mongoose/next",
-				"Connection" : "keep-alive"
+				"Connection" : "keep-alive",
+				"User-Agent" : "mongoose/next"
 			},
 			"pipelining": false,
 			"signMethod": "HmacSHA1"
 		},
 		"item": {
 			"class": "data",
-			"naming" : "random",
+			"naming" : {
+				"type" : "random",
+				"prefix" : null,
+				"length" : 13,
+				"radix" : 36,
+				"offset" : 0
+			},
 			"src": {
 				"file": "",
 				"separator": ",",
@@ -192,8 +200,7 @@
 			},
 			"queue": {
 				"maxSize": 500000
-			},
-			"prefix": null
+			}
 		},
 		"io": {
 			"buffer": {

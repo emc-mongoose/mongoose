@@ -2,14 +2,15 @@ package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.core.api.item.base.ItemNamingScheme;
+import com.emc.mongoose.core.api.item.base.ItemNamingType;
 import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
-import com.emc.mongoose.core.impl.item.base.BasicItemNamingScheme;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.item.data.NewContainerSrc;
 import org.apache.logging.log4j.Level;
@@ -65,21 +66,30 @@ implements ContainerLoadBuilder<T, C, U>{
 	@SuppressWarnings("unchecked")
 	private ItemSrc getNewItemSrc()
 	throws NoSuchMethodException {
-		final String ns = rtConfig.getItemNaming();
-		ItemNamingScheme.Type namingSchemeType = ItemNamingScheme.Type.RANDOM;
+		//
+		final String ns = rtConfig.getItemNamingType();
+		ItemNamingType namingType = ItemNamingType.RANDOM;
 		if(ns != null && !ns.isEmpty()) {
 			try {
-				namingSchemeType = ItemNamingScheme.Type.valueOf(ns.toUpperCase());
+				namingType = ItemNamingType.valueOf(ns.toUpperCase());
 			} catch(final IllegalArgumentException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e,
 					"Failed to parse the naming scheme \"{}\", acceptable values are: {}",
-					ns, Arrays.toString(ItemNamingScheme.Type.values())
+					ns, Arrays.toString(ItemNamingType.values())
 				);
 			}
 		}
+		final Class<C> containerClass = (Class<C>) ioConfig.getContainerClass();
 		return new NewContainerSrc<>(
-			ioConfig.getContainerClass(), new BasicItemNamingScheme(namingSchemeType)
+			containerClass,
+			new BasicItemNameGenerator(
+				namingType,
+				Directory.class.isAssignableFrom(containerClass) ?
+					null : rtConfig.getItemNamingPrefix(),
+				rtConfig.getItemNamingLength(), rtConfig.getItemNamingRadix(),
+				rtConfig.getItemNamingOffset()
+			)
 		);
 	}
 	//

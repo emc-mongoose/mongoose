@@ -5,7 +5,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
 import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.s3.BucketHelper;
@@ -61,8 +60,15 @@ extends WSRequestHandlerBase<T> {
 		),
 		PATTERN_MARKER = Pattern.compile(BucketHelper.URL_ARG_MARKER + "=(?<" + MARKER + ">[a-z\\d]+)&?");
 	//
-	public S3RequestHandler(final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage) {
+	private final String prefix;
+	private final int prefixLength, idRadix;
+	//
+	public S3RequestHandler(final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage)
+	throws IllegalArgumentException {
 		super(runTimeConfig, sharedStorage);
+		prefix = runTimeConfig.getItemNamingPrefix();
+		prefixLength = prefix == null ? 0 : prefix.length();
+		idRadix = runTimeConfig.getItemNamingRadix();
 	}
 	//
 	@Override
@@ -84,9 +90,9 @@ extends WSRequestHandlerBase<T> {
 			if(m.find()) {
 				final String
 					bucket = m.group(BUCKET),
-					objId = m.group(OBJ_ID);
+					objName = m.group(OBJ_ID);
 				if(bucket != null) {
-					if(objId == null) {
+					if(objName == null) {
 						handleGenericContainerReq(httpRequest, httpResponse, method, bucket, null);
 					} else {
 						final long offset;
@@ -94,12 +100,16 @@ extends WSRequestHandlerBase<T> {
 							WSRequestConfig.METHOD_PUT.equalsIgnoreCase(method) ||
 							WSRequestConfig.METHOD_POST.equalsIgnoreCase(method)
 						) {
-							offset = Long.parseLong(objId, MutableDataItem.ID_RADIX);
+							if(prefixLength > 0) {
+								offset = Long.parseLong(objName.substring(prefixLength), idRadix);
+							} else {
+								offset = Long.parseLong(objName, idRadix);
+							}
 						} else {
 							offset = -1;
 						}
 						handleGenericDataReq(
-							httpRequest, httpResponse, method, bucket, objId, offset
+							httpRequest, httpResponse, method, bucket, objName, offset
 						);
 					}
 				} else {
@@ -109,7 +119,9 @@ extends WSRequestHandlerBase<T> {
 				httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 			}
 		} catch(final IllegalArgumentException | IllegalStateException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to parse the request URI: {}", requestURI);
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to parse the request URI: {}", requestURI
+			);
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 		}
 	}

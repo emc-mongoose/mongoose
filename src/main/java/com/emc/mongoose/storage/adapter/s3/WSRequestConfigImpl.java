@@ -104,7 +104,7 @@ extends WSRequestConfigBase<T, C> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		applyObjectId(dataItem, null);
+		//applyObjectId(dataItem, null);
 		return getContainerUriPath(container) + getFilePathFor(dataItem);
 	}
 	//

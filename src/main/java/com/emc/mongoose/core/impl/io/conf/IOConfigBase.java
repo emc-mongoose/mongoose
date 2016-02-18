@@ -36,7 +36,7 @@ implements IOConfig<T, C> {
 	protected volatile boolean verifyContentFlag;
 	protected volatile RunTimeConfig runTimeConfig;
 	protected volatile String nameSpace, namePrefix = null;
-	protected int buffSize;
+	protected int buffSize, nameRadix = Character.MAX_RADIX;
 	protected int reqSleepMilliSec;
 	//
 	protected IOConfigBase() {
@@ -45,7 +45,8 @@ implements IOConfig<T, C> {
 		contentSrc = ContentSourceBase.getDefault();
 		verifyContentFlag = runTimeConfig.getReadVerifyContent();
 		nameSpace = runTimeConfig.getStorageNameSpace();
-		namePrefix = runTimeConfig.getNamePrefix();
+		namePrefix = runTimeConfig.getItemNamingPrefix();
+		nameRadix = runTimeConfig.getItemNamingRadix();
 		buffSize = (int) runTimeConfig.getIOBufferSizeMin();
 		reqSleepMilliSec = runTimeConfig.getLoadLimitReqSleepMilliSec();
 	}
@@ -59,6 +60,7 @@ implements IOConfig<T, C> {
 			setContainer(ioConf2Clone.getContainer());
 			setNameSpace(ioConf2Clone.getNameSpace());
 			setNamePrefix(ioConf2Clone.getNamePrefix());
+			setNameRadix(ioConf2Clone.getNameRadix());
 			setBuffSize(ioConf2Clone.getBuffSize());
 			this.reqSleepMilliSec = ioConf2Clone.reqSleepMilliSec;
 		}
@@ -76,6 +78,7 @@ implements IOConfig<T, C> {
 			.setContainer(container)
 			.setNameSpace(nameSpace)
 			.setNamePrefix(namePrefix)
+			.setNameRadix(nameRadix)
 			.setBuffSize(buffSize)
 			.reqSleepMilliSec = reqSleepMilliSec;
 		return ioConf;
@@ -139,6 +142,17 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
+	public int getNameRadix() {
+		return nameRadix;
+	}
+	//
+	@Override
+	public IOConfigBase<T, C> setNameRadix(final int nameRadix) {
+		this.nameRadix = nameRadix;
+		return this;
+	}
+	//
+	@Override
 	public final ContentSource getContentSource() {
 		return contentSrc;
 	}
@@ -186,7 +200,7 @@ implements IOConfig<T, C> {
 	public IOConfigBase<T, C> setRunTimeConfig(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
-		setNamePrefix(this.runTimeConfig.getNamePrefix());
+		setNamePrefix(this.runTimeConfig.getItemNamingPrefix());
 		setVerifyContentFlag(this.runTimeConfig.getReadVerifyContent());
 		setBuffSize((int) this.runTimeConfig.getIOBufferSizeMin());
 		reqSleepMilliSec = runTimeConfig.getLoadLimitReqSleepMilliSec();

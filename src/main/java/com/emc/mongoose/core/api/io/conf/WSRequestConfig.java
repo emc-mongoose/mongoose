@@ -93,6 +93,9 @@ extends RequestConfig<T, C> {
 	@Override
 	WSRequestConfig<T, C> setNamePrefix(final String prefix);
 	//
+	@Override
+	WSRequestConfig<T, C> setNameRadix(final int radix);
+	//
 	WSRequestConfig<T, C> setFileAccessEnabled(final boolean fsAccessFlag);
 	boolean getFileAccessEnabled();
 	//
