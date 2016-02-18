@@ -14,7 +14,7 @@ public class AsyncFormattingGeneratorTestBase extends TestCase {
 			LockSupport.parkNanos(1);
 			Thread.yield();
 		}
-		Thread.sleep(100); // todo Thread.yield is not enough for an unknown reason
+//		Thread.sleep(100); // todo Thread.yield is not enough for an unknown reason
 	}
 
 }
