@@ -10,6 +10,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.HeaderGroup;
 //
@@ -20,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  An HTTP request shared configuration.
  */
 public interface WSRequestConfig<T extends WSObject, C extends Container<T>>
-extends RequestConfig<T, C> {
+extends RequestConfig<T, C>, HttpRequestInterceptor {
 	//
 	String
 		KEY_EMC_ACCEPT = "x-emc-accept",
@@ -112,7 +113,7 @@ extends RequestConfig<T, C> {
 	//
 	HttpHost getNodeHost(final String nodeAddr);
 	//
-	void applyHeadersFinally(final HttpEntityEnclosingRequest httpRequest);
+	void applyHeadersFinally(final HttpRequest httpRequest);
 	//
 	String getCanonical(final HttpRequest httpRequest);
 	//

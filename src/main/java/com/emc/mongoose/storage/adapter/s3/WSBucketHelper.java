@@ -74,7 +74,6 @@ implements BucketHelper<T, C> {
 				new NByteArrayEntity(CONTENT_VER_CONF_DISABLED, ContentType.APPLICATION_XML)
 			);
 		}
-		reqConf.applyHeadersFinally(httpReq);
 		//
 		return reqConf.execute(
 			addr, httpReq, WSRequestConfig.REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
@@ -116,7 +115,6 @@ implements BucketHelper<T, C> {
 		} else {
 			httpReq = reqConf.createGenericRequest(method, "/" + name);
 		}
-		reqConf.applyHeadersFinally(httpReq);
 		//
 		return reqConf.execute(addr, httpReq, timeOut, timeUnit);
 	}

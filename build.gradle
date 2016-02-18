@@ -287,7 +287,7 @@ dependencies {
 		library.commons_configuration,
 		library.commons_collections4,
 		library.httpcore_plus_nio,
-		library.log4j_api,
+		library.log4j_api_plus_core,
 		library.metrics_core,
 	)
 	coreImplRuntime(
@@ -300,7 +300,7 @@ dependencies {
 		library.commons_configuration,
 		library.commons_lang,
 		library.httpcore,
-		library.log4j_api,
+		library.log4j_api_plus_core,
 	)
 	storageAdapterAtmosRuntime (
 		library.runtime_logging,
@@ -310,7 +310,7 @@ dependencies {
 		library.commons_lang,
 		library.commons_configuration,
 		library.httpcore,
-		library.log4j_api,
+		library.log4j_api_plus_core,
 	)
 	storageAdapterS3Runtime (
 		library.runtime_logging,
@@ -320,7 +320,7 @@ dependencies {
 		library.commons_lang,
 		library.commons_configuration,
 		library.httpcore,
-		library.log4j_api,
+		library.log4j_api_plus_core,
 		library.jackson_core,
 	)
 	storageAdapterSwiftRuntime (
@@ -337,7 +337,7 @@ dependencies {
 
 	webserverCompile (
 		library.commons_configuration,
-		library.log4j_api,
+		library.log4j_api_plus_core,
 		library.jetty_svc,
 	)
 	webserverRuntime (
@@ -351,6 +351,7 @@ dependencies {
 		library.commons_configuration,
 		library.httpcore,
 		library.log4j_api,
+		library.log4j_core,
 		library.metrics_core,
 	)
 	clientRuntime (
@@ -362,7 +363,7 @@ dependencies {
 		library.commons_collections4,
 		library.commons_configuration,
 		library.httpcore,
-		library.log4j_api,
+		library.log4j_api_plus_core,
 	)
 	serverImplRuntime (
 		library.runtime_logging,
@@ -371,7 +372,7 @@ dependencies {
 	scenarioCompile (
 		library.commons_configuration,
 		library.commons_collections4,
-		library.log4j_api,
+		library.log4j_api_plus_core,
 		library.httpcore
 	)
 	scenarioRuntime (
@@ -384,7 +385,7 @@ dependencies {
 		library.commons_configuration,
 		library.httpcore_plus_nio,
 		library.jackson_databind,
-		library.log4j_api,
+		library.log4j_api_plus_core,
 		library.metrics_core,
 		library.netty_handler,
 		library.netty_buffer,

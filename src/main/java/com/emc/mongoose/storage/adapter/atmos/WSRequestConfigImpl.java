@@ -111,7 +111,6 @@ extends WSRequestConfigBase<T, C> {
 				applyPayLoad(request, null);
 				break;
 		}
-		applyHeadersFinally(request);
 		return request;
 	}
 	//
@@ -277,7 +276,7 @@ extends WSRequestConfigBase<T, C> {
 	private final static ThreadLocal<StringBuilder>
 		THR_LOC_METADATA_STR_BUILDER = new ThreadLocal<>();
 	@Override @SuppressWarnings("unchecked")
-	protected final void applyMetaDataHeaders(final HttpEntityEnclosingRequest request) {
+	protected final void applyMetaDataHeaders(final HttpRequest request) {
 		StringBuilder md = THR_LOC_METADATA_STR_BUILDER.get();
 		if(md == null) {
 			md = new StringBuilder();
@@ -293,13 +292,13 @@ extends WSRequestConfigBase<T, C> {
 			}
 		}
 		// the "offset" tag is required for WS mock
-		if(IOTask.Type.CREATE.equals(loadType)) {
-			final HttpEntity entity = request.getEntity();
-			if(entity != null && WSObject.class.isInstance(entity)) {
+		if(IOTask.Type.CREATE.equals(loadType) && request instanceof HttpEntityEnclosingRequest) {
+			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+			if(entity != null && entity instanceof WSObject) {
 				if(md.length() > 0) {
 					md.append(',');
 				}
-				md.append("offset=").append(((T) request.getEntity()).getOffset());
+				md.append("offset=").append(((T) entity).getOffset());
 			}
 		}
 		//
