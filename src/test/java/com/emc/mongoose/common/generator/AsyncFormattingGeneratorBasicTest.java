@@ -1,6 +1,5 @@
 package com.emc.mongoose.common.generator;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -15,27 +14,20 @@ import static org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class AsyncFormattingGeneratorBasicTest extends AsyncFormattingGeneratorTestBase {
 
-	public static Pattern doublePattern;
-	public static Pattern longPattern;
-	public static Pattern datePattern;
-
-	@BeforeClass
-	public static void initPatterns() {
-		doublePattern = Pattern.compile(DOUBLE_REG_EXP);
-		longPattern = Pattern.compile(LONG_REG_EXP);
-		datePattern = Pattern.compile(DATE_REG_EXP);
-	}
+	private final static Pattern DOUBLE_PATTERN = Pattern.compile(DOUBLE_REG_EXP);
+	private final static Pattern LONG_PATTERN = Pattern.compile(LONG_REG_EXP);
+	private final static Pattern DATE_PATTERN = Pattern.compile(DATE_REG_EXP);
 
 	@Parameters
 	public static Iterable<Object[]> data() {
 		return Arrays.asList(new Object[][]{
-				{"%d", longPattern},
-				{"%d[1-5]", longPattern},
-				{"%f", doublePattern},
-				{"%f[0.1-5.0]", doublePattern},
-				{"%D", datePattern},
-				{"%D[1999/02/15-2014/08/22]", datePattern},
-				{"fdfdsfghfh %f[-987.0--785.5]gdghhfe", doublePattern}
+				{"%d", LONG_PATTERN},
+				{"%d[1-5]", LONG_PATTERN},
+				{"%f", DOUBLE_PATTERN},
+				{"%f[0.1-5.0]", DOUBLE_PATTERN},
+//				{"%D", DATE_PATTERN},
+//				{"%D[1999/02/15-2014/08/22]", DATE_PATTERN},
+				{"fdfdsfghfh %f[-987.0--785.5]gdghhfe", DOUBLE_PATTERN}
 		});
 	}
 	@Parameter(value = 0)
@@ -44,17 +36,12 @@ public class AsyncFormattingGeneratorBasicTest extends AsyncFormattingGeneratorT
 	@Parameter(value = 1)
 	public Pattern resultPattern;
 
-//	@Test
-//	public void checkFormattingResult() throws Exception {
-//		initFormatter(patternString);
-//		String result = formatter.get();
-//		assertThat(resultPattern.matcher(result).find(), equalTo(true));
-//	}
-
 	@Test
-	public void checkFormattingReturn() throws Exception {
+	public void checkFormattingResult() throws Exception {
 		initFormatter(patternString);
-		assertNotNull(formatter.get());
+		String result = formatter.get();
+		System.out.println("\t" + result);
+		assertTrue(resultPattern.matcher(result).find());
 	}
 
 }
