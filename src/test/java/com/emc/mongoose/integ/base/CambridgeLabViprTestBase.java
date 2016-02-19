@@ -1,6 +1,5 @@
 package com.emc.mongoose.integ.base;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

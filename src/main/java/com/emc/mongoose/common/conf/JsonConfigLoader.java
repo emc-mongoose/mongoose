@@ -99,24 +99,63 @@ public class JsonConfigLoader {
 					propertyName = fieldPrefix + Constants.DOT + jsonField;
 				}
 			}
-			if(!jsonNode.get(jsonField).fieldNames().hasNext()) {
-				// load configuration from mongoose.json
-				final JsonNode nodeValue = jsonNode.get(jsonField);
-				if(!propertyName.startsWith(AppConfig.PREFIX_KEY_ALIASING)) {
-					LOG.trace(
-						Markers.MSG, "Read property: \"{}\" = {}", propertyName, nodeValue
-					);
-				}
-				//
-				if(!nodeValue.isNull()) {
-					appConfig.setProperty(
-						propertyName, getFormattedValue(nodeValue.toString())
-					);
-				} else {
-					appConfig.setProperty(propertyName, null);
+
+			// load configuration from mongoose.json
+			final JsonNode nodeValue = jsonNode.get(jsonField);
+			if(!propertyName.startsWith(AppConfig.PREFIX_KEY_ALIASING)) {
+				LOG.trace(
+					Markers.MSG, "Read property: \"{}\" = {}", propertyName, nodeValue
+				);
+			}
+			//
+			if(!nodeValue.isNull()) {
+				switch(nodeValue.getNodeType()) {
+					case ARRAY:
+						final Iterator<JsonNode> i = nodeValue.elements();
+						final StringBuilder strb = new StringBuilder();
+						while(i.hasNext()) {
+							strb.append(i.next().asText()).append(',');
+						}
+						strb.setLength(strb.length() - 1); // remove last comma
+						appConfig.setProperty(propertyName, strb.toString());
+						break;
+					case BINARY:
+						appConfig.setProperty(propertyName, nodeValue.asText());
+						break;
+					case BOOLEAN:
+						appConfig.setProperty(propertyName, nodeValue.asBoolean());
+						break;
+					case MISSING:
+						throw new IllegalStateException(
+							"No such value \"" + propertyName + "\""
+						);
+					case NULL:
+						appConfig.setProperty(propertyName, null);
+						break;
+					case NUMBER:
+						if(nodeValue.isDouble() || nodeValue.isFloat()) {
+							appConfig.setProperty(propertyName, nodeValue.asDouble());
+						} else if(nodeValue.isLong() || nodeValue.isInt()) {
+							appConfig.setProperty(propertyName, nodeValue.asLong());
+						} else if(nodeValue.isBigDecimal()){
+							appConfig.setProperty(propertyName, nodeValue.asText());
+						} else {
+							throw new IllegalStateException(
+								"Unexpected value type of \"" + propertyName + "\""
+							);
+						}
+						break;
+					case OBJECT:
+					case POJO:
+						throw new IllegalStateException(
+							"Unsupported value of \"" + propertyName + "\""
+						);
+					case STRING:
+						appConfig.setProperty(propertyName, nodeValue.asText());
+						break;
 				}
 			} else {
-				walkJsonTree(jsonNode.get(jsonField), propertyName);
+				appConfig.setProperty(propertyName, null);
 			}
 		}
 	}
@@ -135,7 +174,7 @@ public class JsonConfigLoader {
 				LOG, Level.WARN, e, "Failed to update properties in \"{}\"", cfgFile);
 		}
 	}
-	//
+	/*
 	private static String getFormattedValue(final String value) {
 		return value
 			.replace("[", "")
@@ -143,5 +182,5 @@ public class JsonConfigLoader {
 			.replace(" ", "")
 			.replace("\"", "")
 			.trim();
-	}
+	}*/
 }

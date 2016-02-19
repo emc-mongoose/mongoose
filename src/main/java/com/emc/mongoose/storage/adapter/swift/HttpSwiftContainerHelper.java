@@ -275,7 +275,6 @@ implements SwiftContainerHelper<T, C> {
 				);
 		}
 		//
-		reqConf.applyHeadersFinally(httpReq);
 		return reqConf.execute(addr, httpReq, timeOut, timeUnit);
 	}
 }

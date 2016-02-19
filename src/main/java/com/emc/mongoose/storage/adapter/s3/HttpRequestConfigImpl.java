@@ -96,7 +96,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		applyObjectId(dataItem, null);
+		//applyObjectId(dataItem, null);
 		return getContainerUriPath(container) + getFilePathFor(dataItem);
 	}
 	//
@@ -227,7 +227,6 @@ extends HttpRequestConfigBase<T, C> {
 		final HttpEntityEnclosingRequest createDirReq = createGenericRequest(
 			METHOD_PUT, "/" + bucketName + "/" + dirPath + "/"
 		);
-		applyHeadersFinally(createDirReq);
 		try {
 			final HttpResponse createDirResp = execute(
 				nodeAddr, createDirReq,

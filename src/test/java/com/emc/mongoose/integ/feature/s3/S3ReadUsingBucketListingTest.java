@@ -1,6 +1,5 @@
 package com.emc.mongoose.integ.feature.s3;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //

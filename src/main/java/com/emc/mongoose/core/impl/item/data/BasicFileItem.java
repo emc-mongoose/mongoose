@@ -29,6 +29,12 @@ implements FileItem {
 	}
 	//
 	public BasicFileItem(
+		final String name, final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		super(name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicFileItem(
 		final String name, final Long offset, final Long size, Integer layerNum,
 		final ContentSource contentSrc
 	) {

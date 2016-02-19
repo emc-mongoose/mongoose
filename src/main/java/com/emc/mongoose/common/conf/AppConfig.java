@@ -31,7 +31,11 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_ITEM_DST_FILE = "item.dst.file";
 	String KEY_ITEM_SRC_FILE = "item.src.file";
 	String KEY_ITEM_SRC_BATCH_SIZE = "item.src.batchSize";
-	String KEY_ITEM_NAMING = "item.naming";
+	String KEY_ITEM_NAMING_TYPE = "item.naming.type";
+	String KEY_ITEM_NAMING_PREFIX = "item.naming.prefix";
+	String KEY_ITEM_NAMING_RADIX = "item.naming.radix";
+	String KEY_ITEM_NAMING_OFFSET = "item.naming.offset";
+	String KEY_ITEM_NAMING_LENGTH = "item.naming.length";
 	String KEY_ITEM_QUEUE_SIZE_LIMIT = "item.queue.sizeLimit";
 	String KEY_LOAD_CIRCULAR = "load.circular";
 	String KEY_LOAD_CLASS = "load.class";
@@ -117,7 +121,15 @@ extends Cloneable, Configuration, Externalizable {
 	int getItemSrcBatchSize();
 
 	enum ItemNamingType { ASC, DESC, RANDOM }
-	ItemNamingType getItemNaming();
+	ItemNamingType getItemNamingType();
+
+	String getItemNamingPrefix();
+
+	int getItemNamingRadix();
+
+	long getItemNamingOffset();
+
+	int getItemNamingLength();
 
 	int getItemQueueSizeLimit();
 

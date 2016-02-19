@@ -9,6 +9,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.HeaderGroup;
 //
@@ -19,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  An HTTP request shared configuration.
  */
 public interface HttpRequestConfig<T extends HttpDataItem, C extends Container<T>>
-extends RequestConfig<T, C> {
+extends RequestConfig<T, C>, HttpRequestInterceptor {
 	//
 	String
 		KEY_EMC_ACCEPT = "x-emc-accept",
@@ -92,6 +93,9 @@ extends RequestConfig<T, C> {
 	@Override
 	HttpRequestConfig<T, C> setNamePrefix(final String prefix);
 	//
+	@Override
+	HttpRequestConfig<T, C> setNameRadix(final int radix);
+	//
 	HttpRequestConfig<T, C> setFileAccessEnabled(final boolean fsAccessFlag);
 	boolean getFileAccessEnabled();
 	//
@@ -108,7 +112,7 @@ extends RequestConfig<T, C> {
 	//
 	HttpHost getNodeHost(final String nodeAddr);
 	//
-	void applyHeadersFinally(final HttpEntityEnclosingRequest httpRequest);
+	void applyHeadersFinally(final HttpRequest httpRequest);
 	//
 	String getCanonical(final HttpRequest httpRequest);
 	//

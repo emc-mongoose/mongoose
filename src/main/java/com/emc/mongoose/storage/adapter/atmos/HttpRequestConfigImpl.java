@@ -88,9 +88,9 @@ extends HttpRequestConfigBase<T, C> {
 	@Override
 	public final HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException {
-		if(fsAccess) {
-			super.applyObjectId(obj, null);
-		}
+		//if(fsAccess) {
+		//	super.applyObjectId(obj, null);
+		//}
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
 			getHttpMethod(), getDataUriPath(obj)
 		);
@@ -110,7 +110,6 @@ extends HttpRequestConfigBase<T, C> {
 				applyPayLoad(request, null);
 				break;
 		}
-		applyHeadersFinally(request);
 		return request;
 	}
 	//
@@ -276,7 +275,7 @@ extends HttpRequestConfigBase<T, C> {
 	private final static ThreadLocal<StringBuilder>
 		THR_LOC_METADATA_STR_BUILDER = new ThreadLocal<>();
 	@Override @SuppressWarnings("unchecked")
-	protected final void applyMetaDataHeaders(final HttpEntityEnclosingRequest request) {
+	protected final void applyMetaDataHeaders(final HttpRequest request) {
 		StringBuilder md = THR_LOC_METADATA_STR_BUILDER.get();
 		if(md == null) {
 			md = new StringBuilder();
@@ -292,13 +291,13 @@ extends HttpRequestConfigBase<T, C> {
 			}
 		}
 		// the "offset" tag is required for WS mock
-		if(IOTask.Type.WRITE.equals(loadType)) {
-			final HttpEntity entity = request.getEntity();
-			if(entity != null && HttpDataItem.class.isInstance(entity)) {
+		if(IOTask.Type.WRITE.equals(loadType) && request instanceof HttpEntityEnclosingRequest) {
+			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+			if(entity != null && entity instanceof HttpDataItem) {
 				if(md.length() > 0) {
 					md.append(',');
 				}
-				md.append("offset=").append(((T) request.getEntity()).getOffset());
+				md.append("offset=").append(((T) entity).getOffset());
 			}
 		}
 		//

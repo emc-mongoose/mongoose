@@ -1,5 +1,4 @@
 package com.emc.mongoose.integ.feature.atmos;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
@@ -7,7 +6,7 @@ import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 import com.emc.mongoose.storage.adapter.atmos.HttpRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
-import com.emc.mongoose.storage.mock.impl.web.request.AtmosRequestHandler;
+import com.emc.mongoose.storage.mock.impl.http.request.AtmosRequestHandler;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.AfterClass;
 import org.junit.Assert;

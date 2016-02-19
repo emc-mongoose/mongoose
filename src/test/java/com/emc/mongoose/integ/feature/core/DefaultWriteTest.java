@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.feature.core;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;

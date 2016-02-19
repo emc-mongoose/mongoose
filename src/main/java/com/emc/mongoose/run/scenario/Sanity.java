@@ -12,15 +12,13 @@ import com.emc.mongoose.core.api.item.base.ItemDst;
 //
 import com.emc.mongoose.core.impl.item.data.BasicHttpObject;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
-import com.emc.mongoose.core.impl.item.base.ItemBinFileDst;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 //
-import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;
 //
 import com.emc.mongoose.core.impl.item.base.ListItemSrc;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.storage.mock.impl.web.Cinderella;
+import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 //
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -32,11 +30,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.06.15.

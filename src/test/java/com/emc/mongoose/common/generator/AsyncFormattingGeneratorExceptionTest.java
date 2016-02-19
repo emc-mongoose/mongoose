@@ -1,0 +1,48 @@
+package com.emc.mongoose.common.generator;
+
+import junit.framework.TestCase;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.util.Arrays;
+import java.util.concurrent.locks.LockSupport;
+
+import static org.junit.runners.Parameterized.Parameter;
+import static org.junit.runners.Parameterized.Parameters;
+
+@RunWith(Parameterized.class)
+public class AsyncFormattingGeneratorExceptionTest
+extends TestCase {
+
+	protected ValueGenerator<String> formatter;
+
+	protected void initFormatter(String patternString) throws Exception {
+		formatter = new AsyncFormattingGenerator(patternString);
+		while (null == formatter.get()) {
+			LockSupport.parkNanos(1);
+			Thread.yield();
+		}
+	}
+
+	@Parameters
+	public static Iterable<Object[]> data() {
+		return Arrays.asList(new Object[][]{
+				{"%%d"},
+				{"%d[1-5]%"},
+				{"nghgh%"},
+				{"%%%%%%"},
+				{"% "},
+				{"hgdhgdh%xgfht"},
+		});
+	}
+	@Parameter(value = 0)
+	public String patternString;
+
+	@Test(expected = IllegalArgumentException.class)
+	public void checkExceptionThrowing() throws Exception {
+		initFormatter(patternString);
+		formatter.get();
+	}
+
+}

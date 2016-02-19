@@ -2,7 +2,6 @@ package com.emc.mongoose.integ.base;
 //
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 //
 //

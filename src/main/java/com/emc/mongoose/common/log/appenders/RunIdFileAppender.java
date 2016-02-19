@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.log.appenders;
 // mongoose-common.jar
-import static com.emc.mongoose.common.conf.RunTimeConfig.KEY_RUN_ID;
+import static com.emc.mongoose.common.conf.AppConfig.KEY_RUN_ID;
 //
 import org.apache.logging.log4j.ThreadContext;
 //

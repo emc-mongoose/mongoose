@@ -6,7 +6,7 @@ import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 //
-import com.emc.mongoose.storage.mock.impl.web.Nagaina;
+import com.emc.mongoose.storage.mock.impl.http.Nagaina;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 

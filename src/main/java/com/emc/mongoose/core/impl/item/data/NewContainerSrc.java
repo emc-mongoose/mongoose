@@ -1,15 +1,14 @@
 package com.emc.mongoose.core.impl.item.data;
 
-import com.emc.mongoose.common.conf.ItemIdGenerator;
+import com.emc.mongoose.common.generator.ValueGenerator;
+//
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-
+//
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-
 /**
  * Created by gusakk on 21.10.15.
  */
@@ -17,24 +16,21 @@ public class NewContainerSrc<T extends Container>
 implements ItemSrc<T> {
 	//
 	private final Constructor<T> itemConstructor;
-	private final ItemIdGenerator namingScheme;
+	private final ValueGenerator<String> idGenerator;
 	//
 	private T lastItem = null;
 	//
-	public NewContainerSrc(
-		final Class<T> dataCls, final ItemIdGenerator namingScheme
-	) throws NoSuchMethodException, IllegalArgumentException {
+	public NewContainerSrc(final Class<T> dataCls, final ValueGenerator<String> idGenerator)
+	throws NoSuchMethodException, IllegalArgumentException {
 		itemConstructor = dataCls.getConstructor(String.class);
-		this.namingScheme = namingScheme;
+		this.idGenerator = idGenerator;
 	}
 	//
 	@Override
 	public final T get()
 	throws IOException {
 		try {
-			return itemConstructor.newInstance(
-				Long.toString(namingScheme.get(), DataItem.ID_RADIX)
-			);
+			return itemConstructor.newInstance(idGenerator.get());
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
 		}
@@ -45,11 +41,7 @@ implements ItemSrc<T> {
 	throws IOException {
 		try {
 			for(int i = 0; i < maxCount; i ++) {
-				buffer.add(
-					itemConstructor.newInstance(
-						Long.toString(namingScheme.get(), DataItem.ID_RADIX)
-					)
-				);
+				buffer.add(itemConstructor.newInstance(idGenerator.get()));
 			}
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);

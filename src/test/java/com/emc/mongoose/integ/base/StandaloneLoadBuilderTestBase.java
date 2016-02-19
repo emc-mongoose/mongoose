@@ -1,7 +1,6 @@
 package com.emc.mongoose.integ.base;
 //
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.builder.HttpDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;

@@ -1,6 +1,5 @@
 package com.emc.mongoose.integ.feature.content;
 
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.base.ListItemDst;

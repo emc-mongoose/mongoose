@@ -1,6 +1,5 @@
 package com.emc.mongoose.integ.cambridgelab;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //

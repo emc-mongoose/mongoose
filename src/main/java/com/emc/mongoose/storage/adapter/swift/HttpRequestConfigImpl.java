@@ -182,7 +182,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		applyObjectId(dataItem, null);
+		//applyObjectId(dataItem, null);
 		return uriSvcBaseContainerPath + getFilePathFor(dataItem);
 	}
 	@Override

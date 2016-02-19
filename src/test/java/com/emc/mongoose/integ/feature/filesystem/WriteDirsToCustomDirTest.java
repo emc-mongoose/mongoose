@@ -1,6 +1,5 @@
 package com.emc.mongoose.integ.feature.filesystem;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
@@ -35,7 +34,7 @@ extends FileSystemTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, RUN_ID);
-		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "/tmp/" + RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "/tmp/" + RUN_ID);
 		FileSystemTestBase.setUpClass();
 		try(
 			final StorageClient<FileItem> client = CLIENT_BUILDER
@@ -54,7 +53,7 @@ extends FileSystemTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		System.setProperty(RunTimeConfig.KEY_ITEM_CLASS, "data");
-		System.setProperty(RunTimeConfig.KEY_ITEM_PREFIX, "");
+		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "");
 		FileSystemTestBase.tearDownClass();
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
 		for(final File f : tgtDir.listFiles()) {

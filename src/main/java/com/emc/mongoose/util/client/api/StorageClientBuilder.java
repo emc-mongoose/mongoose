@@ -10,7 +10,7 @@ public interface StorageClientBuilder<T extends Item, U extends StorageClient<T>
 	/**
 	 Set the storage API to use.
 	 @param api The value should match to any child package name from the
-	 "com.emc.mongoose.storage.web.adapter" package ("atmos", "s3", "swift", etc).
+	 "com.emc.mongoose.storage.http.adapter" package ("atmos", "s3", "swift", etc).
 	 @return self.
 	 @throws IllegalArgumentException if there's no package having the specified name.
 	 */

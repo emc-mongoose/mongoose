@@ -14,15 +14,14 @@ import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
 // mongoose-storage-mock.jar
 //
-import com.emc.mongoose.storage.mock.impl.web.Cinderella;
+import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
-import com.emc.mongoose.storage.mock.impl.web.Nagaina;
+import com.emc.mongoose.storage.mock.impl.http.Nagaina;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
-import java.util.Map;
 /**
  Created by kurila on 04.07.14.
  Mongoose entry point.

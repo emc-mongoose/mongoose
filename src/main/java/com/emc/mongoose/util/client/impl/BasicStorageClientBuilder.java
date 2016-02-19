@@ -169,7 +169,7 @@ implements StorageClientBuilder<T, U> {
 		) {
 			throw new IllegalArgumentException("Path shouldn't begin or end with \"/\"");
 		}
-		appConfig.setProperty(AppConfig.KEY_ITEM_CONTAINER_NAME, path);
+		appConfig.setProperty(AppConfig.KEY_ITEM_NAMING_PREFIX, path);
 		return this;
 	}
 	//

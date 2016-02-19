@@ -1,7 +1,7 @@
 package com.emc.mongoose.integ.base;
 //
 import static com.emc.mongoose.common.conf.Constants.*;
-import com.emc.mongoose.common.conf.RunTimeConfig;
+
 import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;

@@ -37,9 +37,10 @@ implements IOConfig<T, C> {
 	protected volatile boolean verifyContentFlag;
 	protected volatile AppConfig appConfig;
 	protected volatile String nameSpace;
-	@Deprecated protected volatile String namePrefix = null;
+	protected volatile String namePrefix = null;
 	protected int buffSize;
 	@Deprecated protected int reqSleepMilliSec = 0;
+	protected int nameRadix = Character.MAX_RADIX;
 	//
 	protected IOConfigBase() {
 		appConfig = BasicConfig.THREAD_CONTEXT.get();
@@ -47,7 +48,8 @@ implements IOConfig<T, C> {
 		contentSrc = ContentSourceBase.getDefault();
 		verifyContentFlag = appConfig.getItemDataVerify();
 		nameSpace = appConfig.getStorageHttpNamespace();
-		namePrefix = appConfig.getItemContainerName();
+		namePrefix = appConfig.getItemNamingPrefix();
+		nameRadix = appConfig.getItemNamingRadix();
 		buffSize = appConfig.getIoBufferSizeMin();
 	}
 	//
@@ -60,6 +62,7 @@ implements IOConfig<T, C> {
 			setContainer(ioConf2Clone.getContainer());
 			setNameSpace(ioConf2Clone.getNameSpace());
 			setNamePrefix(ioConf2Clone.getNamePrefix());
+			setNameRadix(ioConf2Clone.getNameRadix());
 			setBuffSize(ioConf2Clone.getBuffSize());
 			this.reqSleepMilliSec = ioConf2Clone.reqSleepMilliSec;
 		}
@@ -77,6 +80,7 @@ implements IOConfig<T, C> {
 			.setContainer(container)
 			.setNameSpace(nameSpace)
 			.setNamePrefix(namePrefix)
+			.setNameRadix(nameRadix)
 			.setBuffSize(buffSize)
 			.reqSleepMilliSec = reqSleepMilliSec;
 		return ioConf;
@@ -136,6 +140,17 @@ implements IOConfig<T, C> {
 	@Override
 	public IOConfigBase<T, C> setNamePrefix(final String namePrefix) {
 		this.namePrefix = namePrefix;
+		return this;
+	}
+	//
+	@Override
+	public int getNameRadix() {
+		return nameRadix;
+	}
+	//
+	@Override
+	public IOConfigBase<T, C> setNameRadix(final int nameRadix) {
+		this.nameRadix = nameRadix;
 		return this;
 	}
 	//
@@ -209,6 +224,8 @@ implements IOConfig<T, C> {
 		LOG.trace(Markers.MSG, "Written flag");
 		out.writeInt(getBuffSize());
 		LOG.trace(Markers.MSG, "Written buffer size \"" + buffSize + "\"");
+		out.writeInt(reqSleepMilliSec);
+		LOG.trace(Markers.MSG, "Written req sleep time \"" + reqSleepMilliSec + "\"");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -228,6 +245,8 @@ implements IOConfig<T, C> {
 		LOG.trace(Markers.MSG, "Got verify content flag {}", verifyContentFlag);
 		setBuffSize(in.readInt());
 		LOG.trace(Markers.MSG, "Got buff size {}", buffSize);
+		reqSleepMilliSec = in.readInt();
+		LOG.trace(Markers.MSG, "Got request interval {}", reqSleepMilliSec);
 	}
 	//
 	@Override

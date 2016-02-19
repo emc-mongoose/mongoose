@@ -1,15 +1,17 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicItemIdGenerator;
+import static com.emc.mongoose.common.conf.AppConfig.ItemNamingType;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
 //
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.item.data.NewContainerSrc;
@@ -21,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.Arrays;
 /**
  * Created by gusakk on 21.10.15.
  */
@@ -65,8 +68,18 @@ implements ContainerLoadBuilder<T, C, U>{
 	@SuppressWarnings("unchecked")
 	private ItemSrc getNewItemSrc()
 	throws NoSuchMethodException {
+		//
+		ItemNamingType namingType = appConfig.getItemNamingType();
+		final Class<C> containerClass = (Class<C>) ioConfig.getContainerClass();
 		return new NewContainerSrc<>(
-			ioConfig.getContainerClass(), new BasicItemIdGenerator(appConfig.getItemNaming())
+			containerClass,
+			new BasicItemNameGenerator(
+				namingType,
+				Directory.class.isAssignableFrom(containerClass) ?
+					null : appConfig.getItemNamingPrefix(),
+				appConfig.getItemNamingLength(), appConfig.getItemNamingRadix(),
+				appConfig.getItemNamingOffset()
+			)
 		);
 	}
 	//

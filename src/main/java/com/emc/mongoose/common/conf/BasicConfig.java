@@ -165,10 +165,30 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public ItemNamingType getItemNaming() {
+	public ItemNamingType getItemNamingType() {
 		return ItemNamingType.valueOf(
-			getString(CONFIG_ROOT + KEY_ITEM_NAMING).toUpperCase()
+			getString(CONFIG_ROOT + KEY_ITEM_NAMING_TYPE).toUpperCase()
 		);
+	}
+	//
+	@Override
+	public String getItemNamingPrefix() {
+		return getString(KEY_ITEM_NAMING_PREFIX);
+	}
+	//
+	@Override
+	public int getItemNamingRadix() {
+		return getInt(KEY_ITEM_NAMING_RADIX);
+	}
+	//
+	@Override
+	public long getItemNamingOffset() {
+		return getLong(KEY_ITEM_NAMING_OFFSET);
+	}
+	//
+	@Override
+	public int getItemNamingLength() {
+		return getInt(KEY_ITEM_NAMING_LENGTH);
 	}
 	//
 	@Override

@@ -113,8 +113,6 @@ implements AuthToken<T> {
 		httpReq.setHeader(HttpRequestConfigImpl.KEY_X_AUTH_KEY, reqConf.getSecret());
 		httpReq.setHeader(HttpHeaders.ACCEPT, "*/*");
 		//
-		reqConf.applyHeadersFinally(httpReq);
-		//
 		return reqConf.execute(addr, httpReq, timeOut, timeUnit);
 	}
 }
