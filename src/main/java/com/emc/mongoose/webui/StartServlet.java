@@ -146,7 +146,7 @@ public final class StartServlet extends CommonServlet {
 				setName("run<" + appConfig.getRunId() + ">");
 				ThreadContext.put(AppConfig.KEY_LOAD_METRICS_PERIOD,
 					String.valueOf(appConfig.getLoadMetricsPeriod()));
-				new ScenarioRunner().run();
+				new ScenarioRunner(appConfig).run();
 				LOG.info(Markers.MSG, "Scenario end");
 				//
 			}

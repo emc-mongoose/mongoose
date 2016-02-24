@@ -75,10 +75,8 @@ implements ContainerLoadBuilder<T, C, U>{
 			containerClass,
 			new BasicItemNameGenerator(
 				namingType,
-				Directory.class.isAssignableFrom(containerClass) ?
-					null : appConfig.getItemNamingPrefix(),
-				appConfig.getItemNamingLength(), appConfig.getItemNamingRadix(),
-				appConfig.getItemNamingOffset()
+				appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
+				appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
 			)
 		);
 	}

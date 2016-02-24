@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.item.data;
 // mongoose-common
-import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -21,16 +22,16 @@ implements ContentSource {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public SeedContentSource()
+	public SeedContentSource(final AppConfig appConfig)
 	throws NumberFormatException {
 		this(
-			Long.parseLong(BasicConfig.THREAD_CONTEXT.get().getItemDataContentSeed(), 0x10),
-			(int) BasicConfig.THREAD_CONTEXT.get().getItemDataContentSize()
+			Long.parseLong(appConfig.getItemDataContentRingSeed(), 0x10),
+			appConfig.getItemDataContentRingSize()
 		);
 	}
 	//
-	public SeedContentSource(final long seed, final int size) {
-		super(ByteBuffer.allocateDirect(size));
+	public SeedContentSource(final long seed, final long size) {
+		super(ByteBuffer.allocateDirect((int) size));
 		this.seed = seed;
 		generateData(zeroByteLayer, seed);
 		LOG.debug(Markers.MSG, "New ring buffer instance #{}", hashCode());

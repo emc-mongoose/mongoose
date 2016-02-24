@@ -13,31 +13,31 @@ import java.io.OutputStream;
 /**
  Created by kurila on 27.07.15.
  */
-public final class BasicHttpObjectMock
+public final class BasicHttpDataMock
 extends BasicMutableDataItemMock
 implements HttpDataItemMock {
 	//
-	public BasicHttpObjectMock() {
+	public BasicHttpDataMock() {
 		super();
 	}
 	//
-	public BasicHttpObjectMock(final String metaInfo, final ContentSource contentSrc) {
+	public BasicHttpDataMock(final String metaInfo, final ContentSource contentSrc) {
 		super(metaInfo, contentSrc);
 	}
 	//
-	public BasicHttpObjectMock(
+	public BasicHttpDataMock(
 		final long offset, final long size, final ContentSource contentSrc
 	) {
 		super(offset, size, contentSrc);
 	}
 	//
-	public BasicHttpObjectMock(
+	public BasicHttpDataMock(
 		final String name, final long offset, final long size, final ContentSource contentSrc
 	) {
 		super(name, offset, size, 0, contentSrc);
 	}
 	//
-	public BasicHttpObjectMock(
+	public BasicHttpDataMock(
 		final String name, final long offset, final long size, final int layerNum,
 		final ContentSource contentSrc
 	) {

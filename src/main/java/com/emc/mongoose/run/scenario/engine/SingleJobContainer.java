@@ -31,7 +31,7 @@ implements JobContainer {
 	public SingleJobContainer(final Map<String, Object> configTree)
 	throws IOException {
 		final AppConfig ctxConfig = BasicConfig.THREAD_CONTEXT.get();
-		//ctxConfig.override(null, configTree);
+		ctxConfig.override(null, configTree);
 		final LoadBuilder loadJobBuilder = LoadBuilderFactory
 			.getInstance(ctxConfig);
 		limitTime = ctxConfig.getLoadLimitTime();

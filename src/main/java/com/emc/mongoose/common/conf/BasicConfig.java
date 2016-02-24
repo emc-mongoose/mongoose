@@ -75,99 +75,99 @@ implements AppConfig {
 		final Logger log = LogManager.getLogger();
 		loadFromJson(cfgFilePath);
 		loadFromEnv();
-		log.info(Markers.CFG, BasicConfig.THREAD_CONTEXT.get().toFormattedString());
+		log.info(Markers.CFG, toFormattedString());
 	}
 	//
 	@Override
 	public String getAuthId() {
-		return getString(CONFIG_ROOT + KEY_AUTH_ID);
+		return getString(KEY_AUTH_ID);
 	}
 	//
 	@Override
 	public String getAuthSecret() {
-		return getString(CONFIG_ROOT + KEY_AUTH_SECRET);
+		return getString(KEY_AUTH_SECRET);
 	}
 	//
 	@Override
 	public String getAuthToken() {
-		return getString(CONFIG_ROOT + KEY_AUTH_TOKEN);
+		return getString(KEY_AUTH_TOKEN);
 	}
 	//
 	@Override
 	public int getIoBufferSizeMin() {
-		return (int) SizeInBytes.toFixedSize(getString(CONFIG_ROOT + KEY_IO_BUFFER_SIZE_MIN));
+		return (int) SizeInBytes.toFixedSize(getString(KEY_IO_BUFFER_SIZE_MIN));
 	}
 	//
 	@Override
 	public int getIoBufferSizeMax() {
-		return (int) SizeInBytes.toFixedSize(getString(CONFIG_ROOT + KEY_IO_BUFFER_SIZE_MAX));
+		return (int) SizeInBytes.toFixedSize(getString(KEY_IO_BUFFER_SIZE_MAX));
 	}
 	//
 	@Override
 	public ItemImpl getItemClass() {
-		return ItemImpl.valueOf(getString(CONFIG_ROOT + KEY_ITEM_CLASS).toUpperCase());
+		return ItemImpl.valueOf(getString(KEY_ITEM_CLASS).toUpperCase());
 	}
 	//
 	@Override
 	public String getItemContainerName() {
-		return getString(CONFIG_ROOT + KEY_ITEM_CONTAINER_NAME);
+		return getString(KEY_ITEM_CONTAINER_NAME);
 	}
 	//
 	@Override
 	public ContentSourceImpl getItemDataContentClass() {
 		return ContentSourceImpl
-			.valueOf(getString(CONFIG_ROOT + KEY_ITEM_DATA_CONTENT_CLASS).toUpperCase());
+			.valueOf(getString(KEY_ITEM_DATA_CONTENT_CLASS).toUpperCase());
 	}
 	//
 	@Override
 	public String getItemDataContentFile() {
-		return getString(CONFIG_ROOT + KEY_ITEM_DATA_CONTENT_FILE);
+		return getString(KEY_ITEM_DATA_CONTENT_FILE);
 	}
 	//
 	@Override
-	public String getItemDataContentSeed() {
-		return getString(CONFIG_ROOT + KEY_ITEM_DATA_CONTENT_SEED);
+	public String getItemDataContentRingSeed() {
+		return getString(KEY_ITEM_DATA_CONTENT_RING_SEED);
 	}
 	//
 	@Override
-	public int getItemDataContentSize() {
-		return getInt(CONFIG_ROOT + KEY_ITEM_DATA_CONTENT_SIZE);
+	public long getItemDataContentRingSize() {
+		return SizeInBytes.toFixedSize(getString(KEY_ITEM_DATA_CONTENT_RING_SIZE));
 	}
 	//
 	@Override
 	public String getItemDataRanges() {
-		return getString(CONFIG_ROOT + KEY_ITEM_DATA_RANGES);
+		return getString(KEY_ITEM_DATA_RANGES);
 	}
 	//
 	@Override
 	public String getItemDataSize() {
-		return getString(CONFIG_ROOT + KEY_ITEM_DATA_SIZE);
+		return getString(KEY_ITEM_DATA_SIZE);
 	}
 	//
 	@Override
 	public boolean getItemDataVerify() {
-		return getBoolean(CONFIG_ROOT + KEY_ITEM_DATA_VERIFY);
+		return getBoolean(KEY_ITEM_DATA_VERIFY);
 	}
 	//
 	@Override
 	public String getItemDstFile() {
-		return getString(CONFIG_ROOT + KEY_ITEM_DST_FILE);
+		return getString(KEY_ITEM_DST_FILE);
 	}
 	//
 	@Override
 	public String getItemSrcFile() {
-		return getString(CONFIG_ROOT + KEY_ITEM_SRC_FILE);
+		return getString(KEY_ITEM_SRC_FILE);
 	}
 	//
 	@Override
 	public int getItemSrcBatchSize() {
-		return getInt(CONFIG_ROOT + KEY_ITEM_SRC_BATCH_SIZE);
+		return getInt(KEY_ITEM_SRC_BATCH_SIZE);
 	}
 	//
 	@Override
 	public ItemNamingType getItemNamingType() {
 		return ItemNamingType.valueOf(
-			getString(CONFIG_ROOT + KEY_ITEM_NAMING_TYPE).toUpperCase()
+			getString(KEY_ITEM_NAMING_TYPE).toUpperCase()
 		);
 	}
 	//
@@ -193,139 +193,139 @@ implements AppConfig {
 	//
 	@Override
 	public int getItemQueueSizeLimit() {
-		return getInt(CONFIG_ROOT + KEY_ITEM_QUEUE_SIZE_LIMIT);
+		return getInt(KEY_ITEM_QUEUE_SIZE_LIMIT);
 	}
 	//
 	@Override
 	public boolean getLoadCircular() {
-		return getBoolean(CONFIG_ROOT + KEY_LOAD_CIRCULAR);
+		return getBoolean(KEY_LOAD_CIRCULAR);
 	}
 	//
 	@Override
 	public LoadType getLoadClass() {
-		return LoadType.valueOf(getString(CONFIG_ROOT + KEY_LOAD_CLASS).toUpperCase());
+		return LoadType.valueOf(getString(KEY_LOAD_CLASS).toUpperCase());
 	}
 	//
 	@Override
 	public int getLoadThreads() {
-		return getInt(CONFIG_ROOT + KEY_LOAD_THREADS);
+		return getInt(KEY_LOAD_THREADS);
 	}
 	//
 	@Override
 	public long getLoadLimitCount() {
-		return getLong(CONFIG_ROOT + KEY_LOAD_LIMIT_COUNT);
+		return getLong(KEY_LOAD_LIMIT_COUNT);
 	}
 	//
 	@Override
 	public double getLoadLimitRate() {
-		return getDouble(CONFIG_ROOT + KEY_LOAD_LIMIT_RATE);
+		return getDouble(KEY_LOAD_LIMIT_RATE);
 	}
 	//
 	@Override
 	public long getLoadLimitTime() {
-		final String rawValue = getString(CONFIG_ROOT + KEY_LOAD_LIMIT_TIME);
+		final String rawValue = getString(KEY_LOAD_LIMIT_TIME);
 		return TimeUtil.getTimeUnit(rawValue).toSeconds(TimeUtil.getTimeValue(rawValue));
 	}
 	//
 	@Override
 	public int getLoadMetricsPeriod() {
-		final String rawValue = getString(CONFIG_ROOT + KEY_LOAD_METRICS_PERIOD);
+		final String rawValue = getString(KEY_LOAD_METRICS_PERIOD);
 		return (int) TimeUtil.getTimeUnit(rawValue).toSeconds(TimeUtil.getTimeValue(rawValue));
 	}
 	//
 	@Override
 	public String[] getLoadServerAddrs() {
-		return getStringArray(CONFIG_ROOT + KEY_LOAD_SERVER_ADDRS);
+		return getStringArray(KEY_LOAD_SERVER_ADDRS);
 	}
 	//
 	@Override
 	public boolean getLoadServerAssignToNode() {
-		return getBoolean(CONFIG_ROOT + KEY_LOAD_SERVER_ASSIGN_TO_NODE);
+		return getBoolean(KEY_LOAD_SERVER_ASSIGN_TO_NODE);
 	}
 	//
 	@Override
 	public boolean getNetworkServeJmx() {
-		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SERVE_JMX);
+		return getBoolean(KEY_NETWORK_SERVE_JMX);
 	}
 	//
 	@Override
 	public int getNetworkSocketTimeoutMilliSec() {
-		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_TIMEOUT_MILLISEC);
+		return getInt(KEY_NETWORK_SOCKET_TIMEOUT_MILLISEC);
 	}
 	//
 	@Override
 	public boolean getNetworkSocketReuseAddr() {
-		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_REUSE_ADDR);
+		return getBoolean(KEY_NETWORK_SOCKET_REUSE_ADDR);
 	}
 	//
 	@Override
 	public boolean getNetworkSocketKeepAlive() {
-		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_KEEP_ALIVE);
+		return getBoolean(KEY_NETWORK_SOCKET_KEEP_ALIVE);
 	}
 	//
 	@Override
 	public boolean getNetworkSocketTcpNoDelay() {
-		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_TCP_NO_DELAY);
+		return getBoolean(KEY_NETWORK_SOCKET_TCP_NO_DELAY);
 	}
 	//
 	@Override
 	public int getNetworkSocketLinger() {
-		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_LINGER);
+		return getInt(KEY_NETWORK_SOCKET_LINGER);
 	}
 	//
 	@Override
 	public int getNetworkSocketBindBacklogSize() {
-		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_BIND_BACKLOG_SIZe);
+		return getInt(KEY_NETWORK_SOCKET_BIND_BACKLOG_SIZe);
 	}
 	//
 	@Override
 	public boolean getNetworkSocketInterestOpQueued() {
-		return getBoolean(CONFIG_ROOT + KEY_NETWORK_SOCKET_INTEREST_OP_QUEUED);
+		return getBoolean(KEY_NETWORK_SOCKET_INTEREST_OP_QUEUED);
 	}
 	//
 	@Override
 	public int getNetworkSocketSelectInterval() {
-		return getInt(CONFIG_ROOT + KEY_NETWORK_SOCKET_SELECT_INTERVAL);
+		return getInt(KEY_NETWORK_SOCKET_SELECT_INTERVAL);
 	}
 	//
 	@Override
 	public String getRunId() {
-		return getString(CONFIG_ROOT + KEY_RUN_ID);
+		return getString(KEY_RUN_ID);
 	}
 	//
 	@Override
 	public String getRunMode() {
-		return getString(CONFIG_ROOT + KEY_RUN_MODE);
+		return getString(KEY_RUN_MODE);
 	}
 	//
 	@Override
 	public String getRunName() {
-		return getString(CONFIG_ROOT + KEY_RUN_NAME);
+		return getString(KEY_RUN_NAME);
 	}
 	//
 	@Override
 	public String getRunVersion() {
-		return getString(CONFIG_ROOT + KEY_RUN_VERSION);
+		return getString(KEY_RUN_VERSION);
 	}
 	//
 	@Override
 	public String getRunFile() {
-		return getString(CONFIG_ROOT + KEY_RUN_FILE);
+		return getString(KEY_RUN_FILE);
 	}
 	//
 	@Override
 	public boolean getRunResumeEnabled() {
-		return getBoolean(CONFIG_ROOT + KEY_RUN_RESUME_ENABLED);
+		return getBoolean(KEY_RUN_RESUME_ENABLED);
 	}
 	//
 	@Override
 	public StorageType getStorageClass() {
-		return StorageType.valueOf(getString(CONFIG_ROOT + KEY_STORAGE_CLASS));
+		return StorageType.valueOf(getString(KEY_STORAGE_CLASS).toUpperCase());
 	}
 	//
 	@Override
 	public String[] getStorageHttpAddrs() {
-		return getStringArray(CONFIG_ROOT + KEY_STORAGE_HTTP_ADDRS);
+		return getStringArray(KEY_STORAGE_HTTP_ADDRS);
 	}
 	//
 	@Override
@@ -344,59 +344,57 @@ implements AppConfig {
 	//
 	@Override
 	public String getStorageHttpApiClass() {
-		return getString(CONFIG_ROOT + KEY_STORAGE_HTTP_API_CLASS);
+		return getString(KEY_STORAGE_HTTP_API_CLASS);
 	}
 	//
 	@Override
 	public int getStorageHttpApi_Port() {
-		return getInt(
-			CONFIG_ROOT + String.format(KEY_STORAGE_HTTP_API___PORT, getStorageHttpApiClass())
-		);
+		return getInt(String.format(KEY_STORAGE_HTTP_API___PORT, getStorageHttpApiClass()));
 	}
 	//
 	@Override
 	public boolean getStroageHttpFsAccess() {
-		return getBoolean(CONFIG_ROOT + KEY_STORAGE_HTTP_FS_ACCESS);
+		return getBoolean(KEY_STORAGE_HTTP_FS_ACCESS);
 	}
 	//
 	@Override
 	public Configuration getStorageHttpHeaders() {
-		return subset(CONFIG_ROOT + KEY_STORAGE_HTTP_HEADERS);
+		return subset(KEY_STORAGE_HTTP_HEADERS);
 	}
 	//
 	@Override
 	public String getStorageHttpNamespace() {
-		return getString(CONFIG_ROOT + KEY_STORAGE_HTTP_NAMESPACE);
+		return getString(KEY_STORAGE_HTTP_NAMESPACE);
 	}
 	//
 	@Override
 	public boolean getStorageHttpVersioning() {
-		return getBoolean(CONFIG_ROOT + KEY_STORAGE_HTTP_VERSIONING);
+		return getBoolean(KEY_STORAGE_HTTP_VERSIONING);
 	}
 	//
 	@Override
 	public int getStorageHttpMockHeadCount() {
-		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_HEAD_COUNT);
+		return getInt(KEY_STORAGE_HTTP_MOCK_HEAD_COUNT);
 	}
 	//
 	@Override
 	public int getStorageHttpMockWorkersPerSocket() {
-		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_WORKERS_PER_SOCKET);
+		return getInt(KEY_STORAGE_HTTP_MOCK_WORKERS_PER_SOCKET);
 	}
 	//
 	@Override
 	public int getStorageHttpMockCapacity() {
-		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_CAPACITY);
+		return getInt(KEY_STORAGE_HTTP_MOCK_CAPACITY);
 	}
 	//
 	@Override
 	public int getStorageHttpMockContainerCapacity() {
-		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_CONTAINER_CAPACITY);
+		return getInt(KEY_STORAGE_HTTP_MOCK_CONTAINER_CAPACITY);
 	}
 	//
 	@Override
 	public int getStorageHttpMockContainerCountLimit() {
-		return getInt(CONFIG_ROOT + KEY_STORAGE_HTTP_MOCK_CONTAINER_COUNT_LIMIT);
+		return getInt(KEY_STORAGE_HTTP_MOCK_CONTAINER_COUNT_LIMIT);
 	}
 	//
 	@Override

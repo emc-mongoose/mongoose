@@ -4,6 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
 //
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 //
 import org.apache.logging.log4j.Level;
@@ -32,7 +33,9 @@ implements Scenario {
 	private final static String VALUE_TYPE_LOAD = "load";
 	//
 	public JsonScenario(final File scenarioSrcFile) {
-		final ObjectMapper jsonMapper = new ObjectMapper();
+		final ObjectMapper jsonMapper = new ObjectMapper()
+			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 		if(scenarioSrcFile.exists() && scenarioSrcFile.isFile()) {
 			try {
 				final Map<String, Object> tree = jsonMapper.readValue(scenarioSrcFile, Map.class);

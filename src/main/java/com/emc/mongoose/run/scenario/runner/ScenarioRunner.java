@@ -1,8 +1,6 @@
 package com.emc.mongoose.run.scenario.runner;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.run.scenario.engine.JsonScenario;
 //
@@ -19,12 +17,14 @@ implements Runnable {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
+	private final AppConfig appConfig;
+	//
+	public ScenarioRunner(final AppConfig appConfig) {
+		this.appConfig = appConfig;
+	}
+	//
 	public void run() {
-		final AppConfig localAppConfig = BasicConfig.THREAD_CONTEXT.get();
-		if(localAppConfig != null) {
-			final String scenarioName = localAppConfig.getRunFile();
-			new JsonScenario(new File(scenarioName)).run();
-			LOG.info(Markers.MSG, "Scenario end");
-		}
+		final String runFile = appConfig.getRunFile();
+		new JsonScenario(new File(runFile)).run();
 	}
 }

@@ -10,7 +10,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 //
-import com.emc.mongoose.core.impl.item.data.BasicHttpObject;
+import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 //
@@ -105,7 +105,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);*/
 			// recreate the items
 			final ItemDst<HttpDataItem> dataDstW2 = new ItemCSVFileDst<>(
-				(Class<? extends HttpDataItem>) BasicHttpObject.class,
+				(Class<? extends HttpDataItem>) BasicHttpData.class,
 				ContentSourceBase.getDefault()
 			);
 			final long nReWritten = client.write(

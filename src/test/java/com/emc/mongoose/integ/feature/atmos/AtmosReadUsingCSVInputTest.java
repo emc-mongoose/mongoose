@@ -3,7 +3,7 @@ package com.emc.mongoose.integ.feature.atmos;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.impl.item.data.BasicHttpObject;
+import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
@@ -39,7 +39,7 @@ extends StandaloneClientTestBase {
 				.build()
 		) {
 			final ItemDst<HttpDataItem> writeOutput = new ItemCSVFileDst<>(
-				(Class) BasicHttpObject.class, ContentSourceBase.getDefault()
+				(Class) BasicHttpData.class, ContentSourceBase.getDefault()
 			);
 			COUNT_WRITTEN = client.write(
 				null, writeOutput, COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10MB")

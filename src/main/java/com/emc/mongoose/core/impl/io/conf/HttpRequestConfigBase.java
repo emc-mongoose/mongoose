@@ -21,7 +21,7 @@ import com.emc.mongoose.core.api.item.data.ContentSource;
 import static com.emc.mongoose.common.generator.AsyncFormattingGenerator.PATTERN_SYMBOL;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
-import com.emc.mongoose.core.impl.item.data.BasicHttpObject;
+import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -84,7 +84,6 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -401,7 +400,8 @@ implements HttpRequestConfig<T, C> {
 	public HttpRequestConfigBase<T, C> setSecret(final String secret) {
 		super.setSecret(secret);
 		try {
-			secretKey = new SecretKeySpec(secret.getBytes(Constants.DEFAULT_ENC), SIGN_METHOD);
+			secretKey = secret == null || secret.isEmpty() ?
+				null : new SecretKeySpec(secret.getBytes(Constants.DEFAULT_ENC), SIGN_METHOD);
 		} catch(UnsupportedEncodingException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Configuration error");
 		}
@@ -416,7 +416,7 @@ implements HttpRequestConfig<T, C> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public Class<T> getItemClass() {
-		return (Class<T>) BasicHttpObject.class;
+		return (Class<T>) BasicHttpData.class;
 	}
 	//
 	@Override

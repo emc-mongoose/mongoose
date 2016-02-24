@@ -3,6 +3,7 @@ package com.emc.mongoose.common.conf;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 //
@@ -19,7 +20,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
-import java.util.Set;
 //
 /**
  * Created by gusakk on 3/13/15.
@@ -36,7 +36,9 @@ public class JsonConfigLoader {
 	//
 	public void loadPropsFromJsonCfgFile(final Path filePath) {
 		final File cfgFile = filePath.toFile();
-		final ObjectMapper jsonMapper = new ObjectMapper();
+		final ObjectMapper jsonMapper = new ObjectMapper()
+			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 		//
 		try {
 			JsonNode rootNode;
@@ -146,6 +148,8 @@ public class JsonConfigLoader {
 						}
 						break;
 					case OBJECT:
+						walkJsonTree(nodeValue, propertyName);
+						break;
 					case POJO:
 						throw new IllegalStateException(
 							"Unsupported value of \"" + propertyName + "\""

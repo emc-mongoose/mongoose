@@ -23,8 +23,8 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_ITEM_CONTAINER_NAME = "item.container.name";
 	String KEY_ITEM_DATA_CONTENT_CLASS = "item.data.content.class";
 	String KEY_ITEM_DATA_CONTENT_FILE = "item.data.content.file";
-	String KEY_ITEM_DATA_CONTENT_SEED = "item.data.content.seed";
-	String KEY_ITEM_DATA_CONTENT_SIZE = "item.data.content.size";
+	String KEY_ITEM_DATA_CONTENT_RING_SEED = "item.data.content.ring.seed";
+	String KEY_ITEM_DATA_CONTENT_RING_SIZE = "item.data.content.ring.size";
 	String KEY_ITEM_DATA_RANGES = "item.data.ranges";
 	String KEY_ITEM_DATA_SIZE = "item.data.size";
 	String KEY_ITEM_DATA_VERIFY = "item.data.verify";
@@ -104,9 +104,9 @@ extends Cloneable, Configuration, Externalizable {
 
 	String getItemDataContentFile();
 
-	String getItemDataContentSeed();
+	String getItemDataContentRingSeed();
 
-	int getItemDataContentSize();
+	long getItemDataContentRingSize();
 
 	String getItemDataRanges();
 

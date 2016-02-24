@@ -1,9 +1,9 @@
 {
 	"config" : {
-		"auth": {
-			"id": null,
-			"secret": null,
-			"token": null
+		"auth" : {
+			"id" : null,
+			"secret" : null,
+			"token" : null
 		},
 		"io" : {
 			"buffer" : {
@@ -27,7 +27,7 @@
 						"size" : "4MB"
 					}
 				},
-				"ranges" : 0,
+				"ranges" : "0",
 				"size" : "1MB",
 				"verify" : true
 			},
@@ -38,7 +38,13 @@
 				"file" : null,
 				"batchSize" : 4096
 			},
-			"naming" : "random",
+			"naming" : {
+				"type" : "random",
+				"prefix" : null,
+				"radix" : 36,
+				"offset" : 0,
+				"length" : 13
+			},
 			"queue" : {
 				"sizeLimit" : 500000
 			}
@@ -61,9 +67,9 @@
 			}
 		},
 		"run" : {
-			"name": "mongoose",
-			"version": "next",
-			"mode": "standalone"
+			"name" : "mongoose",
+			"version" : "next",
+			"mode" : "standalone"
 		},
 		"storage" : {
 			"class" : "http",
@@ -72,15 +78,15 @@
 			"http" : {
 				"addrs" : "127.0.0.1",
 				"api" : {
-					"class": "s3",
-					"s3": {
-						"port": 9020
+					"class" : "s3",
+					"s3" : {
+						"port" : 9020
 					},
-					"atmos": {
-						"port": 9022
+					"atmos" : {
+						"port" : 9022
 					},
-					"swift": {
-						"port": 9024
+					"swift" : {
+						"port" : 9024
 					}
 				},
 				"fsAccess" : false,
@@ -90,28 +96,28 @@
 				},
 				"namespace" : null,
 				"versioning" : false,
-				"mock": {
-					"headCount": 1,
-					"workersPerSocket": 0,
-					"capacity": 1000000,
-					"container": {
-						"capacity": 1000000,
-						"countLimit": 1000000
+				"mock" : {
+					"headCount" : 1,
+					"workersPerSocket" : 0,
+					"capacity" : 1000000,
+					"container" : {
+						"capacity" : 1000000,
+						"countLimit" : 1000000
 					}
 				}
 			}
 		},
 		"network" : {
-			"serveJMX": false,
-			"socket": {
-				"timeoutMilliSec": 1000000,
-				"reuseAddr": true,
-				"keepalive": true,
-				"tcpNoDelay": true,
-				"linger": 0,
-				"bindBacklogSize": 0,
-				"interestOpQueued": false,
-				"selectInterval": 100
+			"serveJMX" : false,
+			"socket" : {
+				"timeoutMilliSec" : 1000000,
+				"reuseAddr" : true,
+				"keepAlive" : true,
+				"tcpNoDelay" : true,
+				"linger" : 0,
+				"bindBacklogSize" : 0,
+				"interestOpQueued" : false,
+				"selectInterval" : 100
 			}
 		}
 	}

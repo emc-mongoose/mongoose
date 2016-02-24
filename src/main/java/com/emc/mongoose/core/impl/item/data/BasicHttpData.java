@@ -19,35 +19,35 @@ import java.io.OutputStream;
  Created by kurila on 29.04.14.
  Basic web storage data object implementation.
  */
-public class BasicHttpObject
+public class BasicHttpData
 extends BasicMutableDataItem
 implements HttpDataItem {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicHttpObject() {
+	public BasicHttpData() {
 		super();
 	}
 	//
-	public BasicHttpObject(final ContentSource contentSrc) {
+	public BasicHttpData(final ContentSource contentSrc) {
 		super(contentSrc);
 	}
 	//
-	public BasicHttpObject(final String metaInfo, final ContentSource contentSrc) {
+	public BasicHttpData(final String metaInfo, final ContentSource contentSrc) {
 		super(metaInfo, contentSrc);
 	}
 	//
-	public BasicHttpObject(final Long offset, final Long size, final ContentSource contentSrc) {
+	public BasicHttpData(final Long offset, final Long size, final ContentSource contentSrc) {
 		super(offset, size, contentSrc);
 	}
 	//
-	public BasicHttpObject(
+	public BasicHttpData(
 		final String name, final Long offset, final Long size, final ContentSource contentSrc
 	) {
 		super(name, offset, size, 0, contentSrc);
 	}
 	//
-	public BasicHttpObject(
+	public BasicHttpData(
 		final String name, final Long offset, final Long size, final Integer layerNum,
 		final ContentSource contentSrc
 	) {

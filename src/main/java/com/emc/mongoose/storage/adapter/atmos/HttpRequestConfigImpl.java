@@ -179,7 +179,8 @@ extends HttpRequestConfigBase<T, C> {
 	public final HttpRequestConfigBase<T, C> setSecret(final String secret) {
 		super.setSecret(secret);
 		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
-		secretKey = new SecretKeySpec(Base64.decodeBase64(secret), SIGN_METHOD);
+		secretKey = secret == null || secret.isEmpty() ?
+			null : new SecretKeySpec(Base64.decodeBase64(secret), SIGN_METHOD);
 		return this;
 	}
 	//

@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.item.data;
 //
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
@@ -118,9 +119,9 @@ implements ContentSource {
 		LOCK.lock();
 		try {
 			if(DEFAULT == null) {
+				final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 				try {
-					final String contentFilePath = BasicConfig
-						.THREAD_CONTEXT.get().getItemDataContentFile();
+					final String contentFilePath = appConfig.getItemDataContentFile();
 					if(contentFilePath != null && !contentFilePath.isEmpty()) {
 						final Path p = Paths.get(contentFilePath);
 						if(Files.exists(p) && !Files.isDirectory(p) && Files.isReadable(p)) {
@@ -150,7 +151,7 @@ implements ContentSource {
 						"No ring buffer source file available for reading, " +
 						"falling back to use the random data ring buffer"
 					);
-					DEFAULT = new SeedContentSource();
+					DEFAULT = new SeedContentSource(appConfig);
 				}
 			}
 		} catch(final Exception e) {

@@ -22,6 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
+import java.util.Map;
 /**
  Created by kurila on 04.07.14.
  Mongoose entry point.
@@ -29,8 +30,17 @@ import java.rmi.RemoteException;
 public final class ModeDispatcher {
 	//
 	public static void main(final String args[]) {
+		LogUtil.init();
+		final Logger rootLogger = LogManager.getRootLogger();
+		//
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		// load the config from CLI arguments
-		//final Map<String, String> properties = HumanFriendly.parseCli(args);
+		final Map<String, String> properties = HumanFriendly.parseCli(args);
+		if(properties != null) {
+			for(final String propKey : properties.keySet()) {
+				appConfig.setProperty(propKey, properties.get(propKey));
+			}
+		}
 		//
 		final String runMode;
 		if(args == null || args.length == 0 || args[0].startsWith("-")) {
@@ -38,20 +48,15 @@ public final class ModeDispatcher {
 		} else {
 			runMode = args[0];
 		}
-		System.setProperty(AppConfig.KEY_RUN_MODE, runMode);
-		LogUtil.init();
-		//
-		final Logger rootLogger = LogManager.getRootLogger();
-		rootLogger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
+		appConfig.setProperty(AppConfig.KEY_RUN_MODE, runMode);
+		rootLogger.info(Markers.MSG, appConfig.toString());
 		//
 		switch(runMode) {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try {
-					final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(
-						BasicConfig.THREAD_CONTEXT.get()
-					);
+					final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(appConfig);
 					multiSvc.start();
 					multiSvc.await();
 				} catch(final RemoteException | InterruptedException e) {
@@ -62,20 +67,20 @@ public final class ModeDispatcher {
 				break;
 			case Constants.RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				new WUIRunner(BasicConfig.THREAD_CONTEXT.get()).run();
+				new WUIRunner(appConfig).run();
 				break;
 			case Constants.RUN_MODE_NAGAINA:
 			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting nagaina");
 				try {
-					new Nagaina(BasicConfig.THREAD_CONTEXT.get()).run();
+					new Nagaina(appConfig).run();
 				} catch (final Exception e) {
 					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init nagaina");
 				}
 			case Constants.RUN_MODE_CINDERELLA:
 				rootLogger.debug(Markers.MSG, "Starting cinderella");
 				try {
-					new Cinderella(BasicConfig.THREAD_CONTEXT.get()).run();
+					new Cinderella(appConfig).run();
 				} catch (final Exception e) {
 					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init cinderella");
 				}
@@ -83,7 +88,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
-				new ScenarioRunner().run();
+				new ScenarioRunner(appConfig).run();
 				break;
 			default:
 				throw new IllegalArgumentException(

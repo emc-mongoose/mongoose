@@ -85,7 +85,7 @@ implements HttpStorageMock<T> {
 		final boolean jmxServeFlag, final int minConnLifeMilliSec, final int maxConnLifeMilliSec
 	) throws IOException {
 		super(
-			(Class<T>) BasicHttpObjectMock.class, ContentSourceBase.getDefault(),
+			(Class<T>) BasicHttpDataMock.class, ContentSourceBase.getDefault(),
 			storageCapacity, containerCapacity, containerCountLimit, batchSize,
 			dataSrcPath, metricsPeriodSec, jmxServeFlag
 		);
@@ -158,7 +158,7 @@ implements HttpStorageMock<T> {
 	@Override
 	@SuppressWarnings("unchecked")
 	protected final T newDataObject(final String id, final long offset, final long size) {
-		return (T) new BasicHttpObjectMock(id, offset, size, 0, contentSrc);
+		return (T) new BasicHttpDataMock(id, offset, size, 0, contentSrc);
 	}
 	//
 	@Override

@@ -60,11 +60,8 @@ implements DataLoadBuilder<T, U> {
 	throws NoSuchMethodException {
 		AppConfig.ItemNamingType namingType = appConfig.getItemNamingType();
 		final BasicItemNameGenerator bing = new BasicItemNameGenerator(
-			namingType,
-			FileItem.class.isAssignableFrom(ioConfig.getItemClass()) ?
-				null : appConfig.getItemNamingPrefix(),
-			appConfig.getItemNamingLength(), appConfig.getItemNamingRadix(),
-			appConfig.getItemNamingOffset()
+			namingType, appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
+			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
 		);
 		return new NewDataItemSrc<>(
 			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), dataSize
