@@ -7,7 +7,8 @@ import java.util.Date;
 public final class AsyncDateGenerator
 extends AsyncRangeGeneratorBase<Date> {
 
-	public final static DateFormat FMT_DATE = new SimpleDateFormat("yyyy/MM/dd");
+	public final static String DATE_FMT_STRING = "yyyy/MM/dd";
+	private final DateFormat dateFormat = new SimpleDateFormat(DATE_FMT_STRING);
 
 	private final AsyncLongGenerator longGenerator;
 
@@ -19,7 +20,7 @@ extends AsyncRangeGeneratorBase<Date> {
 	public AsyncDateGenerator(final Date initialValue) throws ParseException{
 		super(initialValue);
 		longGenerator = new AsyncLongGenerator(
-			FMT_DATE.parse("1970/01/01").getTime(), initialValue.getTime()
+				dateFormat.parse("1970/01/01").getTime(), initialValue.getTime()
 		);
 	}
 

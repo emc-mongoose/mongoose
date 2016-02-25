@@ -1,11 +1,8 @@
 package com.emc.mongoose.common.generator;
 
 import java.text.ParseException;
-import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.emc.mongoose.common.generator.AsyncDateGenerator.FMT_DATE;
 
 public final class AsyncRangeGeneratorFactory {
 
@@ -16,6 +13,8 @@ public final class AsyncRangeGeneratorFactory {
 	private static final Pattern DOUBLE_PATTERN = Pattern.compile(rangeRegExp(DOUBLE_REG_EXP));
 	private static final Pattern LONG_PATTERN = Pattern.compile(rangeRegExp(LONG_REG_EXP));
 	private static final Pattern DATE_PATTERN = Pattern.compile(rangeRegExp(DATE_REG_EXP));
+
+
 
 	private AsyncRangeGeneratorFactory() {
 	}
@@ -33,7 +32,7 @@ public final class AsyncRangeGeneratorFactory {
 			case 'd':
 				return new AsyncLongGenerator(47L);
 			case 'D':
-				return new AsyncStringDateGenerator(FMT_DATE.format(new Date()));
+				return new AsyncStringDateGenerator("2016/02/25");
 			default:
 				throw new IllegalArgumentException();
 		}
