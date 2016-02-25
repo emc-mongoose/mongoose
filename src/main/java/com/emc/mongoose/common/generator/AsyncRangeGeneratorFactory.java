@@ -12,7 +12,7 @@ public final class AsyncRangeGeneratorFactory {
 	// pay attention to the matcher groups
 	public static final String DOUBLE_REG_EXP = "([-+]?\\d*\\.?\\d+)";
 	public static final String LONG_REG_EXP = "([-+]?\\d+)";
-	public static final String DATE_REG_EXP = "(((19|20)[0-9][0-9])/(0?[1-9]|1[012])/(0?[1-9]|[12][0-9]|3[01]))";
+	public static final String DATE_REG_EXP = "(((19|20)[0-9][0-9])/(1[012]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9]))";
 	private static final Pattern DOUBLE_PATTERN = Pattern.compile(rangeRegExp(DOUBLE_REG_EXP));
 	private static final Pattern LONG_PATTERN = Pattern.compile(rangeRegExp(LONG_REG_EXP));
 	private static final Pattern DATE_PATTERN = Pattern.compile(rangeRegExp(DATE_REG_EXP));
