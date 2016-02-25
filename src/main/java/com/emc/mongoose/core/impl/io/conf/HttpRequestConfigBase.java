@@ -633,6 +633,11 @@ implements HttpRequestConfig<T, C> {
 	//
 	@Override
 	public String getSignature(final String canonicalForm) {
+		//
+		if(secretKey == null) {
+			return null;
+		}
+		//
 		final byte sigData[];
 		Mac mac = THRLOC_MAC.get();
 		if(mac == null) {

@@ -108,10 +108,12 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override
 	protected final void applyAuthHeader(final HttpRequest httpRequest) {
-		httpRequest.setHeader(
-			HttpHeaders.AUTHORIZATION,
-			AUTH_PREFIX + userName + ":" + getSignature(getCanonical(httpRequest))
-		);
+		final String signature = getSignature(getCanonical(httpRequest));
+		if(signature != null) {
+			httpRequest.setHeader(
+				HttpHeaders.AUTHORIZATION, AUTH_PREFIX + userName + ":" + signature
+			);
+		}
 	}
 	//
 	private static String HEADERS_CANONICAL[] = {

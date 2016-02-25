@@ -73,11 +73,7 @@ extends WSRequestHandlerBase<T> {
 	//
 	@Override
 	public boolean matches(final HttpRequest httpRequest) {
-		final Header authHeader = httpRequest.getFirstHeader(HttpHeaders.AUTHORIZATION);
-		if(authHeader == null) {
-			return false;
-		}
-		return authHeader.getValue().startsWith(AUTH_PREFIX);
+		return true;
 	}
 	//
 	@Override

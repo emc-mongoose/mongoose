@@ -65,19 +65,21 @@ public class NagainaAtmosRequestHandler<T extends HttpDataItemMock> extends Naga
 			ST_PATH = URI_BASE_PATH + "/subtenant",
 			STS_PATH = ST_PATH + "s/";
 
-	public NagainaAtmosRequestHandler(final AppConfig appConfig, HttpStorageMock<T> sharedStorage) {
+	public NagainaAtmosRequestHandler(
+		final AppConfig appConfig, final HttpStorageMock<T> sharedStorage
+	) {
 		super(appConfig, sharedStorage);
 	}
 
 	@Override
-	protected boolean checkProtocolMatch(HttpRequest request) {
+	protected boolean checkApiMatch(final HttpRequest request) {
 		return request.getUri().startsWith(URI_BASE_PATH);
 	}
 
-	private String processMetaDataList(String[] metaDataList, String key) {
+	private String processMetaDataList(final String[] metaDataList, final String key) {
 		if (metaDataList != null) {
 			String entry[];
-			for (String metaData : metaDataList) {
+			for (final String metaData : metaDataList) {
 				entry = metaData.split("=");
 				if (entry.length == 2 && entry[0].equals(key)) {
 					return entry[1];
@@ -89,19 +91,19 @@ public class NagainaAtmosRequestHandler<T extends HttpDataItemMock> extends Naga
 
 
 	@Override
-	protected void handleActually(ChannelHandlerContext ctx) {
- 		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
-		HttpRequest request = ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey)).get();
+	protected final void handleActually(final ChannelHandlerContext ctx) {
+		final FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
+		final HttpRequest request = ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey)).get();
 		String[] metaDataList = null;
 		if (request.headers().contains(HttpRequestConfig.KEY_EMC_TAGS)) {
 			metaDataList = request.headers().get(HttpRequestConfig.KEY_EMC_TAGS).split(",");
 		}
-		String uri = request.getUri();
-		String method = request.getMethod().toString().toUpperCase();
-		Long size = ctx.attr(AttributeKey.<Long>valueOf(contentLengthKey)).get();
+		final String uri = request.getUri();
+		final String method = request.getMethod().toString().toUpperCase();
+		final Long size = ctx.attr(AttributeKey.<Long>valueOf(contentLengthKey)).get();
 		ctx.attr(AttributeKey.<Boolean>valueOf(ctxWriteFlagKey)).set(true);
 		if (uri.startsWith(OBJ_PATH)) {
-			String[] uriParams =
+			final String[] uriParams =
 					getUriParams(ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey))
 							.get().getUri(), 3);
 			String objId = uriParams[2];
@@ -109,12 +111,12 @@ public class NagainaAtmosRequestHandler<T extends HttpDataItemMock> extends Naga
 			if (objId == null) {
 				if (method.equals(HttpRequestConfig.METHOD_POST)) {
 					objId = generateId();
-					String processResult = processMetaDataList(metaDataList, "offset");
+					final String processResult = processMetaDataList(metaDataList, "offset");
 					try {
 						if (processResult != null) {
 							offset = Long.parseLong(processResult);
 						}
-					} catch (NumberFormatException e) {
+					} catch (final NumberFormatException e) {
 						LogUtil.exception(
 								LOG, Level.WARN, e,
 								"Failed to parse offset meta tag value: \"{}\"",
@@ -127,7 +129,7 @@ public class NagainaAtmosRequestHandler<T extends HttpDataItemMock> extends Naga
 						response.headers().set(LOCATION, OBJ_PATH + "/" + objId);
 					}
 				} else if (method.equals(HttpRequestConfig.METHOD_GET)) {
-					String subtenant = processMetaDataList(metaDataList, "subtenant");
+					final String subtenant = processMetaDataList(metaDataList, "subtenant");
 					if (request.headers().contains(HttpRequestConfig.KEY_EMC_TOKEN)) {
 						objId = request.headers().get(HttpRequestConfig.KEY_EMC_TOKEN);
 					}
@@ -139,7 +141,7 @@ public class NagainaAtmosRequestHandler<T extends HttpDataItemMock> extends Naga
 		} else if (uri.startsWith(NS_PATH) || (uri.startsWith(AT_PATH))) {
 			setHttpResponseStatusInContext(ctx, NOT_IMPLEMENTED);
 		} else if (uri.startsWith(ST_PATH)) {
-			String subtenant;
+			final String subtenant;
 			if (method.equals(HttpRequestConfig.METHOD_PUT)) {
 				subtenant = generateSubtenant();
 			} else {
@@ -150,7 +152,8 @@ public class NagainaAtmosRequestHandler<T extends HttpDataItemMock> extends Naga
 			setHttpResponseStatusInContext(ctx, BAD_REQUEST);
 		}
 		if (ctx.attr(AttributeKey.<Boolean>valueOf(ctxWriteFlagKey)).get()) {
-			HttpResponseStatus status = ctx.attr(AttributeKey.<HttpResponseStatus>valueOf(responseStatusKey)).get();
+			final HttpResponseStatus status = ctx
+				.attr(AttributeKey.<HttpResponseStatus>valueOf(responseStatusKey)).get();
 			response.setStatus(status != null ? status : OK);
 			HttpHeaders.setContentLength(response, 0);
 			ctx.write(response);
@@ -169,7 +172,7 @@ public class NagainaAtmosRequestHandler<T extends HttpDataItemMock> extends Naga
 	}
 
 	@Override
-	protected void handleContainerList(String subtenant, ChannelHandlerContext ctx) {
+	protected void handleContainerList(final String subtenant, final ChannelHandlerContext ctx) {
 	}
 
 	private void handleContainerList(String subtenant, String objId, ChannelHandlerContext ctx) {

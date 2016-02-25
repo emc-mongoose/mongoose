@@ -64,7 +64,7 @@ extends NagainaRequestHandlerBase<T> {
 	}
 
 	@Override
-	protected boolean checkProtocolMatch(HttpRequest request) {
+	protected boolean checkApiMatch(HttpRequest request) {
 		String uri = request.getUri();
 		return uri.startsWith(AUTH, 1) || uri.startsWith(API_BASE_PATH_SWIFT, 1);
 	}

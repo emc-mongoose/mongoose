@@ -30,7 +30,9 @@ import java.io.IOException;
 public class Nagaina<T extends HttpDataItemMock>
 extends StorageMockBase<T>
 implements HttpStorageMock<T> {
+	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
 	private final EventLoopGroup[] dispatchGroups;
 	private final EventLoopGroup[] workerGroups;
 	private final Channel[] channels;
@@ -38,6 +40,7 @@ implements HttpStorageMock<T> {
 	private final NagainaRequestHandlerBase swiftRequestHandler;
 	private final NagainaRequestHandlerBase atmosRequestHandler;
 	private final int portStart;
+	//
 	public Nagaina(final AppConfig appConfig) {
 		this(
 			appConfig.getStorageHttpMockHeadCount(),
@@ -99,8 +102,8 @@ implements HttpStorageMock<T> {
 								ChannelPipeline pipeline = socketChannel.pipeline();
 								pipeline.addLast(new HttpServerCodec());
 								pipeline.addLast(swiftRequestHandler);
-								pipeline.addLast(s3RequestHandler);
 								pipeline.addLast(atmosRequestHandler);
+								pipeline.addLast(s3RequestHandler);
 							}
 						}
 					);

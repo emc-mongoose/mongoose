@@ -77,9 +77,8 @@ public class NagainaS3RequestHandler<T extends HttpDataItemMock> extends Nagaina
 	}
 
 	@Override
-	protected boolean checkProtocolMatch(HttpRequest request) {
-		String auth = request.headers().get(AUTHORIZATION);
-		return auth != null && auth.startsWith(S3_AUTH_PREFIX);
+	protected boolean checkApiMatch(HttpRequest request) {
+		return true;
 	}
 
 	@Override

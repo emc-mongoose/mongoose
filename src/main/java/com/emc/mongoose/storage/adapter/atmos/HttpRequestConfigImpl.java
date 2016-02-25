@@ -309,7 +309,10 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override
 	protected final void applyAuthHeader(final HttpRequest httpRequest) {
-		httpRequest.setHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
+		final String signature = getSignature(getCanonical(httpRequest));
+		if(signature != null) {
+			httpRequest.setHeader(KEY_EMC_SIG, signature);
+		}
 	}
 	//
 	private final static String HEADERS_CANONICAL[] = {

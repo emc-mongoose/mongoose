@@ -403,7 +403,8 @@ implements AppConfig {
 		String compositeKey;
 		for(final String k : configTree.keySet()) {
 			v = configTree.get(k);
-			compositeKey = configBranch == null ? k : configBranch + getDefaultListDelimiter() + k;
+			compositeKey = configBranch == null ?
+			   k : configBranch + DefaultExpressionEngine.DEFAULT_PROPERTY_DELIMITER + k;
 			if(v instanceof Map) {
 				override(compositeKey, (Map<String, ?>) v);
 			} else {

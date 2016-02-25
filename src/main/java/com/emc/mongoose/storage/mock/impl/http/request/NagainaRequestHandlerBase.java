@@ -75,7 +75,7 @@ extends ChannelInboundHandlerAdapter {
 		AttributeKey.<Boolean>valueOf(handlerStatus);
 	}
 
-	abstract protected boolean checkProtocolMatch(HttpRequest request);
+	abstract protected boolean checkApiMatch(HttpRequest request);
 
 	@Override
 	public void channelReadComplete(ChannelHandlerContext ctx) {
@@ -104,7 +104,8 @@ extends ChannelInboundHandlerAdapter {
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) {
 		if (msg instanceof HttpRequest) {
-			if (!checkProtocolMatch((HttpRequest) msg)) {
+			// TODO the branch below fails if the request doesn't match the API
+			if (!checkApiMatch((HttpRequest) msg)) {
 				ctx.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).set(false);
 				ctx.fireChannelRead(msg);
 				return;
@@ -143,18 +144,20 @@ extends ChannelInboundHandlerAdapter {
 		handleActually(ctx);
 	}
 
-	protected String[] getUriParams(String uri, int maxNumberOfParams) {
-		String[] result = new String[maxNumberOfParams];
-		QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
-		String[] pathChunks = queryStringDecoder.path().split("/");
+	protected final String[] getUriParams(final String uri, final int maxNumberOfParams) {
+		final String[] result = new String[maxNumberOfParams];
+		final QueryStringDecoder queryStringDecoder = new QueryStringDecoder(uri);
+		final String[] pathChunks = queryStringDecoder.path().split("/");
 		System.arraycopy(pathChunks, 1, result, 0, pathChunks.length - 1);
 		return result;
 	}
 
-	protected abstract void handleActually(ChannelHandlerContext ctx);
+	protected abstract void handleActually(final ChannelHandlerContext ctx);
 
-	protected void handleGenericDataReq(String method, String containerName, String objId,
-	                                    Long offset, Long size, ChannelHandlerContext ctx) {
+	protected final void handleGenericDataReq(
+		final String method, final String containerName, final String objId,
+		final Long offset, final Long size, final ChannelHandlerContext ctx
+	) {
 		switch (method) {
 			case HttpRequestConfig.METHOD_POST:
 			case HttpRequestConfig.METHOD_PUT:
@@ -172,25 +175,26 @@ extends ChannelInboundHandlerAdapter {
 		}
 	}
 
-	private void handleWrite(String containerName, String objId,
-	                         Long offset, Long size, ChannelHandlerContext ctx) {
-		List<String> rangeHeadersValues =
-				ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey)).get().headers().getAll(RANGE);
+	private void handleWrite(
+		final String containerName, final String objId, final Long offset, final Long size,
+		final ChannelHandlerContext ctx
+	) {
+		final List<String> rangeHeadersValues =
+			ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey)).get().headers().getAll(RANGE);
 		try {
 			if (rangeHeadersValues.size() == 0) {
-				sharedStorage.createObject(containerName, objId,
-						offset, size);
+				sharedStorage.createObject(containerName, objId, offset, size);
 				ioStats.markWrite(true, size);
 			} else {
 				ioStats.markWrite(
-						handlePartialWrite(containerName, objId, rangeHeadersValues, size),
-						size
+					handlePartialWrite(containerName, objId, rangeHeadersValues, size),
+					size
 				);
 			}
-		} catch (ContainerMockNotFoundException | ObjectMockNotFoundException e) {
+		} catch (final ContainerMockNotFoundException | ObjectMockNotFoundException e) {
 			setHttpResponseStatusInContext(ctx, NOT_FOUND);
 			ioStats.markWrite(false, size);
-		} catch (StorageMockCapacityLimitReachedException | ContainerMockException e) {
+		} catch (final StorageMockCapacityLimitReachedException | ContainerMockException e) {
 			setHttpResponseStatusInContext(ctx, INSUFFICIENT_STORAGE);
 			ioStats.markWrite(false, size);
 		}

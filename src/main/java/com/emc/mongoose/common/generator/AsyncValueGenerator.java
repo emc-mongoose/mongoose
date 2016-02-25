@@ -10,6 +10,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 10.02.16.
  */
@@ -53,6 +55,7 @@ extends BasicValueGenerator<T> {
 						);
 					}
 					Thread.yield();
+					TimeUnit.MICROSECONDS.sleep(1);
 				} catch(final InterruptedException e) {
 					break;
 				}
