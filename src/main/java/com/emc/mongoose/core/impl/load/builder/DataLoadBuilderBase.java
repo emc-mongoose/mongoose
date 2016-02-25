@@ -19,6 +19,7 @@ import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
+import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
 //
@@ -81,7 +82,7 @@ implements DataLoadBuilder<T, U> {
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.WRITE.equals(ioConfig.getLoadType())) {
+				if(AppConfig.LoadType.WRITE.equals(ioConfig.getLoadType())) {
 					return getNewItemSrc();
 				} else {
 					return getContainerItemSrc();
@@ -125,6 +126,20 @@ implements DataLoadBuilder<T, U> {
 			}
 		}
 		//
+		final String dstFilePath = appConfig.getItemDstFile();
+		if(dstFilePath != null && !dstFilePath.isEmpty()) {
+			try {
+				setItemDst(
+					new ItemCSVFileDst<>(
+						Paths.get(dstFilePath), (Class<T>) ioConfig.getItemClass(),
+						ioConfig.getContentSource()
+					)
+				);
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file output");
+			}
+		}
+		//
 		return this;
 	}
 	//
@@ -135,7 +150,7 @@ implements DataLoadBuilder<T, U> {
 		if(itemSrc instanceof DataItemFileSrc) {
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getAvgDataSize(
-				BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize()
+				appConfig.getItemSrcBatchSize()
 			);
 			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?

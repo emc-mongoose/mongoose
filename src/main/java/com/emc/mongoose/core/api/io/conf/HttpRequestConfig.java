@@ -76,7 +76,7 @@ extends RequestConfig<T, C>, HttpRequestInterceptor {
 	HttpRequestConfig<T, C> setAPI(final String api);
 	//
 	@Override
-	HttpRequestConfig<T, C> setLoadType(final IOTask.Type loadType);
+	HttpRequestConfig<T, C> setLoadType(final AppConfig.LoadType loadType);
 	//
 	@Override
 	HttpRequestConfig<T, C> setUserName(final String userName);

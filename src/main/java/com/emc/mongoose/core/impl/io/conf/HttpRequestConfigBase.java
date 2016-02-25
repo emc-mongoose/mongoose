@@ -346,7 +346,7 @@ implements HttpRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public final HttpRequestConfigBase<T, C> setLoadType(final IOTask.Type loadType) {
+	public final HttpRequestConfigBase<T, C> setLoadType(final AppConfig.LoadType loadType) {
 		super.setLoadType(loadType);
 		return this;
 	}
@@ -387,11 +387,11 @@ implements HttpRequestConfig<T, C> {
 	@Override
 	public HttpRequestConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		// setScheme(...)
-		setNameSpace(this.appConfig.getStorageHttpNamespace());
-		setFileAccessEnabled(this.appConfig.getStroageHttpFsAccess());
-		setVersioning(this.appConfig.getStorageHttpVersioning());
+		setNameSpace(appConfig.getStorageHttpNamespace());
+		setFileAccessEnabled(appConfig.getStroageHttpFsAccess());
+		setVersioning(appConfig.getStorageHttpVersioning());
 		// setPipelining(false);
-		super.setAppConfig(this.appConfig);
+		super.setAppConfig(appConfig);
 		//
 		return this;
 	}
@@ -483,7 +483,7 @@ implements HttpRequestConfig<T, C> {
 		/*final String oldOid = dataItem.getName();
 		if(
 			oldOid == null || oldOid.isEmpty() ||
-			(verifyContentFlag && IOTask.Type.READ.equals(loadType)) || fsAccess
+			(verifyContentFlag && AppConfig.LoadType.READ.equals(loadType)) || fsAccess
 		) {
 			dataItem.setName(Long.toString(dataItem.getOffset(), MutableDataItem.ID_RADIX));
 		}*/

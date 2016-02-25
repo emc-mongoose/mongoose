@@ -13,6 +13,7 @@ import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
 import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
 //
+import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.item.data.NewContainerSrc;
 //
@@ -62,6 +63,21 @@ implements ContainerLoadBuilder<T, C, U>{
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
 			}
 		}
+		//
+		final String dstFilePath = appConfig.getItemDstFile();
+		if(dstFilePath != null && !dstFilePath.isEmpty()) {
+			try {
+				setItemDst(
+					new ItemCSVFileDst<>(
+						Paths.get(dstFilePath), (Class<C>) ioConfig.getContainerClass(),
+						ioConfig.getContentSource()
+					)
+				);
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file output");
+			}
+		}
+		//
 		return this;
 	}
 	//
@@ -87,7 +103,7 @@ implements ContainerLoadBuilder<T, C, U>{
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.WRITE.equals(ioConfig.getLoadType())) {
+				if(AppConfig.LoadType.WRITE.equals(ioConfig.getLoadType())) {
 					getNewItemSrc();
 				}
 			} else if(flagUseNewItemSrc) {

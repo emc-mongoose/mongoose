@@ -88,8 +88,6 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final String loadTypeStr = ioConfig.getLoadType().name().toLowerCase();
-		//
 		return (U) new BasicHttpDataLoadClient<>(
 			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
 			itemSrc, maxCount, remoteLoadMap

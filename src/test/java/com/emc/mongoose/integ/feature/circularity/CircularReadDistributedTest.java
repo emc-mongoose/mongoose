@@ -195,8 +195,8 @@ extends DistributedClientTestBase {
 					m = CONSOLE_METRICS_AVG_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.READ.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + AppConfig.LoadType.READ.name() + ": " + m.group("typeLoad"),
+							AppConfig.LoadType.READ.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
@@ -237,8 +237,8 @@ extends DistributedClientTestBase {
 					m = CONSOLE_METRICS_SUM_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.READ.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + AppConfig.LoadType.READ.name() + ": " + m.group("typeLoad"),
+							AppConfig.LoadType.READ.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long countFail = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue("There are failures reported", countFail == 0);

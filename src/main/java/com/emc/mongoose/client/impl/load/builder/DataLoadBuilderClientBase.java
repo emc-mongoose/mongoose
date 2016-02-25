@@ -96,7 +96,7 @@ implements DataLoadBuilderClient<T, W, U> {
 				//
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.WRITE.equals(ioConfig.getLoadType())) {
+				if(AppConfig.LoadType.WRITE.equals(ioConfig.getLoadType())) {
 					// enable new data item generation on the load servers side
 					V nextBuilder;
 					for(final String addr : loadSvcMap.keySet()) {

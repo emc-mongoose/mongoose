@@ -3,6 +3,7 @@ package com.emc.mongoose.util.builder;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
@@ -153,7 +154,7 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setLoadType(final IOTask.Type loadType)
+	public final LoadBuilderSvc setLoadType(final AppConfig.LoadType loadType)
 	throws IllegalStateException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.setLoadType(loadType);
@@ -202,6 +203,15 @@ implements LoadBuilderSvc {
 	throws RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.setItemSrc(itemSrc);
+		}
+		return this;
+	}
+	//
+	@Override
+	public final LoadBuilderSvc setItemDst(final ItemDst itemDst)
+	throws RemoteException {
+		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
+			loadBuilderSvc.setItemDst(itemDst);
 		}
 		return this;
 	}

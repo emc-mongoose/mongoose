@@ -91,8 +91,8 @@ extends DistributedClientTestBase {
 					m = CONSOLE_METRICS_AVG_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.WRITE.name(),
-							IOTask.Type.WRITE.name().toLowerCase().equals(
+							"Load type is not " + AppConfig.LoadType.WRITE.name(),
+							AppConfig.LoadType.WRITE.name().toLowerCase().equals(
 								m.group("typeLoad").toLowerCase()
 							)
 						);
@@ -135,8 +135,8 @@ extends DistributedClientTestBase {
 					m = CONSOLE_METRICS_SUM_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.WRITE.name(),
-							IOTask.Type.WRITE.name().toLowerCase().equals(
+							"Load type is not " + AppConfig.LoadType.WRITE.name(),
+							AppConfig.LoadType.WRITE.name().toLowerCase().equals(
 								m.group("typeLoad").toLowerCase()
 							)
 						);
@@ -199,7 +199,7 @@ extends DistributedClientTestBase {
 					secondRow = true;
 					Assert.assertTrue(
 						"Load type is \"" + nextRec.get(3) + "\" but \"Create\" is expected",
-						IOTask.Type.WRITE.name().equalsIgnoreCase(nextRec.get(3))
+						AppConfig.LoadType.WRITE.name().equalsIgnoreCase(nextRec.get(3))
 					);
 				}
 			}
@@ -248,7 +248,7 @@ extends DistributedClientTestBase {
 					secondRow = true;
 					Assert.assertTrue(
 						"Load type is \"" + nextRec.get(3) + "\" but \"Create\" is expected",
-						IOTask.Type.WRITE.name().equalsIgnoreCase(nextRec.get(3))
+						AppConfig.LoadType.WRITE.name().equalsIgnoreCase(nextRec.get(3))
 					);
 				}
 			}

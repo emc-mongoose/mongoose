@@ -82,8 +82,8 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final HttpRequestConfigImpl<T, C> setAppConfig(final AppConfig appConfig) {
-		super.setAppConfig(this.appConfig);
-		setContainer((C) new BasicContainer<T>(this.appConfig.getItemContainerName()));
+		super.setAppConfig(appConfig);
+		setContainer((C) new BasicContainer<T>(appConfig.getItemContainerName()));
 		return this;
 	}
 	//

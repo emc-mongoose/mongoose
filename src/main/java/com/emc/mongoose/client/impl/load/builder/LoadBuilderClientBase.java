@@ -14,6 +14,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 //
+import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
@@ -195,11 +196,26 @@ implements LoadBuilderClient<T, W, U> {
 		} catch(final SecurityException | NoSuchMethodException e) {
 			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
+		//
+		final String dstFilePath = appConfig.getItemDstFile();
+		if(dstFilePath != null && !dstFilePath.isEmpty()) {
+			try {
+				setItemDst(
+					new ItemCSVFileDst<>(
+						Paths.get(dstFilePath), (Class<T>) ioConfig.getItemClass(),
+						ioConfig.getContentSource()
+					)
+				);
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file output");
+			}
+		}
+		//
 		return this;
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, W, U> setLoadType(final IOTask.Type loadType)
+	public final LoadBuilderClient<T, W, U> setLoadType(final AppConfig.LoadType loadType)
 	throws IllegalStateException, RemoteException {
 		super.setLoadType(loadType);
 		V nextBuilder;

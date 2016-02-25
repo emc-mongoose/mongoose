@@ -129,11 +129,11 @@ implements RequestConfig<T, C> {
 		super.setAppConfig(appConfig);
 		final String api = appConfig.getStorageHttpApiClass();
 		setAPI(api);
-		setPort(this.appConfig.getStorageHttpApi_Port());
-		setUserName(this.appConfig.getAuthId());
-		setSecret(this.appConfig.getAuthSecret());
-		setNameSpace(this.appConfig.getStorageHttpNamespace());
-		setBuffSize((int) this.appConfig.getIoBufferSizeMin());
+		setPort(appConfig.getStorageHttpApi_Port());
+		setUserName(appConfig.getAuthId());
+		setSecret(appConfig.getAuthSecret());
+		setNameSpace(appConfig.getStorageHttpNamespace());
+		setBuffSize(appConfig.getIoBufferSizeMin());
 		return this;
 	}
 	//

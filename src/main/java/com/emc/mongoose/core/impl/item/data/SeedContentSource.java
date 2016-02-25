@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.item.data;
 // mongoose-common
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -25,7 +24,7 @@ implements ContentSource {
 	public SeedContentSource(final AppConfig appConfig)
 	throws NumberFormatException {
 		this(
-			Long.parseLong(appConfig.getItemDataContentRingSeed(), 0x10),
+			Long.parseLong(appConfig.getItemDataContentSeed(), 0x10),
 			appConfig.getItemDataContentRingSize()
 		);
 	}

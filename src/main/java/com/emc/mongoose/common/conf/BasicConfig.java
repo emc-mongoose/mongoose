@@ -104,8 +104,9 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public ItemImpl getItemClass() {
-		return ItemImpl.valueOf(getString(KEY_ITEM_CLASS).toUpperCase());
+	public
+	ItemType getItemClass() {
+		return ItemType.valueOf(getString(KEY_ITEM_CLASS).toUpperCase());
 	}
 	//
 	@Override
@@ -114,8 +115,9 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public ContentSourceImpl getItemDataContentClass() {
-		return ContentSourceImpl
+	public
+	ContentSourceType getItemDataContentClass() {
+		return ContentSourceType
 			.valueOf(getString(KEY_ITEM_DATA_CONTENT_CLASS).toUpperCase());
 	}
 	//
@@ -125,8 +127,8 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public String getItemDataContentRingSeed() {
-		return getString(KEY_ITEM_DATA_CONTENT_RING_SEED);
+	public String getItemDataContentSeed() {
+		return getString(KEY_ITEM_DATA_CONTENT_SEED);
 	}
 	//
 	@Override

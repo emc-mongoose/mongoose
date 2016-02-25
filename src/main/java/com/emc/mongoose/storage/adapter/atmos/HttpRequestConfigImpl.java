@@ -261,7 +261,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		if(fsAccess || !IOTask.Type.WRITE.equals(loadType)) {
+		if(fsAccess || !AppConfig.LoadType.WRITE.equals(loadType)) {
 			return uriBasePath + getFilePathFor(dataItem);
 		} else { // "/rest/objects"
 			return uriBasePath;
@@ -292,7 +292,7 @@ extends HttpRequestConfigBase<T, C> {
 			}
 		}
 		// the "offset" tag is required for WS mock
-		if(IOTask.Type.WRITE.equals(loadType) && request instanceof HttpEntityEnclosingRequest) {
+		if(AppConfig.LoadType.WRITE.equals(loadType) && request instanceof HttpEntityEnclosingRequest) {
 			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 			if(entity != null && entity instanceof HttpDataItem) {
 				if(md.length() > 0) {
@@ -375,7 +375,7 @@ extends HttpRequestConfigBase<T, C> {
 	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
 		final Header locationHeader = httpResponse == null ?
 			null : httpResponse.getFirstHeader(HttpHeaders.LOCATION);
-		if(locationHeader != null && IOTask.Type.WRITE.equals(loadType)) {
+		if(locationHeader != null && AppConfig.LoadType.WRITE.equals(loadType)) {
 			final String valueLocation = httpResponse
 				.getFirstHeader(HttpHeaders.LOCATION)
 				.getValue();

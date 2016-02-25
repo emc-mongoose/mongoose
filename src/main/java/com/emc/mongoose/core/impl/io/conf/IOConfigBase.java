@@ -31,7 +31,7 @@ implements IOConfig<T, C> {
 	//
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 	//
-	protected IOTask.Type loadType;
+	protected AppConfig.LoadType loadType;
 	protected C container = null;
 	protected ContentSource contentSrc;
 	protected volatile boolean verifyContentFlag;
@@ -44,7 +44,7 @@ implements IOConfig<T, C> {
 	//
 	protected IOConfigBase() {
 		appConfig = BasicConfig.THREAD_CONTEXT.get();
-		loadType = IOTask.Type.WRITE;
+		loadType = AppConfig.LoadType.WRITE;
 		contentSrc = ContentSourceBase.getDefault();
 		verifyContentFlag = appConfig.getItemDataVerify();
 		nameSpace = appConfig.getStorageHttpNamespace();
@@ -56,6 +56,7 @@ implements IOConfig<T, C> {
 	protected IOConfigBase(final IOConfigBase<T, C> ioConf2Clone) {
 		this();
 		if(ioConf2Clone != null) {
+			setLoadType(ioConf2Clone.getLoadType());
 			setContentSource(ioConf2Clone.getContentSource());
 			setVerifyContentFlag(ioConf2Clone.getVerifyContentFlag());
 			setLoadType(ioConf2Clone.getLoadType());
@@ -74,6 +75,7 @@ implements IOConfig<T, C> {
 		throws CloneNotSupportedException {
 		final IOConfigBase<T, C> ioConf = (IOConfigBase<T, C>) super.clone();
 		ioConf
+			.setLoadType(loadType)
 			.setContentSource(contentSrc)
 			.setVerifyContentFlag(verifyContentFlag)
 			.setLoadType(loadType)
@@ -110,12 +112,12 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public final IOTask.Type getLoadType() {
+	public final AppConfig.LoadType getLoadType() {
 		return loadType;
 	}
 	//
 	@Override
-	public IOConfigBase<T, C> setLoadType(final IOTask.Type loadType) {
+	public IOConfigBase<T, C> setLoadType(final AppConfig.LoadType loadType) {
 		LOG.trace(Markers.MSG, "Setting load type {}", loadType);
 		this.loadType = loadType;
 		return this;
@@ -200,6 +202,7 @@ implements IOConfig<T, C> {
 	//
 	public IOConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		this.appConfig = appConfig;
+		setLoadType(appConfig.getLoadClass());
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setNamePrefix(appConfig.getItemContainerName());
 		setVerifyContentFlag(appConfig.getItemDataVerify());
@@ -231,7 +234,7 @@ implements IOConfig<T, C> {
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		setLoadType(IOTask.Type.class.cast(in.readObject()));
+		setLoadType(AppConfig.LoadType.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
 		setContainer((C) in.readObject());
 		LOG.trace(Markers.MSG, "Got container {}", container);

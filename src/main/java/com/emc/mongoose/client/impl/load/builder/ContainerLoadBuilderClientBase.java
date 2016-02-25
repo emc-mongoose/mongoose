@@ -9,6 +9,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 //
+import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.server.api.load.builder.ContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.ContainerLoadSvc;
@@ -44,7 +45,7 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 		super(appConfig);
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public ContainerLoadBuilderClientBase<T, C, W, U, V> setAppConfig(final AppConfig appConfig)
 	throws RemoteException {
 		super.setAppConfig(appConfig);
@@ -62,6 +63,21 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
 			}
 		}
+		//
+		final String dstFilePath = appConfig.getItemDstFile();
+		if(dstFilePath != null && !dstFilePath.isEmpty()) {
+			try {
+				setItemDst(
+					new ItemCSVFileDst<>(
+						Paths.get(dstFilePath), (Class<C>) ioConfig.getContainerClass(),
+						ioConfig.getContentSource()
+					)
+				);
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file output");
+			}
+		}
+		//
 		return this;
 	}
 }

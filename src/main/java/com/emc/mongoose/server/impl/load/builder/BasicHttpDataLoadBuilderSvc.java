@@ -99,13 +99,12 @@ implements HttpDataLoadBuilderSvc<T, U> {
 		}
 		//
 		final HttpRequestConfig httpReqConf = HttpRequestConfig.class.cast(ioConfig);
-		final AppConfig localAppConfig = BasicConfig.THREAD_CONTEXT.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
-		localAppConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
+		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
 		//
 		return (U) new BasicHttpDataLoadSvc<>(
-			localAppConfig, httpReqConf, storageNodeAddrs, threadCount,
+			appConfig, httpReqConf, storageNodeAddrs, threadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
 		);
 	}

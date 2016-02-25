@@ -113,8 +113,8 @@ extends DistributedClientTestBase {
 					m = CONSOLE_METRICS_AVG_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.DELETE.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.DELETE.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + AppConfig.LoadType.DELETE.name() + ": " + m.group("typeLoad"),
+							AppConfig.LoadType.DELETE.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
@@ -154,8 +154,8 @@ extends DistributedClientTestBase {
 					m = CONSOLE_METRICS_SUM_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.DELETE.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.DELETE.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + AppConfig.LoadType.DELETE.name() + ": " + m.group("typeLoad"),
+							AppConfig.LoadType.DELETE.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long
 							countLimit = Long.parseLong(m.group("countLimit")),

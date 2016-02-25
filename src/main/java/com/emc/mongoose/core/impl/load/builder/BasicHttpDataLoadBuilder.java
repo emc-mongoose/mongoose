@@ -58,10 +58,9 @@ implements HttpDataLoadBuilder<T, U> {
 		}
 		//
 		final HttpRequestConfig httpReqConf = (HttpRequestConfig) ioConfig;
-		final AppConfig localAppConfig = BasicConfig.THREAD_CONTEXT.get();
 		//
 		return (U) new BasicHttpDataLoadExecutor<>(
-			localAppConfig, httpReqConf, storageNodeAddrs, threadCount,
+			appConfig, httpReqConf, storageNodeAddrs, threadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, rateLimit
 		);

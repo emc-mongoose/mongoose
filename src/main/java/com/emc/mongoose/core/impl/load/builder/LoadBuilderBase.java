@@ -6,6 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.conf.RequestConfig;
@@ -39,7 +40,8 @@ implements LoadBuilder<T, U> {
 	protected volatile IOConfig<?, ?> ioConfig = getDefaultIOConfig();
 	protected float rateLimit;
 	protected int threadCount = 1;
-	protected ItemSrc itemSrc;
+	protected ItemSrc<T> itemSrc;
+	protected ItemDst<T> itemDst = null;
 	protected String storageNodeAddrs[];
 	protected boolean flagUseNewItemSrc, flagUseNoneItemSrc, flagUseContainerItemSrc;
 	//
@@ -66,7 +68,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
 		this.appConfig = appConfig;
-		BasicConfig.THREAD_CONTEXT.set(appConfig);
+		//BasicConfig.THREAD_CONTEXT.set(appConfig);
 		if(ioConfig != null) {
 			ioConfig.setAppConfig(appConfig);
 		} else {
@@ -93,23 +95,13 @@ implements LoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		if(ioConfig instanceof RequestConfig) {
-			final RequestConfig reqConfig = (RequestConfig) ioConfig;
-			paramName = AppConfig.KEY_STORAGE_HTTP_ADDRS;
-			try {
-				setNodeAddrs(appConfig.getStorageHttpAddrsWithPorts());
-			} catch(final NoSuchElementException | ConversionException e) {
-				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
-			} catch(final IllegalArgumentException e) {
-				LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
-			}
-			//
-			paramName = AppConfig.KEY_STORAGE_HTTP_API___PORT;
-			try {
-				reqConfig.setPort(appConfig.getStorageHttpApi_Port());
-			} catch(final NoSuchElementException e) {
-				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
-			}
+		paramName = AppConfig.KEY_STORAGE_HTTP_ADDRS;
+		try {
+			setNodeAddrs(appConfig.getStorageHttpAddrsWithPorts());
+		} catch(final NoSuchElementException | ConversionException e) {
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+		} catch(final IllegalArgumentException e) {
+			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
 		return this;
@@ -162,7 +154,7 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setLoadType(final IOTask.Type loadType)
+	public LoadBuilder<T, U> setLoadType(final AppConfig.LoadType loadType)
 	throws IllegalStateException, RemoteException {
 		LOG.debug(Markers.MSG, "Set load type: {}", loadType);
 		if(ioConfig == null) {
@@ -227,6 +219,14 @@ implements LoadBuilder<T, U> {
 		return this;
 	}
 	//
+	@Override
+	public LoadBuilder<T, U> setItemDst(final ItemDst<T> itemDst)
+	throws RemoteException {
+		LOG.debug(Markers.MSG, "Set data items destination: {}", itemDst);
+		this.itemDst = itemDst;
+		return this;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	public LoadBuilderBase<T, U> clone()
 	throws CloneNotSupportedException {
@@ -238,6 +238,7 @@ implements LoadBuilder<T, U> {
 		lb.threadCount = threadCount;
 		lb.storageNodeAddrs = storageNodeAddrs;
 		lb.itemSrc = itemSrc;
+		lb.itemDst = itemDst;
 		lb.rateLimit = rateLimit;
 		lb.flagUseNewItemSrc = flagUseNewItemSrc;
 		lb.flagUseNoneItemSrc = flagUseNoneItemSrc;
@@ -276,17 +277,10 @@ implements LoadBuilder<T, U> {
 		} catch(final RemoteException | IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
-		try {
-			return buildActually();
-		} finally {
-			resetItemSrc();
-		}
-	}
-	//
-	protected final int getMinIOThreadCount(
-		final int threadCount, final int nodeCount, final int connCountPerNode
-	) {
-		return Math.min(Math.max(threadCount, nodeCount), nodeCount * connCountPerNode);
+		final U loadJob = buildActually();
+		loadJob.setItemDst(itemDst);
+		resetItemSrc();
+		return loadJob;
 	}
 	//
 	protected abstract U buildActually()

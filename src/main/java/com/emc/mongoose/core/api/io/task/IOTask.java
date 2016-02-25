@@ -8,10 +8,6 @@ import com.emc.mongoose.core.api.load.model.metrics.IOStats;
  */
 public interface IOTask<T extends Item> {
 	//
-	enum Type {
-		WRITE, READ, DELETE, UPDATE, APPEND
-	}
-	//
 	enum Status {
 		SUCC(0, "Success"),
 		CANCELLED(1, "Cancelled"),

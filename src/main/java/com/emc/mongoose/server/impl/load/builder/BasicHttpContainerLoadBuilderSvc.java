@@ -100,11 +100,10 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 		}
 		//
 		final HttpRequestConfig wsReqConf = HttpRequestConfig.class.cast(ioConfig);
-		final AppConfig localAppConfig = BasicConfig.THREAD_CONTEXT.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
-		localAppConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
+		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		return (U) new BasicHttpContainerLoadSvc<>(
-			localAppConfig, wsReqConf, storageNodeAddrs, threadCount,
+			appConfig, wsReqConf, storageNodeAddrs, threadCount,
 			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
 		);
 	}

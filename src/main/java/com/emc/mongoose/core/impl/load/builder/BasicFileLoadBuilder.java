@@ -50,7 +50,7 @@ extends DataLoadBuilderBase<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected U buildActually() {
 		return (U) new BasicFileLoadExecutor<>(
-			BasicConfig.THREAD_CONTEXT.get(), (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
+			appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
 			null, threadCount, itemSrc == null ? getDefaultItemSource() : itemSrc,
 			maxCount, rateLimit
 		);

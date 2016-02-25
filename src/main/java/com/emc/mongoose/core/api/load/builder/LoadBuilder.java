@@ -3,6 +3,7 @@ package com.emc.mongoose.core.api.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 //
 import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -30,7 +31,7 @@ extends Closeable, Cloneable {
 	LoadBuilder<T, U> setIOConfig(final IOConfig<?, ?> reqConf)
 	throws RemoteException;
 	//
-	LoadBuilder<T, U> setLoadType(final IOTask.Type loadType)
+	LoadBuilder<T, U> setLoadType(final AppConfig.LoadType loadType)
 	throws IllegalStateException, RemoteException;
 	//
 	LoadBuilder<T, U> setMaxCount(final long maxCount)
@@ -46,6 +47,9 @@ extends Closeable, Cloneable {
 	throws IllegalArgumentException, RemoteException;
 	//
 	LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
+	throws RemoteException;
+	//
+	LoadBuilder<T, U> setItemDst(final ItemDst<T> itemDst)
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> useNewItemSrc()

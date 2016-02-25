@@ -99,8 +99,6 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-		//
 		return (U) new BasicDirectoryLoadClient<>(
 			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
 			itemSrc, maxCount, remoteLoadMap

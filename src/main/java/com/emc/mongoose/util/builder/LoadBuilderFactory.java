@@ -1,7 +1,7 @@
 package com.emc.mongoose.util.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.AppConfig.ItemImpl;
+import com.emc.mongoose.common.conf.AppConfig.ItemType;
 import com.emc.mongoose.common.conf.AppConfig.StorageType;
 import com.emc.mongoose.common.conf.Constants;
 //
@@ -54,9 +54,9 @@ public class LoadBuilderFactory {
 	//
 	@SuppressWarnings("unchecked")
 	private static <T extends Item> Class<T> getItemClass(
-		final ItemImpl itemImpl, final StorageType storageType
+		final ItemType itemType, final StorageType storageType
 	) {
-		if(ItemImpl.CONTAINER.equals(itemImpl)) {
+		if(ItemType.CONTAINER.equals(itemType)) {
 			if(StorageType.FS.equals(storageType)) {
 				return (Class<T>) BasicDirectory.class;
 			} else { // http
@@ -74,7 +74,7 @@ public class LoadBuilderFactory {
 	@SuppressWarnings("unchecked")
 	private static <T extends Item, U extends LoadExecutor<T>> Class<LoadBuilder<T, U>>
 	getLoadBuilderClass(
-		final String runMode, final ItemImpl itemClass, final StorageType storageType
+		final String runMode, final ItemType itemClass, final StorageType storageType
 	) throws ClassNotFoundException {
 		Class<LoadBuilder<T, U>> loadBuilderCls = null;
 		String

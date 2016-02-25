@@ -26,7 +26,7 @@ extends LimitedRateLoadExecutorBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final IOTask.Type loadType;
+	protected final AppConfig.LoadType loadType;
 	//
 	protected MutableDataLoadExecutorBase(
 		final AppConfig appConfig,

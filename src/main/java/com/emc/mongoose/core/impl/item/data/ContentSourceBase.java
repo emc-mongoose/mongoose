@@ -120,38 +120,39 @@ implements ContentSource {
 		try {
 			if(DEFAULT == null) {
 				final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-				try {
-					final String contentFilePath = appConfig.getItemDataContentFile();
-					if(contentFilePath != null && !contentFilePath.isEmpty()) {
-						final Path p = Paths.get(contentFilePath);
-						if(Files.exists(p) && !Files.isDirectory(p) && Files.isReadable(p)) {
-							final File f = p.toFile();
-							final long fileSize = f.length();
-							if(fileSize > 0) {
-								DEFAULT = new FileContentSource(
-									Files.newByteChannel(p, StandardOpenOption.READ), fileSize
-								);
+				final AppConfig.ContentSourceType
+					contentSrcType = appConfig.getItemDataContentClass();
+				switch(contentSrcType) {
+					case FILE:
+						final String contentFilePath = appConfig.getItemDataContentFile();
+						if(contentFilePath != null && !contentFilePath.isEmpty()) {
+							final Path p = Paths.get(contentFilePath);
+							if(Files.exists(p) && !Files.isDirectory(p) &&
+								Files.isReadable(p)) {
+								final File f = p.toFile();
+								final long fileSize = f.length();
+								if(fileSize > 0) {
+									DEFAULT = new FileContentSource(
+										Files.newByteChannel(p, StandardOpenOption.READ), fileSize
+									);
+								} else {
+									throw new IllegalStateException(
+										"Content source file @" + contentFilePath + " is empty"
+									);
+								}
 							} else {
 								throw new IllegalStateException(
-									"Content source file @" + contentFilePath + " is empty"
+									"Content source file @" + contentFilePath + " doesn't exist/" +
+									"not readable/is a directory"
 								);
 							}
 						} else {
-							throw new IllegalStateException(
-								"Content source file @" + contentFilePath + " doesn't exist/" +
-								"not readable/is a directory"
-							);
+							throw new IllegalStateException("Content source file path is empty");
 						}
-					} else {
-						throw new IllegalStateException("Content source file path is empty");
-					}
-				} catch(final Exception e) {
-					LogUtil.exception(
-						LOG, Level.DEBUG, e,
-						"No ring buffer source file available for reading, " +
-						"falling back to use the random data ring buffer"
-					);
-					DEFAULT = new SeedContentSource(appConfig);
+						break;
+					case SEED:
+						DEFAULT = new SeedContentSource(appConfig);
+						break;
 				}
 			}
 		} catch(final Exception e) {

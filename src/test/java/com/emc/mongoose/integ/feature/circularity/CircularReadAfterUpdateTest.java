@@ -185,8 +185,8 @@ extends StandaloneClientTestBase {
 					m = CONSOLE_METRICS_AVG.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.READ.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + AppConfig.LoadType.READ.name() + ": " + m.group("typeLoad"),
+							AppConfig.LoadType.READ.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
@@ -227,8 +227,8 @@ extends StandaloneClientTestBase {
 					m = CONSOLE_METRICS_SUM.matcher(nextStdOutLine);
 					if(m.find()) {
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.READ.name() + ": " + m.group("typeLoad"),
-							IOTask.Type.READ.name().equalsIgnoreCase(m.group("typeLoad"))
+							"Load type is not " + AppConfig.LoadType.READ.name() + ": " + m.group("typeLoad"),
+							AppConfig.LoadType.READ.name().equalsIgnoreCase(m.group("typeLoad"))
 						);
 						long
 							countLimit = Long.parseLong(m.group("countLimit")),

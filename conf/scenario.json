@@ -5,16 +5,17 @@
 			"config" : { // the place to override the default configuration for this load job
 				"item" : {
 					"data" : {
-						"size" : {
-							"fixed" : "100KB"
-						}
+						"size" : "100KB"
+					},
+					"dst" : {
+						"file" : "/tmp/write100KB.csv"
 					}
 				},
 				"load" : {
 					"class" : "write",
 					"threads" : 100,
 					"limit" : {
-						"count" : 1000000
+						"count" : 1000
 					}
 				}
 			}
@@ -27,9 +28,10 @@
 					"config" : {
 						"item" : {
 							"data" : {
-								"size" : {
-									"fixed" : "100MB"
-								}
+								"size" : "100MB"
+							},
+							"dst" : {
+								"file" : "/tmp/write100MB.csv"
 							}
 						},
 						"load" : {
@@ -37,7 +39,7 @@
 							"threads" : 10,
 							"limit" : {
 								"rate" : 1000,
-								"time" : "1h"
+								"time" : "1m"
 							}
 						}
 					}
@@ -45,24 +47,17 @@
 				{
 					"type" : "load",
 					"config" : {
+						"item" : {
+							"src" : {
+								"file" : "/tmp/write100KB.csv"
+							}
+						},
 						"load" : {
 							"class" : "read",
 							"circular" : true,
 							"threads" : 10,
 							"limit" : {
-								"time" : "1h"
-							}
-						}
-					}
-				},
-				{
-					"type" : "load",
-					"config" : {
-						"load" : {
-							"class" : "delete",
-							"threads" : 10,
-							"limit" : {
-								"time" : "1h"
+								"time" : "1m"
 							}
 						}
 					}
@@ -80,21 +75,14 @@
 							"config" : {
 								"item" : {
 									"data" : {
-										"size" : {
-											"class" : "random",
-											"random" : {
-												"min" : 0,
-												"max" : "16KB",
-												"bias" : 0.5
-											}
-										}
+										"size" : "16KB"
 									}
 								},
 								"load" : {
 									"class" : "write",
 									"threads" : 200,
 									"limit" : {
-										"time" : "1d"
+										"time" : "30s"
 									}
 								}
 							}
@@ -107,6 +95,9 @@
 										"content" : {
 											"verify" : false
 										}
+									},
+									"src" : {
+										"file" : "/tmp/write100MB.csv"
 									}
 								},
 								"load" : {

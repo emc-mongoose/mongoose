@@ -148,6 +148,12 @@ implements Scenario {
 	}
 	//
 	@Override
+	public final void run() {
+		super.run();
+		LOG.info(Markers.MSG, "Scenario end");
+	}
+	//
+	@Override
 	public final String toString() {
 		return "jsonScenario#" + hashCode();
 	}

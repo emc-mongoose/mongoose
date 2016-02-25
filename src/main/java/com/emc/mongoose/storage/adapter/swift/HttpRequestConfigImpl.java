@@ -59,18 +59,14 @@ extends HttpRequestConfigBase<T, C> {
 			}
 			setAuthToken(reqConf2Clone.getAuthToken());
 			setContainer(reqConf2Clone.getContainer());
-		}
-		//
-		final AppConfig localConfig = BasicConfig.THREAD_CONTEXT.get();
-		if(authToken == null) {
-			setAuthToken(new WSAuthTokenImpl<>(this, localConfig.getAuthToken()));
-		}
-		if(container == null) {
-			setContainer(
-				(C) new BasicContainer<T>(
-					localConfig.getItemContainerName()
-				)
-			);
+			//
+			if(authToken == null) {
+				setAuthToken(new WSAuthTokenImpl<>(this, reqConf2Clone.appConfig.getAuthToken()));
+			}
+			if(container == null) {
+				setContainer(
+					(C)new BasicContainer<T>(reqConf2Clone.appConfig.getItemContainerName()));
+			}
 		}
 		//
 		refreshContainerPath();

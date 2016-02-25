@@ -114,23 +114,22 @@ implements HttpDataLoadExecutor<T> {
 			}
 		);
 		//
-		final AppConfig thrLocalConfig = BasicConfig.THREAD_CONTEXT.get();
 		final int buffSize = httpReqConfigCopy.getBuffSize();
 		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(threadCount)
-			.setBacklogSize(thrLocalConfig.getNetworkSocketBindBacklogSize())
-			.setInterestOpQueued(thrLocalConfig.getNetworkSocketInterestOpQueued())
-			.setSelectInterval(thrLocalConfig.getNetworkSocketSelectInterval())
-			.setShutdownGracePeriod(thrLocalConfig.getNetworkSocketTimeoutMilliSec())
-			.setSoKeepAlive(thrLocalConfig.getNetworkSocketKeepAlive())
-			.setSoLinger(thrLocalConfig.getNetworkSocketLinger())
-			.setSoReuseAddress(thrLocalConfig.getNetworkSocketReuseAddr())
-			.setSoTimeout(thrLocalConfig.getNetworkSocketTimeoutMilliSec())
-			.setTcpNoDelay(thrLocalConfig.getNetworkSocketTcpNoDelay())
-			.setRcvBufSize(IOTask.Type.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
-			.setSndBufSize(IOTask.Type.READ.equals(loadType) ? Constants.BUFF_SIZE_LO : buffSize)
+			.setBacklogSize(appConfig.getNetworkSocketBindBacklogSize())
+			.setInterestOpQueued(appConfig.getNetworkSocketInterestOpQueued())
+			.setSelectInterval(appConfig.getNetworkSocketSelectInterval())
+			.setShutdownGracePeriod(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setSoKeepAlive(appConfig.getNetworkSocketKeepAlive())
+			.setSoLinger(appConfig.getNetworkSocketLinger())
+			.setSoReuseAddress(appConfig.getNetworkSocketReuseAddr())
+			.setSoTimeout(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setTcpNoDelay(appConfig.getNetworkSocketTcpNoDelay())
+			.setRcvBufSize(AppConfig.LoadType.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
+			.setSndBufSize(AppConfig.LoadType.READ.equals(loadType) ? Constants.BUFF_SIZE_LO : buffSize)
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 			);

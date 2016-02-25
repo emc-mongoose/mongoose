@@ -1,5 +1,10 @@
 package com.emc.mongoose.run.scenario.engine;
 //
+import com.emc.mongoose.common.log.Markers;
+//
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+//
 import java.util.LinkedList;
 import java.util.List;
 /**
@@ -7,6 +12,8 @@ import java.util.List;
  */
 public class SequentialJobContainer
 implements JobContainer {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final List<JobContainer> subJobs = new LinkedList<>();
 	//
@@ -21,9 +28,13 @@ implements JobContainer {
 	}
 	//
 	@Override
-	public final synchronized void run() {
+	public synchronized void run() {
+		LOG.debug(Markers.MSG, "{}: start {} sub jobs", toString(), subJobs.size());
 		for(final JobContainer subJob : subJobs) {
+			LOG.debug(Markers.MSG, "{}: start next sub job \"{}\"", toString(), subJob.toString());
 			subJob.run();
+			LOG.debug(Markers.MSG, "{}: sub job \"{}\" is done", toString(), subJob.toString());
 		}
+		LOG.debug(Markers.MSG, "{}: end", toString());
 	}
 }

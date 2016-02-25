@@ -61,7 +61,8 @@ implements HttpStorageMock<T> {
 		final int headCount, final int portStart,
 		final int storageCapacity, final int containerCapacity, final int containerCountLimit,
 		final int batchSize, final String dataSrcPath, final int metricsPeriodSec,
-		final boolean jmxServeFlag, final int minConnLifeMilliSec, final int maxConnLifeMilliSec //todo use connections vars
+		final boolean jmxServeFlag, final int minConnLifeMilliSec, final int maxConnLifeMilliSec
+		//todo use connections vars
 	) {
 		super(
 			(Class<T>) BasicHttpDataMock.class, ContentSourceBase.getDefault(),

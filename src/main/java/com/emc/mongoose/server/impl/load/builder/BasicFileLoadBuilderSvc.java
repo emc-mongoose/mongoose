@@ -74,8 +74,6 @@ implements FileLoadBuilderSvc<T, U> {
 		if(ioConfig == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
-		//
-		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//

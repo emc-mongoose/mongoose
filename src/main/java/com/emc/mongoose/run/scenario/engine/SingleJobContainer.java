@@ -30,12 +30,15 @@ implements JobContainer {
 	//
 	public SingleJobContainer(final Map<String, Object> configTree)
 	throws IOException {
-		final AppConfig ctxConfig = BasicConfig.THREAD_CONTEXT.get();
-		ctxConfig.override(null, configTree);
-		final LoadBuilder loadJobBuilder = LoadBuilderFactory
-			.getInstance(ctxConfig);
-		limitTime = ctxConfig.getLoadLimitTime();
-		loadJob = loadJobBuilder.build();
+		try {
+			final AppConfig localConfig = (AppConfig) BasicConfig.THREAD_CONTEXT.get().clone();
+			localConfig.override(null, configTree);
+			final LoadBuilder loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);
+			limitTime = localConfig.getLoadLimitTime();
+			loadJob = loadJobBuilder.build();
+		} catch(final CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	//
 	@Override

@@ -88,8 +88,6 @@ implements FileLoadBuilderClient<T, W, U> {
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-		//
 		return (U) new BasicFileLoadClient<>(
 			appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
 			appConfig.getLoadThreads(), itemSrc, maxCount, remoteLoadMap

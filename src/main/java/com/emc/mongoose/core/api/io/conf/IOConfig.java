@@ -6,7 +6,6 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import java.io.Closeable;
 import java.io.Externalizable;
@@ -23,8 +22,8 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	boolean isClosed();
 	//
-	IOTask.Type getLoadType();
-	IOConfig<T, C> setLoadType(final IOTask.Type loadType);
+	AppConfig.LoadType getLoadType();
+	IOConfig<T, C> setLoadType(final AppConfig.LoadType loadType);
 	//
 	String getNameSpace();
 	IOConfig<T, C> setNameSpace(final String nameSpace);

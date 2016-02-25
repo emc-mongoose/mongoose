@@ -111,7 +111,7 @@ extends DistributedClientTestBase {
 						loadType = m.group("typeLoad");
 						Assert.assertTrue(
 							"Invalid load type int the line:\n" + nextStdOutLine,
-							IOTask.Type.UPDATE.name().toLowerCase().equals(loadType.toLowerCase())
+							AppConfig.LoadType.UPDATE.name().toLowerCase().equals(loadType.toLowerCase())
 						);
 						long
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
@@ -153,7 +153,7 @@ extends DistributedClientTestBase {
 						loadType = m.group("typeLoad");
 						Assert.assertTrue(
 							"Invalid load type in the line: \n" + nextStdOutLine,
-							IOTask.Type.UPDATE.name().toLowerCase().equals(loadType.toLowerCase())
+							AppConfig.LoadType.UPDATE.name().toLowerCase().equals(loadType.toLowerCase())
 						);
 						long
 							countLimit = Long.parseLong(m.group("countLimit")),

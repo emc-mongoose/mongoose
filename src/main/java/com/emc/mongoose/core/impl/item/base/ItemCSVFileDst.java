@@ -22,7 +22,9 @@ implements ItemFileDst<T> {
 		final Path itemsFilePath, final Class<? extends T> itemCls, final ContentSource contentSrc
 	) throws IOException {
 		super(
-			Files.newOutputStream(itemsFilePath, StandardOpenOption.WRITE),
+			Files.newOutputStream(
+				itemsFilePath, StandardOpenOption.WRITE, StandardOpenOption.CREATE
+			),
 			itemCls, contentSrc
 		);
 		this.itemsFilePath = itemsFilePath;

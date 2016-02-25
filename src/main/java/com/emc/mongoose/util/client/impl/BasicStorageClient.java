@@ -73,7 +73,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.WRITE)
+				.setLoadType(AppConfig.LoadType.WRITE)
 				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -94,7 +94,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.WRITE)
+				.setLoadType(AppConfig.LoadType.WRITE)
 				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -114,7 +114,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.WRITE)
+				.setLoadType(AppConfig.LoadType.WRITE)
 				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -142,7 +142,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.READ)
+				.setLoadType(AppConfig.LoadType.READ)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -165,7 +165,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.READ)
+				.setLoadType(AppConfig.LoadType.READ)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -188,7 +188,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.READ)
+				.setLoadType(AppConfig.LoadType.READ)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -214,7 +214,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.DELETE)
+				.setLoadType(AppConfig.LoadType.DELETE)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)

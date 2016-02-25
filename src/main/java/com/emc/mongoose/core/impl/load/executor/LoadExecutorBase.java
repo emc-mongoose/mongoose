@@ -65,7 +65,7 @@ implements LoadExecutor<T> {
 	protected final ContentSource dataSrc;
 	protected final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>>
 		ioConfigCopy;
-	protected final IOTask.Type loadType;
+	protected final AppConfig.LoadType loadType;
 	//
 	protected volatile ItemDst<T> consumer = null;
 	//

@@ -70,7 +70,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final IOTask.Type loadType;
+	protected final AppConfig.LoadType loadType;
 	private final HttpProcessor httpProcessor;
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
@@ -88,7 +88,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		wsReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;
 		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
 		//
-		if(IOTask.Type.READ.equals(loadType)) {
+		if(AppConfig.LoadType.READ.equals(loadType)) {
 			reqConfig.setBuffSize(Constants.BUFF_SIZE_HI);
 		} else {
 			reqConfig.setBuffSize(Constants.BUFF_SIZE_LO);
@@ -115,20 +115,19 @@ implements HttpContainerLoadExecutor<T, C> {
 			}
 		);
 		//
-		final AppConfig thrLocalConfig = BasicConfig.THREAD_CONTEXT.get();
 		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(threadCount)
-			.setBacklogSize(thrLocalConfig.getNetworkSocketBindBacklogSize())
-			.setInterestOpQueued(thrLocalConfig.getNetworkSocketInterestOpQueued())
-			.setSelectInterval(thrLocalConfig.getNetworkSocketSelectInterval())
-			.setShutdownGracePeriod(thrLocalConfig.getNetworkSocketTimeoutMilliSec())
-			.setSoKeepAlive(thrLocalConfig.getNetworkSocketKeepAlive())
-			.setSoLinger(thrLocalConfig.getNetworkSocketLinger())
-			.setSoReuseAddress(thrLocalConfig.getNetworkSocketReuseAddr())
-			.setSoTimeout(thrLocalConfig.getNetworkSocketTimeoutMilliSec())
-			.setTcpNoDelay(thrLocalConfig.getNetworkSocketTcpNoDelay())
+			.setBacklogSize(appConfig.getNetworkSocketBindBacklogSize())
+			.setInterestOpQueued(appConfig.getNetworkSocketInterestOpQueued())
+			.setSelectInterval(appConfig.getNetworkSocketSelectInterval())
+			.setShutdownGracePeriod(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setSoKeepAlive(appConfig.getNetworkSocketKeepAlive())
+			.setSoLinger(appConfig.getNetworkSocketLinger())
+			.setSoReuseAddress(appConfig.getNetworkSocketReuseAddr())
+			.setSoTimeout(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setTcpNoDelay(appConfig.getNetworkSocketTcpNoDelay())
 			.setRcvBufSize(Constants.BUFF_SIZE_LO)
 			.setSndBufSize(Constants.BUFF_SIZE_LO)
 			.setConnectTimeout(

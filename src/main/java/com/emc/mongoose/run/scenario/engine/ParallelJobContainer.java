@@ -2,6 +2,7 @@ package com.emc.mongoose.run.scenario.engine;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 02.02.16.
  */
 public class ParallelJobContainer
-	implements JobContainer {
+implements JobContainer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -30,11 +31,13 @@ public class ParallelJobContainer
 		for(final JobContainer subJob : subJobs) {
 			parallelJobsExecutor.submit(subJob);
 		}
+		LOG.debug(Markers.MSG, "{}: started {} sub jobs", toString(), subJobs.size());
 		parallelJobsExecutor.shutdown();
 		try {
 			parallelJobsExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+			LOG.debug(Markers.MSG, "{}: {} sub jobs done", toString(), subJobs.size());
 		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Interrupted the load job execution");
+			LogUtil.exception(LOG, Level.WARN, e, "{}: interrupted the sub jobs execution");
 		}
 	}
 	//

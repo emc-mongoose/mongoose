@@ -23,8 +23,8 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_ITEM_CONTAINER_NAME = "item.container.name";
 	String KEY_ITEM_DATA_CONTENT_CLASS = "item.data.content.class";
 	String KEY_ITEM_DATA_CONTENT_FILE = "item.data.content.file";
-	String KEY_ITEM_DATA_CONTENT_RING_SEED = "item.data.content.ring.seed";
-	String KEY_ITEM_DATA_CONTENT_RING_SIZE = "item.data.content.ring.size";
+	String KEY_ITEM_DATA_CONTENT_SEED = "item.data.content.seed";
+	String KEY_ITEM_DATA_CONTENT_RING_SIZE = "item.data.content.ringSize";
 	String KEY_ITEM_DATA_RANGES = "item.data.ranges";
 	String KEY_ITEM_DATA_SIZE = "item.data.size";
 	String KEY_ITEM_DATA_VERIFY = "item.data.verify";
@@ -94,17 +94,17 @@ extends Cloneable, Configuration, Externalizable {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
-	enum ItemImpl { CONTAINER, DATA }
-	ItemImpl getItemClass();
+	enum ItemType { CONTAINER, DATA }
+	ItemType getItemClass();
 
 	String getItemContainerName();
 
-	enum ContentSourceImpl { FILE, SEED }
-	ContentSourceImpl getItemDataContentClass();
+	enum ContentSourceType { FILE, SEED }
+	ContentSourceType getItemDataContentClass();
 
 	String getItemDataContentFile();
 
-	String getItemDataContentRingSeed();
+	String getItemDataContentSeed();
 
 	long getItemDataContentRingSize();
 
