@@ -204,7 +204,7 @@ implements IOConfig<T, C> {
 		this.appConfig = appConfig;
 		setLoadType(appConfig.getLoadClass());
 		setNameSpace(appConfig.getStorageHttpNamespace());
-		setNamePrefix(appConfig.getItemContainerName());
+		setNamePrefix(appConfig.getItemNamingPrefix());
 		setVerifyContentFlag(appConfig.getItemDataVerify());
 		setBuffSize(appConfig.getIoBufferSizeMin());
 		return this;

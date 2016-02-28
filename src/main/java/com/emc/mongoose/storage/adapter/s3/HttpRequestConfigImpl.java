@@ -80,13 +80,6 @@ extends HttpRequestConfigBase<T, C> {
 		return this;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	public final HttpRequestConfigImpl<T, C> setAppConfig(final AppConfig appConfig) {
-		super.setAppConfig(appConfig);
-		setContainer((C) new BasicContainer<T>(appConfig.getItemContainerName()));
-		return this;
-	}
-	//
 	@Override
 	protected final String getDataUriPath(final T dataItem)
 	throws IllegalStateException, URISyntaxException {

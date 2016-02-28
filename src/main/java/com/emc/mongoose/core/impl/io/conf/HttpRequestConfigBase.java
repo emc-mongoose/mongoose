@@ -390,6 +390,7 @@ implements HttpRequestConfig<T, C> {
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setFileAccessEnabled(appConfig.getStroageHttpFsAccess());
 		setVersioning(appConfig.getStorageHttpVersioning());
+		setContainer((C) new BasicContainer<T>(appConfig.getItemContainerName()));
 		// setPipelining(false);
 		super.setAppConfig(appConfig);
 		//
@@ -460,12 +461,18 @@ implements HttpRequestConfig<T, C> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		sharedHeaders = HeaderGroup.class.cast(in.readObject());
+		sharedHeaders = (HeaderGroup) in.readObject();
 		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
 		setNameSpace(String.class.cast(in.readObject()));
 		setFileAccessEnabled(in.readBoolean());
 		setVersioning(in.readBoolean());
 		setPipelining(in.readBoolean());
+		final String containerName = (String) in.readObject();
+		if(containerName != null) {
+			setContainer((C) new BasicContainer<T>(containerName));
+		} else {
+			setContainer(null);
+		}
 	}
 	//
 	@Override
@@ -477,6 +484,7 @@ implements HttpRequestConfig<T, C> {
 		out.writeBoolean(getFileAccessEnabled());
 		out.writeBoolean(getVersioning());
 		out.writeBoolean(getPipelining());
+		out.writeObject(container == null ? null : container.getName());
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {

@@ -58,14 +58,8 @@ extends HttpRequestConfigBase<T, C> {
 				uriSvcBaseContainerPath = reqConf2Clone.uriSvcBaseContainerPath;
 			}
 			setAuthToken(reqConf2Clone.getAuthToken());
-			setContainer(reqConf2Clone.getContainer());
-			//
 			if(authToken == null) {
 				setAuthToken(new WSAuthTokenImpl<>(this, reqConf2Clone.appConfig.getAuthToken()));
-			}
-			if(container == null) {
-				setContainer(
-					(C)new BasicContainer<T>(reqConf2Clone.appConfig.getItemContainerName()));
 			}
 		}
 		//
@@ -134,17 +128,8 @@ extends HttpRequestConfigBase<T, C> {
 			LOG.error(Markers.ERR, "Swift auth token is not specified");
 		}
 		//
-		if(this.appConfig.containsKey(AppConfig.KEY_ITEM_CONTAINER_NAME)) {
-			setContainer(
-				(C) new BasicContainer<T>(
-					this.appConfig.getItemContainerName()
-				)
-			);
-		} else {
-			LOG.error(Markers.ERR, "Swift container is not specified");
-		}
-		//
 		refreshContainerPath();
+		//
 		return this;
 	}
 	//

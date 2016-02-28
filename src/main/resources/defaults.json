@@ -20,12 +20,10 @@
 			},
 			"data" : {
 				"content" : {
-					"class" : "ring",
+					"class" : "seed",
 					"file" : null,
-					"ring" : {
-						"seed" : "7a42d9c483244167",
-						"size" : "4MB"
-					}
+					"seed" : "7a42d9c483244167",
+					"ringSize" : "4MB"
 				},
 				"ranges" : "0",
 				"size" : "1MB",
@@ -69,7 +67,10 @@
 		"run" : {
 			"name" : "mongoose",
 			"version" : "next",
-			"mode" : "standalone"
+			"mode" : "standalone",
+			"resume" : {
+				"enabled" : false
+			}
 		},
 		"storage" : {
 			"class" : "http",

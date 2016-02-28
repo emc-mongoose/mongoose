@@ -5,12 +5,12 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 // mongoose-common.jar
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.storage.adapter.swift.AuthToken;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.Header;
@@ -47,7 +47,7 @@ extends HttpRequestConfigBase<T, C> {
 	public final static Header
 		DEFAULT_ACCEPT_HEADER = new BasicHeader(HttpHeaders.ACCEPT, "*/*");
 	//
-	private WSSubTenantImpl<T> subTenant;
+	private AuthToken<T> subTenant;
 	private String uriBasePath;
 	//
 	public HttpRequestConfigImpl()
@@ -66,7 +66,7 @@ extends HttpRequestConfigBase<T, C> {
 		}
 		//
 		if(reqConf2Clone != null) {
-			setSubTenant(reqConf2Clone.getSubTenant());
+			setAuthToken(reqConf2Clone.getAuthToken());
 			setUserName(reqConf2Clone.getUserName());
 			setSecret(reqConf2Clone.getSecret());
 		}
@@ -134,11 +134,11 @@ extends HttpRequestConfigBase<T, C> {
 		}
 	}
 	//
-	public final WSSubTenantImpl<T> getSubTenant() {
+	public final AuthToken<T> getAuthToken() {
 		return subTenant;
 	}
 	//
-	public final HttpRequestConfigImpl<T, C> setSubTenant(final WSSubTenantImpl<T> subTenant)
+	public final HttpRequestConfigImpl<T, C> setAuthToken(final AuthToken<T> subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
 		if(sharedHeaders != null && userName != null) {
@@ -211,7 +211,7 @@ extends HttpRequestConfigBase<T, C> {
 		super.setAppConfig(this.appConfig);
 		//
 		try {
-			setSubTenant(
+			setAuthToken(
 				new WSSubTenantImpl<>(
 					this, this.appConfig.getString(AppConfig.KEY_AUTH_TOKEN)
 				)
@@ -243,7 +243,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(t == null) {
 			LOG.debug(Markers.MSG, "Note: no subtenant has got from load client side");
 		} else {
-			setSubTenant(new WSSubTenantImpl<>(this, String.class.cast(t)));
+			setAuthToken(new WSSubTenantImpl<>(this, String.class.cast(t)));
 		}
 		uriBasePath = String.class.cast(in.readObject());
 	}
@@ -414,7 +414,8 @@ extends HttpRequestConfigBase<T, C> {
 		if(subTenantValue == null || subTenantValue.length() == 0) {
 			subTenant.create(storageAddrs[0]);
 		}
-		/*re*/setSubTenant(subTenant);
+		/*re*/
+		setAuthToken(subTenant);
 		appConfig.setProperty(AppConfig.KEY_AUTH_TOKEN, subTenant.getValue());
 		super.configureStorage(storageAddrs);
 	}

@@ -4,6 +4,9 @@
 			"type" : "load",
 			"config" : { // the place to override the default configuration for this load job
 				"item" : {
+					"container" : {
+						"name" : "bucketObjects100KB"
+					},
 					"data" : {
 						"size" : "100KB"
 					},
@@ -27,6 +30,9 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
+							"container" : {
+								"name" : "bucketObjects100MB"
+							},
 							"data" : {
 								"size" : "100MB"
 							},
@@ -48,6 +54,9 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
+							"container" : {
+								"name" : "bucketObjects100KB"
+							},
 							"src" : {
 								"file" : "/tmp/write100KB.csv"
 							}
@@ -91,6 +100,9 @@
 							"type" : "load",
 							"config" : {
 								"item" : {
+									"container" : {
+										"name" : "bucketObjects100MB"
+									},
 									"data" : {
 										"content" : {
 											"verify" : false

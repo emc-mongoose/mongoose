@@ -50,7 +50,7 @@ implements Scenario {
 	//
 	private static void loadTree(final Map<String, Object> node, final JobContainer jobContainer)
 	throws IOException {
-		LOG.info(Markers.MSG, "Load the subtree to the container \"{}\"", jobContainer);
+		LOG.debug(Markers.MSG, "Load the subtree to the container \"{}\"", jobContainer);
 		Object value;
 		JobContainer subContainer = jobContainer, newSubContainer;
 		for(final String key : node.keySet()) {

@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -58,6 +59,7 @@ implements JobContainer {
 	@Override
 	public final void run() {
 		try {
+			LOG.info(Markers.MSG, "Start the job \"{}\"", loadJob.getName());
 			loadJob.start();
 			try {
 				loadJob.await(
