@@ -57,7 +57,7 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@SuppressWarnings("unchecked")
-	private ItemSrc<T> getNewItemSrc()
+	protected ItemSrc<T> getNewItemSrc()
 	throws NoSuchMethodException {
 		AppConfig.ItemNamingType namingType = appConfig.getItemNamingType();
 		final BasicItemNameGenerator bing = new BasicItemNameGenerator(

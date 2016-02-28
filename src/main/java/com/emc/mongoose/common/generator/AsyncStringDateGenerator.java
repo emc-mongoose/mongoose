@@ -1,24 +1,27 @@
 package com.emc.mongoose.common.generator;
 
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
-import static com.emc.mongoose.common.generator.AsyncDateGenerator.FMT_DATE;
+import static com.emc.mongoose.common.generator.AsyncDateGenerator.*;
 
 public class AsyncStringDateGenerator
 extends AsyncRangeGeneratorBase<String> {
 
 	private final AsyncDateGenerator dateGenerator;
+	private final DateFormat dateFormat = new SimpleDateFormat(DATE_FMT_STRING);
 
 	public AsyncStringDateGenerator(final String minValue, final String maxValue)
 	throws ParseException {
 		super(minValue, maxValue);
-		dateGenerator = new AsyncDateGenerator(FMT_DATE.parse(minValue), FMT_DATE.parse(maxValue));
+		dateGenerator = new AsyncDateGenerator(dateFormat.parse(minValue), dateFormat.parse(maxValue));
 	}
 
 	public AsyncStringDateGenerator(String initialValue)
 	throws ParseException {
 		super(initialValue);
-		dateGenerator = new AsyncDateGenerator(FMT_DATE.parse(initialValue));
+		dateGenerator = new AsyncDateGenerator(dateFormat.parse(initialValue));
 	}
 
 	@Override
@@ -28,12 +31,12 @@ extends AsyncRangeGeneratorBase<String> {
 
 	@Override
 	protected final String rangeValue() {
-		return FMT_DATE.format(dateGenerator.get());
+		return dateFormat.format(dateGenerator.get());
 	}
 
 	@Override
 	protected final String singleValue() {
-		return FMT_DATE.format(dateGenerator.get());
+		return dateFormat.format(dateGenerator.get());
 	}
 
 	@Override

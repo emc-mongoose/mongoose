@@ -1,21 +1,20 @@
 package com.emc.mongoose.common.generator;
 
 import java.text.ParseException;
-import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.emc.mongoose.common.generator.AsyncDateGenerator.FMT_DATE;
 
 public final class AsyncRangeGeneratorFactory {
 
 	// pay attention to the matcher groups
 	public static final String DOUBLE_REG_EXP = "([-+]?\\d*\\.?\\d+)";
 	public static final String LONG_REG_EXP = "([-+]?\\d+)";
-	public static final String DATE_REG_EXP = "(((19|20)[0-9][0-9])/(0?[1-9]|1[012])/(0?[1-9]|[12][0-9]|3[01]))";
+	public static final String DATE_REG_EXP = "(((19|20)[0-9][0-9])/(1[012]|0?[1-9])/(3[01]|[12][0-9]|0?[1-9]))";
 	private static final Pattern DOUBLE_PATTERN = Pattern.compile(rangeRegExp(DOUBLE_REG_EXP));
 	private static final Pattern LONG_PATTERN = Pattern.compile(rangeRegExp(LONG_REG_EXP));
 	private static final Pattern DATE_PATTERN = Pattern.compile(rangeRegExp(DATE_REG_EXP));
+
+
 
 	private AsyncRangeGeneratorFactory() {
 	}
@@ -33,7 +32,7 @@ public final class AsyncRangeGeneratorFactory {
 			case 'd':
 				return new AsyncLongGenerator(47L);
 			case 'D':
-				return new AsyncStringDateGenerator(FMT_DATE.format(new Date()));
+				return new AsyncStringDateGenerator("2016/02/25");
 			default:
 				throw new IllegalArgumentException();
 		}

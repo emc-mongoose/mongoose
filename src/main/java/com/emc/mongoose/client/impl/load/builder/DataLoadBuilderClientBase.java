@@ -15,7 +15,10 @@ import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
+import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
+import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
 //
@@ -83,6 +86,22 @@ implements DataLoadBuilderClient<T, W, U> {
 		return this;
 	}
 	//
+	@SuppressWarnings("unchecked")
+	protected ItemSrc<T> getNewItemSrc()
+	throws NoSuchMethodException {
+		final AppConfig.ItemNamingType namingType = appConfig.getItemNamingType();
+		final BasicItemNameGenerator bing = new BasicItemNameGenerator(
+			namingType,
+			FileItem.class.isAssignableFrom(ioConfig.getItemClass()) ?
+			null : appConfig.getItemNamingPrefix(),
+			appConfig.getItemNamingLength(), appConfig.getItemNamingRadix(),
+			appConfig.getItemNamingOffset()
+		);
+		return new NewDataItemSrc<>(
+			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeInfo
+		);
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	protected ItemSrc<T> getDefaultItemSource() {
 		try {
@@ -101,10 +120,10 @@ implements DataLoadBuilderClient<T, W, U> {
 					V nextBuilder;
 					for(final String addr : loadSvcMap.keySet()) {
 						nextBuilder = loadSvcMap.get(addr);
-						nextBuilder.useNewItemSrc();
+						nextBuilder.useNoneItemSrc();
 					}
 					//
-					return null;
+					return getNewItemSrc();
 				} else {
 					// disable any item source usage on the load servers side
 					V nextBuilder;
@@ -122,10 +141,10 @@ implements DataLoadBuilderClient<T, W, U> {
 				V nextBuilder;
 				for(final String addr : loadSvcMap.keySet()) {
 					nextBuilder = loadSvcMap.get(addr);
-					nextBuilder.useNewItemSrc();
+					nextBuilder.useNoneItemSrc();
 				}
 				//
-				return null;
+				return getNewItemSrc();
 			} else if(flagUseContainerItemSrc) {
 				// disable any item source usage on the load servers side
 				V nextBuilder;
@@ -140,6 +159,8 @@ implements DataLoadBuilderClient<T, W, U> {
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to change the remote data items source");
+		} catch(final NoSuchMethodException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
 		} catch(final CloneNotSupportedException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the I/O config instance");
 		}

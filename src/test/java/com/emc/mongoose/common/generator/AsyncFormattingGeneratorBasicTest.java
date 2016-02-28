@@ -40,6 +40,13 @@ extends TestCase {
 				{"%f[0.1-5.0]", DOUBLE_PATTERN},
 				{"%D", DATE_PATTERN},
 				{"%D[1999/02/15-2014/08/22]", DATE_PATTERN},
+				{"%D[2016/1/1-2016/1/31]", DATE_PATTERN},
+				{"%D[2015/1/1-2015/1/2]", DATE_PATTERN},
+				{"%D[2016/1/1-2016/1/2]", DATE_PATTERN},
+				{"%D[1973/12/15-1973/12/16]", DATE_PATTERN},
+				{"%D[2016/11/21-2016/12/21]", DATE_PATTERN},
+				{"%D[2015/2/2-2015/3/30]", DATE_PATTERN},
+				{"%D[2015/2/2-2015/3/3]", DATE_PATTERN},
 				{"fdfdsfghfh %f[-987.0--785.5]gdghhfe", DOUBLE_PATTERN}
 		});
 	}
@@ -52,7 +59,9 @@ extends TestCase {
 	@Test
 	public void checkFormattingResult() throws Exception {
 		initFormatter(patternString);
+//		Thread.sleep(3000); // to give an opportunity for the generator to work
 		final String result = formatter.get();
+//		System.out.println(patternString + ": " + formatter.get()); // to check that the result is within range
 		assertTrue(result, resultPattern.matcher(result).find());
 	}
 

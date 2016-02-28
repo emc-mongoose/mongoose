@@ -179,9 +179,7 @@ implements LoadClient<T, W> {
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		super(
-			appConfig, ioConfig, addrs, threadCount,
-			// suppress new data items generation on the client side
-			itemSrc instanceof NewDataItemSrc ? null : itemSrc, maxCount,
+			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount,
 			// get any load server last job number
 			remoteLoadMap.values().iterator().next().getInstanceNum(),
 			remoteLoadMap.values().iterator().next().getName() + 'x' + remoteLoadMap.size()
