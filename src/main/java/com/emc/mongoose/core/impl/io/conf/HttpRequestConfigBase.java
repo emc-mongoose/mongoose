@@ -249,7 +249,7 @@ implements HttpRequestConfig<T, C> {
 	//
 	@Override
 	public HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
-	throws URISyntaxException {
+	throws URISyntaxException, IllegalArgumentException, IllegalStateException {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
 			getHttpMethod(), getDataUriPath(obj)
 		);

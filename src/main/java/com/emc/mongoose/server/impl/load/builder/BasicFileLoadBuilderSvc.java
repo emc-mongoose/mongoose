@@ -1,7 +1,6 @@
 package com.emc.mongoose.server.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
@@ -79,7 +78,7 @@ implements FileLoadBuilderSvc<T, U> {
 		//
 		return (U) new BasicFileLoadSvc<>(
 			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
+			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
 		);
 	}
 	//

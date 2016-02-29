@@ -7,6 +7,7 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
+import com.emc.mongoose.core.impl.item.token.BasicToken;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
@@ -24,22 +25,20 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.03.15.
  */
-public class WSAuthTokenImpl<T extends HttpDataItem>
-implements AuthToken<T> {
+public class SwiftAuthTokenHelper<T extends HttpDataItem> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final HttpRequestConfigImpl<T, ? extends Container<T>> reqConf;
 	private String value = null;
 	//
-	public WSAuthTokenImpl(
+	public SwiftAuthTokenHelper(
 		final HttpRequestConfigImpl<T, ? extends Container<T>> reqConf, final String value
 	) {
 		this.reqConf = reqConf;
 		this.value = value;
 	}
 	//
-	@Override
 	public final String getValue() {
 		return value;
 	}
@@ -49,7 +48,6 @@ implements AuthToken<T> {
 		return getValue();
 	}
 	//
-	@Override
 	public final void create(final String addr)
 	throws IllegalStateException {
 		try {
@@ -70,6 +68,7 @@ implements AuthToken<T> {
 								.getFirstHeader(HttpRequestConfigImpl.KEY_X_AUTH_TOKEN)
 								.getValue();
 							LOG.info(Markers.MSG, "Created auth token \"{}\"", value);
+							reqConf.setAuthToken(new BasicToken(value));
 						} else {
 							LOG.warn(Markers.ERR, "Server hasn't returned auth token header");
 						}

@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
@@ -33,7 +32,7 @@ implements HttpContainerLoadBuilder<T, C, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected HttpRequestConfig<T, C> getDefaultIOConfig() {
+	protected HttpRequestConfig<T, C> getDefaultIoConfig() {
 		return HttpRequestConfigBase.getInstance();
 	}
 	//
@@ -71,7 +70,7 @@ implements HttpContainerLoadBuilder<T, C, U> {
 		//
 		return (U) new BasicHttpContainerLoadExecutor<>(
 			appConfig, httpReqConf, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
+			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
 		);
 	}
 }

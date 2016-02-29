@@ -42,7 +42,7 @@ implements FileLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected FileIOConfig<T, ? extends Directory<T>> getDefaultIOConfig() {
+	protected FileIOConfig<T, ? extends Directory<T>> getDefaultIoConfig() {
 		return new BasicFileIOConfig<>();
 	}
 	//
@@ -76,12 +76,12 @@ implements FileLoadBuilderClient<T, W, U> {
 		W nextLoad;
 		//
 		if(itemSrc == null) {
-			itemSrc = getDefaultItemSource(); // affects load service builders
+			itemSrc = getDefaultItemSrc(); // affects load service builders
 		}
 		//
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setIOConfig(ioConfig); // should upload req conf right before instancing
+			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);

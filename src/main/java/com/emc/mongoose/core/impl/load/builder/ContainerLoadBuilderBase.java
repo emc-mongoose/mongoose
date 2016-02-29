@@ -5,10 +5,8 @@ import static com.emc.mongoose.common.conf.AppConfig.ItemNamingType;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
 import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
@@ -24,7 +22,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.Arrays;
 /**
  * Created by gusakk on 21.10.15.
  */
@@ -81,10 +78,9 @@ implements ContainerLoadBuilder<T, C, U>{
 		return this;
 	}
 	//
-	@SuppressWarnings("unchecked")
-	private ItemSrc getNewItemSrc()
+	@Override @SuppressWarnings("unchecked")
+	protected ItemSrc<C> getNewItemSrc()
 	throws NoSuchMethodException {
-		//
 		ItemNamingType namingType = appConfig.getItemNamingType();
 		final Class<C> containerClass = (Class<C>) ioConfig.getContainerClass();
 		return new NewContainerSrc<>(
@@ -97,8 +93,8 @@ implements ContainerLoadBuilder<T, C, U>{
 		);
 	}
 	//
-	@SuppressWarnings("unchecked")
-	protected ItemSrc getDefaultItemSource() {
+	@Override @SuppressWarnings("unchecked")
+	protected ItemSrc getDefaultItemSrc() {
 		try {
 			if(flagUseNoneItemSrc) {
 				return null;

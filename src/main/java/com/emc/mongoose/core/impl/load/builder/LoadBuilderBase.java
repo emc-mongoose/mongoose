@@ -9,8 +9,6 @@ import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
-import com.emc.mongoose.core.api.io.conf.RequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -37,7 +35,7 @@ implements LoadBuilder<T, U> {
 	//
 	protected volatile AppConfig appConfig;
 	protected long maxCount = 0;
-	protected volatile IOConfig<?, ?> ioConfig = getDefaultIOConfig();
+	protected volatile IOConfig<?, ?> ioConfig = getDefaultIoConfig();
 	protected float rateLimit;
 	protected int threadCount = 1;
 	protected ItemSrc<T> itemSrc;
@@ -45,7 +43,7 @@ implements LoadBuilder<T, U> {
 	protected String storageNodeAddrs[];
 	protected boolean flagUseNewItemSrc, flagUseNoneItemSrc, flagUseContainerItemSrc;
 	//
-	protected abstract IOConfig<?, ?> getDefaultIOConfig();
+	protected abstract IOConfig<?, ?> getDefaultIoConfig();
 	//
 	public LoadBuilderBase()
 	throws RemoteException {
@@ -55,7 +53,11 @@ implements LoadBuilder<T, U> {
 	public LoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
 		resetItemSrc();
-		setAppConfig(appConfig);
+		try {
+			setAppConfig(appConfig);
+		} catch(final IllegalArgumentException | IllegalStateException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply the configuration");
+		}
 	}
 	//
 	protected void resetItemSrc() {
@@ -130,12 +132,12 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final IOConfig<?, ?> getIOConfig() {
+	public final IOConfig<?, ?> getIoConfig() {
 		return ioConfig;
 	}
 	//
 	@Override
-	public final LoadBuilder<T, U> setIOConfig(final IOConfig<?, ?> ioConfig)
+	public final LoadBuilder<T, U> setIoConfig(final IOConfig<?, ?> ioConfig)
 	throws ClassCastException, RemoteException {
 		if(this.ioConfig.equals(ioConfig)) {
 			return this;
@@ -246,7 +248,11 @@ implements LoadBuilder<T, U> {
 		return lb;
 	}
 	//
-	protected abstract ItemSrc<T> getDefaultItemSource();
+	//
+	protected abstract ItemSrc<T> getNewItemSrc()
+	throws NoSuchMethodException;
+	//
+	protected abstract ItemSrc<T> getDefaultItemSrc();
 	//
 	@Override
 	public LoadBuilderBase<T, U> useNewItemSrc()

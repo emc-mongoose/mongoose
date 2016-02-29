@@ -1,7 +1,6 @@
 package com.emc.mongoose.server.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
@@ -11,7 +10,6 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.load.builder.BasicDirectoryLoadBuilder;
@@ -89,7 +87,7 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 		//
 		return (U) new BasicDirectoryLoadSvc<>(
 			appConfig, (FileIOConfig<T, C>) ioConfig, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
+			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
 		);
 	}
 	//

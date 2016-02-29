@@ -4,7 +4,7 @@ import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.BasicItem;
+import com.emc.mongoose.core.impl.item.base.BasicItem;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -47,7 +47,7 @@ public class BasicHttpContainerLoadBuilderClient<
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected HttpRequestConfig getDefaultIOConfig() {
+	protected HttpRequestConfig getDefaultIoConfig() {
 		return HttpRequestConfigBase.getInstance();
 	}
 	//
@@ -63,7 +63,7 @@ public class BasicHttpContainerLoadBuilderClient<
 	}
 	//
 	@Override
-	protected ItemSrc<C> getDefaultItemSource() {
+	protected ItemSrc<C> getDefaultItemSrc() {
 		return null;
 	}
 	//
@@ -84,12 +84,12 @@ public class BasicHttpContainerLoadBuilderClient<
 		W nextLoad;
 		//
 		if(itemSrc == null) {
-			itemSrc = getDefaultItemSource(); // affects load service builders
+			itemSrc = getDefaultItemSrc(); // affects load service builders
 		}
 		//
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setIOConfig(ioConfig); // should upload req conf right before instancing
+			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);

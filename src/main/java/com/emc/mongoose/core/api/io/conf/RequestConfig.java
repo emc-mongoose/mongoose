@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
+import com.emc.mongoose.core.api.item.token.Token;
 //
 import java.io.Closeable;
 /**
@@ -38,6 +39,9 @@ extends IOConfig<T, C>, Closeable {
 	//
 	String getSecret();
 	RequestConfig<T, C> setSecret(final String secret);
+	//
+	Token getAuthToken();
+	RequestConfig<T, C> setAuthToken(final Token token);
 	//
 	@Override
 	RequestConfig<T, C> setAppConfig(final AppConfig appConfig);

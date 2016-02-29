@@ -967,6 +967,9 @@ task dist(type: Tar) {
 		into('lib') {
 			from { configurations.runtime }
 		}
+		into('scenario') {
+			from { 'scenario' }
+		}
 		from commonJar.outputs.files
 		from coreApiJar.outputs.files
 		from coreImplJar.outputs.files
@@ -1073,21 +1076,21 @@ ext.publicJars = [
 ]
 
 for(nextPublicJar in publicJars) {
-	def baseName = nextPublicJar.baseName
-	def moduleName = nextPublicJar.classifier.split("-")*.capitalize().join("")
-	def artifactName = "artifact${moduleName}"
-	def configPrefix = "" + Character.toLowerCase(moduleName.charAt(0)) + moduleName.substring(1)
-	def mutualDeps = nextPublicJar.dependsOn
+	String baseName = nextPublicJar.baseName
+	String moduleName = nextPublicJar.classifier.split("-")*.capitalize().join("")
+	String artifactName = "artifact${moduleName}"
+	String configPrefix = "" + Character.toLowerCase(moduleName.charAt(0)) + moduleName.substring(1)
+	String mutualDeps = nextPublicJar.dependsOn
 	publishing.publications.create(artifactName, MavenPublication) {
 		artifact source: nextPublicJar, classifier: null
 		artifactId "${baseName}-${nextPublicJar.classifier}"
 		pom.withXml {
-			def root = asNode()
-			def deps = new Node(root, 'dependencies')
+			Node root = asNode()
+			Node deps = new Node(root, 'dependencies')
 			for(depJar in mutualDeps) {
 				if(Jar.class.isInstance(depJar)) {
 					//print "${depJar.baseName}-${depJar.classifier}-${depJar.version}, "
-					def node = new Node(deps, 'dependency')
+					Node node = new Node(deps, 'dependency')
 					new Node(node, 'groupId', group)
 					new Node(node, 'artifactId', "${depJar.baseName}-${depJar.classifier}")
 					new Node(node, 'version', depJar.version);
@@ -1095,7 +1098,7 @@ for(nextPublicJar in publicJars) {
 			}
 			configurations.getByName(configPrefix + "Runtime").allDependencies.each { dep ->
 				//print "${dep.name}, "
-				def node = new Node(deps, 'dependency')
+				Node node = new Node(deps, 'dependency')
 				new Node(node, 'groupId', dep.group)
 				new Node(node, 'artifactId', dep.name)
 				new Node(node, 'version', dep.version);

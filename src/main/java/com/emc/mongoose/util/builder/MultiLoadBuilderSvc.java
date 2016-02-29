@@ -143,12 +143,12 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final IOConfig getIOConfig()
+	public final IOConfig getIoConfig()
 	throws RemoteException {
 		throw new RemoteException("Method shouldn't be invoked");
 	}
 	@Override
-	public LoadBuilder setIOConfig(final IOConfig ioConfig)
+	public LoadBuilder setIoConfig(final IOConfig ioConfig)
 	throws RemoteException {
 		throw new RemoteException("Method shouldn't be invoked");
 	}

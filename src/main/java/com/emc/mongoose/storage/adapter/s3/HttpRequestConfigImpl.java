@@ -8,7 +8,6 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 //
 import org.apache.http.Header;
@@ -28,7 +27,6 @@ import java.io.ByteArrayOutputStream;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 /**

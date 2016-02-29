@@ -4,7 +4,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 import com.emc.mongoose.integ.base.StandaloneClientTestBase;
 import com.emc.mongoose.storage.adapter.swift.AuthToken;
-import com.emc.mongoose.storage.adapter.swift.WSAuthTokenImpl;
+import com.emc.mongoose.storage.adapter.swift.SwiftAuthTokenHelper;
 import com.emc.mongoose.storage.adapter.swift.HttpRequestConfigImpl;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.Assert;
@@ -35,7 +35,7 @@ extends StandaloneClientTestBase {
 		final HttpRequestConfigImpl
 			reqConf = (HttpRequestConfigImpl) HttpRequestConfigBase.newInstanceFor("swift");
 		reqConf.setAppConfig(BasicConfig.THREAD_CONTEXT.get());
-		AUTH_TOKEN = new WSAuthTokenImpl(
+		AUTH_TOKEN = new SwiftAuthTokenHelper(
 			reqConf, SwiftUsePreExistingContainerTest.class.getSimpleName()
 		);
 		AUTH_TOKEN.create("127.0.0.1");

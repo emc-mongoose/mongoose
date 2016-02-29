@@ -1,12 +1,13 @@
 package com.emc.mongoose.storage.adapter.atmos;
+//
+import static com.emc.mongoose.storage.adapter.atmos.SubTenant.KEY_SUBTENANT_ID;
 // mongoose-common.jar
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
+import com.emc.mongoose.core.impl.item.token.BasicToken;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpResponse;
@@ -25,30 +26,17 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.10.14.
  */
-public class WSSubTenantImpl<T extends HttpDataItem>
-implements SubTenant<T> {
+public class AtmosSubTenantHelper {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	@SuppressWarnings("FieldCanBeLocal")
-	private final HttpRequestConfigImpl<T, ? extends Container<T>> reqConf;
-	private String value = null;
+	private final HttpRequestConfigImpl reqConf;
+	private volatile String subTenant = null;
 	//
-	public WSSubTenantImpl(
-		final HttpRequestConfigImpl<T, ? extends Container<T>> reqConf, final String value
-	) {
+	public AtmosSubTenantHelper(final HttpRequestConfigImpl reqConf, final String value) {
 		this.reqConf = reqConf;
-		this.value = value;
-	}
-	//
-	@Override
-	public final String getValue() {
-		return toString();
-	}
-	//
-	@Override
-	public final String toString() {
-		return value;
+		this.subTenant = value;
 	}
 	//
 	public final static String
@@ -76,19 +64,18 @@ implements SubTenant<T> {
 			);
 		} else {
 			httpReq = reqConf.createGenericRequest(
-				method, HttpRequestConfigImpl.PREFIX_URI + SUBTENANT + "s/" + value
+				method, HttpRequestConfigImpl.PREFIX_URI + SUBTENANT + "s/" + subTenant
 			);
 		}
 		//
 		return reqConf.execute(addr, httpReq, timeOut, timeUnit);
 	}
 	//
-	@Override
 	public final boolean exists(final String addr)
 	throws IllegalStateException {
 		boolean flagExists = false;
 		//
-		if(value != null && value.length() > 0) {
+		if(subTenant != null && subTenant.length() > 0) {
 			try {
 				final HttpResponse httpResp = execute(
 					addr, HttpRequestConfig.METHOD_HEAD,
@@ -102,10 +89,10 @@ implements SubTenant<T> {
 					} else {
 						final int statusCode = statusLine.getStatusCode();
 						if(statusCode == HttpStatus.SC_OK) {
-							LOG.debug(Markers.MSG, "Subtenant \"{}\" exists", value);
+							LOG.debug(Markers.MSG, "Subtenant \"{}\" exists", subTenant);
 							flagExists = true;
 						} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-							LOG.debug(Markers.MSG, "Subtenant \"{}\" doesn't exist", value);
+							LOG.debug(Markers.MSG, "Subtenant \"{}\" doesn't exist", subTenant);
 						} else {
 							final StringBuilder msg = new StringBuilder(
 								statusLine.getReasonPhrase()
@@ -129,7 +116,6 @@ implements SubTenant<T> {
 		return flagExists;
 	}
 	//
-	@Override
 	public final void create(final String addr)
 	throws IllegalStateException {
 		try {
@@ -146,8 +132,9 @@ implements SubTenant<T> {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
 						if(httpResp.containsHeader(KEY_SUBTENANT_ID)) {
-							value = httpResp.getLastHeader(KEY_SUBTENANT_ID).getValue();
-							LOG.info(Markers.MSG, "Subtenant \"{}\" created", value);
+							subTenant = httpResp.getLastHeader(KEY_SUBTENANT_ID).getValue();
+							LOG.info(Markers.MSG, "Subtenant \"{}\" created", subTenant);
+							reqConf.setAuthToken(new BasicToken(subTenant));
 						} else {
 							LOG.warn(
 								Markers.ERR, "Storage response doesn't contain the header {}",
@@ -163,7 +150,8 @@ implements SubTenant<T> {
 							}
 						}
 						LOG.warn(
-							Markers.ERR, "Create subtenant \"{}\" response ({}): {}", value, statusCode, msg.toString()
+							Markers.ERR, "Create subtenant \"{}\" response ({}): {}",
+							subTenant, statusCode, msg.toString()
 						);
 					}
 				}
@@ -174,7 +162,6 @@ implements SubTenant<T> {
 		}
 	}
 	//
-	@Override
 	public final void delete(final String addr)
 	throws IllegalStateException {
 		try {
@@ -190,7 +177,7 @@ implements SubTenant<T> {
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode == HttpStatus.SC_OK) {
-						LOG.info(Markers.MSG, "Subtenant \"{}\" deleted", value);
+						LOG.info(Markers.MSG, "Subtenant \"{}\" deleted", subTenant);
 					} else {
 						final StringBuilder msg = new StringBuilder(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
@@ -200,7 +187,8 @@ implements SubTenant<T> {
 							}
 						}
 						LOG.warn(
-							Markers.ERR, "Delete subtenant \"{}\" response ({}): {}", value, statusCode, msg.toString()
+							Markers.ERR, "Delete subtenant \"{}\" response ({}): {}",
+							subTenant, statusCode, msg.toString()
 						);
 					}
 				}

@@ -1,14 +1,12 @@
 package com.emc.mongoose.storage.adapter.swift;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 //
 import org.apache.http.Header;
@@ -31,6 +29,7 @@ public final class HttpRequestConfigImpl<T extends HttpDataItem, C extends Conta
 extends HttpRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
 	public final static String KEY_X_AUTH_TOKEN = "X-Auth-Token";
 	public final static String KEY_X_AUTH_USER = "X-Auth-User";
 	public final static String KEY_X_AUTH_KEY = "X-Auth-Key";
@@ -38,7 +37,6 @@ extends HttpRequestConfigBase<T, C> {
 	public final static String DEFAULT_VERSIONS_CONTAINER = "archive";
 	//
 	private String uriSvcBasePath = "v1", uriSvcBaseContainerPath = null;
-	private WSAuthTokenImpl<T> authToken = null;
 	//
 	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
@@ -56,10 +54,6 @@ extends HttpRequestConfigBase<T, C> {
 			}
 			if(reqConf2Clone.uriSvcBaseContainerPath != null) {
 				uriSvcBaseContainerPath = reqConf2Clone.uriSvcBaseContainerPath;
-			}
-			setAuthToken(reqConf2Clone.getAuthToken());
-			if(authToken == null) {
-				setAuthToken(new WSAuthTokenImpl<>(this, reqConf2Clone.appConfig.getAuthToken()));
 			}
 		}
 		//
@@ -87,19 +81,6 @@ extends HttpRequestConfigBase<T, C> {
 		return uriSvcBasePath;
 	}
 	//
-	public final WSAuthTokenImpl<T> getAuthToken() {
-		return authToken;
-	}
-	//
-	public final HttpRequestConfigImpl<T, C> setAuthToken(final WSAuthTokenImpl<T> authToken)
-	throws IllegalArgumentException {
-		if(authToken == null) {
-			throw new IllegalArgumentException("Setting <null> auth token is illegal");
-		}
-		this.authToken = authToken;
-		return this;
-	}
-	//
 	@Override
 	public final HttpRequestConfigImpl<T, C> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
@@ -120,16 +101,11 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public HttpRequestConfigImpl<T, C> setAppConfig(final AppConfig appConfig) {
-		super.setAppConfig(this.appConfig);
-		//
-		if(this.appConfig.containsKey(AppConfig.KEY_AUTH_TOKEN)) {
-			authToken = new WSAuthTokenImpl<>(this, this.appConfig.getAuthToken());
-		} else {
-			LOG.error(Markers.ERR, "Swift auth token is not specified");
-		}
-		//
+		super.setAppConfig(appConfig);
 		refreshContainerPath();
-		//
+		if(uriSvcBaseContainerPath == null) {
+
+		}
 		return this;
 	}
 	//
@@ -138,12 +114,6 @@ extends HttpRequestConfigBase<T, C> {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		uriSvcBasePath = String.class.cast(in.readObject());
-		Object t = in.readObject();
-		if(t != null) {
-			setAuthToken(new WSAuthTokenImpl<>(this, String.class.cast(t)));
-		} else {
-			LOG.debug(Markers.MSG, "Note: no auth token has been got from load client side");
-		}
 	}
 	//
 	@Override
@@ -151,14 +121,13 @@ extends HttpRequestConfigBase<T, C> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeObject(uriSvcBasePath);
-		out.writeObject(authToken == null ? null : authToken.getValue());
 	}
 	//
 	@Override
 	protected final String getDataUriPath(final T dataItem)
-	throws IllegalArgumentException {
+	throws IllegalArgumentException, IllegalStateException {
 		if(uriSvcBaseContainerPath == null) {
-			LOG.warn(Markers.ERR, "Illegal URI template: <null>");
+			throw new IllegalStateException("Illegal URI template: <null>");
 		}
 		if(dataItem == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
@@ -176,7 +145,7 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override
 	protected final void applyAuthHeader(final HttpRequest httpRequest) {
-		final String authTokenValue = authToken == null ? null : authToken.getValue();
+		final String authTokenValue = authToken == null ? null : authToken.toString();
 		if(authTokenValue != null && authTokenValue.length() > 0) {
 			if(!httpRequest.containsHeader(KEY_X_AUTH_TOKEN)) {
 				if(headerAuthToken == null || !authTokenValue.equals(headerAuthToken.getValue())) {
@@ -196,19 +165,11 @@ extends HttpRequestConfigBase<T, C> {
 	public final void configureStorage(final String storageNodeAddrs[])
 	throws IllegalStateException {
 		// configure an auth token - create if not specified
-		String authTokenValue;
-		if(authToken == null) {
-			throw new IllegalStateException("No auth token specified");
-		} else {
-			authTokenValue = authToken.getValue();
-			if(authTokenValue == null || authTokenValue.length() < 1) {
-				authToken.create(storageNodeAddrs[0]);
-				authTokenValue = authToken.getValue();
-			}
+		final String authTokenValue = authToken == null ? null : authToken.toString();
+		if(authTokenValue == null || authTokenValue.length() < 1) {
+			new SwiftAuthTokenHelper<>(this, null).create(storageNodeAddrs[0]);
 		}
-		if(authTokenValue == null) {
-			throw new IllegalStateException("No auth token was created");
-		}
+		//
 		sharedHeaders.updateHeader(new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue));
 		appConfig.setProperty(AppConfig.KEY_AUTH_TOKEN, authTokenValue);
 		// configure a container

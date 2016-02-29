@@ -1,7 +1,6 @@
 package com.emc.mongoose.server.impl.load.builder;
 //mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
@@ -9,7 +8,6 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //mongoose-server-api.jar
@@ -105,7 +103,7 @@ implements HttpDataLoadBuilderSvc<T, U> {
 		//
 		return (U) new BasicHttpDataLoadSvc<>(
 			appConfig, httpReqConf, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
+			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
 		);
 	}
 	//

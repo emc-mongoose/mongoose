@@ -7,6 +7,8 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.io.conf.RequestConfig;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.item.token.Token;
+import com.emc.mongoose.core.impl.item.token.BasicToken;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.LogManager;
@@ -29,6 +31,7 @@ implements RequestConfig<T, C> {
 	protected final static String SCHEME = "http";
 	protected String api, secret, userName;
 	protected volatile int port;
+	protected Token authToken;
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
@@ -36,6 +39,8 @@ implements RequestConfig<T, C> {
 		secret = appConfig.getAuthSecret();
 		userName = appConfig.getAuthId();
 		port = appConfig.getStorageHttpApi_Port();
+		final String tokenValue = appConfig.getAuthToken();
+		authToken = tokenValue == null ? null : new BasicToken(tokenValue);
 	}
 	//
 	protected RequestConfigBase(final RequestConfigBase<T, C> reqConf2Clone) {
@@ -44,6 +49,7 @@ implements RequestConfig<T, C> {
 			setAPI(reqConf2Clone.getAPI());
 			setUserName(reqConf2Clone.getUserName());
 			setPort(reqConf2Clone.getPort());
+			setAuthToken(reqConf2Clone.getAuthToken());
 			//setScheme(reqConf2Clone.getScheme());
 			secret = reqConf2Clone.getSecret();
 			LOG.debug(
@@ -60,6 +66,7 @@ implements RequestConfig<T, C> {
 			.setAPI(api)
 			.setUserName(userName)
 			.setPort(port)
+			.setAuthToken(authToken)
 			/*.setScheme(SCHEME)*/;
 		requestConfigBranch.secret = secret;
 		LOG.debug(
@@ -125,6 +132,16 @@ implements RequestConfig<T, C> {
 	}
 	//
 	@Override
+	public Token getAuthToken() {
+		return authToken;
+	}
+	@Override
+	public RequestConfigBase<T, C> setAuthToken(final Token authToken) {
+		this.authToken = authToken;
+		return this;
+	}
+	//
+	@Override
 	public RequestConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		super.setAppConfig(appConfig);
 		final String api = appConfig.getStorageHttpApiClass();
@@ -132,6 +149,8 @@ implements RequestConfig<T, C> {
 		setPort(appConfig.getStorageHttpApi_Port());
 		setUserName(appConfig.getAuthId());
 		setSecret(appConfig.getAuthSecret());
+		final String tokenValue = appConfig.getAuthToken();
+		setAuthToken(tokenValue == null ? null : new BasicToken(tokenValue));
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setBuffSize(appConfig.getIoBufferSizeMin());
 		return this;
@@ -150,6 +169,8 @@ implements RequestConfig<T, C> {
 		LOG.trace(Markers.MSG, "Written user name \"" + userName + "\"");
 		out.writeObject(getSecret());
 		LOG.trace(Markers.MSG, "Written secret key \"" + secret + "\"");
+		out.writeObject(getAuthToken());
+		LOG.trace(Markers.MSG, "Written auth token \"" + authToken + "\"");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -160,10 +181,12 @@ implements RequestConfig<T, C> {
 		LOG.trace(Markers.MSG, "Got API {}", api);
 		setPort(in.readInt());
 		LOG.trace(Markers.MSG, "Got port {}", port);
-		setUserName(String.class.cast(in.readObject()));
+		setUserName((String) in.readObject());
 		LOG.trace(Markers.MSG, "Got user name {}", userName);
-		setSecret(String.class.cast(in.readObject()));
+		setSecret((String) in.readObject());
 		LOG.trace(Markers.MSG, "Got secret {}", secret);
+		setAuthToken((Token) in.readObject());
+		LOG.trace(Markers.MSG, "Got auth token {}", authToken);
 	}
 	//
 	@Override

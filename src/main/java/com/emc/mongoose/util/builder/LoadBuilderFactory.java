@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.AppConfig.ItemType;
 import com.emc.mongoose.common.conf.AppConfig.StorageType;
 import com.emc.mongoose.common.conf.Constants;
 //
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -14,6 +15,7 @@ import com.emc.mongoose.core.impl.item.container.BasicDirectory;
 import com.emc.mongoose.core.impl.item.data.BasicFileItem;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -47,6 +49,7 @@ public class LoadBuilderFactory {
 			loadBuilderInstance = constructor.newInstance(appConfig);
 		} catch(final Exception e) {
 			e.printStackTrace(System.out);
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create a load builder");
 			throw new RuntimeException(e);
 		}
 		return loadBuilderInstance;

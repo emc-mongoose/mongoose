@@ -1,7 +1,6 @@
 package com.emc.mongoose.server.impl.load.builder;
 
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
@@ -10,7 +9,6 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.load.builder.BasicHttpContainerLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.HttpContainerLoadBuilderSvc;
@@ -104,7 +102,7 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		return (U) new BasicHttpContainerLoadSvc<>(
 			appConfig, wsReqConf, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
+			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
 		);
 	}
 	//

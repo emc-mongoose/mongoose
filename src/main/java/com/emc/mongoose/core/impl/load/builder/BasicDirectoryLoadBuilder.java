@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 //
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -33,7 +32,7 @@ implements DirectoryLoadBuilder<T, C, U> {
 	}
 	//
 	@Override
-	protected FileIOConfig<T, C> getDefaultIOConfig() {
+	protected FileIOConfig<T, C> getDefaultIoConfig() {
 		return new BasicFileIOConfig<>();
 	}
 	//
@@ -57,7 +56,7 @@ implements DirectoryLoadBuilder<T, C, U> {
 	protected U buildActually() {
 		return (U) new BasicDirectoryLoadExecutor<>(
 			appConfig, (FileIOConfig<T, C>) ioConfig, null, threadCount,
-			itemSrc == null ? getDefaultItemSource() : itemSrc, maxCount, rateLimit
+			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
 		);
 	}
 }

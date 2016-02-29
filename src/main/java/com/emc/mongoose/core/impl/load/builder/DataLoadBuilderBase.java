@@ -56,10 +56,10 @@ implements DataLoadBuilder<T, U> {
 		return lb;
 	}
 	//
-	@SuppressWarnings("unchecked")
+	@Override @SuppressWarnings("unchecked")
 	protected ItemSrc<T> getNewItemSrc()
 	throws NoSuchMethodException {
-		AppConfig.ItemNamingType namingType = appConfig.getItemNamingType();
+		final AppConfig.ItemNamingType namingType = appConfig.getItemNamingType();
 		final BasicItemNameGenerator bing = new BasicItemNameGenerator(
 			namingType, appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
 			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
@@ -77,7 +77,8 @@ implements DataLoadBuilder<T, U> {
 		);
 	}
 	//
-	protected ItemSrc<T> getDefaultItemSource() {
+	@Override
+	protected ItemSrc<T> getDefaultItemSrc() {
 		try {
 			if(flagUseNoneItemSrc) {
 				return null;

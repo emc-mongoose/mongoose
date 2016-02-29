@@ -9,7 +9,6 @@ import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
@@ -95,7 +94,7 @@ implements LoadBuilderClient<T, W, U> {
 		}
 	}
 	//
-	protected abstract IOConfig<?, ?> getDefaultIOConfig();
+	protected abstract IOConfig<?, ?> getDefaultIoConfig();
 	//
 	protected abstract V resolve(final String serverAddr)
 	throws IOException;

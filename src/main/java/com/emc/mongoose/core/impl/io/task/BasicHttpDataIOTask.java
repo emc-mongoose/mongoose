@@ -85,7 +85,7 @@ implements HttpDataIOTask<T> {
 		final HttpEntityEnclosingRequest httpRequest;
 		try {
 			 httpRequest = ioConfig.createDataRequest(item, nodeAddr);
-		} catch(final URISyntaxException e) {
+		} catch(final URISyntaxException | IllegalArgumentException | IllegalStateException e) {
 			throw new HttpException("Failed to generate the request", e);
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {

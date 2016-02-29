@@ -26,9 +26,9 @@ extends Closeable, Cloneable {
 	LoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException;
 	//
-	IOConfig<?, ?> getIOConfig()
+	IOConfig<?, ?> getIoConfig()
 	throws RemoteException;
-	LoadBuilder<T, U> setIOConfig(final IOConfig<?, ?> reqConf)
+	LoadBuilder<T, U> setIoConfig(final IOConfig<?, ?> reqConf)
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> setLoadType(final AppConfig.LoadType loadType)

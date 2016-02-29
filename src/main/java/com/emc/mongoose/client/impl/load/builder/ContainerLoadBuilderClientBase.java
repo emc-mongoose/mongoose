@@ -6,11 +6,14 @@ import com.emc.mongoose.client.api.load.executor.ContainerLoadClient;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 //
+import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
+import com.emc.mongoose.core.impl.item.data.NewContainerSrc;
 import com.emc.mongoose.server.api.load.builder.ContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.ContainerLoadSvc;
 import org.apache.logging.log4j.Level;
@@ -79,5 +82,20 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 		}
 		//
 		return this;
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	protected ItemSrc<C> getNewItemSrc()
+	throws NoSuchMethodException {
+		AppConfig.ItemNamingType namingType = appConfig.getItemNamingType();
+		final Class<C> containerClass = (Class<C>) ioConfig.getContainerClass();
+		return new NewContainerSrc<>(
+			containerClass,
+			new BasicItemNameGenerator(
+				namingType,
+				appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
+				appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
+			)
+		);
 	}
 }

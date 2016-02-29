@@ -47,7 +47,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected FileIOConfig<T, C> getDefaultIOConfig() {
+	protected FileIOConfig<T, C> getDefaultIoConfig() {
 		return new BasicFileIOConfig();
 	}
 	//
@@ -63,7 +63,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	}
 	//
 	@Override
-	protected ItemSrc<C> getDefaultItemSource() {
+	protected ItemSrc<C> getDefaultItemSrc() {
 		return null;
 	}
 	//
@@ -87,12 +87,12 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		W nextLoad;
 		//
 		if(itemSrc == null) {
-			itemSrc = getDefaultItemSource(); // affects load service builders
+			itemSrc = getDefaultItemSrc(); // affects load service builders
 		}
 		//
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setIOConfig(ioConfig); // should upload req conf right before instancing
+			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);

@@ -6,7 +6,6 @@ import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -138,7 +137,7 @@ implements StorageClient<T> {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
 				.useContainerListingItemSrc()
-				.getIOConfig().setVerifyContentFlag(verifyContentFlag);
+				.getIoConfig().setVerifyContentFlag(verifyContentFlag);
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -161,7 +160,7 @@ implements StorageClient<T> {
 			((DataLoadBuilder) loadBuilder)
 				.setDataRanges(Integer.toString(randomRangesCount))
 				.useContainerListingItemSrc()
-				.getIOConfig().setVerifyContentFlag(verifyContentFlag);
+				.getIoConfig().setVerifyContentFlag(verifyContentFlag);
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -184,7 +183,7 @@ implements StorageClient<T> {
 			((DataLoadBuilder) loadBuilder)
 				.setDataRanges(fixedByteRanges)
 				.useContainerListingItemSrc()
-				.getIOConfig().setVerifyContentFlag(verifyContentFlag);
+				.getIoConfig().setVerifyContentFlag(verifyContentFlag);
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder

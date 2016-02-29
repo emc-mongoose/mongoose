@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl;
+package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 //
@@ -12,13 +12,15 @@ import java.nio.charset.StandardCharsets;
 public class BasicItem
 implements Item {
 	//
-	protected volatile String name;
+	protected volatile String name = null;
 	//
 	public BasicItem() {
-		this(null);
 	}
 	//
 	public BasicItem(final String name) {
+		if(name == null) {
+			throw new NullPointerException();
+		}
 		this.name = name;
 	}
 	//

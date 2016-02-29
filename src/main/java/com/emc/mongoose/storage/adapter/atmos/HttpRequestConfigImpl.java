@@ -6,11 +6,12 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.item.token.Token;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 // mongoose-common.jar
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.storage.adapter.swift.AuthToken;
+import com.emc.mongoose.core.impl.item.token.BasicToken;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.Header;
@@ -47,7 +48,6 @@ extends HttpRequestConfigBase<T, C> {
 	public final static Header
 		DEFAULT_ACCEPT_HEADER = new BasicHeader(HttpHeaders.ACCEPT, "*/*");
 	//
-	private AuthToken<T> subTenant;
 	private String uriBasePath;
 	//
 	public HttpRequestConfigImpl()
@@ -134,19 +134,16 @@ extends HttpRequestConfigBase<T, C> {
 		}
 	}
 	//
-	public final AuthToken<T> getAuthToken() {
-		return subTenant;
-	}
-	//
-	public final HttpRequestConfigImpl<T, C> setAuthToken(final AuthToken<T> subTenant)
+	@Override
+	public final HttpRequestConfigImpl<T, C> setAuthToken(final Token subTenant)
 	throws IllegalStateException {
-		this.subTenant = subTenant;
+		super.setAuthToken(subTenant);
 		if(sharedHeaders != null && userName != null) {
-			if(subTenant == null || subTenant.getValue().length() < 1) {
+			if(subTenant == null || subTenant.toString().length() < 1) {
 				sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_UID, userName));
 			} else {
 				sharedHeaders.updateHeader(
-					new BasicHeader(KEY_EMC_UID, subTenant.getValue() + "/" + userName)
+					new BasicHeader(KEY_EMC_UID, subTenant.toString() + "/" + userName)
 				);
 			}
 		}
@@ -161,12 +158,12 @@ extends HttpRequestConfigBase<T, C> {
 		} else {
 			super.setUserName(userName);
 			if(sharedHeaders != null) {
-				if(subTenant == null || subTenant.getValue().length() < 1) {
+				if(authToken == null || authToken.toString().length() < 1) {
 					sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_UID, userName));
 				} else {
 					sharedHeaders.updateHeader(
 						new BasicHeader(
-							KEY_EMC_UID, subTenant.getValue() + "/" + userName
+							KEY_EMC_UID, authToken.toString() + "/" + userName
 						)
 					);
 				}
@@ -208,14 +205,11 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override
 	public final HttpRequestConfigImpl<T, C> setAppConfig(final AppConfig appConfig) {
-		super.setAppConfig(this.appConfig);
+		super.setAppConfig(appConfig);
 		//
 		try {
-			setAuthToken(
-				new WSSubTenantImpl<>(
-					this, this.appConfig.getString(AppConfig.KEY_AUTH_TOKEN)
-				)
-			);
+			final String t = appConfig.getAuthToken();
+			setAuthToken(t == null ? null : new BasicToken(t));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, AppConfig.KEY_AUTH_TOKEN);
 		}
@@ -239,20 +233,13 @@ extends HttpRequestConfigBase<T, C> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final Object t = in.readObject();
-		if(t == null) {
-			LOG.debug(Markers.MSG, "Note: no subtenant has got from load client side");
-		} else {
-			setAuthToken(new WSSubTenantImpl<>(this, String.class.cast(t)));
-		}
-		uriBasePath = String.class.cast(in.readObject());
+		uriBasePath = (String) in.readObject();
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(subTenant == null ? null : subTenant.getValue());
 		out.writeObject(uriBasePath);
 	}
 	//
@@ -285,14 +272,17 @@ extends HttpRequestConfigBase<T, C> {
 			md.setLength(0); // reset/clear
 		}
 		//
-		if(subTenant != null) {
-			final String subtenantId = subTenant.getValue();
+		if(authToken != null) {
+			final String subtenantId = authToken.toString();
 			if(subtenantId != null && subtenantId.length() > 0) {
-				md.append("subtenant=").append(subTenant.getValue());
+				md.append("subtenant=").append(authToken.toString());
 			}
 		}
 		// the "offset" tag is required for WS mock
-		if(AppConfig.LoadType.WRITE.equals(loadType) && request instanceof HttpEntityEnclosingRequest) {
+		if(
+			AppConfig.LoadType.WRITE.equals(loadType) &&
+			request instanceof HttpEntityEnclosingRequest
+		) {
 			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 			if(entity != null && entity instanceof HttpDataItem) {
 				if(md.length() > 0) {
@@ -409,14 +399,14 @@ extends HttpRequestConfigBase<T, C> {
 	@Override
 	public void configureStorage(final String storageAddrs[])
 	throws IllegalStateException {
-		// create the subtenant if neccessary
-		final String subTenantValue = subTenant.getValue();
+		// create the subtenant if necessary
+		final String subTenantValue = authToken == null ? null : authToken.toString();
 		if(subTenantValue == null || subTenantValue.length() == 0) {
-			subTenant.create(storageAddrs[0]);
+			new AtmosSubTenantHelper(this, null).create(storageAddrs[0]);
 		}
 		/*re*/
-		setAuthToken(subTenant);
-		appConfig.setProperty(AppConfig.KEY_AUTH_TOKEN, subTenant.getValue());
+		setAuthToken(authToken);
+		appConfig.setProperty(AppConfig.KEY_AUTH_TOKEN, authToken.toString());
 		super.configureStorage(storageAddrs);
 	}
 	//
