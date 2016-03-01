@@ -8,6 +8,7 @@ implements ValueGenerator<String> {
 
 	public static final char PATTERN_SYMBOL = '%';
 	public static final char[] RANGE_SYMBOLS = {'[',']'};
+	public static final char[] FORMAT_SYMBOLS = {'{', '}'};
 	public static final char RANGE_DELIMITER = '-';
 
 	private final String[] segments;
