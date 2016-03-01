@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 //
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.tree.DefaultExpressionEngine;
@@ -95,12 +96,21 @@ implements AppConfig {
 	//
 	@Override
 	public int getIoBufferSizeMin() {
-		return (int) SizeInBytes.toFixedSize(getString(KEY_IO_BUFFER_SIZE_MIN));
+		try {
+			return (int) SizeInBytes.toFixedSize(getString(KEY_IO_BUFFER_SIZE_MIN));
+		} catch(final ConversionException e) {
+			return getInt(KEY_IO_BUFFER_SIZE_MIN);
+		}
+
 	}
 	//
 	@Override
 	public int getIoBufferSizeMax() {
-		return (int) SizeInBytes.toFixedSize(getString(KEY_IO_BUFFER_SIZE_MAX));
+		try {
+			return (int)SizeInBytes.toFixedSize(getString(KEY_IO_BUFFER_SIZE_MAX));
+		} catch(final ConversionException e) {
+			return getInt(KEY_IO_BUFFER_SIZE_MAX);
+		}
 	}
 	//
 	@Override
@@ -133,17 +143,26 @@ implements AppConfig {
 	//
 	@Override
 	public long getItemDataContentRingSize() {
-		return SizeInBytes.toFixedSize(getString(KEY_ITEM_DATA_CONTENT_RING_SIZE));
+		try {
+			return SizeInBytes.toFixedSize(getString(KEY_ITEM_DATA_CONTENT_RING_SIZE));
+		} catch(final ConversionException e) {
+			return getLong(KEY_ITEM_DATA_CONTENT_RING_SIZE);
+		}
 	}
 	//
 	@Override
-	public String getItemDataRanges() {
-		return getString(KEY_ITEM_DATA_RANGES);
+	public DataRangesConfig getItemDataRanges()
+	throws DataRangesConfig.InvalidRangeException {
+		try {
+			return new DataRangesConfig(getInt(KEY_ITEM_DATA_RANGES));
+		} catch(final ConversionException e) {
+			return new DataRangesConfig(getString(KEY_ITEM_DATA_RANGES));
+		}
 	}
 	//
 	@Override
-	public String getItemDataSize() {
-		return getString(KEY_ITEM_DATA_SIZE);
+	public SizeInBytes getItemDataSize() {
+		return new SizeInBytes(getString(KEY_ITEM_DATA_SIZE));
 	}
 	//
 	@Override

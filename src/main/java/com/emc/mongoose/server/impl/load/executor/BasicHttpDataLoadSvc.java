@@ -1,6 +1,7 @@
 package com.emc.mongoose.server.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
@@ -38,9 +39,11 @@ implements HttpDataLoadSvc<T> {
 	public BasicHttpDataLoadSvc(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int threadsPerNode, final ItemSrc<T> itemSrc,
-		final long maxCount, final float rateLimit
+		final long maxCount, final float rateLimit, final DataRangesConfig rangesConfig
 	) {
-		super(appConfig, reqConfig, addrs, threadsPerNode, itemSrc, maxCount, rateLimit);
+		super(
+			appConfig, reqConfig, addrs, threadsPerNode, itemSrc, maxCount, rateLimit, rangesConfig
+		);
 	}
 	//
 	@Override

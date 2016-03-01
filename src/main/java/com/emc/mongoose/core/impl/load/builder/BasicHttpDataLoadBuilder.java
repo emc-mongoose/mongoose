@@ -61,7 +61,7 @@ implements HttpDataLoadBuilder<T, U> {
 		return (U) new BasicHttpDataLoadExecutor<>(
 			appConfig, httpReqConf, storageNodeAddrs, threadCount,
 			itemSrc == null ? getDefaultItemSrc() : itemSrc,
-			maxCount, rateLimit
+			maxCount, rateLimit, rangesConfig
 		);
 	}
 }

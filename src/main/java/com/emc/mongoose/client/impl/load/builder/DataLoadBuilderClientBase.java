@@ -6,6 +6,7 @@ import com.emc.mongoose.client.api.load.executor.DataLoadClient;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 //
@@ -40,8 +41,8 @@ implements DataLoadBuilderClient<T, W, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected SizeInBytes sizeInfo;
-	protected String rangesInfo = null;
+	protected SizeInBytes sizeConfig;
+	protected DataRangesConfig rangesConfig = null;
 	protected boolean flagUseContainerItemSrc;
 	//
 	protected DataLoadBuilderClientBase()
@@ -55,10 +56,20 @@ implements DataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
+	public DataLoadBuilderClientBase<T, W, U, V> clone()
+	throws CloneNotSupportedException {
+		final DataLoadBuilderClientBase<T, W, U, V>
+			lb = (DataLoadBuilderClientBase<T, W, U, V>) super.clone();
+		lb.sizeConfig = sizeConfig;
+		lb.rangesConfig = rangesConfig;
+		return lb;
+	}
+	//
+	@Override
 	public final DataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
 		super.setAppConfig(appConfig);
-		setDataSize(new SizeInBytes(appConfig.getItemDataSize()));
+		setDataSize(appConfig.getItemDataSize());
 		setDataRanges(appConfig.getItemDataRanges());
 		return this;
 	}
@@ -94,7 +105,7 @@ implements DataLoadBuilderClient<T, W, U> {
 			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
 		);
 		return new NewDataItemSrc<>(
-			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeInfo
+			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeConfig
 		);
 	}
 	//
@@ -172,14 +183,14 @@ implements DataLoadBuilderClient<T, W, U> {
 	@Override
 	public DataLoadBuilder<T, U> setDataSize(final SizeInBytes dataSize)
 	throws IllegalArgumentException, RemoteException {
-		this.sizeInfo = dataSize;
+		this.sizeConfig = dataSize;
 		return this;
 	}
 	//
 	@Override
-	public DataLoadBuilder<T, U> setDataRanges(final String dataRanges)
+	public DataLoadBuilder<T, U> setDataRanges(final DataRangesConfig rangesConfig)
 	throws IllegalArgumentException, RemoteException {
-		this.rangesInfo = dataRanges;
+		this.rangesConfig = rangesConfig;
 		return this;
 	}
 }

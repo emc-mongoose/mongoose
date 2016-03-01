@@ -108,9 +108,10 @@ extends Cloneable, Configuration, Externalizable {
 
 	long getItemDataContentRingSize();
 
-	String getItemDataRanges();
+	DataRangesConfig getItemDataRanges()
+	throws DataRangesConfig.InvalidRangeException;
 
-	String getItemDataSize();
+	SizeInBytes getItemDataSize();
 
 	boolean getItemDataVerify();
 

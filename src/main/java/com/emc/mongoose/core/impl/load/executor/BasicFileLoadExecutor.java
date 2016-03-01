@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Directory;
@@ -39,9 +40,9 @@ implements FileLoadExecutor<T> {
 	public BasicFileLoadExecutor(
 		final AppConfig appConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
 		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final float rateLimit
+		final float rateLimit, final DataRangesConfig rangesConfig
 	) throws ClassCastException {
-		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
+		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, rangesConfig);
 		ioTaskExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<Runnable>(maxItemQueueSize), new IOWorker.Factory(getName())

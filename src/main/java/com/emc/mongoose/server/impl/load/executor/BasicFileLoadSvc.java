@@ -1,6 +1,7 @@
 package com.emc.mongoose.server.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
@@ -37,9 +38,9 @@ implements FileLoadSvc<T> {
 	public BasicFileLoadSvc(
 		final AppConfig appConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
 		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final float rateLimit
+		final float rateLimit, final DataRangesConfig rangesConfig
 	) throws ClassCastException {
-		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
+		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, rangesConfig);
 	}
 	//
 	@Override

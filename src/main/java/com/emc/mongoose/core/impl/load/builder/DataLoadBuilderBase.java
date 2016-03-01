@@ -1,19 +1,16 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import static com.emc.mongoose.common.conf.AppConfig.ItemNamingType;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -39,8 +36,8 @@ implements DataLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected SizeInBytes dataSize;
-	protected String rangesInfo;
+	protected SizeInBytes sizeConfig;
+	protected DataRangesConfig rangesConfig;
 	//
 	public DataLoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
@@ -51,8 +48,8 @@ implements DataLoadBuilder<T, U> {
 	public DataLoadBuilderBase<T, U> clone()
 	throws CloneNotSupportedException {
 		final DataLoadBuilderBase<T, U> lb = (DataLoadBuilderBase<T, U>) super.clone();
-		lb.dataSize = dataSize;
-		lb.rangesInfo = rangesInfo;
+		lb.sizeConfig = sizeConfig;
+		lb.rangesConfig = rangesConfig;
 		return lb;
 	}
 	//
@@ -65,7 +62,7 @@ implements DataLoadBuilder<T, U> {
 			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
 		);
 		return new NewDataItemSrc<>(
-			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), dataSize
+			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeConfig
 		);
 	}
 	//
@@ -103,14 +100,14 @@ implements DataLoadBuilder<T, U> {
 	//
 	@Override
 	public String toString() {
-		return super.toString() + "x" + dataSize.toString();
+		return super.toString() + "x" + sizeConfig.toString();
 	}
 	//
 	@Override
 	public DataLoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
 		super.setAppConfig(appConfig);
-		setDataSize(new SizeInBytes(appConfig.getItemDataSize()));
+		setDataSize(appConfig.getItemDataSize());
 		setDataRanges(appConfig.getItemDataRanges());
 		//
 		final String listFilePathStr = appConfig.getItemSrcFile();
@@ -167,13 +164,13 @@ implements DataLoadBuilder<T, U> {
 	public DataLoadBuilder<T, U> setDataSize(final SizeInBytes dataSize)
 	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set data item size: {}", dataSize.toString());
-		this.dataSize = dataSize;
+		this.sizeConfig = dataSize;
 		return this;
 	}
 	@Override
-	public DataLoadBuilder<T, U> setDataRanges(final String dataRanges) {
-		LOG.debug(Markers.MSG, "Set fixed byte ranges: {}", dataRanges);
-		this.rangesInfo = dataRanges;
+	public DataLoadBuilder<T, U> setDataRanges(final DataRangesConfig rangesConfig) {
+		LOG.debug(Markers.MSG, "Set fixed byte ranges: {}", rangesConfig);
+		this.rangesConfig = rangesConfig;
 		return this;
 	}
 }

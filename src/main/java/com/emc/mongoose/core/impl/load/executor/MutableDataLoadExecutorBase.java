@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.load.executor;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -27,16 +28,18 @@ extends LimitedRateLoadExecutorBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final AppConfig.LoadType loadType;
+	protected final DataRangesConfig rangesConfig;
 	//
 	protected MutableDataLoadExecutorBase(
 		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final float rateLimit
+		final float rateLimit, final DataRangesConfig rangesConfig
 	) throws ClassCastException {
 		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
 		//
 		this.loadType = ioConfig.getLoadType();
+		this.rangesConfig = rangesConfig;
 		//
 		int buffSize;
 		if(itemSrc instanceof DataItemFileSrc) {

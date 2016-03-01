@@ -25,7 +25,7 @@
 					"seed" : "7a42d9c483244167",
 					"ringSize" : "4MB"
 				},
-				"ranges" : "0",
+				"ranges" : 0,
 				"size" : "1MB",
 				"verify" : true
 			},
