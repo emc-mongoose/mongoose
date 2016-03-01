@@ -1,5 +1,7 @@
 package com.emc.mongoose.common.generator;
 
+import org.apache.commons.lang.time.DateUtils;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -7,8 +9,8 @@ import java.util.Date;
 public final class AsyncDateGenerator
 extends AsyncRangeGeneratorBase<Date> {
 
-	public final static String DATE_FMT_STRING = "yyyy/MM/dd";
-	private final DateFormat dateFormat = new SimpleDateFormat(DATE_FMT_STRING);
+	public final static String[] INPUT_DATE_FMT_STRINGS = new String[]{"yyyy/MM/dd"};
+	public final static String[] OUTPUT_DATE_FMT_STRINGS = new String[]{"yyyy-MM-dd'T'HH:mm:ssZ"};
 
 	private final AsyncLongGenerator longGenerator;
 
@@ -20,7 +22,7 @@ extends AsyncRangeGeneratorBase<Date> {
 	public AsyncDateGenerator(final Date initialValue) throws ParseException{
 		super(initialValue);
 		longGenerator = new AsyncLongGenerator(
-				dateFormat.parse("1970/01/01").getTime(), initialValue.getTime()
+				DateUtils.parseDate("1970/01/01", INPUT_DATE_FMT_STRINGS).getTime(), initialValue.getTime()
 		);
 	}
 
