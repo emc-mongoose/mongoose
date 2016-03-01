@@ -2,17 +2,18 @@ package com.emc.mongoose.common.generator;
 
 import com.emc.mongoose.common.generator.AsyncValueGenerator.InitCallable;
 
+import java.text.Format;
 import java.util.Random;
 
 public abstract class AsyncRangeGeneratorBase<T>
-implements Initializable, ValueGenerator<T> {
+implements Initializable, ValueGenerator<String> {
 
 	protected final Random random = new Random();
 	private final T minValue;
 	private final T range;
 	private final AsyncValueGenerator<T> generator;
 
-	public AsyncRangeGeneratorBase(final T minValue, final T maxValue) {
+	protected AsyncRangeGeneratorBase(final T minValue, final T maxValue) {
 		this.minValue = minValue;
 		this.range = computeRange(minValue, maxValue);
 		this.generator = new AsyncValueGenerator<>(
@@ -32,7 +33,7 @@ implements Initializable, ValueGenerator<T> {
 		);
 	}
 
-	public AsyncRangeGeneratorBase(final T initialValue) {
+	protected AsyncRangeGeneratorBase(final T initialValue) {
 		this.minValue = initialValue;
 		this.range = null;
 		this.generator = new AsyncValueGenerator<>(
@@ -55,18 +56,23 @@ implements Initializable, ValueGenerator<T> {
 	protected abstract T computeRange(final T minValue, final T maxValue);
 	protected abstract T rangeValue();
 	protected abstract T singleValue();
+	protected abstract String stringify(final T value);
 
-	public T minValue() {
+	protected T minValue() {
 		return minValue;
 	}
 
-	public T range() {
+	protected T range() {
 		return range;
 	}
 
-	@Override
-	public T get() {
+	protected T value() {
 		return generator.get();
+	}
+
+	@Override
+	public String get() {
+		return stringify(value());
 	}
 
 }

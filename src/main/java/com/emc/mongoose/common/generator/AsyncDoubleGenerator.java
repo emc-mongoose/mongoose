@@ -1,14 +1,23 @@
 package com.emc.mongoose.common.generator;
 
-public final class AsyncDoubleGenerator
-extends AsyncRangeGeneratorBase<Double> {
+import java.text.DecimalFormat;
+import java.text.Format;
+import java.text.NumberFormat;
 
-	public AsyncDoubleGenerator(final Double minValue, final Double maxValue) {
-		super(minValue, maxValue);
+public final class AsyncDoubleGenerator
+extends AsyncFormatRangeGeneratorBase<Double> {
+	;
+	public AsyncDoubleGenerator(final Double minValue, final Double maxValue, final String formatString) {
+		super(minValue, maxValue, formatString);
 	}
 
-	public AsyncDoubleGenerator(final Double initialValue) {
-		super(initialValue);
+	public AsyncDoubleGenerator(final Double initialValue, final String formatString) {
+		super(initialValue, formatString);
+	}
+
+	@Override
+	Format getFormatterInstance(String formatString) {
+		return new DecimalFormat(formatString);
 	}
 
 	@Override
@@ -24,6 +33,11 @@ extends AsyncRangeGeneratorBase<Double> {
 	@Override
 	protected final Double singleValue() {
 		return random.nextDouble();
+	}
+
+	@Override
+	protected String stringify(Double value) {
+		return outputFormat.format(value);
 	}
 
 	@Override

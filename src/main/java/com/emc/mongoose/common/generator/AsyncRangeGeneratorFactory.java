@@ -4,6 +4,9 @@ import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.emc.mongoose.common.generator.AsyncDateGenerator.*;
+import static org.apache.commons.lang.time.DateUtils.*;
+
 public final class AsyncRangeGeneratorFactory {
 
 	// pay attention to the matcher groups
@@ -14,7 +17,8 @@ public final class AsyncRangeGeneratorFactory {
 	private static final Pattern LONG_PATTERN = Pattern.compile(rangeRegExp(LONG_REG_EXP));
 	private static final Pattern DATE_PATTERN = Pattern.compile(rangeRegExp(DATE_REG_EXP));
 
-
+	public static final String OUTPUT_NUMBER_FMT_STRING = "###.##";
+	public static final String OUTPUT_DATE_FMT_STRING = "yyyy-MM-dd'T'HH:mm:ssZ";
 
 	private AsyncRangeGeneratorFactory() {
 	}
@@ -28,11 +32,11 @@ public final class AsyncRangeGeneratorFactory {
 	throws ParseException {
 		switch (type) {
 			case 'f':
-				return new AsyncDoubleGenerator(47.0);
+				return new AsyncDoubleGenerator(47.0, OUTPUT_NUMBER_FMT_STRING);
 			case 'd':
 				return new AsyncLongGenerator(47L);
 			case 'D':
-				return new AsyncStringDateGenerator("2016/02/25");
+				return new AsyncDateGenerator(parseDate("2016/02/25", INPUT_DATE_FMT_STRINGS), OUTPUT_DATE_FMT_STRING);
 			default:
 				throw new IllegalArgumentException();
 		}
@@ -45,21 +49,29 @@ public final class AsyncRangeGeneratorFactory {
 			case 'f':
 				matcher = DOUBLE_PATTERN.matcher(range);
 				if (matcher.find()) {
-					return new AsyncDoubleGenerator(Double.valueOf(matcher.group(1)), Double.valueOf(matcher.group(2)));
+					return new AsyncDoubleGenerator(
+							Double.valueOf(matcher.group(1)),
+							Double.valueOf(matcher.group(2)),
+							OUTPUT_NUMBER_FMT_STRING);
 				} else {
 					throw new IllegalArgumentException();
 				}
 			case 'd':
 				matcher = LONG_PATTERN.matcher(range);
 				if (matcher.find()) {
-					return new AsyncLongGenerator(Long.valueOf(matcher.group(1)), Long.valueOf(matcher.group(2)));
+					return new AsyncLongGenerator(
+							Long.valueOf(matcher.group(1)),
+							Long.valueOf(matcher.group(2)));
 				} else {
 					throw new IllegalArgumentException();
 				}
 			case 'D':
 				matcher = DATE_PATTERN.matcher(range);
 				if (matcher.find()) {
-					return new AsyncStringDateGenerator(matcher.group(1), matcher.group(6));
+					return new AsyncDateGenerator(
+							parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS),
+							parseDate(matcher.group(6), INPUT_DATE_FMT_STRINGS),
+							OUTPUT_DATE_FMT_STRING);
 				} else {
 					throw new IllegalArgumentException();
 				}
