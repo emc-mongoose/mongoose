@@ -2,6 +2,7 @@ package com.emc.mongoose.run.scenario.runner;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.run.scenario.engine.JsonScenario;
 //
 import org.apache.logging.log4j.LogManager;
@@ -25,6 +26,10 @@ implements Runnable {
 	//
 	public void run() {
 		final String runFile = appConfig.getRunFile();
-		new JsonScenario(new File(runFile)).run();
+		if(runFile == null || runFile.isEmpty()) {
+			LOG.error(Markers.ERR, "Scenario file is not specified");
+		} else {
+			new JsonScenario(new File(runFile)).run();
+		}
 	}
 }

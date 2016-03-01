@@ -53,18 +53,29 @@ public final class SizeInBytes {
 		).toUpperCase();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private long min, max;
-	private double bias;
+	private final static char SEP1 = '-', SEP2 = ',';
+	//
+	private long min, range = 0;
+	private double bias = 1;
 	//
 	public SizeInBytes(final String sizeInfo) {
-		final String bounds[] = sizeInfo.split("-");
-		if(bounds.length == 2) {
-			min = toFixedSize(bounds[0]);
-			max = toFixedSize(bounds[1]);
+		final int
+			sep1pos = sizeInfo.indexOf(SEP1),
+			sep2pos = sizeInfo.indexOf(SEP2);
+		if(sep1pos < 0) {
+			min = toFixedSize(sizeInfo);
 		} else {
-			min = max = toFixedSize(sizeInfo);
+			min = toFixedSize(sizeInfo.substring(0, sep1pos));
+			if(sep2pos < 0) {
+				range = toFixedSize(sizeInfo.substring(sep1pos + 1)) - min;
+			} else {
+				range = toFixedSize(sizeInfo.substring(sep1pos + 1, sep2pos)) - min;
+				bias = Double.parseDouble(sizeInfo.substring(sep2pos + 1));
+			}
 		}
-		bias = 1;
+		if(range < 0) {
+			throw new IllegalArgumentException("Min value is less than max: \"" + sizeInfo + "\"");
+		}
 	}
 	//
 	public SizeInBytes(final long min, final long max, final double bias) {
@@ -78,17 +89,23 @@ public final class SizeInBytes {
 			throw new IllegalArgumentException("Max size is less than 0");
 		}
 		this.min = min;
-		this.max = max;
+		this.range = max - min;
 		this.bias = bias;
 	}
 	//
 	public long get() {
-		return ThreadLocalRandom.current().nextLong(min, max + 1);
+		if(range == 0) {
+			return min;
+		} else if(bias == 1) {
+			return min + ThreadLocalRandom.current().nextLong(range + 1);
+		} else {
+			return min + (long) Math.pow(ThreadLocalRandom.current().nextDouble(), bias) * range;
+		}
 	}
 	//
 	private final static int APPROXIMATION_COUNT = 100;
 	public final long getAvgDataSize() {
-		if(min == max) {
+		if(range == 0) {
 			return min;
 		} else {
 			long sum = 0;
@@ -101,10 +118,23 @@ public final class SizeInBytes {
 	//
 	@Override
 	public final String toString() {
-		if(min == max) {
-			return formatFixedSize(min);
+		final StringBuilder sb = new StringBuilder(formatFixedSize(min));
+		if(range > 0) {
+			sb.append(SEP1).append(formatFixedSize(min + range));
+		}
+		if(bias != 1) {
+			sb.append(SEP2).append(Double.toString(bias));
+		}
+		return sb.toString();
+	}
+	//
+	@Override
+	public final boolean equals(final Object o) {
+		if(o instanceof SizeInBytes) {
+			final SizeInBytes s = (SizeInBytes) o;
+			return min == s.min && range == s.range && bias == s.bias;
 		} else {
-			return formatFixedSize(min) + "-" + formatFixedSize(max);
+			return false;
 		}
 	}
 }

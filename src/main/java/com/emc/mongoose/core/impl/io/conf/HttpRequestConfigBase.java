@@ -72,6 +72,7 @@ import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -545,14 +546,6 @@ implements HttpRequestConfig<T, C> {
 	protected abstract String getContainerUriPath(final Container<T> container)
 	throws IllegalArgumentException, URISyntaxException;
 	//
-	protected final String getFilePathFor(final T dataItem) {
-		if(fsAccess && namePrefix != null && !namePrefix.isEmpty()) {
-			return "/" + namePrefix + "/" + dataItem.getName();
-		} else {
-			return "/" + dataItem.getName();
-		}
-	}
-	//
 	protected final void applyPayLoad(
 		final HttpEntityEnclosingRequest httpRequest, final HttpEntity httpEntity
 	) {
@@ -704,8 +697,13 @@ implements HttpRequestConfig<T, C> {
 	@Override
 	public void configureStorage(final String storageNodeAddrs[])
 	throws IllegalStateException {
-		if(fsAccess && namePrefix != null && !namePrefix.isEmpty()) {
-			createDirectoryPath(storageNodeAddrs[0], namePrefix);
+		final String containerName = container.getName();
+		int firstSepPos = containerName.indexOf(File.pathSeparatorChar);
+		if(fsAccess && firstSepPos >= 0) {
+			final String path = containerName.substring(firstSepPos);
+			if(!path.isEmpty()) {
+				createDirectoryPath(storageNodeAddrs[0], path);
+			}
 		}
 	}
 	//

@@ -36,15 +36,22 @@ implements Scenario {
 		final ObjectMapper jsonMapper = new ObjectMapper()
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
-		if(scenarioSrcFile.exists() && scenarioSrcFile.isFile()) {
-			try {
-				final Map<String, Object> tree = jsonMapper.readValue(scenarioSrcFile, Map.class);
-				loadTree(tree, this);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to read the scenario file @ {}", scenarioSrcFile
-				);
-			}
+		if(!scenarioSrcFile.exists()) {
+			LOG.error(Markers.ERR, "Scenario file is not specified");
+			return;
+		}
+		if(!scenarioSrcFile.isFile()) {
+			LOG.error(Markers.ERR, "Not a valid scenario file: \"{}\"", scenarioSrcFile.toString());
+			return;
+		}
+		//
+		try {
+			final Map<String, Object> tree = jsonMapper.readValue(scenarioSrcFile, Map.class);
+			loadTree(tree, this);
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to read the scenario file @ {}", scenarioSrcFile
+			);
 		}
 	}
 	//

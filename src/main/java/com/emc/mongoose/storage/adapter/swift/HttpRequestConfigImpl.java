@@ -133,7 +133,7 @@ extends HttpRequestConfigBase<T, C> {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
 		//applyObjectId(dataItem, null);
-		return uriSvcBaseContainerPath + getFilePathFor(dataItem);
+		return uriSvcBaseContainerPath + "/" + dataItem.getName();
 	}
 	@Override
 	protected String getContainerUriPath(final Container<T> container)

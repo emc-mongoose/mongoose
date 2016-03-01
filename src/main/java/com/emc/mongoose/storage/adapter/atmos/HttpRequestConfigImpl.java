@@ -249,7 +249,7 @@ extends HttpRequestConfigBase<T, C> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !AppConfig.LoadType.WRITE.equals(loadType)) {
-			return uriBasePath + getFilePathFor(dataItem);
+			return uriBasePath + "/" + dataItem.getName();
 		} else { // "/rest/objects"
 			return uriBasePath;
 		}

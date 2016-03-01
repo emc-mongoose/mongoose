@@ -88,7 +88,7 @@ extends HttpRequestConfigBase<T, C> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		//applyObjectId(dataItem, null);
-		return getContainerUriPath(container) + getFilePathFor(dataItem);
+		return getContainerUriPath(container) + "/" + dataItem.getName();
 	}
 	//
 	@Override

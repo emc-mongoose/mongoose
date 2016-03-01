@@ -9,6 +9,7 @@ import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 //
+import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 //
 import org.apache.commons.lang.StringUtils;
@@ -202,6 +203,10 @@ implements IOConfig<T, C> {
 	public IOConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		this.appConfig = appConfig;
 		setLoadType(appConfig.getLoadClass());
+		final String newContainerName = appConfig.getItemContainerName();
+		if(container == null || !container.getName().equals(newContainerName)) {
+			setContainer((C) new BasicContainer<T>(newContainerName));
+		}
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setNamePrefix(appConfig.getItemNamingPrefix());
 		setVerifyContentFlag(appConfig.getItemDataVerify());

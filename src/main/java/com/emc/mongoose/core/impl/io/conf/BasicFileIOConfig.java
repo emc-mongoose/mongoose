@@ -34,7 +34,7 @@ implements FileIOConfig<F, D> {
 	@Override @SuppressWarnings("unchecked")
 	public BasicFileIOConfig<F, D> setAppConfig(final AppConfig appConfig) {
 		super.setAppConfig(appConfig);
-		setContainer((D) new BasicDirectory<F>(getNamePrefix()));
+		setContainer((D) new BasicDirectory<F>(appConfig.getItemContainerName()));
 		batchSize = appConfig.getItemSrcBatchSize();
 		return this;
 	}
