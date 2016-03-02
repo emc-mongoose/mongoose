@@ -92,28 +92,33 @@ implements ValueGenerator<String> {
 	/**
 	 *
 	 * @param expression is a string which follows PATTERN_SYMBOL.
-	 * @return presence of the range
+	 * @return presence of the range or format
 	 */
-	private boolean isRangePresented(final StringBuilder expression) {
-		return expression.length() >= 2 && expression.charAt(1) == RANGE_SYMBOLS[0];
+	private boolean isParameterPresented(final StringBuilder expression, final char[] binarySymbols) {
+		return expression.length() >= 2 && expression.charAt(1) == binarySymbols[0];
 	}
 
-	private String getRange(final StringBuilder expression) {
-		final int closingSymbolPos = expression.indexOf(String.valueOf(RANGE_SYMBOLS[1]));
-		String range = expression.substring(2, closingSymbolPos);
-		expression.delete(0, closingSymbolPos + 1);
-		return range;
+	private String getParameter(final StringBuilder expression, final char[] binarySymbols) {
+		final int closingSymbolPos = expression.indexOf(String.valueOf(binarySymbols[1]));
+		String parameter = expression.substring(2, closingSymbolPos);
+		expression.delete(1, closingSymbolPos + 1);
+		return parameter;
+	}
+
+	private String initParameter(final StringBuilder expression, final char[] binarySymbols) {
+		if (isParameterPresented(expression, binarySymbols)) {
+			return getParameter(expression, binarySymbols);
+		}
+		return null;
 	}
 
 	private void addExpressionParams(final StringBuilder expression, final int index)
 	throws ParseException {
 		final char type = expression.charAt(0);
-		if (isRangePresented(expression)) {
-			generators[index] = AsyncRangeGeneratorFactory.createGenerator(type, getRange(expression));
-		} else {
-			generators[index] = AsyncRangeGeneratorFactory.createGenerator(type);
-			expression.delete(0, 1);
-		}
+		String format = initParameter(expression, FORMAT_SYMBOLS);
+		String range = initParameter(expression, RANGE_SYMBOLS);
+		expression.delete(0, 1);
+		generators[index] = AsyncRangeGeneratorFactory.createGenerator(type, format, range);
 	}
 
 	@Override

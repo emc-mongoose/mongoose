@@ -2,7 +2,6 @@ package com.emc.mongoose.common.generator;
 
 import java.text.DecimalFormat;
 import java.text.Format;
-import java.text.NumberFormat;
 
 public final class AsyncDoubleGenerator
 extends AsyncFormatRangeGeneratorBase<Double> {

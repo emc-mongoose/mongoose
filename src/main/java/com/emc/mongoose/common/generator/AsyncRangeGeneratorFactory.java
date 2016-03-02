@@ -28,55 +28,94 @@ public final class AsyncRangeGeneratorFactory {
 		return typeRegExp + AsyncFormattingGenerator.RANGE_DELIMITER + typeRegExp;
 	}
 
-	public static ValueGenerator createGenerator(final char type)
-	throws ParseException {
-		switch (type) {
-			case 'f':
-				return new AsyncDoubleGenerator(47.0, OUTPUT_NUMBER_FMT_STRING);
-			case 'd':
-				return new AsyncLongGenerator(47L);
-			case 'D':
-				return new AsyncDateGenerator(parseDate("2016/02/25", INPUT_DATE_FMT_STRINGS), OUTPUT_DATE_FMT_STRING);
+	private enum States {
+		EMPTY, RANGE, FORMAT, FORMAT_RANGE
+	}
+
+	private static States defineState(String format, String range) {
+		if (format == null) {
+			if (range == null) {
+				return States.EMPTY;
+			} else {
+				return States.RANGE;
+			}
+		} else {
+			if (range == null) {
+				return States.FORMAT;
+			} else {
+				return States.FORMAT_RANGE;
+			}
+		}
+	}
+
+	/**
+	 *
+	 * @param type - a type of the generator
+	 * @param parameters - an array of parameters (if length > 1, first arg - a format, second - a range, by default)
+	 * @return a suitable generator
+	 * @throws ParseException
+	 */
+	public static ValueGenerator createGenerator(final char type, final String ... parameters)
+			throws ParseException {
+		States state = defineState(parameters[0], parameters[1]);
+		final Matcher matcher;
+		switch (state) {
+			case EMPTY:
+				switch (type) {
+					case 'd':
+						return new AsyncLongGenerator(47L);
+					default:
+						throw new IllegalArgumentException();
+				}
+			case FORMAT:
+				switch (type) {
+					case 'f':
+						return new AsyncDoubleGenerator(47.0, parameters[0]);
+					case 'D':
+						return new AsyncDateGenerator(parseDate("2016/02/25", INPUT_DATE_FMT_STRINGS), parameters[0]);
+					default:
+						throw new IllegalArgumentException();
+				}
+			case RANGE:
+				switch (type) {
+					case 'd':
+						matcher = LONG_PATTERN.matcher(parameters[1]);
+						if (matcher.find()) {
+							return new AsyncLongGenerator(
+									Long.valueOf(matcher.group(1)),
+									Long.valueOf(matcher.group(2)));
+						} else {
+							throw new IllegalArgumentException();
+						}
+				}
+			case FORMAT_RANGE:
+				switch (type) {
+					case 'f':
+						matcher = DOUBLE_PATTERN.matcher(parameters[1]);
+						if (matcher.find()) {
+							return new AsyncDoubleGenerator(
+									Double.valueOf(matcher.group(1)),
+									Double.valueOf(matcher.group(2)),
+									parameters[0]);
+						} else {
+							throw new IllegalArgumentException();
+						}
+					case 'D':
+						matcher = DATE_PATTERN.matcher(parameters[1]);
+						if (matcher.find()) {
+							return new AsyncDateGenerator(
+									parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS),
+									parseDate(matcher.group(6), INPUT_DATE_FMT_STRINGS),
+									parameters[0]);
+						} else {
+							throw new IllegalArgumentException();
+						}
+					default:
+						throw new IllegalArgumentException();
+				}
 			default:
 				throw new IllegalArgumentException();
 		}
 	}
 
-	public static ValueGenerator createGenerator(final char type, final String range)
-	throws IllegalArgumentException, ParseException {
-		final Matcher matcher;
-		switch (type) {
-			case 'f':
-				matcher = DOUBLE_PATTERN.matcher(range);
-				if (matcher.find()) {
-					return new AsyncDoubleGenerator(
-							Double.valueOf(matcher.group(1)),
-							Double.valueOf(matcher.group(2)),
-							OUTPUT_NUMBER_FMT_STRING);
-				} else {
-					throw new IllegalArgumentException();
-				}
-			case 'd':
-				matcher = LONG_PATTERN.matcher(range);
-				if (matcher.find()) {
-					return new AsyncLongGenerator(
-							Long.valueOf(matcher.group(1)),
-							Long.valueOf(matcher.group(2)));
-				} else {
-					throw new IllegalArgumentException();
-				}
-			case 'D':
-				matcher = DATE_PATTERN.matcher(range);
-				if (matcher.find()) {
-					return new AsyncDateGenerator(
-							parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS),
-							parseDate(matcher.group(6), INPUT_DATE_FMT_STRINGS),
-							OUTPUT_DATE_FMT_STRING);
-				} else {
-					throw new IllegalArgumentException();
-				}
-			default:
-				throw new IllegalArgumentException();
-		}
-	}
 }

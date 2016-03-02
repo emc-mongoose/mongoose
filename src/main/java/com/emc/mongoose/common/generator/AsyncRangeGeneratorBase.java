@@ -1,9 +1,8 @@
 package com.emc.mongoose.common.generator;
 
+import java.util.Random;
 import com.emc.mongoose.common.generator.AsyncValueGenerator.InitCallable;
 
-import java.text.Format;
-import java.util.Random;
 
 public abstract class AsyncRangeGeneratorBase<T>
 implements Initializable, ValueGenerator<String> {
