@@ -68,6 +68,17 @@ extends TestCase {
 		final String result = formatter.get();
 //		System.out.println(patternString + ": " + formatter.get()); // to check that the result is within range
 		assertTrue(result, resultPattern.matcher(result).find());
+		assertEquals(numberOfSpaces(patternString), numberOfSpaces(result));
+	}
+
+	private int numberOfSpaces(String string) {
+		int counter = 0;
+		for (char each: string.toCharArray()) {
+			if (each == ' ') {
+				counter++;
+			}
+		}
+		return counter;
 	}
 
 }
