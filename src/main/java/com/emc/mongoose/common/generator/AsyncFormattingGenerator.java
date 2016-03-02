@@ -19,9 +19,9 @@ implements ValueGenerator<String> {
 		this(pattern, countPatternSymbols(pattern));
 	}
 
+	@SuppressWarnings("unchecked")
 	private AsyncFormattingGenerator(final String pattern, final int patternSymbolsNum)
 	throws ParseException {
-		//noinspection unchecked
 		this(pattern, new String[patternSymbolsNum + 1], new ValueGenerator[patternSymbolsNum]);
 	}
 
