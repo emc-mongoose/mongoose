@@ -18,6 +18,9 @@ import static org.junit.runners.Parameterized.Parameters;
 public class AsyncFormattingGeneratorNullTest
 extends TestCase {
 
+	private static final String OUTPUT_NUMBER_FMT_STRING = "%f" + "{" + "###.##" + "}";
+	private static final String OUTPUT_DATE_FMT_STRING = "%D" + "{" + "yyyy-MM-dd'T'HH:mm:ssZ" + "}";
+
 	protected ValueGenerator<String> formatter;
 
 	protected void initFormatter(String patternString) throws Exception {
@@ -33,11 +36,11 @@ extends TestCase {
 		return Arrays.asList(new Object[][]{
 				{"%d"},
 				{"%d[1-5]"},
-				{"%f"},
-				{"%f[0.1-5.0]"},
-//				{"%D"},
-//				{"%D[1999/02/15-2014/08/22]"},
-				{"fdfdsfghfh %f[-987.0--785.5]gdghhfe"}
+				{OUTPUT_NUMBER_FMT_STRING},
+				{OUTPUT_NUMBER_FMT_STRING + "[0.1-5.0]"},
+				{OUTPUT_DATE_FMT_STRING},
+				{OUTPUT_DATE_FMT_STRING + "[1999/02/15-2014/08/22]"},
+				{"fdfdsfghfh " + OUTPUT_NUMBER_FMT_STRING + "[-987.0--785.5]gdghhfe"}
 		});
 	}
 	@Parameter(value = 0)

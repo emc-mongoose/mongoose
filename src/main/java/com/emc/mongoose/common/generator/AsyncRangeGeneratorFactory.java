@@ -17,9 +17,6 @@ public final class AsyncRangeGeneratorFactory {
 	private static final Pattern LONG_PATTERN = Pattern.compile(rangeRegExp(LONG_REG_EXP));
 	private static final Pattern DATE_PATTERN = Pattern.compile(rangeRegExp(DATE_REG_EXP));
 
-	public static final String OUTPUT_NUMBER_FMT_STRING = "###.##";
-	public static final String OUTPUT_DATE_FMT_STRING = "yyyy-MM-dd'T'HH:mm:ssZ";
-
 	private AsyncRangeGeneratorFactory() {
 	}
 
@@ -55,7 +52,7 @@ public final class AsyncRangeGeneratorFactory {
 	 * @return a suitable generator
 	 * @throws ParseException
 	 */
-	public static ValueGenerator createGenerator(final char type, final String ... parameters)
+	public static ValueGenerator<String> createGenerator(final char type, final String ... parameters)
 			throws ParseException {
 		States state = defineState(parameters[0], parameters[1]);
 		final Matcher matcher;
