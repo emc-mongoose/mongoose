@@ -12,7 +12,7 @@ implements ValueGenerator<String> {
 	public static final char RANGE_DELIMITER = '-';
 
 	private final String[] segments;
-	private final ValueGenerator<?>[] generators;
+	private final ValueGenerator<String>[] generators;
 
 	public AsyncFormattingGenerator(final String pattern)
 	throws ParseException {
@@ -21,11 +21,12 @@ implements ValueGenerator<String> {
 
 	private AsyncFormattingGenerator(final String pattern, final int patternSymbolsNum)
 	throws ParseException {
-		this(pattern, new String[patternSymbolsNum + 1], new ValueGenerator<?>[patternSymbolsNum]);
+		//noinspection unchecked
+		this(pattern, new String[patternSymbolsNum + 1], new ValueGenerator[patternSymbolsNum]);
 	}
 
 	private AsyncFormattingGenerator(
-		final String pattern, final String[] segments, final ValueGenerator<?>[] generators
+		final String pattern, final String[] segments, final ValueGenerator<String>[] generators
 	) throws ParseException {
 		super(
 			null,
