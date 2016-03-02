@@ -84,6 +84,8 @@ public final class AsyncRangeGeneratorFactory {
 						} else {
 							throw new IllegalArgumentException();
 						}
+					default:
+						throw new IllegalArgumentException();
 				}
 			case FORMAT_RANGE:
 				switch (type) {
