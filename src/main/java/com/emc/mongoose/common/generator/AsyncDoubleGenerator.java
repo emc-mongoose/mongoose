@@ -14,6 +14,14 @@ extends AsyncFormatRangeGeneratorBase<Double> {
 		super(initialValue, formatString);
 	}
 
+	/**
+	 *
+	 * @param formatString - a pattern for DecimalFormat. It should match a pattern,
+	 *                        that described here
+	 *                        https://docs.oracle.com/javase/7/docs/api/java/text/DecimalFormat.html
+	 *                        (see Special Pattern Characters paragraph of examples)
+	 * @return a suitable formatter for numbers of a double type
+	 */
 	@Override
 	Format getFormatterInstance(String formatString) {
 		return new DecimalFormat(formatString);

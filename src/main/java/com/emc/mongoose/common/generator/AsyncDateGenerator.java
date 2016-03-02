@@ -10,7 +10,6 @@ public final class AsyncDateGenerator
 extends AsyncFormatRangeGeneratorBase<Date> {
 
 	public final static String[] INPUT_DATE_FMT_STRINGS = new String[]{"yyyy/MM/dd"};
-//
 
 	private final AsyncLongGenerator longGenerator;
 
@@ -26,6 +25,13 @@ extends AsyncFormatRangeGeneratorBase<Date> {
 		);
 	}
 
+	/**
+	 *
+	 * @param formatString - a pattern for SimpleDateFormat. It should match a date pattern in ISO 8601 format.
+	 *                        For details see
+	 *                        https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html
+	 * @return a suitable formatter for dates
+	 */
 	@Override
 	Format getFormatterInstance(String formatString) {
 		return FastDateFormat.getInstance(formatString);

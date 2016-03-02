@@ -33,7 +33,8 @@ extends TestCase {
 				{"nghgh%"},
 				{"%%%%%%"},
 				{"% "},
-				{"hgdhgdh%xgfht"},
+				{"%D{gfg}"},
+				{"%f{fdl;}"},
 		});
 	}
 	@Parameter(value = 0)
