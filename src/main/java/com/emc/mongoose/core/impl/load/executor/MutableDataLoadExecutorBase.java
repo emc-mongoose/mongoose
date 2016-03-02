@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.Constants;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
@@ -16,8 +17,13 @@ import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
+import org.apache.commons.lang.NotImplementedException;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.util.List;
 //
 /**
  Created by kurila on 15.12.14.
@@ -28,17 +34,19 @@ extends LimitedRateLoadExecutorBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final AppConfig.LoadType loadType;
+	protected final SizeInBytes sizeConfig;
 	protected final DataRangesConfig rangesConfig;
 	//
 	protected MutableDataLoadExecutorBase(
 		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final float rateLimit, final DataRangesConfig rangesConfig
+		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) throws ClassCastException {
 		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
 		//
 		this.loadType = ioConfig.getLoadType();
+		this.sizeConfig = sizeConfig;
 		this.rangesConfig = rangesConfig;
 		//
 		int buffSize;
@@ -132,11 +140,28 @@ extends LimitedRateLoadExecutorBase<T> {
 		}
 	}*/
 	/** intercepts the data items which should be scheduled for update or append */
-	/*@Override
+	@Override
 	public final void put(final T dataItem)
 	throws IOException {
 		try {
-			// TODO schedule partial write
+			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
+			if(rndRangesToUpdateCount > 0) {
+				dataItem.scheduleRandomUpdates(rndRangesToUpdateCount);
+			} else {
+				final List<DataRangesConfig.ByteRange> ranges = rangesConfig.getFixedByteRanges();
+				if(ranges.size() == 1) {
+					final DataRangesConfig.ByteRange range = ranges.get(0);
+					if(range.getBeg() == dataItem.getSize()) {
+						dataItem.scheduleAppend(range.getEnd());
+					} else {
+						// TODO
+						throw new NotImplementedException();
+					}
+				} else {
+					// TODO
+					throw new NotImplementedException();
+				}
+			}
 		} catch(final IllegalArgumentException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to schedule {} for the data item",
@@ -151,7 +176,30 @@ extends LimitedRateLoadExecutorBase<T> {
 	public final int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
 		try {
-			// TODO schedule partial write
+			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
+			if(rndRangesToUpdateCount > 0) {
+				for(int i = from; i < to; i ++) {
+					dataItems.get(i).scheduleRandomUpdates(rndRangesToUpdateCount);
+				}
+			} else {
+				final List<DataRangesConfig.ByteRange> ranges = rangesConfig.getFixedByteRanges();
+				if(ranges.size() == 1) {
+					final DataRangesConfig.ByteRange range = ranges.get(0);
+					T dataItem;
+					for(int i = from; i < to; i ++) {
+						dataItem = dataItems.get(i);
+						if(range.getBeg() == dataItem.getSize()) {
+							dataItem.scheduleAppend(range.getEnd());
+						} else {
+							// TODO
+							throw new NotImplementedException();
+						}
+					}
+				} else {
+					// TODO
+					throw new NotImplementedException();
+				}
+			}
 		} catch(final IllegalArgumentException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to schedule {} for the data items",
@@ -160,5 +208,5 @@ extends LimitedRateLoadExecutorBase<T> {
 		}
 		//
 		return super.put(dataItems, from, to);
-	}*/
+	}
 }

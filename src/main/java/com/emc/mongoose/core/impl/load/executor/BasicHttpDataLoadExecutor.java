@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.DataRangesConfig;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
@@ -87,9 +88,12 @@ implements HttpDataLoadExecutor<T> {
 	public BasicHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final float rateLimit, final DataRangesConfig rangesConfig
+		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) {
-		super(appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, rangesConfig);
+		super(
+			appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
+			sizeConfig, rangesConfig
+		);
 		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
 		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
 		//

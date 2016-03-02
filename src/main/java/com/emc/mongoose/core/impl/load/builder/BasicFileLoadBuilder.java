@@ -51,7 +51,7 @@ extends DataLoadBuilderBase<T, U> {
 		return (U) new BasicFileLoadExecutor<>(
 			appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
 			null, threadCount, itemSrc == null ? getDefaultItemSrc() : itemSrc,
-			maxCount, rateLimit, rangesConfig
+			maxCount, rateLimit, sizeConfig, rangesConfig
 		);
 	}
 }

@@ -78,7 +78,8 @@ implements FileLoadBuilderSvc<T, U> {
 		//
 		return (U) new BasicFileLoadSvc<>(
 			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit, rangesConfig
+			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit,
+			sizeConfig, rangesConfig
 		);
 	}
 	//

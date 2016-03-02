@@ -103,7 +103,8 @@ implements HttpDataLoadBuilderSvc<T, U> {
 		//
 		return (U) new BasicHttpDataLoadSvc<>(
 			appConfig, httpReqConf, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
+			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit,
+			sizeConfig, rangesConfig
 		);
 	}
 	//
