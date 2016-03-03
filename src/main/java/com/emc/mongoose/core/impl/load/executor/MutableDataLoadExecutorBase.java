@@ -145,10 +145,10 @@ extends LimitedRateLoadExecutorBase<T> {
 	throws IOException {
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
+			final List<DataRangesConfig.ByteRange> ranges = rangesConfig.getFixedByteRanges();
 			if(rndRangesToUpdateCount > 0) {
 				dataItem.scheduleRandomUpdates(rndRangesToUpdateCount);
-			} else {
-				final List<DataRangesConfig.ByteRange> ranges = rangesConfig.getFixedByteRanges();
+			} else if(ranges != null) {
 				if(ranges.size() == 1) {
 					final DataRangesConfig.ByteRange range = ranges.get(0);
 					if(range.getBeg() == dataItem.getSize()) {
@@ -177,12 +177,12 @@ extends LimitedRateLoadExecutorBase<T> {
 	throws IOException {
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
+			final List<DataRangesConfig.ByteRange> ranges = rangesConfig.getFixedByteRanges();
 			if(rndRangesToUpdateCount > 0) {
 				for(int i = from; i < to; i ++) {
 					dataItems.get(i).scheduleRandomUpdates(rndRangesToUpdateCount);
 				}
-			} else {
-				final List<DataRangesConfig.ByteRange> ranges = rangesConfig.getFixedByteRanges();
+			} else if(ranges != null) {
 				if(ranges.size() == 1) {
 					final DataRangesConfig.ByteRange range = ranges.get(0);
 					T dataItem;

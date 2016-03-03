@@ -261,10 +261,9 @@ implements HttpRequestConfig<T, C> {
 		}
 		switch(loadType) {
 			case WRITE:
-				// TODO
-				//if(/*item.data.ranges.class.random.count*/) {
-				//	applyRangesHeaders(request, obj);
-				//}
+				if(obj.hasScheduledUpdates() || obj.hasBeenUpdated()) {
+					applyRangesHeaders(request, obj);
+				}
 				applyPayLoad(request, obj);
 				break;
 			case READ:
@@ -391,7 +390,12 @@ implements HttpRequestConfig<T, C> {
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setFileAccessEnabled(appConfig.getStroageHttpFsAccess());
 		setVersioning(appConfig.getStorageHttpVersioning());
-		setContainer((C) new BasicContainer<T>(appConfig.getItemContainerName()));
+		final String containerName = appConfig.getItemContainerName();
+		if(containerName != null && !containerName.isEmpty()) {
+			setContainer((C) new BasicContainer<T>(containerName));
+		} else {
+			setContainer(null);
+		}
 		// setPipelining(false);
 		super.setAppConfig(appConfig);
 		//
@@ -468,12 +472,6 @@ implements HttpRequestConfig<T, C> {
 		setFileAccessEnabled(in.readBoolean());
 		setVersioning(in.readBoolean());
 		setPipelining(in.readBoolean());
-		final String containerName = (String) in.readObject();
-		if(containerName != null) {
-			setContainer((C) new BasicContainer<T>(containerName));
-		} else {
-			setContainer(null);
-		}
 	}
 	//
 	@Override
@@ -485,7 +483,6 @@ implements HttpRequestConfig<T, C> {
 		out.writeBoolean(getFileAccessEnabled());
 		out.writeBoolean(getVersioning());
 		out.writeBoolean(getPipelining());
-		out.writeObject(container == null ? null : container.getName());
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse argUsedToOverrideImpl) {

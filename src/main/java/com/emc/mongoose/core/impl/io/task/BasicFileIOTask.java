@@ -63,13 +63,13 @@ implements FileIOTask<T> {
 		//
 		switch(ioType) {
 			case WRITE:
-				// TODO partial content support
-				openOptions.add(StandardOpenOption.CREATE);
 				openOptions.add(StandardOpenOption.WRITE);
-				openOptions.add(StandardOpenOption.TRUNCATE_EXISTING);
+				if(!item.hasScheduledUpdates() && !item.isAppending()) {
+					openOptions.add(StandardOpenOption.CREATE);
+					openOptions.add(StandardOpenOption.TRUNCATE_EXISTING);
+				}
 				break;
 			case READ:
-				// TODO partial content support
 				openOptions.add(StandardOpenOption.READ);
 				break;
 		}

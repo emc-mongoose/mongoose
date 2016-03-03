@@ -223,11 +223,8 @@ implements MutableDataItem {
 		return maskRangesWrite[1].get(i);
 	}
 	//
-	@Override
-	public final synchronized void scheduleRandomUpdate() {
-		final int
-			countRangesTotal = getRangeCount(size),
-			startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
+	private synchronized void scheduleRandomUpdate(final int countRangesTotal) {
+		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
 		int nextCellPos;
 		if(countRangesTotal > maskRangesRead.cardinality() + maskRangesWrite[0].cardinality()) {
 			// current layer has not updated yet ranges
@@ -265,7 +262,7 @@ implements MutableDataItem {
 			);
 		}
 		for(int i = 0; i < count; i++) {
-			scheduleRandomUpdate();
+			scheduleRandomUpdate(countRangesTotal);
 		}
 	}
 	//

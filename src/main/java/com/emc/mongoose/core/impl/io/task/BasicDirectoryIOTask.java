@@ -41,7 +41,13 @@ implements DirectoryIOTask<T, C> {
 	public BasicDirectoryIOTask(final C item, final X ioConfig) {
 		super(item, null, ioConfig);
 		//
-		fPath = Paths.get(ioConfig.getNamePrefix(), item.getName());
+		final String parentPath = ioConfig.getNamePrefix();
+		if(parentPath != null && !parentPath.isEmpty()) {
+			fPath = Paths.get(ioConfig.getNamePrefix(), item.getName()).toAbsolutePath();
+		} else {
+			fPath = Paths.get(item.getName()).toAbsolutePath();
+		}
+		//
 		future = new FutureTask<>(this, this);
 	}
 	//

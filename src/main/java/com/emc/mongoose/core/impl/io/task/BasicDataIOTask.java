@@ -28,8 +28,13 @@ implements DataIOTask<T> {
 		currDataLayerIdx = item.getCurrLayerIndex();
 		switch(ioType) {
 			case WRITE:
-				// TODO update/append support
-				contentSize = item.getSize();
+				if(item.hasScheduledUpdates()) {
+					contentSize = item.getUpdatingRangesSize();
+				} else if(item.isAppending()) {
+					contentSize = item.getAppendSize();
+				} else {
+					contentSize = item.getSize();
+				}
 				break;
 			case READ:
 				// TODO partial content support

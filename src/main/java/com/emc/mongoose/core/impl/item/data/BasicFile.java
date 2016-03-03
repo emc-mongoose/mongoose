@@ -6,35 +6,35 @@ import com.emc.mongoose.core.api.item.data.ContentSource;
 /**
  Created by andrey on 22.11.15.
  */
-public class BasicFileItem
+public class BasicFile
 extends BasicMutableDataItem
 implements FileItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public BasicFileItem() {
+	public BasicFile() {
 		super();
 		name = Long.toString(offset, Character.MAX_RADIX);
 	}
 	//
-	public BasicFileItem(final ContentSource contentSrc) {
+	public BasicFile(final ContentSource contentSrc) {
 		super(contentSrc); // ranges remain uninitialized
 		name = Long.toString(offset, Character.MAX_RADIX);
 	}
 	//
-	public BasicFileItem(final String metaInfo, final ContentSource contentSrc) {
+	public BasicFile(final String metaInfo, final ContentSource contentSrc) {
 		super(metaInfo, contentSrc);
 	}
 	//
-	public BasicFileItem(final Long offset, final Long size, final ContentSource contentSrc) {
+	public BasicFile(final Long offset, final Long size, final ContentSource contentSrc) {
 		super(offset, size, contentSrc);
 	}
 	//
-	public BasicFileItem(
+	public BasicFile(
 		final String name, final Long offset, final Long size, final ContentSource contentSrc
 	) {
 		super(name, offset, size, 0, contentSrc);
 	}
 	//
-	public BasicFileItem(
+	public BasicFile(
 		final String name, final Long offset, final Long size, Integer layerNum,
 		final ContentSource contentSrc
 	) {

@@ -222,7 +222,7 @@ sourceSets {
 	integTest {
 		java {
 			srcDir(['src', 'test'].join(File.separator))
-			include(['java', 'com', 'emc', 'mongoose', 'integ', '**'].join(File.separator))
+			include(['java', 'com', 'emc', 'mongoose', 'system', '**'].join(File.separator))
 		}
 		resources {
 			srcDir(['src', 'main', 'resources'].join(File.separator))

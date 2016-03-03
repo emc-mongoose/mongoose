@@ -9,7 +9,7 @@ import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
-import com.emc.mongoose.core.impl.item.data.BasicFileItem;
+import com.emc.mongoose.core.impl.item.data.BasicFile;
 import com.emc.mongoose.core.impl.item.data.DirectoryItemSrc;
 import org.apache.commons.lang.StringUtils;
 //
@@ -34,7 +34,12 @@ implements FileIOConfig<F, D> {
 	@Override @SuppressWarnings("unchecked")
 	public BasicFileIOConfig<F, D> setAppConfig(final AppConfig appConfig) {
 		super.setAppConfig(appConfig);
-		setContainer((D) new BasicDirectory<F>(appConfig.getItemContainerName()));
+		final String dirName = appConfig.getItemContainerName();
+		if(dirName != null && !dirName.isEmpty()) {
+			setContainer((D) new BasicDirectory<F>(dirName));
+		} else {
+			setContainer(null);
+		}
 		batchSize = appConfig.getItemSrcBatchSize();
 		return this;
 	}
@@ -53,7 +58,7 @@ implements FileIOConfig<F, D> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public Class<F> getItemClass() {
-		return (Class<F>) BasicFileItem.class;
+		return (Class<F>) BasicFile.class;
 	}
 	//
 	@Override

@@ -114,8 +114,13 @@ implements HttpDataIOTask<T> {
 		try {
 			switch(ioType) {
 				case WRITE:
-					// TODO partial content support
-					produceObjectContent(ioCtl);
+					if(item.hasScheduledUpdates()) {
+						produceUpdatedRangesContent(ioCtl);
+					} else if(item.isAppending()){
+						produceAugmentContent(ioCtl);
+					} else {
+						produceObjectContent(ioCtl);
+					}
 					break;
 				case READ:
 					// TODO partial content support

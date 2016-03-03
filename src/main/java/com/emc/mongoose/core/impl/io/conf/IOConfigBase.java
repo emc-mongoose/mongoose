@@ -204,8 +204,10 @@ implements IOConfig<T, C> {
 		this.appConfig = appConfig;
 		setLoadType(appConfig.getLoadClass());
 		final String newContainerName = appConfig.getItemContainerName();
-		if(container == null || !container.getName().equals(newContainerName)) {
+		if(newContainerName != null && !newContainerName.isEmpty()) {
 			setContainer((C) new BasicContainer<T>(newContainerName));
+		} else {
+			setContainer(null);
 		}
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setNamePrefix(appConfig.getItemNamingPrefix());

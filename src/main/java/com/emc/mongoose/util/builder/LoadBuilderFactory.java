@@ -12,7 +12,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
-import com.emc.mongoose.core.impl.item.data.BasicFileItem;
+import com.emc.mongoose.core.impl.item.data.BasicFile;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 //
 import org.apache.logging.log4j.Level;
@@ -30,7 +30,6 @@ public class LoadBuilderFactory {
 	private final static String
 		BUILDER_CORE_PACKAGE_BASE = "com.emc.mongoose.core.impl.load.builder",
 		BUILDER_CLIENT_PACKAGE_BASE = "com.emc.mongoose.client.impl.load.builder",
-		BASIC_PREFIX = "Basic",
 		LOAD_BUILDER_SUFFIX = "LoadBuilder",
 		CLIENT_POSTFIX = "Client";
 	//
@@ -67,7 +66,7 @@ public class LoadBuilderFactory {
 			}
 		} else { // data
 			if(StorageType.FS.equals(storageType)) {
-				return (Class<T>) BasicFileItem.class;
+				return (Class<T>) BasicFile.class;
 			} else { // http
 				return (Class<T>) BasicHttpData.class;
 			}
