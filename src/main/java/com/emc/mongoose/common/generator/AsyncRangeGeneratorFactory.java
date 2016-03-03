@@ -25,7 +25,7 @@ public final class AsyncRangeGeneratorFactory {
 		return typeRegExp + AsyncFormattingGenerator.RANGE_DELIMITER + typeRegExp;
 	}
 
-	private enum States {
+	private enum State {
 		EMPTY, RANGE, FORMAT, FORMAT_RANGE
 	}
 
@@ -35,18 +35,18 @@ public final class AsyncRangeGeneratorFactory {
 	 * @param range - a range of random generator AsyncRangeGeneratorBase values
 	 * @return a state that defines a choice of the generator by the factory
 	 */
-	private static States defineState(String format, String range) {
+	private static State defineState(String format, String range) {
 		if (format == null) {
 			if (range == null) {
-				return States.EMPTY;
+				return State.EMPTY;
 			} else {
-				return States.RANGE;
+				return State.RANGE;
 			}
 		} else {
 			if (range == null) {
-				return States.FORMAT;
+				return State.FORMAT;
 			} else {
-				return States.FORMAT_RANGE;
+				return State.FORMAT_RANGE;
 			}
 		}
 	}
@@ -60,7 +60,7 @@ public final class AsyncRangeGeneratorFactory {
 	 */
 	public static ValueGenerator<String> createGenerator(final char type, final String ... parameters)
 			throws ParseException {
-		States state = defineState(parameters[0], parameters[1]);
+		State state = defineState(parameters[0], parameters[1]);
 		final Matcher matcher;
 		switch (state) {
 			case EMPTY:
