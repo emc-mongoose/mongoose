@@ -30,7 +30,7 @@ public final class AsyncRangeGeneratorFactory {
 	}
 
 	/**
-	 * Enums that used to ease understanding of switch-case in createGenerator() method
+	 * This enum is used to ease understanding of switch-case in createGenerator() method.
 	 * @param format - an output format for an AsyncFormatRangeGeneratorBase generator
 	 * @param range - a range of random generator AsyncRangeGeneratorBase values
 	 * @return a state that defines a choice of the generator by the factory
