@@ -32,12 +32,12 @@ implements IOConfig<T, C> {
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 	//
 	protected AppConfig.LoadType loadType;
-	protected C container = null;
+	protected C container;
 	protected ContentSource contentSrc;
 	protected volatile boolean verifyContentFlag;
 	protected volatile AppConfig appConfig;
 	protected volatile String nameSpace;
-	protected volatile String namePrefix = null;
+	protected volatile String namePrefix;
 	protected int buffSize;
 	@Deprecated protected int reqSleepMilliSec = 0;
 	protected int nameRadix = Character.MAX_RADIX;
@@ -45,6 +45,7 @@ implements IOConfig<T, C> {
 	protected IOConfigBase() {
 		appConfig = BasicConfig.THREAD_CONTEXT.get();
 		loadType = AppConfig.LoadType.WRITE;
+		container = null;
 		contentSrc = ContentSourceBase.getDefault();
 		verifyContentFlag = appConfig.getItemDataVerify();
 		nameSpace = appConfig.getStorageHttpNamespace();

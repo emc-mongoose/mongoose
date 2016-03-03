@@ -1,8 +1,10 @@
 package com.emc.mongoose.core.impl.item.data;
 //
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
@@ -27,19 +29,34 @@ implements ContainerHelper<T, C> {
 	//
 	protected final HttpRequestConfig<T, C> reqConf;
 	protected final C container;
+	protected final String containerName;
+	protected final String path;
 	protected final String idPrefix;
-	protected final int idPrefixLen, idRadix;
-	protected final boolean fsAccess, verifyContent;
+	protected final int pathLen;
+	protected final int idPrefixLen;
+	protected final int idRadix;
+	protected final boolean verifyContent;
 	//
 	protected HttpContainerHelperBase(final HttpRequestConfig<T, C> reqConf, final C container) {
 		this.reqConf = reqConf;
 		this.container = container;
-		final String name = container.getName();
-		if(name == null || name.length() == 0) {
+		String tmpName = container.getName();
+		if(tmpName == null || tmpName.length() == 0) {
 			final Date dt = Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime();
-			container.setName(Constants.MONGOOSE_PREFIX + LogUtil.FMT_DT.format(dt));
+			tmpName = BasicConfig.THREAD_CONTEXT.get().getRunName() + "-" + LogUtil.FMT_DT.format(dt);
+			container.setName(tmpName);
 		}
-		this.fsAccess = reqConf.getFileAccessEnabled();
+		//
+		final int firstSepPos = tmpName.indexOf('/');
+		if(firstSepPos < 0) {
+			containerName = tmpName;
+			path = null;
+			pathLen = 0;
+		} else {
+			containerName = tmpName.substring(0, firstSepPos);
+			path = tmpName.substring(firstSepPos + 1);
+			pathLen = path.length();
+		}
 		this.idPrefix = reqConf.getNamePrefix();
 		this.idRadix = reqConf.getNameRadix();
 		idPrefixLen = idPrefix == null ? 0 : idPrefix.length();
@@ -57,43 +74,47 @@ implements ContainerHelper<T, C> {
 		//
 		T item = null;
 		//
-		String name = null;
+		String id = null;
 		if(rawId != null && !rawId.isEmpty()) {
-			if(fsAccess) { // include the items which have the path matching to configured one
-				if(idPrefix != null && rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
-					name = rawId.substring(idPrefixLen + 1);
-					if(name.contains("/")) { // doesn't include the items from the subdirectories
-						name = null;
+			if(path != null) { // include the items which have the path matching to configured one
+				if(rawId.startsWith(path) && rawId.length() > pathLen) {
+					id = rawId.substring(pathLen + 1);
+					if(id.contains("/")) { // doesn't include the items from the subdirectories
+						id = null;
 					}
 				} else {
-					if(!rawId.contains("/")) { // doesn't include the items from the directories
-						name = rawId;
+					if(!rawId.contains("/")) { // doesn't include the items from another directories
+						id = rawId;
 					}
 				}
 			} else {
-				if(idPrefix != null && rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
-					name = rawId.substring(idPrefixLen);
-				} else {
-					name = rawId;
-				}
+				id = rawId;
+			}
+			// exclude the prefix from the id
+			if(idPrefix != null && rawId.startsWith(idPrefix) && rawId.length() > idPrefixLen) {
+				id = rawId.substring(idPrefixLen);
 			}
 		}
 		//
-		if(name != null) {
+		if(id != null) {
 			long offset = 0;
 			try {
-				offset = Long.parseLong(name, idRadix);
+				offset = Long.parseLong(id, idRadix);
 			} catch(NumberFormatException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to parse the item id \"{}\"", rawId);
 			}
 			try {
 				item = itemConstructor.newInstance(
-					name, offset, size, 0, reqConf.getContentSource()
+					id, offset, size, 0, reqConf.getContentSource()
 				);
 			} catch(
 				final InstantiationException | IllegalAccessException | InvocationTargetException e
 			) {
 				throw new IllegalStateException(e);
+			}
+		} else {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Item with name \"{}\" was excluded", rawId);
 			}
 		}
 		//

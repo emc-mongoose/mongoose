@@ -24,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
@@ -193,13 +194,13 @@ extends HttpRequestConfigBase<T, C> {
 		} else {
 			LOG.debug(Markers.MSG, "Configure storage w/ bucket \"{}\"", container);
 		}
-		final HttpBucketHelper<T, C> bucket = new HttpBucketHelper<>(this, container);
-		if(bucket.exists(storageNodeAddrs[0])) {
+		final BucketHelper<T, C> bucketHelper = new HttpBucketHelper<>(this, container);
+		if(bucketHelper.exists(storageNodeAddrs[0])) {
 			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", container);
 		} else {
 			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", container);
-			bucket.create(storageNodeAddrs[0]);
-			if(bucket.exists(storageNodeAddrs[0])) {
+			bucketHelper.create(storageNodeAddrs[0]);
+			if(bucketHelper.exists(storageNodeAddrs[0])) {
 				appConfig.setProperty(AppConfig.KEY_ITEM_CONTAINER_NAME, container.getName());
 			} else {
 				throw new IllegalStateException(
@@ -208,7 +209,7 @@ extends HttpRequestConfigBase<T, C> {
 			}
 		}
 		if(versioning) {
-			bucket.setVersioning(storageNodeAddrs[0], true);
+			bucketHelper.setVersioning(storageNodeAddrs[0], true);
 		}
 		super.configureStorage(storageNodeAddrs);
 	}

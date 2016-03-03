@@ -97,7 +97,7 @@ extends WSRequestHandlerBase<T> {
 							HttpRequestConfig.METHOD_POST.equalsIgnoreCase(method)
 						) {
 							if(prefixLength > 0) {
-								offset = Long.parseLong(objName.substring(prefixLength), idRadix);
+								offset = Long.parseLong(objName.substring(prefixLength + 1), idRadix);
 							} else {
 								offset = Long.parseLong(objName, idRadix);
 							}

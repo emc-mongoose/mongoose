@@ -103,7 +103,7 @@ extends NagainaRequestHandlerBase<T> {
 							case HttpRequestConfig.METHOD_POST:
 							case HttpRequestConfig.METHOD_PUT:
 								if(prefixLength > 0) {
-									offset = Long.parseLong(objId.substring(prefixLength), idRadix);
+									offset = Long.parseLong(objId.substring(prefixLength + 1), idRadix);
 								} else {
 									offset = Long.parseLong(objId, idRadix);
 								}

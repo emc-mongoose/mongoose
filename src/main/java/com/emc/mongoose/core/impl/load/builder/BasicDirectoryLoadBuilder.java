@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
@@ -40,7 +41,8 @@ implements DirectoryLoadBuilder<T, C, U> {
 	public void invokePreConditions()
 	throws IllegalStateException {
 		// create parent directories
-		final String parentDirectories = ioConfig.getNamePrefix();
+		final Container d = ioConfig.getContainer();
+		final String parentDirectories = d == null ? null : d.getName();
 		if(parentDirectories != null && !parentDirectories.isEmpty()) {
 			try {
 				Files.createDirectories(Paths.get(parentDirectories));

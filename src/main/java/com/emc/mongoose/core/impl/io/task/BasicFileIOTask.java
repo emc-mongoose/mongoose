@@ -54,9 +54,9 @@ implements FileIOTask<T> {
 	public BasicFileIOTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
 		//
-		final String parentPath = ioConfig.getNamePrefix();
-		if(parentPath != null && !parentPath.isEmpty()) {
-			fPath = Paths.get(ioConfig.getNamePrefix(), item.getName()).toAbsolutePath();
+		final C parentDir = ioConfig.getContainer();
+		if(parentDir != null) {
+			fPath = Paths.get(parentDir.getName(), item.getName()).toAbsolutePath();
 		} else {
 			fPath = Paths.get(item.getName()).toAbsolutePath();
 		}

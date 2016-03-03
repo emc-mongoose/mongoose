@@ -61,7 +61,7 @@ implements BucketHelper<T, C> {
 	HttpResponse execute(final String addr, final String method, final boolean versioning)
 	throws IOException {
 		final HttpEntityEnclosingRequest httpReq = reqConf.createGenericRequest(
-			method, "/" + container.getName() + "?" + URL_ARG_VERSIONING
+			method, "/" + containerName + "?" + URL_ARG_VERSIONING
 		);
 		//
 		httpReq.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_XML.getMimeType());
@@ -90,9 +90,8 @@ implements BucketHelper<T, C> {
 		}
 		//
 		final HttpEntityEnclosingRequest httpReq;
-		final String name = container.getName();
 		if(HttpRequestConfig.METHOD_PUT.equals(method)) {
-			httpReq = reqConf.createGenericRequest(method, "/" + name);
+			httpReq = reqConf.createGenericRequest(method, "/" + containerName);
 			if(reqConf.getFileAccessEnabled()) {
 				httpReq.setHeader(
 					new BasicHeader(
@@ -103,17 +102,17 @@ implements BucketHelper<T, C> {
 		} else if(HttpRequestConfig.METHOD_GET.equals(method)) {
 			if(marker == null) {
 				httpReq = reqConf.createGenericRequest(
-					method, "/" + name + "?" + URL_ARG_MAX_KEYS + "=" + limit
+					method, "/" + containerName + "?" + URL_ARG_MAX_KEYS + "=" + limit
 				);
 			} else {
 				httpReq = reqConf.createGenericRequest(
 					method,
-					"/" + name + "?" + URL_ARG_MAX_KEYS + "=" + limit + "&" +
+					"/" + containerName + "?" + URL_ARG_MAX_KEYS + "=" + limit + "&" +
 						URL_ARG_MARKER + "=" + marker
 				);
 			}
 		} else {
-			httpReq = reqConf.createGenericRequest(method, "/" + name);
+			httpReq = reqConf.createGenericRequest(method, "/" + containerName);
 		}
 		//
 		return reqConf.execute(addr, httpReq, timeOut, timeUnit);
@@ -136,15 +135,14 @@ implements BucketHelper<T, C> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
+						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", containerName);
 						flagExists = true;
 					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-						LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist", name);
+						LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist", containerName);
 					} else {
 						final StringBuilder msg = new StringBuilder("Check bucket \"")
-							.append(name).append("\" failure: ")
+							.append(containerName).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
@@ -175,15 +173,14 @@ implements BucketHelper<T, C> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(
 							Markers.MSG, "Bucket \"{}\" versioning {}",
-							name, enabledFlag ? "enabled" : "disabled"
+							containerName, enabledFlag ? "enabled" : "disabled"
 						);
 					} else {
 						final StringBuilder msg = new StringBuilder("Bucket versioning \"")
-							.append(name).append("\" failure: ")
+							.append(containerName).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
@@ -195,7 +192,7 @@ implements BucketHelper<T, C> {
 						}
 						LOG.warn(
 							Markers.ERR, "Bucket versioning \"{}\" response ({}): {}",
-							name, statusCode, msg.toString()
+							containerName, statusCode, msg.toString()
 						);
 					}
 				}
@@ -222,12 +219,11 @@ implements BucketHelper<T, C> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Bucket \"{}\" created", name);
+						LOG.info(Markers.MSG, "Bucket \"{}\" created", containerName);
 					} else {
 						final StringBuilder msg = new StringBuilder("Create bucket \"")
-							.append(name).append("\" failure: ")
+							.append(containerName).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
@@ -239,7 +235,7 @@ implements BucketHelper<T, C> {
 						}
 						LOG.warn(
 							Markers.ERR, "Create bucket \"{}\" response ({}): {}",
-							name, statusCode, msg.toString()
+							containerName, statusCode, msg.toString()
 						);
 					}
 				}
@@ -266,12 +262,11 @@ implements BucketHelper<T, C> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Bucket \"{}\" deleted", name);
+						LOG.info(Markers.MSG, "Bucket \"{}\" deleted", containerName);
 					} else {
 						final StringBuilder msg = new StringBuilder("Delete bucket \"")
-							.append(name).append("\" failure: ")
+							.append(containerName).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
@@ -283,7 +278,7 @@ implements BucketHelper<T, C> {
 						}
 						LOG.warn(
 							Markers.ERR, "Delete bucket \"{}\" response ({}): {}",
-							name, statusCode, msg.toString()
+							containerName, statusCode, msg.toString()
 						);
 					}
 				}

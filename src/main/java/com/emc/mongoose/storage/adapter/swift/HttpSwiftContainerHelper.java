@@ -55,15 +55,14 @@ implements SwiftContainerHelper<T, C> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.debug(Markers.MSG, "Container \"{}\" exists", name);
+						LOG.debug(Markers.MSG, "Container \"{}\" exists", containerName);
 						flagExists = true;
 					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-						LOG.debug(Markers.MSG, "Container \"{}\" doesn't exist", name);
+						LOG.debug(Markers.MSG, "Container \"{}\" doesn't exist", containerName);
 					} else {
 						final StringBuilder msg = new StringBuilder("Check container \"")
-							.append(name).append("\" failure: ")
+							.append(containerName).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
@@ -98,12 +97,11 @@ implements SwiftContainerHelper<T, C> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Container \"{}\" created", name);
+						LOG.info(Markers.MSG, "Container \"{}\" created", containerName);
 					} else {
 						final StringBuilder msg = new StringBuilder("Create container \"")
-							.append(name).append("\" failure: ")
+							.append(containerName).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
@@ -113,7 +111,7 @@ implements SwiftContainerHelper<T, C> {
 						}
 						LOG.warn(
 							Markers.ERR, "Create container \"{}\" response ({}): {}",
-							name, statusCode, msg.toString()
+							containerName, statusCode, msg.toString()
 						);
 					}
 				}
@@ -140,12 +138,11 @@ implements SwiftContainerHelper<T, C> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Container \"{}\" deleted", name);
+						LOG.info(Markers.MSG, "Container \"{}\" deleted", containerName);
 					} else {
 						final StringBuilder msg = new StringBuilder("Delete container \"")
-							.append(name).append("\" failure: ")
+							.append(containerName).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
@@ -155,7 +152,7 @@ implements SwiftContainerHelper<T, C> {
 						}
 						LOG.warn(
 							Markers.ERR, "Delete container \"{}\" response ({}): {}",
-							name, statusCode, msg.toString()
+							containerName, statusCode, msg.toString()
 						);
 					}
 				}
@@ -180,12 +177,11 @@ implements SwiftContainerHelper<T, C> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					final String name = container.getName();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Container \"{}\" created", name);
+						LOG.info(Markers.MSG, "Container \"{}\" created", containerName);
 					} else {
 						final StringBuilder msg = new StringBuilder("Create container \"")
-							.append(name).append("\" failure: ")
+							.append(containerName).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
@@ -195,7 +191,7 @@ implements SwiftContainerHelper<T, C> {
 						}
 						LOG.warn(
 							Markers.ERR, "Create container \"{}\" response ({}): {}",
-							name, statusCode, msg.toString()
+							containerName, statusCode, msg.toString()
 						);
 					}
 				}
@@ -218,7 +214,6 @@ implements SwiftContainerHelper<T, C> {
 		}
 		//
 		final HttpEntityEnclosingRequest httpReq;
-		final String name = container.getName();
 		//
 		switch(method) {
 			case HttpRequestConfig.METHOD_GET:
@@ -226,14 +221,15 @@ implements SwiftContainerHelper<T, C> {
 					httpReq = reqConf.createGenericRequest(
 						method,
 						"/" + HttpRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
-							reqConf.getNameSpace() + "/" + name + "?format=json&limit=" + maxCount
+						reqConf.getNameSpace() + "/" + containerName + "?format=json&limit=" +
+						maxCount
 					);
 				} else {
 					httpReq = reqConf.createGenericRequest(
 						method,
 						"/" + HttpRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
-							reqConf.getNameSpace() + "/" + name + "?format=json&limit=" + maxCount +
-							"&marker=" + nextMarker
+						reqConf.getNameSpace() + "/" + containerName + "?format=json&limit=" +
+						maxCount + "&marker=" + nextMarker
 					);
 				}
 				break;
@@ -241,7 +237,7 @@ implements SwiftContainerHelper<T, C> {
 				httpReq = reqConf.createGenericRequest(
 					method,
 					"/" + HttpRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
-						reqConf.getNameSpace() + "/" + name
+						reqConf.getNameSpace() + "/" + containerName
 				);
 				httpReq.setHeader(
 					new BasicHeader(
@@ -254,7 +250,7 @@ implements SwiftContainerHelper<T, C> {
 				httpReq = reqConf.createGenericRequest(
 					method,
 					"/" + HttpRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
-						reqConf.getNameSpace() + "/" + name
+						reqConf.getNameSpace() + "/" + containerName
 				);
 				if(reqConf.getVersioning()) {
 					httpReq.setHeader(
@@ -271,7 +267,7 @@ implements SwiftContainerHelper<T, C> {
 				httpReq = reqConf.createGenericRequest(
 					method,
 					"/" + HttpRequestConfigImpl.class.cast(reqConf).getSvcBasePath() + "/" +
-						reqConf.getNameSpace() + "/" + name
+						reqConf.getNameSpace() + "/" + containerName
 				);
 		}
 		//

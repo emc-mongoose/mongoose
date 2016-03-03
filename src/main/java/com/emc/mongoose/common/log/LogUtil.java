@@ -17,6 +17,8 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.util.Cancellable;
 import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
+import org.apache.logging.log4j.core.util.datetime.DatePrinter;
+import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 import org.apache.logging.log4j.io.IoBuilder;
 //
 import java.io.File;
@@ -25,8 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.DriverManager;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -89,10 +89,8 @@ implements ShutdownCallbackRegistry {
 	//
 	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
 	public static final Locale LOCALE_DEFAULT = Locale.ROOT;
-	public static final DateFormat
-		FMT_DT = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS",LOCALE_DEFAULT) {
-			{ setTimeZone(TZ_UTC); }
-		};
+	public static final DatePrinter
+		FMT_DT = FastDateFormat.getInstance("yyyy.MM.dd.HH.mm.ss.SSS", TZ_UTC, LOCALE_DEFAULT);
 	// console colors
 	public static final String
 		RESET = "\u001B[0m",

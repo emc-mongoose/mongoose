@@ -104,7 +104,7 @@ extends WSRequestHandlerBase<T> {
 							HttpRequestConfig.METHOD_POST.equalsIgnoreCase(method)
 						) {
 							if(prefixLength > 0) {
-								offset = Long.parseLong(oid.substring(prefixLength), idRadix);
+								offset = Long.parseLong(oid.substring(prefixLength + 1), idRadix);
 							} else {
 								offset = Long.parseLong(oid, idRadix);
 							}
