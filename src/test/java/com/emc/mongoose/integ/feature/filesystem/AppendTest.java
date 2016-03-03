@@ -62,6 +62,7 @@ extends FileSystemTestBase {
 		}
 	}
 	//
+	@SuppressWarnings("ResultOfMethodCallIgnored")
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
@@ -69,7 +70,9 @@ extends FileSystemTestBase {
 		System.setProperty(RunTimeConfig.KEY_ITEM_NAMING_PREFIX, "");
 		FileSystemTestBase.tearDownClass();
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
-		for(final File f : tgtDir.listFiles()) {
+		final File[] files = tgtDir.listFiles();
+		Assert.assertNotNull(files);
+		for (final File f : files) {
 			f.delete();
 		}
 		tgtDir.delete();
@@ -104,8 +107,11 @@ extends FileSystemTestBase {
 	public void checkAppendSize() {
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();
 		final long expectedSize = SizeUtil.toSize("200KB");
-		for(final File f : tgtDir.listFiles()) {
+		final File[] files = tgtDir.listFiles();
+		Assert.assertNotNull(files);
+		for (final File f : files) {
 			Assert.assertEquals(expectedSize, f.length());
 		}
+
 	}
 }

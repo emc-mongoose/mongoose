@@ -54,7 +54,7 @@ extends DistributedClientTestBase {
 	//
 	@Test
 	public void checkReadCount() {
-		Assert.assertEquals(COUNT_WRITTEN, COUNT_TO_WRITE, COUNT_TO_WRITE / 100);
-		Assert.assertEquals(COUNT_WRITTEN, COUNT_READ, COUNT_TO_WRITE / 100);
+		Assert.assertEquals(COUNT_WRITTEN, COUNT_TO_WRITE, COUNT_TO_WRITE / 50);
+		Assert.assertEquals(COUNT_WRITTEN, COUNT_READ, COUNT_TO_WRITE / 50);
 	}
 }

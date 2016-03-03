@@ -29,6 +29,12 @@ public final class AsyncRangeGeneratorFactory {
 		EMPTY, RANGE, FORMAT, FORMAT_RANGE
 	}
 
+	/**
+	 * Enums that used to ease understanding of switch-case in createGenerator() method
+	 * @param format - an output format for an AsyncFormatRangeGeneratorBase generator
+	 * @param range - a range of random generator AsyncRangeGeneratorBase values
+	 * @return a state that defines a choice of the generator by the factory
+	 */
 	private static States defineState(String format, String range) {
 		if (format == null) {
 			if (range == null) {

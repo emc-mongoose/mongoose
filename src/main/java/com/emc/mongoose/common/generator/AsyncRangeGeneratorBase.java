@@ -3,7 +3,11 @@ package com.emc.mongoose.common.generator;
 import java.util.Random;
 import com.emc.mongoose.common.generator.AsyncValueGenerator.InitCallable;
 
-
+/**
+ * This class is a base class to create generators that produce values of any types (in specified ranges or not), but their values are intended
+ * to be converted to String.
+ * @param <T> - type of value that is produced by the generator
+ */
 public abstract class AsyncRangeGeneratorBase<T>
 implements Initializable, ValueGenerator<String> {
 
@@ -55,6 +59,13 @@ implements Initializable, ValueGenerator<String> {
 	protected abstract T computeRange(final T minValue, final T maxValue);
 	protected abstract T rangeValue();
 	protected abstract T singleValue();
+
+	/**
+	 * An implementation of this method should specify
+	 * how to get a String presentation of a clean generator-produced value
+	 * @param value - a clean generator-produced value
+	 * @return a String presentation of the value
+	 */
 	protected abstract String stringify(final T value);
 
 	protected T minValue() {
@@ -65,6 +76,10 @@ implements Initializable, ValueGenerator<String> {
 		return range;
 	}
 
+	/**
+	 *
+	 * @return - a clean generator-produced value
+	 */
 	protected T value() {
 		return generator.get();
 	}

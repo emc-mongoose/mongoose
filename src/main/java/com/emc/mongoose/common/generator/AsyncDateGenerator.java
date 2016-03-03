@@ -54,7 +54,7 @@ extends AsyncFormatRangeGeneratorBase<Date> {
 
 	@Override
 	protected String stringify(Date value) {
-		return outputFormat.format(value);
+		return outputFormat().format(value);
 	}
 
 	@Override

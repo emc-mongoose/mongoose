@@ -19,7 +19,7 @@ implements ValueGenerator<String> {
 		this(pattern, countPatternSymbols(pattern));
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked") // AsyncRangeGeneratorFactory always returns ValueGenerator<String> values for generators[]
 	private AsyncFormattingGenerator(final String pattern, final int patternSymbolsNum)
 	throws ParseException {
 		this(pattern, new String[patternSymbolsNum + 1], new ValueGenerator[patternSymbolsNum]);
@@ -92,13 +92,20 @@ implements ValueGenerator<String> {
 
 	/**
 	 *
-	 * @param expression is a string which follows PATTERN_SYMBOL.
-	 * @return presence of the range or format
+	 * @param expression expression is a string which follows PATTERN_SYMBOL.
+	 * @param binarySymbols - symbols for specifying some parameter between two symbols
+	 * @return presence of the parameter. (e.g a range or a format)
 	 */
 	private boolean isParameterPresented(final StringBuilder expression, final char[] binarySymbols) {
 		return expression.length() >= 2 && expression.charAt(1) == binarySymbols[0];
 	}
 
+	/**
+	 *
+	 * @param expression expression is a string which follows PATTERN_SYMBOL.
+	 * @param binarySymbols - symbols for specifying some parameter between two symbols
+	 * @return a parameter that was extracted from the expression
+	 */
 	private String getParameter(final StringBuilder expression, final char[] binarySymbols) {
 		final int closingSymbolPos = expression.indexOf(String.valueOf(binarySymbols[1]));
 		String parameter = expression.substring(2, closingSymbolPos);
@@ -106,6 +113,12 @@ implements ValueGenerator<String> {
 		return parameter;
 	}
 
+	/**
+	 *
+	 * @param expression expression is a string which follows PATTERN_SYMBOL.
+	 * @param binarySymbols - symbols for specifying some parameter between two symbols
+	 * @return a parameter that was extracted from the expression or null if there is no parameters
+	 */
 	private String initParameter(final StringBuilder expression, final char[] binarySymbols) {
 		if (isParameterPresented(expression, binarySymbols)) {
 			return getParameter(expression, binarySymbols);
