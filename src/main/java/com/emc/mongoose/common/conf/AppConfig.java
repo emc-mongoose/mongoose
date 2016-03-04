@@ -12,6 +12,8 @@ import java.util.Map;
 public interface AppConfig
 extends Cloneable, Configuration, Externalizable {
 
+	long serialVersionUID = 42L;
+
 	String CONFIG_ROOT = "config.";
 
 	String KEY_AUTH_ID = "auth.id";
