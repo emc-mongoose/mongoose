@@ -17,8 +17,7 @@
 					}
 				}
 			}
-		},
-		{
+		}, {
 			"type": "load",
 			"config" : {
 				"item" : {
@@ -26,7 +25,7 @@
 						"name" : "linear-read-partial"
 					},
 					"data" : {
-						"ranges" : "1" // TODO
+						"ranges" : 1 // TODO
 					},
 					"src" : {
 						"file" : "/tmp/scenario-linear-read-partial.csv"

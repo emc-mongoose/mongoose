@@ -173,9 +173,6 @@ extends HttpRequestConfigBase<T, C> {
 		sharedHeaders.updateHeader(new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue));
 		appConfig.setProperty(AppConfig.KEY_AUTH_TOKEN, authTokenValue);
 		// configure a container
-		if(container == null) {
-			throw new IllegalStateException("Container is not specified");
-		}
 		final HttpSwiftContainerHelper<T, C>
 			containerHelper = new HttpSwiftContainerHelper<>(this, container);
 		if(containerHelper.exists(storageNodeAddrs[0])) {

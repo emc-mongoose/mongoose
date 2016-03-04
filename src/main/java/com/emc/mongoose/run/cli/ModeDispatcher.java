@@ -88,7 +88,11 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
-				new ScenarioRunner(appConfig).run();
+				try {
+					new ScenarioRunner(appConfig).run();
+				} catch(final Exception e) {
+					LogUtil.exception(rootLogger, Level.FATAL, e, "Scenario failed");
+				}
 				break;
 			default:
 				throw new IllegalArgumentException(

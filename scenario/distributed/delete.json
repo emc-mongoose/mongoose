@@ -1,1 +1,61 @@
-// TODO
+{
+	"jobs": [
+		{
+			"type": "load", // write is used by default
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "linear-delete"
+					},
+					"data" : {
+						"size" : "8KB"
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-linear-delete.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 1000
+					},
+					"threads" : 10,
+					"server" : "10.249.237.71,10.249.237.72"
+				},
+				"run" : {
+					"mode" : "client"
+				},
+				"storage" : {
+					"http" : {
+						"addrs" : "10.249.237.73,10.249.237.74"
+					}
+				}
+			}
+		},
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "linear-delete"
+					},
+					"src" : {
+						"file" : "/tmp/scenario-linear-delete.csv"
+					}
+				},
+				"load" : {
+					"class" : "delete",
+					"threads" : 10,
+					"server" : "10.249.237.71,10.249.237.72"
+				},
+				"run" : {
+					"mode" : "client"
+				},
+				"storage" : {
+					"http" : {
+						"addrs" : "10.249.237.73,10.249.237.74"
+					}
+				}
+			}
+		}
+	]
+}

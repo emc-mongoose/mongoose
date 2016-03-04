@@ -10,6 +10,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
+import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,9 +27,9 @@ public abstract class HttpContainerHelperBase<T extends HttpDataItem, C extends 
 implements ContainerHelper<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static String CONTAINER_PREFIX = BasicConfig.THREAD_CONTEXT.get().getRunName();
 	//
 	protected final HttpRequestConfig<T, C> reqConf;
-	protected final C container;
 	protected final String containerName;
 	protected final String path;
 	protected final String idPrefix;
@@ -37,14 +38,18 @@ implements ContainerHelper<T, C> {
 	protected final int idRadix;
 	protected final boolean verifyContent;
 	//
+	@SuppressWarnings("unchecked")
 	protected HttpContainerHelperBase(final HttpRequestConfig<T, C> reqConf, final C container) {
 		this.reqConf = reqConf;
-		this.container = container;
-		String tmpName = container.getName();
+		String tmpName = container == null ? null : container.getName();
 		if(tmpName == null || tmpName.length() == 0) {
 			final Date dt = Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime();
-			tmpName = BasicConfig.THREAD_CONTEXT.get().getRunName() + "-" + LogUtil.FMT_DT.format(dt);
-			container.setName(tmpName);
+			tmpName = CONTAINER_PREFIX + "-" + LogUtil.FMT_DT.format(dt);
+			if(container == null) {
+				reqConf.setContainer((C) new BasicContainer<T>(tmpName));
+			} else {
+				container.setName(tmpName);
+			}
 		}
 		//
 		final int firstSepPos = tmpName.indexOf('/');
@@ -64,7 +69,7 @@ implements ContainerHelper<T, C> {
 	}
 	//
 	public final String toString() {
-		return container.getName();
+		return containerName;
 	}
 	//
 	@Override

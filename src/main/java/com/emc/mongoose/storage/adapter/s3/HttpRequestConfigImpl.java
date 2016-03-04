@@ -189,11 +189,6 @@ extends HttpRequestConfigBase<T, C> {
 	@Override
 	public final void configureStorage(final String[] storageNodeAddrs)
 	throws IllegalStateException {
-		if(container == null) {
-			throw new IllegalStateException("Bucket is not specified");
-		} else {
-			LOG.debug(Markers.MSG, "Configure storage w/ bucket \"{}\"", container);
-		}
 		final BucketHelper<T, C> bucketHelper = new HttpBucketHelper<>(this, container);
 		if(bucketHelper.exists(storageNodeAddrs[0])) {
 			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", container);
@@ -223,8 +218,7 @@ extends HttpRequestConfigBase<T, C> {
 		);
 		try {
 			final HttpResponse createDirResp = execute(
-				nodeAddr, createDirReq,
-				REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
+				nodeAddr, createDirReq, REQUEST_NO_PAYLOAD_TIMEOUT_SEC, TimeUnit.SECONDS
 			);
 			if(createDirResp == null) {
 				throw new NoHttpResponseException("No HTTP response available");
@@ -262,7 +256,7 @@ extends HttpRequestConfigBase<T, C> {
 		} catch(final Exception e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to create the storage directory \"" + dirPath +
-					" in the bucket \"" + bucketName + "\""
+				" in the bucket \"" + bucketName + "\""
 			);
 		}
 	}
