@@ -6,6 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 //
 import org.apache.commons.configuration.Configuration;
@@ -30,6 +31,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 /**
  Created by kurila on 20.01.16.
@@ -469,6 +471,27 @@ implements AppConfig {
 							parentNode.put(keyParts[i], (Double) value);
 						} else if(value instanceof String) {
 							parentNode.put(keyParts[i], (String) value);
+						} else if(value instanceof List) {
+							// TODO something w/ this ugly code
+							final ArrayNode arrayNode = parentNode.putArray(keyParts[i]);
+							for(final Object listValue : (List) value) {
+								if(listValue instanceof Long) {
+									arrayNode.add((Long) listValue);
+								} else if(listValue instanceof Integer) {
+									arrayNode.add((Integer) listValue);
+								} else if(listValue instanceof Boolean) {
+									arrayNode.add((Boolean) listValue);
+								} else if(listValue instanceof Double) {
+									arrayNode.add((Double) listValue);
+								} else if(listValue instanceof String) {
+									arrayNode.add((String) listValue);
+								} else {
+									throw new IllegalStateException(
+										"Invalud configuration value type: " +
+										(listValue == null ? null : listValue.getClass())
+									);
+								}
+							}
 						} else {
 							throw new IllegalStateException(
 								"Invalud configuration value type: " +
