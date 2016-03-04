@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.io.conf;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.generator.ValueGenerator;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
@@ -22,12 +23,20 @@ implements FileIOConfig<F, D> {
 	//
 	private int batchSize = RunTimeConfig.getContext().getBatchSize();
 	//
+	private ValueGenerator<String> pathGenerator = null;
+	//
 	public BasicFileIOConfig() {
 		super();
+		final String np = getNamePrefix();
+		// todo implement with real code
+//		if(np contains pattern) {
+//			pathGenerator = new path generator(depth, width, radix = 36);
+//		}
 	}
 	//
 	public BasicFileIOConfig(final BasicFileIOConfig<F, D> another) {
 		super(another);
+		this.pathGenerator = another.pathGenerator;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -63,5 +72,24 @@ implements FileIOConfig<F, D> {
 	@Override
 	public String toString() {
 	return "FS-" + StringUtils.capitalize(loadType.name().toLowerCase());
+	}
+
+	@Override
+	public String getNamePrefix() {
+		if (pathGenerator == null) {
+			return super.getNamePrefix();
+		} else {
+			return pathGenerator.get();
+		}
+	}
+
+	@Override
+	public BasicFileIOConfig<F, D> setNamePrefix(final String namePrefix) {
+		super.setNamePrefix(namePrefix);
+		// todo implement with real code
+//		if(namePrefix contains pattern) {
+//			pathGenerator = new path generator(depth, width, radix = 36);
+//		}
+		return this;
 	}
 }

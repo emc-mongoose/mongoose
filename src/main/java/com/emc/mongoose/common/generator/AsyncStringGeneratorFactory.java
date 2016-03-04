@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 import static com.emc.mongoose.common.generator.AsyncDateGenerator.*;
 import static org.apache.commons.lang.time.DateUtils.*;
 
-public final class AsyncRangeGeneratorFactory {
+public final class AsyncStringGeneratorFactory implements GeneratorFactory<String> {
 
 	// pay attention to the matcher groups
 	public static final String DOUBLE_REG_EXP = "([-+]?\\d*\\.?\\d+)";
@@ -17,7 +17,16 @@ public final class AsyncRangeGeneratorFactory {
 	private static final Pattern LONG_PATTERN = Pattern.compile(rangeRegExp(LONG_REG_EXP));
 	private static final Pattern DATE_PATTERN = Pattern.compile(rangeRegExp(DATE_REG_EXP));
 
-	private AsyncRangeGeneratorFactory() {
+	private static AsyncStringGeneratorFactory singleton = null;
+
+	private AsyncStringGeneratorFactory() {
+	}
+
+	public static AsyncStringGeneratorFactory generatorFactory() {
+		if (singleton == null) {
+			singleton = new AsyncStringGeneratorFactory();
+		}
+		return singleton;
 	}
 
 	// Pay attention to the escape symbols
@@ -31,19 +40,21 @@ public final class AsyncRangeGeneratorFactory {
 
 	/**
 	 * This enum is used to ease understanding of switch-case in createGenerator() method.
-	 * @param format - an output format for an AsyncFormatRangeGeneratorBase generator
-	 * @param range - a range of random generator AsyncRangeGeneratorBase values
+	 * @param parameters :
+	 * [0] an output format for an AsyncFormatRangeGeneratorBase generator
+	 * [1] a range of random generator AsyncRangeGeneratorBase values
 	 * @return a state that defines a choice of the generator by the factory
 	 */
-	private static State defineState(String format, String range) {
-		if (format == null) {
-			if (range == null) {
+	@Override
+	public Enum defineState(String... parameters) {
+		if (parameters[0] == null) {
+			if (parameters[1] == null) {
 				return State.EMPTY;
 			} else {
 				return State.RANGE;
 			}
 		} else {
-			if (range == null) {
+			if (parameters[1] == null) {
 				return State.FORMAT;
 			} else {
 				return State.FORMAT_RANGE;
@@ -58,9 +69,10 @@ public final class AsyncRangeGeneratorFactory {
 	 * @return a suitable generator
 	 * @throws ParseException
 	 */
-	public static ValueGenerator<String> createGenerator(final char type, final String ... parameters)
+	@Override
+	public ValueGenerator<String> createGenerator(final char type, final String ... parameters)
 			throws ParseException {
-		State state = defineState(parameters[0], parameters[1]);
+		State state =  (State) defineState(parameters);
 		final Matcher matcher;
 		switch (state) {
 			case EMPTY:

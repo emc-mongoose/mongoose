@@ -9,8 +9,8 @@ import java.util.Arrays;
 import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Pattern;
 
-import static com.emc.mongoose.common.generator.AsyncRangeGeneratorFactory.DOUBLE_REG_EXP;
-import static com.emc.mongoose.common.generator.AsyncRangeGeneratorFactory.LONG_REG_EXP;
+import static com.emc.mongoose.common.generator.AsyncStringGeneratorFactory.DOUBLE_REG_EXP;
+import static com.emc.mongoose.common.generator.AsyncStringGeneratorFactory.LONG_REG_EXP;
 import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
 

@@ -33,7 +33,7 @@ public class SimpleFilePathsGenerator {
 
 	private void writePaths(List<String> paths, String path, boolean rootFlag) {
 		if (!rootFlag) {
-			path += "/" + value;
+			path +=  value  + "/";
 		}
 		if (branches.isEmpty()) {
 			paths.add(path);

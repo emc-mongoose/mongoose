@@ -2,6 +2,8 @@ package com.emc.mongoose.common.generator;
 
 import java.text.ParseException;
 
+import static com.emc.mongoose.common.generator.AsyncStringGeneratorFactory.generatorFactory;
+
 public final class AsyncFormattingGenerator
 extends AsyncValueGenerator<String>
 implements ValueGenerator<String> {
@@ -19,7 +21,7 @@ implements ValueGenerator<String> {
 		this(pattern, countPatternSymbols(pattern));
 	}
 
-	@SuppressWarnings("unchecked") // AsyncRangeGeneratorFactory always returns ValueGenerator<String> values for generators[]
+	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for generators[]
 	private AsyncFormattingGenerator(final String pattern, final int patternSymbolsNum)
 	throws ParseException {
 		this(pattern, new String[patternSymbolsNum + 1], new ValueGenerator[patternSymbolsNum]);
@@ -53,8 +55,8 @@ implements ValueGenerator<String> {
 		);
 		this.generators = generators;
 		this.segments = segments;
-		StringBuilder segmentsBuilder = new StringBuilder();
-		StringBuilder patternBuilder = new StringBuilder(pattern);
+		final StringBuilder segmentsBuilder = new StringBuilder();
+		final StringBuilder patternBuilder = new StringBuilder(pattern);
 		final int patternSymbolsNum = segments.length - 1;
 		int segmentCounter = 0;
 		for (int j = 0; j < patternSymbolsNum; j++) {
@@ -108,7 +110,7 @@ implements ValueGenerator<String> {
 	 */
 	private String getParameter(final StringBuilder expression, final char[] binarySymbols) {
 		final int closingSymbolPos = expression.indexOf(String.valueOf(binarySymbols[1]));
-		String parameter = expression.substring(2, closingSymbolPos);
+		final String parameter = expression.substring(2, closingSymbolPos);
 		expression.delete(1, closingSymbolPos + 1);
 		return parameter;
 	}
@@ -132,7 +134,7 @@ implements ValueGenerator<String> {
 		String format = initParameter(expression, FORMAT_SYMBOLS);
 		String range = initParameter(expression, RANGE_SYMBOLS);
 		expression.delete(0, 1);
-		generators[index] = AsyncRangeGeneratorFactory.createGenerator(type, format, range);
+		generators[index] = generatorFactory().createGenerator(type, format, range);
 	}
 
 	@Override

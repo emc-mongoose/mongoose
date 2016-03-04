@@ -1,16 +1,13 @@
 package com.emc.mongoose.common.generator;
 
 import junit.framework.TestCase;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.concurrent.locks.LockSupport;
-import java.util.regex.Pattern;
 
-import static com.emc.mongoose.common.generator.AsyncRangeGeneratorFactory.*;
 import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
 
