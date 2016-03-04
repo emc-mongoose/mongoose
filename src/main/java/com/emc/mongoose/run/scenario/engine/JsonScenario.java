@@ -50,7 +50,7 @@ implements Scenario {
 			loadTree(tree, this);
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to read the scenario file @ {}", scenarioSrcFile
+				LOG, Level.ERROR, e, "Scenario \"{}\" initialization failure", scenarioSrcFile
 			);
 		}
 	}

@@ -21,6 +21,10 @@ implements ContentSource {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public SeedContentSource() {
+		super();
+	}
+	//
 	public SeedContentSource(final AppConfig appConfig)
 	throws NumberFormatException {
 		this(

@@ -14,6 +14,7 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.tree.DefaultExpressionEngine;
 //
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.logging.log4j.Level;
@@ -41,9 +42,7 @@ implements AppConfig {
 		THREAD_CONTEXT = new InheritableThreadLocal<AppConfig>() {
 		@Override
 		protected final AppConfig initialValue() {
-			final BasicConfig instance = new BasicConfig(
-				Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF)
-			);
+			final BasicConfig instance = new BasicConfig();
 			ThreadContext.put(KEY_RUN_ID, instance.getRunId());
 			ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
 			return instance;
@@ -378,7 +377,7 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public boolean getStroageHttpFsAccess() {
+	public boolean getStorageHttpFsAccess() {
 		return getBoolean(KEY_STORAGE_HTTP_FS_ACCESS);
 	}
 	//
@@ -453,7 +452,7 @@ implements AppConfig {
 		ObjectNode currNode = rootNode, parentNode;
 		for(final Iterator<String> keyIter = super.getKeys(); keyIter.hasNext(); ) {
 			compositeKey = keyIter.next();
-			keyParts = compositeKey.split(DefaultExpressionEngine.DEFAULT_PROPERTY_DELIMITER);
+			keyParts = compositeKey.split("\\.");
 			for(i = 0; i < keyParts.length; i ++) {
 				parentNode = currNode;
 				currNode = (ObjectNode) currNode.get(keyParts[i]);
@@ -462,6 +461,8 @@ implements AppConfig {
 						value = getProperty(compositeKey);
 						if(value instanceof Long) {
 							parentNode.put(keyParts[i], (Long) value);
+						} else if(value instanceof Integer) {
+							parentNode.put(keyParts[i], (Integer) value);
 						} else if(value instanceof Boolean) {
 							parentNode.put(keyParts[i], (Boolean) value);
 						} else if(value instanceof Double) {
@@ -471,9 +472,10 @@ implements AppConfig {
 						} else {
 							throw new IllegalStateException(
 								"Invalud configuration value type: " +
-									(value == null ? null : value.getClass())
+								(value == null ? null : value.getClass())
 							);
 						}
+						currNode = parentNode;
 					} else {
 						currNode = mapper.createObjectNode();
 						parentNode.set(keyParts[i], currNode);

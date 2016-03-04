@@ -245,11 +245,11 @@ implements IOConfig<T, C> {
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
 		setContainer((C) in.readObject());
 		LOG.trace(Markers.MSG, "Got container {}", container);
-		setNameSpace(String.class.cast(in.readObject()));
+		setNameSpace((String) in.readObject());
 		LOG.trace(Markers.MSG, "Got namespace {}", nameSpace);
-		setNamePrefix(String.class.cast(in.readObject()));
+		setNamePrefix((String) in.readObject());
 		LOG.trace(Markers.MSG, "Got name prefix {}", namePrefix);
-		setContentSource(ContentSource.class.cast(in.readObject()));
+		setContentSource((ContentSource) in.readObject());
 		LOG.trace(Markers.MSG, "Got data source {}", contentSrc);
 		setVerifyContentFlag(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got verify content flag {}", verifyContentFlag);

@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.02.16.
@@ -33,10 +34,14 @@ implements JobContainer {
 	throws IOException {
 		try {
 			final AppConfig localConfig = (AppConfig) BasicConfig.THREAD_CONTEXT.get().clone();
-			localConfig.override(null, configTree);
-			final LoadBuilder loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);
-			limitTime = localConfig.getLoadLimitTime();
-			loadJob = loadJobBuilder.build();
+			try {
+				localConfig.override(null, configTree);
+				final LoadBuilder loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);
+				limitTime = localConfig.getLoadLimitTime();
+				loadJob = loadJobBuilder.build();
+			} catch(final NoSuchElementException e) {
+				throw new RuntimeException(e);
+			}
 		} catch(final CloneNotSupportedException e) {
 			throw new RuntimeException(e);
 		}

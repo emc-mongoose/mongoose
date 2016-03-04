@@ -214,7 +214,7 @@ extends HttpRequestConfigBase<T, C> {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, AppConfig.KEY_AUTH_TOKEN);
 		}
 		//
-		if(this.appConfig.getStroageHttpFsAccess()) {
+		if(this.appConfig.getStorageHttpFsAccess()) {
 			uriBasePath = PREFIX_URI + API_TYPE_FS;
 		} else {
 			uriBasePath = PREFIX_URI + API_TYPE_OBJ;

@@ -14,7 +14,6 @@ import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
 import org.apache.commons.lang.NotImplementedException;

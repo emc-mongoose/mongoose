@@ -14,7 +14,7 @@ extends Cloneable, Configuration, Externalizable {
 
 	long serialVersionUID = 42L;
 
-	String CONFIG_ROOT = "config.";
+	String CONFIG_ROOT = "config";
 
 	String KEY_AUTH_ID = "auth.id";
 	String KEY_AUTH_SECRET = "auth.secret";
@@ -205,7 +205,7 @@ extends Cloneable, Configuration, Externalizable {
 
 	int getStorageHttpApi_Port();
 
-	boolean getStroageHttpFsAccess();
+	boolean getStorageHttpFsAccess();
 
 	Configuration getStorageHttpHeaders();
 

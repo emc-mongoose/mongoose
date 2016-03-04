@@ -100,7 +100,6 @@ implements HttpDataLoadBuilderSvc<T, U> {
 		// the statement below fixes hi-level API distributed mode usage and tests
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
-		//
 		return (U) new BasicHttpDataLoadSvc<>(
 			appConfig, httpReqConf, storageNodeAddrs, threadCount,
 			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit,

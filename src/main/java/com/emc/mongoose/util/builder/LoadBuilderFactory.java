@@ -47,7 +47,6 @@ public class LoadBuilderFactory {
 				constructor = loadBuilderImplClass.getConstructor(AppConfig.class);
 			loadBuilderInstance = constructor.newInstance(appConfig);
 		} catch(final Exception e) {
-			e.printStackTrace(System.out);
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create a load builder");
 			throw new RuntimeException(e);
 		}

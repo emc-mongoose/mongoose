@@ -693,11 +693,6 @@ implements LoadExecutor<T> {
 	protected final void ioTaskFailed(final int n, final Throwable e) {
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
-		if(!isClosed.get() && !isInterrupted.get()) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O tasks ({}) failure", getName(), n);
-		} else {
-			LOG.debug(Markers.ERR, "{}: {} I/O tasks has been interrupted", getName(), n);
-		}
 	}
 	//
 	protected void passItems()

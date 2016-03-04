@@ -67,8 +67,8 @@ implements LoadBuilderClient<T, W, U> {
 			try {
 				loadBuilderSvc = resolve(serverAddr);
 				LOG.info(
-						Markers.MSG, "Resolved service \"{}\" @ {}",
-						loadBuilderSvc.getName(), serverAddr
+					Markers.MSG, "Resolved service \"{}\" @ {}",
+					loadBuilderSvc.getName(), serverAddr
 				);
 				nextInstanceN = loadBuilderSvc.getNextInstanceNum(appConfig.getRunId());
 				if(nextInstanceN > maxLastInstanceN) {
@@ -160,14 +160,22 @@ implements LoadBuilderClient<T, W, U> {
 				if(nextLoadSvcConfig == null) {
 					nextLoadSvcConfig = appConfig; // use default
 					LOG.debug(
-							Markers.MSG, "Applying the common configuration to server @ \"{}\"...", addr
+						Markers.MSG, "Applying the common configuration to server @ \"{}\"...", addr
 					);
 				} else {
 					LOG.debug(
-							Markers.MSG, "Applying the specific configuration to server @ \"{}\"...", addr
+						Markers.MSG, "Applying the specific configuration to server @ \"{}\"...",
+						addr
 					);
 				}
-				nextBuilder.setAppConfig(nextLoadSvcConfig);
+				try {
+					nextBuilder.setAppConfig(nextLoadSvcConfig);
+				} catch(final Exception e) {
+					LogUtil.exception(
+						LOG, Level.ERROR, e,
+						"Failed to apply the configuration to the server @ \"{}\"", addr
+					);
+				}
 			}
 		}
 		//

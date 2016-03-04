@@ -15,7 +15,6 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
 import static com.emc.mongoose.common.generator.AsyncFormattingGenerator.PATTERN_SYMBOL;
@@ -388,7 +387,7 @@ implements HttpRequestConfig<T, C> {
 	public HttpRequestConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		// setScheme(...)
 		setNameSpace(appConfig.getStorageHttpNamespace());
-		setFileAccessEnabled(appConfig.getStroageHttpFsAccess());
+		setFileAccessEnabled(appConfig.getStorageHttpFsAccess());
 		setVersioning(appConfig.getStorageHttpVersioning());
 		final String containerName = appConfig.getItemContainerName();
 		if(containerName != null && !containerName.isEmpty()) {
