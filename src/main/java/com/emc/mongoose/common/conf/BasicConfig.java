@@ -72,6 +72,10 @@ implements AppConfig {
 		return DIR_ROOT;
 	}
 	//
+	public BasicConfig() {
+		this(Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF));
+	}
+	//
 	public BasicConfig(final Path cfgFilePath) {
 		final Logger log = LogManager.getLogger();
 		loadFromJson(cfgFilePath);
