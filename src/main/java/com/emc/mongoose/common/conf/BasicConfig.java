@@ -555,7 +555,7 @@ implements AppConfig {
 	public String toFormattedString() {
 		final Logger log = LogManager.getLogger();
 		final ObjectMapper
-			mapper = new ObjectMapper();//.configure(SerializationFeature.INDENT_OUTPUT, true);
+			mapper = new ObjectMapper().configure(SerializationFeature.INDENT_OUTPUT, true);
 		try {
 			return mapper.writeValueAsString(toJsonTree(mapper));
 		} catch(final JsonProcessingException e) {
