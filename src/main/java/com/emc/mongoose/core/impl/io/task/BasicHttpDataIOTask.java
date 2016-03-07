@@ -39,6 +39,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CancelledKeyException;
@@ -254,14 +255,15 @@ implements HttpDataIOTask<T> {
 		if(e instanceof ConnectionClosedException | e instanceof CancelledKeyException) {
 			LogUtil.exception(LOG, Level.TRACE, e, "I/O task dropped while executing");
 			status = Status.CANCELLED;
-			exception = e;
-			respTimeDone = System.nanoTime() / 1000;
+		} else if(e instanceof ConnectException) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to connect to \"{}\"", nodeAddr);
+			status = Status.FAIL_UNKNOWN;
 		} else {
 			LogUtil.exception(LOG, Level.DEBUG, e, "I/O task failure");
 			status = Status.FAIL_UNKNOWN;
-			exception = e;
-			respTimeDone = System.nanoTime() / 1000;
 		}
+		exception = e;
+		respTimeDone = System.nanoTime() / 1000;
 	}
 	//
 	@Override
