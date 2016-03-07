@@ -451,7 +451,7 @@ implements AppConfig {
 		int i;
 		Object value;
 		String compositeKey, keyParts[];
-		ObjectNode currNode = rootNode, parentNode;
+		ObjectNode currNode = configNode, parentNode;
 		for(final Iterator<String> keyIter = super.getKeys(); keyIter.hasNext(); ) {
 			compositeKey = keyIter.next();
 			keyParts = compositeKey.split("\\.");
@@ -555,7 +555,7 @@ implements AppConfig {
 	public String toFormattedString() {
 		final Logger log = LogManager.getLogger();
 		final ObjectMapper
-			mapper = new ObjectMapper().configure(SerializationFeature.INDENT_OUTPUT, true);
+			mapper = new ObjectMapper();//.configure(SerializationFeature.INDENT_OUTPUT, true);
 		try {
 			return mapper.writeValueAsString(toJsonTree(mapper));
 		} catch(final JsonProcessingException e) {
