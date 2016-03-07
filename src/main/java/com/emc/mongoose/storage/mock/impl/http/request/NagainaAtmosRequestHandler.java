@@ -118,9 +118,9 @@ public class NagainaAtmosRequestHandler<T extends HttpDataItemMock> extends Naga
 						}
 					} catch (final NumberFormatException e) {
 						LogUtil.exception(
-								LOG, Level.WARN, e,
-								"Failed to parse offset meta tag value: \"{}\"",
-								processResult
+							LOG, Level.WARN, e,
+							"Failed to parse offset meta tag value: \"{}\"",
+							processResult
 						);
 					}
 					handleGenericDataReq(method, getSubtenant(request.headers(), uri), objId, offset, size, ctx);
