@@ -63,9 +63,9 @@ implements FileIOTask<T> {
 		//
 		switch(ioType) {
 			case CREATE:
-				openOptions.add(StandardOpenOption.CREATE);
+				//openOptions.add(StandardOpenOption.CREATE);
 				openOptions.add(StandardOpenOption.WRITE);
-				openOptions.add(StandardOpenOption.TRUNCATE_EXISTING);
+				//openOptions.add(StandardOpenOption.TRUNCATE_EXISTING);
 				break;
 			case READ:
 				openOptions.add(StandardOpenOption.READ);
