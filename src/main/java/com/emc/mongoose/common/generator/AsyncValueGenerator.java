@@ -16,12 +16,14 @@ import java.util.concurrent.Callable;
 public class AsyncValueGenerator<T>
 extends BasicValueGenerator<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	private final static int MAX_UPDATE_TASKS = 1024;
 	protected interface InitRunnable extends Initializable, Runnable {}
-	private final static BlockingQueue<InitRunnable>
+	protected interface InitCallable<T> extends Initializable, Callable<T> {}
+	//
+	private static final Logger LOG = LogManager.getLogger();
+	private static final int MAX_UPDATE_TASKS = 1024;
+	private static final BlockingQueue<InitRunnable>
 		UPDATE_TASKS = new ArrayBlockingQueue<>(MAX_UPDATE_TASKS);
-	private final static Thread UPDATE_VALUES_WORKER = new Thread() {
+	private static final Thread UPDATE_VALUES_WORKER = new Thread() {
 		//
 		{
 			setName("asyncUpdateValuesWorker");
@@ -60,14 +62,13 @@ extends BasicValueGenerator<T> {
 		}
 	};
 	//
-	protected interface InitCallable<T> extends Initializable, Callable<T> {}
-	//
-	public AsyncValueGenerator(final T initialValue, final InitCallable<T> updateAction) {
+	public AsyncValueGenerator(final T initialValue, final Callable<T> updateAction) {
 		super(initialValue, null);
 		final InitRunnable updateTask = new InitRunnable() {
 			@Override
 			public final boolean isInitialized() {
-				return updateAction.isInitialized();
+				return updateAction != null &&
+						(!(updateAction instanceof InitCallable) || ((InitCallable) updateAction).isInitialized());
 			}
 			@Override
 			public final void run() {

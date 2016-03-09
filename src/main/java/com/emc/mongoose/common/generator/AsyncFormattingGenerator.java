@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.generator;
 
 import java.text.ParseException;
+import java.util.concurrent.Callable;
 
 public final class AsyncFormattingGenerator
 extends AsyncValueGenerator<String>
@@ -15,17 +16,13 @@ implements ValueGenerator<String> {
 	throws ParseException {
 		super(
 			null,
-			new InitCallable<String>() {
+			new Callable<String>() {
 				private final StringBuilder result = new StringBuilder();
 				@Override
 				public String call()
 				throws Exception {
 					result.setLength(0);
 					return innerGenerator.format(result);
-				}
-				@Override
-				public boolean isInitialized() {
-					return true;
 				}
 			}
 		);

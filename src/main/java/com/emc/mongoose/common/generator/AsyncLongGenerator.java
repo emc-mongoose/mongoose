@@ -31,9 +31,4 @@ extends AsyncRangeGeneratorBase<Long> {
 	protected String stringify(Long value) {
 		return value.toString();
 	}
-
-	@Override
-	public final boolean isInitialized() {
-		return true;
-	}
 }

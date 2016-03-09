@@ -4,12 +4,13 @@ import java.util.Random;
 import com.emc.mongoose.common.generator.AsyncValueGenerator.InitCallable;
 
 /**
- * This class is a base class to create generators that produce values of any types (in specified ranges or not), but their values are intended
- * to be converted to String.
+ * This class is a base class to create generators that produce values of any types (in specified ranges or not),
+ * but their values are intended to be converted to String.
+ * ATTENTION: It is necessary to implement Initializable if the child class contains another AsyncValueGenerator as a field
  * @param <T> - type of value that is produced by the generator
  */
 public abstract class AsyncRangeGeneratorBase<T>
-implements Initializable, ValueGenerator<String> {
+implements ValueGenerator<String> {
 
 	protected final Random random = new Random();
 	private final T minValue;
@@ -25,7 +26,8 @@ implements Initializable, ValueGenerator<String> {
 				//
 				@Override
 				public boolean isInitialized() {
-					return AsyncRangeGeneratorBase.this.isInitialized();
+					return !(AsyncRangeGeneratorBase.this instanceof Initializable) ||
+							((Initializable) AsyncRangeGeneratorBase.this).isInitialized();
 				}
 				//
 				@Override
@@ -45,7 +47,8 @@ implements Initializable, ValueGenerator<String> {
 				//
 				@Override
 				public boolean isInitialized() {
-					return AsyncRangeGeneratorBase.this.isInitialized();
+					return !(AsyncRangeGeneratorBase.this instanceof Initializable) ||
+							((Initializable) AsyncRangeGeneratorBase.this).isInitialized();
 				}
 				//
 				@Override
@@ -88,5 +91,4 @@ implements Initializable, ValueGenerator<String> {
 	public String get() {
 		return stringify(value());
 	}
-
 }

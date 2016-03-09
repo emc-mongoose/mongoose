@@ -46,9 +46,4 @@ extends AsyncFormatRangeGeneratorBase<Double> {
 	protected String stringify(Double value) {
 		return outputFormat().format(value);
 	}
-
-	@Override
-	public final boolean isInitialized() {
-		return true;
-	}
 }
