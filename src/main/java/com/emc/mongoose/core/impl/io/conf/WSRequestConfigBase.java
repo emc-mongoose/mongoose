@@ -17,7 +17,7 @@ import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
-import static com.emc.mongoose.common.generator.AsyncFormattingGenerator.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.generator.FormattingGeneratorSkeleton.PATTERN_SYMBOL;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.BasicWSObject;

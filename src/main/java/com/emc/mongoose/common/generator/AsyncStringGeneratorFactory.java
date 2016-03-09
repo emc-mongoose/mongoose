@@ -5,6 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.generator.AsyncDateGenerator.*;
+import static com.emc.mongoose.common.generator.FormattingGeneratorSkeleton.RANGE_DELIMITER;
 import static org.apache.commons.lang.time.DateUtils.*;
 
 public final class AsyncStringGeneratorFactory implements GeneratorFactory<String> {
@@ -31,7 +32,7 @@ public final class AsyncStringGeneratorFactory implements GeneratorFactory<Strin
 
 	// Pay attention to the escape symbols
 	private static String rangeRegExp(final String typeRegExp) {
-		return typeRegExp + AsyncFormattingGenerator.RANGE_DELIMITER + typeRegExp;
+		return typeRegExp + RANGE_DELIMITER + typeRegExp;
 	}
 
 	private enum State {
