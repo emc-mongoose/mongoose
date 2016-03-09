@@ -1,14 +1,14 @@
 package com.emc.mongoose.common.generator;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Random;
 
-public class SimpleFilePathsGenerator {
+public class SimpleFilePathsGenerator implements ValueGenerator<String> {
 
 	private static final String DIR_NAME_PREFIX = "d";
+	private static final Random random = new Random();
 
-	private List<SimpleFilePathsGenerator> branches = new ArrayList<>();
-	private List<String> paths = new ArrayList<>();
+	private SimpleFilePathsGenerator branch;
+	private String path;
 	private String value;
 
 	public SimpleFilePathsGenerator(int width, int depth) {
@@ -21,35 +21,27 @@ public class SimpleFilePathsGenerator {
 			return;
 		}
 		depth--;
-		for (int i = 1; i < width + 1; i++) {
-			branches.add(new SimpleFilePathsGenerator(width, depth, value + i));
-		}
-		writePaths(paths, "", true);
+		int suffix = random.nextInt(width) + 1;
+		this.branch = new SimpleFilePathsGenerator(width, depth, value + suffix);
+		this.path = writePath("", true);
 	}
 
 	public String getValue() {
 		return value;
 	}
 
-	private void writePaths(List<String> paths, String path, boolean rootFlag) {
+	public String writePath(String path, boolean rootFlag) {
+		if (branch == null) {
+			return path;
+		}
 		if (!rootFlag) {
-			path +=  value  + "/";
+			path += value + "/";
 		}
-		if (branches.isEmpty()) {
-			paths.add(path);
-		}
-		for (SimpleFilePathsGenerator branch: branches) {
-			branch.writePaths(paths, path, false);
-		}
+		return branch.writePath(path, false);
 	}
 
-	public void printPaths() {
-		for (String path: paths) {
-			System.out.println(path);
-		}
-	}
-
-	public List<String> paths() {
-		return paths;
+	@Override
+	public String get() {
+		return path;
 	}
 }

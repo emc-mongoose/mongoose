@@ -6,7 +6,6 @@ import com.emc.mongoose.common.generator.AsyncValueGenerator.InitCallable;
 /**
  * This class is a base class to create generators that produce values of any types (in specified ranges or not),
  * but their values are intended to be converted to String.
- * ATTENTION: It is necessary to implement Initializable if the child class contains another AsyncValueGenerator as a field
  * @param <T> - type of value that is produced by the generator
  */
 public abstract class AsyncRangeGeneratorBase<T>
