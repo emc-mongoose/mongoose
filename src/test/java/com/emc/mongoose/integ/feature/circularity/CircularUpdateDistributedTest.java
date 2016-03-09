@@ -19,7 +19,6 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -111,7 +110,7 @@ extends DistributedClientTestBase {
 	public void checkUpdatedCount()
 	throws Exception {
 		Assert.assertEquals(
-			COUNT_WRITTEN * COUNT_OF_UPDATES, COUNT_UPDATED, (COUNT_UPDATED * 5) / 100
+			COUNT_WRITTEN * COUNT_OF_UPDATES, COUNT_UPDATED, (COUNT_UPDATED * 5) / 50
 		);
 	}
 	//

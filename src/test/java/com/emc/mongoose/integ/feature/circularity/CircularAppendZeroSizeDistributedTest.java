@@ -123,7 +123,7 @@ extends DistributedClientTestBase {
 	public void checkAppendedCount()
 	throws Exception {
 		Assert.assertEquals(
-			COUNT_WRITTEN * COUNT_OF_APPEND, COUNT_APPENDED, (COUNT_APPENDED * 5) / 100
+			COUNT_WRITTEN * COUNT_OF_APPEND, COUNT_APPENDED, (COUNT_APPENDED * 5) / 50
 		);
 	}
 	//

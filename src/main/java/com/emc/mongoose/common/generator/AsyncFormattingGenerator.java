@@ -8,23 +8,25 @@ implements ValueGenerator<String> {
 
 	public static final char PATTERN_SYMBOL = '%';
 	public static final char[] RANGE_SYMBOLS = {'[',']'};
+	public static final char[] FORMAT_SYMBOLS = {'{', '}'};
 	public static final char RANGE_DELIMITER = '-';
 
 	private final String[] segments;
-	private final ValueGenerator<?>[] generators;
+	private final ValueGenerator<String>[] generators;
 
 	public AsyncFormattingGenerator(final String pattern)
 	throws ParseException {
 		this(pattern, countPatternSymbols(pattern));
 	}
 
+	@SuppressWarnings("unchecked") // AsyncRangeGeneratorFactory always returns ValueGenerator<String> values for generators[]
 	private AsyncFormattingGenerator(final String pattern, final int patternSymbolsNum)
 	throws ParseException {
-		this(pattern, new String[patternSymbolsNum + 1], new ValueGenerator<?>[patternSymbolsNum]);
+		this(pattern, new String[patternSymbolsNum + 1], new ValueGenerator[patternSymbolsNum]);
 	}
 
 	private AsyncFormattingGenerator(
-		final String pattern, final String[] segments, final ValueGenerator<?>[] generators
+		final String pattern, final String[] segments, final ValueGenerator<String>[] generators
 	) throws ParseException {
 		super(
 			null,
@@ -90,29 +92,47 @@ implements ValueGenerator<String> {
 
 	/**
 	 *
-	 * @param expression is a string which follows PATTERN_SYMBOL.
-	 * @return presence of the range
+	 * @param expression expression is a string which follows PATTERN_SYMBOL.
+	 * @param binarySymbols - symbols for specifying some parameter between two symbols
+	 * @return presence of the parameter. (e.g a range or a format)
 	 */
-	private boolean isRangePresented(final StringBuilder expression) {
-		return expression.length() >= 2 && expression.charAt(1) == RANGE_SYMBOLS[0];
+	private boolean isParameterPresented(final StringBuilder expression, final char[] binarySymbols) {
+		return expression.length() >= 2 && expression.charAt(1) == binarySymbols[0];
 	}
 
-	private String getRange(final StringBuilder expression) {
-		final int closingSymbolPos = expression.indexOf(String.valueOf(RANGE_SYMBOLS[1]));
-		String range = expression.substring(2, closingSymbolPos);
-		expression.delete(0, closingSymbolPos + 1);
-		return range;
+	/**
+	 *
+	 * @param expression expression is a string which follows PATTERN_SYMBOL.
+	 * @param binarySymbols - symbols for specifying some parameter between two symbols
+	 * @return a parameter that was extracted from the expression
+	 */
+	private String getParameter(final StringBuilder expression, final char[] binarySymbols) {
+		final int closingSymbolPos = expression.indexOf(String.valueOf(binarySymbols[1]));
+		String parameter = expression.substring(2, closingSymbolPos);
+		expression.delete(1, closingSymbolPos + 1);
+		return parameter;
+	}
+
+	/**
+	 *
+	 * @param expression expression is a string which follows PATTERN_SYMBOL.
+	 * @param binarySymbols - symbols for specifying some parameter between two symbols
+	 * @return a parameter that was extracted from the expression or null if there is no parameters
+	 */
+	private String initParameter(final StringBuilder expression, final char[] binarySymbols) {
+		if (isParameterPresented(expression, binarySymbols)) {
+			return getParameter(expression, binarySymbols);
+		}
+		return null;
 	}
 
 	private void addExpressionParams(final StringBuilder expression, final int index)
 	throws ParseException {
 		final char type = expression.charAt(0);
-		if (isRangePresented(expression)) {
-			generators[index] = AsyncRangeGeneratorFactory.createGenerator(type, getRange(expression));
-		} else {
-			generators[index] = AsyncRangeGeneratorFactory.createGenerator(type);
-			expression.delete(0, 1);
-		}
+		String format = initParameter(expression, FORMAT_SYMBOLS);
+		String range = initParameter(expression, RANGE_SYMBOLS);
+		expression.delete(0, 1);
+		generators[index] = AsyncRangeGeneratorFactory.createGenerator(type, format, range);
 	}
 
 	@Override

@@ -60,7 +60,7 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@SuppressWarnings("unchecked")
-	private ItemSrc<T> getNewItemSrc()
+	protected ItemSrc<T> getNewItemSrc()
 	throws NoSuchMethodException {
 		final String ns = rtConfig.getItemNamingType();
 		ItemNamingType namingType = ItemNamingType.RANDOM;

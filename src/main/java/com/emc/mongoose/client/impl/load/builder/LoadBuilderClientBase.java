@@ -355,8 +355,6 @@ implements LoadBuilderClient<T, W, U> {
 		return this;
 	}
 	//
-	protected abstract ItemSrc<T> getDefaultItemSource();
-	//
 	protected void resetItemSrc() {
 		flagUseNewItemSrc = true;
 		flagUseNoneItemSrc = false;
