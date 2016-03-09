@@ -10,7 +10,7 @@ import com.emc.mongoose.common.generator.AsyncValueGenerator.InitCallable;
  * @param <T> - type of value that is produced by the generator
  */
 public abstract class AsyncRangeGeneratorBase<T>
-implements ValueGenerator<String> {
+implements Initializable, ValueGenerator<String> {
 
 	protected final Random random = new Random();
 	private final T minValue;
@@ -26,8 +26,7 @@ implements ValueGenerator<String> {
 				//
 				@Override
 				public boolean isInitialized() {
-					return !(AsyncRangeGeneratorBase.this instanceof Initializable) ||
-							((Initializable) AsyncRangeGeneratorBase.this).isInitialized();
+					return AsyncRangeGeneratorBase.this.isInitialized();
 				}
 				//
 				@Override
@@ -47,8 +46,7 @@ implements ValueGenerator<String> {
 				//
 				@Override
 				public boolean isInitialized() {
-					return !(AsyncRangeGeneratorBase.this instanceof Initializable) ||
-							((Initializable) AsyncRangeGeneratorBase.this).isInitialized();
+					return AsyncRangeGeneratorBase.this.isInitialized();
 				}
 				//
 				@Override
@@ -90,5 +88,10 @@ implements ValueGenerator<String> {
 	@Override
 	public String get() {
 		return stringify(value());
+	}
+
+	@Override
+	public boolean isInitialized() {
+		return true;
 	}
 }

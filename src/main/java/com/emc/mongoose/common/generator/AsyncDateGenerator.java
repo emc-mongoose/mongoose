@@ -7,8 +7,7 @@ import java.text.Format;
 import java.text.ParseException;
 import java.util.Date;
 public final class AsyncDateGenerator
-extends AsyncFormatRangeGeneratorBase<Date>
-implements Initializable {
+extends AsyncFormatRangeGeneratorBase<Date> {
 
 	public final static String[] INPUT_DATE_FMT_STRINGS = new String[]{"yyyy/MM/dd"};
 
