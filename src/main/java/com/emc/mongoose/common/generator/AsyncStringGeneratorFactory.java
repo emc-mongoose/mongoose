@@ -5,7 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.generator.AsyncDateGenerator.*;
-import static com.emc.mongoose.common.generator.FormattingGeneratorSkeleton.RANGE_DELIMITER;
+import static com.emc.mongoose.common.generator.FormattingGenerator.RANGE_DELIMITER;
 import static org.apache.commons.lang.time.DateUtils.*;
 
 public final class AsyncStringGeneratorFactory implements GeneratorFactory<String> {

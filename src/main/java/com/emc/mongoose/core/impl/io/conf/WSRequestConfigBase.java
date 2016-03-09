@@ -17,7 +17,7 @@ import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
-import static com.emc.mongoose.common.generator.FormattingGeneratorSkeleton.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.generator.FormattingGenerator.PATTERN_SYMBOL;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.BasicWSObject;
@@ -34,7 +34,6 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.entity.ContentType;
