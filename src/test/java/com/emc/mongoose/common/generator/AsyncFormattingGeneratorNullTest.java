@@ -8,12 +8,12 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.concurrent.locks.LockSupport;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class AsyncFormattingGeneratorNullTest
-extends TestCase {
+public class AsyncFormattingGeneratorNullTest {
 
 	private static final String OUTPUT_NUMBER_FMT_STRING = "%f" + "{" + "###.##" + "}";
 	private static final String OUTPUT_DATE_FMT_STRING = "%D" + "{" + "yyyy-MM-dd'T'HH:mm:ssZ" + "}";

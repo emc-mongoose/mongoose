@@ -822,20 +822,12 @@ implements WSRequestConfig<T, C> {
 			if(!request.containsHeader(headerName)) {
 				if (headerValue != null && headerValue.indexOf(PATTERN_SYMBOL) > -1) {
 					if (!HEADER_FORMATTERS.containsKey(headerName)) {
-						try {
-							final ValueGenerator<String>
-								formatter = new AsyncFormattingGenerator(headerValue);
-							while(null == formatter.get()) {
-								LockSupport.parkNanos(1);
-								Thread.yield();
-							}
-							HEADER_FORMATTERS.put(headerName, formatter);
-						} catch(final ParseException e) {
-							LogUtil.exception(
-								LOG, Level.ERROR, e, "Failed to parse the pattern \"{}\"",
-								headerValue
-							);
+						final ValueGenerator<String> formatter = new AsyncFormattingGenerator(headerValue);
+						while(null == formatter.get()) {
+							LockSupport.parkNanos(1);
+							Thread.yield();
 						}
+						HEADER_FORMATTERS.put(headerName, formatter);
 					}
 					request.setHeader(
 						new BasicHeader(headerName, HEADER_FORMATTERS.get(headerName).get())

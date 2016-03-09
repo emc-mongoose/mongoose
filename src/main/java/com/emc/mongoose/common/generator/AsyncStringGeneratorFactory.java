@@ -1,5 +1,10 @@
 package com.emc.mongoose.common.generator;
 
+import com.emc.mongoose.common.log.LogUtil;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -10,6 +15,7 @@ import static org.apache.commons.lang.time.DateUtils.*;
 
 public final class AsyncStringGeneratorFactory implements GeneratorFactory<String> {
 
+	private static final Logger LOG = LogManager.getLogger();
 	// pay attention to the matcher groups
 	public static final String DOUBLE_REG_EXP = "([-+]?\\d*\\.?\\d+)";
 	public static final String LONG_REG_EXP = "([-+]?\\d+)";
@@ -68,11 +74,9 @@ public final class AsyncStringGeneratorFactory implements GeneratorFactory<Strin
 	 * @param type - a type of the generator
 	 * @param parameters - an array of parameters (if length > 1, first arg - a format, second - a range, by default)
 	 * @return a suitable generator
-	 * @throws ParseException
 	 */
 	@Override
-	public ValueGenerator<String> createGenerator(final char type, final String ... parameters)
-			throws ParseException {
+	public ValueGenerator<String> createGenerator(final char type, final String ... parameters) {
 		State state =  (State) defineState(parameters);
 		final Matcher matcher;
 		switch (state) {
@@ -88,7 +92,13 @@ public final class AsyncStringGeneratorFactory implements GeneratorFactory<Strin
 					case 'f':
 						return new AsyncDoubleGenerator(47.0, parameters[0]);
 					case 'D':
-						return new AsyncDateGenerator(parseDate("2016/02/25", INPUT_DATE_FMT_STRINGS), parameters[0]);
+						try {
+							return new AsyncDateGenerator(parseDate("2016/02/25", INPUT_DATE_FMT_STRINGS), parameters[0]);
+						} catch (ParseException e) {
+							LogUtil.exception(
+									LOG, Level.ERROR, e, "Failed to parse the pattern"
+							);
+						}
 					default:
 						throw new IllegalArgumentException();
 				}
@@ -121,10 +131,16 @@ public final class AsyncStringGeneratorFactory implements GeneratorFactory<Strin
 					case 'D':
 						matcher = DATE_PATTERN.matcher(parameters[1]);
 						if (matcher.find()) {
-							return new AsyncDateGenerator(
-									parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS),
-									parseDate(matcher.group(6), INPUT_DATE_FMT_STRINGS),
-									parameters[0]);
+							try {
+								return new AsyncDateGenerator(
+										parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS),
+										parseDate(matcher.group(6), INPUT_DATE_FMT_STRINGS),
+										parameters[0]);
+							} catch (final ParseException e) {
+								LogUtil.exception(
+										LOG, Level.ERROR, e, "Failed to parse the pattern"
+								);
+							}
 						} else {
 							throw new IllegalArgumentException();
 						}

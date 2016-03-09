@@ -1,19 +1,16 @@
 package com.emc.mongoose.common.generator;
 
-import java.text.ParseException;
 import java.util.concurrent.Callable;
 
 public final class AsyncFormattingGenerator
 extends AsyncValueGenerator<String>
 implements ValueGenerator<String> {
 
-	public AsyncFormattingGenerator(final String pattern)
-	throws ParseException {
-		this(new FormattingGenerator(pattern));
+	public AsyncFormattingGenerator(final String pattern) {
+		this(new FormattingGenerator(pattern, AsyncStringGeneratorFactory.generatorFactory()));
 	}
 
-	private AsyncFormattingGenerator(final FormattingGenerator innerGenerator)
-	throws ParseException {
+	private AsyncFormattingGenerator(final FormattingGenerator innerGenerator) {
 		super(
 			null,
 			new Callable<String>() {

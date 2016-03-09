@@ -11,12 +11,13 @@ import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.generator.AsyncStringGeneratorFactory.DOUBLE_REG_EXP;
 import static com.emc.mongoose.common.generator.AsyncStringGeneratorFactory.LONG_REG_EXP;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class AsyncFormattingGeneratorBasicTest
-extends TestCase {
+public class AsyncFormattingGeneratorBasicTest {
 
 	private static final String OUTPUT_NUMBER_FMT_STRING = "%f" + "{" + "###.##" + "}";
 	private static final String OUTPUT_DATE_FMT_STRING = "%D" + "{" + "yyyy-MM-dd'T'HH:mm:ssZ" + "}";
@@ -26,9 +27,9 @@ extends TestCase {
 	private static final Pattern LONG_PATTERN = Pattern.compile(LONG_REG_EXP);
 	private static final Pattern DATE_PATTERN = Pattern.compile(DATE_REG_EXP);
 
-	protected ValueGenerator<String> formatter;
+	private ValueGenerator<String> formatter;
 
-	protected void initFormatter(String patternString) throws Exception {
+	private void initFormatter(String patternString) throws Exception {
 		formatter = new AsyncFormattingGenerator(patternString);
 		while (null == formatter.get()) {
 			LockSupport.parkNanos(1);

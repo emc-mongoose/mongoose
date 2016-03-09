@@ -1,32 +1,35 @@
 package com.emc.mongoose.common.generator;
 
-import java.text.ParseException;
-
-import static com.emc.mongoose.common.generator.AsyncStringGeneratorFactory.generatorFactory;
-
-public class FormattingGenerator implements ValueGenerator<String> {
+public class FormattingGenerator extends SimpleFormattingGenerator {
 
 	/**
 	 * Special characters
 	 */
 	public static final char PATTERN_SYMBOL = '%';
 	public static final char[] RANGE_SYMBOLS = {'[',']'};
-	public static final char[] FORMAT_SYMBOLS = {'{', '}'};
 	public static final char RANGE_DELIMITER = '-';
 
 	/**
 	 * Segments (parts) of the input string that do not require changes
 	 */
-	private final String[] segments;
+	private String[] segments;
 
 	/**
 	 * Generators of values that should be inserted instead of special characters (see above)
 	 */
-	private final ValueGenerator<String>[] generators;
+	private ValueGenerator<String>[] generators;
 
+	public FormattingGenerator(final String pattern) {
+		this(pattern, StringGeneratorFactory.generatorFactory());
+	}
+
+	public FormattingGenerator(final String pattern, final GeneratorFactory<String> generatorFactory) {
+		super(pattern, generatorFactory);
+	}
+
+	@Override
 	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for generators[]
-	public FormattingGenerator(final String pattern)
-	throws ParseException {
+	protected void initialize(String pattern) {
 		final int patternSymbolsNum = countPatternSymbols(pattern);
 		generators = new ValueGenerator[patternSymbolsNum];
 		segments = new String[patternSymbolsNum + 1];
@@ -46,7 +49,6 @@ public class FormattingGenerator implements ValueGenerator<String> {
 			segmentCounter++;
 		}
 		segments[patternSymbolsNum] = patternBuilder.toString();
-
 	}
 
 	/**
@@ -73,57 +75,18 @@ public class FormattingGenerator implements ValueGenerator<String> {
 	}
 
 	/**
-	 *
-	 * @param expression - a string which follows PATTERN_SYMBOL
-	 * @param binarySymbols - symbols for specifying some parameter between two symbols
-	 * @return presence of the parameter. (e.g a range or a format)
-	 */
-	private boolean isParameterPresented(final StringBuilder expression, final char[] binarySymbols) {
-		return expression.length() >= 2 && expression.charAt(1) == binarySymbols[0];
-	}
-
-	/**
-	 *
-	 * @param expression - a string which follows PATTERN_SYMBOL
-	 * @param binarySymbols - symbols for specifying some parameter between two symbols
-	 * @return a parameter that was extracted from the expression
-	 */
-	private String getParameter(final StringBuilder expression, final char[] binarySymbols) {
-		final int closingSymbolPos = expression.indexOf(String.valueOf(binarySymbols[1]));
-		final String parameter = expression.substring(2, closingSymbolPos);
-		expression.delete(1, closingSymbolPos + 1);
-		return parameter;
-	}
-
-	/**
-	 *
-	 * @param expression - a string which follows PATTERN_SYMBOL
-	 * @param binarySymbols - symbols for specifying some parameter between two symbols
-	 * @return a parameter that was extracted from the expression or null if there is no parameters
-	 */
-	private String initParameter(final StringBuilder expression, final char[] binarySymbols) {
-		if (isParameterPresented(expression, binarySymbols)) {
-			return getParameter(expression, binarySymbols);
-		}
-		return null;
-	}
-
-	/**
 	 * In this method is used to fill the 'generators' field with value generators
 	 * in accordance with the specified expression parameters
 	 * @param expression - a string which follows PATTERN_SYMBOL
 	 * @param index of current empty position in generators' array ('generators' field)
-	 * @throws ParseException
 	 */
-	private void addExpressionParams(final StringBuilder expression, final int index)
-			throws ParseException {
+	private void addExpressionParams(final StringBuilder expression, final int index) {
 		final char type = expression.charAt(0);
 		String format = initParameter(expression, FORMAT_SYMBOLS);
 		String range = initParameter(expression, RANGE_SYMBOLS);
 		expression.delete(0, 1);
 		generators[index] = generatorFactory().createGenerator(type, format, range);
 	}
-
 
 	/**
 	 * This method can be used for debug
@@ -151,7 +114,8 @@ public class FormattingGenerator implements ValueGenerator<String> {
 	 *                  (StringBuilder instance must be new or cleared with setLength(0))
 	 * @return string with PATTERN_SYMBOLs replaced by suitable values
 	 */
-	protected String format(StringBuilder result) {
+	@Override
+	protected final String format(StringBuilder result) {
 		for (int i = 0; i < segments.length - 1; i++) {
 			result.append(segments[i]);
 			if (generators[i] != null) {
@@ -160,14 +124,5 @@ public class FormattingGenerator implements ValueGenerator<String> {
 		}
 		result.append(segments[segments.length - 1]);
 		return result.toString();
-	}
-
-	/**
-	 * This is a default get() implementation for FormattingGenerator
-	 * @return string with PATTERN_SYMBOLs replaced by suitable values
-	 */
-	@Override
-	public String get() {
-		return format(new StringBuilder());
 	}
 }

@@ -12,8 +12,7 @@ import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class AsyncFormattingGeneratorExceptionTest
-extends TestCase {
+public class AsyncFormattingGeneratorExceptionTest {
 
 	protected ValueGenerator<String> formatter;
 
