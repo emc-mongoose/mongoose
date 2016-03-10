@@ -28,7 +28,9 @@ implements FileIOConfig<F, D> {
 	//
 	public BasicFileIOConfig() {
 		super();
-		pathGenerator = new FormattingGenerator(super.getNamePrefix());
+		if (super.getNamePrefix() != null) {
+			pathGenerator = new FormattingGenerator(super.getNamePrefix());
+		}
 	}
 	//
 	public BasicFileIOConfig(final BasicFileIOConfig<F, D> another) {
@@ -73,12 +75,18 @@ implements FileIOConfig<F, D> {
 
 	@Override
 	public String getNamePrefix() {
-		return pathGenerator.get();
+		if (pathGenerator != null) {
+			return pathGenerator.get();
+		} else {
+			return null;
+		}
 	}
 
 	@Override
 	public BasicFileIOConfig<F, D> setNamePrefix(final String namePrefix) {
-		pathGenerator = new FormattingGenerator(namePrefix);
+		if (namePrefix != null) {
+			pathGenerator = new FormattingGenerator(namePrefix);
+		}
 		super.setNamePrefix(namePrefix);
 		return this;
 	}

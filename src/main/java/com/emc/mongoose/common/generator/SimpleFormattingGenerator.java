@@ -1,5 +1,7 @@
 package com.emc.mongoose.common.generator;
 
+import org.apache.commons.lang.NullArgumentException;
+
 /**
  * This class is used ONLY for input pattern strings containing only one expression with the pattern symbol.
  */
@@ -39,6 +41,9 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 	}
 
 	public SimpleFormattingGenerator(String pattern, GeneratorFactory<String> generatorFactory) {
+		if (pattern == null) {
+			throw new NullArgumentException("pattern");
+		}
 		this.generatorFactory = generatorFactory;
 		this.pattern = pattern;
 		initialize();
