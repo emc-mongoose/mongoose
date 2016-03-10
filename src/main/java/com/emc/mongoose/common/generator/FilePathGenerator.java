@@ -7,7 +7,7 @@ import static java.lang.Math.abs;
 public class FilePathGenerator implements ValueGenerator<String> {
 
 	public static final String DIR_NAME_PREFIX = "d";
-	private static final String DELIMITER = ";";
+	public static final String DELIMITER = ";";
 	private static final int RADIX = 36;
 
 	private final int width;

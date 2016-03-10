@@ -7,6 +7,7 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
+import static com.emc.mongoose.common.generator.FilePathGenerator.DELIMITER;
 import static com.emc.mongoose.common.generator.FilePathGenerator.DIR_NAME_PREFIX;
 import static org.junit.Assert.*;
 
@@ -57,7 +58,7 @@ public class FormattingGeneratorBasicTest {
 			if (each == ' ') {
 				counter++;
 			}
-			if (each == ';') { // a temp condition
+			if (each == DELIMITER.charAt(0)) { // a temp condition
 				counter--;
 			}
 		}
