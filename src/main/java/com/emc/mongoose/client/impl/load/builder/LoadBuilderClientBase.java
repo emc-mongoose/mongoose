@@ -146,7 +146,7 @@ implements LoadBuilderClient<T, W, U> {
 		super.setAppConfig(appConfig);
 		//
 		storageNodeAddrs = appConfig.getStorageHttpAddrsWithPorts();
-		flagAssignLoadSvcToNode = appConfig.getLoadServerAssignToNode();
+		flagAssignLoadSvcToNode = appConfig.getLoadServerNodeMapping();
 		if(flagAssignLoadSvcToNode) {
 			assignNodesToLoadSvcs(loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
 		}

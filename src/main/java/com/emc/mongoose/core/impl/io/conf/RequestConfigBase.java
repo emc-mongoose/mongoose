@@ -35,10 +35,10 @@ implements RequestConfig<T, C> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		api = appConfig.getStorageHttpApiClass();
+		api = appConfig.getStorageHttpApi();
 		secret = appConfig.getAuthSecret();
 		userName = appConfig.getAuthId();
-		port = appConfig.getStorageHttpApi_Port();
+		port = appConfig.getStorageHttpPort();
 		final String tokenValue = appConfig.getAuthToken();
 		authToken = tokenValue == null ? null : new BasicToken(tokenValue);
 	}
@@ -144,9 +144,9 @@ implements RequestConfig<T, C> {
 	@Override
 	public RequestConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		super.setAppConfig(appConfig);
-		final String api = appConfig.getStorageHttpApiClass();
+		final String api = appConfig.getStorageHttpApi();
 		setAPI(api);
-		setPort(appConfig.getStorageHttpApi_Port());
+		setPort(appConfig.getStorageHttpPort());
 		setUserName(appConfig.getAuthId());
 		setSecret(appConfig.getAuthSecret());
 		final String tokenValue = appConfig.getAuthToken();

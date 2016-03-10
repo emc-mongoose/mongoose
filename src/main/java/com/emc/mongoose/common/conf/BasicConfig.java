@@ -4,6 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -15,7 +16,6 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.tree.DefaultExpressionEngine;
 //
-import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.logging.log4j.Level;
@@ -30,6 +30,7 @@ import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -121,7 +122,7 @@ implements AppConfig {
 	@Override
 	public
 	ItemType getItemClass() {
-		return ItemType.valueOf(getString(KEY_ITEM_CLASS).toUpperCase());
+		return ItemType.valueOf(getString(KEY_ITEM_TYPE).toUpperCase());
 	}
 	//
 	@Override
@@ -131,9 +132,9 @@ implements AppConfig {
 	//
 	@Override
 	public
-	ContentSourceType getItemDataContentClass() {
+	ContentSourceType getItemDataContentType() {
 		return ContentSourceType
-			.valueOf(getString(KEY_ITEM_DATA_CONTENT_CLASS).toUpperCase());
+			.valueOf(getString(KEY_ITEM_DATA_CONTENT_TYPE).toUpperCase());
 	}
 	//
 	@Override
@@ -228,8 +229,8 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public LoadType getLoadClass() {
-		return LoadType.valueOf(getString(KEY_LOAD_CLASS).toUpperCase());
+	public LoadType getLoadType() {
+		return LoadType.valueOf(getString(KEY_LOAD_TYPE).toUpperCase());
 	}
 	//
 	@Override
@@ -265,8 +266,8 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public boolean getLoadServerAssignToNode() {
-		return getBoolean(KEY_LOAD_SERVER_ASSIGN_TO_NODE);
+	public boolean getLoadServerNodeMapping() {
+		return getBoolean(KEY_LOAD_SERVER_NODE_MAPPING);
 	}
 	//
 	@Override
@@ -345,8 +346,8 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public StorageType getStorageClass() {
-		return StorageType.valueOf(getString(KEY_STORAGE_CLASS).toUpperCase());
+	public StorageType getStorageType() {
+		return StorageType.valueOf(getString(KEY_STORAGE_TYPE).toUpperCase());
 	}
 	//
 	@Override
@@ -360,7 +361,7 @@ implements AppConfig {
 			nodeAddrs[] = getStorageHttpAddrs(),
 			nodeAddrsWithPorts[] = new String[nodeAddrs.length];
 		String nodeAddr;
-		int port = getStorageHttpApi_Port();
+		int port = getStorageHttpPort();
 		for(int i = 0; i < nodeAddrs.length; i ++) {
 			nodeAddr = nodeAddrs[i];
 			nodeAddrsWithPorts[i] = nodeAddr + (nodeAddr.contains(":") ? ":" + port : "");
@@ -369,13 +370,13 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public String getStorageHttpApiClass() {
-		return getString(KEY_STORAGE_HTTP_API_CLASS);
+	public String getStorageHttpApi() {
+		return getString(KEY_STORAGE_HTTP_API);
 	}
 	//
 	@Override
-	public int getStorageHttpApi_Port() {
-		return getInt(String.format(KEY_STORAGE_HTTP_API___PORT, getStorageHttpApiClass()));
+	public int getStorageHttpPort() {
+		return getInt(KEY_STORAGE_HTTP_PORT);
 	}
 	//
 	@Override
@@ -401,11 +402,6 @@ implements AppConfig {
 	@Override
 	public int getStorageHttpMockHeadCount() {
 		return getInt(KEY_STORAGE_HTTP_MOCK_HEAD_COUNT);
-	}
-	//
-	@Override
-	public int getStorageHttpMockWorkersPerSocket() {
-		return getInt(KEY_STORAGE_HTTP_MOCK_WORKERS_PER_SOCKET);
 	}
 	//
 	@Override
@@ -443,22 +439,25 @@ implements AppConfig {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public ObjectNode toJsonTree(final ObjectMapper mapper) {
-		final ObjectNode
-			rootNode = mapper.createObjectNode(),
-			configNode = mapper.createObjectNode();
+		final ObjectNode rootNode = mapper.createObjectNode();
+		final ObjectNode configNode = mapper.createObjectNode();
 		rootNode.set(CONFIG_ROOT, configNode);
 		//
 		int i;
 		Object value;
 		String compositeKey, keyParts[];
-		ObjectNode currNode = configNode, parentNode;
+		ObjectNode currNode, parentNode;
+		JsonNode n;
 		for(final Iterator<String> keyIter = super.getKeys(); keyIter.hasNext(); ) {
 			compositeKey = keyIter.next();
 			keyParts = compositeKey.split("\\.");
+			currNode = configNode;
 			for(i = 0; i < keyParts.length; i ++) {
 				parentNode = currNode;
-				currNode = (ObjectNode) currNode.get(keyParts[i]);
-				if(currNode == null) {
+				n = currNode.get(keyParts[i]);
+				if(n instanceof ObjectNode ){
+					currNode = (ObjectNode) n;
+				} else if(n == null) {
 					if(i == keyParts.length - 1) {
 						value = getProperty(compositeKey);
 						if(value instanceof Long) {
@@ -529,16 +528,16 @@ implements AppConfig {
 			nextKey = keyIterator.next();
 			nextVal = getProperty(nextKey);
 			switch(nextKey) {
-				case KEY_ITEM_CLASS:
+				case KEY_ITEM_TYPE:
 				case KEY_ITEM_CONTAINER_NAME:
-				case KEY_LOAD_CLASS:
+				case KEY_LOAD_TYPE:
 				case KEY_LOAD_THREADS:
 				case KEY_LOAD_LIMIT_COUNT:
 				case KEY_LOAD_LIMIT_TIME:
 				case KEY_RUN_ID:
 				case KEY_RUN_MODE:
 				case KEY_RUN_VERSION:
-				case KEY_STORAGE_CLASS:
+				case KEY_STORAGE_TYPE:
 					strBuilder
 						.appendNewLine().append("| ")
 						.appendFixedWidthPadRight(nextKey, 31, ' ')
@@ -558,7 +557,7 @@ implements AppConfig {
 			mapper = new ObjectMapper().configure(SerializationFeature.INDENT_OUTPUT, true);
 		try {
 			return mapper.writeValueAsString(toJsonTree(mapper));
-		} catch(final JsonProcessingException e) {
+		} catch(final Exception e) {
 			LogUtil.exception(log, Level.WARN, e, "Failed to convert the configuration to JSON");
 		}
 		return null;

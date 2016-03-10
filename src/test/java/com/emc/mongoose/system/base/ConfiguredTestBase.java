@@ -17,6 +17,6 @@ public abstract class ConfiguredTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		System.setProperty(KEY_ITEM_CLASS, "data");
+		System.setProperty(KEY_ITEM_TYPE, "data");
 	}
 }

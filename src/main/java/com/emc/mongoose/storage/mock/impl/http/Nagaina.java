@@ -44,7 +44,7 @@ implements HttpStorageMock<T> {
 	public Nagaina(final AppConfig appConfig) {
 		this(
 			appConfig.getStorageHttpMockHeadCount(),
-			appConfig.getStorageHttpApi_Port(),
+			appConfig.getStorageHttpPort(),
 			appConfig.getStorageHttpMockCapacity(),
 			appConfig.getStorageHttpMockContainerCapacity(),
 			appConfig.getStorageHttpMockContainerCountLimit(),
@@ -110,7 +110,7 @@ implements HttpStorageMock<T> {
 					);
 				// todo check if there should be used just using of THE ONLY ONE bootstrap and several channels
 				channels[i] = bootstrap.bind(portStart + i).sync().channel();
-			} catch(InterruptedException e) {
+			} catch(final Exception e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to start the head at port #{}", portStart + i
 				);
@@ -125,7 +125,7 @@ implements HttpStorageMock<T> {
 	}
 	@Override
 	protected final void await() {
-		for(Channel channel : channels) {
+		for(final Channel channel : channels) {
 			try {
 				channel.closeFuture().await(); // todo check if it should execute in different threads or some similar way
 			} catch(InterruptedException e) {

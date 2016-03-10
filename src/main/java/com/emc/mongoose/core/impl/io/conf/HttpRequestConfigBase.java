@@ -109,7 +109,7 @@ implements HttpRequestConfig<T, C> {
 	private final Thread clientDaemon;
 	//
 	public static <T extends HttpDataItem, C extends Container<T>> HttpRequestConfig<T, C> getInstance() {
-		return newInstanceFor(BasicConfig.THREAD_CONTEXT.get().getStorageHttpApiClass());
+		return newInstanceFor(BasicConfig.THREAD_CONTEXT.get().getStorageHttpApi());
 	}
 	//
 	@SuppressWarnings("unchecked")
@@ -737,7 +737,7 @@ implements HttpRequestConfig<T, C> {
 					);
 				}
 			} else {
-				tgtHost = new HttpHost(tgtAddr, appConfig.getStorageHttpApi_Port(), SCHEME);
+				tgtHost = new HttpHost(tgtAddr, appConfig.getStorageHttpPort(), SCHEME);
 			}
 		} else {
 			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");

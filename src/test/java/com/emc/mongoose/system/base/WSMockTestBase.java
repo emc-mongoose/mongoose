@@ -27,7 +27,7 @@ extends LoggingTestBase {
 	throws Exception {
 		LoggingTestBase.setUpClass();
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_API_CLASS, "s3"); // reset the ports beginning
+		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_API_TYPE, "s3"); // reset the ports beginning
 		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
 		WS_MOCK = new Nagaina<>(appConfig);
 		WS_MOCK_THREAD = new Thread(WS_MOCK, "wsMock");

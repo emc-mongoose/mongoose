@@ -33,7 +33,7 @@ implements StorageClientBuilder<T, U> {
 				Arrays.toString(Package.getPackages())
 			);
 		}*/
-		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_API_CLASS, api);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_API, api);
 		return this;
 	}
 	//
@@ -142,7 +142,7 @@ implements StorageClientBuilder<T, U> {
 	@Override
 	public final StorageClientBuilder<T, U> setItemClass(final String itemCls)
 	throws IllegalArgumentException {
-		appConfig.setProperty(AppConfig.KEY_ITEM_CLASS, itemCls);
+		appConfig.setProperty(AppConfig.KEY_ITEM_TYPE, itemCls);
 		return this;
 	}
 	//

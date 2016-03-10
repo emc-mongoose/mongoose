@@ -14,13 +14,13 @@
 			}
 		},
 		"item" : {
-			"class" : "data",
+			"type" : "data",
 			"container" : {
 				"name" : null
 			},
 			"data" : {
 				"content" : {
-					"class" : "seed",
+					"type" : "seed",
 					"file" : null,
 					"seed" : "7a42d9c483244167",
 					"ringSize" : "4MB"
@@ -49,7 +49,7 @@
 		},
 		"load" : {
 			"circular" : false,
-			"class" : "write",
+			"type" : "write",
 			"threads" : 1,
 			"limit" : {
 				"count" : 0,
@@ -58,54 +58,8 @@
 			},
 			"metricsPeriod" : "10s",
 			"server" : {
-				"addrs" : "127.0.0.1",
-				"assignTo" : {
-					"node" : false
-				}
-			}
-		},
-		"run" : {
-			"name" : "mongoose",
-			"version" : "next",
-			"mode" : "standalone",
-			"resume" : {
-				"enabled" : false
-			}
-		},
-		"storage" : {
-			"class" : "http",
-			"fs" : {
-			},
-			"http" : {
-				"addrs" : "127.0.0.1",
-				"api" : {
-					"class" : "s3",
-					"s3" : {
-						"port" : 9020
-					},
-					"atmos" : {
-						"port" : 9022
-					},
-					"swift" : {
-						"port" : 9024
-					}
-				},
-				"fsAccess" : false,
-				"headers" : {
-					"Connection" : "keep-alive",
-					"User-Agent" : "mongoose/next"
-				},
-				"namespace" : null,
-				"versioning" : false,
-				"mock" : {
-					"headCount" : 1,
-					"workersPerSocket" : 0,
-					"capacity" : 1000000,
-					"container" : {
-						"capacity" : 1000000,
-						"countLimit" : 1000000
-					}
-				}
+				"addrs" : [ "127.0.0.1" ],
+				"nodeMapping" : false
 			}
 		},
 		"network" : {
@@ -119,6 +73,39 @@
 				"bindBacklogSize" : 0,
 				"interestOpQueued" : false,
 				"selectInterval" : 100
+			}
+		},
+		"run" : {
+			"id" : null,
+			"file" : null,
+			"mode" : "standalone",
+			"name" : "mongoose",
+			"resume" : {
+				"enabled" : false
+			},
+			"version" : "next"
+		},
+		"storage" : {
+			"type" : "http",
+			"http" : {
+				"addrs" : [ "127.0.0.1" ],
+				"fsAccess" : false,
+				"headers" : {
+					"Connection" : "keep-alive",
+					"User-Agent" : "mongoose/next"
+				},
+				"namespace" : null,
+				"port" : 8080,
+				"api" : "S3",
+				"versioning" : false,
+				"mock" : {
+					"headCount" : 1,
+					"capacity" : 1000000,
+					"container" : {
+						"capacity" : 1000000,
+						"countLimit" : 1000000
+					}
+				}
 			}
 		}
 	}

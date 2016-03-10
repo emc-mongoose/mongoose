@@ -56,10 +56,7 @@ implements Runnable {
 		socketAddress = new InetSocketAddress(port);
 		// set I/O reactor configuration
 		final long timeOutSec = appConfig.getLoadLimitTime();
-		int ioThreadCount = appConfig.getStorageHttpMockWorkersPerSocket();
-		if(ioThreadCount == 0) {
-			ioThreadCount = ThreadUtil.getWorkerCount();
-		}
+		final int ioThreadCount = ThreadUtil.getWorkerCount();
 		LOG.info(
 			Markers.MSG, "Socket {}:{} will use {} I/O threads",
 			socketAddress.getHostString(), socketAddress.getPort(), ioThreadCount

@@ -203,7 +203,7 @@ implements IOConfig<T, C> {
 	//
 	public IOConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		this.appConfig = appConfig;
-		setLoadType(appConfig.getLoadClass());
+		setLoadType(appConfig.getLoadType());
 		final String newContainerName = appConfig.getItemContainerName();
 		if(newContainerName != null && !newContainerName.isEmpty()) {
 			setContainer((C) new BasicContainer<T>(newContainerName));

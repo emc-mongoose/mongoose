@@ -121,7 +121,7 @@ implements ContentSource {
 			if(DEFAULT == null) {
 				final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 				final AppConfig.ContentSourceType
-					contentSrcType = appConfig.getItemDataContentClass();
+					contentSrcType = appConfig.getItemDataContentType();
 				switch(contentSrcType) {
 					case FILE:
 						final String contentFilePath = appConfig.getItemDataContentFile();

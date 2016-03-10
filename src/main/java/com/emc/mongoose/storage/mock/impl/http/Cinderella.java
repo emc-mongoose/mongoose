@@ -57,15 +57,9 @@ implements HttpStorageMock<T> {
 	//
 	public Cinderella(final AppConfig appConfig)
 	throws IOException {
-		this(appConfig, appConfig.getStorageHttpMockWorkersPerSocket());
-	}
-	//
-	private Cinderella(final AppConfig appConfig, final int ioThreadCount)
-	throws IOException {
 		this(
 			appConfig.getStorageHttpMockHeadCount(),
-			ioThreadCount > 0 ? ioThreadCount : ThreadUtil.getWorkerCount(),
-			appConfig.getStorageHttpApi_Port(),
+			appConfig.getStorageHttpPort(),
 			appConfig.getStorageHttpMockCapacity(),
 			appConfig.getStorageHttpMockContainerCapacity(),
 			appConfig.getStorageHttpMockContainerCountLimit(),
@@ -79,10 +73,10 @@ implements HttpStorageMock<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public Cinderella(
-		final int headCount, final int ioThreadCount, final int portStart,
-		final int storageCapacity, final int containerCapacity, final int containerCountLimit,
-		final int batchSize, final String dataSrcPath, final int metricsPeriodSec,
-		final boolean jmxServeFlag, final int minConnLifeMilliSec, final int maxConnLifeMilliSec
+		final int headCount, final int portStart, final int storageCapacity,
+		final int containerCapacity, final int containerCountLimit, final int batchSize,
+		final String dataSrcPath, final int metricsPeriodSec, final boolean jmxServeFlag,
+		final int minConnLifeMilliSec, final int maxConnLifeMilliSec
 	) throws IOException {
 		super(
 			(Class<T>) BasicHttpDataMock.class, ContentSourceBase.getDefault(),

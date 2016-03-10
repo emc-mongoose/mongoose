@@ -41,7 +41,7 @@ public class LoadBuilderFactory {
 		try {
 			final Class<LoadBuilder<T, U>>
 				loadBuilderImplClass = getLoadBuilderClass(
-					appConfig.getRunMode(), appConfig.getItemClass(), appConfig.getStorageClass()
+					appConfig.getRunMode(), appConfig.getItemClass(), appConfig.getStorageType()
 				);
 			final Constructor<LoadBuilder<T, U>>
 				constructor = loadBuilderImplClass.getConstructor(AppConfig.class);

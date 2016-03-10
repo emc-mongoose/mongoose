@@ -77,6 +77,7 @@ public final class ModeDispatcher {
 				} catch (final Exception e) {
 					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init nagaina");
 				}
+				break;
 			case Constants.RUN_MODE_CINDERELLA:
 				rootLogger.debug(Markers.MSG, "Starting cinderella");
 				try {
