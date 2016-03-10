@@ -1,9 +1,5 @@
 package com.emc.mongoose.common.generator;
 
-import com.emc.mongoose.common.math.MathUtil;
-
-import java.util.Random;
-
 import static com.emc.mongoose.common.math.MathUtil.xorShift;
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.abs;
@@ -16,7 +12,6 @@ public class FilePathGenerator implements ValueGenerator<String> {
 
 	private final int width;
 	private final int depth;
-	private String path;
 
 	public FilePathGenerator(String paramsString) {
 		this(paramsString.split(DELIMITER));
@@ -37,7 +32,8 @@ public class FilePathGenerator implements ValueGenerator<String> {
 	private String dirName(StringBuilder dirBuilder, int width) {
 		dirBuilder.setLength(0);
 		dirBuilder.append(DIR_NAME_PREFIX);
-		dirBuilder.append(Long.toString(nextLong(width), RADIX));
+		int range = width % RADIX ==  0 ? RADIX : width % RADIX;
+		dirBuilder.append(Long.toString(nextLong(range), RADIX));
 		return dirBuilder.toString();
 	}
 

@@ -13,11 +13,11 @@ public final class FormattingGenerator extends SimpleFormattingGenerator {
 	 */
 	private String[] segments;
 
-	public FormattingGenerator(final String pattern) {
-		this(pattern, StringGeneratorFactory.generatorFactory());
+	public FormattingGenerator(String pattern) {
+		super(pattern);
 	}
 
-	public FormattingGenerator(final String pattern, final GeneratorFactory<String> generatorFactory) {
+	public FormattingGenerator(String pattern, GeneratorFactory<String> generatorFactory) {
 		super(pattern, generatorFactory);
 	}
 
@@ -25,15 +25,18 @@ public final class FormattingGenerator extends SimpleFormattingGenerator {
 		this.segments = segments;
 	}
 
+	/**
+	 * see the description of the parent class (SimpleFormattingGenerator)
+	 */
 	@Override
 	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for generators[]
-	protected void initialize(String pattern) {
-		final int patternSymbolsNum = countPatternSymbols(pattern);
+	protected void initialize() {
+		final int patternSymbolsNum = countPatternSymbols(pattern());
 		if (patternSymbolsNum > 0) {
 			setGenerators(new ValueGenerator[patternSymbolsNum]);
 			setSegments(new String[patternSymbolsNum + 1]);
 			StringBuilder segmentsBuilder = new StringBuilder();
-			StringBuilder patternBuilder = new StringBuilder(pattern);
+			StringBuilder patternBuilder = new StringBuilder(pattern());
 			int segmentCounter = 0;
 			for (int j = 0; j < patternSymbolsNum; j++) {
 				int i = 0;
@@ -58,16 +61,18 @@ public final class FormattingGenerator extends SimpleFormattingGenerator {
 	 */
 	public static int countPatternSymbols(final String pattern) {
 		int counter = 0;
-		int lastPatternIndex = pattern.length() - 1;
-		if (pattern.charAt(lastPatternIndex) == PATTERN_SYMBOL) {
-			throw new IllegalArgumentException();
-		}
-		char[] patternChars = pattern.toCharArray();
-		for (int i = 0; i < lastPatternIndex; i++) {
-			if (patternChars[i] == PATTERN_SYMBOL) {
-				counter++;
-				if (patternChars[i + 1] == PATTERN_SYMBOL) {
-					throw new IllegalArgumentException();
+		if (!pattern.equals("")) {
+			int lastPatternIndex = pattern.length() - 1;
+			if (pattern.charAt(lastPatternIndex) == PATTERN_SYMBOL) {
+				throw new IllegalArgumentException();
+			}
+			char[] patternChars = pattern.toCharArray();
+			for (int i = 0; i < lastPatternIndex; i++) {
+				if (patternChars[i] == PATTERN_SYMBOL) {
+					counter++;
+					if (patternChars[i + 1] == PATTERN_SYMBOL) {
+						throw new IllegalArgumentException();
+					}
 				}
 			}
 		}
@@ -108,8 +113,13 @@ public final class FormattingGenerator extends SimpleFormattingGenerator {
 		return result.toString();
 	}
 
+	/**
+	 * Assemble output string with 'segments' and 'generators'
+	 * @param result see the description of the parent class (SimpleFormattingGenerator)
+	 * @return a string with PATTERN_SYMBOLs replaced by suitable values
+	 */
 	@Override
-	protected String assembleOutputString(StringBuilder result) {
+	protected final String assembleOutputString(StringBuilder result) {
 		for (int i = 0; i < segments.length - 1; i++) {
 			result.append(segments[i]);
 			if (generators()[i] != null) {

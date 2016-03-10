@@ -14,9 +14,6 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Parameterized.class)
 public class FilePathGeneratorRandomTest {
 
-	private static final String PATH_REG_EXP = "(" + DIR_NAME_PREFIX + "[0-9a-z]+" + "\\/" + ")+";
-	private static final Pattern PATH_PATTERN = Pattern.compile(PATH_REG_EXP);
-
 	private ValueGenerator<String> formatter;
 
 	private void initFormatter(int width, int depth) throws Exception {
@@ -26,7 +23,7 @@ public class FilePathGeneratorRandomTest {
 	@Parameterized.Parameters
 	public static Iterable<Object[]> data() {
 		return Arrays.asList(new Object[][]{
-				{5, 2},
+				{36, 4},
 		});
 	}
 
@@ -42,6 +39,7 @@ public class FilePathGeneratorRandomTest {
 		String result1 = formatter.get();
 		for (int i = 0; i < 10; i++) {
 			String result2 = formatter.get();
+//			System.out.println(formatter.get());
 			assertFalse(result1.equals(result2));
 			result1 = result2;
 		}

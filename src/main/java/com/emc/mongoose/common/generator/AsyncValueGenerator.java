@@ -95,7 +95,6 @@ extends BasicValueGenerator<T> {
 			);
 		}
 	}
-
 	//
 	@Override
 	public final T get() {

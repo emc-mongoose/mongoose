@@ -15,20 +15,24 @@ public class FormattingGeneratorBasicTest {
 
 	private static final String PATH_REG_EXP = "(" + DIR_NAME_PREFIX + "[0-9a-z]+" + "\\/" + ")+";
 	private static final Pattern PATH_PATTERN = Pattern.compile(PATH_REG_EXP);
+	private static final Pattern ANYTHING_PATTERN = Pattern.compile(".*");
 
 	private ValueGenerator<String> formatter;
 
 	private void initFormatter(String patternString) throws Exception {
-//		formatter = new SimpleFormattingGenerator(patternString);
 		formatter = new FormattingGenerator(patternString);
 	}
 
 	@Parameterized.Parameters
 	public static Iterable<Object[]> data() {
 		return Arrays.asList(new Object[][]{
+				{"", ANYTHING_PATTERN},
+				{"glgkwl;gh", ANYTHING_PATTERN},
+				{"sgdhdh%p{1; 3}", PATH_PATTERN },
 				{"%p{1; 3}", PATH_PATTERN },
 				{"%p{11; 7}", PATH_PATTERN },
 				{"%p{1; 1}", PATH_PATTERN },
+				{"%p{36; 4}", PATH_PATTERN },
 		});
 	}
 
