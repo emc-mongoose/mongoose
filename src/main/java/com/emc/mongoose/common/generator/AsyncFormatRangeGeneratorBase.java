@@ -20,7 +20,7 @@ public abstract class AsyncFormatRangeGeneratorBase<T> extends AsyncRangeGenerat
 	 * @param formatString - a format-containing string that is different for different implementations.
 	 *                     To get examples see finished implementations (e.g. AsyncDoubleGenerator)
 	 */
-	protected AsyncFormatRangeGeneratorBase(T minValue, T maxValue, String formatString) {
+	protected AsyncFormatRangeGeneratorBase(final T minValue, final T maxValue, final String formatString) {
 		super(minValue, maxValue);
 		outputFormat = getFormatterInstance(formatString);
 	}
@@ -31,7 +31,7 @@ public abstract class AsyncFormatRangeGeneratorBase<T> extends AsyncRangeGenerat
 	 * @param formatString - a format-containing string that is different for different implementations.
 	 *                     To get examples see finished implementations (e.g. AsyncDoubleGenerator)
 	 */
-	protected AsyncFormatRangeGeneratorBase(T initialValue, String formatString) {
+	protected AsyncFormatRangeGeneratorBase(final T initialValue, final String formatString) {
 		super(initialValue);
 		outputFormat = getFormatterInstance(formatString);
 	}
@@ -44,7 +44,7 @@ public abstract class AsyncFormatRangeGeneratorBase<T> extends AsyncRangeGenerat
 	 *                     To get examples see finished implementations (e.g. AsyncDoubleGenerator)
 	 * @return - the formatter that help to produce a String presentation of a generator value.
 	 */
-	abstract Format getFormatterInstance(String formatString);
+	protected abstract Format getFormatterInstance(final String formatString);
 
 	protected Format outputFormat() {
 		return outputFormat;

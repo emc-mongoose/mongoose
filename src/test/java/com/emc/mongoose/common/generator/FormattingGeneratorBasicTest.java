@@ -48,7 +48,7 @@ public class FormattingGeneratorBasicTest {
 		final String result = formatter.get();
 		assertTrue(result, resultPattern.matcher(result).find());
 		assertEquals(numberOfSpaces(patternString), numberOfSpaces(result));
-		System.out.println(result);
+//		System.out.println(result);
 	}
 
 	private int numberOfSpaces(String string) {

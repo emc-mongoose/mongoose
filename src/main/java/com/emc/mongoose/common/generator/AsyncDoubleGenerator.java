@@ -23,7 +23,7 @@ extends AsyncFormatRangeGeneratorBase<Double> {
 	 * @return a suitable formatter for numbers of a double type
 	 */
 	@Override
-	Format getFormatterInstance(String formatString) {
+	protected final Format getFormatterInstance(String formatString) {
 		return new DecimalFormat(formatString);
 	}
 
@@ -43,7 +43,7 @@ extends AsyncFormatRangeGeneratorBase<Double> {
 	}
 
 	@Override
-	protected String stringify(Double value) {
+	protected final String stringify(Double value) {
 		return outputFormat().format(value);
 	}
 }

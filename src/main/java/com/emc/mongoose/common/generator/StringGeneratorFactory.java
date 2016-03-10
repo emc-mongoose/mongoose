@@ -19,12 +19,12 @@ public class StringGeneratorFactory implements GeneratorFactory<String> {
 	}
 
 	@Override
-	public Enum defineState(String... parameters) {
+	public Enum defineState(final String... parameters) {
 		return State.DEFAULT;
 	}
 
 	@Override
-	public ValueGenerator<String> createGenerator(char type, String... parameters) {
+	public ValueGenerator<String> createGenerator(final char type, final String... parameters) {
 		State state =  (State) defineState(parameters);
 		switch (state) {
 			case DEFAULT:

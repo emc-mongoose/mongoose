@@ -53,7 +53,7 @@ public final class AsyncStringGeneratorFactory implements GeneratorFactory<Strin
 	 * @return a state that defines a choice of the generator by the factory
 	 */
 	@Override
-	public Enum defineState(String... parameters) {
+	public Enum defineState(final String... parameters) {
 		if (parameters[0] == null) {
 			if (parameters[1] == null) {
 				return State.EMPTY;

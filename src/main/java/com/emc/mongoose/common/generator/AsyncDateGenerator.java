@@ -10,7 +10,7 @@ import java.util.Date;
 public final class AsyncDateGenerator
 extends AsyncFormatRangeGeneratorBase<Date> {
 
-	public final static String[] INPUT_DATE_FMT_STRINGS = new String[]{"yyyy/MM/dd"};
+	public static final String[] INPUT_DATE_FMT_STRINGS = new String[]{"yyyy/MM/dd"};
 
 	private final AsyncLongGenerator longGenerator;
 
@@ -34,7 +34,7 @@ extends AsyncFormatRangeGeneratorBase<Date> {
 	 * @return a suitable formatter for dates
 	 */
 	@Override
-	Format getFormatterInstance(String formatString) {
+	protected final Format getFormatterInstance(final String formatString) {
 		return FastDateFormat.getInstance(formatString);
 	}
 
@@ -54,7 +54,7 @@ extends AsyncFormatRangeGeneratorBase<Date> {
 	}
 
 	@Override
-	protected String stringify(Date value) {
+	protected final String stringify(final Date value) {
 		return outputFormat().format(value);
 	}
 
