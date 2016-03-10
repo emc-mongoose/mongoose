@@ -19,7 +19,8 @@ public class FormattingGeneratorBasicTest {
 	private ValueGenerator<String> formatter;
 
 	private void initFormatter(String patternString) throws Exception {
-		formatter = new SimpleFormattingGenerator(patternString);
+//		formatter = new SimpleFormattingGenerator(patternString);
+		formatter = new FormattingGenerator(patternString);
 	}
 
 	@Parameterized.Parameters

@@ -5,9 +5,14 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 	/**
 	 * Special characters
 	 */
+	public static final char PATTERN_SYMBOL = '%';
 	public static final char[] FORMAT_SYMBOLS = {'{', '}'};
 
 	private final GeneratorFactory<String> generatorFactory;
+	private final String pattern;
+	/**
+	 * Generators of values that should be inserted instead of special characters (see above)
+	 */
 	private ValueGenerator<String>[] generators;
 
 	public SimpleFormattingGenerator(String pattern) {
@@ -16,6 +21,7 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 
 	public SimpleFormattingGenerator(String pattern, GeneratorFactory<String> generatorFactory) {
 		this.generatorFactory = generatorFactory;
+		this.pattern = pattern;
 		initialize(pattern);
 
 	}
@@ -26,11 +32,23 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 		patternBuilder.delete(0, 1);
 		final char type = patternBuilder.charAt(0);
 		String format = initParameter(patternBuilder, FORMAT_SYMBOLS);
-		generators = new ValueGenerator[]{generatorFactory.createGenerator(type, format, null)};
+		setGenerators(new ValueGenerator[]{generatorFactory.createGenerator(type, format, null)});
 	}
 
 	protected GeneratorFactory<String> generatorFactory() {
 		return generatorFactory;
+	}
+
+	public final String pattern() {
+		return pattern;
+	}
+
+	protected final void setGenerators(ValueGenerator<String>[] generators) {
+		this.generators = generators;
+	}
+
+	protected final ValueGenerator<String>[] generators() {
+		return generators;
 	}
 
 	/**
@@ -69,15 +87,23 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 		return null;
 	}
 
+	protected String assembleOutputString(StringBuilder result) {
+		result.append(generators[0].get());
+		return result.toString();
+	}
+
 	/**
 	 *
 	 * @param result - a parameter to create an opportunity of StringBuilder reusing
 	 *                  (StringBuilder instance must be new or cleared with setLength(0))
 	 * @return string with PATTERN_SYMBOLs replaced by suitable values
 	 */
-	protected String format(StringBuilder result) {
-		result.append(generators[0].get());
-		return result.toString();
+	protected final String format(StringBuilder result) {
+		if (generators != null) {
+			return assembleOutputString(result);
+		} else {
+			return pattern();
+		}
 	}
 
 	/**

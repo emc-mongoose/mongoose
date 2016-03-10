@@ -23,6 +23,7 @@ public class AsyncFormattingGeneratorBasicTest {
 	private static final String OUTPUT_DATE_FMT_STRING = "%D" + "{" + "yyyy-MM-dd'T'HH:mm:ssZ" + "}";
 	private static final String DATE_REG_EXP =
 			"(((19|20)[0-9][0-9])-(1[012]|0?[1-9])-(3[01]|[12][0-9]|0?[1-9])T(0[0-9]|1[0-9]|2[0-4]):([0-5][0-9]):([0-5][0-9]))"; // regexp should match the date format in the string above
+	private static final Pattern ANYTHING_PATTERN = Pattern.compile(".*");
 	private static final Pattern DOUBLE_PATTERN = Pattern.compile(DOUBLE_REG_EXP);
 	private static final Pattern LONG_PATTERN = Pattern.compile(LONG_REG_EXP);
 	private static final Pattern DATE_PATTERN = Pattern.compile(DATE_REG_EXP);
@@ -40,6 +41,7 @@ public class AsyncFormattingGeneratorBasicTest {
 	@Parameters
 	public static Iterable<Object[]> data() {
 		return Arrays.asList(new Object[][]{
+				{"dfdgffsgsgsg", ANYTHING_PATTERN},
 				{"%d", LONG_PATTERN},
 				{"%d[1-5]", LONG_PATTERN},
 				{OUTPUT_NUMBER_FMT_STRING, DOUBLE_PATTERN},

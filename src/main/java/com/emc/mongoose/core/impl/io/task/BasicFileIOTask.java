@@ -56,7 +56,12 @@ implements FileIOTask<T> {
 		//
 		final String parentPath = ioConfig.getNamePrefix();
 		if(parentPath != null && !parentPath.isEmpty()) {
-			fPath = Paths.get(ioConfig.getNamePrefix(), item.getName()).toAbsolutePath();
+				try {
+					Files.createDirectories(Paths.get(parentPath).toAbsolutePath());
+				} catch (IOException e) {
+					throw new IllegalStateException(e);
+				}
+			fPath = Paths.get(parentPath, item.getName()).toAbsolutePath();
 		} else {
 			fPath = Paths.get(item.getName()).toAbsolutePath();
 		}
@@ -113,6 +118,10 @@ implements FileIOTask<T> {
 			}
 		} catch(final NoSuchFileException e) {
 			status = Status.RESP_FAIL_NOT_FOUND;
+			LogUtil.exception(
+					LOG, Level.WARN, e,
+					"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), fPath
+			);
 		} catch(final IOException e) {
 			status = Status.FAIL_IO;
 			LogUtil.exception(
