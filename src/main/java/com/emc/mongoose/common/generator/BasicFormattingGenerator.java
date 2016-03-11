@@ -32,7 +32,7 @@ implements FormattingGenerator {
 	private ValueGenerator<String>[] generators;
 
 	public BasicFormattingGenerator(final String pattern) {
-		this(pattern, StringGeneratorFactory.generatorFactory());
+		this(pattern, StringGeneratorFactory.getInstance());
 	}
 
 	public BasicFormattingGenerator(

@@ -27,7 +27,7 @@ implements GeneratorFactory<String, G> {
 	private static final Pattern LONG_PATTERN = Pattern.compile(rangeRegExp(LONG_REG_EXP));
 	private static final Pattern DATE_PATTERN = Pattern.compile(rangeRegExp(DATE_REG_EXP));
 
-	private static AsyncStringGeneratorFactory<? extends ValueGenerator<String>>
+	private static final AsyncStringGeneratorFactory<? extends ValueGenerator<String>>
 			INSTANCE = new AsyncStringGeneratorFactory<>();
 
 	private AsyncStringGeneratorFactory() {
