@@ -110,8 +110,8 @@ extends BasicFormattingGenerator {
 			}
 		}
 		result.append("\n");
+		result.append("Segments: ");
 		if (segments != null) {
-			result.append("Segments: ");
 			for (final String segment : segments) {
 				result.append(segment).append(";");
 			}
