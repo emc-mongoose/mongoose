@@ -1,17 +1,21 @@
 package com.emc.mongoose.common.generator;
 
+import java.io.File;
+
 import static com.emc.mongoose.common.math.MathUtil.xorShift;
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.abs;
 
-public class FilePathGenerator implements ValueGenerator<String> {
+public class FilePathGenerator
+implements ValueGenerator<String> {
 
-	public static final String DIR_NAME_PREFIX = "d";
 	private static final String DELIMITER = ";";
-	private static final int RADIX = 36;
+	private static final int RADIX = Character.MAX_RADIX;
 
 	private final int width;
 	private final int depth;
+
+	public long seed = System.nanoTime() ^ System.currentTimeMillis();
 
 	public FilePathGenerator(String paramsString) {
 		this(paramsString.split(DELIMITER));
@@ -29,26 +33,31 @@ public class FilePathGenerator implements ValueGenerator<String> {
 		}
 	}
 
-	private String dirName(StringBuilder dirBuilder, int width) {
-		dirBuilder.setLength(0);
-		dirBuilder.append(DIR_NAME_PREFIX);
-		int range = width % RADIX ==  0 ? RADIX : width % RADIX;
-		dirBuilder.append(Long.toString(nextLong(range), RADIX));
-		return dirBuilder.toString();
+	private int nextNumber(final int range) {
+		seed = xorShift(seed) ^ System.nanoTime();
+		return (int) abs(seed % range);
 	}
 
-	private long nextLong(int range) {
-		return abs(xorShift(System.nanoTime())) % range;
+	private String nextDirName(final int width) {
+		return Long.toString(nextNumber(width), RADIX);
 	}
+
+	private final static ThreadLocal<StringBuilder>
+		THREAD_LOCAL_PATH_PUILDER = new ThreadLocal<StringBuilder>() {
+			@Override
+			protected StringBuilder initialValue() {
+				return new StringBuilder();
+			}
+		};
 
 	@Override
 	public String get() {
-		StringBuilder pathBuilder = new StringBuilder();
-		StringBuilder dirBuilder = new StringBuilder();
-		long newDepth = nextLong(depth) + 1;
-		for (long i = 0; i < newDepth; i++) {
-			pathBuilder.append(dirName(dirBuilder, width));
-			pathBuilder.append('/');
+		final StringBuilder pathBuilder = THREAD_LOCAL_PATH_PUILDER.get();
+		pathBuilder.setLength(0);
+		final long newDepth = nextNumber(depth) + 1;
+		for(long i = 0; i < newDepth; i++) {
+			pathBuilder.append(nextDirName(width));
+			pathBuilder.append(File.separatorChar);
 		}
 		return pathBuilder.toString();
 	}

@@ -1,5 +1,6 @@
-package com.emc.mongoose.common.generator;
+package com.emc.mongoose.common.generator.async;
 //
+import com.emc.mongoose.common.generator.BasicValueGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
@@ -62,13 +63,15 @@ extends BasicValueGenerator<T> {
 		}
 	};
 	//
-	public AsyncValueGenerator(final T initialValue, final Callable<T> updateAction) {
+	public AsyncValueGenerator(final T initialValue, final InitCallable<T> updateAction) {
 		super(initialValue, null);
+		if(updateAction == null) {
+			throw new NullPointerException("Argument should not be null");
+		}
 		final InitRunnable updateTask = new InitRunnable() {
 			@Override
 			public final boolean isInitialized() {
-				return updateAction != null &&
-						(!(updateAction instanceof InitCallable) || ((InitCallable) updateAction).isInitialized());
+				return updateAction.isInitialized();
 			}
 			@Override
 			public final void run() {
@@ -93,6 +96,14 @@ extends BasicValueGenerator<T> {
 				"Failed to register the update task \"{}\" for the generator \"{}\", " +
 				"possibly there are too many update tasks registered", updateTask, this
 			);
+		}
+	}
+	//
+	public static abstract class InitializedCallableBase<T>
+	implements InitCallable<T> {
+		@Override
+		public final boolean isInitialized() {
+			return true;
 		}
 	}
 	//

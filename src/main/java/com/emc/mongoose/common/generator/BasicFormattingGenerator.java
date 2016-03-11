@@ -5,13 +5,8 @@ import org.apache.commons.lang.NullArgumentException;
 /**
  * This class is used ONLY for input pattern strings containing only one expression with the pattern symbol.
  */
-public class SimpleFormattingGenerator implements ValueGenerator<String> {
-
-	/**
-	 * Special characters
-	 */
-	public static final char PATTERN_SYMBOL = '%';
-	public static final char[] FORMAT_SYMBOLS = {'{', '}'};
+public class BasicFormattingGenerator
+implements FormattingGenerator {
 
 	private static final ThreadLocal<StringBuilder>
 			OUTPUT_BUILDER = new ThreadLocal<StringBuilder>() {
@@ -24,7 +19,7 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 	/**
 	 * A factory for getting of value generators (see below)
 	 */
-	private final GeneratorFactory<String> generatorFactory;
+	private final GeneratorFactory<String, ValueGenerator<String>> generatorFactory;
 
 	/**
 	 * An input string with pattern symbols and expressions that have to be replaced by suitable values
@@ -36,11 +31,13 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 	 */
 	private ValueGenerator<String>[] generators;
 
-	public SimpleFormattingGenerator(String pattern) {
+	public BasicFormattingGenerator(final String pattern) {
 		this(pattern, StringGeneratorFactory.generatorFactory());
 	}
 
-	public SimpleFormattingGenerator(String pattern, GeneratorFactory<String> generatorFactory) {
+	public BasicFormattingGenerator(
+		final String pattern, GeneratorFactory<String, ValueGenerator<String>> generatorFactory
+	) {
 		if (pattern == null) {
 			throw new NullArgumentException("pattern");
 		}
@@ -49,11 +46,12 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 		initialize();
 	}
 
-	protected final GeneratorFactory<String> generatorFactory() {
+	protected final GeneratorFactory<String, ValueGenerator<String>> generatorFactory() {
 		return generatorFactory;
 	}
 
-	public final String pattern() {
+	@Override
+	public final String getPattern() {
 		return pattern;
 	}
 
@@ -61,7 +59,7 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 		return generators;
 	}
 
-	protected final void setGenerators(ValueGenerator<String>[] generators) {
+	protected final void setGenerators(final ValueGenerator<String>[] generators) {
 		this.generators = generators;
 	}
 
@@ -70,10 +68,10 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 	 */
 	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for generators[]
 	protected void initialize() {
-		if (pattern.charAt(0) != PATTERN_SYMBOL) {
+		if(pattern.charAt(0) != PATTERN_SYMBOL) {
 			throw new IllegalArgumentException();
 		}
-		StringBuilder patternBuilder = new StringBuilder(pattern);
+		final StringBuilder patternBuilder = new StringBuilder(pattern);
 		patternBuilder.delete(0, 1);
 		final char type = patternBuilder.charAt(0);
 		final String format = initParameter(patternBuilder, FORMAT_SYMBOLS);
@@ -110,7 +108,7 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 	 * @return a parameter that was extracted from the expression or null if there is no parameters
 	 */
 	protected final String initParameter(final StringBuilder expression, final char[] binarySymbols) {
-		if (isParameterPresented(expression, binarySymbols)) {
+		if(isParameterPresented(expression, binarySymbols)) {
 			return getParameter(expression, binarySymbols);
 		}
 		return null;
@@ -121,7 +119,7 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 	 * @param result see below (format() method)
 	 * @return a string with PATTERN_SYMBOLs replaced by suitable values
 	 */
-	protected String assembleOutputString(StringBuilder result) {
+	protected String assembleOutputString(final StringBuilder result) {
 		result.append(generators[0].get());
 		return result.toString();
 	}
@@ -132,11 +130,12 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 	 *                  (StringBuilder instance must be cleared with setLength(0))
 	 * @return a string with PATTERN_SYMBOLs replaced by suitable values
 	 */
-	protected final String format(StringBuilder result) {
-		if (generators != null) {
-			return assembleOutputString(result);
+	@Override
+	public final String format(final StringBuilder result) {
+		if(generators == null) {
+			return getPattern();
 		} else {
-			return pattern();
+			return assembleOutputString(result);
 		}
 	}
 
@@ -145,7 +144,7 @@ public class SimpleFormattingGenerator implements ValueGenerator<String> {
 	 * @return string with PATTERN_SYMBOLs replaced by suitable values
 	 */
 	@Override
-	public String get() {
+	public final String get() {
 		final StringBuilder result = OUTPUT_BUILDER.get();
 		result.setLength(0);
 		return format(result);

@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.generator;
+package com.emc.mongoose.common.generator.async;
 
 public final class AsyncLongGenerator
 extends AsyncRangeGeneratorBase<Long> {

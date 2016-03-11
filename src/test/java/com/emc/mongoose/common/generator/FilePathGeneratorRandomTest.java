@@ -7,7 +7,6 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-import static com.emc.mongoose.common.generator.FilePathGenerator.DIR_NAME_PREFIX;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 

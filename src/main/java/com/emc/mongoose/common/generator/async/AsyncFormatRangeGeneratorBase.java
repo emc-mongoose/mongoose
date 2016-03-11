@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.generator;
+package com.emc.mongoose.common.generator.async;
 
 import java.text.Format;
 
@@ -9,7 +9,8 @@ import java.text.Format;
  * For details see AsyncRangeGeneratorBase class.
  * @param <T> - type of value that is produced by the generator
  */
-public abstract class AsyncFormatRangeGeneratorBase<T> extends AsyncRangeGeneratorBase<T> {
+public abstract class AsyncFormatRangeGeneratorBase<T>
+extends AsyncRangeGeneratorBase<T> {
 
 	private final Format outputFormat;
 

@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.io.conf;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.common.generator.FormattingGenerator;
+import com.emc.mongoose.common.generator.CompositeFormattingGenerator;
 import com.emc.mongoose.common.generator.ValueGenerator;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -24,12 +24,12 @@ implements FileIOConfig<F, D> {
 	//
 	private int batchSize = RunTimeConfig.getContext().getBatchSize();
 	//
-	private ValueGenerator<String> pathGenerator;
+	private ValueGenerator<String> pathGenerator = null;
 	//
 	public BasicFileIOConfig() {
 		super();
-		if (super.getNamePrefix() != null) {
-			pathGenerator = new FormattingGenerator(super.getNamePrefix());
+		if(namePrefix != null) {
+			pathGenerator = new CompositeFormattingGenerator(namePrefix);
 		}
 	}
 	//
@@ -75,17 +75,17 @@ implements FileIOConfig<F, D> {
 
 	@Override
 	public String getNamePrefix() {
-		if (pathGenerator != null) {
-			return pathGenerator.get();
+		if(pathGenerator == null) {
+			return namePrefix;
 		} else {
-			return null;
+			return pathGenerator.get();
 		}
 	}
 
 	@Override
 	public BasicFileIOConfig<F, D> setNamePrefix(final String namePrefix) {
-		if (namePrefix != null) {
-			pathGenerator = new FormattingGenerator(namePrefix);
+		if(namePrefix != null) {
+			pathGenerator = new CompositeFormattingGenerator(namePrefix);
 		}
 		super.setNamePrefix(namePrefix);
 		return this;

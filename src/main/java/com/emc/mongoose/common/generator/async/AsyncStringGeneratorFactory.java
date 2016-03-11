@@ -1,5 +1,7 @@
-package com.emc.mongoose.common.generator;
+package com.emc.mongoose.common.generator.async;
 
+import com.emc.mongoose.common.generator.GeneratorFactory;
+import com.emc.mongoose.common.generator.ValueGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -9,11 +11,12 @@ import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.emc.mongoose.common.generator.AsyncDateGenerator.*;
-import static com.emc.mongoose.common.generator.FormattingGenerator.RANGE_DELIMITER;
+import static com.emc.mongoose.common.generator.async.AsyncDateGenerator.*;
+import static com.emc.mongoose.common.generator.CompositeFormattingGenerator.RANGE_DELIMITER;
 import static org.apache.commons.lang.time.DateUtils.*;
 
-public final class AsyncStringGeneratorFactory implements GeneratorFactory<String> {
+public final class AsyncStringGeneratorFactory<G extends ValueGenerator<String>>
+implements GeneratorFactory<String, G> {
 
 	private static final Logger LOG = LogManager.getLogger();
 	// pay attention to the matcher groups
@@ -24,16 +27,13 @@ public final class AsyncStringGeneratorFactory implements GeneratorFactory<Strin
 	private static final Pattern LONG_PATTERN = Pattern.compile(rangeRegExp(LONG_REG_EXP));
 	private static final Pattern DATE_PATTERN = Pattern.compile(rangeRegExp(DATE_REG_EXP));
 
-	private static AsyncStringGeneratorFactory singleton = null;
+	private static AsyncStringGeneratorFactory INSTANCE = new AsyncStringGeneratorFactory();
 
 	private AsyncStringGeneratorFactory() {
 	}
 
-	public static AsyncStringGeneratorFactory generatorFactory() {
-		if (singleton == null) {
-			singleton = new AsyncStringGeneratorFactory();
-		}
-		return singleton;
+	public static AsyncStringGeneratorFactory getInstance() {
+		return INSTANCE;
 	}
 
 	// Pay attention to the escape symbols
@@ -75,25 +75,27 @@ public final class AsyncStringGeneratorFactory implements GeneratorFactory<Strin
 	 * @param parameters - an array of parameters (if length > 1, first arg - a format, second - a range, by default)
 	 * @return a suitable generator
 	 */
-	@Override
-	public ValueGenerator<String> createGenerator(final char type, final String ... parameters) {
-		State state =  (State) defineState(parameters);
+	@Override @SuppressWarnings("unchecked")
+	public G createGenerator(final char type, final String ... parameters) {
+		final State state =  (State) defineState(parameters);
 		final Matcher matcher;
 		switch (state) {
 			case EMPTY:
 				switch (type) {
 					case 'd':
-						return new AsyncLongGenerator(47L);
+						return (G) new AsyncLongGenerator(47L);
 					default:
 						throw new IllegalArgumentException();
 				}
 			case FORMAT:
 				switch (type) {
 					case 'f':
-						return new AsyncDoubleGenerator(47.0, parameters[0]);
+						return (G) new AsyncDoubleGenerator(47.0, parameters[0]);
 					case 'D':
 						try {
-							return new AsyncDateGenerator(parseDate("2016/02/25", INPUT_DATE_FMT_STRINGS), parameters[0]);
+							return (G) new AsyncDateGenerator(
+								parseDate("2016/02/25", INPUT_DATE_FMT_STRINGS), parameters[0]
+							);
 						} catch (ParseException e) {
 							LogUtil.exception(
 									LOG, Level.ERROR, e, "Failed to parse the pattern"
@@ -106,10 +108,10 @@ public final class AsyncStringGeneratorFactory implements GeneratorFactory<Strin
 				switch (type) {
 					case 'd':
 						matcher = LONG_PATTERN.matcher(parameters[1]);
-						if (matcher.find()) {
-							return new AsyncLongGenerator(
-									Long.valueOf(matcher.group(1)),
-									Long.valueOf(matcher.group(2)));
+						if(matcher.find()) {
+							return (G) new AsyncLongGenerator(
+								Long.valueOf(matcher.group(1)), Long.valueOf(matcher.group(2))
+							);
 						} else {
 							throw new IllegalArgumentException();
 						}
@@ -121,10 +123,10 @@ public final class AsyncStringGeneratorFactory implements GeneratorFactory<Strin
 					case 'f':
 						matcher = DOUBLE_PATTERN.matcher(parameters[1]);
 						if (matcher.find()) {
-							return new AsyncDoubleGenerator(
-									Double.valueOf(matcher.group(1)),
-									Double.valueOf(matcher.group(2)),
-									parameters[0]);
+							return (G) new AsyncDoubleGenerator(
+								Double.valueOf(matcher.group(1)), Double.valueOf(matcher.group(2)),
+								parameters[0]
+							);
 						} else {
 							throw new IllegalArgumentException();
 						}
@@ -132,10 +134,11 @@ public final class AsyncStringGeneratorFactory implements GeneratorFactory<Strin
 						matcher = DATE_PATTERN.matcher(parameters[1]);
 						if (matcher.find()) {
 							try {
-								return new AsyncDateGenerator(
-										parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS),
-										parseDate(matcher.group(6), INPUT_DATE_FMT_STRINGS),
-										parameters[0]);
+								return (G) new AsyncDateGenerator(
+									parseDate(matcher.group(1), INPUT_DATE_FMT_STRINGS),
+									parseDate(matcher.group(6), INPUT_DATE_FMT_STRINGS),
+									parameters[0]
+								);
 							} catch (final ParseException e) {
 								LogUtil.exception(
 										LOG, Level.ERROR, e, "Failed to parse the pattern"

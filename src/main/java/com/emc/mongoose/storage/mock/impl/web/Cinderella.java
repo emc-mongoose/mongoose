@@ -4,7 +4,7 @@ import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.generator.AsyncCurrentDateGenerator;
+import com.emc.mongoose.common.generator.async.AsyncCurrentDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //

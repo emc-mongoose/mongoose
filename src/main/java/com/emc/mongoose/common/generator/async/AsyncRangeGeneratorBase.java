@@ -1,27 +1,28 @@
-package com.emc.mongoose.common.generator;
+package com.emc.mongoose.common.generator.async;
 
 import java.util.Random;
-import com.emc.mongoose.common.generator.AsyncValueGenerator.InitCallable;
 
+import com.emc.mongoose.common.generator.RangeGenerator;
+import com.emc.mongoose.common.generator.ValueGenerator;
 /**
  * This class is a base class to create generators that produce values of any types (in specified ranges or not),
  * but their values are intended to be converted to String.
  * @param <T> - type of value that is produced by the generator
  */
 public abstract class AsyncRangeGeneratorBase<T>
-implements Initializable, ValueGenerator<String> {
+implements Initializable, RangeGenerator<T> {
 
 	protected final Random random = new Random();
 	private final T minValue;
 	private final T range;
-	private final AsyncValueGenerator<T> generator;
+	private final ValueGenerator<T> generator;
 
 	protected AsyncRangeGeneratorBase(final T minValue, final T maxValue) {
 		this.minValue = minValue;
 		this.range = computeRange(minValue, maxValue);
 		this.generator = new AsyncValueGenerator<>(
 			minValue,
-			new InitCallable<T>() {
+			new AsyncValueGenerator.InitCallable<T>() {
 				//
 				@Override
 				public boolean isInitialized() {
@@ -29,7 +30,8 @@ implements Initializable, ValueGenerator<String> {
 				}
 				//
 				@Override
-				public T call() throws Exception {
+				public T call()
+				throws Exception {
 					return rangeValue();
 				}
 			}
@@ -41,7 +43,7 @@ implements Initializable, ValueGenerator<String> {
 		this.range = null;
 		this.generator = new AsyncValueGenerator<>(
 			initialValue,
-			new InitCallable<T>() {
+			new AsyncValueGenerator.InitCallable<T>() {
 				//
 				@Override
 				public boolean isInitialized() {
@@ -68,11 +70,11 @@ implements Initializable, ValueGenerator<String> {
 	 */
 	protected abstract String stringify(final T value);
 
-	protected T minValue() {
+	protected final T minValue() {
 		return minValue;
 	}
 
-	protected T range() {
+	protected final T range() {
 		return range;
 	}
 
@@ -80,12 +82,13 @@ implements Initializable, ValueGenerator<String> {
 	 *
 	 * @return - a clean generator-produced value
 	 */
-	protected T value() {
+	@Override
+	public final T value() {
 		return generator.get();
 	}
 
 	@Override
-	public String get() {
+	public final String get() {
 		return stringify(value());
 	}
 

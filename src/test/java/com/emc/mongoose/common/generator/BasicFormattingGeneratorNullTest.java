@@ -2,17 +2,12 @@ package com.emc.mongoose.common.generator;
 
 import org.apache.commons.lang.NullArgumentException;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-
-import java.util.Arrays;
-
-public class SimpleFormattingGeneratorNullTest {
+public class BasicFormattingGeneratorNullTest {
 
 	private ValueGenerator<String> formatter;
 
 	private void initFormatter(String patternString) throws Exception {
-		formatter = new SimpleFormattingGenerator(patternString);
+		formatter = new BasicFormattingGenerator(patternString);
 	}
 
 	@Test(expected = NullArgumentException.class)

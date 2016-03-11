@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.generator;
 
-import junit.framework.TestCase;
+import com.emc.mongoose.common.generator.async.AsyncFormattingGenerator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -9,8 +9,8 @@ import java.util.Arrays;
 import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Pattern;
 
-import static com.emc.mongoose.common.generator.AsyncStringGeneratorFactory.DOUBLE_REG_EXP;
-import static com.emc.mongoose.common.generator.AsyncStringGeneratorFactory.LONG_REG_EXP;
+import static com.emc.mongoose.common.generator.async.AsyncStringGeneratorFactory.DOUBLE_REG_EXP;
+import static com.emc.mongoose.common.generator.async.AsyncStringGeneratorFactory.LONG_REG_EXP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.runners.Parameterized.Parameter;

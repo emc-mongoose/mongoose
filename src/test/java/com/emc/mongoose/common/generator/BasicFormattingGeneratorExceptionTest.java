@@ -7,12 +7,12 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 
 @RunWith(Parameterized.class)
-public class SimpleFormattingGeneratorExceptionTest {
+public class BasicFormattingGeneratorExceptionTest {
 
 	private ValueGenerator<String> formatter;
 
 	private void initFormatter(String patternString) throws Exception {
-		formatter = new SimpleFormattingGenerator(patternString);
+		formatter = new BasicFormattingGenerator(patternString);
 	}
 
 	@Parameterized.Parameters

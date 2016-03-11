@@ -1,5 +1,6 @@
-package com.emc.mongoose.common.generator;
+package com.emc.mongoose.common.generator.async;
 
+import com.emc.mongoose.common.generator.RangeGenerator;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 
@@ -12,17 +13,19 @@ extends AsyncFormatRangeGeneratorBase<Date> {
 
 	public static final String[] INPUT_DATE_FMT_STRINGS = new String[]{"yyyy/MM/dd"};
 
-	private final AsyncLongGenerator longGenerator;
+	private final RangeGenerator<Long> longGenerator;
 
 	public AsyncDateGenerator(final Date minValue, final Date maxValue, final String formatString) {
 		super(minValue, maxValue, formatString);
 		longGenerator = new AsyncLongGenerator(minValue.getTime(), maxValue.getTime());
 	}
 
-	public AsyncDateGenerator(final Date initialValue, final String formatString) throws ParseException{
+	public AsyncDateGenerator(final Date initialValue, final String formatString)
+	throws ParseException{
 		super(initialValue, formatString);
 		longGenerator = new AsyncLongGenerator(
-				DateUtils.parseDate("1970/01/01", INPUT_DATE_FMT_STRINGS).getTime(), initialValue.getTime()
+			DateUtils.parseDate("1970/01/01", INPUT_DATE_FMT_STRINGS).getTime(),
+			initialValue.getTime()
 		);
 	}
 

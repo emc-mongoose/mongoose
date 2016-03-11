@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.generator;
 
-public class StringGeneratorFactory implements GeneratorFactory<String> {
+public class StringGeneratorFactory
+implements GeneratorFactory<String, ValueGenerator<String>> {
 
 	private static StringGeneratorFactory singleton = null;
 
@@ -25,7 +26,7 @@ public class StringGeneratorFactory implements GeneratorFactory<String> {
 
 	@Override
 	public ValueGenerator<String> createGenerator(final char type, final String... parameters) {
-		State state =  (State) defineState(parameters);
+		final State state =  (State) defineState(parameters);
 		switch (state) {
 			case DEFAULT:
 				switch (type) {

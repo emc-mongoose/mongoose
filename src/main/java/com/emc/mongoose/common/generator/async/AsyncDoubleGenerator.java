@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.generator;
+package com.emc.mongoose.common.generator.async;
 
 import java.text.DecimalFormat;
 import java.text.Format;

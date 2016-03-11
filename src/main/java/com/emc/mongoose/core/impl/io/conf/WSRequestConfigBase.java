@@ -4,8 +4,8 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.generator.AsyncCurrentDateGenerator;
-import com.emc.mongoose.common.generator.AsyncFormattingGenerator;
+import com.emc.mongoose.common.generator.async.AsyncCurrentDateGenerator;
+import com.emc.mongoose.common.generator.async.AsyncFormattingGenerator;
 import com.emc.mongoose.common.generator.ValueGenerator;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
@@ -17,7 +17,7 @@ import com.emc.mongoose.core.api.io.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
-import static com.emc.mongoose.common.generator.FormattingGenerator.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.generator.CompositeFormattingGenerator.PATTERN_SYMBOL;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.BasicWSObject;
@@ -79,7 +79,6 @@ import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -88,7 +87,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 09.06.14.
  */
@@ -816,22 +814,26 @@ implements WSRequestConfig<T, C> {
 	throws HttpException, IOException {
 		// add all the shared headers if missing
 		String headerName, headerValue;
+		ValueGenerator<String> headerValueGenerator;
 		for(final Header nextHeader : sharedHeaders.getAllHeaders()) {
 			headerName = nextHeader.getName();
 			headerValue = nextHeader.getValue();
 			if(!request.containsHeader(headerName)) {
-				if (headerValue != null && headerValue.indexOf(PATTERN_SYMBOL) > -1) {
-					if (!HEADER_FORMATTERS.containsKey(headerName)) {
-						final ValueGenerator<String> formatter = new AsyncFormattingGenerator(headerValue);
-						while(null == formatter.get()) {
+				if(headerValue != null && headerValue.indexOf(PATTERN_SYMBOL) > -1) {
+					// header value is a generator pattern
+					headerValueGenerator  = HEADER_FORMATTERS.get(headerName);
+					// try to find the corresponding generator in the registry
+					if(headerValueGenerator == null) {
+						// create new generator and put it into the registry for reuse
+						headerValueGenerator = new AsyncFormattingGenerator(headerValue);
+						/*while(null == headerValueGenerator.get()) {
 							LockSupport.parkNanos(1);
 							Thread.yield();
-						}
-						HEADER_FORMATTERS.put(headerName, formatter);
+						}*/
+						HEADER_FORMATTERS.put(headerName, headerValueGenerator);
 					}
-					request.setHeader(
-						new BasicHeader(headerName, HEADER_FORMATTERS.get(headerName).get())
-					);
+					// put the generated header value into the request
+					request.setHeader(new BasicHeader(headerName, headerValueGenerator.get()));
 				} else {
 					request.setHeader(nextHeader);
 				}
