@@ -87,6 +87,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 09.06.14.
  */
@@ -826,14 +827,17 @@ implements WSRequestConfig<T, C> {
 					if(headerValueGenerator == null) {
 						// create new generator and put it into the registry for reuse
 						headerValueGenerator = new AsyncFormattingGenerator(headerValue);
-						/*while(null == headerValueGenerator.get()) {
+						// spin while header value generator is not ready
+						while(null == (headerValue = headerValueGenerator.get())) {
 							LockSupport.parkNanos(1);
 							Thread.yield();
-						}*/
+						}
 						HEADER_FORMATTERS.put(headerName, headerValueGenerator);
+					} else {
+						headerValue = headerValueGenerator.get();
 					}
 					// put the generated header value into the request
-					request.setHeader(new BasicHeader(headerName, headerValueGenerator.get()));
+					request.setHeader(new BasicHeader(headerName, headerValue));
 				} else {
 					request.setHeader(nextHeader);
 				}
