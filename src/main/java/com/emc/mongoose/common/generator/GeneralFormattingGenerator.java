@@ -104,13 +104,17 @@ extends BasicFormattingGenerator {
 	public String toString() {
 		final StringBuilder result = new StringBuilder();
 		result.append("Generators: ");
-		for (final ValueGenerator generator : generators()) {
-			result.append(generator.getClass().getName()).append(";");
+		if (generators() != null) {
+			for (final ValueGenerator generator : generators()) {
+				result.append(generator.getClass().getName()).append(";");
+			}
 		}
 		result.append("\n");
-		result.append("Segments: ");
-		for (final String segment: segments) {
-			result.append(segment).append(";");
+		if (segments != null) {
+			result.append("Segments: ");
+			for (final String segment : segments) {
+				result.append(segment).append(";");
+			}
 		}
 		result.append("\n");
 		return result.toString();
