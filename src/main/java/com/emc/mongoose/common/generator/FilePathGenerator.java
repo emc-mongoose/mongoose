@@ -33,7 +33,7 @@ implements ValueGenerator<String> {
 	}
 
 	private String nextDirName(final int width) {
-		return Long.toString(RANDOM.nextNumber(width), RADIX);
+		return Long.toString(RANDOM.nextInt(width), RADIX);
 	}
 
 	private final static ThreadLocal<StringBuilder>
@@ -48,7 +48,7 @@ implements ValueGenerator<String> {
 	public String get() {
 		final StringBuilder pathBuilder = THREAD_LOCAL_PATH_BUILDER.get();
 		pathBuilder.setLength(0);
-		final long newDepth = RANDOM.nextNumber(depth) + 1;
+		final long newDepth = RANDOM.nextInt(depth) + 1;
 		for(long i = 0; i < newDepth; i++) {
 			pathBuilder.append(nextDirName(width));
 			pathBuilder.append(File.separatorChar);
