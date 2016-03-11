@@ -20,7 +20,7 @@ public class FormattingGeneratorBasicTest {
 	private ValueGenerator<String> formatter;
 
 	private void initFormatter(String patternString) throws Exception {
-		formatter = new CompositeFormattingGenerator(patternString);
+		formatter = new GeneralFormattingGenerator(patternString);
 	}
 
 	@Parameterized.Parameters

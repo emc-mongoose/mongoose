@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.io.conf;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.common.generator.CompositeFormattingGenerator;
+import com.emc.mongoose.common.generator.GeneralFormattingGenerator;
 import com.emc.mongoose.common.generator.ValueGenerator;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -29,7 +29,7 @@ implements FileIOConfig<F, D> {
 	public BasicFileIOConfig() {
 		super();
 		if(namePrefix != null) {
-			pathGenerator = new CompositeFormattingGenerator(namePrefix);
+			pathGenerator = new GeneralFormattingGenerator(namePrefix);
 		}
 	}
 	//
@@ -85,7 +85,7 @@ implements FileIOConfig<F, D> {
 	@Override
 	public BasicFileIOConfig<F, D> setNamePrefix(final String namePrefix) {
 		if(namePrefix != null) {
-			pathGenerator = new CompositeFormattingGenerator(namePrefix);
+			pathGenerator = new GeneralFormattingGenerator(namePrefix);
 		}
 		super.setNamePrefix(namePrefix);
 		return this;

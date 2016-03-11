@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.generator;
 
-public final class CompositeFormattingGenerator
+public final class GeneralFormattingGenerator
 extends BasicFormattingGenerator {
 
 	/**
@@ -14,12 +14,12 @@ extends BasicFormattingGenerator {
 	 */
 	private String[] segments;
 
-	public CompositeFormattingGenerator(final String pattern) {
+	public GeneralFormattingGenerator(final String pattern) {
 		super(pattern);
 	}
 
-	public CompositeFormattingGenerator(
-		final String pattern, GeneratorFactory<String, ValueGenerator<String>> generatorFactory
+	public GeneralFormattingGenerator(
+		final String pattern, GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory
 	) {
 		super(pattern, generatorFactory);
 	}

@@ -19,7 +19,7 @@ implements FormattingGenerator {
 	/**
 	 * A factory for getting of value generators (see below)
 	 */
-	private final GeneratorFactory<String, ValueGenerator<String>> generatorFactory;
+	private final GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory;
 
 	/**
 	 * An input string with pattern symbols and expressions that have to be replaced by suitable values
@@ -36,7 +36,7 @@ implements FormattingGenerator {
 	}
 
 	public BasicFormattingGenerator(
-		final String pattern, GeneratorFactory<String, ValueGenerator<String>> generatorFactory
+		final String pattern, GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory
 	) {
 		if (pattern == null) {
 			throw new NullArgumentException("pattern");
@@ -46,7 +46,7 @@ implements FormattingGenerator {
 		initialize();
 	}
 
-	protected final GeneratorFactory<String, ValueGenerator<String>> generatorFactory() {
+	protected final GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory() {
 		return generatorFactory;
 	}
 
