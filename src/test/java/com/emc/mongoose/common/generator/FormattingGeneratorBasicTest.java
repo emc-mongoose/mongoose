@@ -7,6 +7,7 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
+import static com.emc.mongoose.common.generator.FilePathGenerator.DELIMITER;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
@@ -52,11 +53,11 @@ public class FormattingGeneratorBasicTest {
 
 	private int numberOfSpaces(String string) {
 		int counter = 0;
-		for (char each: string.toCharArray()) {
-			if (each == ' ') {
+		for(final char each : string.toCharArray()) {
+			if(each == ' ') {
 				counter++;
 			}
-			if (each == ';') { // a temp condition
+			if(each == DELIMITER.charAt(0)) { // a temp condition
 				counter--;
 			}
 		}
