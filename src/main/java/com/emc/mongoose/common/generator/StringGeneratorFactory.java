@@ -1,7 +1,11 @@
 package com.emc.mongoose.common.generator;
 
+import java.io.File;
+
 public class StringGeneratorFactory<G extends ValueGenerator<String>>
 implements GeneratorFactory<String, G> {
+
+	public static final String PATH_REG_EXP = "([0-9a-z]+" + "\\" + File.separatorChar + ")+";
 
 	private static final StringGeneratorFactory<? extends ValueGenerator<String>>
 			INSTANCE = new StringGeneratorFactory<>();

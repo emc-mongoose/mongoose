@@ -8,12 +8,12 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.generator.FilePathGenerator.DELIMITER;
+import static com.emc.mongoose.common.generator.StringGeneratorFactory.PATH_REG_EXP;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class FormattingGeneratorBasicTest {
 
-	private static final String PATH_REG_EXP = "([0-9a-z]+" + "\\/" + ")+";
 	private static final Pattern PATH_PATTERN = Pattern.compile(PATH_REG_EXP);
 	private static final Pattern ANYTHING_PATTERN = Pattern.compile(".*");
 
