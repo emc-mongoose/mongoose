@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.bundling.Compression
 import groovy.json.JsonSlurper
+import de.gesellix.gradle.docker.tasks.*
 
 buildscript {
 	repositories {
@@ -19,6 +20,11 @@ buildscript {
 	}
 }
 
+plugins {
+	id "de.gesellix.docker" version "2016-02-08T22-29-47"
+}
+
+apply plugin: "de.gesellix.docker"
 apply plugin: 'java'
 apply plugin: 'java-library-distribution'
 apply plugin: 'idea'
@@ -1123,3 +1129,15 @@ artifactoryPublish.dependsOn commonJar, coreApiJar, coreImplJar
 artifactoryPublish.dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 artifactoryPublish.dependsOn serverApiJar, webserverJar, clientJar, scenarioJar, serverImplJar
 artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testJar
+
+task buildDockerImage(type: DockerBuildTask, dependsOn: dist) {
+	dockerHost = "unix:///var/run/docker.sock"
+	//dockerHost = 'https://192.168.99.100:2376'
+	//dockerHost = System.env.DOCKER_HOST
+
+	//registry = 'https://nile-registry.lss.emc.com:5000'
+
+	//defaultCertPath = System.getProperty('docker.cert.path') ?: "${System.getProperty('user.home')}/.docker/machine/machines/default"
+	imageName = project.name
+	buildContextDirectory = file('./docker/')
+}

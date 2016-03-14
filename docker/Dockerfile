@@ -2,7 +2,7 @@ FROM nile-registry.lss.emc.com:5000/emccaspian/java8:latest
 
 MAINTAINER EMC
 
-ADD mongoose*.tgz /opt/
+ADD build/dist/mongoose*.tgz /opt/
 
 RUN ln -s /opt/mongoose* /opt/mongoose
 
