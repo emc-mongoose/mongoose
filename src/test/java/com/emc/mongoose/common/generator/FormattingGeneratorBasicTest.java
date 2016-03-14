@@ -28,7 +28,7 @@ public class FormattingGeneratorBasicTest {
 		return Arrays.asList(new Object[][]{
 				{"", ANYTHING_PATTERN},
 				{"glgkwl;gh", ANYTHING_PATTERN},
-				{"sgdhdh%p{1; 3}", PATH_PATTERN },
+				{"sgdhdh/%p{1; 3}/fdfg", PATH_PATTERN },
 				{"%p{1; 3}", PATH_PATTERN },
 				{"%p{11; 7}", PATH_PATTERN },
 				{"%p{1; 1}", PATH_PATTERN },
@@ -46,9 +46,9 @@ public class FormattingGeneratorBasicTest {
 	public void checkFormattingResult() throws Exception {
 		initFormatter(patternString);
 		final String result = formatter.get();
+//		System.out.println(result);
 		assertTrue(result, resultPattern.matcher(result).find());
 		assertEquals(numberOfSpaces(patternString), numberOfSpaces(result));
-//		System.out.println(result);
 	}
 
 	private int numberOfSpaces(String string) {
