@@ -42,6 +42,7 @@ public class FilePathGeneratorBasicTest {
 	public void checkPrintingResult() throws Exception {
 		initFormatter(width, depth);
 		final String result = formatter.get();
+//		System.out.println(result);
 		assertTrue(PATH_PATTERN.matcher(result).find());
 	}
 
