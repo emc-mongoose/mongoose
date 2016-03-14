@@ -28,7 +28,7 @@ public class FormattingGeneratorBasicTest {
 		return Arrays.asList(new Object[][]{
 				{"", ANYTHING_PATTERN},
 				{"glgkwl;gh", ANYTHING_PATTERN},
-				{"sgdhdh/%p{1; 3}/fdfg", PATH_PATTERN },
+				{"sgdhdh/%p{1; 3}fdfg", PATH_PATTERN },
 				{"%p{1; 3}", PATH_PATTERN },
 				{"%p{11; 7}", PATH_PATTERN },
 				{"%p{1; 1}", PATH_PATTERN },
