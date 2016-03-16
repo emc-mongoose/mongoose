@@ -14,12 +14,14 @@ extends BasicFormattingGenerator {
 	 */
 	private String[] segments;
 
-	public GeneralFormattingGenerator(final String pattern) {
+	public GeneralFormattingGenerator(final String pattern)
+	throws IllegalArgumentException {
 		super(pattern);
 	}
 
 	public GeneralFormattingGenerator(
-		final String pattern, GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory
+		final String pattern,
+		final GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory
 	) {
 		super(pattern, generatorFactory);
 	}

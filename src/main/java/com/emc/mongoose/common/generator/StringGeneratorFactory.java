@@ -27,7 +27,8 @@ implements GeneratorFactory<String, G> {
 	}
 
 	@Override @SuppressWarnings("unchecked")
-	public G createGenerator(final char type, final String... parameters) {
+	public G createGenerator(final char type, final String... parameters)
+	throws IllegalArgumentException {
 		final State state =  (State) defineState(parameters);
 		switch (state) {
 			case DEFAULT:

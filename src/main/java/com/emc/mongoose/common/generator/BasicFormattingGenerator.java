@@ -31,13 +31,15 @@ implements FormattingGenerator {
 	 */
 	private ValueGenerator<String>[] generators;
 
-	public BasicFormattingGenerator(final String pattern) {
+	public BasicFormattingGenerator(final String pattern)
+	throws IllegalArgumentException {
 		this(pattern, StringGeneratorFactory.getInstance());
 	}
 
 	public BasicFormattingGenerator(
-		final String pattern, GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory
-	) {
+		final String pattern,
+		final GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory
+	) throws IllegalArgumentException {
 		if (pattern == null) {
 			throw new NullArgumentException("pattern");
 		}
@@ -67,7 +69,8 @@ implements FormattingGenerator {
 	 * In this method the class fields are being filled
 	 */
 	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for generators[]
-	protected void initialize() {
+	protected void initialize()
+	throws IllegalArgumentException {
 		if(pattern.charAt(0) != PATTERN_SYMBOL) {
 			throw new IllegalArgumentException();
 		}

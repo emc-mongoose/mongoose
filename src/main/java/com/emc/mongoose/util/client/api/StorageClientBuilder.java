@@ -2,6 +2,7 @@ package com.emc.mongoose.util.client.api;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 //
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 17.06.15.
@@ -152,5 +153,6 @@ public interface StorageClientBuilder<T extends Item, U extends StorageClient<T>
 	throws IllegalArgumentException;
 
 	/** Build the storage client instance */
-	U build();
+	U build()
+	throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException;
 }

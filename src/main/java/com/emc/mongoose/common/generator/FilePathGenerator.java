@@ -9,19 +9,31 @@ import static java.lang.Integer.parseInt;
 public class FilePathGenerator
 implements ValueGenerator<String> {
 
-	public static final String DELIMITER = ";";
 	private static final int RADIX = Character.MAX_RADIX;
 	private static final Random RANDOM = new Random();
 
 	private final int width;
 	private final int depth;
 
-	public FilePathGenerator(String paramsString) {
-		this(paramsString.split(DELIMITER));
+	public FilePathGenerator(final String paramsString) {
+		this(areParamsValid(paramsString) ? paramsString.split(DELIMITER) : new String[]{});
 	}
 
-	private FilePathGenerator(String ... params) {
-		this(parseInt(params[0].replaceAll(" ", "")), parseInt(params[1].replaceAll(" ", "")));
+	private FilePathGenerator(final String[] params) {
+		this(
+			(params.length > 0 ? parseInt(params[0].replaceAll(" ", "")) : 0),
+			(params.length > 1 ? parseInt(params[1].replaceAll(" ", "")) : 0)
+		);
+	}
+
+	private static boolean areParamsValid(final String paramsString) {
+		final int delPos;
+		if(paramsString == null) {
+			delPos = 0;
+		} else {
+			delPos = paramsString.indexOf(DELIMITER);
+		}
+		return delPos > 0 && delPos < paramsString.length() - 1;
 	}
 
 	public FilePathGenerator(int width, int depth) {

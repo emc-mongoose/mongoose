@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 /**
@@ -45,8 +46,10 @@ implements Runnable {
 			this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
 			this.timeUnit = timeOut > 0 ? rtConfig.getLoadLimitTimeUnit() : TimeUnit.DAYS;
 			this.loadJob = loadBuilder.build();
-		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.FATAL, e, "Failed to build the load job");
+		} catch(final IOException | ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException e ) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to execute");
+		} catch(final InvocationTargetException e) {
+			LogUtil.exception(LOG, Level.ERROR, e.getTargetException(), "Failed to execute");
 		}
 	}
 	//

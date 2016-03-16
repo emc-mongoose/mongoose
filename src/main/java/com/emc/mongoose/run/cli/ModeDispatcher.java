@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
@@ -101,22 +102,29 @@ public final class ModeDispatcher {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		if (rtConfig != null) {
 			final String scenarioName = rtConfig.getScenarioName();
-			switch (scenarioName) {
-				case Constants.RUN_SCENARIO_SINGLE:
-					new Single(rtConfig).run();
-					break;
-				case Constants.RUN_SCENARIO_CHAIN:
-					new Chain(rtConfig).run();
-					break;
-				case Constants.RUN_SCENARIO_RAMPUP:
-					new Rampup(rtConfig).run();
-					break;
-				default:
-					throw new IllegalArgumentException(
-						String.format("Incorrect scenario: \"%s\"", scenarioName)
-					);
+			final Logger rootLogger = LogManager.getRootLogger();
+			try {
+				switch(scenarioName) {
+					case Constants.RUN_SCENARIO_SINGLE:
+						new Single(rtConfig).run();
+						break;
+					case Constants.RUN_SCENARIO_CHAIN:
+						new Chain(rtConfig).run();
+						break;
+					case Constants.RUN_SCENARIO_RAMPUP:
+						new Rampup(rtConfig).run();
+						break;
+					default:
+						throw new IllegalArgumentException(
+							String.format("Incorrect scenario: \"%s\"", scenarioName)
+						);
+				}
+			} catch(final ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException e ) {
+				LogUtil.exception(rootLogger, Level.ERROR, e, "Failed to execute");
+			} catch(final InvocationTargetException e) {
+				LogUtil.exception(rootLogger, Level.ERROR, e.getTargetException(), "Failed to execute");
 			}
-			LogManager.getRootLogger().info(Markers.MSG, "Scenario end");
+			rootLogger.info(Markers.MSG, "Scenario end");
 		} else {
 			throw new NullPointerException(
 				"runTimeConfig hasn't been initialized"

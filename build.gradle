@@ -32,8 +32,8 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.artifactory'
 
-sourceCompatibility = JavaVersion.VERSION_1_7
-targetCompatibility = JavaVersion.VERSION_1_7
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 distsDirName = 'dist'
 dependencyCacheDirName = 'tmp'
@@ -52,7 +52,7 @@ version = ext.version
 group = "com.emc.${rootProject.name}"
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '2.4'
+	gradleVersion = '2.10'
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -995,7 +995,7 @@ task dist(type: Tar) {
 idea {
 	module {
 		name = rootProject.name
-		//jdkName = sourceCompatibility
+		jdkName = sourceCompatibility
 		//
 		inheritOutputDirs = false
 		outputDir = sourceSets.common.output.resourcesDir

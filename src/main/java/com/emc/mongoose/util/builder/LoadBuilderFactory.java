@@ -12,7 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.lang.reflect.Constructor;
-
+import java.lang.reflect.InvocationTargetException;
 /**
  Created by kurila on 09.06.15.
  */
@@ -31,19 +31,13 @@ public class LoadBuilderFactory {
 	@SuppressWarnings("unchecked")
 	public static <T extends Item, U extends LoadExecutor<T>> LoadBuilder<T, U> getInstance(
 		final RunTimeConfig rtConfig
-	) {
-		LoadBuilder loadBuilderInstance;
-		try {
-			final Class loadBuilderImplClass = getLoadBuilderClass(
-				rtConfig.getRunMode(), rtConfig.getItemClass()
-			);
-			final Constructor constructor = loadBuilderImplClass.getConstructor(RunTimeConfig.class);
-			loadBuilderInstance = (LoadBuilder) constructor.newInstance(rtConfig);
-		} catch(final Exception e) {
-			e.printStackTrace(System.out);
-			throw new RuntimeException(e);
-		}
-		return loadBuilderInstance;
+	) throws ClassNotFoundException, NoSuchMethodException, InstantiationException,
+	IllegalAccessException, InvocationTargetException {
+		final Class loadBuilderImplClass = getLoadBuilderClass(
+			rtConfig.getRunMode(), rtConfig.getItemClass()
+		);
+		final Constructor constructor = loadBuilderImplClass.getConstructor(RunTimeConfig.class);
+		return (LoadBuilder) constructor.newInstance(rtConfig);
 	}
 	//
 	@SuppressWarnings("unchecked")

@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 //
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 11.06.15.
@@ -61,11 +62,22 @@ implements Runnable {
 				rtConfig.set(RunTimeConfig.KEY_DELETE_CONNS, nextConnCountStr);
 				rtConfig.set(RunTimeConfig.KEY_READ_CONNS, nextConnCountStr);
 				rtConfig.set(RunTimeConfig.KEY_UPDATE_CONNS, nextConnCountStr);
-				nextLoadSeq = new Chain(rtConfig, timeOut, timeUnit, loadTypeSeq, false);
-				LOG.info(Markers.PERF_SUM, "---- Step {} start ----", nextStepName);
-				nextLoadSeq.run();
-				if(nextLoadSeq.isInterrupted()) {
-					return;
+				try {
+					nextLoadSeq = new Chain(rtConfig, timeOut, timeUnit, loadTypeSeq, false);
+					LOG.info(Markers.PERF_SUM, "---- Step {} start ----", nextStepName);
+					nextLoadSeq.run();
+					if(nextLoadSeq.isInterrupted()) {
+						return;
+					}
+				} catch(final ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException e ) {
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "Failed to execute the step \"{}\"", nextStepName
+					);
+				} catch(final InvocationTargetException e) {
+					LogUtil.exception(
+						LOG, Level.ERROR, e.getTargetException(),
+						"Failed to execute the step \"{}\"", nextStepName
+					);
 				}
 			}
 		}

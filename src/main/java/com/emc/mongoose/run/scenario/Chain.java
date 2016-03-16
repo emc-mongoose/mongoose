@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 import java.util.List;
@@ -48,7 +49,8 @@ implements Runnable {
 	//
 	private volatile boolean interrupted;
 	//
-	public Chain(final RunTimeConfig rtConfig) {
+	public Chain(final RunTimeConfig rtConfig)
+	throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 		this(
 			rtConfig,
 			rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit(),
@@ -60,7 +62,7 @@ implements Runnable {
 	public Chain(
 		final RunTimeConfig rtConfig, final long timeOut, final TimeUnit timeUnit,
 		final String[] loadTypeSeq, final boolean isParallel
-	) {
+	) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 		this.timeOut = timeOut > 0 ? timeOut : Long.MAX_VALUE;
 		this.timeUnit = timeOut > 0 ? timeUnit : TimeUnit.DAYS;
 		this.isParallel = isParallel;

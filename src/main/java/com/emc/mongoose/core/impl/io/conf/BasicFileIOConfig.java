@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.common.generator.GeneralFormattingGenerator;
 import com.emc.mongoose.common.generator.ValueGenerator;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
@@ -13,6 +14,9 @@ import com.emc.mongoose.core.impl.item.container.BasicDirectory;
 import com.emc.mongoose.core.impl.item.data.BasicFileItem;
 import com.emc.mongoose.core.impl.item.data.DirectoryItemSrc;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 /**
@@ -21,6 +25,8 @@ import java.io.IOException;
 public class BasicFileIOConfig<F extends FileItem, D extends Directory<F>>
 extends IOConfigBase<F, D>
 implements FileIOConfig<F, D> {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private int batchSize = RunTimeConfig.getContext().getBatchSize();
 	//

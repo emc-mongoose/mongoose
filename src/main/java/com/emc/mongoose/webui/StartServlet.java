@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 //
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.concurrent.ConcurrentHashMap;
 /**
@@ -151,27 +152,34 @@ public final class StartServlet extends CommonServlet {
 				LOG.debug(Markers.MSG, message);
 				LOG.info(Markers.CFG, runTimeConfig.toFormattedString());
 				//
-				switch (scenarioName) {
-					case Constants.RUN_SCENARIO_SINGLE:
-						new Single(runTimeConfig).run();
-						break;
-					case Constants.RUN_SCENARIO_CHAIN:
-						new Chain(runTimeConfig).run();
-						break;
-					case Constants.RUN_SCENARIO_RAMPUP:
-						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
-							convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
-						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS,
-							convertArrayToString(runTimeConfig.getScenarioRampupConnCounts()));
-						ThreadContext.put(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD,
-							convertArrayToString(runTimeConfig.getScenarioChainLoad()));
-						new Rampup(runTimeConfig).run();
-						break;
-					default:
-						throw new IllegalArgumentException(
-							String.format("Incorrect scenario: \"%s\"", scenarioName)
-						);
+				try {
+					switch (scenarioName) {
+						case Constants.RUN_SCENARIO_SINGLE:
+							new Single(runTimeConfig).run();
+							break;
+						case Constants.RUN_SCENARIO_CHAIN:
+							new Chain(runTimeConfig).run();
+							break;
+						case Constants.RUN_SCENARIO_RAMPUP:
+							ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
+								convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
+							ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_CONN_COUNTS,
+								convertArrayToString(runTimeConfig.getScenarioRampupConnCounts()));
+							ThreadContext.put(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD,
+								convertArrayToString(runTimeConfig.getScenarioChainLoad()));
+							new Rampup(runTimeConfig).run();
+							break;
+						default:
+							throw new IllegalArgumentException(
+								String.format("Incorrect scenario: \"%s\"", scenarioName)
+							);
+					}
+				} catch(final ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException e ) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to execute");
+				} catch(final InvocationTargetException e) {
+					LogUtil.exception(LOG, Level.ERROR, e.getTargetException(), "Failed to execute");
 				}
+				
 				LOG.info(Markers.MSG, "Scenario end");
 				//
 			}
