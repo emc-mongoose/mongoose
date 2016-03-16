@@ -6,11 +6,12 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-//
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+//
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
 import com.emc.mongoose.core.impl.item.data.BasicFile;
 import com.emc.mongoose.core.impl.item.data.DirectoryItemSrc;
+//
 import org.apache.commons.lang.StringUtils;
 //
 import java.io.IOException;

@@ -63,7 +63,7 @@ implements IOConfig<T, C> {
 			setLoadType(ioConf2Clone.getLoadType());
 			setContainer(ioConf2Clone.getContainer());
 			setNameSpace(ioConf2Clone.getNameSpace());
-			setNamePrefix(ioConf2Clone.getNamePrefix());
+			setNamePrefix(ioConf2Clone.namePrefix);
 			setNameRadix(ioConf2Clone.getNameRadix());
 			setBuffSize(ioConf2Clone.getBuffSize());
 			this.reqSleepMilliSec = ioConf2Clone.reqSleepMilliSec;

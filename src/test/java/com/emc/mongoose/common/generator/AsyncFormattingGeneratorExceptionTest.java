@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.generator;
 
-import junit.framework.TestCase;
+import com.emc.mongoose.common.generator.async.AsyncFormattingGenerator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -12,8 +12,7 @@ import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class AsyncFormattingGeneratorExceptionTest
-extends TestCase {
+public class AsyncFormattingGeneratorExceptionTest {
 
 	protected ValueGenerator<String> formatter;
 
@@ -33,7 +32,8 @@ extends TestCase {
 				{"nghgh%"},
 				{"%%%%%%"},
 				{"% "},
-				{"hgdhgdh%xgfht"},
+				{"%D{gfg}"},
+				{"%f{fdl;}"},
 		});
 	}
 	@Parameter(value = 0)

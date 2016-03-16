@@ -5,8 +5,8 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeInBytes;
-import com.emc.mongoose.common.generator.AsyncCurrentDateGenerator;
-import com.emc.mongoose.common.generator.AsyncFormattingGenerator;
+import com.emc.mongoose.common.generator.async.AsyncCurrentDateGenerator;
+import com.emc.mongoose.common.generator.async.AsyncFormattingGenerator;
 import com.emc.mongoose.common.generator.ValueGenerator;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
@@ -17,7 +17,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
-import static com.emc.mongoose.common.generator.AsyncFormattingGenerator.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.generator.CompositeFormattingGenerator.PATTERN_SYMBOL;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
@@ -80,7 +80,6 @@ import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -782,30 +781,29 @@ implements HttpRequestConfig<T, C> {
 	throws HttpException, IOException {
 		// add all the shared headers if missing
 		String headerName, headerValue;
+		ValueGenerator<String> headerValueGenerator;
 		for(final Header nextHeader : sharedHeaders.getAllHeaders()) {
 			headerName = nextHeader.getName();
 			headerValue = nextHeader.getValue();
 			if(!request.containsHeader(headerName)) {
-				if (headerValue != null && headerValue.indexOf(PATTERN_SYMBOL) > -1) {
-					if (!HEADER_FORMATTERS.containsKey(headerName)) {
-						try {
-							final ValueGenerator<String>
-								formatter = new AsyncFormattingGenerator(headerValue);
-							while(null == formatter.get()) {
-								LockSupport.parkNanos(1);
-								Thread.yield();
-							}
-							HEADER_FORMATTERS.put(headerName, formatter);
-						} catch(final ParseException e) {
-							LogUtil.exception(
-								LOG, Level.ERROR, e, "Failed to parse the pattern \"{}\"",
-								headerValue
-							);
+				if(headerValue != null && headerValue.indexOf(PATTERN_SYMBOL) > -1) {
+					// header value is a generator pattern
+					headerValueGenerator  = HEADER_FORMATTERS.get(headerName);
+					// try to find the corresponding generator in the registry
+					if(headerValueGenerator == null) {
+						// create new generator and put it into the registry for reuse
+						headerValueGenerator = new AsyncFormattingGenerator(headerValue);
+						// spin while header value generator is not ready
+						while(null == (headerValue = headerValueGenerator.get())) {
+							LockSupport.parkNanos(1);
+							Thread.yield();
 						}
+						HEADER_FORMATTERS.put(headerName, headerValueGenerator);
+					} else {
+						headerValue = headerValueGenerator.get();
 					}
-					request.setHeader(
-						new BasicHeader(headerName, HEADER_FORMATTERS.get(headerName).get())
-					);
+					// put the generated header value into the request
+					request.setHeader(new BasicHeader(headerName, headerValue));
 				} else {
 					request.setHeader(nextHeader);
 				}

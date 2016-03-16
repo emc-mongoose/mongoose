@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.generator;
+package com.emc.mongoose.common.generator.async;
 
 public final class AsyncLongGenerator
 extends AsyncRangeGeneratorBase<Long> {
@@ -28,7 +28,7 @@ extends AsyncRangeGeneratorBase<Long> {
 	}
 
 	@Override
-	public final boolean isInitialized() {
-		return true;
+	protected String stringify(Long value) {
+		return value.toString();
 	}
 }

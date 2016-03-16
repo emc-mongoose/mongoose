@@ -5,13 +5,13 @@
 			"config" : {
 				"item" : {
 					"container" : {
-						"name" : "linear-delete"
+						"name" : "distributed-delete"
 					},
 					"data" : {
 						"size" : "8KB"
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-linear-delete.csv"
+						"file" : "/tmp/scenario-distributed-delete.csv"
 					}
 				},
 				"load" : {
@@ -38,14 +38,14 @@
 			"config" : {
 				"item" : {
 					"container" : {
-						"name" : "linear-delete"
+						"name" : "distributed-delete"
 					},
 					"src" : {
-						"file" : "/tmp/scenario-linear-delete.csv"
+						"file" : "/tmp/scenario-distributed-delete.csv"
 					}
 				},
 				"load" : {
-					"class" : "delete",
+					"type" : "delete",
 					"threads" : 10,
 					"server" : {
 						"addrs": "10.249.237.71,10.249.237.72"

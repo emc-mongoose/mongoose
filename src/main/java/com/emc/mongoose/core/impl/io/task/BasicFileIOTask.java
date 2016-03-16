@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -61,6 +62,7 @@ implements FileIOTask<T> {
 			fPath = Paths.get(item.getName()).toAbsolutePath();
 		}
 		//
+		openOptions.add(LinkOption.NOFOLLOW_LINKS);
 		switch(ioType) {
 			case WRITE:
 				openOptions.add(StandardOpenOption.WRITE);
@@ -109,6 +111,10 @@ implements FileIOTask<T> {
 			}
 		} catch(final NoSuchFileException e) {
 			status = Status.RESP_FAIL_NOT_FOUND;
+			LogUtil.exception(
+				LOG, Level.WARN, e,
+				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), fPath
+			);
 		} catch(final IOException e) {
 			status = Status.FAIL_IO;
 			LogUtil.exception(

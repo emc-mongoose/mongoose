@@ -1,5 +1,6 @@
-package com.emc.mongoose.common.generator;
+package com.emc.mongoose.common.generator.async;
 //
+import com.emc.mongoose.common.generator.BasicValueGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
@@ -18,12 +19,14 @@ import java.util.concurrent.locks.LockSupport;
 public class AsyncValueGenerator<T>
 extends BasicValueGenerator<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	private final static int MAX_UPDATE_TASKS = 1024;
 	protected interface InitRunnable extends Initializable, Runnable {}
-	private final static BlockingQueue<InitRunnable>
+	protected interface InitCallable<T> extends Initializable, Callable<T> {}
+	//
+	private static final Logger LOG = LogManager.getLogger();
+	private static final int MAX_UPDATE_TASKS = 1024;
+	private static final BlockingQueue<InitRunnable>
 		UPDATE_TASKS = new ArrayBlockingQueue<>(MAX_UPDATE_TASKS);
-	private final static Thread UPDATE_VALUES_WORKER = new Thread() {
+	private static final Thread UPDATE_VALUES_WORKER = new Thread() {
 		//
 		{
 			setName("asyncUpdateValuesWorker");
@@ -63,10 +66,11 @@ extends BasicValueGenerator<T> {
 		}
 	};
 	//
-	protected interface InitCallable<T> extends Initializable, Callable<T> {}
-	//
 	public AsyncValueGenerator(final T initialValue, final InitCallable<T> updateAction) {
 		super(initialValue, null);
+		if(updateAction == null) {
+			throw new NullPointerException("Argument should not be null");
+		}
 		final InitRunnable updateTask = new InitRunnable() {
 			@Override
 			public final boolean isInitialized() {
@@ -97,7 +101,14 @@ extends BasicValueGenerator<T> {
 			);
 		}
 	}
-
+	//
+	public static abstract class InitializedCallableBase<T>
+	implements InitCallable<T> {
+		@Override
+		public final boolean isInitialized() {
+			return true;
+		}
+	}
 	//
 	@Override
 	public final T get() {
