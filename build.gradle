@@ -1075,11 +1075,14 @@ task buildDockerImage(type: DockerBuildTask, dependsOn: copyTarBall) {
 }
 
 task pushDockerImage(type: DockerPushTask, dependsOn: buildDockerImage) {
-	doFirst {
-		getDockerClient().tag(getRepositoryName(), version, true)
-	}
 	repositoryName = 'emcecs/' + project.name
 	registry = "nile-registry.lss.emc.com:5000"
+	doFirst {
+		def dockerClient = getDockerClient()
+		def latestImageId = dockerClient.findImageId(repositoryName, "latest")
+		dockerClient.tag(latestImageId, registry + '/' + repositoryName + ':' + version, true)
+		dockerClient.push(repositoryName, '.', registry)
+	}
 }
 
 // ARTIFACTORY /////////////////////////////////////////////////////////////////////////////////////

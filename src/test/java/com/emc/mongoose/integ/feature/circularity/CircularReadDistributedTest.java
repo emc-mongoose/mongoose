@@ -80,10 +80,9 @@ extends DistributedClientTestBase {
 				final ItemDst<WSObject> writeOutput = new ItemCSVFileDst<WSObject>(
 					BasicWSObject.class, ContentSourceBase.getDefault()
 				);
-				long COUNT_WRITTEN = client.write(
-						null, writeOutput, WRITE_COUNT, 10, SizeUtil.toSize(DATA_SIZE)
+				final long COUNT_WRITTEN = client.write(
+					null, writeOutput, WRITE_COUNT, 10, SizeUtil.toSize(DATA_SIZE)
 				);
-				TimeUnit.SECONDS.sleep(1);
 				RunIdFileManager.flushAll();
 				//
 				try (
@@ -96,7 +95,6 @@ extends DistributedClientTestBase {
 					} else {
 						throw new IllegalStateException("Failed to read");
 					}
-					TimeUnit.SECONDS.sleep(1);
 					STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 				}
 			}
@@ -121,6 +119,7 @@ extends DistributedClientTestBase {
 	public void checkItemsFileExistsAndCanBeReadFully()
 	throws Exception {
 		final Map<String, Long> items = new HashMap<>();
+		TimeUnit.SECONDS.sleep(5);
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
