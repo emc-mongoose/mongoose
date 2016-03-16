@@ -118,7 +118,7 @@ implements ItemProducer<T> {
 			while(maxCount > producedItemsCount && !isInterrupted) {
 				try {
 					buff = new ArrayList<>(batchSize);
-					n = itemSrc.get(buff, batchSize);
+					n = (int) Math.min(itemSrc.get(buff, batchSize), maxCount - producedItemsCount);
 					if(isShuffling) {
 						Collections.shuffle(buff);
 					}
@@ -126,7 +126,7 @@ implements ItemProducer<T> {
 						break;
 					}
 					if(n > 0) {
-						for(m = 0; m < n && maxCount > producedItemsCount + m && !isInterrupted; ) {
+						for(m = 0; m < n && !isInterrupted; ) {
 							m += itemDst.put(buff, m, n);
 							LockSupport.parkNanos(1);
 						}
