@@ -98,7 +98,7 @@ extends CambridgeLabDistributedClientTestBase {
 			containers2delete.add(new BasicContainer<WSObject>(RUN_ID));
 			client.delete(new ListItemSrc<>(containers2delete), null, 1, 1);
 			TimeUnit.SECONDS.sleep(1);
-		} catch(final IOException | InterruptedException e) {
+		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Postconditions failure");
 		}
 		//
