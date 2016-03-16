@@ -69,7 +69,7 @@ public class AsyncFormattingGeneratorBasicTest {
 		initFormatter(patternString);
 //		Thread.sleep(3000); // to give an opportunity for the generator to work
 		final String result = formatter.get();
-//		System.out.println(patternString + ": " + formatter.get()); // to check that the result is within range
+//		System.out.println(patternString + ": " + result); // to check that the result is within range
 		assertTrue(result, resultPattern.matcher(result).find());
 		assertEquals(numberOfSpaces(patternString), numberOfSpaces(result));
 	}

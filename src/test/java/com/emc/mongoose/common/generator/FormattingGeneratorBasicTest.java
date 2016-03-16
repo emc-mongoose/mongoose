@@ -46,7 +46,7 @@ public class FormattingGeneratorBasicTest {
 	public void checkFormattingResult() throws Exception {
 		initFormatter(patternString);
 		final String result = formatter.get();
-//		System.out.println(result);
+		//System.out.println("path: " + result);
 		assertTrue(result, resultPattern.matcher(result).find());
 		assertEquals(numberOfSpaces(patternString), numberOfSpaces(result));
 	}

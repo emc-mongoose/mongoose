@@ -5,7 +5,7 @@ import java.text.Format;
 
 public final class AsyncDoubleGenerator
 extends AsyncFormatRangeGeneratorBase<Double> {
-	;
+
 	public AsyncDoubleGenerator(final Double minValue, final Double maxValue, final String formatString) {
 		super(minValue, maxValue, formatString);
 	}
