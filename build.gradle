@@ -46,7 +46,7 @@ def loadProjectVersionFrom(String sourceFileName) {
 	def json = new JsonSlurper().parseText(inputFile.text)
 	ext.version = json.properties.run.version
 }
-loadProjectVersionFrom confDirName + File.separator + project.name + ".json"
+loadProjectVersionFrom(confDirName + File.separator + project.name + ".json")
 
 version = ext.version
 group = "com.emc.${rootProject.name}"
@@ -951,8 +951,7 @@ task dist(type: Tar) {
 	configurations.webuiRuntime.collect {
 		def path = it.getAbsolutePath()
 		if(
-		it.isFile() && (path.contains("jstl") ||
-			path.contains("log4j-web") ||
+			it.isFile() && (path.contains("jstl") || path.contains("log4j-web") ||
 			path.contains("webjars"))
 		) {
 			webappLibs.add(path)
@@ -1058,6 +1057,33 @@ build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testJa
 tasks.idea.dependsOn(cleanIdea)
 //tasks.idea.dependsOn(build)
 
+// REGISTRY ////////////////////////////////////////////////////////////////////////////////////////
+
+task copyTarBall(type: Copy, dependsOn: dist) {
+	System.out.println(dist.archivePath)
+	from dist.archivePath
+	into "docker${File.separator}"
+}
+
+docker {
+	dockerHost = "unix:///var/run/docker.sock"
+}
+
+task buildDockerImage(type: DockerBuildTask, dependsOn: copyTarBall) {
+	imageName = 'emcecs/' + project.name
+	buildContextDirectory = file(".${File.separator}docker${File.separator}")
+}
+
+task pushDockerImage(type: DockerPushTask, dependsOn: buildDockerImage) {
+	doFirst {
+		getDockerClient().tag(getRepositoryName(), version, true)
+	}
+	repositoryName = 'emcecs/' + project.name
+	registry = "nile-registry.lss.emc.com:5000"
+}
+
+// ARTIFACTORY /////////////////////////////////////////////////////////////////////////////////////
+
 publishing {
 	publications {
 		artifactDist(MavenPublication) {
@@ -1130,14 +1156,4 @@ artifactoryPublish.dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storag
 artifactoryPublish.dependsOn serverApiJar, webserverJar, clientJar, scenarioJar, serverImplJar
 artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testJar
 
-task buildDockerImage(type: DockerBuildTask, dependsOn: dist) {
-	dockerHost = "unix:///var/run/docker.sock"
-	//dockerHost = 'https://192.168.99.100:2376'
-	//dockerHost = System.env.DOCKER_HOST
-
-	//registry = 'https://nile-registry.lss.emc.com:5000'
-
-	//defaultCertPath = System.getProperty('docker.cert.path') ?: "${System.getProperty('user.home')}/.docker/machine/machines/default"
-	imageName = project.name
-	buildContextDirectory = file('./docker/')
-}
+artifactoryPublish.dependsOn pushDockerImage

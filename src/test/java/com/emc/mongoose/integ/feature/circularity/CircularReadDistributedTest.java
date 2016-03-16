@@ -137,7 +137,7 @@ extends DistributedClientTestBase {
 				items.put(id, count);
 			}
 			//
-			Assert.assertEquals("Data hasn't been read fully", items.size(), WRITE_COUNT);
+			Assert.assertEquals("Data hasn't been read fully", WRITE_COUNT, items.size());
 		}
 	}
 	//
