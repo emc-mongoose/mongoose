@@ -1,9 +1,8 @@
 package com.emc.mongoose.common.generator.async;
 
-import java.util.Random;
-
 import com.emc.mongoose.common.generator.RangeGenerator;
 import com.emc.mongoose.common.generator.ValueGenerator;
+import com.emc.mongoose.common.math.Random;
 /**
  * This class is a base class to create generators that produce values of any types (in specified ranges or not),
  * but their values are intended to be converted to String.

@@ -115,7 +115,7 @@ implements ItemProducer<T> {
 		int n = 0, m = 0;
 		try {
 			List<T> buff;
-			while(!isInterrupted && producedItemsCount < maxCount) {
+			while(maxCount > producedItemsCount && !isInterrupted) {
 				try {
 					buff = new ArrayList<>(batchSize);
 					n = itemSrc.get(buff, batchSize);
@@ -126,7 +126,7 @@ implements ItemProducer<T> {
 						break;
 					}
 					if(n > 0) {
-						for(m = 0; m < n && !isInterrupted; ) {
+						for(m = 0; m < n && maxCount > producedItemsCount + m && !isInterrupted; ) {
 							m += itemDst.put(buff, m, n);
 							LockSupport.parkNanos(1);
 						}
@@ -136,7 +136,8 @@ implements ItemProducer<T> {
 							break;
 						}
 					}
-					//
+					// CIRCULARITY: produce only <maxItemQueueSize> items in order to make it
+					// possible to enqueue them infinitely
 					if(isCircular && producedItemsCount >= maxItemQueueSize) {
 						break;
 					}
