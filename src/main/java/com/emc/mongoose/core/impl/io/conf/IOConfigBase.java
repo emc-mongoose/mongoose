@@ -46,7 +46,7 @@ implements IOConfig<T, C> {
 		appConfig = BasicConfig.THREAD_CONTEXT.get();
 		loadType = AppConfig.LoadType.WRITE;
 		container = null;
-		contentSrc = ContentSourceBase.getDefault();
+		contentSrc = ContentSourceBase.getDefaultInstance();
 		verifyContentFlag = appConfig.getItemDataVerify();
 		nameSpace = appConfig.getStorageHttpNamespace();
 		namePrefix = appConfig.getItemNamingPrefix();

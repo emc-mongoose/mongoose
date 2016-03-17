@@ -39,7 +39,7 @@ implements DataItem {
 	public BasicDataItem() {
 		this(
 			ContentSourceBase.DEFAULT == null ?
-				ContentSourceBase.getDefault() : ContentSourceBase.DEFAULT
+				ContentSourceBase.getDefaultInstance() : ContentSourceBase.DEFAULT
 		);
 	}
 	//

@@ -1,18 +1,20 @@
 package com.emc.mongoose.common.generator;
 
-public class StringGeneratorFactory
-implements GeneratorFactory<String, ValueGenerator<String>> {
+import java.io.File;
 
-	private static StringGeneratorFactory singleton = null;
+public class StringGeneratorFactory<G extends ValueGenerator<String>>
+implements GeneratorFactory<String, G> {
+
+	public static final String PATH_REG_EXP = "([0-9a-z]+" + "\\" + File.separatorChar + ")+";
+
+	private static final StringGeneratorFactory<? extends ValueGenerator<String>>
+			INSTANCE = new StringGeneratorFactory<>();
 
 	private StringGeneratorFactory() {
 	}
 
-	public static StringGeneratorFactory generatorFactory() {
-		if (singleton == null) {
-			singleton = new StringGeneratorFactory();
-		}
-		return singleton;
+	public static StringGeneratorFactory<? extends ValueGenerator<String>> getInstance() {
+		return INSTANCE;
 	}
 
 	private enum State {
@@ -24,14 +26,15 @@ implements GeneratorFactory<String, ValueGenerator<String>> {
 		return State.DEFAULT;
 	}
 
-	@Override
-	public ValueGenerator<String> createGenerator(final char type, final String... parameters) {
+	@Override @SuppressWarnings("unchecked")
+	public G createGenerator(final char type, final String... parameters)
+	throws IllegalArgumentException {
 		final State state =  (State) defineState(parameters);
 		switch (state) {
 			case DEFAULT:
 				switch (type) {
 					case 'p':
-						return new FilePathGenerator(parameters[0]);
+						return (G) new FilePathGenerator(parameters[0]);
 					default:
 						throw new IllegalArgumentException();
 				}

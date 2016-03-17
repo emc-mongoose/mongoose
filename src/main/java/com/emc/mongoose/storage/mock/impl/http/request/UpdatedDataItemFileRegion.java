@@ -9,7 +9,8 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;
 
-public class UpdatedDataItemFileRegion<T extends MutableDataItemMock> extends DataItemFileRegion<T> {
+public final class UpdatedDataItemFileRegion<T extends MutableDataItemMock>
+extends DataItemFileRegion<T> {
 
 	private BasicDataItem currRange;
 	private long currRangeSize, nextRangeOffset;
@@ -20,7 +21,7 @@ public class UpdatedDataItemFileRegion<T extends MutableDataItemMock> extends Da
 	public UpdatedDataItemFileRegion(T dataItem) {
 		super(dataItem);
 		currDataLayerIdx = dataObject.getCurrLayerIndex();
-		contentSource = ContentSourceBase.getDefault();
+		contentSource = ContentSourceBase.getDefaultInstance();
 	}
 
 	@Override

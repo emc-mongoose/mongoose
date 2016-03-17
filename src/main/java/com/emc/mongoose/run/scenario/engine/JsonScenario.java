@@ -31,6 +31,7 @@ implements Scenario {
 	private final static String VALUE_TYPE_PARALLEL = "parallel";
 	private final static String VALUE_TYPE_SEQUENTIAL = "sequential";
 	private final static String VALUE_TYPE_LOAD = "load";
+	private final static String VALUE_TYPE_RAMPUP = "rampup";
 	//
 	public JsonScenario(final File scenarioSrcFile) {
 		final ObjectMapper jsonMapper = new ObjectMapper()
@@ -116,15 +117,26 @@ implements Scenario {
 								subContainer = newSubContainer;
 								break;
 							case VALUE_TYPE_LOAD:
+							case VALUE_TYPE_RAMPUP:
 								final Object configTree = node.get(KEY_CONFIG);
 								if(configTree instanceof Map) {
-									newSubContainer = new SingleJobContainer(
-										(Map<String, Object>) configTree
-									);
+									if(VALUE_TYPE_LOAD.equals(value)) {
+										newSubContainer = new SingleJobContainer(
+											(Map<String, Object>) configTree
+										);
+									} else {
+										newSubContainer = new RampupJobContainer(
+											(Map<String, Object>) configTree
+										);
+									}
 									subContainer.append(newSubContainer);
 									subContainer = newSubContainer;
 								} else if(configTree == null) {
-									newSubContainer = new SingleJobContainer(Collections.EMPTY_MAP);
+									if(VALUE_TYPE_LOAD.equals(value)) {
+										newSubContainer = new SingleJobContainer();
+									} else {
+										newSubContainer = new RampupJobContainer();
+									}
 									subContainer.append(newSubContainer);
 									subContainer = newSubContainer;
 								} else {

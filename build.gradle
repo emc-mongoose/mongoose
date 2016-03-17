@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.bundling.Compression
 import groovy.json.JsonSlurper
+import de.gesellix.gradle.docker.tasks.*
 
 buildscript {
 	repositories {
@@ -19,6 +20,11 @@ buildscript {
 	}
 }
 
+plugins {
+	id "de.gesellix.docker" version "2016-02-08T22-29-47"
+}
+
+apply plugin: "de.gesellix.docker"
 apply plugin: 'java'
 apply plugin: 'java-library-distribution'
 apply plugin: 'idea'
@@ -46,7 +52,7 @@ version = ext.version
 group = "com.emc.${rootProject.name}"
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '2.4'
+	gradleVersion = '2.11'
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -949,8 +955,7 @@ task dist(type: Tar) {
 	configurations.webuiRuntime.collect {
 		def path = it.getAbsolutePath()
 		if(
-		it.isFile() && (path.contains("jstl") ||
-			path.contains("log4j-web") ||
+			it.isFile() && (path.contains("jstl") || path.contains("log4j-web") ||
 			path.contains("webjars"))
 		) {
 			webappLibs.add(path)
@@ -997,7 +1002,7 @@ task dist(type: Tar) {
 idea {
 	module {
 		name = rootProject.name
-		//jdkName = sourceCompatibility
+		jdkName = sourceCompatibility
 		//
 		inheritOutputDirs = false
 		outputDir = sourceSets.common.output.resourcesDir
@@ -1058,6 +1063,36 @@ build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testJa
 
 tasks.idea.dependsOn(cleanIdea)
 //tasks.idea.dependsOn(build)
+
+// REGISTRY ////////////////////////////////////////////////////////////////////////////////////////
+
+task copyTarBall(type: Copy, dependsOn: dist) {
+	System.out.println(dist.archivePath)
+	from dist.archivePath
+	into "docker${File.separator}"
+}
+
+docker {
+	dockerHost = "unix:///var/run/docker.sock"
+}
+
+task buildDockerImage(type: DockerBuildTask, dependsOn: copyTarBall) {
+	imageName = 'emcecs/' + project.name
+	buildContextDirectory = file(".${File.separator}docker${File.separator}")
+}
+
+task pushDockerImage(type: DockerPushTask, dependsOn: buildDockerImage) {
+	repositoryName = 'emcecs/' + project.name
+	registry = "nile-registry.lss.emc.com:5000"
+	doFirst {
+		def dockerClient = getDockerClient()
+		def latestImageId = dockerClient.findImageId(repositoryName, "latest")
+		dockerClient.tag(latestImageId, registry + '/' + repositoryName + ':' + version, true)
+		dockerClient.push(repositoryName, '.', registry)
+	}
+}
+
+// ARTIFACTORY /////////////////////////////////////////////////////////////////////////////////////
 
 publishing {
 	publications {
@@ -1130,3 +1165,5 @@ artifactoryPublish.dependsOn commonJar, coreApiJar, coreImplJar
 artifactoryPublish.dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 artifactoryPublish.dependsOn serverApiJar, webserverJar, clientJar, scenarioJar, serverImplJar
 artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testJar
+
+artifactoryPublish.dependsOn pushDockerImage

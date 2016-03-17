@@ -1,1 +1,29 @@
-// TODO
+{
+	"jobs": [
+		{
+			"type": "rampup",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : [
+							0, "1KB", "1MB"
+						]
+					}
+				},
+				"load" : {
+					"limit" : {
+						"time" : "1m",
+						"count" : 1000000
+					},
+					"threads": [
+						1, 10, 100
+					],
+					"type" : [
+						"write", "read", "delete"
+					]
+				}
+			}
+		}
+	]
+}
+

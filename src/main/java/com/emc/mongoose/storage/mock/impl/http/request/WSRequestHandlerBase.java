@@ -53,7 +53,7 @@ implements ReqURIMatchingHandler<T> {
 	private final StorageIOStats ioStats;
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
-	private final ContentSource contentSrc = ContentSourceBase.getDefault();
+	private final ContentSource contentSrc = ContentSourceBase.getDefaultInstance();
 	//
 	protected final HttpStorageMock<T> sharedStorage;
 	protected final int batchSize;
