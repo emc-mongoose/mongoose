@@ -15,9 +15,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
+import java.util.Collections;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.02.16.
@@ -30,21 +31,41 @@ implements JobContainer {
 	private final LoadExecutor loadJob;
 	private final long limitTime;
 	//
-	public SingleJobContainer(final Map<String, Object> configTree)
-	throws IOException {
+	public SingleJobContainer() {
+		this(Collections.<String, Object>emptyMap());
+	}
+	//
+	public SingleJobContainer(final Map<String, Object> configTree) {
 		try {
 			final AppConfig localConfig = (AppConfig) BasicConfig.THREAD_CONTEXT.get().clone();
+			localConfig.override(null, configTree);
+			limitTime = localConfig.getLoadLimitTime();
+			LoadBuilder loadJobBuilder = null;
 			try {
-				localConfig.override(null, configTree);
-				final LoadBuilder loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);
-				limitTime = localConfig.getLoadLimitTime();
-				loadJob = loadJobBuilder.build();
-			} catch(final NoSuchElementException e) {
-				throw new RuntimeException(e);
+				loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);
+			} catch(final ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to get a load builder instance");
+			} catch(final InvocationTargetException e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e.getTargetException(), "Failed to get a load builder instance"
+				);
+			}
+			LoadExecutor loadJob_ = null;
+			try {
+				loadJob_ = loadJobBuilder == null ? null : loadJobBuilder.build();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the load job");
+			} finally {
+				loadJob = loadJob_;
 			}
 		} catch(final CloneNotSupportedException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	//
+	public SingleJobContainer(final LoadExecutor loadJob, final long limitTime) {
+		this.loadJob = loadJob;
+		this.limitTime = limitTime;
 	}
 	//
 	@Override

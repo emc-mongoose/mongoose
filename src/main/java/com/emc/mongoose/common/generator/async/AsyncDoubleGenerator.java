@@ -5,7 +5,7 @@ import java.text.Format;
 
 public final class AsyncDoubleGenerator
 extends AsyncFormatRangeGeneratorBase<Double> {
-	;
+
 	public AsyncDoubleGenerator(final Double minValue, final Double maxValue, final String formatString) {
 		super(minValue, maxValue, formatString);
 	}
@@ -19,7 +19,7 @@ extends AsyncFormatRangeGeneratorBase<Double> {
 	 * @param formatString - a pattern for DecimalFormat. It should match a pattern,
 	 *                        that described here
 	 *                        https://docs.oracle.com/javase/7/docs/api/java/text/DecimalFormat.html
-	 *                        (see Special Pattern Characters paragraph of examples)
+	 *                        (see Special Pattern Characters paragraph for examples)
 	 * @return a suitable formatter for numbers of a double type
 	 */
 	@Override

@@ -386,6 +386,16 @@ implements LoadClient<T, W> {
 	@Override
 	public final void put(final T dataItem)
 	throws IOException {
+		if(counterSubm.get() + countRej.get() >= maxCount) {
+			LOG.debug(
+				Markers.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", getName(),
+				counterSubm.get(), countRej.get()
+			);
+			if(isShutdown.compareAndSet(false, true)) {
+				shutdownActually();
+			}
+			return;
+		}
 		if(remotePutExecutor.isShutdown()) {
 			return;
 		}
@@ -458,21 +468,39 @@ implements LoadClient<T, W> {
 	@Override
 	public final int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
-		if(remotePutExecutor.isShutdown()) {
-			return 0;
-		}
-		while(true) {
-			try {
-				remotePutExecutor.submit(new RemoteBatchPutTask(dataItems, from, to));
-				break;
-			} catch(final RejectedExecutionException e) {
+		final long dstLimit = maxCount - counterSubm.get() - countRej.get();
+		final int srcLimit = to - from;
+		if(dstLimit > 0) {
+			if(dstLimit < srcLimit) {
+				return put(dataItems, from, from + (int) dstLimit);
+			} else {
 				if(remotePutExecutor.isShutdown()) {
 					return 0;
 				}
-				if(LOG.isTraceEnabled(Markers.ERR)) {
-					LogUtil.exception(LOG, Level.TRACE, e, "Failed to submit remote batch put task");
+				while(true) {
+					try {
+						remotePutExecutor.submit(new RemoteBatchPutTask(dataItems, from, to));
+						break;
+					} catch(final RejectedExecutionException e) {
+						if(remotePutExecutor.isShutdown()) {
+							return 0;
+						}
+						if(LOG.isTraceEnabled(Markers.ERR)) {
+							LogUtil.exception(
+								LOG, Level.TRACE, e, "Failed to submit remote batch put task"
+							);
+						}
+						Thread.yield();
+					}
 				}
-				Thread.yield();
+			}
+		} else {
+			if(isShutdown.compareAndSet(false, true)) {
+				shutdownActually();
+			}
+			if(srcLimit > 0) {
+				countRej.addAndGet(srcLimit);
+				LOG.debug(Markers.MSG, "Rejected {} I/O tasks", srcLimit);
 			}
 		}
 		return to - from;
@@ -542,7 +570,7 @@ implements LoadClient<T, W> {
 			super.shutdownActually();
 		} finally {
 			LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
-			//
+			// CIRCULARITY: why shutdown is disabled?
 			if(!isCircular) {
 				final long timeOutSec = appConfig.getLoadLimitTime();
 				remotePutExecutor.shutdown();

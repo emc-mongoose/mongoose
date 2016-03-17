@@ -3,7 +3,6 @@ package com.emc.mongoose.common.conf;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -11,6 +10,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 //
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
@@ -30,7 +30,6 @@ import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -120,8 +119,7 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public
-	ItemType getItemClass() {
+	public ItemType getItemType() {
 		return ItemType.valueOf(getString(KEY_ITEM_TYPE).toUpperCase());
 	}
 	//
@@ -131,8 +129,7 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public
-	ContentSourceType getItemDataContentType() {
+	public ContentSourceType getItemDataContentType() {
 		return ContentSourceType
 			.valueOf(getString(KEY_ITEM_DATA_CONTENT_TYPE).toUpperCase());
 	}
@@ -256,8 +253,18 @@ implements AppConfig {
 	//
 	@Override
 	public int getLoadMetricsPeriod() {
-		final String rawValue = getString(KEY_LOAD_METRICS_PERIOD);
-		return (int) TimeUtil.getTimeUnit(rawValue).toSeconds(TimeUtil.getTimeValue(rawValue));
+		final Object rawValue = getProperty(KEY_LOAD_METRICS_PERIOD);
+		if(rawValue instanceof String) {
+			final String rawStrValue = (String) rawValue;
+			return (int) TimeUtil.getTimeUnit(rawStrValue)
+				.toSeconds(TimeUtil.getTimeValue(rawStrValue));
+		} else if(rawValue instanceof Integer) {
+			return (Integer) rawValue;
+		} else {
+			throw new ConversionException(
+				"Invalid value @ " + KEY_LOAD_METRICS_PERIOD + ": \"" + rawValue + "\""
+			);
+		}
 	}
 	//
 	@Override

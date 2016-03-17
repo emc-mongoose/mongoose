@@ -19,7 +19,7 @@ implements FormattingGenerator {
 	/**
 	 * A factory for getting of value generators (see below)
 	 */
-	private final GeneratorFactory<String, ValueGenerator<String>> generatorFactory;
+	private final GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory;
 
 	/**
 	 * An input string with pattern symbols and expressions that have to be replaced by suitable values
@@ -31,13 +31,15 @@ implements FormattingGenerator {
 	 */
 	private ValueGenerator<String>[] generators;
 
-	public BasicFormattingGenerator(final String pattern) {
-		this(pattern, StringGeneratorFactory.generatorFactory());
+	public BasicFormattingGenerator(final String pattern)
+	throws IllegalArgumentException {
+		this(pattern, StringGeneratorFactory.getInstance());
 	}
 
 	public BasicFormattingGenerator(
-		final String pattern, GeneratorFactory<String, ValueGenerator<String>> generatorFactory
-	) {
+		final String pattern,
+		final GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory
+	) throws IllegalArgumentException {
 		if (pattern == null) {
 			throw new NullArgumentException("pattern");
 		}
@@ -46,7 +48,7 @@ implements FormattingGenerator {
 		initialize();
 	}
 
-	protected final GeneratorFactory<String, ValueGenerator<String>> generatorFactory() {
+	protected final GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory() {
 		return generatorFactory;
 	}
 
@@ -67,7 +69,8 @@ implements FormattingGenerator {
 	 * In this method the class fields are being filled
 	 */
 	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for generators[]
-	protected void initialize() {
+	protected void initialize()
+	throws IllegalArgumentException {
 		if(pattern.charAt(0) != PATTERN_SYMBOL) {
 			throw new IllegalArgumentException();
 		}

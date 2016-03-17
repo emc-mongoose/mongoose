@@ -19,7 +19,7 @@ extends AsyncRangeGeneratorBase<Long> {
 
 	@Override
 	protected final Long rangeValue() {
-		return minValue() + (long) (random.nextDouble() * range());
+		return minValue() + random.nextLong(range());
 	}
 
 	@Override

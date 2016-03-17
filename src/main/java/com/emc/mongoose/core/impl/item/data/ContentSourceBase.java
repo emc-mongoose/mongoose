@@ -115,45 +115,13 @@ implements ContentSource {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public static ContentSourceBase DEFAULT = null;
 	private final static Lock LOCK = new ReentrantLock();
-	public static ContentSourceBase getDefault() {
+	public static ContentSourceBase getDefaultInstance()
+	throws IllegalStateException {
 		LOCK.lock();
 		try {
 			if(DEFAULT == null) {
 				final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-				final AppConfig.ContentSourceType
-					contentSrcType = appConfig.getItemDataContentType();
-				switch(contentSrcType) {
-					case FILE:
-						final String contentFilePath = appConfig.getItemDataContentFile();
-						if(contentFilePath != null && !contentFilePath.isEmpty()) {
-							final Path p = Paths.get(contentFilePath);
-							if(Files.exists(p) && !Files.isDirectory(p) &&
-								Files.isReadable(p)) {
-								final File f = p.toFile();
-								final long fileSize = f.length();
-								if(fileSize > 0) {
-									DEFAULT = new FileContentSource(
-										Files.newByteChannel(p, StandardOpenOption.READ), fileSize
-									);
-								} else {
-									throw new IllegalStateException(
-										"Content source file @" + contentFilePath + " is empty"
-									);
-								}
-							} else {
-								throw new IllegalStateException(
-									"Content source file @" + contentFilePath + " doesn't exist/" +
-									"not readable/is a directory"
-								);
-							}
-						} else {
-							throw new IllegalStateException("Content source file path is empty");
-						}
-						break;
-					case SEED:
-						DEFAULT = new SeedContentSource(appConfig);
-						break;
-				}
+				DEFAULT = getInstance(appConfig);
 			}
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.FATAL, e, "Failed to init the ring buffer");
@@ -161,6 +129,46 @@ implements ContentSource {
 			LOCK.unlock();
 		}
 		return DEFAULT;
+	}
+	//
+	public static ContentSourceBase getInstance(final AppConfig appConfig)
+	throws IOException, IllegalStateException {
+		ContentSourceBase instance = null;
+		final AppConfig.ContentSourceType
+			contentSrcType = appConfig.getItemDataContentType();
+		switch(contentSrcType) {
+			case FILE:
+				final String contentFilePath = appConfig.getItemDataContentFile();
+				if(contentFilePath != null && !contentFilePath.isEmpty()) {
+					final Path p = Paths.get(contentFilePath);
+					if(Files.exists(p) && !Files.isDirectory(p) &&
+						Files.isReadable(p)) {
+						final File f = p.toFile();
+						final long fileSize = f.length();
+						if(fileSize > 0) {
+							instance = new FileContentSource(
+								Files.newByteChannel(p, StandardOpenOption.READ), fileSize
+							);
+						} else {
+							throw new IllegalStateException(
+								"Content source file @" + contentFilePath + " is empty"
+							);
+						}
+					} else {
+						throw new IllegalStateException(
+							"Content source file @" + contentFilePath + " doesn't exist/" +
+								"not readable/is a directory"
+						);
+					}
+				} else {
+					throw new IllegalStateException("Content source file path is empty");
+				}
+				break;
+			case SEED:
+				instance = new SeedContentSource(appConfig);
+				break;
+		}
+		return instance;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

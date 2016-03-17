@@ -8,19 +8,19 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.generator.FilePathGenerator.DELIMITER;
+import static com.emc.mongoose.common.generator.StringGeneratorFactory.PATH_REG_EXP;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class FormattingGeneratorBasicTest {
 
-	private static final String PATH_REG_EXP = "([0-9a-z]+" + "\\/" + ")+";
 	private static final Pattern PATH_PATTERN = Pattern.compile(PATH_REG_EXP);
 	private static final Pattern ANYTHING_PATTERN = Pattern.compile(".*");
 
 	private ValueGenerator<String> formatter;
 
 	private void initFormatter(String patternString) throws Exception {
-		formatter = new CompositeFormattingGenerator(patternString);
+		formatter = new GeneralFormattingGenerator(patternString);
 	}
 
 	@Parameterized.Parameters
@@ -28,7 +28,7 @@ public class FormattingGeneratorBasicTest {
 		return Arrays.asList(new Object[][]{
 				{"", ANYTHING_PATTERN},
 				{"glgkwl;gh", ANYTHING_PATTERN},
-				{"sgdhdh%p{1; 3}", PATH_PATTERN },
+				{"sgdhdh/%p{1; 3}fdfg", PATH_PATTERN },
 				{"%p{1; 3}", PATH_PATTERN },
 				{"%p{11; 7}", PATH_PATTERN },
 				{"%p{1; 1}", PATH_PATTERN },
@@ -46,9 +46,9 @@ public class FormattingGeneratorBasicTest {
 	public void checkFormattingResult() throws Exception {
 		initFormatter(patternString);
 		final String result = formatter.get();
+		//System.out.println("path: " + result);
 		assertTrue(result, resultPattern.matcher(result).find());
 		assertEquals(numberOfSpaces(patternString), numberOfSpaces(result));
-//		System.out.println(result);
 	}
 
 	private int numberOfSpaces(String string) {

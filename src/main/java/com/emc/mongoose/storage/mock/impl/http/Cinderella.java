@@ -2,7 +2,6 @@ package com.emc.mongoose.storage.mock.impl.http;
 // mongoose-common.jar
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 
-import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.generator.async.AsyncCurrentDateGenerator;
@@ -79,7 +78,7 @@ implements HttpStorageMock<T> {
 		final int minConnLifeMilliSec, final int maxConnLifeMilliSec
 	) throws IOException {
 		super(
-			(Class<T>) BasicHttpDataMock.class, ContentSourceBase.getDefault(),
+			(Class<T>) BasicHttpDataMock.class, ContentSourceBase.getDefaultInstance(),
 			storageCapacity, containerCapacity, containerCountLimit, batchSize,
 			dataSrcPath, metricsPeriodSec, jmxServeFlag
 		);

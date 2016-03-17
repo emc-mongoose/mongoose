@@ -10,6 +10,8 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 //
+import com.emc.mongoose.core.impl.item.base.ItemBinFileDst;
+import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
@@ -30,8 +32,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.06.15.
@@ -64,49 +70,38 @@ implements Runnable {
 				DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
-			/* update the created items
+			// update the created items
 			LOG.info(Markers.MSG, "Start updating {} items", itemBuff.size());
 			final ItemDst<HttpDataItem> dataDstU = new ItemBinFileDst<>();
-			final long nUpdated = client.update(
+			final long nUpdated = client.write(
 				new ListItemSrc<>(itemBuff), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
 			final ItemDst<HttpDataItem> dataDstR = new ItemCSVFileDst<>(
-				(Class<? extends HttpDataItem>) BasicHttpObject.class, ContentSourceBase.getDefault()
+				(Class<? extends HttpDataItem>) BasicHttpData.class, ContentSourceBase.getDefaultInstance()
 			);
 			final long nRead = client.read(
 				dataDstU.getItemSrc(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead);
-			// variable-sized appending of the verified data items
-			final ItemDst<HttpDataItem> dataDstA = new LimitedQueueItemBuffer<>(
+			// update again the data items
+			final ItemDst<HttpDataItem> dataDstU2 = new LimitedQueueItemBuffer<>(
 				new ArrayBlockingQueue<HttpDataItem>(DEFAULT_DATA_COUNT_MAX)
 			);
-			final long nAppended = client.append(
-				dataDstR.getItemSrc(), dataDstA, nRead, DEFAULT_CONN_PER_NODE,
-				DEFAULT_DATA_SIZE, 3 * DEFAULT_DATA_SIZE, 1
-			);
-			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
-			// update again the appended data items
-			final Path fileTmpItems0 = Files.createTempFile("reUpdatedItems", ".csv"); // do not delete on exit
-			final ItemDst<HttpDataItem> dataDstU2 = new ItemCSVFileDst<>(
-				fileTmpItems0, (Class<? extends HttpDataItem>) BasicHttpObject.class,
-				ContentSourceBase.getDefault()
-			);
-			final long nUpdated2 = client.update(
-				dataDstA.getItemSrc(), dataDstU2, nAppended, DEFAULT_CONN_PER_NODE, 10
+			final long nUpdated2 = client.write(
+				dataDstR.getItemSrc(), dataDstU2, nRead, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
 			// read and verify the updated items again
 			final long nRead2 = client.read(
 				dataDstU2.getItemSrc(), null, nUpdated2, DEFAULT_CONN_PER_NODE, true
 			);
-			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);*/
+			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
 			// recreate the items
 			final ItemDst<HttpDataItem> dataDstW2 = new ItemCSVFileDst<>(
 				(Class<? extends HttpDataItem>) BasicHttpData.class,
-				ContentSourceBase.getDefault()
+				ContentSourceBase.getDefaultInstance()
 			);
 			final long nReWritten = client.write(
 				new ListItemSrc<>(itemBuff), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE,
@@ -131,7 +126,7 @@ implements Runnable {
 	//
 	@SuppressWarnings("unchecked")
 	public static void main(final String... args)
-	throws IOException, InterruptedException {
+	throws IOException, InterruptedException, ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 		//
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		//

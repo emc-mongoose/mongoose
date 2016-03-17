@@ -5,27 +5,18 @@ import com.emc.mongoose.common.conf.AppConfig.ItemType;
 import com.emc.mongoose.common.conf.AppConfig.StorageType;
 import com.emc.mongoose.common.conf.Constants;
 //
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.item.container.BasicContainer;
-import com.emc.mongoose.core.impl.item.container.BasicDirectory;
-import com.emc.mongoose.core.impl.item.data.BasicFile;
-import com.emc.mongoose.core.impl.item.data.BasicHttpData;
-//
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.core.impl.item.ItemTypeUtil;
 //
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 /**
  Created by kurila on 09.06.15.
  */
 public class LoadBuilderFactory {
-	//
-	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final static String
 		BUILDER_CORE_PACKAGE_BASE = "com.emc.mongoose.core.impl.load.builder",
@@ -36,40 +27,15 @@ public class LoadBuilderFactory {
 	@SuppressWarnings("unchecked")
 	public static <T extends Item, U extends LoadExecutor<T>> LoadBuilder<T, U> getInstance(
 		final AppConfig appConfig
-	) {
-		LoadBuilder<T, U> loadBuilderInstance;
-		try {
-			final Class<LoadBuilder<T, U>>
-				loadBuilderImplClass = getLoadBuilderClass(
-					appConfig.getRunMode(), appConfig.getItemClass(), appConfig.getStorageType()
-				);
-			final Constructor<LoadBuilder<T, U>>
-				constructor = loadBuilderImplClass.getConstructor(AppConfig.class);
-			loadBuilderInstance = constructor.newInstance(appConfig);
-		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create a load builder");
-			throw new RuntimeException(e);
-		}
-		return loadBuilderInstance;
-	}
-	//
-	@SuppressWarnings("unchecked")
-	private static <T extends Item> Class<T> getItemClass(
-		final ItemType itemType, final StorageType storageType
-	) {
-		if(ItemType.CONTAINER.equals(itemType)) {
-			if(StorageType.FS.equals(storageType)) {
-				return (Class<T>) BasicDirectory.class;
-			} else { // http
-				return (Class<T>) BasicContainer.class;
-			}
-		} else { // data
-			if(StorageType.FS.equals(storageType)) {
-				return (Class<T>) BasicFile.class;
-			} else { // http
-				return (Class<T>) BasicHttpData.class;
-			}
-		}
+	) throws ClassNotFoundException, NoSuchMethodException, InstantiationException,
+	IllegalAccessException, InvocationTargetException {
+		final Class<LoadBuilder<T, U>>
+			loadBuilderImplClass = getLoadBuilderClass(
+				appConfig.getRunMode(), appConfig.getItemType(), appConfig.getStorageType()
+			);
+		final Constructor<LoadBuilder<T, U>>
+			constructor = loadBuilderImplClass.getConstructor(AppConfig.class);
+		return constructor.newInstance(appConfig);
 	}
 	//
 	@SuppressWarnings("unchecked")
@@ -79,7 +45,8 @@ public class LoadBuilderFactory {
 	) throws ClassNotFoundException {
 		Class<LoadBuilder<T, U>> loadBuilderCls = null;
 		String
-			result = getItemClass(itemClass, storageType).getSimpleName()  + LOAD_BUILDER_SUFFIX,
+			result = ItemTypeUtil.getItemClass(itemClass, storageType).getSimpleName() +
+				LOAD_BUILDER_SUFFIX,
 			itemClassPackage = null;
 		// don't append anything if run.mode is standalone
 		switch(runMode) {

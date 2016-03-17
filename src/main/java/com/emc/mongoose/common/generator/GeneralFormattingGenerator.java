@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.generator;
 
-public final class CompositeFormattingGenerator
+public final class GeneralFormattingGenerator
 extends BasicFormattingGenerator {
 
 	/**
@@ -14,12 +14,14 @@ extends BasicFormattingGenerator {
 	 */
 	private String[] segments;
 
-	public CompositeFormattingGenerator(final String pattern) {
+	public GeneralFormattingGenerator(final String pattern)
+	throws IllegalArgumentException {
 		super(pattern);
 	}
 
-	public CompositeFormattingGenerator(
-		final String pattern, GeneratorFactory<String, ValueGenerator<String>> generatorFactory
+	public GeneralFormattingGenerator(
+		final String pattern,
+		final GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory
 	) {
 		super(pattern, generatorFactory);
 	}
@@ -104,13 +106,17 @@ extends BasicFormattingGenerator {
 	public String toString() {
 		final StringBuilder result = new StringBuilder();
 		result.append("Generators: ");
-		for (final ValueGenerator generator : generators()) {
-			result.append(generator.getClass().getName()).append(";");
+		if (generators() != null) {
+			for (final ValueGenerator generator : generators()) {
+				result.append(generator.getClass().getName()).append(";");
+			}
 		}
 		result.append("\n");
 		result.append("Segments: ");
-		for (final String segment: segments) {
-			result.append(segment).append(";");
+		if (segments != null) {
+			for (final String segment : segments) {
+				result.append(segment).append(";");
+			}
 		}
 		result.append("\n");
 		return result.toString();

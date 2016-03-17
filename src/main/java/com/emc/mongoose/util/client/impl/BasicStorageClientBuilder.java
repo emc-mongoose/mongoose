@@ -11,6 +11,7 @@ import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 //
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 19.06.15.
@@ -174,7 +175,8 @@ implements StorageClientBuilder<T, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final U build() {
+	public final U build()
+	throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		return (U) new BasicStorageClient<>(
 			appConfig, LoadBuilderFactory.<T, LoadExecutor<T>>getInstance(appConfig)

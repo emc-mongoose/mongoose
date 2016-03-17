@@ -1,5 +1,5 @@
 package com.emc.mongoose.common.generator.async;
-import com.emc.mongoose.common.generator.CompositeFormattingGenerator;
+import com.emc.mongoose.common.generator.GeneralFormattingGenerator;
 import com.emc.mongoose.common.generator.FormattingGenerator;
 public final class AsyncFormattingGenerator
 extends AsyncValueGenerator<String>
@@ -9,7 +9,7 @@ implements FormattingGenerator {
 
 	public AsyncFormattingGenerator(final String pattern) {
 		this(
-			new CompositeFormattingGenerator(
+			new GeneralFormattingGenerator(
 				pattern, AsyncStringGeneratorFactory.getInstance()
 			)
 		);

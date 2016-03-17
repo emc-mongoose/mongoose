@@ -115,10 +115,10 @@ implements ItemProducer<T> {
 		int n = 0, m = 0;
 		try {
 			List<T> buff;
-			while(!isInterrupted && producedItemsCount < maxCount) {
+			while(maxCount > producedItemsCount && !isInterrupted) {
 				try {
 					buff = new ArrayList<>(batchSize);
-					n = itemSrc.get(buff, batchSize);
+					n = (int) Math.min(itemSrc.get(buff, batchSize), maxCount - producedItemsCount);
 					if(isShuffling) {
 						Collections.shuffle(buff);
 					}
@@ -136,7 +136,8 @@ implements ItemProducer<T> {
 							break;
 						}
 					}
-					//
+					// CIRCULARITY: produce only <maxItemQueueSize> items in order to make it
+					// possible to enqueue them infinitely
 					if(isCircular && producedItemsCount >= maxItemQueueSize) {
 						break;
 					}

@@ -96,7 +96,7 @@ extends Cloneable, Configuration, Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	enum ItemType { CONTAINER, DATA }
-	ItemType getItemClass();
+	ItemType getItemType();
 
 	String getItemContainerName();
 

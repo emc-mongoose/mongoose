@@ -3,6 +3,9 @@ package com.emc.mongoose.core.impl.io.conf;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 //
+import com.emc.mongoose.common.generator.GeneralFormattingGenerator;
+import com.emc.mongoose.common.generator.ValueGenerator;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
@@ -13,6 +16,9 @@ import com.emc.mongoose.core.impl.item.data.BasicFile;
 import com.emc.mongoose.core.impl.item.data.DirectoryItemSrc;
 //
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 /**
@@ -22,6 +28,9 @@ public class BasicFileIOConfig<F extends FileItem, D extends Directory<F>>
 extends IOConfigBase<F, D>
 implements FileIOConfig<F, D> {
 	//
+	private final static Logger LOG = LogManager.getLogger();
+	//
+	private ValueGenerator<String> pathGenerator = null;
 	private int batchSize = BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize();
 	//
 	public BasicFileIOConfig() {
@@ -30,6 +39,7 @@ implements FileIOConfig<F, D> {
 	//
 	public BasicFileIOConfig(final BasicFileIOConfig<F, D> another) {
 		super(another);
+		// TODO init the generator
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -60,11 +70,6 @@ implements FileIOConfig<F, D> {
 	@Override @SuppressWarnings("unchecked")
 	public Class<F> getItemClass() {
 		return (Class<F>) BasicFile.class;
-	}
-	//
-	@Override
-	public void close()
-	throws IOException {
 	}
 	//
 	@Override
