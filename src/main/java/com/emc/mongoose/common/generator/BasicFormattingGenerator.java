@@ -40,7 +40,7 @@ implements FormattingGenerator {
 		final String pattern,
 		final GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory
 	) throws IllegalArgumentException {
-		if (pattern == null) {
+		if(pattern == null) {
 			throw new NullArgumentException("pattern");
 		}
 		this.generatorFactory = generatorFactory;
