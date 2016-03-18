@@ -30,6 +30,7 @@ import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -165,7 +166,22 @@ implements AppConfig {
 	//
 	@Override
 	public SizeInBytes getItemDataSize() {
-		return new SizeInBytes(getString(KEY_ITEM_DATA_SIZE));
+		final Object raw = getProperty(KEY_ITEM_DATA_SIZE);
+		if(raw instanceof Long) {
+			return new SizeInBytes((long) raw);
+		} else if(raw instanceof Integer) {
+			return new SizeInBytes((int) raw);
+		} else if(raw instanceof Short) {
+			return new SizeInBytes((short) raw);
+		} else if(raw instanceof String) {
+			return new SizeInBytes((String) raw);
+		} else if(raw instanceof SizeInBytes){
+			return (SizeInBytes) raw;
+		} else {
+			throw new ConversionException(
+				"Type of \"" + KEY_ITEM_DATA_SIZE + "\" is not supported: \"" + raw + "\""
+			);
+		}
 	}
 	//
 	@Override
@@ -371,7 +387,7 @@ implements AppConfig {
 		int port = getStorageHttpPort();
 		for(int i = 0; i < nodeAddrs.length; i ++) {
 			nodeAddr = nodeAddrs[i];
-			nodeAddrsWithPorts[i] = nodeAddr + (nodeAddr.contains(":") ? ":" + port : "");
+			nodeAddrsWithPorts[i] = nodeAddr + (nodeAddr.contains(":") ? "" : ":" + port);
 		}
 		return nodeAddrsWithPorts;
 	}
@@ -471,10 +487,14 @@ implements AppConfig {
 							parentNode.put(keyParts[i], (Long) value);
 						} else if(value instanceof Integer) {
 							parentNode.put(keyParts[i], (Integer) value);
+						} else if(value instanceof Short) {
+							parentNode.put(keyParts[i], (Short) value);
 						} else if(value instanceof Boolean) {
 							parentNode.put(keyParts[i], (Boolean) value);
 						} else if(value instanceof Double) {
 							parentNode.put(keyParts[i], (Double) value);
+						} else if(value instanceof Float) {
+							parentNode.put(keyParts[i], (Float) value);
 						} else if(value instanceof String) {
 							parentNode.put(keyParts[i], (String) value);
 						} else if(value instanceof List) {
@@ -485,10 +505,14 @@ implements AppConfig {
 									arrayNode.add((Long) listValue);
 								} else if(listValue instanceof Integer) {
 									arrayNode.add((Integer) listValue);
+								} else if(listValue instanceof Short) {
+									arrayNode.add((Short) listValue);
 								} else if(listValue instanceof Boolean) {
 									arrayNode.add((Boolean) listValue);
 								} else if(listValue instanceof Double) {
 									arrayNode.add((Double) listValue);
+								} else if(listValue instanceof Float) {
+									arrayNode.add((Float) listValue);
 								} else if(listValue instanceof String) {
 									arrayNode.add((String) listValue);
 								} else {

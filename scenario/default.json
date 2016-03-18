@@ -1,7 +1,7 @@
 {
 	"jobs": [
 		{
-			"type": "load" // write is used by default
+			"type" : "load" // write is used by default
 		}
 	]
 }

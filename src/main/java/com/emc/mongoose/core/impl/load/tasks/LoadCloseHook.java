@@ -170,6 +170,7 @@ implements Runnable {
 							}
 						}
 					} catch(final Throwable e) {
+						e.printStackTrace(System.out);
 						LogUtil.exception(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 					}
 				}

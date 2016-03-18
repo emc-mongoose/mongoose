@@ -206,14 +206,26 @@ implements HttpDataLoadExecutor<T> {
 			super.interruptActually();
 		} finally {
 			for(final HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool : connPoolMap.values()) {
-				nextConnPool.closeExpired();
-				LOG.debug(
-					Markers.MSG, "{}: closed expired (if any) connections in the pool", getName()
-				);
+				try {
+					nextConnPool.closeExpired();
+					LOG.debug(
+						Markers.MSG, "{}: closed expired (if any) connections in the pool", getName()
+					);
+				} catch(final IllegalStateException e) {
+					LogUtil.exception(
+						LOG, Level.INFO, e,
+						"{}: failed to closed expired connections in the pool", getName()
+					);
+				}
 				try {
 					nextConnPool.closeIdle(1, TimeUnit.MILLISECONDS);
 					LOG.debug(
 						Markers.MSG, "{}: closed idle connections (if any) in the pool", getName()
+					);
+				} catch(final IllegalStateException e) {
+					LogUtil.exception(
+						LOG, Level.INFO, e,
+						"{}: failed to closed expired connections in the pool", getName()
 					);
 				} finally {
 					try {

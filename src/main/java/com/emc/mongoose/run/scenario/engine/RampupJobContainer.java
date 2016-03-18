@@ -54,16 +54,13 @@ extends SequentialJobContainer {
 	//
 	public RampupJobContainer(final Map<String, Object> configTree)
 	throws IllegalStateException {
-		//
+		// get the lists of the rampup parameters
 		final List rawThreadCounts = (List) configTree.get(KEY_LOAD_THREADS);
 		final List rawSizes = (List) configTree.get(KEY_ITEM_DATA_SIZE);
 		final List rawLoadTypes = (List) configTree.get(KEY_LOAD_TYPE);
-		//
+		// disable periodic/intermediate metrics logging
 		configTree.put(KEY_LOAD_METRICS_PERIOD, 0);
-		configTree.remove(KEY_LOAD_THREADS);
-		configTree.remove(KEY_ITEM_DATA_SIZE);
-		configTree.remove(KEY_LOAD_TYPE);
-		//
+		// get the default config
 		final AppConfig localConfig;
 		try {
 			localConfig = (AppConfig) BasicConfig.THREAD_CONTEXT.get().clone();
@@ -79,7 +76,21 @@ extends SequentialJobContainer {
 			throw new IllegalStateException("Failed to init the content source", e);
 		}
 		limitTime = localConfig.getLoadLimitTime();
+		// save the default values being replaced with rampup list values
+		final int defaultThreadCount = localConfig.getLoadThreads();
+		final SizeInBytes defaultSize = localConfig.getItemDataSize();
+		final LoadType defaultLoadType = localConfig.getLoadType();
 		localConfig.override(null, configTree);
+		// return the default values replaced with the list values back
+		if(defaultThreadCount > 0) {
+			localConfig.setProperty(KEY_LOAD_THREADS, defaultThreadCount);
+		}
+		if(defaultSize != null) {
+			localConfig.setProperty(KEY_ITEM_DATA_SIZE, defaultSize.toString());
+		}
+		if(defaultLoadType != null) {
+			localConfig.setProperty(KEY_LOAD_TYPE, defaultLoadType.name().toLowerCase());
+		}
 		//
 		try {
 			loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);

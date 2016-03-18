@@ -78,6 +78,10 @@ public final class SizeInBytes {
 		}
 	}
 	//
+	public SizeInBytes(final long size) {
+		this(size, size, 0);
+	}
+	//
 	public SizeInBytes(final long min, final long max, final double bias) {
 		if(min < 0) {
 			throw new IllegalArgumentException("Min size is less than 0");
