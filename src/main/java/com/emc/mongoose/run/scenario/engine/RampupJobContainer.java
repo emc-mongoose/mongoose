@@ -54,10 +54,6 @@ extends SequentialJobContainer {
 	//
 	public RampupJobContainer(final Map<String, Object> configTree)
 	throws IllegalStateException {
-		// get the lists of the rampup parameters
-		final List rawThreadCounts = (List) configTree.get(KEY_LOAD_THREADS);
-		final List rawSizes = (List) configTree.get(KEY_ITEM_DATA_SIZE);
-		final List rawLoadTypes = (List) configTree.get(KEY_LOAD_TYPE);
 		// disable periodic/intermediate metrics logging
 		configTree.put(KEY_LOAD_METRICS_PERIOD, 0);
 		// get the default config
@@ -81,6 +77,10 @@ extends SequentialJobContainer {
 		final SizeInBytes defaultSize = localConfig.getItemDataSize();
 		final LoadType defaultLoadType = localConfig.getLoadType();
 		localConfig.override(null, configTree);
+		// get the lists of the rampup parameters
+		final List rawThreadCounts = (List) localConfig.getProperty(KEY_LOAD_THREADS);
+		final List rawSizes = (List) localConfig.getProperty(KEY_ITEM_DATA_SIZE);
+		final List rawLoadTypes = (List) localConfig.getProperty(KEY_LOAD_TYPE);
 		// return the default values replaced with the list values back
 		if(defaultThreadCount > 0) {
 			localConfig.setProperty(KEY_LOAD_THREADS, defaultThreadCount);
@@ -98,6 +98,9 @@ extends SequentialJobContainer {
 			throw new IllegalStateException("Failed to init the rampup job", e);
 		} catch(final InvocationTargetException e) {
 			throw new IllegalStateException("Failed to init the rampup job", e.getTargetException());
+		} catch(final Throwable t) {
+			t.printStackTrace(System.out);
+			throw t;
 		}
 		//
 		initForEach(rawThreadCounts, rawSizes, rawLoadTypes);
