@@ -26,6 +26,7 @@ import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
+import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,6 +64,13 @@ extends SequentialJobContainer {
 		} catch(final CloneNotSupportedException e) {
 			throw new RuntimeException(e);
 		}
+		// save the default values being replaced with rampup list values
+		final int defaultThreadCount = localConfig.getLoadThreads();
+		final SizeInBytes defaultSize = localConfig.getItemDataSize();
+		final LoadType defaultLoadType = localConfig.getLoadType();
+		//
+		localConfig.override(null, configTree);
+		limitTime = localConfig.getLoadLimitTime();
 		final ItemType itemType = localConfig.getItemType();
 		final StorageType storageType = localConfig.getStorageType();
 		itemCls = ItemTypeUtil.getItemClass(itemType, storageType);
@@ -71,12 +79,6 @@ extends SequentialJobContainer {
 		} catch(final IOException e) {
 			throw new IllegalStateException("Failed to init the content source", e);
 		}
-		limitTime = localConfig.getLoadLimitTime();
-		// save the default values being replaced with rampup list values
-		final int defaultThreadCount = localConfig.getLoadThreads();
-		final SizeInBytes defaultSize = localConfig.getItemDataSize();
-		final LoadType defaultLoadType = localConfig.getLoadType();
-		localConfig.override(null, configTree);
 		// get the lists of the rampup parameters
 		final List rawThreadCounts = (List) localConfig.getProperty(KEY_LOAD_THREADS);
 		final List rawSizes = (List) localConfig.getProperty(KEY_ITEM_DATA_SIZE);
@@ -177,7 +179,7 @@ extends SequentialJobContainer {
 		final int nextThreadCount, final SizeInBytes nextSize, final List rawLoadTypes
 	) {
 		LoadType nextLoadType;
-		ItemDst prevLoadJobItemDst = null;
+		ItemDst itemDst = null;
 		for(final Object rawLoadType : rawLoadTypes) {
 			nextLoadType = null;
 			if(rawLoadType instanceof LoadType) {
@@ -202,10 +204,7 @@ extends SequentialJobContainer {
 			}
 			//
 			try {
-				prevLoadJobItemDst = append(
-					prevLoadJobItemDst == null ? null : prevLoadJobItemDst.getItemSrc(),
-					nextThreadCount, nextSize, nextLoadType
-				);
+				itemDst = append(itemDst, nextThreadCount, nextSize, nextLoadType);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to build the load job \"{} x {} x {}\"",
@@ -215,27 +214,51 @@ extends SequentialJobContainer {
 		}
 	}
 	//
-	private LoadExecutor append(
-		final ItemSrc itemSrc,
-		final int nextThreadCount, final SizeInBytes nextSize, final LoadType nextLoadType
+	private final StrBuilder strb = new StrBuilder();
+	{
+		strb
+			.appendNewLine()
+			.appendFixedWidthPadLeft("Job number", 16, ' ')
+			.appendFixedWidthPadLeft("Load type", 16, ' ')
+			.appendFixedWidthPadLeft("Thread count", 16, ' ')
+			.appendFixedWidthPadLeft("Data size", 16, ' ')
+			.appendNewLine();
+	}
+	//
+	private ItemDst append(
+		final ItemDst prevItemDst, final int nextThreadCount, final SizeInBytes nextSize,
+		final LoadType nextLoadType
 	) throws IOException {
 		//
 		final LoadExecutor nextLoadJob;
+		final ItemDst nextItemDst = new ItemCSVFileDst<>(itemCls, contentSrc);
 		//
 		loadJobBuilder
 			.setLoadType(nextLoadType)
 			.setThreadCount(nextThreadCount)
-			.setItemSrc(itemSrc)
-			.setItemDst(new ItemCSVFileDst<>(itemCls, contentSrc));
+			.setItemSrc(prevItemDst == null ? null : prevItemDst.getItemSrc())
+			.setItemDst(nextItemDst);
 		if(loadJobBuilder instanceof DataLoadBuilder && nextSize != null) {
 			((DataLoadBuilder) loadJobBuilder).setDataSize(nextSize);
 		}
 		nextLoadJob = loadJobBuilder.build();
 		//
 		if(nextLoadJob != null) {
+			strb
+				.appendNewLine()
+				.appendFixedWidthPadLeft(nextLoadJob.getLoadState().getLoadNumber(), 16, ' ')
+				.appendFixedWidthPadLeft(nextLoadType.name(), 16, ' ')
+				.appendFixedWidthPadLeft(nextThreadCount, 16, ' ')
+				.appendFixedWidthPadLeft(nextSize, 16, ' ');
 			append(new SingleJobContainer(nextLoadJob, limitTime));
 		}
 		//
-		return nextLoadJob;
+		return nextItemDst;
+	}
+	//
+	@Override
+	public final void run() {
+		LOG.info(Markers.MSG, "Run rampup{}", strb.toString());
+		super.run();
 	}
 }

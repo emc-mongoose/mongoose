@@ -93,6 +93,7 @@ public final class ModeDispatcher {
 					new ScenarioRunner(appConfig).run();
 				} catch(final Exception e) {
 					LogUtil.exception(rootLogger, Level.FATAL, e, "Scenario failed");
+					e.printStackTrace(System.out);
 				}
 				break;
 			default:
