@@ -15,12 +15,13 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.load.model.LoadState;
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.item.ItemTypeUtil;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
@@ -33,9 +34,12 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.rmi.RemoteException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 /**
  Created by kurila on 17.03.16.
  */
@@ -43,6 +47,30 @@ public class RampupJobContainer
 extends SequentialJobContainer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static int tblWidth = 200;
+	private final static char colSep = '|';
+	private final static char rowSep = '-';
+	private final static char padChar = ' ';
+	//
+	private final StrBuilder strb = new StrBuilder();
+	{
+		strb
+			.appendNewLine()
+			.appendPadding(tblWidth, rowSep)
+			.appendNewLine()
+			.appendFixedWidthPadLeft("Job number " + colSep, 12, padChar)
+			.appendFixedWidthPadLeft("Load type " + colSep, 12, padChar)
+			.appendFixedWidthPadLeft("Thread count " + colSep, 16, padChar)
+			.appendFixedWidthPadLeft("Data size " + colSep, 12, padChar)
+			.appendFixedWidthPadLeft("Count " + colSep, 12, padChar)
+			.appendFixedWidthPadLeft("Failed " + colSep, 12, padChar)
+			.appendFixedWidthPadLeft("Duration[us] " + colSep, 38, padChar)
+			.appendFixedWidthPadLeft("Latency[us] " + colSep, 38, padChar)
+			.appendFixedWidthPadLeft("TP[op/s] " + colSep, 24, padChar)
+			.appendFixedWidthPadLeft("BW[MB/s] " + colSep, 24, padChar)
+			.appendNewLine()
+			.appendPadding(tblWidth, rowSep);
+	}
 	//
 	private final LoadBuilder loadJobBuilder;
 	private final Class<? extends Item> itemCls;
@@ -214,16 +242,8 @@ extends SequentialJobContainer {
 		}
 	}
 	//
-	private final StrBuilder strb = new StrBuilder();
-	{
-		strb
-			.appendNewLine()
-			.appendFixedWidthPadLeft("Job number", 16, ' ')
-			.appendFixedWidthPadLeft("Load type", 16, ' ')
-			.appendFixedWidthPadLeft("Thread count", 16, ' ')
-			.appendFixedWidthPadLeft("Data size", 16, ' ')
-			.appendNewLine();
-	}
+	private final Map<Integer, Map<Integer, Map<SizeInBytes, Map<LoadType, LoadExecutor>>>>
+		loadJobMap = new TreeMap<>();
 	//
 	private ItemDst append(
 		final ItemDst prevItemDst, final int nextThreadCount, final SizeInBytes nextSize,
@@ -242,23 +262,100 @@ extends SequentialJobContainer {
 			((DataLoadBuilder) loadJobBuilder).setDataSize(nextSize);
 		}
 		nextLoadJob = loadJobBuilder.build();
-		//
 		if(nextLoadJob != null) {
-			strb
-				.appendNewLine()
-				.appendFixedWidthPadLeft(nextLoadJob.getLoadState().getLoadNumber(), 16, ' ')
-				.appendFixedWidthPadLeft(nextLoadType.name(), 16, ' ')
-				.appendFixedWidthPadLeft(nextThreadCount, 16, ' ')
-				.appendFixedWidthPadLeft(nextSize, 16, ' ');
+			final int nextLoadNum = nextLoadJob.getLoadState().getLoadNumber();
+			Map<Integer, Map<SizeInBytes, Map<LoadType, LoadExecutor>>> m1 = loadJobMap.get(
+				nextLoadJob.getLoadState().getLoadNumber()
+			);
+			if(m1 == null) {
+				loadJobMap.put(nextLoadNum, m1 = new HashMap<>());
+			}
+			Map<SizeInBytes, Map<LoadType, LoadExecutor>> m2 = m1.get(nextThreadCount);
+			if(m2 == null) {
+				m1.put(nextThreadCount, m2 = new HashMap<>());
+			}
+			Map<LoadType, LoadExecutor> m3 = m2.get(nextSize);
+			if(m3 == null) {
+				m2.put(nextSize, m3 = new HashMap<>());
+			}
+			m3.put(nextLoadType, nextLoadJob);
+			//
 			append(new SingleJobContainer(nextLoadJob, limitTime));
 		}
-		//
 		return nextItemDst;
 	}
 	//
 	@Override
 	public final void run() {
-		LOG.info(Markers.MSG, "Run rampup{}", strb.toString());
 		super.run();
+		// print the table
+		LoadExecutor nextLoadJob;
+		LoadState nextLoadState;
+		Map<Integer, Map<SizeInBytes, Map<LoadType, LoadExecutor>>> m0;
+		Map<SizeInBytes, Map<LoadType, LoadExecutor>> m1;
+		Map<LoadType, LoadExecutor> m2;
+		for(final int nextLoadNum : loadJobMap.keySet()) {
+			m0 = loadJobMap.get(nextLoadNum);
+			for(final int nextThreadCount : m0.keySet()) {
+				m1 = m0.get(nextThreadCount);
+				for(final SizeInBytes nextSize : m1.keySet()) {
+					m2 = m1.get(nextSize);
+					for(final LoadType nextLoadType : m2.keySet()) {
+						nextLoadJob = m2.get(nextLoadType);
+						try {
+							nextLoadState = nextLoadJob.getLoadState();
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e, "Failed to fetch the load state for {}",
+								nextLoadJob
+							);
+							nextLoadState = null;
+						}
+						final String sizeStr = nextSize == null ? " " : nextSize.toString();
+						final IOStats.Snapshot statsSnapshot = nextLoadState == null ?
+							null : nextLoadState.getStatsSnapshot();
+						final long countSucc = statsSnapshot == null ?
+							-1 : statsSnapshot.getSuccCount();
+						final long countFail = statsSnapshot == null ?
+							-1 : statsSnapshot.getFailCount();
+						final String durStr = statsSnapshot == null ?
+							"N/A" :
+							statsSnapshot.getDurationMin() + "/" + statsSnapshot.getDurationLoQ() +
+							"/" + statsSnapshot.getDurationMed() + "/" +
+							statsSnapshot.getDurationHiQ() + "/" + statsSnapshot.getDurationMax();
+						final String latStr = statsSnapshot == null ?
+							"N/A" :
+							statsSnapshot.getLatencyMin() + "/" + statsSnapshot.getLatencyLoQ() +
+							"/" + statsSnapshot.getLatencyMed() + "/" +
+							statsSnapshot.getLatencyHiQ() + "/" + statsSnapshot.getLatencyMax();
+						final String tpStr = statsSnapshot == null ?
+							"N/A" :
+							String.format("%.3f", statsSnapshot.getSuccRateMean()) + "/" +
+							String.format("%.3f", statsSnapshot.getSuccRateLast());
+						final String bwStr = statsSnapshot == null ?
+							"N/A" :
+							String.format("%.3f", statsSnapshot.getByteRateMean() / IOStats.MIB) + "/" +
+							String.format("%.3f", statsSnapshot.getByteRateLast() / IOStats.MIB);
+						strb
+							.appendNewLine()
+							.appendFixedWidthPadLeft(nextLoadNum + " " + colSep, 12, padChar)
+							.appendFixedWidthPadLeft(nextLoadType.name() + " " + colSep, 12, padChar)
+							.appendFixedWidthPadLeft(nextThreadCount + " " + colSep, 16, padChar)
+							.appendFixedWidthPadLeft(sizeStr + " " + colSep, 12, padChar)
+							.appendFixedWidthPadLeft(countSucc + " " + colSep, 12, padChar)
+							.appendFixedWidthPadLeft(countFail + " " + colSep, 12, padChar)
+							.appendFixedWidthPadLeft(durStr + " " + colSep, 38, padChar)
+							.appendFixedWidthPadLeft(latStr + " " + colSep, 38, padChar)
+							.appendFixedWidthPadLeft(tpStr + " " + colSep, 24, padChar)
+							.appendFixedWidthPadLeft(bwStr + " " + colSep, 24, padChar);
+					}
+				}
+			}
+		}
+		strb.appendNewLine().appendPadding(tblWidth, rowSep);
+		//
+		LOG.info(Markers.MSG, strb.toString());
+		//
+		loadJobMap.clear();
 	}
 }

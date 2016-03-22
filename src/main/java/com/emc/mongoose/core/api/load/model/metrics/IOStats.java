@@ -75,18 +75,18 @@ extends Closeable {
 		long getElapsedTime();
 		long getDurationSum();
 		//
-		double getDurationMin();
-		double getDurationLoQ();
-		double getDurationMed();
-		double getDurationHiQ();
-		double getDurationMax();
+		long getDurationMin();
+		long getDurationLoQ();
+		long getDurationMed();
+		long getDurationHiQ();
+		long getDurationMax();
 		long[] getDurationValues();
 		//
-		double getLatencyMin();
-		double getLatencyLoQ();
-		double getLatencyMed();
-		double getLatencyHiQ();
-		double getLatencyMax();
+		long getLatencyMin();
+		long getLatencyLoQ();
+		long getLatencyMed();
+		long getLatencyHiQ();
+		long getLatencyMax();
 		long[] getLatencyValues();
 		//
 		String toSummaryString();

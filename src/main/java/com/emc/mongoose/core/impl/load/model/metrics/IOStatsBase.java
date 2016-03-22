@@ -158,7 +158,7 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getDurationMin() {
+		public long getDurationMin() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -166,31 +166,31 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getDurationLoQ() {
+		public long getDurationLoQ() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
-			return durSnapshot.getValue(0.25);
+			return (long) durSnapshot.getValue(0.25);
 		}
 		//
 		@Override
-		public double getDurationMed() {
+		public long getDurationMed() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
-			return durSnapshot.getValue(0.5);
+			return (long) durSnapshot.getValue(0.5);
 		}
 		//
 		@Override
-		public double getDurationHiQ() {
+		public long getDurationHiQ() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
-			return durSnapshot.getValue(0.75);
+			return (long) durSnapshot.getValue(0.75);
 		}
 		//
 		@Override
-		public double getDurationMax() {
+		public long getDurationMax() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -208,7 +208,7 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getLatencyMin() {
+		public long getLatencyMin() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -216,30 +216,30 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getLatencyLoQ() {
+		public long getLatencyLoQ() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
-			return latSnapshot.getValue(0.25);
+			return (long) latSnapshot.getValue(0.25);
 		}
 		//
 		@Override
-		public double getLatencyMed() {
+		public long getLatencyMed() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
-			return latSnapshot.getValue(0.5);
+			return (long) latSnapshot.getValue(0.5);
 		}
 		//
 		@Override
-		public double getLatencyHiQ() {
+		public long getLatencyHiQ() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
-			return latSnapshot.getValue(0.75);
+			return (long) latSnapshot.getValue(0.75);
 		}//
 		@Override
-		public double getLatencyMax() {
+		public long getLatencyMax() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
