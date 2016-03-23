@@ -1,14 +1,10 @@
 {
-	"jobs" : [
-		{
-			"type" : "load",
-			"config" : {
-				"load" : {
-					"limit" : {
-						"time" : "1m" // unit may be also "s", "h" and "d"
-					}
-				}
+	"type" : "load",
+	"config" : {
+		"load" : {
+			"limit" : {
+				"time" : "1m" // unit may be also "s", "h" and "d"
 			}
 		}
-	]
+	}
 }

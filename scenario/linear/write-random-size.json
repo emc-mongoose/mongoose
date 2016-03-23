@@ -1,15 +1,11 @@
 {
-	"jobs": [
-		{
-			"type": "load",
-			"config" : {
-				"item" : {
-					"data" : {
-						"size" : "10KB-30KB,2.5" // the range and the (optional) bias degree
-					}
-				}
+	"type": "load",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : "10KB-30KB,2.5" // the range and the (optional) bias degree
 			}
 		}
-	]
+	}
 }
 

@@ -1,4 +1,5 @@
 {
+	"type" : "sequential",
 	"jobs": [
 		{
 			"type": "load", // write is used by default
@@ -30,7 +31,7 @@
 					}
 				},
 				"load" : {
-					"class" : "delete"
+					"type" : "delete"
 				}
 			}
 		}

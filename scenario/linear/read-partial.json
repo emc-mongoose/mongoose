@@ -1,4 +1,5 @@
 {
+	"type" : "sequential",
 	"jobs": [
 		{
 			"type": "load", // write is used by default
@@ -30,6 +31,9 @@
 					"src" : {
 						"file" : "/tmp/scenario-linear-read-partial.csv"
 					}
+				},
+				"load" : {
+					"type" : "read"
 				}
 			}
 		}
