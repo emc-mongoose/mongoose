@@ -168,8 +168,12 @@ implements AppConfig {
 	@Override
 	public SizeInBytes getItemDataSize() {
 		final Object raw = getProperty(KEY_ITEM_DATA_SIZE);
-		if(raw instanceof Number) {
+		if(raw instanceof Long) {
 			return new SizeInBytes((long) raw);
+		} else if(raw instanceof Integer) {
+			return new SizeInBytes((int) raw);
+		} else if(raw instanceof Short) {
+			return new SizeInBytes((short) raw);
 		} else if(raw instanceof String) {
 			return new SizeInBytes((String) raw);
 		} else if(raw instanceof SizeInBytes){
@@ -271,8 +275,12 @@ implements AppConfig {
 			final String rawStrValue = (String) rawValue;
 			return (int) TimeUtil.getTimeUnit(rawStrValue)
 				.toSeconds(TimeUtil.getTimeValue(rawStrValue));
-		} else if(rawValue instanceof Number) {
-			return (int) rawValue;
+		} else if(rawValue instanceof Long) {
+			return ((Long) rawValue).intValue();
+		} else if(rawValue instanceof Integer) {
+			return (Integer) rawValue;
+		} else if(rawValue instanceof Short) {
+			return (Short) rawValue;
 		} else {
 			throw new ConversionException(
 				"Invalid value @ " + KEY_LOAD_METRICS_PERIOD + ": \"" +
