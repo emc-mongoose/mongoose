@@ -170,7 +170,7 @@ extends HttpRequestConfigBase<T, C> {
 			new SwiftAuthTokenHelper<>(this, null).create(storageNodeAddrs[0]);
 		}
 		//
-		sharedHeaders.updateHeader(new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue));
+		sharedHeaders.put(KEY_X_AUTH_TOKEN, new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue));
 		appConfig.setProperty(AppConfig.KEY_AUTH_TOKEN, authTokenValue);
 		// configure a container
 		final HttpSwiftContainerHelper<T, C>

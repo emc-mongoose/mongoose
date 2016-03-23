@@ -71,7 +71,7 @@ extends HttpRequestConfigBase<T, C> {
 			setSecret(reqConf2Clone.getSecret());
 		}
 		//
-		sharedHeaders.updateHeader(DEFAULT_ACCEPT_HEADER);
+		sharedHeaders.put(HttpHeaders.ACCEPT, DEFAULT_ACCEPT_HEADER);
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
@@ -140,10 +140,10 @@ extends HttpRequestConfigBase<T, C> {
 		super.setAuthToken(subTenant);
 		if(sharedHeaders != null && userName != null) {
 			if(subTenant == null || subTenant.toString().length() < 1) {
-				sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_UID, userName));
+				sharedHeaders.put(KEY_EMC_UID, new BasicHeader(KEY_EMC_UID, userName));
 			} else {
-				sharedHeaders.updateHeader(
-					new BasicHeader(KEY_EMC_UID, subTenant.toString() + "/" + userName)
+				sharedHeaders.put(
+					KEY_EMC_UID, new BasicHeader(KEY_EMC_UID, subTenant.toString() + "/" + userName)
 				);
 			}
 		}
@@ -159,12 +159,11 @@ extends HttpRequestConfigBase<T, C> {
 			super.setUserName(userName);
 			if(sharedHeaders != null) {
 				if(authToken == null || authToken.toString().length() < 1) {
-					sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_UID, userName));
+					sharedHeaders.put(KEY_EMC_UID, new BasicHeader(KEY_EMC_UID, userName));
 				} else {
-					sharedHeaders.updateHeader(
-						new BasicHeader(
-							KEY_EMC_UID, authToken.toString() + "/" + userName
-						)
+					sharedHeaders.put(
+						KEY_EMC_UID,
+						new BasicHeader(KEY_EMC_UID, authToken.toString() + "/" + userName)
 					);
 				}
 			}
@@ -330,8 +329,8 @@ extends HttpRequestConfigBase<T, C> {
 				for(final Header header : httpRequest.getHeaders(headerName)) {
 					canonical.append('\n').append(header.getValue());
 				}
-			} else if(sharedHeaders.containsHeader(headerName)) {
-				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
+			} else if(sharedHeaders.containsKey(headerName)) {
+				canonical.append('\n').append(sharedHeaders.get(headerName).getValue());
 			} else {
 				canonical.append('\n');
 			}
@@ -347,10 +346,10 @@ extends HttpRequestConfigBase<T, C> {
 						emcHeader.getValue()
 					);
 				}
-			} else if(sharedHeaders.containsHeader(emcHeaderName)) {
+			} else if(sharedHeaders.containsKey(emcHeaderName)) {
 				canonical
 					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
+					.append(':').append(sharedHeaders.get(emcHeaderName).getValue());
 			}
 		}
 		//

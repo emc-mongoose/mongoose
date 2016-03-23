@@ -29,13 +29,11 @@ import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
-import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
@@ -97,15 +95,11 @@ implements HttpDataLoadExecutor<T> {
 		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
 		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
 		//
-		final HeaderGroup sharedHeaders = httpReqConfigCopy.getSharedHeaders();
-		final String userAgent = appConfig.getRunName() + "/" + appConfig.getRunVersion();
-		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
 			.add(httpReqConfigCopy)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
-			.add(new RequestUserAgent(userAgent))
 			//.add(new RequestExpectContinue(true))
 			.add(new RequestContent(false))
 			.build();

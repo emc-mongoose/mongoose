@@ -1,19 +1,20 @@
 package com.emc.mongoose.core.api.io.conf;
-// mongoose-core-api.jar
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-import com.emc.mongoose.core.api.io.task.IOTask;
-// mongoose-common.jar
+//
+import org.apache.http.Header;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
-import org.apache.http.message.HeaderGroup;
 //
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 29.09.14.
@@ -108,7 +109,7 @@ extends RequestConfig<T, C>, HttpRequestInterceptor {
 	@Override
 	HttpRequestConfig<T, C> setAppConfig(final AppConfig appConfig);
 	//
-	HeaderGroup getSharedHeaders();
+	Map<String, Header> getSharedHeaders();
 	//
 	HttpHost getNodeHost(final String nodeAddr);
 	//

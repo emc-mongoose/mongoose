@@ -24,7 +24,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
@@ -132,8 +131,8 @@ extends HttpRequestConfigBase<T, C> {
 				for(final Header header: httpRequest.getHeaders(headerName)) {
 					canonical.append('\n').append(header.getValue());
 				}
-			} else if(sharedHeaders.containsHeader(headerName)) {
-				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
+			} else if(sharedHeaders.containsKey(headerName)) {
+				canonical.append('\n').append(sharedHeaders.get(headerName).getValue());
 			} else {
 				canonical.append('\n');
 			}
@@ -141,7 +140,7 @@ extends HttpRequestConfigBase<T, C> {
 		// x-amz-*
 		String amzHeaderName;
 		Map<String, String> sortedAmzHeaders = new TreeMap<>();
-		for(final Header header : sharedHeaders.getAllHeaders()) {
+		for(final Header header : sharedHeaders.values()) {
 			amzHeaderName = header.getName().toLowerCase();
 			if(amzHeaderName.startsWith(CANONICAL_AMZ_HEADER_PREFIX)) {
 				sortedAmzHeaders.put(amzHeaderName, header.getValue());
@@ -164,10 +163,10 @@ extends HttpRequestConfigBase<T, C> {
 						.append('\n').append(emcHeaderName.toLowerCase())
 						.append(':').append(emcHeader.getValue());
 				}
-			} else if(sharedHeaders.containsHeader(emcHeaderName)) {
+			} else if(sharedHeaders.containsKey(emcHeaderName)) {
 				canonical
 					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
+					.append(':').append(sharedHeaders.get(emcHeaderName).getValue());
 			}
 		}
 		//
