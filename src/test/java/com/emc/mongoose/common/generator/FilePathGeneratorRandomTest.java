@@ -14,6 +14,8 @@ import static org.junit.Assert.assertTrue;
 public class FilePathGeneratorRandomTest {
 
 	private ValueGenerator<String> formatter;
+	private static int[] counters;
+	private static int depthToCount;
 
 	private void initFormatter(int width, int depth) throws Exception {
 		formatter = new FilePathGenerator(width, depth);
@@ -22,7 +24,7 @@ public class FilePathGeneratorRandomTest {
 	@Parameterized.Parameters
 	public static Iterable<Object[]> data() {
 		return Arrays.asList(new Object[][]{
-				{36, 4},
+				{5, 4},
 		});
 	}
 
@@ -36,13 +38,36 @@ public class FilePathGeneratorRandomTest {
 	public void checkPrintingResult() throws Exception {
 		initFormatter(width, depth);
 		String result1 = formatter.get();
-		for (int i = 0; i < 10; i++) {
+		counters = new int[depth];
+		depthToCount = depth;
+		for (int i = 0; i < 100; i++) {
 			String result2 = formatter.get();
 //			System.out.println(formatter.get());
-			assertFalse(result1.equals(result2));
+//			assertFalse(result1.equals(result2));
+			countDirsByDepth(result1);
+			printIfEquals(result1, result2);
 			result1 = result2;
+		}
+		printCounters();
+	}
+
+	private void countDirsByDepth (final String result) {
+		for (int i = 0; i < depthToCount; i++) {
+			if (result.length() == ((i + 1) * 2)) {
+				counters[i]++;
+			}
 		}
 	}
 
+	private void printCounters() {
+		for (int counter: counters) {
+			System.out.println(counter);
+		}
+	}
 
+	private void printIfEquals(final String result1, final String result2) {
+		if (result1.equals(result2)) {
+				System.out.println("EQUALS!");
+			};
+	}
 }
