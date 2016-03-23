@@ -1,1 +1,88 @@
-// TODO
+{
+	"type" : "sequential",
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "read-with-many-users"
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-read-with-many-users.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 1000
+					}
+				}
+			}
+		},
+		{
+			"type" : "parallel",
+			"jobs" : [
+				{
+					"type" : "load",
+					"config" : {
+						"auth" : {
+							"id" : "user1",
+							"secret" : "secret1"
+						},
+						"item" : {
+							"container" : {
+								"name" : "read-with-many-users"
+							},
+							"src" : {
+								"file" : "/tmp/scenario-read-with-many-users.csv"
+							}
+						},
+						"load" : {
+							"type" : "read"
+						}
+					}
+				},
+				{
+					"type" : "load",
+					"config" : {
+						"auth" : {
+							"id" : "user2",
+							"secret" : "secret2"
+						},
+						"item" : {
+							"container" : {
+								"name" : "read-with-many-users"
+							},
+							"src" : {
+								"file" : "/tmp/scenario-read-with-many-users.csv"
+							}
+						},
+						"load" : {
+							"type" : "read"
+						}
+					}
+				},
+				{
+					"type" : "load",
+					"config" : {
+						"auth" : {
+							"id" : "user3",
+							"secret" : "secret3"
+						},
+						"item" : {
+							"container" : {
+								"name" : "read-with-many-users"
+							},
+							"src" : {
+								"file" : "/tmp/scenario-read-with-many-users.csv"
+							}
+						},
+						"load" : {
+							"type" : "read"
+						}
+					}
+				}
+			]
+		}
+	]
+}

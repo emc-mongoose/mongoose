@@ -146,8 +146,10 @@ implements ItemProducer<T> {
 				} catch(final ClosedByInterruptException | IllegalStateException e) {
 					break;
 				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.DEBUG, e, "Failed to transfer the data items, " +
-						"count = {}, batch size = {}, batch offset = {}", producedItemsCount, n, m);
+					LogUtil.exception(
+						LOG, Level.DEBUG, e, "Failed to transfer the data items, count = {}, " +
+						"batch size = {}, batch offset = {}", producedItemsCount, n, m
+					);
 				}
 			}
 		} finally {

@@ -1,1 +1,10 @@
-// TODO
+{
+	"type" : "load", // write is used by default
+	"config" : {
+		"item" : {
+			"naming" : {
+				"prefix" : "____"
+			}
+		}
+	}
+}

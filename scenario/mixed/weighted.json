@@ -1,1 +1,70 @@
-// TODO
+{
+	"type" : "sequential",
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "weighted-load"
+					},
+					"data" : {
+						"size" : "4KB-16KB"
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-weighted-load.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 1000
+					},
+					"metricsPeriod" : 0
+				}
+			}
+		},
+		{
+			"type" : "parallel",
+			"jobs" : [
+				{
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "weighted-load"
+							},
+							"src" : {
+								"file" : "/tmp/scenario-weighted-load.csv"
+							}
+						},
+						"load" : {
+							"circular" : true,
+							"limit" : {
+								"time" : "5m"
+							},
+							"type" : "read"
+						}
+					}
+				},
+				{
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "weighted-load"
+							},
+							"data" : {
+								"size" : "4KB-16KB"
+							}
+						},
+						"load" : {
+							"limit" : {
+								"time" : "5m"
+							}
+						}
+					}
+				}
+			]
+		}
+	]
+}

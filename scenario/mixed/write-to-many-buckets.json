@@ -1,1 +1,36 @@
-// TODO
+{
+	"type" : "parallel",
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "bucket1"
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "bucket2"
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "bucket3"
+					}
+				}
+			}
+		}
+	]
+}
+
