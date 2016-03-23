@@ -10,7 +10,7 @@
 		},
 		"load" : {
 			"limit" : {
-				"time" : "1m",
+				"time" : "1s",
 				"count" : 1000000
 			},
 			"threads": [

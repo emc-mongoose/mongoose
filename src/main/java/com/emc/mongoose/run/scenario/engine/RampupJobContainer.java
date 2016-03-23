@@ -27,6 +27,7 @@ import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -47,7 +48,7 @@ public class RampupJobContainer
 extends SequentialJobContainer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static int tblWidth = 200;
+	private final static int tblWidth = 124;
 	private final static char colSep = '|';
 	private final static char rowSep = '-';
 	private final static char padChar = ' ';
@@ -58,16 +59,16 @@ extends SequentialJobContainer {
 			.appendNewLine()
 			.appendPadding(tblWidth, rowSep)
 			.appendNewLine()
-			.appendFixedWidthPadLeft("Job number " + colSep, 12, padChar)
+			.appendFixedWidthPadLeft("Job # " + colSep, 7, padChar)
 			.appendFixedWidthPadLeft("Load type " + colSep, 12, padChar)
 			.appendFixedWidthPadLeft("Thread count " + colSep, 15, padChar)
 			.appendFixedWidthPadLeft("Data size " + colSep, 12, padChar)
 			.appendFixedWidthPadLeft("Count " + colSep, 12, padChar)
 			.appendFixedWidthPadLeft("Failed " + colSep, 9, padChar)
-			.appendFixedWidthPadLeft("Duration[us] " + colSep, 40, padChar)
-			.appendFixedWidthPadLeft("Latency[us] " + colSep, 40, padChar)
-			.appendFixedWidthPadLeft("TP[op/s] " + colSep, 24, padChar)
-			.appendFixedWidthPadLeft("BW[MB/s] " + colSep, 24, padChar)
+			.appendFixedWidthPadLeft("Duration[us] " + colSep, 15, padChar)
+			.appendFixedWidthPadLeft("Latency[us] " + colSep, 14, padChar)
+			.appendFixedWidthPadLeft("TP[op/s] " + colSep, 14, padChar)
+			.appendFixedWidthPadLeft("BW[MB/s] " + colSep, 14, padChar)
 			.appendNewLine()
 			.appendPadding(tblWidth, rowSep);
 	}
@@ -315,39 +316,47 @@ extends SequentialJobContainer {
 						final IOStats.Snapshot statsSnapshot = nextLoadState == null ?
 							null : nextLoadState.getStatsSnapshot();
 						final long countSucc = statsSnapshot == null ?
-							-1 : statsSnapshot.getSuccCount();
+							0 : statsSnapshot.getSuccCount();
 						final long countFail = statsSnapshot == null ?
-							-1 : statsSnapshot.getFailCount();
-						final String durStr = statsSnapshot == null ?
-							"N/A" :
-							statsSnapshot.getDurationMin() + "/" + statsSnapshot.getDurationLoQ() +
-							"/" + statsSnapshot.getDurationMed() + "/" +
-							statsSnapshot.getDurationHiQ() + "/" + statsSnapshot.getDurationMax();
-						final String latStr = statsSnapshot == null ?
-							"N/A" :
-							statsSnapshot.getLatencyMin() + "/" + statsSnapshot.getLatencyLoQ() +
-							"/" + statsSnapshot.getLatencyMed() + "/" +
-							statsSnapshot.getLatencyHiQ() + "/" + statsSnapshot.getLatencyMax();
+							0 : statsSnapshot.getFailCount();
+						long avgDur = statsSnapshot == null ? 0 : statsSnapshot.getDurationSum();
+						avgDur = avgDur == 0 ? 0 : avgDur / countSucc;
+						long avgLat = 0;
+						if(statsSnapshot != null) {
+							final long[] latValues = statsSnapshot.getLatencyValues();
+							for(final long nextLatencyValue : latValues) {
+								avgLat += nextLatencyValue;
+							}
+							avgLat = avgLat == 0 ? 0 : avgLat / latValues.length;
+						}
 						final String tpStr = statsSnapshot == null ?
 							"N/A" :
-							String.format("%.3f", statsSnapshot.getSuccRateMean()) + "/" +
-							String.format("%.3f", statsSnapshot.getSuccRateLast());
+							String.format(
+								LogUtil.LOCALE_DEFAULT, "%.3f", statsSnapshot.getSuccRateMean()
+							);
 						final String bwStr = statsSnapshot == null ?
 							"N/A" :
-							String.format("%.3f", statsSnapshot.getByteRateMean() / IOStats.MIB) + "/" +
-							String.format("%.3f", statsSnapshot.getByteRateLast() / IOStats.MIB);
+							String.format(
+								LogUtil.LOCALE_DEFAULT, "%.3f",
+								statsSnapshot.getByteRateMean() / IOStats.MIB
+							);
 						strb
 							.appendNewLine()
-							.appendFixedWidthPadLeft(nextLoadNum + " " + colSep, 12, padChar)
-							.appendFixedWidthPadLeft(nextLoadType.name() + " " + colSep, 12, padChar)
+							.appendFixedWidthPadLeft(nextLoadNum + " " + colSep, 7, padChar)
+							.appendFixedWidthPadRight(
+								" " + StringUtils.capitalize(nextLoadType.name().toLowerCase()),
+								11, padChar
+							)
+							.append(colSep)
 							.appendFixedWidthPadLeft(nextThreadCount + " " + colSep, 15, padChar)
 							.appendFixedWidthPadLeft(sizeStr + " " + colSep, 12, padChar)
 							.appendFixedWidthPadLeft(countSucc + " " + colSep, 12, padChar)
 							.appendFixedWidthPadLeft(countFail + " " + colSep, 9, padChar)
-							.appendFixedWidthPadLeft(durStr + " " + colSep, 40, padChar)
-							.appendFixedWidthPadLeft(latStr + " " + colSep, 40, padChar)
-							.appendFixedWidthPadLeft(tpStr + " " + colSep, 24, padChar)
-							.appendFixedWidthPadLeft(bwStr + " " + colSep, 24, padChar);
+							.appendFixedWidthPadRight(" " + avgDur, 14, padChar)
+							.appendFixedWidthPadRight(colSep + " " + avgLat, 14, padChar)
+							.appendFixedWidthPadRight(colSep + " " + tpStr, 14, padChar)
+							.appendFixedWidthPadRight(colSep + " " + bwStr, 14, padChar)
+							.append(colSep);
 					}
 				}
 			}

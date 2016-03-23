@@ -278,7 +278,8 @@ implements AppConfig {
 			return (Integer) rawValue;
 		} else {
 			throw new ConversionException(
-				"Invalid value @ " + KEY_LOAD_METRICS_PERIOD + ": \"" + rawValue + "\""
+				"Invalid value @ " + KEY_LOAD_METRICS_PERIOD + ": \"" +
+				(rawValue == null ? null : rawValue.getClass()) + "\""
 			);
 		}
 	}

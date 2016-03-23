@@ -48,11 +48,20 @@ public final class SizeInBytes {
 		}
 		final int z = (63 - Long.numberOfLeadingZeros(v)) / 10;
 		final double x = (double) v / (1L << (z * 10));
-		return String.format(
-			LogUtil.LOCALE_DEFAULT,
-			x < 10 ? "%.3f%sb" : x < 100 ? "%.2f%sb" : "%.1f%sb",
-			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
-		).toUpperCase();
+		if(x % 1 == 0) {
+			final long y = (long) x;
+			return String.format(
+				LogUtil.LOCALE_DEFAULT,
+				y < 10 ? "%d%sb" : y < 100 ? "%d%sb" : "%d%sb",
+				y, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
+			).toUpperCase();
+		} else {
+			return String.format(
+				LogUtil.LOCALE_DEFAULT,
+				x < 10 ? "%.3f%sb" : x < 100 ? "%.2f%sb" : "%.1f%sb",
+				x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
+			).toUpperCase();
+		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static char SEP1 = '-', SEP2 = ',';
