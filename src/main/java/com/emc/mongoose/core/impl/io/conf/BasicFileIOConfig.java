@@ -47,7 +47,12 @@ implements FileIOConfig<F, D> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public BasicFileIOConfig<F, D> setAppConfig(final AppConfig appConfig) {
-		super.setAppConfig(appConfig);
+		this.appConfig = appConfig;
+		setLoadType(appConfig.getLoadType());
+		setNameSpace(appConfig.getStorageHttpNamespace());
+		setNamePrefix(appConfig.getItemNamingPrefix());
+		setVerifyContentFlag(appConfig.getItemDataVerify());
+		setBuffSize(appConfig.getIoBufferSizeMin());
 		final String dirName = appConfig.getItemContainerName();
 		if(dirName != null && !dirName.isEmpty()) {
 			setContainer((D) new BasicDirectory<F>(dirName));

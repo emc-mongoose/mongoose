@@ -12,7 +12,9 @@ import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.io.task.FileIOTask;
 import static com.emc.mongoose.core.api.io.task.IOTask.Status.CANCELLED;
+import static com.emc.mongoose.core.api.io.task.IOTask.Status.FAIL_IO;
 import static com.emc.mongoose.core.api.io.task.IOTask.Status.FAIL_TIMEOUT;
+import static com.emc.mongoose.core.api.io.task.IOTask.Status.RESP_FAIL_CORRUPT;
 import static com.emc.mongoose.core.api.io.task.IOTask.Status.RESP_FAIL_NOT_FOUND;
 import static com.emc.mongoose.core.api.io.task.IOTask.Status.SUCC;
 //
@@ -90,6 +92,7 @@ implements FileIOTask<T> {
 			if(openOptions.isEmpty()) { // delete
 				runDelete();
 			} else { // work w/ a content
+				Files.createDirectories(DEFAULT_FS.getPath(parentDir));
 				try(
 					final SeekableByteChannel byteChannel = Files.newByteChannel(
 						DEFAULT_FS.getPath(parentDir, item.getName()), openOptions
@@ -121,7 +124,7 @@ implements FileIOTask<T> {
 				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), parentDir
 			);
 		} catch(final IOException e) {
-			status = Status.FAIL_IO;
+			status = FAIL_IO;
 			LogUtil.exception(
 				LOG, Level.WARN, e,
 				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), parentDir
@@ -208,7 +211,7 @@ implements FileIOTask<T> {
 				"{}: content size mismatch, expected: {}, actual: {}",
 				item.getName(), item.getSize(), countBytesDone
 			);
-			status = Status.RESP_FAIL_CORRUPT;
+			status = RESP_FAIL_CORRUPT;
 		} catch(final DataCorruptionException e) {
 			countBytesDone += e.offset;
 			LOG.warn(
@@ -219,13 +222,12 @@ implements FileIOTask<T> {
 					"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
 				)
 			);
-			status = Status.RESP_FAIL_CORRUPT;
+			status = RESP_FAIL_CORRUPT;
 		}
 	}
 	//
 	protected void runWriteFully(final SeekableByteChannel byteChannel)
 	throws IOException {
-		Files.createDirectories(DEFAULT_FS.getPath(parentDir));
 		while(countBytesDone < contentSize) {
 			countBytesDone += item.write(byteChannel, contentSize - countBytesDone);
 		}
