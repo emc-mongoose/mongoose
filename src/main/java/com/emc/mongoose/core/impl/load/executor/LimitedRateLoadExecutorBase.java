@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
 // mongoose-core-api.jar
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
@@ -27,6 +26,7 @@ extends LoadExecutorBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int M = 1000000;
 	//
+	private final double rateLimit;
 	private final double tgtMicroDuration;
 	//
 	protected LimitedRateLoadExecutorBase(
@@ -40,6 +40,7 @@ extends LoadExecutorBase<T> {
 		if(rateLimit < 0) {
 			throw new IllegalArgumentException("Frequency rate limit shouldn't be a negative value");
 		}
+		this.rateLimit = rateLimit;
 		if(rateLimit > 0) {
 			tgtMicroDuration = M * totalThreadCount / rateLimit;
 		} else {
@@ -51,13 +52,16 @@ extends LoadExecutorBase<T> {
 	public <A extends IOTask<T>> Future<A> submitTask(final A task)
 	throws RejectedExecutionException {
 		// rate limit matching
-		if(tgtMicroDuration > 0) {
-			final double t = tgtMicroDuration - (M * totalThreadCount / lastStats.getSuccRateLast());
-			if(t > 0) {
-				try {
-					TimeUnit.MICROSECONDS.sleep((long) t);
-				} catch(final InterruptedException e) {
-					throw new RejectedExecutionException(e);
+		if(rateLimit > 0) {
+			double t = lastStats.getSuccRateLast();
+			if(t > rateLimit) {
+				t = tgtMicroDuration - lastStats.getDurationMed();
+				if(t > 0) {
+					try {
+						TimeUnit.MICROSECONDS.sleep((long) t);
+					} catch(final InterruptedException e) {
+						throw new RejectedExecutionException(e);
+					}
 				}
 			}
 		}
