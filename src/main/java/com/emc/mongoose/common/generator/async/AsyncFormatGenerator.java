@@ -1,21 +1,21 @@
 package com.emc.mongoose.common.generator.async;
-import com.emc.mongoose.common.generator.GeneralFormattingGenerator;
-import com.emc.mongoose.common.generator.FormattingGenerator;
-public final class AsyncFormattingGenerator
+import com.emc.mongoose.common.generator.FormatRangeGenerator;
+import com.emc.mongoose.common.generator.FormatGenerator;
+public final class AsyncFormatGenerator
 extends AsyncValueGenerator<String>
-implements FormattingGenerator {
+implements FormatGenerator {
 
-	private final FormattingGenerator wrappedGenerator;
+	private final FormatGenerator wrappedGenerator;
 
-	public AsyncFormattingGenerator(final String pattern) {
+	public AsyncFormatGenerator(final String pattern) {
 		this(
-			new GeneralFormattingGenerator(
+			new FormatRangeGenerator(
 				pattern, AsyncStringGeneratorFactory.getInstance()
 			)
 		);
 	}
 
-	private AsyncFormattingGenerator(final FormattingGenerator wrappedGenerator) {
+	private AsyncFormatGenerator(final FormatGenerator wrappedGenerator) {
 		super(
 			null,
 			new InitializedCallableBase<String>() {

@@ -6,7 +6,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.generator.async.AsyncCurrentDateGenerator;
-import com.emc.mongoose.common.generator.async.AsyncFormattingGenerator;
+import com.emc.mongoose.common.generator.async.AsyncFormatGenerator;
 import com.emc.mongoose.common.generator.ValueGenerator;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
@@ -17,7 +17,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
-import static com.emc.mongoose.common.generator.GeneralFormattingGenerator.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.generator.FormatRangeGenerator.PATTERN_SYMBOL;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
@@ -805,7 +805,7 @@ implements HttpRequestConfig<T, C> {
 				// try to find the corresponding generator in the registry
 				if(headerValueGenerator == null) {
 					// create new generator and put it into the registry for reuse
-					headerValueGenerator = new AsyncFormattingGenerator(headerValue);
+					headerValueGenerator = new AsyncFormatGenerator(headerValue);
 					// spin while header value generator is not ready
 					while(null == (headerValue = headerValueGenerator.get())) {
 						LockSupport.parkNanos(1);

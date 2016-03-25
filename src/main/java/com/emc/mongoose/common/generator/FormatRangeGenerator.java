@@ -1,7 +1,7 @@
 package com.emc.mongoose.common.generator;
 
-public final class GeneralFormattingGenerator
-extends BasicFormattingGenerator {
+public final class FormatRangeGenerator
+extends BasicFormatGenerator {
 
 	/**
 	 * Special characters
@@ -14,12 +14,12 @@ extends BasicFormattingGenerator {
 	 */
 	private String[] segments;
 
-	public GeneralFormattingGenerator(final String pattern)
+	public FormatRangeGenerator(final String pattern)
 	throws IllegalArgumentException {
 		super(pattern);
 	}
 
-	public GeneralFormattingGenerator(
+	public FormatRangeGenerator(
 		final String pattern,
 		final GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory
 	) {
@@ -35,7 +35,7 @@ extends BasicFormattingGenerator {
 	 */
 	@Override
 	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for generators[]
-	protected void initialize() {
+	protected final void initialize() {
 		final int patternSymbolsNum = countPatternSymbols(getPattern());
 		if (patternSymbolsNum > 0) {
 			setGenerators(new ValueGenerator[patternSymbolsNum]);

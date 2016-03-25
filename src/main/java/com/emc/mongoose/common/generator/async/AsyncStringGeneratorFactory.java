@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.emc.mongoose.common.generator.async.AsyncDateGenerator.*;
-import static com.emc.mongoose.common.generator.GeneralFormattingGenerator.RANGE_DELIMITER;
+import static com.emc.mongoose.common.generator.FormatRangeGenerator.RANGE_DELIMITER;
 import static org.apache.commons.lang.time.DateUtils.*;
 
 public final class AsyncStringGeneratorFactory<G extends ValueGenerator<String>>

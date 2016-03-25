@@ -12,7 +12,7 @@ import static com.emc.mongoose.common.generator.StringGeneratorFactory.PATH_REG_
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
-public class FormattingGeneratorBasicTest {
+public class FormatGeneratorBasicTest {
 
 	private static final Pattern PATH_PATTERN = Pattern.compile(PATH_REG_EXP);
 	private static final Pattern ANYTHING_PATTERN = Pattern.compile(".*");
@@ -20,7 +20,7 @@ public class FormattingGeneratorBasicTest {
 	private ValueGenerator<String> formatter;
 
 	private void initFormatter(String patternString) throws Exception {
-		formatter = new GeneralFormattingGenerator(patternString);
+		formatter = new FormatRangeGenerator(patternString);
 	}
 
 	@Parameterized.Parameters

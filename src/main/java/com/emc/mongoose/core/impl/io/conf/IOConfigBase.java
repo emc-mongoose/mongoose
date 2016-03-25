@@ -174,7 +174,7 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public final IOConfigBase<T, C> setContainer(final C container) {
+	public IOConfigBase<T, C> setContainer(final C container) {
 		this.container = container;
 		return this;
 	}

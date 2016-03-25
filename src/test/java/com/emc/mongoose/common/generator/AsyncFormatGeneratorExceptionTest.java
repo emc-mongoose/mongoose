@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.generator;
 
-import com.emc.mongoose.common.generator.async.AsyncFormattingGenerator;
+import com.emc.mongoose.common.generator.async.AsyncFormatGenerator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -12,12 +12,12 @@ import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class AsyncFormattingGeneratorExceptionTest {
+public class AsyncFormatGeneratorExceptionTest {
 
 	protected ValueGenerator<String> formatter;
 
 	protected void initFormatter(String patternString) throws Exception {
-		formatter = new AsyncFormattingGenerator(patternString);
+		formatter = new AsyncFormatGenerator(patternString);
 		while (null == formatter.get()) {
 			LockSupport.parkNanos(1);
 			Thread.yield();

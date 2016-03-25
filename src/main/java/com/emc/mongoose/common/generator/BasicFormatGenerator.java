@@ -5,8 +5,8 @@ import org.apache.commons.lang.NullArgumentException;
 /**
  * This class is used ONLY for input pattern strings containing only one expression with the pattern symbol.
  */
-public class BasicFormattingGenerator
-implements FormattingGenerator {
+public class BasicFormatGenerator
+implements FormatGenerator {
 
 	private static final ThreadLocal<StringBuilder>
 			OUTPUT_BUILDER = new ThreadLocal<StringBuilder>() {
@@ -31,12 +31,12 @@ implements FormattingGenerator {
 	 */
 	private ValueGenerator<String>[] generators;
 
-	public BasicFormattingGenerator(final String pattern)
+	public BasicFormatGenerator(final String pattern)
 	throws IllegalArgumentException {
 		this(pattern, StringGeneratorFactory.getInstance());
 	}
 
-	public BasicFormattingGenerator(
+	public BasicFormatGenerator(
 		final String pattern,
 		final GeneratorFactory<String, ? extends ValueGenerator<String>> generatorFactory
 	) throws IllegalArgumentException {
