@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
@@ -304,7 +303,7 @@ implements HttpDataLoadExecutor<T> {
 			}
 		} else {
 			for(int i = from; i < to; i ++) {
-				if(null != submitReq(ioTasks.get(i))) {
+				if(null != submitTask(ioTasks.get(i))) {
 					n ++;
 				} else {
 					break;

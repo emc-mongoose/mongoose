@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.io.task;
 //
-import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.AppConfig.LoadType;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
@@ -20,7 +20,7 @@ implements IOTask<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final X ioConfig;
-	protected final AppConfig.LoadType ioType;
+	protected final LoadType ioType;
 	protected final T item;
 	protected final String nodeAddr;
 	//

@@ -1,8 +1,8 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
@@ -25,9 +25,9 @@ public abstract class LimitedRateLoadExecutorBase<T extends Item>
 extends LoadExecutorBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static int M = 1000000;
 	//
-	private final float rateLimit;
-	private final int tgtDurMicroSecs;
+	private final double tgtMicroDuration;
 	//
 	protected LimitedRateLoadExecutorBase(
 		final AppConfig appConfig,
@@ -40,36 +40,29 @@ extends LoadExecutorBase<T> {
 		if(rateLimit < 0) {
 			throw new IllegalArgumentException("Frequency rate limit shouldn't be a negative value");
 		}
-		this.rateLimit = rateLimit;
 		if(rateLimit > 0) {
-			tgtDurMicroSecs = (int) (1000000 * totalThreadCount / rateLimit);
-			LOG.debug(
-				Markers.MSG, "{}: target I/O task durations is {}[us]", getName(), tgtDurMicroSecs
-			);
+			tgtMicroDuration = M * totalThreadCount / rateLimit;
 		} else {
-			tgtDurMicroSecs = 0;
+			tgtMicroDuration = 0;
 		}
 	}
 	//
 	@Override
-	public <A extends IOTask<T>> Future<A> submitReq(final A request)
+	public <A extends IOTask<T>> Future<A> submitTask(final A task)
 	throws RejectedExecutionException {
 		// rate limit matching
-		if(rateLimit > 0 && lastStats.getSuccRateLast() > rateLimit) {
-			final int microDelay = (int) (
-				tgtDurMicroSecs - lastStats.getDurationSum() / lastStats.getSuccCount()
-			);
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "Next delay: {}[us]", microDelay);
-			}
-			try {
-				TimeUnit.MICROSECONDS.sleep(microDelay);
-			} catch(final InterruptedException e) {
-				throw new RejectedExecutionException(e);
+		if(tgtMicroDuration > 0) {
+			final double t = tgtMicroDuration - (M * totalThreadCount / lastStats.getSuccRateLast());
+			if(t > 0) {
+				try {
+					TimeUnit.MICROSECONDS.sleep((long) t);
+				} catch(final InterruptedException e) {
+					throw new RejectedExecutionException(e);
+				}
 			}
 		}
 		//
-		return submitTaskActually(request);
+		return submitTaskActually(task);
 	}
 	//
 	protected abstract <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)

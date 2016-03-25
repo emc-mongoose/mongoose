@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
@@ -295,7 +294,7 @@ implements HttpContainerLoadExecutor<T, C> {
 			}
 		} else {
 			for(int i = from; i < to; i ++) {
-				if(null != submitReq(ioTasks.get(i))) {
+				if(null != submitTask(ioTasks.get(i))) {
 					n ++;
 				} else {
 					break;

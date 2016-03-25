@@ -81,6 +81,7 @@ extends Closeable {
 		long getDurationHiQ();
 		long getDurationMax();
 		long[] getDurationValues();
+		double getDurationAvg();
 		//
 		long getLatencyMin();
 		long getLatencyLoQ();

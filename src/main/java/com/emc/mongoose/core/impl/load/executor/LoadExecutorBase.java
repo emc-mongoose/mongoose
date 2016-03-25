@@ -490,7 +490,7 @@ implements LoadExecutor<T> {
 		} while(true);
 		//
 		try {
-			if(null == submitReq(ioTask)) {
+			if(null == submitTask(ioTask)) {
 				throw new RejectedExecutionException("Null future returned");
 			}
 			counterSubm.incrementAndGet();

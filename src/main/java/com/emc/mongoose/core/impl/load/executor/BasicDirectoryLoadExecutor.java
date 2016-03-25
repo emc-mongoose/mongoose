@@ -72,7 +72,7 @@ implements DirectoryLoadExecutor<T, C> {
 	throws RemoteException, RejectedExecutionException {
 		int n = 0;
 		for(int i = from; i < to; i ++) {
-			if(null != submitReq(tasks.get(i))) {
+			if(null != submitTask(tasks.get(i))) {
 				n ++;
 			} else {
 				break;

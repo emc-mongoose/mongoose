@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.api.io.conf;
 //
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.AppConfig.LoadType;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
@@ -22,8 +23,8 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	boolean isClosed();
 	//
-	AppConfig.LoadType getLoadType();
-	IOConfig<T, C> setLoadType(final AppConfig.LoadType loadType);
+	LoadType getLoadType();
+	IOConfig<T, C> setLoadType(final LoadType loadType);
 	//
 	String getNameSpace();
 	IOConfig<T, C> setNameSpace(final String nameSpace);

@@ -208,6 +208,11 @@ implements IOStats {
 		}
 		//
 		@Override
+		public double getDurationAvg() {
+			return durValues.length == 0 ? 0 : ((double) sumDur) / durValues.length;
+		}
+		//
+		@Override
 		public long getLatencyMin() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
