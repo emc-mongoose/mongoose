@@ -5,6 +5,8 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 //
 import org.apache.logging.log4j.Level;
@@ -47,7 +49,9 @@ implements Scenario {
 		}
 		//
 		try {
-			final Map<String, Object> tree = jsonMapper.readValue(scenarioSrcFile, Map.class);
+			final String jsonString = jsonMapper.readTree(scenarioSrcFile).toString();
+			final Map<String, Object> tree = jsonMapper.readValue(jsonString, new
+					TypeReference<Map<String, Object>>(){});
 			loadTree(tree, this);
 		} catch(final IOException e) {
 			LogUtil.exception(

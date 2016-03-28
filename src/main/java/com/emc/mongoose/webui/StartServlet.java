@@ -34,8 +34,8 @@ import java.util.Map;
  */
 public final class StartServlet extends CommonServlet {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	private final static String RUN_MODES = "runmodes";
+	private static final Logger LOG = LogManager.getLogger();
+	private static final String RUN_MODES = "runmodes";
 	//
 	private Map<String, Thread> threadsMap;
 	private Map<String, Boolean> stoppedRunModes;
