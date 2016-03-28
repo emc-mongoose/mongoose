@@ -1,12 +1,14 @@
 package com.emc.mongoose.common.generator.async;
+//
 import com.emc.mongoose.common.generator.FormatRangeGenerator;
 import com.emc.mongoose.common.generator.FormatGenerator;
+//
 public final class AsyncFormatGenerator
 extends AsyncValueGenerator<String>
 implements FormatGenerator {
-
+	//
 	private final FormatGenerator wrappedGenerator;
-
+	//
 	public AsyncFormatGenerator(final String pattern) {
 		this(
 			new FormatRangeGenerator(
@@ -14,7 +16,7 @@ implements FormatGenerator {
 			)
 		);
 	}
-
+	//
 	private AsyncFormatGenerator(final FormatGenerator wrappedGenerator) {
 		super(
 			null,
@@ -30,7 +32,7 @@ implements FormatGenerator {
 		);
 		this.wrappedGenerator = wrappedGenerator;
 	}
-
+	//
 	@Override
 	public String getPattern() {
 		return wrappedGenerator.getPattern();

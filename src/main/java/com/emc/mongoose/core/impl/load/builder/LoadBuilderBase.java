@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.load.builder;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
@@ -156,7 +157,7 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setLoadType(final AppConfig.LoadType loadType)
+	public LoadBuilder<T, U> setLoadType(final LoadType loadType)
 	throws IllegalStateException, RemoteException {
 		LOG.debug(Markers.MSG, "Set load type: {}", loadType);
 		if(ioConfig == null) {

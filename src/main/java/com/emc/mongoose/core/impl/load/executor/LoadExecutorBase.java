@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -65,7 +66,7 @@ implements LoadExecutor<T> {
 	protected final ContentSource dataSrc;
 	protected final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>>
 		ioConfigCopy;
-	protected final AppConfig.LoadType loadType;
+	protected final LoadType loadType;
 	//
 	protected volatile ItemDst<T> consumer = null;
 	//

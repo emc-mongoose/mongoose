@@ -2,8 +2,8 @@ package com.emc.mongoose.common.generator.async;
 //
 import com.emc.mongoose.common.generator.BasicValueGenerator;
 import com.emc.mongoose.common.log.LogUtil;
-//
 import com.emc.mongoose.common.log.Markers;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,7 +12,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 10.02.16.
  */

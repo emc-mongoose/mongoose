@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 //
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.base.ItemDst;
@@ -73,7 +74,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(AppConfig.LoadType.WRITE)
+				.setLoadType(LoadType.WRITE)
 				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -94,7 +95,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(AppConfig.LoadType.WRITE)
+				.setLoadType(LoadType.WRITE)
 				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -114,7 +115,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(AppConfig.LoadType.WRITE)
+				.setLoadType(LoadType.WRITE)
 				.useNewItemSrc().setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -142,7 +143,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(AppConfig.LoadType.READ)
+				.setLoadType(LoadType.READ)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -165,7 +166,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(AppConfig.LoadType.READ)
+				.setLoadType(LoadType.READ)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -188,7 +189,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(AppConfig.LoadType.READ)
+				.setLoadType(LoadType.READ)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
@@ -214,7 +215,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(AppConfig.LoadType.DELETE)
+				.setLoadType(LoadType.DELETE)
 				.setItemSrc(src)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)

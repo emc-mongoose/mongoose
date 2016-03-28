@@ -2,6 +2,7 @@ package com.emc.mongoose.core.api.io.conf;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -77,7 +78,7 @@ extends RequestConfig<T, C>, HttpRequestInterceptor {
 	HttpRequestConfig<T, C> setAPI(final String api);
 	//
 	@Override
-	HttpRequestConfig<T, C> setLoadType(final AppConfig.LoadType loadType);
+	HttpRequestConfig<T, C> setLoadType(final LoadType loadType);
 	//
 	@Override
 	HttpRequestConfig<T, C> setUserName(final String userName);

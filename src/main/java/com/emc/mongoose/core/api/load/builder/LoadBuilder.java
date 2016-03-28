@@ -2,11 +2,11 @@ package com.emc.mongoose.core.api.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import java.io.Closeable;
@@ -31,7 +31,7 @@ extends Closeable, Cloneable {
 	LoadBuilder<T, U> setIoConfig(final IOConfig<?, ?> reqConf)
 	throws RemoteException;
 	//
-	LoadBuilder<T, U> setLoadType(final AppConfig.LoadType loadType)
+	LoadBuilder<T, U> setLoadType(final LoadType loadType)
 	throws IllegalStateException, RemoteException;
 	//
 	LoadBuilder<T, U> setMaxCount(final long maxCount)

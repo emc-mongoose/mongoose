@@ -2,6 +2,7 @@ package com.emc.mongoose.client.impl.load.builder;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.math.MathUtil;
@@ -222,7 +223,7 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, W, U> setLoadType(final AppConfig.LoadType loadType)
+	public final LoadBuilderClient<T, W, U> setLoadType(final LoadType loadType)
 	throws IllegalStateException, RemoteException {
 		super.setLoadType(loadType);
 		V nextBuilder;

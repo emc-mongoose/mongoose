@@ -5,6 +5,7 @@ import com.emc.mongoose.client.api.load.executor.ContainerLoadClient;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
@@ -87,7 +88,7 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected ItemSrc<C> getNewItemSrc()
 	throws NoSuchMethodException {
-		AppConfig.ItemNamingType namingType = appConfig.getItemNamingType();
+		ItemNamingType namingType = appConfig.getItemNamingType();
 		final Class<C> containerClass = (Class<C>) ioConfig.getContainerClass();
 		return new NewContainerSrc<>(
 			containerClass,

@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.Constants;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -32,7 +33,7 @@ extends LoadExecutorBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final AppConfig.LoadType loadType;
+	protected final LoadType loadType;
 	protected final SizeInBytes sizeConfig;
 	protected final DataRangesConfig rangesConfig;
 	//

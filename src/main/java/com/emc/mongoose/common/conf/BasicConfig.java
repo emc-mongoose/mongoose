@@ -1,17 +1,20 @@
 package com.emc.mongoose.common.conf;
 //
+import com.emc.mongoose.common.conf.enums.ContentSourceType;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
+import com.emc.mongoose.common.conf.enums.ItemType;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.conf.enums.StorageType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.deser.std.NumberDeserializers;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 //
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
@@ -31,7 +34,6 @@ import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;

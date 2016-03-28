@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.io.conf;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.container.Container;
@@ -31,7 +32,7 @@ implements IOConfig<T, C> {
 	//
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 	//
-	protected AppConfig.LoadType loadType;
+	protected LoadType loadType;
 	protected C container;
 	protected ContentSource contentSrc;
 	protected volatile boolean verifyContentFlag;
@@ -44,7 +45,7 @@ implements IOConfig<T, C> {
 	//
 	protected IOConfigBase() {
 		appConfig = BasicConfig.THREAD_CONTEXT.get();
-		loadType = AppConfig.LoadType.WRITE;
+		loadType = LoadType.WRITE;
 		container = null;
 		contentSrc = ContentSourceBase.getDefaultInstance();
 		verifyContentFlag = appConfig.getItemDataVerify();
@@ -113,12 +114,12 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public final AppConfig.LoadType getLoadType() {
+	public final LoadType getLoadType() {
 		return loadType;
 	}
 	//
 	@Override
-	public IOConfigBase<T, C> setLoadType(final AppConfig.LoadType loadType) {
+	public IOConfigBase<T, C> setLoadType(final LoadType loadType) {
 		LOG.trace(Markers.MSG, "Setting load type {}", loadType);
 		this.loadType = loadType;
 		return this;
@@ -241,7 +242,7 @@ implements IOConfig<T, C> {
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		setLoadType(AppConfig.LoadType.class.cast(in.readObject()));
+		setLoadType(LoadType.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
 		setContainer((C) in.readObject());
 		LOG.trace(Markers.MSG, "Got container {}", container);

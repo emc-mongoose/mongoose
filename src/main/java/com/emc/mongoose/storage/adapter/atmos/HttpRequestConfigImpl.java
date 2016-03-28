@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
@@ -247,7 +248,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		if(fsAccess || !AppConfig.LoadType.WRITE.equals(loadType)) {
+		if(fsAccess || !LoadType.WRITE.equals(loadType)) {
 			return uriBasePath + "/" + dataItem.getName();
 		} else { // "/rest/objects"
 			return uriBasePath;
@@ -279,7 +280,7 @@ extends HttpRequestConfigBase<T, C> {
 		}
 		// the "offset" tag is required for WS mock
 		if(
-			AppConfig.LoadType.WRITE.equals(loadType) &&
+			LoadType.WRITE.equals(loadType) &&
 			request instanceof HttpEntityEnclosingRequest
 		) {
 			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
@@ -364,7 +365,7 @@ extends HttpRequestConfigBase<T, C> {
 	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
 		final Header locationHeader = httpResponse == null ?
 			null : httpResponse.getFirstHeader(HttpHeaders.LOCATION);
-		if(locationHeader != null && AppConfig.LoadType.WRITE.equals(loadType)) {
+		if(locationHeader != null && LoadType.WRITE.equals(loadType)) {
 			final String valueLocation = httpResponse
 				.getFirstHeader(HttpHeaders.LOCATION)
 				.getValue();

@@ -1,8 +1,9 @@
 package com.emc.mongoose.run.scenario.engine;
 //
-import static com.emc.mongoose.common.conf.AppConfig.LoadType;
-import static com.emc.mongoose.common.conf.AppConfig.ItemType;
-import static com.emc.mongoose.common.conf.AppConfig.StorageType;
+import com.emc.mongoose.common.conf.enums.LoadType;
+
+import com.emc.mongoose.common.conf.enums.ItemType;
+import com.emc.mongoose.common.conf.enums.StorageType;
 import static com.emc.mongoose.common.conf.AppConfig.KEY_ITEM_DATA_SIZE;
 import static com.emc.mongoose.common.conf.AppConfig.KEY_LOAD_METRICS_PERIOD;
 import static com.emc.mongoose.common.conf.AppConfig.KEY_LOAD_THREADS;

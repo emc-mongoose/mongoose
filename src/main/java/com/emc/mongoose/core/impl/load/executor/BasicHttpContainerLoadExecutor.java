@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -69,7 +70,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final AppConfig.LoadType loadType;
+	protected final LoadType loadType;
 	private final HttpProcessor httpProcessor;
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
@@ -87,7 +88,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		wsReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;
 		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
 		//
-		if(AppConfig.LoadType.READ.equals(loadType)) {
+		if(LoadType.READ.equals(loadType)) {
 			reqConfig.setBuffSize(Constants.BUFF_SIZE_HI);
 		} else {
 			reqConfig.setBuffSize(Constants.BUFF_SIZE_LO);

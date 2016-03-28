@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.generator.async.AsyncCurrentDateGenerator;
 import com.emc.mongoose.common.generator.async.AsyncFormatGenerator;
 import com.emc.mongoose.common.generator.ValueGenerator;
@@ -349,7 +350,7 @@ implements HttpRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public final HttpRequestConfigBase<T, C> setLoadType(final AppConfig.LoadType loadType) {
+	public final HttpRequestConfigBase<T, C> setLoadType(final LoadType loadType) {
 		super.setLoadType(loadType);
 		return this;
 	}

@@ -4,6 +4,8 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -56,7 +58,7 @@ implements DataLoadBuilder<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected ItemSrc<T> getNewItemSrc()
 	throws NoSuchMethodException {
-		final AppConfig.ItemNamingType namingType = appConfig.getItemNamingType();
+		final ItemNamingType namingType = appConfig.getItemNamingType();
 		final BasicItemNameGenerator bing = new BasicItemNameGenerator(
 			namingType, appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
 			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
@@ -80,7 +82,7 @@ implements DataLoadBuilder<T, U> {
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(AppConfig.LoadType.WRITE.equals(ioConfig.getLoadType())) {
+				if(LoadType.WRITE.equals(ioConfig.getLoadType())) {
 					return getNewItemSrc();
 				} else {
 					return getContainerItemSrc();

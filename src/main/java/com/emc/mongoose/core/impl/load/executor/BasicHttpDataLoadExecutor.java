@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
@@ -126,8 +127,8 @@ implements HttpDataLoadExecutor<T> {
 			.setSoReuseAddress(appConfig.getNetworkSocketReuseAddr())
 			.setSoTimeout(appConfig.getNetworkSocketTimeoutMilliSec())
 			.setTcpNoDelay(appConfig.getNetworkSocketTcpNoDelay())
-			.setRcvBufSize(AppConfig.LoadType.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
-			.setSndBufSize(AppConfig.LoadType.READ.equals(loadType) ? Constants.BUFF_SIZE_LO : buffSize)
+			.setRcvBufSize(LoadType.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
+			.setSndBufSize(LoadType.READ.equals(loadType) ? Constants.BUFF_SIZE_LO : buffSize)
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 			);

@@ -1,8 +1,8 @@
 package com.emc.mongoose.util.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.AppConfig.ItemType;
-import com.emc.mongoose.common.conf.AppConfig.StorageType;
+import com.emc.mongoose.common.conf.enums.ItemType;
+import com.emc.mongoose.common.conf.enums.StorageType;
 import com.emc.mongoose.common.conf.Constants;
 //
 import com.emc.mongoose.core.api.item.base.Item;

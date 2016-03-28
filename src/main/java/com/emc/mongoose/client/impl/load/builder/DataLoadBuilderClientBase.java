@@ -8,6 +8,8 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
@@ -98,7 +100,7 @@ implements DataLoadBuilderClient<T, W, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected ItemSrc<T> getNewItemSrc()
 	throws NoSuchMethodException {
-		final AppConfig.ItemNamingType namingType = appConfig.getItemNamingType();
+		final ItemNamingType namingType = appConfig.getItemNamingType();
 		final BasicItemNameGenerator bing = new BasicItemNameGenerator(
 			namingType,
 			appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
@@ -122,7 +124,7 @@ implements DataLoadBuilderClient<T, W, U> {
 				//
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(AppConfig.LoadType.WRITE.equals(ioConfig.getLoadType())) {
+				if(LoadType.WRITE.equals(ioConfig.getLoadType())) {
 					// enable new data item generation on the load servers side
 					V nextBuilder;
 					for(final String addr : loadSvcMap.keySet()) {

@@ -4,7 +4,7 @@ import com.emc.mongoose.common.generator.BasicValueGenerator;
 import com.emc.mongoose.common.math.MathUtil;
 //
 import com.emc.mongoose.common.net.ServiceUtil;
-import static com.emc.mongoose.common.conf.AppConfig.ItemNamingType;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
 /**
  Created by kurila on 18.12.15.
  */

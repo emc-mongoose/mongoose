@@ -3,12 +3,12 @@ package com.emc.mongoose.util.builder;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -154,7 +154,7 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setLoadType(final AppConfig.LoadType loadType)
+	public final LoadBuilderSvc setLoadType(final LoadType loadType)
 	throws IllegalStateException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.setLoadType(loadType);
