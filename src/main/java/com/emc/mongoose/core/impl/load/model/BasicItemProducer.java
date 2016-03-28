@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -34,12 +35,13 @@ implements ItemProducer<T> {
 	protected final ConcurrentHashMap<String, T> uniqueItems;
 	protected final ItemSrc<T> itemSrc;
 	protected final long maxCount;
-	protected volatile ItemDst<T> itemDst = null;
+	protected final boolean isCircular;
+	protected final boolean isShuffling;
+	protected final long tgtNanoTime;
 	protected final int batchSize;
+	protected volatile ItemDst<T> itemDst = null;
 	protected long skipCount;
 	protected T lastDataItem;
-	protected boolean isCircular;
-	protected boolean isShuffling;
 	protected int maxItemQueueSize;
 	//
 	protected volatile boolean areAllItemsProduced = false;
@@ -47,14 +49,19 @@ implements ItemProducer<T> {
 	//
 	protected BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
-		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize
+		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
+	    final float rateLimit
 	) {
-		this(itemSrc, maxCount, batchSize, isCircular, isShuffling, maxItemQueueSize, 0, null);
+		this(
+			itemSrc, maxCount, batchSize, isCircular, isShuffling, maxItemQueueSize, rateLimit,
+			0, null
+		);
 	}
 	//
 	private BasicItemProducer(
 		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
 		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
+		final float rateLimit,
 		final long skipCount, final T lastDataItem
 	) {
 		this.itemSrc = itemSrc;
@@ -65,6 +72,9 @@ implements ItemProducer<T> {
 		this.isCircular = isCircular;
 		this.isShuffling = isShuffling;
 		this.maxItemQueueSize = maxItemQueueSize;
+		this.tgtNanoTime = rateLimit > 0 && Float.isFinite(rateLimit) && !Float.isNaN(rateLimit) ?
+			(long) (TimeUnit.SECONDS.toNanos(1) / rateLimit) :
+			0;
 		this.uniqueItems = new ConcurrentHashMap<>(maxItemQueueSize);
 	}
 	//
@@ -113,6 +123,7 @@ implements ItemProducer<T> {
 			return;
 		}
 		int n = 0, m = 0;
+		long nt = System.nanoTime(); // LOAD RATE LIMIT FEATURE
 		try {
 			List<T> buff;
 			while(maxCount > producedItemsCount && !isInterrupted) {
@@ -126,6 +137,16 @@ implements ItemProducer<T> {
 						break;
 					}
 					if(n > 0) {
+						if(tgtNanoTime > 0) {
+							// LOAD RATE LIMIT FEATURE:
+							// sleep the calculated time in order to match the target rate
+							nt = tgtNanoTime * n - System.nanoTime() + nt;
+							if(nt > 0) {
+								TimeUnit.NANOSECONDS.sleep(nt);
+							}
+							nt = System.nanoTime(); // mark the current time again
+						}
+						//
 						for(m = 0; m < n && !isInterrupted; ) {
 							m += itemDst.put(buff, m, n);
 							LockSupport.parkNanos(1);
@@ -136,14 +157,16 @@ implements ItemProducer<T> {
 							break;
 						}
 					}
-					// CIRCULARITY: produce only <maxItemQueueSize> items in order to make it
-					// possible to enqueue them infinitely
+					// CIRCULARITY FEATURE:
+					// produce only <maxItemQueueSize> items in order to make it possible to enqueue
+					// them infinitely
 					if(isCircular && producedItemsCount >= maxItemQueueSize) {
 						break;
 					}
-				} catch(final EOFException e) {
-					break;
-				} catch(final ClosedByInterruptException | IllegalStateException e) {
+				} catch(
+					final EOFException | InterruptedException | ClosedByInterruptException |
+					IllegalStateException e
+				) {
 					break;
 				} catch(final IOException e) {
 					LogUtil.exception(

@@ -32,9 +32,9 @@ implements HttpDataLoadClient<T, W> {
 	public BasicHttpDataLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final Map<String, W> remoteLoadMap
+		final float rateLimit, final Map<String, W> remoteLoadMap
 	) throws RemoteException {
-		super(appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, remoteLoadMap);
+		super(appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, remoteLoadMap);
 	}
 	//
 	@Override

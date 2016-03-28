@@ -40,8 +40,10 @@
 						"load" : {
 							"circular" : true,
 							"limit" : {
+								"rate" : 1000,
 								"time" : "5m"
 							},
+							"threads" : 100,
 							"type" : "read"
 						}
 					}
@@ -59,8 +61,10 @@
 						},
 						"load" : {
 							"limit" : {
+								"rate" : 5000,
 								"time" : "5m"
-							}
+							},
+							"threads" : 100
 						}
 					}
 				}

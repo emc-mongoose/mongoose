@@ -244,7 +244,7 @@ implements HttpDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)
+	public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		//
 		final HttpDataIOTask<T> wsTask = (HttpDataIOTask<T>) ioTask;

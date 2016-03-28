@@ -73,7 +73,7 @@ implements FileLoadExecutor<T> {
 	}
 	//
 	@Override
-	public int submitTasks(final List<? extends IOTask<T>> tasks, final int from, final int to)
+	public final int submitTasks(final List<? extends IOTask<T>> tasks, final int from, final int to)
 	throws RemoteException, RejectedExecutionException {
 		int n = 0;
 		for(int i = from; i < to; i ++) {
@@ -87,7 +87,7 @@ implements FileLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)
+	public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		return (Future<A>) ioTaskExecutor.<FileIOTask<T>>submit((FileIOTask<T>) ioTask);
 	}

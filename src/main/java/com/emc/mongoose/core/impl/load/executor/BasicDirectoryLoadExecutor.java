@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 23.11.15.
  */
 public class BasicDirectoryLoadExecutor<T extends FileItem, C extends Directory<T>>
-extends LimitedRateLoadExecutorBase<C>
+extends LoadExecutorBase<C>
 implements DirectoryLoadExecutor<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -82,7 +82,7 @@ implements DirectoryLoadExecutor<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected <A extends IOTask<C>> Future<A> submitTaskActually(final A ioTask)
+	public final <A extends IOTask<C>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		return (Future<A>) ioTaskExecutor
 			.<DirectoryIOTask<T, C>>submit((DirectoryIOTask<T, C>) ioTask);

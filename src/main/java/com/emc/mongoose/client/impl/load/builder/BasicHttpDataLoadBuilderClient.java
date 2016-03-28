@@ -90,7 +90,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 		//
 		return (U) new BasicHttpDataLoadClient<>(
 			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
-			itemSrc, maxCount, remoteLoadMap
+			itemSrc, maxCount, rateLimit, remoteLoadMap
 		);
 	}
 }

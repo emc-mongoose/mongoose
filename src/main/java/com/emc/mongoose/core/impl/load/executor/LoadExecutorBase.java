@@ -166,11 +166,11 @@ implements LoadExecutor<T> {
 		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final int instanceNum, final String name
+		final float rateLimit, final int instanceNum, final String name
 	) {
 		super(
 			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE, DEFAULT_INTERNAL_BATCH_SIZE,
-			appConfig.getLoadCircular(), false, appConfig.getItemQueueSizeLimit()
+			appConfig.getLoadCircular(), false, appConfig.getItemQueueSizeLimit(), rateLimit
 		);
 		try {
 			super.setItemDst(this);
@@ -233,10 +233,10 @@ implements LoadExecutor<T> {
 		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final int instanceNum
+		final float rateLimit, final int instanceNum
 	) {
 		this(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount,
+			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
 			instanceNum,
 			Integer.toString(instanceNum) + '-' + ioConfig.toString() +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
@@ -247,10 +247,11 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount
+		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final float rateLimit
 	) {
 		this(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount,
+			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
 			NEXT_INSTANCE_NUM.getAndIncrement()
 		);
 	}

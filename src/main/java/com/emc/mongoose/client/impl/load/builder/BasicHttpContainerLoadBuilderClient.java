@@ -98,7 +98,7 @@ public class BasicHttpContainerLoadBuilderClient<
 		//
 		return (U) new BasicHttpContainerLoadClient<>(
 			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
-			itemSrc, maxCount, remoteLoadMap
+			itemSrc, maxCount, rateLimit, remoteLoadMap
 		);
 	}
 }

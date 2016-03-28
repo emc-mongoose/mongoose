@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 20.10.15.
  */
 public class BasicHttpContainerLoadExecutor<T extends HttpDataItem, C extends Container<T>>
-extends LimitedRateLoadExecutorBase<C>
+extends LoadExecutorBase<C>
 implements HttpContainerLoadExecutor<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -234,7 +234,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	protected <A extends IOTask<C>> Future<A> submitTaskActually(final A ioTask)
+	public final <A extends IOTask<C>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		//
 		final HttpIOTask wsIoTask = (HttpIOTask) ioTask;

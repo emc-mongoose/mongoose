@@ -101,7 +101,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		//
 		return (U) new BasicDirectoryLoadClient<>(
 			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
-			itemSrc, maxCount, remoteLoadMap
+			itemSrc, maxCount, rateLimit, remoteLoadMap
 		);
 	}
 }

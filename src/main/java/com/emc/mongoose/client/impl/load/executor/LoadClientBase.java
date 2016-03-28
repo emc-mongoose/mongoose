@@ -174,11 +174,11 @@ implements LoadClient<T, W> {
 	@SuppressWarnings("unchecked")
 	public LoadClientBase(
 		final AppConfig appConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
-		final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final int threadCount, final ItemSrc<T> itemSrc, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		super(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount,
+			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
 			// get any load server last job number
 			remoteLoadMap.values().iterator().next().getInstanceNum(),
 			remoteLoadMap.values().iterator().next().getName() + 'x' + remoteLoadMap.size()
@@ -634,10 +634,10 @@ implements LoadClient<T, W> {
 		awaitExecutor.submit(
 			new Runnable() {
 				@Override
-				public final void run() {
+				public void run() {
 					// wait the remaining tasks to be transmitted to load servers
 					LOG.debug(
-						Markers.MSG, "{}: waiting remaining {} tasks to complete", getName(),
+						Markers.MSG, "{}: waiting remaining {} tasks to complete", LoadClientBase.this.getName(),
 						remotePutExecutor.getQueue().size() + remotePutExecutor.getActiveCount()
 					);
 					try {

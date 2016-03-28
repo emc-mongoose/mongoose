@@ -28,7 +28,7 @@ import java.util.List;
  Created by kurila on 15.12.14.
  */
 public abstract class MutableDataLoadExecutorBase<T extends MutableDataItem>
-extends LimitedRateLoadExecutorBase<T> {
+extends LoadExecutorBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//

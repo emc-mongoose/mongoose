@@ -7,9 +7,9 @@
 			}
 		},
 		"load" : {
-			"threads" : 100,
+			"threads" : 1000,
 			"limit" : {
-				"rate" : 10
+				"rate" : 1000
 			}
 		}
 	}
