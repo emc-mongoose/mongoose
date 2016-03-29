@@ -19,8 +19,7 @@ function(Handlebars, extendedConf) {
 	}
 	//
 	function render(props) {
-		var compiled = Handlebars.compile(extendedConf);
-		var html = compiled();
+		var html = Handlebars.compile(extendedConf)();
 		document.querySelector("#main-content")
 			.insertAdjacentHTML("beforeend", html);
 		var propsMap = {};

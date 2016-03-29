@@ -7,11 +7,8 @@
 .folders {
 	display: none;
 	padding-left: 40px;
-	border-bottom: 1px solid #ccc;
-	margin-top: 15px;
-	padding-bottom: 15px;
 	overflow: auto;
-	height: calc(100vh - 430px); /* looks ugly */
+	/*height: calc(100vh - 430px); !* looks ugly *!*/
 }
 
 .props {

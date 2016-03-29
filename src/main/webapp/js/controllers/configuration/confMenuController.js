@@ -21,30 +21,14 @@ define([
 		};
 		//  render configuration menu panel
 		render();
-		baseConfController.setup(props);
 		extendedConfController.setup(props);
 		//  some settings for configuration menu
-		setDefaultRunMode(run.mode);
 		bindMenuEvents(props, runIdArray);
 	}
 	//
 	function render() {
-		var compiled = Handlebars.compile(confMenuTemplate);
-		document.querySelector("#configuration")
-			.insertAdjacentHTML("afterbegin", compiled());
-	}
-	//
-	function setDefaultRunMode(runMode) {
-		var select = document.querySelector("#run-mode");
-		var options = select.options;
-		for(var option in options) {
-			if(options.hasOwnProperty(option)) {
-				option = options[option];
-				if(option.value == runMode) {
-					select.value = option.value;
-				}
-			}
-		}
+		var html = Handlebars.compile(confMenuTemplate)();
+		$(html).insertAfter("#header");
 	}
 	//
 	function bindMenuEvents(props, runIdArray) {
@@ -60,7 +44,7 @@ define([
 		};
 		var configModeSelect = $("#config-type");
 		configModeSelect.on("change", function() {
-			var activeOptionValue = this.options[this.selectedIndex].value;
+			var activeOptionValue = "extended";
 			//  activate baseConfController or extendedConfController
 			configTypes[activeOptionValue].activate();
 		});

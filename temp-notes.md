@@ -14,17 +14,3 @@ renderTabs(),
 вызывается render(), в котором компилируется confMenuTemplate
 - После этого выполняются baseConfController.setup(props) и
 extendedConfController.setup(props), setDefautRunMode(run.mode)
-
-***
-
-Classes that need the attention
-ScenarioRunner
-JsonScenario
-
-***
-
-- Кнопка open в текущей версии - просто input\[type="file"\] +
-- Она должна выглядеть, как остальные кнопки, +
-- При первом запуске должен выводиться tooltip -
-- input\[type="text\] должен быть "резиновым"
-- Логика загрузки файла при нажатии на кнопку содержится в файле confMenuController

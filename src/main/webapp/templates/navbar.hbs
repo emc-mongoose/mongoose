@@ -1,36 +1,23 @@
 <!-- Navigation bar -->
-<nav class="navbar navbar-default" role="navigation">
-	<div class="container-fluid">
-
-		<div class="navbar-header">
-			<button type="button" class="navbar-toggle collapsed"
-				data-toggle="collapse" data-target="#main-navbar"
-				aria-expanded="false">
-				<span class="sr-only">Toggle navigation</span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-			</button>
-			<a class="navbar-brand" href="#">
-				<span>
-					<img alt="logo" id="logo" width="58" height="50"
-					     src="../assets/img/mongoose_logo.png"/>
-					Mongoose
-				</span>
-			</a>
-		</div>
-
-		<div id="main-navbar" class="collapse navbar-collapse">
-			<ul class="nav navbar-nav">
-				<li class="active">
-					<a href="#">
-						Run
-						<span class="sr-only">(current)</span>
-					</a>
-				</li>
-			</ul>
-			<p class="navbar-text navbar-right">v{{version}}</p>
-		</div>
-
-	</div>
-</nav>
+<header id="header" class="header container-fluid">
+    <!-- The justified navigation menu is meant for single line per list item.
+         Multiple lines will require custom code not provided by Bootstrap. -->
+    <a class="logo-link navbar-left" href="#">
+        <div class="logo mongoose-img"></div>
+    </a>
+    <a class="brand navbar-left" href="/">
+        Mongoose
+    </a>
+    <span class="version navbar-left">v{{version}}</span>
+    <nav class="header-nav-tabs">
+        <ul class="nav nav-tabs">
+            <li id="scenarios-tab"><a href="#">Scenarios</a></li>
+            <li id="defaults-tab"><a href="#">Defaults</a></li>
+            <li id="tests-tab"><a href="#">Tests</a></li>
+        </ul>
+    </nav>
+    <a class="logo-link navbar-right"
+       href="https://asdwiki.isus.emc.com:8443/pages/viewpage.action?spaceKey=ECS&title=Mongoose">
+        <div class="logo wiki-img"></div>
+    </a>
+</header>

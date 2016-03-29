@@ -2,54 +2,37 @@
 	<div class="row">
 
 		<!-- Left menu panel -->
-		<div id="menu" class="col-xs-12 col-sm-5 col-md-4 col-lg-3 no-padding">
-			<div id="run-modes">
-				<div>
-					<label for="run-mode" class="block">
-						Run mode
-					</label>
-					<select id="run-mode" class="form-control">
-						<option value="standalone">standalone</option>
-						<option value="client">load client</option>
-						<option value="server">load server</option>
-						<option value="cinderella">cinderella</option>
-					</select>
-				</div>
-				<div>
-					<button type="button" id="start" class="btn btn-success">
-						Start
-					</button>
-				</div>
-			</div>
-
-			<div id="config">
-				<div>
-					<label for="config-type" class="block">
-						Config mode
-					</label>
-					<select id="config-type" class="form-control">
-						<option value="base">basic</option>
-						<option value="extended">extended</option>
-					</select>
-				</div>
-				<div class="save-buttons">
-					<button type="button" class="btn btn-default" id="save-config">
-						Save
-					</button>
-					<br/>
-					<a href="#save" class="btn btn-default" id="save-file">
-						Save As...
-					</a>
-				</div>
-				<br/>
-				<div id="file-visibility">
-					<input type="checkbox" id="file-checkbox"/>
-					<label for="file-checkbox">
-						Read config from file
-					</label>
-				</div>
-				<input type="file" accept=".txt" id="config-file"/>
-			</div>
+        <div id="menu" class="col-xs-12 col-sm-4 col-md-3 col-lg-2 nopadding">
+            <div id="config">
+                <div>
+                    <div class="form-group btn-file">
+                        <button type="button" class="btn btn-custom btn-custom-default column-btn-upper" id="open">
+                            Open
+                        </button>
+                        <!--suppress HtmlFormInputWithoutLabel -->
+                        <input class="form-control" id="config-file-name" type="text" value="No scenario chosen" disabled>
+                        <input id="config-file" onchange="fillTheField()" type="file" accept=".json" class="upload"/>
+                    </div>
+                    <script>
+                        $('#open').click(function () {
+                            $('#config-file').click();
+                        });
+                        var fillTheField =  function () {
+                            $('#config-file-name').val($('#config-file').val())
+                        }
+                    </script>
+                    <button type="button" class="btn btn-custom btn-custom-default" id="save-config">
+                        Save
+                    </button>
+                    <a href="http://127.0.0.1:8080/#save" class="btn btn-custom btn-custom-default"
+                       id="save-file">
+                        Save As...
+                    </a>
+                    <button type="button" class="btn btn-custom btn-custom-green column-btn-lower" id="start">
+                        Start
+                    </button>
+                </div>
+            </div>
 
 			<ul class="folders">
 
@@ -57,8 +40,9 @@
 
 		</div>
 
-		<div id="main-content" class="col-xs-12 col-sm-7 col-md-8 col-lg-9 no-padding">
-			<!-- Configuration fields -->
-		</div>
+
+        <div id="main-content" class="col-xs-12 col-sm-8 col-md-9 col-lg-10 nopadding">
+            <!-- Configuration fields -->
+        </div>
 	</div>
 </div>

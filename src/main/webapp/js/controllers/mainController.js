@@ -4,7 +4,6 @@ define([
 	"./configuration/confMenuController",
 	"./websockets/webSocketController",
 	"text!../../templates/navbar.hbs",
-	"text!../../templates/tabs.hbs",
 	"text!../../templates/run/tab-header.hbs",
 	"text!../../templates/run/tab-content.hbs"
 ], function(
@@ -13,7 +12,6 @@ define([
 	confMenuController,
 	webSocketController,
 	navbarTemplate,
-	tabsTemplate,
 	tabHeaderTemplate,
 	tabContentTemplate
 ) {
@@ -135,7 +133,6 @@ define([
 	//
 	function render(props) {
 		renderNavbar(props.run.version || "unknown");
-		renderTabs();
 	}
 	//
 	function renderNavbar(runVersion) {
@@ -147,12 +144,7 @@ define([
 		var navbar = compiled(run);
 		document.querySelector("body")
 			.insertAdjacentHTML('afterbegin', navbar);
-	}
-	//
-	function renderTabs() {
-		var tabs = Handlebars.compile(tabsTemplate);
-		document.querySelector("#app")
-			.insertAdjacentHTML('afterbegin', tabs());
+		$("#scenarios-tab").addClass('active');
 	}
 	//
 	return {
