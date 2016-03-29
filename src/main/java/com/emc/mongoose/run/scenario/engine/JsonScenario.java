@@ -49,8 +49,7 @@ implements Scenario {
 		}
 		//
 		try {
-			final String jsonString = jsonMapper.readTree(scenarioSrcFile).toString();
-			final Map<String, Object> tree = jsonMapper.readValue(jsonString, new
+			final Map<String, Object> tree = jsonMapper.readValue(scenarioSrcFile, new
 					TypeReference<Map<String, Object>>(){});
 			loadTree(tree, this);
 		} catch(final IOException e) {

@@ -1,64 +1,42 @@
 package com.emc.mongoose.webui;
-//
-import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
+
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
-//
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.http.MimeTypes;
-//
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-//
+import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
+import java.nio.file.Paths;
 
-/**
- * Created by gusakk on 02/10/14.
- */
+import static com.emc.mongoose.common.conf.AppConfig.FNAME_CONF;
+import static com.emc.mongoose.common.conf.BasicConfig.getRootDir;
+
 public final class MainServlet
 extends HttpServlet {
-	//
+
 	private static final Logger LOG = LogManager.getLogger();
- 	//
+
 	@Override
 	public final void doGet(
 		final HttpServletRequest request, final HttpServletResponse response
 	) {
+		final String appConfigPathString =
+				Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF).toString();
 
-		final ObjectNode rootNode = BasicConfig
-			.THREAD_CONTEXT.get()
-			.toJsonTree(new ObjectMapper().configure(SerializationFeature.INDENT_OUTPUT, true));
-		final JsonNode aliasingSection = rootNode.findValue(AppConfig.PREFIX_KEY_ALIASING);
-		if (aliasingSection != null) {
-			walkTree(rootNode);
-		}
-
-		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
 		try {
-			response.getWriter().write(rootNode.toString());
-		} catch (final IOException e) {
+			final String appConfigJson = new ObjectMapper().readTree(new File(appConfigPathString))
+					.toString();
+			response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
+			response.getWriter().write(appConfigJson);
+		} catch (IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to write json response");
-		}
-	}
-
-	private void walkTree(final ObjectNode rootNode) {
-		final Iterator<String> fieldNames = rootNode.fieldNames();
-		while (fieldNames.hasNext()) {
-			final String field = fieldNames.next();
-			if (field.equals(AppConfig.PREFIX_KEY_ALIASING)) {
-				rootNode.remove(field);
-				break;
-			} else {
-				walkTree((ObjectNode) rootNode.get(field));
-			}
 		}
 	}
 

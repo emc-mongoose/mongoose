@@ -146,13 +146,13 @@ define([
 		var compiled = Handlebars.compile(navbarTemplate);
 		var navbar = compiled(run);
 		document.querySelector("body")
-			.insertAdjacentHTML("afterbegin", navbar);
+			.insertAdjacentHTML('afterbegin', navbar);
 	}
 	//
 	function renderTabs() {
 		var tabs = Handlebars.compile(tabsTemplate);
 		document.querySelector("#app")
-			.insertAdjacentHTML("afterbegin", tabs());
+			.insertAdjacentHTML('afterbegin', tabs());
 	}
 	//
 	return {

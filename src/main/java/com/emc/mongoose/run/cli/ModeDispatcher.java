@@ -6,23 +6,26 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
-// mongoose-core-api.jar
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import com.emc.mongoose.run.webserver.WUIRunner;
-// mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-// mongoose-server-impl.jar
-// mongoose-storage-mock.jar
-//
 import com.emc.mongoose.storage.mock.impl.http.Cinderella;
-import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.http.Nagaina;
+import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.rmi.RemoteException;
 import java.util.Map;
+
+// mongoose-core-api.jar
+// mongoose-server-api.jar
+// mongoose-server-impl.jar
+// mongoose-storage-mock.jar
+//
+//
+
 /**
  Created by kurila on 04.07.14.
  Mongoose entry point.
@@ -67,7 +70,7 @@ public final class ModeDispatcher {
 				break;
 			case Constants.RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				new WUIRunner(appConfig).run();
+				new WUIRunner().run();
 				break;
 			case Constants.RUN_MODE_NAGAINA:
 			case Constants.RUN_MODE_WSMOCK:

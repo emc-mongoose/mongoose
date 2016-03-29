@@ -10,10 +10,10 @@ require(["./requirejs/conf"], function() {
 	], function($, mainController) {
 		//  get all properties from runTimeConfig
 		$.get("/main", function(appConfig) {
-			//  root element ("properties") of mongoose.json configuration file
-			var props = appConfig.properties;
-			if(props) {
-				mainController.run(props);
+			//  root element ("config") of defaults.json configuration file
+			var config = appConfig.config;
+			if(config) {
+				mainController.run(config);
 			} else {
 				alert("Failed to load the configuration");
 			}
