@@ -1,7 +1,7 @@
-package com.emc.mongoose.common.generator.async;
+package com.emc.mongoose.common.generator;
 //
 import com.emc.mongoose.common.conf.enums.LoadType;
-import com.emc.mongoose.common.generator.ValueGenerator;
+import com.emc.mongoose.common.generator.async.WeightLoadTypeGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 /**
