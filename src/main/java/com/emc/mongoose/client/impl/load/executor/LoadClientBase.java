@@ -615,8 +615,8 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final int submitTasks(
-		final List<? extends IOTask<T>> requests, final int from, final int to
+	public final <A extends IOTask<T>> int submitTasks(
+		final List<A> requests, final int from, final int to
 	) throws RemoteException, RejectedExecutionException {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (remotePutExecutor.getTaskCount() % loadSvcAddrs.length)])

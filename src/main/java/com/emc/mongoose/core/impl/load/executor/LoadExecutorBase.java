@@ -28,9 +28,9 @@ import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
+import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 //
 import org.apache.logging.log4j.Level;
-import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;

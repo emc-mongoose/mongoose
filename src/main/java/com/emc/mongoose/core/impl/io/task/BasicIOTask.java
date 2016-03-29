@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.io.task;
 //
 import com.emc.mongoose.common.conf.enums.LoadType;
+import static com.emc.mongoose.common.conf.enums.LoadType.MIXED;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
@@ -45,6 +46,11 @@ implements IOTask<T> {
 	@Override
 	public final T getItem() {
 		return item;
+	}
+	//
+	@Override
+	public final LoadType call() {
+		return ioType;
 	}
 	//
 	@Override

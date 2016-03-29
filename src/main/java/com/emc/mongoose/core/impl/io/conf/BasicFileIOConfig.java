@@ -47,6 +47,7 @@ implements FileIOConfig<F, D> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public BasicFileIOConfig<F, D> setAppConfig(final AppConfig appConfig) {
+		// note that it's incorrect to invoke super here
 		this.appConfig = appConfig;
 		setLoadType(appConfig.getLoadType());
 		setNameSpace(appConfig.getStorageHttpNamespace());

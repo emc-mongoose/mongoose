@@ -68,7 +68,7 @@ implements DirectoryLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	public int submitTasks(final List<? extends IOTask<C>> tasks, final int from, final int to)
+	public <A extends IOTask<C>> int submitTasks(final List<A> tasks, final int from, final int to)
 	throws RemoteException, RejectedExecutionException {
 		int n = 0;
 		for(int i = from; i < to; i ++) {

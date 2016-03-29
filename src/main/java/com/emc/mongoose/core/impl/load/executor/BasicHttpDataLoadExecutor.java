@@ -71,18 +71,33 @@ implements HttpDataLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final HttpProcessor httpProcessor;
-	private final HttpAsyncRequester client;
-	private final ConnectingIOReactor ioReactor;
-	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
+	protected final HttpProcessor httpProcessor;
+	protected final HttpAsyncRequester client;
+	protected final ConnectingIOReactor ioReactor;
+	protected final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
 	private final HttpRequestConfig<T, Container<T>> httpReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
-	private final AtomicLong
-		connLeaseCount = new AtomicLong(0),
-		connReleaseCount = new AtomicLong(0);
+	public BasicHttpDataLoadExecutor(
+		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
+		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
+		final HttpProcessor httpProcessor, final HttpAsyncRequester client,
+		final ConnectingIOReactor ioReactor,
+		final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap
+	) {
+		super(
+			appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
+			sizeConfig, rangesConfig
+		);
+		this.httpProcessor = httpProcessor;
+		this.client = client;
+		this.ioReactor = ioReactor;
+		this.connPoolMap = connPoolMap;
+		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
+		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
+	}
 	//
-	@SuppressWarnings("unchecked")
 	public BasicHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
@@ -179,17 +194,6 @@ implements HttpDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final void logMetrics(final Marker logMarker) {
-		super.logMetrics(logMarker);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "Connections: leased={}, released={}",
-				connLeaseCount.get(), connReleaseCount.get()
-			);
-		}
-	}
-	//
-	@Override
 	protected HttpDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
 		return new BasicHttpDataIOTask<>(item, nodeAddr, httpReqConfigCopy);
 	}
@@ -245,7 +249,7 @@ implements HttpDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
+	public <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		//
 		final HttpDataIOTask<T> wsTask = (HttpDataIOTask<T>) ioTask;
@@ -285,7 +289,7 @@ implements HttpDataLoadExecutor<T> {
 	};
 	//
 	@Override
-	public final int submitTasks(final List<? extends IOTask<T>> ioTasks, int from, int to)
+	public <A extends IOTask<T>> int submitTasks(final List<A> ioTasks, int from, int to)
 	throws RejectedExecutionException {
 		int n = 0;
 		if(isPipeliningEnabled) {

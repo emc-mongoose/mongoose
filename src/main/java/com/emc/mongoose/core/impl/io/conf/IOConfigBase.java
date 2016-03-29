@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.io.conf;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import static com.emc.mongoose.common.conf.enums.LoadType.MIXED;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.container.Container;

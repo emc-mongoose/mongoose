@@ -75,7 +75,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
-	private final HttpRequestConfig<T, C> wsReqConfigCopy;
+	private final HttpRequestConfig<T, C> httpReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
 	public BasicHttpContainerLoadExecutor(
@@ -85,8 +85,8 @@ implements HttpContainerLoadExecutor<T, C> {
 		super(appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
 		//
 		this.loadType = reqConfig.getLoadType();
-		wsReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;
-		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
+		httpReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;
+		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
 		//
 		if(LoadType.READ.equals(loadType)) {
 			reqConfig.setBuffSize(Constants.BUFF_SIZE_HI);
@@ -98,7 +98,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
-			.add(wsReqConfigCopy)
+			.add(httpReqConfigCopy)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
@@ -164,7 +164,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		HttpHost nextRoute;
 		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
 		for(int i = 0; i < storageNodeCount; i ++) {
-			nextRoute = wsReqConfigCopy.getNodeHost(addrs[i]);
+			nextRoute = httpReqConfigCopy.getNodeHost(addrs[i]);
 			nextConnPool = new FixedRouteSequencingConnPool(
 				ioReactor, nextRoute, connFactory,
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ?
@@ -181,7 +181,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	//
 	@Override
 	protected HttpContainerIOTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
-		return new BasicHttpContainerTask<>(item, nextNodeAddr, wsReqConfigCopy);
+		return new BasicHttpContainerTask<>(item, nextNodeAddr, httpReqConfigCopy);
 	}
 	//
 	@Override
@@ -276,8 +276,9 @@ implements HttpContainerLoadExecutor<T, C> {
 		};
 	//
 	@Override
-	public int submitTasks(final List<? extends IOTask<C>> ioTasks, final int from, final int to)
-	throws RemoteException, RejectedExecutionException {
+	public final <A extends IOTask<C>> int submitTasks(
+		final List<A> ioTasks, final int from, final int to
+	) throws RemoteException, RejectedExecutionException {
 		int n = 0;
 		if(isPipeliningEnabled) {
 			if(ioTasks.size() > 0) {
