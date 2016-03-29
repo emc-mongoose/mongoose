@@ -1,5 +1,6 @@
-package com.emc.mongoose.common.generator;
+package com.emc.mongoose.common.generator.async;
 
+import com.emc.mongoose.common.generator.ValueGenerator;
 import com.emc.mongoose.common.generator.async.AsyncFormatGenerator;
 import org.junit.Test;
 import org.junit.runner.RunWith;

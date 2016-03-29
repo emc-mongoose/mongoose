@@ -1,24 +1,24 @@
 package com.emc.mongoose.common.generator.async;
 //
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.generator.BasicValueGenerator;
 import com.emc.mongoose.common.generator.FormatGenerator;
+import com.emc.mongoose.common.math.Random;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.concurrent.Callable;
 /**
  Created by kurila on 28.03.16.
  */
-public class WeightedLoadTypeAsyncGenerator<T extends LoadType>
-extends AsyncValueGenerator<T> {
+public class WeightLoadTypeGenerator
+extends BasicValueGenerator<LoadType> {
 	//
-	private final static class LoadTypeCalculator<T extends LoadType>
-	implements InitCallable<T> {
+	private final static class LoadTypeCalculator
+	implements Callable<LoadType> {
 		//
-		private final Map<LoadType, Short> loadTypeWeightMap = new HashMap<>();
+		private final LoadType loadTypePerCents[] = new LoadType[100];
+		private final Random rnd;
 		//
-		public LoadTypeCalculator(final String pattern)
+		public LoadTypeCalculator(final String pattern, final Random rnd)
 		throws IllegalArgumentException {
 			//
 			if(pattern == null || pattern.isEmpty()) {
@@ -43,16 +43,18 @@ extends AsyncValueGenerator<T> {
 			//
 			String tt[];
 			LoadType loadType;
-			short loadWeight, loadWeightSum = 0;
+			int loadWeight, loadWeightSum = 0;
 			for(final String t : p.split(";")) {
 				tt = t.split("=");
 				if(tt.length != 2) {
 					throw new IllegalArgumentException("Invalid mixed load type pattern");
 				}
 				loadType = LoadType.valueOf(tt[0].toUpperCase());
-				loadWeight = Short.parseShort(tt[1]);
+				loadWeight = Integer.parseInt(tt[1]);
 				if(loadWeight > 0 && loadWeight + loadWeightSum <= 100) {
-					loadTypeWeightMap.put(loadType, loadWeight);
+					for(int i = loadWeightSum; i < loadWeightSum + loadWeight; i ++) {
+						loadTypePerCents[i] = loadType;
+					}
 					loadWeightSum += loadWeight;
 				}
 			}
@@ -60,22 +62,28 @@ extends AsyncValueGenerator<T> {
 			if(loadWeightSum != 100) {
 				throw new IllegalArgumentException("Invalid mixed load type pattern");
 			}
+			//
+			this.rnd = rnd;
 		}
 		//
 		@Override
-		public final T call() throws Exception {
-			return null;
+		public final LoadType call()
+		throws Exception {
+			final int i = rnd.nextInt(100);
+			return loadTypePerCents[i];
 		}
 		//
-		@Override
-		public final boolean isInitialized() {
-			return true;
+		public LoadType getAnyLoadType() {
+			return loadTypePerCents[0];
 		}
 	}
 	//
-	public WeightedLoadTypeAsyncGenerator(final String pattern)
+	public WeightLoadTypeGenerator(final String pattern)
 	throws IllegalArgumentException {
-		super(null, new LoadTypeCalculator<>(pattern));
+		this(new LoadTypeCalculator(pattern, new Random(1L)));
 	}
 	//
+	private WeightLoadTypeGenerator(final LoadTypeCalculator loadTypeCalculator) {
+		super(loadTypeCalculator.getAnyLoadType(), loadTypeCalculator);
+	}
 }
