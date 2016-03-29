@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.load.model;
 //
-import com.emc.mongoose.core.api.load.model.FaceControl;
+import com.emc.mongoose.core.api.load.model.Barrier;
 //
 import java.util.HashMap;
 import java.util.List;
@@ -10,14 +10,14 @@ import java.util.concurrent.Callable;
 /**
  Created by kurila on 29.03.16.
  */
-public class WeightFaceControl<K, T extends Callable<K>>
-implements FaceControl<T> {
+public class WeightBarrier<K, T extends Callable<K>>
+implements Barrier<T> {
 	//
 	private final Set<K> keySet;
 	private final Map<K, Integer> weightMap;
 	private final Map<K, Integer> remainingWeightMap = new HashMap<>();
 	//
-	public WeightFaceControl(final Map<K, Integer> weightMap)
+	public WeightBarrier(final Map<K, Integer> weightMap)
 	throws IllegalArgumentException {
 		this.keySet = weightMap.keySet();
 		this.weightMap = weightMap;

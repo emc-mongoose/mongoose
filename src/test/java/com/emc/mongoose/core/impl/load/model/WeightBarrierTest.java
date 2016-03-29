@@ -1,9 +1,8 @@
 package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.conf.enums.LoadType;
-import com.emc.mongoose.common.math.Random;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.model.FaceControl;
+import com.emc.mongoose.core.api.load.model.Barrier;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import org.junit.Test;
 
@@ -20,7 +19,7 @@ import static org.junit.Assert.*;
 /**
  Created by kurila on 29.03.16.
  */
-public class WeightFaceControlTest {
+public class WeightBarrierTest {
 
 	private final Map<LoadType, Integer> weightMap = new HashMap<LoadType, Integer>() {
 		{
@@ -36,7 +35,7 @@ public class WeightFaceControlTest {
 		}
 	};
 
-	private final FaceControl<IOTask> fc = new WeightFaceControl<>(weightMap);
+	private final Barrier<IOTask> fc = new WeightBarrier<>(weightMap);
 
 	private final class IOTaskMock
 	implements IOTask {

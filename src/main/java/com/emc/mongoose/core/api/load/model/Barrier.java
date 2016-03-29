@@ -4,7 +4,7 @@ import java.util.List;
 /**
  Created by kurila on 29.03.16.
  */
-public interface FaceControl<X> {
+public interface Barrier<X> {
 
 	boolean requestApprovalFor(final X thing)
 	throws InterruptedException;

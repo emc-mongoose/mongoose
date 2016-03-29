@@ -11,9 +11,9 @@ import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
-import com.emc.mongoose.core.api.load.model.FaceControl;
+import com.emc.mongoose.core.api.load.model.Barrier;
 //
-import com.emc.mongoose.core.impl.load.model.WeightFaceControl;
+import com.emc.mongoose.core.impl.load.model.WeightBarrier;
 //
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +27,7 @@ public class MixedHttpDataLoadExecutor<T extends HttpDataItem>
 extends BasicHttpDataLoadExecutor<T>
 implements HttpDataLoadExecutor<T> {
 	//
-	private final FaceControl faceControl;
+	private final Barrier barrier;
 	private final Map<LoadType, HttpRequestConfig<T, ? extends Container<T>>>
 		reqConfigMap = new HashMap<>();
 	private final Map<LoadType, HttpDataLoadExecutor<T>>
@@ -44,7 +44,7 @@ implements HttpDataLoadExecutor<T> {
 			rangesConfig
 		);
 		//
-		this.faceControl = new WeightFaceControl<>(loadTypeWeightMap);
+		this.barrier = new WeightBarrier<>(loadTypeWeightMap);
 		for(final LoadType loadType : loadTypeWeightMap.keySet()) {
 			final HttpRequestConfig<T, ? extends Container<T>> reqConfigCopy;
 			try {
@@ -79,7 +79,7 @@ implements HttpDataLoadExecutor<T> {
 	public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		try {
-			if(faceControl.requestApprovalFor(ioTask)) {
+			if(barrier.requestApprovalFor(ioTask)) {
 				return super.submitTask(ioTask);
 			} else {
 				throw new RejectedExecutionException(
@@ -95,7 +95,7 @@ implements HttpDataLoadExecutor<T> {
 	public final <A extends IOTask<T>> int submitTasks(final List<A> ioTasks, int from, int to)
 	throws RejectedExecutionException {
 		try {
-			if(faceControl.requestBatchApprovalFor(ioTasks, from, to)) {
+			if(barrier.requestBatchApprovalFor(ioTasks, from, to)) {
 				return super.submitTasks(ioTasks, from, to);
 			} else {
 				throw new RejectedExecutionException(
