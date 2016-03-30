@@ -239,7 +239,7 @@ implements LoadExecutor<T> {
 		this(
 			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
 			instanceNum,
-			Integer.toString(instanceNum) + '-' + ioConfig.toString() +
+			instanceNum + "-" + ioConfig.toString() +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
 				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
 		);

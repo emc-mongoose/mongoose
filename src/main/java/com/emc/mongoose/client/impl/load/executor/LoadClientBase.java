@@ -171,17 +171,29 @@ implements LoadClient<T, W> {
 		}
 	}
 	//
-	@SuppressWarnings("unchecked")
 	public LoadClientBase(
 		final AppConfig appConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
 		final int threadCount, final ItemSrc<T> itemSrc, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
-		super(
+		this(
 			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
 			// get any load server last job number
-			remoteLoadMap.values().iterator().next().getInstanceNum(),
-			remoteLoadMap.values().iterator().next().getName() + 'x' + remoteLoadMap.size()
+			remoteLoadMap, remoteLoadMap.values().iterator().next().getInstanceNum()
+		);
+	}
+	//
+	private LoadClientBase(
+		final AppConfig appConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
+		final int threadCount, final ItemSrc<T> itemSrc, final long maxCount, final float rateLimit,
+		final Map<String, W> remoteLoadMap, final int instanceNum
+	) {
+		super(
+			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, instanceNum,
+			instanceNum + "-" + ioConfig.toString() +
+				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
+				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
+				+ 'x' + remoteLoadMap.size()
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
