@@ -72,7 +72,7 @@ implements ItemProducer<T> {
 		this.isCircular = isCircular;
 		this.isShuffling = isShuffling;
 		this.maxItemQueueSize = maxItemQueueSize;
-		this.tgtNanoTime = rateLimit > 0 && Float.isFinite(rateLimit) && !Float.isNaN(rateLimit) ?
+		this.tgtNanoTime = rateLimit > 0 && !Float.isInfinite(rateLimit) && !Float.isNaN(rateLimit) ?
 			(long) (TimeUnit.SECONDS.toNanos(1) / rateLimit) :
 			0;
 		this.uniqueItems = new ConcurrentHashMap<>(maxItemQueueSize);

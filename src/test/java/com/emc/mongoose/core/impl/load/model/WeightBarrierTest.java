@@ -77,7 +77,8 @@ public class WeightBarrierTest {
 					if(fc.requestApprovalFor(ioTask)) {
 						resultsMap.get(loadType).incrementAndGet();
 					}
-				} catch(final Exception ignore) {
+				} catch(final InterruptedException e) {
+					break;
 				}
 			}
 		}
@@ -89,13 +90,12 @@ public class WeightBarrierTest {
 		final ExecutorService es = Executors.newFixedThreadPool(2);
 		es.submit(new SubmTask(LoadType.WRITE));
 		es.submit(new SubmTask(LoadType.READ));
-		es.awaitTermination(10, TimeUnit.SECONDS);
+		es.awaitTermination(100, TimeUnit.SECONDS);
 		es.shutdownNow();
-		assertEquals(
-			80/20,
-			(double) resultsMap.get(LoadType.WRITE).get() / resultsMap.get(LoadType.READ).get(),
-			0.01
-		);
+		final double writes = resultsMap.get(LoadType.WRITE).get();
+		final long reads = resultsMap.get(LoadType.READ).get();
+		assertEquals(80/20, writes / reads, 0.01);
+		System.out.println("Rate was: " + (writes + reads) / 10 + " per sec");
 	}
 
 	private final class BatchSubmTask
@@ -118,7 +118,8 @@ public class WeightBarrierTest {
 					if(fc.requestBatchApprovalFor(ioTasks, 0, 128)) {
 						resultsMap.get(loadType).incrementAndGet();
 					}
-				} catch(final Exception ignore) {
+				} catch(final InterruptedException e) {
+					break;
 				}
 			}
 		}
@@ -130,12 +131,11 @@ public class WeightBarrierTest {
 		final ExecutorService es = Executors.newFixedThreadPool(2);
 		es.submit(new BatchSubmTask(LoadType.WRITE));
 		es.submit(new BatchSubmTask(LoadType.READ));
-		es.awaitTermination(10, TimeUnit.SECONDS);
+		es.awaitTermination(100, TimeUnit.SECONDS);
 		es.shutdownNow();
-		assertEquals(
-			80/20,
-			(double) resultsMap.get(LoadType.WRITE).get() / resultsMap.get(LoadType.READ).get(),
-			0.01
-		);
+		final double writes = resultsMap.get(LoadType.WRITE).get();
+		final long reads = resultsMap.get(LoadType.READ).get();
+		assertEquals(80/20, writes / reads, 0.01);
+		System.out.println("Rate was: " + 128 * (writes + reads) / 10 + " per sec");
 	}
 }

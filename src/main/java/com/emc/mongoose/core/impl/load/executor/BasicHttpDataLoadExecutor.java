@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.DataRangesConfig;
@@ -52,7 +53,6 @@ import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
 import java.util.HashMap;
@@ -61,7 +61,6 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 02.12.14.
  */
@@ -132,7 +131,7 @@ implements HttpDataLoadExecutor<T> {
 		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
-			.setIoThreadCount(threadCount)
+			.setIoThreadCount(ThreadUtil.getWorkerCount())
 			.setBacklogSize(appConfig.getNetworkSocketBindBacklogSize())
 			.setInterestOpQueued(appConfig.getNetworkSocketInterestOpQueued())
 			.setSelectInterval(appConfig.getNetworkSocketSelectInterval())

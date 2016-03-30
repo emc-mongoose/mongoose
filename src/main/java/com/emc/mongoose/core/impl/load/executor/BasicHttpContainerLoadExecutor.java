@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.enums.LoadType;
@@ -118,7 +119,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
-			.setIoThreadCount(threadCount)
+			.setIoThreadCount(ThreadUtil.getWorkerCount())
 			.setBacklogSize(appConfig.getNetworkSocketBindBacklogSize())
 			.setInterestOpQueued(appConfig.getNetworkSocketInterestOpQueued())
 			.setSelectInterval(appConfig.getNetworkSocketSelectInterval())

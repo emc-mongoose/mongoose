@@ -3,7 +3,6 @@ package com.emc.mongoose.core.impl.io.conf;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
-import static com.emc.mongoose.common.conf.enums.LoadType.MIXED;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.container.Container;
@@ -62,7 +61,6 @@ implements IOConfig<T, C> {
 			setLoadType(ioConf2Clone.getLoadType());
 			setContentSource(ioConf2Clone.getContentSource());
 			setVerifyContentFlag(ioConf2Clone.getVerifyContentFlag());
-			setLoadType(ioConf2Clone.getLoadType());
 			setContainer(ioConf2Clone.getContainer());
 			setNameSpace(ioConf2Clone.getNameSpace());
 			setNamePrefix(ioConf2Clone.namePrefix);
@@ -81,7 +79,6 @@ implements IOConfig<T, C> {
 			.setLoadType(loadType)
 			.setContentSource(contentSrc)
 			.setVerifyContentFlag(verifyContentFlag)
-			.setLoadType(loadType)
 			.setContainer(container)
 			.setNameSpace(nameSpace)
 			.setNamePrefix(namePrefix)

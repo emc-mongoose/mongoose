@@ -246,7 +246,14 @@ implements AppConfig {
 	//
 	@Override
 	public LoadType getLoadType() {
-		return LoadType.valueOf(getString(KEY_LOAD_TYPE).toUpperCase());
+		final Object t = getProperty(KEY_LOAD_TYPE);
+		if(t instanceof String) {
+			return LoadType.valueOf(((String) t).toUpperCase());
+		} else if(t instanceof List) {
+			return LoadType.WEIGHTED;
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	//
 	@Override

@@ -6,16 +6,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
+
 /**
  Created by kurila on 29.03.16.
+ A kind of very abstract barrier which uses the map of weights.
+ Each thing (subject) should be an instance having a key for the weights map.
+ The barrier determines the weight for each thing and makes the decision.
+ The weight is used to pass the things with specific ratio for the different keys.
+ This implementation of the barrier never denies the things but blocks until a thing may be passed.
  */
-public class WeightBarrier<K, T extends Callable<K>>
+public class WeightBarrier<K, T extends Map.Entry<K, ?>>
 implements Barrier<T> {
-	//
-	private final Set<K> keySet;
-	private final Map<K, Integer> weightMap;
+
+	private final Set<K> keySet; // just to not to calculate every time
+	private final Map<K, Integer> weightMap; // initial weight map (constant)
 	private final Map<K, Integer> remainingWeightMap = new HashMap<>();
+
 	//
 	public WeightBarrier(final Map<K, Integer> weightMap)
 	throws IllegalArgumentException {
@@ -23,6 +29,7 @@ implements Barrier<T> {
 		this.weightMap = weightMap;
 		resetRemainingWeights();
 	}
+
 	//
 	private void resetRemainingWeights()
 	throws IllegalArgumentException {
@@ -30,13 +37,14 @@ implements Barrier<T> {
 			remainingWeightMap.put(key, weightMap.get(key));
 		}
 	}
+
 	//
 	@Override
 	public final boolean requestApprovalFor(final T thing)
 	throws InterruptedException {
 		final K key;
 		try {
-			key = thing.call();
+			key = thing.getKey();
 		} catch(final Exception e) {
 			return false;
 		}
@@ -54,7 +62,7 @@ implements Barrier<T> {
 						resetRemainingWeights();
 						remainingWeightMap.notify();
 					} else {
-						remainingWeightMap.wait(1);
+						remainingWeightMap.wait();
 					}
 				} else { // remaining weight is more than 0
 					remainingWeightMap.put(key, remainingWeight - 1);
@@ -64,6 +72,7 @@ implements Barrier<T> {
 		}
 		return true;
 	}
+
 	//
 	@Override
 	public final boolean requestBatchApprovalFor(
@@ -75,7 +84,7 @@ implements Barrier<T> {
 		}
 		final K key;
 		try {
-			key = things.get(from).call();
+			key = things.get(from).getKey();
 		} catch(final Exception e) {
 			return false;
 		}
@@ -93,7 +102,7 @@ implements Barrier<T> {
 						resetRemainingWeights();
 						remainingWeightMap.notify();
 					} else {
-						remainingWeightMap.wait(1);
+						remainingWeightMap.wait();
 					}
 				} else if(remainingWeight < left) {
 					remainingWeightMap.put(key, 0);

@@ -1,7 +1,11 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
+import com.emc.mongoose.client.impl.load.executor.WeightedHttpDataLoadClient;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -17,11 +21,14 @@ import com.emc.mongoose.client.api.load.builder.HttpDataLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.HttpDataLoadClient;
 //
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 /**
@@ -88,9 +95,31 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		return (U) new BasicHttpDataLoadClient<>(
-			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
-			itemSrc, maxCount, rateLimit, remoteLoadMap
-		);
+		final LoadType loadType = ioConfig.getLoadType();
+		if(LoadType.WEIGHTED.equals(loadType)) {
+			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
+				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
+			);
+			final Map<LoadType, ItemSrc<T>> itemSrcMap = new HashMap<>();
+			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
+				try {
+					itemSrcMap.put(
+						nextLoadType,
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemSrc
+					);
+				} catch(final NoSuchMethodException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
+				}
+			}
+			return (U) new WeightedHttpDataLoadClient<>(
+				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount,
+				maxCount, rateLimit, remoteLoadMap, loadTypeWeightMap, itemSrcMap
+			);
+		} else {
+			return (U) new BasicHttpDataLoadClient<>(
+				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount,
+				itemSrc, maxCount, rateLimit, remoteLoadMap
+			);
+		}
 	}
 }

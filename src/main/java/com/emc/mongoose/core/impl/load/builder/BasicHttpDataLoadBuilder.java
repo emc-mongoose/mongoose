@@ -1,8 +1,11 @@
 package com.emc.mongoose.core.impl.load.builder;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.load.executor.BasicHttpDataLoadExecutor;
@@ -12,10 +15,15 @@ import com.emc.mongoose.core.api.load.builder.HttpDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
+import com.emc.mongoose.core.impl.load.executor.WeightedHttpDataLoadExecutor;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 /**
  Created by kurila on 05.05.14.
  */
@@ -56,12 +64,34 @@ implements HttpDataLoadBuilder<T, U> {
 			throw new IllegalStateException("No I/O configuration instance available");
 		}
 		//
+		final LoadType loadType = ioConfig.getLoadType();
 		final HttpRequestConfig httpReqConf = (HttpRequestConfig) ioConfig;
-		//
-		return (U) new BasicHttpDataLoadExecutor<>(
-			appConfig, httpReqConf, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSrc() : itemSrc,
-			maxCount, rateLimit, sizeConfig, rangesConfig
-		);
+		if(LoadType.WEIGHTED.equals(loadType)) {
+			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
+				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
+			);
+			final Map<LoadType, ItemSrc<T>> itemSrcMap = new HashMap<>();
+			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
+				try {
+					itemSrcMap.put(
+						nextLoadType,
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemSrc
+					);
+				} catch(final NoSuchMethodException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
+				}
+			}
+			return (U) new WeightedHttpDataLoadExecutor<>(
+				appConfig, httpReqConf, storageNodeAddrs, threadCount,
+				maxCount, rateLimit, sizeConfig, rangesConfig,
+				loadTypeWeightMap, itemSrcMap
+			);
+		} else {
+			return (U) new BasicHttpDataLoadExecutor<>(
+				appConfig, httpReqConf, storageNodeAddrs, threadCount,
+				itemSrc == null ? getDefaultItemSrc() : itemSrc,
+				maxCount, rateLimit, sizeConfig, rangesConfig
+			);
+		}
 	}
 }

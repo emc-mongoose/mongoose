@@ -513,7 +513,7 @@ implements LoadClient<T, W> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void closeActually()
+	protected void closeActually()
 	throws IOException {
 		try {
 			if(isInterrupted.compareAndSet(false, true)) {
@@ -607,7 +607,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final <A extends IOTask<T>> Future<A> submitTask(final A request)
+	public <A extends IOTask<T>> Future<A> submitTask(final A request)
 	throws RemoteException {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (remotePutExecutor.getTaskCount() % loadSvcAddrs.length)])
@@ -615,7 +615,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final <A extends IOTask<T>> int submitTasks(
+	public <A extends IOTask<T>> int submitTasks(
 		final List<A> requests, final int from, final int to
 	) throws RemoteException, RejectedExecutionException {
 		return remoteLoadMap
@@ -624,7 +624,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final void await(final long timeOut, final TimeUnit timeUnit)
+	public void await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
 		//
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(

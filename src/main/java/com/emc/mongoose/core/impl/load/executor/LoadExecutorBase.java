@@ -598,7 +598,7 @@ implements LoadExecutor<T> {
 		return to - from;
 	}
 	//
-	protected final void ioTaskCompleted(final IOTask<T> ioTask) {
+	protected void ioTaskCompleted(final IOTask<T> ioTask) {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return;
@@ -634,7 +634,7 @@ implements LoadExecutor<T> {
 		counterResults.incrementAndGet();
 	}
 	//
-	protected final int ioTaskCompletedBatch(
+	protected int ioTaskCompletedBatch(
 		final List<? extends IOTask<T>> ioTasks, final int from, final int to
 	) {
 		// producing was interrupted?
@@ -686,13 +686,13 @@ implements LoadExecutor<T> {
 		return n;
 	}
 	//
-	protected final void ioTaskCancelled(final int n) {
+	protected void ioTaskCancelled(final int n) {
 		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
 	}
 	//
-	protected final void ioTaskFailed(final int n, final Throwable e) {
+	protected void ioTaskFailed(final int n, final Throwable e) {
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
 	}
