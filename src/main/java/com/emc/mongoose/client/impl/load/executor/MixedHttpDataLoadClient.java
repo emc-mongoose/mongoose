@@ -165,10 +165,10 @@ implements HttpDataLoadClient<T, W> {
 			.appendPadding(100, '-');
 		LOG.info(Markers.MSG, strb.toString());
 	}
-	/*
+	//
 	@Override
 	protected void startActually() {
-		/*for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
+		for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
 			try {
 				nextLoadClient.start();
 			} catch(final RemoteException e) {
@@ -178,7 +178,7 @@ implements HttpDataLoadClient<T, W> {
 			}
 		}
 		super.startActually();
-	}*/
+	}
 	//
 	@Override
 	protected void interruptActually() {
