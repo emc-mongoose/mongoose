@@ -250,7 +250,7 @@ implements AppConfig {
 		if(t instanceof String) {
 			return LoadType.valueOf(((String) t).toUpperCase());
 		} else if(t instanceof List) {
-			return LoadType.WEIGHTED;
+			return LoadType.MIXED;
 		} else {
 			throw new IllegalArgumentException();
 		}

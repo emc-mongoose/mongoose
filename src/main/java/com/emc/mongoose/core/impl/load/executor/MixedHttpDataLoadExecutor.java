@@ -15,6 +15,7 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 //
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.load.model.WeightBarrier;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -36,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 29.03.16.
  */
-public class WeightedHttpDataLoadExecutor<T extends HttpDataItem>
+public class MixedHttpDataLoadExecutor<T extends HttpDataItem>
 extends BasicHttpDataLoadExecutor<T>
 implements HttpDataLoadExecutor<T> {
 	//
@@ -49,7 +50,7 @@ implements HttpDataLoadExecutor<T> {
 	private final Map<LoadType, BasicHttpDataLoadExecutor<T>>
 		loadExecutorMap = new HashMap<>();
 	//
-	public WeightedHttpDataLoadExecutor(
+	public MixedHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
@@ -79,14 +80,14 @@ implements HttpDataLoadExecutor<T> {
 				@Override
 				public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
-					return WeightedHttpDataLoadExecutor.this.submitTask(ioTask);
+					return MixedHttpDataLoadExecutor.this.submitTask(ioTask);
 				}
 				//
 				@Override
 				public final <A extends IOTask<T>> int submitTasks(
 					final List<A> ioTasks, int from, int to
 				) throws RejectedExecutionException {
-					return WeightedHttpDataLoadExecutor.this.submitTasks(ioTasks, from, to);
+					return MixedHttpDataLoadExecutor.this.submitTasks(ioTasks, from, to);
 				}
 			};
 			loadExecutorMap.put(loadType, nextLoadExecutor);
@@ -147,21 +148,35 @@ implements HttpDataLoadExecutor<T> {
 			.appendNewLine()
 			.appendPadding(100, '-')
 			.appendNewLine();
-		BasicHttpDataLoadExecutor nextLoadJob;
+		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
+		IOStats.Snapshot nextLoadStats = null;
 		for(final LoadType nextLoadType : loadExecutorMap.keySet()) {
 			nextLoadWeight = loadTypeWeights.get(nextLoadType);
 			nextLoadJob = loadExecutorMap.get(nextLoadType);
+			try {
+				nextLoadStats = nextLoadJob.getStatsSnapshot();
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the remote stats snapshot");
+			}
 			strb
 				.appendFixedWidthPadLeft(nextLoadWeight + " % ", 6, ' ')
 				.appendFixedWidthPadLeft(nextLoadType.name() + " ", 10, ' ')
-				.append(nextLoadJob.lastStats)
+				.append(
+					nextLoadStats == null ?
+						null :
+						Markers.PERF_SUM.equals(logMarker) ?
+							nextLoadStats.toSummaryString() : nextLoadStats.toString()
+				)
 				.appendNewLine();
 		}
 		strb
 			.appendPadding(100, '-').appendNewLine()
 			.appendFixedWidthPadLeft("100 %     TOTAL ", 16, ' ')
-			.append(lastStats)
+			.append(
+				Markers.PERF_SUM.equals(logMarker) ?
+					lastStats.toSummaryString() : lastStats.toString()
+			)
 			.appendNewLine()
 			.appendPadding(100, '-');
 		LOG.info(Markers.MSG, strb.toString());
@@ -239,7 +254,7 @@ implements HttpDataLoadExecutor<T> {
 				@Override
 				public final void run() {
 					try {
-						WeightedHttpDataLoadExecutor.super.await(timeOut, timeUnit);
+						MixedHttpDataLoadExecutor.super.await(timeOut, timeUnit);
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "{}: await call interrupted", getName());
 					} catch(final RemoteException e) {

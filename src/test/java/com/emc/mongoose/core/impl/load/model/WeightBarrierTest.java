@@ -56,9 +56,16 @@ public class WeightBarrierTest {
 		public void mark(final IOStats ioStats) {
 		}
 		@Override
-		public Object call()
-		throws Exception {
+		public Object getKey() {
 			return loadType;
+		}
+		@Override
+		public Object getValue() {
+			return null;
+		}
+		@Override
+		public Object setValue(final Object value) {
+			return null;
 		}
 	}
 

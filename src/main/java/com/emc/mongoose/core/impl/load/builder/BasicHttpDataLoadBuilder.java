@@ -15,7 +15,7 @@ import com.emc.mongoose.core.api.load.builder.HttpDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
-import com.emc.mongoose.core.impl.load.executor.WeightedHttpDataLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.MixedHttpDataLoadExecutor;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,7 +66,7 @@ implements HttpDataLoadBuilder<T, U> {
 		//
 		final LoadType loadType = ioConfig.getLoadType();
 		final HttpRequestConfig httpReqConf = (HttpRequestConfig) ioConfig;
-		if(LoadType.WEIGHTED.equals(loadType)) {
+		if(LoadType.MIXED.equals(loadType)) {
 			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
 				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
 			);
@@ -81,7 +81,7 @@ implements HttpDataLoadBuilder<T, U> {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
 				}
 			}
-			return (U) new WeightedHttpDataLoadExecutor<>(
+			return (U) new MixedHttpDataLoadExecutor<>(
 				appConfig, httpReqConf, storageNodeAddrs, threadCount,
 				maxCount, rateLimit, sizeConfig, rangesConfig,
 				loadTypeWeightMap, itemSrcMap

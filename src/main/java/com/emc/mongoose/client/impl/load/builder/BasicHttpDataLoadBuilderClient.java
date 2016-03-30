@@ -1,6 +1,6 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
-import com.emc.mongoose.client.impl.load.executor.WeightedHttpDataLoadClient;
+import com.emc.mongoose.client.impl.load.executor.MixedHttpDataLoadClient;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
@@ -96,7 +96,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 		}
 		//
 		final LoadType loadType = ioConfig.getLoadType();
-		if(LoadType.WEIGHTED.equals(loadType)) {
+		if(LoadType.MIXED.equals(loadType)) {
 			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
 				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
 			);
@@ -111,7 +111,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
 				}
 			}
-			return (U) new WeightedHttpDataLoadClient<>(
+			return (U) new MixedHttpDataLoadClient<>(
 				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount,
 				maxCount, rateLimit, remoteLoadMap, loadTypeWeightMap, itemSrcMap
 			);

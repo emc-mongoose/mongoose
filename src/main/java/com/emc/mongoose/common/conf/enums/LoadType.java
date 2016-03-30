@@ -11,7 +11,7 @@ public enum LoadType {
 	WRITE,
 	READ,
 	DELETE,
-	WEIGHTED;
+	MIXED;
 	//
 	public static Map<LoadType, Integer> getMixedLoadWeights(final List<String> patterns)
 	throws IllegalArgumentException {

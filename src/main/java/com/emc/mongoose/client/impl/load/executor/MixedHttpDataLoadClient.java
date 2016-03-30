@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.03.16.
  */
-public class WeightedHttpDataLoadClient<T extends HttpDataItem, W extends HttpDataLoadSvc<T>>
+public class MixedHttpDataLoadClient<T extends HttpDataItem, W extends HttpDataLoadSvc<T>>
 extends BasicHttpDataLoadClient<T, W>
 implements HttpDataLoadClient<T, W> {
 	//
@@ -52,7 +52,7 @@ implements HttpDataLoadClient<T, W> {
 	private final Map<LoadType, HttpDataLoadClient<T, W>>
 		loadClientMap = new HashMap<>();
 	//
-	public WeightedHttpDataLoadClient(
+	public MixedHttpDataLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap, final Map<LoadType, Integer> loadTypeWeightMap,
@@ -78,14 +78,14 @@ implements HttpDataLoadClient<T, W> {
 				@Override
 				public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 				throws RemoteException, RejectedExecutionException {
-					return WeightedHttpDataLoadClient.this.submitTask(ioTask);
+					return MixedHttpDataLoadClient.this.submitTask(ioTask);
 				}
 				//
 				@Override
 				public final <A extends IOTask<T>> int submitTasks(
 					final List<A> ioTasks, int from, int to
 				) throws RemoteException, RejectedExecutionException {
-					return WeightedHttpDataLoadClient.this.submitTasks(ioTasks, from, to);
+					return MixedHttpDataLoadClient.this.submitTasks(ioTasks, from, to);
 				}
 			};
 			loadClientMap.put(loadType, nextLoadClient);
@@ -165,29 +165,29 @@ implements HttpDataLoadClient<T, W> {
 			.appendPadding(100, '-');
 		LOG.info(Markers.MSG, strb.toString());
 	}
-	//
+	/*
 	@Override
 	protected void startActually() {
-		for(final HttpDataLoadClient<T, W> nextLoadExecutor : loadClientMap.values()) {
+		/*for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
 			try {
-				nextLoadExecutor.start();
+				nextLoadClient.start();
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to start the load job \"{}\"", nextLoadExecutor
+					LOG, Level.ERROR, e, "Failed to start the load job \"{}\"", nextLoadClient
 				);
 			}
 		}
 		super.startActually();
-	}
+	}*/
 	//
 	@Override
 	protected void interruptActually() {
-		for(final HttpDataLoadClient<T, W> nextLoadExecutor : loadClientMap.values()) {
+		for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
 			try {
-				nextLoadExecutor.interrupt();
+				nextLoadClient.interrupt();
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to interrupt the load job \"{}\"", nextLoadExecutor
+					LOG, Level.ERROR, e, "Failed to interrupt the load job \"{}\"", nextLoadClient
 				);
 			}
 		}
@@ -196,12 +196,12 @@ implements HttpDataLoadClient<T, W> {
 	//
 	@Override
 	protected void shutdownActually() {
-		for(final HttpDataLoadClient<T, W> nextLoadExecutor : loadClientMap.values()) {
+		for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
 			try {
-				nextLoadExecutor.shutdown();
+				nextLoadClient.shutdown();
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to shutdown the load job \"{}\"", nextLoadExecutor
+					LOG, Level.ERROR, e, "Failed to shutdown the load job \"{}\"", nextLoadClient
 				);
 			}
 		}
@@ -214,20 +214,20 @@ implements HttpDataLoadClient<T, W> {
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			loadClientMap.size() + 1, new GroupThreadFactory("await<" + getName() + ">", true)
 		);
-		for(final HttpDataLoadClient<T, W> nextLoadExecutor : loadClientMap.values()) {
+		for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
 			awaitExecutor.submit(
 				new Runnable() {
 					@Override
 					public final void run() {
 						try {
-							nextLoadExecutor.await(timeOut, timeUnit);
+							nextLoadClient.await(timeOut, timeUnit);
 						} catch(final RemoteException e) {
 							LogUtil.exception(
 								LOG, Level.ERROR, e, "Failed to await the load job \"{}\"",
-								nextLoadExecutor
+								nextLoadClient
 							);
 						} catch(final InterruptedException e) {
-							LOG.debug(Markers.MSG, "{}: await call interrupted", nextLoadExecutor);
+							LOG.debug(Markers.MSG, "{}: await call interrupted", nextLoadClient);
 						}
 					}
 				}
@@ -238,7 +238,7 @@ implements HttpDataLoadClient<T, W> {
 				@Override
 				public final void run() {
 					try {
-						WeightedHttpDataLoadClient.super.await(timeOut, timeUnit);
+						MixedHttpDataLoadClient.super.await(timeOut, timeUnit);
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "{}: await call interrupted", getName());
 					} catch(final RemoteException e) {
@@ -261,12 +261,12 @@ implements HttpDataLoadClient<T, W> {
 	@Override
 	protected void closeActually()
 	throws IOException {
-		for(final HttpDataLoadClient<T, W> nextLoadExecutor : loadClientMap.values()) {
+		for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
 			try {
-				nextLoadExecutor.close();
+				nextLoadClient.close();
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to close the load job \"{}\"", nextLoadExecutor
+					LOG, Level.ERROR, e, "Failed to close the load job \"{}\"", nextLoadClient
 				);
 			}
 		}
