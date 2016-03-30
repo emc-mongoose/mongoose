@@ -2,11 +2,13 @@ package com.emc.mongoose.server.impl.load.builder;
 //mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //mongoose-core-api.jar
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -18,6 +20,7 @@ import com.emc.mongoose.core.impl.load.builder.BasicHttpDataLoadBuilder;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.executor.BasicHttpDataLoadSvc;
 //
+import com.emc.mongoose.server.impl.load.executor.MixedHttpDataLoadSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,6 +30,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 /**
@@ -96,15 +102,38 @@ implements HttpDataLoadBuilderSvc<T, U> {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final HttpRequestConfig httpReqConf = HttpRequestConfig.class.cast(ioConfig);
+		final LoadType loadType = ioConfig.getLoadType();
+		final HttpRequestConfig httpReqConf = (HttpRequestConfig) ioConfig;
 		// the statement below fixes hi-level API distributed mode usage and tests
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
-		return (U) new BasicHttpDataLoadSvc<>(
-			appConfig, httpReqConf, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit,
-			sizeConfig, rangesConfig
-		);
+		if(LoadType.MIXED.equals(loadType)) {
+			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
+				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
+			);
+			final Map<LoadType, ItemSrc<T>> itemSrcMap = new HashMap<>();
+			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
+				try {
+					itemSrcMap.put(
+						nextLoadType,
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemSrc
+					);
+				} catch(final NoSuchMethodException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
+				}
+			}
+			return (U) new MixedHttpDataLoadSvc<>(
+				appConfig, httpReqConf, storageNodeAddrs, threadCount,
+				maxCount, rateLimit, sizeConfig, rangesConfig,
+				loadTypeWeightMap, itemSrcMap
+			);
+		} else {
+			return (U) new BasicHttpDataLoadSvc<>(
+				appConfig, httpReqConf, storageNodeAddrs, threadCount,
+				itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit,
+				sizeConfig, rangesConfig
+			);
+		}
 	}
 	//
 	public final void start()
@@ -145,8 +174,11 @@ implements HttpDataLoadBuilderSvc<T, U> {
 	@Override
 	public final void close()
 	throws IOException {
-		super.close();
-		ServiceUtil.close(this);
+		try {
+			super.close();
+		} finally {
+			ServiceUtil.close(this);
+		}
 		LOG.info(Markers.MSG, "Service \"{}\" closed", name);
 	}
 	//

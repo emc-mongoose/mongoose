@@ -151,7 +151,7 @@ implements LoadExecutor<T> {
 					}
 				}
 				while(!currThread.isInterrupted()) {
-					passItems();
+					postProcessItems();
 					Thread.yield();
 					LockSupport.parkNanos(1000);
 				}
@@ -427,7 +427,7 @@ implements LoadExecutor<T> {
 			final List<T> itemsList = Collections.list(
 				Collections.enumeration(uniqueItems.values())
 			);
-			passUniqueItemsFinally(itemsList);
+			postProcessUniqueItemsFinally(itemsList);
 		}
 		uniqueItems.clear();
 		//
@@ -697,7 +697,7 @@ implements LoadExecutor<T> {
 		counterResults.addAndGet(n);
 	}
 	//
-	protected void passItems()
+	protected void postProcessItems()
 	throws InterruptedException {
 		try {
 			//
@@ -716,7 +716,7 @@ implements LoadExecutor<T> {
 						Thread.yield(); LockSupport.parkNanos(1);
 					}
 				} else {
-					passUniqueItemsFinally(items);
+					postProcessUniqueItemsFinally(items);
 				}
 			}
 		} catch(final IOException e) {
@@ -730,7 +730,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected void passUniqueItemsFinally(final List<T> items) {
+	protected void postProcessUniqueItemsFinally(final List<T> items) {
 		// is this an end of consumer-producer chain?
 		if(consumer == null) {
 			if(LOG.isTraceEnabled(Markers.MSG)) {

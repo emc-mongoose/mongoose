@@ -93,15 +93,15 @@ implements HttpContainerLoadSvc<T, C> {
 	}
 	// prevent output buffer consuming by the logger at the end of a chain
 	@Override
-	protected final void passItems()
+	protected final void postProcessItems()
 	throws InterruptedException {
 		if(consumer != null) {
-			super.passItems();
+			super.postProcessItems();
 		}
 	}
 	//
 	@Override
-	protected void passUniqueItemsFinally(final List<C> items) {
+	protected void postProcessUniqueItemsFinally(final List<C> items) {
 		if(consumer != null) {
 			int n = items.size();
 			if(LOG.isTraceEnabled(Markers.MSG)) {

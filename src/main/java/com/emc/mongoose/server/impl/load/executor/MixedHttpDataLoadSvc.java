@@ -1,29 +1,24 @@
 package com.emc.mongoose.server.impl.load.executor;
-// mongoose-common.jar
+//
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.LoadType;
+//
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
-// mongoose-core-api.jar
-import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-// mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.executor.BasicHttpDataLoadExecutor;
-// mongoose-server-api.jar
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
+//
+import com.emc.mongoose.core.impl.load.executor.MixedHttpDataLoadExecutor;
+//
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 //
-import org.apache.http.HttpHost;
-import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
-import org.apache.http.nio.protocol.HttpAsyncRequester;
-import org.apache.http.nio.reactor.ConnectingIOReactor;
-import org.apache.http.protocol.HttpProcessor;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,39 +29,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
-
 /**
- Created by kurila on 16.12.14.
+ Created by kurila on 30.03.16.
  */
-public class BasicHttpDataLoadSvc<T extends HttpDataItem>
-extends BasicHttpDataLoadExecutor<T>
+public class MixedHttpDataLoadSvc<T extends HttpDataItem>
+extends MixedHttpDataLoadExecutor<T>
 implements HttpDataLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicHttpDataLoadSvc(
+	public MixedHttpDataLoadSvc(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadsPerNode, final ItemSrc<T> itemSrc,
-		final long maxCount, final float rateLimit,
-		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
+		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
+		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
+		final Map<LoadType, Integer> loadTypeWeightMap,
+		final Map<LoadType, ItemSrc<T>> itemSrcMap
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadsPerNode, itemSrc, maxCount, rateLimit,
-			sizeConfig, rangesConfig
-		);
-	}
-	//
-	public BasicHttpDataLoadSvc(
-		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
-		final HttpProcessor httpProcessor, final HttpAsyncRequester client,
-		final ConnectingIOReactor ioReactor,
-		final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap
-	) {
-		super(
-			appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
-			sizeConfig, rangesConfig, httpProcessor, client, ioReactor, connPoolMap
+			appConfig, reqConfig, addrs, threadCount, maxCount, rateLimit, sizeConfig,
+			rangesConfig, loadTypeWeightMap, itemSrcMap
 		);
 	}
 	//
