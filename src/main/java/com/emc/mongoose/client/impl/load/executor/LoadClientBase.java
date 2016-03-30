@@ -221,7 +221,7 @@ implements LoadClient<T, W> {
 					Markers.MSG, "{} started bound to remote service @{}",
 					nextLoadSvc.getName(), addr
 				);
-			} catch(final IOException e) {
+			} catch(final IOException | IllegalStateException e) {
 				LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
 			}
 		}
