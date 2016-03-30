@@ -180,8 +180,7 @@ implements LoadClient<T, W> {
 		super(
 			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
 			// get any load server last job number
-			remoteLoadMap.values().iterator().next().getInstanceNum(),
-			remoteLoadMap.values().iterator().next().getName() + 'x' + remoteLoadMap.size()
+			remoteLoadMap.values().iterator().next().getInstanceNum()
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;

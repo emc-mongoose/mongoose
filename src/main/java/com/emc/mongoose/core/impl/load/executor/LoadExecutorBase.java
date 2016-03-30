@@ -167,18 +167,23 @@ implements LoadExecutor<T> {
 		final AppConfig appConfig,
 		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final float rateLimit, final int instanceNum, final String name
+		final float rateLimit, final int instanceNum
 	) {
 		super(
 			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE, DEFAULT_INTERNAL_BATCH_SIZE,
 			appConfig.getLoadCircular(), false, appConfig.getItemQueueSizeLimit(), rateLimit
+		);
+		setName(
+			Integer.toString(instanceNum) + '-' + ioConfig.toString() +
+			(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
+			(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
 		);
 		try {
 			super.setItemDst(this);
 		} catch(final RemoteException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to set \"{}\" as a consumer of \"{}\" producer",
-				name, itemSrc
+				getName(), itemSrc
 			);
 		}
 		itemOutBuff = new LimitedQueueItemBuffer<>(
@@ -189,7 +194,6 @@ implements LoadExecutor<T> {
 		this.instanceNum = instanceNum;
 		storageNodeCount = addrs == null ? 0 : addrs.length;
 		//
-		setName(name);
 		if(itemSrc != null) {
 			LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc.toString());
 		}
@@ -228,21 +232,6 @@ implements LoadExecutor<T> {
 		mgmtTasks.add(new ResultsDispatcher());
 		//
 		LoadCloseHook.add(this);
-	}
-	//
-	private LoadExecutorBase(
-		final AppConfig appConfig,
-		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final float rateLimit, final int instanceNum
-	) {
-		this(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
-			instanceNum,
-			Integer.toString(instanceNum) + '-' + ioConfig.toString() +
-				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
-				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
-		);
 	}
 	//
 	protected LoadExecutorBase(
