@@ -35,17 +35,27 @@ define([
 	function run(config) {
 		//  render navbar and tabs before any other interactions
 		render(config);
-		confMenuController.run(config, runIdArray);
+		confMenuController.run(config, currentTabType, runIdArray);
 	}
 
 	function render(config) {
 		function bindTabEvents() {
+			function showSuitableButtons(tabType) {
+				if (currentTabType != tabType) {
+					$('#buttons-' + currentTabType).hide();
+					$('#buttons-' + tabType).show();
+				}
+				if (currentTabType != TAB_TYPE.SCENARIOS) {
+					$('#start').hide();
+				}
+			}
 			function makeTabActive(tabType) {
 				if (currentTabType != tabType) {
 					$.each(TAB_TYPE, function (key, value) {
 						$('#' + tabId(value)).removeClass(TAB_CLASS.ACTIVE);
 					});
 					$('#' + tabId(tabType)).addClass(TAB_CLASS.ACTIVE);
+					showSuitableButtons(tabType);
 					currentTabType = tabType;
 				}
 			}
