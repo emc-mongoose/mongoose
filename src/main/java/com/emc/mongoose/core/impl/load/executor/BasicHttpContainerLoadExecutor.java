@@ -264,7 +264,10 @@ implements HttpContainerLoadExecutor<T, C> {
 		futureCallback = new FutureCallback<HttpContainerIOTask<T, C>>() {
 			@Override
 			public final void completed(final HttpContainerIOTask<T, C> ioTask) {
-				ioTaskCompleted(ioTask);
+				try {
+					ioTaskCompleted(ioTask);
+				} catch(final RemoteException ignored) {
+				}
 			}
 			//
 			public final void cancelled() {
@@ -318,7 +321,10 @@ implements HttpContainerLoadExecutor<T, C> {
 		//
 		@Override
 		public final void completed(final List<HttpContainerIOTask<T, C>> result) {
-			ioTaskCompletedBatch(result, 0, result.size());
+			try {
+				ioTaskCompletedBatch(result, 0, result.size());
+			} catch(final RemoteException ignored) {
+			}
 		}
 		//
 		@Override

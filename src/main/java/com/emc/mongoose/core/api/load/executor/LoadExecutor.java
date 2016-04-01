@@ -56,4 +56,11 @@ extends ItemDst<T>, LifeCycle, ItemProducer<T> {
 	//
 	<A extends IOTask<T>> int submitTasks(final List<A> requests, final int from, final int to)
 	throws RemoteException, RejectedExecutionException;
+
+	void ioTaskCompleted(final IOTask<T> ioTask)
+	throws RemoteException;
+
+	int ioTaskCompletedBatch(
+		final List<? extends IOTask<T>> ioTasks, final int from, final int to
+	) throws RemoteException;
 }

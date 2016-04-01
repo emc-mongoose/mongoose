@@ -53,14 +53,8 @@ implements FileLoadSvc<T> {
 		try {
 			super.closeActually();
 		} finally {
-			// close the exposed network service, if any
-			final Service svc = ServiceUtil.getLocalSvc(ServiceUtil.getLocalSvcName(getName()));
-			if(svc == null) {
-				LOG.debug(Markers.MSG, "The load was not exposed remotely");
-			} else {
-				LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
-				ServiceUtil.close(svc);
-			}
+			LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
+			ServiceUtil.close(this);
 		}
 	}
 	//
@@ -72,15 +66,15 @@ implements FileLoadSvc<T> {
 		);
 		try {
 			if(itemDst instanceof Service) {
-				final String remoteSvcName = ((Service) itemDst).getName();
-				LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
+				final String remoteSvcUrl = ((Service) itemDst).getName();
+				LOG.debug(Markers.MSG, "Name is {}", remoteSvcUrl);
 				final Service localSvc = ServiceUtil.getLocalSvc(
-					ServiceUtil.getLocalSvcName(remoteSvcName)
+					ServiceUtil.getSvcUrl(remoteSvcUrl)
 				);
 				if(localSvc == null) {
 					LOG.error(
 						Markers.ERR, "Failed to get local service for name \"{}\"",
-						remoteSvcName
+						remoteSvcUrl
 					);
 				} else {
 					super.setItemDst((ItemDst<T>) localSvc);

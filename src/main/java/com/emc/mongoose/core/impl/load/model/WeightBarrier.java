@@ -40,7 +40,7 @@ implements Barrier<T> {
 
 	//
 	@Override
-	public final boolean requestApprovalFor(final T thing)
+	public final boolean getApprovalFor(final T thing)
 	throws InterruptedException {
 		final K key;
 		try {
@@ -75,7 +75,7 @@ implements Barrier<T> {
 
 	//
 	@Override
-	public final boolean requestBatchApprovalFor(
+	public final boolean getBatchApprovalFor(
 		final List<T> things, final int from, final int to
 	) throws InterruptedException {
 		int left = to - from;

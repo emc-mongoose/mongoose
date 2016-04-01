@@ -1,23 +1,26 @@
-package com.emc.mongoose.client.impl.load.executor;
-//
-import com.emc.mongoose.client.api.load.executor.HttpDataLoadClient;
+package com.emc.mongoose.server.impl.load.executor;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.DataRangesConfig;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 //
 import com.emc.mongoose.core.impl.load.model.WeightBarrier;
 //
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
+import com.emc.mongoose.server.api.load.executor.MixedHttpDataLoadSvc;
 //
 import org.apache.commons.lang.text.StrBuilder;
 //
@@ -25,7 +28,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
-
+//
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -39,9 +42,9 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.03.16.
  */
-public class MixedHttpDataLoadClient<T extends HttpDataItem, W extends HttpDataLoadSvc<T>>
-extends BasicHttpDataLoadClient<T, W>
-implements HttpDataLoadClient<T, W> {
+public class BasicMixedHttpDataLoadSvc<T extends HttpDataItem>
+extends BasicHttpDataLoadSvc<T>
+implements MixedHttpDataLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -49,16 +52,21 @@ implements HttpDataLoadClient<T, W> {
 	private final Map<LoadType, Integer> loadTypeWeights;
 	private final Map<LoadType, HttpRequestConfig<T, ? extends Container<T>>>
 		reqConfigMap = new HashMap<>();
-	private final Map<LoadType, HttpDataLoadClient<T, W>>
-		loadClientMap = new HashMap<>();
+	protected final Map<LoadType, HttpDataLoadSvc<T>>
+		loadSvcMap = new HashMap<>();
+
 	//
-	public MixedHttpDataLoadClient(
+	public BasicMixedHttpDataLoadSvc(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
-		final Map<String, W> remoteLoadMap, final Map<LoadType, Integer> loadTypeWeightMap,
+		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
+		final Map<LoadType, Integer> loadTypeWeightMap,
 		final Map<LoadType, ItemSrc<T>> itemSrcMap
-	) throws RemoteException {
-		super(appConfig, reqConfig, addrs, threadCount, null, maxCount, rateLimit, remoteLoadMap);
+	) {
+		super(
+			appConfig, reqConfig, addrs, threadCount, null, maxCount, rateLimit, sizeConfig,
+			rangesConfig
+		);
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
 		this.barrier = new WeightBarrier<>(loadTypeWeights);
@@ -71,32 +79,42 @@ implements HttpDataLoadClient<T, W> {
 				throw new IllegalStateException(e);
 			}
 			reqConfigMap.put(loadType, reqConfigCopy);
-			final BasicHttpDataLoadClient<T, W> nextLoadClient = new BasicHttpDataLoadClient<T, W>(
+			final BasicHttpDataLoadSvc<T> nextLoadSvc = new BasicHttpDataLoadSvc<T>(
 				appConfig, reqConfigCopy, addrs, threadCount, itemSrcMap.get(loadType),
-				maxCount, rateLimit, remoteLoadMap
+				maxCount, rateLimit, sizeConfig, rangesConfig,
+				httpProcessor, client, ioReactor, connPoolMap
 			) {
 				@Override
 				public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
-				throws RemoteException, RejectedExecutionException {
-					return MixedHttpDataLoadClient.this.submitTask(ioTask);
+				throws RejectedExecutionException {
+					return BasicMixedHttpDataLoadSvc.this.submitTask(ioTask);
 				}
 				//
 				@Override
 				public final <A extends IOTask<T>> int submitTasks(
 					final List<A> ioTasks, int from, int to
-				) throws RemoteException, RejectedExecutionException {
-					return MixedHttpDataLoadClient.this.submitTasks(ioTasks, from, to);
+				) throws RejectedExecutionException {
+					return BasicMixedHttpDataLoadSvc.this.submitTasks(ioTasks, from, to);
 				}
 			};
-			loadClientMap.put(loadType, nextLoadClient);
+			try {
+				ServiceUtil.create(nextLoadSvc);
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to export the load service \"{}\"",
+					nextLoadSvc.getName()
+				);
+			}
+			loadSvcMap.put(loadType, nextLoadSvc);
 		}
 	}
 	//
+	//
 	@Override
 	public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
-	throws RemoteException, RejectedExecutionException {
+	throws RejectedExecutionException {
 		try {
-			if(barrier.requestApprovalFor(ioTask)) {
+			if(barrier.getApprovalFor(ioTask)) {
 				return super.submitTask(ioTask);
 			} else {
 				throw new RejectedExecutionException(
@@ -110,9 +128,9 @@ implements HttpDataLoadClient<T, W> {
 	//
 	@Override
 	public final <A extends IOTask<T>> int submitTasks(final List<A> ioTasks, int from, int to)
-	throws RemoteException, RejectedExecutionException {
+	throws RejectedExecutionException {
 		try {
-			if(barrier.requestBatchApprovalFor((List<IOTask<T>>) ioTasks, from, to)) {
+			if(barrier.getBatchApprovalFor((List<IOTask<T>>) ioTasks, from, to)) {
 				return super.submitTasks(ioTasks, from, to);
 			} else {
 				throw new RejectedExecutionException(
@@ -124,6 +142,23 @@ implements HttpDataLoadClient<T, W> {
 		}
 	}
 	//
+	@Override
+	public final void ioTaskCompleted(final IOTask<T> ioTask)
+	throws RemoteException {
+		loadSvcMap.get(ioTask.getKey())
+			.ioTaskCompleted(ioTask);
+		super.ioTaskCompleted(ioTask);
+	}
+	//
+	@Override
+	public final int ioTaskCompletedBatch(
+		final List<? extends IOTask<T>> ioTasks, final int from, final int to
+	) throws RemoteException {
+		if(ioTasks != null && ioTasks.size() > 0) {
+			loadSvcMap.get(ioTasks.get(0).getKey()).ioTaskCompletedBatch(ioTasks, from, to);
+		}
+		return super.ioTaskCompletedBatch(ioTasks, from, to);
+	}
 	//
 	@Override
 	public void logMetrics(final Marker logMarker) {
@@ -131,14 +166,14 @@ implements HttpDataLoadClient<T, W> {
 			.appendNewLine()
 			.appendPadding(100, '-')
 			.appendNewLine();
-		HttpDataLoadClient<T, W> nextLoadJobClient;
+		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
 		IOStats.Snapshot nextLoadStats = null;
-		for(final LoadType nextLoadType : loadClientMap.keySet()) {
+		for(final LoadType nextLoadType : loadSvcMap.keySet()) {
 			nextLoadWeight = loadTypeWeights.get(nextLoadType);
-			nextLoadJobClient = loadClientMap.get(nextLoadType);
+			nextLoadJob = loadSvcMap.get(nextLoadType);
 			try {
-				nextLoadStats = nextLoadJobClient.getStatsSnapshot();
+				nextLoadStats = nextLoadJob.getStatsSnapshot();
 			} catch(final RemoteException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the remote stats snapshot");
 			}
@@ -152,7 +187,6 @@ implements HttpDataLoadClient<T, W> {
 							nextLoadStats.toSummaryString() : nextLoadStats.toString()
 				)
 				.appendNewLine();
-
 		}
 		strb
 			.appendPadding(100, '-').appendNewLine()
@@ -168,12 +202,12 @@ implements HttpDataLoadClient<T, W> {
 	//
 	@Override
 	protected void startActually() {
-		for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
+		for(final HttpDataLoadSvc<T> nextLoadSvc : loadSvcMap.values()) {
 			try {
-				nextLoadClient.start();
+				nextLoadSvc.start();
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to start the load job \"{}\"", nextLoadClient
+					LOG, Level.ERROR, e, "Failed to start the load job \"{}\"", nextLoadSvc
 				);
 			}
 		}
@@ -182,12 +216,12 @@ implements HttpDataLoadClient<T, W> {
 	//
 	@Override
 	protected void interruptActually() {
-		for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
+		for(final HttpDataLoadSvc<T> nextLoadSvc : loadSvcMap.values()) {
 			try {
-				nextLoadClient.interrupt();
+				nextLoadSvc.interrupt();
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to interrupt the load job \"{}\"", nextLoadClient
+					LOG, Level.ERROR, e, "Failed to interrupt the load job \"{}\"", nextLoadSvc
 				);
 			}
 		}
@@ -196,12 +230,12 @@ implements HttpDataLoadClient<T, W> {
 	//
 	@Override
 	protected void shutdownActually() {
-		for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
+		for(final HttpDataLoadSvc<T> nextLoadSvc : loadSvcMap.values()) {
 			try {
-				nextLoadClient.shutdown();
+				nextLoadSvc.shutdown();
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to shutdown the load job \"{}\"", nextLoadClient
+					LOG, Level.ERROR, e, "Failed to shutdown the load job \"{}\"", nextLoadSvc
 				);
 			}
 		}
@@ -212,22 +246,22 @@ implements HttpDataLoadClient<T, W> {
 	public void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			loadClientMap.size() + 1, new GroupThreadFactory("await<" + getName() + ">", true)
+			loadSvcMap.size() + 1, new GroupThreadFactory("await<" + getName() + ">", true)
 		);
-		for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
+		for(final HttpDataLoadSvc<T> nextLoadSvc : loadSvcMap.values()) {
 			awaitExecutor.submit(
 				new Runnable() {
 					@Override
 					public final void run() {
 						try {
-							nextLoadClient.await(timeOut, timeUnit);
+							nextLoadSvc.await(timeOut, timeUnit);
 						} catch(final RemoteException e) {
 							LogUtil.exception(
 								LOG, Level.ERROR, e, "Failed to await the load job \"{}\"",
-								nextLoadClient
+								nextLoadSvc
 							);
 						} catch(final InterruptedException e) {
-							LOG.debug(Markers.MSG, "{}: await call interrupted", nextLoadClient);
+							LOG.debug(Markers.MSG, "{}: await call interrupted", nextLoadSvc);
 						}
 					}
 				}
@@ -238,7 +272,7 @@ implements HttpDataLoadClient<T, W> {
 				@Override
 				public final void run() {
 					try {
-						MixedHttpDataLoadClient.super.await(timeOut, timeUnit);
+						BasicMixedHttpDataLoadSvc.super.await(timeOut, timeUnit);
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "{}: await call interrupted", getName());
 					} catch(final RemoteException e) {
@@ -261,15 +295,25 @@ implements HttpDataLoadClient<T, W> {
 	@Override
 	protected void closeActually()
 	throws IOException {
-		for(final HttpDataLoadClient<T, W> nextLoadClient : loadClientMap.values()) {
+		for(final HttpDataLoadSvc<T> nextLoadSvc : loadSvcMap.values()) {
 			try {
-				nextLoadClient.close();
+				nextLoadSvc.close();
 			} catch(final RemoteException e) {
 				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to close the load job \"{}\"", nextLoadClient
+					LOG, Level.ERROR, e, "Failed to close the load job \"{}\"", nextLoadSvc
 				);
 			}
 		}
 		super.closeActually();
+	}
+	//
+	@Override
+	public final Map<LoadType, String> getWrappedLoadSvcNames()
+	throws RemoteException {
+		final Map<LoadType, String> wrappedLoadSvcStubs = new HashMap<>();
+		for(final LoadType loadType : loadSvcMap.keySet()) {
+			wrappedLoadSvcStubs.put(loadType, loadSvcMap.get(loadType).getName());
+		}
+		return wrappedLoadSvcStubs;
 	}
 }

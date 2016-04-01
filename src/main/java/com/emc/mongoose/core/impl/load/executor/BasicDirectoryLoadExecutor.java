@@ -54,7 +54,10 @@ implements DirectoryLoadExecutor<T, C> {
 			protected final void afterExecute(final Runnable task, final Throwable throwable) {
 				final DirectoryIOTask<T, C> ioTask = (DirectoryIOTask<T, C>) task;
 				if(throwable == null) {
-					ioTaskCompleted(ioTask);
+					try {
+						ioTaskCompleted(ioTask);
+					} catch(final RemoteException ignored) {
+					}
 				} else {
 					ioTaskFailed(1, throwable);
 				}

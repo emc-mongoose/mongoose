@@ -64,7 +64,7 @@ implements LoadExecutor<T> {
 	protected final AppConfig appConfig;
 	//
 	protected final ContentSource dataSrc;
-	protected final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>>
+	protected final IOConfig<? extends Item, ? extends Container<? extends Item>>
 		ioConfigCopy;
 	protected final LoadType loadType;
 	//
@@ -146,14 +146,13 @@ implements LoadExecutor<T> {
 			try {
 				if(isCircular) {
 					while(!areAllItemsProduced) {
-						LockSupport.parkNanos(1000000);
+						LockSupport.parkNanos(1_000_000);
 						Thread.yield();
 					}
 				}
 				while(!currThread.isInterrupted()) {
 					postProcessItems();
-					Thread.yield();
-					LockSupport.parkNanos(1000);
+					LockSupport.parkNanos(1_000);
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
@@ -165,7 +164,7 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
-		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final IOConfig<? extends Item, ? extends Container<? extends Item>> ioConfig,
 		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
 		final float rateLimit, final int instanceNum, final String name
 	) {
@@ -197,7 +196,7 @@ implements LoadExecutor<T> {
 		totalThreadCount = threadCount * storageNodeCount;
 		activeTaskCountLimit = 2 * totalThreadCount + 1000;
 		//
-		IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> reqConfigClone = null;
+		IOConfig<? extends Item, ? extends Container<? extends Item>> reqConfigClone = null;
 		try {
 			reqConfigClone = ioConfig.clone();
 		} catch(final CloneNotSupportedException e) {
@@ -598,7 +597,9 @@ implements LoadExecutor<T> {
 		return to - from;
 	}
 	//
-	protected void ioTaskCompleted(final IOTask<T> ioTask) {
+	@Override
+	public void ioTaskCompleted(final IOTask<T> ioTask)
+	throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return;
@@ -634,9 +635,10 @@ implements LoadExecutor<T> {
 		counterResults.incrementAndGet();
 	}
 	//
-	protected int ioTaskCompletedBatch(
+	@Override
+	public int ioTaskCompletedBatch(
 		final List<? extends IOTask<T>> ioTasks, final int from, final int to
-	) {
+	) throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return 0;

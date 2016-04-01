@@ -59,7 +59,7 @@ extends Thread {
 	extends GroupThreadFactory {
 		//
 		public Factory(final String threadNamePrefix) {
-			super(threadNamePrefix);
+			super(threadNamePrefix, true);
 		}
 		//
 		@Override

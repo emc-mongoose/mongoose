@@ -15,6 +15,7 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 //
+import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.load.model.WeightBarrier;
 //
@@ -37,9 +38,9 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 29.03.16.
  */
-public class MixedHttpDataLoadExecutor<T extends HttpDataItem>
+public class BasicMixedHttpDataLoadExecutor<T extends HttpDataItem>
 extends BasicHttpDataLoadExecutor<T>
-implements HttpDataLoadExecutor<T> {
+implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -47,10 +48,10 @@ implements HttpDataLoadExecutor<T> {
 	private final Map<LoadType, Integer> loadTypeWeights;
 	private final Map<LoadType, HttpRequestConfig<T, ? extends Container<T>>>
 		reqConfigMap = new HashMap<>();
-	private final Map<LoadType, BasicHttpDataLoadExecutor<T>>
+	protected final Map<LoadType, HttpDataLoadExecutor<T>>
 		loadExecutorMap = new HashMap<>();
 	//
-	public MixedHttpDataLoadExecutor(
+	public BasicMixedHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
@@ -80,14 +81,14 @@ implements HttpDataLoadExecutor<T> {
 				@Override
 				public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
-					return MixedHttpDataLoadExecutor.this.submitTask(ioTask);
+					return BasicMixedHttpDataLoadExecutor.this.submitTask(ioTask);
 				}
 				//
 				@Override
 				public final <A extends IOTask<T>> int submitTasks(
 					final List<A> ioTasks, int from, int to
 				) throws RejectedExecutionException {
-					return MixedHttpDataLoadExecutor.this.submitTasks(ioTasks, from, to);
+					return BasicMixedHttpDataLoadExecutor.this.submitTasks(ioTasks, from, to);
 				}
 			};
 			loadExecutorMap.put(loadType, nextLoadExecutor);
@@ -98,7 +99,7 @@ implements HttpDataLoadExecutor<T> {
 	public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		try {
-			if(barrier.requestApprovalFor(ioTask)) {
+			if(barrier.getApprovalFor(ioTask)) {
 				return super.submitTask(ioTask);
 			} else {
 				throw new RejectedExecutionException(
@@ -114,7 +115,7 @@ implements HttpDataLoadExecutor<T> {
 	public final <A extends IOTask<T>> int submitTasks(final List<A> ioTasks, int from, int to)
 	throws RejectedExecutionException {
 		try {
-			if(barrier.requestBatchApprovalFor((List<IOTask<T>>) ioTasks, from, to)) {
+			if(barrier.getBatchApprovalFor((List<IOTask<T>>) ioTasks, from, to)) {
 				return super.submitTasks(ioTasks, from, to);
 			} else {
 				throw new RejectedExecutionException(
@@ -127,17 +128,18 @@ implements HttpDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected void ioTaskCompleted(final IOTask<T> ioTask) {
+	public void ioTaskCompleted(final IOTask<T> ioTask)
+	throws RemoteException {
 		loadExecutorMap.get(ioTask.getKey()).ioTaskCompleted(ioTask);
 		super.ioTaskCompleted(ioTask);
 	}
 	//
 	@Override
-	protected final int ioTaskCompletedBatch(
+	public final int ioTaskCompletedBatch(
 		final List<? extends IOTask<T>> ioTasks, final int from, final int to
-	) {
+	) throws RemoteException {
 		if(ioTasks != null && ioTasks.size() > 0) {
-			loadExecutorMap.get(ioTasks.get(0).getKey()).ioTaskCompletedBatch(ioTasks, from, to);
+			loadExecutorMap.get(ioTasks.get(from).getKey()).ioTaskCompletedBatch(ioTasks, from, to);
 		}
 		return super.ioTaskCompletedBatch(ioTasks, from, to);
 	}
@@ -254,7 +256,7 @@ implements HttpDataLoadExecutor<T> {
 				@Override
 				public final void run() {
 					try {
-						MixedHttpDataLoadExecutor.super.await(timeOut, timeUnit);
+						BasicMixedHttpDataLoadExecutor.super.await(timeOut, timeUnit);
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "{}: await call interrupted", getName());
 					} catch(final RemoteException e) {

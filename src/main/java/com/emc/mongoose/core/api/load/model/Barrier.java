@@ -14,7 +14,7 @@ public interface Barrier<X> {
 	 @return true if the thing should be passed, false otherwise
 	 @throws InterruptedException
 	 */
-	boolean requestApprovalFor(final X thing)
+	boolean getApprovalFor(final X thing)
 	throws InterruptedException;
 
 	/**
@@ -25,6 +25,6 @@ public interface Barrier<X> {
 	 @return true if the set of things should be passed, false otherwise
 	 @throws InterruptedException
 	 */
-	boolean requestBatchApprovalFor(final List<X> things, int from, int to)
+	boolean getBatchApprovalFor(final List<X> things, int from, int to)
 	throws InterruptedException;
 }

@@ -11,6 +11,7 @@ import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
@@ -234,7 +235,14 @@ implements LoadClient<T, W> {
 					nextLoadSvc.getName(), addr
 				);
 			} catch(final IOException | IllegalStateException e) {
-				LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
+				try {
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "Failed to start remote load \"{}\" @{}",
+						nextLoadSvc.getName(), addr
+					);
+				} catch(final RemoteException ee) {
+					LogUtil.exception(LOG, Level.FATAL, e, "Network connectivity failure");
+				}
 			}
 		}
 		//
@@ -295,7 +303,7 @@ implements LoadClient<T, W> {
 		//
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size(),
-			new GroupThreadFactory(String.format("interrupt<%s>", getName()))
+			new GroupThreadFactory(String.format("interrupt<%s>", getName()), true)
 		);
 		for(final String addr : loadSvcAddrs) {
 			interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
@@ -641,7 +649,7 @@ implements LoadClient<T, W> {
 		//
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size() + 1,
-			new GroupThreadFactory(String.format("awaitWorker<%s>", getName()))
+			new GroupThreadFactory(String.format("awaitWorker<%s>", getName()), true)
 		);
 		awaitExecutor.submit(
 			new Runnable() {

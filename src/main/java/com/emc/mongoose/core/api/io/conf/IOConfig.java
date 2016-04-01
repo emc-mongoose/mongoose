@@ -3,8 +3,8 @@ package com.emc.mongoose.core.api.io.conf;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
 //
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
@@ -13,7 +13,7 @@ import java.io.Externalizable;
 /**
  Created by kurila on 23.11.15.
  */
-public interface IOConfig<T extends DataItem, C extends Container<T>>
+public interface IOConfig<T extends Item, C extends Container<T>>
 extends Externalizable, Cloneable, Closeable {
 	//
 	long serialVersionUID = 42L;

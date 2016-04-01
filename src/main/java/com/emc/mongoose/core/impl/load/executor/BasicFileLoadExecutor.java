@@ -59,7 +59,10 @@ implements FileLoadExecutor<T> {
 			@Override @SuppressWarnings("unchecked")
 			protected final void afterExecute(final Runnable task, final Throwable throwable) {
 				if(throwable == null) {
-					ioTaskCompleted((FileIOTask<T>) task);
+					try {
+						ioTaskCompleted((FileIOTask<T>) task);
+					} catch(final RemoteException ignored) {
+					}
 				} else {
 					ioTaskFailed(1, throwable);
 				}

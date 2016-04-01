@@ -81,7 +81,7 @@ public class WeightBarrierTest {
 				try {
 					final IOTaskMock ioTask = new IOTaskMock();
 					ioTask.loadType = loadType;
-					if(fc.requestApprovalFor(ioTask)) {
+					if(fc.getApprovalFor(ioTask)) {
 						resultsMap.get(loadType).incrementAndGet();
 					}
 				} catch(final InterruptedException e) {
@@ -122,7 +122,7 @@ public class WeightBarrierTest {
 						ioTask.loadType = loadType;
 						ioTasks.add(ioTask);
 					}
-					if(fc.requestBatchApprovalFor(ioTasks, 0, 128)) {
+					if(fc.getBatchApprovalFor(ioTasks, 0, 128)) {
 						resultsMap.get(loadType).incrementAndGet();
 					}
 				} catch(final InterruptedException e) {

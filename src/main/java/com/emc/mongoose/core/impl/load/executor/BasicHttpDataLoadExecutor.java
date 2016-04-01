@@ -55,6 +55,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -275,7 +276,10 @@ implements HttpDataLoadExecutor<T> {
 	private final FutureCallback<HttpDataIOTask<T>> futureCallback = new FutureCallback<HttpDataIOTask<T>>() {
 		@Override
 		public final void completed(final HttpDataIOTask<T> ioTask) {
-			ioTaskCompleted(ioTask);
+			try {
+				ioTaskCompleted(ioTask);
+			} catch(final RemoteException ignore) {
+			}
 		}
 		//
 		public final void cancelled() {
@@ -328,7 +332,10 @@ implements HttpDataLoadExecutor<T> {
 		//
 		@Override
 		public final void completed(final List<HttpDataIOTask<T>> result) {
-			ioTaskCompletedBatch(result, 0, result.size());
+			try {
+				ioTaskCompletedBatch(result, 0, result.size());
+			} catch(final RemoteException e) {
+			}
 		}
 		//
 		@Override

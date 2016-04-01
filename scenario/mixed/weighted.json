@@ -19,7 +19,8 @@
 					"limit" : {
 						"count" : 1000
 					},
-					"metricsPeriod" : 0
+					"metricsPeriod" : 0,
+					"threads" : 100
 				}
 			}
 		},

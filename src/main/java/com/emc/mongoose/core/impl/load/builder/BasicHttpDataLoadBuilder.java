@@ -15,7 +15,7 @@ import com.emc.mongoose.core.api.load.builder.HttpDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
-import com.emc.mongoose.core.impl.load.executor.MixedHttpDataLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.BasicMixedHttpDataLoadExecutor;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -81,7 +81,7 @@ implements HttpDataLoadBuilder<T, U> {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
 				}
 			}
-			return (U) new MixedHttpDataLoadExecutor<>(
+			return (U) new BasicMixedHttpDataLoadExecutor<>(
 				appConfig, httpReqConf, storageNodeAddrs, threadCount,
 				maxCount, rateLimit, sizeConfig, rangesConfig,
 				loadTypeWeightMap, itemSrcMap

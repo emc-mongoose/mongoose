@@ -1,6 +1,6 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
-import com.emc.mongoose.client.impl.load.executor.MixedHttpDataLoadClient;
+import com.emc.mongoose.client.impl.load.executor.BasicMixedHttpDataLoadClient;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
@@ -21,6 +21,7 @@ import com.emc.mongoose.client.api.load.builder.HttpDataLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.HttpDataLoadClient;
 //
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
+import com.emc.mongoose.server.api.load.executor.MixedHttpDataLoadSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -111,9 +112,10 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
 				}
 			}
-			return (U) new MixedHttpDataLoadClient<>(
+			return (U) new BasicMixedHttpDataLoadClient<>(
 				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount,
-				maxCount, rateLimit, remoteLoadMap, loadTypeWeightMap, itemSrcMap
+				maxCount, rateLimit, (Map<String, MixedHttpDataLoadSvc<T>>) remoteLoadMap,
+				loadTypeWeightMap, itemSrcMap
 			);
 		} else {
 			return (U) new BasicHttpDataLoadClient<>(

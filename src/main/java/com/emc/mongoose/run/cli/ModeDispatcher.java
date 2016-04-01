@@ -103,6 +103,7 @@ public final class ModeDispatcher {
 		}
 		//
 		ServiceUtil.shutdown();
+		LogUtil.shutdown();
 	}
 }
 //
