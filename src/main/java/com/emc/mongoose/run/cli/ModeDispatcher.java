@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
-import com.emc.mongoose.run.webserver.WUIRunner;
+import com.emc.mongoose.run.webserver.WebUIRunner;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 import com.emc.mongoose.storage.mock.impl.http.Nagaina;
@@ -69,8 +69,8 @@ public final class ModeDispatcher {
 				}
 				break;
 			case Constants.RUN_MODE_WEBUI:
-				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				new WUIRunner().run();
+				rootLogger.debug(Markers.MSG, "Starting the Web UI");
+				new WebUIRunner().run();
 				break;
 			case Constants.RUN_MODE_NAGAINA:
 			case Constants.RUN_MODE_WSMOCK:

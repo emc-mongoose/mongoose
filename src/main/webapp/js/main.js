@@ -11,7 +11,8 @@ require(["./requirejs/conf"], function() {
 		//  get all properties from runTimeConfig
 		$.get("/main", function(appConfig) {
 			//  root element ("config") of defaults.json configuration file
-			var config = appConfig.config;
+			const ROOT_ELEMENT_NAME = 'config';
+			var config = appConfig[ROOT_ELEMENT_NAME];
 			if(config) {
 				mainController.run(config);
 			} else {

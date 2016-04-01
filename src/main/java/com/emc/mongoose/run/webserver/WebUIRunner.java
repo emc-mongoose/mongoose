@@ -16,20 +16,20 @@ import java.nio.file.Paths;
 /**
  * Created by gusakk on 02/10/14.
  */
-public class WUIRunner
+public class WebUIRunner
 implements Runnable {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 	//
-	public final static String
-			webResourceBaseDir,
-			webDescriptorBaseDir;
+	private static final String
+			WEB_RESOURCE_BASE_DIR,
+			WEB_DESCRIPTOR_BASE_DIR;
 	//
 	static {
-		webResourceBaseDir = Paths
+		WEB_RESOURCE_BASE_DIR = Paths
 			.get(BasicConfig.getRootDir(), Constants.DIR_WEBAPP)
 			.toString();
-		webDescriptorBaseDir = Paths
+		WEB_DESCRIPTOR_BASE_DIR = Paths
 			.get(BasicConfig.getRootDir(), Constants.DIR_WEBAPP, Constants.DIR_WEBINF)
 			.resolve("web.xml").toString();
 	}
@@ -40,8 +40,8 @@ implements Runnable {
 		//
 		final WebAppContext webAppContext = new WebAppContext();
 		webAppContext.setContextPath("/");
-		webAppContext.setResourceBase(webResourceBaseDir);
-		webAppContext.setDescriptor(webDescriptorBaseDir);
+		webAppContext.setResourceBase(WEB_RESOURCE_BASE_DIR);
+		webAppContext.setDescriptor(WEB_DESCRIPTOR_BASE_DIR);
 		webAppContext.setParentLoaderPriority(true);
 		//
 		server.setHandler(webAppContext);

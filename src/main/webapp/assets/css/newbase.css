@@ -163,4 +163,5 @@
 .btn-file input[type="text"] {
     width: auto;
     display: inline-block;
+    сursor: default;
 }

@@ -2,28 +2,26 @@ define([
 	"jquery",
 	"handlebars",
 	"text!../../../templates/configuration/confMenu.hbs",
-	"./baseConfController",
 	"./extendedConfController",
 	"../run/runController"
 ], function(
 	$,
 	Handlebars,
 	confMenuTemplate,
-    baseConfController,
     extendedConfController,
     runController
 ) {
 	//
-	function run(props, runIdArray) {
+	function run(config, tabType, runIdArray) {
 		//  default run.mode ("webui") from appConfig should be overridden here
 		var run = {
 			mode: "standalone" // possible: ["standalone", "client", "server", "cinderella"]
 		};
 		//  render configuration menu panel
 		render();
-		extendedConfController.setup(props);
+		extendedConfController.setup(config);
 		//  some settings for configuration menu
-		bindMenuEvents(props, runIdArray);
+		bindMenuEvents(config, runIdArray);
 	}
 	//
 	function render() {
@@ -38,15 +36,11 @@ define([
 			runController.start(runIdArray);
 		});
 		//  config mode change
-		var configTypes = {
-			"base": baseConfController,
-			"extended": extendedConfController
-		};
 		var configModeSelect = $("#config-type");
 		configModeSelect.on("change", function() {
 			var activeOptionValue = "extended";
 			//  activate baseConfController or extendedConfController
-			configTypes[activeOptionValue].activate();
+			extendedConfController.activate();
 		});
 		//  activate
 		configModeSelect.trigger("change");
