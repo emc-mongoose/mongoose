@@ -32,7 +32,7 @@ define([
 	//
 	function render() {
 		const CONFIG_TABS = TEMPLATE.configTabs();
-		const BUTTONS = TEMPLATE.commonButtonTypes();
+		const BUTTONS = TEMPLATE.commonButtons();
 		function renderConfMenu() {
 			HB.compileAndInsert('header', 'afterend', confMenuTemplate, { 'tab-types': CONFIG_TABS });
 		}
@@ -42,8 +42,32 @@ define([
 			HB.insert('config', 'afterbegin', htmlButtonSet2);
 			HB.insert('config', 'afterbegin', htmlButtonSet1);
 		}
+		function bindOpenButtonEvent() {
+			const CONFIG_TABS = TEMPLATE.configTabs();
+			const BUTTON_TYPE = TEMPLATE.commonButtonTypes();
+			function passClick(tabName) {
+				$('#' + BUTTON_TYPE.OPEN + '-' + tabName).click(function () {
+					$('#' + BUTTON_TYPE.OPEN_INPUT_FILE + '-' + tabName).trigger('click')
+				})
+			}
+			var fillTheField = function (tabName) {
+				const openInputFileId = '#' + BUTTON_TYPE.OPEN_INPUT_FILE + '-' + tabName;
+				const openInputTextId = '#' + BUTTON_TYPE.OPEN_INPUT_TEXT + '-' + tabName;
+				const openFileName = $(openInputFileId).val();
+				if (openFileName) {
+					$(openInputTextId).val(openFileName)
+				} else {
+					$(openInputTextId).val('No ' + tabName.slice(0, -1) + ' chosen')
+				}
+			};
+			$.each(CONFIG_TABS, function (index, value) {
+				passClick(value);
+				fillTheField(value);
+			})
+		}
 		renderConfMenu();
 		renderCommonButtons();
+		bindOpenButtonEvent();
 	}
 	
 

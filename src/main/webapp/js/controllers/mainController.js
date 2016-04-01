@@ -39,6 +39,25 @@ define([
 	}
 
 	function render(config) {
+		function bindTabEvents() {
+			function makeTabActive(tabType) {
+				if (currentTabType != tabType) {
+					$.each(TAB_TYPE, function (key, value) {
+						$('#' + tabId(value)).removeClass(TAB_CLASS.ACTIVE);
+					});
+					$('#' + tabId(tabType)).addClass(TAB_CLASS.ACTIVE);
+					currentTabType = tabType;
+				}
+			}
+			function bindTabClickEvent(tabType) {
+				$('#' + tabId(tabType)).click(function() {
+					makeTabActive(tabType)
+				});
+			}
+			$.each(TAB_TYPE, function(key, value) {
+				bindTabClickEvent(value);
+			});
+		}
 		function renderNavbar(runVersion) {
 			const navbarHtml = HB.compile(navbarTemplate, { version: runVersion });
 			document.querySelector("body").insertAdjacentHTML('afterbegin', navbarHtml);
@@ -46,26 +65,6 @@ define([
 			bindTabEvents();
 		}
 		renderNavbar(config.run.version || "unknown");
-	}
-
-	function bindTabEvents() {
-		function makeTabActive(tabType) {
-			if (currentTabType != tabType) {
-				$.each(TAB_TYPE, function (key, value) {
-					$('#' + tabId(value)).removeClass(TAB_CLASS.ACTIVE);
-				});
-				$('#' + tabId(tabType)).addClass(TAB_CLASS.ACTIVE);
-				currentTabType = tabType;
-			}
-		}
-		function bindTabClickEvent(tabType) {
-			$('#' + tabId(tabType)).click(function() {
-				makeTabActive(tabType)
-			});
-		}
-		$.each(TAB_TYPE, function(key, value) {
-			bindTabClickEvent(value);
-		});
 	}
 	
 	return {
