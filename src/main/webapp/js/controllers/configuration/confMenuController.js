@@ -2,17 +2,23 @@ define([
 	"jquery",
 	"handlebars",
 	"text!../../../templates/configuration/confMenu.hbs",
+	"text!../../../templates/configuration/commonButtons.hbs",
 	"./extendedConfController",
-	"../run/runController"
+	"../run/runController",
+	"../../util/handlebarsShortcuts",
+	"../../util/templateConstants"
 ], function(
 	$,
 	Handlebars,
 	confMenuTemplate,
+	commonButtonsTemplate,
     extendedConfController,
-    runController
+    runController,
+	HB,
+    TEMPLATE
 ) {
 	//
-	function run(config, tabType, runIdArray) {
+	function run(config, tabRunIdArray) {
 		//  default run.mode ("webui") from appConfig should be overridden here
 		var run = {
 			mode: "standalone" // possible: ["standalone", "client", "server", "cinderella"]
@@ -25,9 +31,22 @@ define([
 	}
 	//
 	function render() {
-		var html = Handlebars.compile(confMenuTemplate)();
-		$(html).insertAfter("#header");
+		const CONFIG_TABS = TEMPLATE.configTabs();
+		const BUTTONS = TEMPLATE.commonButtonTypes();
+		function renderConfMenu() {
+			HB.compileAndInsert('header', 'afterend', confMenuTemplate, { 'tab-types': CONFIG_TABS });
+		}
+		function renderCommonButtons() {
+			const htmlButtonSet1 = HB.compile(commonButtonsTemplate, { 'buttons': BUTTONS, 'tab-type': CONFIG_TABS[0]});
+			const htmlButtonSet2 = HB.compile(commonButtonsTemplate, { 'buttons': BUTTONS, 'tab-type': CONFIG_TABS[1]});
+			HB.insert('config', 'afterbegin', htmlButtonSet2);
+			HB.insert('config', 'afterbegin', htmlButtonSet1);
+		}
+		renderConfMenu();
+		renderCommonButtons();
 	}
+	
+
 	//
 	function bindMenuEvents(props, runIdArray) {
 		//

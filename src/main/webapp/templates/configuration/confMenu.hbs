@@ -1,48 +1,21 @@
 <div class="container-fluid">
-	<div class="row">
+    <div class="row">
 
-		<!-- Left menu panel -->
+        <!-- Left menu panel -->
         <div id="menu" class="col-xs-12 col-sm-4 col-md-3 col-lg-2 nopadding">
             <div id="config">
-                <div>
-                    <div class="form-group btn-file">
-                        <button type="button" class="btn btn-custom btn-custom-default column-btn-upper" id="open">
-                            Open
-                        </button>
-                        <!--suppress HtmlFormInputWithoutLabel -->
-                        <input class="form-control" id="config-file-name" type="text" value="No scenario chosen" disabled>
-                        <input id="config-file" onchange="fillTheField()" type="file" accept=".json" class="upload"/>
-                    </div>
-                    <script>
-                        $('#open').click(function () {
-                            $('#config-file').click();
-                        });
-                        var fillTheField =  function () {
-                            $('#config-file-name').val($('#config-file').val())
-                        }
-                    </script>
-                    <button type="button" class="btn btn-custom btn-custom-default" id="save-config">
-                        Save
-                    </button>
-                    <a href="http://127.0.0.1:8080/#save" class="btn btn-custom btn-custom-default"
-                       id="save-file">
-                        Save As...
-                    </a>
-                    <button type="button" class="btn btn-custom btn-custom-green column-btn-lower" id="start">
-                        Start
-                    </button>
-                </div>
+                <button type="button" class="btn btn-custom btn-custom-green column-btn-lower"
+                        id="start">
+                    Start
+                </button>
             </div>
 
-			<ul class="folders">
-
-			</ul>
-
-		</div>
-
-
-        <div id="main-content" class="col-xs-12 col-sm-8 col-md-9 col-lg-10 nopadding">
-            <!-- Configuration fields -->
+            <ul class="folders folders-{{tab-types.[0]}}"></ul>
+            <ul class="folders-{{tab-types.[1]}}"></ul>
         </div>
-	</div>
+
+        <!-- Configuration fields -->
+        <div id="main-content" class="col-xs-12 col-sm-8 col-md-9 col-lg-10 nopadding">
+        </div>
+    </div>
 </div>

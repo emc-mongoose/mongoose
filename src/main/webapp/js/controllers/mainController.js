@@ -5,7 +5,9 @@ define([
 	"./websockets/webSocketController",
 	"text!../../templates/navbar.hbs",
 	"text!../../templates/run/tab-header.hbs",
-	"text!../../templates/run/tab-content.hbs"
+	"text!../../templates/run/tab-content.hbs",
+	"../util/handlebarsShortcuts",
+	"../util/templateConstants"
 ], function(
 	$,
 	Handlebars,
@@ -13,14 +15,11 @@ define([
 	webSocketController,
 	navbarTemplate,
 	tabHeaderTemplate,
-	tabContentTemplate
+	tabContentTemplate,
+	HB,
+    TEMPLATE
 ) {
-	const TAB_TYPE = {
-		SCENARIOS: 'scenarios',
-		DEFAULTS: 'defaults',
-		TESTS: 'tests',
-		OTHER: 'other'
-	};
+	const TAB_TYPE = TEMPLATE.tabTypes();
 
 	function tabId(tabType) {
 		return tabType + '-tab';
@@ -30,30 +29,23 @@ define([
 		ACTIVE: 'active'
 	};
 
-	var currentTabType;
+	var currentTabType = TAB_TYPE.SCENARIOS;
 	var runIdArray = [];
 	//
 	function run(config) {
 		//  render navbar and tabs before any other interactions
 		render(config);
-		bindTabEvents();
-		currentTabType = TAB_TYPE.SCENARIOS;
-		confMenuController.run(config, currentTabType, runIdArray);
+		confMenuController.run(config, runIdArray);
 	}
 
 	function render(config) {
+		function renderNavbar(runVersion) {
+			const navbarHtml = HB.compile(navbarTemplate, { version: runVersion });
+			document.querySelector("body").insertAdjacentHTML('afterbegin', navbarHtml);
+			$('#' + tabId(currentTabType)).addClass(TAB_CLASS.ACTIVE);
+			bindTabEvents();
+		}
 		renderNavbar(config.run.version || "unknown");
-	}
-
-	function renderNavbar(runVersion) {
-		var run = {
-			version: runVersion
-		};
-		//
-		var compiled = Handlebars.compile(navbarTemplate);
-		var navbar = compiled(run);
-		document.querySelector("body").insertAdjacentHTML('afterbegin', navbar);
-		$("#scenarios-tab").addClass('active');
 	}
 
 	function bindTabEvents() {
