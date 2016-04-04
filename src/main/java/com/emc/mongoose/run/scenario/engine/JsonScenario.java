@@ -59,6 +59,7 @@ implements Scenario {
 		}
 	}
 	//
+	@SuppressWarnings({"unchecked", "ConstantConditions"})
 	private static void loadTree(final Map<String, Object> node, final JobContainer jobContainer)
 	throws IOException {
 		LOG.debug(Markers.MSG, "Load the subtree to the container \"{}\"", jobContainer);
