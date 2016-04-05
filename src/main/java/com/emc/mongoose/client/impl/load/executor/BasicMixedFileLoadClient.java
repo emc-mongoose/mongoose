@@ -1,32 +1,27 @@
 package com.emc.mongoose.client.impl.load.executor;
 //
-import com.emc.mongoose.client.api.load.executor.HttpDataLoadClient;
-//
+import com.emc.mongoose.client.api.load.executor.FileLoadClient;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
-//
-import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.api.io.conf.FileIOConfig;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
-//
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
-//
-import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
-import com.emc.mongoose.server.api.load.executor.MixedHttpDataLoadSvc;
-//
+import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
+import com.emc.mongoose.server.api.load.executor.MixedFileLoadSvc;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
-//
+
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -35,23 +30,22 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 /**
- Created by kurila on 30.03.16.
+ Created by kurila on 05.04.16.
  */
-public class BasicMixedHttpDataLoadClient<T extends HttpDataItem, W extends MixedHttpDataLoadSvc<T>>
-extends BasicHttpDataLoadClient<T, W>
-implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
-	//
+public class BasicMixedFileLoadClient<F extends FileItem, W extends MixedFileLoadSvc<F>>
+extends BasicFileLoadClient<F, W>
+implements FileLoadClient<F, W>, MixedLoadExecutor<F> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final Map<LoadType, HttpDataLoadClient<T, HttpDataLoadSvc<T>>>
+	private final Map<LoadType, FileLoadClient<F, FileLoadSvc<F>>>
 		loadClientMap = new HashMap<>();
 	private final Map<LoadType, Integer>
 		loadTypeWeightMap;
 	//
-	public BasicMixedHttpDataLoadClient(
-		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
+	public BasicMixedFileLoadClient(
+		final AppConfig appConfig, final FileIOConfig<F, ? extends Directory<F>> reqConfig,
 		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
-		final Map<String, W> remoteLoadMap, final Map<LoadType, ItemSrc<T>> itemSrcMap,
+		final Map<String, W> remoteLoadMap, final Map<LoadType, ItemSrc<F>> itemSrcMap,
 		final Map<LoadType, Integer> loadTypeWeightMap
 	) throws RemoteException {
 		//
@@ -61,11 +55,11 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 		);
 		this.loadTypeWeightMap = loadTypeWeightMap;
 		//
-		Map<String, HttpDataLoadSvc<T>> nextRemoteLoadMap;
+		Map<String, FileLoadSvc<F>> nextRemoteLoadMap;
 		for(final LoadType nextLoadType : itemSrcMap.keySet()) {
-			final HttpRequestConfig<T, ? extends Container<T>> reqConfigCopy;
+			final FileIOConfig<F, ? extends Directory<F>> reqConfigCopy;
 			try {
-				reqConfigCopy = (HttpRequestConfig<T, ? extends Container<T>>) reqConfig
+				reqConfigCopy = (FileIOConfig<F, ? extends Directory<F>>) reqConfig
 					.clone().setLoadType(nextLoadType);
 			} catch(final CloneNotSupportedException e) {
 				throw new IllegalStateException(e);
@@ -74,20 +68,20 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 			nextRemoteLoadMap = new HashMap<>();
 			W nextMixedLoadSvc;
 			String nextWrappedLoadSvcName;
-			HttpDataLoadSvc<T> nextWrappedLoadSvc;
+			FileLoadSvc<F> nextWrappedLoadSvc;
 			for(final String svcAddr : remoteLoadMap.keySet()) {
 				nextMixedLoadSvc = remoteLoadMap.get(svcAddr);
 				nextWrappedLoadSvcName = nextMixedLoadSvc.getWrappedLoadSvcNameFor(nextLoadType);
-				nextWrappedLoadSvc = (HttpDataLoadSvc<T>) ServiceUtil
+				nextWrappedLoadSvc = (FileLoadSvc<F>) ServiceUtil
 					.getRemoteSvc("//" + svcAddr + "/" + nextWrappedLoadSvcName);
 				nextRemoteLoadMap.put(svcAddr, nextWrappedLoadSvc);
 			}
 			//
-			final BasicHttpDataLoadClient<T, HttpDataLoadSvc<T>>
-				nextLoadClient = new BasicHttpDataLoadClient<>(
-					appConfig, reqConfigCopy, addrs, threadCount, itemSrcMap.get(nextLoadType),
-					maxCount, rateLimit, nextRemoteLoadMap
-				);
+			final BasicFileLoadClient<F, FileLoadSvc<F>>
+				nextLoadClient = new BasicFileLoadClient<>(
+				appConfig, reqConfigCopy, addrs, threadCount, itemSrcMap.get(nextLoadType),
+				maxCount, rateLimit, nextRemoteLoadMap
+			);
 			loadClientMap.put(nextLoadType, nextLoadClient);
 		}
 	}
@@ -107,7 +101,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 			.appendNewLine()
 			.appendPadding(160, '-')
 			.appendNewLine();
-		HttpDataLoadExecutor nextLoadJob;
+		FileLoadExecutor<F> nextLoadJob;
 		int nextLoadWeight;
 		IOStats.Snapshot nextLoadStats;
 		for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
@@ -165,7 +159,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 	//
 	@Override
 	protected void startActually() {
-		for(final HttpDataLoadClient<T, HttpDataLoadSvc<T>> nextLoadClient : loadClientMap.values()) {
+		for(final FileLoadClient<F, FileLoadSvc<F>> nextLoadClient : loadClientMap.values()) {
 			try {
 				nextLoadClient.start();
 			} catch(final RemoteException e) {
@@ -179,7 +173,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 	//
 	@Override
 	protected void interruptActually() {
-		for(final HttpDataLoadClient<T, HttpDataLoadSvc<T>> nextLoadClient : loadClientMap.values()) {
+		for(final FileLoadClient<F, FileLoadSvc<F>> nextLoadClient : loadClientMap.values()) {
 			try {
 				nextLoadClient.interrupt();
 			} catch(final RemoteException e) {
@@ -193,7 +187,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 	//
 	@Override
 	protected void shutdownActually() {
-		for(final HttpDataLoadClient<T, HttpDataLoadSvc<T>> nextLoadClient : loadClientMap.values()) {
+		for(final FileLoadClient<F, FileLoadSvc<F>> nextLoadClient : loadClientMap.values()) {
 			try {
 				nextLoadClient.shutdown();
 			} catch(final RemoteException e) {
@@ -211,7 +205,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			loadClientMap.size() + 1, new GroupThreadFactory("await<" + getName() + ">", true)
 		);
-		for(final HttpDataLoadClient<T, HttpDataLoadSvc<T>> nextLoadClient : loadClientMap.values()) {
+		for(final FileLoadClient<F, FileLoadSvc<F>> nextLoadClient : loadClientMap.values()) {
 			awaitExecutor.submit(
 				new Runnable() {
 					@Override
@@ -235,7 +229,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 				@Override
 				public final void run() {
 					try {
-						BasicMixedHttpDataLoadClient.super.await(timeOut, timeUnit);
+						BasicMixedFileLoadClient.super.await(timeOut, timeUnit);
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "{}: await call interrupted", getName());
 					} catch(final RemoteException e) {
@@ -258,7 +252,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 	@Override
 	protected void closeActually()
 	throws IOException {
-		for(final HttpDataLoadClient<T, HttpDataLoadSvc<T>> nextLoadClient : loadClientMap.values()) {
+		for(final FileLoadClient<F, FileLoadSvc<F>> nextLoadClient : loadClientMap.values()) {
 			try {
 				nextLoadClient.close();
 			} catch(final RemoteException e) {

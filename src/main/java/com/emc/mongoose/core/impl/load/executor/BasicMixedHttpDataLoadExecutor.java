@@ -154,7 +154,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 			.appendFixedWidthPadLeft("Duration [us] | ", 35, ' ')
 			.appendFixedWidthPadLeft("Latency [us] | ", 35, ' ')
 			.appendFixedWidthPadLeft("TP [op/s] | ", 25, ' ')
-			.appendFixedWidthPadLeft("BW [MB/s]", 25, ' ')
+			.appendFixedWidthPadLeft("BW [MB/s]", 22, ' ')
 			.appendNewLine()
 			.appendPadding(160, '-')
 			.appendNewLine();
@@ -188,7 +188,8 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 					) + " | ", 35, ' '
 				)
 				.appendFixedWidthPadLeft(nextLoadStats.toSuccRatesString() + " | ", 25, ' ')
-				.appendFixedWidthPadLeft(nextLoadStats.toByteRatesString(), 25, ' ');
+				.appendFixedWidthPadLeft(nextLoadStats.toByteRatesString(), 22, ' ')
+				.appendNewLine();
 		}
 		strb
 			.appendPadding(160, '-').appendNewLine()
@@ -209,7 +210,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 				) + " | ", 35, ' '
 			)
 			.appendFixedWidthPadLeft(lastStats.toSuccRatesString() + " | ", 25, ' ')
-			.appendFixedWidthPadLeft(lastStats.toByteRatesString(), 25, ' ');
+			.appendFixedWidthPadLeft(lastStats.toByteRatesString(), 22, ' ');
 		LOG.info(Markers.MSG, strb.toString());
 	}
 	//

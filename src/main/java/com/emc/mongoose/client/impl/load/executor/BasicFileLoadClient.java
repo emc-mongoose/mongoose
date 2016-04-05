@@ -31,6 +31,18 @@ implements FileLoadClient<T, W> {
 		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, remoteLoadMap);
 	}
 	//
+	protected BasicFileLoadClient(
+		final AppConfig appConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
+		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc,
+		final long maxCount, final float rateLimit, final Map<String, W> remoteLoadMap,
+	    final int instanceNum
+	) throws RemoteException {
+		super(
+			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, remoteLoadMap,
+			instanceNum
+		);
+	}
+	//
 	@Override
 	protected IOTask<T> getIOTask(final T item, final String nextNodeAddr) {
 		return new BasicFileIOTask<>(

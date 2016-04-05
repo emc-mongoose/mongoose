@@ -4,12 +4,16 @@ import com.emc.mongoose.client.api.load.builder.FileLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.FileLoadClient;
 //
 import com.emc.mongoose.client.impl.load.executor.BasicFileLoadClient;
+import com.emc.mongoose.client.impl.load.executor.BasicMixedFileLoadClient;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
+import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIOConfig;
@@ -18,11 +22,17 @@ import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
 //
 import com.emc.mongoose.server.api.load.builder.FileLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
+import com.emc.mongoose.server.api.load.executor.MixedFileLoadSvc;
+//
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 26.11.15.
  */
@@ -30,6 +40,8 @@ public class BasicFileLoadBuilderClient<
 	T extends FileItem, W extends FileLoadSvc<T>, U extends FileLoadClient<T, W>
 > extends DataLoadBuilderClientBase<T, W, U, FileLoadBuilderSvc<T, W>>
 implements FileLoadBuilderClient<T, W, U> {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicFileLoadBuilderClient()
 	throws IOException {
@@ -70,15 +82,13 @@ implements FileLoadBuilderClient<T, W, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected U buildActually()
 	throws RemoteException, DuplicateSvcNameException {
-		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
-		//
-		FileLoadBuilderSvc<T, W> nextBuilder;
-		W nextLoad;
-		//
+		final LoadType loadType = ioConfig.getLoadType();
 		if(itemSrc == null) {
 			itemSrc = getDefaultItemSrc(); // affects load service builders
 		}
-		//
+		final Map<String, W> remoteLoadMap = new HashMap<>();
+		FileLoadBuilderSvc<T, W> nextBuilder;
+		W nextLoad;
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing
@@ -88,9 +98,32 @@ implements FileLoadBuilderClient<T, W, U> {
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		//
-		return (U) new BasicFileLoadClient<>(
-			appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
-			appConfig.getLoadThreads(), itemSrc, maxCount, rateLimit, remoteLoadMap
-		);
+		if(LoadType.MIXED.equals(loadType)) {
+			final Map<LoadType, ItemSrc<T>> itemSrcMap = new HashMap<>();
+			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
+				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
+			);
+			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
+				try {
+					itemSrcMap.put(
+						nextLoadType,
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemSrc
+					);
+				} catch(final NoSuchMethodException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
+				}
+			}
+			//
+			return (U) new BasicMixedFileLoadClient<>(
+				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
+				threadCount, maxCount, rateLimit, (Map<String, MixedFileLoadSvc<T>>) remoteLoadMap,
+				itemSrcMap, loadTypeWeightMap
+			);
+		} else {
+			return (U) new BasicFileLoadClient<>(
+				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
+				appConfig.getLoadThreads(), itemSrc, maxCount, rateLimit, remoteLoadMap
+			);
+		}
 	}
 }
