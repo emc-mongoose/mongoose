@@ -12,7 +12,7 @@
 						"size" : "8KB"
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-weighted2-read.csv"
+						"file" : "/tmp/scenario-weighted2-load.csv"
 					}
 				},
 				"load" : {
@@ -35,7 +35,7 @@
 						"size" : "64KB"
 					},
 					"src" : {
-						"file" : "/tmp/scenario-weighted-load.csv"
+						"file" : "/tmp/scenario-weighted2-load.csv"
 					}
 				},
 				"load" : {
