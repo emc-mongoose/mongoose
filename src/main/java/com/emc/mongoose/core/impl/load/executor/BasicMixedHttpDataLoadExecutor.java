@@ -143,11 +143,21 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	public void logMetrics(final Marker logMarker) {
 		final StrBuilder strb = new StrBuilder()
 			.appendNewLine()
-			.appendPadding(100, '-')
+			.appendPadding(160, '-')
+			.appendNewLine()
+			.appendFixedWidthPadLeft("Weight ", 7, ' ')
+			.appendFixedWidthPadLeft("Load type ", 10, ' ')
+			.appendFixedWidthPadLeft("Count ", 20, ' ')
+			.appendFixedWidthPadLeft("Duration [us] ", 40, ' ')
+			.appendFixedWidthPadLeft("Latency [us] ", 40, ' ')
+			.appendFixedWidthPadLeft("TP [op/s] ", 20, ' ')
+			.appendFixedWidthPadLeft("BW [MB/s] ", 20, ' ')
+			.appendNewLine()
+			.appendPadding(160, '-')
 			.appendNewLine();
 		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
-		IOStats.Snapshot nextLoadStats = null;
+		IOStats.Snapshot nextLoadStats;
 		for(final LoadType nextLoadType : loadExecutorMap.keySet()) {
 			nextLoadWeight = loadTypeWeights.get(nextLoadType);
 			nextLoadJob = loadExecutorMap.get(nextLoadType);
@@ -155,27 +165,29 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 				nextLoadStats = nextLoadJob.getStatsSnapshot();
 			} catch(final RemoteException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the remote stats snapshot");
+				continue;
 			}
 			strb
-				.appendFixedWidthPadLeft(nextLoadWeight + " % ", 6, ' ')
+				.appendFixedWidthPadLeft(nextLoadWeight + " % ", 7, ' ')
 				.appendFixedWidthPadLeft(nextLoadType.name() + " ", 10, ' ')
-				.append(
-					nextLoadStats == null ?
-						null :
-						Markers.PERF_SUM.equals(logMarker) ?
-							nextLoadStats.toSummaryString() : nextLoadStats.toString()
-				)
+				.appendFixedWidthPadLeft(nextLoadStats.toCountsString() + " ", 20, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.toDurString() + " ", 40, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.toLatString() + " ", 40, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.toSuccRatesString() + " ", 20, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.toByteRatesString() + " ", 20, ' ')
 				.appendNewLine();
 		}
 		strb
-			.appendPadding(100, '-').appendNewLine()
-			.appendFixedWidthPadLeft("100 %     TOTAL ", 16, ' ')
-			.append(
-				Markers.PERF_SUM.equals(logMarker) ?
-					lastStats.toSummaryString() : lastStats.toString()
-			)
+			.appendPadding(160, '-').appendNewLine()
+			.appendFixedWidthPadLeft("100 % ", 7, ' ')
+			.appendFixedWidthPadLeft("TOTAL ", 10, ' ')
+			.appendFixedWidthPadLeft(lastStats.toCountsString() + " ", 20, ' ')
+			.appendFixedWidthPadLeft(lastStats.toDurString() + " ", 40, ' ')
+			.appendFixedWidthPadLeft(lastStats.toLatString() + " ", 40, ' ')
+			.appendFixedWidthPadLeft(lastStats.toSuccRatesString() + " ", 20, ' ')
+			.appendFixedWidthPadLeft(lastStats.toByteRatesString() + " ", 20, ' ')
 			.appendNewLine()
-			.appendPadding(100, '-');
+			.appendPadding(160, '-');
 		LOG.info(Markers.MSG, strb.toString());
 	}
 	//

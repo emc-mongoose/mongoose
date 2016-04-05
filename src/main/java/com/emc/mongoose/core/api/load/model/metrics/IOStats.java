@@ -32,16 +32,8 @@ extends Closeable {
 		//
 		NAME_SEP = "@",
 		//
-		MSG_FMT_METRICS = "count=(%d/%s); " +
-			"duration[us]=(%d/%d/%d); " +
-			"latency[us]=(%d/%d/%d); " +
-			"TP[op/s]=(%.3f/%.3f); " +
-			"BW[MB/s]=(%.3f/%.3f)",
-		MSG_FMT_METRICS_SUM = "count=(%d/%s); " +
-			"duration[us]=(%d/%d/%d/%d/%d/%d); " +
-			"latency[us]=(%d/%d/%d/%d/%d/%d); " +
-			"TP[op/s]=(%.3f/%.3f); " +
-			"BW[MB/s]=(%.3f/%.3f)";
+		MSG_FMT_METRICS = "count=(%s); duration[us]=(%s); latency[us]=(%s); TP[op/s]=(%s); BW[MB/s]=(%s)",
+		MSG_FMT_FLOAT_PAIR = "%.3f/%.3f";
 	//
 	void start();
 	//
@@ -90,6 +82,13 @@ extends Closeable {
 		long getLatencyMax();
 		long[] getLatencyValues();
 		//
+		String toCountsString();
+		String toDurString();
+		String toDurSummaryString();
+		String toLatString();
+		String toLatSummaryString();
+		String toSuccRatesString();
+		String toByteRatesString();
 		String toSummaryString();
 	}
 }
