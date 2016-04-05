@@ -154,9 +154,9 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 			.appendFixedWidthPadLeft("Duration [us] | ", 35, ' ')
 			.appendFixedWidthPadLeft("Latency [us] | ", 35, ' ')
 			.appendFixedWidthPadLeft("TP [op/s] | ", 25, ' ')
-			.appendFixedWidthPadLeft("BW [MB/s] | ", 25, ' ')
+			.appendFixedWidthPadLeft("BW [MB/s]", 25, ' ')
 			.appendNewLine()
-			.appendPadding(163, '-')
+			.appendPadding(160, '-')
 			.appendNewLine();
 		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
@@ -188,11 +188,10 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 					) + " | ", 35, ' '
 				)
 				.appendFixedWidthPadLeft(nextLoadStats.toSuccRatesString() + " | ", 25, ' ')
-				.appendFixedWidthPadLeft(nextLoadStats.toByteRatesString() + " | ", 25, ' ')
-				.appendNewLine();
+				.appendFixedWidthPadLeft(nextLoadStats.toByteRatesString(), 25, ' ');
 		}
 		strb
-			.appendPadding(163, '-').appendNewLine()
+			.appendPadding(160, '-').appendNewLine()
 			.appendFixedWidthPadLeft("100 % | ", 9, ' ')
 			.appendFixedWidthPadLeft("TOTAL | ", 12, ' ')
 			.appendFixedWidthPadLeft(lastStats.getSuccCount() + " | ", 14, ' ')
@@ -210,8 +209,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 				) + " | ", 35, ' '
 			)
 			.appendFixedWidthPadLeft(lastStats.toSuccRatesString() + " | ", 25, ' ')
-			.appendFixedWidthPadLeft(lastStats.toByteRatesString() + " | ", 25, ' ')
-			.appendNewLine();
+			.appendFixedWidthPadLeft(lastStats.toByteRatesString(), 25, ' ');
 		LOG.info(Markers.MSG, strb.toString());
 	}
 	//
