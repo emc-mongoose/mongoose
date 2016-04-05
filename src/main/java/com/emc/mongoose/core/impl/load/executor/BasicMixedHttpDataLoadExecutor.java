@@ -151,11 +151,12 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 			.appendNewLine()
 			.appendFixedWidthPadLeft("Weight | ", 9, ' ')
 			.appendFixedWidthPadLeft("Load type | ", 12, ' ')
-			.appendFixedWidthPadLeft("Count | ", 20, ' ')
-			.appendFixedWidthPadLeft("Duration [us] | ", 40, ' ')
-			.appendFixedWidthPadLeft("Latency [us] | ", 40, ' ')
-			.appendFixedWidthPadLeft("TP [op/s] | ", 20, ' ')
-			.appendFixedWidthPadLeft("BW [MB/s] | ", 20, ' ')
+			.appendFixedWidthPadLeft("Done | ", 13, ' ')
+			.appendFixedWidthPadLeft("Failed | ", 8, ' ')
+			.appendFixedWidthPadLeft("Duration [us] | ", 35, ' ')
+			.appendFixedWidthPadLeft("Latency [us] | ", 35, ' ')
+			.appendFixedWidthPadLeft("TP [op/s] | ", 25, ' ')
+			.appendFixedWidthPadLeft("BW [MB/s] | ", 25, ' ')
 			.appendNewLine()
 			.appendPadding(160, '-')
 			.appendNewLine();
@@ -174,42 +175,44 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 			strb
 				.appendFixedWidthPadLeft(nextLoadWeight + " % | ", 9, ' ')
 				.appendFixedWidthPadLeft(nextLoadType.name() + " | ", 12, ' ')
-				.appendFixedWidthPadLeft(nextLoadStats.toCountsString() + " | ", 20, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.getSuccCount() + " | ", 14, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.getFailCount() + " | ", 9, ' ')
 				.appendFixedWidthPadLeft(
 					(
 						Markers.PERF_SUM.equals(logMarker) ?
 							nextLoadStats.toDurSummaryString() : nextLoadStats.toDurString()
-					) + " | ", 40, ' '
+					) + " | ", 35, ' '
 				)
 				.appendFixedWidthPadLeft(
 					(
 						Markers.PERF_SUM.equals(logMarker) ?
 							nextLoadStats.toLatSummaryString() : nextLoadStats.toLatString()
-					) + " | ", 40, ' '
+					) + " | ", 35, ' '
 				)
-				.appendFixedWidthPadLeft(nextLoadStats.toSuccRatesString() + " | ", 20, ' ')
-				.appendFixedWidthPadLeft(nextLoadStats.toByteRatesString() + " | ", 20, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.toSuccRatesString() + " | ", 25, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.toByteRatesString() + " | ", 25, ' ')
 				.appendNewLine();
 		}
 		strb
 			.appendPadding(160, '-').appendNewLine()
 			.appendFixedWidthPadLeft("100 % | ", 9, ' ')
 			.appendFixedWidthPadLeft("TOTAL | ", 12, ' ')
-			.appendFixedWidthPadLeft(lastStats.toCountsString() + " | ", 20, ' ')
+			.appendFixedWidthPadLeft(lastStats.getSuccCount() + " | ", 14, ' ')
+			.appendFixedWidthPadLeft(lastStats.getFailCount() + " | ", 9, ' ')
 			.appendFixedWidthPadLeft(
 				(
 					Markers.PERF_SUM.equals(logMarker) ?
 						lastStats.toDurSummaryString() : lastStats.toDurString()
-				) + " | ", 40, ' '
+				) + " | ", 35, ' '
 			)
 			.appendFixedWidthPadLeft(
 				(
 					Markers.PERF_SUM.equals(logMarker) ?
 						lastStats.toLatSummaryString() : lastStats.toLatString()
-				) + " | ", 40, ' '
+				) + " | ", 35, ' '
 			)
-			.appendFixedWidthPadLeft(lastStats.toSuccRatesString() + " | ", 20, ' ')
-			.appendFixedWidthPadLeft(lastStats.toByteRatesString() + " | ", 20, ' ')
+			.appendFixedWidthPadLeft(lastStats.toSuccRatesString() + " | ", 25, ' ')
+			.appendFixedWidthPadLeft(lastStats.toByteRatesString() + " | ", 25, ' ')
 			.appendNewLine()
 			.appendPadding(160, '-');
 		LOG.info(Markers.MSG, strb.toString());
