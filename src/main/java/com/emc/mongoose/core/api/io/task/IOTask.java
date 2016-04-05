@@ -4,14 +4,11 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
-//
-import java.util.Map;
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
  */
-public interface IOTask<T extends Item>
-extends Map.Entry<LoadType, T> {
+public interface IOTask<T extends Item>  {
 	//
 	enum Status {
 		SUCC(0, "Success"),
@@ -35,6 +32,8 @@ extends Map.Entry<LoadType, T> {
 	}
 	//
 	String getNodeAddr();
+	//
+	LoadType getLoadType();
 	//
 	T getItem();
 	//

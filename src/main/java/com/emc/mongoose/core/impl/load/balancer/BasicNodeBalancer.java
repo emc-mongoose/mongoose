@@ -78,7 +78,9 @@ implements Balancer<String> {
 				bestNodes.add(nextNode);
 			}
 		}
+		// round robin counter
 		rrc = rrc == Short.MAX_VALUE ? 0 : rrc + 1;
+		// select using round robin counter if there are more than 1 best nodes
 		return bestNodes.get(rrc % bestNodes.size());
 	}
 }

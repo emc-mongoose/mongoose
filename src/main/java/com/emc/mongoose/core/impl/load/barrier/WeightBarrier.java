@@ -1,9 +1,8 @@
-package com.emc.mongoose.core.impl.load.model;
+package com.emc.mongoose.core.impl.load.barrier;
 //
-import com.emc.mongoose.core.api.load.model.Barrier;
+import com.emc.mongoose.core.api.load.barrier.Barrier;
 //
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,8 +14,8 @@ import java.util.Set;
  The weight is used to pass the things with specific ratio for the different keys.
  This implementation of the barrier never denies the things but blocks until a thing may be passed.
  */
-public class WeightBarrier<K, T extends Map.Entry<K, ?>>
-implements Barrier<T> {
+public class WeightBarrier<K>
+implements Barrier<K> {
 
 	private final Set<K> keySet; // just to not to calculate every time
 	private final Map<K, Integer> weightMap; // initial weight map (constant)
@@ -40,14 +39,8 @@ implements Barrier<T> {
 
 	//
 	@Override
-	public final boolean getApprovalFor(final T thing)
+	public final boolean getApprovalFor(final K key)
 	throws InterruptedException {
-		final K key;
-		try {
-			key = thing.getKey();
-		} catch(final Exception e) {
-			return false;
-		}
 		int remainingWeight;
 		while(true) {
 			synchronized(remainingWeightMap) {
@@ -62,7 +55,7 @@ implements Barrier<T> {
 						resetRemainingWeights();
 						remainingWeightMap.notify();
 					} else {
-						remainingWeightMap.wait();
+						remainingWeightMap.wait(1);
 					}
 				} else { // remaining weight is more than 0
 					remainingWeightMap.put(key, remainingWeight - 1);
@@ -75,18 +68,11 @@ implements Barrier<T> {
 
 	//
 	@Override
-	public final boolean getBatchApprovalFor(
-		final List<T> things, final int from, final int to
-	) throws InterruptedException {
-		int left = to - from;
+	public final boolean getApprovalsFor(final K key, final int times)
+	throws InterruptedException {
+		int left = times;
 		if(left == 0) {
 			return true;
-		}
-		final K key;
-		try {
-			key = things.get(from).getKey();
-		} catch(final Exception e) {
-			return false;
 		}
 		int remainingWeight;
 		while(true) {
@@ -102,7 +88,7 @@ implements Barrier<T> {
 						resetRemainingWeights();
 						remainingWeightMap.notify();
 					} else {
-						remainingWeightMap.wait();
+						remainingWeightMap.wait(1);
 					}
 				} else if(remainingWeight < left) {
 					remainingWeightMap.put(key, 0);

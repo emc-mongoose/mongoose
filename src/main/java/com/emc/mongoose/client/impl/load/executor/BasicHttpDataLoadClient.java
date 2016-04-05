@@ -37,6 +37,17 @@ implements HttpDataLoadClient<T, W> {
 		super(appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, remoteLoadMap);
 	}
 	//
+	protected BasicHttpDataLoadClient(
+		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
+		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final float rateLimit, final Map<String, W> remoteLoadMap, final int instanceNum
+	) throws RemoteException {
+		super(
+			appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, remoteLoadMap,
+			instanceNum
+		);
+	}
+	//
 	@Override
 	protected HttpDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
 		return new BasicHttpDataIOTask<>(

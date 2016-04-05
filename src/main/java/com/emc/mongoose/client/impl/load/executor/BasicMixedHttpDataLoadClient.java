@@ -7,23 +7,21 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-//
 import com.emc.mongoose.common.net.ServiceUtil;
+//
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 //
-import com.emc.mongoose.core.impl.load.model.WeightBarrier;
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 //
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 import com.emc.mongoose.server.api.load.executor.MixedHttpDataLoadSvc;
 //
 import org.apache.commons.lang.text.StrBuilder;
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,12 +30,9 @@ import org.apache.logging.log4j.Marker;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.03.16.
@@ -48,102 +43,52 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final WeightBarrier<LoadType, IOTask<T>> barrier;
-	private final Map<LoadType, Integer> loadTypeWeights;
-	private final Map<LoadType, HttpRequestConfig<T, ? extends Container<T>>>
-		reqConfigMap = new HashMap<>();
 	private final Map<LoadType, HttpDataLoadClient<T, HttpDataLoadSvc<T>>>
 		loadClientMap = new HashMap<>();
+	private final Map<LoadType, Integer>
+		loadTypeWeightMap;
 	//
 	public BasicMixedHttpDataLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
-		final Map<String, W> remoteLoadMap, final Map<LoadType, Integer> loadTypeWeightMap,
-		final Map<LoadType, ItemSrc<T>> itemSrcMap
+		final Map<String, W> remoteLoadMap, final Map<LoadType, ItemSrc<T>> itemSrcMap,
+		final Map<LoadType, Integer> loadTypeWeightMap
 	) throws RemoteException {
 		//
-		super(appConfig, reqConfig, addrs, threadCount, null, maxCount, rateLimit, remoteLoadMap);
+		super(
+			appConfig, reqConfig, addrs, threadCount, null, maxCount, rateLimit, remoteLoadMap,
+			remoteLoadMap.values().iterator().next().getInstanceNum()
+		);
+		this.loadTypeWeightMap = loadTypeWeightMap;
 		//
-		this.loadTypeWeights = loadTypeWeightMap;
-		this.barrier = new WeightBarrier<>(loadTypeWeights);
-		//
-		W nextMixedLoadSvc;
-		Map<LoadType, String> wrappedLoadSvcNames;
-		Map<String, HttpDataLoadSvc<T>> remoteMixedLoadMap;
-		//
-		for(final LoadType loadType : loadTypeWeights.keySet()) {
+		Map<String, HttpDataLoadSvc<T>> nextRemoteLoadMap;
+		for(final LoadType nextLoadType : itemSrcMap.keySet()) {
 			final HttpRequestConfig<T, ? extends Container<T>> reqConfigCopy;
 			try {
 				reqConfigCopy = (HttpRequestConfig<T, ? extends Container<T>>) reqConfig
-					.clone().setLoadType(loadType);
+					.clone().setLoadType(nextLoadType);
 			} catch(final CloneNotSupportedException e) {
 				throw new IllegalStateException(e);
 			}
-			reqConfigMap.put(loadType, reqConfigCopy);
 			//
-			remoteMixedLoadMap = new HashMap<>();
-			for(final String loadServerAddr : remoteLoadMap.keySet()) {
-				nextMixedLoadSvc = remoteLoadMap.get(loadServerAddr);
-				wrappedLoadSvcNames = nextMixedLoadSvc.getWrappedLoadSvcNames();
-				remoteMixedLoadMap.put(
-					loadServerAddr,
-					(HttpDataLoadSvc<T>) ServiceUtil.getRemoteSvc(
-						ServiceUtil.getSvcUrl(wrappedLoadSvcNames.get(loadType))
-					)
-				);
+			nextRemoteLoadMap = new HashMap<>();
+			W nextMixedLoadSvc;
+			String nextWrappedLoadSvcName;
+			HttpDataLoadSvc<T> nextWrappedLoadSvc;
+			for(final String svcAddr : remoteLoadMap.keySet()) {
+				nextMixedLoadSvc = remoteLoadMap.get(svcAddr);
+				nextWrappedLoadSvcName = nextMixedLoadSvc.getWrappedLoadSvcNameFor(nextLoadType);
+				nextWrappedLoadSvc = (HttpDataLoadSvc<T>) ServiceUtil
+					.getRemoteSvc("//" + svcAddr + "/" + nextWrappedLoadSvcName);
+				nextRemoteLoadMap.put(svcAddr, nextWrappedLoadSvc);
 			}
 			//
 			final BasicHttpDataLoadClient<T, HttpDataLoadSvc<T>>
-				nextLoadClient = new BasicHttpDataLoadClient<T, HttpDataLoadSvc<T>>(
-					appConfig, reqConfigCopy, addrs, threadCount, itemSrcMap.get(loadType),
-					maxCount, rateLimit, remoteMixedLoadMap
-				) {
-					@Override
-					public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
-					throws RemoteException, RejectedExecutionException {
-						return BasicMixedHttpDataLoadClient.this.submitTask(ioTask);
-					}
-					//
-					@Override
-					public final <A extends IOTask<T>> int submitTasks(
-						final List<A> ioTasks, int from, int to
-					) throws RemoteException, RejectedExecutionException {
-						return BasicMixedHttpDataLoadClient.this.submitTasks(ioTasks, from, to);
-					}
-				};
-			loadClientMap.put(loadType, nextLoadClient);
-		}
-	}
-	//
-	@Override
-	public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
-	throws RemoteException, RejectedExecutionException {
-		try {
-			if(barrier.getApprovalFor(ioTask)) {
-				return super.submitTask(ioTask);
-			} else {
-				throw new RejectedExecutionException(
-					"Barrier rejected the task #" + ioTask.hashCode()
+				nextLoadClient = new BasicHttpDataLoadClient<>(
+					appConfig, reqConfigCopy, addrs, threadCount, itemSrcMap.get(nextLoadType),
+					maxCount, rateLimit, nextRemoteLoadMap
 				);
-			}
-		} catch(final InterruptedException e) {
-			throw new RejectedExecutionException(e);
-		}
-	}
-	//
-	@Override
-	public final <A extends IOTask<T>> int submitTasks(final List<A> ioTasks, int from, int to)
-	throws RemoteException, RejectedExecutionException {
-		try {
-			if(barrier.getBatchApprovalFor((List<IOTask<T>>) ioTasks, from, to)) {
-				return super.submitTasks(ioTasks, from, to);
-			} else {
-				throw new RejectedExecutionException(
-					"Barrier rejected " + (to - from) + " tasks"
-				);
-			}
-		} catch(final InterruptedException e) {
-			throw new RejectedExecutionException(e);
+			loadClientMap.put(nextLoadType, nextLoadClient);
 		}
 	}
 	//
@@ -153,14 +98,14 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 			.appendNewLine()
 			.appendPadding(100, '-')
 			.appendNewLine();
-		HttpDataLoadClient<T, HttpDataLoadSvc<T>> nextLoadJobClient;
+		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
 		IOStats.Snapshot nextLoadStats = null;
 		for(final LoadType nextLoadType : loadClientMap.keySet()) {
-			nextLoadWeight = loadTypeWeights.get(nextLoadType);
-			nextLoadJobClient = loadClientMap.get(nextLoadType);
+			nextLoadWeight = loadTypeWeightMap.get(nextLoadType);
+			nextLoadJob = loadClientMap.get(nextLoadType);
 			try {
-				nextLoadStats = nextLoadJobClient.getStatsSnapshot();
+				nextLoadStats = nextLoadJob.getStatsSnapshot();
 			} catch(final RemoteException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the remote stats snapshot");
 			}
@@ -174,7 +119,6 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 							nextLoadStats.toSummaryString() : nextLoadStats.toString()
 				)
 				.appendNewLine();
-
 		}
 		strb
 			.appendPadding(100, '-').appendNewLine()

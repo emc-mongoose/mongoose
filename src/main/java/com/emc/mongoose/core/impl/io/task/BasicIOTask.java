@@ -48,18 +48,8 @@ implements IOTask<T> {
 	}
 	//
 	@Override
-	public final LoadType getKey() {
+	public final LoadType getLoadType() {
 		return ioType;
-	}
-	//
-	@Override
-	public final T getValue() {
-		return item;
-	}
-	//
-	@Override
-	public final T setValue(final T item) {
-		throw new UnsupportedOperationException();
 	}
 	//
 	@Override

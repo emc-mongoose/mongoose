@@ -11,7 +11,6 @@ import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
@@ -96,6 +95,7 @@ implements LoadClient<T, W> {
 									);
 								}
 								counterResults.addAndGet(n);
+								// CIRCULARITY FEATURE
 								if(isCircular) {
 									for(final T item : frame) {
 										uniqueItems.put(item.getName(), item);
@@ -184,7 +184,7 @@ implements LoadClient<T, W> {
 		);
 	}
 	//
-	private LoadClientBase(
+	protected LoadClientBase(
 		final AppConfig appConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
 		final int threadCount, final ItemSrc<T> itemSrc, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap, final int instanceNum
@@ -301,24 +301,27 @@ implements LoadClient<T, W> {
 	//
 	private void interruptLoadSvcs() {
 		//
-		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-			remoteLoadMap.size(),
-			new GroupThreadFactory(String.format("interrupt<%s>", getName()), true)
-		);
-		for(final String addr : loadSvcAddrs) {
-			interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
-		}
-		interruptExecutor.shutdown();
-		try {
-			if(!interruptExecutor.awaitTermination(REMOTE_TASK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
-				LOG.warn(Markers.ERR, "{}: remote interrupt tasks timeout", getName());
+		final int loadSvcCount = remoteLoadMap.size();
+		if(loadSvcCount > 0) {
+			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
+				remoteLoadMap.size(),
+				new GroupThreadFactory(String.format("interrupt<%s>", getName()), true)
+			);
+			for(final String addr : loadSvcAddrs) {
+				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
 			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
-		} finally {
-			final List<Runnable> tasksLeft = interruptExecutor.shutdownNow();
-			for(final Runnable task : tasksLeft) {
-				LOG.debug(Markers.ERR, "The interrupt task is not finished in time: {}", task);
+			interruptExecutor.shutdown();
+			try {
+				if(!interruptExecutor.awaitTermination(REMOTE_TASK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
+					LOG.warn(Markers.ERR, "{}: remote interrupt tasks timeout", getName());
+				}
+			} catch(final InterruptedException e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
+			} finally {
+				final List<Runnable> tasksLeft = interruptExecutor.shutdownNow();
+				for(final Runnable task : tasksLeft) {
+					LOG.debug(Markers.ERR, "The interrupt task is not finished in time: {}", task);
+				}
 			}
 		}
 	}
@@ -403,7 +406,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
 		if(counterSubm.get() + countRej.get() >= maxCount) {
 			LOG.debug(
@@ -420,7 +423,7 @@ implements LoadClient<T, W> {
 		}
 		while(true) {
 			try {
-				remotePutExecutor.submit(new RemotePutTask(dataItem));
+				remotePutExecutor.submit(new RemotePutTask(item));
 				break;
 			} catch(final RejectedExecutionException e) {
 				if(LOG.isTraceEnabled(Markers.ERR)) {
@@ -485,7 +488,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final int put(final List<T> dataItems, final int from, final int to)
+	public int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
 		final long dstLimit = maxCount - counterSubm.get() - countRej.get();
 		final int srcLimit = to - from;

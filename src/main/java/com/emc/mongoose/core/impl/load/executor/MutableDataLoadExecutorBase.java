@@ -141,18 +141,18 @@ extends LoadExecutorBase<T> {
 	}*/
 	/** intercepts the data items which should be scheduled for update or append */
 	@Override
-	public final void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
 			final List<DataRangesConfig.ByteRange> ranges = rangesConfig.getFixedByteRanges();
 			if(rndRangesToUpdateCount > 0) {
-				dataItem.scheduleRandomUpdates(rndRangesToUpdateCount);
+				item.scheduleRandomUpdates(rndRangesToUpdateCount);
 			} else if(ranges != null) {
 				if(ranges.size() == 1) {
 					final DataRangesConfig.ByteRange range = ranges.get(0);
-					if(range.getBeg() == dataItem.getSize()) {
-						dataItem.scheduleAppend(range.getEnd());
+					if(range.getBeg() == item.getSize()) {
+						item.scheduleAppend(range.getEnd());
 					} else {
 						// TODO
 						throw new NotImplementedException();
@@ -169,11 +169,11 @@ extends LoadExecutorBase<T> {
 			);
 		}
 		//
-		super.put(dataItem);
+		super.put(item);
 	}
 	//
 	@Override
-	public final int put(final List<T> dataItems, final int from, final int to)
+	public int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();

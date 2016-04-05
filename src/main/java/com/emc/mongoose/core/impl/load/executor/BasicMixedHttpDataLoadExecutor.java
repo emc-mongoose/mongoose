@@ -17,7 +17,7 @@ import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 //
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
-import com.emc.mongoose.core.impl.load.model.WeightBarrier;
+import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
 //
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
@@ -44,7 +44,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final WeightBarrier<LoadType, IOTask<T>> barrier;
+	private final WeightBarrier<LoadType> barrier;
 	private final Map<LoadType, Integer> loadTypeWeights;
 	private final Map<LoadType, HttpRequestConfig<T, ? extends Container<T>>>
 		reqConfigMap = new HashMap<>();
@@ -64,73 +64,66 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
 		this.barrier = new WeightBarrier<>(loadTypeWeights);
-		for(final LoadType loadType : loadTypeWeights.keySet()) {
+		for(final LoadType nextLoadType : loadTypeWeights.keySet()) {
 			final HttpRequestConfig<T, ? extends Container<T>> reqConfigCopy;
 			try {
 				reqConfigCopy = (HttpRequestConfig<T, ? extends Container<T>>) reqConfig
-					.clone().setLoadType(loadType);
+					.clone().setLoadType(nextLoadType);
 			} catch(final CloneNotSupportedException e) {
 				throw new IllegalStateException(e);
 			}
-			reqConfigMap.put(loadType, reqConfigCopy);
+			reqConfigMap.put(nextLoadType, reqConfigCopy);
 			final BasicHttpDataLoadExecutor<T> nextLoadExecutor = new BasicHttpDataLoadExecutor<T>(
-				appConfig, reqConfigCopy, addrs, threadCount, itemSrcMap.get(loadType),
+				appConfig, reqConfigCopy, addrs, threadCount,
+				itemSrcMap == null ? null : itemSrcMap.get(nextLoadType),
 				maxCount, rateLimit, sizeConfig, rangesConfig,
 				httpProcessor, client, ioReactor, connPoolMap
 			) {
 				@Override
 				public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
-					return BasicMixedHttpDataLoadExecutor.this.submitTask(ioTask);
+					try {
+						if(barrier.getApprovalFor(nextLoadType)) {
+							return BasicMixedHttpDataLoadExecutor.this.submitTask(ioTask);
+						} else {
+							throw new RejectedExecutionException(
+								"Barrier rejected the item for {} operation" + nextLoadType
+							);
+						}
+					} catch(final InterruptedException e) {
+						throw new RejectedExecutionException(e);
+					}
 				}
 				//
 				@Override
 				public final <A extends IOTask<T>> int submitTasks(
 					final List<A> ioTasks, int from, int to
 				) throws RejectedExecutionException {
-					return BasicMixedHttpDataLoadExecutor.this.submitTasks(ioTasks, from, to);
+					try {
+						if(barrier.getApprovalsFor(nextLoadType, to - from)) {
+							return BasicMixedHttpDataLoadExecutor.this.submitTasks(
+								ioTasks, from, to
+							);
+						} else {
+							throw new RejectedExecutionException(
+								"Barrier rejected " + (to - from) + " tasks"
+							);
+						}
+					} catch(final InterruptedException e) {
+						throw new RejectedExecutionException(e);
+					}
 				}
 			};
-			loadExecutorMap.put(loadType, nextLoadExecutor);
-		}
-	}
-	//
-	@Override
-	public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
-	throws RejectedExecutionException {
-		try {
-			if(barrier.getApprovalFor(ioTask)) {
-				return super.submitTask(ioTask);
-			} else {
-				throw new RejectedExecutionException(
-					"Barrier rejected the task #" + ioTask.hashCode()
-				);
-			}
-		} catch(final InterruptedException e) {
-			throw new RejectedExecutionException(e);
-		}
-	}
-	//
-	@Override
-	public final <A extends IOTask<T>> int submitTasks(final List<A> ioTasks, int from, int to)
-	throws RejectedExecutionException {
-		try {
-			if(barrier.getBatchApprovalFor((List<IOTask<T>>) ioTasks, from, to)) {
-				return super.submitTasks(ioTasks, from, to);
-			} else {
-				throw new RejectedExecutionException(
-					"Barrier rejected " + (to - from) + " tasks"
-				);
-			}
-		} catch(final InterruptedException e) {
-			throw new RejectedExecutionException(e);
+			loadExecutorMap.put(nextLoadType, nextLoadExecutor);
 		}
 	}
 	//
 	@Override
 	public void ioTaskCompleted(final IOTask<T> ioTask)
 	throws RemoteException {
-		loadExecutorMap.get(ioTask.getKey()).ioTaskCompleted(ioTask);
+		loadExecutorMap
+			.get(ioTask.getLoadType())
+			.ioTaskCompleted(ioTask);
 		super.ioTaskCompleted(ioTask);
 	}
 	//
@@ -139,7 +132,9 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 		final List<? extends IOTask<T>> ioTasks, final int from, final int to
 	) throws RemoteException {
 		if(ioTasks != null && ioTasks.size() > 0) {
-			loadExecutorMap.get(ioTasks.get(from).getKey()).ioTaskCompletedBatch(ioTasks, from, to);
+			loadExecutorMap
+				.get(ioTasks.get(from).getLoadType())
+				.ioTaskCompletedBatch(ioTasks, from, to);
 		}
 		return super.ioTaskCompletedBatch(ioTasks, from, to);
 	}

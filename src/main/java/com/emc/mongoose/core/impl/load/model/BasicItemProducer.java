@@ -6,8 +6,10 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.model.ItemProducer;
 //
+import com.emc.mongoose.core.impl.load.barrier.RateLimitBarrier;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -37,7 +38,7 @@ implements ItemProducer<T> {
 	protected final long maxCount;
 	protected final boolean isCircular;
 	protected final boolean isShuffling;
-	protected final long tgtNanoTime;
+	protected final Barrier<T> rateLimitBarrier;
 	protected final int batchSize;
 	protected volatile ItemDst<T> itemDst = null;
 	protected long skipCount;
@@ -72,10 +73,9 @@ implements ItemProducer<T> {
 		this.isCircular = isCircular;
 		this.isShuffling = isShuffling;
 		this.maxItemQueueSize = maxItemQueueSize;
-		this.tgtNanoTime = rateLimit > 0 && !Float.isInfinite(rateLimit) && !Float.isNaN(rateLimit) ?
-			(long) (TimeUnit.SECONDS.toNanos(1) / rateLimit) :
-			0;
+		this.rateLimitBarrier = new RateLimitBarrier<>(rateLimit);
 		this.uniqueItems = new ConcurrentHashMap<>(maxItemQueueSize);
+		setDaemon(true);
 	}
 	//
 	@Override
@@ -123,7 +123,6 @@ implements ItemProducer<T> {
 			return;
 		}
 		int n = 0, m = 0;
-		long nt = System.nanoTime(); // LOAD RATE LIMIT FEATURE
 		try {
 			List<T> buff;
 			while(maxCount > producedItemsCount && !isInterrupted) {
@@ -136,17 +135,7 @@ implements ItemProducer<T> {
 					if(isInterrupted) {
 						break;
 					}
-					if(n > 0) {
-						if(tgtNanoTime > 0) {
-							// LOAD RATE LIMIT FEATURE:
-							// sleep the calculated time in order to match the target rate
-							nt = tgtNanoTime * n - System.nanoTime() + nt;
-							if(nt > 0) {
-								TimeUnit.NANOSECONDS.sleep(nt);
-							}
-							nt = System.nanoTime(); // mark the current time again
-						}
-						//
+					if(n > 0 && rateLimitBarrier.getApprovalsFor(null, n)) {
 						for(m = 0; m < n && !isInterrupted; ) {
 							m += itemDst.put(buff, m, n);
 							LockSupport.parkNanos(1);

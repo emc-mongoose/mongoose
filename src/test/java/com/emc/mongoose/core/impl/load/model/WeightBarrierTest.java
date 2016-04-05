@@ -2,8 +2,9 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.model.Barrier;
+import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -122,7 +123,7 @@ public class WeightBarrierTest {
 						ioTask.loadType = loadType;
 						ioTasks.add(ioTask);
 					}
-					if(fc.getBatchApprovalFor(ioTasks, 0, 128)) {
+					if(fc.getApprovalsFor(ioTasks, 0, 128)) {
 						resultsMap.get(loadType).incrementAndGet();
 					}
 				} catch(final InterruptedException e) {

@@ -31,7 +31,6 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 08.05.14.
  */
@@ -78,15 +77,13 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 	protected final U buildActually()
 	throws RemoteException {
 		//
-		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
-		//
-		HttpDataLoadBuilderSvc<T, W> nextBuilder;
-		W nextLoad;
-		//
+		final LoadType loadType = ioConfig.getLoadType();
 		if(itemSrc == null) {
 			itemSrc = getDefaultItemSrc(); // affects load service builders
 		}
-		//
+		final Map<String, W> remoteLoadMap = new HashMap<>();
+		HttpDataLoadBuilderSvc<T, W> nextBuilder;
+		W nextLoad;
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing
@@ -95,13 +92,11 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 			);
 			remoteLoadMap.put(addr, nextLoad);
 		}
-		//
-		final LoadType loadType = ioConfig.getLoadType();
 		if(LoadType.MIXED.equals(loadType)) {
+			final Map<LoadType, ItemSrc<T>> itemSrcMap = new HashMap<>();
 			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
 				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
 			);
-			final Map<LoadType, ItemSrc<T>> itemSrcMap = new HashMap<>();
 			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
 				try {
 					itemSrcMap.put(
@@ -112,12 +107,14 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
 				}
 			}
+			//
 			return (U) new BasicMixedHttpDataLoadClient<>(
 				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount,
 				maxCount, rateLimit, (Map<String, MixedHttpDataLoadSvc<T>>) remoteLoadMap,
-				loadTypeWeightMap, itemSrcMap
+				itemSrcMap, loadTypeWeightMap
 			);
 		} else {
+			//
 			return (U) new BasicHttpDataLoadClient<>(
 				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount,
 				itemSrc, maxCount, rateLimit, remoteLoadMap

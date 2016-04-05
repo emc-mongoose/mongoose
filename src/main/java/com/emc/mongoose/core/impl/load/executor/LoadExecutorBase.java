@@ -18,12 +18,14 @@ import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
+import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
+import com.emc.mongoose.core.impl.load.barrier.ActiveTaskCountLimitBarrier;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
@@ -71,7 +73,8 @@ implements LoadExecutor<T> {
 	protected volatile ItemDst<T> consumer = null;
 	//
 	protected final long maxCount;
-	protected final int totalThreadCount, activeTaskCountLimit;
+	protected final int totalThreadCount;
+	protected final Barrier<T> activeTaskCountLimitBarrier;
 	// METRICS section
 	protected final int metricsPeriodSec;
 	protected IOStats ioStats;
@@ -194,7 +197,10 @@ implements LoadExecutor<T> {
 		}
 		//
 		totalThreadCount = threadCount * storageNodeCount;
-		activeTaskCountLimit = 2 * totalThreadCount + 1000;
+		activeTaskCountLimitBarrier = new ActiveTaskCountLimitBarrier<>(
+			2 * totalThreadCount + 1000, counterSubm, counterResults, isInterrupted, isShutdown,
+			isCircular
+		);
 		//
 		IOConfig<? extends Item, ? extends Container<? extends Item>> reqConfigClone = null;
 		try {
@@ -459,7 +465,7 @@ implements LoadExecutor<T> {
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
 		if(counterSubm.get() + countRej.get() >= maxCount) {
 			LOG.debug(
@@ -474,31 +480,18 @@ implements LoadExecutor<T> {
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final String nextNodeAddr = storageNodeAddrs == null ?
 			null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
-		final IOTask<T> ioTask = getIOTask(dataItem, nextNodeAddr);
+		final IOTask<T> ioTask = getIOTask(item, nextNodeAddr);
 		// don't fill the connection pool as fast as possible, this may cause a failure
-		int activeTaskCount;
-		do {
-			activeTaskCount = (int) (counterSubm.get() - counterResults.get());
-			if(isInterrupted.get() || (isShutdown.get() && !isCircular)) {
-				throw new InterruptedIOException(
-					getName() + ": submit failed, shut down already or interrupted"
-				);
-			}
-			if(activeTaskCount < activeTaskCountLimit) {
-				break;
-			}
-			LockSupport.parkNanos(1000); Thread.yield();
-		} while(true);
 		//
 		try {
-			if(null == submitTask(ioTask)) {
-				throw new RejectedExecutionException("Null future returned");
+			if(!activeTaskCountLimitBarrier.getApprovalFor(item) || null == submitTask(ioTask)) {
+				throw new RejectedExecutionException();
 			}
 			counterSubm.incrementAndGet();
 			if(nodeBalancer != null) {
 				nodeBalancer.markTaskStart(nextNodeAddr);
 			}
-		} catch(final RejectedExecutionException e) {
+		} catch(final InterruptedException | RejectedExecutionException e) {
 			if(!isInterrupted.get()) {
 				countRej.incrementAndGet();
 				LogUtil.exception(LOG, Level.DEBUG, e, "Rejected the I/O task {}", ioTask);
@@ -511,7 +504,7 @@ implements LoadExecutor<T> {
 	throws IOException {
 		final long dstLimit = maxCount - counterSubm.get() - countRej.get();
 		final int srcLimit = to - from;
-		int n = 0, m, activeTaskCount;
+		int n = 0, m;
 		if(dstLimit > 0) {
 			if(dstLimit < srcLimit) {
 				return put(srcBuff, from, from + (int) dstLimit);
@@ -527,20 +520,8 @@ implements LoadExecutor<T> {
 				// submit all I/O tasks
 				while(n < srcLimit) {
 					// don't fill the connection pool as fast as possible, this may cause a failure
-					do {
-						activeTaskCount = (int) (counterSubm.get() - counterResults.get());
-						if(isInterrupted.get() || (isShutdown.get() && !isCircular)) {
-							throw new InterruptedIOException(
-								getName() + ": submit failed, shut down already or interrupted"
-							);
-						}
-						if(activeTaskCount < activeTaskCountLimit) {
-							break;
-						}
-						LockSupport.parkNanos(1000); Thread.yield();
-					} while(true);
-					//
 					try {
+						activeTaskCountLimitBarrier.getApprovalsFor(null, to - from);
 						m = submitTasks(ioTaskBuff, n, srcLimit);
 						if(m < 1) {
 							throw new RejectedExecutionException("No I/O tasks submitted");
@@ -552,7 +533,7 @@ implements LoadExecutor<T> {
 						if(nodeBalancer != null) {
 							nodeBalancer.markTasksStart(nextNodeAddr, m);
 						}
-					} catch(final RejectedExecutionException e) {
+					} catch(final InterruptedException | RejectedExecutionException e) {
 						if(isInterrupted.get()) {
 							throw new InterruptedIOException(getName() + " is interrupted");
 						} else {

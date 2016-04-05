@@ -9,7 +9,7 @@
 						"name" : "weighted-load"
 					},
 					"data" : {
-						"size" : "4KB-16KB"
+						"size" : "1KB"
 					},
 					"dst" : {
 						"file" : "/tmp/scenario-weighted-load.csv"
@@ -41,11 +41,11 @@
 				"load" : {
 					"circular" : true,
 					"limit" : {
-						"time" : "100s"
+						"time" : "5m"
 					},
 					"threads" : 100,
 					"type" : [
-						"write=40%", "read=60%"
+						"write=20%", "read=80%"
 					]
 				}
 			}

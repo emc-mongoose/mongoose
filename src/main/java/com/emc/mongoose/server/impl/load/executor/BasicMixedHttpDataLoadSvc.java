@@ -14,14 +14,15 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 //
-import com.emc.mongoose.core.impl.load.model.WeightBarrier;
+import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
 //
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
-import com.emc.mongoose.server.api.load.executor.MixedHttpDataLoadSvc;
 //
+import com.emc.mongoose.server.api.load.executor.MixedHttpDataLoadSvc;
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.logging.log4j.Level;
@@ -30,6 +31,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +50,7 @@ implements MixedHttpDataLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final WeightBarrier<LoadType, IOTask<T>> barrier;
+	private final Barrier<LoadType> barrier;
 	private final Map<LoadType, Integer> loadTypeWeights;
 	private final Map<LoadType, HttpRequestConfig<T, ? extends Container<T>>>
 		reqConfigMap = new HashMap<>();
@@ -70,31 +72,53 @@ implements MixedHttpDataLoadSvc<T> {
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
 		this.barrier = new WeightBarrier<>(loadTypeWeights);
-		for(final LoadType loadType : loadTypeWeights.keySet()) {
+		for(final LoadType nextLoadType : loadTypeWeights.keySet()) {
 			final HttpRequestConfig<T, ? extends Container<T>> reqConfigCopy;
 			try {
 				reqConfigCopy = (HttpRequestConfig<T, ? extends Container<T>>) reqConfig
-					.clone().setLoadType(loadType);
+					.clone().setLoadType(nextLoadType);
 			} catch(final CloneNotSupportedException e) {
 				throw new IllegalStateException(e);
 			}
-			reqConfigMap.put(loadType, reqConfigCopy);
+			reqConfigMap.put(nextLoadType, reqConfigCopy);
 			final BasicHttpDataLoadSvc<T> nextLoadSvc = new BasicHttpDataLoadSvc<T>(
-				appConfig, reqConfigCopy, addrs, threadCount, itemSrcMap.get(loadType),
+				appConfig, reqConfigCopy, addrs, threadCount, itemSrcMap.get(nextLoadType),
 				maxCount, rateLimit, sizeConfig, rangesConfig,
 				httpProcessor, client, ioReactor, connPoolMap
 			) {
 				@Override
 				public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
-					return BasicMixedHttpDataLoadSvc.this.submitTask(ioTask);
+					try {
+						if(barrier.getApprovalFor(nextLoadType)) {
+							return BasicMixedHttpDataLoadSvc.this.submitTask(ioTask);
+						} else {
+							throw new RejectedExecutionException(
+								"Barrier rejected the item for {} operation" + nextLoadType
+							);
+						}
+					} catch(final InterruptedException e) {
+						throw new RejectedExecutionException(e);
+					}
 				}
 				//
 				@Override
 				public final <A extends IOTask<T>> int submitTasks(
 					final List<A> ioTasks, int from, int to
 				) throws RejectedExecutionException {
-					return BasicMixedHttpDataLoadSvc.this.submitTasks(ioTasks, from, to);
+					try {
+						if(barrier.getApprovalsFor(nextLoadType, to - from)) {
+							return BasicMixedHttpDataLoadSvc.this.submitTasks(
+								ioTasks, from, to
+							);
+						} else {
+							throw new RejectedExecutionException(
+								"Barrier rejected " + (to - from) + " tasks"
+							);
+						}
+					} catch(final InterruptedException e) {
+						throw new RejectedExecutionException(e);
+					}
 				}
 			};
 			try {
@@ -105,47 +129,14 @@ implements MixedHttpDataLoadSvc<T> {
 					nextLoadSvc.getName()
 				);
 			}
-			loadSvcMap.put(loadType, nextLoadSvc);
-		}
-	}
-	//
-	//
-	@Override
-	public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
-	throws RejectedExecutionException {
-		try {
-			if(barrier.getApprovalFor(ioTask)) {
-				return super.submitTask(ioTask);
-			} else {
-				throw new RejectedExecutionException(
-					"Barrier rejected the task #" + ioTask.hashCode()
-				);
-			}
-		} catch(final InterruptedException e) {
-			throw new RejectedExecutionException(e);
-		}
-	}
-	//
-	@Override
-	public final <A extends IOTask<T>> int submitTasks(final List<A> ioTasks, int from, int to)
-	throws RejectedExecutionException {
-		try {
-			if(barrier.getBatchApprovalFor((List<IOTask<T>>) ioTasks, from, to)) {
-				return super.submitTasks(ioTasks, from, to);
-			} else {
-				throw new RejectedExecutionException(
-					"Barrier rejected " + (to - from) + " tasks"
-				);
-			}
-		} catch(final InterruptedException e) {
-			throw new RejectedExecutionException(e);
+			loadSvcMap.put(nextLoadType, nextLoadSvc);
 		}
 	}
 	//
 	@Override
 	public final void ioTaskCompleted(final IOTask<T> ioTask)
 	throws RemoteException {
-		loadSvcMap.get(ioTask.getKey())
+		loadSvcMap.get(ioTask.getLoadType())
 			.ioTaskCompleted(ioTask);
 		super.ioTaskCompleted(ioTask);
 	}
@@ -155,7 +146,7 @@ implements MixedHttpDataLoadSvc<T> {
 		final List<? extends IOTask<T>> ioTasks, final int from, final int to
 	) throws RemoteException {
 		if(ioTasks != null && ioTasks.size() > 0) {
-			loadSvcMap.get(ioTasks.get(0).getKey()).ioTaskCompletedBatch(ioTasks, from, to);
+			loadSvcMap.get(ioTasks.get(0).getLoadType()).ioTaskCompletedBatch(ioTasks, from, to);
 		}
 		return super.ioTaskCompletedBatch(ioTasks, from, to);
 	}
@@ -199,7 +190,7 @@ implements MixedHttpDataLoadSvc<T> {
 			.appendPadding(100, '-');
 		LOG.info(Markers.MSG, strb.toString());
 	}
-	//
+	/*
 	@Override
 	protected void startActually() {
 		for(final HttpDataLoadSvc<T> nextLoadSvc : loadSvcMap.values()) {
@@ -212,7 +203,7 @@ implements MixedHttpDataLoadSvc<T> {
 			}
 		}
 		super.startActually();
-	}
+	}*/
 	//
 	@Override
 	protected void interruptActually() {
@@ -308,12 +299,9 @@ implements MixedHttpDataLoadSvc<T> {
 	}
 	//
 	@Override
-	public final Map<LoadType, String> getWrappedLoadSvcNames()
+	public final String getWrappedLoadSvcNameFor(final LoadType loadType)
 	throws RemoteException {
-		final Map<LoadType, String> wrappedLoadSvcStubs = new HashMap<>();
-		for(final LoadType loadType : loadSvcMap.keySet()) {
-			wrappedLoadSvcStubs.put(loadType, loadSvcMap.get(loadType).getName());
-		}
-		return wrappedLoadSvcStubs;
+		final HttpDataLoadSvc<T> wrappedLoadSvc = loadSvcMap.get(loadType);
+		return wrappedLoadSvc == null ? null : wrappedLoadSvc.getName();
 	}
 }
