@@ -1,0 +1,54 @@
+{
+	"type" : "sequential",
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "weighted2-load"
+					},
+					"data" : {
+						"size" : "8KB"
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-weighted2-read.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 1000000
+					},
+					"metricsPeriod" : 0,
+					"threads" : 100
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "weighted2-load"
+					},
+					"data" : {
+						"size" : "64KB"
+					},
+					"src" : {
+						"file" : "/tmp/scenario-weighted-load.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"limit" : {
+						"time" : "5m"
+					},
+					"threads" : 100,
+					"type" : [
+						"write=50%", "read=30%", "delete=20%"
+					]
+				}
+			}
+		}
+	]
+}
