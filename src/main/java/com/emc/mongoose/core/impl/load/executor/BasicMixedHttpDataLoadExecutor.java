@@ -145,17 +145,17 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	//
 	@Override
 	public void logMetrics(final Marker logMarker) {
-		final StrBuilder strb = new StrBuilder()
+		final StrBuilder strb = new StrBuilder(Markers.PERF_SUM.equals(logMarker) ? "Summary:" : "")
 			.appendNewLine()
 			.appendPadding(160, '-')
 			.appendNewLine()
-			.appendFixedWidthPadLeft("Weight ", 7, ' ')
-			.appendFixedWidthPadLeft("Load type ", 10, ' ')
-			.appendFixedWidthPadLeft("Count ", 20, ' ')
-			.appendFixedWidthPadLeft("Duration [us] ", 40, ' ')
-			.appendFixedWidthPadLeft("Latency [us] ", 40, ' ')
-			.appendFixedWidthPadLeft("TP [op/s] ", 20, ' ')
-			.appendFixedWidthPadLeft("BW [MB/s] ", 20, ' ')
+			.appendFixedWidthPadLeft("Weight | ", 9, ' ')
+			.appendFixedWidthPadLeft("Load type | ", 12, ' ')
+			.appendFixedWidthPadLeft("Count | ", 20, ' ')
+			.appendFixedWidthPadLeft("Duration [us] | ", 40, ' ')
+			.appendFixedWidthPadLeft("Latency [us] | ", 40, ' ')
+			.appendFixedWidthPadLeft("TP [op/s] | ", 20, ' ')
+			.appendFixedWidthPadLeft("BW [MB/s] | ", 20, ' ')
 			.appendNewLine()
 			.appendPadding(160, '-')
 			.appendNewLine();
@@ -172,24 +172,44 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 				continue;
 			}
 			strb
-				.appendFixedWidthPadLeft(nextLoadWeight + " % ", 7, ' ')
-				.appendFixedWidthPadLeft(nextLoadType.name() + " ", 10, ' ')
-				.appendFixedWidthPadLeft(nextLoadStats.toCountsString() + " ", 20, ' ')
-				.appendFixedWidthPadLeft(nextLoadStats.toDurString() + " ", 40, ' ')
-				.appendFixedWidthPadLeft(nextLoadStats.toLatString() + " ", 40, ' ')
-				.appendFixedWidthPadLeft(nextLoadStats.toSuccRatesString() + " ", 20, ' ')
-				.appendFixedWidthPadLeft(nextLoadStats.toByteRatesString() + " ", 20, ' ')
+				.appendFixedWidthPadLeft(nextLoadWeight + " % | ", 9, ' ')
+				.appendFixedWidthPadLeft(nextLoadType.name() + " | ", 12, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.toCountsString() + " | ", 20, ' ')
+				.appendFixedWidthPadLeft(
+					(
+						Markers.PERF_SUM.equals(logMarker) ?
+							nextLoadStats.toDurSummaryString() : nextLoadStats.toDurString()
+					) + " | ", 40, ' '
+				)
+				.appendFixedWidthPadLeft(
+					(
+						Markers.PERF_SUM.equals(logMarker) ?
+							nextLoadStats.toLatSummaryString() : nextLoadStats.toLatString()
+					) + " | ", 40, ' '
+				)
+				.appendFixedWidthPadLeft(nextLoadStats.toSuccRatesString() + " | ", 20, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.toByteRatesString() + " | ", 20, ' ')
 				.appendNewLine();
 		}
 		strb
 			.appendPadding(160, '-').appendNewLine()
-			.appendFixedWidthPadLeft("100 % ", 7, ' ')
-			.appendFixedWidthPadLeft("TOTAL ", 10, ' ')
-			.appendFixedWidthPadLeft(lastStats.toCountsString() + " ", 20, ' ')
-			.appendFixedWidthPadLeft(lastStats.toDurString() + " ", 40, ' ')
-			.appendFixedWidthPadLeft(lastStats.toLatString() + " ", 40, ' ')
-			.appendFixedWidthPadLeft(lastStats.toSuccRatesString() + " ", 20, ' ')
-			.appendFixedWidthPadLeft(lastStats.toByteRatesString() + " ", 20, ' ')
+			.appendFixedWidthPadLeft("100 % | ", 9, ' ')
+			.appendFixedWidthPadLeft("TOTAL | ", 12, ' ')
+			.appendFixedWidthPadLeft(lastStats.toCountsString() + " | ", 20, ' ')
+			.appendFixedWidthPadLeft(
+				(
+					Markers.PERF_SUM.equals(logMarker) ?
+						lastStats.toDurSummaryString() : lastStats.toDurString()
+				) + " | ", 40, ' '
+			)
+			.appendFixedWidthPadLeft(
+				(
+					Markers.PERF_SUM.equals(logMarker) ?
+						lastStats.toLatSummaryString() : lastStats.toLatString()
+				) + " | ", 40, ' '
+			)
+			.appendFixedWidthPadLeft(lastStats.toSuccRatesString() + " | ", 20, ' ')
+			.appendFixedWidthPadLeft(lastStats.toByteRatesString() + " | ", 20, ' ')
 			.appendNewLine()
 			.appendPadding(160, '-');
 		LOG.info(Markers.MSG, strb.toString());
