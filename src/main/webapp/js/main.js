@@ -8,13 +8,22 @@ require(["./requirejs/conf"], function() {
 		"bootstrap",
 		"./util/bootstrap/tabs"
 	], function($, mainController) {
+		
+		function getAppConfig(fullAppJson) {
+			return fullAppJson['appConfig']['config'];
+		}
+		
+		function getScenariosDirContents(fullAppJson) {
+			return fullAppJson["scenarios"];
+		}
+		
 		//  get all properties from runTimeConfig
-		$.get("/main", function(appConfig) {
+		$.get("/main", function(fullAppJson) {
 			//  root element ("config") of defaults.json configuration file
-			const ROOT_ELEMENT_NAME = 'config';
-			var config = appConfig[ROOT_ELEMENT_NAME];
-			if(config) {
-				mainController.run(config);
+			var config = getAppConfig(fullAppJson);
+			var scenariosArray = getScenariosDirContents(fullAppJson);
+			if(config && scenariosArray) {
+				mainController.run(config, scenariosArray);
 			} else {
 				alert("Failed to load the configuration");
 			}

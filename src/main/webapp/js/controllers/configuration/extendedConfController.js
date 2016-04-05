@@ -1,16 +1,15 @@
 define([
 	"handlebars",
-	"text!../../../templates/configuration/extendedConf.hbs"
+	"text!../../../templates/configuration/extendedConf.hbs",
+	"../../util/handlebarsShortcuts"
 ],
-function(Handlebars, extendedConf) {
+function(Handlebars, extendedConfTemplate, HB) {
 	//
 	var KEY_FIELD_RUN_ID = "run.id",
 		KEY_FIELD_LOAD_LIMIT_TIME = "load.limit.time",
 		KEY_RUN_MODE = "run.mode";
 	//
 	function activate() {
-		$("#base").hide();
-		$(".folders").show();
 		$("#configuration-content").find(".activate").css("display", "block");
 	}
 	//
@@ -19,25 +18,23 @@ function(Handlebars, extendedConf) {
 	}
 	//
 	function render(props) {
-		var html = Handlebars.compile(extendedConf)();
-		document.querySelector("#main-content")
-			.insertAdjacentHTML("beforeend", html);
+		HB.compileAndInsert("main-content", 'beforeend', extendedConfTemplate);
 		var propsMap = {};
 		//  show hidden folders on menu panel
-		var ul = $(".folders");
+		var ul = $(".folders-defaults");
 		ul.show();
 		walkTreeMap(props, ul, propsMap);
-		$("<li>").appendTo($("#run").parent().find("ul").first())
-			.addClass("file")
-			.append($("<a>", {
-				class: "props",
-				href: "#" + "run.id",
-				text: "id"
-			}));
-		//  add empty field which doesn't contain in appConfig
-		propsMap[KEY_FIELD_RUN_ID] = "";
-		buildDivBlocksByPropertyNames(propsMap);
-		bindEvents();
+		// $("<li>").appendTo($("#run").parent().find("ul").first())
+		// 	.addClass("file")
+		// 	.append($("<a>", {
+		// 		class: "props",
+		// 		href: "#" + "run.id",
+		// 		text: "id"
+		// 	}));
+		// //  add empty field which doesn't contain in appConfig
+		// propsMap[KEY_FIELD_RUN_ID] = "";
+		// buildDivBlocksByPropertyNames(propsMap);
+		// bindEvents();
 	}
 	//
 	function onMenuItemClick(element) {

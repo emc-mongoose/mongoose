@@ -32,42 +32,14 @@ define([
 	var currentTabType = TAB_TYPE.SCENARIOS;
 	var runIdArray = [];
 	//
-	function run(config) {
+	function run(config, scenariosArray) {
 		//  render navbar and tabs before any other interactions
 		render(config);
-		confMenuController.run(config, currentTabType, runIdArray);
+		confMenuController.run(config, currentTabType, runIdArray, scenariosArray);
+		bindTabEvents();
 	}
 
 	function render(config) {
-		function bindTabEvents() {
-			function showSuitableButtons(tabType) {
-				if (currentTabType != tabType) {
-					$('#buttons-' + currentTabType).hide();
-					$('#buttons-' + tabType).show();
-				}
-				if (currentTabType != TAB_TYPE.SCENARIOS) {
-					$('#start').hide();
-				}
-			}
-			function makeTabActive(tabType) {
-				if (currentTabType != tabType) {
-					$.each(TAB_TYPE, function (key, value) {
-						$('#' + tabId(value)).removeClass(TAB_CLASS.ACTIVE);
-					});
-					$('#' + tabId(tabType)).addClass(TAB_CLASS.ACTIVE);
-					showSuitableButtons(tabType);
-					currentTabType = tabType;
-				}
-			}
-			function bindTabClickEvent(tabType) {
-				$('#' + tabId(tabType)).click(function() {
-					makeTabActive(tabType)
-				});
-			}
-			$.each(TAB_TYPE, function(key, value) {
-				bindTabClickEvent(value);
-			});
-		}
 		function renderNavbar(runVersion) {
 			const navbarHtml = HB.compile(navbarTemplate, { version: runVersion });
 			document.querySelector("body").insertAdjacentHTML('afterbegin', navbarHtml);
@@ -75,6 +47,39 @@ define([
 			bindTabEvents();
 		}
 		renderNavbar(config.run.version || "unknown");
+	}
+
+	function bindTabEvents() {
+		function showSuitableButtons(tabType) {
+			if (currentTabType != tabType) {
+				$('#buttons-' + currentTabType).hide();
+				$('#buttons-' + tabType).show();
+			}
+		}
+		function makeTabActive(tabType) {
+			if (currentTabType != tabType) {
+				$.each(TAB_TYPE, function (key, value) {
+					$('#' + tabId(value)).removeClass(TAB_CLASS.ACTIVE);
+				});
+				$('#' + tabId(tabType)).addClass(TAB_CLASS.ACTIVE);
+				showSuitableButtons(tabType);
+				currentTabType = tabType;
+			}
+			if (tabType == TAB_TYPE.SCENARIOS) {
+				$("#start").show();
+			} else {
+				$("#start").hide();
+			}
+		}
+		function bindTabClickEvent(tabType) {
+			$('#' + tabId(tabType)).click(function() {
+				makeTabActive(tabType)
+			});
+		}
+		$.each(TAB_TYPE, function(key, value) {
+			bindTabClickEvent(value);
+		});
+		$("#config-file-name-defaults").val("");
 	}
 	
 	return {

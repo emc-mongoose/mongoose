@@ -97,7 +97,7 @@
     margin-bottom: 5px !important;
 }
 .column-btn-lower {
-    display: block !important;
+    display: block;
     margin-top: 5px !important;
 }
 .btn-custom {
@@ -145,7 +145,7 @@
     color: #225182 !important;
 }
 .list-group > .active {
-    background-color: #225182 !important;
+    background-color: rgb(34, 81, 130) !important;
     border-color: #225182 !important;
 }
 .folders {
@@ -155,7 +155,7 @@
     border: 1px solid #ccc;
 }
 .btn-file {
-    margin: 0 !important;
+    margin: 0;
 }
 .btn-file input[type="file"] {
     display: none;
