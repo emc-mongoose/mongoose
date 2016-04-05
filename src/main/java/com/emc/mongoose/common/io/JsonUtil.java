@@ -28,8 +28,18 @@ public class JsonUtil {
 	 * @throws JsonProcessingException - an exception of the json building
 	 */
 	public static String jsonPathContent(String pathString) throws JsonProcessingException {
+		return jsonPathContent(new File(pathString));
+	}
+
+	/**
+	 *
+	 * @param file - some file
+	 * @return json that contains the file tree if the file is a directory,
+	 * or the name of the file otherwise
+	 * @throws JsonProcessingException - an exception of the json building
+	 */
+	public static String jsonPathContent(File file) throws JsonProcessingException {
 		List<Object> dirContent = new ArrayList<>();
-		File file = new File(pathString);
 		if (file.isFile()) {
 			return file.getName();
 		} else {
@@ -38,7 +48,6 @@ public class JsonUtil {
 			fileTree.put(file.getName(), dirContent);
 			return JSON_MAPPER.writeValueAsString(fileTree);
 		}
-
 	}
 
 	private static void listDirectoryContents(Path dirPath, List<Object> rootList) {
