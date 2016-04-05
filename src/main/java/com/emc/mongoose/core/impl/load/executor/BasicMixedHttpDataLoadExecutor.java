@@ -147,8 +147,6 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	public void logMetrics(final Marker logMarker) {
 		final StrBuilder strb = new StrBuilder(Markers.PERF_SUM.equals(logMarker) ? "Summary:" : "")
 			.appendNewLine()
-			.appendPadding(160, '-')
-			.appendNewLine()
 			.appendFixedWidthPadLeft("Weight | ", 9, ' ')
 			.appendFixedWidthPadLeft("Load type | ", 12, ' ')
 			.appendFixedWidthPadLeft("Done | ", 14, ' ')
@@ -158,7 +156,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 			.appendFixedWidthPadLeft("TP [op/s] | ", 25, ' ')
 			.appendFixedWidthPadLeft("BW [MB/s] | ", 25, ' ')
 			.appendNewLine()
-			.appendPadding(160, '-')
+			.appendPadding(163, '-')
 			.appendNewLine();
 		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
@@ -194,7 +192,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 				.appendNewLine();
 		}
 		strb
-			.appendPadding(160, '-').appendNewLine()
+			.appendPadding(163, '-').appendNewLine()
 			.appendFixedWidthPadLeft("100 % | ", 9, ' ')
 			.appendFixedWidthPadLeft("TOTAL | ", 12, ' ')
 			.appendFixedWidthPadLeft(lastStats.getSuccCount() + " | ", 14, ' ')
@@ -213,8 +211,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 			)
 			.appendFixedWidthPadLeft(lastStats.toSuccRatesString() + " | ", 25, ' ')
 			.appendFixedWidthPadLeft(lastStats.toByteRatesString() + " | ", 25, ' ')
-			.appendNewLine()
-			.appendPadding(160, '-');
+			.appendNewLine();
 		LOG.info(Markers.MSG, strb.toString());
 	}
 	//

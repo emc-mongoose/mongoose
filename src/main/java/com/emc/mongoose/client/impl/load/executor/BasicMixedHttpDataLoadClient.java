@@ -94,41 +94,73 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 	//
 	@Override
 	public void logMetrics(final Marker logMarker) {
-		final StrBuilder strb = new StrBuilder()
+		final StrBuilder strb = new StrBuilder(Markers.PERF_SUM.equals(logMarker) ? "Summary:" : "")
 			.appendNewLine()
-			.appendPadding(100, '-')
+			.appendFixedWidthPadLeft("Weight | ", 9, ' ')
+			.appendFixedWidthPadLeft("Load type | ", 12, ' ')
+			.appendFixedWidthPadLeft("Done | ", 14, ' ')
+			.appendFixedWidthPadLeft("Failed | ", 9, ' ')
+			.appendFixedWidthPadLeft("Duration [us] | ", 35, ' ')
+			.appendFixedWidthPadLeft("Latency [us] | ", 35, ' ')
+			.appendFixedWidthPadLeft("TP [op/s] | ", 25, ' ')
+			.appendFixedWidthPadLeft("BW [MB/s] | ", 25, ' ')
+			.appendNewLine()
+			.appendPadding(163, '-')
 			.appendNewLine();
 		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
-		IOStats.Snapshot nextLoadStats = null;
-		for(final LoadType nextLoadType : loadClientMap.keySet()) {
+		IOStats.Snapshot nextLoadStats;
+		for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
 			nextLoadWeight = loadTypeWeightMap.get(nextLoadType);
 			nextLoadJob = loadClientMap.get(nextLoadType);
 			try {
 				nextLoadStats = nextLoadJob.getStatsSnapshot();
 			} catch(final RemoteException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the remote stats snapshot");
+				continue;
 			}
 			strb
-				.appendFixedWidthPadLeft(nextLoadWeight + " % ", 6, ' ')
-				.appendFixedWidthPadLeft(nextLoadType.name() + " ", 10, ' ')
-				.append(
-					nextLoadStats == null ?
-						null :
+				.appendFixedWidthPadLeft(nextLoadWeight + " % | ", 9, ' ')
+				.appendFixedWidthPadLeft(nextLoadType.name() + " | ", 12, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.getSuccCount() + " | ", 14, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.getFailCount() + " | ", 9, ' ')
+				.appendFixedWidthPadLeft(
+					(
 						Markers.PERF_SUM.equals(logMarker) ?
-							nextLoadStats.toSummaryString() : nextLoadStats.toString()
+							nextLoadStats.toDurSummaryString() : nextLoadStats.toDurString()
+					) + " | ", 35, ' '
 				)
+				.appendFixedWidthPadLeft(
+					(
+						Markers.PERF_SUM.equals(logMarker) ?
+							nextLoadStats.toLatSummaryString() : nextLoadStats.toLatString()
+					) + " | ", 35, ' '
+				)
+				.appendFixedWidthPadLeft(nextLoadStats.toSuccRatesString() + " | ", 25, ' ')
+				.appendFixedWidthPadLeft(nextLoadStats.toByteRatesString() + " | ", 25, ' ')
 				.appendNewLine();
 		}
 		strb
-			.appendPadding(100, '-').appendNewLine()
-			.appendFixedWidthPadLeft("100 %     TOTAL ", 16, ' ')
-			.append(
-				Markers.PERF_SUM.equals(logMarker) ?
-					lastStats.toSummaryString() : lastStats.toString()
+			.appendPadding(163, '-').appendNewLine()
+			.appendFixedWidthPadLeft("100 % | ", 9, ' ')
+			.appendFixedWidthPadLeft("TOTAL | ", 12, ' ')
+			.appendFixedWidthPadLeft(lastStats.getSuccCount() + " | ", 14, ' ')
+			.appendFixedWidthPadLeft(lastStats.getFailCount() + " | ", 9, ' ')
+			.appendFixedWidthPadLeft(
+				(
+					Markers.PERF_SUM.equals(logMarker) ?
+						lastStats.toDurSummaryString() : lastStats.toDurString()
+				) + " | ", 35, ' '
 			)
-			.appendNewLine()
-			.appendPadding(100, '-');
+			.appendFixedWidthPadLeft(
+				(
+					Markers.PERF_SUM.equals(logMarker) ?
+						lastStats.toLatSummaryString() : lastStats.toLatString()
+				) + " | ", 35, ' '
+			)
+			.appendFixedWidthPadLeft(lastStats.toSuccRatesString() + " | ", 25, ' ')
+			.appendFixedWidthPadLeft(lastStats.toByteRatesString() + " | ", 25, ' ')
+			.appendNewLine();
 		LOG.info(Markers.MSG, strb.toString());
 	}
 	//
