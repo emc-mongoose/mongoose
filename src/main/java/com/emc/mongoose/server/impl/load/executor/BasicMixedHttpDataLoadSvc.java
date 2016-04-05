@@ -71,7 +71,7 @@ implements MixedHttpDataLoadSvc<T> {
 		);
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
-		this.barrier = new WeightBarrier<>(loadTypeWeights);
+		this.barrier = new WeightBarrier<>(loadTypeWeights, isInterrupted);
 		for(final LoadType nextLoadType : loadTypeWeights.keySet()) {
 			final HttpRequestConfig<T, ? extends Container<T>> reqConfigCopy;
 			try {

@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -36,7 +37,7 @@ public class WeightBarrierTest {
 		}
 	};
 
-	private final Barrier<IOTask> fc = new WeightBarrier<>(weightMap);
+	private final Barrier<LoadType> fc = new WeightBarrier<>(weightMap, new AtomicBoolean(false));
 
 	private final class IOTaskMock
 	implements IOTask {
@@ -57,16 +58,8 @@ public class WeightBarrierTest {
 		public void mark(final IOStats ioStats) {
 		}
 		@Override
-		public Object getKey() {
+		public LoadType getLoadType() {
 			return loadType;
-		}
-		@Override
-		public Object getValue() {
-			return null;
-		}
-		@Override
-		public Object setValue(final Object value) {
-			return null;
 		}
 	}
 
@@ -82,7 +75,7 @@ public class WeightBarrierTest {
 				try {
 					final IOTaskMock ioTask = new IOTaskMock();
 					ioTask.loadType = loadType;
-					if(fc.getApprovalFor(ioTask)) {
+					if(fc.getApprovalFor(loadType)) {
 						resultsMap.get(loadType).incrementAndGet();
 					}
 				} catch(final InterruptedException e) {
@@ -123,7 +116,7 @@ public class WeightBarrierTest {
 						ioTask.loadType = loadType;
 						ioTasks.add(ioTask);
 					}
-					if(fc.getApprovalsFor(ioTasks, 0, 128)) {
+					if(fc.getApprovalsFor(loadType, 128)) {
 						resultsMap.get(loadType).incrementAndGet();
 					}
 				} catch(final InterruptedException e) {

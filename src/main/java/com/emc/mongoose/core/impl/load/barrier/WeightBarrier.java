@@ -5,7 +5,7 @@ import com.emc.mongoose.core.api.load.barrier.Barrier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 29.03.16.
  A kind of very abstract barrier which uses the map of weights.
@@ -20,12 +20,14 @@ implements Barrier<K> {
 	private final Set<K> keySet; // just to not to calculate every time
 	private final Map<K, Integer> weightMap; // initial weight map (constant)
 	private final Map<K, Integer> remainingWeightMap = new HashMap<>();
+	private final AtomicBoolean stopFlag;
 
 	//
-	public WeightBarrier(final Map<K, Integer> weightMap)
+	public WeightBarrier(final Map<K, Integer> weightMap, final AtomicBoolean stopFlag)
 	throws IllegalArgumentException {
 		this.keySet = weightMap.keySet();
 		this.weightMap = weightMap;
+		this.stopFlag = stopFlag;
 		resetRemainingWeights();
 	}
 
@@ -42,7 +44,7 @@ implements Barrier<K> {
 	public final boolean getApprovalFor(final K key)
 	throws InterruptedException {
 		int remainingWeight;
-		while(true) {
+		while(!stopFlag.get()) {
 			synchronized(remainingWeightMap) {
 				remainingWeight = remainingWeightMap.get(key);
 				if(remainingWeight == 0) {
@@ -75,7 +77,7 @@ implements Barrier<K> {
 			return true;
 		}
 		int remainingWeight;
-		while(true) {
+		while(!stopFlag.get()) {
 			synchronized(remainingWeightMap) {
 				remainingWeight = remainingWeightMap.get(key);
 				if(remainingWeight == 0) {
