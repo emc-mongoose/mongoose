@@ -58,7 +58,7 @@ implements DirectoryLoadBuilder<T, C, U> {
 	protected U buildActually() {
 		return (U) new BasicDirectoryLoadExecutor<>(
 			appConfig, (FileIOConfig<T, C>) ioConfig, threadCount,
-			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
+			itemInput == null ? getDefaultItemSrc() : itemInput, maxCount, rateLimit
 		);
 	}
 }

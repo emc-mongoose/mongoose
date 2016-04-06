@@ -8,7 +8,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemDst;
+import com.emc.mongoose.core.api.item.base.Output;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
@@ -55,14 +55,14 @@ implements HttpContainerLoadSvc<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final void setItemDst(final ItemDst<C> itemDst) {
+	public final void setOutput(final Output<C> itemOutput) {
 		LOG.debug(
 			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
-			itemDst, getName()
+			itemOutput, getName()
 		);
 		try {
-			if(itemDst instanceof Service) {
-				final String remoteSvcUrl = ((Service) itemDst).getName();
+			if(itemOutput instanceof Service) {
+				final String remoteSvcUrl = ((Service)itemOutput).getName();
 				LOG.debug(Markers.MSG, "Name is {}", remoteSvcUrl);
 				final Service localSvc = ServiceUtil.getLocalSvc(
 					ServiceUtil.getSvcUrl(remoteSvcUrl)
@@ -73,14 +73,14 @@ implements HttpContainerLoadSvc<T, C> {
 						remoteSvcUrl
 					);
 				} else {
-					super.setItemDst((ItemDst<C>) localSvc);
+					super.setOutput((Output<C>) localSvc);
 					LOG.debug(
 						Markers.MSG,
 						"Successfully resolved local service and appended it as consumer"
 					);
 				}
 			} else {
-				super.setItemDst(itemDst);
+				super.setOutput(itemOutput);
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "{}: looks like network failure", getName());

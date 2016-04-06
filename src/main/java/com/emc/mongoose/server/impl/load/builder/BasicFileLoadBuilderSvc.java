@@ -93,7 +93,7 @@ implements FileLoadBuilderSvc<T, U> {
 				try {
 					itemSrcMap.put(
 						nextLoadType,
-						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemSrc
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemInput
 					);
 				} catch(final NoSuchMethodException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
@@ -106,7 +106,7 @@ implements FileLoadBuilderSvc<T, U> {
 		} else {
 			return (U) new BasicFileLoadSvc<>(
 				appConfig, (FileIOConfig) ioConfig, threadCount,
-				itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit,
+				itemInput == null ? getDefaultItemSrc() : itemInput, maxCount, rateLimit,
 				sizeConfig, rangesConfig
 			);
 		}

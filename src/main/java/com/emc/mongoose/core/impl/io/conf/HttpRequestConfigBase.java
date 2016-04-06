@@ -6,9 +6,9 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
-import com.emc.mongoose.common.generator.async.AsyncCurrentDateGenerator;
-import com.emc.mongoose.common.generator.async.AsyncFormatGenerator;
-import com.emc.mongoose.common.generator.ValueGenerator;
+import com.emc.mongoose.common.io.value.async.AsyncCurrentDateInput;
+import com.emc.mongoose.common.io.value.async.AsyncPatternDefinedInput;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
@@ -18,7 +18,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
-import static com.emc.mongoose.common.generator.FormatRangeGenerator.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.io.value.RangePatternDefinedInput.PATTERN_SYMBOL;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
@@ -611,7 +611,7 @@ implements HttpRequestConfig<T, C> {
 	};*/
 	//
 	protected void applyDateHeader(final HttpRequest httpRequest) {
-		httpRequest.setHeader(HttpHeaders.DATE, AsyncCurrentDateGenerator.INSTANCE.get());
+		httpRequest.setHeader(HttpHeaders.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Apply date header \"{}\" to the request: \"{}\"",
@@ -778,8 +778,7 @@ implements HttpRequestConfig<T, C> {
 		return response;
 	}
 	//
-	private final static Map<String, ValueGenerator<String>>
-		HEADER_FORMATTERS = new ConcurrentHashMap<>();
+	private final static Map<String, Input<String>> HEADER_VALUE_INPUTS = new ConcurrentHashMap<>();
 	/**
 	Created by kurila on 30.01.15.
 	*/
@@ -789,7 +788,7 @@ implements HttpRequestConfig<T, C> {
 		// add all the shared headers if missing
 		Header nextHeader;
 		String headerValue;
-		ValueGenerator<String> headerValueGenerator;
+		Input<String> headerValueInput;
 		for(final String nextKey : sharedHeaders.keySet()) {
 			nextHeader = sharedHeaders.get(nextKey);
 			if(!request.containsHeader(nextKey)) {
@@ -802,19 +801,19 @@ implements HttpRequestConfig<T, C> {
 			headerValue = nextHeader.getValue();
 			if(headerValue != null) {
 				// header value is a generator pattern
-				headerValueGenerator  = HEADER_FORMATTERS.get(nextKey);
+				headerValueInput  = HEADER_VALUE_INPUTS.get(nextKey);
 				// try to find the corresponding generator in the registry
-				if(headerValueGenerator == null) {
+				if(headerValueInput == null) {
 					// create new generator and put it into the registry for reuse
-					headerValueGenerator = new AsyncFormatGenerator(headerValue);
+					headerValueInput = new AsyncPatternDefinedInput(headerValue);
 					// spin while header value generator is not ready
-					while(null == (headerValue = headerValueGenerator.get())) {
+					while(null == (headerValue = headerValueInput.get())) {
 						LockSupport.parkNanos(1);
 						Thread.yield();
 					}
-					HEADER_FORMATTERS.put(nextKey, headerValueGenerator);
+					HEADER_VALUE_INPUTS.put(nextKey, headerValueInput);
 				} else {
-					headerValue = headerValueGenerator.get();
+					headerValue = headerValueInput.get();
 				}
 				// put the generated header value into the request
 				request.setHeader(new BasicHeader(nextKey, headerValue));

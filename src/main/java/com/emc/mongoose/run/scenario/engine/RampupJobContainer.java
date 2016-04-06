@@ -15,7 +15,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemDst;
+import com.emc.mongoose.core.api.item.base.Output;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
@@ -24,7 +24,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.item.ItemTypeUtil;
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
+import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
@@ -209,7 +209,7 @@ extends SequentialJobContainer {
 		final int nextThreadCount, final SizeInBytes nextSize, final List rawLoadTypes
 	) {
 		LoadType nextLoadType;
-		ItemDst itemDst = null;
+		Output itemOutput = null;
 		for(final Object rawLoadType : rawLoadTypes) {
 			nextLoadType = null;
 			if(rawLoadType instanceof LoadType) {
@@ -234,7 +234,7 @@ extends SequentialJobContainer {
 			}
 			//
 			try {
-				itemDst = append(itemDst, nextThreadCount, nextSize, nextLoadType);
+				itemOutput = append(itemOutput, nextThreadCount, nextSize, nextLoadType);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to build the load job \"{} x {} x {}\"",
@@ -247,19 +247,19 @@ extends SequentialJobContainer {
 	private final Map<Integer, Map<Integer, Map<SizeInBytes, Map<LoadType, LoadExecutor>>>>
 		loadJobMap = new TreeMap<>();
 	//
-	private ItemDst append(
-		final ItemDst prevItemDst, final int nextThreadCount, final SizeInBytes nextSize,
+	private Output append(
+		final Output prevItemOutput, final int nextThreadCount, final SizeInBytes nextSize,
 		final LoadType nextLoadType
 	) throws IOException {
 		//
 		final LoadExecutor nextLoadJob;
-		final ItemDst nextItemDst = new ItemCSVFileDst<>(itemCls, contentSrc);
+		final Output nextItemOutput = new ItemCsvFileOutput<>(itemCls, contentSrc);
 		//
 		loadJobBuilder
 			.setLoadType(nextLoadType)
 			.setThreadCount(nextThreadCount)
-			.setItemSrc(prevItemDst == null ? null : prevItemDst.getItemSrc())
-			.setItemDst(nextItemDst);
+			.setInput(prevItemOutput == null ? null : prevItemOutput.getInput())
+			.setOutput(nextItemOutput);
 		if(loadJobBuilder instanceof DataLoadBuilder && nextSize != null) {
 			((DataLoadBuilder) loadJobBuilder).setDataSize(nextSize);
 		}
@@ -284,7 +284,7 @@ extends SequentialJobContainer {
 			//
 			append(new SingleJobContainer(nextLoadJob, limitTime));
 		}
-		return nextItemDst;
+		return nextItemOutput;
 	}
 	//
 	@Override

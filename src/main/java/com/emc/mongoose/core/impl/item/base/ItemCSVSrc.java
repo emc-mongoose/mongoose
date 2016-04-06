@@ -46,8 +46,7 @@ implements ItemSrc<T> {
 		);
 	}
 	//
-	protected
-	ItemCSVSrc(
+	protected ItemCSVSrc(
 		final BufferedReader itemsSrc, final Constructor<? extends T> itemConstructor,
 		final ContentSource contentSrc
 	) {
@@ -58,11 +57,6 @@ implements ItemSrc<T> {
 	//
 	public void setItemsSrc(final BufferedReader itemsSrc) {
 		this.itemsSrc = itemsSrc;
-	}
-	//
-	@Override
-	public T getLastItem() {
-		return lastItem;
 	}
 	//
 	@Override

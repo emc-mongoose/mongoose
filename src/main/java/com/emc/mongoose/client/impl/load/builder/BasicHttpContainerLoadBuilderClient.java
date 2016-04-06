@@ -83,8 +83,8 @@ public class BasicHttpContainerLoadBuilderClient<
 		HttpContainerLoadBuilderSvc<T, C, W> nextBuilder;
 		W nextLoad;
 		//
-		if(itemSrc == null) {
-			itemSrc = getDefaultItemSrc(); // affects load service builders
+		if(itemInput == null) {
+			itemInput = getDefaultItemSrc(); // affects load service builders
 		}
 		//
 		for(final String addr : loadSvcMap.keySet()) {
@@ -98,7 +98,7 @@ public class BasicHttpContainerLoadBuilderClient<
 		//
 		return (U) new BasicHttpContainerLoadClient<>(
 			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
-			itemSrc, maxCount, rateLimit, remoteLoadMap
+			itemInput, maxCount, rateLimit, remoteLoadMap
 		);
 	}
 }

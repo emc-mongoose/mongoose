@@ -18,7 +18,7 @@ import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 //
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
-import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
 import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
@@ -77,9 +77,9 @@ implements DataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public DataLoadBuilderClient<T, W, U> setItemSrc(final ItemSrc<T> itemSrc)
+	public DataLoadBuilderClient<T, W, U> setInput(final ItemSrc<T> itemSrc)
 	throws RemoteException {
-		super.setItemSrc(itemSrc);
+		super.setInput(itemSrc);
 		//
 		if(itemSrc instanceof DataItemFileSrc) {
 			// calculate approx average data item size
@@ -101,7 +101,7 @@ implements DataLoadBuilderClient<T, W, U> {
 	protected ItemSrc<T> getNewItemSrc()
 	throws NoSuchMethodException {
 		final ItemNamingType namingType = appConfig.getItemNamingType();
-		final BasicItemNameGenerator bing = new BasicItemNameGenerator(
+		final BasicItemNameInput bing = new BasicItemNameInput(
 			namingType,
 			appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
 			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()

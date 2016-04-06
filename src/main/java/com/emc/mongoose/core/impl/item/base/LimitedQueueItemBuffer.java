@@ -68,7 +68,7 @@ implements ItemBuffer<T> {
 	 */
 	@Override
 	public
-	LimitedQueueItemBuffer<T> getItemSrc()
+	LimitedQueueItemBuffer<T> getInput()
 	throws IOException {
 		return this;
 	}
@@ -97,11 +97,6 @@ implements ItemBuffer<T> {
 		} catch(final UnsupportedOperationException | IllegalArgumentException e) {
 			throw new IOException(e);
 		}
-	}
-	//
-	@Override
-	public T getLastItem() {
-		return lastItem;
 	}
 	//
 	@Override

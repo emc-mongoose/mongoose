@@ -27,8 +27,7 @@ implements ItemSrc<T> {
 	protected int srcFrom = 0;
 	private T lastItem = null;
 	//
-	public
-	ItemBinSrc(final ObjectInputStream itemsSrc) {
+	public ItemBinSrc(final ObjectInputStream itemsSrc) {
 		this.itemsSrc = itemsSrc;
 	}
 	//
@@ -102,11 +101,6 @@ implements ItemSrc<T> {
 	throws IOException {
 		itemsSrc.reset();
 		srcBuff = null;
-	}
-	//
-	@Override
-	public T getLastItem() {
-		return lastItem;
 	}
 	//
 	@Override

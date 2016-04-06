@@ -5,14 +5,14 @@ import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.core.api.item.base.Output;
 import com.emc.mongoose.core.api.item.base.ItemBuffer;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -70,7 +70,7 @@ implements LoadExecutor<T> {
 		ioConfigCopy;
 	protected final LoadType loadType;
 	//
-	protected volatile ItemDst<T> consumer = null;
+	protected volatile Output<T> consumer = null;
 	//
 	protected final long maxCount;
 	protected final int totalThreadCount;
@@ -168,7 +168,7 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
 		final IOConfig<? extends Item, ? extends Container<? extends Item>> ioConfig,
-		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final String addrs[], final int threadCount, final Input<T> itemSrc, final long maxCount,
 		final float rateLimit, final int instanceNum, final String name
 	) {
 		super(
@@ -176,7 +176,7 @@ implements LoadExecutor<T> {
 			appConfig.getLoadCircular(), false, appConfig.getItemQueueSizeLimit(), rateLimit
 		);
 		try {
-			super.setItemDst(this);
+			super.setOutput(this);
 		} catch(final RemoteException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to set \"{}\" as a consumer of \"{}\" producer",
@@ -272,7 +272,7 @@ implements LoadExecutor<T> {
 		try {
 			super.runActually();
 		} finally {
-			if(itemSrc != null) {
+			if(itemInput != null) {
 				LOG.debug(
 					Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
 					getName(), counterSubm.get()
@@ -456,10 +456,10 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public void setItemDst(final ItemDst<T> itemDst)
+	public void setOutput(final com.emc.mongoose.common.io.Output<T> itemOutput)
 	throws RemoteException {
-		this.consumer = itemDst;
-		LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemDst + "\"");
+		this.consumer = itemOutput;
+		LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemOutput + "\"");
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
@@ -883,7 +883,7 @@ implements LoadExecutor<T> {
 		if(isCircular) {
 			areAllItemsProduced = true; //  unblock ResultsDispatcher thread
 		}
-		LOG.debug(Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"", itemSrc, getName());
+		LOG.debug(Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"", itemInput, getName());
 	}
 	//
 	@Override

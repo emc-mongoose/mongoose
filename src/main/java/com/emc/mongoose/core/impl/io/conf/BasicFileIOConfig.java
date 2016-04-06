@@ -2,9 +2,10 @@ package com.emc.mongoose.core.impl.io.conf;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.generator.FormatRangeGenerator;
-import com.emc.mongoose.common.generator.ValueGenerator;
+import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
 //
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
@@ -16,8 +17,11 @@ import com.emc.mongoose.core.impl.item.data.DirectoryItemSrc;
 //
 import org.apache.commons.lang.StringUtils;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
 /**
  Created by kurila on 23.11.15.
  */
@@ -27,7 +31,7 @@ implements FileIOConfig<F, D> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private ValueGenerator<String> pathGenerator = null;
+	private Input<String> pathInput = null;
 	private int batchSize = BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize();
 	//
 	public BasicFileIOConfig() {
@@ -35,14 +39,14 @@ implements FileIOConfig<F, D> {
 		if(container != null) {
 			final String containerName = container.getName();
 			if(containerName != null && !containerName.isEmpty()) {
-				pathGenerator = new FormatRangeGenerator(containerName);
+				pathInput = new RangePatternDefinedInput(containerName);
 			}
 		}
 	}
 	//
 	public BasicFileIOConfig(final BasicFileIOConfig<F, D> another) {
 		super(another);
-		pathGenerator = another.pathGenerator;
+		pathInput = another.pathInput;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -70,7 +74,7 @@ implements FileIOConfig<F, D> {
 		if(container != null) {
 			final String containerName = container.getName();
 			if(containerName != null && !containerName.isEmpty()) {
-				pathGenerator = new FormatRangeGenerator(containerName);
+				pathInput = new RangePatternDefinedInput(containerName);
 			}
 		}
 		return this;
@@ -95,10 +99,20 @@ implements FileIOConfig<F, D> {
 	//
 	@Override
 	public final String getTargetItemPath() {
-		return pathGenerator == null ?
-			container == null ? null :
-				container.getName() :
-			pathGenerator.get();
+		if(pathInput == null) {
+			if(container == null) {
+				return null;
+			} else {
+				return container.getName();
+			}
+		} else {
+			try {
+				return pathInput.get();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the target item path");
+				return null;
+			}
+		}
 	}
 	//
 	@Override

@@ -3,9 +3,10 @@ package com.emc.mongoose.core.api.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 //
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
+//
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -46,10 +47,10 @@ extends Closeable, Cloneable {
 	LoadBuilder<T, U> setNodeAddrs(final String[] nodeAddrs)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
+	LoadBuilder<T, U> setInput(final Input<T> itemSrc)
 	throws RemoteException;
 	//
-	LoadBuilder<T, U> setItemDst(final ItemDst<T> itemDst)
+	LoadBuilder<T, U> setOutput(final Output<T> itemDst)
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> useNewItemSrc()

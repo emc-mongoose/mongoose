@@ -2,7 +2,7 @@ package com.emc.mongoose.util.client.api;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.item.base.ItemDst;
+import com.emc.mongoose.core.api.item.base.Output;
 //
 import java.io.Closeable;
 import java.io.IOException;
@@ -45,7 +45,7 @@ extends Closeable {
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(
-		final ItemSrc<T> src, final ItemDst<T> dst,
+		final ItemSrc<T> src, final Output<T> dst,
 		final long maxCount, final int connPerNodeCount, final long size
 	) throws IllegalArgumentException, InterruptedException, IOException;
 
@@ -63,7 +63,7 @@ extends Closeable {
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(
-		final ItemSrc<T> src, final ItemDst<T> dst,
+		final ItemSrc<T> src, final Output<T> dst,
 		final long maxCount, final int connPerNodeCount,
 		final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, InterruptedException, IOException;
@@ -81,7 +81,7 @@ extends Closeable {
 	 @throws IOException
 	 */
 	long write(
-		final ItemSrc<T> src, final ItemDst<T> dst, final long maxCount, final int connPerNodeCount,
+		final ItemSrc<T> src, final Output<T> dst, final long maxCount, final int connPerNodeCount,
 		final int randomRangesCount
 	) throws IllegalArgumentException, InterruptedException, IOException;
 
@@ -98,7 +98,7 @@ extends Closeable {
 	 @throws IOException
 	 */
 	long write(
-		final ItemSrc<T> src, final ItemDst<T> dst, final long maxCount, final int connPerNodeCount,
+		final ItemSrc<T> src, final Output<T> dst, final long maxCount, final int connPerNodeCount,
 		final String fixedByteRanges
 	) throws IllegalArgumentException, InterruptedException, IOException;
 
@@ -120,7 +120,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long read(
-		final ItemSrc<T> src, final ItemDst<T> dst,
+		final ItemSrc<T> src, final Output<T> dst,
 		final long maxCount, final int connPerNodeCount, final boolean verifyContentFlag
 	) throws IllegalStateException, InterruptedException, IOException;
 
@@ -135,7 +135,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long read(
-		final ItemSrc<T> src, final ItemDst<T> dst, final long maxCount, final int connPerNodeCount,
+		final ItemSrc<T> src, final Output<T> dst, final long maxCount, final int connPerNodeCount,
 		final boolean verifyContentFlag, final int randomRangesCount
 	) throws IllegalStateException, InterruptedException, IOException;
 
@@ -150,7 +150,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long read(
-		final ItemSrc<T> src, final ItemDst<T> dst, final long maxCount, final int connPerNodeCount,
+		final ItemSrc<T> src, final Output<T> dst, final long maxCount, final int connPerNodeCount,
 		final boolean verifyContentFlag, final String fixedByteRanges
 	) throws IllegalStateException, InterruptedException, IOException;
 
@@ -171,7 +171,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
 	long delete(
-		final ItemSrc<T> src, final ItemDst<T> dst,
+		final ItemSrc<T> src, final Output<T> dst,
 		final long maxCount, final int connPerNodeCount
 	) throws IllegalStateException, InterruptedException, IOException;
 }

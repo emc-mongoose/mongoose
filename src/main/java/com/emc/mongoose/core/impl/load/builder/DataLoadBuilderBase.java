@@ -17,8 +17,8 @@ import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
+import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
 //
@@ -59,7 +59,7 @@ implements DataLoadBuilder<T, U> {
 	protected ItemSrc<T> getNewItemSrc()
 	throws NoSuchMethodException {
 		final ItemNamingType namingType = appConfig.getItemNamingType();
-		final BasicItemNameGenerator bing = new BasicItemNameGenerator(
+		final BasicItemNameInput bing = new BasicItemNameInput(
 			namingType, appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
 			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
 		);
@@ -115,7 +115,7 @@ implements DataLoadBuilder<T, U> {
 		final String listFilePathStr = appConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
-				setItemSrc(
+				setInput(
 					new ItemCSVFileSrc<>(
 						Paths.get(listFilePathStr), (Class<T>) ioConfig.getItemClass(),
 						ioConfig.getContentSource()
@@ -129,8 +129,8 @@ implements DataLoadBuilder<T, U> {
 		final String dstFilePath = appConfig.getItemDstFile();
 		if(dstFilePath != null && !dstFilePath.isEmpty()) {
 			try {
-				setItemDst(
-					new ItemCSVFileDst<>(
+				setOutput(
+					new ItemCsvFileOutput<>(
 						Paths.get(dstFilePath), (Class<T>) ioConfig.getItemClass(),
 						ioConfig.getContentSource()
 					)
@@ -144,9 +144,9 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
+	public LoadBuilder<T, U> setInput(final ItemSrc<T> itemSrc)
 	throws RemoteException {
-		super.setItemSrc(itemSrc);
+		super.setInput(itemSrc);
 		if(itemSrc instanceof DataItemFileSrc) {
 			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
 			final long approxDataItemsSize = fileInput.getAvgDataSize(

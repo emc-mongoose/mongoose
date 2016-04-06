@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.item.data;
 
-import com.emc.mongoose.common.generator.ValueGenerator;
 //
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
@@ -16,21 +16,21 @@ public class NewContainerSrc<T extends Container>
 implements ItemSrc<T> {
 	//
 	private final Constructor<T> itemConstructor;
-	private final ValueGenerator<String> idGenerator;
+	private final Input<String> idInput;
 	//
 	private T lastItem = null;
 	//
-	public NewContainerSrc(final Class<T> dataCls, final ValueGenerator<String> idGenerator)
+	public NewContainerSrc(final Class<T> dataCls, final Input<String> idInput)
 	throws NoSuchMethodException, IllegalArgumentException {
 		itemConstructor = dataCls.getConstructor(String.class);
-		this.idGenerator = idGenerator;
+		this.idInput = idInput;
 	}
 	//
 	@Override
 	public final T get()
 	throws IOException {
 		try {
-			return itemConstructor.newInstance(idGenerator.get());
+			return itemConstructor.newInstance(idInput.get());
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
 		}
@@ -41,17 +41,12 @@ implements ItemSrc<T> {
 	throws IOException {
 		try {
 			for(int i = 0; i < maxCount; i ++) {
-				buffer.add(itemConstructor.newInstance(idGenerator.get()));
+				buffer.add(itemConstructor.newInstance(idInput.get()));
 			}
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
 		}
 		return maxCount;
-	}
-	//
-	@Override
-	public T getLastItem() {
-		return lastItem;
 	}
 	//
 	@Override

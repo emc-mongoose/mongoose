@@ -14,7 +14,7 @@ import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 //
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
+import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
@@ -186,7 +186,7 @@ implements LoadBuilderClient<T, W, U> {
 		try {
 			final String listFile = appConfig.getItemSrcFile();
 			if(itemsFileExists(listFile) && loadSvcMap != null) {
-				setItemSrc(
+				setInput(
 					new ItemCSVFileSrc<>(
 						Paths.get(listFile), (Class<T>) ioConfig.getItemClass(),
 						ioConfig.getContentSource()
@@ -194,13 +194,13 @@ implements LoadBuilderClient<T, W, U> {
 				);
 				// disable file-based item sources on the load servers side
 				for(final V nextLoadBuilder : loadSvcMap.values()) {
-					nextLoadBuilder.setItemSrc(null);
+					nextLoadBuilder.setInput(null);
 				}
 			}
 		} catch(final NoSuchElementException e) {
 			LOG.warn(Markers.ERR, "No \"data.src.fpath\" value was set");
 		} catch(final IOException e) {
-			LOG.warn(Markers.ERR, "Invalid items source file path: {}", itemSrc);
+			LOG.warn(Markers.ERR, "Invalid items source file path: {}", itemInput);
 		} catch(final SecurityException | NoSuchMethodException e) {
 			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
@@ -208,8 +208,8 @@ implements LoadBuilderClient<T, W, U> {
 		final String dstFilePath = appConfig.getItemDstFile();
 		if(dstFilePath != null && !dstFilePath.isEmpty()) {
 			try {
-				setItemDst(
-					new ItemCSVFileDst<>(
+				setOutput(
+					new ItemCsvFileOutput<>(
 						Paths.get(dstFilePath), (Class<T>) ioConfig.getItemClass(),
 						ioConfig.getContentSource()
 					)
@@ -302,9 +302,9 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public LoadBuilderClient<T, W, U> setItemSrc(final ItemSrc<T> itemSrc)
+	public LoadBuilderClient<T, W, U> setInput(final ItemSrc<T> itemSrc)
 	throws RemoteException {
-		super.setItemSrc(itemSrc);
+		super.setInput(itemSrc);
 		if(itemSrc != null && loadSvcMap != null) {
 			// disable any item source usage on the load servers side
 			V nextBuilder;
@@ -319,7 +319,7 @@ implements LoadBuilderClient<T, W, U> {
 	protected void resetItemSrc() {
 		flagUseNewItemSrc = true;
 		flagUseNoneItemSrc = false;
-		itemSrc = null;
+		itemInput = null;
 	}
 	//
 	@Override

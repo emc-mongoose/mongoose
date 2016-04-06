@@ -75,7 +75,7 @@ implements HttpDataLoadBuilder<T, U> {
 				try {
 					itemSrcMap.put(
 						nextLoadType,
-						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemSrc
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemInput
 					);
 				} catch(final NoSuchMethodException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
@@ -89,7 +89,7 @@ implements HttpDataLoadBuilder<T, U> {
 		} else {
 			return (U) new BasicHttpDataLoadExecutor<>(
 				appConfig, httpReqConf, storageNodeAddrs, threadCount,
-				itemSrc == null ? getDefaultItemSrc() : itemSrc,
+				itemInput == null ? getDefaultItemSrc() : itemInput,
 				maxCount, rateLimit, sizeConfig, rangesConfig
 			);
 		}

@@ -3,11 +3,12 @@ package com.emc.mongoose.core.impl.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemDst;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
@@ -39,8 +40,8 @@ implements LoadBuilder<T, U> {
 	protected volatile IOConfig<?, ?> ioConfig = getDefaultIoConfig();
 	protected float rateLimit;
 	protected int threadCount = 1;
-	protected ItemSrc<T> itemSrc;
-	protected ItemDst<T> itemDst = null;
+	protected Input<T> itemInput;
+	protected Output<T> itemOutput = null;
 	protected String storageNodeAddrs[];
 	protected boolean flagUseNewItemSrc, flagUseNoneItemSrc, flagUseContainerItemSrc;
 	//
@@ -65,7 +66,7 @@ implements LoadBuilder<T, U> {
 		flagUseNewItemSrc = true;
 		flagUseNoneItemSrc = false;
 		flagUseContainerItemSrc = true;
-		itemSrc = null;
+		itemInput = null;
 	}
 	//
 	public LoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
@@ -215,18 +216,18 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
+	public LoadBuilder<T, U> setInput(final Input<T> itemSrc)
 	throws RemoteException {
 		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
-		this.itemSrc = itemSrc;
+		this.itemInput = itemSrc;
 		return this;
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setItemDst(final ItemDst<T> itemDst)
+	public LoadBuilder<T, U> setOutput(final Output<T> itemDst)
 	throws RemoteException {
 		LOG.debug(Markers.MSG, "Set data items destination: {}", itemDst);
-		this.itemDst = itemDst;
+		this.itemOutput = itemDst;
 		return this;
 	}
 	//
@@ -240,8 +241,8 @@ implements LoadBuilder<T, U> {
 		lb.maxCount = maxCount;
 		lb.threadCount = threadCount;
 		lb.storageNodeAddrs = storageNodeAddrs;
-		lb.itemSrc = itemSrc;
-		lb.itemDst = itemDst;
+		lb.itemInput = itemInput;
+		lb.itemOutput = itemOutput;
 		lb.rateLimit = rateLimit;
 		lb.flagUseNewItemSrc = flagUseNewItemSrc;
 		lb.flagUseNoneItemSrc = flagUseNoneItemSrc;
@@ -285,7 +286,7 @@ implements LoadBuilder<T, U> {
 			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
 		final U loadJob = buildActually();
-		loadJob.setItemDst(itemDst);
+		loadJob.setOutput(itemOutput);
 		resetItemSrc();
 		return loadJob;
 	}

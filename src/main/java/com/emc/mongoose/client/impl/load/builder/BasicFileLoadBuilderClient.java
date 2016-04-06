@@ -83,8 +83,8 @@ implements FileLoadBuilderClient<T, W, U> {
 	protected U buildActually()
 	throws RemoteException, DuplicateSvcNameException {
 		final LoadType loadType = ioConfig.getLoadType();
-		if(itemSrc == null) {
-			itemSrc = getDefaultItemSrc(); // affects load service builders
+		if(itemInput == null) {
+			itemInput = getDefaultItemSrc(); // affects load service builders
 		}
 		final Map<String, W> remoteLoadMap = new HashMap<>();
 		FileLoadBuilderSvc<T, W> nextBuilder;
@@ -107,7 +107,7 @@ implements FileLoadBuilderClient<T, W, U> {
 				try {
 					itemSrcMap.put(
 						nextLoadType,
-						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemSrc
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemInput
 					);
 				} catch(final NoSuchMethodException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
@@ -122,7 +122,7 @@ implements FileLoadBuilderClient<T, W, U> {
 		} else {
 			return (U) new BasicFileLoadClient<>(
 				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
-				appConfig.getLoadThreads(), itemSrc, maxCount, rateLimit, remoteLoadMap
+				appConfig.getLoadThreads(), itemInput, maxCount, rateLimit, remoteLoadMap
 			);
 		}
 	}

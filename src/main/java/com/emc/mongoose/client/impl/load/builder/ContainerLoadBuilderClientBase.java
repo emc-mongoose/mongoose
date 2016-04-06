@@ -11,8 +11,8 @@ import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 //
-import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
+import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
 import com.emc.mongoose.core.impl.item.data.NewContainerSrc;
 import com.emc.mongoose.server.api.load.builder.ContainerLoadBuilderSvc;
@@ -57,7 +57,7 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 		final String listFilePathStr = appConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
-				setItemSrc(
+				setInput(
 					new ItemCSVFileSrc<>(
 						Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
 						ioConfig.getContentSource()
@@ -71,8 +71,8 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 		final String dstFilePath = appConfig.getItemDstFile();
 		if(dstFilePath != null && !dstFilePath.isEmpty()) {
 			try {
-				setItemDst(
-					new ItemCSVFileDst<>(
+				setOutput(
+					new ItemCsvFileOutput<>(
 						Paths.get(dstFilePath), (Class<C>) ioConfig.getContainerClass(),
 						ioConfig.getContentSource()
 					)
@@ -92,7 +92,7 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 		final Class<C> containerClass = (Class<C>) ioConfig.getContainerClass();
 		return new NewContainerSrc<>(
 			containerClass,
-			new BasicItemNameGenerator(
+			new BasicItemNameInput(
 				namingType,
 				appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
 				appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()

@@ -3,12 +3,12 @@ package com.emc.mongoose.client.impl.load.executor;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.IOConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
@@ -54,7 +54,7 @@ implements LoadClient<T, W> {
 	private final ThreadPoolExecutor remotePutExecutor;
 	private final String loadSvcAddrs[];
 	//
-	protected volatile ItemDst<T> consumer = null;
+	protected volatile Output<T> consumer = null;
 	//
 	private final static int COUNT_LIMIT_RETRY = 100;
 	//
@@ -174,7 +174,7 @@ implements LoadClient<T, W> {
 	//
 	public LoadClientBase(
 		final AppConfig appConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
-		final int threadCount, final ItemSrc<T> itemSrc, final long maxCount, final float rateLimit,
+		final int threadCount, final Input<T> itemSrc, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		this(
@@ -186,7 +186,7 @@ implements LoadClient<T, W> {
 	//
 	protected LoadClientBase(
 		final AppConfig appConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
-		final int threadCount, final ItemSrc<T> itemSrc, final long maxCount, final float rateLimit,
+		final int threadCount, final Input<T> itemSrc, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap, final int instanceNum
 	) {
 		super(
@@ -337,27 +337,27 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final void setItemDst(final ItemDst<T> itemDst)
+	public final void setOutput(final Output<T> itemOutput)
 	throws RemoteException {
-		if(itemDst instanceof LoadClient) {
+		if(itemOutput instanceof LoadClient) {
 			LOG.debug(Markers.MSG, "Consumer is a LoadClient instance");
 			// consumer is client which has the map of consumers
 			// this is necessary for the distributed chain/rampup scenarios
-			this.consumer = itemDst;
-			final Map<String, W> consumeMap = ((LoadClient<T, W>) itemDst)
+			this.consumer = itemOutput;
+			final Map<String, W> consumeMap = ((LoadClient<T, W>)itemOutput)
 				.getRemoteLoadMap();
 			for(final String addr : consumeMap.keySet()) {
-				remoteLoadMap.get(addr).setItemDst(consumeMap.get(addr));
+				remoteLoadMap.get(addr).setOutput(consumeMap.get(addr));
 			}
-		} else if(itemDst instanceof LoadSvc) {
+		} else if(itemOutput instanceof LoadSvc) {
 			// single consumer for all these producers
-			final W loadSvc = (W) itemDst;
+			final W loadSvc = (W)itemOutput;
 			LOG.debug(Markers.MSG, "Consumer is a load service");
 			for(final String addr : loadSvcAddrs) {
-				remoteLoadMap.get(addr).setItemDst(loadSvc);
+				remoteLoadMap.get(addr).setOutput(loadSvc);
 			}
 		} else {
-			super.setItemDst(itemDst);
+			super.setOutput(itemOutput);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

@@ -73,11 +73,6 @@ implements ItemSrc<T> {
 	}
 
 	@Override
-	public T getLastItem() {
-		return lastItem;
-	}
-
-	@Override
 	public void setLastItem(final T lastItem) {
 		this.lastItem = lastItem;
 	}

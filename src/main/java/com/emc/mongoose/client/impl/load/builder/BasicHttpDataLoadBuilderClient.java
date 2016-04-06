@@ -78,8 +78,8 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 	throws RemoteException {
 		//
 		final LoadType loadType = ioConfig.getLoadType();
-		if(itemSrc == null) {
-			itemSrc = getDefaultItemSrc(); // affects load service builders
+		if(itemInput == null) {
+			itemInput = getDefaultItemSrc(); // affects load service builders
 		}
 		final Map<String, W> remoteLoadMap = new HashMap<>();
 		HttpDataLoadBuilderSvc<T, W> nextBuilder;
@@ -101,7 +101,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 				try {
 					itemSrcMap.put(
 						nextLoadType,
-						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemSrc
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemInput
 					);
 				} catch(final NoSuchMethodException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
@@ -116,8 +116,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 		} else {
 			//
 			return (U) new BasicHttpDataLoadClient<>(
-				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount,
-				itemSrc, maxCount, rateLimit, remoteLoadMap
+				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount, itemInput, maxCount, rateLimit, remoteLoadMap
 			);
 		}
 	}

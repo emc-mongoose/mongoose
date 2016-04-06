@@ -5,7 +5,7 @@ import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
-import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
 //
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -18,13 +18,13 @@ public final class NewDataItemSrc<T extends DataItem>
 implements ItemSrc<T> {
 	//
 	private final Constructor<T> itemConstructor;
-	private final BasicItemNameGenerator idGenerator;
+	private final BasicItemNameInput idGenerator;
 	private final ContentSource contentSrc;
 	private final SizeInBytes dataSize;
 	private T lastItem = null;
 	//
 	public NewDataItemSrc(
-		final Class<T> dataCls, final BasicItemNameGenerator idGenerator,
+		final Class<T> dataCls, final BasicItemNameInput idGenerator,
 		final ContentSource contentSrc, final SizeInBytes dataSize
 	) throws NoSuchMethodException, IllegalArgumentException {
 		this.itemConstructor = dataCls.getConstructor(
@@ -66,11 +66,6 @@ implements ItemSrc<T> {
 			throw new IOException(e);
 		}
 		return maxCount;
-	}
-	//
-	@Override
-	public T getLastItem() {
-		return lastItem;
 	}
 	//
 	@Override

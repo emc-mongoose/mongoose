@@ -73,7 +73,7 @@ extends DataLoadBuilderBase<T, U> {
 				try {
 					itemSrcMap.put(
 						nextLoadType,
-						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemSrc
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemInput
 					);
 				} catch(final NoSuchMethodException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
@@ -86,7 +86,7 @@ extends DataLoadBuilderBase<T, U> {
 		} else {
 			return (U) new BasicFileLoadExecutor<>(
 				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
-				threadCount, itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit,
+				threadCount, itemInput == null ? getDefaultItemSrc() : itemInput, maxCount, rateLimit,
 				sizeConfig, rangesConfig
 			);
 		}

@@ -4,7 +4,7 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 //
 import com.emc.mongoose.common.conf.enums.LoadType;
-import com.emc.mongoose.core.api.item.base.ItemDst;
+import com.emc.mongoose.core.api.item.base.Output;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.base.ItemSrc;
@@ -199,19 +199,19 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setItemSrc(final ItemSrc itemSrc)
+	public final LoadBuilderSvc setInput(final ItemSrc itemSrc)
 	throws RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setItemSrc(itemSrc);
+			loadBuilderSvc.setInput(itemSrc);
 		}
 		return this;
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setItemDst(final ItemDst itemDst)
+	public final LoadBuilderSvc setOutput(final Output itemOutput)
 	throws RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setItemDst(itemDst);
+			loadBuilderSvc.setOutput(itemOutput);
 		}
 		return this;
 	}

@@ -87,7 +87,7 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 		//
 		return (U) new BasicDirectoryLoadSvc<>(
 			appConfig, (FileIOConfig<T, C>) ioConfig, threadCount,
-			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
+			itemInput == null ? getDefaultItemSrc() : itemInput, maxCount, rateLimit
 		);
 	}
 	//

@@ -86,8 +86,8 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		DirectoryLoadBuilderSvc<T, C, W> nextBuilder;
 		W nextLoad;
 		//
-		if(itemSrc == null) {
-			itemSrc = getDefaultItemSrc(); // affects load service builders
+		if(itemInput == null) {
+			itemInput = getDefaultItemSrc(); // affects load service builders
 		}
 		//
 		for(final String addr : loadSvcMap.keySet()) {
@@ -100,7 +100,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		}
 		//
 		return (U) new BasicDirectoryLoadClient<>(
-			appConfig, (FileIOConfig) ioConfig, appConfig.getLoadThreads(), itemSrc, maxCount,
+			appConfig, (FileIOConfig) ioConfig, appConfig.getLoadThreads(), itemInput, maxCount,
 			rateLimit, remoteLoadMap
 		);
 	}
