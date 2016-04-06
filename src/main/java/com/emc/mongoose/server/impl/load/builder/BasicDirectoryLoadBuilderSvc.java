@@ -86,7 +86,7 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
 		return (U) new BasicDirectoryLoadSvc<>(
-			appConfig, (FileIOConfig<T, C>) ioConfig, storageNodeAddrs, threadCount,
+			appConfig, (FileIOConfig<T, C>) ioConfig, threadCount,
 			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
 		);
 	}

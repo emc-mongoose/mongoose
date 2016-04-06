@@ -100,13 +100,12 @@ implements FileLoadBuilderSvc<T, U> {
 				}
 			}
 			return (U) new BasicMixedFileLoadSvc<>(
-				appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, threadCount,
-				maxCount, rateLimit, sizeConfig, rangesConfig,
-				loadTypeWeightMap, itemSrcMap
+				appConfig, (FileIOConfig) ioConfig, threadCount, maxCount, rateLimit, sizeConfig,
+				rangesConfig, loadTypeWeightMap, itemSrcMap
 			);
 		} else {
 			return (U) new BasicFileLoadSvc<>(
-				appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, threadCount,
+				appConfig, (FileIOConfig) ioConfig, threadCount,
 				itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit,
 				sizeConfig, rangesConfig
 			);

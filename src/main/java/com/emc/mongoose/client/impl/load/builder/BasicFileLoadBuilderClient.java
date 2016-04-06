@@ -115,13 +115,13 @@ implements FileLoadBuilderClient<T, W, U> {
 			}
 			//
 			return (U) new BasicMixedFileLoadClient<>(
-				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
-				threadCount, maxCount, rateLimit, (Map<String, MixedFileLoadSvc<T>>) remoteLoadMap,
-				itemSrcMap, loadTypeWeightMap
+				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
+				maxCount, rateLimit, (Map<String, MixedFileLoadSvc<T>>) remoteLoadMap, itemSrcMap,
+				loadTypeWeightMap
 			);
 		} else {
 			return (U) new BasicFileLoadClient<>(
-				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
+				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
 				appConfig.getLoadThreads(), itemSrc, maxCount, rateLimit, remoteLoadMap
 			);
 		}

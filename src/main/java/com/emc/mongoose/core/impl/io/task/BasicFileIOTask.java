@@ -120,13 +120,13 @@ implements FileIOTask<T> {
 		} catch(final NoSuchFileException e) {
 			status = RESP_FAIL_NOT_FOUND;
 			LogUtil.exception(
-				LOG, Level.WARN, e,
+				LOG, Level.DEBUG, e,
 				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), parentDir
 			);
 		} catch(final IOException e) {
 			status = FAIL_IO;
 			LogUtil.exception(
-				LOG, Level.WARN, e,
+				LOG, Level.DEBUG, e,
 				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), parentDir
 			);
 		} finally {

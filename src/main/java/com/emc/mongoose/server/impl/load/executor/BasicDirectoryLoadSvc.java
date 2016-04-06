@@ -34,11 +34,10 @@ implements DirectoryLoadSvc<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicDirectoryLoadSvc(
-		final AppConfig appConfig, final FileIOConfig<T, C> ioConfig, final String[] addrs,
-		final int threadsPerNode, final ItemSrc<C> itemSrc, final long maxCount,
-		final float rateLimit
+		final AppConfig appConfig, final FileIOConfig<T, C> ioConfig, final int threadsPerNode,
+		final ItemSrc<C> itemSrc, final long maxCount, final float rateLimit
 	) {
-		super(appConfig, ioConfig, addrs, threadsPerNode, itemSrc, maxCount, rateLimit);
+		super(appConfig, ioConfig, threadsPerNode, itemSrc, maxCount, rateLimit);
 	}
 	//
 	//

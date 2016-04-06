@@ -57,7 +57,7 @@ implements DirectoryLoadBuilder<T, C, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected U buildActually() {
 		return (U) new BasicDirectoryLoadExecutor<>(
-			appConfig, (FileIOConfig<T, C>) ioConfig, null, threadCount,
+			appConfig, (FileIOConfig<T, C>) ioConfig, threadCount,
 			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
 		);
 	}

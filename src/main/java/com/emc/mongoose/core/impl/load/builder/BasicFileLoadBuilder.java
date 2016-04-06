@@ -80,15 +80,14 @@ extends DataLoadBuilderBase<T, U> {
 				}
 			}
 			return (U) new BasicMixedFileLoadExecutor<>(
-				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, storageNodeAddrs,
-				threadCount, maxCount, rateLimit, sizeConfig, rangesConfig,
-				loadTypeWeightMap, itemSrcMap
+				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
+				maxCount, rateLimit, sizeConfig, rangesConfig, loadTypeWeightMap, itemSrcMap
 			);
 		} else {
 			return (U) new BasicFileLoadExecutor<>(
 				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
-				null, threadCount, itemSrc == null ? getDefaultItemSrc() : itemSrc,
-				maxCount, rateLimit, sizeConfig, rangesConfig
+				threadCount, itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit,
+				sizeConfig, rangesConfig
 			);
 		}
 	}

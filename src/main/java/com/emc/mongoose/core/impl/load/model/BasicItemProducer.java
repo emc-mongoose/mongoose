@@ -21,6 +21,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.LockSupport;
 
@@ -116,6 +117,8 @@ implements ItemProducer<T> {
 		runActually();
 	}
 	//
+	private final Random rnd = new Random(); // create once instead creating every time
+	//
 	protected void runActually() {
 		//
 		if(itemSrc == null) {
@@ -130,7 +133,7 @@ implements ItemProducer<T> {
 					buff = new ArrayList<>(batchSize);
 					n = (int) Math.min(itemSrc.get(buff, batchSize), maxCount - producedItemsCount);
 					if(isShuffling) {
-						Collections.shuffle(buff);
+						Collections.shuffle(buff, rnd);
 					}
 					if(isInterrupted) {
 						break;

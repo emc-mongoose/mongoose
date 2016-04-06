@@ -50,13 +50,12 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	//
 	public BasicMixedFileLoadExecutor(
 		final AppConfig appConfig, final FileIOConfig<F, ? extends Directory<F>> reqConfig,
-		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
+		final int threadCount, final long maxCount, final float rateLimit,
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
 		final Map<LoadType, Integer> loadTypeWeightMap, final Map<LoadType, ItemSrc<F>> itemSrcMap
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadCount, null, maxCount, rateLimit, sizeConfig,
-			rangesConfig
+			appConfig, reqConfig, threadCount, null, maxCount, rateLimit, sizeConfig, rangesConfig
 		);
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
@@ -71,7 +70,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 			}
 			reqConfigMap.put(nextLoadType, reqConfigCopy);
 			final BasicFileLoadExecutor<F> nextLoadExecutor = new BasicFileLoadExecutor<F>(
-				appConfig, reqConfigCopy, addrs, threadCount,
+				appConfig, reqConfigCopy, threadCount,
 				itemSrcMap == null ? null : itemSrcMap.get(nextLoadType),
 				maxCount, rateLimit, sizeConfig, rangesConfig
 			) {

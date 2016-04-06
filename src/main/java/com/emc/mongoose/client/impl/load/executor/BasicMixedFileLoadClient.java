@@ -44,13 +44,13 @@ implements FileLoadClient<F, W>, MixedLoadExecutor<F> {
 	//
 	public BasicMixedFileLoadClient(
 		final AppConfig appConfig, final FileIOConfig<F, ? extends Directory<F>> reqConfig,
-		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
+		final int threadCount, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap, final Map<LoadType, ItemSrc<F>> itemSrcMap,
 		final Map<LoadType, Integer> loadTypeWeightMap
 	) throws RemoteException {
 		//
 		super(
-			appConfig, reqConfig, addrs, threadCount, null, maxCount, rateLimit, remoteLoadMap,
+			appConfig, reqConfig, threadCount, null, maxCount, rateLimit, remoteLoadMap,
 			remoteLoadMap.values().iterator().next().getInstanceNum()
 		);
 		this.loadTypeWeightMap = loadTypeWeightMap;
@@ -79,7 +79,7 @@ implements FileLoadClient<F, W>, MixedLoadExecutor<F> {
 			//
 			final BasicFileLoadClient<F, FileLoadSvc<F>>
 				nextLoadClient = new BasicFileLoadClient<>(
-				appConfig, reqConfigCopy, addrs, threadCount, itemSrcMap.get(nextLoadType),
+				appConfig, reqConfigCopy, threadCount, itemSrcMap.get(nextLoadType),
 				maxCount, rateLimit, nextRemoteLoadMap
 			);
 			loadClientMap.put(nextLoadType, nextLoadClient);
