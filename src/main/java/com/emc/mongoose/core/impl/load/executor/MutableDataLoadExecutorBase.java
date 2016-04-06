@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.DataRangesConfig;
+import com.emc.mongoose.common.conf.DataRangesConfig.ByteRange;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
@@ -145,12 +146,12 @@ extends LoadExecutorBase<T> {
 	throws IOException {
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
-			final List<DataRangesConfig.ByteRange> ranges = rangesConfig.getFixedByteRanges();
+			final List<ByteRange> ranges = rangesConfig.getFixedByteRanges();
 			if(rndRangesToUpdateCount > 0) {
 				item.scheduleRandomUpdates(rndRangesToUpdateCount);
 			} else if(ranges != null) {
 				if(ranges.size() == 1) {
-					final DataRangesConfig.ByteRange range = ranges.get(0);
+					final ByteRange range = ranges.get(0);
 					if(range.getBeg() == item.getSize()) {
 						item.scheduleAppend(range.getEnd());
 					} else {
@@ -177,14 +178,14 @@ extends LoadExecutorBase<T> {
 	throws IOException {
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
-			final List<DataRangesConfig.ByteRange> ranges = rangesConfig.getFixedByteRanges();
+			final List<ByteRange> ranges = rangesConfig.getFixedByteRanges();
 			if(rndRangesToUpdateCount > 0) {
 				for(int i = from; i < to; i ++) {
 					dataItems.get(i).scheduleRandomUpdates(rndRangesToUpdateCount);
 				}
 			} else if(ranges != null) {
 				if(ranges.size() == 1) {
-					final DataRangesConfig.ByteRange range = ranges.get(0);
+					final ByteRange range = ranges.get(0);
 					T dataItem;
 					for(int i = from; i < to; i ++) {
 						dataItem = dataItems.get(i);
