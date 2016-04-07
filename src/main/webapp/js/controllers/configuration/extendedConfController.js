@@ -22,7 +22,7 @@ function(Handlebars, extendedConfTemplate, HB) {
 		var propsMap = {};
 		//  show hidden folders on menu panel
 		var ul = $("#folders-defaults");
-		fillDomWithObject(ul, props);
+		addVisualTreeOfObject(ul, props);
 		// walkTreeMap(props, ul, propsMap);
 		// $("<li>").appendTo($("#run").parent().find("ul").first())
 		// 	.addClass("file")
@@ -93,13 +93,10 @@ function(Handlebars, extendedConfTemplate, HB) {
 		});
 	}
 	//
-	function fillDomWithObject(rootUlElem, object) {
+	function addVisualTreeOfObject(rootUlElem, object) {
 		$.each(object, function (key, value) {
-			// var li = document.createElement('li');
 			var li = $('<li/>');
 			if ((typeof value === 'object') && (value !== null)) {
-				// li.setAttribute('class', 'dir');
-				// var input = document.createElement('input');
 				li.attr({class: 'dir'});
 				const inputId = key + "-prop-id";
 				var input = $('<input/>', {type: 'checkbox', id: inputId});
@@ -111,12 +108,6 @@ function(Handlebars, extendedConfTemplate, HB) {
 				ul.appendTo(li);
 				fillDomWithObject(ul, value);
 			} else {
-				// li.setAttribute('class', 'file');
-				// var a = document.createElement('a');
-				// a.setAttribute('class', 'props');
-				// a.setAttribute('href', '#' + key);
-				// a.text = key;
-				// li.appendChild(a);
 				li.attr({class: 'file'});
 				var a = $('<a/>', {class: 'props', href: '#' + key});
 				a.text(key);
