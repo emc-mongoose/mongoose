@@ -9,8 +9,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -37,7 +36,7 @@ implements LoadBuilder<T, U> {
 	//
 	protected volatile AppConfig appConfig;
 	protected long maxCount = 0;
-	protected volatile IOConfig<?, ?> ioConfig = getDefaultIoConfig();
+	protected volatile IoConfig<?, ?> ioConfig = getDefaultIoConfig();
 	protected float rateLimit;
 	protected int threadCount = 1;
 	protected Input<T> itemInput;
@@ -45,7 +44,7 @@ implements LoadBuilder<T, U> {
 	protected String storageNodeAddrs[];
 	protected boolean flagUseNewItemSrc, flagUseNoneItemSrc, flagUseContainerItemSrc;
 	//
-	protected abstract IOConfig<?, ?> getDefaultIoConfig();
+	protected abstract IoConfig<?, ?> getDefaultIoConfig();
 	//
 	public LoadBuilderBase()
 	throws RemoteException {
@@ -134,12 +133,12 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final IOConfig<?, ?> getIoConfig() {
+	public final IoConfig<?, ?> getIoConfig() {
 		return ioConfig;
 	}
 	//
 	@Override
-	public final LoadBuilder<T, U> setIoConfig(final IOConfig<?, ?> ioConfig)
+	public final LoadBuilder<T, U> setIoConfig(final IoConfig<?, ?> ioConfig)
 	throws ClassCastException, RemoteException {
 		if(this.ioConfig.equals(ioConfig)) {
 			return this;
@@ -216,18 +215,18 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setInput(final Input<T> itemSrc)
+	public LoadBuilder<T, U> setInput(final Input<T> itemInput)
 	throws RemoteException {
-		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
-		this.itemInput = itemSrc;
+		LOG.debug(Markers.MSG, "Set data items input: {}", itemInput);
+		this.itemInput = itemInput;
 		return this;
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setOutput(final Output<T> itemDst)
+	public LoadBuilder<T, U> setOutput(final Output<T> itemOutput)
 	throws RemoteException {
-		LOG.debug(Markers.MSG, "Set data items destination: {}", itemDst);
-		this.itemOutput = itemDst;
+		LOG.debug(Markers.MSG, "Set data items output: {}", itemOutput);
+		this.itemOutput = itemOutput;
 		return this;
 	}
 	//
@@ -251,10 +250,10 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	//
-	protected abstract ItemSrc<T> getNewItemSrc()
+	protected abstract Input<T> getNewItemInput()
 	throws NoSuchMethodException;
 	//
-	protected abstract ItemSrc<T> getDefaultItemSrc();
+	protected abstract Input<T> getDefaultItemInput();
 	//
 	@Override
 	public LoadBuilderBase<T, U> useNewItemSrc()

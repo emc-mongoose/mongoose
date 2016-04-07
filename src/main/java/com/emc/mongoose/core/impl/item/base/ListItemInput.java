@@ -1,8 +1,8 @@
 package com.emc.mongoose.core.impl.item.base;
 //
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.base.Item;
 //
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -13,16 +13,15 @@ import java.util.List;
 /**
  Readable collection of the data items.
  */
-public class ListItemSrc<T extends Item>
-implements ItemSrc<T> {
+public class ListItemInput<T extends Item>
+implements Input<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	protected final List<T> items;
 	protected volatile int i = 0;
-	private T lastItem = null;
 	//
-	public ListItemSrc(final List<T> items) {
+	public ListItemInput(final List<T> items) {
 		this.items = items;
 	}
 
@@ -70,11 +69,6 @@ implements ItemSrc<T> {
 	public void reset()
 	throws IOException {
 		i = 0;
-	}
-
-	@Override
-	public void setLastItem(final T lastItem) {
-		this.lastItem = lastItem;
 	}
 
 	@Override

@@ -1,9 +1,9 @@
 package com.emc.mongoose.core.impl.item.data;
 //
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
 //
@@ -14,23 +14,23 @@ import java.util.List;
 /**
  Created by kurila on 24.07.15.
  */
-public final class NewDataItemSrc<T extends DataItem>
-implements ItemSrc<T> {
+public final class NewDataItemInput<T extends DataItem>
+implements Input<T> {
 	//
 	private final Constructor<T> itemConstructor;
-	private final BasicItemNameInput idGenerator;
+	private final BasicItemNameInput idInput;
 	private final ContentSource contentSrc;
 	private final SizeInBytes dataSize;
 	private T lastItem = null;
 	//
-	public NewDataItemSrc(
-		final Class<T> dataCls, final BasicItemNameInput idGenerator,
+	public NewDataItemInput(
+		final Class<T> dataCls, final BasicItemNameInput idInput,
 		final ContentSource contentSrc, final SizeInBytes dataSize
 	) throws NoSuchMethodException, IllegalArgumentException {
 		this.itemConstructor = dataCls.getConstructor(
 			String.class, Long.class, Long.class, ContentSource.class
 		);
-		this.idGenerator = idGenerator;
+		this.idInput = idInput;
 		this.contentSrc = contentSrc;
 		this.dataSize = dataSize;
 	}
@@ -44,7 +44,7 @@ implements ItemSrc<T> {
 	throws IOException {
 		try {
 			return itemConstructor.newInstance(
-				idGenerator.get(), idGenerator.getLastValue(), dataSize.get(), contentSrc
+				idInput.get(), idInput.getLastValue(), dataSize.get(), contentSrc
 			);
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
@@ -58,7 +58,7 @@ implements ItemSrc<T> {
 			for(int i = 0; i < maxCount; i ++) {
 				buffer.add(
 					itemConstructor.newInstance(
-						idGenerator.get(), idGenerator.getLastValue(), dataSize.get(), contentSrc
+						idInput.get(), idInput.getLastValue(), dataSize.get(), contentSrc
 					)
 				);
 			}
@@ -66,11 +66,6 @@ implements ItemSrc<T> {
 			throw new IOException(e);
 		}
 		return maxCount;
-	}
-	//
-	@Override
-	public void setLastItem(final T lastItem) {
-		this.lastItem = lastItem;
 	}
 	/**
 	 * Does nothing

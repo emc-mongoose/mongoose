@@ -9,7 +9,7 @@ import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataSizeException;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.FileIOTask;
 import static com.emc.mongoose.core.api.io.task.IOTask.Status.CANCELLED;
 import static com.emc.mongoose.core.api.io.task.IOTask.Status.FAIL_IO;
@@ -52,7 +52,7 @@ import java.util.concurrent.TimeoutException;
  Created by kurila on 23.11.15.
  */
 public class BasicFileIOTask<
-	T extends FileItem, C extends Directory<T>, X extends FileIOConfig<T, C>
+	T extends FileItem, C extends Directory<T>, X extends FileIoConfig<T, C>
 > extends BasicDataIOTask<T, C, X>
 implements FileIOTask<T> {
 	//

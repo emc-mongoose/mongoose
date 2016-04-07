@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 //
-import com.emc.mongoose.core.api.item.base.Output;
+import com.emc.mongoose.common.io.Output;
 //
 import java.io.IOException;
 import java.util.List;
@@ -56,9 +56,9 @@ implements Output<T> {
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public ListItemSrc<T> getInput()
+	public ListItemInput<T> getInput()
 	throws IOException {
-		return new ListItemSrc<>(items);
+		return new ListItemInput<>(items);
 	}
 
 	/**

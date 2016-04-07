@@ -5,11 +5,11 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.load.builder.DirectoryLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.DirectoryLoadExecutor;
 //
-import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
+import com.emc.mongoose.core.impl.io.conf.BasicFileIoConfig;
 import com.emc.mongoose.core.impl.load.executor.BasicDirectoryLoadExecutor;
 //
 import java.io.IOException;
@@ -33,8 +33,8 @@ implements DirectoryLoadBuilder<T, C, U> {
 	}
 	//
 	@Override
-	protected FileIOConfig<T, C> getDefaultIoConfig() {
-		return new BasicFileIOConfig<>();
+	protected FileIoConfig<T, C> getDefaultIoConfig() {
+		return new BasicFileIoConfig<>();
 	}
 	//
 	@Override
@@ -57,8 +57,8 @@ implements DirectoryLoadBuilder<T, C, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected U buildActually() {
 		return (U) new BasicDirectoryLoadExecutor<>(
-			appConfig, (FileIOConfig<T, C>) ioConfig, threadCount,
-			itemInput == null ? getDefaultItemSrc() : itemInput, maxCount, rateLimit
+			appConfig, (FileIoConfig<T, C>) ioConfig, threadCount,
+			itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit
 		);
 	}
 }

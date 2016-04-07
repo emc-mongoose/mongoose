@@ -6,9 +6,9 @@ import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
+import com.emc.mongoose.common.io.Output;
 //
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.Output;
 //
 import com.emc.mongoose.core.impl.item.base.ItemBinFileOutput;
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
@@ -18,7 +18,7 @@ import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 //
 import com.emc.mongoose.core.impl.item.base.ItemListOutput;
 //
-import com.emc.mongoose.core.impl.item.base.ListItemSrc;
+import com.emc.mongoose.core.impl.item.base.ListItemInput;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 //
@@ -72,7 +72,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Start updating {} items", itemBuff.size());
 			final Output<HttpDataItem> dataDstU = new ItemBinFileOutput<>();
 			final long nUpdated = client.write(
-				new ListItemSrc<>(itemBuff), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
+				new ListItemInput<>(itemBuff), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
@@ -102,7 +102,7 @@ implements Runnable {
 				ContentSourceBase.getDefaultInstance()
 			);
 			final long nReWritten = client.write(
-				new ListItemSrc<>(itemBuff), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE,
+				new ListItemInput<>(itemBuff), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE,
 				DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
@@ -113,7 +113,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
 			// delete all created data items
 			final long nDeleted = client.delete(
-				new ListItemSrc<>(itemBuff), null, nWritten, DEFAULT_CONN_PER_NODE
+				new ListItemInput<>(itemBuff), null, nWritten, DEFAULT_CONN_PER_NODE
 			);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
 		} catch(final Exception e) {

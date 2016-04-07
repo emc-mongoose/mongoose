@@ -1,9 +1,9 @@
 package com.emc.mongoose.core.impl.item.base;
 //
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,8 +17,8 @@ import java.util.List;
 /**
  The data item input implementation deserializing the data items from the specified stream
  */
-public class ItemBinSrc<T extends Item>
-implements ItemSrc<T> {
+public class BinItemInput<T extends Item>
+implements Input<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
@@ -27,7 +27,7 @@ implements ItemSrc<T> {
 	protected int srcFrom = 0;
 	private T lastItem = null;
 	//
-	public ItemBinSrc(final ObjectInputStream itemsSrc) {
+	public BinItemInput(final ObjectInputStream itemsSrc) {
 		this.itemsSrc = itemsSrc;
 	}
 	//
@@ -103,15 +103,10 @@ implements ItemSrc<T> {
 		srcBuff = null;
 	}
 	//
-	@Override
-	public void setLastItem(final T lastItem) {
-		this.lastItem = lastItem;
-	}
-	//
 	@Override @SuppressWarnings("unchecked")
 	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, ItemSrc.MSG_SKIP_START, itemsCount);
+		LOG.info(Markers.MSG, Input.MSG_SKIP_START, itemsCount);
 		try {
 			Object o;
 			long i = 0;

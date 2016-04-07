@@ -23,8 +23,8 @@ import java.util.Iterator;
 /**
  Created by andrey on 22.11.15.
  */
-public class DirectoryItemSrc<F extends FileItem, D extends Directory<F>>
-extends GenericContainerItemSrcBase<F, D> {
+public class DirectoryItemInput<F extends FileItem, D extends Directory<F>>
+extends GenericContainerItemInputBase<F, D> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -74,7 +74,7 @@ extends GenericContainerItemSrcBase<F, D> {
 		}
 	}
 	//
-	public DirectoryItemSrc(
+	public DirectoryItemInput(
 		final D dir, final Class<F> itemCls, final long maxCount,
 		final int batchSize, final ContentSource contentSrc
 	) throws IllegalStateException {

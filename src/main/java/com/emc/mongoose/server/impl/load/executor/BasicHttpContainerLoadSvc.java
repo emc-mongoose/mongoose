@@ -1,6 +1,7 @@
 package com.emc.mongoose.server.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
@@ -8,8 +9,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.Output;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
 import com.emc.mongoose.core.impl.load.executor.BasicHttpContainerLoadExecutor;
@@ -36,10 +36,10 @@ implements HttpContainerLoadSvc<T, C> {
 	//
 	public BasicHttpContainerLoadSvc(
 		final AppConfig appConfig, final HttpRequestConfig reqConfig, final String[] addrs,
-		final int threadsPerNode, final ItemSrc<C> itemSrc, final long maxCount,
+		final int threadsPerNode, final Input<C> itemInput, final long maxCount,
 		final float rateLimit
 	) {
-		super(appConfig, reqConfig, addrs, threadsPerNode, itemSrc, maxCount, rateLimit);
+		super(appConfig, reqConfig, addrs, threadsPerNode, itemInput, maxCount, rateLimit);
 	}
 	//
 	@Override

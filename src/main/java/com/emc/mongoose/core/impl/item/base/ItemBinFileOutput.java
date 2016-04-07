@@ -42,10 +42,9 @@ implements ItemFileOutput<T> {
 	}
 	//
 	@Override
-	public
-	ItemBinFileSrc<T> getInput()
+	public BinFileInput<T> getInput()
 	throws IOException {
-		return new ItemBinFileSrc<>(itemsDstPath);
+		return new BinFileInput<>(itemsDstPath);
 	}
 	//
 	@Override

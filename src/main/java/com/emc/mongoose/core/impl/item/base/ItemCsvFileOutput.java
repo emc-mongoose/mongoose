@@ -36,11 +36,10 @@ implements ItemFileOutput<T> {
 	}
 	//
 	@Override
-	public
-	ItemCSVFileSrc<T> getInput()
+	public CsvFileItemInput<T> getInput()
 	throws IOException {
 		try {
-			return new ItemCSVFileSrc<>(itemsFilePath, itemCls, contentSrc);
+			return new CsvFileItemInput<>(itemsFilePath, itemCls, contentSrc);
 		} catch(final NoSuchMethodException e) {
 			throw new IOException(e);
 		}

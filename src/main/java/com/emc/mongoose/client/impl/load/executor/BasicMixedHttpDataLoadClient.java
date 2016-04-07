@@ -5,12 +5,12 @@ import com.emc.mongoose.client.api.load.executor.HttpDataLoadClient;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
@@ -51,7 +51,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 	public BasicMixedHttpDataLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
-		final Map<String, W> remoteLoadMap, final Map<LoadType, ItemSrc<T>> itemSrcMap,
+		final Map<String, W> remoteLoadMap, final Map<LoadType, Input<T>> itemInputMap,
 		final Map<LoadType, Integer> loadTypeWeightMap
 	) throws RemoteException {
 		//
@@ -62,7 +62,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 		this.loadTypeWeightMap = loadTypeWeightMap;
 		//
 		Map<String, HttpDataLoadSvc<T>> nextRemoteLoadMap;
-		for(final LoadType nextLoadType : itemSrcMap.keySet()) {
+		for(final LoadType nextLoadType : itemInputMap.keySet()) {
 			final HttpRequestConfig<T, ? extends Container<T>> reqConfigCopy;
 			try {
 				reqConfigCopy = (HttpRequestConfig<T, ? extends Container<T>>) reqConfig
@@ -85,7 +85,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 			//
 			final BasicHttpDataLoadClient<T, HttpDataLoadSvc<T>>
 				nextLoadClient = new BasicHttpDataLoadClient<>(
-					appConfig, reqConfigCopy, addrs, threadCount, itemSrcMap.get(nextLoadType),
+					appConfig, reqConfigCopy, addrs, threadCount, itemInputMap.get(nextLoadType),
 					maxCount, rateLimit, nextRemoteLoadMap
 				);
 			loadClientMap.put(nextLoadType, nextLoadClient);

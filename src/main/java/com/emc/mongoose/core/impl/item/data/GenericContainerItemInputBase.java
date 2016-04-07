@@ -2,13 +2,13 @@ package com.emc.mongoose.core.impl.item.data;
 //
 import com.emc.mongoose.common.conf.BasicConfig;
 //
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
-import com.emc.mongoose.core.impl.item.base.ListItemSrc;
+import com.emc.mongoose.core.impl.item.base.ListItemInput;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,9 +21,9 @@ import java.util.List;
 /**
  The implementation should have a state representing the actual position in the container listing
  */
-public abstract class GenericContainerItemSrcBase<T extends DataItem, C extends Container<T>>
-extends ListItemSrc<T>
-implements ItemSrc<T> {
+public abstract class GenericContainerItemInputBase<T extends DataItem, C extends Container<T>>
+extends ListItemInput<T>
+implements Input<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -33,7 +33,7 @@ implements ItemSrc<T> {
 	//
 	protected String lastItemId = null;
 	//
-	protected GenericContainerItemSrcBase(
+	protected GenericContainerItemInputBase(
 		final ContainerHelper<T, C> containerHelper, final Class<T> itemCls, final long maxCount
 	) throws IllegalStateException {
 		super(new ArrayList<T>(BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize()));
@@ -77,12 +77,6 @@ implements ItemSrc<T> {
 	throws IOException {
 		loadNewPageIfNecessary();
 		return super.get(buffer, maxCount);
-	}
-	//
-	@Override
-	public void setLastItem(final T lastItem) {
-		super.setLastItem(lastItem);
-		this.lastItemId = lastItem.getName();
 	}
 	//
 	/**

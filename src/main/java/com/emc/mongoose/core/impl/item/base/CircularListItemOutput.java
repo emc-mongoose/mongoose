@@ -82,9 +82,9 @@ extends ItemListOutput<T> {
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public CircularListItemSrc<T> getInput()
+	public CircularListItemInput<T> getInput()
 	throws IOException {
-		return new CircularListItemSrc<>(items);
+		return new CircularListItemInput<>(items);
 	}
 	//
 	@Override

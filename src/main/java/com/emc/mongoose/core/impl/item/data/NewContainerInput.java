@@ -3,7 +3,6 @@ package com.emc.mongoose.core.impl.item.data;
 //
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -12,15 +11,15 @@ import java.util.List;
 /**
  * Created by gusakk on 21.10.15.
  */
-public class NewContainerSrc<T extends Container>
-implements ItemSrc<T> {
+public class NewContainerInput<T extends Container>
+implements Input<T> {
 	//
 	private final Constructor<T> itemConstructor;
 	private final Input<String> idInput;
 	//
 	private T lastItem = null;
 	//
-	public NewContainerSrc(final Class<T> dataCls, final Input<String> idInput)
+	public NewContainerInput(final Class<T> dataCls, final Input<String> idInput)
 	throws NoSuchMethodException, IllegalArgumentException {
 		itemConstructor = dataCls.getConstructor(String.class);
 		this.idInput = idInput;
@@ -47,11 +46,6 @@ implements ItemSrc<T> {
 			throw new IOException(e);
 		}
 		return maxCount;
-	}
-	//
-	@Override
-	public void setLastItem(final T lastItem) {
-		this.lastItem = lastItem;
 	}
 	/**
 	 * Does nothing

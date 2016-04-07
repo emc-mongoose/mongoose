@@ -3,6 +3,7 @@ package com.emc.mongoose.server.impl.load.executor;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
@@ -11,8 +12,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.Output;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.BasicHttpDataLoadExecutor;
@@ -46,26 +46,26 @@ implements HttpDataLoadSvc<T> {
 	//
 	public BasicHttpDataLoadSvc(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadsPerNode, final ItemSrc<T> itemSrc,
+		final String[] addrs, final int threadsPerNode, final Input<T> itemInput,
 		final long maxCount, final float rateLimit,
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadsPerNode, itemSrc, maxCount, rateLimit,
+			appConfig, reqConfig, addrs, threadsPerNode, itemInput, maxCount, rateLimit,
 			sizeConfig, rangesConfig
 		);
 	}
 	//
 	public BasicHttpDataLoadSvc(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
 		final HttpProcessor httpProcessor, final HttpAsyncRequester client,
 		final ConnectingIOReactor ioReactor,
 		final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
+			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
 			sizeConfig, rangesConfig, httpProcessor, client, ioReactor, connPoolMap
 		);
 	}

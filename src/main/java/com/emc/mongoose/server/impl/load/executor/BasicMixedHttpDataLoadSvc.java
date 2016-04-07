@@ -5,13 +5,13 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.barrier.Barrier;
@@ -31,7 +31,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.List;
@@ -63,7 +62,7 @@ implements MixedHttpDataLoadSvc<T> {
 		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
 		final Map<LoadType, Integer> loadTypeWeightMap,
-		final Map<LoadType, ItemSrc<T>> itemSrcMap
+		final Map<LoadType, Input<T>> itemInputMap
 	) {
 		super(
 			appConfig, reqConfig, addrs, threadCount, null, maxCount, rateLimit, sizeConfig,
@@ -82,7 +81,7 @@ implements MixedHttpDataLoadSvc<T> {
 			}
 			reqConfigMap.put(nextLoadType, reqConfigCopy);
 			final BasicHttpDataLoadSvc<T> nextLoadSvc = new BasicHttpDataLoadSvc<T>(
-				appConfig, reqConfigCopy, addrs, threadCount, itemSrcMap.get(nextLoadType),
+				appConfig, reqConfigCopy, addrs, threadCount, itemInputMap.get(nextLoadType),
 				maxCount, rateLimit, sizeConfig, rangesConfig,
 				httpProcessor, client, ioReactor, connPoolMap
 			) {

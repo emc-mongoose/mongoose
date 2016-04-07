@@ -1,11 +1,11 @@
 package com.emc.mongoose.storage.adapter.swift;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 //
@@ -250,8 +250,8 @@ extends HttpRequestConfigBase<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
-		return new WSContainerItemSrc<>(
+	public final Input<T> getContainerListInput(final long maxCount, final String addr) {
+		return new WSContainerItemInput<>(
 			new HttpSwiftContainerHelper<>(this, container), addr, getItemClass(), maxCount
 		);
 	}

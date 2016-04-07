@@ -5,11 +5,11 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
@@ -43,16 +43,16 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	//
 	private final WeightBarrier<LoadType> barrier;
 	private final Map<LoadType, Integer> loadTypeWeights;
-	private final Map<LoadType, FileIOConfig<F, ? extends Directory<F>>>
+	private final Map<LoadType, FileIoConfig<F, ? extends Directory<F>>>
 		reqConfigMap = new HashMap<>();
 	protected final Map<LoadType, FileLoadExecutor<F>>
 		loadExecutorMap = new HashMap<>();
 	//
 	public BasicMixedFileLoadExecutor(
-		final AppConfig appConfig, final FileIOConfig<F, ? extends Directory<F>> reqConfig,
+		final AppConfig appConfig, final FileIoConfig<F, ? extends Directory<F>> reqConfig,
 		final int threadCount, final long maxCount, final float rateLimit,
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
-		final Map<LoadType, Integer> loadTypeWeightMap, final Map<LoadType, ItemSrc<F>> itemSrcMap
+		final Map<LoadType, Integer> loadTypeWeightMap, final Map<LoadType, Input<F>> itemInputMap
 	) {
 		super(
 			appConfig, reqConfig, threadCount, null, maxCount, rateLimit, sizeConfig, rangesConfig
@@ -61,9 +61,9 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 		this.loadTypeWeights = loadTypeWeightMap;
 		this.barrier = new WeightBarrier<>(loadTypeWeights, isInterrupted);
 		for(final LoadType nextLoadType : loadTypeWeights.keySet()) {
-			final FileIOConfig<F, ? extends Directory<F>> reqConfigCopy;
+			final FileIoConfig<F, ? extends Directory<F>> reqConfigCopy;
 			try {
-				reqConfigCopy = (FileIOConfig<F, ? extends Directory<F>>) reqConfig
+				reqConfigCopy = (FileIoConfig<F, ? extends Directory<F>>) reqConfig
 					.clone().setLoadType(nextLoadType);
 			} catch(final CloneNotSupportedException e) {
 				throw new IllegalStateException(e);
@@ -71,7 +71,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 			reqConfigMap.put(nextLoadType, reqConfigCopy);
 			final BasicFileLoadExecutor<F> nextLoadExecutor = new BasicFileLoadExecutor<F>(
 				appConfig, reqConfigCopy, threadCount,
-				itemSrcMap == null ? null : itemSrcMap.get(nextLoadType),
+				itemInputMap == null ? null : itemInputMap.get(nextLoadType),
 				maxCount, rateLimit, sizeConfig, rangesConfig
 			) {
 				@Override

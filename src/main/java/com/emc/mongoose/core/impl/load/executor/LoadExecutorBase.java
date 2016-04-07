@@ -6,15 +6,15 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
-import com.emc.mongoose.core.api.item.base.Output;
 import com.emc.mongoose.core.api.item.base.ItemBuffer;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
@@ -66,7 +66,7 @@ implements LoadExecutor<T> {
 	protected final AppConfig appConfig;
 	//
 	protected final ContentSource dataSrc;
-	protected final IOConfig<? extends Item, ? extends Container<? extends Item>>
+	protected final IoConfig<? extends Item, ? extends Container<? extends Item>>
 		ioConfigCopy;
 	protected final LoadType loadType;
 	//
@@ -167,12 +167,12 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
-		final IOConfig<? extends Item, ? extends Container<? extends Item>> ioConfig,
-		final String addrs[], final int threadCount, final Input<T> itemSrc, final long maxCount,
+		final IoConfig<? extends Item, ? extends Container<? extends Item>> ioConfig,
+		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final int instanceNum, final String name
 	) {
 		super(
-			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE, DEFAULT_INTERNAL_BATCH_SIZE,
+			itemInput, maxCount > 0 ? maxCount : Long.MAX_VALUE, DEFAULT_INTERNAL_BATCH_SIZE,
 			appConfig.getLoadCircular(), false, appConfig.getItemQueueSizeLimit(), rateLimit
 		);
 		try {
@@ -180,7 +180,7 @@ implements LoadExecutor<T> {
 		} catch(final RemoteException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to set \"{}\" as a consumer of \"{}\" producer",
-				name, itemSrc
+				name, itemInput
 			);
 		}
 		itemOutBuff = new LimitedQueueItemBuffer<>(
@@ -192,8 +192,8 @@ implements LoadExecutor<T> {
 		storageNodeCount = addrs == null ? 0 : addrs.length;
 		//
 		setName(name);
-		if(itemSrc != null) {
-			LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc.toString());
+		if(itemInput != null) {
+			LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemInput.toString());
 		}
 		//
 		totalThreadCount = threadCount * storageNodeCount;
@@ -202,7 +202,7 @@ implements LoadExecutor<T> {
 			isCircular
 		);
 		//
-		IOConfig<? extends Item, ? extends Container<? extends Item>> reqConfigClone = null;
+		IoConfig<? extends Item, ? extends Container<? extends Item>> reqConfigClone = null;
 		try {
 			reqConfigClone = ioConfig.clone();
 		} catch(final CloneNotSupportedException e) {
@@ -237,12 +237,12 @@ implements LoadExecutor<T> {
 	//
 	private LoadExecutorBase(
 		final AppConfig appConfig,
-		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final IoConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final int instanceNum
 	) {
 		this(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
+			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
 			instanceNum,
 			instanceNum + "-" + ioConfig.toString() +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
@@ -252,12 +252,12 @@ implements LoadExecutor<T> {
 	//
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
-		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final IoConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit
 	) {
 		this(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
+			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
 			NEXT_INSTANCE_NUM.getAndIncrement()
 		);
 	}
@@ -456,7 +456,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public void setOutput(final com.emc.mongoose.common.io.Output<T> itemOutput)
+	public void setOutput(final Output<T> itemOutput)
 	throws RemoteException {
 		this.consumer = itemOutput;
 		LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemOutput + "\"");

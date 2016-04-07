@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
@@ -13,7 +14,6 @@ import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.HttpContainerIOTask;
@@ -81,9 +81,9 @@ implements HttpContainerLoadExecutor<T, C> {
 	//
 	public BasicHttpContainerLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, C> reqConfig, final String[] addrs,
-		final int threadCount, final ItemSrc<C> itemSrc, final long maxCount, final float rateLimit
+		final int threadCount, final Input<C> itemInput, final long maxCount, final float rateLimit
 	) throws ClassCastException {
-		super(appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
+		super(appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit);
 		//
 		this.loadType = reqConfig.getLoadType();
 		httpReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;

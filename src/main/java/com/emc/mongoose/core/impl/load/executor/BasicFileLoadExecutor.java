@@ -5,11 +5,11 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.FileIOTask;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
@@ -39,12 +39,12 @@ implements FileLoadExecutor<T> {
 	private final ExecutorService ioTaskExecutor;
 	//
 	public BasicFileLoadExecutor(
-		final AppConfig appConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
-		final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final AppConfig appConfig, final FileIoConfig<T, ? extends Directory<T>> ioConfig,
+		final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) throws ClassCastException {
 		super(
-			appConfig, ioConfig, null, threadCount, itemSrc, maxCount, rateLimit,
+			appConfig, ioConfig, null, threadCount, itemInput, maxCount, rateLimit,
 			sizeConfig, rangesConfig
 		);
 		ioTaskExecutor = new ThreadPoolExecutor(
@@ -72,7 +72,7 @@ implements FileLoadExecutor<T> {
 	//
 	@Override
 	protected FileIOTask<T> getIOTask(final T item, final String nextNodeAddr) {
-		return new BasicFileIOTask<>(item, (FileIOConfig<T, Directory<T>>) ioConfigCopy);
+		return new BasicFileIOTask<>(item, (FileIoConfig<T, Directory<T>>) ioConfigCopy);
 	}
 	//
 	@Override

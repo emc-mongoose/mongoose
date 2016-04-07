@@ -2,16 +2,16 @@ package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 //
-import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
+import com.emc.mongoose.core.impl.io.conf.BasicFileIoConfig;
 import com.emc.mongoose.core.impl.load.executor.BasicFileLoadExecutor;
 import com.emc.mongoose.core.impl.load.executor.BasicMixedFileLoadExecutor;
 //
@@ -40,8 +40,8 @@ extends DataLoadBuilderBase<T, U> {
 	}
 	//
 	@Override
-	protected FileIOConfig<T, ? extends Directory<T>> getDefaultIoConfig() {
-		return new BasicFileIOConfig<>();
+	protected FileIoConfig<T, ? extends Directory<T>> getDefaultIoConfig() {
+		return new BasicFileIoConfig<>();
 	}
 	//
 	@Override
@@ -68,25 +68,25 @@ extends DataLoadBuilderBase<T, U> {
 			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
 				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
 			);
-			final Map<LoadType, ItemSrc<T>> itemSrcMap = new HashMap<>();
+			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
 			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
 				try {
-					itemSrcMap.put(
+					itemInputMap.put(
 						nextLoadType,
-						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemInput
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemInput() : itemInput
 					);
 				} catch(final NoSuchMethodException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
 				}
 			}
 			return (U) new BasicMixedFileLoadExecutor<>(
-				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
-				maxCount, rateLimit, sizeConfig, rangesConfig, loadTypeWeightMap, itemSrcMap
+				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
+				maxCount, rateLimit, sizeConfig, rangesConfig, loadTypeWeightMap, itemInputMap
 			);
 		} else {
 			return (U) new BasicFileLoadExecutor<>(
-				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
-				threadCount, itemInput == null ? getDefaultItemSrc() : itemInput, maxCount, rateLimit,
+				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig,
+				threadCount, itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit,
 				sizeConfig, rangesConfig
 			);
 		}

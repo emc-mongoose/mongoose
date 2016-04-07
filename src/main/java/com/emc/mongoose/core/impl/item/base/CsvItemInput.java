@@ -1,10 +1,10 @@
 package com.emc.mongoose.core.impl.item.base;
 //
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,8 +22,8 @@ import java.util.List;
 /**
  The data item input using CSV file containing the human-readable data item records as the source
  */
-public class ItemCSVSrc<T extends Item>
-implements ItemSrc<T> {
+public class CsvItemInput<T extends Item>
+implements Input<T> {
 	//
 	protected BufferedReader itemsSrc;
 	protected final Constructor<? extends T> itemConstructor;
@@ -37,7 +37,7 @@ implements ItemSrc<T> {
 	 @throws IOException
 	 @throws NoSuchMethodException
 	 */
-	public ItemCSVSrc(
+	public CsvItemInput(
 		final InputStream in, final Class<? extends T> itemCls, final ContentSource contentSrc
 	) throws IOException, NoSuchMethodException {
 		this(
@@ -46,7 +46,7 @@ implements ItemSrc<T> {
 		);
 	}
 	//
-	protected ItemCSVSrc(
+	protected CsvItemInput(
 		final BufferedReader itemsSrc, final Constructor<? extends T> itemConstructor,
 		final ContentSource contentSrc
 	) {
@@ -60,21 +60,16 @@ implements ItemSrc<T> {
 	}
 	//
 	@Override
-	public void setLastItem(final T lastItem) {
-		this.lastItem = lastItem;
-	}
-	//
-	@Override
 	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, ItemSrc.MSG_SKIP_START, itemsCount);
+		LOG.info(Markers.MSG, Input.MSG_SKIP_START, itemsCount);
 		String item;
 		for (int i = 0; i < itemsCount; i++) {
 			item = itemsSrc.readLine();
 			if (item == null) {
 				throw new IOException("Couldn't skip such amount of data items");
 			} else if (item.equals(lastItem.toString())) {
-				LOG.info(Markers.MSG, ItemSrc.MSG_SKIP_END);
+				LOG.info(Markers.MSG, Input.MSG_SKIP_END);
 				return;
 			}
 		}

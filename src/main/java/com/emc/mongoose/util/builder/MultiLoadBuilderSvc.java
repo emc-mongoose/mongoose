@@ -4,11 +4,11 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 //
 import com.emc.mongoose.common.conf.enums.LoadType;
-import com.emc.mongoose.core.api.item.base.Output;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -143,12 +143,12 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final IOConfig getIoConfig()
+	public final IoConfig getIoConfig()
 	throws RemoteException {
 		throw new RemoteException("Method shouldn't be invoked");
 	}
 	@Override
-	public LoadBuilder setIoConfig(final IOConfig ioConfig)
+	public LoadBuilder setIoConfig(final IoConfig ioConfig)
 	throws RemoteException {
 		throw new RemoteException("Method shouldn't be invoked");
 	}
@@ -199,10 +199,10 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setInput(final ItemSrc itemSrc)
+	public final LoadBuilderSvc setInput(final Input itemInput)
 	throws RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setInput(itemSrc);
+			loadBuilderSvc.setInput(itemInput);
 		}
 		return this;
 	}

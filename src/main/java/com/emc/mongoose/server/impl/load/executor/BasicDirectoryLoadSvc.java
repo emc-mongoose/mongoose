@@ -1,6 +1,7 @@
 package com.emc.mongoose.server.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
@@ -8,9 +9,8 @@ import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.item.base.Output;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.common.io.Output;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 //
 import com.emc.mongoose.core.impl.load.executor.BasicDirectoryLoadExecutor;
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
@@ -34,10 +34,10 @@ implements DirectoryLoadSvc<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicDirectoryLoadSvc(
-		final AppConfig appConfig, final FileIOConfig<T, C> ioConfig, final int threadsPerNode,
-		final ItemSrc<C> itemSrc, final long maxCount, final float rateLimit
+		final AppConfig appConfig, final FileIoConfig<T, C> ioConfig, final int threadsPerNode,
+		final Input<C> itemInput, final long maxCount, final float rateLimit
 	) {
-		super(appConfig, ioConfig, threadsPerNode, itemSrc, maxCount, rateLimit);
+		super(appConfig, ioConfig, threadsPerNode, itemInput, maxCount, rateLimit);
 	}
 	//
 	//

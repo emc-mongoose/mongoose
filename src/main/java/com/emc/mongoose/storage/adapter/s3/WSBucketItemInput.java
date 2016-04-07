@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
 //
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.impl.item.data.GenericContainerItemSrcBase;
+import com.emc.mongoose.core.impl.item.data.GenericContainerItemInputBase;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -35,8 +35,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public final class WSBucketItemSrc<T extends HttpDataItem, C extends Container<T>>
-extends GenericContainerItemSrcBase<T, C> {
+public final class WSBucketItemInput<T extends HttpDataItem, C extends Container<T>>
+extends GenericContainerItemInputBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -46,7 +46,7 @@ extends GenericContainerItemSrcBase<T, C> {
 	private boolean eof = false;
 	private long doneCount = 0;
 	//
-	public WSBucketItemSrc(
+	public WSBucketItemInput(
 		final BucketHelper<T, C> bucket, final String nodeAddr, final Class<T> itemCls,
 		final long maxCount
 	) throws IllegalStateException {

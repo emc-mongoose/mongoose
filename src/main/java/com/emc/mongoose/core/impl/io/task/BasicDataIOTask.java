@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.io.task;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.MutableDataItem;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.DataIOTask;
 //
 //import org.apache.logging.log4j.LogManager;
@@ -12,7 +12,7 @@ import com.emc.mongoose.core.api.io.task.DataIOTask;
  Created by andrey on 12.10.14.
  */
 public class BasicDataIOTask<
-	T extends MutableDataItem, C extends Container<T>, X extends IOConfig<T, C>
+	T extends MutableDataItem, C extends Container<T>, X extends IoConfig<T, C>
 > extends BasicIOTask<T, C, X>
 implements DataIOTask<T> {
 	//

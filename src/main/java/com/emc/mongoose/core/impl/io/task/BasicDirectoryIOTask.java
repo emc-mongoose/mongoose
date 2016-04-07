@@ -5,10 +5,10 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
 //
-import com.emc.mongoose.core.impl.item.data.DirectoryItemSrc;
+import com.emc.mongoose.core.impl.item.data.DirectoryItemInput;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeoutException;
  Created by kurila on 23.11.15.
  */
 public class BasicDirectoryIOTask<
-	T extends FileItem, C extends Directory<T>, X extends FileIOConfig<T, C>
+	T extends FileItem, C extends Directory<T>, X extends FileIoConfig<T, C>
 > extends BasicIOTask<C, C, X>
 implements DirectoryIOTask<T, C> {
 	//
@@ -96,7 +96,7 @@ implements DirectoryIOTask<T, C> {
 		try(
 			final DirectoryStream<Path>
 				dirStream = Files.newDirectoryStream(
-					fPath, DirectoryItemSrc.DEFAULT_DIRECTORY_STREAM_FILTER
+					fPath, DirectoryItemInput.DEFAULT_DIRECTORY_STREAM_FILTER
 				)
 		) {
 			if(LOG.isTraceEnabled(Markers.MSG)) {

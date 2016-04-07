@@ -22,7 +22,7 @@ import java.io.ObjectOutput;
  The most common implementation of the shared request configuration.
  */
 public abstract class RequestConfigBase<T extends DataItem, C extends Container<T>>
-extends IOConfigBase<T, C>
+extends IoConfigBase<T, C>
 implements RequestConfig<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

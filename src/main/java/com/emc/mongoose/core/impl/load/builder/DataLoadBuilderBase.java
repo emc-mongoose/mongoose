@@ -6,21 +6,21 @@ import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
-import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.item.data.FileDataItemInput;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
 import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
-import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
+import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -56,41 +56,41 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected ItemSrc<T> getNewItemSrc()
+	protected Input<T> getNewItemInput()
 	throws NoSuchMethodException {
 		final ItemNamingType namingType = appConfig.getItemNamingType();
 		final BasicItemNameInput bing = new BasicItemNameInput(
 			namingType, appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
 			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
 		);
-		return new NewDataItemSrc<>(
+		return new NewDataItemInput<>(
 			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeConfig
 		);
 	}
 	//
 	@SuppressWarnings("unchecked")
-	private ItemSrc<T> getContainerItemSrc()
+	private Input<T> getContainerItemInput()
 	throws CloneNotSupportedException {
-		return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
+		return (Input<T>) ((IoConfig) ioConfig.clone()).getContainerListInput(
 			maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
 		);
 	}
 	//
 	@Override
-	protected ItemSrc<T> getDefaultItemSrc() {
+	protected Input<T> getDefaultItemInput() {
 		try {
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
 				if(LoadType.WRITE.equals(ioConfig.getLoadType())) {
-					return getNewItemSrc();
+					return getNewItemInput();
 				} else {
-					return getContainerItemSrc();
+					return getContainerItemInput();
 				}
 			} else if(flagUseNewItemSrc) {
-				return getNewItemSrc();
+				return getNewItemInput();
 			} else if(flagUseContainerItemSrc) {
-				return getContainerItemSrc();
+				return getContainerItemInput();
 			}
 		} catch(final NoSuchMethodException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
@@ -116,7 +116,7 @@ implements DataLoadBuilder<T, U> {
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setInput(
-					new ItemCSVFileSrc<>(
+					new CsvFileItemInput<>(
 						Paths.get(listFilePathStr), (Class<T>) ioConfig.getItemClass(),
 						ioConfig.getContentSource()
 					)
@@ -144,11 +144,11 @@ implements DataLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setInput(final ItemSrc<T> itemSrc)
+	public LoadBuilder<T, U> setInput(final Input<T> itemInput)
 	throws RemoteException {
-		super.setInput(itemSrc);
-		if(itemSrc instanceof DataItemFileSrc) {
-			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
+		super.setInput(itemInput);
+		if(itemInput instanceof FileDataItemInput) {
+			final FileDataItemInput<T> fileInput = (FileDataItemInput<T>) itemInput;
 			final long approxDataItemsSize = fileInput.getAvgDataSize(
 				appConfig.getItemSrcBatchSize()
 			);

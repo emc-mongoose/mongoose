@@ -4,11 +4,11 @@ import com.emc.mongoose.client.api.load.executor.FileLoadClient;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
@@ -43,9 +43,9 @@ implements FileLoadClient<F, W>, MixedLoadExecutor<F> {
 		loadTypeWeightMap;
 	//
 	public BasicMixedFileLoadClient(
-		final AppConfig appConfig, final FileIOConfig<F, ? extends Directory<F>> reqConfig,
+		final AppConfig appConfig, final FileIoConfig<F, ? extends Directory<F>> reqConfig,
 		final int threadCount, final long maxCount, final float rateLimit,
-		final Map<String, W> remoteLoadMap, final Map<LoadType, ItemSrc<F>> itemSrcMap,
+		final Map<String, W> remoteLoadMap, final Map<LoadType, Input<F>> itemInputMap,
 		final Map<LoadType, Integer> loadTypeWeightMap
 	) throws RemoteException {
 		//
@@ -56,10 +56,10 @@ implements FileLoadClient<F, W>, MixedLoadExecutor<F> {
 		this.loadTypeWeightMap = loadTypeWeightMap;
 		//
 		Map<String, FileLoadSvc<F>> nextRemoteLoadMap;
-		for(final LoadType nextLoadType : itemSrcMap.keySet()) {
-			final FileIOConfig<F, ? extends Directory<F>> reqConfigCopy;
+		for(final LoadType nextLoadType : itemInputMap.keySet()) {
+			final FileIoConfig<F, ? extends Directory<F>> reqConfigCopy;
 			try {
-				reqConfigCopy = (FileIOConfig<F, ? extends Directory<F>>) reqConfig
+				reqConfigCopy = (FileIoConfig<F, ? extends Directory<F>>) reqConfig
 					.clone().setLoadType(nextLoadType);
 			} catch(final CloneNotSupportedException e) {
 				throw new IllegalStateException(e);
@@ -79,7 +79,7 @@ implements FileLoadClient<F, W>, MixedLoadExecutor<F> {
 			//
 			final BasicFileLoadClient<F, FileLoadSvc<F>>
 				nextLoadClient = new BasicFileLoadClient<>(
-				appConfig, reqConfigCopy, threadCount, itemSrcMap.get(nextLoadType),
+				appConfig, reqConfigCopy, threadCount, itemInputMap.get(nextLoadType),
 				maxCount, rateLimit, nextRemoteLoadMap
 			);
 			loadClientMap.put(nextLoadType, nextLoadClient);

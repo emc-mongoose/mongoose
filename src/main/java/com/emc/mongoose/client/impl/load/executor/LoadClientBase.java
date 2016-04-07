@@ -9,7 +9,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
@@ -173,24 +173,24 @@ implements LoadClient<T, W> {
 	}
 	//
 	public LoadClientBase(
-		final AppConfig appConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
-		final int threadCount, final Input<T> itemSrc, final long maxCount, final float rateLimit,
+		final AppConfig appConfig, final IoConfig<?, ?> ioConfig, final String addrs[],
+		final int threadCount, final Input<T> itemInput, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		this(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
+			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
 			// get any load server last job number
 			remoteLoadMap, remoteLoadMap.values().iterator().next().getInstanceNum()
 		);
 	}
 	//
 	protected LoadClientBase(
-		final AppConfig appConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
-		final int threadCount, final Input<T> itemSrc, final long maxCount, final float rateLimit,
+		final AppConfig appConfig, final IoConfig<?, ?> ioConfig, final String addrs[],
+		final int threadCount, final Input<T> itemInput, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap, final int instanceNum
 	) {
 		super(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, instanceNum,
+			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit, instanceNum,
 			instanceNum + "-" + ioConfig.toString() +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
 				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))

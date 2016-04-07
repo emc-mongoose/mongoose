@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.item.base;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 //
-import com.emc.mongoose.core.api.item.base.ItemFileSrc;
+import com.emc.mongoose.core.api.item.base.FileItemInput;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -15,9 +15,9 @@ import java.nio.file.StandardOpenOption;
 /**
  Created by kurila on 30.06.15.
  */
-public class ItemCSVFileSrc<T extends Item>
-extends ItemCSVSrc<T>
-implements ItemFileSrc<T> {
+public class CsvFileItemInput<T extends Item>
+extends CsvItemInput<T>
+implements FileItemInput<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -27,7 +27,7 @@ implements ItemFileSrc<T> {
 	 @param itemCls the particular data item implementation class used to parse the records
 	 @throws java.io.IOException
 	 @throws NoSuchMethodException */
-	public ItemCSVFileSrc(
+	public CsvFileItemInput(
 		final Path itemsFilePath, final Class<? extends T> itemCls, final ContentSource contentSrc
 	) throws IOException, NoSuchMethodException {
 		super(Files.newInputStream(itemsFilePath, StandardOpenOption.READ), itemCls, contentSrc);

@@ -4,9 +4,9 @@ import com.emc.mongoose.client.api.load.executor.HttpContainerLoadClient;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.HttpContainerIOTask;
 //
@@ -25,10 +25,12 @@ public class BasicHttpContainerLoadClient<
 	//
 	public BasicHttpContainerLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig reqConfig, final String addrs[],
-		final int threadCount, final ItemSrc<C> itemSrc, final long maxCount, final float rateLimit,
+		final int threadCount, final Input<C> itemInput, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
-		super(appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, remoteLoadMap);
+		super(
+			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit, remoteLoadMap
+		);
 	}
 	//
 	@Override

@@ -10,15 +10,15 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 //
-import com.emc.mongoose.core.impl.io.conf.BasicFileIOConfig;
+import com.emc.mongoose.core.impl.io.conf.BasicFileIoConfig;
 //
 import com.emc.mongoose.server.api.load.builder.FileLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
@@ -54,8 +54,8 @@ implements FileLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected FileIOConfig<T, ? extends Directory<T>> getDefaultIoConfig() {
-		return new BasicFileIOConfig<>();
+	protected FileIoConfig<T, ? extends Directory<T>> getDefaultIoConfig() {
+		return new BasicFileIoConfig<>();
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -84,7 +84,7 @@ implements FileLoadBuilderClient<T, W, U> {
 	throws RemoteException, DuplicateSvcNameException {
 		final LoadType loadType = ioConfig.getLoadType();
 		if(itemInput == null) {
-			itemInput = getDefaultItemSrc(); // affects load service builders
+			itemInput = getDefaultItemInput(); // affects load service builders
 		}
 		final Map<String, W> remoteLoadMap = new HashMap<>();
 		FileLoadBuilderSvc<T, W> nextBuilder;
@@ -99,15 +99,15 @@ implements FileLoadBuilderClient<T, W, U> {
 		}
 		//
 		if(LoadType.MIXED.equals(loadType)) {
-			final Map<LoadType, ItemSrc<T>> itemSrcMap = new HashMap<>();
+			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
 			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
 				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
 			);
 			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
 				try {
-					itemSrcMap.put(
+					itemInputMap.put(
 						nextLoadType,
-						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemInput
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemInput() : itemInput
 					);
 				} catch(final NoSuchMethodException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
@@ -115,13 +115,13 @@ implements FileLoadBuilderClient<T, W, U> {
 			}
 			//
 			return (U) new BasicMixedFileLoadClient<>(
-				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
-				maxCount, rateLimit, (Map<String, MixedFileLoadSvc<T>>) remoteLoadMap, itemSrcMap,
+				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
+				maxCount, rateLimit, (Map<String, MixedFileLoadSvc<T>>) remoteLoadMap, itemInputMap,
 				loadTypeWeightMap
 			);
 		} else {
 			return (U) new BasicFileLoadClient<>(
-				appConfig, (FileIOConfig<T, ? extends Directory<T>>) ioConfig,
+				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig,
 				appConfig.getLoadThreads(), itemInput, maxCount, rateLimit, remoteLoadMap
 			);
 		}

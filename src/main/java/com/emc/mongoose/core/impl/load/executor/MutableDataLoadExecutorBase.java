@@ -7,17 +7,17 @@ import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig.ByteRange;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.MutableDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.item.data.FileDataItemInput;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 //
-import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
+import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -40,19 +40,19 @@ extends LoadExecutorBase<T> {
 	//
 	protected MutableDataLoadExecutorBase(
 		final AppConfig appConfig,
-		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final IoConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) throws ClassCastException {
-		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
+		super(appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit);
 		//
 		this.loadType = ioConfig.getLoadType();
 		this.sizeConfig = sizeConfig;
 		this.rangesConfig = rangesConfig;
 		//
 		int buffSize;
-		if(itemSrc instanceof DataItemFileSrc) {
-			final long avgDataSize = ((DataItemFileSrc) itemSrc).getAvgDataSize(
+		if(itemInput instanceof FileDataItemInput) {
+			final long avgDataSize = ((FileDataItemInput) itemInput).getAvgDataSize(
 				appConfig.getItemSrcBatchSize()
 			);
 			if(avgDataSize < Constants.BUFF_SIZE_LO) {
@@ -62,8 +62,8 @@ extends LoadExecutorBase<T> {
 			} else {
 				buffSize = (int) avgDataSize;
 			}
-		} else if(itemSrc instanceof NewDataItemSrc) {
-			final long avgDataSize = ((NewDataItemSrc) itemSrc).getDataSizeInfo().getAvgDataSize();
+		} else if(itemInput instanceof NewDataItemInput) {
+			final long avgDataSize = ((NewDataItemInput) itemInput).getDataSizeInfo().getAvgDataSize();
 			if(avgDataSize < Constants.BUFF_SIZE_LO) {
 				buffSize = Constants.BUFF_SIZE_LO;
 			} else if(avgDataSize > Constants.BUFF_SIZE_HI) {

@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
 //
-import com.emc.mongoose.core.api.item.base.Output;
+import com.emc.mongoose.common.io.Output;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;

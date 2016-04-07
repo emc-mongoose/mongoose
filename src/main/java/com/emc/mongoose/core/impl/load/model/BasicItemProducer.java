@@ -183,7 +183,6 @@ implements ItemProducer<T> {
 	protected void skipIfNecessary() {
 		if(skipCount > 0) {
 			try {
-				itemInput.setLast(lastItem);
 				itemInput.skip(skipCount);
 			} catch (final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to skip {} items", skipCount);

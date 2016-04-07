@@ -10,6 +10,8 @@ public interface Input<T>
 extends Closeable {
 
 	String DELIMITER = ";";
+	String MSG_SKIP_START = "Skipping {} items. This may take some time. Please wait...";
+	String MSG_SKIP_END = "Items have been skipped";
 
 	/**
 	 Get next item
@@ -44,5 +46,4 @@ extends Closeable {
 	 */
 	void reset()
 	throws IOException;
-
 }

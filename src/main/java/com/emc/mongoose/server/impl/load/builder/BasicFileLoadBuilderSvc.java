@@ -4,12 +4,12 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.load.builder.BasicFileLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.FileLoadBuilderSvc;
@@ -88,25 +88,25 @@ implements FileLoadBuilderSvc<T, U> {
 			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
 				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
 			);
-			final Map<LoadType, ItemSrc<T>> itemSrcMap = new HashMap<>();
+			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
 			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
 				try {
-					itemSrcMap.put(
+					itemInputMap.put(
 						nextLoadType,
-						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemInput
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemInput() : itemInput
 					);
 				} catch(final NoSuchMethodException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
 				}
 			}
 			return (U) new BasicMixedFileLoadSvc<>(
-				appConfig, (FileIOConfig) ioConfig, threadCount, maxCount, rateLimit, sizeConfig,
-				rangesConfig, loadTypeWeightMap, itemSrcMap
+				appConfig, (FileIoConfig) ioConfig, threadCount, maxCount, rateLimit, sizeConfig,
+				rangesConfig, loadTypeWeightMap, itemInputMap
 			);
 		} else {
 			return (U) new BasicFileLoadSvc<>(
-				appConfig, (FileIOConfig) ioConfig, threadCount,
-				itemInput == null ? getDefaultItemSrc() : itemInput, maxCount, rateLimit,
+				appConfig, (FileIoConfig) ioConfig, threadCount,
+				itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit,
 				sizeConfig, rangesConfig
 			);
 		}

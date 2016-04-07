@@ -51,7 +51,7 @@ public class ItemListOutputTest {
 	@Test
 	public void shouldClose()
 	throws Exception {
-		final ListItemSrc<DataItem> itemsInput = new ListItemSrc<>(itemsMock);
+		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsMock);
 		itemsInput.close();
 		Mockito.verifyNoMoreInteractions(itemsMock);
 	}

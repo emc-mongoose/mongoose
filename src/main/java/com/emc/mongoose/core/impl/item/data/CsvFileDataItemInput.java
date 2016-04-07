@@ -4,9 +4,9 @@ import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
+import com.emc.mongoose.core.api.item.data.FileDataItemInput;
 //
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,9 +19,9 @@ import java.util.List;
 /**
  Created by kurila on 20.10.15.
  */
-public class DataItemCSVFileSrc<T extends DataItem>
-extends ItemCSVFileSrc<T>
-implements DataItemFileSrc<T> {
+public class CsvFileDataItemInput<T extends DataItem>
+extends CsvFileItemInput<T>
+implements FileDataItemInput<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	/**
@@ -30,7 +30,7 @@ implements DataItemFileSrc<T> {
 	 @param contentSrc
 	 @throws IOException
 	 @throws NoSuchMethodException */
-	public DataItemCSVFileSrc(
+	public CsvFileDataItemInput(
 		final Path itemsFilePath, final Class<? extends T> itemCls, final ContentSource contentSrc
 	) throws IOException, NoSuchMethodException {
 		super(itemsFilePath, itemCls, contentSrc);
@@ -41,7 +41,7 @@ implements DataItemFileSrc<T> {
 		long sumSize = 0;
 		int actualCount = 0;
 		try(
-			final DataItemFileSrc<T> nestedItemSrc = new DataItemCSVFileSrc<>(
+			final FileDataItemInput<T> nestedItemSrc = new CsvFileDataItemInput<>(
 				itemsFilePath, itemConstructor.getDeclaringClass(), contentSrc
 			)
 		) {

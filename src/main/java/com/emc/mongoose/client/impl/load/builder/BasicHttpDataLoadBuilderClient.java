@@ -4,8 +4,8 @@ import com.emc.mongoose.client.impl.load.executor.BasicMixedHttpDataLoadClient;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -79,7 +79,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 		//
 		final LoadType loadType = ioConfig.getLoadType();
 		if(itemInput == null) {
-			itemInput = getDefaultItemSrc(); // affects load service builders
+			itemInput = getDefaultItemInput(); // affects load service builders
 		}
 		final Map<String, W> remoteLoadMap = new HashMap<>();
 		HttpDataLoadBuilderSvc<T, W> nextBuilder;
@@ -93,15 +93,15 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		if(LoadType.MIXED.equals(loadType)) {
-			final Map<LoadType, ItemSrc<T>> itemSrcMap = new HashMap<>();
+			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
 			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
 				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
 			);
 			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
 				try {
-					itemSrcMap.put(
+					itemInputMap.put(
 						nextLoadType,
-						LoadType.WRITE.equals(nextLoadType) ? getNewItemSrc() : itemInput
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemInput() : itemInput
 					);
 				} catch(final NoSuchMethodException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
@@ -111,7 +111,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 			return (U) new BasicMixedHttpDataLoadClient<>(
 				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount,
 				maxCount, rateLimit, (Map<String, MixedHttpDataLoadSvc<T>>) remoteLoadMap,
-				itemSrcMap, loadTypeWeightMap
+				itemInputMap, loadTypeWeightMap
 			);
 		} else {
 			//

@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 //
-import com.emc.mongoose.core.api.item.base.Output;
+import com.emc.mongoose.common.io.Output;
 //
 import java.io.IOException;
 import java.io.ObjectOutputStream;

@@ -2,9 +2,9 @@ package com.emc.mongoose.client.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.HttpDataIOTask;
 // mongoose-server-api.jar
@@ -31,19 +31,21 @@ implements HttpDataLoadClient<T, W> {
 	//
 	public BasicHttpDataLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final Map<String, W> remoteLoadMap
 	) throws RemoteException {
-		super(appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, remoteLoadMap);
+		super(
+			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit, remoteLoadMap
+		);
 	}
 	//
 	protected BasicHttpDataLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final Map<String, W> remoteLoadMap, final int instanceNum
 	) throws RemoteException {
 		super(
-			appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit, remoteLoadMap,
+			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit, remoteLoadMap,
 			instanceNum
 		);
 	}

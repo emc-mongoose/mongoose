@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
-import com.emc.mongoose.core.impl.item.data.GenericContainerItemSrcBase;
+import com.emc.mongoose.core.impl.item.data.GenericContainerItemInputBase;
 //
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -30,8 +30,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public class WSContainerItemSrc<T extends HttpDataItem, C extends Container<T>>
-extends GenericContainerItemSrcBase<T, C> {
+public class WSContainerItemInput<T extends HttpDataItem, C extends Container<T>>
+extends GenericContainerItemInputBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static JsonFactory JSON_FACTORY = new JsonFactory();
@@ -42,7 +42,7 @@ extends GenericContainerItemSrcBase<T, C> {
 	private boolean isInsideObjectToken = false, eof = false;
 	private long lastSize = -1, doneCount = 0;
 	//
-	public WSContainerItemSrc(
+	public WSContainerItemInput(
 		final SwiftContainerHelper<T, C> container, final String nodeAddr, final Class<T> itemCls,
 		final long maxCount
 	) throws IllegalStateException {

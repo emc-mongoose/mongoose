@@ -8,7 +8,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 //
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
@@ -25,8 +25,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 23.11.15.
  */
-public abstract class IOConfigBase<T extends DataItem, C extends Container<T>>
-implements IOConfig<T, C> {
+public abstract class IoConfigBase<T extends DataItem, C extends Container<T>>
+implements IoConfig<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -43,7 +43,7 @@ implements IOConfig<T, C> {
 	@Deprecated protected int reqSleepMilliSec = 0;
 	protected int nameRadix = Character.MAX_RADIX;
 	//
-	protected IOConfigBase() {
+	protected IoConfigBase() {
 		appConfig = BasicConfig.THREAD_CONTEXT.get();
 		loadType = LoadType.WRITE;
 		container = null;
@@ -55,7 +55,7 @@ implements IOConfig<T, C> {
 		buffSize = appConfig.getIoBufferSizeMin();
 	}
 	//
-	protected IOConfigBase(final IOConfigBase<T, C> ioConf2Clone) {
+	protected IoConfigBase(final IoConfigBase<T, C> ioConf2Clone) {
 		this();
 		if(ioConf2Clone != null) {
 			setLoadType(ioConf2Clone.getLoadType());
@@ -72,9 +72,9 @@ implements IOConfig<T, C> {
 	//
 	@Override
 	@SuppressWarnings("unchecked")
-	public IOConfigBase<T, C> clone()
+	public IoConfigBase<T, C> clone()
 		throws CloneNotSupportedException {
-		final IOConfigBase<T, C> ioConf = (IOConfigBase<T, C>) super.clone();
+		final IoConfigBase<T, C> ioConf = (IoConfigBase<T, C>) super.clone();
 		ioConf
 			.setLoadType(loadType)
 			.setContentSource(contentSrc)
@@ -117,7 +117,7 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public IOConfigBase<T, C> setLoadType(final LoadType loadType) {
+	public IoConfigBase<T, C> setLoadType(final LoadType loadType) {
 		LOG.trace(Markers.MSG, "Setting load type {}", loadType);
 		this.loadType = loadType;
 		return this;
@@ -129,7 +129,7 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public IOConfigBase<T, C> setNameSpace(final String nameSpace) {
+	public IoConfigBase<T, C> setNameSpace(final String nameSpace) {
 		this.nameSpace = nameSpace;
 		return this;
 	}
@@ -140,7 +140,7 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public IOConfigBase<T, C> setNamePrefix(final String namePrefix) {
+	public IoConfigBase<T, C> setNamePrefix(final String namePrefix) {
 		this.namePrefix = namePrefix;
 		return this;
 	}
@@ -151,7 +151,7 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public IOConfigBase<T, C> setNameRadix(final int nameRadix) {
+	public IoConfigBase<T, C> setNameRadix(final int nameRadix) {
 		this.nameRadix = nameRadix;
 		return this;
 	}
@@ -162,7 +162,7 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public IOConfigBase<T, C> setContentSource(final ContentSource dataSrc) {
+	public IoConfigBase<T, C> setContentSource(final ContentSource dataSrc) {
 		this.contentSrc = dataSrc;
 		return this;
 	}
@@ -173,7 +173,7 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public IOConfigBase<T, C> setContainer(final C container) {
+	public IoConfigBase<T, C> setContainer(final C container) {
 		this.container = container;
 		return this;
 	}
@@ -184,7 +184,7 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public final IOConfigBase<T, C> setVerifyContentFlag(final boolean verifyContentFlag) {
+	public final IoConfigBase<T, C> setVerifyContentFlag(final boolean verifyContentFlag) {
 		this.verifyContentFlag = verifyContentFlag;
 		return this;
 	}
@@ -195,12 +195,12 @@ implements IOConfig<T, C> {
 	}
 	//
 	@Override
-	public final IOConfigBase<T, C> setBuffSize(final int buffSize) {
+	public final IoConfigBase<T, C> setBuffSize(final int buffSize) {
 		this.buffSize = buffSize;
 		return this;
 	}
 	//
-	public IOConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
+	public IoConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		this.appConfig = appConfig;
 		setLoadType(appConfig.getLoadType());
 		final String newContainerName = appConfig.getItemContainerName();

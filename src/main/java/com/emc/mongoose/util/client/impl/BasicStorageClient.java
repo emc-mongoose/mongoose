@@ -5,9 +5,9 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.item.base.Output;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -35,9 +35,8 @@ implements StorageClient<T> {
 		this.loadBuilder = loadBuilder;
 	}
 	//
-	protected long executeLoadJob(
-		final LoadExecutor<T> loadExecutor, final Output<T> dst
-	) throws InterruptedException, IOException {
+	protected long executeLoadJob(final LoadExecutor<T> loadExecutor, final Output<T> dst)
+	throws InterruptedException, IOException {
 		loadExecutor.setOutput(dst);
 		loadExecutor.start();
 		final long timeOut = appConfig.getLoadLimitTime();
@@ -57,16 +56,16 @@ implements StorageClient<T> {
 	//
 	@Override
 	public long write(
-		final ItemSrc<T> src, final Output<T> dst, final long maxCount, final int connPerNodeCount,
-		final long size
+		final Input<T> itemInput, final Output<T> itemOutput, final long maxCount,
+		final int connPerNodeCount, final long size
 	) throws IllegalArgumentException, InterruptedException, IOException {
-		return write(src, dst, maxCount, connPerNodeCount, size, size, 0);
+		return write(itemInput, itemOutput, maxCount, connPerNodeCount, size, size, 0);
 	}
 	//
 	@Override
 	public long write(
-		final ItemSrc<T> src, final Output<T> dst, final long maxCount, final int connPerNodeCount,
-		final long minSize, final long maxSize, final float sizeBias
+		final Input<T> itemInput, final Output<T> itemOutput, final long maxCount,
+		final int connPerNodeCount, final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
@@ -75,19 +74,19 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.WRITE)
-				.useNewItemSrc().setInput(src)
+				.useNewItemSrc().setInput(itemInput)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
-			return executeLoadJob(loadJobExecutor, dst);
+			return executeLoadJob(loadJobExecutor, itemOutput);
 		}
 	}
 	//
 	@Override
 	public long write(
-		final ItemSrc<T> src, final Output<T> dst, final long maxCount, final int connPerNodeCount,
-		final int randomRangesCount
+		final Input<T> itemInput, final Output<T> itemOutput, final long maxCount, 
+		final int connPerNodeCount, final int randomRangesCount
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
@@ -96,19 +95,19 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.WRITE)
-				.useNewItemSrc().setInput(src)
+				.useNewItemSrc().setInput(itemInput)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
-			return executeLoadJob(loadJobExecutor, dst);
+			return executeLoadJob(loadJobExecutor, itemOutput);
 		}
 	}
 	//
 	@Override
 	public long write(
-		final ItemSrc<T> src, final Output<T> dst, final long maxCount, final int connPerNodeCount,
-		final String fixedByteRanges
+		final Input<T> itemInput, final Output<T> itemOutput, final long maxCount,
+		final int connPerNodeCount, final String fixedByteRanges
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder).setDataRanges(new DataRangesConfig(fixedByteRanges));
@@ -116,25 +115,25 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.WRITE)
-				.useNewItemSrc().setInput(src)
+				.useNewItemSrc().setInput(itemInput)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
-			return executeLoadJob(loadJobExecutor, dst);
+			return executeLoadJob(loadJobExecutor, itemOutput);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public long read(final ItemSrc<T> src)
+	public long read(final Input<T> itemInput)
 	throws IllegalStateException, InterruptedException, IOException {
-		return read(src, null, 0, DEFAULT_CONN_PER_NODE_COUNT, appConfig.getItemDataVerify());
+		return read(itemInput, null, 0, DEFAULT_CONN_PER_NODE_COUNT, appConfig.getItemDataVerify());
 	}
 	//
 	@Override
 	public long read(
-		final ItemSrc<T> src, final Output<T> dst, final long maxCount, final int connPerNodeCount,
-		final boolean verifyContentFlag
+		final Input<T> itemInput, final Output<T> itemOutput, final long maxCount,
+		final int connPerNodeCount, final boolean verifyContentFlag
 	) throws IllegalStateException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
@@ -144,19 +143,19 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.READ)
-				.setInput(src)
+				.setInput(itemInput)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
-			return executeLoadJob(loadJobExecutor, dst);
+			return executeLoadJob(loadJobExecutor, itemOutput);
 		}
 	}
 	//
 	@Override
 	public long read(
-		final ItemSrc<T> src, final Output<T> dst, final long maxCount, final int connPerNodeCount,
-		final boolean verifyContentFlag, final int randomRangesCount
+		final Input<T> itemInput, final Output<T> itemOutput, final long maxCount,
+		final int connPerNodeCount, final boolean verifyContentFlag, final int randomRangesCount
 	) throws IllegalStateException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
@@ -167,19 +166,19 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.READ)
-				.setInput(src)
+				.setInput(itemInput)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
-			return executeLoadJob(loadJobExecutor, dst);
+			return executeLoadJob(loadJobExecutor, itemOutput);
 		}
 	}
 	//
 	@Override
 	public long read(
-		final ItemSrc<T> src, final Output<T> dst, final long maxCount, final int connPerNodeCount,
-		final boolean verifyContentFlag, final String fixedByteRanges
+		final Input<T> itemInput, final Output<T> itemOutput, final long maxCount,
+		final int connPerNodeCount, final boolean verifyContentFlag, final String fixedByteRanges
 	) throws IllegalStateException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
@@ -190,24 +189,24 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.READ)
-				.setInput(src)
+				.setInput(itemInput)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
-			return executeLoadJob(loadJobExecutor, dst);
+			return executeLoadJob(loadJobExecutor, itemOutput);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public long delete(final ItemSrc<T> src)
+	public long delete(final Input<T> itemInput)
 	throws IllegalStateException, InterruptedException, IOException {
-		return delete(src, null, 0, DEFAULT_CONN_PER_NODE_COUNT);
+		return delete(itemInput, null, 0, DEFAULT_CONN_PER_NODE_COUNT);
 	}
 	//
 	@Override
 	public long delete(
-		final ItemSrc<T> src, final Output<T> dst,
+		final Input<T> itemInput, final Output<T> itemOutput,
 		final long maxCount, final int connPerNodeCount
 	) throws IllegalStateException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
@@ -216,12 +215,12 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.DELETE)
-				.setInput(src)
+				.setInput(itemInput)
 				.setMaxCount(maxCount)
 				.setThreadCount(connPerNodeCount)
 				.build()
 		) {
-			return executeLoadJob(loadJobExecutor, dst);
+			return executeLoadJob(loadJobExecutor, itemOutput);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

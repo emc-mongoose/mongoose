@@ -8,12 +8,11 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 //
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
 import com.emc.mongoose.core.impl.item.data.BasicFile;
-import com.emc.mongoose.core.impl.item.data.DirectoryItemSrc;
+import com.emc.mongoose.core.impl.item.data.DirectoryItemInput;
 //
 import org.apache.commons.lang.StringUtils;
 //
@@ -25,16 +24,16 @@ import java.io.IOException;
 /**
  Created by kurila on 23.11.15.
  */
-public class BasicFileIOConfig<F extends FileItem, D extends Directory<F>>
-extends IOConfigBase<F, D>
-implements FileIOConfig<F, D> {
+public class BasicFileIoConfig<F extends FileItem, D extends Directory<F>>
+extends IoConfigBase<F, D>
+implements FileIoConfig<F, D> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private Input<String> pathInput = null;
 	private int batchSize = BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize();
 	//
-	public BasicFileIOConfig() {
+	public BasicFileIoConfig() {
 		super();
 		if(container != null) {
 			final String containerName = container.getName();
@@ -44,13 +43,13 @@ implements FileIOConfig<F, D> {
 		}
 	}
 	//
-	public BasicFileIOConfig(final BasicFileIOConfig<F, D> another) {
+	public BasicFileIoConfig(final BasicFileIoConfig<F, D> another) {
 		super(another);
 		pathInput = another.pathInput;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public BasicFileIOConfig<F, D> setAppConfig(final AppConfig appConfig) {
+	public BasicFileIoConfig<F, D> setAppConfig(final AppConfig appConfig) {
 		// note that it's incorrect to invoke super here
 		this.appConfig = appConfig;
 		setLoadType(appConfig.getLoadType());
@@ -69,7 +68,7 @@ implements FileIOConfig<F, D> {
 	}
 	//
 	@Override
-	public final BasicFileIOConfig<F, D> setContainer(final D container) {
+	public final BasicFileIoConfig<F, D> setContainer(final D container) {
 		super.setContainer(container);
 		if(container != null) {
 			final String containerName = container.getName();
@@ -81,8 +80,8 @@ implements FileIOConfig<F, D> {
 	}
 	//
 	@Override
-	public ItemSrc<F> getContainerListInput(final long maxCount, final String addr) {
-		return new DirectoryItemSrc<>(
+	public Input<F> getContainerListInput(final long maxCount, final String addr) {
+		return new DirectoryItemInput<>(
 			container, getItemClass(), maxCount, batchSize, contentSrc
 		);
 	}

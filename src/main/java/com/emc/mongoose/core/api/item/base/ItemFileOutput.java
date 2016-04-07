@@ -1,5 +1,7 @@
 package com.emc.mongoose.core.api.item.base;
 //
+import com.emc.mongoose.common.io.Output;
+
 import java.io.IOException;
 import java.nio.file.Path;
 /**

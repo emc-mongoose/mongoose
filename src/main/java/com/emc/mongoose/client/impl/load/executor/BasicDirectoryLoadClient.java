@@ -4,10 +4,10 @@ import com.emc.mongoose.client.api.load.executor.DirectoryLoadClient;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.io.task.BasicDirectoryIOTask;
@@ -24,15 +24,15 @@ public class BasicDirectoryLoadClient<
 > extends LoadClientBase<C, W> implements DirectoryLoadClient<T, C, W> {
 	//
 	public BasicDirectoryLoadClient(
-		final AppConfig appConfig, final FileIOConfig<T, C> ioConfig, final int threadCount,
-		final ItemSrc<C> itemSrc, final long maxCount, final float rateLimit,
+		final AppConfig appConfig, final FileIoConfig<T, C> ioConfig, final int threadCount,
+		final Input<C> itemInput, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
-		super(appConfig, ioConfig, null, threadCount, itemSrc, maxCount, rateLimit, remoteLoadMap);
+		super(appConfig, ioConfig, null, threadCount, itemInput, maxCount, rateLimit, remoteLoadMap);
 	}
 	//
 	@Override
 	protected IOTask<C> getIOTask(final C item, final String nextNodeAddr) {
-		return new BasicDirectoryIOTask<>(item, (FileIOConfig<T, C>) ioConfigCopy);
+		return new BasicDirectoryIOTask<>(item, (FileIoConfig<T, C>) ioConfigCopy);
 	}
 }

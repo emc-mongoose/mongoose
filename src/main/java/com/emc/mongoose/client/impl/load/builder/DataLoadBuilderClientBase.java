@@ -10,16 +10,16 @@ import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
-import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.item.data.FileDataItemInput;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 //
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
-import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
+import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
 //
@@ -77,13 +77,13 @@ implements DataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public DataLoadBuilderClient<T, W, U> setInput(final ItemSrc<T> itemSrc)
+	public DataLoadBuilderClient<T, W, U> setInput(final Input<T> itemInput)
 	throws RemoteException {
-		super.setInput(itemSrc);
+		super.setInput(itemInput);
 		//
-		if(itemSrc instanceof DataItemFileSrc) {
+		if(itemInput instanceof FileDataItemInput) {
 			// calculate approx average data item size
-			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
+			final FileDataItemInput<T> fileInput = (FileDataItemInput<T>) itemInput;
 			final long approxDataItemsSize = fileInput.getAvgDataSize(
 				appConfig.getItemSrcBatchSize()
 			);
@@ -98,7 +98,7 @@ implements DataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected ItemSrc<T> getNewItemSrc()
+	protected Input<T> getNewItemInput()
 	throws NoSuchMethodException {
 		final ItemNamingType namingType = appConfig.getItemNamingType();
 		final BasicItemNameInput bing = new BasicItemNameInput(
@@ -106,13 +106,13 @@ implements DataLoadBuilderClient<T, W, U> {
 			appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
 			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
 		);
-		return new NewDataItemSrc<>(
+		return new NewDataItemInput<>(
 			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeConfig
 		);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected ItemSrc<T> getDefaultItemSrc() {
+	protected Input<T> getDefaultItemInput() {
 		try {
 			if(flagUseNoneItemSrc) {
 				// disable any item source usage on the load servers side
@@ -132,7 +132,7 @@ implements DataLoadBuilderClient<T, W, U> {
 						nextBuilder.useNoneItemSrc();
 					}
 					//
-					return getNewItemSrc();
+					return getNewItemInput();
 				} else {
 					// disable any item source usage on the load servers side
 					V nextBuilder;
@@ -141,7 +141,7 @@ implements DataLoadBuilderClient<T, W, U> {
 						nextBuilder.useNoneItemSrc();
 					}
 					//
-					return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
+					return (Input<T>) ((IoConfig) ioConfig.clone()).getContainerListInput(
 						maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
 					);
 				}
@@ -153,7 +153,7 @@ implements DataLoadBuilderClient<T, W, U> {
 					nextBuilder.useNoneItemSrc();
 				}
 				//
-				return getNewItemSrc();
+				return getNewItemInput();
 			} else if(flagUseContainerItemSrc) {
 				// disable any item source usage on the load servers side
 				V nextBuilder;
@@ -162,7 +162,7 @@ implements DataLoadBuilderClient<T, W, U> {
 					nextBuilder.useNoneItemSrc();
 				}
 				//
-				return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
+				return (Input<T>) ((IoConfig) ioConfig.clone()).getContainerListInput(
 					maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
 				);
 			}

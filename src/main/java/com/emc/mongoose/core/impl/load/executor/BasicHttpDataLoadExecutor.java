@@ -7,6 +7,7 @@ import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
 import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
@@ -15,7 +16,6 @@ import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.HttpDataIOTask;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -80,14 +80,14 @@ implements HttpDataLoadExecutor<T> {
 	//
 	public BasicHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
 		final HttpProcessor httpProcessor, final HttpAsyncRequester client,
 		final ConnectingIOReactor ioReactor,
 		final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
+			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
 			sizeConfig, rangesConfig
 		);
 		this.httpProcessor = httpProcessor;
@@ -100,11 +100,11 @@ implements HttpDataLoadExecutor<T> {
 	//
 	public BasicHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
+			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
 			sizeConfig, rangesConfig
 		);
 		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;

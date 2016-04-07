@@ -3,18 +3,18 @@ package com.emc.mongoose.core.impl.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
 //
 import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
-import com.emc.mongoose.core.impl.item.data.NewContainerSrc;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
+import com.emc.mongoose.core.impl.item.data.NewContainerInput;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -52,7 +52,7 @@ implements ContainerLoadBuilder<T, C, U>{
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setInput(
-					new ItemCSVFileSrc<>(
+					new CsvFileItemInput<>(
 						Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
 						ioConfig.getContentSource()
 					)
@@ -80,11 +80,11 @@ implements ContainerLoadBuilder<T, C, U>{
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected ItemSrc<C> getNewItemSrc()
+	protected Input<C> getNewItemInput()
 	throws NoSuchMethodException {
 		ItemNamingType namingType = appConfig.getItemNamingType();
 		final Class<C> containerClass = (Class<C>) ioConfig.getContainerClass();
-		return new NewContainerSrc<>(
+		return new NewContainerInput<>(
 			containerClass,
 			new BasicItemNameInput(
 				namingType,
@@ -94,17 +94,17 @@ implements ContainerLoadBuilder<T, C, U>{
 		);
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	protected ItemSrc getDefaultItemSrc() {
+	@Override
+	protected Input<C> getDefaultItemInput() {
 		try {
 			if(flagUseNoneItemSrc) {
 				return null;
 			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
 				if(LoadType.WRITE.equals(ioConfig.getLoadType())) {
-					getNewItemSrc();
+					getNewItemInput();
 				}
 			} else if(flagUseNewItemSrc) {
-				return getNewItemSrc();
+				return getNewItemInput();
 			}
 		} catch(final NoSuchMethodException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
