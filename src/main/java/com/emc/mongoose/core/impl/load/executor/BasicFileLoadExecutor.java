@@ -10,11 +10,11 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-import com.emc.mongoose.core.api.io.task.FileIOTask;
+import com.emc.mongoose.core.api.io.task.FileIoTask;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 //
-import com.emc.mongoose.core.impl.io.task.BasicFileIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicFileIoTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -60,7 +60,7 @@ implements FileLoadExecutor<T> {
 			protected final void afterExecute(final Runnable task, final Throwable throwable) {
 				if(throwable == null) {
 					try {
-						ioTaskCompleted((FileIOTask<T>) task);
+						ioTaskCompleted((FileIoTask<T>) task);
 					} catch(final RemoteException ignored) {
 					}
 				} else {
@@ -71,8 +71,8 @@ implements FileLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected FileIOTask<T> getIOTask(final T item, final String nextNodeAddr) {
-		return new BasicFileIOTask<>(item, (FileIoConfig<T, Directory<T>>) ioConfigCopy);
+	protected FileIoTask<T> getIOTask(final T item, final String nextNodeAddr) {
+		return new BasicFileIoTask<>(item, (FileIoConfig<T, Directory<T>>) ioConfigCopy);
 	}
 	//
 	@Override
@@ -93,7 +93,7 @@ implements FileLoadExecutor<T> {
 	@Override
 	public <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
-		return (Future<A>) ioTaskExecutor.<FileIOTask<T>>submit((FileIOTask<T>) ioTask);
+		return (Future<A>) ioTaskExecutor.<FileIoTask<T>>submit((FileIoTask<T>) ioTask);
 	}
 	//
 	@Override

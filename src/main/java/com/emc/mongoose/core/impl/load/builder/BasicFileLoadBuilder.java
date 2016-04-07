@@ -47,18 +47,6 @@ extends DataLoadBuilderBase<T, U> {
 	@Override
 	public void invokePreConditions()
 	throws IllegalStateException {
-		// create parent directories
-		final Container c = ioConfig.getContainer();
-		final String parentDirectories = c == null ? null : c.getName();
-		if(parentDirectories != null && !parentDirectories.isEmpty()) {
-			try {
-				Files.createDirectories(Paths.get(parentDirectories));
-			} catch(final IOException e) {
-				throw new IllegalStateException(
-					"Failed to create target directories @ \"" + parentDirectories + "\""
-				);
-			}
-		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

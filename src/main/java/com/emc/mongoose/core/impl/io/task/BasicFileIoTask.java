@@ -10,7 +10,7 @@ import com.emc.mongoose.core.api.item.data.DataSizeException;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-import com.emc.mongoose.core.api.io.task.FileIOTask;
+import com.emc.mongoose.core.api.io.task.FileIoTask;
 import static com.emc.mongoose.core.api.io.task.IOTask.Status.CANCELLED;
 import static com.emc.mongoose.core.api.io.task.IOTask.Status.FAIL_IO;
 import static com.emc.mongoose.core.api.io.task.IOTask.Status.FAIL_TIMEOUT;
@@ -51,19 +51,19 @@ import java.util.concurrent.TimeoutException;
 /**
  Created by kurila on 23.11.15.
  */
-public class BasicFileIOTask<
+public class BasicFileIoTask<
 	T extends FileItem, C extends Directory<T>, X extends FileIoConfig<T, C>
 > extends BasicDataIOTask<T, C, X>
-implements FileIOTask<T> {
+implements FileIoTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static FileSystem DEFAULT_FS = FileSystems.getDefault();
 	//
 	private final String parentDir;
 	private final Set<OpenOption> openOptions = new HashSet<>();
-	private final RunnableFuture<BasicFileIOTask<T, C, X>> future;
+	private final RunnableFuture<BasicFileIoTask<T, C, X>> future;
 	//
-	public BasicFileIOTask(final T item, final X ioConfig) {
+	public BasicFileIoTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
 		parentDir = ioConfig.getTargetItemPath();
 		//
@@ -321,13 +321,13 @@ implements FileIOTask<T> {
 	}
 	//
 	@Override
-	public final FileIOTask<T> get()
+	public final FileIoTask<T> get()
 	throws InterruptedException, ExecutionException {
 		return future.get();
 	}
 	//
 	@Override
-	public final FileIOTask<T> get(final long timeout, final TimeUnit unit)
+	public final FileIoTask<T> get(final long timeout, final TimeUnit unit)
 	throws InterruptedException, ExecutionException, TimeoutException {
 		return future.get(timeout, unit);
 	}
