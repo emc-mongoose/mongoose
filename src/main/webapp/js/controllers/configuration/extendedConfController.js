@@ -93,7 +93,13 @@ function(Handlebars, extendedConfTemplate, HB) {
 		});
 	}
 	//
-	function addVisualTreeOfObject(rootUlElem, object) {
+	function addVisualTreeOfObject(rootUlElem, object, compoundName) {
+		var aHref;
+		if (compoundName) {
+			aHref = compoundName;
+		} else {
+			aHref = '';
+		}
 		$.each(object, function (key, value) {
 			var li = $('<li/>');
 			if ((typeof value === 'object') && (value !== null)) {
@@ -106,10 +112,12 @@ function(Handlebars, extendedConfTemplate, HB) {
 				input.appendTo(li);
 				var ul = $('<ul/>');
 				ul.appendTo(li);
-				fillDomWithObject(ul, value);
+				const delimiter = '.';
+				const aHrefChunk = key + delimiter;
+				addVisualTreeOfObject(ul, value, aHref + aHrefChunk);
 			} else {
 				li.attr({class: 'file'});
-				var a = $('<a/>', {class: 'props', href: '#' + key});
+				var a = $('<a/>', {class: 'props', href: '#' + aHref + key});
 				a.text(key);
 				a.appendTo(li);
 			}
