@@ -24,17 +24,17 @@ define([
 			mode: "standalone" // possible: ["standalone", "client", "server", "cinderella"]
 		};
 		//  render configuration menu panel
-		render(currentTabType);
+		render(currentTabType, scenariosArray);
 		extendedConfController.setup(config);
 		//  some settings for configuration menu
 		bindMenuEvents(config, tabRunIdArray);
 	}
 	//
-	function render(currentTabType) {
+	function render(currentTabType, scenariosArray) {
 		const CONFIG_TABS = TEMPLATE.configTabs();
 		const BUTTONS = TEMPLATE.commonButtons();
-		function renderConfMenu(configTabs) {
-			HB.compileAndInsert('header', 'afterend', confMenuTemplate, { 'tab-types': configTabs });
+		function renderConfMenu(configTabs, scenariosArray) {
+			HB.compileAndInsert('header', 'afterend', confMenuTemplate, { 'tab-types': configTabs, 'scenarios': scenariosArray });
 		}
 		function renderCommonButtons(configTabs) {
 			const htmlButtonSet1 = HB.compile(commonButtonsTemplate, { 'buttons': BUTTONS, 'tab-type': configTabs[0]});
@@ -71,7 +71,7 @@ define([
 				}
 			})
 		}
-		renderConfMenu(CONFIG_TABS);
+		renderConfMenu(CONFIG_TABS, scenariosArray);
 		renderCommonButtons(CONFIG_TABS);
 		bindOpenButtonEvent(CONFIG_TABS);
 		hideExtraButtons(currentTabType, CONFIG_TABS)

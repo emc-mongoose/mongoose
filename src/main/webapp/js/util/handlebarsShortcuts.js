@@ -15,6 +15,16 @@ define(["jquery", "handlebars"], function ($, Handlebars) {
     function insert(existingElementId, position, html) {
         document.getElementById(existingElementId).insertAdjacentHTML(position, html);
     }
+    
+    function ifObjAndNotNull(item, options) {
+        if ((typeof item === 'object') && (item !== null)) {
+            return options.fn(this);
+        } else {
+            return options.inverse(this);
+        }
+    }
+    
+    Handlebars.registerHelper('ifObj', ifObjAndNotNull);
 
     return {
         compile: compile,

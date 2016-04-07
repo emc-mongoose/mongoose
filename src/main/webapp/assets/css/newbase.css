@@ -149,7 +149,7 @@
     border-color: #225182 !important;
 }
 .folders {
-    display: block !important;
+    display: block;
     min-height: 200px;
     padding-top: 10px;
     border: 1px solid #ccc;

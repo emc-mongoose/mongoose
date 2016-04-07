@@ -21,9 +21,9 @@ function(Handlebars, extendedConfTemplate, HB) {
 		HB.compileAndInsert("main-content", 'beforeend', extendedConfTemplate);
 		var propsMap = {};
 		//  show hidden folders on menu panel
-		var ul = $(".folders-defaults");
-		ul.show();
-		walkTreeMap(props, ul, propsMap);
+		var ul = $("#folders-defaults");
+		fillDomWithObject(ul, props);
+		// walkTreeMap(props, ul, propsMap);
 		// $("<li>").appendTo($("#run").parent().find("ul").first())
 		// 	.addClass("file")
 		// 	.append($("<a>", {
@@ -91,6 +91,39 @@ function(Handlebars, extendedConfTemplate, HB) {
 				walkTreeMap(value, element, propsMap, currKeyName);
 			}
 		});
+	}
+	//
+	function fillDomWithObject(rootUlElem, object) {
+		$.each(object, function (key, value) {
+			// var li = document.createElement('li');
+			var li = $('<li/>');
+			if ((typeof value === 'object') && (value !== null)) {
+				// li.setAttribute('class', 'dir');
+				// var input = document.createElement('input');
+				li.attr({class: 'dir'});
+				const inputId = key + "-prop-id";
+				var input = $('<input/>', {type: 'checkbox', id: inputId});
+				var label = $('<label/>', {for: inputId});
+				label.text(key);
+				label.appendTo(li);
+				input.appendTo(li);
+				var ul = $('<ul/>');
+				ul.appendTo(li);
+				fillDomWithObject(ul, value);
+			} else {
+				// li.setAttribute('class', 'file');
+				// var a = document.createElement('a');
+				// a.setAttribute('class', 'props');
+				// a.setAttribute('href', '#' + key);
+				// a.text = key;
+				// li.appendChild(a);
+				li.attr({class: 'file'});
+				var a = $('<a/>', {class: 'props', href: '#' + key});
+				a.text(key);
+				a.appendTo(li);
+			}
+			li.appendTo(rootUlElem);
+		})
 	}
 	//
 	function buildDivBlocksByPropertyNames(propsMap) {
