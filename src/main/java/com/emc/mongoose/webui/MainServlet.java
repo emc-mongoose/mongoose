@@ -43,7 +43,6 @@ public final class MainServlet
 	public final void doGet(
 			final HttpServletRequest request, final HttpServletResponse response
 	) {
-
 		try {
 			final String appConfigJson = JsonUtil.readFileToString(PATH_TO_APP_CONFIG_DIR);
 			final String scenarioDirContentsJson = JsonUtil.jsArrayPathContent(PATH_TO_SCENARIO_DIR);

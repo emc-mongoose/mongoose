@@ -12,6 +12,8 @@ define([
 			KEY_FIELD_LOAD_LIMIT_TIME = "load.limit.time",
 			KEY_RUN_MODE = "run.mode";
 		//
+		var currentScenarioJson;
+		//
 		function activate() {
 			$("#configuration-content").find(".activate").css("display", "block");
 		}
@@ -21,16 +23,20 @@ define([
 			render(configObject, scenariosArray);
 		}
 
+		function getScenarioFromServer(aHref) {
+			$.post('/scenario', { path: aHref })
+				.done(function (scenarioJson) {
+					currentScenarioJson = scenarioJson;
+				})
+		};
 		//
 		function render(configObject, scenariosArray) {
 			HB.compileAndInsert("main-content", 'beforeend', extendedConfTemplate);
-			var propsMap = {};
-			//  show hidden folders on menu panel
 			var ul = $('#' + TEMPLATE.getConstElemId('folders', TAB_TYPE.DEFAULTS));
 			var addressObject = {};
 			addVisualTreeOfObject(configObject, ul, addressObject);
 			ul = $('#' + TEMPLATE.getConstElemId('folders', TAB_TYPE.SCENARIOS));
-			addVisualTreeOfArray(scenariosArray, ul);
+			addVisualTreeOfArray(scenariosArray, ul, getScenarioFromServer);
 			// walkTreeMap(props, ul, propsMap);
 			// $("<li>").appendTo($("#run").parent().find("ul").first())
 			// 	.addClass("file")
@@ -105,8 +111,7 @@ define([
 		}
 
 		//
-		//
-		function fillFileLi(liElem, aHref, aText) {
+		function fillFileLi(liElem, aHref, aText, aClickEvent) {
 			liElem.attr({class: 'file'});
 			var a = $('<a/>',
 				{
@@ -114,6 +119,11 @@ define([
 					href: '#' + aHref
 				});
 			a.text(aText);
+			a.click(function (aHref) {
+				if (aClickEvent) {
+					aClickEvent(aHref);
+				}
+			});
 			a.appendTo(liElem);
 		}
 
@@ -166,7 +176,7 @@ define([
 			})
 		}
 
-		function addVisualTreeOfArray(array, rootUlElem) {
+		function addVisualTreeOfArray(array, rootUlElem, aClickEvent) {
 			const delimiter = '.';
 			$.each(array, function (index, item) {
 				function objCase(liOuter) {
@@ -175,15 +185,15 @@ define([
 						var ul = $('<ul/>');
 						$.each(filesArr, function (index, fileName) {
 							var liInner = $('<li/>');
-							fillFileLi(liInner, dirName + delimiter + fileName, fileName);
+							fillFileLi(liInner, dirName + delimiter + fileName, fileName, aClickEvent);
 							liInner.appendTo(ul);
 						});
-						ul.appendTo(liOuter);
+						ul.appendTo(liOuter, aClickEvent);
 					})
 				}
 
 				function notObjCase(liOuter) {
-					fillFileLi(liOuter, item, item);
+					fillFileLi(liOuter, item, item, aClickEvent);
 				}
 
 				itemProcess(item, objCase, notObjCase, rootUlElem);

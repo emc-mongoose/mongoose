@@ -21,4 +21,4 @@ extendedConfController.setup(props), setDefautRunMode(run.mode)
 
 ***
 
-Во время fillDomWithObject
+Какая-то проблема в $.post запросе

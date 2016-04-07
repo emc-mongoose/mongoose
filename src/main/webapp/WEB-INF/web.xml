@@ -66,4 +66,14 @@
 		<url-pattern>/state/*</url-pattern>
 	</servlet-mapping>
 
+	<servlet>
+		<servlet-name>ScenarioServlet</servlet-name>
+		<servlet-class>com.emc.mongoose.webui.ScenarioServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>ScenarioServlet</servlet-name>
+		<url-pattern>/scenario</url-pattern>
+	</servlet-mapping>
+
 </web-app>

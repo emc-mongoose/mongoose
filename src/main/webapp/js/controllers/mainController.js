@@ -19,6 +19,7 @@ define([
              TEMPLATE) {
 	
 	const TAB_TYPE = TEMPLATE.tabTypes();
+	const BUTTON_TYPE = TEMPLATE.commonButtonTypes();
 
 	function tabId(tabType) {
 		return tabType + '-tab';
@@ -36,24 +37,22 @@ define([
 		render(configObject);
 		confMenuController.run(configObject, scenariosArray, currentTabType, runIdArray);
 		bindTabEvents();
-		$("#config-file-name-" + TAB_TYPE.DEFAULTS).val(""); // at the request of a customer
+		$('#' + TEMPLATE.getConstElemId(BUTTON_TYPE.OPEN_INPUT_TEXT, TAB_TYPE.DEFAULTS)).val(''); // at the request of a customer
+		$('#' + TEMPLATE.getConstElemId(BUTTON_TYPE.OPEN, TAB_TYPE.SCENARIOS)).prop('disabled', true);
 	}
 
 	function render(config) {
 		function renderNavbar(runVersion) {
 			const navbarHtml = HB.compile(navbarTemplate, {version: runVersion});
-			document.querySelector("body").insertAdjacentHTML('afterbegin', navbarHtml);
+			document.querySelector('body').insertAdjacentHTML('afterbegin', navbarHtml);
 			$('#' + tabId(currentTabType)).addClass(TAB_CLASS.ACTIVE);
 			bindTabEvents();
 		}
-
-		renderNavbar(config.run.version || "unknown");
+		renderNavbar(config.run.version || 'unknown');
 	}
 
 	function bindTabEvents() {
 		
-		var tabTypeElemId = TEMPLATE.getConstElemId;
-
 		function showElemById(id) {
 			$("#" + id).show();
 		}
