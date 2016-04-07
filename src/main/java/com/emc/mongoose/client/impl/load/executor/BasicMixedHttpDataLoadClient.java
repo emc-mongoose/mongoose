@@ -16,7 +16,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 //
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IOStats;
 //
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 import com.emc.mongoose.server.api.load.executor.MixedHttpDataLoadSvc;

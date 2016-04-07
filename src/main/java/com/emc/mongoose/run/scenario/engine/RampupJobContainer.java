@@ -21,8 +21,8 @@ import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.load.model.LoadState;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.generator.LoadState;
+import com.emc.mongoose.core.api.load.metrics.IOStats;
 import com.emc.mongoose.core.impl.item.ItemTypeUtil;
 import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;

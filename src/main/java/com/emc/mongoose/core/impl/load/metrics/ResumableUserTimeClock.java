@@ -1,10 +1,8 @@
-package com.emc.mongoose.core.impl.load.model.metrics;
+package com.emc.mongoose.core.impl.load.metrics;
 
 import com.codahale.metrics.Clock;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
  * Created by gusakk on 02.07.15.
  */

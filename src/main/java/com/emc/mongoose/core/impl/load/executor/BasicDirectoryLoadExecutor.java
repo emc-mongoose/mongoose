@@ -8,11 +8,11 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.DirectoryIoTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.load.executor.DirectoryLoadExecutor;
 //
-import com.emc.mongoose.core.impl.io.task.BasicDirectoryIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicDirectoryIoTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -52,7 +52,7 @@ implements DirectoryLoadExecutor<T, C> {
 			//
 			@Override @SuppressWarnings("unchecked")
 			protected final void afterExecute(final Runnable task, final Throwable throwable) {
-				final DirectoryIOTask<T, C> ioTask = (DirectoryIOTask<T, C>) task;
+				final DirectoryIoTask<T, C> ioTask = (DirectoryIoTask<T, C>) task;
 				if(throwable == null) {
 					try {
 						ioTaskCompleted(ioTask);
@@ -66,12 +66,12 @@ implements DirectoryLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	protected DirectoryIOTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
-		return new BasicDirectoryIOTask<>(item, (FileIoConfig<T, C>) ioConfigCopy);
+	protected DirectoryIoTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
+		return new BasicDirectoryIoTask<>(item, (FileIoConfig<T, C>) ioConfigCopy);
 	}
 	//
 	@Override
-	public <A extends IOTask<C>> int submitTasks(final List<A> tasks, final int from, final int to)
+	public <A extends IoTask<C>> int submitTasks(final List<A> tasks, final int from, final int to)
 	throws RemoteException, RejectedExecutionException {
 		int n = 0;
 		for(int i = from; i < to; i ++) {
@@ -85,10 +85,10 @@ implements DirectoryLoadExecutor<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final <A extends IOTask<C>> Future<A> submitTask(final A ioTask)
+	public final <A extends IoTask<C>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		return (Future<A>) ioTaskExecutor
-			.<DirectoryIOTask<T, C>>submit((DirectoryIOTask<T, C>) ioTask);
+			.<DirectoryIoTask<T, C>>submit((DirectoryIoTask<T, C>) ioTask);
 	}
 	//
 	@Override

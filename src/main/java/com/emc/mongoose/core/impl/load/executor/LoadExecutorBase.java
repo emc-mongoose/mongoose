@@ -15,21 +15,21 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.base.ItemBuffer;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
 import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
-import com.emc.mongoose.core.api.load.model.LoadState;
+import com.emc.mongoose.core.api.load.metrics.IOStats;
+import com.emc.mongoose.core.api.load.generator.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
 import com.emc.mongoose.core.impl.load.barrier.ActiveTaskCountLimitBarrier;
-import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
+import com.emc.mongoose.core.impl.load.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
-import com.emc.mongoose.core.impl.load.model.BasicLoadState;
-import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
+import com.emc.mongoose.core.impl.load.generator.BasicLoadState;
+import com.emc.mongoose.core.impl.load.generator.BasicItemGenerator;
 import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 //
 import org.apache.logging.log4j.Level;
@@ -55,7 +55,7 @@ import java.util.concurrent.locks.LockSupport;
  Created by kurila on 15.10.14.
  */
 public abstract class LoadExecutorBase<T extends Item>
-extends BasicItemProducer<T>
+extends BasicItemGenerator<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -480,7 +480,7 @@ implements LoadExecutor<T> {
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final String nextNodeAddr = storageNodeAddrs == null ?
 			null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
-		final IOTask<T> ioTask = getIOTask(item, nextNodeAddr);
+		final IoTask<T> ioTask = getIOTask(item, nextNodeAddr);
 		// don't fill the connection pool as fast as possible, this may cause a failure
 		//
 		try {
@@ -513,7 +513,7 @@ implements LoadExecutor<T> {
 				final String nextNodeAddr = storageNodeAddrs == null ?
 					null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 				// prepare the I/O tasks list (make the link between the data item and load type)
-				final List<IOTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
+				final List<IoTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
 				if(srcLimit > getIOTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr)) {
 					LOG.warn(Markers.ERR, "Produced less I/O tasks then expected ({})", srcLimit);
 				}
@@ -562,11 +562,11 @@ implements LoadExecutor<T> {
 		return put(items, 0, items.size());
 	}
 	//
-	protected abstract IOTask<T> getIOTask(final T item, final String nextNodeAddr);
+	protected abstract IoTask<T> getIOTask(final T item, final String nextNodeAddr);
 	//
 	protected int getIOTasks(
 		final List<T> items, final int from, final int to,
-		final List<IOTask<T>> dstTaskBuff, final String nextNodeAddr
+		final List<IoTask<T>> dstTaskBuff, final String nextNodeAddr
 	) {
 		for(final T item : items) {
 			if(item == null) {
@@ -579,7 +579,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public void ioTaskCompleted(final IOTask<T> ioTask)
+	public void ioTaskCompleted(final IoTask<T> ioTask)
 	throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
@@ -588,14 +588,14 @@ implements LoadExecutor<T> {
 		//
 		final T item = ioTask.getItem();
 		//
-		final IOTask.Status status = ioTask.getStatus();
+		final IoTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
 		// update the metrics
 		ioTask.mark(ioStats);
 		if(nodeBalancer != null) {
 			nodeBalancer.markTaskFinish(nodeAddr);
 		}
-		if(status == IOTask.Status.SUCC) {
+		if(status == IoTask.Status.SUCC) {
 			lastItem = item;
 			// put into the output buffer
 			try {
@@ -618,7 +618,7 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public int ioTaskCompletedBatch(
-		final List<? extends IOTask<T>> ioTasks, final int from, final int to
+		final List<? extends IoTask<T>> ioTasks, final int from, final int to
 	) throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
@@ -632,9 +632,9 @@ implements LoadExecutor<T> {
 				nodeBalancer.markTasksFinish(nodeAddr, n);
 			}
 			//
-			IOTask<T> ioTask;
+			IoTask<T> ioTask;
 			T item;
-			IOTask.Status status;
+			IoTask.Status status;
 			for(int i = from; i < to; i++) {
 				ioTask = ioTasks.get(i);
 				item = ioTask.getItem();
@@ -642,7 +642,7 @@ implements LoadExecutor<T> {
 				status = ioTask.getStatus();
 				// update the metrics
 				ioTask.mark(ioStats);
-				if(status == IOTask.Status.SUCC) {
+				if(status == IoTask.Status.SUCC) {
 					lastItem = item;
 					// pass data item to a consumer
 					try {
@@ -941,7 +941,7 @@ implements LoadExecutor<T> {
 				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
 				break;
 			}
-			Thread.yield(); LockSupport.parkNanos(1000000);
+			Thread.yield(); LockSupport.parkNanos(1_000_000);
 		}
 	}
 	//

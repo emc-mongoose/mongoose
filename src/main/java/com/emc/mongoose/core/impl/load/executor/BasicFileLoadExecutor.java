@@ -11,7 +11,7 @@ import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.FileIoTask;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.task.BasicFileIoTask;
@@ -76,7 +76,7 @@ implements FileLoadExecutor<T> {
 	}
 	//
 	@Override
-	public <A extends IOTask<T>> int submitTasks(
+	public <A extends IoTask<T>> int submitTasks(
 		final List<A> tasks, final int from, final int to
 	) throws RejectedExecutionException {
 		int n = 0;
@@ -91,7 +91,7 @@ implements FileLoadExecutor<T> {
 	}
 	//
 	@Override
-	public <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
+	public <A extends IoTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		return (Future<A>) ioTaskExecutor.<FileIoTask<T>>submit((FileIoTask<T>) ioTask);
 	}

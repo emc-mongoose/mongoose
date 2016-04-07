@@ -1,9 +1,9 @@
-package com.emc.mongoose.core.impl.load.model;
+package com.emc.mongoose.core.impl.load.generator;
 import com.emc.mongoose.common.conf.enums.LoadType;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.barrier.Barrier;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IOStats;
 import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
 import org.junit.Test;
 
@@ -39,8 +39,8 @@ public class WeightBarrierTest {
 
 	private final Barrier<LoadType> fc = new WeightBarrier<>(weightMap, new AtomicBoolean(false));
 
-	private final class IOTaskMock
-	implements IOTask {
+	private final class IoTaskMock
+	implements IoTask {
 		public LoadType loadType = null;
 		@Override
 		public String getNodeAddr() {
@@ -73,7 +73,7 @@ public class WeightBarrierTest {
 		public final void run() {
 			while(true) {
 				try {
-					final IOTaskMock ioTask = new IOTaskMock();
+					final IoTaskMock ioTask = new IoTaskMock();
 					ioTask.loadType = loadType;
 					if(fc.getApprovalFor(loadType)) {
 						resultsMap.get(loadType).incrementAndGet();
@@ -109,10 +109,10 @@ public class WeightBarrierTest {
 		public final void run() {
 			while(true) {
 				try {
-					final List<IOTask> ioTasks = new ArrayList<>();
-					IOTaskMock ioTask;
+					final List<IoTask> ioTasks = new ArrayList<>();
+					IoTaskMock ioTask;
 					for(int i = 0; i < 128; i ++) {
-						ioTask = new IOTaskMock();
+						ioTask = new IoTaskMock();
 						ioTask.loadType = loadType;
 						ioTasks.add(ioTask);
 					}

@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.model.metrics;
+package com.emc.mongoose.core.impl.load.metrics;
 /**
  Created by kurila on 15.09.15.
  */

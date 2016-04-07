@@ -1,6 +1,5 @@
-package com.emc.mongoose.core.impl.load.model.metrics;
+package com.emc.mongoose.core.impl.load.metrics;
 //
-import com.codahale.metrics.Snapshot;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //

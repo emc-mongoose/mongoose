@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.model.metrics;
+package com.emc.mongoose.core.impl.load.metrics;
 //
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.EWMA;

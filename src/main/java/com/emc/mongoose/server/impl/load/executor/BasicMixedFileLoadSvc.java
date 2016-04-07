@@ -10,12 +10,12 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IOStats;
 import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 import com.emc.mongoose.server.api.load.executor.MixedFileLoadSvc;
@@ -79,7 +79,7 @@ implements MixedFileLoadSvc<F> {
 				rateLimit, sizeConfig, rangesConfig
 			) {
 				@Override
-				public final <A extends IOTask<F>> Future<A> submitTask(final A ioTask)
+				public final <A extends IoTask<F>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
 					try {
 						if(barrier.getApprovalFor(nextLoadType)) {
@@ -95,7 +95,7 @@ implements MixedFileLoadSvc<F> {
 				}
 				//
 				@Override
-				public final <A extends IOTask<F>> int submitTasks(
+				public final <A extends IoTask<F>> int submitTasks(
 					final List<A> ioTasks, int from, int to
 				) throws RejectedExecutionException {
 					try {
@@ -126,7 +126,7 @@ implements MixedFileLoadSvc<F> {
 	}
 	//
 	@Override
-	public final void ioTaskCompleted(final IOTask<F> ioTask)
+	public final void ioTaskCompleted(final IoTask<F> ioTask)
 	throws RemoteException {
 		loadSvcMap.get(ioTask.getLoadType())
 			.ioTaskCompleted(ioTask);
@@ -135,7 +135,7 @@ implements MixedFileLoadSvc<F> {
 	//
 	@Override
 	public final int ioTaskCompletedBatch(
-		final List<? extends IOTask<F>> ioTasks, final int from, final int to
+		final List<? extends IoTask<F>> ioTasks, final int from, final int to
 	) throws RemoteException {
 		if(ioTasks != null && ioTasks.size() > 0) {
 			loadSvcMap.get(ioTasks.get(0).getLoadType()).ioTaskCompletedBatch(ioTasks, from, to);

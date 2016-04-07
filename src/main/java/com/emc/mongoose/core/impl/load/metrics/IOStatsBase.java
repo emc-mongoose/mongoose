@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.model.metrics;
+package com.emc.mongoose.core.impl.load.metrics;
 //
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
@@ -8,7 +8,7 @@ import com.codahale.metrics.UniformSnapshot;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IOStats;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -7,6 +7,6 @@ import java.util.concurrent.RunnableFuture;
 /**
  Created by andrey on 22.11.15.
  */
-public interface DirectoryIOTask<T extends FileItem, C extends Directory<T>>
-extends ContainerIOTask<T, C>, RunnableFuture<DirectoryIOTask<T, C>> {
+public interface DirectoryIoTask<T extends FileItem, C extends Directory<T>>
+extends ContainerIoTask<T, C>, RunnableFuture<DirectoryIoTask<T, C>> {
 }

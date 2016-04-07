@@ -8,9 +8,9 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 //
-import com.emc.mongoose.core.impl.io.task.BasicDirectoryIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicDirectoryIoTask;
 //
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
 //
@@ -32,7 +32,7 @@ public class BasicDirectoryLoadClient<
 	}
 	//
 	@Override
-	protected IOTask<C> getIOTask(final C item, final String nextNodeAddr) {
-		return new BasicDirectoryIOTask<>(item, (FileIoConfig<T, C>) ioConfigCopy);
+	protected IoTask<C> getIOTask(final C item, final String nextNodeAddr) {
+		return new BasicDirectoryIoTask<>(item, (FileIoConfig<T, C>) ioConfigCopy);
 	}
 }

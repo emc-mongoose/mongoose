@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.load.model.metrics;
+package com.emc.mongoose.core.api.load.metrics;
 //
 import java.io.Closeable;
 import java.io.Serializable;

@@ -7,9 +7,9 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.load.model.LoadState;
+import com.emc.mongoose.core.api.load.generator.LoadState;
 //
-import com.emc.mongoose.core.impl.load.model.BasicLoadState;
+import com.emc.mongoose.core.impl.load.generator.BasicLoadState;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

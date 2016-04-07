@@ -15,9 +15,9 @@ import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.task.HttpContainerIOTask;
-import com.emc.mongoose.core.api.io.task.HttpIOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
+import com.emc.mongoose.core.api.io.task.HttpContainerIoTask;
+import com.emc.mongoose.core.api.io.task.HttpIoTask;
 import com.emc.mongoose.core.api.load.executor.HttpContainerLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.task.BasicHttpContainerTask;
@@ -181,7 +181,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	protected HttpContainerIOTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
+	protected HttpContainerIoTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
 		return new BasicHttpContainerTask<>(item, nextNodeAddr, httpReqConfigCopy);
 	}
 	//
@@ -236,10 +236,10 @@ implements HttpContainerLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	public final <A extends IOTask<C>> Future<A> submitTask(final A ioTask)
+	public final <A extends IoTask<C>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		//
-		final HttpIOTask wsIoTask = (HttpIOTask) ioTask;
+		final HttpIoTask wsIoTask = (HttpIoTask) ioTask;
 		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
 			connPool = connPoolMap.get(wsIoTask.getTarget());
 		if(connPool.isShutdown()) {
@@ -260,10 +260,10 @@ implements HttpContainerLoadExecutor<T, C> {
 		return futureResult;
 	}
 	//
-	private final FutureCallback<HttpContainerIOTask<T, C>>
-		futureCallback = new FutureCallback<HttpContainerIOTask<T, C>>() {
+	private final FutureCallback<HttpContainerIoTask<T, C>>
+		futureCallback = new FutureCallback<HttpContainerIoTask<T, C>>() {
 			@Override
-			public final void completed(final HttpContainerIOTask<T, C> ioTask) {
+			public final void completed(final HttpContainerIoTask<T, C> ioTask) {
 				try {
 					ioTaskCompleted(ioTask);
 				} catch(final RemoteException ignored) {
@@ -280,14 +280,14 @@ implements HttpContainerLoadExecutor<T, C> {
 		};
 	//
 	@Override
-	public final <A extends IOTask<C>> int submitTasks(
+	public final <A extends IoTask<C>> int submitTasks(
 		final List<A> ioTasks, final int from, final int to
 	) throws RemoteException, RejectedExecutionException {
 		int n = 0;
 		if(isPipeliningEnabled) {
 			if(ioTasks.size() > 0) {
-				final List<HttpContainerIOTask<T, C>> wsIOTasks = (List<HttpContainerIOTask<T, C>>) ioTasks;
-				final HttpContainerIOTask<T, C> anyTask = wsIOTasks.get(0);
+				final List<HttpContainerIoTask<T, C>> wsIOTasks = (List<HttpContainerIoTask<T, C>>) ioTasks;
+				final HttpContainerIoTask<T, C> anyTask = wsIOTasks.get(0);
 				final HttpHost tgtHost = anyTask.getTarget();
 				if(
 					null == client.executePipelined(
@@ -311,16 +311,16 @@ implements HttpContainerLoadExecutor<T, C> {
 	}
 	//
 	private final class BatchFutureCallback
-	implements FutureCallback<List<HttpContainerIOTask<T, C>>> {
+	implements FutureCallback<List<HttpContainerIoTask<T, C>>> {
 		//
-		private final List<HttpContainerIOTask<T, C>> tasks;
+		private final List<HttpContainerIoTask<T, C>> tasks;
 		//
-		private BatchFutureCallback(final List<HttpContainerIOTask<T, C>> tasks) {
+		private BatchFutureCallback(final List<HttpContainerIoTask<T, C>> tasks) {
 			this.tasks = tasks;
 		}
 		//
 		@Override
-		public final void completed(final List<HttpContainerIOTask<T, C>> result) {
+		public final void completed(final List<HttpContainerIoTask<T, C>> result) {
 			try {
 				ioTaskCompletedBatch(result, 0, result.size());
 			} catch(final RemoteException ignored) {

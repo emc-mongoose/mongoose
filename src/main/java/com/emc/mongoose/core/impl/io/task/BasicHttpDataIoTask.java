@@ -14,7 +14,7 @@ import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataSizeException;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.HttpDataIOTask;
+import com.emc.mongoose.core.api.io.task.HttpDataIoTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.impl.item.data.BasicMutableDataItem;
 import com.emc.mongoose.core.impl.item.data.BasicDataItem;
@@ -48,17 +48,17 @@ import java.nio.charset.StandardCharsets;
 /**
  Created by kurila on 06.06.14.
  */
-public class BasicHttpDataIOTask<
+public class BasicHttpDataIoTask<
 	T extends HttpDataItem, C extends Container<T>, X extends HttpRequestConfig<T, C>
-> extends BasicDataIOTask<T, C, X>
-implements HttpDataIOTask<T> {
+> extends BasicDataIoTask<T, C, X>
+implements HttpDataIoTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile OutputChannel chanOut = null;
 	private volatile InputChannel chanIn = null;
 	//
-	public BasicHttpDataIOTask(final T dataObject, final String nodeAddr, final X reqConf) {
+	public BasicHttpDataIoTask(final T dataObject, final String nodeAddr, final X reqConf) {
 		super(dataObject, nodeAddr, reqConf);
 	}
 	/**
@@ -488,7 +488,7 @@ implements HttpDataIOTask<T> {
 	}
 	//
 	@Override
-	public final HttpDataIOTask<T> getResult() {
+	public final HttpDataIoTask<T> getResult() {
 		return this;
 	}
 	//

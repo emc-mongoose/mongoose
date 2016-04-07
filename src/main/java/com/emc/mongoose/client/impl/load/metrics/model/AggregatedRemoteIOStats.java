@@ -9,8 +9,8 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 //
-import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
-import com.emc.mongoose.core.impl.load.model.metrics.IOStatsBase;
+import com.emc.mongoose.core.impl.load.metrics.BasicIOStats;
+import com.emc.mongoose.core.impl.load.metrics.IOStatsBase;
 //
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //

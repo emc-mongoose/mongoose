@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.model;
+package com.emc.mongoose.core.impl.load.generator;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
@@ -8,8 +8,8 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.load.model.LoadState;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.generator.LoadState;
+import com.emc.mongoose.core.api.load.metrics.IOStats;
 //
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 //

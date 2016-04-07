@@ -1,8 +1,8 @@
-package com.emc.mongoose.core.api.load.model;
+package com.emc.mongoose.core.api.load.generator;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IOStats;
 //
 import java.io.Serializable;
 /**

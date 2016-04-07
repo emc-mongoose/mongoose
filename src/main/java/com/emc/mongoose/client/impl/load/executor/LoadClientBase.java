@@ -10,8 +10,8 @@ import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.model.LoadState;
+import com.emc.mongoose.core.api.io.task.IoTask;
+import com.emc.mongoose.core.api.load.generator.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
@@ -630,7 +630,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public <A extends IOTask<T>> Future<A> submitTask(final A request)
+	public <A extends IoTask<T>> Future<A> submitTask(final A request)
 	throws RemoteException {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (remotePutExecutor.getTaskCount() % loadSvcAddrs.length)])
@@ -638,7 +638,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public <A extends IOTask<T>> int submitTasks(
+	public <A extends IoTask<T>> int submitTasks(
 		final List<A> requests, final int from, final int to
 	) throws RemoteException, RejectedExecutionException {
 		return remoteLoadMap

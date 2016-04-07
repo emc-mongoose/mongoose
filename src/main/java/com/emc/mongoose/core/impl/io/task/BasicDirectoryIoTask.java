@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
+import com.emc.mongoose.core.api.io.task.DirectoryIoTask;
 //
 import com.emc.mongoose.core.impl.item.data.DirectoryItemInput;
 //
@@ -28,17 +28,17 @@ import java.util.concurrent.TimeoutException;
 /**
  Created by kurila on 23.11.15.
  */
-public class BasicDirectoryIOTask<
+public class BasicDirectoryIoTask<
 	T extends FileItem, C extends Directory<T>, X extends FileIoConfig<T, C>
-> extends BasicIOTask<C, C, X>
-implements DirectoryIOTask<T, C> {
+> extends BasicIoTask<C, C, X>
+implements DirectoryIoTask<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final Path fPath;
-	private final RunnableFuture<BasicDirectoryIOTask<T, C, X>> future;
+	private final RunnableFuture<BasicDirectoryIoTask<T, C, X>> future;
 	//
-	public BasicDirectoryIOTask(final C item, final X ioConfig) {
+	public BasicDirectoryIoTask(final C item, final X ioConfig) {
 		super(item, null, ioConfig);
 		//
 		final C parentDir = ioConfig.getContainer();
@@ -133,13 +133,13 @@ implements DirectoryIOTask<T, C> {
 	}
 	//
 	@Override
-	public final DirectoryIOTask<T, C> get()
+	public final DirectoryIoTask<T, C> get()
 	throws InterruptedException, ExecutionException {
 		return future.get();
 	}
 	//
 	@Override
-	public final DirectoryIOTask<T, C> get(final long timeout, final TimeUnit unit)
+	public final DirectoryIoTask<T, C> get(final long timeout, final TimeUnit unit)
 	throws InterruptedException, ExecutionException, TimeoutException {
 		return future.get(timeout, unit);
 	}
