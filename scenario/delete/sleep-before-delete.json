@@ -18,8 +18,7 @@
 					}
 				}
 			}
-		},
-		{
+		}, { // sleep 15 seconds between the jobs executed sequentially
 			"type" : "sleep",
 			"value" : "15s"
 		},
