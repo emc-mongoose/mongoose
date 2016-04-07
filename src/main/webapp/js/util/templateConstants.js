@@ -40,10 +40,15 @@ define(function() {
         return COMMON_BUTTONS;
     }
 
+    function constElemId(prefix, constName) {
+        return prefix + "-" + constName;
+    }
+
     return {
         tabTypes: tabTypes,
         commonButtonTypes: commonButtonTypes,
         configTabs: configTabs,
-        commonButtons: commonButtons
+        commonButtons: commonButtons,
+        getConstElemId: constElemId
     }
 });

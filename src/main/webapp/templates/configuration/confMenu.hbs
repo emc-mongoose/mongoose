@@ -10,39 +10,7 @@
                 </button>
             </div>
 
-            <ul class="folders" id="folders-{{tab-types.[0]}}">
-                {{#each scenarios}}
-                    {{#with this as |scenarioItem|}}
-                        {{#ifObj scenarioItem}}
-                            {{#each scenarioItem}}
-                                {{#with this as |filesArr|}}
-                                    <li class="dir">
-                                        <label for="{{@key}}-dir-id">{{@key}}</label>
-                                        <input type="checkbox" id="{{@key}}-dir-id">
-                                        <ul>
-                                            {{#each filesArr}}
-                                                {{#with this as |file|}}
-                                                    <li class="file">
-                                                        <a class="props" href="#{{file}}">
-                                                            {{file}}
-                                                        </a>
-                                                    </li>
-                                                {{/with}}
-                                            {{/each}}
-                                        </ul>
-                                    </li>
-                                {{/with}}
-                            {{/each}}
-                        {{else}}
-                            <li class="file">
-                                <a class="props" href="#{{scenarioItem}}">
-                                    {{scenarioItem}}
-                                </a>
-                            </li>
-                        {{/ifObj}}
-                    {{/with}}
-                {{/each}}
-            </ul>
+            <ul class="folders" id="folders-{{tab-types.[0]}}"></ul>
 
             <ul class="folders" id="folders-{{tab-types.[1]}}"></ul>
         </div>

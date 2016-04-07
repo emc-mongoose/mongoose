@@ -17,6 +17,7 @@ define([
              tabContentTemplate,
              HB,
              TEMPLATE) {
+	
 	const TAB_TYPE = TEMPLATE.tabTypes();
 
 	function tabId(tabType) {
@@ -30,10 +31,10 @@ define([
 	var currentTabType = TAB_TYPE.SCENARIOS;
 	var runIdArray = [];
 	//
-	function run(config, scenariosArray) {
+	function run(configObject, scenariosArray) {
 		//  render navbar and tabs before any other interactions
-		render(config);
-		confMenuController.run(config, currentTabType, runIdArray, scenariosArray);
+		render(configObject);
+		confMenuController.run(configObject, scenariosArray, currentTabType, runIdArray);
 		bindTabEvents();
 		$("#config-file-name-" + TAB_TYPE.DEFAULTS).val(""); // at the request of a customer
 	}
@@ -51,9 +52,7 @@ define([
 
 	function bindTabEvents() {
 		
-		function tabTypeElemId(prefix, tabType) {
-			return prefix + "-" + tabType;
-		}
+		var tabTypeElemId = TEMPLATE.getConstElemId;
 
 		function showElemById(id) {
 			$("#" + id).show();
@@ -65,13 +64,15 @@ define([
 
 		function makeTabActive(tabType) {
 			$.each(TAB_TYPE, function (key, value) {
+				const foldersId = TEMPLATE.getConstElemId('folders', value);
+				const buttonsId = TEMPLATE.getConstElemId('buttons', value);
 				if (value === tabType) {
-					showElemById(tabTypeElemId("folders", value));
-					showElemById(tabTypeElemId("buttons", value));
+					showElemById(foldersId);
+					showElemById(buttonsId);
 					$('#' + tabId(tabType)).addClass(TAB_CLASS.ACTIVE);
 				} else {
-					hideElemById(tabTypeElemId("folders", value));
-					hideElemById(tabTypeElemId("buttons", value));
+					hideElemById(foldersId);
+					hideElemById(buttonsId);
 					$('#' + tabId(value)).removeClass(TAB_CLASS.ACTIVE);
 				}
 			});

@@ -20,10 +20,10 @@ require(["./requirejs/conf"], function() {
 		//  get all properties from runTimeConfig
 		$.get("/main", function(fullAppJson) {
 			//  root element ("config") of defaults.json configuration file
-			var config = getAppConfig(fullAppJson);
+			var configObject = getAppConfig(fullAppJson);
 			var scenariosArray = getScenariosDirContents(fullAppJson);
-			if(config && scenariosArray) {
-				mainController.run(config, scenariosArray);
+			if(configObject && scenariosArray) {
+				mainController.run(configObject, scenariosArray);
 			} else {
 				alert("Failed to load the configuration");
 			}

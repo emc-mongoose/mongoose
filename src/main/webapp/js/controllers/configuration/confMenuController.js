@@ -18,16 +18,16 @@ define([
     TEMPLATE
 ) {
 	//
-	function run(config, currentTabType, tabRunIdArray, scenariosArray) {
+	function run(configObject, scenariosArray, currentTabType, tabRunIdArray) {
 		//  default run.mode ("webui") from appConfig should be overridden here
 		var run = {
 			mode: "standalone" // possible: ["standalone", "client", "server", "cinderella"]
 		};
 		//  render configuration menu panel
 		render(currentTabType, scenariosArray);
-		extendedConfController.setup(config);
+		extendedConfController.setup(configObject, scenariosArray);
 		//  some settings for configuration menu
-		bindMenuEvents(config, tabRunIdArray);
+		bindMenuEvents(configObject, tabRunIdArray);
 	}
 	//
 	function render(currentTabType, scenariosArray) {
