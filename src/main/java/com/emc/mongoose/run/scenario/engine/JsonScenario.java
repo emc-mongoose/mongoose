@@ -27,10 +27,12 @@ implements Scenario {
 	private final static String KEY_NODE_JOBS = "jobs";
 	private final static String KEY_TYPE = "type";
 	private final static String KEY_CONFIG = "config";
-	private final static String VALUE_TYPE_PARALLEL = "parallel";
-	private final static String VALUE_TYPE_SEQUENTIAL = "sequential";
-	private final static String VALUE_TYPE_LOAD = "load";
-	private final static String VALUE_TYPE_RAMPUP = "rampup";
+	private final static String KEY_VALUE = "value";
+	private final static String NODE_TYPE_PARALLEL = "parallel";
+	private final static String NODE_TYPE_SEQUENTIAL = "sequential";
+	private final static String NODE_TYPE_LOAD = "load";
+	private final static String NODE_TYPE_RAMPUP = "rampup";
+	private final static String NODE_TYPE_SLEEP = "sleep";
 	//
 	public JsonScenario(final File scenarioSrcFile) {
 		final ObjectMapper jsonMapper = new ObjectMapper()
@@ -105,21 +107,28 @@ implements Scenario {
 				case KEY_TYPE:
 					if(value instanceof String) {
 						switch((String) value) {
-							case VALUE_TYPE_PARALLEL:
+							case NODE_TYPE_PARALLEL:
 								newSubContainer = new ParallelJobContainer();
 								subContainer.append(newSubContainer);
 								subContainer = newSubContainer;
 								break;
-							case VALUE_TYPE_SEQUENTIAL:
+							case NODE_TYPE_SEQUENTIAL:
 								newSubContainer = new SequentialJobContainer();
 								subContainer.append(newSubContainer);
 								subContainer = newSubContainer;
 								break;
-							case VALUE_TYPE_LOAD:
-							case VALUE_TYPE_RAMPUP:
+							case NODE_TYPE_SLEEP:
+								newSubContainer = new SleepJobContainer(
+									(String) node.get(KEY_VALUE)
+								);
+								subContainer.append(newSubContainer);
+								subContainer = newSubContainer;
+								break;
+							case NODE_TYPE_LOAD:
+							case NODE_TYPE_RAMPUP:
 								final Object configTree = node.get(KEY_CONFIG);
 								if(configTree instanceof Map) {
-									if(VALUE_TYPE_LOAD.equals(value)) {
+									if(NODE_TYPE_LOAD.equals(value)) {
 										newSubContainer = new SingleJobContainer(
 											(Map<String, Object>) configTree
 										);
@@ -131,7 +140,7 @@ implements Scenario {
 									subContainer.append(newSubContainer);
 									subContainer = newSubContainer;
 								} else if(configTree == null) {
-									if(VALUE_TYPE_LOAD.equals(value)) {
+									if(NODE_TYPE_LOAD.equals(value)) {
 										newSubContainer = new SingleJobContainer();
 									} else {
 										newSubContainer = new RampupJobContainer();
@@ -158,7 +167,8 @@ implements Scenario {
 					}
 					break;
 				case KEY_CONFIG:
-					break; // ignore
+				case KEY_VALUE:
+					break; // ignore because the keys above are consumed already
 				default:
 					LOG.warn(Markers.ERR, "{}: unexpected key: {}", jobContainer, key);
 			}

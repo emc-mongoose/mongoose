@@ -20,6 +20,10 @@
 			}
 		},
 		{
+			"type" : "sleep",
+			"value" : "15s"
+		},
+		{
 			"type": "load",
 			"config" : {
 				"item" : {

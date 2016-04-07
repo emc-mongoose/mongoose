@@ -70,7 +70,7 @@ implements JobContainer {
 	//
 	@Override
 	public final boolean append(final JobContainer subJob) {
-		return false;
+		throw new IllegalStateException("Appending sub jobs to a single load job is not allowed");
 	}
 	//
 	public final LoadExecutor get() {
