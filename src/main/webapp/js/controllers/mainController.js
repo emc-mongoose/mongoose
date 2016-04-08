@@ -6,8 +6,9 @@ define([
 	"text!../../templates/navbar.hbs",
 	"text!../../templates/run/tab-header.hbs",
 	"text!../../templates/run/tab-content.hbs",
-	"../util/handlebarsShortcuts",
-	"../util/templateConstants"
+	"../util/handlebarsUtil",
+	"../util/templatesUtil",
+	"../util/cssUtil"
 ], function ($,
              Handlebars,
              confMenuController,
@@ -15,71 +16,58 @@ define([
              navbarTemplate,
              tabHeaderTemplate,
              tabContentTemplate,
-             HB,
-             TEMPLATE) {
-	
-	const TAB_TYPE = TEMPLATE.tabTypes();
-	const BUTTON_TYPE = TEMPLATE.commonButtonTypes();
+             hbUtil,
+             templatesUtil,
+             cssUtil) {
 
-	function tabId(tabType) {
-		return tabType + '-tab';
+	const TAB_TYPE = templatesUtil.tabTypes();
+	const BUTTON_TYPE = templatesUtil.commonButtonTypes();
+	const TAB_CLASS = templatesUtil.tabClasses();
+	const BLOCK = templatesUtil.blocks();
+	
+	const jqId = templatesUtil.composeJqId;
+	
+	function tabJqId(tabType) {
+		return jqId('', tabType, 'tab');
 	}
 
-	const TAB_CLASS = {
-		ACTIVE: 'active'
-	};
-
 	var currentTabType = TAB_TYPE.SCENARIOS;
-	var runIdArray = [];
 	//
 	function run(configObject, scenariosArray) {
 		//  render navbar and tabs before any other interactions
 		render(configObject);
-		confMenuController.run(configObject, scenariosArray, currentTabType, runIdArray);
+		confMenuController.run(configObject, scenariosArray, currentTabType);
 		bindTabEvents();
-		$('#' + TEMPLATE.getConstElemId(BUTTON_TYPE.OPEN_INPUT_TEXT, TAB_TYPE.DEFAULTS)).val(''); // at the request of a customer
-		$('#' + TEMPLATE.getConstElemId(BUTTON_TYPE.OPEN, TAB_TYPE.SCENARIOS)).prop('disabled', true);
+		cssUtil.emptyValue(jqId(BUTTON_TYPE.OPEN_INPUT_TEXT, TAB_TYPE.DEFAULTS));
+		cssUtil.disable(jqId(BUTTON_TYPE.OPEN, TAB_TYPE.DEFAULTS));
 	}
 
-	function render(config) {
+	function render(configObject) {
 		function renderNavbar(runVersion) {
-			const navbarHtml = HB.compile(navbarTemplate, {version: runVersion});
-			document.querySelector('body').insertAdjacentHTML('afterbegin', navbarHtml);
-			$('#' + tabId(currentTabType)).addClass(TAB_CLASS.ACTIVE);
-			bindTabEvents();
+			hbUtil.compileAndInsertInsideBefore('body', navbarTemplate, {version: runVersion});
 		}
-		renderNavbar(config.run.version || 'unknown');
+		renderNavbar(configObject.run.version || 'unknown');
 	}
 
 	function bindTabEvents() {
-		
-		function showElemById(id) {
-			$("#" + id).show();
-		}
-
-		function hideElemById(id) {
-			$("#" + id).hide();
-		}
-
 		function makeTabActive(tabType) {
 			$.each(TAB_TYPE, function (key, value) {
-				const foldersId = TEMPLATE.getConstElemId('folders', value);
-				const buttonsId = TEMPLATE.getConstElemId('buttons', value);
+				const treeId = jqId(BLOCK.TREE, value);
+				const buttonsId = jqId(BLOCK.BUTTONS, value);
 				if (value === tabType) {
-					showElemById(foldersId);
-					showElemById(buttonsId);
-					$('#' + tabId(tabType)).addClass(TAB_CLASS.ACTIVE);
+					cssUtil.show(treeId, buttonsId);
+					cssUtil.addClass(TAB_CLASS.ACTIVE, tabJqId(tabType))
 				} else {
-					hideElemById(foldersId);
-					hideElemById(buttonsId);
-					$('#' + tabId(value)).removeClass(TAB_CLASS.ACTIVE);
+					cssUtil.hide(treeId, buttonsId);
+					cssUtil.removeClass(TAB_CLASS.ACTIVE, tabJqId(value));
 				}
 			});
 			currentTabType = tabType;
 		}
 
 		function bindTabClickEvent(tabType) {
-			$('#' + tabId(tabType)).click(function () {
+			const tabId = tabJqId(tabType);
+			$(tabId).click(function () {
 				makeTabActive(tabType)
 			});
 		}

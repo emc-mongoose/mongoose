@@ -5,8 +5,9 @@ define([
 	"text!../../../templates/configuration/commonButtons.hbs",
 	"./extendedConfController",
 	"../run/runController",
-	"../../util/handlebarsShortcuts",
-	"../../util/templateConstants"
+	"../../util/handlebarsUtil",
+	"../../util/templatesUtil",
+	"../../util/cssUtil"
 ], function(
 	$,
 	Handlebars,
@@ -14,162 +15,80 @@ define([
 	commonButtonsTemplate,
     extendedConfController,
     runController,
-	HB,
-    TEMPLATE
+	hbUtil,
+    templatesUtil,
+    cssUtil
 ) {
-	//
-	function run(configObject, scenariosArray, currentTabType, tabRunIdArray) {
+	const jqId = templatesUtil.composeJqId;
+	
+	const TAB_TYPE = templatesUtil.tabTypes();
+	const BUTTON_TYPE = templatesUtil.commonButtonTypes();
+	const BLOCK = templatesUtil.blocks();
+	// object to array
+	const CONFIG_TABS = $.map(TAB_TYPE, function (value) { return value; }).slice(0, 2);
+	const BUTTONS = $.map(BUTTON_TYPE, function (value) { return value; });
+	
+	function run(configObject, scenariosArray, currentTabType) {
 		//  default run.mode ("webui") from appConfig should be overridden here
 		var run = {
 			mode: "standalone" // possible: ["standalone", "client", "server", "cinderella"]
 		};
 		//  render configuration menu panel
-		render(currentTabType, scenariosArray);
+		render(currentTabType);
 		extendedConfController.setup(configObject, scenariosArray);
-		//  some settings for configuration menu
-		bindMenuEvents(configObject, tabRunIdArray);
 	}
 	//
-	function render(currentTabType, scenariosArray) {
-		const CONFIG_TABS = TEMPLATE.configTabs();
-		const BUTTONS = TEMPLATE.commonButtons();
-		function renderConfMenu(configTabs, scenariosArray) {
-			HB.compileAndInsert('header', 'afterend', confMenuTemplate, { 'tab-types': configTabs, 'scenarios': scenariosArray });
+	function render(currentTabType) {
+		function renderConfMenu() {
+			hbUtil.compileAndInsertAfter('header', confMenuTemplate, { 'tab-types': CONFIG_TABS });
 		}
-		function renderCommonButtons(configTabs) {
-			const htmlButtonSet1 = HB.compile(commonButtonsTemplate, { 'buttons': BUTTONS, 'tab-type': configTabs[0]});
-			const htmlButtonSet2 = HB.compile(commonButtonsTemplate, { 'buttons': BUTTONS, 'tab-type': configTabs[1]});
-			HB.insert('config', 'afterbegin', htmlButtonSet2);
-			HB.insert('config', 'afterbegin', htmlButtonSet1);
+		function renderCommonButtons() {
+			$.each(CONFIG_TABS, function (index, value) {
+				hbUtil.compileAndInsertInsideBefore('#config', commonButtonsTemplate,
+					{ 'buttons': BUTTONS, 'tab-type': value });
+			});
 		}
-		function bindOpenButtonEvent(configTabs) {
-			const BUTTON_TYPE = TEMPLATE.commonButtonTypes();
+		function bindOpenButtonEvent() {
+			
+			function buttonJqId(buttonType, tabName) {
+				return jqId('', buttonType, tabName);
+			}
+			
 			function passClick(tabName) {
-				$('#' + BUTTON_TYPE.OPEN + '-' + tabName).click(function () {
-					$('#' + BUTTON_TYPE.OPEN_INPUT_FILE + '-' + tabName).trigger('click')
+				$(buttonJqId(BUTTON_TYPE.OPEN, tabName)).click(function () {
+					$(buttonJqId(BUTTON_TYPE.OPEN_INPUT_FILE, tabName)).trigger('click')
 				})
 			}
-			var fillTheField = function (tabName) {
-				const openInputFileId = '#' + BUTTON_TYPE.OPEN_INPUT_FILE + '-' + tabName;
-				const openInputTextId = '#' + BUTTON_TYPE.OPEN_INPUT_TEXT + '-' + tabName;
+			
+			function fillTheField(tabName) {
+				const openInputFileId = buttonJqId(BUTTON_TYPE.OPEN_INPUT_FILE, tabName);
+				const openInputTextId = buttonJqId(BUTTON_TYPE.OPEN_INPUT_TEXT, tabName);
 				const openFileName = $(openInputFileId).val();
 				if (openFileName) {
 					$(openInputTextId).val(openFileName)
 				} else {
 					$(openInputTextId).val('No ' + tabName.slice(0, -1) + ' chosen')
 				}
-			};
-			$.each(configTabs, function (index, value) {
+			}
+			$.each(CONFIG_TABS, function (index, value) {
 				passClick(value);
 				fillTheField(value);
 			})
 		}
-		function hideExtraButtons(currentTabType, configTabs) {
-			$.each(configTabs, function (index, value) {
+		function hideExtraButtons(currentTabType) {
+			$.each(CONFIG_TABS, function (index, value) {
 				if (value != currentTabType) {
-					$('#buttons-' + value).hide();
+					const buttonBlockId = jqId(BLOCK.BUTTONS, value);
+					cssUtil.hide(buttonBlockId);
 				}
 			})
 		}
-		renderConfMenu(CONFIG_TABS, scenariosArray);
-		renderCommonButtons(CONFIG_TABS);
-		bindOpenButtonEvent(CONFIG_TABS);
-		hideExtraButtons(currentTabType, CONFIG_TABS)
+		renderConfMenu();
+		renderCommonButtons();
+		bindOpenButtonEvent();
+		hideExtraButtons(currentTabType)
 	}
 	
-
-	//
-	function bindMenuEvents(props, runIdArray) {
-		//  config mode change
-		var configModeSelect = $("#config-type");
-		configModeSelect.on("change", function() {
-			extendedConfController.activate();
-		});
-		//  activate
-		configModeSelect.trigger("change");
-
-		////////////////////////////////////////////////////////////////////////////////////////////
-
-		//  run mode change (show base conf fields only for selected run mode)
-		var runModeSelect = $("#run-mode");
-		runModeSelect.on("change", function() {
-			var valueSelected = this.options[this.selectedIndex].value;
-			var notSelected = $("option:not(:selected)", this);
-			notSelected.each(function() {
-				$("." + this.value).hide();
-			});
-			$("." + valueSelected).show();
-		});
-		//  activate
-		runModeSelect.trigger("change");
-
-		////////////////////////////////////////////////////////////////////////////////////////////
-
-		var fields = $("#main-form").serialize();
-
-		//  update config file (save button click)
-		var updateConfig = $("#save-config");
-		updateConfig.click(function() {
-			$.post("/save", fields, function() {
-				alert("Config was successfully saved");
-			});
-		});
-
-		//  save configuration in separate file
-		var saveInFile = $("#save-file");
-		saveInFile.click(function(e) {
-			e.preventDefault();
-			$.get("/save", fields, function() {
-				window.location.href = "/save/config.json";
-			});
-		});
-
-		////////////////////////////////////////////////////////////////////////////////////////////
-
-		//  read cfg from file
-		var fileInput = $("#config-file");
-		fileInput.change(function() {
-			var input = $(this).get(0);
-			loadPropertiesFromFile(props, input.files[0]);
-		});
-	}
-
-	function loadPropertiesFromFile(props, fileName) {
-		var reader = new FileReader();
-		reader.onload = function() {
-			var result = reader.result;
-			var lines = result.split("\n");
-			var key, value;
-			for(var i = 0;i < lines.length; i++) {
-				var splitLine = lines[i].split(" = ");
-				//  key and value
-				if(splitLine.length == 2) {
-					key = splitLine[0];
-					value = splitLine[1];
-					index(props, key, value);
-				} else {
-					return;
-				}
-			}
-		};
-		reader.readAsText(fileName);
-	}
-
-	function index(obj,is, value) {
-		try {
-			if(typeof is == 'string')
-				return index(obj, is.split('.'), value);
-			else if(is.length == 1 && value !== undefined)
-				return obj[is[0]] = value;
-			else if(is.length == 0)
-				return obj;
-			else
-				return index(obj[is[0]], is.slice(1), value);
-		} catch(e) {
-			//  do nothing
-		}
-	}
-
 	return {
 		run: run
 	};
