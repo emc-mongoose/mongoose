@@ -66,6 +66,11 @@ implements FileIoTask<T> {
 	public BasicFileIoTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
 		parentDir = ioConfig.getTargetItemPath();
+		try {
+			Files.createDirectories(DEFAULT_FS.getPath(parentDir));
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to create the directory {}", parentDir);
+		}
 		//
 		openOptions.add(NOFOLLOW_LINKS);
 		switch(ioType) {
@@ -92,7 +97,6 @@ implements FileIoTask<T> {
 			if(openOptions.isEmpty()) { // delete
 				runDelete();
 			} else { // work w/ a content
-				Files.createDirectories(DEFAULT_FS.getPath(parentDir));
 				try(
 					final SeekableByteChannel byteChannel = Files.newByteChannel(
 						DEFAULT_FS.getPath(parentDir, item.getName()), openOptions
