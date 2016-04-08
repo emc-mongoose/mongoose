@@ -41,6 +41,7 @@ import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 //
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -66,11 +67,6 @@ implements FileIoTask<T> {
 	public BasicFileIoTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
 		parentDir = ioConfig.getTargetItemPath();
-		try {
-			Files.createDirectories(DEFAULT_FS.getPath(parentDir));
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to create the directory {}", parentDir);
-		}
 		//
 		openOptions.add(NOFOLLOW_LINKS);
 		switch(ioType) {
@@ -97,6 +93,10 @@ implements FileIoTask<T> {
 			if(openOptions.isEmpty()) { // delete
 				runDelete();
 			} else { // work w/ a content
+				final Path parentPath = DEFAULT_FS.getPath(parentDir);
+				if(!Files.exists(parentPath)) {
+					Files.createDirectories(parentPath);
+				}
 				try(
 					final SeekableByteChannel byteChannel = Files.newByteChannel(
 						DEFAULT_FS.getPath(parentDir, item.getName()), openOptions
