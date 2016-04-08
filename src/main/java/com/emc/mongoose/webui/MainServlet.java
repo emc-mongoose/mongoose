@@ -31,11 +31,12 @@ public final class MainServlet
 		extends HttpServlet {
 
 	private static final Logger LOG = LogManager.getLogger();
+	private static final StringBuilder FULL_JSON_BUILDER = new StringBuilder();
+
 	private static final Path PATH_TO_APP_CONFIG_DIR =
 			Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF);
-	private static final Path PATH_TO_SCENARIO_DIR =
+	public static final Path PATH_TO_SCENARIO_DIR =
 			Paths.get(getRootDir(), Constants.DIR_SCENARIO);
-	private static final StringBuilder FULL_JSON_BUILDER = new StringBuilder();
 	private static final String APP_CONFIG_JSON_KEY = "appConfig";
 	private static final String SCENARIOS_JSON_KEY = "scenarios";
 

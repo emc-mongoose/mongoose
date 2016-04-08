@@ -7,6 +7,7 @@ define([
 	function (Handlebars, extendedConfTemplate, HB, TEMPLATE) {
 		//
 		const TAB_TYPE = TEMPLATE.tabTypes();
+		const delimiter = '.';
 		//
 		var KEY_FIELD_RUN_ID = "run.id",
 			KEY_FIELD_LOAD_LIMIT_TIME = "load.limit.time",
@@ -24,11 +25,16 @@ define([
 		}
 
 		function getScenarioFromServer(aHref) {
-			$.post('/scenario', { path: aHref })
+			$.post('/scenario', {path: aHref})
 				.done(function (scenarioJson) {
 					currentScenarioJson = scenarioJson;
 				})
-		};
+		}
+
+		function updateScenarioTree() {
+
+		}
+
 		//
 		function render(configObject, scenariosArray) {
 			HB.compileAndInsert("main-content", 'beforeend', extendedConfTemplate);
@@ -71,47 +77,47 @@ define([
 		}
 
 		//
-		function walkTreeMap(map, ul, propsMap, fullKeyName) {
-			$.each(map, function (key, value) {
-				var element;
-				var currKeyName = "";
-				//
-				if (!fullKeyName) {
-					currKeyName = key;
-				} else {
-					currKeyName = fullKeyName + "." + key;
-				}
-				//
-				if (!(value instanceof Object)) {
-					if (currKeyName === "run.mode")
-						return;
-					$("<li>").appendTo(ul)
-						.addClass("file")
-						.append($("<a>", {
-							class: "props",
-							href: "#" + currKeyName,
-							text: key
-						}));
-					propsMap[currKeyName] = value;
-				} else {
-					element = $("<ul>").appendTo(
-						$("<li>").prependTo(ul)
-							.append($("<label>", {
-								for: key,
-								text: key
-							}))
-							.append($("<input>", {
-								type: "checkbox",
-								id: key
-							}))
-					);
-					walkTreeMap(value, element, propsMap, currKeyName);
-				}
-			});
-		}
+		// function walkTreeMap(map, ul, propsMap, fullKeyName) {
+		// 	$.each(map, function (key, value) {
+		// 		var element;
+		// 		var currKeyName = "";
+		// 		//
+		// 		if (!fullKeyName) {
+		// 			currKeyName = key;
+		// 		} else {
+		// 			currKeyName = fullKeyName + "." + key;
+		// 		}
+		// 		//
+		// 		if (!(value instanceof Object)) {
+		// 			if (currKeyName === "run.mode")
+		// 				return;
+		// 			$("<li>").appendTo(ul)
+		// 				.addClass("file")
+		// 				.append($("<a>", {
+		// 					class: "props",
+		// 					href: "#" + currKeyName,
+		// 					text: key
+		// 				}));
+		// 			propsMap[currKeyName] = value;
+		// 		} else {
+		// 			element = $("<ul>").appendTo(
+		// 				$("<li>").prependTo(ul)
+		// 					.append($("<label>", {
+		// 						for: key,
+		// 						text: key
+		// 					}))
+		// 					.append($("<input>", {
+		// 						type: "checkbox",
+		// 						id: key
+		// 					}))
+		// 			);
+		// 			walkTreeMap(value, element, propsMap, currKeyName);
+		// 		}
+		// 	});
+		// }
 
 		//
-		function fillFileLi(liElem, aHref, aText, aClickEvent) {
+		function fillFileLi(liElem, aHref, aText, aClickEvent, aClickEventParam) {
 			liElem.attr({class: 'file'});
 			var a = $('<a/>',
 				{
@@ -119,12 +125,12 @@ define([
 					href: '#' + aHref
 				});
 			a.text(aText);
-			a.click(function (aHref) {
-				if (aClickEvent) {
-					aClickEvent(aHref);
-				}
-			});
-			a.appendTo(liElem);
+			if (aClickEvent) {
+				a.click(function () {
+					aClickEvent(aClickEventParam);
+				});
+			}
+			liElem.append(a);
 		}
 
 		//
@@ -133,8 +139,7 @@ define([
 			var input = $('<input/>', {type: 'checkbox', id: inputId});
 			var label = $('<label/>', {for: inputId});
 			label.text(labelText);
-			label.appendTo(liElem);
-			input.appendTo(liElem);
+			liElem.append(label, input);
 		}
 
 		//
@@ -145,7 +150,7 @@ define([
 			} else {
 				notObjCase(li);
 			}
-			li.appendTo(rootUlElem);
+			rootUlElem.append(li);
 		}
 
 		//
@@ -156,12 +161,11 @@ define([
 			if (!elemAddress) {
 				elemAddress = '';
 			}
-			const delimiter = '.';
 			$.each(object, function (key, value) {
 				function objCase(li) {
 					fillDirLi(li, key + "-prop-id", key);
 					var ul = $('<ul/>');
-					ul.appendTo(li);
+					li.append(ul);
 					const aHrefChunk = key + delimiter;
 					addVisualTreeOfObject(value, ul, addressObject, elemAddress + aHrefChunk);
 				}
@@ -177,7 +181,6 @@ define([
 		}
 
 		function addVisualTreeOfArray(array, rootUlElem, aClickEvent) {
-			const delimiter = '.';
 			$.each(array, function (index, item) {
 				function objCase(liOuter) {
 					$.each(item, function (dirName, filesArr) {
@@ -185,15 +188,16 @@ define([
 						var ul = $('<ul/>');
 						$.each(filesArr, function (index, fileName) {
 							var liInner = $('<li/>');
-							fillFileLi(liInner, dirName + delimiter + fileName, fileName, aClickEvent);
-							liInner.appendTo(ul);
+							var aHref = dirName + delimiter + fileName;
+							fillFileLi(liInner, aHref, fileName, aClickEvent, aHref);
+							ul.append(liInner);
 						});
-						ul.appendTo(liOuter, aClickEvent);
+						liOuter.append(ul);
 					})
 				}
 
 				function notObjCase(liOuter) {
-					fillFileLi(liOuter, item, item, aClickEvent);
+					fillFileLi(liOuter, item, item, aClickEvent, item);
 				}
 
 				itemProcess(item, objCase, notObjCase, rootUlElem);
