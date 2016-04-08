@@ -53,6 +53,9 @@ extends SequentialJobContainer {
 	private final static char colSep = '|';
 	private final static char rowSep = '-';
 	private final static char padChar = ' ';
+	private final static int DEFAULT_THREAD_COUNT = 1;
+	private final static String DEFAULT_SIZE = "1MB";
+	private final static String DEFAULT_LOAD_TYPE = LoadType.WRITE.name().toLowerCase();
 	//
 	private final StrBuilder strb = new StrBuilder();
 	{
@@ -85,10 +88,6 @@ extends SequentialJobContainer {
 		// disable periodic/intermediate metrics logging
 		localConfig.setProperty(KEY_LOAD_METRICS_PERIOD, 0);
 		// save the default values being replaced with rampup list values
-		final int defaultThreadCount = localConfig.getLoadThreads();
-		final SizeInBytes defaultSize = localConfig.getItemDataSize();
-		final LoadType defaultLoadType = localConfig.getLoadType();
-		//
 		limitTime = localConfig.getLoadLimitTime();
 		final ItemType itemType = localConfig.getItemType();
 		final StorageType storageType = localConfig.getStorageType();
@@ -103,15 +102,9 @@ extends SequentialJobContainer {
 		final List rawSizes = (List) localConfig.getProperty(KEY_ITEM_DATA_SIZE);
 		final List rawLoadTypes = (List) localConfig.getProperty(KEY_LOAD_TYPE);
 		// return the default values replaced with the list values back
-		if(defaultThreadCount > 0) {
-			localConfig.setProperty(KEY_LOAD_THREADS, defaultThreadCount);
-		}
-		if(defaultSize != null) {
-			localConfig.setProperty(KEY_ITEM_DATA_SIZE, defaultSize.toString());
-		}
-		if(defaultLoadType != null) {
-			localConfig.setProperty(KEY_LOAD_TYPE, defaultLoadType.name().toLowerCase());
-		}
+		localConfig.setProperty(KEY_LOAD_THREADS, DEFAULT_THREAD_COUNT);
+		localConfig.setProperty(KEY_ITEM_DATA_SIZE, DEFAULT_SIZE);
+		localConfig.setProperty(KEY_LOAD_TYPE, DEFAULT_LOAD_TYPE);
 		//
 		try {
 			loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);
