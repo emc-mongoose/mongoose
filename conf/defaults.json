@@ -87,15 +87,17 @@
 		},
 		"storage" : {
 			"type" : "http",
+			"addrs" : [
+				"127.0.0.1"
+			],
+			"port" : 9020,
 			"http" : {
-				"addrs" : [ "127.0.0.1" ],
 				"fsAccess" : false,
 				"headers" : {
 					"Connection" : "keep-alive",
 					"User-Agent" : "mongoose/next"
 				},
 				"namespace" : null,
-				"port" : 9020,
 				"api" : "S3",
 				"versioning" : false,
 				"mock" : {

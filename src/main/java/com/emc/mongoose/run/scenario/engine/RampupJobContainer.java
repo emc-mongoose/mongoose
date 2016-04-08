@@ -79,27 +79,16 @@ extends SequentialJobContainer {
 	private final ContentSource contentSrc;
 	private final long limitTime;
 	//
-	public RampupJobContainer() {
-		this(Collections.<String, Object>emptyMap());
-	}
-	//
-	public RampupJobContainer(final Map<String, Object> configTree)
+	public RampupJobContainer(final AppConfig appConfig)
 	throws IllegalStateException {
+		super(appConfig);
 		// disable periodic/intermediate metrics logging
-		configTree.put(KEY_LOAD_METRICS_PERIOD, 0);
-		// get the default config
-		final AppConfig localConfig;
-		try {
-			localConfig = (AppConfig) BasicConfig.THREAD_CONTEXT.get().clone();
-		} catch(final CloneNotSupportedException e) {
-			throw new RuntimeException(e);
-		}
+		localConfig.setProperty(KEY_LOAD_METRICS_PERIOD, 0);
 		// save the default values being replaced with rampup list values
 		final int defaultThreadCount = localConfig.getLoadThreads();
 		final SizeInBytes defaultSize = localConfig.getItemDataSize();
 		final LoadType defaultLoadType = localConfig.getLoadType();
 		//
-		localConfig.override(null, configTree);
 		limitTime = localConfig.getLoadLimitTime();
 		final ItemType itemType = localConfig.getItemType();
 		final StorageType storageType = localConfig.getStorageType();

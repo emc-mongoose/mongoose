@@ -1,5 +1,13 @@
 {
 	"type" : "sequential",
+	"config" : {
+		"storage" : {
+			"addrs" : [
+				"10.249.237.71",
+				"10.249.237.72"
+			]
+		}
+	},
 	"jobs" : [
 		{
 			"type" : "load",
@@ -23,32 +31,50 @@
 					"threads" : 100
 				}
 			}
-		},
-		{
-			"type" : "load",
+		}, {
+			"type" : "sleep",
+			"value" : "1m"
+		}, {
+			"type" : "parallel",
 			"config" : {
 				"item" : {
 					"container" : {
 						"name" : "weighted-load"
-					},
-					"data" : {
-						"size" : "4KB-16KB"
-					},
-					"src" : {
-						"file" : "/tmp/scenario-weighted-load.csv"
 					}
 				},
 				"load" : {
-					"circular" : true,
 					"limit" : {
 						"time" : "5m"
 					},
-					"threads" : 100,
-					"type" : [
-						"write=20%", "read=80%"
-					]
+					"threads" : 100
 				}
-			}
+			},
+			"jobs" : [
+				{
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"src" : {
+								"file" : "/tmp/scenario-weighted-load.csv"
+							}
+						},
+						"load" : {
+							"circular" : true,
+							"type" : "read",
+							"weight" : 80
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"data" : {
+								"size" : "4KB-16KB"
+							}
+						}
+					}
+				}
+			]
 		}
 	]
 }

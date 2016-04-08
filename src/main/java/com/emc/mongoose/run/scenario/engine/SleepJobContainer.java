@@ -1,5 +1,6 @@
 package com.emc.mongoose.run.scenario.engine;
 //
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 //
@@ -12,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 07.04.16.
  */
-public class SleepJobContainer
+public final class SleepJobContainer
 implements JobContainer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -30,12 +31,17 @@ implements JobContainer {
 	}
 	//
 	@Override
-	public boolean append(final JobContainer subJob) {
+	public final AppConfig getConfig() {
+		return null;
+	}
+	//
+	@Override
+	public final boolean append(final JobContainer subJob) {
 		throw new IllegalStateException("Appending sub jobs to a sleep step is not allowed");
 	}
 	//
 	@Override
-	public void run() {
+	public final void run() {
 		try {
 			LOG.info(Markers.MSG, "Invoking sleep step: {} {}", timeValue, timeUnit.name());
 			timeUnit.sleep(timeValue);

@@ -389,14 +389,14 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public String[] getStorageHttpAddrs() {
-		return getStringArray(KEY_STORAGE_HTTP_ADDRS);
+	public String[] getStorageAddrs() {
+		return getStringArray(KEY_STORAGE_ADDRS);
 	}
 	//
 	@Override
-	public String[] getStorageHttpAddrsWithPorts() {
+	public String[] getStorageAddrsWithPorts() {
 		final String
-			nodeAddrs[] = getStorageHttpAddrs(),
+			nodeAddrs[] = getStorageAddrs(),
 			nodeAddrsWithPorts[] = new String[nodeAddrs.length];
 		String nodeAddr;
 		int port = getStorageHttpPort();
@@ -414,7 +414,7 @@ implements AppConfig {
 	//
 	@Override
 	public int getStorageHttpPort() {
-		return getInt(KEY_STORAGE_HTTP_PORT);
+		return getInt(KEY_STORAGE_PORT);
 	}
 	//
 	@Override

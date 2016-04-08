@@ -1,5 +1,6 @@
 package com.emc.mongoose.run.scenario.engine;
 //
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.Markers;
 //
 import org.apache.logging.log4j.LogManager;
@@ -11,11 +12,15 @@ import java.util.List;
  Created by kurila on 02.02.16.
  */
 public class SequentialJobContainer
-implements JobContainer {
+extends JobContainerBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final List<JobContainer> subJobs = new LinkedList<>();
+	//
+	public SequentialJobContainer(final AppConfig appConfig) {
+		super(appConfig);
+	}
 	//
 	@Override
 	public final synchronized boolean append(final JobContainer subJob) {

@@ -18,8 +18,8 @@ extends LoggingTestBase {
 	throws Exception {
 		LoggingTestBase.setUpClass();
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-		STORAGE_ADDRS_DEFAULT = appConfig.getString(AppConfig.KEY_STORAGE_HTTP_ADDRS);
-		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_ADDRS, "10.249.237.73,10.249.237.74,10.249.237.75");
+		STORAGE_ADDRS_DEFAULT = appConfig.getString(AppConfig.KEY_STORAGE_ADDRS);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_ADDRS, "10.249.237.73,10.249.237.74,10.249.237.75");
 	}
 	//
 	@AfterClass
@@ -27,6 +27,6 @@ extends LoggingTestBase {
 	throws Exception {
 		LoggingTestBase.tearDownClass();
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_ADDRS, STORAGE_ADDRS_DEFAULT); // reset to default
+		appConfig.setProperty(AppConfig.KEY_STORAGE_ADDRS, STORAGE_ADDRS_DEFAULT); // reset to default
 	}
 }

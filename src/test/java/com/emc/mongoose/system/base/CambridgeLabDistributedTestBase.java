@@ -99,7 +99,7 @@ extends CambridgeLabViprTestBase {
 			final String dataNodes = System.getenv("DataNodes")
 				.replace('(', ' ').replace(')', ' ').trim().replace(' ', ',');
 			LOG.info(Markers.MSG, "Using custom nodes: \"{}\"", dataNodes);
-			appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_ADDRS, dataNodes);
+			appConfig.setProperty(AppConfig.KEY_STORAGE_ADDRS, dataNodes);
 		} catch(final FileNotFoundException e) {
 			LOG.info(Markers.ERR, "Deployment output file not found");
 		} catch(final IOException e) {

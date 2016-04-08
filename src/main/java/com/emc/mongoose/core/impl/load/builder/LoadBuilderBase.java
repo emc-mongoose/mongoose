@@ -98,9 +98,9 @@ implements LoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		paramName = AppConfig.KEY_STORAGE_HTTP_ADDRS;
+		paramName = AppConfig.KEY_STORAGE_ADDRS;
 		try {
-			setNodeAddrs(appConfig.getStorageHttpAddrsWithPorts());
+			setNodeAddrs(appConfig.getStorageAddrsWithPorts());
 		} catch(final NoSuchElementException | ConversionException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {

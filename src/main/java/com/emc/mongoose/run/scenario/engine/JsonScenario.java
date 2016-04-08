@@ -1,5 +1,7 @@
 package com.emc.mongoose.run.scenario.engine;
 //
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
@@ -35,6 +37,7 @@ implements Scenario {
 	private final static String NODE_TYPE_SLEEP = "sleep";
 	//
 	public JsonScenario(final File scenarioSrcFile) {
+		super(BasicConfig.THREAD_CONTEXT.get());
 		final ObjectMapper jsonMapper = new ObjectMapper()
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
@@ -50,7 +53,7 @@ implements Scenario {
 		try {
 			final Map<String, Object> tree = jsonMapper.readValue(scenarioSrcFile, Map.class);
 			loadTree(tree, this);
-		} catch(final IOException e) {
+		} catch(final IOException | CloneNotSupportedException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Scenario \"{}\" initialization failure", scenarioSrcFile
 			);
@@ -58,7 +61,7 @@ implements Scenario {
 	}
 	//
 	private static void loadTree(final Map<String, Object> node, final JobContainer jobContainer)
-	throws IOException {
+	throws IOException, CloneNotSupportedException {
 		LOG.debug(Markers.MSG, "Load the subtree to the container \"{}\"", jobContainer);
 		Object value;
 		JobContainer subContainer = jobContainer, newSubContainer;
@@ -106,14 +109,21 @@ implements Scenario {
 					break;
 				case KEY_TYPE:
 					if(value instanceof String) {
+						final Object configTree = node.get(KEY_CONFIG);
+						final AppConfig nodeConfig = (AppConfig) subContainer.getConfig().clone();
+						if(configTree instanceof Map) {
+							if(nodeConfig != null) {
+								nodeConfig.override(null, (Map<String, Object>) configTree);
+							}
+						}
 						switch((String) value) {
 							case NODE_TYPE_PARALLEL:
-								newSubContainer = new ParallelJobContainer();
+								newSubContainer = new ParallelJobContainer(nodeConfig);
 								subContainer.append(newSubContainer);
 								subContainer = newSubContainer;
 								break;
 							case NODE_TYPE_SEQUENTIAL:
-								newSubContainer = new SequentialJobContainer();
+								newSubContainer = new SequentialJobContainer(nodeConfig);
 								subContainer.append(newSubContainer);
 								subContainer = newSubContainer;
 								break;
@@ -126,24 +136,11 @@ implements Scenario {
 								break;
 							case NODE_TYPE_LOAD:
 							case NODE_TYPE_RAMPUP:
-								final Object configTree = node.get(KEY_CONFIG);
-								if(configTree instanceof Map) {
+								if(configTree instanceof Map || configTree == null) {
 									if(NODE_TYPE_LOAD.equals(value)) {
-										newSubContainer = new SingleJobContainer(
-											(Map<String, Object>) configTree
-										);
+										newSubContainer = new SingleJobContainer(nodeConfig);
 									} else {
-										newSubContainer = new RampupJobContainer(
-											(Map<String, Object>) configTree
-										);
-									}
-									subContainer.append(newSubContainer);
-									subContainer = newSubContainer;
-								} else if(configTree == null) {
-									if(NODE_TYPE_LOAD.equals(value)) {
-										newSubContainer = new SingleJobContainer();
-									} else {
-										newSubContainer = new RampupJobContainer();
+										newSubContainer = new RampupJobContainer(nodeConfig);
 									}
 									subContainer.append(newSubContainer);
 									subContainer = newSubContainer;

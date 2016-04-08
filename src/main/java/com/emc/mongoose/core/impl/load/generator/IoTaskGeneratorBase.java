@@ -58,7 +58,7 @@ implements IoTaskGenerator<T, A> {
 		return loadExecutor;
 	}
 	//
-	protected A getIoTask(final T item);
+	//protected A getIoTask(final T item);
 	//
-	protected int getIoTasks()
+	//protected int getIoTasks()
 }

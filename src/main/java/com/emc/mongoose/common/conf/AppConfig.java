@@ -60,9 +60,9 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_RUN_FILE = "run.file";
 	String KEY_RUN_RESUME_ENABLED = "run.resume.enabled";
 	String KEY_STORAGE_TYPE = "storage.type";
-	String KEY_STORAGE_HTTP_ADDRS = "storage.http.addrs";
+	String KEY_STORAGE_ADDRS = "storage.addrs";
+	String KEY_STORAGE_PORT = "storage.port";
 	String KEY_STORAGE_HTTP_API = "storage.http.api";
-	String KEY_STORAGE_HTTP_PORT = "storage.http.port";
 	String KEY_STORAGE_HTTP_FS_ACCESS = "storage.http.fsAccess";
 	String KEY_STORAGE_HTTP_HEADERS = "storage.http.headers";
 	String KEY_STORAGE_HTTP_NAMESPACE = "storage.http.namespace";
@@ -193,8 +193,8 @@ extends Cloneable, Configuration, Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	StorageType getStorageType();
 
-	String[] getStorageHttpAddrs();
-	String[] getStorageHttpAddrsWithPorts();
+	String[] getStorageAddrs();
+	String[] getStorageAddrsWithPorts();
 
 	String getStorageHttpApi();
 
