@@ -1,9 +1,11 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
@@ -12,7 +14,6 @@ import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.HttpContainerIOTask;
@@ -65,30 +66,30 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 20.10.15.
  */
 public class BasicHttpContainerLoadExecutor<T extends HttpDataItem, C extends Container<T>>
-extends LimitedRateLoadExecutorBase<C>
+extends LoadExecutorBase<C>
 implements HttpContainerLoadExecutor<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final AppConfig.LoadType loadType;
+	protected final LoadType loadType;
 	private final HttpProcessor httpProcessor;
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
-	private final HttpRequestConfig<T, C> wsReqConfigCopy;
+	private final HttpRequestConfig<T, C> httpReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
 	public BasicHttpContainerLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, C> reqConfig, final String[] addrs,
-		final int threadCount, final ItemSrc<C> itemSrc, final long maxCount, final float rateLimit
+		final int threadCount, final Input<C> itemInput, final long maxCount, final float rateLimit
 	) throws ClassCastException {
-		super(appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
+		super(appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit);
 		//
 		this.loadType = reqConfig.getLoadType();
-		wsReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;
-		isPipeliningEnabled = wsReqConfigCopy.getPipelining();
+		httpReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;
+		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
 		//
-		if(AppConfig.LoadType.READ.equals(loadType)) {
+		if(LoadType.READ.equals(loadType)) {
 			reqConfig.setBuffSize(Constants.BUFF_SIZE_HI);
 		} else {
 			reqConfig.setBuffSize(Constants.BUFF_SIZE_LO);
@@ -98,7 +99,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
-			.add(wsReqConfigCopy)
+			.add(httpReqConfigCopy)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
@@ -118,7 +119,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
-			.setIoThreadCount(threadCount)
+			.setIoThreadCount(ThreadUtil.getWorkerCount())
 			.setBacklogSize(appConfig.getNetworkSocketBindBacklogSize())
 			.setInterestOpQueued(appConfig.getNetworkSocketInterestOpQueued())
 			.setSelectInterval(appConfig.getNetworkSocketSelectInterval())
@@ -164,7 +165,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		HttpHost nextRoute;
 		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
 		for(int i = 0; i < storageNodeCount; i ++) {
-			nextRoute = wsReqConfigCopy.getNodeHost(addrs[i]);
+			nextRoute = httpReqConfigCopy.getNodeHost(addrs[i]);
 			nextConnPool = new FixedRouteSequencingConnPool(
 				ioReactor, nextRoute, connFactory,
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ?
@@ -181,7 +182,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	//
 	@Override
 	protected HttpContainerIOTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
-		return new BasicHttpContainerTask<>(item, nextNodeAddr, wsReqConfigCopy);
+		return new BasicHttpContainerTask<>(item, nextNodeAddr, httpReqConfigCopy);
 	}
 	//
 	@Override
@@ -235,7 +236,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	protected <A extends IOTask<C>> Future<A> submitTaskActually(final A ioTask)
+	public final <A extends IOTask<C>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		//
 		final HttpIOTask wsIoTask = (HttpIOTask) ioTask;
@@ -263,7 +264,10 @@ implements HttpContainerLoadExecutor<T, C> {
 		futureCallback = new FutureCallback<HttpContainerIOTask<T, C>>() {
 			@Override
 			public final void completed(final HttpContainerIOTask<T, C> ioTask) {
-				ioTaskCompleted(ioTask);
+				try {
+					ioTaskCompleted(ioTask);
+				} catch(final RemoteException ignored) {
+				}
 			}
 			//
 			public final void cancelled() {
@@ -276,8 +280,9 @@ implements HttpContainerLoadExecutor<T, C> {
 		};
 	//
 	@Override
-	public int submitTasks(final List<? extends IOTask<C>> ioTasks, final int from, final int to)
-	throws RemoteException, RejectedExecutionException {
+	public final <A extends IOTask<C>> int submitTasks(
+		final List<A> ioTasks, final int from, final int to
+	) throws RemoteException, RejectedExecutionException {
 		int n = 0;
 		if(isPipeliningEnabled) {
 			if(ioTasks.size() > 0) {
@@ -295,7 +300,7 @@ implements HttpContainerLoadExecutor<T, C> {
 			}
 		} else {
 			for(int i = from; i < to; i ++) {
-				if(null != submitReq(ioTasks.get(i))) {
+				if(null != submitTask(ioTasks.get(i))) {
 					n ++;
 				} else {
 					break;
@@ -316,7 +321,10 @@ implements HttpContainerLoadExecutor<T, C> {
 		//
 		@Override
 		public final void completed(final List<HttpContainerIOTask<T, C>> result) {
-			ioTaskCompletedBatch(result, 0, result.size());
+			try {
+				ioTaskCompletedBatch(result, 0, result.size());
+			} catch(final RemoteException ignored) {
+			}
 		}
 		//
 		@Override

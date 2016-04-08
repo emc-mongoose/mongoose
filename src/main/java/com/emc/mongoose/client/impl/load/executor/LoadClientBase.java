@@ -3,17 +3,16 @@ package com.emc.mongoose.client.impl.load.executor;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 // mongoose-server-api.jar
@@ -55,7 +54,7 @@ implements LoadClient<T, W> {
 	private final ThreadPoolExecutor remotePutExecutor;
 	private final String loadSvcAddrs[];
 	//
-	protected volatile ItemDst<T> consumer = null;
+	protected volatile Output<T> consumer = null;
 	//
 	private final static int COUNT_LIMIT_RETRY = 100;
 	//
@@ -96,6 +95,7 @@ implements LoadClient<T, W> {
 									);
 								}
 								counterResults.addAndGet(n);
+								// CIRCULARITY FEATURE
 								if(isCircular) {
 									for(final T item : frame) {
 										uniqueItems.put(item.getName(), item);
@@ -172,17 +172,29 @@ implements LoadClient<T, W> {
 		}
 	}
 	//
-	@SuppressWarnings("unchecked")
 	public LoadClientBase(
-		final AppConfig appConfig, final IOConfig<?, ?> ioConfig, final String addrs[],
-		final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final AppConfig appConfig, final IoConfig<?, ?> ioConfig, final String addrs[],
+		final int threadCount, final Input<T> itemInput, final long maxCount, final float rateLimit,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
-		super(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount,
+		this(
+			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
 			// get any load server last job number
-			remoteLoadMap.values().iterator().next().getInstanceNum(),
-			remoteLoadMap.values().iterator().next().getName() + 'x' + remoteLoadMap.size()
+			remoteLoadMap, remoteLoadMap.values().iterator().next().getInstanceNum()
+		);
+	}
+	//
+	protected LoadClientBase(
+		final AppConfig appConfig, final IoConfig<?, ?> ioConfig, final String addrs[],
+		final int threadCount, final Input<T> itemInput, final long maxCount, final float rateLimit,
+		final Map<String, W> remoteLoadMap, final int instanceNum
+	) {
+		super(
+			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit, instanceNum,
+			instanceNum + "-" + ioConfig.toString() +
+				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
+				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
+				+ 'x' + remoteLoadMap.size()
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
@@ -222,8 +234,15 @@ implements LoadClient<T, W> {
 					Markers.MSG, "{} started bound to remote service @{}",
 					nextLoadSvc.getName(), addr
 				);
-			} catch(final IOException e) {
-				LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
+			} catch(final IOException | IllegalStateException e) {
+				try {
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "Failed to start remote load \"{}\" @{}",
+						nextLoadSvc.getName(), addr
+					);
+				} catch(final RemoteException ee) {
+					LogUtil.exception(LOG, Level.FATAL, e, "Network connectivity failure");
+				}
 			}
 		}
 		//
@@ -282,24 +301,27 @@ implements LoadClient<T, W> {
 	//
 	private void interruptLoadSvcs() {
 		//
-		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-			remoteLoadMap.size(),
-			new GroupThreadFactory(String.format("interrupt<%s>", getName()))
-		);
-		for(final String addr : loadSvcAddrs) {
-			interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
-		}
-		interruptExecutor.shutdown();
-		try {
-			if(!interruptExecutor.awaitTermination(REMOTE_TASK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
-				LOG.warn(Markers.ERR, "{}: remote interrupt tasks timeout", getName());
+		final int loadSvcCount = remoteLoadMap.size();
+		if(loadSvcCount > 0) {
+			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
+				remoteLoadMap.size(),
+				new GroupThreadFactory(String.format("interrupt<%s>", getName()), true)
+			);
+			for(final String addr : loadSvcAddrs) {
+				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
 			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
-		} finally {
-			final List<Runnable> tasksLeft = interruptExecutor.shutdownNow();
-			for(final Runnable task : tasksLeft) {
-				LOG.debug(Markers.ERR, "The interrupt task is not finished in time: {}", task);
+			interruptExecutor.shutdown();
+			try {
+				if(!interruptExecutor.awaitTermination(REMOTE_TASK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
+					LOG.warn(Markers.ERR, "{}: remote interrupt tasks timeout", getName());
+				}
+			} catch(final InterruptedException e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
+			} finally {
+				final List<Runnable> tasksLeft = interruptExecutor.shutdownNow();
+				for(final Runnable task : tasksLeft) {
+					LOG.debug(Markers.ERR, "The interrupt task is not finished in time: {}", task);
+				}
 			}
 		}
 	}
@@ -315,27 +337,27 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final void setItemDst(final ItemDst<T> itemDst)
+	public final void setOutput(final Output<T> itemOutput)
 	throws RemoteException {
-		if(itemDst instanceof LoadClient) {
+		if(itemOutput instanceof LoadClient) {
 			LOG.debug(Markers.MSG, "Consumer is a LoadClient instance");
 			// consumer is client which has the map of consumers
 			// this is necessary for the distributed chain/rampup scenarios
-			this.consumer = itemDst;
-			final Map<String, W> consumeMap = ((LoadClient<T, W>) itemDst)
+			this.consumer = itemOutput;
+			final Map<String, W> consumeMap = ((LoadClient<T, W>)itemOutput)
 				.getRemoteLoadMap();
 			for(final String addr : consumeMap.keySet()) {
-				remoteLoadMap.get(addr).setItemDst(consumeMap.get(addr));
+				remoteLoadMap.get(addr).setOutput(consumeMap.get(addr));
 			}
-		} else if(itemDst instanceof LoadSvc) {
+		} else if(itemOutput instanceof LoadSvc) {
 			// single consumer for all these producers
-			final W loadSvc = (W) itemDst;
+			final W loadSvc = (W)itemOutput;
 			LOG.debug(Markers.MSG, "Consumer is a load service");
 			for(final String addr : loadSvcAddrs) {
-				remoteLoadMap.get(addr).setItemDst(loadSvc);
+				remoteLoadMap.get(addr).setOutput(loadSvc);
 			}
 		} else {
-			super.setItemDst(itemDst);
+			super.setOutput(itemOutput);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -384,7 +406,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
 		if(counterSubm.get() + countRej.get() >= maxCount) {
 			LOG.debug(
@@ -401,7 +423,7 @@ implements LoadClient<T, W> {
 		}
 		while(true) {
 			try {
-				remotePutExecutor.submit(new RemotePutTask(dataItem));
+				remotePutExecutor.submit(new RemotePutTask(item));
 				break;
 			} catch(final RejectedExecutionException e) {
 				if(LOG.isTraceEnabled(Markers.ERR)) {
@@ -466,7 +488,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final int put(final List<T> dataItems, final int from, final int to)
+	public int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
 		final long dstLimit = maxCount - counterSubm.get() - countRej.get();
 		final int srcLimit = to - from;
@@ -514,7 +536,7 @@ implements LoadClient<T, W> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void closeActually()
+	protected void closeActually()
 	throws IOException {
 		try {
 			if(isInterrupted.compareAndSet(false, true)) {
@@ -608,16 +630,16 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final <A extends IOTask<T>> Future<A> submitReq(final A request)
+	public <A extends IOTask<T>> Future<A> submitTask(final A request)
 	throws RemoteException {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (remotePutExecutor.getTaskCount() % loadSvcAddrs.length)])
-			.submitReq(request);
+			.submitTask(request);
 	}
 	//
 	@Override
-	public final int submitTasks(
-		final List<? extends IOTask<T>> requests, final int from, final int to
+	public <A extends IOTask<T>> int submitTasks(
+		final List<A> requests, final int from, final int to
 	) throws RemoteException, RejectedExecutionException {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (remotePutExecutor.getTaskCount() % loadSvcAddrs.length)])
@@ -625,20 +647,20 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public final void await(final long timeOut, final TimeUnit timeUnit)
+	public void await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
 		//
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size() + 1,
-			new GroupThreadFactory(String.format("awaitWorker<%s>", getName()))
+			new GroupThreadFactory(String.format("awaitWorker<%s>", getName()), true)
 		);
 		awaitExecutor.submit(
 			new Runnable() {
 				@Override
-				public final void run() {
+				public void run() {
 					// wait the remaining tasks to be transmitted to load servers
 					LOG.debug(
-						Markers.MSG, "{}: waiting remaining {} tasks to complete", getName(),
+						Markers.MSG, "{}: waiting remaining {} tasks to complete", LoadClientBase.this.getName(),
 						remotePutExecutor.getQueue().size() + remotePutExecutor.getActiveCount()
 					);
 					try {

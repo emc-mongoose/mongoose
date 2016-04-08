@@ -9,8 +9,14 @@ import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataSizeException;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.FileIOTask;
+import static com.emc.mongoose.core.api.io.task.IOTask.Status.CANCELLED;
+import static com.emc.mongoose.core.api.io.task.IOTask.Status.FAIL_IO;
+import static com.emc.mongoose.core.api.io.task.IOTask.Status.FAIL_TIMEOUT;
+import static com.emc.mongoose.core.api.io.task.IOTask.Status.RESP_FAIL_CORRUPT;
+import static com.emc.mongoose.core.api.io.task.IOTask.Status.RESP_FAIL_NOT_FOUND;
+import static com.emc.mongoose.core.api.io.task.IOTask.Status.SUCC;
 //
 import com.emc.mongoose.core.impl.item.data.BasicDataItem;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeCount;
@@ -24,13 +30,17 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
+//
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -42,37 +52,32 @@ import java.util.concurrent.TimeoutException;
  Created by kurila on 23.11.15.
  */
 public class BasicFileIOTask<
-	T extends FileItem, C extends Directory<T>, X extends FileIOConfig<T, C>
+	T extends FileItem, C extends Directory<T>, X extends FileIoConfig<T, C>
 > extends BasicDataIOTask<T, C, X>
 implements FileIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static FileSystem DEFAULT_FS = FileSystems.getDefault();
 	//
-	private final Path fPath;
+	private final String parentDir;
 	private final Set<OpenOption> openOptions = new HashSet<>();
 	private final RunnableFuture<BasicFileIOTask<T, C, X>> future;
 	//
 	public BasicFileIOTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
+		parentDir = ioConfig.getTargetItemPath();
 		//
-		final C parentDir = ioConfig.getContainer();
-		if(parentDir != null) {
-			fPath = Paths.get(parentDir.getName(), item.getName()).toAbsolutePath();
-		} else {
-			fPath = Paths.get(item.getName()).toAbsolutePath();
-		}
-		//
-		openOptions.add(LinkOption.NOFOLLOW_LINKS);
+		openOptions.add(NOFOLLOW_LINKS);
 		switch(ioType) {
 			case WRITE:
-				openOptions.add(StandardOpenOption.WRITE);
+				openOptions.add(WRITE);
 				if(!item.hasScheduledUpdates() && !item.isAppending()) {
-					openOptions.add(StandardOpenOption.CREATE);
-					openOptions.add(StandardOpenOption.TRUNCATE_EXISTING);
+					openOptions.add(CREATE);
+					openOptions.add(TRUNCATE_EXISTING);
 				}
 				break;
 			case READ:
-				openOptions.add(StandardOpenOption.READ);
+				openOptions.add(READ);
 				break;
 		}
 		//
@@ -87,10 +92,13 @@ implements FileIOTask<T> {
 			if(openOptions.isEmpty()) { // delete
 				runDelete();
 			} else { // work w/ a content
+				Files.createDirectories(DEFAULT_FS.getPath(parentDir));
 				try(
-					final SeekableByteChannel byteChannel = Files.newByteChannel(fPath, openOptions)
+					final SeekableByteChannel byteChannel = Files.newByteChannel(
+						DEFAULT_FS.getPath(parentDir, item.getName()), openOptions
+					)
 				) {
-					if(openOptions.contains(StandardOpenOption.READ)) {
+					if(openOptions.contains(READ)) {
 						runRead(byteChannel);
 					} else {
 						if(item.hasScheduledUpdates()) {
@@ -105,21 +113,21 @@ implements FileIOTask<T> {
 			}
 		} catch(final ClosedByInterruptException e) {
 			if(ioConfig.isClosed()) {
-				status = Status.CANCELLED;
+				status = CANCELLED;
 			} else {
-				status = Status.FAIL_TIMEOUT;
+				status = FAIL_TIMEOUT;
 			}
 		} catch(final NoSuchFileException e) {
-			status = Status.RESP_FAIL_NOT_FOUND;
+			status = RESP_FAIL_NOT_FOUND;
 			LogUtil.exception(
-				LOG, Level.WARN, e,
-				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), fPath
+				LOG, Level.DEBUG, e,
+				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), parentDir
 			);
 		} catch(final IOException e) {
-			status = Status.FAIL_IO;
+			status = FAIL_IO;
 			LogUtil.exception(
-				LOG, Level.WARN, e,
-				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), fPath
+				LOG, Level.DEBUG, e,
+				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), parentDir
 			);
 		} finally {
 			respTimeDone = System.nanoTime() / 1000;
@@ -128,8 +136,8 @@ implements FileIOTask<T> {
 	//
 	protected void runDelete()
 	throws IOException {
-		Files.delete(fPath);
-		status = Status.SUCC;
+		Files.delete(DEFAULT_FS.getPath(parentDir, item.getName()));
+		status = SUCC;
 	}
 	//
 	protected void runRead(final SeekableByteChannel byteChannel)
@@ -195,7 +203,7 @@ implements FileIOTask<T> {
 					}
 				}
 			}
-			status = Status.SUCC;
+			status = SUCC;
 		} catch(final DataSizeException e) {
 			countBytesDone += e.offset;
 			LOG.warn(
@@ -203,7 +211,7 @@ implements FileIOTask<T> {
 				"{}: content size mismatch, expected: {}, actual: {}",
 				item.getName(), item.getSize(), countBytesDone
 			);
-			status = Status.RESP_FAIL_CORRUPT;
+			status = RESP_FAIL_CORRUPT;
 		} catch(final DataCorruptionException e) {
 			countBytesDone += e.offset;
 			LOG.warn(
@@ -214,7 +222,7 @@ implements FileIOTask<T> {
 					"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
 				)
 			);
-			status = Status.RESP_FAIL_CORRUPT;
+			status = RESP_FAIL_CORRUPT;
 		}
 	}
 	//
@@ -223,7 +231,7 @@ implements FileIOTask<T> {
 		while(countBytesDone < contentSize) {
 			countBytesDone += item.write(byteChannel, contentSize - countBytesDone);
 		}
-		status = Status.SUCC;
+		status = SUCC;
 		item.resetUpdates();
 	}
 	//
@@ -243,7 +251,7 @@ implements FileIOTask<T> {
 			}
 		}
 		item.commitUpdatedRanges();
-		status = Status.SUCC;
+		status = SUCC;
 	}
 	//
 	protected void runWriteCurrRange(
@@ -294,7 +302,7 @@ implements FileIOTask<T> {
 			}
 		}
 		item.commitAppend();
-		status = Status.SUCC;
+		status = SUCC;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

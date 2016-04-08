@@ -3,7 +3,7 @@ package com.emc.mongoose.core.api.load.executor;
 import com.emc.mongoose.common.concurrent.LifeCycle;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemDst;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.ItemProducer;
@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  Supports method "join" for waiting the load execution to be done.
  */
 public interface LoadExecutor<T extends Item>
-extends ItemDst<T>, LifeCycle, ItemProducer<T> {
+extends Output<T>, LifeCycle, ItemProducer<T> {
 	//
 	int
 		DEFAULT_INTERNAL_BATCH_SIZE = 0x80,
@@ -51,9 +51,16 @@ extends ItemDst<T>, LifeCycle, ItemProducer<T> {
 	void logMetrics(Marker marker)
 	throws RemoteException;
 	//
-	<A extends IOTask<T>> Future<A> submitReq(final A request)
+	<A extends IOTask<T>> Future<A> submitTask(final A request)
 	throws RemoteException, RejectedExecutionException;
 	//
-	int submitTasks(final List<? extends IOTask<T>> requests, final int from, final int to)
+	<A extends IOTask<T>> int submitTasks(final List<A> requests, final int from, final int to)
 	throws RemoteException, RejectedExecutionException;
+
+	void ioTaskCompleted(final IOTask<T> ioTask)
+	throws RemoteException;
+
+	int ioTaskCompletedBatch(
+		final List<? extends IOTask<T>> ioTasks, final int from, final int to
+	) throws RemoteException;
 }

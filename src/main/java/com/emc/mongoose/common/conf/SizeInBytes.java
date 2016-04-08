@@ -13,14 +13,16 @@ public final class SizeInBytes {
 		FMT_MSG_INVALID_SIZE = "The string \"%s\" doesn't match the pattern: \"%s\"";
 	//
 	public final static String SIZE_UNITS = "kmgtpe";
-	public final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)b?");
+	public final static Pattern PATTERN_SIZE = Pattern.compile("([\\d\\.]+)(["+SIZE_UNITS+"]?)b?");
 	//
-	public static long toFixedSize(final String value) {
+	public static long toFixedSize(final String value)
+	throws NumberFormatException {
 		final String unit;
 		final Matcher matcher = PATTERN_SIZE.matcher(value.toLowerCase());
-		long size, degree;
+		double size;
+		long degree;
 		if(matcher.matches() && matcher.groupCount() > 0 && matcher.groupCount() < 3) {
-			size = Long.valueOf(matcher.group(1), 10);
+			size = Double.valueOf(matcher.group(1));
 			unit = matcher.group(2);
 			if(unit.length() == 0) {
 				degree = 0;
@@ -37,7 +39,7 @@ public final class SizeInBytes {
 			);
 		}
 		size *= 1L << 10 * degree;
-		return size;
+		return (long) size;
 	}
 	//
 	public static String formatFixedSize(final long v) {
@@ -46,11 +48,20 @@ public final class SizeInBytes {
 		}
 		final int z = (63 - Long.numberOfLeadingZeros(v)) / 10;
 		final double x = (double) v / (1L << (z * 10));
-		return String.format(
-			LogUtil.LOCALE_DEFAULT,
-			x < 10 ? "%.3f%sb" : x < 100 ? "%.2f%sb" : "%.1f%sb",
-			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
-		).toUpperCase();
+		if(x % 1 == 0) {
+			final long y = (long) x;
+			return String.format(
+				LogUtil.LOCALE_DEFAULT,
+				y < 10 ? "%d%sb" : y < 100 ? "%d%sb" : "%d%sb",
+				y, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
+			).toUpperCase();
+		} else {
+			return String.format(
+				LogUtil.LOCALE_DEFAULT,
+				x < 10 ? "%.3f%sb" : x < 100 ? "%.2f%sb" : "%.1f%sb",
+				x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
+			).toUpperCase();
+		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static char SEP1 = '-', SEP2 = ',';
@@ -79,7 +90,7 @@ public final class SizeInBytes {
 	}
 	//
 	public SizeInBytes(final long size) {
-		this(size, size, 0);
+		this(size, size, 1);
 	}
 	//
 	public SizeInBytes(final long min, final long max, final double bias) {
@@ -125,9 +136,9 @@ public final class SizeInBytes {
 		final StringBuilder sb = new StringBuilder(formatFixedSize(min));
 		if(range > 0) {
 			sb.append(SEP1).append(formatFixedSize(min + range));
-		}
-		if(bias != 1) {
-			sb.append(SEP2).append(Double.toString(bias));
+			if(bias != 1) {
+				sb.append(SEP2).append(Double.toString(bias));
+			}
 		}
 		return sb.toString();
 	}

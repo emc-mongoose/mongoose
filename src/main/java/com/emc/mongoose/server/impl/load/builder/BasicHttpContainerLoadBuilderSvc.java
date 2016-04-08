@@ -102,7 +102,7 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		return (U) new BasicHttpContainerLoadSvc<>(
 			appConfig, wsReqConf, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
+			itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit
 		);
 	}
 	//

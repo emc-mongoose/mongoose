@@ -3,6 +3,7 @@ package com.emc.mongoose.server.impl.load.executor;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
@@ -10,9 +11,8 @@ import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.common.io.Output;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 //
 import com.emc.mongoose.core.impl.load.executor.BasicFileLoadExecutor;
 //
@@ -37,13 +37,12 @@ implements FileLoadSvc<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicFileLoadSvc(
-		final AppConfig appConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
-		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final AppConfig appConfig, final FileIoConfig<T, ? extends Directory<T>> ioConfig,
+		final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) throws ClassCastException {
 		super(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
-			sizeConfig, rangesConfig
+			appConfig, ioConfig, threadCount, itemInput, maxCount, rateLimit, sizeConfig, rangesConfig
 		);
 	}
 	//
@@ -53,44 +52,38 @@ implements FileLoadSvc<T> {
 		try {
 			super.closeActually();
 		} finally {
-			// close the exposed network service, if any
-			final Service svc = ServiceUtil.getLocalSvc(ServiceUtil.getLocalSvcName(getName()));
-			if(svc == null) {
-				LOG.debug(Markers.MSG, "The load was not exposed remotely");
-			} else {
-				LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
-				ServiceUtil.close(svc);
-			}
+			LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
+			ServiceUtil.close(this);
 		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final void setItemDst(final ItemDst<T> itemDst) {
+	public final void setOutput(final Output<T> itemOutput) {
 		LOG.debug(
 			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
-			itemDst, getName()
+			itemOutput, getName()
 		);
 		try {
-			if(itemDst instanceof Service) {
-				final String remoteSvcName = ((Service) itemDst).getName();
-				LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
+			if(itemOutput instanceof Service) {
+				final String remoteSvcUrl = ((Service)itemOutput).getName();
+				LOG.debug(Markers.MSG, "Name is {}", remoteSvcUrl);
 				final Service localSvc = ServiceUtil.getLocalSvc(
-					ServiceUtil.getLocalSvcName(remoteSvcName)
+					ServiceUtil.getSvcUrl(remoteSvcUrl)
 				);
 				if(localSvc == null) {
 					LOG.error(
 						Markers.ERR, "Failed to get local service for name \"{}\"",
-						remoteSvcName
+						remoteSvcUrl
 					);
 				} else {
-					super.setItemDst((ItemDst<T>) localSvc);
+					super.setOutput((Output<T>) localSvc);
 					LOG.debug(
 						Markers.MSG,
 						"Successfully resolved local service and appended it as consumer"
 					);
 				}
 			} else {
-				super.setItemDst(itemDst);
+				super.setOutput(itemOutput);
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "{}: looks like network failure", getName());
@@ -98,15 +91,15 @@ implements FileLoadSvc<T> {
 	}
 	// prevent output buffer consuming by the logger at the end of a chain
 	@Override
-	protected final void passItems()
+	protected final void postProcessItems()
 	throws InterruptedException {
 		if(consumer != null) {
-			super.passItems();
+			super.postProcessItems();
 		}
 	}
 	//
 	@Override
-	protected final void passUniqueItemsFinally(final List<T> items) {
+	protected final void postProcessUniqueItemsFinally(final List<T> items) {
 		if(consumer != null) {
 			int n = items.size();
 			if(LOG.isTraceEnabled(Markers.MSG)) {

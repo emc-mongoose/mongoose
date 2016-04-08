@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
-import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.ContentUtil;
@@ -377,7 +377,7 @@ implements HttpDataIOTask<T> {
 				consumeFailedResponseContent(decoder, ioCtl);
 			} else {
 				// check for the content corruption
-				if(AppConfig.LoadType.READ.equals(ioType)) {
+				if(LoadType.READ.equals(ioType)) {
 					// just consume quietly if marked as corrupted once
 					if(!Status.RESP_FAIL_CORRUPT.equals(status) && ioConfig.getVerifyContentFlag()) {
 						// should verify the content

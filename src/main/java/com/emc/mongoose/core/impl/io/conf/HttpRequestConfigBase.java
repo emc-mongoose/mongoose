@@ -5,9 +5,10 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeInBytes;
-import com.emc.mongoose.common.generator.async.AsyncCurrentDateGenerator;
-import com.emc.mongoose.common.generator.async.AsyncFormattingGenerator;
-import com.emc.mongoose.common.generator.ValueGenerator;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.value.async.AsyncCurrentDateInput;
+import com.emc.mongoose.common.io.value.async.AsyncPatternDefinedInput;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
@@ -17,7 +18,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
-import static com.emc.mongoose.common.generator.GeneralFormattingGenerator.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.io.value.RangePatternDefinedInput.PATTERN_SYMBOL;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
@@ -41,7 +42,6 @@ import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
-import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
@@ -129,7 +129,8 @@ implements HttpRequestConfig<T, C> {
 		return reqConf;
 	}
 	//
-	protected HeaderGroup sharedHeaders = new HeaderGroup();
+	protected Map<String, Header> sharedHeaders = new HashMap<>();
+	protected Map<String, Header> dynamicHeaders = new HashMap<>();
 	protected static final ThreadLocal<Mac> THRLOC_MAC = new ThreadLocal<>();
 	//
 	public HttpRequestConfigBase()
@@ -149,11 +150,16 @@ implements HttpRequestConfig<T, C> {
 				while(customHeadersIterator.hasNext()) {
 					nextKey = customHeadersIterator.next();
 					nextValue = customHeaders.getString(nextKey);
-					sharedHeaders.updateHeader(new BasicHeader(nextKey, nextValue));
+					if(-1 < nextKey.indexOf(PATTERN_SYMBOL)) {
+						dynamicHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
+					} else {
+						sharedHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
+					}
 				}
 			}
 		}
-		sharedHeaders.updateHeader(
+		sharedHeaders.put(
+			HttpHeaders.CONTENT_TYPE,
 			new BasicHeader(
 				HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_OCTET_STREAM.getMimeType()
 			)
@@ -344,7 +350,7 @@ implements HttpRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public final HttpRequestConfigBase<T, C> setLoadType(final AppConfig.LoadType loadType) {
+	public final HttpRequestConfigBase<T, C> setLoadType(final LoadType loadType) {
 		super.setLoadType(loadType);
 		return this;
 	}
@@ -424,7 +430,7 @@ implements HttpRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public final HeaderGroup getSharedHeaders() {
+	public final Map<String, Header> getSharedHeaders() {
 		return sharedHeaders;
 	}
 	//
@@ -464,9 +470,9 @@ implements HttpRequestConfig<T, C> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		sharedHeaders = (HeaderGroup) in.readObject();
-		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
-		setNameSpace(String.class.cast(in.readObject()));
+		sharedHeaders = (Map<String, Header>) in.readObject();
+		dynamicHeaders = (Map<String, Header>) in.readObject();
+		setNameSpace((String) in.readObject());
 		setFileAccessEnabled(in.readBoolean());
 		setVersioning(in.readBoolean());
 		setPipelining(in.readBoolean());
@@ -477,6 +483,7 @@ implements HttpRequestConfig<T, C> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeObject(sharedHeaders);
+		out.writeObject(dynamicHeaders);
 		out.writeObject(getNameSpace());
 		out.writeBoolean(getFileAccessEnabled());
 		out.writeBoolean(getVersioning());
@@ -604,7 +611,7 @@ implements HttpRequestConfig<T, C> {
 	};*/
 	//
 	protected void applyDateHeader(final HttpRequest httpRequest) {
-		httpRequest.setHeader(HttpHeaders.DATE, AsyncCurrentDateGenerator.INSTANCE.get());
+		httpRequest.setHeader(HttpHeaders.DATE, AsyncCurrentDateInput.INSTANCE.get());
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Apply date header \"{}\" to the request: \"{}\"",
@@ -771,8 +778,7 @@ implements HttpRequestConfig<T, C> {
 		return response;
 	}
 	//
-	private final static Map<String, ValueGenerator<String>>
-		HEADER_FORMATTERS = new ConcurrentHashMap<>();
+	private final static Map<String, Input<String>> HEADER_VALUE_INPUTS = new ConcurrentHashMap<>();
 	/**
 	Created by kurila on 30.01.15.
 	*/
@@ -780,33 +786,37 @@ implements HttpRequestConfig<T, C> {
 	public final void process(final HttpRequest request, final HttpContext context)
 	throws HttpException, IOException {
 		// add all the shared headers if missing
-		String headerName, headerValue;
-		ValueGenerator<String> headerValueGenerator;
-		for(final Header nextHeader : sharedHeaders.getAllHeaders()) {
-			headerName = nextHeader.getName();
+		Header nextHeader;
+		String headerValue;
+		Input<String> headerValueInput;
+		for(final String nextKey : sharedHeaders.keySet()) {
+			nextHeader = sharedHeaders.get(nextKey);
+			if(!request.containsHeader(nextKey)) {
+				request.setHeader(nextHeader);
+			}
+		}
+		//
+		for(final String nextKey : dynamicHeaders.keySet()) {
+			nextHeader = sharedHeaders.get(nextKey);
 			headerValue = nextHeader.getValue();
-			if(!request.containsHeader(headerName)) {
-				if(headerValue != null && headerValue.indexOf(PATTERN_SYMBOL) > -1) {
-					// header value is a generator pattern
-					headerValueGenerator  = HEADER_FORMATTERS.get(headerName);
-					// try to find the corresponding generator in the registry
-					if(headerValueGenerator == null) {
-						// create new generator and put it into the registry for reuse
-						headerValueGenerator = new AsyncFormattingGenerator(headerValue);
-						// spin while header value generator is not ready
-						while(null == (headerValue = headerValueGenerator.get())) {
-							LockSupport.parkNanos(1);
-							Thread.yield();
-						}
-						HEADER_FORMATTERS.put(headerName, headerValueGenerator);
-					} else {
-						headerValue = headerValueGenerator.get();
+			if(headerValue != null) {
+				// header value is a generator pattern
+				headerValueInput  = HEADER_VALUE_INPUTS.get(nextKey);
+				// try to find the corresponding generator in the registry
+				if(headerValueInput == null) {
+					// create new generator and put it into the registry for reuse
+					headerValueInput = new AsyncPatternDefinedInput(headerValue);
+					// spin while header value generator is not ready
+					while(null == (headerValue = headerValueInput.get())) {
+						LockSupport.parkNanos(1);
+						Thread.yield();
 					}
-					// put the generated header value into the request
-					request.setHeader(new BasicHeader(headerName, headerValue));
+					HEADER_VALUE_INPUTS.put(nextKey, headerValueInput);
 				} else {
-					request.setHeader(nextHeader);
+					headerValue = headerValueInput.get();
 				}
+				// put the generated header value into the request
+				request.setHeader(new BasicHeader(nextKey, headerValue));
 			}
 		}
 		// add all other required headers

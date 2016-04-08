@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 //
@@ -24,7 +24,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
@@ -132,8 +131,8 @@ extends HttpRequestConfigBase<T, C> {
 				for(final Header header: httpRequest.getHeaders(headerName)) {
 					canonical.append('\n').append(header.getValue());
 				}
-			} else if(sharedHeaders.containsHeader(headerName)) {
-				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
+			} else if(sharedHeaders.containsKey(headerName)) {
+				canonical.append('\n').append(sharedHeaders.get(headerName).getValue());
 			} else {
 				canonical.append('\n');
 			}
@@ -141,7 +140,7 @@ extends HttpRequestConfigBase<T, C> {
 		// x-amz-*
 		String amzHeaderName;
 		Map<String, String> sortedAmzHeaders = new TreeMap<>();
-		for(final Header header : sharedHeaders.getAllHeaders()) {
+		for(final Header header : sharedHeaders.values()) {
 			amzHeaderName = header.getName().toLowerCase();
 			if(amzHeaderName.startsWith(CANONICAL_AMZ_HEADER_PREFIX)) {
 				sortedAmzHeaders.put(amzHeaderName, header.getValue());
@@ -164,10 +163,10 @@ extends HttpRequestConfigBase<T, C> {
 						.append('\n').append(emcHeaderName.toLowerCase())
 						.append(':').append(emcHeader.getValue());
 				}
-			} else if(sharedHeaders.containsHeader(emcHeaderName)) {
+			} else if(sharedHeaders.containsKey(emcHeaderName)) {
 				canonical
 					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
+					.append(':').append(sharedHeaders.get(emcHeaderName).getValue());
 			}
 		}
 		//
@@ -262,8 +261,8 @@ extends HttpRequestConfigBase<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
-		return new WSBucketItemSrc<>(
+	public final Input<T> getContainerListInput(final long maxCount, final String addr) {
+		return new WSBucketItemInput<>(
 			new HttpBucketHelper<>(this, container), addr, getItemClass(), maxCount
 		);
 	}

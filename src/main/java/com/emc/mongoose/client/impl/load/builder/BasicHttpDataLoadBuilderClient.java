@@ -1,7 +1,11 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
+import com.emc.mongoose.client.impl.load.executor.BasicMixedHttpDataLoadClient;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -17,13 +21,16 @@ import com.emc.mongoose.client.api.load.builder.HttpDataLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.HttpDataLoadClient;
 //
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
+import com.emc.mongoose.server.api.load.executor.MixedHttpDataLoadSvc;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 08.05.14.
  */
@@ -70,15 +77,13 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 	protected final U buildActually()
 	throws RemoteException {
 		//
-		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
-		//
+		final LoadType loadType = ioConfig.getLoadType();
+		if(itemInput == null) {
+			itemInput = getDefaultItemInput(); // affects load service builders
+		}
+		final Map<String, W> remoteLoadMap = new HashMap<>();
 		HttpDataLoadBuilderSvc<T, W> nextBuilder;
 		W nextLoad;
-		//
-		if(itemSrc == null) {
-			itemSrc = getDefaultItemSrc(); // affects load service builders
-		}
-		//
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing
@@ -87,10 +92,32 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 			);
 			remoteLoadMap.put(addr, nextLoad);
 		}
-		//
-		return (U) new BasicHttpDataLoadClient<>(
-			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
-			itemSrc, maxCount, remoteLoadMap
-		);
+		if(LoadType.MIXED.equals(loadType)) {
+			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
+			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
+				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
+			);
+			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
+				try {
+					itemInputMap.put(
+						nextLoadType,
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemInput() : itemInput
+					);
+				} catch(final NoSuchMethodException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
+				}
+			}
+			//
+			return (U) new BasicMixedHttpDataLoadClient<>(
+				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount,
+				maxCount, rateLimit, (Map<String, MixedHttpDataLoadSvc<T>>) remoteLoadMap,
+				itemInputMap, loadTypeWeightMap
+			);
+		} else {
+			//
+			return (U) new BasicHttpDataLoadClient<>(
+				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount, itemInput, maxCount, rateLimit, remoteLoadMap
+			);
+		}
 	}
 }

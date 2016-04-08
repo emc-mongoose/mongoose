@@ -12,7 +12,7 @@ import java.io.Closeable;
  Shared request configuration.
  */
 public interface RequestConfig<T extends DataItem, C extends Container<T>>
-extends IOConfig<T, C>, Closeable {
+extends IoConfig<T, C>, Closeable {
 	//
 	int REQUEST_NO_PAYLOAD_TIMEOUT_SEC = 100,
 		REQUEST_WITH_PAYLOAD_TIMEOUT_SEC = 100000;

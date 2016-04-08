@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.item.data;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.ContentSourceType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -134,7 +135,7 @@ implements ContentSource {
 	public static ContentSourceBase getInstance(final AppConfig appConfig)
 	throws IOException, IllegalStateException {
 		ContentSourceBase instance = null;
-		final AppConfig.ContentSourceType
+		final ContentSourceType
 			contentSrcType = appConfig.getItemDataContentType();
 		switch(contentSrcType) {
 			case FILE:

@@ -1,5 +1,10 @@
 package com.emc.mongoose.common.conf;
 //
+import com.emc.mongoose.common.conf.enums.ContentSourceType;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
+import com.emc.mongoose.common.conf.enums.ItemType;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.conf.enums.StorageType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -10,7 +15,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 //
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
@@ -30,7 +34,6 @@ import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -243,7 +246,14 @@ implements AppConfig {
 	//
 	@Override
 	public LoadType getLoadType() {
-		return LoadType.valueOf(getString(KEY_LOAD_TYPE).toUpperCase());
+		final Object t = getProperty(KEY_LOAD_TYPE);
+		if(t instanceof String) {
+			return LoadType.valueOf(((String) t).toUpperCase());
+		} else if(t instanceof List) {
+			return LoadType.MIXED;
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	//
 	@Override
@@ -274,11 +284,16 @@ implements AppConfig {
 			final String rawStrValue = (String) rawValue;
 			return (int) TimeUtil.getTimeUnit(rawStrValue)
 				.toSeconds(TimeUtil.getTimeValue(rawStrValue));
+		} else if(rawValue instanceof Long) {
+			return ((Long) rawValue).intValue();
 		} else if(rawValue instanceof Integer) {
 			return (Integer) rawValue;
+		} else if(rawValue instanceof Short) {
+			return (Short) rawValue;
 		} else {
 			throw new ConversionException(
-				"Invalid value @ " + KEY_LOAD_METRICS_PERIOD + ": \"" + rawValue + "\""
+				"Invalid value @ " + KEY_LOAD_METRICS_PERIOD + ": \"" +
+				(rawValue == null ? null : rawValue.getClass()) + "\""
 			);
 		}
 	}

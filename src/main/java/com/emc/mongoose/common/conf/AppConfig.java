@@ -1,5 +1,10 @@
 package com.emc.mongoose.common.conf;
 //
+import com.emc.mongoose.common.conf.enums.ContentSourceType;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
+import com.emc.mongoose.common.conf.enums.ItemType;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.conf.enums.StorageType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.configuration.Configuration;
@@ -94,13 +99,10 @@ extends Cloneable, Configuration, Externalizable {
 	int getIoBufferSizeMax();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
-
-	enum ItemType { CONTAINER, DATA }
 	ItemType getItemType();
 
 	String getItemContainerName();
 
-	enum ContentSourceType { FILE, SEED }
 	ContentSourceType getItemDataContentType();
 
 	String getItemDataContentFile();
@@ -121,8 +123,6 @@ extends Cloneable, Configuration, Externalizable {
 	String getItemSrcFile();
 
 	int getItemSrcBatchSize();
-
-	enum ItemNamingType { ASC, DESC, RANDOM }
 	ItemNamingType getItemNamingType();
 
 	String getItemNamingPrefix();
@@ -138,8 +138,6 @@ extends Cloneable, Configuration, Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	boolean getLoadCircular();
-
-	enum LoadType { WRITE, READ, DELETE }
 	LoadType getLoadType();
 
 	int getLoadThreads();
@@ -193,8 +191,6 @@ extends Cloneable, Configuration, Externalizable {
 	boolean getRunResumeEnabled();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
-
-	enum StorageType { FS, HTTP }
 	StorageType getStorageType();
 
 	String[] getStorageHttpAddrs();

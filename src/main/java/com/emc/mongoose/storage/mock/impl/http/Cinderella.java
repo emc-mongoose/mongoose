@@ -4,7 +4,7 @@ import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.generator.async.AsyncCurrentDateGenerator;
+import com.emc.mongoose.common.io.value.async.AsyncCurrentDateInput;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -102,7 +102,7 @@ implements HttpStorageMock<T> {
 					public void process(
 						final HttpResponse response, final HttpContext context
 					) throws HttpException, IOException {
-						response.setHeader(HTTP.DATE_HEADER, AsyncCurrentDateGenerator.INSTANCE.get());
+						response.setHeader(HTTP.DATE_HEADER, AsyncCurrentDateInput.INSTANCE.get());
 					}
 				}
 			)

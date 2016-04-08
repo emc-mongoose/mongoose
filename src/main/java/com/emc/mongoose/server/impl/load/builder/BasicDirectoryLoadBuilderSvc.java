@@ -9,7 +9,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.load.builder.BasicDirectoryLoadBuilder;
@@ -86,8 +86,8 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
 		return (U) new BasicDirectoryLoadSvc<>(
-			appConfig, (FileIOConfig<T, C>) ioConfig, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit
+			appConfig, (FileIoConfig<T, C>) ioConfig, threadCount,
+			itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit
 		);
 	}
 	//

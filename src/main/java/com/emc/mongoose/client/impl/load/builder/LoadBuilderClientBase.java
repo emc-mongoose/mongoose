@@ -2,19 +2,20 @@ package com.emc.mongoose.client.impl.load.builder;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.math.MathUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 //
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
+import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
@@ -94,7 +95,7 @@ implements LoadBuilderClient<T, W, U> {
 		}
 	}
 	//
-	protected abstract IOConfig<?, ?> getDefaultIoConfig();
+	protected abstract IoConfig<?, ?> getDefaultIoConfig();
 	//
 	protected abstract V resolve(final String serverAddr)
 	throws IOException;
@@ -185,21 +186,21 @@ implements LoadBuilderClient<T, W, U> {
 		try {
 			final String listFile = appConfig.getItemSrcFile();
 			if(itemsFileExists(listFile) && loadSvcMap != null) {
-				setItemSrc(
-					new ItemCSVFileSrc<>(
+				setInput(
+					new CsvFileItemInput<>(
 						Paths.get(listFile), (Class<T>) ioConfig.getItemClass(),
 						ioConfig.getContentSource()
 					)
 				);
 				// disable file-based item sources on the load servers side
 				for(final V nextLoadBuilder : loadSvcMap.values()) {
-					nextLoadBuilder.setItemSrc(null);
+					nextLoadBuilder.setInput(null);
 				}
 			}
 		} catch(final NoSuchElementException e) {
 			LOG.warn(Markers.ERR, "No \"data.src.fpath\" value was set");
 		} catch(final IOException e) {
-			LOG.warn(Markers.ERR, "Invalid items source file path: {}", itemSrc);
+			LOG.warn(Markers.ERR, "Invalid items source file path: {}", itemInput);
 		} catch(final SecurityException | NoSuchMethodException e) {
 			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
@@ -207,8 +208,8 @@ implements LoadBuilderClient<T, W, U> {
 		final String dstFilePath = appConfig.getItemDstFile();
 		if(dstFilePath != null && !dstFilePath.isEmpty()) {
 			try {
-				setItemDst(
-					new ItemCSVFileDst<>(
+				setOutput(
+					new ItemCsvFileOutput<>(
 						Paths.get(dstFilePath), (Class<T>) ioConfig.getItemClass(),
 						ioConfig.getContentSource()
 					)
@@ -222,7 +223,7 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, W, U> setLoadType(final AppConfig.LoadType loadType)
+	public final LoadBuilderClient<T, W, U> setLoadType(final LoadType loadType)
 	throws IllegalStateException, RemoteException {
 		super.setLoadType(loadType);
 		V nextBuilder;
@@ -301,10 +302,10 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public LoadBuilderClient<T, W, U> setItemSrc(final ItemSrc<T> itemSrc)
+	public LoadBuilderClient<T, W, U> setInput(final Input<T> itemInput)
 	throws RemoteException {
-		super.setItemSrc(itemSrc);
-		if(itemSrc != null && loadSvcMap != null) {
+		super.setInput(itemInput);
+		if(itemInput != null && loadSvcMap != null) {
 			// disable any item source usage on the load servers side
 			V nextBuilder;
 			for(final String addr : loadSvcMap.keySet()) {
@@ -318,7 +319,7 @@ implements LoadBuilderClient<T, W, U> {
 	protected void resetItemSrc() {
 		flagUseNewItemSrc = true;
 		flagUseNoneItemSrc = false;
-		itemSrc = null;
+		itemInput = null;
 	}
 	//
 	@Override

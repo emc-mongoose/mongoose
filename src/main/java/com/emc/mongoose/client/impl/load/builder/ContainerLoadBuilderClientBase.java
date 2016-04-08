@@ -5,15 +5,16 @@ import com.emc.mongoose.client.api.load.executor.ContainerLoadClient;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 //
-import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
-import com.emc.mongoose.core.impl.item.data.NewContainerSrc;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
+import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
+import com.emc.mongoose.core.impl.item.data.NewContainerInput;
 import com.emc.mongoose.server.api.load.builder.ContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.ContainerLoadSvc;
 import org.apache.logging.log4j.Level;
@@ -56,8 +57,8 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 		final String listFilePathStr = appConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
-				setItemSrc(
-					new ItemCSVFileSrc<>(
+				setInput(
+					new CsvFileItemInput<>(
 						Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
 						ioConfig.getContentSource()
 					)
@@ -70,8 +71,8 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 		final String dstFilePath = appConfig.getItemDstFile();
 		if(dstFilePath != null && !dstFilePath.isEmpty()) {
 			try {
-				setItemDst(
-					new ItemCSVFileDst<>(
+				setOutput(
+					new ItemCsvFileOutput<>(
 						Paths.get(dstFilePath), (Class<C>) ioConfig.getContainerClass(),
 						ioConfig.getContentSource()
 					)
@@ -85,13 +86,13 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected ItemSrc<C> getNewItemSrc()
+	protected Input<C> getNewItemInput()
 	throws NoSuchMethodException {
-		AppConfig.ItemNamingType namingType = appConfig.getItemNamingType();
+		ItemNamingType namingType = appConfig.getItemNamingType();
 		final Class<C> containerClass = (Class<C>) ioConfig.getContainerClass();
-		return new NewContainerSrc<>(
+		return new NewContainerInput<>(
 			containerClass,
-			new BasicItemNameGenerator(
+			new BasicItemNameInput(
 				namingType,
 				appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
 				appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()

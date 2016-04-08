@@ -1,0 +1,16 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : 0
+			}
+		},
+		"load" : {
+			"threads" : 1000,
+			"limit" : {
+				"rate" : 1000
+			}
+		}
+	}
+}

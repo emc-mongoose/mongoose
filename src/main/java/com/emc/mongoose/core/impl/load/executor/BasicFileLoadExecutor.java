@@ -5,11 +5,11 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.FileIOTask;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
@@ -39,12 +39,12 @@ implements FileLoadExecutor<T> {
 	private final ExecutorService ioTaskExecutor;
 	//
 	public BasicFileLoadExecutor(
-		final AppConfig appConfig, final FileIOConfig<T, ? extends Directory<T>> ioConfig,
-		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final AppConfig appConfig, final FileIoConfig<T, ? extends Directory<T>> ioConfig,
+		final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) throws ClassCastException {
 		super(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
+			appConfig, ioConfig, null, threadCount, itemInput, maxCount, rateLimit,
 			sizeConfig, rangesConfig
 		);
 		ioTaskExecutor = new ThreadPoolExecutor(
@@ -59,7 +59,10 @@ implements FileLoadExecutor<T> {
 			@Override @SuppressWarnings("unchecked")
 			protected final void afterExecute(final Runnable task, final Throwable throwable) {
 				if(throwable == null) {
-					ioTaskCompleted((FileIOTask<T>) task);
+					try {
+						ioTaskCompleted((FileIOTask<T>) task);
+					} catch(final RemoteException ignored) {
+					}
 				} else {
 					ioTaskFailed(1, throwable);
 				}
@@ -69,15 +72,16 @@ implements FileLoadExecutor<T> {
 	//
 	@Override
 	protected FileIOTask<T> getIOTask(final T item, final String nextNodeAddr) {
-		return new BasicFileIOTask<>(item, (FileIOConfig<T, Directory<T>>) ioConfigCopy);
+		return new BasicFileIOTask<>(item, (FileIoConfig<T, Directory<T>>) ioConfigCopy);
 	}
 	//
 	@Override
-	public int submitTasks(final List<? extends IOTask<T>> tasks, final int from, final int to)
-	throws RemoteException, RejectedExecutionException {
+	public <A extends IOTask<T>> int submitTasks(
+		final List<A> tasks, final int from, final int to
+	) throws RejectedExecutionException {
 		int n = 0;
 		for(int i = from; i < to; i ++) {
-			if(null != submitReq(tasks.get(i))) {
+			if(null != submitTask(tasks.get(i))) {
 				n ++;
 			} else {
 				break;
@@ -87,7 +91,7 @@ implements FileLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)
+	public <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		return (Future<A>) ioTaskExecutor.<FileIOTask<T>>submit((FileIOTask<T>) ioTask);
 	}

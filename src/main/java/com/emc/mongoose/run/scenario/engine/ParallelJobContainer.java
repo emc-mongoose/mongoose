@@ -26,7 +26,7 @@ implements JobContainer {
 	@Override
 	public final synchronized void run() {
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
-			subJobs.size(), new GroupThreadFactory("jobContainerWorker" + hashCode())
+			subJobs.size(), new GroupThreadFactory("jobContainerWorker" + hashCode(), true)
 		);
 		for(final JobContainer subJob : subJobs) {
 			parallelJobsExecutor.submit(subJob);

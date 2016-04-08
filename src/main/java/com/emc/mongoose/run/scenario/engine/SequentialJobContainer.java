@@ -15,7 +15,7 @@ implements JobContainer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final List<JobContainer> subJobs = new LinkedList<>();
+	protected final List<JobContainer> subJobs = new LinkedList<>();
 	//
 	@Override
 	public final synchronized boolean append(final JobContainer subJob) {

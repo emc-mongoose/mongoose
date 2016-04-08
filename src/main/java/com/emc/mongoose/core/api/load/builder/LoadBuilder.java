@@ -2,11 +2,12 @@ package com.emc.mongoose.core.api.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
+//
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import java.io.Closeable;
@@ -26,12 +27,12 @@ extends Closeable, Cloneable {
 	LoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException;
 	//
-	IOConfig<?, ?> getIoConfig()
+	IoConfig<?, ?> getIoConfig()
 	throws RemoteException;
-	LoadBuilder<T, U> setIoConfig(final IOConfig<?, ?> reqConf)
+	LoadBuilder<T, U> setIoConfig(final IoConfig<?, ?> reqConf)
 	throws RemoteException;
 	//
-	LoadBuilder<T, U> setLoadType(final AppConfig.LoadType loadType)
+	LoadBuilder<T, U> setLoadType(final LoadType loadType)
 	throws IllegalStateException, RemoteException;
 	//
 	LoadBuilder<T, U> setMaxCount(final long maxCount)
@@ -46,10 +47,10 @@ extends Closeable, Cloneable {
 	LoadBuilder<T, U> setNodeAddrs(final String[] nodeAddrs)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
+	LoadBuilder<T, U> setInput(final Input<T> itemInput)
 	throws RemoteException;
 	//
-	LoadBuilder<T, U> setItemDst(final ItemDst<T> itemDst)
+	LoadBuilder<T, U> setOutput(final Output<T> itemOutput)
 	throws RemoteException;
 	//
 	LoadBuilder<T, U> useNewItemSrc()

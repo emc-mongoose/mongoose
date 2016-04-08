@@ -2,13 +2,14 @@ package com.emc.mongoose.core.impl.load.builder;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -35,15 +36,15 @@ implements LoadBuilder<T, U> {
 	//
 	protected volatile AppConfig appConfig;
 	protected long maxCount = 0;
-	protected volatile IOConfig<?, ?> ioConfig = getDefaultIoConfig();
+	protected volatile IoConfig<?, ?> ioConfig = getDefaultIoConfig();
 	protected float rateLimit;
 	protected int threadCount = 1;
-	protected ItemSrc<T> itemSrc;
-	protected ItemDst<T> itemDst = null;
+	protected Input<T> itemInput;
+	protected Output<T> itemOutput = null;
 	protected String storageNodeAddrs[];
 	protected boolean flagUseNewItemSrc, flagUseNoneItemSrc, flagUseContainerItemSrc;
 	//
-	protected abstract IOConfig<?, ?> getDefaultIoConfig();
+	protected abstract IoConfig<?, ?> getDefaultIoConfig();
 	//
 	public LoadBuilderBase()
 	throws RemoteException {
@@ -64,7 +65,7 @@ implements LoadBuilder<T, U> {
 		flagUseNewItemSrc = true;
 		flagUseNoneItemSrc = false;
 		flagUseContainerItemSrc = true;
-		itemSrc = null;
+		itemInput = null;
 	}
 	//
 	public LoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
@@ -132,12 +133,12 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final IOConfig<?, ?> getIoConfig() {
+	public final IoConfig<?, ?> getIoConfig() {
 		return ioConfig;
 	}
 	//
 	@Override
-	public final LoadBuilder<T, U> setIoConfig(final IOConfig<?, ?> ioConfig)
+	public final LoadBuilder<T, U> setIoConfig(final IoConfig<?, ?> ioConfig)
 	throws ClassCastException, RemoteException {
 		if(this.ioConfig.equals(ioConfig)) {
 			return this;
@@ -156,7 +157,7 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setLoadType(final AppConfig.LoadType loadType)
+	public LoadBuilder<T, U> setLoadType(final LoadType loadType)
 	throws IllegalStateException, RemoteException {
 		LOG.debug(Markers.MSG, "Set load type: {}", loadType);
 		if(ioConfig == null) {
@@ -214,18 +215,18 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setItemSrc(final ItemSrc<T> itemSrc)
+	public LoadBuilder<T, U> setInput(final Input<T> itemInput)
 	throws RemoteException {
-		LOG.debug(Markers.MSG, "Set data items source: {}", itemSrc);
-		this.itemSrc = itemSrc;
+		LOG.debug(Markers.MSG, "Set data items input: {}", itemInput);
+		this.itemInput = itemInput;
 		return this;
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setItemDst(final ItemDst<T> itemDst)
+	public LoadBuilder<T, U> setOutput(final Output<T> itemOutput)
 	throws RemoteException {
-		LOG.debug(Markers.MSG, "Set data items destination: {}", itemDst);
-		this.itemDst = itemDst;
+		LOG.debug(Markers.MSG, "Set data items output: {}", itemOutput);
+		this.itemOutput = itemOutput;
 		return this;
 	}
 	//
@@ -239,8 +240,8 @@ implements LoadBuilder<T, U> {
 		lb.maxCount = maxCount;
 		lb.threadCount = threadCount;
 		lb.storageNodeAddrs = storageNodeAddrs;
-		lb.itemSrc = itemSrc;
-		lb.itemDst = itemDst;
+		lb.itemInput = itemInput;
+		lb.itemOutput = itemOutput;
 		lb.rateLimit = rateLimit;
 		lb.flagUseNewItemSrc = flagUseNewItemSrc;
 		lb.flagUseNoneItemSrc = flagUseNoneItemSrc;
@@ -249,10 +250,10 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	//
-	protected abstract ItemSrc<T> getNewItemSrc()
+	protected abstract Input<T> getNewItemInput()
 	throws NoSuchMethodException;
 	//
-	protected abstract ItemSrc<T> getDefaultItemSrc();
+	protected abstract Input<T> getDefaultItemInput();
 	//
 	@Override
 	public LoadBuilderBase<T, U> useNewItemSrc()
@@ -284,7 +285,7 @@ implements LoadBuilder<T, U> {
 			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
 		final U loadJob = buildActually();
-		loadJob.setItemDst(itemDst);
+		loadJob.setOutput(itemOutput);
 		resetItemSrc();
 		return loadJob;
 	}

@@ -4,18 +4,20 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.DataRangesConfig;
+import com.emc.mongoose.common.conf.DataRangesConfig.ByteRange;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.MutableDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.item.data.FileDataItemInput;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 //
-import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
+import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -28,29 +30,29 @@ import java.util.List;
  Created by kurila on 15.12.14.
  */
 public abstract class MutableDataLoadExecutorBase<T extends MutableDataItem>
-extends LimitedRateLoadExecutorBase<T> {
+extends LoadExecutorBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final AppConfig.LoadType loadType;
+	protected final LoadType loadType;
 	protected final SizeInBytes sizeConfig;
 	protected final DataRangesConfig rangesConfig;
 	//
 	protected MutableDataLoadExecutorBase(
 		final AppConfig appConfig,
-		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final IoConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) throws ClassCastException {
-		super(appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount, rateLimit);
+		super(appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit);
 		//
 		this.loadType = ioConfig.getLoadType();
 		this.sizeConfig = sizeConfig;
 		this.rangesConfig = rangesConfig;
 		//
 		int buffSize;
-		if(itemSrc instanceof DataItemFileSrc) {
-			final long avgDataSize = ((DataItemFileSrc) itemSrc).getAvgDataSize(
+		if(itemInput instanceof FileDataItemInput) {
+			final long avgDataSize = ((FileDataItemInput) itemInput).getAvgDataSize(
 				appConfig.getItemSrcBatchSize()
 			);
 			if(avgDataSize < Constants.BUFF_SIZE_LO) {
@@ -60,8 +62,8 @@ extends LimitedRateLoadExecutorBase<T> {
 			} else {
 				buffSize = (int) avgDataSize;
 			}
-		} else if(itemSrc instanceof NewDataItemSrc) {
-			final long avgDataSize = ((NewDataItemSrc) itemSrc).getDataSizeInfo().getAvgDataSize();
+		} else if(itemInput instanceof NewDataItemInput) {
+			final long avgDataSize = ((NewDataItemInput) itemInput).getDataSizeInfo().getAvgDataSize();
 			if(avgDataSize < Constants.BUFF_SIZE_LO) {
 				buffSize = Constants.BUFF_SIZE_LO;
 			} else if(avgDataSize > Constants.BUFF_SIZE_HI) {
@@ -140,18 +142,18 @@ extends LimitedRateLoadExecutorBase<T> {
 	}*/
 	/** intercepts the data items which should be scheduled for update or append */
 	@Override
-	public final void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
-			final List<DataRangesConfig.ByteRange> ranges = rangesConfig.getFixedByteRanges();
+			final List<ByteRange> ranges = rangesConfig.getFixedByteRanges();
 			if(rndRangesToUpdateCount > 0) {
-				dataItem.scheduleRandomUpdates(rndRangesToUpdateCount);
+				item.scheduleRandomUpdates(rndRangesToUpdateCount);
 			} else if(ranges != null) {
 				if(ranges.size() == 1) {
-					final DataRangesConfig.ByteRange range = ranges.get(0);
-					if(range.getBeg() == dataItem.getSize()) {
-						dataItem.scheduleAppend(range.getEnd());
+					final ByteRange range = ranges.get(0);
+					if(range.getBeg() == item.getSize()) {
+						item.scheduleAppend(range.getEnd());
 					} else {
 						// TODO
 						throw new NotImplementedException();
@@ -168,22 +170,22 @@ extends LimitedRateLoadExecutorBase<T> {
 			);
 		}
 		//
-		super.put(dataItem);
+		super.put(item);
 	}
 	//
 	@Override
-	public final int put(final List<T> dataItems, final int from, final int to)
+	public int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
-			final List<DataRangesConfig.ByteRange> ranges = rangesConfig.getFixedByteRanges();
+			final List<ByteRange> ranges = rangesConfig.getFixedByteRanges();
 			if(rndRangesToUpdateCount > 0) {
 				for(int i = from; i < to; i ++) {
 					dataItems.get(i).scheduleRandomUpdates(rndRangesToUpdateCount);
 				}
 			} else if(ranges != null) {
 				if(ranges.size() == 1) {
-					final DataRangesConfig.ByteRange range = ranges.get(0);
+					final ByteRange range = ranges.get(0);
 					T dataItem;
 					for(int i = from; i < to; i ++) {
 						dataItem = dataItems.get(i);

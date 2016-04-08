@@ -73,6 +73,10 @@ implements JobContainer {
 		return false;
 	}
 	//
+	public final LoadExecutor get() {
+		return loadJob;
+	}
+	//
 	@Override
 	public final String toString() {
 		try {

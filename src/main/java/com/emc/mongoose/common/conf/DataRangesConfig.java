@@ -64,19 +64,18 @@ public class DataRangesConfig {
 		randomCount = 0;
 		//
 		final String[] rawRanges;
+		if(rawRangesConfig == null || rawRangesConfig.isEmpty()) {
+			throw new InvalidRangeException("Empty fixed byte range");
+		}
 		if(rawRangesConfig.contains(",")) {
 			rawRanges = rawRangesConfig.split(",");
 		} else {
 			rawRanges = new String[] { rawRangesConfig };
 		}
 		//
-		if(rawRanges.length > 0) {
-			fixedByteRanges = new ArrayList<>();
-			for(final String rawRange : rawRanges) {
-				fixedByteRanges.add(new ByteRange(rawRange));
-			}
-		} else {
-			fixedByteRanges = null;
+		fixedByteRanges = new ArrayList<>();
+		for(final String rawRange : rawRanges) {
+			fixedByteRanges.add(new ByteRange(rawRange));
 		}
 	}
 	//

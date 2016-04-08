@@ -1,11 +1,13 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
+import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
 import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
@@ -14,7 +16,6 @@ import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.HttpDataIOTask;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -29,13 +30,11 @@ import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
-import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
@@ -54,16 +53,15 @@ import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 02.12.14.
  */
@@ -73,39 +71,50 @@ implements HttpDataLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final HttpProcessor httpProcessor;
-	private final HttpAsyncRequester client;
-	private final ConnectingIOReactor ioReactor;
-	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
+	protected final HttpProcessor httpProcessor;
+	protected final HttpAsyncRequester client;
+	protected final ConnectingIOReactor ioReactor;
+	protected final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
 	private final HttpRequestConfig<T, Container<T>> httpReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
-	private final AtomicLong
-		connLeaseCount = new AtomicLong(0),
-		connReleaseCount = new AtomicLong(0);
-	//
-	@SuppressWarnings("unchecked")
 	public BasicHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
+		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
+		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
+		final HttpProcessor httpProcessor, final HttpAsyncRequester client,
+		final ConnectingIOReactor ioReactor,
+		final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap
+	) {
+		super(
+			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
+			sizeConfig, rangesConfig
+		);
+		this.httpProcessor = httpProcessor;
+		this.client = client;
+		this.ioReactor = ioReactor;
+		this.connPoolMap = connPoolMap;
+		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
+		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
+	}
+	//
+	public BasicHttpDataLoadExecutor(
+		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
+		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadCount, itemSrc, maxCount, rateLimit,
+			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
 			sizeConfig, rangesConfig
 		);
 		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
 		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
-		//
-		final HeaderGroup sharedHeaders = httpReqConfigCopy.getSharedHeaders();
-		final String userAgent = appConfig.getRunName() + "/" + appConfig.getRunVersion();
 		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
 			.add(httpReqConfigCopy)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
-			.add(new RequestUserAgent(userAgent))
 			//.add(new RequestExpectContinue(true))
 			.add(new RequestContent(false))
 			.build();
@@ -123,7 +132,7 @@ implements HttpDataLoadExecutor<T> {
 		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
-			.setIoThreadCount(threadCount)
+			.setIoThreadCount(ThreadUtil.getWorkerCount())
 			.setBacklogSize(appConfig.getNetworkSocketBindBacklogSize())
 			.setInterestOpQueued(appConfig.getNetworkSocketInterestOpQueued())
 			.setSelectInterval(appConfig.getNetworkSocketSelectInterval())
@@ -133,8 +142,8 @@ implements HttpDataLoadExecutor<T> {
 			.setSoReuseAddress(appConfig.getNetworkSocketReuseAddr())
 			.setSoTimeout(appConfig.getNetworkSocketTimeoutMilliSec())
 			.setTcpNoDelay(appConfig.getNetworkSocketTcpNoDelay())
-			.setRcvBufSize(AppConfig.LoadType.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
-			.setSndBufSize(AppConfig.LoadType.READ.equals(loadType) ? Constants.BUFF_SIZE_LO : buffSize)
+			.setRcvBufSize(LoadType.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
+			.setSndBufSize(LoadType.READ.equals(loadType) ? Constants.BUFF_SIZE_LO : buffSize)
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 			);
@@ -182,17 +191,6 @@ implements HttpDataLoadExecutor<T> {
 		}
 		//
 		mgmtTasks.add(new HttpClientRunTask(ioEventDispatch, ioReactor));
-	}
-	//
-	@Override
-	public final void logMetrics(final Marker logMarker) {
-		super.logMetrics(logMarker);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "Connections: leased={}, released={}",
-				connLeaseCount.get(), connReleaseCount.get()
-			);
-		}
 	}
 	//
 	@Override
@@ -251,7 +249,7 @@ implements HttpDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected <A extends IOTask<T>> Future<A> submitTaskActually(final A ioTask)
+	public <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		//
 		final HttpDataIOTask<T> wsTask = (HttpDataIOTask<T>) ioTask;
@@ -278,7 +276,10 @@ implements HttpDataLoadExecutor<T> {
 	private final FutureCallback<HttpDataIOTask<T>> futureCallback = new FutureCallback<HttpDataIOTask<T>>() {
 		@Override
 		public final void completed(final HttpDataIOTask<T> ioTask) {
-			ioTaskCompleted(ioTask);
+			try {
+				ioTaskCompleted(ioTask);
+			} catch(final RemoteException ignore) {
+			}
 		}
 		//
 		public final void cancelled() {
@@ -291,7 +292,7 @@ implements HttpDataLoadExecutor<T> {
 	};
 	//
 	@Override
-	public final int submitTasks(final List<? extends IOTask<T>> ioTasks, int from, int to)
+	public <A extends IOTask<T>> int submitTasks(final List<A> ioTasks, int from, int to)
 	throws RejectedExecutionException {
 		int n = 0;
 		if(isPipeliningEnabled) {
@@ -310,7 +311,7 @@ implements HttpDataLoadExecutor<T> {
 			}
 		} else {
 			for(int i = from; i < to; i ++) {
-				if(null != submitReq(ioTasks.get(i))) {
+				if(null != submitTask(ioTasks.get(i))) {
 					n ++;
 				} else {
 					break;
@@ -331,7 +332,10 @@ implements HttpDataLoadExecutor<T> {
 		//
 		@Override
 		public final void completed(final List<HttpDataIOTask<T>> result) {
-			ioTaskCompletedBatch(result, 0, result.size());
+			try {
+				ioTaskCompletedBatch(result, 0, result.size());
+			} catch(final RemoteException e) {
+			}
 		}
 		//
 		@Override

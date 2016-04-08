@@ -2,18 +2,21 @@ package com.emc.mongoose.server.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.load.builder.BasicFileLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.FileLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 import com.emc.mongoose.server.impl.load.executor.BasicFileLoadSvc;
 //
+import com.emc.mongoose.server.impl.load.executor.BasicMixedFileLoadSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +26,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 /**
@@ -73,14 +79,37 @@ implements FileLoadBuilderSvc<T, U> {
 		if(ioConfig == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
+		//
+		final LoadType loadType = ioConfig.getLoadType();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
-		return (U) new BasicFileLoadSvc<>(
-			appConfig, (FileIOConfig) ioConfig, storageNodeAddrs, threadCount,
-			itemSrc == null ? getDefaultItemSrc() : itemSrc, maxCount, rateLimit,
-			sizeConfig, rangesConfig
-		);
+		if(LoadType.MIXED.equals(loadType)) {
+			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
+				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
+			);
+			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
+			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
+				try {
+					itemInputMap.put(
+						nextLoadType,
+						LoadType.WRITE.equals(nextLoadType) ? getNewItemInput() : itemInput
+					);
+				} catch(final NoSuchMethodException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
+				}
+			}
+			return (U) new BasicMixedFileLoadSvc<>(
+				appConfig, (FileIoConfig) ioConfig, threadCount, maxCount, rateLimit, sizeConfig,
+				rangesConfig, loadTypeWeightMap, itemInputMap
+			);
+		} else {
+			return (U) new BasicFileLoadSvc<>(
+				appConfig, (FileIoConfig) ioConfig, threadCount,
+				itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit,
+				sizeConfig, rangesConfig
+			);
+		}
 	}
 	//
 	@Override

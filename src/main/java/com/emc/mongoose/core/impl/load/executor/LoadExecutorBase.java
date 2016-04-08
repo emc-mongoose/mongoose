@@ -4,32 +4,35 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.item.base.ItemBuffer;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
+import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
+import com.emc.mongoose.core.impl.load.barrier.ActiveTaskCountLimitBarrier;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
+import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 //
 import org.apache.logging.log4j.Level;
-import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
@@ -63,14 +66,15 @@ implements LoadExecutor<T> {
 	protected final AppConfig appConfig;
 	//
 	protected final ContentSource dataSrc;
-	protected final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>>
+	protected final IoConfig<? extends Item, ? extends Container<? extends Item>>
 		ioConfigCopy;
-	protected final AppConfig.LoadType loadType;
+	protected final LoadType loadType;
 	//
-	protected volatile ItemDst<T> consumer = null;
+	protected volatile Output<T> consumer = null;
 	//
 	protected final long maxCount;
-	protected final int totalThreadCount, activeTaskCountLimit;
+	protected final int totalThreadCount;
+	protected final Barrier<T> activeTaskCountLimitBarrier;
 	// METRICS section
 	protected final int metricsPeriodSec;
 	protected IOStats ioStats;
@@ -145,14 +149,13 @@ implements LoadExecutor<T> {
 			try {
 				if(isCircular) {
 					while(!areAllItemsProduced) {
-						LockSupport.parkNanos(1000000);
+						LockSupport.parkNanos(1_000_000);
 						Thread.yield();
 					}
 				}
 				while(!currThread.isInterrupted()) {
-					passItems();
-					Thread.yield();
-					LockSupport.parkNanos(1000);
+					postProcessItems();
+					LockSupport.parkNanos(1_000);
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
@@ -164,20 +167,20 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
-		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final int instanceNum, final String name
+		final IoConfig<? extends Item, ? extends Container<? extends Item>> ioConfig,
+		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
+		final float rateLimit, final int instanceNum, final String name
 	) {
 		super(
-			itemSrc, maxCount > 0 ? maxCount : Long.MAX_VALUE, DEFAULT_INTERNAL_BATCH_SIZE,
-			appConfig.getLoadCircular(), false, appConfig.getItemQueueSizeLimit()
+			itemInput, maxCount > 0 ? maxCount : Long.MAX_VALUE, DEFAULT_INTERNAL_BATCH_SIZE,
+			appConfig.getLoadCircular(), false, appConfig.getItemQueueSizeLimit(), rateLimit
 		);
 		try {
-			super.setItemDst(this);
+			super.setOutput(this);
 		} catch(final RemoteException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to set \"{}\" as a consumer of \"{}\" producer",
-				name, itemSrc
+				name, itemInput
 			);
 		}
 		itemOutBuff = new LimitedQueueItemBuffer<>(
@@ -189,14 +192,17 @@ implements LoadExecutor<T> {
 		storageNodeCount = addrs == null ? 0 : addrs.length;
 		//
 		setName(name);
-		if(itemSrc != null) {
-			LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemSrc.toString());
+		if(itemInput != null) {
+			LOG.info(Markers.MSG, "{}: will use \"{}\" as an item source", getName(), itemInput.toString());
 		}
 		//
 		totalThreadCount = threadCount * storageNodeCount;
-		activeTaskCountLimit = 2 * totalThreadCount + 1000;
+		activeTaskCountLimitBarrier = new ActiveTaskCountLimitBarrier<>(
+			2 * totalThreadCount + 1000, counterSubm, counterResults, isInterrupted, isShutdown,
+			isCircular
+		);
 		//
-		IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> reqConfigClone = null;
+		IoConfig<? extends Item, ? extends Container<? extends Item>> reqConfigClone = null;
 		try {
 			reqConfigClone = ioConfig.clone();
 		} catch(final CloneNotSupportedException e) {
@@ -231,14 +237,14 @@ implements LoadExecutor<T> {
 	//
 	private LoadExecutorBase(
 		final AppConfig appConfig,
-		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount,
-		final int instanceNum
+		final IoConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
+		final float rateLimit, final int instanceNum
 	) {
 		this(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount,
+			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
 			instanceNum,
-			Integer.toString(instanceNum) + '-' + ioConfig.toString() +
+			instanceNum + "-" + ioConfig.toString() +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
 				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
 		);
@@ -246,11 +252,12 @@ implements LoadExecutor<T> {
 	//
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
-		final IOConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int threadCount, final ItemSrc<T> itemSrc, final long maxCount
+		final IoConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
+		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
+		final float rateLimit
 	) {
 		this(
-			appConfig, ioConfig, addrs, threadCount, itemSrc, maxCount,
+			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
 			NEXT_INSTANCE_NUM.getAndIncrement()
 		);
 	}
@@ -265,7 +272,7 @@ implements LoadExecutor<T> {
 		try {
 			super.runActually();
 		} finally {
-			if(itemSrc != null) {
+			if(itemInput != null) {
 				LOG.debug(
 					Markers.MSG, "{}: scheduled {} tasks, invoking self-shutdown",
 					getName(), counterSubm.get()
@@ -425,7 +432,7 @@ implements LoadExecutor<T> {
 			final List<T> itemsList = Collections.list(
 				Collections.enumeration(uniqueItems.values())
 			);
-			passUniqueItemsFinally(itemsList);
+			postProcessUniqueItemsFinally(itemsList);
 		}
 		uniqueItems.clear();
 		//
@@ -449,16 +456,16 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public void setItemDst(final ItemDst<T> itemDst)
+	public void setOutput(final Output<T> itemOutput)
 	throws RemoteException {
-		this.consumer = itemDst;
-		LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemDst + "\"");
+		this.consumer = itemOutput;
+		LOG.debug(Markers.MSG, getName() + ": appended the consumer \"" + itemOutput + "\"");
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
 		if(counterSubm.get() + countRej.get() >= maxCount) {
 			LOG.debug(
@@ -473,31 +480,18 @@ implements LoadExecutor<T> {
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final String nextNodeAddr = storageNodeAddrs == null ?
 			null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
-		final IOTask<T> ioTask = getIOTask(dataItem, nextNodeAddr);
+		final IOTask<T> ioTask = getIOTask(item, nextNodeAddr);
 		// don't fill the connection pool as fast as possible, this may cause a failure
-		int activeTaskCount;
-		do {
-			activeTaskCount = (int) (counterSubm.get() - counterResults.get());
-			if(isInterrupted.get() || (isShutdown.get() && !isCircular)) {
-				throw new InterruptedIOException(
-					getName() + ": submit failed, shut down already or interrupted"
-				);
-			}
-			if(activeTaskCount < activeTaskCountLimit) {
-				break;
-			}
-			LockSupport.parkNanos(1000); Thread.yield();
-		} while(true);
 		//
 		try {
-			if(null == submitReq(ioTask)) {
-				throw new RejectedExecutionException("Null future returned");
+			if(!activeTaskCountLimitBarrier.getApprovalFor(item) || null == submitTask(ioTask)) {
+				throw new RejectedExecutionException();
 			}
 			counterSubm.incrementAndGet();
 			if(nodeBalancer != null) {
 				nodeBalancer.markTaskStart(nextNodeAddr);
 			}
-		} catch(final RejectedExecutionException e) {
+		} catch(final InterruptedException | RejectedExecutionException e) {
 			if(!isInterrupted.get()) {
 				countRej.incrementAndGet();
 				LogUtil.exception(LOG, Level.DEBUG, e, "Rejected the I/O task {}", ioTask);
@@ -510,7 +504,7 @@ implements LoadExecutor<T> {
 	throws IOException {
 		final long dstLimit = maxCount - counterSubm.get() - countRej.get();
 		final int srcLimit = to - from;
-		int n = 0, m, activeTaskCount;
+		int n = 0, m;
 		if(dstLimit > 0) {
 			if(dstLimit < srcLimit) {
 				return put(srcBuff, from, from + (int) dstLimit);
@@ -526,20 +520,8 @@ implements LoadExecutor<T> {
 				// submit all I/O tasks
 				while(n < srcLimit) {
 					// don't fill the connection pool as fast as possible, this may cause a failure
-					do {
-						activeTaskCount = (int) (counterSubm.get() - counterResults.get());
-						if(isInterrupted.get() || (isShutdown.get() && !isCircular)) {
-							throw new InterruptedIOException(
-								getName() + ": submit failed, shut down already or interrupted"
-							);
-						}
-						if(activeTaskCount < activeTaskCountLimit) {
-							break;
-						}
-						LockSupport.parkNanos(1000); Thread.yield();
-					} while(true);
-					//
 					try {
+						activeTaskCountLimitBarrier.getApprovalsFor(null, to - from);
 						m = submitTasks(ioTaskBuff, n, srcLimit);
 						if(m < 1) {
 							throw new RejectedExecutionException("No I/O tasks submitted");
@@ -551,7 +533,7 @@ implements LoadExecutor<T> {
 						if(nodeBalancer != null) {
 							nodeBalancer.markTasksStart(nextNodeAddr, m);
 						}
-					} catch(final RejectedExecutionException e) {
+					} catch(final InterruptedException | RejectedExecutionException e) {
 						if(isInterrupted.get()) {
 							throw new InterruptedIOException(getName() + " is interrupted");
 						} else {
@@ -596,7 +578,9 @@ implements LoadExecutor<T> {
 		return to - from;
 	}
 	//
-	protected final void ioTaskCompleted(final IOTask<T> ioTask) {
+	@Override
+	public void ioTaskCompleted(final IOTask<T> ioTask)
+	throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return;
@@ -632,9 +616,10 @@ implements LoadExecutor<T> {
 		counterResults.incrementAndGet();
 	}
 	//
-	protected final int ioTaskCompletedBatch(
+	@Override
+	public int ioTaskCompletedBatch(
 		final List<? extends IOTask<T>> ioTasks, final int from, final int to
-	) {
+	) throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
 			return 0;
@@ -684,18 +669,18 @@ implements LoadExecutor<T> {
 		return n;
 	}
 	//
-	protected final void ioTaskCancelled(final int n) {
+	protected void ioTaskCancelled(final int n) {
 		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
 	}
 	//
-	protected final void ioTaskFailed(final int n, final Throwable e) {
+	protected void ioTaskFailed(final int n, final Throwable e) {
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
 	}
 	//
-	protected void passItems()
+	protected void postProcessItems()
 	throws InterruptedException {
 		try {
 			//
@@ -714,7 +699,7 @@ implements LoadExecutor<T> {
 						Thread.yield(); LockSupport.parkNanos(1);
 					}
 				} else {
-					passUniqueItemsFinally(items);
+					postProcessUniqueItemsFinally(items);
 				}
 			}
 		} catch(final IOException e) {
@@ -728,7 +713,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected void passUniqueItemsFinally(final List<T> items) {
+	protected void postProcessUniqueItemsFinally(final List<T> items) {
 		// is this an end of consumer-producer chain?
 		if(consumer == null) {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -898,7 +883,7 @@ implements LoadExecutor<T> {
 		if(isCircular) {
 			areAllItemsProduced = true; //  unblock ResultsDispatcher thread
 		}
-		LOG.debug(Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"", itemSrc, getName());
+		LOG.debug(Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"", itemInput, getName());
 	}
 	//
 	@Override

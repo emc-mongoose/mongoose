@@ -1,0 +1,43 @@
+{
+	"type" : "sequential",
+	"jobs": [
+		{
+			"type" : "load",
+			// write is used by default
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "linear-update-multiple-random-ranges"
+					},
+					"data" : {
+						"size" : "1KB"
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-linear-update-multiple-random-ranges.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 100
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "linear-update-multiple-random-ranges"
+					},
+					"data" : {
+						"ranges" : 10 // update 10 random byte ranges per request
+					},
+					"src" : {
+						"file" : "/tmp/scenario-linear-update-multiple-random-ranges.csv"
+					}
+				}
+			}
+		}
+	]
+}
+

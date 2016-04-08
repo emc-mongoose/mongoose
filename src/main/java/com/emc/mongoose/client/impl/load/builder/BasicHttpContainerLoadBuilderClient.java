@@ -5,11 +5,11 @@ import com.emc.mongoose.client.api.load.executor.HttpContainerLoadClient;
 import com.emc.mongoose.client.impl.load.executor.BasicHttpContainerLoadClient;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
@@ -63,7 +63,7 @@ public class BasicHttpContainerLoadBuilderClient<
 	}
 	//
 	@Override
-	protected ItemSrc<C> getDefaultItemSrc() {
+	protected Input<C> getDefaultItemInput() {
 		return null;
 	}
 	//
@@ -83,8 +83,8 @@ public class BasicHttpContainerLoadBuilderClient<
 		HttpContainerLoadBuilderSvc<T, C, W> nextBuilder;
 		W nextLoad;
 		//
-		if(itemSrc == null) {
-			itemSrc = getDefaultItemSrc(); // affects load service builders
+		if(itemInput == null) {
+			itemInput = getDefaultItemInput(); // affects load service builders
 		}
 		//
 		for(final String addr : loadSvcMap.keySet()) {
@@ -98,7 +98,7 @@ public class BasicHttpContainerLoadBuilderClient<
 		//
 		return (U) new BasicHttpContainerLoadClient<>(
 			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
-			itemSrc, maxCount, remoteLoadMap
+			itemInput, maxCount, rateLimit, remoteLoadMap
 		);
 	}
 }

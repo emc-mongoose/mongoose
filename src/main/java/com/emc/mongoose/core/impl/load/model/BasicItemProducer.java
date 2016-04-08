@@ -1,13 +1,15 @@
 package com.emc.mongoose.core.impl.load.model;
 //
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.model.ItemProducer;
 //
+import com.emc.mongoose.core.impl.load.barrier.RateLimitBarrier;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,6 +21,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.LockSupport;
 
@@ -32,40 +35,47 @@ implements ItemProducer<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final ConcurrentHashMap<String, T> uniqueItems;
-	protected final ItemSrc<T> itemSrc;
+	protected final Input<T> itemInput;
 	protected final long maxCount;
-	protected volatile ItemDst<T> itemDst = null;
+	protected final boolean isCircular;
+	protected final boolean isShuffling;
+	protected final Barrier<T> rateLimitBarrier;
 	protected final int batchSize;
+	protected volatile Output<T> itemOutput = null;
 	protected long skipCount;
-	protected T lastDataItem;
-	protected boolean isCircular;
-	protected boolean isShuffling;
+	protected T lastItem;
 	protected int maxItemQueueSize;
 	//
 	protected volatile boolean areAllItemsProduced = false;
 	protected volatile long producedItemsCount = 0;
 	//
 	protected BasicItemProducer(
-		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
-		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize
+		final Input<T> itemInput, final long maxCount, final int batchSize,
+		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
+	    final float rateLimit
 	) {
-		this(itemSrc, maxCount, batchSize, isCircular, isShuffling, maxItemQueueSize, 0, null);
+		this(itemInput, maxCount, batchSize, isCircular, isShuffling, maxItemQueueSize, rateLimit,
+			0, null
+		);
 	}
 	//
 	private BasicItemProducer(
-		final ItemSrc<T> itemSrc, final long maxCount, final int batchSize,
+		final Input<T> itemInput, final long maxCount, final int batchSize,
 		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
-		final long skipCount, final T lastDataItem
+		final float rateLimit,
+		final long skipCount, final T lastItem
 	) {
-		this.itemSrc = itemSrc;
+		this.itemInput = itemInput;
 		this.maxCount = maxCount - skipCount;
 		this.batchSize = batchSize;
 		this.skipCount = skipCount;
-		this.lastDataItem = lastDataItem;
+		this.lastItem = lastItem;
 		this.isCircular = isCircular;
 		this.isShuffling = isShuffling;
 		this.maxItemQueueSize = maxItemQueueSize;
+		this.rateLimitBarrier = new RateLimitBarrier<>(rateLimit);
 		this.uniqueItems = new ConcurrentHashMap<>(maxItemQueueSize);
+		setDaemon(true);
 	}
 	//
 	@Override
@@ -75,26 +85,25 @@ implements ItemProducer<T> {
 	//
 	@Override
 	public void setLastItem(final T dataItem) {
-		this.lastDataItem = dataItem;
+		this.lastItem = dataItem;
 	}
 	//
 	@Override
-	public void setItemDst(final ItemDst<T> itemDst)
+	public void setOutput(final Output<T> itemOutput)
 	throws RemoteException {
-		this.itemDst = itemDst;
+		this.itemOutput = itemOutput;
 	}
 	//
-	@Override
-	public ItemSrc<T> getItemSrc()
+	public Input<T> getInput()
 	throws RemoteException {
-		return itemSrc;
+		return itemInput;
 	}
 	//
 	@Override
 	public void reset() {
-		if(itemSrc != null) {
+		if(itemInput != null) {
 			try {
-				itemSrc.reset();
+				itemInput.reset();
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to reset data item input");
 			}
@@ -106,9 +115,11 @@ implements ItemProducer<T> {
 		runActually();
 	}
 	//
+	private final Random rnd = new Random(); // create once instead creating every time
+	//
 	protected void runActually() {
 		//
-		if(itemSrc == null) {
+		if(itemInput == null) {
 			LOG.debug(Markers.MSG, "No item source for the producing, exiting");
 			return;
 		}
@@ -118,16 +129,16 @@ implements ItemProducer<T> {
 			while(maxCount > producedItemsCount && !isInterrupted) {
 				try {
 					buff = new ArrayList<>(batchSize);
-					n = (int) Math.min(itemSrc.get(buff, batchSize), maxCount - producedItemsCount);
+					n = (int) Math.min(itemInput.get(buff, batchSize), maxCount - producedItemsCount);
 					if(isShuffling) {
-						Collections.shuffle(buff);
+						Collections.shuffle(buff, rnd);
 					}
 					if(isInterrupted) {
 						break;
 					}
-					if(n > 0) {
+					if(n > 0 && rateLimitBarrier.getApprovalsFor(null, n)) {
 						for(m = 0; m < n && !isInterrupted; ) {
-							m += itemDst.put(buff, m, n);
+							m += itemOutput.put(buff, m, n);
 							LockSupport.parkNanos(1);
 						}
 						producedItemsCount += n;
@@ -136,30 +147,34 @@ implements ItemProducer<T> {
 							break;
 						}
 					}
-					// CIRCULARITY: produce only <maxItemQueueSize> items in order to make it
-					// possible to enqueue them infinitely
+					// CIRCULARITY FEATURE:
+					// produce only <maxItemQueueSize> items in order to make it possible to enqueue
+					// them infinitely
 					if(isCircular && producedItemsCount >= maxItemQueueSize) {
 						break;
 					}
-				} catch(final EOFException e) {
-					break;
-				} catch(final ClosedByInterruptException | IllegalStateException e) {
+				} catch(
+					final EOFException | InterruptedException | ClosedByInterruptException |
+					IllegalStateException e
+				) {
 					break;
 				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.DEBUG, e, "Failed to transfer the data items, " +
-						"count = {}, batch size = {}, batch offset = {}", producedItemsCount, n, m);
+					LogUtil.exception(
+						LOG, Level.DEBUG, e, "Failed to transfer the data items, count = {}, " +
+						"batch size = {}, batch offset = {}", producedItemsCount, n, m
+					);
 				}
 			}
 		} finally {
 			LOG.debug(
 				Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
-				getName(), producedItemsCount, itemSrc, itemDst
+				getName(), producedItemsCount, itemInput, itemOutput
 			);
 			try {
-				itemSrc.close();
+				itemInput.close();
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to close the item source \"{}\"", itemSrc
+					LOG, Level.WARN, e, "Failed to close the item source \"{}\"", itemInput
 				);
 			}
 		}
@@ -168,8 +183,7 @@ implements ItemProducer<T> {
 	protected void skipIfNecessary() {
 		if(skipCount > 0) {
 			try {
-				itemSrc.setLastItem(lastDataItem);
-				itemSrc.skip(skipCount);
+				itemInput.skip(skipCount);
 			} catch (final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to skip {} items", skipCount);
 			}

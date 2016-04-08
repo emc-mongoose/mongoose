@@ -1,8 +1,9 @@
 package com.emc.mongoose.run.scenario.engine;
 //
-import static com.emc.mongoose.common.conf.AppConfig.LoadType;
-import static com.emc.mongoose.common.conf.AppConfig.ItemType;
-import static com.emc.mongoose.common.conf.AppConfig.StorageType;
+import com.emc.mongoose.common.conf.enums.LoadType;
+
+import com.emc.mongoose.common.conf.enums.ItemType;
+import com.emc.mongoose.common.conf.enums.StorageType;
 import static com.emc.mongoose.common.conf.AppConfig.KEY_ITEM_DATA_SIZE;
 import static com.emc.mongoose.common.conf.AppConfig.KEY_LOAD_METRICS_PERIOD;
 import static com.emc.mongoose.common.conf.AppConfig.KEY_LOAD_THREADS;
@@ -14,27 +15,33 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.load.model.LoadState;
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.item.ItemTypeUtil;
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
+import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.rmi.RemoteException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 /**
  Created by kurila on 17.03.16.
  */
@@ -42,6 +49,30 @@ public class RampupJobContainer
 extends SequentialJobContainer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static int tblWidth = 124;
+	private final static char colSep = '|';
+	private final static char rowSep = '-';
+	private final static char padChar = ' ';
+	//
+	private final StrBuilder strb = new StrBuilder();
+	{
+		strb
+			.appendNewLine()
+			.appendPadding(tblWidth, rowSep)
+			.appendNewLine()
+			.appendFixedWidthPadLeft("Job # " + colSep, 7, padChar)
+			.appendFixedWidthPadLeft("Load type " + colSep, 12, padChar)
+			.appendFixedWidthPadLeft("Thread count " + colSep, 15, padChar)
+			.appendFixedWidthPadLeft("Data size " + colSep, 12, padChar)
+			.appendFixedWidthPadLeft("Count " + colSep, 12, padChar)
+			.appendFixedWidthPadLeft("Failed " + colSep, 9, padChar)
+			.appendFixedWidthPadLeft("Duration[us] " + colSep, 15, padChar)
+			.appendFixedWidthPadLeft("Latency[us] " + colSep, 14, padChar)
+			.appendFixedWidthPadLeft("TP[op/s] " + colSep, 14, padChar)
+			.appendFixedWidthPadLeft("BW[MB/s] " + colSep, 14, padChar)
+			.appendNewLine()
+			.appendPadding(tblWidth, rowSep);
+	}
 	//
 	private final LoadBuilder loadJobBuilder;
 	private final Class<? extends Item> itemCls;
@@ -54,10 +85,6 @@ extends SequentialJobContainer {
 	//
 	public RampupJobContainer(final Map<String, Object> configTree)
 	throws IllegalStateException {
-		// get the lists of the rampup parameters
-		final List rawThreadCounts = (List) configTree.get(KEY_LOAD_THREADS);
-		final List rawSizes = (List) configTree.get(KEY_ITEM_DATA_SIZE);
-		final List rawLoadTypes = (List) configTree.get(KEY_LOAD_TYPE);
 		// disable periodic/intermediate metrics logging
 		configTree.put(KEY_LOAD_METRICS_PERIOD, 0);
 		// get the default config
@@ -67,6 +94,13 @@ extends SequentialJobContainer {
 		} catch(final CloneNotSupportedException e) {
 			throw new RuntimeException(e);
 		}
+		// save the default values being replaced with rampup list values
+		final int defaultThreadCount = localConfig.getLoadThreads();
+		final SizeInBytes defaultSize = localConfig.getItemDataSize();
+		final LoadType defaultLoadType = localConfig.getLoadType();
+		//
+		localConfig.override(null, configTree);
+		limitTime = localConfig.getLoadLimitTime();
 		final ItemType itemType = localConfig.getItemType();
 		final StorageType storageType = localConfig.getStorageType();
 		itemCls = ItemTypeUtil.getItemClass(itemType, storageType);
@@ -75,12 +109,10 @@ extends SequentialJobContainer {
 		} catch(final IOException e) {
 			throw new IllegalStateException("Failed to init the content source", e);
 		}
-		limitTime = localConfig.getLoadLimitTime();
-		// save the default values being replaced with rampup list values
-		final int defaultThreadCount = localConfig.getLoadThreads();
-		final SizeInBytes defaultSize = localConfig.getItemDataSize();
-		final LoadType defaultLoadType = localConfig.getLoadType();
-		localConfig.override(null, configTree);
+		// get the lists of the rampup parameters
+		final List rawThreadCounts = (List) localConfig.getProperty(KEY_LOAD_THREADS);
+		final List rawSizes = (List) localConfig.getProperty(KEY_ITEM_DATA_SIZE);
+		final List rawLoadTypes = (List) localConfig.getProperty(KEY_LOAD_TYPE);
 		// return the default values replaced with the list values back
 		if(defaultThreadCount > 0) {
 			localConfig.setProperty(KEY_LOAD_THREADS, defaultThreadCount);
@@ -98,6 +130,9 @@ extends SequentialJobContainer {
 			throw new IllegalStateException("Failed to init the rampup job", e);
 		} catch(final InvocationTargetException e) {
 			throw new IllegalStateException("Failed to init the rampup job", e.getTargetException());
+		} catch(final Throwable t) {
+			t.printStackTrace(System.out);
+			throw t;
 		}
 		//
 		initForEach(rawThreadCounts, rawSizes, rawLoadTypes);
@@ -174,7 +209,7 @@ extends SequentialJobContainer {
 		final int nextThreadCount, final SizeInBytes nextSize, final List rawLoadTypes
 	) {
 		LoadType nextLoadType;
-		ItemDst prevLoadJobItemDst = null;
+		Output itemOutput = null;
 		for(final Object rawLoadType : rawLoadTypes) {
 			nextLoadType = null;
 			if(rawLoadType instanceof LoadType) {
@@ -199,10 +234,7 @@ extends SequentialJobContainer {
 			}
 			//
 			try {
-				prevLoadJobItemDst = append(
-					prevLoadJobItemDst == null ? null : prevLoadJobItemDst.getItemSrc(),
-					nextThreadCount, nextSize, nextLoadType
-				);
+				itemOutput = append(itemOutput, nextThreadCount, nextSize, nextLoadType);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to build the load job \"{} x {} x {}\"",
@@ -212,27 +244,128 @@ extends SequentialJobContainer {
 		}
 	}
 	//
-	private LoadExecutor append(
-		final ItemSrc itemSrc,
-		final int nextThreadCount, final SizeInBytes nextSize, final LoadType nextLoadType
+	private final Map<Integer, Map<Integer, Map<SizeInBytes, Map<LoadType, LoadExecutor>>>>
+		loadJobMap = new TreeMap<>();
+	//
+	private Output append(
+		final Output prevItemOutput, final int nextThreadCount, final SizeInBytes nextSize,
+		final LoadType nextLoadType
 	) throws IOException {
 		//
 		final LoadExecutor nextLoadJob;
+		final Output nextItemOutput = new ItemCsvFileOutput<>(itemCls, contentSrc);
 		//
 		loadJobBuilder
 			.setLoadType(nextLoadType)
 			.setThreadCount(nextThreadCount)
-			.setItemSrc(itemSrc)
-			.setItemDst(new ItemCSVFileDst<>(itemCls, contentSrc));
+			.setInput(prevItemOutput == null ? null : prevItemOutput.getInput())
+			.setOutput(nextItemOutput);
 		if(loadJobBuilder instanceof DataLoadBuilder && nextSize != null) {
 			((DataLoadBuilder) loadJobBuilder).setDataSize(nextSize);
 		}
 		nextLoadJob = loadJobBuilder.build();
-		//
 		if(nextLoadJob != null) {
+			final int nextLoadNum = nextLoadJob.getLoadState().getLoadNumber();
+			Map<Integer, Map<SizeInBytes, Map<LoadType, LoadExecutor>>> m1 = loadJobMap.get(
+				nextLoadJob.getLoadState().getLoadNumber()
+			);
+			if(m1 == null) {
+				loadJobMap.put(nextLoadNum, m1 = new HashMap<>());
+			}
+			Map<SizeInBytes, Map<LoadType, LoadExecutor>> m2 = m1.get(nextThreadCount);
+			if(m2 == null) {
+				m1.put(nextThreadCount, m2 = new HashMap<>());
+			}
+			Map<LoadType, LoadExecutor> m3 = m2.get(nextSize);
+			if(m3 == null) {
+				m2.put(nextSize, m3 = new HashMap<>());
+			}
+			m3.put(nextLoadType, nextLoadJob);
+			//
 			append(new SingleJobContainer(nextLoadJob, limitTime));
 		}
+		return nextItemOutput;
+	}
+	//
+	@Override
+	public final void run() {
+		super.run();
+		// print the table
+		LoadExecutor nextLoadJob;
+		LoadState nextLoadState;
+		Map<Integer, Map<SizeInBytes, Map<LoadType, LoadExecutor>>> m0;
+		Map<SizeInBytes, Map<LoadType, LoadExecutor>> m1;
+		Map<LoadType, LoadExecutor> m2;
+		for(final int nextLoadNum : loadJobMap.keySet()) {
+			m0 = loadJobMap.get(nextLoadNum);
+			for(final int nextThreadCount : m0.keySet()) {
+				m1 = m0.get(nextThreadCount);
+				for(final SizeInBytes nextSize : m1.keySet()) {
+					m2 = m1.get(nextSize);
+					for(final LoadType nextLoadType : m2.keySet()) {
+						nextLoadJob = m2.get(nextLoadType);
+						try {
+							nextLoadState = nextLoadJob.getLoadState();
+						} catch(final RemoteException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e, "Failed to fetch the load state for {}",
+								nextLoadJob
+							);
+							nextLoadState = null;
+						}
+						final String sizeStr = nextSize == null ? " " : nextSize.toString();
+						final IOStats.Snapshot statsSnapshot = nextLoadState == null ?
+							null : nextLoadState.getStatsSnapshot();
+						final long countSucc = statsSnapshot == null ?
+							0 : statsSnapshot.getSuccCount();
+						final long countFail = statsSnapshot == null ?
+							0 : statsSnapshot.getFailCount();
+						long avgDur = statsSnapshot == null ? 0 : statsSnapshot.getDurationSum();
+						avgDur = avgDur == 0 ? 0 : avgDur / countSucc;
+						long avgLat = 0;
+						if(statsSnapshot != null) {
+							final long[] latValues = statsSnapshot.getLatencyValues();
+							for(final long nextLatencyValue : latValues) {
+								avgLat += nextLatencyValue;
+							}
+							avgLat = avgLat == 0 ? 0 : avgLat / latValues.length;
+						}
+						final String tpStr = statsSnapshot == null ?
+							"N/A" :
+							String.format(
+								LogUtil.LOCALE_DEFAULT, "%.3f", statsSnapshot.getSuccRateMean()
+							);
+						final String bwStr = statsSnapshot == null ?
+							"N/A" :
+							String.format(
+								LogUtil.LOCALE_DEFAULT, "%.3f",
+								statsSnapshot.getByteRateMean() / IOStats.MIB
+							);
+						strb
+							.appendNewLine()
+							.appendFixedWidthPadLeft(nextLoadNum + " " + colSep, 7, padChar)
+							.appendFixedWidthPadRight(
+								" " + StringUtils.capitalize(nextLoadType.name().toLowerCase()),
+								11, padChar
+							)
+							.append(colSep)
+							.appendFixedWidthPadLeft(nextThreadCount + " " + colSep, 15, padChar)
+							.appendFixedWidthPadLeft(sizeStr + " " + colSep, 12, padChar)
+							.appendFixedWidthPadLeft(countSucc + " " + colSep, 12, padChar)
+							.appendFixedWidthPadLeft(countFail + " " + colSep, 9, padChar)
+							.appendFixedWidthPadRight(" " + avgDur, 14, padChar)
+							.appendFixedWidthPadRight(colSep + " " + avgLat, 14, padChar)
+							.appendFixedWidthPadRight(colSep + " " + tpStr, 14, padChar)
+							.appendFixedWidthPadRight(colSep + " " + bwStr, 14, padChar)
+							.append(colSep);
+					}
+				}
+			}
+		}
+		strb.appendNewLine().appendPadding(tblWidth, rowSep);
 		//
-		return nextLoadJob;
+		LOG.info(Markers.MSG, strb.toString());
+		//
+		loadJobMap.clear();
 	}
 }

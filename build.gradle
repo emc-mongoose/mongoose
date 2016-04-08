@@ -1034,7 +1034,8 @@ idea {
 }
 
 test {
-	jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() + "${File.separator}${confDirName}${File.separator}logging.json"
+	jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() +
+		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}logging.json"
 	jvmArgs '-Dlog4j.configurationFactory=org.apache.logging.log4j.core.config.json.JsonConfigurationFactory'
 	jvmArgs '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"

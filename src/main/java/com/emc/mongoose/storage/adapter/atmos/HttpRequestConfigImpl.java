@@ -1,10 +1,11 @@
 package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.item.token.Token;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
@@ -71,7 +72,7 @@ extends HttpRequestConfigBase<T, C> {
 			setSecret(reqConf2Clone.getSecret());
 		}
 		//
-		sharedHeaders.updateHeader(DEFAULT_ACCEPT_HEADER);
+		sharedHeaders.put(HttpHeaders.ACCEPT, DEFAULT_ACCEPT_HEADER);
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
@@ -140,10 +141,10 @@ extends HttpRequestConfigBase<T, C> {
 		super.setAuthToken(subTenant);
 		if(sharedHeaders != null && userName != null) {
 			if(subTenant == null || subTenant.toString().length() < 1) {
-				sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_UID, userName));
+				sharedHeaders.put(KEY_EMC_UID, new BasicHeader(KEY_EMC_UID, userName));
 			} else {
-				sharedHeaders.updateHeader(
-					new BasicHeader(KEY_EMC_UID, subTenant.toString() + "/" + userName)
+				sharedHeaders.put(
+					KEY_EMC_UID, new BasicHeader(KEY_EMC_UID, subTenant.toString() + "/" + userName)
 				);
 			}
 		}
@@ -159,12 +160,11 @@ extends HttpRequestConfigBase<T, C> {
 			super.setUserName(userName);
 			if(sharedHeaders != null) {
 				if(authToken == null || authToken.toString().length() < 1) {
-					sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_UID, userName));
+					sharedHeaders.put(KEY_EMC_UID, new BasicHeader(KEY_EMC_UID, userName));
 				} else {
-					sharedHeaders.updateHeader(
-						new BasicHeader(
-							KEY_EMC_UID, authToken.toString() + "/" + userName
-						)
+					sharedHeaders.put(
+						KEY_EMC_UID,
+						new BasicHeader(KEY_EMC_UID, authToken.toString() + "/" + userName)
 					);
 				}
 			}
@@ -224,7 +224,7 @@ extends HttpRequestConfigBase<T, C> {
 	}
 	//
 	@Override
-	public final ItemSrc<T> getContainerListInput(final long maxCount, final String addr) {
+	public final Input<T> getContainerListInput(final long maxCount, final String addr) {
 		// TODO implement sub tenant listing producer
 		return null;
 	}
@@ -248,7 +248,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		if(fsAccess || !AppConfig.LoadType.WRITE.equals(loadType)) {
+		if(fsAccess || !LoadType.WRITE.equals(loadType)) {
 			return uriBasePath + "/" + dataItem.getName();
 		} else { // "/rest/objects"
 			return uriBasePath;
@@ -280,7 +280,7 @@ extends HttpRequestConfigBase<T, C> {
 		}
 		// the "offset" tag is required for WS mock
 		if(
-			AppConfig.LoadType.WRITE.equals(loadType) &&
+			LoadType.WRITE.equals(loadType) &&
 			request instanceof HttpEntityEnclosingRequest
 		) {
 			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
@@ -330,8 +330,8 @@ extends HttpRequestConfigBase<T, C> {
 				for(final Header header : httpRequest.getHeaders(headerName)) {
 					canonical.append('\n').append(header.getValue());
 				}
-			} else if(sharedHeaders.containsHeader(headerName)) {
-				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
+			} else if(sharedHeaders.containsKey(headerName)) {
+				canonical.append('\n').append(sharedHeaders.get(headerName).getValue());
 			} else {
 				canonical.append('\n');
 			}
@@ -347,10 +347,10 @@ extends HttpRequestConfigBase<T, C> {
 						emcHeader.getValue()
 					);
 				}
-			} else if(sharedHeaders.containsHeader(emcHeaderName)) {
+			} else if(sharedHeaders.containsKey(emcHeaderName)) {
 				canonical
 					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
+					.append(':').append(sharedHeaders.get(emcHeaderName).getValue());
 			}
 		}
 		//
@@ -365,7 +365,7 @@ extends HttpRequestConfigBase<T, C> {
 	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
 		final Header locationHeader = httpResponse == null ?
 			null : httpResponse.getFirstHeader(HttpHeaders.LOCATION);
-		if(locationHeader != null && AppConfig.LoadType.WRITE.equals(loadType)) {
+		if(locationHeader != null && LoadType.WRITE.equals(loadType)) {
 			final String valueLocation = httpResponse
 				.getFirstHeader(HttpHeaders.LOCATION)
 				.getValue();

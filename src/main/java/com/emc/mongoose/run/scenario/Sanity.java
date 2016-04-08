@@ -6,19 +6,19 @@ import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
+import com.emc.mongoose.common.io.Output;
 //
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.base.ItemDst;
 //
-import com.emc.mongoose.core.impl.item.base.ItemBinFileDst;
+import com.emc.mongoose.core.impl.item.base.ItemBinFileOutput;
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileDst;
+import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 //
-import com.emc.mongoose.core.impl.item.base.ListItemDst;
+import com.emc.mongoose.core.impl.item.base.ItemListOutput;
 //
-import com.emc.mongoose.core.impl.item.base.ListItemSrc;
+import com.emc.mongoose.core.impl.item.base.ListItemInput;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 //
@@ -33,8 +33,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -66,56 +64,56 @@ implements Runnable {
 			// create new items
 			LOG.info(Markers.MSG, "Start writing");
 			final long nWritten = client.write(
-				null, new ListItemDst<>(itemBuff), DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE,
+				null, new ItemListOutput<>(itemBuff), DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE,
 				DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
 			// update the created items
 			LOG.info(Markers.MSG, "Start updating {} items", itemBuff.size());
-			final ItemDst<HttpDataItem> dataDstU = new ItemBinFileDst<>();
+			final Output<HttpDataItem> dataDstU = new ItemBinFileOutput<>();
 			final long nUpdated = client.write(
-				new ListItemSrc<>(itemBuff), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
+				new ListItemInput<>(itemBuff), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
-			final ItemDst<HttpDataItem> dataDstR = new ItemCSVFileDst<>(
+			final Output<HttpDataItem> dataDstR = new ItemCsvFileOutput<>(
 				(Class<? extends HttpDataItem>) BasicHttpData.class, ContentSourceBase.getDefaultInstance()
 			);
 			final long nRead = client.read(
-				dataDstU.getItemSrc(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
+				dataDstU.getInput(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead);
 			// update again the data items
-			final ItemDst<HttpDataItem> dataDstU2 = new LimitedQueueItemBuffer<>(
+			final Output<HttpDataItem> dataDstU2 = new LimitedQueueItemBuffer<>(
 				new ArrayBlockingQueue<HttpDataItem>(DEFAULT_DATA_COUNT_MAX)
 			);
 			final long nUpdated2 = client.write(
-				dataDstR.getItemSrc(), dataDstU2, nRead, DEFAULT_CONN_PER_NODE, 10
+				dataDstR.getInput(), dataDstU2, nRead, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
 			// read and verify the updated items again
 			final long nRead2 = client.read(
-				dataDstU2.getItemSrc(), null, nUpdated2, DEFAULT_CONN_PER_NODE, true
+				dataDstU2.getInput(), null, nUpdated2, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
 			// recreate the items
-			final ItemDst<HttpDataItem> dataDstW2 = new ItemCSVFileDst<>(
+			final Output<HttpDataItem> dataDstW2 = new ItemCsvFileOutput<>(
 				(Class<? extends HttpDataItem>) BasicHttpData.class,
 				ContentSourceBase.getDefaultInstance()
 			);
 			final long nReWritten = client.write(
-				new ListItemSrc<>(itemBuff), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE,
+				new ListItemInput<>(itemBuff), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE,
 				DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
 			// read and verify the rewritten data items
 			final long nRead3 = client.read(
-				dataDstW2.getItemSrc(), null, nWritten, DEFAULT_CONN_PER_NODE, true
+				dataDstW2.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
 			// delete all created data items
 			final long nDeleted = client.delete(
-				new ListItemSrc<>(itemBuff), null, nWritten, DEFAULT_CONN_PER_NODE
+				new ListItemInput<>(itemBuff), null, nWritten, DEFAULT_CONN_PER_NODE
 			);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
 		} catch(final Exception e) {

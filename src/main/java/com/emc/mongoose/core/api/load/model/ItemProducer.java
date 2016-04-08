@@ -1,8 +1,7 @@
 package com.emc.mongoose.core.api.load.model;
 //
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
 import java.rmi.RemoteException;
 /**
@@ -12,10 +11,7 @@ import java.rmi.RemoteException;
  */
 public interface ItemProducer<T extends Item> {
 	//
-	void setItemDst(final ItemDst<T> itemDst)
-	throws RemoteException;
-	//
-	ItemSrc<T> getItemSrc()
+	void setOutput(final Output<T> itemDst)
 	throws RemoteException;
 	//
 	void setSkipCount(final long itemsCount)

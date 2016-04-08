@@ -9,6 +9,10 @@ public final class Random {
 	private long seed;
 
 	public Random() {
+		reset();
+	}
+
+	public void reset() {
 		seed = System.nanoTime() ^ System.currentTimeMillis();
 	}
 
