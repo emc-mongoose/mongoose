@@ -24,19 +24,22 @@ define(["jquery", "handlebars"], function ($, Handlebars) {
         $(jqSelector).after(html);
     }
 
-    function compileAndInsertInside(jQuerySelector, template, paramsMap) {
+    function compileAndInsertBase(jQuerySelector, template, paramsMap, insertFunc) {
         const html = compile(template, paramsMap);
-        insertInside(jQuerySelector, html);
+        insertFunc(jQuerySelector, html);
+    }
+    
+    function compileAndInsertInside(jQuerySelector, template, paramsMap) {
+        compileAndInsertBase(jQuerySelector, template, paramsMap, insertInside);
     }
 
     function compileAndInsertInsideBefore(jQuerySelector, template, paramsMap) {
-        const html = compile(template, paramsMap);
-        insertInsideBefore(jQuerySelector, html);
+        compileAndInsertBase(jQuerySelector, template, paramsMap, insertInsideBefore);
     }
 
     function compileAndInsertAfter(jQuerySelector, template, paramsMap) {
-        const html = compile(template, paramsMap);
-        insertAfter(jQuerySelector, html);
+        compileAndInsertBase(jQuerySelector, template, paramsMap, insertAfter);
+
     }
 
     return {
