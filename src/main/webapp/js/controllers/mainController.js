@@ -28,7 +28,7 @@ define([
 	const jqId = templatesUtil.composeJqId;
 	
 	function tabJqId(tabType) {
-		return jqId('', tabType, 'tab');
+		return jqId([tabType, 'tab']);
 	}
 
 	var currentTabType = TAB_TYPE.SCENARIOS;
@@ -38,8 +38,8 @@ define([
 		render(configObject);
 		confMenuController.run(configObject, scenariosArray, currentTabType);
 		bindTabEvents();
-		cssUtil.emptyValue(jqId(BUTTON_TYPE.OPEN_INPUT_TEXT, TAB_TYPE.DEFAULTS));
-		cssUtil.disable(jqId(BUTTON_TYPE.OPEN, TAB_TYPE.DEFAULTS));
+		cssUtil.emptyValue(jqId([BUTTON_TYPE.OPEN_INPUT_TEXT, TAB_TYPE.DEFAULTS]));
+		cssUtil.disable(jqId([BUTTON_TYPE.OPEN, TAB_TYPE.DEFAULTS]));
 	}
 
 	function render(configObject) {
@@ -52,8 +52,8 @@ define([
 	function bindTabEvents() {
 		function makeTabActive(tabType) {
 			$.each(TAB_TYPE, function (key, value) {
-				const treeId = jqId(BLOCK.TREE, value);
-				const buttonsId = jqId(BLOCK.BUTTONS, value);
+				const treeId = jqId([BLOCK.TREE, value]);
+				const buttonsId = jqId([BLOCK.BUTTONS, value]);
 				if (value === tabType) {
 					cssUtil.show(treeId, buttonsId);
 					cssUtil.addClass(TAB_CLASS.ACTIVE, tabJqId(tabType))

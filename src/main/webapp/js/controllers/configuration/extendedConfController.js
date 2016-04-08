@@ -6,7 +6,10 @@ define([
 		"../../util/cssUtil"
 	],
 	function (Handlebars, extendedConfTemplate, hbUtil, templatesUtil, cssUtil) {
-		//
+
+		const plainId = templatesUtil.composeId;
+		const jqId = templatesUtil.composeJqId;
+		
 		const TAB_TYPE = templatesUtil.tabTypes();
 		const BLOCK = templatesUtil.blocks();
 		const DELIMITER = '.';
@@ -21,23 +24,41 @@ define([
 			$.post('/scenario', {path: aHref})
 				.done(function (scenarioJson) {
 					currentScenarioJson = scenarioJson;
+					updateScenarioTree(scenarioJson);
 				})
 		}
 
-		function updateScenarioTree() {
-			var ul = $('#' + templatesUtil.getConstElemId('folders', TAB_TYPE.SCENARIOS));
+		function backClickEvent() {
+			cssUtil.show([BLOCK.TREE, TAB_TYPE.SCENARIOS]);
+			cssUtil.hide([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']);
+		}
+
+		function updateScenarioTree(scenarioJson) {
+			const ul = $(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
+			ul.empty();
+			const span = $('<span/>');
+			cssUtil.addId(plainId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']));
+			cssUtil.addClass('icon-reply', span);
+			ul.append(span);
+			$(jqId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id'])).click(function () {
+				backClickEvent();
+			});
+			cssUtil.addClass(BLOCK.TREE, ul);
+			var addressObject = {};
+			addVisualTreeOfObject(scenarioJson, ul, '-file-id', addressObject);
+			cssUtil.show(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
+			cssUtil.hide([BLOCK.TREE, TAB_TYPE.SCENARIOS]);
 		}
 
 		//
 		function render(configObject, scenariosArray) {
+			cssUtil.hide(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
 			hbUtil.compileAndInsertInside('#main-content', extendedConfTemplate);
-			var ulId = templatesUtil.composeJqId('', BLOCK.TREE, TAB_TYPE.DEFAULTS);
-			var ul = $(ulId);
+			var ul = $(jqId([BLOCK.TREE, TAB_TYPE.DEFAULTS]));
 			var addressObject = {};
-			addVisualTreeOfObject(configObject, ul, addressObject);
-			ulId = templatesUtil.composeJqId('', BLOCK.TREE, TAB_TYPE.SCENARIOS);
-			ul = $(ulId);
-			addVisualTreeOfArray(scenariosArray, ul, getScenarioFromServer);
+			addVisualTreeOfObject(configObject, ul, '-prop-id', addressObject);
+			ul = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
+			addVisualTreeOfArray(scenariosArray, ul, '-dir-id', getScenarioFromServer);
 		}
 		
 		function fillFileLi(liElem, aHref, aText, aClickEvent, aClickEventParam) {
@@ -77,7 +98,7 @@ define([
 		}
 
 		//
-		function addVisualTreeOfObject(object, rootUlElem, addressObject, elemAddress) {
+		function addVisualTreeOfObject(object, rootUlElem, nodeIdSuffix, addressObject, elemAddress) {
 			if (!addressObject) {
 				addressObject = {};
 			}
@@ -86,11 +107,11 @@ define([
 			}
 			$.each(object, function (key, value) {
 				function objCase(li) {
-					fillDirLi(li, key + "-prop-id", key);
+					fillDirLi(li, key + nodeIdSuffix, key);
 					var ul = $('<ul/>');
 					li.append(ul);
 					const aHrefChunk = key + DELIMITER;
-					addVisualTreeOfObject(value, ul, addressObject, elemAddress + aHrefChunk);
+					addVisualTreeOfObject(value, ul, nodeIdSuffix, addressObject, elemAddress + aHrefChunk);
 				}
 
 				function notObjCase(li) {
@@ -103,11 +124,11 @@ define([
 			})
 		}
 
-		function addVisualTreeOfArray(array, rootUlElem, aClickEvent) {
+		function addVisualTreeOfArray(array, rootUlElem, nodeIdSuffix, aClickEvent) {
 			$.each(array, function (index, item) {
 				function objCase(liOuter) {
 					$.each(item, function (dirName, filesArr) {
-						fillDirLi(liOuter, dirName + "-dir-id", dirName);
+						fillDirLi(liOuter, dirName + nodeIdSuffix, dirName);
 						var ul = $('<ul/>');
 						$.each(filesArr, function (index, fileName) {
 							var liInner = $('<li/>');
@@ -128,6 +149,6 @@ define([
 		}
 		//
 		return {
-			setup: setup,
+			setup: setup
 		};
 	});

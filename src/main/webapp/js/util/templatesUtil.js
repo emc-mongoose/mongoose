@@ -56,26 +56,16 @@ define(function() {
         return BLOCK;
     }
     
-    function composeId(prefix, constName , suffix) {
-        if (prefix) {
-            prefix = prefix + DELIMITER;
-        } else {
-            prefix = '';
-        }
-        if (suffix) {
-            suffix = DELIMITER + suffix;
-        } else {
-            suffix = '';
-        }
-        return prefix + constName + suffix;
+    function composeId(partsArr) {
+        return partsArr.join(DELIMITER);
     }
     
-    function composeJqueryId(prefix, constName, suffix) {
-        return '#' + composeId(prefix, constName, suffix);
+    function composeJqueryId(partsArr) {
+        return '#' + composeId(partsArr);
     }
 
-    function getComposedJquerySelector(prefix, constName, suffix) {
-        return $(composeJqueryId(prefix, constName, suffix));
+    function getComposedJquerySelector(partsArr) {
+        $(composeJqueryId(partsArr));
     }
 
     return {

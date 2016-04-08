@@ -22,7 +22,10 @@ public class ScenarioServlet extends HttpServlet {
 	@Override
 	protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
 			throws ServletException, IOException {
-		final String relativeScenarioPath =  request.getParameter(REQUEST_PATH_KEY);
+		final String relativeScenarioPath =
+				request.getParameter(REQUEST_PATH_KEY)
+						.replaceAll("\\.", "/")
+						.replace("/" + "json", ".json");
 		final Path fullScenarioPath =  PATH_TO_SCENARIO_DIR.resolve(relativeScenarioPath);
 		final String scenarioJson = JsonUtil.readFileToString(fullScenarioPath);
 		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());

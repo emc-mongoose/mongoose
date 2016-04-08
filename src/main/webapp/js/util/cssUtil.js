@@ -56,6 +56,10 @@ define(["jquery"], function ($) {
 		}
 	}
 
+	function addId(id, jQuerySelector) {
+		$(jQuerySelector).attr('id', id);
+	}
+
 	return {
 		disable: disable,
 		enable: enable,
@@ -63,6 +67,7 @@ define(["jquery"], function ($) {
 		hide: hide,
 		emptyValue: emptyValue,
 		addClass: addClass,
-		removeClass: removeClass
+		removeClass: removeClass,
+		addId: addId
 	}
 });

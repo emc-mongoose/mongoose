@@ -51,7 +51,7 @@ define([
 		function bindOpenButtonEvent() {
 			
 			function buttonJqId(buttonType, tabName) {
-				return jqId('', buttonType, tabName);
+				return jqId([buttonType, tabName]);
 			}
 			
 			function passClick(tabName) {
@@ -78,7 +78,7 @@ define([
 		function hideExtraButtons(currentTabType) {
 			$.each(CONFIG_TABS, function (index, value) {
 				if (value != currentTabType) {
-					const buttonBlockId = jqId(BLOCK.BUTTONS, value);
+					const buttonBlockId = jqId([BLOCK.BUTTONS, value]);
 					cssUtil.hide(buttonBlockId);
 				}
 			})
