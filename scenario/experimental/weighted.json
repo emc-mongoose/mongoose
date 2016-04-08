@@ -71,6 +71,9 @@
 							"data" : {
 								"size" : "4KB-16KB"
 							}
+						},
+						"load" : {
+							"weight" : 20
 						}
 					}
 				}
