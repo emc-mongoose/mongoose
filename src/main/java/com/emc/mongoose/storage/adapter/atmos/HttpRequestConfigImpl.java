@@ -4,15 +4,15 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.v1.item.container.Container;
+import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.api.item.token.Token;
-import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
+import com.emc.mongoose.core.api.v1.item.token.Token;
+import com.emc.mongoose.core.impl.v1.io.conf.HttpRequestConfigBase;
 // mongoose-common.jar
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.impl.item.token.BasicToken;
+import com.emc.mongoose.core.impl.v1.item.token.BasicToken;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.Header;

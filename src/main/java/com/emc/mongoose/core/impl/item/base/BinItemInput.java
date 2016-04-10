@@ -2,18 +2,15 @@ package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
-//
 import com.emc.mongoose.core.api.item.base.Item;
-//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.IOException;
 import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.util.Arrays;
 import java.util.List;
-
 /**
  The data item input implementation deserializing the data items from the specified stream
  */

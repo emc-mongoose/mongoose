@@ -2,13 +2,14 @@ package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemFileOutput;
-//
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+//
 /**
  An item input implementation serializing the data items to the specified file.
  */

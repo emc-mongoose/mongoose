@@ -7,12 +7,12 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.item.container.Directory;
-import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.v1.item.container.Directory;
+import com.emc.mongoose.core.api.v1.item.data.FileItem;
+import com.emc.mongoose.core.api.v1.io.conf.FileIoConfig;
+import com.emc.mongoose.core.api.v1.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.load.builder.BasicDirectoryLoadBuilder;
+import com.emc.mongoose.core.impl.v1.load.builder.BasicDirectoryLoadBuilder;
 //
 import com.emc.mongoose.server.api.load.builder.DirectoryLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;

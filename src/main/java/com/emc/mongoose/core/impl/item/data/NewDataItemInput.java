@@ -2,11 +2,10 @@ package com.emc.mongoose.core.impl.item.data;
 //
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-//
+import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
-//
+
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

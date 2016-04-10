@@ -6,7 +6,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.v1.load.executor.LoadExecutor;
 // mongoose-core-impl.jar
 // mongoose-server-api.jar
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
@@ -26,7 +26,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 //
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.Map;
 /**

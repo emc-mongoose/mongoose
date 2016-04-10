@@ -1,10 +1,9 @@
 package com.emc.mongoose.core.impl.item.data;
 //
 import com.emc.mongoose.core.api.item.data.ContentSource;
-//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.IOException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.InvalidPathException;

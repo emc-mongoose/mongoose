@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+//
 /**
  Created by kurila on 29.09.14.
  A most common data item descriptor having a determined size and able to be written out.

@@ -10,11 +10,11 @@ public interface Output<T>
 extends Closeable {
 
 	/**
-	 Write the data item
-	 @param dataItem the item to put
+	 Write the item
+	 @param item the item to put
 	 @throws IOException if fails some-why
 	 */
-	void put(final T dataItem)
+	void put(final T item)
 	throws IOException;
 
 	/**

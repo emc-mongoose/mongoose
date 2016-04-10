@@ -8,17 +8,17 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.common.io.Output;
 //
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
 //
-import com.emc.mongoose.core.impl.item.base.ItemBinFileOutput;
-import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
-import com.emc.mongoose.core.impl.item.data.BasicHttpData;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
-import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.v1.item.base.ItemBinFileOutput;
+import com.emc.mongoose.core.impl.v1.item.base.LimitedQueueItemBuffer;
+import com.emc.mongoose.core.impl.v1.item.data.BasicHttpData;
+import com.emc.mongoose.core.impl.v1.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.v1.item.base.ItemCsvFileOutput;
 //
-import com.emc.mongoose.core.impl.item.base.ItemListOutput;
+import com.emc.mongoose.core.impl.v1.item.base.ItemListOutput;
 //
-import com.emc.mongoose.core.impl.item.base.ListItemInput;
+import com.emc.mongoose.core.impl.v1.item.base.ListItemInput;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 //

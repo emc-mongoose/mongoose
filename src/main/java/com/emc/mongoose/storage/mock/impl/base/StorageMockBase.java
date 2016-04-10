@@ -4,9 +4,9 @@ import com.emc.mongoose.common.concurrent.Sequencer;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.item.data.ContentSource;
+import com.emc.mongoose.core.api.v1.item.data.ContentSource;
 //
-import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
+import com.emc.mongoose.core.impl.v1.item.base.CsvFileItemInput;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;

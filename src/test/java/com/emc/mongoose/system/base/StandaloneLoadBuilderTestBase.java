@@ -3,10 +3,10 @@ package com.emc.mongoose.system.base;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.load.builder.HttpDataLoadBuilder;
-import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
-import com.emc.mongoose.core.impl.load.builder.BasicHttpDataLoadBuilder;
+import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.v1.load.builder.HttpDataLoadBuilder;
+import com.emc.mongoose.core.api.v1.load.executor.HttpDataLoadExecutor;
+import com.emc.mongoose.core.impl.v1.load.builder.BasicHttpDataLoadBuilder;
 //
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

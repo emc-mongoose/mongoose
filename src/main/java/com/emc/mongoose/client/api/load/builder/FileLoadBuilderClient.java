@@ -1,7 +1,7 @@
 package com.emc.mongoose.client.api.load.builder;
 import com.emc.mongoose.client.api.load.executor.FileLoadClient;
-import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.load.builder.FileLoadBuilder;
+import com.emc.mongoose.core.api.v1.item.data.FileItem;
+import com.emc.mongoose.core.api.v1.load.builder.FileLoadBuilder;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 /**
  Created by andrey on 22.11.15.

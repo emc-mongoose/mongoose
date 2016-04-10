@@ -1,9 +1,9 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
 //
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.item.data.ContainerHelper;
+import com.emc.mongoose.core.api.v1.item.container.Container;
+import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.v1.item.data.ContainerHelper;
 /**
  Created by kurila on 02.03.15.
  */

@@ -1,11 +1,12 @@
 package com.emc.mongoose.core.impl.item.base;
 //
-import com.emc.mongoose.core.api.item.base.Item;
-//
 import com.emc.mongoose.common.io.Output;
-//
+import com.emc.mongoose.core.api.item.base.Item;
+
 import java.io.IOException;
 import java.util.List;
+//
+//
 /**
  Created by kurila on 18.06.15.
  Writable collection of the data items.
@@ -20,14 +21,14 @@ implements Output<T> {
 	}
 
 	/**
-	 @param dataItem the data item to put
+	 @param item the data item to put
 	 @throws IOException if the destination collection fails to add the data item
 	 (due to capacity reasons for example)
 	 */
 	@Override
-	public void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
-		if(!items.add(dataItem)) {
+		if(!items.add(item)) {
 			throw new IOException("Failed to add the data item to the destination collection");
 		}
 	}

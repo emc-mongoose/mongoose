@@ -2,8 +2,8 @@ package com.emc.mongoose.server.api.load.executor;
 //
 import com.emc.mongoose.common.net.Service;
 //
-import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.v1.item.base.Item;
+import com.emc.mongoose.core.api.v1.load.executor.LoadExecutor;
 //
 import java.rmi.RemoteException;
 import java.util.List;

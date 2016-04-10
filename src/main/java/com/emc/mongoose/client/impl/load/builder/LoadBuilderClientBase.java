@@ -8,16 +8,16 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.math.MathUtil;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.io.conf.IoConfig;
+import com.emc.mongoose.core.api.v1.item.base.Item;
+import com.emc.mongoose.core.api.v1.io.conf.IoConfig;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 //
-import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
-import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
+import com.emc.mongoose.core.impl.v1.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.v1.item.base.CsvFileItemInput;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
+import com.emc.mongoose.core.impl.v1.load.builder.LoadBuilderBase;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //

@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.adapter.atmos;
 //
-import com.emc.mongoose.core.api.item.token.Token;
+import com.emc.mongoose.core.api.v1.item.token.Token;
 /**
  Created by kurila on 02.10.14.
  */

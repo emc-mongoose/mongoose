@@ -2,13 +2,11 @@ package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
-//
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
@@ -18,7 +16,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
 /**
  The data item input using CSV file containing the human-readable data item records as the source
  */

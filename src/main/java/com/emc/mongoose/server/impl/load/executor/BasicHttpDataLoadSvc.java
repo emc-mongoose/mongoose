@@ -10,12 +10,12 @@ import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.v1.item.container.Container;
+import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.executor.BasicHttpDataLoadExecutor;
+import com.emc.mongoose.core.impl.v1.load.executor.BasicHttpDataLoadExecutor;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 //

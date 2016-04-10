@@ -1,16 +1,14 @@
 package com.emc.mongoose.core.impl.item.data;
 //
 import com.emc.mongoose.common.log.LogUtil;
-//
 import com.emc.mongoose.core.api.item.container.Directory;
-import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.item.data.ContentSource;
-//
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
+import com.emc.mongoose.core.api.item.data.ContentSource;
+import com.emc.mongoose.core.api.item.data.FileItem;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -20,6 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
+//
+//
+//
 /**
  Created by andrey on 22.11.15.
  */

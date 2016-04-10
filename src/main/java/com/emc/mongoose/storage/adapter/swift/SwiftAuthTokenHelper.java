@@ -3,11 +3,11 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.api.v1.item.container.Container;
+import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig;
 //
-import com.emc.mongoose.core.impl.item.token.BasicToken;
+import com.emc.mongoose.core.impl.v1.item.token.BasicToken;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;

@@ -1,9 +1,8 @@
 package com.emc.mongoose.core.api.load.generator;
 //
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.item.base.Item;
-//
-import java.rmi.RemoteException;
 /**
  Created by kurila on 09.05.14.
  A producer feeding the generated items to its consumer.
@@ -11,15 +10,21 @@ import java.rmi.RemoteException;
  */
 public interface ItemGenerator<T extends Item> {
 	//
-	void setOutput(final Output<T> itemDst)
-	throws RemoteException;
+	Input<T> getInput();
 	//
-	void setSkipCount(final long itemsCount)
-	throws RemoteException;
+	void setInput(final Input<T> itemInput);
 	//
-	void setLastItem(final T dataItem)
-	throws RemoteException;
+	long getCountLimit();
 	//
-	void reset()
-	throws RemoteException;
+	void setCountLimit(final long countLimit);
+	//
+	Output<T> getOutput();
+	//
+	void setOutput(final Output<T> itemOutput);
+	//
+	void setSkipCount(final long itemsCount);
+	//
+	void setLastItem(final T item);
+	//
+	void reset();
 }

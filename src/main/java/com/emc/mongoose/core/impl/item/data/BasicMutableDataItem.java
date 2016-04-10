@@ -1,22 +1,23 @@
 package com.emc.mongoose.core.impl.item.data;
 // mongoose-common.jar
 import com.emc.mongoose.common.log.Markers;
-// mongoose-core-api.jar
-// mongoose-core-impl.jar
-import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-//
+import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.BitSet;
 import java.util.concurrent.ThreadLocalRandom;
+// mongoose-core-api.jar
+// mongoose-core-impl.jar
+//
+//
+//
 /**
  Created by kurila on 15.09.14.
  A uniform data extension which may be logically split into isolated ranges for appends and updates.

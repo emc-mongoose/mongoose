@@ -9,14 +9,14 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //mongoose-core-api.jar
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.v1.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig;
 //mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 import com.emc.mongoose.server.api.load.builder.HttpDataLoadBuilderSvc;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.builder.BasicHttpDataLoadBuilder;
+import com.emc.mongoose.core.impl.v1.load.builder.BasicHttpDataLoadBuilder;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.executor.BasicHttpDataLoadSvc;
 //

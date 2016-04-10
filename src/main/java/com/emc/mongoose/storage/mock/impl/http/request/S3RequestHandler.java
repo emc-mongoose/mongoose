@@ -5,8 +5,8 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.item.data.ContainerHelper;
-import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.api.v1.item.data.ContainerHelper;
+import com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig;
 import com.emc.mongoose.storage.adapter.s3.BucketHelper;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
@@ -14,7 +14,6 @@ import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 //
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
-import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;

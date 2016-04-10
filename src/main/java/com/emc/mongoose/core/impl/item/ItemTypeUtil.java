@@ -1,14 +1,13 @@
 package com.emc.mongoose.core.impl.item;
 //
-//
 import com.emc.mongoose.common.conf.enums.ItemType;
 import com.emc.mongoose.common.conf.enums.StorageType;
 import com.emc.mongoose.core.api.item.base.Item;
-//
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
 import com.emc.mongoose.core.impl.item.data.BasicFile;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
+//
 /**
  Created by kurila on 17.03.16.
  */

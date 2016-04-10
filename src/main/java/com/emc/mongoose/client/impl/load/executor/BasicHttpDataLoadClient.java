@@ -3,12 +3,12 @@ package com.emc.mongoose.client.impl.load.executor;
 import com.emc.mongoose.common.conf.AppConfig;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.HttpDataIoTask;
+import com.emc.mongoose.core.api.v1.item.container.Container;
+import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.api.v1.io.task.HttpDataIoTask;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.impl.io.task.BasicHttpDataIoTask;
+import com.emc.mongoose.core.impl.v1.io.task.BasicHttpDataIoTask;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.HttpDataLoadClient;
 //

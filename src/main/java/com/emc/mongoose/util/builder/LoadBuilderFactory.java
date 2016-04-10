@@ -5,11 +5,11 @@ import com.emc.mongoose.common.conf.enums.ItemType;
 import com.emc.mongoose.common.conf.enums.StorageType;
 import com.emc.mongoose.common.conf.Constants;
 //
-import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.builder.LoadBuilder;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.v1.item.base.Item;
+import com.emc.mongoose.core.api.v1.load.builder.LoadBuilder;
+import com.emc.mongoose.core.api.v1.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.item.ItemTypeUtil;
+import com.emc.mongoose.core.impl.v1.item.ItemTypeUtil;
 //
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -19,7 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 public class LoadBuilderFactory {
 	//
 	private final static String
-		BUILDER_CORE_PACKAGE_BASE = "com.emc.mongoose.core.impl.load.builder",
+		BUILDER_CORE_PACKAGE_BASE = "com.emc.mongoose.core.impl.v1.load.builder",
 		BUILDER_CLIENT_PACKAGE_BASE = "com.emc.mongoose.client.impl.load.builder",
 		LOAD_BUILDER_SUFFIX = "LoadBuilder",
 		CLIENT_POSTFIX = "Client";

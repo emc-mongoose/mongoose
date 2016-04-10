@@ -2,9 +2,9 @@ package com.emc.mongoose.storage.mock.impl.base;
 //
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.item.data.ContentSource;
+import com.emc.mongoose.core.api.v1.item.data.ContentSource;
 //
-import com.emc.mongoose.core.impl.item.data.BasicMutableDataItem;
+import com.emc.mongoose.core.impl.v1.item.data.BasicMutableDataItem;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 //
 import org.apache.logging.log4j.LogManager;

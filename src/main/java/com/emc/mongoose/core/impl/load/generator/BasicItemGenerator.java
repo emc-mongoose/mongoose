@@ -4,16 +4,12 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-//
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.generator.ItemGenerator;
-//
-import com.emc.mongoose.core.impl.load.barrier.RateLimitBarrier;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
@@ -24,7 +20,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.LockSupport;
-
 /**
  Created by kurila on 19.06.15.
  */
@@ -34,48 +29,53 @@ implements ItemGenerator<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final ConcurrentHashMap<String, T> uniqueItems;
-	protected final Input<T> itemInput;
-	protected final long maxCount;
-	protected final boolean isCircular;
-	protected final boolean isShuffling;
-	protected final Barrier<T> rateLimitBarrier;
-	protected final int batchSize;
-	protected volatile Output<T> itemOutput = null;
-	protected long skipCount;
-	protected T lastItem;
-	protected int maxItemQueueSize;
+	private final ConcurrentHashMap<String, T> uniqueItems;
+	private Input<T> itemInput;
+	private final long countLimit;
+	private final boolean isCircular;
+	private final boolean isShuffling;
+	private final int batchSize;
+	private Output<T> itemOutput;
+	private long skipCount;
+	private T lastItem;
+	private int maxItemQueueSize;
 	//
 	protected volatile boolean areAllItemsProduced = false;
 	protected volatile long producedItemsCount = 0;
 	//
-	protected BasicItemGenerator(
-		final Input<T> itemInput, final long maxCount, final int batchSize,
-		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
-	    final float rateLimit
+	public BasicItemGenerator(
+		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit,
+		final int batchSize, final boolean isCircular, final boolean isShuffling,
+		final int maxItemQueueSize
 	) {
-		this(itemInput, maxCount, batchSize, isCircular, isShuffling, maxItemQueueSize, rateLimit,
+		this(
+			itemInput, itemOutput, countLimit, batchSize, isCircular, isShuffling, maxItemQueueSize,
 			0, null
 		);
 	}
 	//
-	private BasicItemGenerator(
-		final Input<T> itemInput, final long maxCount, final int batchSize,
-		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
-		final float rateLimit,
-		final long skipCount, final T lastItem
+	public BasicItemGenerator(
+		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit,
+		final int batchSize, final boolean isCircular, final boolean isShuffling,
+		final int maxItemQueueSize, final long skipCount, final T lastItem
 	) {
 		this.itemInput = itemInput;
-		this.maxCount = maxCount - skipCount;
+		this.itemOutput = itemOutput;
+		this.countLimit = countLimit - skipCount;
 		this.batchSize = batchSize;
 		this.skipCount = skipCount;
 		this.lastItem = lastItem;
 		this.isCircular = isCircular;
 		this.isShuffling = isShuffling;
 		this.maxItemQueueSize = maxItemQueueSize;
-		this.rateLimitBarrier = new RateLimitBarrier<>(rateLimit);
 		this.uniqueItems = new ConcurrentHashMap<>(maxItemQueueSize);
 		setDaemon(true);
+	}
+	//
+	@Override
+	public final void setOutput(final Output<T> itemOutput)
+	throws RemoteException {
+		this.itemOutput = itemOutput;
 	}
 	//
 	@Override
@@ -84,14 +84,8 @@ implements ItemGenerator<T> {
 	}
 	//
 	@Override
-	public void setLastItem(final T dataItem) {
-		this.lastItem = dataItem;
-	}
-	//
-	@Override
-	public void setOutput(final Output<T> itemOutput)
-	throws RemoteException {
-		this.itemOutput = itemOutput;
+	public void setLastItem(final T item) {
+		this.lastItem = item;
 	}
 	//
 	public Input<T> getInput()
@@ -126,17 +120,17 @@ implements ItemGenerator<T> {
 		int n = 0, m = 0;
 		try {
 			List<T> buff;
-			while(maxCount > producedItemsCount && !isInterrupted) {
+			while(countLimit > producedItemsCount && !isInterrupted) {
 				try {
 					buff = new ArrayList<>(batchSize);
-					n = (int) Math.min(itemInput.get(buff, batchSize), maxCount - producedItemsCount);
+					n = (int) Math.min(itemInput.get(buff, batchSize), countLimit - producedItemsCount);
 					if(isShuffling) {
 						Collections.shuffle(buff, rnd);
 					}
 					if(isInterrupted) {
 						break;
 					}
-					if(n > 0 && rateLimitBarrier.getApprovalsFor(null, n)) {
+					if(n > 0) {
 						for(m = 0; m < n && !isInterrupted; ) {
 							m += itemOutput.put(buff, m, n);
 							LockSupport.parkNanos(1);
@@ -154,7 +148,7 @@ implements ItemGenerator<T> {
 						break;
 					}
 				} catch(
-					final EOFException | InterruptedException | ClosedByInterruptException |
+					final EOFException | ClosedByInterruptException |
 					IllegalStateException e
 				) {
 					break;

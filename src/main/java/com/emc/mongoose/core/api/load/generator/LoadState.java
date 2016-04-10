@@ -2,9 +2,10 @@ package com.emc.mongoose.core.api.load.generator;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.metrics.IOStats;
-//
+import com.emc.mongoose.core.api.load.metrics.IoStats;
+
 import java.io.Serializable;
+//
 /**
  * Created by gusakk on 19.06.15.
  */
@@ -15,7 +16,7 @@ extends Serializable {
 	//
 	AppConfig getAppConfig();
 	//
-	IOStats.Snapshot getStatsSnapshot();
+	IoStats.Snapshot getStatsSnapshot();
 	//
 	T getLastDataItem();
 	//
@@ -27,7 +28,7 @@ extends Serializable {
 		//
 		Builder<T, U> setAppConfig(final AppConfig appConfig);
 		//
-		Builder<T, U> setStatsSnapshot(final IOStats.Snapshot ioStatsSnapshot);
+		Builder<T, U> setStatsSnapshot(final IoStats.Snapshot ioStatsSnapshot);
 		//
 		Builder<T, U> setLastDataItem(final T dataItem);
 		//

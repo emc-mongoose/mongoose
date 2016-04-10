@@ -1,8 +1,7 @@
 package com.emc.mongoose.core.api.item.data;
 //
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.DataItem;
-//
+
 import java.io.Closeable;
 import java.lang.reflect.Constructor;
 /**

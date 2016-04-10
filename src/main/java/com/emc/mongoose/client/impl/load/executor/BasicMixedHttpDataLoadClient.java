@@ -10,13 +10,13 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
-import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
+import com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.api.v1.item.container.Container;
+import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.v1.load.executor.HttpDataLoadExecutor;
+import com.emc.mongoose.core.api.v1.load.executor.MixedLoadExecutor;
 //
-import com.emc.mongoose.core.api.load.metrics.IOStats;
+import com.emc.mongoose.core.api.v1.load.metrics.IOStats;
 //
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 import com.emc.mongoose.server.api.load.executor.MixedHttpDataLoadSvc;

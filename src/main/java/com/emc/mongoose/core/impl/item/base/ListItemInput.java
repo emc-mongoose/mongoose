@@ -2,14 +2,12 @@ package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.base.Item;
-//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
-
 /**
  Readable collection of the data items.
  */
@@ -27,8 +25,8 @@ implements Input<T> {
 
 	/**
 	 @return next data item
-	 @throws java.io.EOFException if there's nothing to get more
-	 @throws java.io.IOException doesn't throw
+	 @throws EOFException if there's nothing to get more
+	 @throws IOException doesn't throw
 	 */
 	@Override
 	public T get()
@@ -45,7 +43,7 @@ implements Input<T> {
 	 @param buffer buffer for the data items
 	 @param maxCount the count limit
 	 @return the count of the data items been get
-	 @throws java.io.EOFException if there's nothing to get more
+	 @throws EOFException if there's nothing to get more
 	 @throws IOException if fails some-why
 	 */
 	@Override

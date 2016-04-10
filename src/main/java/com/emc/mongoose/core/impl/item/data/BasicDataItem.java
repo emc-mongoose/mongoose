@@ -1,14 +1,11 @@
 package com.emc.mongoose.core.impl.item.data;
-// mongoose-core-api.jar
+import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataItem;
-import com.emc.mongoose.core.api.item.data.ContentSource;
-// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.item.base.BasicItem;
-//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -39,7 +36,7 @@ implements DataItem {
 	public BasicDataItem() {
 		this(
 			ContentSourceBase.DEFAULT == null ?
-				ContentSourceBase.getDefaultInstance() : ContentSourceBase.DEFAULT
+			ContentSourceBase.getDefaultInstance() : ContentSourceBase.DEFAULT
 		);
 	}
 	//

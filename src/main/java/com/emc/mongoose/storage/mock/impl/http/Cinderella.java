@@ -8,7 +8,7 @@ import com.emc.mongoose.common.io.value.async.AsyncCurrentDateInput;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.v1.item.data.ContentSourceBase;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;

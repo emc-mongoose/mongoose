@@ -4,9 +4,8 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.item.data.ContainerHelper;
-import com.emc.mongoose.core.api.item.data.MutableDataItem;
+import com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.api.v1.item.data.ContainerHelper;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
@@ -43,7 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 //
 import static io.netty.channel.ChannelHandler.Sharable;
-import static io.netty.handler.codec.http.HttpHeaders.Names.AUTHORIZATION;
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;

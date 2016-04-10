@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.mock.api;
 //
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
 /**
  Created by kurila on 03.07.15.
  */
