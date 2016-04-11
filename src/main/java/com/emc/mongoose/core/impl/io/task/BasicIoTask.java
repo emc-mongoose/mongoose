@@ -7,7 +7,7 @@ import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IoTask;
-import com.emc.mongoose.core.api.load.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IoStats;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,7 +66,7 @@ implements IoTask<T> {
 		};
 	//
 	@Override
-	public final void mark(final IOStats ioStats) {
+	public final void mark(final IoStats ioStats) {
 		// perf traces logging
 		final int
 			reqDuration = (int) (respTimeDone - reqTimeStart),

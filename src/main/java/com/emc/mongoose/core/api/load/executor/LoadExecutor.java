@@ -2,12 +2,13 @@ package com.emc.mongoose.core.api.load.executor;
 //
 import com.emc.mongoose.common.concurrent.LifeCycle;
 //
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.load.generator.LoadState;
 import com.emc.mongoose.core.api.load.generator.LoadGenerator;
-import com.emc.mongoose.core.api.load.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IoStats;
 //
 import org.apache.logging.log4j.Marker;
 //
@@ -24,43 +25,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  May be a consumer and producer both also.
  Supports method "join" for waiting the load execution to be done.
  */
-public interface LoadExecutor<T extends Item>
-extends Output<T>, LifeCycle, LoadGenerator<T> {
+public interface LoadExecutor<T extends Item> {
 	//
 	int
 		DEFAULT_INTERNAL_BATCH_SIZE = 0x80,
 		DEFAULT_RESULTS_QUEUE_SIZE = 0x10000;
 	//
-	AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
-	//
-	Map<String, List<LoadState<? extends Item>>>
-		RESTORED_STATES_MAP = new ConcurrentHashMap<>();
-	//
-	String getName()
+	int submit(final List<T> items, final LoadType loadType)
 	throws RemoteException;
-	//
-	void setLoadState(final LoadState<T> state)
-	throws RemoteException;
-	//
-	LoadState<T> getLoadState()
-	throws RemoteException;
-	//
-	IOStats.Snapshot getStatsSnapshot()
-	throws RemoteException;
-	//
-	void logMetrics(Marker marker)
-	throws RemoteException;
-	//
-	<A extends IoTask<T>> Future<A> submitTask(final A request)
-	throws RemoteException, RejectedExecutionException;
-	//
-	<A extends IoTask<T>> int submitTasks(final List<A> requests, final int from, final int to)
-	throws RemoteException, RejectedExecutionException;
-
-	void ioTaskCompleted(final IoTask<T> ioTask)
-	throws RemoteException;
-
-	int ioTaskCompletedBatch(
-		final List<? extends IoTask<T>> ioTasks, final int from, final int to
-	) throws RemoteException;
 }

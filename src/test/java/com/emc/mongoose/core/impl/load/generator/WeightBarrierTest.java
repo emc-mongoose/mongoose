@@ -3,7 +3,7 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.barrier.Barrier;
-import com.emc.mongoose.core.api.load.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IoStats;
 import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
 import org.junit.Test;
 
@@ -55,7 +55,7 @@ public class WeightBarrierTest {
 			return null;
 		}
 		@Override
-		public void mark(final IOStats ioStats) {
+		public void mark(final IoStats ioStats) {
 		}
 		@Override
 		public LoadType getLoadType() {

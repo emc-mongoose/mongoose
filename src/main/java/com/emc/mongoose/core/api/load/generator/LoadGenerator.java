@@ -1,14 +1,16 @@
 package com.emc.mongoose.core.api.load.generator;
 //
 import com.emc.mongoose.common.concurrent.LifeCycle;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.load.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IoStats;
 import org.apache.logging.log4j.Marker;
 //
+import java.io.Closeable;
 import java.rmi.RemoteException;
 import java.util.List;
 /**
@@ -17,11 +19,14 @@ import java.util.List;
  May be linked with particular consumer, started and interrupted.
  */
 public interface LoadGenerator<T extends Item, A extends IoTask<T>>
-extends LifeCycle {
+extends LifeCycle, Closeable {
 
 	// immutable properties
 
 	String getName()
+	throws RemoteException;
+
+	LoadType getLoadType()
 	throws RemoteException;
 
 	long getCountLimit()
@@ -33,30 +38,24 @@ extends LifeCycle {
 	boolean isCircular()
 	throws RemoteException;
 
+	boolean isShuffle()
+	throws RemoteException;
+
 	Input<T> getInput()
 	throws RemoteException;
 
 	LoadExecutor<T> getExecutor()
 	throws RemoteException;
 
-	IOStats.Snapshot getStatsSnapshot()
+	IoStats.Snapshot getStatsSnapshot()
 	throws RemoteException;
 
 	// mutable properties
 
-	LoadState<T> getState()
-	throws RemoteException;
-
-	void setState(final LoadState<T> state)
+	LoadState<T> getLoadState()
 	throws RemoteException;
 
 	void setOutput(final Output<T> itemDst)
-	throws RemoteException;
-
-	void setSkipCount(final long itemsCount)
-	throws RemoteException;
-
-	void setLastItem(final T item)
 	throws RemoteException;
 
 	// other methods

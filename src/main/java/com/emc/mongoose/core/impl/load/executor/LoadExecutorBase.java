@@ -20,14 +20,14 @@ import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
 import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.load.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IoStats;
 import com.emc.mongoose.core.api.load.generator.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
 import com.emc.mongoose.core.impl.load.barrier.ActiveTaskCountLimitBarrier;
 import com.emc.mongoose.core.impl.load.generator.BasicLoadGenerator;
-import com.emc.mongoose.core.impl.load.metrics.BasicIOStats;
+import com.emc.mongoose.core.impl.load.metrics.BasicIoStats;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 import com.emc.mongoose.core.impl.load.generator.BasicLoadState;
@@ -77,8 +77,8 @@ implements LoadExecutor<T> {
 	protected final Barrier<T> activeTaskCountLimitBarrier;
 	// METRICS section
 	protected final int metricsPeriodSec;
-	protected IOStats ioStats;
-	protected volatile IOStats.Snapshot lastStats = null;
+	protected IoStats ioStats;
+	protected volatile IoStats.Snapshot lastStats = null;
 	// STATES section //////////////////////////////////////////////////////////////////////////////
 	private Balancer<String> nodeBalancer = null;
 	private LoadState<T> loadedPrevState = null;
@@ -263,7 +263,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected void initStats(final boolean flagServeJMX) {
-		ioStats = new BasicIOStats(getName(), flagServeJMX, metricsPeriodSec);
+		ioStats = new BasicIoStats(getName(), flagServeJMX, metricsPeriodSec);
 		lastStats = ioStats.getSnapshot();
 	}
 	//
@@ -801,7 +801,7 @@ implements LoadExecutor<T> {
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
 			}
 			// apply parameters from loadState to current load executor
-			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
+			final IoStats.Snapshot statsSnapshot = state.getStatsSnapshot();
 			final long
 				countSucc = statsSnapshot.getSuccCount(),
 				countFail = statsSnapshot.getFailCount();
@@ -830,12 +830,12 @@ implements LoadExecutor<T> {
 			.setLoadNumber(instanceNum)
 			.setAppConfig(appConfig)
 			.setStatsSnapshot(lastStats)
-			.setLastDataItem(lastItem)
+			.setLastItem(lastItem)
 			.build();
 	}
 	//
 	@Override
-	public IOStats.Snapshot getStatsSnapshot() {
+	public IoStats.Snapshot getStatsSnapshot() {
 		return lastStats;
 	}
 	//

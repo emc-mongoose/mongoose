@@ -16,7 +16,7 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
-import com.emc.mongoose.core.api.load.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IoStats;
 //
 import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
 //
@@ -158,7 +158,7 @@ implements MixedHttpDataLoadSvc<T> {
 			.appendNewLine();
 		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
-		IOStats.Snapshot nextLoadStats = null;
+		IoStats.Snapshot nextLoadStats = null;
 		for(final LoadType nextLoadType : loadSvcMap.keySet()) {
 			nextLoadWeight = loadTypeWeights.get(nextLoadType);
 			nextLoadJob = loadSvcMap.get(nextLoadType);

@@ -21,7 +21,7 @@ import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.generator.LoadState;
-import com.emc.mongoose.core.api.load.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IoStats;
 import com.emc.mongoose.core.impl.item.ItemTypeUtil;
 import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
@@ -294,8 +294,8 @@ extends SequentialJobContainer {
 							nextLoadState = null;
 						}
 						final String sizeStr = nextSize == null ? " " : nextSize.toString();
-						final IOStats.Snapshot statsSnapshot = nextLoadState == null ?
-							null : nextLoadState.getStatsSnapshot();
+						final IoStats.Snapshot statsSnapshot = nextLoadState == null ?
+															   null : nextLoadState.getStatsSnapshot();
 						final long countSucc = statsSnapshot == null ?
 							0 : statsSnapshot.getSuccCount();
 						final long countFail = statsSnapshot == null ?
@@ -319,7 +319,7 @@ extends SequentialJobContainer {
 							"N/A" :
 							String.format(
 								LogUtil.LOCALE_DEFAULT, "%.3f",
-								statsSnapshot.getByteRateMean() / IOStats.MIB
+								statsSnapshot.getByteRateMean() / IoStats.MIB
 							);
 						strb
 							.appendNewLine()
