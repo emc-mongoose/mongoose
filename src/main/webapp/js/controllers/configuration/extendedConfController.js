@@ -12,7 +12,8 @@ define([
 		
 		const TAB_TYPE = templatesUtil.tabTypes();
 		const BLOCK = templatesUtil.blocks();
-		const DELIMITER = '.';
+		const TREE_ELEM = templatesUtil.configTreeElements();
+		const DELIMITER = '-';
 		//
 		var currentScenarioJson;
 		//
@@ -20,12 +21,24 @@ define([
 			render(configObject, scenariosArray);
 		}
 
-		function getScenarioFromServer(aHref) {
+		function clickScenarioFileEvent(aHref) {
 			$.post('/scenario', {path: aHref})
 				.done(function (scenarioJson) {
 					currentScenarioJson = scenarioJson;
 					updateScenarioTree(scenarioJson);
 				})
+		}
+
+		var prevPropInputId = '';
+
+		function clickScenarioPropertyEvent(aHref) {
+			const currentPropInputId = jqId([aHref]);
+			if (currentPropInputId !== prevPropInputId) {
+				// cssUtil.hide(prevPropInputId);
+				// cssUtil.show(currentPropInputId);
+				$(currentPropInputId).show();
+				prevPropInputId = currentPropInputId;
+			}
 		}
 
 		function backClickEvent() {
@@ -36,20 +49,21 @@ define([
 		function updateScenarioTree(scenarioJson) {
 			const ul = $(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
 			ul.empty();
-			const div = $('<div/>');
+			const div = $('<div/>', {
+				id: plainId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']),
+				class: 'icon-reply'
+			});
 			// todo check
-			cssUtil.addIdByElem(plainId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']), div);
-			cssUtil.addClass('icon-reply', div);
 			ul.append(div);
 			$(jqId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id'])).click(function () {
 				backClickEvent();
 			});
 			cssUtil.addClass(BLOCK.TREE, ul);
 			var addressObject = {};
-			addVisualTreeOfObject(scenarioJson, ul, '-file-id', addressObject);
+			addVisualTreeOfObject(scenarioJson, ul, TREE_ELEM.LEAF, addressObject, '', clickScenarioPropertyEvent);
 			cssUtil.show(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
 			cssUtil.hide(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
-			const form = createFormForTree(addressObject);
+			const form = createFormForTree(addressObject, BLOCK.TREE);
 			$(jqId(['configuration', 'content'])).append(form);
 		}
 
@@ -59,13 +73,13 @@ define([
 			hbUtil.compileAndInsertInside('#main-content', extendedConfTemplate);
 			var ul = $(jqId([BLOCK.TREE, TAB_TYPE.DEFAULTS]));
 			var addressObject = {};
-			addVisualTreeOfObject(configObject, ul, '-prop-id', addressObject);
+			addVisualTreeOfObject(configObject, ul, 'prop', addressObject);
 			ul = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
-			addVisualTreeOfArray(scenariosArray, ul, '-dir-id', getScenarioFromServer);
+			addVisualTreeOfArray(scenariosArray, ul, 'dir', clickScenarioFileEvent);
 		}
 		
-		function fillFileLi(liElem, aHref, aText, aClickEvent, aClickEventParam) {
-			liElem.attr({class: 'file'});
+		function fillLeafLi(liElem, aHref, aText, aClickEvent, aClickEventParam) {
+			liElem.addClass(TREE_ELEM.LEAF);
 			var a = $('<a/>',
 				{
 					class: 'props',
@@ -82,8 +96,8 @@ define([
 		}
 
 		//
-		function fillDirLi(liElem, inputId, labelText) {
-			liElem.attr({class: 'dir'});
+		function fillNodeLi(liElem, inputId, labelText) {
+			liElem.addClass(TREE_ELEM.NODE);
 			var input = $('<input/>', {type: 'checkbox', id: inputId});
 			var label = $('<label/>', {for: inputId});
 			label.text(labelText);
@@ -101,8 +115,9 @@ define([
 			rootUlElem.append(li);
 		}
 
-		//
-		function addVisualTreeOfObject(object, rootUlElem, nodeIdSuffix, addressObject, elemAddress) {
+		// with recursion
+		function addVisualTreeOfObject(object, rootUlElem, nodeIdSuffix,
+		                               addressObject, elemAddress, aClickEvent) {
 			if (!addressObject) {
 				addressObject = {};
 			}
@@ -111,33 +126,35 @@ define([
 			}
 			$.each(object, function (key, value) {
 				function objCase(li) {
-					fillDirLi(li, key + nodeIdSuffix, key);
+					fillNodeLi(li, plainId([key, nodeIdSuffix, 'id']), key);
 					var ul = $('<ul/>');
 					li.append(ul);
 					const aHrefChunk = key + DELIMITER;
-					addVisualTreeOfObject(value, ul, nodeIdSuffix, addressObject, elemAddress + aHrefChunk);
+					addVisualTreeOfObject(value, ul, nodeIdSuffix, addressObject,
+						elemAddress + aHrefChunk, aClickEvent);
 				}
 
 				function notObjCase(li) {
 					const addressObjKey = elemAddress + key;
 					addressObject[addressObjKey] = value;
-					fillFileLi(li, addressObjKey, key);
+					fillLeafLi(li, addressObjKey, key, aClickEvent, addressObjKey);
 				}
 
 				itemProcess(value, objCase, notObjCase, rootUlElem);
 			})
 		}
 
+		// without recursion
 		function addVisualTreeOfArray(array, rootUlElem, nodeIdSuffix, aClickEvent) {
 			$.each(array, function (index, item) {
 				function objCase(liOuter) {
-					$.each(item, function (dirName, filesArr) {
-						fillDirLi(liOuter, dirName + nodeIdSuffix, dirName);
+					$.each(item, function (nodeName, leavesArr) {
+						fillNodeLi(liOuter, plainId([nodeName, nodeIdSuffix, 'id']), nodeName);
 						var ul = $('<ul/>');
-						$.each(filesArr, function (index, fileName) {
+						$.each(leavesArr, function (index, leafName) {
 							var liInner = $('<li/>');
-							var aHref = dirName + DELIMITER + fileName;
-							fillFileLi(liInner, aHref, fileName, aClickEvent, aHref);
+							var aHref = nodeName + DELIMITER + leafName;
+							fillLeafLi(liInner, aHref, leafName, aClickEvent, aHref);
 							ul.append(liInner);
 						});
 						liOuter.append(ul);
@@ -145,40 +162,44 @@ define([
 				}
 
 				function notObjCase(liOuter) {
-					fillFileLi(liOuter, item, item, aClickEvent, item);
+					fillLeafLi(liOuter, item, item, aClickEvent, item);
 				}
 
 				itemProcess(item, objCase, notObjCase, rootUlElem);
 			})
 		}
 
-		function createFormForTree(addressObj) {
-			const form = $('<form/>');
-			const formPlainId = plainId([BLOCK.TREE, 'main', 'form']);
-			cssUtil.addIdByElem(formPlainId, form);
-			cssUtil.addClass('form-horizontal');
+		function createFormForTree(addressObj, treeType) {
+			const form = $('<form/>', {
+				id: plainId([treeType, 'main', 'form']),
+				class: 'form-horizontal'
+			});
 			$.each(addressObj, function (key, value) {
-				const formGroupDiv = $('<div/>');
+				const formGroupDiv = $('<div/>', {
+					id: key,
+					class: 'form-group'
+				});
 				const formGroupDivId = jqId([key]);
-				cssUtil.addIdByElem(key, formGroupDiv);
-				cssUtil.addClass('form-group', formGroupDivId);
-				const label = $('<label/>');
-				label.attr('for', key);
-				label.addClass('col-sm-3');
-				label.addClass('control-label');
-				label.text(key.split('.').slice(-1));
+				const label = $('<label/>', {
+					for: key,
+					class: 'col-sm-3 control-label',
+					text: key.split(DELIMITER).slice(-1)
+				});
 				formGroupDiv.append(label);
-				const inputDiv = $('<div/>');
-				inputDiv.addClass('col-sm-9');
-				const input = $('<input/>');
-				input.attr('type', 'text');
-				input.addClass('form-control');
-				input.attr('name', key);
-				input.val(value);
-				input.attr('placeholder', "Enter '" + key + "' property");
+				const inputDiv = $('<div/>', {
+					class: 'col-sm-9'
+				});
+				const input = $('<input/>', {
+					type: 'text',
+					class: 'form-control',
+					name: key,
+					value: value,
+					placeholder: "Enter '" + key + "' property"
+				});
 				formGroupDiv.append(inputDiv);
 				inputDiv.append(input);
 				form.append(formGroupDiv);
+				formGroupDiv.hide();
 			});
 			return form;
 		}
