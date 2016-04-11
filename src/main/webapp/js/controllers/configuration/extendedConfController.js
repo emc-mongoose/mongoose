@@ -13,7 +13,7 @@ define([
 		const TAB_TYPE = templatesUtil.tabTypes();
 		const BLOCK = templatesUtil.blocks();
 		const TREE_ELEM = templatesUtil.configTreeElements();
-		const DELIMITER = '-';
+		const DELIMITER = '.';
 		//
 		var currentScenarioJson;
 		//
@@ -32,11 +32,11 @@ define([
 		var prevPropInputId = '';
 
 		function clickScenarioPropertyEvent(aHref) {
+			aHref = aHref.replaceAll('\\.', '\\\.');
 			const currentPropInputId = jqId([aHref]);
 			if (currentPropInputId !== prevPropInputId) {
-				// cssUtil.hide(prevPropInputId);
-				// cssUtil.show(currentPropInputId);
-				$(currentPropInputId).show();
+				cssUtil.hide(prevPropInputId);
+				cssUtil.show(currentPropInputId);
 				prevPropInputId = currentPropInputId;
 			}
 		}
