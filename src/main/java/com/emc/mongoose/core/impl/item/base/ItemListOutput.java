@@ -1,12 +1,11 @@
 package com.emc.mongoose.core.impl.item.base;
 //
-import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.item.base.Item;
-
+//
+import com.emc.mongoose.common.io.Output;
+//
 import java.io.IOException;
 import java.util.List;
-//
-//
 /**
  Created by kurila on 18.06.15.
  Writable collection of the data items.

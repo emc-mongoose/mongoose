@@ -13,18 +13,18 @@ import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.v1.item.base.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.core.api.v1.item.data.ContentSource;
-import com.emc.mongoose.core.api.v1.load.builder.DataLoadBuilder;
-import com.emc.mongoose.core.api.v1.load.builder.LoadBuilder;
+import com.emc.mongoose.core.api.item.data.ContentSource;
+import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
+import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
-import com.emc.mongoose.core.api.v1.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.v1.load.generator.LoadState;
-import com.emc.mongoose.core.api.v1.load.metrics.IOStats;
-import com.emc.mongoose.core.impl.v1.item.ItemTypeUtil;
-import com.emc.mongoose.core.impl.v1.item.base.ItemCsvFileOutput;
-import com.emc.mongoose.core.impl.v1.item.data.ContentSourceBase;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.load.generator.LoadState;
+import com.emc.mongoose.core.api.load.metrics.IOStats;
+import com.emc.mongoose.core.impl.item.ItemTypeUtil;
+import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
 import org.apache.commons.lang.StringUtils;

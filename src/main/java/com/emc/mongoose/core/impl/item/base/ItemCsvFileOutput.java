@@ -1,14 +1,13 @@
 package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemFileOutput;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-
+import com.emc.mongoose.core.api.item.base.ItemFileOutput;
+//
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-//
 /**
  Created by kurila on 30.06.15.
  */

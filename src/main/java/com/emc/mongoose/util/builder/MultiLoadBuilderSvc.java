@@ -6,11 +6,11 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.core.api.v1.item.container.Directory;
-import com.emc.mongoose.core.api.v1.item.data.FileItem;
-import com.emc.mongoose.core.api.v1.io.conf.IoConfig;
-import com.emc.mongoose.core.api.v1.load.builder.LoadBuilder;
-import com.emc.mongoose.core.api.v1.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.item.container.Directory;
+import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
+import com.emc.mongoose.core.api.load.builder.LoadBuilder;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //

@@ -1,13 +1,12 @@
 package com.emc.mongoose.core.impl.item.base;
 //
-import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.item.base.Item;
-
+//
+import com.emc.mongoose.common.io.Output;
+//
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.List;
-//
-//
 /**
  The data item output implementation serializing the data items into the specified stream
  */

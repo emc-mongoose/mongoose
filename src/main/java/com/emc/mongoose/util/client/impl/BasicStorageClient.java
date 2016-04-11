@@ -6,11 +6,11 @@ import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.core.api.v1.item.base.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.core.api.v1.load.builder.DataLoadBuilder;
-import com.emc.mongoose.core.api.v1.load.builder.LoadBuilder;
-import com.emc.mongoose.core.api.v1.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
+import com.emc.mongoose.core.api.load.builder.LoadBuilder;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 //
 import com.emc.mongoose.util.client.api.StorageClient;

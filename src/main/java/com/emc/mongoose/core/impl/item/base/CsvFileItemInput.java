@@ -1,11 +1,12 @@
 package com.emc.mongoose.core.impl.item.base;
 //
-import com.emc.mongoose.core.api.item.base.FileItemInput;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.data.ContentSource;
+//
+import com.emc.mongoose.core.api.item.base.FileItemInput;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -24,7 +25,7 @@ implements FileItemInput<T> {
 	/**
 	 @param itemsFilePath the input stream to get the data item records from
 	 @param itemCls the particular data item implementation class used to parse the records
-	 @throws IOException
+	 @throws java.io.IOException
 	 @throws NoSuchMethodException */
 	public CsvFileItemInput(
 		final Path itemsFilePath, final Class<? extends T> itemCls, final ContentSource contentSrc

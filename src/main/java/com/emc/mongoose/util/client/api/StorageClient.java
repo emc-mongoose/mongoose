@@ -1,7 +1,7 @@
 package com.emc.mongoose.util.client.api;
 //
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.core.api.v1.item.base.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.common.io.Output;
 //
 import java.io.Closeable;

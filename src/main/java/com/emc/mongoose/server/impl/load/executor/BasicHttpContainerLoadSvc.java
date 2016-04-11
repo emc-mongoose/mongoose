@@ -7,12 +7,12 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.v1.item.container.Container;
-import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
-import com.emc.mongoose.core.impl.v1.load.executor.BasicHttpContainerLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.BasicHttpContainerLoadExecutor;
 //
 import com.emc.mongoose.server.api.load.executor.HttpContainerLoadSvc;
 //

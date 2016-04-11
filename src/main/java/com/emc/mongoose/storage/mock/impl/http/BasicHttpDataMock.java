@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.http;
 //
-import com.emc.mongoose.core.api.v1.item.data.ContentSource;
+import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.BasicMutableDataItemMock;
 //

@@ -1,6 +1,6 @@
 package com.emc.mongoose.system.base;
 //
-import com.emc.mongoose.core.api.v1.item.data.FileItem;
+import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicStorageClientBuilder;

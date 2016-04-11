@@ -1,17 +1,16 @@
 package com.emc.mongoose.core.impl.item.base;
 //
-import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.item.base.Item;
+//
 import com.emc.mongoose.core.api.item.data.ContentSource;
-
+import com.emc.mongoose.common.io.Output;
+//
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-//
-//
 /**
  The data item output writing into the specified file human-readable data item records using the CSV
  format

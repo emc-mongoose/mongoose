@@ -3,12 +3,12 @@ package com.emc.mongoose.storage.adapter.s3;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.v1.item.container.Container;
-import com.emc.mongoose.core.api.v1.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.v1.item.data.ContainerHelper;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.item.data.ContainerHelper;
 //
-import com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.impl.v1.item.data.GenericContainerItemInputBase;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.impl.item.data.GenericContainerItemInputBase;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;

@@ -8,12 +8,12 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.v1.load.metrics.IOStats;
+import com.emc.mongoose.core.api.load.metrics.IOStats;
 //
-import com.emc.mongoose.core.impl.v1.load.metrics.CustomJmxReporter;
-import com.emc.mongoose.core.impl.v1.load.metrics.CustomMeter;
-import com.emc.mongoose.core.impl.v1.load.metrics.CustomMetricRegistry;
-import com.emc.mongoose.core.impl.v1.load.metrics.ResumableUserTimeClock;
+import com.emc.mongoose.core.impl.load.metrics.CustomJmxReporter;
+import com.emc.mongoose.core.impl.load.metrics.CustomMeter;
+import com.emc.mongoose.core.impl.load.metrics.CustomMetricRegistry;
+import com.emc.mongoose.core.impl.load.metrics.ResumableUserTimeClock;
 //
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;

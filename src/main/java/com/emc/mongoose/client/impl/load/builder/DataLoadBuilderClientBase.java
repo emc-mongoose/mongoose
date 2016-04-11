@@ -13,13 +13,13 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.core.api.v1.item.data.DataItem;
-import com.emc.mongoose.core.api.v1.item.data.FileDataItemInput;
-import com.emc.mongoose.core.api.v1.io.conf.IoConfig;
+import com.emc.mongoose.core.api.item.data.DataItem;
+import com.emc.mongoose.core.api.item.data.FileDataItemInput;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 //
-import com.emc.mongoose.core.api.v1.load.builder.DataLoadBuilder;
-import com.emc.mongoose.core.impl.v1.item.base.BasicItemNameInput;
-import com.emc.mongoose.core.impl.v1.item.data.NewDataItemInput;
+import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
+import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
 //

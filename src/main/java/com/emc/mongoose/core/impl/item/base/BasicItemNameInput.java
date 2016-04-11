@@ -1,9 +1,10 @@
 package com.emc.mongoose.core.impl.item.base;
 //
-import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.io.value.BasicValueInput;
 import com.emc.mongoose.common.math.MathUtil;
+//
 import com.emc.mongoose.common.net.ServiceUtil;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
 /**
  Created by kurila on 18.12.15.
  */

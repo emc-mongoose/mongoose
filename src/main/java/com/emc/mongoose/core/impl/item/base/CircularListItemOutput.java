@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-
+//
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ extends ItemListOutput<T> {
 	}
 	/**
 	 @param item the data item to put
-	 @throws IOException if the destination collection fails to add the data item
+	 @throws java.io.IOException if the destination collection fails to add the data item
 	 */
 	@Override
 	public void put(final T item)
@@ -44,7 +44,7 @@ extends ItemListOutput<T> {
 	/**
 	 Bulk circular put method
 	 @param buffer the list of the items to put in a batch mode
-	 @throws IOException if the destination collection fails to add the data items
+	 @throws java.io.IOException if the destination collection fails to add the data items
 	 @return the size of the buffer to put
 	 */
 	@Override

@@ -2,18 +2,17 @@ package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
+//
 import com.emc.mongoose.core.api.item.base.Item;
+//
 import com.emc.mongoose.core.api.item.base.ItemBuffer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-//
-//
-//
 /**
  The blocking queue wrapped in order to act as data item output from the tail and as data item input
  from the head.
@@ -68,7 +67,8 @@ implements ItemBuffer<T> {
 	 @throws IOException doesn't throw
 	 */
 	@Override
-	public LimitedQueueItemBuffer<T> getInput()
+	public
+	LimitedQueueItemBuffer<T> getInput()
 	throws IOException {
 		return this;
 	}

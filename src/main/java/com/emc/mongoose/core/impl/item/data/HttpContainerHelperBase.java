@@ -2,24 +2,23 @@ package com.emc.mongoose.core.impl.item.data;
 //
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
+//
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.ContainerHelper;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.item.data.ContainerHelper;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+//
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Calendar;
 import java.util.Date;
-//
-//
-//
 /**
  Created by kurila on 10.07.15.
  */

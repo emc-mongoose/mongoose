@@ -1,7 +1,8 @@
 package com.emc.mongoose.core.impl.item.data;
 //
-import com.emc.mongoose.core.api.item.data.ContentSource;
+//
 import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.api.item.data.ContentSource;
 /**
  Created by andrey on 22.11.15.
  */

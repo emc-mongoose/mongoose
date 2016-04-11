@@ -1,9 +1,9 @@
 package com.emc.mongoose.storage.mock.impl.http.request;
 
-import com.emc.mongoose.core.api.v1.item.data.ContentSource;
-import com.emc.mongoose.core.impl.v1.item.data.BasicDataItem;
-import com.emc.mongoose.core.impl.v1.item.data.BasicMutableDataItem;
-import com.emc.mongoose.core.impl.v1.item.data.ContentSourceBase;
+import com.emc.mongoose.core.api.item.data.ContentSource;
+import com.emc.mongoose.core.impl.item.data.BasicDataItem;
+import com.emc.mongoose.core.impl.item.data.BasicMutableDataItem;
+import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 
 import java.io.IOException;

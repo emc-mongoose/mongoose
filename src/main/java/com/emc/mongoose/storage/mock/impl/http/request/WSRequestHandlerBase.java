@@ -4,12 +4,12 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import static com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig.VALUE_RANGE_PREFIX;
-import static com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig.VALUE_RANGE_CONCAT;
+import static com.emc.mongoose.core.api.io.conf.HttpRequestConfig.VALUE_RANGE_PREFIX;
+import static com.emc.mongoose.core.api.io.conf.HttpRequestConfig.VALUE_RANGE_CONCAT;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.core.api.v1.item.data.ContentSource;
-import com.emc.mongoose.core.api.v1.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.impl.v1.item.data.ContentSourceBase;
+import com.emc.mongoose.core.api.item.data.ContentSource;
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;

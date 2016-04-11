@@ -7,10 +7,10 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.v1.item.base.Item;
+import com.emc.mongoose.core.api.item.base.Item;
 //
-import com.emc.mongoose.core.impl.v1.load.metrics.BasicIOStats;
-import com.emc.mongoose.core.impl.v1.load.metrics.IOStatsBase;
+import com.emc.mongoose.core.impl.load.metrics.BasicIOStats;
+import com.emc.mongoose.core.impl.load.metrics.IOStatsBase;
 //
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //

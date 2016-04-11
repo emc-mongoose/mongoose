@@ -2,15 +2,14 @@ package com.emc.mongoose.core.impl.item.data;
 // mongoose-common
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.Markers;
+// mongoose-core-api
 import com.emc.mongoose.core.api.item.data.ContentSource;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.nio.ByteBuffer;
-// mongoose-core-api
-//
-//
 /**
  Created by kurila on 23.07.14.
  A uniform data source for producing uniform data items.

@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.api.item.data;
 //
-import com.emc.mongoose.core.api.v1.item.base.FileItemInput;
+import com.emc.mongoose.core.api.item.base.FileItemInput;
 /**
  Created by kurila on 11.08.15.
  */
