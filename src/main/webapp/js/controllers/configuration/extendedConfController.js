@@ -44,6 +44,7 @@ define([
 		function backClickEvent() {
 			cssUtil.show(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
 			cssUtil.hide(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
+			cssUtil.hide('.' + plainId(['form', TAB_TYPE.SCENARIOS, 'property']))
 		}
 
 		function updateScenarioTree(scenarioJson) {
@@ -182,7 +183,7 @@ define([
 				const formGroupDivId = jqId([key]);
 				const label = $('<label/>', {
 					for: key,
-					class: 'col-sm-3 control-label',
+					class: 'col-sm-3 control-label '  + plainId(['form', TAB_TYPE.SCENARIOS, 'property']),
 					text: key.split(DELIMITER).slice(-1)
 				});
 				formGroupDiv.append(label);
