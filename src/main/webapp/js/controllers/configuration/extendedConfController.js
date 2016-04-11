@@ -25,21 +25,22 @@ define([
 				.done(function (scenarioJson) {
 					currentScenarioJson = scenarioJson;
 					updateScenarioTree(scenarioJson);
+
 				})
 		}
 
 		function backClickEvent() {
-			cssUtil.show([BLOCK.TREE, TAB_TYPE.SCENARIOS]);
-			cssUtil.hide([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']);
+			cssUtil.show(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
+			cssUtil.hide(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
 		}
 
 		function updateScenarioTree(scenarioJson) {
 			const ul = $(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
 			ul.empty();
-			const span = $('<span/>');
-			cssUtil.addId(plainId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']));
-			cssUtil.addClass('icon-reply', span);
-			ul.append(span);
+			const div = $('<div/>');
+			cssUtil.addId(plainId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']), div);
+			cssUtil.addClass('icon-reply', div);
+			ul.append(div);
 			$(jqId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id'])).click(function () {
 				backClickEvent();
 			});
@@ -47,7 +48,7 @@ define([
 			var addressObject = {};
 			addVisualTreeOfObject(scenarioJson, ul, '-file-id', addressObject);
 			cssUtil.show(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
-			cssUtil.hide([BLOCK.TREE, TAB_TYPE.SCENARIOS]);
+			cssUtil.hide(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
 		}
 
 		//
@@ -72,6 +73,7 @@ define([
 			if (aClickEvent) {
 				a.click(function () {
 					aClickEvent(aClickEventParam);
+
 				});
 			}
 			liElem.append(a);
