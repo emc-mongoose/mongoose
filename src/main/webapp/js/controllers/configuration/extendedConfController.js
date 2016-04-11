@@ -25,7 +25,6 @@ define([
 				.done(function (scenarioJson) {
 					currentScenarioJson = scenarioJson;
 					updateScenarioTree(scenarioJson);
-
 				})
 		}
 
@@ -38,7 +37,8 @@ define([
 			const ul = $(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
 			ul.empty();
 			const div = $('<div/>');
-			cssUtil.addId(plainId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']), div);
+			// todo check
+			cssUtil.addIdByElem(plainId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']), div);
 			cssUtil.addClass('icon-reply', div);
 			ul.append(div);
 			$(jqId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id'])).click(function () {
@@ -49,6 +49,8 @@ define([
 			addVisualTreeOfObject(scenarioJson, ul, '-file-id', addressObject);
 			cssUtil.show(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
 			cssUtil.hide(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
+			const form = createFormForTree(addressObject);
+			$(jqId(['configuration', 'content'])).append(form);
 		}
 
 		//
@@ -149,7 +151,38 @@ define([
 				itemProcess(item, objCase, notObjCase, rootUlElem);
 			})
 		}
-		//
+
+		function createFormForTree(addressObj) {
+			const form = $('<form/>');
+			const formPlainId = plainId([BLOCK.TREE, 'main', 'form']);
+			cssUtil.addIdByElem(formPlainId, form);
+			cssUtil.addClass('form-horizontal');
+			$.each(addressObj, function (key, value) {
+				const formGroupDiv = $('<div/>');
+				const formGroupDivId = jqId([key]);
+				cssUtil.addIdByElem(key, formGroupDiv);
+				cssUtil.addClass('form-group', formGroupDivId);
+				const label = $('<label/>');
+				label.attr('for', key);
+				label.addClass('col-sm-3');
+				label.addClass('control-label');
+				label.text(key.split('.').slice(-1));
+				formGroupDiv.append(label);
+				const inputDiv = $('<div/>');
+				inputDiv.addClass('col-sm-9');
+				const input = $('<input/>');
+				input.attr('type', 'text');
+				input.addClass('form-control');
+				input.attr('name', key);
+				input.val(value);
+				input.attr('placeholder', "Enter '" + key + "' property");
+				formGroupDiv.append(inputDiv);
+				inputDiv.append(input);
+				form.append(formGroupDiv);
+			});
+			return form;
+		}
+
 		return {
 			setup: setup
 		};
