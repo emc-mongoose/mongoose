@@ -13,7 +13,8 @@ define([
 		const TAB_TYPE = templatesUtil.tabTypes();
 		const BLOCK = templatesUtil.blocks();
 		const TREE_ELEM = templatesUtil.configTreeElements();
-		const DELIMITER = '.';
+		const PATH_DELIMITER = '/';
+		const PROPERTY_DELIMITER = '.';
 		//
 		var currentScenarioJson;
 		//
@@ -44,7 +45,8 @@ define([
 		function backClickEvent() {
 			cssUtil.show(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
 			cssUtil.hide(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
-			cssUtil.hide('.' + plainId(['form', TAB_TYPE.SCENARIOS, 'property']))
+			cssUtil.hide('.' + plainId(['form', TAB_TYPE.SCENARIOS, 'property']));
+			$(jqId(['configuration', 'content'])).empty();
 		}
 
 		function updateScenarioTree(scenarioJson) {
@@ -54,17 +56,16 @@ define([
 				id: plainId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']),
 				class: 'icon-reply'
 			});
-			// todo check
 			ul.append(div);
 			$(jqId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id'])).click(function () {
 				backClickEvent();
 			});
 			cssUtil.addClass(BLOCK.TREE, ul);
 			var addressObject = {};
-			addVisualTreeOfObject(scenarioJson, ul, TREE_ELEM.LEAF, addressObject, '', clickScenarioPropertyEvent);
+			addVisualTreeOfObject(scenarioJson, ul, TREE_ELEM.LEAF, addressObject, PROPERTY_DELIMITER, '', clickScenarioPropertyEvent);
 			cssUtil.show(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
 			cssUtil.hide(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
-			const form = createFormForTree(addressObject, BLOCK.TREE);
+			const form = createFormForTree(addressObject, BLOCK.TREE, PROPERTY_DELIMITER);
 			$(jqId(['configuration', 'content'])).append(form);
 		}
 
@@ -74,9 +75,9 @@ define([
 			hbUtil.compileAndInsertInside('#main-content', extendedConfTemplate);
 			var ul = $(jqId([BLOCK.TREE, TAB_TYPE.DEFAULTS]));
 			var addressObject = {};
-			addVisualTreeOfObject(configObject, ul, 'prop', addressObject);
+			addVisualTreeOfObject(configObject, ul, 'prop', addressObject, PROPERTY_DELIMITER);
 			ul = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
-			addVisualTreeOfArray(scenariosArray, ul, 'dir', clickScenarioFileEvent);
+			addVisualTreeOfArray(scenariosArray, ul, 'dir', PATH_DELIMITER, clickScenarioFileEvent);
 		}
 		
 		function fillLeafLi(liElem, aHref, aText, aClickEvent, aClickEventParam) {
@@ -116,9 +117,10 @@ define([
 			rootUlElem.append(li);
 		}
 
-		// with recursion
+		// with recursion, pay attention to the internal call if the function signature is being
+		// changed
 		function addVisualTreeOfObject(object, rootUlElem, nodeIdSuffix,
-		                               addressObject, elemAddress, aClickEvent) {
+		                               addressObject, delimiter, elemAddress, aClickEvent) {
 			if (!addressObject) {
 				addressObject = {};
 			}
@@ -130,8 +132,8 @@ define([
 					fillNodeLi(li, plainId([key, nodeIdSuffix, 'id']), key);
 					var ul = $('<ul/>');
 					li.append(ul);
-					const aHrefChunk = key + DELIMITER;
-					addVisualTreeOfObject(value, ul, nodeIdSuffix, addressObject,
+					const aHrefChunk = key + delimiter;
+					addVisualTreeOfObject(value, ul, nodeIdSuffix, addressObject, delimiter,
 						elemAddress + aHrefChunk, aClickEvent);
 				}
 
@@ -146,7 +148,7 @@ define([
 		}
 
 		// without recursion
-		function addVisualTreeOfArray(array, rootUlElem, nodeIdSuffix, aClickEvent) {
+		function addVisualTreeOfArray(array, rootUlElem, nodeIdSuffix, delimiter, aClickEvent) {
 			$.each(array, function (index, item) {
 				function objCase(liOuter) {
 					$.each(item, function (nodeName, leavesArr) {
@@ -154,7 +156,7 @@ define([
 						var ul = $('<ul/>');
 						$.each(leavesArr, function (index, leafName) {
 							var liInner = $('<li/>');
-							var aHref = nodeName + DELIMITER + leafName;
+							var aHref = nodeName + delimiter + leafName;
 							fillLeafLi(liInner, aHref, leafName, aClickEvent, aHref);
 							ul.append(liInner);
 						});
@@ -170,7 +172,7 @@ define([
 			})
 		}
 
-		function createFormForTree(addressObj, treeType) {
+		function createFormForTree(addressObj, treeType, delimiter) {
 			const form = $('<form/>', {
 				id: plainId([treeType, 'main', 'form']),
 				class: 'form-horizontal'
@@ -184,7 +186,7 @@ define([
 				const label = $('<label/>', {
 					for: key,
 					class: 'col-sm-3 control-label '  + plainId(['form', TAB_TYPE.SCENARIOS, 'property']),
-					text: key.split(DELIMITER).slice(-1)
+					text: key.split(delimiter).slice(-1)
 				});
 				formGroupDiv.append(label);
 				const inputDiv = $('<div/>', {
