@@ -27,6 +27,7 @@ define([
 				.done(function (scenarioJson) {
 					currentScenarioJson = scenarioJson;
 					updateScenarioTree(scenarioJson);
+					$(jqId(['config', 'file', 'name', TAB_TYPE.SCENARIOS])).val(aHref);
 				})
 		}
 
@@ -47,6 +48,7 @@ define([
 			cssUtil.hide(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
 			cssUtil.hide('.' + plainId(['form', TAB_TYPE.SCENARIOS, 'property']));
 			$(jqId(['configuration', 'content'])).empty();
+			$(jqId(['config', 'file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
 		}
 
 		function updateScenarioTree(scenarioJson) {
