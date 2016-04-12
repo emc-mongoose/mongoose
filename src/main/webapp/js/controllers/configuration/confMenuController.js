@@ -86,13 +86,14 @@ define([
 				}
 			})
 		}
-
-		var content = '';
+		
+		var fullFileName = '';
 		
 		const reader = new FileReader();
 		reader.onload = function (data) {
 			content = data.target.result;
-			alert(content);
+			const json = JSON.parse(content);
+			extendedConfController.openedJsonFileProcess(json, fullFileName);
 		};
 		reader.onerror = function (data) {
 			console.error("File couldn't be read. Code" + data.target.error.code);
@@ -100,10 +101,9 @@ define([
 		
 		function openFileEvent(data) {
 			const files = data.target.files; // FileList object
-			
-			$.each(files, function (key, value) {
-				reader.readAsText(value);
-			})
+			const file = files[0];
+			fullFileName = file.name;
+			reader.readAsText(file);
 		}
 		
 		renderConfMenu();

@@ -51,6 +51,12 @@ define([
 			$(jqId(['config', 'file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
 		}
 
+		function openedJsonFileProcess(scenarioJson, fullFileName) {
+			currentScenarioJson = scenarioJson;
+			updateScenarioTree(scenarioJson);
+			$(jqId(['config', 'file', 'name', TAB_TYPE.SCENARIOS])).val(fullFileName);
+		}
+
 		function updateScenarioTree(scenarioJson) {
 			const ul = $(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
 			ul.empty();
@@ -210,6 +216,7 @@ define([
 		}
 
 		return {
-			setup: setup
+			setup: setup,
+			openedJsonFileProcess: openedJsonFileProcess
 		};
 	});
