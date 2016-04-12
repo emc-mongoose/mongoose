@@ -55,9 +55,11 @@ define([
 			}
 			
 			function passClick(tabName) {
+				const openInputFileId = buttonJqId(BUTTON_TYPE.OPEN_INPUT_FILE, tabName);
 				$(buttonJqId(BUTTON_TYPE.OPEN, tabName)).click(function () {
-					$(buttonJqId(BUTTON_TYPE.OPEN_INPUT_FILE, tabName)).trigger('click')
-				})
+					$(openInputFileId).trigger('click')
+				});
+				$(openInputFileId).change(openFileEvent);
 			}
 			
 			function fillTheField(tabName) {
@@ -73,7 +75,8 @@ define([
 			$.each(CONFIG_TABS, function (index, value) {
 				passClick(value);
 				fillTheField(value);
-			})
+			});
+			
 		}
 		function hideExtraButtons(currentTabType) {
 			$.each(CONFIG_TABS, function (index, value) {
@@ -83,6 +86,26 @@ define([
 				}
 			})
 		}
+
+		var content = '';
+		
+		const reader = new FileReader();
+		reader.onload = function (data) {
+			content = data.target.result;
+			alert(content);
+		};
+		reader.onerror = function (data) {
+			console.error("File couldn't be read. Code" + data.target.error.code);
+		};
+		
+		function openFileEvent(data) {
+			const files = data.target.files; // FileList object
+			
+			$.each(files, function (key, value) {
+				reader.readAsText(value);
+			})
+		}
+		
 		renderConfMenu();
 		renderCommonButtons();
 		bindOpenButtonEvent();
