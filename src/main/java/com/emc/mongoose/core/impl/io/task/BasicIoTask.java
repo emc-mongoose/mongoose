@@ -4,8 +4,6 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.load.metrics.IoStats;
 //
@@ -14,15 +12,13 @@ import org.apache.logging.log4j.Logger;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicIoTask<T extends Item, C extends Container<?>, X extends IoConfig<?, C>>
+public class BasicIoTask<T extends Item>
 implements IoTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final X ioConfig;
 	protected final LoadType ioType;
 	protected final T item;
-	protected final String nodeAddr;
 	//
 	protected volatile IoTask.Status status = IoTask.Status.FAIL_UNKNOWN;
 	protected volatile long
@@ -30,16 +26,9 @@ implements IoTask<T> {
 		respTimeStart = 0, respDataTimeStart = 0, respTimeDone = 0,
 		countBytesDone = 0;
 	//
-	public BasicIoTask(final T item, final String nodeAddr, final X ioConfig) {
-		this.ioConfig = ioConfig;
-		this.ioType = ioConfig.getLoadType();
+	public BasicIoTask(final T item, final LoadType ioType) {
+		this.ioType = ioType;
 		this.item = item;
-		this.nodeAddr = nodeAddr;
-	}
-	//
-	@Override
-	public final String getNodeAddr() {
-		return nodeAddr;
 	}
 	//
 	@Override
@@ -83,7 +72,6 @@ implements IoTask<T> {
 			LOG.info(
 				Markers.PERF_TRACE,
 				strBuilder
-					.append(nodeAddr == null ? "" : nodeAddr).append(',')
 					.append(item.getName()).append(',')
 					.append(countBytesDone).append(',')
 					.append(status.code).append(',')

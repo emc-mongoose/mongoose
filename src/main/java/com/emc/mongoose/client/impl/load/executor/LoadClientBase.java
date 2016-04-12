@@ -13,7 +13,7 @@ import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.load.generator.LoadState;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
+import com.emc.mongoose.core.impl.load.executor.v1.LoadExecutorBase;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;

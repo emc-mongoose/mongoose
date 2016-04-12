@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.executor;
+package com.emc.mongoose.core.impl.load.executor.v1;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.concurrent.LifeCycle;

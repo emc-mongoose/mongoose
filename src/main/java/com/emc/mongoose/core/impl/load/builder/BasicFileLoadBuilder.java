@@ -11,8 +11,8 @@ import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.conf.BasicFileIoConfig;
-import com.emc.mongoose.core.impl.load.executor.BasicFileLoadExecutor;
-import com.emc.mongoose.core.impl.load.executor.BasicMixedFileLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.v1.BasicFileLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.v1.BasicMixedFileLoadExecutor;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

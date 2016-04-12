@@ -13,6 +13,8 @@ import org.apache.logging.log4j.Marker;
 import java.io.Closeable;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 09.05.14.
  A producer feeding the generated items to its consumer.
@@ -20,6 +22,9 @@ import java.util.List;
  */
 public interface LoadGenerator<T extends Item, A extends IoTask<T>>
 extends LifeCycle, Closeable {
+
+	int DEFAULT_RESULTS_QUEUE_SIZE = 0x10000;
+	Map<String, List<LoadState<? extends Item>>> RESTORED_STATES = new ConcurrentHashMap<>();
 
 	// immutable properties
 
@@ -44,7 +49,7 @@ extends LifeCycle, Closeable {
 	Input<T> getInput()
 	throws RemoteException;
 
-	LoadExecutor<T> getExecutor()
+	LoadExecutor<T, A> getExecutor()
 	throws RemoteException;
 
 	IoStats.Snapshot getStatsSnapshot()
@@ -64,6 +69,12 @@ extends LifeCycle, Closeable {
 	throws RemoteException;
 
 	int ioTaskCompletedBatch(final List<A> ioTasks, final int from, final int to)
+	throws RemoteException;
+
+	void ioTaskCancelled(final int n)
+	throws RemoteException;
+
+	void ioTaskFailed(final int n, final Throwable e)
 	throws RemoteException;
 
 	void logMetrics(Marker marker)

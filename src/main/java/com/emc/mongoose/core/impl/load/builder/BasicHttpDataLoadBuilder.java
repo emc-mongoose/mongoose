@@ -8,14 +8,14 @@ import com.emc.mongoose.common.log.Markers;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.impl.load.executor.BasicHttpDataLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.v1.BasicHttpDataLoadExecutor;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.builder.HttpDataLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
-import com.emc.mongoose.core.impl.load.executor.BasicMixedHttpDataLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.v1.BasicMixedHttpDataLoadExecutor;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

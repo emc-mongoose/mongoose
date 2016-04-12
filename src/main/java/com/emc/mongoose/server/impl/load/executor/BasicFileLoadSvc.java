@@ -14,7 +14,7 @@ import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 //
-import com.emc.mongoose.core.impl.load.executor.BasicFileLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.v1.BasicFileLoadExecutor;
 //
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 //

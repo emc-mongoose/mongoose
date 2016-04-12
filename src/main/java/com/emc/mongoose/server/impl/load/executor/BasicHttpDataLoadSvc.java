@@ -15,7 +15,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.executor.BasicHttpDataLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.v1.BasicHttpDataLoadExecutor;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 //

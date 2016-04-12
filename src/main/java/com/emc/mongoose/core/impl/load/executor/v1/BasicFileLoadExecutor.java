@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.executor;
+package com.emc.mongoose.core.impl.load.executor.v1;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //

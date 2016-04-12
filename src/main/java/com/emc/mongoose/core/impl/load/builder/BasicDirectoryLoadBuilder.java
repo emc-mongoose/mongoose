@@ -9,7 +9,7 @@ import com.emc.mongoose.core.api.load.builder.DirectoryLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.DirectoryLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.conf.BasicFileIoConfig;
-import com.emc.mongoose.core.impl.load.executor.BasicDirectoryLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.v1.BasicDirectoryLoadExecutor;
 //
 import java.rmi.RemoteException;
 /**

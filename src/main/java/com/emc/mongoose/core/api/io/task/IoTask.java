@@ -31,8 +31,6 @@ public interface IoTask<T extends Item>  {
 		}
 	}
 	//
-	String getNodeAddr();
-	//
 	LoadType getLoadType();
 	//
 	T getItem();

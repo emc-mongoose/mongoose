@@ -11,19 +11,15 @@ import java.io.Serializable;
 public interface LoadState<T extends Item>
 extends Serializable {
 	//
-	int getLoadNumber();
-	//
 	AppConfig getAppConfig();
 	//
 	IoStats.Snapshot getStatsSnapshot();
 	//
 	T getLastDataItem();
 	//
-	boolean isLimitReached(final AppConfig appConfig);
+	boolean isLimitReached(final long countLimit, final long timeLimitMicroSeconds);
 	//
 	interface Builder<T extends Item, U extends LoadState<T>> {
-		//
-		Builder<T, U> setLoadNumber(final int loadNumber);
 		//
 		Builder<T, U> setAppConfig(final AppConfig appConfig);
 		//

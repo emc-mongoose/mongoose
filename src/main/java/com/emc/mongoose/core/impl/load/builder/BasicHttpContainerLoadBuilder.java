@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.load.builder.HttpContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.HttpContainerLoadExecutor;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
-import com.emc.mongoose.core.impl.load.executor.BasicHttpContainerLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.v1.BasicHttpContainerLoadExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.rmi.RemoteException;

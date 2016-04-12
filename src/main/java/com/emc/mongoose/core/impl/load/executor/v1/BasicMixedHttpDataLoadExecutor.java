@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.executor;
+package com.emc.mongoose.core.impl.load.executor.v1;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
@@ -8,20 +8,23 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.io.conf.FileIoConfig;
+//
+import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IoTask;
-import com.emc.mongoose.core.api.item.container.Directory;
-import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
+import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
+//
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 import com.emc.mongoose.core.api.load.metrics.IoStats;
 import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
+//
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
-
+//
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -33,53 +36,55 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
- Created by kurila on 05.04.16.
+ Created by kurila on 29.03.16.
  */
-public class BasicMixedFileLoadExecutor<F extends FileItem>
-extends BasicFileLoadExecutor<F>
-implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
+public class BasicMixedHttpDataLoadExecutor<T extends HttpDataItem>
+extends BasicHttpDataLoadExecutor<T>
+implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final WeightBarrier<LoadType> barrier;
 	private final Map<LoadType, Integer> loadTypeWeights;
-	private final Map<LoadType, FileIoConfig<F, ? extends Directory<F>>>
+	private final Map<LoadType, HttpRequestConfig<T, ? extends Container<T>>>
 		reqConfigMap = new HashMap<>();
-	protected final Map<LoadType, FileLoadExecutor<F>>
+	protected final Map<LoadType, HttpDataLoadExecutor<T>>
 		loadExecutorMap = new HashMap<>();
 	//
-	public BasicMixedFileLoadExecutor(
-		final AppConfig appConfig, final FileIoConfig<F, ? extends Directory<F>> reqConfig,
-		final int threadCount, final long maxCount, final float rateLimit,
+	public BasicMixedHttpDataLoadExecutor(
+		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
+		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
-		final Map<LoadType, Integer> loadTypeWeightMap, final Map<LoadType, Input<F>> itemInputMap
+		final Map<LoadType, Integer> loadTypeWeightMap, final Map<LoadType, Input<T>> itemInputMap
 	) {
 		super(
-			appConfig, reqConfig, threadCount, null, maxCount, rateLimit, sizeConfig, rangesConfig
+			appConfig, reqConfig, addrs, threadCount, null, maxCount, rateLimit, sizeConfig,
+			rangesConfig
 		);
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
 		this.barrier = new WeightBarrier<>(loadTypeWeights, isInterrupted);
 		for(final LoadType nextLoadType : loadTypeWeights.keySet()) {
-			final FileIoConfig<F, ? extends Directory<F>> reqConfigCopy;
+			final HttpRequestConfig<T, ? extends Container<T>> reqConfigCopy;
 			try {
-				reqConfigCopy = (FileIoConfig<F, ? extends Directory<F>>) reqConfig
+				reqConfigCopy = (HttpRequestConfig<T, ? extends Container<T>>) reqConfig
 					.clone().setLoadType(nextLoadType);
 			} catch(final CloneNotSupportedException e) {
 				throw new IllegalStateException(e);
 			}
 			reqConfigMap.put(nextLoadType, reqConfigCopy);
-			final BasicFileLoadExecutor<F> nextLoadExecutor = new BasicFileLoadExecutor<F>(
-				appConfig, reqConfigCopy, threadCount,
+			final BasicHttpDataLoadExecutor<T> nextLoadExecutor = new BasicHttpDataLoadExecutor<T>(
+				appConfig, reqConfigCopy, addrs, threadCount,
 				itemInputMap == null ? null : itemInputMap.get(nextLoadType),
-				maxCount, rateLimit, sizeConfig, rangesConfig
+				maxCount, rateLimit, sizeConfig, rangesConfig,
+				httpProcessor, client, ioReactor, connPoolMap
 			) {
 				@Override
-				public final <A extends IoTask<F>> Future<A> submitTask(final A ioTask)
+				public final <A extends IoTask<T>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
 					try {
 						if(barrier.getApprovalFor(nextLoadType)) {
-							return BasicMixedFileLoadExecutor.this.submitTask(ioTask);
+							return BasicMixedHttpDataLoadExecutor.this.submitTask(ioTask);
 						} else {
 							throw new RejectedExecutionException(
 								"Barrier rejected the item for {} operation" + nextLoadType
@@ -91,12 +96,12 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 				}
 				//
 				@Override
-				public final <A extends IoTask<F>> int submitTasks(
+				public final <A extends IoTask<T>> int submitTasks(
 					final List<A> ioTasks, int from, int to
 				) throws RejectedExecutionException {
 					try {
 						if(barrier.getApprovalsFor(nextLoadType, to - from)) {
-							return BasicMixedFileLoadExecutor.this.submitTasks(
+							return BasicMixedHttpDataLoadExecutor.this.submitTasks(
 								ioTasks, from, to
 							);
 						} else {
@@ -118,7 +123,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	}
 	//
 	@Override
-	public void ioTaskCompleted(final IoTask<F> ioTask)
+	public void ioTaskCompleted(final IoTask<T> ioTask)
 	throws RemoteException {
 		loadExecutorMap
 			.get(ioTask.getLoadType())
@@ -128,7 +133,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	//
 	@Override
 	public final int ioTaskCompletedBatch(
-		final List<? extends IoTask<F>> ioTasks, final int from, final int to
+		final List<? extends IoTask<T>> ioTasks, final int from, final int to
 	) throws RemoteException {
 		if(ioTasks != null && ioTasks.size() > 0) {
 			loadExecutorMap
@@ -153,7 +158,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 			.appendNewLine()
 			.appendPadding(160, '-')
 			.appendNewLine();
-		FileLoadExecutor nextLoadJob;
+		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
 		IoStats.Snapshot nextLoadStats;
 		for(final LoadType nextLoadType : loadExecutorMap.keySet()) {
@@ -211,7 +216,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	//
 	@Override
 	protected void startActually() {
-		for(final FileLoadExecutor<F> nextLoadExecutor : loadExecutorMap.values()) {
+		for(final HttpDataLoadExecutor<T> nextLoadExecutor : loadExecutorMap.values()) {
 			try {
 				nextLoadExecutor.start();
 			} catch(final RemoteException e) {
@@ -225,7 +230,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	//
 	@Override
 	protected void interruptActually() {
-		for(final FileLoadExecutor<F> nextLoadExecutor : loadExecutorMap.values()) {
+		for(final HttpDataLoadExecutor<T> nextLoadExecutor : loadExecutorMap.values()) {
 			try {
 				nextLoadExecutor.interrupt();
 			} catch(final RemoteException e) {
@@ -239,7 +244,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	//
 	@Override
 	protected void shutdownActually() {
-		for(final FileLoadExecutor<F> nextLoadExecutor : loadExecutorMap.values()) {
+		for(final HttpDataLoadExecutor<T> nextLoadExecutor : loadExecutorMap.values()) {
 			try {
 				nextLoadExecutor.shutdown();
 			} catch(final RemoteException e) {
@@ -257,7 +262,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			loadExecutorMap.size() + 1, new GroupThreadFactory("await<" + getName() + ">", true)
 		);
-		for(final FileLoadExecutor<F> nextLoadExecutor : loadExecutorMap.values()) {
+		for(final HttpDataLoadExecutor<T> nextLoadExecutor : loadExecutorMap.values()) {
 			awaitExecutor.submit(
 				new Runnable() {
 					@Override
@@ -281,7 +286,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 				@Override
 				public final void run() {
 					try {
-						BasicMixedFileLoadExecutor.super.await(timeOut, timeUnit);
+						BasicMixedHttpDataLoadExecutor.super.await(timeOut, timeUnit);
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.MSG, "{}: await call interrupted", getName());
 					} catch(final RemoteException e) {
@@ -304,7 +309,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	@Override
 	protected void closeActually()
 	throws IOException {
-		for(final FileLoadExecutor<F> nextLoadExecutor : loadExecutorMap.values()) {
+		for(final HttpDataLoadExecutor<T> nextLoadExecutor : loadExecutorMap.values()) {
 			try {
 				nextLoadExecutor.close();
 			} catch(final RemoteException e) {

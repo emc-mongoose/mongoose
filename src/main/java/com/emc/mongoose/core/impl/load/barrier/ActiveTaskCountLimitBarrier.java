@@ -3,7 +3,6 @@ package com.emc.mongoose.core.impl.load.barrier;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.barrier.Barrier;
 //
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 /**
@@ -13,24 +12,16 @@ public class ActiveTaskCountLimitBarrier<T extends Item>
 implements Barrier<T> {
 	//
 	private final int activeTaskCountLimit;
-	private final AtomicLong counterSubm;
-	private final AtomicLong counterResults;
-	//
-	private final AtomicBoolean isInterrupted;
-	private final AtomicBoolean isShutdown;
-	private final boolean isCircular;
+	private final AtomicLong counterIn;
+	private final AtomicLong counterOut;
 	//
 	public ActiveTaskCountLimitBarrier(
-		final int activeTaskCountLimit, final AtomicLong counterSubm, AtomicLong counterResults,
-		final AtomicBoolean isInterrupted, final AtomicBoolean isShutdown, final boolean isCircular
+		final int activeTaskCountLimit, final AtomicLong counterIn, AtomicLong counterOut
 	) {
 		this.activeTaskCountLimit = activeTaskCountLimit;
-		this.counterSubm = counterSubm;
-		this.counterResults = counterResults;
-		//
-		this.isInterrupted = isInterrupted;
-		this.isShutdown = isShutdown;
-		this.isCircular = isCircular;
+		this.counterIn = counterIn;
+		this.counterOut = counterOut;
+
 	}
 	//
 	@Override
@@ -38,10 +29,7 @@ implements Barrier<T> {
 	throws InterruptedException {
 		int activeTaskCount;
 		do {
-			activeTaskCount = (int) (counterSubm.get() - counterResults.get());
-			if(isInterrupted.get() || (isShutdown.get() && !isCircular)) {
-				throw new InterruptedException("Submit failed, shut down already or interrupted");
-			}
+			activeTaskCount = (int) (counterIn.get() - counterOut.get());
 			if(activeTaskCount < activeTaskCountLimit) {
 				break;
 			}

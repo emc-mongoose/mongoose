@@ -102,8 +102,8 @@ extends ChannelInboundHandlerAdapter {
 	}
 
 	@Override
-	public void channelRead(ChannelHandlerContext ctx, Object msg) {
-		if (msg instanceof HttpRequest) {
+	public void channelRead(final ChannelHandlerContext ctx, final Object msg) {
+		if(msg instanceof HttpRequest) {
 			// TODO the branch below fails if the request doesn't match the API
 			if (!checkApiMatch((HttpRequest) msg)) {
 				ctx.attr(AttributeKey.<Boolean>valueOf(handlerStatus)).set(false);
@@ -123,21 +123,21 @@ extends ChannelInboundHandlerAdapter {
 //		if (msg instanceof HttpContent) {
 //			processHttpContent(ctx, (HttpContent) msg);
 //		}
-		if (msg instanceof LastHttpContent) {
+		if(msg instanceof LastHttpContent) {
 			handle(ctx);
 		}
 		ReferenceCountUtil.release(msg);
 	}
 
-	public final void handle(ChannelHandlerContext ctx) {
-		if (rateLimit > 0) {
+	public final void handle(final ChannelHandlerContext ctx) {
+		if(rateLimit > 0) {
 			if (ioStats.getWriteRate() + ioStats.getReadRate() + ioStats.getDeleteRate() > rateLimit) {
 				try {
 					Thread.sleep(lastMilliDelay.incrementAndGet());
 				} catch (InterruptedException e) {
 					return;
 				}
-			} else if (lastMilliDelay.get() > 0) {
+			} else if(lastMilliDelay.get() > 0) {
 				lastMilliDelay.decrementAndGet();
 			}
 		}

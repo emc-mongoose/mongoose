@@ -12,7 +12,7 @@ import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 //
-import com.emc.mongoose.core.impl.load.executor.BasicDirectoryLoadExecutor;
+import com.emc.mongoose.core.impl.load.executor.v1.BasicDirectoryLoadExecutor;
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
 //
 import org.apache.logging.log4j.Level;

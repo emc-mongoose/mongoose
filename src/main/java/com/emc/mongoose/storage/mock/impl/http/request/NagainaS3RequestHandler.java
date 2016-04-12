@@ -80,15 +80,15 @@ public class NagainaS3RequestHandler<T extends HttpDataItemMock> extends Nagaina
 	}
 
 	@Override
-	public void handleActually(ChannelHandlerContext ctx) {
-		String method = ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey))
+	public void handleActually(final ChannelHandlerContext ctx) {
+		final String method = ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey))
 				.get().getMethod().toString().toUpperCase();
-		String[] uriParams =
+		final String[] uriParams =
 				getUriParams(ctx.attr(AttributeKey.<HttpRequest>valueOf(requestKey))
 						.get().getUri(), 2);
-		String containerName = uriParams[0];
-		String objId = uriParams[1];
-		Long size = ctx.attr(AttributeKey.<Long>valueOf(contentLengthKey)).get();
+		final String containerName = uriParams[0];
+		final String objId = uriParams[1];
+		final Long size = ctx.attr(AttributeKey.<Long>valueOf(contentLengthKey)).get();
 		ctx.attr(AttributeKey.<Boolean>valueOf(ctxWriteFlagKey)).set(true);
 		if (containerName != null) {
 			if (objId != null) {

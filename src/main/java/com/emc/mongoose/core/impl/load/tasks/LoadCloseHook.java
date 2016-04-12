@@ -6,7 +6,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.load.generator.LoadGenerator;
 import com.emc.mongoose.core.api.load.generator.LoadState;
 //
 import com.emc.mongoose.core.impl.load.generator.BasicLoadState;
@@ -30,19 +30,19 @@ public final class LoadCloseHook
 implements Runnable {
 	//
 	private static final Logger LOG = LogManager.getLogger();
-	private static final Map<String, Map<LoadExecutor, Thread>>
+	private static final Map<String, Map<LoadGenerator, Thread>>
 		HOOKS_MAP = new HashMap<>();
 	//
 	public static final Map<String, List<LoadState>>
 		LOAD_STATES_MAP = new HashMap<>();
 	//
-	private final LoadExecutor loadExecutor;
+	private final LoadGenerator loadGenerator;
 	private final String loadName;
 	//
-	private LoadCloseHook(final LoadExecutor loadExecutor) {
+	private LoadCloseHook(final LoadGenerator loadGenerator) {
 		String ln = "";
 		try {
-			ln = loadExecutor.getName();
+			ln = loadGenerator.getName();
 		} catch(final RemoteException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to get the name of the remote load executor"
@@ -50,12 +50,12 @@ implements Runnable {
 		} finally {
 			loadName = ln;
 		}
-		this.loadExecutor = loadExecutor;
+		this.loadGenerator = loadGenerator;
 	}
 	//
-	public static void add(final LoadExecutor loadExecutor) {
+	public static void add(final LoadGenerator loadGenerator) {
 		//
-		final LoadCloseHook hookTask = new LoadCloseHook(loadExecutor);
+		final LoadCloseHook hookTask = new LoadCloseHook(loadGenerator);
 		try {
 			final Thread hookThread = new Thread(
 				hookTask, String.format("loadCloseHook<%s>", hookTask.loadName)
@@ -63,12 +63,12 @@ implements Runnable {
 			Runtime.getRuntime().addShutdownHook(hookThread);
 			final String currRunId = BasicConfig.THREAD_CONTEXT.get().getRunId();
 			synchronized(HOOKS_MAP) {
-				Map<LoadExecutor, Thread> runLoadHooks = HOOKS_MAP.get(currRunId);
+				Map<LoadGenerator, Thread> runLoadHooks = HOOKS_MAP.get(currRunId);
 				if(runLoadHooks == null) {
 					runLoadHooks = new HashMap<>();
 					HOOKS_MAP.put(currRunId, runLoadHooks);
 				}
-				runLoadHooks.put(loadExecutor, hookThread);
+				runLoadHooks.put(loadGenerator, hookThread);
 			}
 			LogUtil.LOAD_HOOKS_COUNT.incrementAndGet();
 			LOG.debug(
@@ -81,33 +81,33 @@ implements Runnable {
 		}
 	}
 	//
-	public static void del(final LoadExecutor loadExecutor) {
+	public static void del(final LoadGenerator loadGenerator) {
 		String currRunId;
 		try {
-			currRunId = loadExecutor.getLoadState().getAppConfig().getRunId();
+			currRunId = loadGenerator.getLoadState().getAppConfig().getRunId();
 		} catch (final RemoteException e) {
 			currRunId = BasicConfig.THREAD_CONTEXT.get().getRunId();
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 		}
 		synchronized(HOOKS_MAP) {
-			final Map<LoadExecutor, Thread> runHooks = HOOKS_MAP.get(currRunId);
-			if(runHooks != null && runHooks.containsKey(loadExecutor)) {
-				final Thread loadCloseHookThread = runHooks.get(loadExecutor);
+			final Map<LoadGenerator, Thread> runHooks = HOOKS_MAP.get(currRunId);
+			if(runHooks != null && runHooks.containsKey(loadGenerator)) {
+				final Thread loadCloseHookThread = runHooks.get(loadGenerator);
 				try {
 					Runtime.getRuntime().removeShutdownHook(loadCloseHookThread);
-					LOG.debug(Markers.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
+					LOG.debug(Markers.MSG, "Shutdown hook for \"{}\" removed", loadGenerator);
 				} catch(final IllegalStateException e) {
 					LogUtil.exception(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
 				} catch(final SecurityException | IllegalArgumentException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 				} finally {
-					runHooks.remove(loadExecutor);
+					runHooks.remove(loadGenerator);
 					if(LogUtil.LOAD_HOOKS_COUNT.get() > 1) {
 						LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
 					}
 					//
 					try {
-						final LoadState currState = loadExecutor.getLoadState();
+						final LoadState currState = loadGenerator.getLoadState();
 						List<LoadState> runLoadStates;
 						synchronized(LOAD_STATES_MAP) {
 							runLoadStates = LOAD_STATES_MAP.get(currRunId);
@@ -175,7 +175,7 @@ implements Runnable {
 					}
 				}
 			} else {
-				LOG.trace(Markers.ERR, "No shutdown hook registered for \"{}\"", loadExecutor);
+				LOG.trace(Markers.ERR, "No shutdown hook registered for \"{}\"", loadGenerator);
 			}
 		}
 	}
@@ -184,7 +184,7 @@ implements Runnable {
 	public final void run() {
 		LOG.debug(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
 		try {
-			loadExecutor.close();
+			loadGenerator.close();
 			LOG.debug(Markers.MSG, "The load executor \"{}\" closed successfully", loadName);
 		} catch(final Exception e) {
 			LogUtil.exception(

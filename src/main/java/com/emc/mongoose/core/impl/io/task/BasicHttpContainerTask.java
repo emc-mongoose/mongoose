@@ -43,7 +43,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class BasicHttpContainerTask<
 	T extends HttpDataItem, C extends Container<T>, X extends HttpRequestConfig<T, C>
-> extends BasicIoTask<C, C, X>
+> extends BasicIoTask<C>
 implements HttpContainerIoTask<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

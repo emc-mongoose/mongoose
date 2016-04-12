@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.executor;
+package com.emc.mongoose.core.impl.load.executor.v1;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
@@ -183,7 +183,7 @@ implements HttpDataLoadExecutor<T> {
 				ioReactor, nextRoute, connFactory,
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ?
 					(int) timeOutMs : Integer.MAX_VALUE,
-				batchSize
+				DEFAULT_INTERNAL_BATCH_SIZE
 			);
 			nextConnPool.setDefaultMaxPerRoute(threadCount);
 			nextConnPool.setMaxTotal(threadCount);

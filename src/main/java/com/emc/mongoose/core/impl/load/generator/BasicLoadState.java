@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.load.generator.LoadGenerator;
 import com.emc.mongoose.core.api.load.generator.LoadState;
 import com.emc.mongoose.core.api.load.metrics.IoStats;
 //
@@ -36,15 +36,9 @@ import java.util.concurrent.TimeUnit;
 public class BasicLoadState<T extends Item>
 implements LoadState<T> {
 	//
-	private final int loadNumber;
 	private final AppConfig appConfig;
 	private final IoStats.Snapshot ioStatsSnapshot;
 	private final T lastDataItem;
-	//
-	@Override
-	public int getLoadNumber() {
-		return loadNumber;
-	}
 	//
 	@Override
 	public AppConfig getAppConfig() {
@@ -62,17 +56,17 @@ implements LoadState<T> {
 	}
 	//
 	@Override
-	public boolean isLimitReached(final AppConfig appConfig) {
+	public boolean isLimitReached(
+		final long countLimit, final long timeLimit
+	) {
 		//  time limitations
 		final TimeUnit loadLimitTimeUnit = TimeUnit.SECONDS;
-		final long loadLimitTimeValue = appConfig.getLoadLimitTime();
-		final long loadTimeMicroSec = loadLimitTimeValue > 0 ?
-			loadLimitTimeUnit.toMicros(loadLimitTimeValue) : Long.MAX_VALUE;
+		final long loadTimeMicroSec = timeLimit > 0 ?
+			loadLimitTimeUnit.toMicros(timeLimit) : Long.MAX_VALUE;
 		final long stateTimeMicroSec = ioStatsSnapshot.getElapsedTime();
 		//  count limitations
 		final long counterResults = ioStatsSnapshot.getSuccCount() + ioStatsSnapshot.getFailCount();
-		final long loadLimitCount = appConfig.getLoadLimitCount();
-		final long maxCount = loadLimitCount > 0 ?
+		final long maxCount = countLimit > 0 ?
 			appConfig.getLoadLimitCount() : Long.MAX_VALUE;
 		return (counterResults >= maxCount) || (stateTimeMicroSec >= loadTimeMicroSec);
 	}
@@ -80,16 +74,9 @@ implements LoadState<T> {
 	public static class Builder<T extends Item, U extends LoadState<T>>
 	implements LoadState.Builder<T, U> {
 		//
-		private int loadNumber;
 		private AppConfig appConfig;
 		private IoStats.Snapshot ioStatsSnapshot;
 		private T lastDataItem;
-		//
-		@Override
-		public Builder<T, U> setLoadNumber(final int loadNumber) {
-			this.loadNumber = loadNumber;
-			return this;
-		}
 		//
 		@Override
 		public Builder<T, U> setAppConfig(final AppConfig appConfig) {
@@ -118,7 +105,6 @@ implements LoadState<T> {
 	}
 	//
 	private BasicLoadState(final Builder<T, LoadState<T>> builder) {
-		this.loadNumber = builder.loadNumber;
 		this.appConfig = builder.appConfig;
 		this.ioStatsSnapshot = builder.ioStatsSnapshot;
 		this.lastDataItem = builder.lastDataItem;
@@ -126,50 +112,52 @@ implements LoadState<T> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
-	public static void restoreScenarioState(final AppConfig appConfig) {
-		final String fullStateFileName = Paths.get(
-			BasicConfig.getRootDir(), Constants.DIR_LOG, appConfig.getRunId()
-		).resolve(Constants.STATES_FILE).toString();
-		//  if load states list is empty or file w/ load states doesn't exist, then init
-		//  map entry value w/ empty list
-		LoadExecutor.RESTORED_STATES_MAP.put(
-			appConfig.getRunId(), new ArrayList<LoadState<? extends Item>>()
+	public static void restoreScenarioState(
+		final String runId, final String runMode, final String runVersion,
+	    final long countLimit, final long timeLimitMicroSeconds
+	) {
+		final String fullStateFileName = Paths
+			.get(BasicConfig.getRootDir(), Constants.DIR_LOG, runId)
+			.resolve(Constants.STATES_FILE).toString();
+		// if load states list is empty or file w/ load states doesn't exist, then init map entry
+		// value w/ empty list
+		LoadGenerator.RESTORED_STATES.put(
+			runId, new ArrayList<LoadState<? extends Item>>()
 		);
-		if(isSavedStateOfRunExists(appConfig.getRunId())) {
+		if(isSavedStateOfRunExists(runId)) {
 			final List<LoadState<? extends Item>>
-				loadStates = getRunStateFromFile(appConfig.getRunId(), fullStateFileName);
+				loadStates = getRunStateFromFile(runId, fullStateFileName);
 			if(loadStates != null && !loadStates.isEmpty()) {
-				//  check if immutable params were changed for load executors
+				// check if immutable params were changed for load generators
 				for(final LoadState state : loadStates) {
 					if(
-						appConfig.getRunMode().equals(state.getAppConfig().getRunMode())
-							&&
-						appConfig.getRunVersion().equals(state.getAppConfig().getRunVersion())
+						!runMode.equals(state.getAppConfig().getRunMode())
+							||
+						!runVersion.equals(state.getAppConfig().getRunVersion())
 					) {
-
-					} else {
 						LOG.warn(
 							Markers.MSG,
 							"Run \"{}\": configuration immutability violated. Starting new run",
-							appConfig.getRunId()
+							runId
 						);
 						return;
 					}
 				}
-				//  override load states list
-				LoadExecutor.RESTORED_STATES_MAP.put(appConfig.getRunId(), loadStates);
-				LOG.info(Markers.MSG, "Run \"{}\" was resumed", appConfig.getRunId());
-				//  don't remove state file if load executor has been already finished
+				// override load states list
+				LoadGenerator.RESTORED_STATES.put(runId, loadStates);
+				LOG.info(Markers.MSG, "Run \"{}\" was resumed", runId);
+				// don't remove state file if load generator has been already finished
 				for(final LoadState state : loadStates) {
-					if (state.isLimitReached(appConfig))
+					if(state.isLimitReached(countLimit, timeLimitMicroSeconds))
 						return;
 				}
-				//  remove state file when scenario's state was restored
+				// remove state file when scenario's state was restored
 				removePrevStateFile(fullStateFileName);
 			}
 		} else {
-			LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
-				appConfig.getRunId());
+			LOG.info(
+				Markers.MSG, "Could not find saved state of run \"{}\". Starting new run", runId
+			);
 		}
 	}
 	//
@@ -217,20 +205,6 @@ implements LoadState<T> {
 		}
 	}
 	//
-	@SuppressWarnings("unchecked")
-	public static <T extends Item> LoadState<T> findStateByLoadNumber(
-		final int loadNumber, final AppConfig appConfig
-	) {
-		final List<LoadState<?>>
-			loadStates = LoadExecutor.RESTORED_STATES_MAP.get(appConfig.getRunId());
-		for(final LoadState<? extends Item> state : loadStates) {
-			if(state.getLoadNumber() == loadNumber) {
-				return (LoadState<T>) state;
-			}
-		}
-		return null;
-	}
-	//
 	public static boolean isRunFinished(final AppConfig appConfig, final List<LoadState> states) {
 		final TimeUnit loadLimitTimeUnit = TimeUnit.SECONDS;
 		final long loadLimitTimeValue = appConfig.getLoadLimitTime();
@@ -258,7 +232,6 @@ implements LoadState<T> {
 					Markers.MSG, "Processed items count {} is not less than the limit {}",
 					elapsedTimeMicroSec, timeLimitMicroSec
 				);
-
 				return true;
 			}
 		}
