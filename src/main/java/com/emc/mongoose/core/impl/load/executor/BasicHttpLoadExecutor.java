@@ -22,45 +22,6 @@ import com.emc.mongoose.core.api.load.executor.HttpLoadExecutor;
 import com.emc.mongoose.core.api.load.generator.LoadGenerator;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
 import com.emc.mongoose.core.impl.load.barrier.ActiveTaskCountLimitBarrier;
-import org.apache.http.ExceptionLogger;
-import org.apache.http.Header;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpException;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
-import org.apache.http.config.ConnectionConfig;
-import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
-import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
-import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
-import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
-import org.apache.http.impl.nio.reactor.IOReactorConfig;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.nio.ContentDecoder;
-import org.apache.http.nio.ContentEncoder;
-import org.apache.http.nio.IOControl;
-import org.apache.http.nio.NHttpClientConnection;
-import org.apache.http.nio.NHttpClientEventHandler;
-import org.apache.http.nio.pool.NIOConnFactory;
-import org.apache.http.nio.protocol.BasicAsyncRequestProducer;
-import org.apache.http.nio.protocol.BasicAsyncResponseConsumer;
-import org.apache.http.nio.protocol.HttpAsyncRequestConsumer;
-import org.apache.http.nio.protocol.HttpAsyncRequestExecutor;
-import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
-import org.apache.http.nio.protocol.HttpAsyncRequester;
-import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
-import org.apache.http.nio.reactor.ConnectingIOReactor;
-import org.apache.http.nio.reactor.IOEventDispatch;
-import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.nio.util.DirectByteBufferAllocator;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpCoreContext;
-import org.apache.http.protocol.HttpProcessor;
-import org.apache.http.protocol.HttpProcessorBuilder;
-import org.apache.http.protocol.RequestConnControl;
-import org.apache.http.protocol.RequestContent;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -82,16 +43,10 @@ import java.util.concurrent.locks.LockSupport;
  Created by kurila on 12.04.16.
  */
 public class BasicHttpLoadExecutor<T extends Item, A extends IoTask<T>>
-extends Thread
 implements HttpLoadExecutor<T, A> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final HttpProcessor httpProcessor;
-	private final HttpAsyncRequester client;
-	private final IOEventDispatch ioEventDispatch;
-	private final ConnectingIOReactor ioReactor;
-	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
 	private final String[] nodeAddrs;
 	private final int storageNodeCount;
 	private final Balancer<String> nodeBalancer;
@@ -109,115 +64,7 @@ implements HttpLoadExecutor<T, A> {
 		this.storageNodeCount = nodeAddrs.length;
 		this.nodeAddrs = nodeAddrs;
 		//
-		httpProcessor = HttpProcessorBuilder
-			.create()
-			.add(this)
-			.add(new HostHeaderSetter())
-			.add(new RequestConnControl())
-			//.add(new RequestExpectContinue(true))
-			.add(new RequestContent(false))
-			.build();
-		client = new HttpAsyncRequester(
-			httpProcessor, DefaultConnectionReuseStrategy.INSTANCE,
-			new ExceptionLogger() {
-				@Override
-				public final void log(final Exception e) {
-					LogUtil.exception(LOG, Level.DEBUG, e, "HTTP client internal failure");
-				}
-			}
-		);
-		//
-		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
-		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
-			.custom()
-			.setIoThreadCount(ThreadUtil.getWorkerCount())
-			.setBacklogSize(appConfig.getNetworkSocketBindBacklogSize())
-			.setInterestOpQueued(appConfig.getNetworkSocketInterestOpQueued())
-			.setSelectInterval(appConfig.getNetworkSocketSelectInterval())
-			.setShutdownGracePeriod(appConfig.getNetworkSocketTimeoutMilliSec())
-			.setSoKeepAlive(appConfig.getNetworkSocketKeepAlive())
-			.setSoLinger(appConfig.getNetworkSocketLinger())
-			.setSoReuseAddress(appConfig.getNetworkSocketReuseAddr())
-			.setSoTimeout(appConfig.getNetworkSocketTimeoutMilliSec())
-			.setTcpNoDelay(appConfig.getNetworkSocketTcpNoDelay())
-			.setRcvBufSize(appConfig.getIoBufferSizeMin())
-			.setSndBufSize(appConfig.getIoBufferSizeMin())
-			.setConnectTimeout(
-				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
-			);
-		//
-		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
-		//
-		final ConnectionConfig connConfig = ConnectionConfig
-			.custom()
-			.setBufferSize(appConfig.getIoBufferSizeMin())
-			.setFragmentSizeHint(0)
-			.build();
-		ioEventDispatch = new DefaultHttpClientIODispatch(
-			reqExecutor, connConfig
-		);
-		//
-		final IOWorker.Factory ioWorkerFactory = new IOWorker.Factory(getName());
-		try {
-			ioReactor = new DefaultConnectingIOReactor(
-				ioReactorConfigBuilder.build(), ioWorkerFactory
-			);
-		} catch(final IOReactorException e) {
-			throw new IllegalStateException("Failed to build the I/O reactor", e);
-		}
-		//
-		final NIOConnFactory<HttpHost, NHttpClientConnection>
-			connFactory = new BasicNIOConnFactory(
-			null, null, null, null,
-			DirectByteBufferAllocator.INSTANCE, connConfig
-		);
-		//
-		connPoolMap = new HashMap<>(storageNodeCount);
-		HttpHost nextRoute;
-		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
-		for(int i = 0; i < storageNodeCount; i ++) {
-			nextRoute = getNodeHost(nodeAddrs[i]);
-			nextConnPool = new FixedRouteSequencingConnPool(
-				ioReactor, nextRoute, connFactory,
-				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ?
-					(int) timeOutMs : Integer.MAX_VALUE,
-				DEFAULT_INTERNAL_BATCH_SIZE
-			);
-			nextConnPool.setDefaultMaxPerRoute(threadCount);
-			nextConnPool.setMaxTotal(threadCount);
-			connPoolMap.put(nextRoute, nextConnPool);
-		}
-		this.pipeliningEnabled = pipeliningFlag;
-		this.port = appConfig.getStorageHttpPort();
-		this.nodeBalancer = new BasicNodeBalancer(nodeAddrs);
-		this.totalThreadCount = threadCount * storageNodeCount;
-		activeTaskCountLimitBarrier = new ActiveTaskCountLimitBarrier<>(
-			2 * totalThreadCount + 1000, counterIn, counterOut
-		);
-		start();
-	}
-	//
-	@Override
-	public final void run() {
-		LOG.debug(
-			Markers.MSG, "Running the web storage client {}", Thread.currentThread().getName()
-		);
-		try {
-			ioReactor.execute(ioEventDispatch);
-		} catch(final IOReactorException e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e,
-				"Possible max open files limit exceeded, please check the environment configuration"
-			);
-		} catch(final InterruptedIOException e) {
-			LOG.debug(Markers.MSG, "{}: interrupted", Thread.currentThread().getName());
-		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to execute the web storage client"
-			);
-		} catch(final IllegalStateException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
-		}
+
 	}
 	//
 	private final HttpAsyncRequestProducer requestProducer = new HttpAsyncRequestProducer() {
