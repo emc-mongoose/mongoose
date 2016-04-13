@@ -4,6 +4,8 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
+import com.emc.mongoose.storage.mock.impl.base.ZeroCopyDataItemWrapper;
+import com.emc.mongoose.storage.mock.impl.base.ZeroCopyUpdatedDataItemWrapper;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
@@ -250,9 +252,9 @@ extends ChannelInboundHandlerAdapter {
 				HttpHeaders.setContentLength(response, objSize);
 				ctx.write(response);
 				if(obj.hasBeenUpdated()) {
-					ctx.write(new UpdatedDataItemFileRegion<>(obj));
+					ctx.write(new ZeroCopyUpdatedDataItemWrapper<>(obj));
 				} else {
-					ctx.write(new DataItemFileRegion<>(obj));
+					ctx.write(new ZeroCopyDataItemWrapper<>(obj));
 				}
 				ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 			} else {

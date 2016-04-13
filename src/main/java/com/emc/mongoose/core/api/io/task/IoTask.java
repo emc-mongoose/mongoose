@@ -36,6 +36,12 @@ public interface IoTask<T extends Item>  {
 	T getItem();
 	//
 	Status getStatus();
+	void setStatus(final Status status);
 	//
+	void markRequestStart();
+	void markRequestDone();
+	void markResponseStart();
+	void markResponseDataStart();
+	void markResponseDone(final long byteCount);
 	void mark(final IoStats ioStats);
 }

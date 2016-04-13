@@ -1,4 +1,5 @@
 package com.emc.mongoose.storage.mock.impl.http;
+//
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -11,16 +12,18 @@ import com.emc.mongoose.storage.mock.impl.http.request.NagainaRequestHandlerBase
 import com.emc.mongoose.storage.mock.impl.http.request.NagainaS3RequestHandler;
 import com.emc.mongoose.storage.mock.impl.http.request.NagainaSwiftRequestHandler;
 import com.emc.mongoose.storage.mock.impl.http.request.NagainaAtmosRequestHandler;
+//
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.util.concurrent.DefaultThreadFactory;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -70,8 +73,8 @@ implements HttpStorageMock<T> {
 			jmxServeFlag
 		);
 		this.portStart = portStart;
-		dispatchGroups = new NioEventLoopGroup[headCount];
-		workerGroups = new NioEventLoopGroup[headCount];
+		dispatchGroups = new EpollEventLoopGroup[headCount];
+		workerGroups = new EpollEventLoopGroup[headCount];
 		channels = new Channel[headCount];
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
 		final AppConfig ctxAppConfig = BasicConfig.THREAD_CONTEXT.get();
@@ -89,11 +92,11 @@ implements HttpStorageMock<T> {
 		for(int i = 0; i < dispatchGroups.length; i++) {
 			try {
 				// the first arg is a number of threads (0 as default)
-				dispatchGroups[i] = new NioEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
-				workerGroups[i] = new NioEventLoopGroup();
+				dispatchGroups[i] = new EpollEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
+				workerGroups[i] = new EpollEventLoopGroup();
 				ServerBootstrap bootstrap = new ServerBootstrap();
 				bootstrap.group(dispatchGroups[i], workerGroups[i])
-					.channel(NioServerSocketChannel.class)
+					.channel(EpollServerSocketChannel.class)
 //					.handler(new LoggingHandler(LogLevel.WARN))
 					.childHandler(
 						new ChannelInitializer<SocketChannel>() {

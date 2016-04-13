@@ -46,7 +46,38 @@ implements IoTask<T> {
 		return status;
 	}
 	//
-	protected final static ThreadLocal<StringBuilder>
+	@Override
+	public final void setStatus(final Status status) {
+		this.status = status;
+	}
+	//
+	@Override
+	public final void markRequestStart() {
+		reqTimeStart = System.nanoTime() / 1000;
+	}
+	//
+	@Override
+	public final void markRequestDone() {
+		reqTimeDone = System.nanoTime() / 1000;
+	}
+	//
+	@Override
+	public final void markResponseStart() {
+		respTimeStart = System.nanoTime() / 1000;
+	}
+	//
+	@Override
+	public final void markResponseDataStart() {
+		respDataTimeStart = System.nanoTime() / 1000;
+	}
+	//
+	@Override
+	public final void markResponseDone(final long byteCount) {
+		respTimeDone = System.nanoTime() / 1000;
+		countBytesDone = byteCount;
+	}
+	//
+	private final static ThreadLocal<StringBuilder>
 		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
 			@Override
 			protected final StringBuilder initialValue() {

@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.load.executor;
 //
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.enums.LoadType;
 //
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.io.Input;
@@ -12,30 +11,60 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
-import com.emc.mongoose.core.api.io.task.HttpDataIoTask;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
 import com.emc.mongoose.core.api.load.barrier.Barrier;
 import com.emc.mongoose.core.api.load.executor.HttpLoadExecutor;
 import com.emc.mongoose.core.api.load.generator.LoadGenerator;
+import com.emc.mongoose.core.impl.io.task.NioTaskWrapper;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
 import com.emc.mongoose.core.impl.load.barrier.ActiveTaskCountLimitBarrier;
+import org.apache.http.ExceptionLogger;
+import org.apache.http.Header;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.concurrent.FutureCallback;
+import org.apache.http.config.ConnectionConfig;
+import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
+import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
+import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.nio.NHttpClientConnection;
+import org.apache.http.nio.NHttpClientEventHandler;
+import org.apache.http.nio.pool.NIOConnFactory;
+import org.apache.http.nio.protocol.BasicAsyncRequestProducer;
+import org.apache.http.nio.protocol.BasicAsyncResponseConsumer;
+import org.apache.http.nio.protocol.HttpAsyncRequestExecutor;
+import org.apache.http.nio.protocol.HttpAsyncRequester;
+import org.apache.http.nio.reactor.ConnectingIOReactor;
+import org.apache.http.nio.reactor.IOEventDispatch;
+import org.apache.http.nio.reactor.IOReactorException;
+import org.apache.http.nio.util.DirectByteBufferAllocator;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpCoreContext;
+import org.apache.http.protocol.HttpProcessor;
+import org.apache.http.protocol.HttpProcessorBuilder;
+import org.apache.http.protocol.RequestConnControl;
+import org.apache.http.protocol.RequestContent;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
@@ -43,10 +72,16 @@ import java.util.concurrent.locks.LockSupport;
  Created by kurila on 12.04.16.
  */
 public class BasicHttpLoadExecutor<T extends Item, A extends IoTask<T>>
+extends Thread
 implements HttpLoadExecutor<T, A> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	private final HttpProcessor httpProcessor;
+	private final HttpAsyncRequester client;
+	private final IOEventDispatch ioEventDispatch;
+	private final ConnectingIOReactor ioReactor;
+	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
 	private final String[] nodeAddrs;
 	private final int storageNodeCount;
 	private final Balancer<String> nodeBalancer;
@@ -64,72 +99,117 @@ implements HttpLoadExecutor<T, A> {
 		this.storageNodeCount = nodeAddrs.length;
 		this.nodeAddrs = nodeAddrs;
 		//
-
+		httpProcessor = HttpProcessorBuilder
+			.create()
+			.add(this)
+			.add(new HostHeaderSetter())
+			.add(new RequestConnControl())
+			//.add(new RequestExpectContinue(true))
+			.add(new RequestContent(false))
+			.build();
+		client = new HttpAsyncRequester(
+			httpProcessor, DefaultConnectionReuseStrategy.INSTANCE,
+			new ExceptionLogger() {
+				@Override
+				public final void log(final Exception e) {
+					LogUtil.exception(LOG, Level.DEBUG, e, "HTTP client internal failure");
+				}
+			}
+		);
+		//
+		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
+		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
+			.custom()
+			.setIoThreadCount(ThreadUtil.getWorkerCount())
+			.setBacklogSize(appConfig.getNetworkSocketBindBacklogSize())
+			.setInterestOpQueued(appConfig.getNetworkSocketInterestOpQueued())
+			.setSelectInterval(appConfig.getNetworkSocketSelectInterval())
+			.setShutdownGracePeriod(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setSoKeepAlive(appConfig.getNetworkSocketKeepAlive())
+			.setSoLinger(appConfig.getNetworkSocketLinger())
+			.setSoReuseAddress(appConfig.getNetworkSocketReuseAddr())
+			.setSoTimeout(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setTcpNoDelay(appConfig.getNetworkSocketTcpNoDelay())
+			.setRcvBufSize(appConfig.getIoBufferSizeMin())
+			.setSndBufSize(appConfig.getIoBufferSizeMin())
+			.setConnectTimeout(
+				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
+			);
+		//
+		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
+		//
+		final ConnectionConfig connConfig = ConnectionConfig
+			.custom()
+			.setBufferSize(appConfig.getIoBufferSizeMin())
+			.setFragmentSizeHint(0)
+			.build();
+		ioEventDispatch = new DefaultHttpClientIODispatch(
+			reqExecutor, connConfig
+		);
+		//
+		final IOWorker.Factory ioWorkerFactory = new IOWorker.Factory(getName());
+		try {
+			ioReactor = new DefaultConnectingIOReactor(
+				ioReactorConfigBuilder.build(), ioWorkerFactory
+			);
+		} catch(final IOReactorException e) {
+			throw new IllegalStateException("Failed to build the I/O reactor", e);
+		}
+		//
+		final NIOConnFactory<HttpHost, NHttpClientConnection>
+			connFactory = new BasicNIOConnFactory(
+			null, null, null, null,
+			DirectByteBufferAllocator.INSTANCE, connConfig
+		);
+		//
+		connPoolMap = new HashMap<>(storageNodeCount);
+		HttpHost nextRoute;
+		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
+		for(int i = 0; i < storageNodeCount; i ++) {
+			nextRoute = getNodeHost(nodeAddrs[i]);
+			nextConnPool = new FixedRouteSequencingConnPool(
+				ioReactor, nextRoute, connFactory,
+				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ?
+					(int) timeOutMs : Integer.MAX_VALUE,
+				DEFAULT_INTERNAL_BATCH_SIZE
+			);
+			nextConnPool.setDefaultMaxPerRoute(threadCount);
+			nextConnPool.setMaxTotal(threadCount);
+			connPoolMap.put(nextRoute, nextConnPool);
+		}
+		this.pipeliningEnabled = pipeliningFlag;
+		this.port = appConfig.getStorageHttpPort();
+		this.nodeBalancer = new BasicNodeBalancer(nodeAddrs);
+		this.totalThreadCount = threadCount * storageNodeCount;
+		activeTaskCountLimitBarrier = new ActiveTaskCountLimitBarrier<>(
+			2 * totalThreadCount + 1000, counterIn, counterOut
+		);
+		start();
 	}
 	//
-	private final HttpAsyncRequestProducer requestProducer = new HttpAsyncRequestProducer() {
-		@Override
-		public HttpHost getTarget() {
-			return null;
+	@Override
+	public final void run() {
+		LOG.debug(
+			Markers.MSG, "Running the web storage client {}", Thread.currentThread().getName()
+		);
+		try {
+			ioReactor.execute(ioEventDispatch);
+		} catch(final IOReactorException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e,
+				"Possible max open files limit exceeded, please check the environment configuration"
+			);
+		} catch(final InterruptedIOException e) {
+			LOG.debug(Markers.MSG, "{}: interrupted", Thread.currentThread().getName());
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to execute the web storage client"
+			);
+		} catch(final IllegalStateException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
 		}
-		@Override
-		public HttpRequest generateRequest() throws IOException, HttpException {
-			return null;
-		}
-		@Override
-		public void produceContent(final ContentEncoder encoder, final IOControl ioctrl) throws IOException {
-		}
-		@Override
-		public void requestCompleted(final HttpContext context) {
-		}
-		@Override
-		public void failed(final Exception ex) {
-		}
-		@Override
-		public boolean isRepeatable() {
-			return false;
-		}
-		@Override
-		public void resetRequest() throws IOException {
-		}
-		@Override
-		public void close() throws IOException {
-		}
-	};
-	//
-	private final HttpAsyncResponseConsumer responseConsumer = new HttpAsyncResponseConsumer() {
-		@Override
-		public void responseReceived(final HttpResponse response) throws IOException, HttpException {
-		}
-		@Override
-		public void consumeContent(final ContentDecoder decoder, final IOControl ioctrl) throws IOException {
-		}
-		@Override
-		public void responseCompleted(final HttpContext context) {
-		}
-		@Override
-		public void failed(final Exception ex) {
-		}
-		@Override
-		public Exception getException() {
-			return null;
-		}
-		@Override
-		public Object getResult() {
-			return null;
-		}
-		@Override
-		public boolean isDone() {
-			return false;
-		}
-		@Override
-		public boolean cancel() {
-			return false;
-		}
-		@Override
-		public void close() throws IOException {
-		}
-	};
+	}
+	;
 	//
 	private final Map<LoadGenerator<T, A>, FutureCallback<A>>
 		LOAD_GENERATOR_CALLBACKS = new HashMap<>();
@@ -171,7 +251,6 @@ implements HttpLoadExecutor<T, A> {
 	public final int submit(
 		final LoadGenerator<T, A> loadGenerator, final List<A> ioTasks, final int from, final int to
 	) throws IOException {
-		final int srcLimit = to - from;
 		// select the target node
 		final String nextNodeAddr = storageNodeCount == 1 ? nodeAddrs[0] : nodeBalancer.getNext();
 		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
@@ -181,67 +260,78 @@ implements HttpLoadExecutor<T, A> {
 			futureCallback = new LoadGeneratorFutureCallback<>(loadGenerator);
 			LOAD_GENERATOR_CALLBACKS.put(loadGenerator, futureCallback);
 		}
-		// prepare the I/O tasks list (make the link between the data item and load type)
-		// submit all I/O tasks
-		int n = 0, m;
-		while(n < srcLimit) {
-			// don't fill the connection pool as fast as possible, this may cause a failure
-			try {
-				activeTaskCountLimitBarrier.getApprovalsFor(null, to - from);
-
-				client.execute(
-					this, this, connPool, wsTask, futureCallback
-				);
-
-				if(m < 1) {
-					throw new RejectedExecutionException("No I/O tasks submitted");
-				} else {
-					n += m;
-				}
-				counterIn.addAndGet(m);
-				// increment node's usage counter
-				if(nodeBalancer != null) {
-					nodeBalancer.markTasksStart(nextNodeAddr, m);
-				}
-			} catch(final InterruptedException | RejectedExecutionException e) {
-				if(isInterrupted()) {
-					throw new InterruptedIOException(getName() + " is interrupted");
-				} else {
-					m = srcLimit - n;
-					countRej.addAndGet(m);
-					LogUtil.exception(LOG, Level.DEBUG, e, "Rejected {} I/O tasks", m);
-				}
-			}
+		// don't fill the connection pool as fast as possible, this may cause a failure
+		try {
+			activeTaskCountLimitBarrier.getApprovalsFor(null, to - from);
+		} catch(final InterruptedException e) {
+			return 0;
 		}
-		return 0;
+		// submit all I/O tasks
+		NioTaskWrapper nextNioTask;
+		for(int i = from; i < to; i ++) {
+			nextNioTask = generateNioTaskFor(loadGenerator, ioTasks.get(i), nextNodeAddr);
+			client.execute(nextNioTask, nextNioTask, connPool, nextNioTask, futureCallback);
+		}
+		final int count = to - from;
+		counterIn.addAndGet(count);
+		// increment node's usage counter
+		if(nodeBalancer != null) {
+			nodeBalancer.markTasksStart(nextNodeAddr, count);
+		}
+		return count;
+	}
+
+	protected NioTaskWrapper<T, A> generateNioTaskFor(
+		final LoadGenerator<T, A> loadGenerator, final A ioTask, String nextNodeAddr
+	) {
+		return new NioTaskWrapper<>(ioTask, nextNodeAddr, this);
+	}
+
+	@Override
+	public boolean isClosed() {
+		return isInterrupted();
 	}
 	//
-
-	//
+	private final static ThreadLocal<Map<String, HttpHost>>
+		THREAD_CACHED_NODE_MAP = new ThreadLocal<>();
 	@Override
 	public HttpHost getNodeHost(final String nodeAddr) {
-		return null;
+		Map<String, HttpHost> cachedNodeMap = THREAD_CACHED_NODE_MAP.get();
+		if(cachedNodeMap == null) {
+			cachedNodeMap = new HashMap<>();
+			THREAD_CACHED_NODE_MAP.set(cachedNodeMap);
+		}
+		//
+		HttpHost nodeHost = cachedNodeMap.get(nodeAddr);
+		if(nodeHost == null) {
+			if(nodeAddr.contains(HOST_PORT_SEP)) {
+				final String nodeAddrParts[] = nodeAddr.split(HOST_PORT_SEP);
+				if(nodeAddrParts.length == 2) {
+					nodeHost = new HttpHost(
+						nodeAddrParts[0], Integer.valueOf(nodeAddrParts[1]), SCHEME
+					);
+				} else {
+					LOG.fatal(Markers.ERR, "Invalid node address: {}", nodeAddr);
+					nodeHost = null;
+				}
+			} else {
+				nodeHost = new HttpHost(nodeAddr, port, SCHEME);
+			}
+			cachedNodeMap.put(nodeAddr, nodeHost);
+		}
+		//
+		return nodeHost;
 	}
-	//
+
 	@Override
 	public void applyHeadersFinally(final HttpRequest httpRequest) {
 	}
-	//
-	protected void applySuccResponseToItem(final HttpResponse response, final T item) {
-	}
-	//
+
 	@Override
-	public HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
-	throws URISyntaxException {
+	public HttpEntityEnclosingRequest createRequest(final A ioTask) {
 		return null;
 	}
-	//
-	@Override
-	public HttpEntityEnclosingRequest createContainerRequest(
-		final Container<T> container, final String nodeAddr
-	) throws URISyntaxException {
-		return null;
-	}
+
 	//
 	@Override
 	public HttpEntityEnclosingRequest createGenericRequest(final String method, final String uri) {

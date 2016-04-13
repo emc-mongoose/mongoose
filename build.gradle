@@ -17,6 +17,7 @@ buildscript {
 	}
 	dependencies {
 		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1"
+		classpath "com.google.gradle:osdetector-gradle-plugin:1.4.0"
 	}
 }
 
@@ -24,13 +25,14 @@ plugins {
 	id "de.gesellix.docker" version "2016-02-08T22-29-47"
 }
 
-apply plugin: "de.gesellix.docker"
+apply plugin: 'de.gesellix.docker'
 apply plugin: 'java'
 apply plugin: 'java-library-distribution'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'com.google.osdetector'
 
 sourceCompatibility = JavaVersion.VERSION_1_7
 targetCompatibility = JavaVersion.VERSION_1_7
@@ -292,7 +294,6 @@ dependencies {
 		library.commons_codec,
 		library.commons_configuration,
 		library.commons_collections4,
-		library.httpcore_plus_nio,
 		library.log4j_api_plus_core,
 		library.metrics_core,
 	)
@@ -393,10 +394,11 @@ dependencies {
 		library.jackson_databind,
 		library.log4j_api_plus_core,
 		library.metrics_core,
-		library.netty_handler,
 		library.netty_buffer,
-		library.netty_transport,
 		library.netty_codec_http,
+		library.netty_handler,
+		library.netty_transport,
+		library.netty_transport_native_epoll,
 	)
 	storageMockRuntime (
 		library.runtime_logging,

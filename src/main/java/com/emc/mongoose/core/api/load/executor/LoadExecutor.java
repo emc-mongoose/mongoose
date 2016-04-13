@@ -21,4 +21,6 @@ extends Closeable {
 	int submit(
 		final LoadGenerator<T, A> loadGenerator, final List<A> ioTasks, final int from, final int to
 	) throws IOException;
+	//
+	boolean isClosed();
 }

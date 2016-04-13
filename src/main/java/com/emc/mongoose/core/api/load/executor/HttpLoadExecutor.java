@@ -2,20 +2,19 @@ package com.emc.mongoose.core.api.load.executor;
 //
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.container.Container;
 //
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 //
-import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 12.04.16.
  */
 public interface HttpLoadExecutor<T extends Item, A extends IoTask<T>>
-extends LoadExecutor<T, A> {
+extends LoadExecutor<T, A>, HttpRequestInterceptor {
 	//
 	String
 		KEY_EMC_ACCEPT = "x-emc-accept",
@@ -48,7 +47,8 @@ extends LoadExecutor<T, A> {
 			KEY_EMC_TOKEN,
 			KEY_EMC_UID
 		},
-		SCHEME = "http";
+		SCHEME = "http",
+		HOST_PORT_SEP = ":";
 	//
 	String
 		METHOD_PUT = "PUT",
@@ -62,12 +62,7 @@ extends LoadExecutor<T, A> {
 	//
 	void applyHeadersFinally(final HttpRequest httpRequest);
 	//
-	HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
-	throws URISyntaxException;
-	//
-	HttpEntityEnclosingRequest createContainerRequest(
-		final Container<T> container, final String nodeAddr
-	) throws URISyntaxException;
+	HttpEntityEnclosingRequest createRequest(final A ioTask);
 	//
 	HttpEntityEnclosingRequest createGenericRequest(final String method, final String uri);
 	//
