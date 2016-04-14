@@ -4,14 +4,14 @@
 		"item" : {
 			"data" : {
 				"size" : [
-					0, "1KB", "1MB"
+					0, "1KB", "1MB", "1GB"
 				]
 			}
 		},
 		"load" : {
 			"limit" : {
-				"time" : "1m",
-				"count" : 1000000
+				"time" : "10m",
+				"count" : 10000000
 			},
 			"threads": [
 				1, 10, 100, 1000
