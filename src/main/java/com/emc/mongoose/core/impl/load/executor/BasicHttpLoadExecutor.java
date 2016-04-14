@@ -67,6 +67,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 12.04.16.
@@ -90,6 +91,8 @@ implements HttpLoadExecutor<T, A> {
 	protected Map<String, Header> sharedHeaders = new HashMap<>();
 	protected Map<String, Header> dynamicHeaders = new HashMap<>();
 	private final int totalThreadCount;
+	private final AtomicLong counterIn = new AtomicLong();
+	private final AtomicLong counterOut = new AtomicLong();
 	protected final Barrier<T> activeTaskCountLimitBarrier;
 	//
 	public BasicHttpLoadExecutor(
@@ -213,7 +216,7 @@ implements HttpLoadExecutor<T, A> {
 	//
 	private final Map<LoadGenerator<T, A>, FutureCallback<A>>
 		LOAD_GENERATOR_CALLBACKS = new HashMap<>();
-	private final static class LoadGeneratorFutureCallback<T extends Item, A extends IoTask<T>>
+	private final class LoadGeneratorFutureCallback
 	implements FutureCallback<A> {
 		//
 		private final LoadGenerator<T, A> loadGenerator;
@@ -224,6 +227,7 @@ implements HttpLoadExecutor<T, A> {
 		//
 		@Override
 		public final void completed(final A ioTask) {
+			counterOut.incrementAndGet();
 			try {
 				loadGenerator.ioTaskCompleted(ioTask);
 			} catch(final RemoteException ignored) {
@@ -232,6 +236,7 @@ implements HttpLoadExecutor<T, A> {
 		//
 		@Override
 		public final void failed(final Exception e) {
+			counterOut.incrementAndGet();
 			try {
 				loadGenerator.ioTaskFailed(1, e);
 			} catch(final RemoteException ignored) {
@@ -240,6 +245,7 @@ implements HttpLoadExecutor<T, A> {
 		//
 		@Override
 		public final void cancelled() {
+			counterOut.incrementAndGet();
 			try {
 				loadGenerator.ioTaskCancelled(1);
 			} catch(final RemoteException ignored) {
