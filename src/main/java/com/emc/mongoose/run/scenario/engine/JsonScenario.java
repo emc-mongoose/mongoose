@@ -8,6 +8,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 //
 import org.apache.logging.log4j.Level;

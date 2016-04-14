@@ -17,7 +17,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
+import org.apache.commons.configuration.PropertyConverter;
 import org.apache.commons.configuration.SystemConfiguration;
+import org.apache.commons.configuration.tree.ConfigurationNode;
 import org.apache.commons.configuration.tree.DefaultExpressionEngine;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -31,10 +33,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 /**
@@ -464,9 +470,13 @@ implements AppConfig {
 		for(final String k : configTree.keySet()) {
 			v = configTree.get(k);
 			compositeKey = configBranch == null ?
-			   k : configBranch + DefaultExpressionEngine.DEFAULT_PROPERTY_DELIMITER + k;
+				k :
+				configBranch + DefaultExpressionEngine.DEFAULT_PROPERTY_DELIMITER + k;
 			if(v instanceof Map) {
 				override(compositeKey, (Map<String, ?>) v);
+			} else if(v instanceof List) {
+				setProperty(compositeKey, null);
+				addPropertyDirect(compositeKey, v);
 			} else {
 				setProperty(compositeKey, v);
 			}

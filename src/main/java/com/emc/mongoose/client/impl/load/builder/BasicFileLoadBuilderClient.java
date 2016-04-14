@@ -20,6 +20,7 @@ import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 //
 import com.emc.mongoose.core.impl.io.conf.BasicFileIoConfig;
 //
+import com.emc.mongoose.core.impl.item.data.CsvFileDataItemInput;
 import com.emc.mongoose.server.api.load.builder.FileLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 import com.emc.mongoose.server.api.load.executor.MixedFileLoadSvc;
@@ -29,10 +30,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 /**
  Created by kurila on 26.11.15.
  */
@@ -99,19 +105,54 @@ implements FileLoadBuilderClient<T, W, U> {
 		}
 		//
 		if(LoadType.MIXED.equals(loadType)) {
+			final List<String> inputFiles = (List<String>) appConfig
+				.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
+			final List<String> loadPatterns = (List<String>) appConfig
+				.getProperty(AppConfig.KEY_LOAD_TYPE);
 			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
-			final Map<LoadType, Integer> loadTypeWeightMap = LoadType.getMixedLoadWeights(
-				(List<String>) appConfig.getProperty(AppConfig.KEY_LOAD_TYPE)
-			);
-			for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
-				try {
-					itemInputMap.put(
-						nextLoadType,
-						LoadType.WRITE.equals(nextLoadType) ? getNewItemInput() : itemInput
-					);
-				} catch(final NoSuchMethodException e) {
-					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
+			final Map<LoadType, Integer> loadTypeWeightMap = LoadType
+				.getMixedLoadWeights(loadPatterns);
+			if(inputFiles.size()==1) {
+				final Path singleInputPath = Paths.get(inputFiles.get(0));
+				for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
+					try {
+						itemInputMap.put(
+							nextLoadType,
+							LoadType.WRITE.equals(nextLoadType) ?
+								getNewItemInput() :
+								new CsvFileDataItemInput<>(
+									singleInputPath, (Class<T>) ioConfig.getItemClass(),
+									ioConfig.getContentSource()
+								)
+						);
+					} catch(final NoSuchMethodException | IOException e) {
+						LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
+					}
 				}
+			} else if(inputFiles.size() == loadPatterns.size()) {
+				final Iterator<String> inputFilesIterator = inputFiles.iterator();
+				Path nextInputPath;
+				for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
+					nextInputPath = Paths.get(inputFilesIterator.next());
+					try {
+						itemInputMap.put(
+							nextLoadType,
+							LoadType.WRITE.equals(nextLoadType) ?
+								getNewItemInput() :
+								new CsvFileDataItemInput<>(
+									nextInputPath, (Class<T>) ioConfig.getItemClass(),
+									ioConfig.getContentSource()
+								)
+						);
+					} catch(final NoSuchMethodException | IOException e) {
+						LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
+					}
+				}
+			} else {
+				throw new IllegalStateException(
+					"Unable to map the list of " + inputFiles.size() + " input files to " +
+					loadPatterns.size() + " load jobs"
+				);
 			}
 			//
 			return (U) new BasicMixedFileLoadClient<>(

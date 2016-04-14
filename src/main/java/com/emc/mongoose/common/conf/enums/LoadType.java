@@ -27,7 +27,7 @@ public enum LoadType {
 		for(final String pattern : patterns) {
 			parts = pattern.split("=");
 			if(parts.length != 2) {
-				throw new IllegalArgumentException("Invalid patterns");
+				throw new IllegalArgumentException("Invalid pattern: \"" + pattern + "\"");
 			}
 			loadType = LoadType.valueOf(parts[0].toUpperCase());
 			tailPart = parts[1];

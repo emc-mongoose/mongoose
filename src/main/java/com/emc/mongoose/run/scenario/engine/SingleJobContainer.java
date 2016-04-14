@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 02.02.16.
  */
 public final class SingleJobContainer
-	extends JobContainerBase {
+extends JobContainerBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
