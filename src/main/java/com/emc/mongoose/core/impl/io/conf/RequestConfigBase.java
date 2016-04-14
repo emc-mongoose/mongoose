@@ -38,7 +38,7 @@ implements RequestConfig<T, C> {
 		api = appConfig.getStorageHttpApi();
 		secret = appConfig.getAuthSecret();
 		userName = appConfig.getAuthId();
-		port = appConfig.getStorageHttpPort();
+		port = appConfig.getStoragePort();
 		final String tokenValue = appConfig.getAuthToken();
 		authToken = tokenValue == null ? null : new BasicToken(tokenValue);
 	}
@@ -146,7 +146,7 @@ implements RequestConfig<T, C> {
 		super.setAppConfig(appConfig);
 		final String api = appConfig.getStorageHttpApi();
 		setAPI(api);
-		setPort(appConfig.getStorageHttpPort());
+		setPort(appConfig.getStoragePort());
 		setUserName(appConfig.getAuthId());
 		setSecret(appConfig.getAuthSecret());
 		final String tokenValue = appConfig.getAuthToken();

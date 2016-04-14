@@ -57,11 +57,11 @@ implements HttpStorageMock<T> {
 	public Cinderella(final AppConfig appConfig)
 	throws IOException {
 		this(
-			appConfig.getStorageHttpMockHeadCount(),
-			appConfig.getStorageHttpPort(),
-			appConfig.getStorageHttpMockCapacity(),
-			appConfig.getStorageHttpMockContainerCapacity(),
-			appConfig.getStorageHttpMockContainerCountLimit(),
+			appConfig.getStorageMockHeadCount(),
+			appConfig.getStoragePort(),
+			appConfig.getStorageMockCapacity(),
+			appConfig.getStorageMockContainerCapacity(),
+			appConfig.getStorageMockContainerCountLimit(),
 			appConfig.getItemSrcBatchSize(),
 			appConfig.getItemSrcFile(),
 			appConfig.getLoadMetricsPeriod(),

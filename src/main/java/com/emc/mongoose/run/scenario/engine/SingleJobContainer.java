@@ -1,7 +1,6 @@
 package com.emc.mongoose.run.scenario.engine;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
@@ -17,60 +16,50 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
-import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.02.16.
  */
-public class SingleJobContainer
-implements JobContainer {
+public final class SingleJobContainer
+	extends JobContainerBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final LoadExecutor loadJob;
 	private final long limitTime;
 	//
-	public SingleJobContainer() {
-		this(Collections.<String, Object>emptyMap());
-	}
-	//
-	public SingleJobContainer(final Map<String, Object> configTree) {
+	public SingleJobContainer(final AppConfig appConfig) {
+		super(appConfig);
+		limitTime = localConfig.getLoadLimitTime();
+		LoadBuilder loadJobBuilder = null;
 		try {
-			final AppConfig localConfig = (AppConfig) BasicConfig.THREAD_CONTEXT.get().clone();
-			localConfig.override(null, configTree);
-			limitTime = localConfig.getLoadLimitTime();
-			LoadBuilder loadJobBuilder = null;
-			try {
-				loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);
-			} catch(final ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to get a load builder instance");
-			} catch(final InvocationTargetException e) {
-				LogUtil.exception(
-					LOG, Level.ERROR, e.getTargetException(), "Failed to get a load builder instance"
-				);
-			}
-			LoadExecutor loadJob_ = null;
-			try {
-				loadJob_ = loadJobBuilder == null ? null : loadJobBuilder.build();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the load job");
-			} finally {
-				loadJob = loadJob_;
-			}
-		} catch(final CloneNotSupportedException e) {
-			throw new RuntimeException(e);
+			loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);
+		} catch(final ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to get a load builder instance");
+		} catch(final InvocationTargetException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e.getTargetException(), "Failed to get a load builder instance"
+			);
+		}
+		LoadExecutor loadJob_ = null;
+		try {
+			loadJob_ = loadJobBuilder == null ? null : loadJobBuilder.build();
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the load job");
+		} finally {
+			loadJob = loadJob_;
 		}
 	}
 	//
 	public SingleJobContainer(final LoadExecutor loadJob, final long limitTime) {
+		super(null);
 		this.loadJob = loadJob;
 		this.limitTime = limitTime;
 	}
 	//
 	@Override
 	public final boolean append(final JobContainer subJob) {
-		return false;
+		throw new IllegalStateException("Appending sub jobs to a single load job is not allowed");
 	}
 	//
 	public final LoadExecutor get() {

@@ -9,7 +9,6 @@ import static com.emc.mongoose.common.conf.AppConfig.KEY_LOAD_METRICS_PERIOD;
 import static com.emc.mongoose.common.conf.AppConfig.KEY_LOAD_THREADS;
 import static com.emc.mongoose.common.conf.AppConfig.KEY_LOAD_TYPE;
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -37,7 +36,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,13 +44,16 @@ import java.util.TreeMap;
  Created by kurila on 17.03.16.
  */
 public class RampupJobContainer
-extends SequentialJobContainer {
+	extends SequentialJobContainer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int tblWidth = 124;
 	private final static char colSep = '|';
 	private final static char rowSep = '-';
 	private final static char padChar = ' ';
+	private final static int DEFAULT_THREAD_COUNT = 1;
+	private final static String DEFAULT_SIZE = "1MB";
+	private final static String DEFAULT_LOAD_TYPE = LoadType.WRITE.name().toLowerCase();
 	//
 	private final StrBuilder strb = new StrBuilder();
 	{
@@ -79,27 +80,12 @@ extends SequentialJobContainer {
 	private final ContentSource contentSrc;
 	private final long limitTime;
 	//
-	public RampupJobContainer() {
-		this(Collections.<String, Object>emptyMap());
-	}
-	//
-	public RampupJobContainer(final Map<String, Object> configTree)
+	public RampupJobContainer(final AppConfig appConfig)
 	throws IllegalStateException {
+		super(appConfig);
 		// disable periodic/intermediate metrics logging
-		configTree.put(KEY_LOAD_METRICS_PERIOD, 0);
-		// get the default config
-		final AppConfig localConfig;
-		try {
-			localConfig = (AppConfig) BasicConfig.THREAD_CONTEXT.get().clone();
-		} catch(final CloneNotSupportedException e) {
-			throw new RuntimeException(e);
-		}
+		localConfig.setProperty(KEY_LOAD_METRICS_PERIOD, 0);
 		// save the default values being replaced with rampup list values
-		final int defaultThreadCount = localConfig.getLoadThreads();
-		final SizeInBytes defaultSize = localConfig.getItemDataSize();
-		final LoadType defaultLoadType = localConfig.getLoadType();
-		//
-		localConfig.override(null, configTree);
 		limitTime = localConfig.getLoadLimitTime();
 		final ItemType itemType = localConfig.getItemType();
 		final StorageType storageType = localConfig.getStorageType();
@@ -114,15 +100,9 @@ extends SequentialJobContainer {
 		final List rawSizes = (List) localConfig.getProperty(KEY_ITEM_DATA_SIZE);
 		final List rawLoadTypes = (List) localConfig.getProperty(KEY_LOAD_TYPE);
 		// return the default values replaced with the list values back
-		if(defaultThreadCount > 0) {
-			localConfig.setProperty(KEY_LOAD_THREADS, defaultThreadCount);
-		}
-		if(defaultSize != null) {
-			localConfig.setProperty(KEY_ITEM_DATA_SIZE, defaultSize.toString());
-		}
-		if(defaultLoadType != null) {
-			localConfig.setProperty(KEY_LOAD_TYPE, defaultLoadType.name().toLowerCase());
-		}
+		localConfig.setProperty(KEY_LOAD_THREADS, DEFAULT_THREAD_COUNT);
+		localConfig.setProperty(KEY_ITEM_DATA_SIZE, DEFAULT_SIZE);
+		localConfig.setProperty(KEY_LOAD_TYPE, DEFAULT_LOAD_TYPE);
 		//
 		try {
 			loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);

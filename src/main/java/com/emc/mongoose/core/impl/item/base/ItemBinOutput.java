@@ -20,10 +20,10 @@ implements Output<T> {
 	}
 	//
 	@Override
-	public void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
 		try {
-			itemsDst.writeUnshared(dataItem);
+			itemsDst.writeUnshared(item);
 		} catch(final ArrayIndexOutOfBoundsException e) {
 			e.printStackTrace(System.err);
 		}

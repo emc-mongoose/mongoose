@@ -128,9 +128,9 @@ implements Runnable {
 		//
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		//
-		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
-		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_MOCK_CONTAINER_CAPACITY, DEFAULT_DATA_COUNT_MAX);
-		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, DEFAULT_DATA_COUNT_MAX);
+		appConfig.setProperty(AppConfig.KEY_STORAGE_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
 		//appConfig.setProperty(AppConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		Thread wsMockThread = new Thread(
 			new Cinderella(BasicConfig.THREAD_CONTEXT.get()), "wsMock"

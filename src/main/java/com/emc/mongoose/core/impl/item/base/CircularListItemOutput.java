@@ -25,19 +25,19 @@ extends ItemListOutput<T> {
 		this.capacity = capacity;
 	}
 	/**
-	 @param dataItem the data item to put
+	 @param item the data item to put
 	 @throws java.io.IOException if the destination collection fails to add the data item
 	 */
 	@Override
-	public void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
 		if(items.size() < capacity) {
-			super.put(dataItem);
+			super.put(item);
 		} else {
 			if(i >= capacity) {
 				i = 0;
 			}
-			items.set(i, dataItem);
+			items.set(i, item);
 		}
 		i ++;
 	}

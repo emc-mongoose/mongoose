@@ -743,7 +743,7 @@ implements HttpRequestConfig<T, C> {
 					);
 				}
 			} else {
-				tgtHost = new HttpHost(tgtAddr, appConfig.getStorageHttpPort(), SCHEME);
+				tgtHost = new HttpHost(tgtAddr, appConfig.getStoragePort(), SCHEME);
 			}
 		} else {
 			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");

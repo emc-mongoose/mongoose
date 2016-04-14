@@ -20,14 +20,14 @@ implements Output<T> {
 	}
 
 	/**
-	 @param dataItem the data item to put
+	 @param item the data item to put
 	 @throws IOException if the destination collection fails to add the data item
 	 (due to capacity reasons for example)
 	 */
 	@Override
-	public void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
-		if(!items.add(dataItem)) {
+		if(!items.add(item)) {
 			throw new IOException("Failed to add the data item to the destination collection");
 		}
 	}

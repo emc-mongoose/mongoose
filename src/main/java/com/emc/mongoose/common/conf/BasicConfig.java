@@ -389,17 +389,17 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public String[] getStorageHttpAddrs() {
-		return getStringArray(KEY_STORAGE_HTTP_ADDRS);
+	public String[] getStorageAddrs() {
+		return getStringArray(KEY_STORAGE_ADDRS);
 	}
 	//
 	@Override
-	public String[] getStorageHttpAddrsWithPorts() {
+	public String[] getStorageAddrsWithPorts() {
 		final String
-			nodeAddrs[] = getStorageHttpAddrs(),
+			nodeAddrs[] = getStorageAddrs(),
 			nodeAddrsWithPorts[] = new String[nodeAddrs.length];
 		String nodeAddr;
-		int port = getStorageHttpPort();
+		int port = getStoragePort();
 		for(int i = 0; i < nodeAddrs.length; i ++) {
 			nodeAddr = nodeAddrs[i];
 			nodeAddrsWithPorts[i] = nodeAddr + (nodeAddr.contains(":") ? "" : ":" + port);
@@ -413,8 +413,8 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public int getStorageHttpPort() {
-		return getInt(KEY_STORAGE_HTTP_PORT);
+	public int getStoragePort() {
+		return getInt(KEY_STORAGE_PORT);
 	}
 	//
 	@Override
@@ -438,23 +438,23 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public int getStorageHttpMockHeadCount() {
-		return getInt(KEY_STORAGE_HTTP_MOCK_HEAD_COUNT);
+	public int getStorageMockHeadCount() {
+		return getInt(KEY_STORAGE_MOCK_HEAD_COUNT);
 	}
 	//
 	@Override
-	public int getStorageHttpMockCapacity() {
-		return getInt(KEY_STORAGE_HTTP_MOCK_CAPACITY);
+	public int getStorageMockCapacity() {
+		return getInt(KEY_STORAGE_MOCK_CAPACITY);
 	}
 	//
 	@Override
-	public int getStorageHttpMockContainerCapacity() {
-		return getInt(KEY_STORAGE_HTTP_MOCK_CONTAINER_CAPACITY);
+	public int getStorageMockContainerCapacity() {
+		return getInt(KEY_STORAGE_MOCK_CONTAINER_CAPACITY);
 	}
 	//
 	@Override
-	public int getStorageHttpMockContainerCountLimit() {
-		return getInt(KEY_STORAGE_HTTP_MOCK_CONTAINER_COUNT_LIMIT);
+	public int getStorageMockContainerCountLimit() {
+		return getInt(KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT);
 	}
 	//
 	@Override
