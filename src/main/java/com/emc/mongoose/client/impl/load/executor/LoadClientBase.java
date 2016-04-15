@@ -56,8 +56,6 @@ implements LoadClient<T, W> {
 	//
 	protected volatile Output<T> consumer = null;
 	//
-	private final static int COUNT_LIMIT_RETRY = 100;
-	//
 	private final class LoadItemsBatchTask
 	implements Runnable {
 		//
@@ -70,73 +68,55 @@ implements LoadClient<T, W> {
 		@Override
 		public final void run() {
 			//
-			final Thread currThread = Thread.currentThread();
-			currThread.setName("dataItemsBatchLoader<" + getName() + ">");
-			//
-			int retryCount = 0;
 			try {
-				while(!currThread.isInterrupted()) {
-					try {
-						List<T> frame = loadSvc.getProcessedItems();
-						retryCount = 0; // reset
-						if(frame == null) {
-							LOG.debug(
-								Markers.ERR, "No data items frame from the load server @ {}",
-								loadSvc
+				List<T> frame = loadSvc.getProcessedItems();
+				if(frame == null) {
+					LOG.debug(
+						Markers.ERR, "No data items frame from the load server @ {}",
+						loadSvc
+					);
+				} else {
+					final int n = frame.size();
+					if(n > 0) {
+						if(LOG.isTraceEnabled(Markers.MSG)) {
+							LOG.trace(
+								Markers.MSG,
+								"Got the next {} items from the load server @ {}",
+								n, loadSvc
 							);
-						} else {
-							final int n = frame.size();
-							if(n > 0) {
-								if(LOG.isTraceEnabled(Markers.MSG)) {
-									LOG.trace(
-										Markers.MSG,
-										"Got the next {} items from the load server @ {}",
-										n, loadSvc
-									);
-								}
-								counterResults.addAndGet(n);
-								// CIRCULARITY FEATURE
-								if(isCircular) {
-									for(final T item : frame) {
-										uniqueItems.put(item.getName(), item);
-									}
-								}
-								for(int m = 0; m < n && !currThread.isInterrupted();) {
-									m += itemOutBuff.put(frame, m, n);
-									LockSupport.parkNanos(1);
-								}
-								if(LOG.isTraceEnabled(Markers.MSG)) {
-									LOG.trace(
-										Markers.MSG, "Put the next {} items to the output buffer",
-										n, loadSvc
-									);
-								}
-							} else {
-								if(LOG.isTraceEnabled(Markers.MSG)) {
-									LOG.trace(
-										Markers.MSG,
-										"No data items in the frame from the load server @ {}",
-										loadSvc
-									);
-								}
+						}
+						counterResults.addAndGet(n);
+						// CIRCULARITY FEATURE
+						if(isCircular) {
+							for(final T item : frame) {
+								uniqueItems.put(item.getName(), item);
 							}
 						}
-						Thread.yield(); LockSupport.parkNanos(1);
-					} catch(final IOException e) {
-						if(retryCount < COUNT_LIMIT_RETRY) {
-							retryCount ++;
-							TimeUnit.MILLISECONDS.sleep(retryCount);
-						} else {
-							LogUtil.exception(
-								LOG, Level.ERROR, e,
-								"Failed to load the processed items from the load server @ {}",
+						for(int m = 0; m < n; m += itemOutBuff.put(frame, m, n)); {
+							LockSupport.parkNanos(1);
+						}
+						if(LOG.isTraceEnabled(Markers.MSG)) {
+							LOG.trace(
+								Markers.MSG, "Put the next {} items to the output buffer",
+								n, loadSvc
+							);
+						}
+					} else {
+						if(LOG.isTraceEnabled(Markers.MSG)) {
+							LOG.trace(
+								Markers.MSG,
+								"No data items in the frame from the load server @ {}",
 								loadSvc
 							);
-							break;
 						}
 					}
 				}
-			} catch(final InterruptedException ignored) {
+				Thread.yield(); LockSupport.parkNanos(1);
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.DEBUG, e,
+					"Failed to load the processed items from the load server @ {}", loadSvc
+				);
 			}
 		}
 	}
@@ -145,29 +125,14 @@ implements LoadClient<T, W> {
 	implements Runnable {
 		@Override
 		public final void run() {
-			final Thread currThread = Thread.currentThread();
-			currThread.setName("interruptOnCountLimitReached<" + getName() + ">");
-			if(maxCount > 0) {
-				try {
-					while(!currThread.isInterrupted()) {
-						if(maxCount <= lastStats.getSuccCount() + lastStats.getFailCount()) {
-							LOG.debug(
-								Markers.MSG, "Interrupting due to count limit ({}) is reached",
-								maxCount
-							);
-							break;
-						} else if(currThread.isInterrupted()) {
-							LOG.debug(Markers.MSG, "Interrupting due to external interruption");
-							break;
-						} else {
-							LockSupport.parkNanos(1); Thread.yield();
-						}
-					}
-				} finally {
-					isLimitReached = true;
-					remotePutExecutor.shutdownNow();
-					interruptLoadSvcs();
-				}
+			if(maxCount > 0 && maxCount <= lastStats.getSuccCount() + lastStats.getFailCount()) {
+				LOG.debug(
+					Markers.MSG, "Interrupting due to count limit ({}) is reached",
+					maxCount
+				);
+				isLimitReached = true;
+				remotePutExecutor.shutdownNow();
+				interruptLoadSvcs();
 			}
 		}
 	}
@@ -202,9 +167,9 @@ implements LoadClient<T, W> {
 		remoteLoadMap.keySet().toArray(this.loadSvcAddrs);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		for(final W nextLoadSvc : remoteLoadMap.values()) {
-			mgmtTasks.add(new LoadItemsBatchTask(nextLoadSvc));
+			svcTasks.add(new LoadItemsBatchTask(nextLoadSvc));
 		}
-		mgmtTasks.add(new InterruptOnCountLimitReachedTask());
+		svcTasks.add(new InterruptOnCountLimitReachedTask());
 		//
 		final int remotePutThreadCount = Math.max(loadSvcAddrs.length, ThreadUtil.getWorkerCount());
 		remotePutExecutor = new ThreadPoolExecutor(

@@ -78,6 +78,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
 	private final HttpRequestConfig<T, C> httpReqConfigCopy;
 	private final boolean isPipeliningEnabled;
+	private final Thread httpClientThread;
 	//
 	public BasicHttpContainerLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, C> reqConfig, final String[] addrs,
@@ -177,7 +178,10 @@ implements HttpContainerLoadExecutor<T, C> {
 			connPoolMap.put(nextRoute, nextConnPool);
 		}
 		//
-		mgmtTasks.add(new HttpClientRunTask(ioEventDispatch, ioReactor));
+		httpClientThread = new Thread(new HttpClientRunTask(ioEventDispatch, ioReactor));
+		httpClientThread.setName(getName() + "-httpClient");
+		httpClientThread.setDaemon(true);
+		httpClientThread.start();
 	}
 	//
 	@Override
@@ -223,6 +227,8 @@ implements HttpContainerLoadExecutor<T, C> {
 					}
 				}
 			}
+			//
+			httpClientThread.interrupt();
 			//
 			try {
 				ioReactor.shutdown();

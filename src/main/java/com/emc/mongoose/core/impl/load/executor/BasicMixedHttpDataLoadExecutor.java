@@ -48,7 +48,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	private final Map<LoadType, Integer> loadTypeWeights;
 	private final Map<LoadType, HttpRequestConfig<T, ? extends Container<T>>>
 		reqConfigMap = new HashMap<>();
-	protected final Map<LoadType, HttpDataLoadExecutor<T>>
+	private final Map<LoadType, HttpDataLoadExecutor<T>>
 		loadExecutorMap = new HashMap<>();
 	//
 	public BasicMixedHttpDataLoadExecutor(

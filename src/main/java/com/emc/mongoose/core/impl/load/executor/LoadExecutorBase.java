@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
@@ -42,11 +41,14 @@ import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -96,26 +98,48 @@ implements LoadExecutor<T> {
 	protected final Object state = new Object();
 	protected final ItemBuffer<T> itemOutBuff;
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final List<Runnable> mgmtTasks = new LinkedList<>();
-	private final ThreadPoolExecutor mgmtExecutor;
-	//
+	protected final List<Runnable> svcTasks = new LinkedList<>();
+	private final static Map<String, List<Runnable>> ALL_SVC_TASKS = new ConcurrentHashMap<>();
+	private final static Thread ALL_SVC_TASKS_WORKER = new Thread("loadExecutorSvcTasksWorker") {
+		{
+			setDaemon(true);
+			start();
+		}
+		@Override
+		public final void run() {
+			while(!isInterrupted()) {
+				List<Runnable> nextLoadSvcTasks;
+				for(final String nextLoadName : ALL_SVC_TASKS.keySet()) {
+					nextLoadSvcTasks = ALL_SVC_TASKS.get(nextLoadName);
+					for(final Runnable nextSvcTask : nextLoadSvcTasks) {
+						try {
+							nextSvcTask.run();
+							LockSupport.parkNanos(1);
+						} catch(final Exception e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e,
+								"Service task \"{}\" or load executor \"{}\" failed",
+								nextSvcTask, nextLoadName
+							);
+						}
+					}
+				}
+			}
+		}
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final class StatsRefreshTask
 	implements Runnable {
 		@Override
 		public final void run() {
-			final Thread currThread = Thread.currentThread();
-			currThread.setName("statsRefresh<" + getName() + ">");
 			try {
-				while(!currThread.isInterrupted()) {
-					synchronized(ioStats) {
-						ioStats.wait(1000);
-					}
-					refreshStats();
-					Thread.yield();
-					LockSupport.parkNanos(1000000);
+				synchronized(ioStats) {
+					ioStats.wait(1000);
 				}
-			} catch(final InterruptedException ignored) {
+			} catch(final InterruptedException e) {
+				return;
 			}
+			refreshStats();
 		}
 	}
 	//
@@ -124,19 +148,14 @@ implements LoadExecutor<T> {
 	implements Runnable {
 		@Override
 		public final void run() {
-			final Thread currThread = Thread.currentThread();
-			currThread.setName("failuresMonitor<" + getName() + ">");
 			try {
-				while(!currThread.isInterrupted()) {
-					synchronized(ioStats) {
-						ioStats.wait(1000);
-					}
-					checkForBadState();
-					Thread.yield();
-					LockSupport.parkNanos(1000000);
+				synchronized(ioStats) {
+					ioStats.wait(1000);
 				}
-			} catch(final InterruptedException ignored) {
+			} catch(final InterruptedException e) {
+				return;
 			}
+			checkForBadState();
 		}
 	}
 	//
@@ -144,23 +163,11 @@ implements LoadExecutor<T> {
 	implements Runnable {
 		@Override
 		public final void run() {
-			final Thread currThread = Thread.currentThread();
-			currThread.setName("resultsDispatcher<" + getName() + ">");
-			try {
-				if(isCircular) {
-					while(!areAllItemsProduced) {
-						LockSupport.parkNanos(1_000_000);
-						Thread.yield();
-					}
-				}
-				while(!currThread.isInterrupted()) {
+			if(!isCircular || allItemsProducedFlag) {
+				try {
 					postProcessItems();
-					LockSupport.parkNanos(1_000);
+				} catch(final InterruptedException ignored) {
 				}
-			} catch(final InterruptedException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
-			} finally {
-				LOG.debug(Markers.MSG, "{}: results dispatched finished", getName());
 			}
 		}
 	}
@@ -221,16 +228,12 @@ implements LoadExecutor<T> {
 		}
 		dataSrc = ioConfig.getContentSource();
 		//
-		mgmtExecutor = new ThreadPoolExecutor(
-			1, 1, 0, TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(batchSize),
-			new GroupThreadFactory("mgmtWorker", true)
-		);
 		if(metricsPeriodSec > 0) {
-			mgmtTasks.add(new LogMetricsTask(this, metricsPeriodSec));
+			svcTasks.add(new LogMetricsTask(this, metricsPeriodSec));
 		}
-		mgmtTasks.add(new StatsRefreshTask());
-		mgmtTasks.add(new FailuresMonitorTask());
-		mgmtTasks.add(new ResultsDispatcher());
+		svcTasks.add(new StatsRefreshTask());
+		svcTasks.add(new FailuresMonitorTask());
+		svcTasks.add(new ResultsDispatcher());
 		//
 		LoadCloseHook.add(this);
 	}
@@ -345,14 +348,7 @@ implements LoadExecutor<T> {
 			}
 			super.start();
 			LOG.debug(Markers.MSG, "Started object producer {}", getName());
-			//
-			mgmtExecutor.setCorePoolSize(mgmtTasks.size());
-			mgmtExecutor.setMaximumPoolSize(mgmtTasks.size());
-			for(final Runnable mgmtTask : mgmtTasks) {
-				mgmtExecutor.submit(mgmtTask);
-			}
-			mgmtExecutor.shutdown();
-			//
+			ALL_SVC_TASKS.put(getName(), svcTasks);
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		}
 	}
@@ -425,7 +421,7 @@ implements LoadExecutor<T> {
 			t.printStackTrace(System.err);
 		}
 		//
-		mgmtExecutor.shutdownNow();
+		ALL_SVC_TASKS.remove(getName());
 		LOG.debug(Markers.MSG, "{}: service threads executor shut down", getName());
 		//
 		if(isCircular) {
@@ -881,7 +877,7 @@ implements LoadExecutor<T> {
 	protected void shutdownActually() {
 		super.interrupt(); // stop the source producing right now
 		if(isCircular) {
-			areAllItemsProduced = true; //  unblock ResultsDispatcher thread
+			allItemsProducedFlag = true; //  unblock ResultsDispatcher thread
 		}
 		LOG.debug(Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"", itemInput, getName());
 	}

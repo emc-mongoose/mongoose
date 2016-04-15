@@ -21,6 +21,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.LockSupport;
@@ -34,7 +35,7 @@ implements ItemProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final ConcurrentHashMap<String, T> uniqueItems;
+	protected final Map<String, T> uniqueItems;
 	protected final Input<T> itemInput;
 	protected final long maxCount;
 	protected final boolean isCircular;
@@ -46,7 +47,7 @@ implements ItemProducer<T> {
 	protected T lastItem;
 	protected int maxItemQueueSize;
 	//
-	protected volatile boolean areAllItemsProduced = false;
+	protected volatile boolean allItemsProducedFlag = false;
 	protected volatile long producedItemsCount = 0;
 	//
 	protected BasicItemProducer(
