@@ -93,7 +93,14 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 	}
 	//
 	@Override
-	public void logMetrics(final Marker logMarker) {
+	public void logMetrics(final Marker logMarker)
+	throws InterruptedException {
+		if(isInterrupted.get()) {
+			throw new InterruptedException();
+		}
+		if(!isStarted.get()) {
+			return;
+		}
 		final StrBuilder strb = new StrBuilder(Markers.PERF_SUM.equals(logMarker) ? "Summary:" : "")
 			.appendNewLine()
 			.appendFixedWidthPadLeft("Weight | ", 9, ' ')

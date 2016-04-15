@@ -144,7 +144,14 @@ implements MixedFileLoadSvc<F> {
 	}
 	//
 	@Override
-	public void logMetrics(final Marker logMarker) {
+	public void logMetrics(final Marker logMarker)
+	throws InterruptedException {
+		if(isInterrupted.get()) {
+			throw new InterruptedException();
+		}
+		if(!isStarted.get()) {
+			return;
+		}
 		final StrBuilder strb = new StrBuilder()
 			.appendNewLine()
 			.appendPadding(100, '-')

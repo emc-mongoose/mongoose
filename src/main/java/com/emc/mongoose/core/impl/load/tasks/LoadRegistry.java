@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.tasks;
 // mongoose-common.jar
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
@@ -20,74 +21,129 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
 Created by kurila on 23.10.14.
 Register shutdown hook which should perform correct server-side shutdown even if user hits ^C
 */
-public final class LoadCloseHook
-implements Runnable {
+public final class LoadRegistry {
 	//
-	private static final Logger LOG = LogManager.getLogger();
-	private static final Map<String, Map<LoadExecutor, Thread>>
+	private final static Logger LOG = LogManager.getLogger();
+	private final static Map<String, Map<LoadExecutor, Thread>>
 		HOOKS_MAP = new HashMap<>();
-	//
-	public static final Map<String, List<LoadState>>
+	public final static Map<String, List<LoadState>>
 		LOAD_STATES_MAP = new HashMap<>();
+	private final static ScheduledThreadPoolExecutor
+		LOG_METRICS_EXECUTOR = new ScheduledThreadPoolExecutor(
+			1, new GroupThreadFactory("logMetricsDaemon", true)
+		);
+
 	//
-	private final LoadExecutor loadExecutor;
-	private final String loadName;
-	//
-	private LoadCloseHook(final LoadExecutor loadExecutor) {
-		String ln = "";
-		try {
-			ln = loadExecutor.getName();
-		} catch(final RemoteException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to get the name of the remote load executor"
-			);
-		} finally {
-			loadName = ln;
+	private final static class LoadCloseHook
+	implements Runnable {
+		//
+		private final static Logger LOG = LogManager.getLogger();
+		//
+		private final LoadExecutor loadExecutor;
+		private final String loadName;
+		//
+		private LoadCloseHook(final LoadExecutor loadExecutor) {
+			String ln = "";
+			try {
+				ln = loadExecutor.getName();
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to get the name of the remote load executor"
+				);
+			} finally {
+				loadName = ln;
+			}
+			this.loadExecutor = loadExecutor;
 		}
-		this.loadExecutor = loadExecutor;
+		//
+		@Override
+		public final void run() {
+			LOG.debug(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
+			try {
+				loadExecutor.close();
+				LOG.debug(Markers.MSG, "The load executor \"{}\" closed successfully", loadName);
+			} catch(final Exception e) {
+				LogUtil.exception(
+					LOG, Level.DEBUG, e, "Failed to close the load executor \"{}\"", loadName
+				);
+			}
+		}
 	}
 	//
-	public static void add(final LoadExecutor loadExecutor) {
+	private final static class LogMetricsTask
+	implements Runnable {
 		//
-		final LoadCloseHook hookTask = new LoadCloseHook(loadExecutor);
-		try {
-			final Thread hookThread = new Thread(
-				hookTask, String.format("loadCloseHook<%s>", hookTask.loadName)
+		private final LoadExecutor loadExecutor;
+		//
+		public LogMetricsTask(final LoadExecutor loadExecutor) {
+			this.loadExecutor = loadExecutor;
+		}
+		//
+		@Override
+		public final void run() {
+			try {
+				loadExecutor.logMetrics(Markers.PERF_AVG);
+			} catch(final InterruptedException e) {
+				LOG_METRICS_EXECUTOR.getQueue().remove(this);
+			} catch(final RemoteException e) {
+				try {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to log the metrics for \"{}\"",
+						loadExecutor.getName()
+					);
+				} catch(final RemoteException ignored) {
+				}
+			}
+		}
+	}
+	//
+	public static void register(final LoadExecutor loadExecutor, final int metricsPeriodSec) {
+		//
+		if(metricsPeriodSec > 0) {
+			LOG_METRICS_EXECUTOR.scheduleAtFixedRate(
+				new LogMetricsTask(loadExecutor), 0, metricsPeriodSec, TimeUnit.SECONDS
 			);
-			Runtime.getRuntime().addShutdownHook(hookThread);
-			final String currRunId = BasicConfig.THREAD_CONTEXT.get().getRunId();
+		}
+		// add shutdown hook
+		final LoadCloseHook hookTask = new LoadCloseHook(loadExecutor);
+		final Thread hookThread = new Thread(hookTask, hookTask.loadName + "-closeHook");
+		try {
 			synchronized(HOOKS_MAP) {
+				Runtime.getRuntime().addShutdownHook(hookThread);
+				final String currRunId = BasicConfig.THREAD_CONTEXT.get().getRunId();
 				Map<LoadExecutor, Thread> runLoadHooks = HOOKS_MAP.get(currRunId);
 				if(runLoadHooks == null) {
 					runLoadHooks = new HashMap<>();
 					HOOKS_MAP.put(currRunId, runLoadHooks);
 				}
 				runLoadHooks.put(loadExecutor, hookThread);
+				LogUtil.LOAD_HOOKS_COUNT.incrementAndGet();
 			}
-			LogUtil.LOAD_HOOKS_COUNT.incrementAndGet();
 			LOG.debug(
 				Markers.MSG, "Registered shutdown hook \"{}\"", hookTask.loadName
 			);
 		} catch(final SecurityException | IllegalArgumentException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to add the shutdown hook");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to register the shutdown hook");
 		} catch(final IllegalStateException e) { // shutdown is in progress
-			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to add the shutdown hook");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to register the shutdown hook");
 		}
 	}
 	//
-	public static void del(final LoadExecutor loadExecutor) {
+	public static void unregister(final LoadExecutor loadExecutor) {
+		//
 		String currRunId;
 		try {
 			currRunId = loadExecutor.getLoadState().getAppConfig().getRunId();
 		} catch (final RemoteException e) {
-			currRunId = BasicConfig.THREAD_CONTEXT.get().getRunId();
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+			currRunId = BasicConfig.THREAD_CONTEXT.get().getRunId();
 		}
 		synchronized(HOOKS_MAP) {
 			final Map<LoadExecutor, Thread> runHooks = HOOKS_MAP.get(currRunId);
@@ -161,7 +217,7 @@ implements Runnable {
 									} else {
 										LOG.debug(
 											Markers.ERR,
-											"Failed to acquire the lock for the del method"
+											"Failed to acquire the lock for the unregister method"
 										);
 									}
 								} catch(final InterruptedException e) {
@@ -179,18 +235,4 @@ implements Runnable {
 			}
 		}
 	}
-	//
-	@Override
-	public final void run() {
-		LOG.debug(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
-		try {
-			loadExecutor.close();
-			LOG.debug(Markers.MSG, "The load executor \"{}\" closed successfully", loadName);
-		} catch(final Exception e) {
-			LogUtil.exception(
-				LOG, Level.DEBUG, e, "Failed to close the load executor \"{}\"", loadName
-			);
-		}
-	}
-	//
 }

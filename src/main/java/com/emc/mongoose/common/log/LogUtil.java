@@ -230,7 +230,7 @@ implements ShutdownCallbackRegistry {
 						HOOKS_LOCK.unlock();
 					}
 				} else {
-					LOG.debug(Markers.ERR, "Failed to acquire the lock for the del method");
+					LOG.debug(Markers.ERR, "Failed to acquire the lock for the unregister method");
 				}
 			} else {
 				LOG.debug(Markers.MSG, "There's no unclosed loads, forcing logging subsystem shutdown");

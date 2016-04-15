@@ -26,10 +26,9 @@ import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
 import com.emc.mongoose.core.impl.load.barrier.ActiveTaskCountLimitBarrier;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
-import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
+import com.emc.mongoose.core.impl.load.tasks.LoadRegistry;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
-import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -41,13 +40,11 @@ import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -228,14 +225,11 @@ implements LoadExecutor<T> {
 		}
 		dataSrc = ioConfig.getContentSource();
 		//
-		if(metricsPeriodSec > 0) {
-			svcTasks.add(new LogMetricsTask(this, metricsPeriodSec));
-		}
 		svcTasks.add(new StatsRefreshTask());
 		svcTasks.add(new FailuresMonitorTask());
 		svcTasks.add(new ResultsDispatcher());
 		//
-		LoadCloseHook.add(this);
+		LoadRegistry.register(this, metricsPeriodSec);
 	}
 	//
 	private LoadExecutorBase(
@@ -288,12 +282,16 @@ implements LoadExecutor<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public void logMetrics(final Marker logMarker) {
-		LOG.info(
-			logMarker,
-			Markers.PERF_SUM.equals(logMarker) ?
-				"\"" + getName() + "\" summary: " + lastStats.toSummaryString() : lastStats
-		);
+	public void logMetrics(final Marker logMarker)
+	throws InterruptedException {
+		if(isInterrupted.get()) {
+			throw new InterruptedException();
+		}
+		if(isStarted.get()) {
+			LOG.info(
+				logMarker, Markers.PERF_SUM.equals(logMarker) ?
+					"\"" + getName() + "\" summary: " + lastStats.toSummaryString() : lastStats);
+		}
 	}
 	//
 	@Override
@@ -979,7 +977,7 @@ implements LoadExecutor<T> {
 				}
 			}
 			setCountLimitConfig(counterResults.get());
-			LoadCloseHook.del(this);
+			LoadRegistry.unregister(this);
 			if(loadedPrevState != null) {
 				if(RESTORED_STATES_MAP.containsKey(appConfig.getRunId())) {
 					RESTORED_STATES_MAP.get(appConfig.getRunId()).remove(loadedPrevState);
