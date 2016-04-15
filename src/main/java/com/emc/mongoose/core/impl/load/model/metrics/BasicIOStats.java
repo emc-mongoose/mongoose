@@ -85,9 +85,7 @@ extends IOStatsBase {
 		final long currElapsedTime = tsStartMicroSec > 0 ?
 			TimeUnit.NANOSECONDS.toMicros(System.nanoTime()) - tsStartMicroSec : 0;
 		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
-		Thread.yield(); LockSupport.parkNanos(1);
 		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
-		Thread.yield(); LockSupport.parkNanos(1);
 		return new BasicSnapshot(
 			throughPutSucc == null ? 0 : throughPutSucc.getCount(),
 			throughPutSucc == null ? 0 : throughPutSucc.getLastRate(),
