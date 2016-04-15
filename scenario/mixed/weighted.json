@@ -1,13 +1,20 @@
 {
 	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "weighted-load"
+			}
+		},
+		"load" : {
+			"threads" : 100
+		}
+	},
 	"jobs" : [
 		{
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "weighted-load"
-					},
 					"data" : {
 						"size" : "1KB"
 					},
@@ -19,8 +26,7 @@
 					"limit" : {
 						"count" : 1000
 					},
-					"metricsPeriod" : 0,
-					"threads" : 100
+					"metricsPeriod" : 0
 				}
 			}
 		},
@@ -28,9 +34,6 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "weighted-load"
-					},
 					"data" : {
 						"size" : "4KB-16KB"
 					},
@@ -43,7 +46,6 @@
 					"limit" : {
 						"time" : "5m"
 					},
-					"threads" : 100,
 					"type" : [
 						"write=20%", "read=80%"
 					]

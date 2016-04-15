@@ -1,34 +1,34 @@
 {
 	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "linear-read-100MB"
+			},
+			"data" : {
+				"size" : "100MB"
+			},
+			"load" : {
+				"limit" : {
+					"count" : 10
+				}
+			}
+		}
+	},
 	"jobs": [
 		{
 			"type": "load", // write is used by default
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "linear-read-100MB"
-					},
-					"data" : {
-						"size" : "100MB"
-					},
 					"dst" : {
 						"file" : "/tmp/scenario-linear-read-100MB.csv"
 					}
-				},
-				"load" : {
-					"limit" : {
-						"count" : 10
-					}
 				}
 			}
-		},
-		{
+		}, {
 			"type": "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "linear-read-100MB"
-					},
 					"src" : {
 						"file" : "/tmp/scenario-linear-read-100MB.csv"
 					}
