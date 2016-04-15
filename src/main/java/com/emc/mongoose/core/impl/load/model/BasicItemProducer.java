@@ -21,9 +21,9 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -35,7 +35,7 @@ implements ItemProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final Map<String, T> uniqueItems;
+	protected final ConcurrentMap<String, T> uniqueItems;
 	protected final Input<T> itemInput;
 	protected final long maxCount;
 	protected final boolean isCircular;
