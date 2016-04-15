@@ -97,61 +97,43 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final List<Runnable> svcTasks = new LinkedList<>();
 	private final static Map<String, List<Runnable>> ALL_SVC_TASKS = new ConcurrentHashMap<>();
-	private final static Thread ALL_SVC_TASKS_WORKER = new Thread("loadExecutorSvcTasksWorker") {
-		{
-			setDaemon(true);
-			start();
-		}
-		@Override
-		public final void run() {
-			while(!isInterrupted()) {
-				List<Runnable> nextLoadSvcTasks;
-				for(final String nextLoadName : ALL_SVC_TASKS.keySet()) {
-					nextLoadSvcTasks = ALL_SVC_TASKS.get(nextLoadName);
-					for(final Runnable nextSvcTask : nextLoadSvcTasks) {
-						try {
-							nextSvcTask.run();
-							LockSupport.parkNanos(1);
-						} catch(final Exception e) {
-							LogUtil.exception(
-								LOG, Level.WARN, e,
-								"Service task \"{}\" or load executor \"{}\" failed",
-								nextSvcTask, nextLoadName
-							);
+	static {
+		new Thread("loadExecutorSvcTasksWorker") {
+
+			{
+				setDaemon(true);
+				start();
+			}
+
+			@Override
+			public final void run() {
+				while(!isInterrupted()) {
+					List<Runnable> nextLoadSvcTasks;
+					for(final String nextLoadName : ALL_SVC_TASKS.keySet()) {
+						nextLoadSvcTasks = ALL_SVC_TASKS.get(nextLoadName);
+						for(final Runnable nextSvcTask : nextLoadSvcTasks) {
+							try {
+								nextSvcTask.run();
+								LockSupport.parkNanos(1);
+							} catch(final Exception e) {
+								LogUtil.exception(LOG, Level.WARN, e,
+									"Service task \"{}\" or load executor \"{}\" failed",
+									nextSvcTask, nextLoadName
+								);
+							}
 						}
 					}
 				}
 			}
-		}
-	};
+		};
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public final static int MAX_FAIL_COUNT = 100000;
 	private final class StatsRefreshTask
 	implements Runnable {
 		@Override
 		public final void run() {
-			try {
-				synchronized(ioStats) {
-					ioStats.wait(1000);
-				}
-			} catch(final InterruptedException e) {
-				return;
-			}
 			refreshStats();
-		}
-	}
-	//
-	public final static int MAX_FAIL_COUNT = 100000;
-	private final class FailuresMonitorTask
-	implements Runnable {
-		@Override
-		public final void run() {
-			try {
-				synchronized(ioStats) {
-					ioStats.wait(1000);
-				}
-			} catch(final InterruptedException e) {
-				return;
-			}
 			checkForBadState();
 		}
 	}
@@ -226,7 +208,6 @@ implements LoadExecutor<T> {
 		dataSrc = ioConfig.getContentSource();
 		//
 		svcTasks.add(new StatsRefreshTask());
-		svcTasks.add(new FailuresMonitorTask());
 		svcTasks.add(new ResultsDispatcher());
 		//
 		LoadRegistry.register(this, metricsPeriodSec);
@@ -599,7 +580,7 @@ implements LoadExecutor<T> {
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.DEBUG, e,
+					LOG, Level.WARN, e,
 					"{}: failed to put the item into the output buffer", getName()
 				);
 			}
@@ -677,21 +658,11 @@ implements LoadExecutor<T> {
 	protected void postProcessItems()
 	throws InterruptedException {
 		try {
-			//
 			final List<T> items = new ArrayList<>(batchSize);
 			final int n = itemOutBuff.get(items, batchSize);
 			if(n > 0) {
 				if(isCircular) {
-					int m = 0, k;
-					while(m < n) {
-						k = put(items, m, n);
-						if(k > 0) {
-							m += k;
-						} else {
-							break;
-						}
-						Thread.yield(); LockSupport.parkNanos(1);
-					}
+					for(int m = 0; m < n; m += put(items, m, n));
 				} else {
 					postProcessUniqueItemsFinally(items);
 				}
@@ -713,7 +684,7 @@ implements LoadExecutor<T> {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "{}: going to dump out {} items", getName(), items.size());
 			}
-			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
+			if(LOG.isEnabled(Level.INFO, Markers.ITEM_LIST)) {
 				try {
 					for(final Item item : items) {
 						LOG.info(Markers.ITEM_LIST, item);
@@ -735,15 +706,7 @@ implements LoadExecutor<T> {
 			}
 			try {
 				if(!items.isEmpty()) {
-					int m = 0, k;
-					while(m < n) {
-						k = consumer.put(items, m, n);
-						if(k > 0) {
-							m += k;
-						}
-						Thread.yield();
-						LockSupport.parkNanos(1);
-					}
+					for(int m = 0; m < n; m += consumer.put(items, m, n));
 				}
 				items.clear();
 			} catch(final IOException e) {

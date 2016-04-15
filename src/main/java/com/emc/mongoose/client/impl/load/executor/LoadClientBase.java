@@ -92,9 +92,7 @@ implements LoadClient<T, W> {
 								uniqueItems.put(item.getName(), item);
 							}
 						}
-						for(int m = 0; m < n; m += itemOutBuff.put(frame, m, n)); {
-							LockSupport.parkNanos(1);
-						}
+						for(int m = 0; m < n; m += itemOutBuff.put(frame, m, n));
 						if(LOG.isTraceEnabled(Markers.MSG)) {
 							LOG.trace(
 								Markers.MSG, "Put the next {} items to the output buffer",
@@ -111,7 +109,6 @@ implements LoadClient<T, W> {
 						}
 					}
 				}
-				Thread.yield(); LockSupport.parkNanos(1);
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.DEBUG, e,
