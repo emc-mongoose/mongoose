@@ -10,21 +10,29 @@ require(['./requirejs/conf'], function() {
 		'./util/bootstrap/tabs'
 	], function($, mainController, templateConstants) {
 		
-		function extractAppConfig(fullAppJson) {
-			return fullAppJson['appConfig']['config'];
-		}
-		
-		function extractScenariosDirContents(fullAppJson) {
-			return fullAppJson[templateConstants.tabTypes().SCENARIOS];
-		}
+		const dataExtractorFactory = function (fullAppJson) {
+			function extractAppConfig() {
+				return fullAppJson['appConfig']['config'];
+			}
+
+			function extractScenariosDirContents() {
+				return fullAppJson[templateConstants.tabTypes().SCENARIOS];
+			}
+			
+			return {
+				appConfig: extractAppConfig,
+				scenarioDirContents: extractScenariosDirContents
+			}
+		};
 		
 		//  get all properties from runTimeConfig
 		$.get("/main", function(fullAppJson) {
 			//  root element ("config") of defaults.json configuration file
-			var configObject = extractAppConfig(fullAppJson);
-			var scenariosArray = extractScenariosDirContents(fullAppJson);
+			const dataExtractor = dataExtractorFactory(fullAppJson);
+			const configObject = dataExtractor.appConfig();
+			const scenariosArray = dataExtractor.scenarioDirContents();
 			if(configObject && scenariosArray) {
-				mainController.run(configObject, scenariosArray);
+				mainController.render(scenariosArray, configObject);
 			} else {
 				alert('Failed to load the configuration');
 			}

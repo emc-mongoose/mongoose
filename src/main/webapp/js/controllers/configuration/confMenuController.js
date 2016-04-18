@@ -29,11 +29,6 @@ define([
 	const BUTTONS = $.map(BUTTON_TYPE, function (value) { return value; });
 	
 	function run(configObject, scenariosArray, currentTabType) {
-		//  default run.mode ("webui") from appConfig should be overridden here
-		var run = {
-			mode: "standalone" // possible: ["standalone", "client", "server", "cinderella"]
-		};
-		//  render configuration menu panel
 		render(currentTabType);
 		extendedConfController.setup(configObject, scenariosArray);
 	}
