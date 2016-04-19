@@ -211,8 +211,8 @@ implements HttpDataLoadExecutor<T> {
 					);
 				} catch(final IllegalStateException e) {
 					LogUtil.exception(
-						LOG, Level.INFO, e,
-						"{}: failed to closed expired connections in the pool", getName()
+						LOG, Level.DEBUG, e,
+						"{}: failed to close the expired connections in the pool", getName()
 					);
 				}
 				try {
@@ -222,7 +222,7 @@ implements HttpDataLoadExecutor<T> {
 					);
 				} catch(final IllegalStateException e) {
 					LogUtil.exception(
-						LOG, Level.INFO, e,
+						LOG, Level.DEBUG, e,
 						"{}: failed to closed expired connections in the pool", getName()
 					);
 				} finally {

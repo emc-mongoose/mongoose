@@ -3,15 +3,12 @@
 	"config" : {
 		"item" : {
 			"container" : {
-				"name" : "/tmp/scenario-circular-read-from-container"
-			},
-			"load" : {
-				"limit" : {
-					"count" : 10
-				}
-			},
-			"storage" : {
-				"type" : "fs"
+				"name" : "scenario-circular-read-from-container"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1
 			}
 		}
 	},
@@ -25,7 +22,7 @@
 					"type" : "read",
 					"circular" : true,
 					"limit" : {
-						// count -> infinity, time -> 1 minute
+						// count -> infinity instead of inherited value of 1, time -> 1 minute
 						"count" : 0,
 						"time" : "1m"
 					}

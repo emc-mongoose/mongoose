@@ -14,7 +14,7 @@
 	},
 	"jobs": [
 		{
-			"type": "load", // write is used by default
+			"type": "load",
 			"config" : {
 				"item" : {
 					"dst" : {

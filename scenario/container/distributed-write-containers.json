@@ -1,10 +1,8 @@
 {
-	"type" : "sequential",
+	"type" : "load",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "read-bucket-listing-distributed"
-			}
+			"type" : "container"
 		},
 		"load" : {
 			"limit" : {
@@ -15,7 +13,7 @@
 					"10.249.237.72", "10.249.237.73"
 				]
 			},
-			"threads" : 10
+			"threads" : 100
 		},
 		"run" : {
 			"mode" : "client"
@@ -25,17 +23,5 @@
 				"10.249.237.71"
 			]
 		}
-	},
-	"jobs": [
-		{
-			"type": "load"
-		}, {
-			"type": "load",
-			"config" : {
-				"load" : {
-					"type" : "read"
-				}
-			}
-		}
-	]
+	}
 }

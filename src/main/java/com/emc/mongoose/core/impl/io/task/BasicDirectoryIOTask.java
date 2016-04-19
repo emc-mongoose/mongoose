@@ -103,9 +103,7 @@ implements DirectoryIOTask<T, C> {
 				LOG.trace(Markers.MSG, "Directory \"{}\" listing follows", fPath);
 			}
 			for(final Path nextFilePath : dirStream) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.MSG, nextFilePath.toAbsolutePath());
-				}
+				countBytesDone += Files.size(nextFilePath);
 			}
 			status = Status.SUCC;
 		}

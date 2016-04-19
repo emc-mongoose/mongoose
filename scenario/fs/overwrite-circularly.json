@@ -1,1 +1,50 @@
-// TODO
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "/tmp/scenario-circular-file-overwrite"
+			},
+			"data" : {
+				"size" : "64KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1
+			}
+		},
+		"storage" : {
+			"type" : "fs"
+		}
+	},
+	"jobs": [
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-circular-file-overwrite.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-circular-file-overwrite.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"limit" : {
+						// count -> infinity instead of inherited value, time -> 5 minutes
+						"count" : 0,
+						"time" : "5m"
+					}
+				}
+			}
+		}
+	]
+}

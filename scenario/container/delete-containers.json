@@ -2,16 +2,13 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"data" : {
-				"content" : {
-					"file" : "conf/content/zerobytes"
-				}
-			}
+			"type" : "container"
 		},
 		"load" : {
 			"limit" : {
-				"count" : 1000
-			}
+				"count" : 100000
+			},
+			"threads" : 100
 		}
 	},
 	"jobs" : [
@@ -20,7 +17,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-content-read-zerobytes.csv"
+						"file" : "/tmp/scenario-read-containers.json"
 					}
 				}
 			}
@@ -29,11 +26,11 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-content-read-zerobytes.csv"
+						"file" : "/tmp/scenario-read-containers.json"
 					}
 				},
 				"load" : {
-					"type" : "read"
+					"type" : "delete"
 				}
 			}
 		}

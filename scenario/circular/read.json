@@ -1,17 +1,15 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"item" : {
-			"load" : {
-				"limit" : {
-					"count" : 1
-				}
+		"load" : {
+			"limit" : {
+				"count" : 1
 			}
 		}
 	},
 	"jobs": [
 		{
-			"type": "load", // write is used by default
+			"type": "load",
 			"config" : {
 				"item" : {
 					"dst" : {

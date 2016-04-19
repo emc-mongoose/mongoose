@@ -2,29 +2,23 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"type" : "container",
-			"container" : {
-				"name" : "/tmp/scenario-read-dirs-with-files"
-			}
+			"type" : "container"
 		},
 		"load" : {
 			"limit" : {
 				"count" : 10
 			},
 			"threads" : 10
-		},
-		"storage" : {
-			"type" : "fs"
 		}
 	},
 	"jobs" : [
 		{
-			// create 10 directories
+			// create 10 containers
 			"type" : "load",
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-read-dirs-with-files.json"
+						"file" : "/tmp/scenario-read-containers-with-items.json"
 					},
 					"naming" : {
 						"type" : "asc",
@@ -34,7 +28,7 @@
 				}
 			}
 		}, {
-			// fill each of 10 created directories with files
+			// fill each of 10 created containers with items
 			"type" : "parallel",
 			"config" : {
 				"item" : {
@@ -42,9 +36,9 @@
 				},
 				"load" : {
 					"limit" : {
-						"count" : 100
+						"count" : 100000
 					},
-					"threads" : 1
+					"threads" : 10
 				}
 			},
 			"jobs" : [
@@ -53,7 +47,7 @@
 					"config" : {
 						"item" : {
 							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/0"
+								"name" : "0"
 							}
 						}
 					}
@@ -62,7 +56,7 @@
 					"config" : {
 						"item" : {
 							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/1"
+								"name" : "1"
 							}
 						}
 					}
@@ -71,7 +65,7 @@
 					"config" : {
 						"item" : {
 							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/2"
+								"name" : "2"
 							}
 						}
 					}
@@ -80,7 +74,7 @@
 					"config" : {
 						"item" : {
 							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/3"
+								"name" : "3"
 							}
 						}
 					}
@@ -89,7 +83,7 @@
 					"config" : {
 						"item" : {
 							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/4"
+								"name" : "4"
 							}
 						}
 					}
@@ -98,7 +92,7 @@
 					"config" : {
 						"item" : {
 							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/5"
+								"name" : "5"
 							}
 						}
 					}
@@ -107,7 +101,7 @@
 					"config" : {
 						"item" : {
 							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/6"
+								"name" : "6"
 							}
 						}
 					}
@@ -116,7 +110,7 @@
 					"config" : {
 						"item" : {
 							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/7"
+								"name" : "7"
 							}
 						}
 					}
@@ -125,7 +119,7 @@
 					"config" : {
 						"item" : {
 							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/8"
+								"name" : "8"
 							}
 						}
 					}
@@ -134,19 +128,19 @@
 					"config" : {
 						"item" : {
 							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/9"
+								"name" : "9"
 							}
 						}
 					}
 				}
 			]
 		}, {
-			// read 10 directories with the files
+			// read 10 containers with the files
 			"type" : "load",
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-read-dirs-with-files.json"
+						"file" : "/tmp/scenario-read-containers-with-items.json"
 					}
 				},
 				"load" : {

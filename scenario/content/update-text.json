@@ -4,7 +4,7 @@
 		"item" : {
 			"data" : {
 				"content" : {
-					"file" : "conf/content/zerobytes"
+					"file" : "conf/content/textexample"
 				},
 				"size" : "4KB"
 			}
@@ -12,20 +12,7 @@
 		"load" : {
 			"limit" : {
 				"count" : 1000
-			},
-			"server" : {
-				"addrs" : [
-					"10.249.237.72", "10.249.237.73"
-				]
 			}
-		},
-		"run" : {
-			"mode" : "client"
-		},
-		"storage" : {
-			"addrs" : [
-				"10.249.237.71"
-			]
 		}
 	},
 	"jobs" : [
@@ -34,7 +21,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-content-read-zerobytes-0.csv"
+						"file" : "/tmp/scenario-content-read-text-0.csv"
 					}
 				}
 			}
@@ -46,10 +33,10 @@
 						"ranges" : 10
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-content-read-zerobytes-1.csv"
+						"file" : "/tmp/scenario-content-read-text-1.csv"
 					},
 					"src" : {
-						"file" : "/tmp/scenario-content-read-zerobytes-0.csv"
+						"file" : "/tmp/scenario-content-read-text-0.csv"
 					}
 				}
 			}
@@ -58,7 +45,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-content-read-zerobytes-1.csv"
+						"file" : "/tmp/scenario-content-read-text-1.csv"
 					}
 				},
 				"load" : {

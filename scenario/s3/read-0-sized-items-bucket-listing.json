@@ -1,1 +1,31 @@
-// TODO
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "read-bucket-listing"
+			},
+			"data" : {
+				"size" : 0
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100000
+			},
+			"threads" : 10
+		}
+	},
+	"jobs": [
+		{
+			"type": "load"
+		}, {
+			"type": "load",
+			"config" : {
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

@@ -1,1 +1,10 @@
-// TODO
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "existingBucketName"
+			}
+		}
+	}
+}

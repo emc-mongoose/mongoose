@@ -1,0 +1,14 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"type" : "container"
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100000
+			},
+			"threads" : 100
+		}
+	}
+}

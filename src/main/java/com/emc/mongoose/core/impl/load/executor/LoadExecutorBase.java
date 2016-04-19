@@ -147,6 +147,7 @@ implements LoadExecutor<T> {
 	implements Runnable {
 		@Override
 		public final void run() {
+			Thread.currentThread().setName(LoadExecutorBase.this.getName());
 			while(!isInterrupted.get()) {
 				logMetrics(Markers.PERF_AVG);
 				try {
