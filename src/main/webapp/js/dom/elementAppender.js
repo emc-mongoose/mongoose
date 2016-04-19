@@ -1,7 +1,13 @@
 /**
  * Created on 19.04.16.
  */
-define(["jquery"], function ($) {
+define([
+	'jquery',
+	'../util/templatesUtil'
+], function ($, templatesUtil) {
+
+	const TREE_ELEM = templatesUtil.configTreeElements();
+	const plainId = templatesUtil.composeId;
 
 	function fillLeafLi(liElem, aHref, aText, aClickEvent, aClickEventParam) {
 		liElem.addClass(TREE_ELEM.LEAF);

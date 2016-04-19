@@ -1,15 +1,15 @@
 define([
-	"jquery",
-	"./websockets/webSocketController",
-	"./tab/scenariosController",
-	"./tab/defaultsController",
-	"./tab/testsController",
-	"text!../../templates/navbar.hbs",
-	"text!../../templates/base.hbs",
-	"text!../../templates/tab/buttons.hbs",
-	"../util/handlebarsUtil",
-	"../util/templatesUtil",
-	"../util/cssUtil"
+	'jquery',
+	'./websockets/webSocketController',
+	'./tab/scenariosController',
+	'./tab/defaultsController',
+	'./tab/testsController',
+	'text!../../templates/navbar.hbs',
+	'text!../../templates/base.hbs',
+	'text!../../templates/tab/buttons.hbs',
+	'../util/handlebarsUtil',
+	'../util/templatesUtil',
+	'../util/cssUtil'
 ], function ($,
              webSocketController,
              scenariosController,
@@ -47,17 +47,16 @@ define([
 	
 	function makeTabActive(tabType) {
 		const TAB_CLASS = templatesUtil.tabClasses();
-		$.each(TAB_TYPE, function (key, value) {
-			const treeId = jqId([BLOCK.TREE, value]);
-			const buttonsId = jqId([BLOCK.BUTTONS, value]);
-			if (value === tabType) {
-				cssUtil.show(treeId, buttonsId);
-				cssUtil.addClass(TAB_CLASS.ACTIVE, tabJqId(tabType))
-			} else {
-				cssUtil.hide(treeId, buttonsId);
-				cssUtil.removeClass(TAB_CLASS.ACTIVE, tabJqId(value));
-			}
-		});
+		cssUtil.processClassElements('tab', tabType,
+			function (elemSelector) {
+			elemSelector.addClass(TAB_CLASS.ACTIVE);},
+			function (elemSelector) {
+			elemSelector.removeClass(TAB_CLASS.ACTIVE);});
+		cssUtil.processClassElements('tab-dependent', tabType,
+			function (elemSelector) {
+				elemSelector.show();},
+			function (elemSelector) {
+				elemSelector.hide();});
 		currentTabType = tabType;
 	}
 	
@@ -76,12 +75,12 @@ define([
 					configElem.after(
 						$('<ul/>', {
 						id: plainId([BLOCK.TREE, value, 'details']),
-						class: BLOCK.TREE}));
+						class: BLOCK.TREE + ' ' + 'tab-dependent'}));
 				}
 				configElem.after(
 					$('<ul/>', {
 						id: plainId([BLOCK.TREE, value]),
-						class: BLOCK.TREE}));
+						class: BLOCK.TREE + ' ' + 'tab-dependent'}));
 			})
 		}
 		function renderButtons() {

@@ -15,14 +15,10 @@ define([
 		const TREE_ELEM = templatesUtil.configTreeElements();
 		const PATH_DELIMITER = '/';
 		const PROPERTY_DELIMITER = '.';
-		//
+		
 		var currentScenarioJson;
-		//
-		function setup(configObject, scenariosArray) {
-			render(configObject, scenariosArray);
-		}
 
-		function render(configObject, scenariosArray) {
+		function render(scenariosArray) {
 			cssUtil.hide(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
 			hbUtil.compileAndInsertInside(jqId(['main', 'content']), extendedConfTemplate);
 			//
@@ -238,12 +234,8 @@ define([
 			}
 		};
 
-		const rendererFactory = function () {
-			
-			return {}
-		};
-
 		return {
+			render: render,
 			setup: setup,
 			openedJsonFileProcess: openedJsonFileProcess
 		};

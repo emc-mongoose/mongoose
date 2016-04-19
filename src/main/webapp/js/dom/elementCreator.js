@@ -1,7 +1,13 @@
 /**
  * Created on 19.04.16.
  */
-define(["jquery"], function ($) {
+define([
+	'jquery',
+	'../util/templatesUtil'
+], function ($, templatesUtil) {
+
+	const TAB_TYPE = templatesUtil.tabTypes();
+	const plainId = templatesUtil.composeId;
 
 	function createFormForTree(addressObj, treeType, delimiter) {
 		const form = $('<form/>', {
@@ -37,18 +43,7 @@ define(["jquery"], function ($) {
 		});
 		return form;
 	}
-	function createBackIcon() {
-		const div = $('<div/>', {
-			id: plainId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']),
-			class: 'icon-reply'
-		});
-		div.click(function () {
-			backClickEvent();
-		});
-		return div;
-	}
 	return {
-		backIconElem: createBackIcon,
 		treeFormElem: createFormForTree
 	}
 });

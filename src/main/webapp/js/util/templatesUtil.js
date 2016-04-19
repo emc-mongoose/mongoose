@@ -34,7 +34,12 @@ define(function() {
         TREE: CONFIG_TREE_ELEMENT.TREE
     };
 
-    const DELIMITER = '-';
+
+    const DELIMITER = {
+        ID: '-',
+        PATH: '/',
+        PROPERTY: '.'
+    };
 
     function tabTypes() {
         return TAB_TYPE;
@@ -56,13 +61,17 @@ define(function() {
         return BLOCK;
     }
 
+    function delimiters() {
+        return DELIMITER;
+    }
+
     String.prototype.replaceAll = function(search, replacement) {
         var target = this;
         return target.replace(new RegExp(search, 'g'), replacement);
     };
 
     function composeId(partsArr) {
-	    return partsArr.join(DELIMITER);
+	    return partsArr.join(DELIMITER.ID);
     }
     
     function composeJqueryId(partsArr) {
@@ -70,7 +79,7 @@ define(function() {
     }
 
     function getComposedJquerySelector(partsArr) {
-        $(composeJqueryId(partsArr));
+        return $(composeJqueryId(partsArr));
     }
 
     return {
@@ -79,6 +88,7 @@ define(function() {
         configTreeElements: configTreeElements,
         tabClasses: tabClasses,
         blocks: blocks,
+        delimiters: delimiters,
         composeId: composeId,
         composeJqId:composeJqueryId,
         getComposedJqSelector: getComposedJquerySelector
