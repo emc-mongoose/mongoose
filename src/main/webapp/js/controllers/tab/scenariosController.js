@@ -44,8 +44,7 @@ define([
 			}
 		}
 		function backClickEvent() {
-			cssUtil.show(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
-			cssUtil.hide(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
+			showMainTree();
 			cssUtil.hide('.' + plainId(['form', TAB_TYPE.SCENARIOS, 'property']));
 			$(jqId(['configuration', 'content'])).empty();
 			$(jqId(['config', 'file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
@@ -70,9 +69,18 @@ define([
 		treeUlElem.append(createBackIcon());
 		var addressObject = {};
 		elementAppender.objectAsTree(scenarioJson, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', clickEventCreator.scenarioProperty);
-		treeUlElem.show();
+		showDetailsTree();
+		// $(jqId(['configuration', 'content'])).append(elementCreator.treeFormElem((addressObject, BLOCK.TREE, DELIMITER.PROPERTY)));
+	}
+
+	function showMainTree() {
+		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS, 'details'])).hide();
+		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS])).show();
+	}
+
+	function showDetailsTree() {
+		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS, 'details'])).show();
 		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS])).hide();
-		$(jqId(['configuration', 'content'])).append(elementCreator.treeFormElem((addressObject, BLOCK.TREE, DELIMITER.PROPERTY)));
 	}
 
 	function createBackIcon() {

@@ -153,7 +153,7 @@ define([
 		reader.onload = function (data) {
 			content = data.target.result;
 			const json = JSON.parse(content);
-			extendedConfController.openedJsonFileProcess(json, fullFileName);
+			// extendedConfController.openedJsonFileProcess(json, fullFileName);
 		};
 		reader.onerror = function (data) {
 			console.error("File couldn't be read. Code" + data.target.error.code);
