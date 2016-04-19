@@ -1,20 +1,24 @@
 {
 	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "linear-sleep-and-delete"
+			},
+			"load" : {
+				"limit" : {
+					"count" : 1000
+				}
+			}
+		}
+	},
 	"jobs": [
 		{
 			"type": "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "linear-delete"
-					},
 					"dst" : {
-						"file" : "/tmp/scenario-linear-delete.csv"
-					}
-				},
-				"load" : {
-					"limit" : {
-						"count" : 1000
+						"file" : "/tmp/scenario-linear-sleep-and-delete.csv"
 					}
 				}
 			}
@@ -27,11 +31,8 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "linear-delete"
-					},
 					"src" : {
-						"file" : "/tmp/scenario-linear-delete.csv"
+						"file" : "/tmp/scenario-linear-sleep-and-delete.csv"
 					}
 				},
 				"load" : {

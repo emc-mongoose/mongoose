@@ -8,7 +8,8 @@
 			"data" : {
 				"size" : "100MB"
 			}
-		},
+		}
+	},
 	"jobs": [
 		{
 			"type": "load", // write is used by default
@@ -24,8 +25,7 @@
 					}
 				}
 			}
-		},
-		{
+		}, {
 			"type": "load",
 			"config" : {
 				"item" : {
@@ -40,5 +40,3 @@
 		}
 	]
 }
-
-

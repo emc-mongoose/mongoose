@@ -7,6 +7,11 @@
 			},
 			"data" : {
 				"size" : "0"
+			},
+			"load" : {
+				"limit" : {
+					"count" : 100000
+				}
 			}
 		}
 	},
@@ -17,11 +22,6 @@
 				"item" : {
 					"dst" : {
 						"file" : "/tmp/scenario-linear-read-zero-size.csv"
-					}
-				},
-				"load" : {
-					"limit" : {
-						"count" : 100000
 					}
 				}
 			}
