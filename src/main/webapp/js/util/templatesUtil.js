@@ -13,9 +13,9 @@ define(function() {
     // the order of elements matters for a template
     const COMMON_BUTTON_TYPE = {
         OPEN: 'open',
-        OPEN_INPUT_TEXT: 'config-file-name',
-        OPEN_INPUT_FILE: 'config-file',
-        SAVE: 'save-config',
+        OPEN_INPUT_TEXT: 'file-name',
+        OPEN_INPUT_FILE: 'file',
+        SAVE: 'save',
         SAVE_AS: 'save-file'
     };
     

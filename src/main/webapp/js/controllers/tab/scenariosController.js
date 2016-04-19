@@ -1,37 +1,34 @@
 /**
  * Created on 18.04.16.
  */
-/**
- * Created on 18.04.16.
- */
 define([
 	'jquery',
 	'../../util/templatesUtil',
 	'../../util/cssUtil',
-	'../../dom/elementAppender',
-	'../../dom/elementCreator'
+	'../../common/elementAppender',
+	'../../common/openFileHandler'
 ], function ($,
              templatesUtil,
              cssUtil,
-             elementAppender, 
-             elementCreator) {
-
+             elementAppender,
+             openFileHandler) {
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const BLOCK = templatesUtil.blocks();
 	const TREE_ELEM = templatesUtil.configTreeElements();
 	const DELIMITER = templatesUtil.delimiters();
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
-	var currentScenarioJson = {};
+	var mainViewFlag = true;
+	var currentScenarioObject = {};
 	
 	const clickEventCreatorFactory = function () {
 		var prevPropInputId = '';
 		function scenarioFileClickEvent(aHref) {
 			$.post('/scenario', {path: aHref})
 				.done(function (scenarioJson) {
-					currentScenarioJson = scenarioJson;
+					currentScenarioObject = scenarioJson;
 					updateDetailsTree(scenarioJson);
-					$(jqId(['config', 'file', 'name', TAB_TYPE.SCENARIOS])).val(aHref);
+					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(aHref);
 				})
 		}
 		function scenarioPropertyClickEvent(aHref) {
@@ -45,9 +42,9 @@ define([
 		}
 		function backClickEvent() {
 			showMainTree();
-			cssUtil.hide('.' + plainId(['form', TAB_TYPE.SCENARIOS, 'property']));
-			$(jqId(['configuration', 'content'])).empty();
-			$(jqId(['config', 'file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
+			// cssUtil.hide('.' + plainId(['form', TAB_TYPE.SCENARIOS, 'property']));
+			// $(jqId(['configuration', 'content'])).empty();
+			$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
 		}
 		return {
 			backToUpperLevel: backClickEvent,
@@ -63,12 +60,12 @@ define([
 		elementAppender.arrayAsTree(scenariosArray, rootTreeUlElem, 'dir', DELIMITER.PATH, clickEventCreator.scenarioFile);
 	}
 
-	function updateDetailsTree(scenarioJson) {
+	function updateDetailsTree(scenarioObject) {
 		const treeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS, 'details']));
 		treeUlElem.empty();
 		treeUlElem.append(createBackIcon());
 		var addressObject = {};
-		elementAppender.objectAsTree(scenarioJson, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', clickEventCreator.scenarioProperty);
+		elementAppender.objectAsTree(scenarioObject, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', clickEventCreator.scenarioProperty);
 		showDetailsTree();
 		// $(jqId(['configuration', 'content'])).append(elementCreator.treeFormElem((addressObject, BLOCK.TREE, DELIMITER.PROPERTY)));
 	}
@@ -76,11 +73,13 @@ define([
 	function showMainTree() {
 		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS, 'details'])).hide();
 		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS])).show();
+		mainViewFlag = true;
 	}
 
 	function showDetailsTree() {
 		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS, 'details'])).show();
 		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS])).hide();
+		mainViewFlag = false;
 	}
 
 	function createBackIcon() {
@@ -94,8 +93,25 @@ define([
 		return div;
 	}
 
+
+	function fileReaderOnLoadAction(scenarioObject, fullFileName) {
+		currentScenarioObject = scenarioObject;
+		updateDetailsTree(scenarioObject);
+		// $(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(fullFileName);
+	}
+	
+	function setTabParameters() {
+		if (mainViewFlag) {
+			showMainTree();
+		} else {
+			showDetailsTree();
+		}
+		openFileHandler.setFileReaderOnLoadAction(fileReaderOnLoadAction);
+	}
+	
 	return {
-		render: render
+		render: render,
+		setTabParameters: setTabParameters
 	}
 });
 

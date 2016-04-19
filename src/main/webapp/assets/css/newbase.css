@@ -27,6 +27,7 @@
     padding: 12px 20px 15px 20px !important;
     font-size: 16px;
     min-width: 20%;
+    cursor: pointer;
 }
 .logo-link {
     /*padding: 5px !important;*/
@@ -164,6 +165,7 @@
     width: auto;
     display: inline-block;
     сursor: default;
+    margin-bottom: 5px !important;
 }
 .icon-reply {
 	width: 30px;

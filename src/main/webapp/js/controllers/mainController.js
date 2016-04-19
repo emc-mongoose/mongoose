@@ -4,6 +4,7 @@ define([
 	'./tab/scenariosController',
 	'./tab/defaultsController',
 	'./tab/testsController',
+	'../common/openFileHandler',
 	'text!../../templates/navbar.hbs',
 	'text!../../templates/base.hbs',
 	'text!../../templates/tab/buttons.hbs',
@@ -15,6 +16,7 @@ define([
              scenariosController,
              defaultsController,
              testsController,
+             openFileHandler,
              navbarTemplate,
              baseTemplate,
              buttonsTemplate,
@@ -57,6 +59,14 @@ define([
 				elemSelector.show();},
 			function (elemSelector) {
 				elemSelector.hide();});
+		switch (tabType) {
+			case TAB_TYPE.SCENARIOS:
+				scenariosController.setTabParameters();
+				break;
+			case TAB_TYPE.DEFAULTS:
+				defaultsController.setTabParameters();
+				break;
+		}
 		currentTabType = tabType;
 	}
 	
@@ -69,12 +79,12 @@ define([
 		}
 		function renderBase() {
 			hbUtil.compileAndInsertInside('#app', baseTemplate);
-			const configElem = $('#config');
+			const configElem = $('#all-buttons');
 			$.each(CONFIG_TABS, function (index, value) {
 				if (index === 0) {
 					const detailsTree = $('<ul/>', {
 						id: plainId([BLOCK.TREE, value, 'details']),
-						class: BLOCK.TREE});
+						class: BLOCK.TREE + ' ' + 'tab-dependent'});
 					configElem.after(detailsTree);
 					detailsTree.hide();
 				}
@@ -89,7 +99,7 @@ define([
 			const BUTTON_TYPE = templatesUtil.commonButtonTypes();
 			const BUTTONS = $.map(BUTTON_TYPE, function (value) { return value; });
 			$.each(CONFIG_TABS, function (index, value) {
-				hbUtil.compileAndInsertInsideBefore('#config', buttonsTemplate,
+				hbUtil.compileAndInsertInsideBefore(jqId(['all', BLOCK.BUTTONS]), buttonsTemplate,
 					{ 'buttons': BUTTONS, 'tab-type': value });
 			});
 			binder.openButton(BUTTON_TYPE, CONFIG_TABS);
@@ -137,33 +147,15 @@ define([
 			});
 			openInputFileElem.change(function (data) {
 				fillTheField(tabName, BUTTON_TYPE);
-				openFileEvent(data);
+				openFileHandler.event(data);
 			})
 		}
 		
 		function bindOpenButtonClickEvents(BUTTON_TYPE, CONFIG_TABS) {
 			$.each(CONFIG_TABS, function (index, value) {
 				passClick(value, BUTTON_TYPE);
+				
 			});
-		}
-
-		var fullFileName = '';
-
-		const reader = new FileReader();
-		reader.onload = function (data) {
-			content = data.target.result;
-			const json = JSON.parse(content);
-			// extendedConfController.openedJsonFileProcess(json, fullFileName);
-		};
-		reader.onerror = function (data) {
-			console.error("File couldn't be read. Code" + data.target.error.code);
-		};
-
-		function openFileEvent(data) {
-			const files = data.target.files; // FileList object
-			const file = files[0];
-			fullFileName = file.name;
-			reader.readAsText(file);
 		}
 		
 		return {
