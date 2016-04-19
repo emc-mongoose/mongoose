@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
@@ -17,19 +18,19 @@ import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
-import com.emc.mongoose.core.api.load.barrier.Barrier;
+import com.emc.mongoose.core.api.load.barrier.Throttle;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
-import com.emc.mongoose.core.impl.load.barrier.ActiveTaskCountLimitBarrier;
+import com.emc.mongoose.core.impl.load.barrier.ActiveTasksThrottle;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
-import com.emc.mongoose.core.impl.load.tasks.LoadRegistry;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
 //
+import com.emc.mongoose.core.impl.load.model.LoadRegistry;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,10 +43,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -73,7 +73,7 @@ implements LoadExecutor<T> {
 	//
 	protected final long maxCount;
 	protected final int totalThreadCount;
-	protected final Barrier<T> activeTaskCountLimitBarrier;
+	protected final Throttle<T> activeTasksThrottle;
 	// METRICS section
 	protected final int metricsPeriodSec;
 	protected IOStats ioStats;
@@ -95,46 +95,27 @@ implements LoadExecutor<T> {
 	protected final Object state = new Object();
 	protected final ItemBuffer<T> itemOutBuff;
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final List<Runnable> svcTasks = new LinkedList<>();
-	private final static Map<String, List<Runnable>> ALL_SVC_TASKS = new ConcurrentHashMap<>();
-	static {
-		new Thread("loadExecutorSvcTasksWorker") {
-
-			{
-				setDaemon(true);
-				start();
-			}
-
-			@Override
-			public final void run() {
-				while(!isInterrupted()) {
-					List<Runnable> nextLoadSvcTasks;
-					for(final String nextLoadName : ALL_SVC_TASKS.keySet()) {
-						nextLoadSvcTasks = ALL_SVC_TASKS.get(nextLoadName);
-						for(final Runnable nextSvcTask : nextLoadSvcTasks) {
-							try {
-								nextSvcTask.run();
-								LockSupport.parkNanos(1);
-							} catch(final Exception e) {
-								LogUtil.exception(LOG, Level.WARN, e,
-									"Service task \"{}\" or load executor \"{}\" failed",
-									nextSvcTask, nextLoadName
-								);
-							}
-						}
-					}
-				}
-			}
-		};
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final static int MAX_FAIL_COUNT = 100000;
+	protected final List<Runnable> mgmtTasks = new LinkedList<>();
+	private final ThreadPoolExecutor mgmtExecutor;
+	//
+	public final static int MAX_FAIL_COUNT = 100_000;
 	private final class StatsRefreshTask
 	implements Runnable {
 		@Override
 		public final void run() {
-			refreshStats();
-			checkForBadState();
+			final Thread currThread = Thread.currentThread();
+			currThread.setName("statsRefresh<" + getName() + ">");
+			try {
+				while(!currThread.isInterrupted()) {
+					synchronized(ioStats) {
+						ioStats.wait(1_000);
+					}
+					refreshStats();
+					checkForBadState();
+					LockSupport.parkNanos(1_000_000);
+				}
+			} catch(final InterruptedException ignored) {
+			}
 		}
 	}
 	//
@@ -142,10 +123,36 @@ implements LoadExecutor<T> {
 	implements Runnable {
 		@Override
 		public final void run() {
-			if(!isCircular || allItemsProducedFlag) {
-				try {
+			final Thread currThread = Thread.currentThread();
+			currThread.setName("resultsDispatcher<" + getName() + ">");
+			try {
+				if(isCircular) {
+					while(!allItemsProducedFlag) {
+						LockSupport.parkNanos(1_000_000);
+					}
+				}
+				while(!currThread.isInterrupted()) {
 					postProcessItems();
-				} catch(final InterruptedException ignored) {
+					LockSupport.parkNanos(1_000);
+				}
+			} catch(final InterruptedException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
+			} finally {
+				LOG.debug(Markers.MSG, "{}: results dispatched finished", getName());
+			}
+		}
+	}
+	//
+	private final class LogMetricsTask
+	implements Runnable {
+		@Override
+		public final void run() {
+			while(!isInterrupted.get()) {
+				logMetrics(Markers.PERF_AVG);
+				try {
+					TimeUnit.SECONDS.sleep(metricsPeriodSec);
+				} catch(final InterruptedException e) {
+					break;
 				}
 			}
 		}
@@ -183,7 +190,7 @@ implements LoadExecutor<T> {
 		}
 		//
 		totalThreadCount = threadCount * storageNodeCount;
-		activeTaskCountLimitBarrier = new ActiveTaskCountLimitBarrier<>(
+		activeTasksThrottle = new ActiveTasksThrottle<>(
 			2 * totalThreadCount + 1000, counterSubm, counterResults, isInterrupted, isShutdown,
 			isCircular
 		);
@@ -207,10 +214,17 @@ implements LoadExecutor<T> {
 		}
 		dataSrc = ioConfig.getContentSource();
 		//
-		svcTasks.add(new StatsRefreshTask());
-		svcTasks.add(new ResultsDispatcher());
+		mgmtExecutor = new ThreadPoolExecutor(
+			1, 1, 0, TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(batchSize),
+			new GroupThreadFactory("mgmtWorker", true)
+		);
+		if(metricsPeriodSec > 0) {
+			mgmtTasks.add(new LogMetricsTask());
+		}
+		mgmtTasks.add(new StatsRefreshTask());
+		mgmtTasks.add(new ResultsDispatcher());
 		//
-		LoadRegistry.register(this, metricsPeriodSec);
+		LoadRegistry.register(this);
 	}
 	//
 	private LoadExecutorBase(
@@ -263,16 +277,12 @@ implements LoadExecutor<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public void logMetrics(final Marker logMarker)
-	throws InterruptedException {
-		if(isInterrupted.get()) {
-			throw new InterruptedException();
-		}
-		if(isStarted.get()) {
-			LOG.info(
-				logMarker, Markers.PERF_SUM.equals(logMarker) ?
-					"\"" + getName() + "\" summary: " + lastStats.toSummaryString() : lastStats);
-		}
+	public void logMetrics(final Marker logMarker) {
+		LOG.info(
+			logMarker,
+			Markers.PERF_SUM.equals(logMarker) ?
+				"\"" + getName() + "\" summary: " + lastStats.toSummaryString() : lastStats
+		);
 	}
 	//
 	@Override
@@ -327,7 +337,14 @@ implements LoadExecutor<T> {
 			}
 			super.start();
 			LOG.debug(Markers.MSG, "Started object producer {}", getName());
-			ALL_SVC_TASKS.put(getName(), svcTasks);
+			//
+			mgmtExecutor.setCorePoolSize(mgmtTasks.size());
+			mgmtExecutor.setMaximumPoolSize(mgmtTasks.size());
+			for(final Runnable mgmtTask : mgmtTasks) {
+				mgmtExecutor.submit(mgmtTask);
+			}
+			mgmtExecutor.shutdown();
+			//
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		}
 	}
@@ -400,7 +417,7 @@ implements LoadExecutor<T> {
 			t.printStackTrace(System.err);
 		}
 		//
-		ALL_SVC_TASKS.remove(getName());
+		mgmtExecutor.shutdownNow();
 		LOG.debug(Markers.MSG, "{}: service threads executor shut down", getName());
 		//
 		if(isCircular) {
@@ -459,7 +476,7 @@ implements LoadExecutor<T> {
 		// don't fill the connection pool as fast as possible, this may cause a failure
 		//
 		try {
-			if(!activeTaskCountLimitBarrier.getApprovalFor(item) || null == submitTask(ioTask)) {
+			if(!activeTasksThrottle.requestContinueFor(item) || null == submitTask(ioTask)) {
 				throw new RejectedExecutionException();
 			}
 			counterSubm.incrementAndGet();
@@ -489,14 +506,12 @@ implements LoadExecutor<T> {
 					null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 				// prepare the I/O tasks list (make the link between the data item and load type)
 				final List<IOTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
-				if(srcLimit > getIOTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr)) {
-					LOG.warn(Markers.ERR, "Produced less I/O tasks then expected ({})", srcLimit);
-				}
+				getIOTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr);
 				// submit all I/O tasks
 				while(n < srcLimit) {
 					// don't fill the connection pool as fast as possible, this may cause a failure
 					try {
-						activeTaskCountLimitBarrier.getApprovalsFor(null, to - from);
+						activeTasksThrottle.requestContinueFor(null, to - from);
 						m = submitTasks(ioTaskBuff, n, srcLimit);
 						if(m < 1) {
 							throw new RejectedExecutionException("No I/O tasks submitted");
@@ -580,7 +595,7 @@ implements LoadExecutor<T> {
 				}
 			} catch(final IOException e) {
 				LogUtil.exception(
-					LOG, Level.WARN, e,
+					LOG, Level.DEBUG, e,
 					"{}: failed to put the item into the output buffer", getName()
 				);
 			}
@@ -658,11 +673,21 @@ implements LoadExecutor<T> {
 	protected void postProcessItems()
 	throws InterruptedException {
 		try {
+			//
 			final List<T> items = new ArrayList<>(batchSize);
 			final int n = itemOutBuff.get(items, batchSize);
 			if(n > 0) {
 				if(isCircular) {
-					for(int m = 0; m < n; m += put(items, m, n));
+					int m = 0, k;
+					while(m < n) {
+						k = put(items, m, n);
+						if(k > 0) {
+							m += k;
+						} else {
+							break;
+						}
+						LockSupport.parkNanos(1);
+					}
 				} else {
 					postProcessUniqueItemsFinally(items);
 				}
@@ -684,7 +709,7 @@ implements LoadExecutor<T> {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "{}: going to dump out {} items", getName(), items.size());
 			}
-			if(LOG.isEnabled(Level.INFO, Markers.ITEM_LIST)) {
+			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
 				try {
 					for(final Item item : items) {
 						LOG.info(Markers.ITEM_LIST, item);
@@ -706,7 +731,9 @@ implements LoadExecutor<T> {
 			}
 			try {
 				if(!items.isEmpty()) {
-					for(int m = 0; m < n; m += consumer.put(items, m, n));
+					for(int m = 0; m < n; m += consumer.put(items, m, n)) {
+						LockSupport.parkNanos(1);
+					}
 				}
 				items.clear();
 			} catch(final IOException e) {
@@ -728,7 +755,8 @@ implements LoadExecutor<T> {
 		lastStats = ioStats.getSnapshot();
 	}
 	//
-	protected void checkForBadState() {
+	protected void checkForBadState()
+	throws InterruptedException {
 		if(
 			lastStats.getFailCount() > MAX_FAIL_COUNT &&
 			lastStats.getFailRateLast() > lastStats.getSuccRateLast()
@@ -742,8 +770,7 @@ implements LoadExecutor<T> {
 			);
 			try {
 				interrupt();
-			} catch(final Exception e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt the load job");
+				throw new InterruptedException();
 			} finally {
 				Thread.currentThread().interrupt();
 			}
@@ -898,7 +925,7 @@ implements LoadExecutor<T> {
 				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
 				break;
 			}
-			Thread.yield(); LockSupport.parkNanos(1000000);
+			LockSupport.parkNanos(1_000_000);
 		}
 	}
 	//

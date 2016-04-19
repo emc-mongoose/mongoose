@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.tasks;
+package com.emc.mongoose.core.impl.load.model;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
@@ -35,11 +35,6 @@ public final class LoadRegistry {
 		HOOKS_MAP = new HashMap<>();
 	public final static Map<String, List<LoadState>>
 		LOAD_STATES_MAP = new HashMap<>();
-	private final static ScheduledThreadPoolExecutor
-		LOG_METRICS_EXECUTOR = new ScheduledThreadPoolExecutor(
-			1, new GroupThreadFactory("logMetricsDaemon", true)
-		);
-
 	//
 	private final static class LoadCloseHook
 	implements Runnable {
@@ -77,40 +72,7 @@ public final class LoadRegistry {
 		}
 	}
 	//
-	private final static class LogMetricsTask
-	implements Runnable {
-		//
-		private final LoadExecutor loadExecutor;
-		//
-		public LogMetricsTask(final LoadExecutor loadExecutor) {
-			this.loadExecutor = loadExecutor;
-		}
-		//
-		@Override
-		public final void run() {
-			try {
-				loadExecutor.logMetrics(Markers.PERF_AVG);
-			} catch(final InterruptedException e) {
-				LOG_METRICS_EXECUTOR.getQueue().remove(this);
-			} catch(final RemoteException e) {
-				try {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to log the metrics for \"{}\"",
-						loadExecutor.getName()
-					);
-				} catch(final RemoteException ignored) {
-				}
-			}
-		}
-	}
-	//
-	public static void register(final LoadExecutor loadExecutor, final int metricsPeriodSec) {
-		//
-		if(metricsPeriodSec > 0) {
-			LOG_METRICS_EXECUTOR.scheduleAtFixedRate(
-				new LogMetricsTask(loadExecutor), 0, metricsPeriodSec, TimeUnit.SECONDS
-			);
-		}
+	public static void register(final LoadExecutor loadExecutor) {
 		// add shutdown hook
 		final LoadCloseHook hookTask = new LoadCloseHook(loadExecutor);
 		final Thread hookThread = new Thread(hookTask, hookTask.loadName + "-closeHook");

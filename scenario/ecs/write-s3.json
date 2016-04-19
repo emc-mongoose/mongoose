@@ -5,7 +5,7 @@
 			"config" : {
 				"auth" : {
 					"id" : "wuser1@sanity.local",
-					"secret" : "qMzVDJj1ispZib3BB8+mR7Gvrd/5IXif2vvu4d77"
+					"secret" : "WQmcQh5UYRAWYqJGCVEueihGBZ7h6nI2vHHwYmPg"
 				},
 				"storage" : {
 					"addrs" : "10.77.33.102,10.77.33.103,10.77.33.104",

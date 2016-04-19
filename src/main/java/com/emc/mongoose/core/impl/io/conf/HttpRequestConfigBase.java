@@ -808,7 +808,6 @@ implements HttpRequestConfig<T, C> {
 					headerValueInput = new AsyncPatternDefinedInput(headerValue);
 					// spin while header value generator is not ready
 					while(null == (headerValue = headerValueInput.get())) {
-						LockSupport.parkNanos(1);
 						Thread.yield();
 					}
 					HEADER_VALUE_INPUTS.put(nextKey, headerValueInput);

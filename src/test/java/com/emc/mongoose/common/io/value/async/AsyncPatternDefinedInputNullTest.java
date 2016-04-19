@@ -23,7 +23,6 @@ public class AsyncPatternDefinedInputNullTest {
 	protected void initFormatter(String patternString) throws Exception {
 		formatter = new AsyncPatternDefinedInput(patternString);
 		while (null == formatter.get()) {
-			LockSupport.parkNanos(1);
 			Thread.yield();
 		}
 	}

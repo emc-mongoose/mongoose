@@ -14,7 +14,7 @@
 		},
 		"load" : {
 			"limit" : {
-				"count" : 1000000
+				"count" : 10000
 			},
 			"metricsPeriod" : 0,
 			"threads" : 100
@@ -66,9 +66,10 @@
 				"load" : {
 					"circular" : true,
 					"limit" : {
-						"time" : "5m"
+						"time" : "5m",
+						"count" : 0
 					},
-					"threads" : 100,
+					"metricsPeriod" : 10,
 					"type" : [
 						"write=50%", "read=30%", "delete=20%"
 					]

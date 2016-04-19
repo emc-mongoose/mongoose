@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.conf.enums;
 //
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 /**
@@ -23,7 +23,8 @@ public enum LoadType {
 		String parts[], tailPart;
 		LoadType loadType;
 		int loadWeight;
-		final Map<LoadType, Integer> loadWeights = new HashMap<>();
+		// use LinkedHashMap to save the order
+		final Map<LoadType, Integer> loadWeights = new LinkedHashMap<>();
 		for(final String pattern : patterns) {
 			parts = pattern.split("=");
 			if(parts.length != 2) {

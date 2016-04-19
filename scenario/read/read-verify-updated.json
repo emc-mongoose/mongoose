@@ -1,16 +1,19 @@
 {
 	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "linear-read-verify-updated"
+			},
+			"data" : {
+				"size" : "1KB"
+			}
+		},
 	"jobs": [
 		{
 			"type": "load", // write is used by default
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "linear-read-verify-updated"
-					},
-					"data" : {
-						"size" : "1KB"
-					},
 					"dst" : {
 						"file" : "/tmp/scenario-linear-read-verify-updated-0.csv"
 					}
@@ -25,9 +28,6 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "linear-read-verify-updated"
-					},
 					"data" : {
 						"ranges" : 1 // update 1 random byte ranges per request
 					},
@@ -43,9 +43,6 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "linear-read-verify-updated"
-					},
 					"src" : {
 						"file" : "/tmp/scenario-linear-read-verify-updated-1.csv"
 					}

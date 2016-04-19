@@ -1,13 +1,20 @@
 {
 	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "read-with-many-users"
+			},
+			"src" : {
+				"file" : "/tmp/scenario-read-with-many-users.csv"
+			}
+		}
+	},
 	"jobs" : [
 		{
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "read-with-many-users"
-					},
 					"dst" : {
 						"file" : "/tmp/scenario-read-with-many-users.csv"
 					}
@@ -18,9 +25,18 @@
 					}
 				}
 			}
-		},
-		{
+		}, {
 			"type" : "parallel",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-read-with-many-users.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			},
 			"jobs" : [
 				{
 					"type" : "load",
@@ -28,57 +44,22 @@
 						"auth" : {
 							"id" : "user1",
 							"secret" : "secret1"
-						},
-						"item" : {
-							"container" : {
-								"name" : "read-with-many-users"
-							},
-							"src" : {
-								"file" : "/tmp/scenario-read-with-many-users.csv"
-							}
-						},
-						"load" : {
-							"type" : "read"
 						}
 					}
-				},
-				{
+				}, {
 					"type" : "load",
 					"config" : {
 						"auth" : {
 							"id" : "user2",
 							"secret" : "secret2"
-						},
-						"item" : {
-							"container" : {
-								"name" : "read-with-many-users"
-							},
-							"src" : {
-								"file" : "/tmp/scenario-read-with-many-users.csv"
-							}
-						},
-						"load" : {
-							"type" : "read"
 						}
 					}
-				},
-				{
+				}, {
 					"type" : "load",
 					"config" : {
 						"auth" : {
 							"id" : "user3",
 							"secret" : "secret3"
-						},
-						"item" : {
-							"container" : {
-								"name" : "read-with-many-users"
-							},
-							"src" : {
-								"file" : "/tmp/scenario-read-with-many-users.csv"
-							}
-						},
-						"load" : {
-							"type" : "read"
 						}
 					}
 				}

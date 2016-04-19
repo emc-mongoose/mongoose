@@ -77,9 +77,8 @@ implements HttpDataLoadExecutor<T> {
 	protected final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
 	private final HttpRequestConfig<T, Container<T>> httpReqConfigCopy;
 	private final boolean isPipeliningEnabled;
-	private Thread httpClientThread = null;
 	//
-	protected BasicHttpDataLoadExecutor(
+	public BasicHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
 		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
@@ -191,10 +190,7 @@ implements HttpDataLoadExecutor<T> {
 			connPoolMap.put(nextRoute, nextConnPool);
 		}
 		//
-		httpClientThread = new Thread(new HttpClientRunTask(ioEventDispatch, ioReactor));
-		httpClientThread.setName(getName() + "-httpClient");
-		httpClientThread.setDaemon(true);
-		httpClientThread.start();
+		mgmtTasks.add(new HttpClientRunTask(ioEventDispatch, ioReactor));
 	}
 	//
 	@Override
@@ -239,10 +235,6 @@ implements HttpDataLoadExecutor<T> {
 						);
 					}
 				}
-			}
-			//
-			if(httpClientThread != null) {
-				httpClientThread.interrupt();
 			}
 			//
 			try {

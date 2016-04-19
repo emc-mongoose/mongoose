@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.load.barrier;
 //
-import com.emc.mongoose.core.api.load.barrier.Barrier;
+import com.emc.mongoose.core.api.load.barrier.Throttle;
 //
 import java.util.HashMap;
 import java.util.Map;
@@ -8,14 +8,14 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 29.03.16.
- A kind of very abstract barrier which uses the map of weights.
+ A kind of very abstract throttle which uses the map of weights.
  Each thing (subject) should be an instance having a key for the weights map.
- The barrier determines the weight for each thing and makes the decision.
+ The throttle determines the weight for each thing and makes the decision.
  The weight is used to pass the things with specific ratio for the different keys.
  This implementation of the barrier never denies the things but blocks until a thing may be passed.
  */
-public class WeightBarrier<K>
-implements Barrier<K> {
+public class WeightThrottle<K>
+implements Throttle<K> {
 
 	private final Set<K> keySet; // just to not to calculate every time
 	private final Map<K, Integer> weightMap; // initial weight map (constant)
@@ -23,7 +23,7 @@ implements Barrier<K> {
 	private final AtomicBoolean stopFlag;
 
 	//
-	public WeightBarrier(final Map<K, Integer> weightMap, final AtomicBoolean stopFlag)
+	public WeightThrottle(final Map<K, Integer> weightMap, final AtomicBoolean stopFlag)
 	throws IllegalArgumentException {
 		this.keySet = weightMap.keySet();
 		this.weightMap = weightMap;
@@ -41,7 +41,7 @@ implements Barrier<K> {
 
 	//
 	@Override
-	public final boolean getApprovalFor(final K key)
+	public final boolean requestContinueFor(final K key)
 	throws InterruptedException {
 		int remainingWeight;
 		while(!stopFlag.get()) {
@@ -70,7 +70,7 @@ implements Barrier<K> {
 
 	//
 	@Override
-	public final boolean getApprovalsFor(final K key, final int times)
+	public final boolean requestContinueFor(final K key, final int times)
 	throws InterruptedException {
 		int left = times;
 		if(left == 0) {

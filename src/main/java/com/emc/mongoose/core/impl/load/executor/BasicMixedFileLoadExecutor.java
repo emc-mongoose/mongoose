@@ -15,7 +15,7 @@ import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
-import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
+import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -41,7 +41,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final WeightBarrier<LoadType> barrier;
+	private final WeightThrottle<LoadType> barrier;
 	private final Map<LoadType, Integer> loadTypeWeights;
 	private final Map<LoadType, FileIoConfig<F, ? extends Directory<F>>>
 		reqConfigMap = new HashMap<>();
@@ -59,7 +59,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 		);
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
-		this.barrier = new WeightBarrier<>(loadTypeWeights, isInterrupted);
+		this.barrier = new WeightThrottle<>(loadTypeWeights, isInterrupted);
 		for(final LoadType nextLoadType : loadTypeWeights.keySet()) {
 			final FileIoConfig<F, ? extends Directory<F>> reqConfigCopy;
 			try {
@@ -78,7 +78,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 				public final <A extends IOTask<F>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
 					try {
-						if(barrier.getApprovalFor(nextLoadType)) {
+						if(barrier.requestContinueFor(nextLoadType)) {
 							return BasicMixedFileLoadExecutor.this.submitTask(ioTask);
 						} else {
 							throw new RejectedExecutionException(
@@ -95,7 +95,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 					final List<A> ioTasks, int from, int to
 				) throws RejectedExecutionException {
 					try {
-						if(barrier.getApprovalsFor(nextLoadType, to - from)) {
+						if(barrier.requestContinueFor(nextLoadType, to - from)) {
 							return BasicMixedFileLoadExecutor.this.submitTasks(
 								ioTasks, from, to
 							);
@@ -139,14 +139,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	}
 	//
 	@Override
-	public void logMetrics(final Marker logMarker)
-	throws InterruptedException {
-		if(isInterrupted.get()) {
-			throw new InterruptedException();
-		}
-		if(!isStarted.get()) {
-			return;
-		}
+	public void logMetrics(final Marker logMarker) {
 		final StrBuilder strb = new StrBuilder(Markers.PERF_SUM.equals(logMarker) ? "Summary:" : "")
 			.appendNewLine()
 			.appendFixedWidthPadLeft("Weight | ", 9, ' ')

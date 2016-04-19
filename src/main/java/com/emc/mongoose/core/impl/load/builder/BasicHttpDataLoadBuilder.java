@@ -72,10 +72,10 @@ implements HttpDataLoadBuilder<T, U> {
 		final LoadType loadType = ioConfig.getLoadType();
 		final HttpRequestConfig httpReqConf = (HttpRequestConfig) ioConfig;
 		if(LoadType.MIXED.equals(loadType)) {
-			final List<String> inputFiles = (List<String>) appConfig
-				.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
-			final List<String> loadPatterns = (List<String>) appConfig
-				.getProperty(AppConfig.KEY_LOAD_TYPE);
+			final List<String> inputFiles = (List) appConfig
+				.getList(AppConfig.KEY_ITEM_SRC_FILE);
+			final List<String> loadPatterns = (List) appConfig
+				.getList(AppConfig.KEY_LOAD_TYPE);
 			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
 			final Map<LoadType, Integer> loadTypeWeightMap = LoadType
 				.getMixedLoadWeights(loadPatterns);

@@ -17,7 +17,7 @@
 				},
 				"load" : {
 					"limit" : {
-						"count" : 1000
+						"count" : 10000
 					},
 					"metricsPeriod" : 0,
 					"threads" : 100

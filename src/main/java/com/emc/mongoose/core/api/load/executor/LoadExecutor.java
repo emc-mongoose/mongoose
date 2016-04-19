@@ -49,7 +49,7 @@ extends Output<T>, LifeCycle, ItemProducer<T> {
 	throws RemoteException;
 	//
 	void logMetrics(Marker marker)
-	throws RemoteException, InterruptedException;
+	throws RemoteException;
 	//
 	<A extends IOTask<T>> Future<A> submitTask(final A request)
 	throws RemoteException, RejectedExecutionException;

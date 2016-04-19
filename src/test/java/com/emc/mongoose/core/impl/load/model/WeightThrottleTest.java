@@ -2,9 +2,9 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.barrier.Barrier;
+import com.emc.mongoose.core.api.load.barrier.Throttle;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
-import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
+import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ import static org.junit.Assert.*;
 /**
  Created by kurila on 29.03.16.
  */
-public class WeightBarrierTest {
+public class WeightThrottleTest {
 
 	private final Map<LoadType, Integer> weightMap = new HashMap<LoadType, Integer>() {
 		{
@@ -37,7 +37,7 @@ public class WeightBarrierTest {
 		}
 	};
 
-	private final Barrier<LoadType> fc = new WeightBarrier<>(weightMap, new AtomicBoolean(false));
+	private final Throttle<LoadType> fc = new WeightThrottle<>(weightMap, new AtomicBoolean(false));
 
 	private final class IOTaskMock
 	implements IOTask {
@@ -75,7 +75,7 @@ public class WeightBarrierTest {
 				try {
 					final IOTaskMock ioTask = new IOTaskMock();
 					ioTask.loadType = loadType;
-					if(fc.getApprovalFor(loadType)) {
+					if(fc.requestContinueFor(loadType)) {
 						resultsMap.get(loadType).incrementAndGet();
 					}
 				} catch(final InterruptedException e) {
@@ -116,7 +116,7 @@ public class WeightBarrierTest {
 						ioTask.loadType = loadType;
 						ioTasks.add(ioTask);
 					}
-					if(fc.getApprovalsFor(loadType, 128)) {
+					if(fc.requestContinueFor(loadType, 128)) {
 						resultsMap.get(loadType).incrementAndGet();
 					}
 				} catch(final InterruptedException e) {
