@@ -23,8 +23,10 @@ define([
              cssUtil) {
 	
 	const TAB_TYPE = templatesUtil.tabTypes();
+	const BLOCK = templatesUtil.blocks();
+	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
-	
+
 	var currentTabType = TAB_TYPE.SCENARIOS;
 	
 	// render html and bind events of basic elements and same for all tabs elements 
@@ -45,7 +47,6 @@ define([
 	
 	function makeTabActive(tabType) {
 		const TAB_CLASS = templatesUtil.tabClasses();
-		const BLOCK = templatesUtil.blocks();
 		$.each(TAB_TYPE, function (key, value) {
 			const treeId = jqId([BLOCK.TREE, value]);
 			const buttonsId = jqId([BLOCK.BUTTONS, value]);
@@ -62,17 +63,30 @@ define([
 	
 	const rendererFactory = function () {
 		const binder = clickEventBinderFactory();
+		const CONFIG_TABS = $.map(TAB_TYPE, function (value) { return value; }).slice(0, 2);
 		function renderNavbar(runVersion) {
 			hbUtil.compileAndInsertInsideBefore('body', navbarTemplate, {version: runVersion});
 			binder.tab();
 		}
 		function renderBase() {
 			hbUtil.compileAndInsertInside('#app', baseTemplate);
+			const configElem = $('#config');
+			$.each(CONFIG_TABS, function (index, value) {
+				if (index === 0) {
+					configElem.after(
+						$('<ul/>', {
+						id: plainId([BLOCK.TREE, value, 'details']),
+						class: BLOCK.TREE}));
+				}
+				configElem.after(
+					$('<ul/>', {
+						id: plainId([BLOCK.TREE, value]),
+						class: BLOCK.TREE}));
+			})
 		}
 		function renderButtons() {
 			// object to array
 			const BUTTON_TYPE = templatesUtil.commonButtonTypes();
-			const CONFIG_TABS = $.map(TAB_TYPE, function (value) { return value; }).slice(0, 2);
 			const BUTTONS = $.map(BUTTON_TYPE, function (value) { return value; });
 			$.each(CONFIG_TABS, function (index, value) {
 				hbUtil.compileAndInsertInsideBefore('#config', buttonsTemplate,
@@ -121,8 +135,9 @@ define([
 			$(buttonJqId(BUTTON_TYPE.OPEN, tabName)).click(function () {
 				openInputFileElem.trigger('click');
 			});
-			openInputFileElem.change(function () {
+			openInputFileElem.change(function (data) {
 				fillTheField(tabName, BUTTON_TYPE);
+				openFileEvent(data);
 			})
 		}
 		
@@ -130,6 +145,25 @@ define([
 			$.each(CONFIG_TABS, function (index, value) {
 				passClick(value, BUTTON_TYPE);
 			});
+		}
+
+		var fullFileName = '';
+
+		const reader = new FileReader();
+		reader.onload = function (data) {
+			content = data.target.result;
+			const json = JSON.parse(content);
+			extendedConfController.openedJsonFileProcess(json, fullFileName);
+		};
+		reader.onerror = function (data) {
+			console.error("File couldn't be read. Code" + data.target.error.code);
+		};
+
+		function openFileEvent(data) {
+			const files = data.target.files; // FileList object
+			const file = files[0];
+			fullFileName = file.name;
+			reader.readAsText(file);
 		}
 		
 		return {

@@ -238,6 +238,11 @@ define([
 			}
 		};
 
+		const rendererFactory = function () {
+			
+			return {}
+		};
+
 		return {
 			setup: setup,
 			openedJsonFileProcess: openedJsonFileProcess
