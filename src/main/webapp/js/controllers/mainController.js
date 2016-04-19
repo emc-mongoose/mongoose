@@ -72,10 +72,11 @@ define([
 			const configElem = $('#config');
 			$.each(CONFIG_TABS, function (index, value) {
 				if (index === 0) {
-					configElem.after(
-						$('<ul/>', {
+					const detailsTree = $('<ul/>', {
 						id: plainId([BLOCK.TREE, value, 'details']),
-						class: BLOCK.TREE + ' ' + 'tab-dependent'}));
+						class: BLOCK.TREE});
+					configElem.after(detailsTree);
+					detailsTree.hide();
 				}
 				configElem.after(
 					$('<ul/>', {
