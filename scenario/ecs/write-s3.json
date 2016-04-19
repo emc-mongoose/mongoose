@@ -8,7 +8,7 @@
 					"secret" : "WQmcQh5UYRAWYqJGCVEueihGBZ7h6nI2vHHwYmPg"
 				},
 				"storage" : {
-					"addrs" : "10.77.33.102,10.77.33.103,10.77.33.104",
+					"addrs" : "10.77.33.100,10.77.33.101,10.77.33.102,10.77.33.103,10.77.33.104",
 					"port" : 9020,
 					"http" : {
 						"api" : {
