@@ -29,7 +29,7 @@ import org.apache.logging.log4j.LogManager;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
-import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -94,7 +94,7 @@ implements FileIOTask<T> {
 			} else { // work w/ a content
 				Files.createDirectories(DEFAULT_FS.getPath(parentDir));
 				try(
-					final SeekableByteChannel byteChannel = Files.newByteChannel(
+					final FileChannel byteChannel = FileChannel.open(
 						DEFAULT_FS.getPath(parentDir, item.getName()), openOptions
 					)
 				) {
@@ -140,7 +140,7 @@ implements FileIOTask<T> {
 		status = SUCC;
 	}
 	//
-	protected void runRead(final SeekableByteChannel byteChannel)
+	protected void runRead(final FileChannel fileChannel)
 	throws IOException {
 		try {
 			//
@@ -170,7 +170,7 @@ implements FileIOTask<T> {
 							while(countBytesDone < contentSize && countBytesDone < nextRangeOffset) {
 								buffIn = ((IOWorker) Thread.currentThread())
 									.getThreadLocalBuff(nextRangeOffset - countBytesDone);
-								n = currRange.readAndVerify(byteChannel, buffIn);
+								n = currRange.readAndVerify(fileChannel, buffIn);
 								if(n < 0) {
 									break;
 								} else {
@@ -183,7 +183,7 @@ implements FileIOTask<T> {
 					while(countBytesDone < contentSize) {
 						buffIn = ((IOWorker) Thread.currentThread())
 							.getThreadLocalBuff(contentSize - countBytesDone);
-						n = item.readAndVerify(byteChannel, buffIn);
+						n = item.readAndVerify(fileChannel, buffIn);
 						if(n < 0) {
 							break;
 						} else {
@@ -195,7 +195,7 @@ implements FileIOTask<T> {
 				while(countBytesDone < contentSize) {
 					buffIn = ((IOWorker) Thread.currentThread())
 						.getThreadLocalBuff(contentSize - countBytesDone);
-					n = byteChannel.read(buffIn);
+					n = fileChannel.read(buffIn);
 					if(n < 0) {
 						break;
 					} else {
@@ -226,16 +226,17 @@ implements FileIOTask<T> {
 		}
 	}
 	//
-	protected void runWriteFully(final SeekableByteChannel byteChannel)
+	protected void runWriteFully(final FileChannel fileChannel)
 	throws IOException {
 		while(countBytesDone < contentSize) {
-			countBytesDone += item.write(byteChannel, contentSize - countBytesDone);
+			// countBytesDone += item.write(fileChannel, contentSize - countBytesDone);
+			countBytesDone += fileChannel.transferFrom(item, countBytesDone, contentSize);
 		}
 		status = SUCC;
 		item.resetUpdates();
 	}
 	//
-	protected void runWriteUpdatedRanges(final SeekableByteChannel byteChannel)
+	protected void runWriteUpdatedRanges(final FileChannel fileChannel)
 	throws IOException {
 		final int rangeCount = item.getCountRangesTotal();
 		final ContentSource contentSource = ioConfig.getContentSource();
@@ -247,26 +248,26 @@ implements FileIOTask<T> {
 					item.getOffset() + nextRangeOffset, currRangeSize,
 					currDataLayerIdx + 1, contentSource
 				);
-				runWriteCurrRange(byteChannel, 0);
+				runWriteCurrRange(fileChannel, 0);
 			}
 		}
 		item.commitUpdatedRanges();
 		status = SUCC;
 	}
 	//
-	protected void runWriteCurrRange(
-		final SeekableByteChannel byteChannel, final long rangeOffset
-	) throws IOException {
-		byteChannel.position(nextRangeOffset);
+	protected void runWriteCurrRange(final FileChannel fileChannel, final long rangeOffset)
+	throws IOException {
+		fileChannel.position(nextRangeOffset);
 		currRange.setRelativeOffset(rangeOffset);
 		long n = 0;
 		while(n < currRangeSize - rangeOffset && n < contentSize - countBytesDone) {
-			n += currRange.write(byteChannel, currRangeSize - rangeOffset - n);
+			//n += currRange.write(fileChannel, currRangeSize - rangeOffset - n);
+			n += fileChannel.transferFrom(currRange, n, currRangeSize - rangeOffset);
 		}
 		countBytesDone += n;
 	}
 	//
-	protected void runAppend(final SeekableByteChannel byteChannel)
+	protected void runAppend(final FileChannel fileChannel)
 	throws IOException {
 		final long
 			prevSize = item.getSize(),
@@ -285,7 +286,7 @@ implements FileIOTask<T> {
 					currDataLayerIdx + 1 : currDataLayerIdx,
 				ioConfig.getContentSource()
 			);
-			runWriteCurrRange(byteChannel, prevSize - nextRangeOffset);
+			runWriteCurrRange(fileChannel, prevSize - nextRangeOffset);
 			// work w/ remaining ranges if any
 			final int lastRangeIdx = newSize > 0 ? getRangeCount(newSize) - 1 : 0;
 			if(startRangeIdx < lastRangeIdx) {
@@ -298,7 +299,7 @@ implements FileIOTask<T> {
 					item.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx,
 					ioConfig.getContentSource()
 				);
-				runWriteCurrRange(byteChannel, 0);
+				runWriteCurrRange(fileChannel, 0);
 			}
 		}
 		item.commitAppend();
