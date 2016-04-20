@@ -5,17 +5,20 @@ define([
 	'jquery',
 	'../../util/templatesUtil',
 	'../../common/elementAppender',
-	'../../common/openFileHandler'
+	'../../common/openFileHandler',
+	'../../common/eventCreator'
 ], function ($,
              templatesUtil,
              elementAppender,
-             openFileHandler) {
+             openFileHandler, 
+             eventCreator) {
 
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const BLOCK = templatesUtil.blocks();
 	const DELIMITER = templatesUtil.delimiters();
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
+	const commonClickEventCreator = eventCreator.getInstance();
 
 	var currentConfigObject;
 
@@ -24,7 +27,7 @@ define([
 		const rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.DEFAULTS]));
 		rootTreeUlElem.empty();
 		var addressObject = {};
-		elementAppender.objectAsTree(configObject, rootTreeUlElem, 'prop', addressObject, DELIMITER.PROPERTY);
+		elementAppender.objectAsTree(configObject, rootTreeUlElem, 'prop', addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
 		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.DEFAULTS]));
 		treeFormElem.empty();
 		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY);

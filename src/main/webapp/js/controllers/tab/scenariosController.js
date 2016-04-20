@@ -6,12 +6,14 @@ define([
 	'../../util/templatesUtil',
 	'../../util/cssUtil',
 	'../../common/elementAppender',
-	'../../common/openFileHandler'
+	'../../common/openFileHandler',
+	'../../common/eventCreator'
 ], function ($,
              templatesUtil,
              cssUtil,
              elementAppender,
-             openFileHandler) {
+             openFileHandler, 
+             eventCreator) {
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const BLOCK = templatesUtil.blocks();
 	const TREE_ELEM = templatesUtil.configTreeElements();
@@ -22,8 +24,7 @@ define([
 	var currentScenarioObject = null;
 
 	const clickEventCreatorFactory = function () {
-		var prevPropInputId = '';
-
+		
 		function scenarioFileClickEvent(aHref) {
 			$.post('/scenario', {path: aHref})
 				.done(function (scenarioJson) {
@@ -32,17 +33,7 @@ define([
 					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(aHref);
 				})
 		}
-
-		function scenarioPropertyClickEvent(aHref) {
-			aHref = aHref.replaceAll('\\.', '\\\.');
-			const currentPropInputId = jqId([aHref]);
-			if (currentPropInputId !== prevPropInputId) {
-				cssUtil.hide(prevPropInputId);
-				cssUtil.show(currentPropInputId);
-				prevPropInputId = currentPropInputId;
-			}
-		}
-
+		
 		function backClickEvent() {
 			showMainTree();
 			// cssUtil.hide('.' + plainId(['form', TAB_TYPE.SCENARIOS, 'property']));
@@ -52,16 +43,16 @@ define([
 
 		return {
 			backToUpperLevel: backClickEvent,
-			scenarioFile: scenarioFileClickEvent,
-			scenarioProperty: scenarioPropertyClickEvent
+			scenarioFile: scenarioFileClickEvent
 		}
 	};
 
-	const clickEventCreator = clickEventCreatorFactory();
+	const localClickEventCreator = clickEventCreatorFactory();
+	const commonClickEventCreator = eventCreator.getInstance();
 
 	function render(scenariosArray) {
 		const rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
-		elementAppender.arrayAsTree(scenariosArray, rootTreeUlElem, 'dir', DELIMITER.PATH, clickEventCreator.scenarioFile);
+		elementAppender.arrayAsTree(scenariosArray, rootTreeUlElem, 'dir', DELIMITER.PATH, localClickEventCreator.scenarioFile);
 	}
 
 	function updateDetailsTree(scenarioObject) {
@@ -69,7 +60,7 @@ define([
 		treeUlElem.empty();
 		treeUlElem.append(createBackIcon());
 		var addressObject = {};
-		elementAppender.objectAsTree(scenarioObject, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', clickEventCreator.scenarioProperty);
+		elementAppender.objectAsTree(scenarioObject, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
 		showDetailsTree();
 		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.SCENARIOS]));
 		treeFormElem.empty();
@@ -94,7 +85,7 @@ define([
 			class: 'icon-reply'
 		});
 		div.click(function () {
-			clickEventCreator.backToUpperLevel();
+			localClickEventCreator.backToUpperLevel();
 			const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.SCENARIOS]));
 			treeFormElem.empty();
 			currentScenarioObject = null;
