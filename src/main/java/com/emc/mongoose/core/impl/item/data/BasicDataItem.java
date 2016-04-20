@@ -4,6 +4,7 @@ import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.item.data.DataSizeException;
 import com.emc.mongoose.core.impl.item.base.BasicItem;
 //
 import org.apache.logging.log4j.LogManager;
@@ -96,8 +97,10 @@ implements DataItem {
 	}
 	//
 	private void setRingBuffer(final ByteBuffer ringBuff) {
-		this.ringBuff = ringBuff;
-		ringBuffSize = ringBuff.capacity();
+		synchronized(ringBuff) {
+			this.ringBuff = ringBuff;
+			ringBuffSize = ringBuff.capacity();
+		}
 	}
 	//
 	private void enforceCircularity() {
@@ -108,7 +111,9 @@ implements DataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public void reset() {
-		ringBuff.limit(ringBuffSize).position((int) (offset % ringBuffSize));
+		synchronized(ringBuff) {
+			ringBuff.limit(ringBuffSize).position((int)(offset % ringBuffSize));
+		}
 	}
 	//
 	@Override
@@ -145,7 +150,7 @@ implements DataItem {
 		setRingBuffer(dataSrc.getLayer(overlayIndex).asReadOnlyBuffer());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	// ReadableByteChannel implementation
+	// ByteChannels implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void close() {
@@ -157,45 +162,78 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final synchronized int read(final ByteBuffer dst) {
-		enforceCircularity();
-		// bytes count to transfer
-		final int n = Math.min(dst.remaining(), ringBuff.remaining());
-		ringBuff.limit(ringBuff.position() + n);
-		// do the transfer
-		dst.put(ringBuff);
+	public final int read(final ByteBuffer dst) {
+		final int n;
+		synchronized(ringBuff) {
+			enforceCircularity();
+			// bytes count to transfer
+			n = Math.min(dst.remaining(), ringBuff.remaining());
+			ringBuff.limit(ringBuff.position() + n);
+			// do the transfer
+			dst.put(ringBuff);
+		}
 		return n;
 	}
 	//
 	@Override
-	public final synchronized int write(final WritableByteChannel chanDst, final long maxCount)
+	public final int write(final ByteBuffer src)
+	throws DataCorruptionException, DataSizeException {
+		if(src == null) {
+			return 0;
+		}
+		int m;
+		synchronized(ringBuff) {
+			enforceCircularity();
+			final int n = Math.min(src.remaining(), ringBuff.remaining());
+			if(n > 0) {
+				byte bs, bi;
+				for(m = 0; m < n; m++) {
+					bs = ringBuff.get();
+					bi = src.get();
+					if(bs != bi) {
+						throw new DataCorruptionException(n, bs, bi);
+					}
+				}
+			} else {
+				return n;
+			}
+		}
+		return m;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
-		enforceCircularity();
-		int n = (int) Math.min(maxCount, ringBuff.remaining());
-		ringBuff.limit(ringBuff.position() + n);
-		return chanDst.write(ringBuff);
+		synchronized(ringBuff) {
+			enforceCircularity();
+			int n = (int)Math.min(maxCount, ringBuff.remaining());
+			ringBuff.limit(ringBuff.position() + n);
+			return chanDst.write(ringBuff);
+		}
 	}
 	//
 	@Override
 	public final int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataCorruptionException, IOException {
-		//
-		enforceCircularity();
-		int n = ringBuff.remaining();
-		if(buff.limit() > n) {
-			buff.limit(n);
-		}
-		//
-		n = chanSrc.read(buff);
-		//
-		if(n > 0) {
-			byte bs, bi;
-			buff.flip();
-			for(int m = 0; m < n; m ++) {
-				bs = ringBuff.get();
-				bi = buff.get();
-				if(bs != bi) {
-					throw new DataCorruptionException(m, bs, bi);
+		int n;
+		synchronized(ringBuff) {
+			enforceCircularity();
+			n = ringBuff.remaining();
+			if(buff.limit() > n) {
+				buff.limit(n);
+			}
+			//
+			n = chanSrc.read(buff);
+			//
+			if(n > 0) {
+				byte bs, bi;
+				buff.flip();
+				for(int m = 0; m < n; m++) {
+					bs = ringBuff.get();
+					bi = buff.get();
+					if(bs != bi) {
+						throw new DataCorruptionException(m, bs, bi);
+					}
 				}
 			}
 		}

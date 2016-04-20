@@ -27,7 +27,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 //
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
@@ -144,9 +143,6 @@ implements FileIOTask<T> {
 	throws IOException {
 		try {
 			//
-			int n;
-			ByteBuffer buffIn;
-			//
 			if(ioConfig.getVerifyContentFlag()) {
 				if(item.hasBeenUpdated()) {
 					final int rangeCount = item.getCountRangesTotal();
@@ -167,40 +163,32 @@ implements FileIOTask<T> {
 						nextRangeOffset = getRangeOffset(currRangeIdx + 1);
 						// read the bytes range
 						if(currRangeSize > 0) {
-							while(countBytesDone < contentSize && countBytesDone < nextRangeOffset) {
-								buffIn = ((IOWorker) Thread.currentThread())
-									.getThreadLocalBuff(nextRangeOffset - countBytesDone);
-								n = currRange.readAndVerify(fileChannel, buffIn);
-								if(n < 0) {
-									break;
-								} else {
-									countBytesDone += n;
-								}
+							int n = 0;
+							while(
+								countBytesDone < contentSize && countBytesDone < nextRangeOffset
+							) {
+								//buffIn = ((IOWorker) Thread.currentThread())
+								//	.getThreadLocalBuff(nextRangeOffset - countBytesDone);
+								//n = currRange.readAndVerify(fileChannel, buffIn);
+								n += fileChannel.transferTo(n, currRangeSize, currRange);
 							}
+							countBytesDone += n;
 						}
 					}
 				} else {
 					while(countBytesDone < contentSize) {
-						buffIn = ((IOWorker) Thread.currentThread())
-							.getThreadLocalBuff(contentSize - countBytesDone);
-						n = item.readAndVerify(fileChannel, buffIn);
-						if(n < 0) {
-							break;
-						} else {
-							countBytesDone += n;
-						}
+						//buffIn = ((IOWorker) Thread.currentThread())
+						//	.getThreadLocalBuff(contentSize - countBytesDone);
+						//n = item.readAndVerify(fileChannel, buffIn);
+						countBytesDone += fileChannel.transferTo(countBytesDone, contentSize, item);
 					}
 				}
 			} else {
 				while(countBytesDone < contentSize) {
-					buffIn = ((IOWorker) Thread.currentThread())
-						.getThreadLocalBuff(contentSize - countBytesDone);
-					n = fileChannel.read(buffIn);
-					if(n < 0) {
-						break;
-					} else {
-						countBytesDone += n;
-					}
+					//buffIn = ((IOWorker) Thread.currentThread())
+					//	.getThreadLocalBuff(contentSize - countBytesDone);
+					//n = fileChannel.read(buffIn);
+					countBytesDone += fileChannel.transferTo(countBytesDone, contentSize, item);
 				}
 			}
 			status = SUCC;
