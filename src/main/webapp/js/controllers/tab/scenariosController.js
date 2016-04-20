@@ -6,11 +6,13 @@ define([
 	'../../util/templatesUtil',
 	'../../util/cssUtil',
 	'../../common/elementAppender',
+	'../../common/elementCreator',
 	'../../common/openFileHandler'
 ], function ($,
              templatesUtil,
              cssUtil,
              elementAppender,
+             elementCreator,
              openFileHandler) {
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const BLOCK = templatesUtil.blocks();
@@ -20,9 +22,10 @@ define([
 	const jqId = templatesUtil.composeJqId;
 	var mainViewFlag = true;
 	var currentScenarioObject = {};
-	
+
 	const clickEventCreatorFactory = function () {
 		var prevPropInputId = '';
+
 		function scenarioFileClickEvent(aHref) {
 			$.post('/scenario', {path: aHref})
 				.done(function (scenarioJson) {
@@ -31,6 +34,7 @@ define([
 					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(aHref);
 				})
 		}
+
 		function scenarioPropertyClickEvent(aHref) {
 			aHref = aHref.replaceAll('\\.', '\\\.');
 			const currentPropInputId = jqId([aHref]);
@@ -40,19 +44,21 @@ define([
 				prevPropInputId = currentPropInputId;
 			}
 		}
+
 		function backClickEvent() {
 			showMainTree();
 			// cssUtil.hide('.' + plainId(['form', TAB_TYPE.SCENARIOS, 'property']));
 			// $(jqId(['configuration', 'content'])).empty();
 			$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
 		}
+
 		return {
 			backToUpperLevel: backClickEvent,
 			scenarioFile: scenarioFileClickEvent,
 			scenarioProperty: scenarioPropertyClickEvent
 		}
 	};
-	
+
 	const clickEventCreator = clickEventCreatorFactory();
 
 	function render(scenariosArray) {
@@ -67,7 +73,10 @@ define([
 		var addressObject = {};
 		elementAppender.objectAsTree(scenarioObject, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', clickEventCreator.scenarioProperty);
 		showDetailsTree();
-		// $(jqId(['configuration', 'content'])).append(elementCreator.treeFormElem((addressObject, BLOCK.TREE, DELIMITER.PROPERTY)));
+		const treeFormsBlock = $(jqId(['configuration', 'content']));
+		treeFormsBlock.empty();
+		const treeForm = elementCreator.treeFormElem(addressObject, BLOCK.TREE, DELIMITER.PROPERTY);
+		treeFormsBlock.append(treeForm);
 	}
 
 	function showMainTree() {
@@ -99,7 +108,7 @@ define([
 		updateDetailsTree(scenarioObject);
 		// $(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(fullFileName);
 	}
-	
+
 	function setTabParameters() {
 		if (mainViewFlag) {
 			showMainTree();
@@ -108,10 +117,15 @@ define([
 		}
 		openFileHandler.setFileReaderOnLoadAction(fileReaderOnLoadAction);
 	}
+
+	function getCurrentScenario() {
+		return currentScenarioObject;
+	}
 	
 	return {
 		render: render,
-		setTabParameters: setTabParameters
+		setTabParameters: setTabParameters,
+		getCurrentScenario: getCurrentScenario
 	}
 });
 

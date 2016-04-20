@@ -94,6 +94,36 @@ define([
 			itemProcess(item, objCase, notObjCase, rootUlElem);
 		})
 	}
+	
+	function addFormForTree(addressObj, rootFormElem, delimiter) {
+		$.each(addressObj, function (key, value) {
+			const formGroupDiv = $('<div/>', {
+				id: key,
+				class: 'form-group'
+			});
+			const formGroupDivId = jqId([key]);
+			const label = $('<label/>', {
+				for: key,
+				class: 'col-sm-3 control-label '  + plainId(['form', TAB_TYPE.SCENARIOS, 'property']),
+				text: key.split(delimiter).slice(-1)
+			});
+			formGroupDiv.append(label);
+			const inputDiv = $('<div/>', {
+				class: 'col-sm-9'
+			});
+			const input = $('<input/>', {
+				type: 'text',
+				class: 'form-control',
+				name: key,
+				value: value,
+				placeholder: "Enter '" + key + "' property"
+			});
+			formGroupDiv.append(inputDiv);
+			inputDiv.append(input);
+			rootFormElem.append(formGroupDiv);
+			formGroupDiv.hide();
+		});
+	}
 
 	return {
 		arrayAsTree: addVisualTreeOfArray,

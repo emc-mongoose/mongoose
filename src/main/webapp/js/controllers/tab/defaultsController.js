@@ -38,8 +38,13 @@ define([
 		openFileHandler.setFileReaderOnLoadAction(fileReaderOnLoadAction);
 	}
 
+	function getCurrentAppConfiguration() {
+		return currentConfigObject;
+	}
+	
 	return {
 		render: render,
-		setTabParameters: setTabParameters
+		setTabParameters: setTabParameters,
+		getCurrentAppConfiguration: getCurrentAppConfiguration
 	}
 });

@@ -31,7 +31,8 @@ define(function() {
 
     const BLOCK = {
         BUTTONS: 'buttons',
-        TREE: CONFIG_TREE_ELEMENT.TREE
+        TREE: CONFIG_TREE_ELEMENT.TREE,
+        CONFIG: 'configurations'
     };
 
 

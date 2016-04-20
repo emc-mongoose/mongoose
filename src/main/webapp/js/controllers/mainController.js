@@ -8,6 +8,7 @@ define([
 	'text!../../templates/navbar.hbs',
 	'text!../../templates/base.hbs',
 	'text!../../templates/tab/buttons.hbs',
+	'text!../../templates/tab/configurations.hbs',
 	'../util/handlebarsUtil',
 	'../util/templatesUtil',
 	'../util/cssUtil'
@@ -20,6 +21,7 @@ define([
              navbarTemplate,
              baseTemplate,
              buttonsTemplate,
+             configurationsTemplate,
              hbUtil,
              templatesUtil,
              cssUtil) {
@@ -37,6 +39,7 @@ define([
 		renderer.navbar(configObject.run.version || 'unknown');
 		renderer.base();
 		renderer.buttons();
+		renderer.configurations();
 		scenariosController.render(scenariosArray);
 		defaultsController.render(configObject);
 		testsController.render();
@@ -104,10 +107,17 @@ define([
 			});
 			binder.openButton(BUTTON_TYPE, CONFIG_TABS);
 		}
+		function renderConfigurations() {
+			$.each(CONFIG_TABS, function (index, value) {
+				hbUtil.compileAndInsertInsideBefore(jqId(['all', BLOCK.CONFIG]), configurationsTemplate,
+					{'tab-type': value });
+			});
+		}
 		return {
 			navbar: renderNavbar,
 			base: renderBase,
-			buttons: renderButtons
+			buttons: renderButtons,
+			configurations: renderConfigurations
 		}
 	};
 	
