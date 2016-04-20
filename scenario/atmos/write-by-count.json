@@ -1,1 +1,21 @@
-// TODO
+{
+	"type": "load",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"file" : "/tmp/scenario-linear-write-by-count-atmos.csv"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1234
+			}
+		},
+		"storage" : {
+			"port" : 9022,
+			"http" : {
+				"api" : "atmos"
+			}
+		}
+	}
+}

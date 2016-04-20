@@ -27,7 +27,7 @@ public class HumanFriendly {
 
     public enum CLIOption {
 
-        IP("i", "Comma-separated list of ip addresses to write to", true, AppConfig.KEY_STORAGE_HTTP_ADDRS),
+        IP("i", "Comma-separated list of ip addresses to write to", true, AppConfig.KEY_STORAGE_ADDRS),
         USER("u", "User", true, AppConfig.KEY_AUTH_ID),
         SECRET("s", "Secret", true, AppConfig.KEY_AUTH_SECRET),
         BUCKET("b","Bucket to write data to", true, AppConfig.KEY_ITEM_CONTAINER_NAME),
@@ -214,9 +214,9 @@ public class HumanFriendly {
                     address.add(firstDataNode + ":" + port);
                 }
 
-                result.put(AppConfig.KEY_STORAGE_HTTP_ADDRS, StringUtils.join(address, ','));
+                result.put(AppConfig.KEY_STORAGE_ADDRS, StringUtils.join(address, ','));
             }else{
-               result.put(AppConfig.KEY_STORAGE_HTTP_ADDRS, dataNodes);
+               result.put(AppConfig.KEY_STORAGE_ADDRS, dataNodes);
             }
 
             return result;

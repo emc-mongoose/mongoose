@@ -18,20 +18,19 @@ import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
-import com.emc.mongoose.core.api.load.barrier.Barrier;
+import com.emc.mongoose.core.api.load.barrier.Throttle;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
-import com.emc.mongoose.core.impl.load.barrier.ActiveTaskCountLimitBarrier;
+import com.emc.mongoose.core.impl.load.barrier.ActiveTasksThrottle;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
-import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
-import com.emc.mongoose.core.impl.load.tasks.LogMetricsTask;
 //
+import com.emc.mongoose.core.impl.load.model.LoadRegistry;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -74,7 +73,7 @@ implements LoadExecutor<T> {
 	//
 	protected final long maxCount;
 	protected final int totalThreadCount;
-	protected final Barrier<T> activeTaskCountLimitBarrier;
+	protected final Throttle<T> activeTasksThrottle;
 	// METRICS section
 	protected final int metricsPeriodSec;
 	protected IOStats ioStats;
@@ -99,6 +98,7 @@ implements LoadExecutor<T> {
 	protected final List<Runnable> mgmtTasks = new LinkedList<>();
 	private final ThreadPoolExecutor mgmtExecutor;
 	//
+	public final static int MAX_FAIL_COUNT = 100_000;
 	private final class StatsRefreshTask
 	implements Runnable {
 		@Override
@@ -108,32 +108,11 @@ implements LoadExecutor<T> {
 			try {
 				while(!currThread.isInterrupted()) {
 					synchronized(ioStats) {
-						ioStats.wait(1000);
+						ioStats.wait(1_000);
 					}
 					refreshStats();
-					Thread.yield();
-					LockSupport.parkNanos(1000000);
-				}
-			} catch(final InterruptedException ignored) {
-			}
-		}
-	}
-	//
-	public final static int MAX_FAIL_COUNT = 100000;
-	private final class FailuresMonitorTask
-	implements Runnable {
-		@Override
-		public final void run() {
-			final Thread currThread = Thread.currentThread();
-			currThread.setName("failuresMonitor<" + getName() + ">");
-			try {
-				while(!currThread.isInterrupted()) {
-					synchronized(ioStats) {
-						ioStats.wait(1000);
-					}
 					checkForBadState();
-					Thread.yield();
-					LockSupport.parkNanos(1000000);
+					LockSupport.parkNanos(1_000_000);
 				}
 			} catch(final InterruptedException ignored) {
 			}
@@ -148,9 +127,8 @@ implements LoadExecutor<T> {
 			currThread.setName("resultsDispatcher<" + getName() + ">");
 			try {
 				if(isCircular) {
-					while(!areAllItemsProduced) {
+					while(!allItemsProducedFlag) {
 						LockSupport.parkNanos(1_000_000);
-						Thread.yield();
 					}
 				}
 				while(!currThread.isInterrupted()) {
@@ -161,6 +139,22 @@ implements LoadExecutor<T> {
 				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
 			} finally {
 				LOG.debug(Markers.MSG, "{}: results dispatched finished", getName());
+			}
+		}
+	}
+	//
+	private final class LogMetricsTask
+	implements Runnable {
+		@Override
+		public final void run() {
+			Thread.currentThread().setName(LoadExecutorBase.this.getName());
+			while(!isInterrupted.get()) {
+				logMetrics(Markers.PERF_AVG);
+				try {
+					TimeUnit.SECONDS.sleep(metricsPeriodSec);
+				} catch(final InterruptedException e) {
+					break;
+				}
 			}
 		}
 	}
@@ -197,7 +191,7 @@ implements LoadExecutor<T> {
 		}
 		//
 		totalThreadCount = threadCount * storageNodeCount;
-		activeTaskCountLimitBarrier = new ActiveTaskCountLimitBarrier<>(
+		activeTasksThrottle = new ActiveTasksThrottle<>(
 			2 * totalThreadCount + 1000, counterSubm, counterResults, isInterrupted, isShutdown,
 			isCircular
 		);
@@ -226,13 +220,12 @@ implements LoadExecutor<T> {
 			new GroupThreadFactory("mgmtWorker", true)
 		);
 		if(metricsPeriodSec > 0) {
-			mgmtTasks.add(new LogMetricsTask(this, metricsPeriodSec));
+			mgmtTasks.add(new LogMetricsTask());
 		}
 		mgmtTasks.add(new StatsRefreshTask());
-		mgmtTasks.add(new FailuresMonitorTask());
 		mgmtTasks.add(new ResultsDispatcher());
 		//
-		LoadCloseHook.add(this);
+		LoadRegistry.register(this);
 	}
 	//
 	private LoadExecutorBase(
@@ -484,7 +477,7 @@ implements LoadExecutor<T> {
 		// don't fill the connection pool as fast as possible, this may cause a failure
 		//
 		try {
-			if(!activeTaskCountLimitBarrier.getApprovalFor(item) || null == submitTask(ioTask)) {
+			if(!activeTasksThrottle.requestContinueFor(item) || null == submitTask(ioTask)) {
 				throw new RejectedExecutionException();
 			}
 			counterSubm.incrementAndGet();
@@ -514,14 +507,12 @@ implements LoadExecutor<T> {
 					null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 				// prepare the I/O tasks list (make the link between the data item and load type)
 				final List<IOTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
-				if(srcLimit > getIOTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr)) {
-					LOG.warn(Markers.ERR, "Produced less I/O tasks then expected ({})", srcLimit);
-				}
+				getIOTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr);
 				// submit all I/O tasks
 				while(n < srcLimit) {
 					// don't fill the connection pool as fast as possible, this may cause a failure
 					try {
-						activeTaskCountLimitBarrier.getApprovalsFor(null, to - from);
+						activeTasksThrottle.requestContinueFor(null, to - from);
 						m = submitTasks(ioTaskBuff, n, srcLimit);
 						if(m < 1) {
 							throw new RejectedExecutionException("No I/O tasks submitted");
@@ -696,7 +687,7 @@ implements LoadExecutor<T> {
 						} else {
 							break;
 						}
-						Thread.yield(); LockSupport.parkNanos(1);
+						LockSupport.parkNanos(1);
 					}
 				} else {
 					postProcessUniqueItemsFinally(items);
@@ -741,13 +732,7 @@ implements LoadExecutor<T> {
 			}
 			try {
 				if(!items.isEmpty()) {
-					int m = 0, k;
-					while(m < n) {
-						k = consumer.put(items, m, n);
-						if(k > 0) {
-							m += k;
-						}
-						Thread.yield();
+					for(int m = 0; m < n; m += consumer.put(items, m, n)) {
 						LockSupport.parkNanos(1);
 					}
 				}
@@ -771,7 +756,8 @@ implements LoadExecutor<T> {
 		lastStats = ioStats.getSnapshot();
 	}
 	//
-	protected void checkForBadState() {
+	protected void checkForBadState()
+	throws InterruptedException {
 		if(
 			lastStats.getFailCount() > MAX_FAIL_COUNT &&
 			lastStats.getFailRateLast() > lastStats.getSuccRateLast()
@@ -785,8 +771,7 @@ implements LoadExecutor<T> {
 			);
 			try {
 				interrupt();
-			} catch(final Exception e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt the load job");
+				throw new InterruptedException();
 			} finally {
 				Thread.currentThread().interrupt();
 			}
@@ -881,7 +866,7 @@ implements LoadExecutor<T> {
 	protected void shutdownActually() {
 		super.interrupt(); // stop the source producing right now
 		if(isCircular) {
-			areAllItemsProduced = true; //  unblock ResultsDispatcher thread
+			allItemsProducedFlag = true; //  unblock ResultsDispatcher thread
 		}
 		LOG.debug(Markers.MSG, "Stopped the producing from \"{}\" for \"{}\"", itemInput, getName());
 	}
@@ -941,7 +926,7 @@ implements LoadExecutor<T> {
 				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
 				break;
 			}
-			Thread.yield(); LockSupport.parkNanos(1000000);
+			LockSupport.parkNanos(1_000_000);
 		}
 	}
 	//
@@ -983,7 +968,7 @@ implements LoadExecutor<T> {
 				}
 			}
 			setCountLimitConfig(counterResults.get());
-			LoadCloseHook.del(this);
+			LoadRegistry.unregister(this);
 			if(loadedPrevState != null) {
 				if(RESTORED_STATES_MAP.containsKey(appConfig.getRunId())) {
 					RESTORED_STATES_MAP.get(appConfig.getRunId()).remove(loadedPrevState);

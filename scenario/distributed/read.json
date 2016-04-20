@@ -1,39 +1,37 @@
 {
 	"type" : "sequential",
+	"config" : {
+		"container" : {
+			"name" : "distributed-read"
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : 10,
+			"server" : {
+				"addrs": [
+					"10.249.237.71", "10.249.237.72"
+				]
+			}
+		},
+		"run" : {
+			"mode" : "client"
+		},
+		"storage" : {
+			"addrs" : "10.249.237.73"
+		}
+	},
 	"jobs": [
 		{
 			"type": "load", // write is used by default
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "distributed-read"
-					},
 					"data" : {
 						"size" : "8KB"
 					},
 					"dst" : {
 						"file" : "/tmp/scenario-distributed-read.csv"
-					}
-				},
-				"load" : {
-					"limit" : {
-						"count" : 1000
-					},
-					"threads" : 10,
-					"server" : {
-						"addrs": [
-							"10.249.237.71", "10.249.237.72"
-						]
-					}
-				},
-				"run" : {
-					"mode" : "client"
-				},
-				"storage" : {
-					"http" : {
-						"addrs" : [
-							"10.249.237.73"
-						]
 					}
 				}
 			}
@@ -42,34 +40,14 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "distributed-read"
-					},
 					"src" : {
 						"file" : "/tmp/scenario-distributed-read.csv"
 					}
 				},
 				"load" : {
-					"type" : "read",
-					"threads" : 10,
-					"server" : {
-						"addrs": [
-							"10.249.237.71", "10.249.237.72"
-						]
-					}
-				},
-				"run" : {
-					"mode" : "client"
-				},
-				"storage" : {
-					"http" : {
-						"addrs" : [
-							"10.249.237.73"
-						]
-					}
+					"type" : "read"
 				}
 			}
 		}
 	]
 }
-

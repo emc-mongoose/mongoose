@@ -1,1 +1,159 @@
-// TODO
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"type" : "container"
+		},
+		"load" : {
+			"limit" : {
+				"count" : 10
+			},
+			"threads" : 10
+		},
+		"storage" : {
+			"http" : {
+				"api" : "Swift",
+				"namespace" : "test"
+			},
+			"port" : 9024
+		}
+	},
+	"jobs" : [
+		{
+			// create 10 directories
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-swift-read-containers-with-objects.json"
+					},
+					"naming" : {
+						"type" : "asc",
+						"radix" : 10,
+						"length" : 1
+					}
+				}
+			}
+		}, {
+			// fill each of 10 created directories with files
+			"type" : "parallel",
+			"config" : {
+				"item" : {
+					"type" : "data"
+				},
+				"load" : {
+					"limit" : {
+						"count" : 100000
+					},
+					"threads" : 10
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "0"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "1"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "2"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "3"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "4"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "5"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "6"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "7"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "8"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "9"
+							}
+						}
+					}
+				}
+			]
+		}, {
+			// read 10 directories with the files
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-swift-read-containers-with-objects.json"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

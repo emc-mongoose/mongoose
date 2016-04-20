@@ -1,1 +1,158 @@
-// TODO
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"type" : "container",
+			"container" : {
+				"name" : "/tmp/scenario-read-dirs-with-files"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 10
+			},
+			"threads" : 10
+		},
+		"storage" : {
+			"type" : "fs"
+		}
+	},
+	"jobs" : [
+		{
+			// create 10 directories
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-read-dirs-with-files.json"
+					},
+					"naming" : {
+						"type" : "asc",
+						"radix" : 10,
+						"length" : 1
+					}
+				}
+			}
+		}, {
+			// fill each of 10 created directories with files
+			"type" : "parallel",
+			"config" : {
+				"item" : {
+					"type" : "data"
+				},
+				"load" : {
+					"limit" : {
+						"count" : 100
+					},
+					"threads" : 1
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "/tmp/scenario-read-dirs-with-files/0"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "/tmp/scenario-read-dirs-with-files/1"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "/tmp/scenario-read-dirs-with-files/2"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "/tmp/scenario-read-dirs-with-files/3"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "/tmp/scenario-read-dirs-with-files/4"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "/tmp/scenario-read-dirs-with-files/5"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "/tmp/scenario-read-dirs-with-files/6"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "/tmp/scenario-read-dirs-with-files/7"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "/tmp/scenario-read-dirs-with-files/8"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"container" : {
+								"name" : "/tmp/scenario-read-dirs-with-files/9"
+							}
+						}
+					}
+				}
+			]
+		}, {
+			// read 10 directories with the files
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-read-dirs-with-files.json"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

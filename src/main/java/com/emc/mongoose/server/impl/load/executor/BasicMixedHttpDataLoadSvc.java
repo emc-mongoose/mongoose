@@ -14,11 +14,11 @@ import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.load.barrier.Barrier;
+import com.emc.mongoose.core.api.load.barrier.Throttle;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 //
-import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
+import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
 //
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 //
@@ -49,7 +49,7 @@ implements MixedHttpDataLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final Barrier<LoadType> barrier;
+	private final Throttle<LoadType> throttle;
 	private final Map<LoadType, Integer> loadTypeWeights;
 	private final Map<LoadType, HttpRequestConfig<T, ? extends Container<T>>>
 		reqConfigMap = new HashMap<>();
@@ -70,7 +70,7 @@ implements MixedHttpDataLoadSvc<T> {
 		);
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
-		this.barrier = new WeightBarrier<>(loadTypeWeights, isInterrupted);
+		this.throttle = new WeightThrottle<>(loadTypeWeights, isInterrupted);
 		for(final LoadType nextLoadType : loadTypeWeights.keySet()) {
 			final HttpRequestConfig<T, ? extends Container<T>> reqConfigCopy;
 			try {
@@ -89,7 +89,7 @@ implements MixedHttpDataLoadSvc<T> {
 				public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
 					try {
-						if(barrier.getApprovalFor(nextLoadType)) {
+						if(throttle.requestContinueFor(nextLoadType)) {
 							return BasicMixedHttpDataLoadSvc.this.submitTask(ioTask);
 						} else {
 							throw new RejectedExecutionException(
@@ -106,7 +106,7 @@ implements MixedHttpDataLoadSvc<T> {
 					final List<A> ioTasks, int from, int to
 				) throws RejectedExecutionException {
 					try {
-						if(barrier.getApprovalsFor(nextLoadType, to - from)) {
+						if(throttle.requestContinueFor(nextLoadType, to - from)) {
 							return BasicMixedHttpDataLoadSvc.this.submitTasks(
 								ioTasks, from, to
 							);

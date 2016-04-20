@@ -1,1 +1,74 @@
-// TODO
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "scenario-circular-read-updated"
+			},
+			"data" : {
+				"size" : "1KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : 10
+		}
+	},
+	"jobs": [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-circular-read-updated-0.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						// partial write or random ranges update
+						"ranges" : 3
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-circular-read-updated-1.csv"
+					},
+					"src" : {
+						"file" : "/tmp/scenario-circular-read-updated-0.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"limit" : {
+						// count -> infinity instead of inherited value of 1, time -> 1 minute
+						"count" : 0,
+						"time" : "1m"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-circular-read-updated-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read",
+					"circular" : true,
+					"limit" : {
+						// count -> infinity instead of inherited value, time -> 1 minute
+						"count" : 0,
+						"time" : "1m"
+					}
+				}
+			}
+		}
+	]
+}
+

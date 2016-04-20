@@ -1,20 +1,24 @@
 {
 	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "linear-delete"
+			},
+			"load" : {
+				"limit" : {
+					"count" : 1000
+				}
+			}
+		}
+	},
 	"jobs": [
 		{
-			"type": "load", // write is used by default
+			"type": "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "linear-delete"
-					},
 					"dst" : {
 						"file" : "/tmp/scenario-linear-delete.csv"
-					}
-				},
-				"load" : {
-					"limit" : {
-						"count" : 1000
 					}
 				}
 			}
@@ -23,9 +27,6 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "linear-delete"
-					},
 					"src" : {
 						"file" : "/tmp/scenario-linear-delete.csv"
 					}

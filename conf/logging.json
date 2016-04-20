@@ -42,7 +42,7 @@
 					"follow": "true",
 					"PatternLayout": {
 						"alwaysWriteExceptions" : false,
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-40.-40t %m%n}"
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-20.-20c{1} %-30.-30t %m%n}"
 					},
 					"Filters": {
 						"Filter" : [

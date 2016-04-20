@@ -1,1 +1,41 @@
-// TODO
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "read-bucket-listing-distributed"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100000
+			},
+			"server" : {
+				"addrs" : [
+					"10.249.237.72", "10.249.237.73"
+				]
+			},
+			"threads" : 10
+		},
+		"run" : {
+			"mode" : "client"
+		},
+		"storage" : {
+			"addrs" : [
+				"10.249.237.71"
+			]
+		}
+	},
+	"jobs": [
+		{
+			"type": "load"
+		}, {
+			"type": "load",
+			"config" : {
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

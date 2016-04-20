@@ -127,7 +127,7 @@ implements LoadBuilderClient<T, W, U> {
 							Markers.MSG, "Load server @ " + nextLoadSvcAddr +
 							" will use the following storage nodes: " + nextNodeAddrs
 						);
-						nextConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_ADDRS, nextNodeAddrs);
+						nextConfig.setProperty(AppConfig.KEY_STORAGE_ADDRS, nextNodeAddrs);
 					}
 				}
 			} else {
@@ -146,7 +146,7 @@ implements LoadBuilderClient<T, W, U> {
 		//
 		super.setAppConfig(appConfig);
 		//
-		storageNodeAddrs = appConfig.getStorageHttpAddrsWithPorts();
+		storageNodeAddrs = appConfig.getStorageAddrsWithPorts();
 		flagAssignLoadSvcToNode = appConfig.getLoadServerNodeMapping();
 		if(flagAssignLoadSvcToNode) {
 			assignNodesToLoadSvcs(loadSvcConfMap, loadSvcAddrs, storageNodeAddrs);
@@ -293,7 +293,7 @@ implements LoadBuilderClient<T, W, U> {
 				for(final String addr : loadSvcMap.keySet()) {
 					nextBuilder = loadSvcMap.get(addr);
 					nextBuilder.setNodeAddrs(
-						loadSvcConfMap.get(addr).getStorageHttpAddrs()
+						loadSvcConfMap.get(addr).getStorageAddrs()
 					);
 				}
 			}

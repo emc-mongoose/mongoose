@@ -12,6 +12,8 @@ import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.StorageMockCapacityLimitReachedException;
 //
+import com.emc.mongoose.storage.mock.impl.base.ZeroCopyDataItemWrapper;
+import com.emc.mongoose.storage.mock.impl.base.ZeroCopyUpdatedDataItemWrapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -250,9 +252,9 @@ extends ChannelInboundHandlerAdapter {
 				HttpHeaders.setContentLength(response, objSize);
 				ctx.write(response);
 				if(obj.hasBeenUpdated()) {
-					ctx.write(new UpdatedDataItemFileRegion<>(obj));
+					ctx.write(new ZeroCopyUpdatedDataItemWrapper<>(obj));
 				} else {
-					ctx.write(new DataItemFileRegion<>(obj));
+					ctx.write(new ZeroCopyDataItemWrapper<>(obj));
 				}
 				ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
 			} else {

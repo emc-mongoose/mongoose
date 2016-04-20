@@ -17,7 +17,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
+import org.apache.commons.configuration.PropertyConverter;
 import org.apache.commons.configuration.SystemConfiguration;
+import org.apache.commons.configuration.tree.ConfigurationNode;
 import org.apache.commons.configuration.tree.DefaultExpressionEngine;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -31,10 +33,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 /**
@@ -389,17 +395,17 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public String[] getStorageHttpAddrs() {
-		return getStringArray(KEY_STORAGE_HTTP_ADDRS);
+	public String[] getStorageAddrs() {
+		return getStringArray(KEY_STORAGE_ADDRS);
 	}
 	//
 	@Override
-	public String[] getStorageHttpAddrsWithPorts() {
+	public String[] getStorageAddrsWithPorts() {
 		final String
-			nodeAddrs[] = getStorageHttpAddrs(),
+			nodeAddrs[] = getStorageAddrs(),
 			nodeAddrsWithPorts[] = new String[nodeAddrs.length];
 		String nodeAddr;
-		int port = getStorageHttpPort();
+		int port = getStoragePort();
 		for(int i = 0; i < nodeAddrs.length; i ++) {
 			nodeAddr = nodeAddrs[i];
 			nodeAddrsWithPorts[i] = nodeAddr + (nodeAddr.contains(":") ? "" : ":" + port);
@@ -413,8 +419,8 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public int getStorageHttpPort() {
-		return getInt(KEY_STORAGE_HTTP_PORT);
+	public int getStoragePort() {
+		return getInt(KEY_STORAGE_PORT);
 	}
 	//
 	@Override
@@ -438,23 +444,23 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public int getStorageHttpMockHeadCount() {
-		return getInt(KEY_STORAGE_HTTP_MOCK_HEAD_COUNT);
+	public int getStorageMockHeadCount() {
+		return getInt(KEY_STORAGE_MOCK_HEAD_COUNT);
 	}
 	//
 	@Override
-	public int getStorageHttpMockCapacity() {
-		return getInt(KEY_STORAGE_HTTP_MOCK_CAPACITY);
+	public int getStorageMockCapacity() {
+		return getInt(KEY_STORAGE_MOCK_CAPACITY);
 	}
 	//
 	@Override
-	public int getStorageHttpMockContainerCapacity() {
-		return getInt(KEY_STORAGE_HTTP_MOCK_CONTAINER_CAPACITY);
+	public int getStorageMockContainerCapacity() {
+		return getInt(KEY_STORAGE_MOCK_CONTAINER_CAPACITY);
 	}
 	//
 	@Override
-	public int getStorageHttpMockContainerCountLimit() {
-		return getInt(KEY_STORAGE_HTTP_MOCK_CONTAINER_COUNT_LIMIT);
+	public int getStorageMockContainerCountLimit() {
+		return getInt(KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT);
 	}
 	//
 	@Override
@@ -464,9 +470,13 @@ implements AppConfig {
 		for(final String k : configTree.keySet()) {
 			v = configTree.get(k);
 			compositeKey = configBranch == null ?
-			   k : configBranch + DefaultExpressionEngine.DEFAULT_PROPERTY_DELIMITER + k;
+				k :
+				configBranch + DefaultExpressionEngine.DEFAULT_PROPERTY_DELIMITER + k;
 			if(v instanceof Map) {
 				override(compositeKey, (Map<String, ?>) v);
+			} else if(v instanceof List) {
+				setProperty(compositeKey, null);
+				addPropertyDirect(compositeKey, v);
 			} else {
 				setProperty(compositeKey, v);
 			}

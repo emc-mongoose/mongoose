@@ -31,9 +31,9 @@ implements Output<T> {
 	}
 	//
 	@Override
-	public void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
-		itemsDst.write(dataItem.toString());
+		itemsDst.write(item.toString());
 		itemsDst.newLine();
 	}
 	//

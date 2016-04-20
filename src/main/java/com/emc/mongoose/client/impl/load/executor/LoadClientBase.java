@@ -121,7 +121,7 @@ implements LoadClient<T, W> {
 								}
 							}
 						}
-						Thread.yield(); LockSupport.parkNanos(1);
+						LockSupport.parkNanos(1);
 					} catch(final IOException e) {
 						if(retryCount < COUNT_LIMIT_RETRY) {
 							retryCount ++;
@@ -160,7 +160,7 @@ implements LoadClient<T, W> {
 							LOG.debug(Markers.MSG, "Interrupting due to external interruption");
 							break;
 						} else {
-							LockSupport.parkNanos(1); Thread.yield();
+							LockSupport.parkNanos(1_000);
 						}
 					}
 				} finally {
@@ -429,7 +429,7 @@ implements LoadClient<T, W> {
 				if(LOG.isTraceEnabled(Markers.ERR)) {
 					LogUtil.exception(LOG, Level.TRACE, e, "Failed to submit remote put task");
 				}
-				Thread.yield();
+				LockSupport.parkNanos(1);
 			}
 		}
 	}
@@ -512,7 +512,7 @@ implements LoadClient<T, W> {
 								LOG, Level.TRACE, e, "Failed to submit remote batch put task"
 							);
 						}
-						Thread.yield();
+						LockSupport.parkNanos(1_000);
 					}
 				}
 			}

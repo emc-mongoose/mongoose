@@ -1,1 +1,22 @@
-// TODO
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "/tmp/scenario-write-to-custom-dir"
+			},
+			"data" : {
+				"size" : "4KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : 5
+		},
+		"storage" : {
+			"type" : "fs"
+		}
+	}
+}

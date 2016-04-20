@@ -1,0 +1,57 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"data" : {
+				"content" : {
+					"file" : "conf/content/textexample"
+				},
+				"size" : "4KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-content-read-text-0.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : 10
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-content-read-text-1.csv"
+					},
+					"src" : {
+						"file" : "/tmp/scenario-content-read-text-0.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-content-read-text-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

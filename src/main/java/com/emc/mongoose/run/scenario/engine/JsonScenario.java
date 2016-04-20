@@ -1,12 +1,14 @@
 package com.emc.mongoose.run.scenario.engine;
 //
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 //
 import org.apache.logging.log4j.Level;
@@ -15,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 /**
@@ -29,38 +32,47 @@ implements Scenario {
 	private final static String KEY_NODE_JOBS = "jobs";
 	private final static String KEY_TYPE = "type";
 	private final static String KEY_CONFIG = "config";
-	private final static String VALUE_TYPE_PARALLEL = "parallel";
-	private final static String VALUE_TYPE_SEQUENTIAL = "sequential";
-	private final static String VALUE_TYPE_LOAD = "load";
-	private final static String VALUE_TYPE_RAMPUP = "rampup";
+	private final static String KEY_VALUE = "value";
+	private final static String NODE_TYPE_PARALLEL = "parallel";
+	private final static String NODE_TYPE_SEQUENTIAL = "sequential";
+	private final static String NODE_TYPE_LOAD = "load";
+	private final static String NODE_TYPE_RAMPUP = "rampup";
+	private final static String NODE_TYPE_SLEEP = "sleep";
 	//
-	public JsonScenario(final File scenarioSrcFile) {
-		final ObjectMapper jsonMapper = new ObjectMapper()
-			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
-			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
-		if(!scenarioSrcFile.exists()) {
-			LOG.error(Markers.ERR, "Scenario file is not specified");
-			return;
-		}
-		if(!scenarioSrcFile.isFile()) {
-			LOG.error(Markers.ERR, "Not a valid scenario file: \"{}\"", scenarioSrcFile.toString());
-			return;
-		}
-		//
-		try {
-			final Map<String, Object> tree = jsonMapper.readValue(scenarioSrcFile, new
-					TypeReference<Map<String, Object>>(){});
-			loadTree(tree, this);
-		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "Scenario \"{}\" initialization failure", scenarioSrcFile
-			);
-		}
+	public JsonScenario(final AppConfig config, final File scenarioSrcFile)
+	throws IOException, CloneNotSupportedException {
+		this(
+			config,
+			new ObjectMapper()
+				.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+				.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true)
+				.<Map<String, Object>>readValue(
+					scenarioSrcFile, new TypeReference<Map<String, Object>>(){}
+				)
+		);
 	}
 	//
-	@SuppressWarnings({"unchecked", "ConstantConditions"})
+	public JsonScenario(final AppConfig config, final InputStream scenarioInputStream)
+	throws IOException, CloneNotSupportedException {
+		this(
+			config,
+			new ObjectMapper()
+				.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+				.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true)
+				.<Map<String, Object>>readValue(
+					scenarioInputStream, new TypeReference<Map<String, Object>>(){}
+				)
+		);
+	}
+	//
+	public JsonScenario(final AppConfig config, final Map<String, Object> tree)
+	throws IOException, CloneNotSupportedException {
+		super(config);
+		loadTree(tree, this);
+	}
+	//
 	private static void loadTree(final Map<String, Object> node, final JobContainer jobContainer)
-	throws IOException {
+	throws IOException, CloneNotSupportedException {
 		LOG.debug(Markers.MSG, "Load the subtree to the container \"{}\"", jobContainer);
 		Object value;
 		JobContainer subContainer = jobContainer, newSubContainer;
@@ -108,37 +120,38 @@ implements Scenario {
 					break;
 				case KEY_TYPE:
 					if(value instanceof String) {
+						final Object configTree = node.get(KEY_CONFIG);
+						final AppConfig nodeConfig = (AppConfig) subContainer.getConfig().clone();
+						if(configTree instanceof Map) {
+							if(nodeConfig != null) {
+								nodeConfig.override(null, (Map<String, Object>) configTree);
+							}
+						}
 						switch((String) value) {
-							case VALUE_TYPE_PARALLEL:
-								newSubContainer = new ParallelJobContainer();
+							case NODE_TYPE_PARALLEL:
+								newSubContainer = new ParallelJobContainer(nodeConfig);
 								subContainer.append(newSubContainer);
 								subContainer = newSubContainer;
 								break;
-							case VALUE_TYPE_SEQUENTIAL:
-								newSubContainer = new SequentialJobContainer();
+							case NODE_TYPE_SEQUENTIAL:
+								newSubContainer = new SequentialJobContainer(nodeConfig);
 								subContainer.append(newSubContainer);
 								subContainer = newSubContainer;
 								break;
-							case VALUE_TYPE_LOAD:
-							case VALUE_TYPE_RAMPUP:
-								final Object configTree = node.get(KEY_CONFIG);
-								if(configTree instanceof Map) {
-									if(VALUE_TYPE_LOAD.equals(value)) {
-										newSubContainer = new SingleJobContainer(
-											(Map<String, Object>) configTree
-										);
+							case NODE_TYPE_SLEEP:
+								newSubContainer = new SleepJobContainer(
+									(String) node.get(KEY_VALUE)
+								);
+								subContainer.append(newSubContainer);
+								subContainer = newSubContainer;
+								break;
+							case NODE_TYPE_LOAD:
+							case NODE_TYPE_RAMPUP:
+								if(configTree instanceof Map || configTree == null) {
+									if(NODE_TYPE_LOAD.equals(value)) {
+										newSubContainer = new SingleJobContainer(nodeConfig);
 									} else {
-										newSubContainer = new RampupJobContainer(
-											(Map<String, Object>) configTree
-										);
-									}
-									subContainer.append(newSubContainer);
-									subContainer = newSubContainer;
-								} else if(configTree == null) {
-									if(VALUE_TYPE_LOAD.equals(value)) {
-										newSubContainer = new SingleJobContainer();
-									} else {
-										newSubContainer = new RampupJobContainer();
+										newSubContainer = new RampupJobContainer(nodeConfig);
 									}
 									subContainer.append(newSubContainer);
 									subContainer = newSubContainer;
@@ -162,7 +175,8 @@ implements Scenario {
 					}
 					break;
 				case KEY_CONFIG:
-					break; // ignore
+				case KEY_VALUE:
+					break; // ignore because the keys above are consumed already
 				default:
 					LOG.warn(Markers.ERR, "{}: unexpected key: {}", jobContainer, key);
 			}

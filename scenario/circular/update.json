@@ -1,1 +1,53 @@
-// TODO
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "scenario-circular-update"
+			},
+			"data" : {
+				"size" : "1KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : 10
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-circular-update.csv"
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						// partial write or random ranges update
+						"ranges" : 5
+					},
+					"src" : {
+						"file" : "/tmp/scenario-circular-update.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"limit" : {
+						// count -> infinity instead of inherited value of 1, time -> 1 minute
+						"count" : 0,
+						"time" : "1m"
+					}
+				}
+			}
+		}
+	]
+}

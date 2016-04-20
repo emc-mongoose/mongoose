@@ -1,6 +1,7 @@
 package com.emc.mongoose.run.scenario.engine;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -17,11 +18,15 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 02.02.16.
  */
 public class ParallelJobContainer
-implements JobContainer {
+	extends JobContainerBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final List<JobContainer> subJobs = new LinkedList<>();
+	//
+	protected ParallelJobContainer(final AppConfig appConfig) {
+		super(appConfig);
+	}
 	//
 	@Override
 	public final synchronized void run() {

@@ -30,13 +30,13 @@ implements ItemBuffer<T> {
 	}
 	/**
 	 Non-blocking put implementation
-	 @param dataItem the data item to put
+	 @param item the data item to put
 	 @throws IOException if no free capacity in the buffer
 	 */
 	@Override
-	public void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
-		if(!queue.offer(dataItem)) {
+		if(!queue.offer(item)) {
 			throw new IOException("Buffer has no free space to put an item");
 		}
 	}

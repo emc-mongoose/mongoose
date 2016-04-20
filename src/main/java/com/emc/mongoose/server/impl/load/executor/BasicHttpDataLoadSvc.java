@@ -135,13 +135,7 @@ implements HttpDataLoadSvc<T> {
 			}
 			try {
 				if(!items.isEmpty()) {
-					int m = 0, k;
-					while(m < n) {
-						k = consumer.put(items, m, n);
-						if(k > 0) {
-							m += k;
-						}
-						Thread.yield();
+					for(int m = 0; m < n; m += consumer.put(items, m, n)) {
 						LockSupport.parkNanos(1);
 					}
 				}

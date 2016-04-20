@@ -51,7 +51,7 @@ implements StorageClientBuilder<T, U> {
 			}
 			addrListBuilder.append(nextAddr);
 		}
-		appConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_ADDRS, addrListBuilder.toString());
+		appConfig.setProperty(AppConfig.KEY_STORAGE_ADDRS, addrListBuilder.toString());
 		return this;
 	}
 	//

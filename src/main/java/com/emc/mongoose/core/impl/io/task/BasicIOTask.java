@@ -9,6 +9,7 @@ import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
@@ -80,19 +81,21 @@ implements IOTask<T> {
 			} else {
 				strBuilder.setLength(0); // clear/reset
 			}
-			LOG.info(
-				Markers.PERF_TRACE,
-				strBuilder
-					.append(nodeAddr == null ? "" : nodeAddr).append(',')
-					.append(item.getName()).append(',')
-					.append(countBytesDone).append(',')
-					.append(status.code).append(',')
-					.append(reqTimeStart).append(',')
-					.append(respLatency > 0 ? respLatency : 0).append(',')
-					.append(respDataTimeStart > 0 ? respDataLatency : -1).append(',')
-					.append(reqDuration)
-					.toString()
-			);
+			if(LOG.isEnabled(Level.INFO, Markers.PERF_TRACE)) {
+				LOG.info(
+					Markers.PERF_TRACE,
+					strBuilder
+						.append(nodeAddr == null ? "" : nodeAddr).append(',')
+						.append(item.getName()).append(',')
+						.append(countBytesDone).append(',')
+						.append(status.code).append(',')
+						.append(reqTimeStart).append(',')
+						.append(respLatency > 0 ? respLatency : 0).append(',')
+						.append(respDataTimeStart > 0 ? respDataLatency : -1).append(',')
+						.append(reqDuration)
+						.toString()
+				);
+			}
 		}
 		// stats refreshing
 		if(status == IOTask.Status.SUCC) {

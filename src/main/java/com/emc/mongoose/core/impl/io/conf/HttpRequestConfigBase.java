@@ -743,7 +743,7 @@ implements HttpRequestConfig<T, C> {
 					);
 				}
 			} else {
-				tgtHost = new HttpHost(tgtAddr, appConfig.getStorageHttpPort(), SCHEME);
+				tgtHost = new HttpHost(tgtAddr, appConfig.getStoragePort(), SCHEME);
 			}
 		} else {
 			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");
@@ -808,7 +808,6 @@ implements HttpRequestConfig<T, C> {
 					headerValueInput = new AsyncPatternDefinedInput(headerValue);
 					// spin while header value generator is not ready
 					while(null == (headerValue = headerValueInput.get())) {
-						LockSupport.parkNanos(1);
 						Thread.yield();
 					}
 					HEADER_VALUE_INPUTS.put(nextKey, headerValueInput);

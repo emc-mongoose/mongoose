@@ -60,17 +60,17 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_RUN_FILE = "run.file";
 	String KEY_RUN_RESUME_ENABLED = "run.resume.enabled";
 	String KEY_STORAGE_TYPE = "storage.type";
-	String KEY_STORAGE_HTTP_ADDRS = "storage.http.addrs";
+	String KEY_STORAGE_ADDRS = "storage.addrs";
+	String KEY_STORAGE_PORT = "storage.port";
 	String KEY_STORAGE_HTTP_API = "storage.http.api";
-	String KEY_STORAGE_HTTP_PORT = "storage.http.port";
 	String KEY_STORAGE_HTTP_FS_ACCESS = "storage.http.fsAccess";
 	String KEY_STORAGE_HTTP_HEADERS = "storage.http.headers";
 	String KEY_STORAGE_HTTP_NAMESPACE = "storage.http.namespace";
 	String KEY_STORAGE_HTTP_VERSIONING = "storage.http.versioning";
-	String KEY_STORAGE_HTTP_MOCK_HEAD_COUNT = "storage.http.mock.headCount";
-	String KEY_STORAGE_HTTP_MOCK_CAPACITY = "storage.http.mock.capacity";
-	String KEY_STORAGE_HTTP_MOCK_CONTAINER_CAPACITY = "storage.http.mock.container.capacity";
-	String KEY_STORAGE_HTTP_MOCK_CONTAINER_COUNT_LIMIT = "storage.http.mock.container.countLimit";
+	String KEY_STORAGE_MOCK_HEAD_COUNT = "storage.mock.headCount";
+	String KEY_STORAGE_MOCK_CAPACITY = "storage.mock.capacity";
+	String KEY_STORAGE_MOCK_CONTAINER_CAPACITY = "storage.mock.container.capacity";
+	String KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT = "storage.mock.container.countLimit";
 	String KEY_NETWORK_SERVE_JMX = "network.serveJMX";
 	String KEY_NETWORK_SOCKET_TIMEOUT_MILLISEC = "network.socket.timeoutMilliSec";
 	String KEY_NETWORK_SOCKET_REUSE_ADDR = "network.socket.reuseAddr";
@@ -193,12 +193,12 @@ extends Cloneable, Configuration, Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	StorageType getStorageType();
 
-	String[] getStorageHttpAddrs();
-	String[] getStorageHttpAddrsWithPorts();
+	String[] getStorageAddrs();
+	String[] getStorageAddrsWithPorts();
+
+	int getStoragePort();
 
 	String getStorageHttpApi();
-
-	int getStorageHttpPort();
 
 	boolean getStorageHttpFsAccess();
 
@@ -208,13 +208,13 @@ extends Cloneable, Configuration, Externalizable {
 
 	boolean getStorageHttpVersioning();
 
-	int getStorageHttpMockHeadCount();
+	int getStorageMockHeadCount();
 
-	int getStorageHttpMockCapacity();
+	int getStorageMockCapacity();
 
-	int getStorageHttpMockContainerCapacity();
+	int getStorageMockContainerCapacity();
 
-	int getStorageHttpMockContainerCountLimit();
+	int getStorageMockContainerCountLimit();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 

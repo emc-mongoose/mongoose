@@ -17,6 +17,7 @@ buildscript {
 	}
 	dependencies {
 		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1"
+		classpath "com.google.gradle:osdetector-gradle-plugin:1.4.0"
 	}
 }
 
@@ -31,6 +32,7 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'com.google.osdetector'
 
 sourceCompatibility = JavaVersion.VERSION_1_7
 targetCompatibility = JavaVersion.VERSION_1_7
@@ -393,10 +395,11 @@ dependencies {
 		library.jackson_databind,
 		library.log4j_api_plus_core,
 		library.metrics_core,
-		library.netty_handler,
 		library.netty_buffer,
-		library.netty_transport,
 		library.netty_codec_http,
+		library.netty_handler,
+		library.netty_transport,
+		library.netty_transport_native_epoll,
 	)
 	storageMockRuntime (
 		library.runtime_logging,

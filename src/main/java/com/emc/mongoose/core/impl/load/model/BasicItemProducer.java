@@ -6,10 +6,10 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.barrier.Barrier;
+import com.emc.mongoose.core.api.load.barrier.Throttle;
 import com.emc.mongoose.core.api.load.model.ItemProducer;
 //
-import com.emc.mongoose.core.impl.load.barrier.RateLimitBarrier;
+import com.emc.mongoose.core.impl.load.barrier.RateThrottle;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -34,19 +35,19 @@ implements ItemProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final ConcurrentHashMap<String, T> uniqueItems;
+	protected final ConcurrentMap<String, T> uniqueItems;
 	protected final Input<T> itemInput;
 	protected final long maxCount;
 	protected final boolean isCircular;
 	protected final boolean isShuffling;
-	protected final Barrier<T> rateLimitBarrier;
+	protected final Throttle<T> rateThrottle;
 	protected final int batchSize;
 	protected volatile Output<T> itemOutput = null;
 	protected long skipCount;
 	protected T lastItem;
 	protected int maxItemQueueSize;
 	//
-	protected volatile boolean areAllItemsProduced = false;
+	protected volatile boolean allItemsProducedFlag = false;
 	protected volatile long producedItemsCount = 0;
 	//
 	protected BasicItemProducer(
@@ -73,7 +74,7 @@ implements ItemProducer<T> {
 		this.isCircular = isCircular;
 		this.isShuffling = isShuffling;
 		this.maxItemQueueSize = maxItemQueueSize;
-		this.rateLimitBarrier = new RateLimitBarrier<>(rateLimit);
+		this.rateThrottle = new RateThrottle<>(rateLimit);
 		this.uniqueItems = new ConcurrentHashMap<>(maxItemQueueSize);
 		setDaemon(true);
 	}
@@ -136,7 +137,7 @@ implements ItemProducer<T> {
 					if(isInterrupted) {
 						break;
 					}
-					if(n > 0 && rateLimitBarrier.getApprovalsFor(null, n)) {
+					if(n > 0 && rateThrottle.requestContinueFor(null, n)) {
 						for(m = 0; m < n && !isInterrupted; ) {
 							m += itemOutput.put(buff, m, n);
 							LockSupport.parkNanos(1);

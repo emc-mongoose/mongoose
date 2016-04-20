@@ -1,17 +1,19 @@
 {
 	"type" : "sequential",
+	"config" : {
+		"container" : {
+			"name" : "linear-update-multiple-random-ranges"
+		},
+		"data" : {
+			"size" : "1KB"
+		}
+	},
 	"jobs": [
 		{
 			"type" : "load",
 			// write is used by default
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "linear-update-multiple-random-ranges"
-					},
-					"data" : {
-						"size" : "1KB"
-					},
 					"dst" : {
 						"file" : "/tmp/scenario-linear-update-multiple-random-ranges.csv"
 					}
@@ -26,9 +28,6 @@
 			"type": "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "linear-update-multiple-random-ranges"
-					},
 					"data" : {
 						"ranges" : 10 // update 10 random byte ranges per request
 					},

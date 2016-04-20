@@ -17,7 +17,7 @@ import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 //
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
-import com.emc.mongoose.core.impl.load.barrier.WeightBarrier;
+import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
 //
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
@@ -44,7 +44,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final WeightBarrier<LoadType> barrier;
+	private final WeightThrottle<LoadType> barrier;
 	private final Map<LoadType, Integer> loadTypeWeights;
 	private final Map<LoadType, HttpRequestConfig<T, ? extends Container<T>>>
 		reqConfigMap = new HashMap<>();
@@ -63,7 +63,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 		);
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
-		this.barrier = new WeightBarrier<>(loadTypeWeights, isInterrupted);
+		this.barrier = new WeightThrottle<>(loadTypeWeights, isInterrupted);
 		for(final LoadType nextLoadType : loadTypeWeights.keySet()) {
 			final HttpRequestConfig<T, ? extends Container<T>> reqConfigCopy;
 			try {
@@ -83,7 +83,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 				public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
 					try {
-						if(barrier.getApprovalFor(nextLoadType)) {
+						if(barrier.requestContinueFor(nextLoadType)) {
 							return BasicMixedHttpDataLoadExecutor.this.submitTask(ioTask);
 						} else {
 							throw new RejectedExecutionException(
@@ -100,7 +100,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 					final List<A> ioTasks, int from, int to
 				) throws RejectedExecutionException {
 					try {
-						if(barrier.getApprovalsFor(nextLoadType, to - from)) {
+						if(barrier.requestContinueFor(nextLoadType, to - from)) {
 							return BasicMixedHttpDataLoadExecutor.this.submitTasks(
 								ioTasks, from, to
 							);

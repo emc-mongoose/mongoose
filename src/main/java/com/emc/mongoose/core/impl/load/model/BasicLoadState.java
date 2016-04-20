@@ -11,8 +11,6 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 //
-import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -272,7 +270,7 @@ implements LoadState<T> {
 			.toString();
 		try(final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
 			try(final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-				synchronized(LoadCloseHook.LOAD_STATES_MAP) {
+				synchronized(LoadRegistry.LOAD_STATES_MAP) {
 					oos.writeObject(loadStates);
 				}
 			}

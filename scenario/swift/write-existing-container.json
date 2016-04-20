@@ -1,1 +1,17 @@
-// TODO
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "existingContainerName"
+			}
+		},
+		"storage" : {
+			"http" : {
+				"api" : "Swift",
+				"namespace" : "test"
+			},
+			"port" : 9024
+		}
+	}
+}
