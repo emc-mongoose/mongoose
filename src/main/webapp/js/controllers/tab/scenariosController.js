@@ -6,13 +6,11 @@ define([
 	'../../util/templatesUtil',
 	'../../util/cssUtil',
 	'../../common/elementAppender',
-	'../../common/elementCreator',
 	'../../common/openFileHandler'
 ], function ($,
              templatesUtil,
              cssUtil,
              elementAppender,
-             elementCreator,
              openFileHandler) {
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const BLOCK = templatesUtil.blocks();
@@ -21,7 +19,7 @@ define([
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
 	var mainViewFlag = true;
-	var currentScenarioObject = {};
+	var currentScenarioObject = null;
 
 	const clickEventCreatorFactory = function () {
 		var prevPropInputId = '';
@@ -73,10 +71,9 @@ define([
 		var addressObject = {};
 		elementAppender.objectAsTree(scenarioObject, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', clickEventCreator.scenarioProperty);
 		showDetailsTree();
-		const treeFormsBlock = $(jqId(['configuration', 'content']));
-		treeFormsBlock.empty();
-		const treeForm = elementCreator.treeFormElem(addressObject, BLOCK.TREE, DELIMITER.PROPERTY);
-		treeFormsBlock.append(treeForm);
+		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.SCENARIOS]));
+		treeFormElem.empty();
+		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY);
 	}
 
 	function showMainTree() {
@@ -98,6 +95,9 @@ define([
 		});
 		div.click(function () {
 			clickEventCreator.backToUpperLevel();
+			const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.SCENARIOS]));
+			treeFormElem.empty();
+			currentScenarioObject = null;
 		});
 		return div;
 	}

@@ -8,6 +8,7 @@ define([
 
 	const TREE_ELEM = templatesUtil.configTreeElements();
 	const plainId = templatesUtil.composeId;
+	const jqId = templatesUtil.composeJqId;
 
 	function fillLeafLi(liElem, aHref, aText, aClickEvent, aClickEventParam) {
 		liElem.addClass(TREE_ELEM.LEAF);
@@ -104,7 +105,7 @@ define([
 			const formGroupDivId = jqId([key]);
 			const label = $('<label/>', {
 				for: key,
-				class: 'col-sm-3 control-label '  + plainId(['form', TAB_TYPE.SCENARIOS, 'property']),
+				class: 'col-sm-3 control-label',
 				text: key.split(delimiter).slice(-1)
 			});
 			formGroupDiv.append(label);
@@ -127,6 +128,7 @@ define([
 
 	return {
 		arrayAsTree: addVisualTreeOfArray,
-		objectAsTree: addVisualTreeOfObject
+		objectAsTree: addVisualTreeOfObject,
+		formForTree: addFormForTree
 	}
 });

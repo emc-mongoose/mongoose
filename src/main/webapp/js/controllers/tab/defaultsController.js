@@ -25,6 +25,9 @@ define([
 		rootTreeUlElem.empty();
 		var addressObject = {};
 		elementAppender.objectAsTree(configObject, rootTreeUlElem, 'prop', addressObject, DELIMITER.PROPERTY);
+		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.DEFAULTS]));
+		treeFormElem.empty();
+		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY);
 	}
 
 
