@@ -191,7 +191,7 @@ implements DataItem {
 					bs = ringBuff.get();
 					bi = src.get();
 					if(bs != bi) {
-						throw new DataCorruptionException(n, bs, bi);
+						throw new DataCorruptionException(m, bs, bi);
 					}
 				}
 			} else {

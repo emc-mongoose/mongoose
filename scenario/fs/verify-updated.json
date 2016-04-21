@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"container" : {
-				"name" : "partial-update-multiple-random-ranges"
+				"name" : "/tmp/scenario-fs-verify-updated"
 			}
 		},
 		"load" : {
@@ -11,6 +11,9 @@
 				"count" : 100
 			},
 			"threads" : 2
+		},
+		"storage" : {
+			"type" : "fs"
 		}
 	},
 	"jobs": [
@@ -20,7 +23,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-partial-update-multiple-random-ranges-0.csv"
+						"file" : "/tmp/scenario-fs-verify-updated-0.csv"
 					}
 				}
 			}
@@ -33,10 +36,10 @@
 						"ranges" : 10 // update 10 random byte ranges per request
 					},
 					"src" : {
-						"file" : "/tmp/scenario-partial-update-multiple-random-ranges-0.csv"
+						"file" : "/tmp/scenario-fs-verify-updated-0.csv"
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-partial-update-multiple-random-ranges-1.csv"
+						"file" : "/tmp/scenario-fs-verify-updated-1.csv"
 					}
 				}
 			}
@@ -46,7 +49,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-partial-update-multiple-random-ranges-1.csv"
+						"file" : "/tmp/scenario-fs-verify-updated-1.csv"
 					}
 				},
 				"load" : {

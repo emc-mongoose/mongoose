@@ -206,9 +206,7 @@ implements FileIOTask<T> {
 				Markers.MSG,
 				"{}: content mismatch @ offset {}, expected: {}, actual: {}",
 				item.getName(), countBytesDone,
-				String.format(
-					"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
-				)
+				String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual)
 			);
 			status = RESP_FAIL_CORRUPT;
 		}
