@@ -33,11 +33,13 @@ define([
 
 	};
 
-	function getInstance() {
+
+
+	function newClickEventCreator() {
 		return clickEventCreatorFactory();
 	}
 
 	return {
-		getInstance: getInstance
+		newClickEventCreator: newClickEventCreator,
 	}
 });

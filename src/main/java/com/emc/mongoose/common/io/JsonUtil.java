@@ -1,13 +1,13 @@
 package com.emc.mongoose.common.io;
 
+import com.emc.mongoose.common.conf.Constants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,9 +17,6 @@ import java.util.*;
  * Created on 04.04.16.
  */
 public class JsonUtil {
-
-	private static final int BUFFER_SIZE = 8192;
-	private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
 
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
@@ -42,12 +39,12 @@ public class JsonUtil {
 	 * @throws JsonProcessingException - an exception of the json building
 	 */
 	public static String jsonPathContent(final File file) throws JsonProcessingException {
-		List<Object> dirContent = new ArrayList<>();
+		final List<Object> dirContent = new ArrayList<>();
 		if (file.isFile()) {
 			return file.getName();
 		} else {
 			listDirectoryContents(file.toPath(), dirContent);
-			Map<String, List<Object>> fileTree = new HashMap<>();
+			final Map<String, List<Object>> fileTree = new HashMap<>();
 			fileTree.put(file.getName(), dirContent);
 			return JSON_MAPPER.writeValueAsString(fileTree);
 		}
@@ -59,7 +56,7 @@ public class JsonUtil {
 	}
 
 	public static String jsArrayPathContent(final File file) throws JsonProcessingException {
-		List<Object> dirContent = new ArrayList<>();
+		final List<Object> dirContent = new ArrayList<>();
 		if (file.isFile()) {
 			return file.getName();
 		} else {
@@ -73,11 +70,13 @@ public class JsonUtil {
 	}
 
 	private static void listDirectoryContents(final Path dirPath, final List<Object> rootList) {
-		try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
-			for (Path file : stream) {
+		try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
+			Map<String, Object> dirMap;
+			List<Object> subList;
+			for (final Path file : stream) {
 				if (file.toFile().isDirectory()) {
-					Map<String, Object> dirMap = new HashMap<>();
-					List<Object> subList = new ArrayList<>();
+					dirMap = new HashMap<>();
+					subList = new ArrayList<>();
 					dirMap.put(file.getFileName().toString(), subList);
 					rootList.add(dirMap);
 					listDirectoryContents(file.toAbsolutePath(), subList);
@@ -85,56 +84,23 @@ public class JsonUtil {
 					rootList.add(file.getFileName().toString());
 				}
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-
-	public static String readFileToString(Path path) throws IOException {
-		return new String(readAllBytes(path));
-	}
-
-	/**
-	 * see Java 8 java.nio.file.Files class
-	 */
-	private static byte[] readAllBytes(Path path) throws IOException {
-		try (SeekableByteChannel sbc = Files.newByteChannel(path);
-		     InputStream in = Channels.newInputStream(sbc)) {
-			long size = sbc.size();
-			if (size > (long)Integer.MAX_VALUE - 8)
-				throw new OutOfMemoryError("Required array size too large");
-
-			return read(in, (int)size);
-		}
-	}
-
-	/**
-	 * see Java 8 java.nio.file.Files class
-	 */
-	private static byte[] read(InputStream source, int initialSize) throws IOException {
-		int capacity = initialSize;
-		byte[] buf = new byte[capacity];
-		int nread = 0;
-		int n;
-		for (;;) {
-			while ((n = source.read(buf, nread, capacity - nread)) > 0)
-				nread += n;
-
-			if (n < 0 || (n = source.read()) < 0)
-				break;
-
-			if (capacity <= MAX_BUFFER_SIZE - capacity) {
-				capacity = Math.max(capacity << 1, BUFFER_SIZE);
-			} else {
-				if (capacity == MAX_BUFFER_SIZE)
-					throw new OutOfMemoryError("Required array size too large");
-				capacity = MAX_BUFFER_SIZE;
+	public static String readFileToString(final Path path)
+	throws IOException {
+		final StringBuilder fileTextBuilder = new StringBuilder();
+		try(
+			final BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.US_ASCII)
+		) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				fileTextBuilder.append(line).append('\n');
 			}
-			buf = Arrays.copyOf(buf, capacity);
-			buf[nread++] = (byte)n;
 		}
-		return (capacity == nread) ? buf : Arrays.copyOf(buf, nread);
+		return fileTextBuilder.toString();
 	}
 
 }

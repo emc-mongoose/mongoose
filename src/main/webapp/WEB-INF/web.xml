@@ -1,9 +1,7 @@
-<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xmlns="http://java.sun.com/xml/ns/javaee"
-		 xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
-		 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
-			http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
-			version="3.0">
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                             http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" version="3.1">
 
 	<servlet>
 		<servlet-name>MainServlet</servlet-name>
@@ -75,5 +73,19 @@
 		<servlet-name>ScenarioServlet</servlet-name>
 		<url-pattern>/scenario</url-pattern>
 	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>RunServlet</servlet-name>
+		<servlet-class>com.emc.mongoose.webui.RunServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>RunServlet</servlet-name>
+		<url-pattern>/run</url-pattern>
+	</servlet-mapping>
+
+	<multipart-config>
+
+	</multipart-config>
 
 </web-app>

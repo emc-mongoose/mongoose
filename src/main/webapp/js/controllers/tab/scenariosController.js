@@ -21,14 +21,25 @@ define([
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
 	var mainViewFlag = true;
-	var currentScenarioObject = null;
+	var runScenarioObject = null;
+	var saveScenarioObject = null;
+
+	function setScenarioObject(scenarioObj) {
+		if (scenarioObj !== null) {
+			runScenarioObject = scenarioObj;
+			saveScenarioObject = $.extend(true, {}, scenarioObj);
+		} else {
+			runScenarioObject = null;
+			saveScenarioObject = null;
+		}
+	}
 
 	const clickEventCreatorFactory = function () {
 		
 		function scenarioFileClickEvent(aHref) {
 			$.post('/scenario', {path: aHref})
 				.done(function (scenarioJson) {
-					currentScenarioObject = scenarioJson;
+					setScenarioObject(scenarioJson);
 					updateDetailsTree(scenarioJson);
 					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(aHref);
 				})
@@ -48,7 +59,7 @@ define([
 	};
 
 	const localClickEventCreator = clickEventCreatorFactory();
-	const commonClickEventCreator = eventCreator.getInstance();
+	const commonClickEventCreator = eventCreator.newClickEventCreator();
 
 	function render(scenariosArray) {
 		const rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
@@ -64,7 +75,7 @@ define([
 		showDetailsTree();
 		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.SCENARIOS]));
 		treeFormElem.empty();
-		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY);
+		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, saveScenarioObject);
 	}
 
 	function showMainTree() {
@@ -88,14 +99,14 @@ define([
 			localClickEventCreator.backToUpperLevel();
 			const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.SCENARIOS]));
 			treeFormElem.empty();
-			currentScenarioObject = null;
+			saveScenarioObject(null);
 		});
 		return div;
 	}
 
 
 	function fileReaderOnLoadAction(scenarioObject, fullFileName) {
-		currentScenarioObject = scenarioObject;
+		setScenarioObject(scenarioObject);
 		updateDetailsTree(scenarioObject);
 		// $(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(fullFileName);
 	}
@@ -109,14 +120,19 @@ define([
 		openFileHandler.setFileReaderOnLoadAction(fileReaderOnLoadAction);
 	}
 
-	function getCurrentScenario() {
-		return currentScenarioObject;
+	function getRunScenario() {
+		return runScenarioObject;
+	}
+
+	function getSaveScenario() {
+		return saveScenarioObject;
 	}
 	
 	return {
 		render: render,
 		setTabParameters: setTabParameters,
-		getCurrentScenario: getCurrentScenario
+		getRunScenario: getRunScenario,
+		getSaveScenario: getSaveScenario
 	}
 });
 

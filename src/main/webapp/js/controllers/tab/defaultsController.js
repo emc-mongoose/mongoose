@@ -18,19 +18,30 @@ define([
 	const DELIMITER = templatesUtil.delimiters();
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
-	const commonClickEventCreator = eventCreator.getInstance();
+	const commonClickEventCreator = eventCreator.newClickEventCreator();
 
-	var currentConfigObject;
+	var runConfigObject;
+	var saveConfigObject;
+
+	function setConfigObject(configObj) {
+		if (configObj !== null) {
+			runConfigObject = configObj;
+			saveConfigObject = $.extend(true, {}, configObj);
+		} else {
+			runConfigObject = null;
+			saveConfigObject = null;
+		}
+	}
 
 	function render(configObject) {
-		currentConfigObject = configObject;
+		setConfigObject(configObject);
 		const rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.DEFAULTS]));
 		rootTreeUlElem.empty();
 		var addressObject = {};
 		elementAppender.objectAsTree(configObject, rootTreeUlElem, 'prop', addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
 		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.DEFAULTS]));
 		treeFormElem.empty();
-		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY);
+		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, saveConfigObject);
 	}
 
 
@@ -44,13 +55,18 @@ define([
 		openFileHandler.setFileReaderOnLoadAction(fileReaderOnLoadAction);
 	}
 
-	function getCurrentAppConfiguration() {
-		return currentConfigObject;
+	function getRunAppConfig() {
+		return runConfigObject;
+	}
+
+	function getSaveAppConfig() {
+		return saveConfigObject;
 	}
 	
 	return {
 		render: render,
 		setTabParameters: setTabParameters,
-		getCurrentAppConfiguration: getCurrentAppConfiguration
+		getRunAppConfig: getRunAppConfig,
+		getSaveAppConfig: getSaveAppConfig
 	}
 });

@@ -96,7 +96,7 @@ define([
 		})
 	}
 	
-	function addFormForTree(addressObj, rootFormElem, delimiter) {
+	function addFormForTree(addressObj, rootFormElem, delimiter, objectToChangeWithForm) {
 		$.each(addressObj, function (key, value) {
 			const formGroupDiv = $('<div/>', {
 				id: key,
@@ -119,11 +119,26 @@ define([
 				value: value,
 				placeholder: "Enter '" + key + "' property"
 			});
+			input.change(objectToChangeWithForm, function (objectToChange) {
+				objChanger(objectToChange, key, input.val())
+			});
 			formGroupDiv.append(inputDiv);
 			inputDiv.append(input);
 			rootFormElem.append(formGroupDiv);
 			formGroupDiv.hide();
 		});
+	}
+
+	function objChanger(obj, address, newValue) {
+		const addressParts = address.split('.').reverse();
+		const lastIndex = addressParts.length - 1;
+		var tempField = newValue;
+		var tempObj = {};
+		for (var i = 0; i < lastIndex; i++) {
+			tempObj[addressParts[i]] = tempField;
+			tempField = tempObj;
+		}
+		obj[addressParts[lastIndex]] = tempField;
 	}
 
 	return {
