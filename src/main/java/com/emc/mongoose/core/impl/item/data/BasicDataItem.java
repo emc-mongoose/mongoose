@@ -103,9 +103,12 @@ implements DataItem {
 		}
 	}
 	//
-	private void enforceCircularity() {
-		if(!ringBuff.hasRemaining()) {
+	private void makeCircular() {
+		final int currPos = ringBuff.position();
+		if(currPos == ringBuffSize) {
 			ringBuff.clear();
+		} else if(currPos == ringBuff.limit()) {
+			ringBuff.limit(ringBuffSize);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -165,7 +168,7 @@ implements DataItem {
 	public final int read(final ByteBuffer dst) {
 		final int n;
 		synchronized(ringBuff) {
-			enforceCircularity();
+			makeCircular();
 			// bytes count to transfer
 			n = Math.min(dst.remaining(), ringBuff.remaining());
 			ringBuff.limit(ringBuff.position() + n);
@@ -183,11 +186,11 @@ implements DataItem {
 		}
 		int m;
 		synchronized(ringBuff) {
-			enforceCircularity();
+			makeCircular();
 			final int n = Math.min(src.remaining(), ringBuff.remaining());
 			if(n > 0) {
 				byte bs, bi;
-				for(m = 0; m < n; m++) {
+				for(m = 0; m < n; m ++) {
 					bs = ringBuff.get();
 					bi = src.get();
 					if(bs != bi) {
@@ -205,7 +208,7 @@ implements DataItem {
 	public final int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
 		synchronized(ringBuff) {
-			enforceCircularity();
+			makeCircular();
 			int n = (int)Math.min(maxCount, ringBuff.remaining());
 			ringBuff.limit(ringBuff.position() + n);
 			return chanDst.write(ringBuff);
@@ -217,7 +220,7 @@ implements DataItem {
 	throws DataCorruptionException, IOException {
 		int n;
 		synchronized(ringBuff) {
-			enforceCircularity();
+			makeCircular();
 			n = ringBuff.remaining();
 			if(buff.limit() > n) {
 				buff.limit(n);

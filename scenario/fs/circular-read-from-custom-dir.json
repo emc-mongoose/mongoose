@@ -3,16 +3,16 @@
 	"config" : {
 		"item" : {
 			"container" : {
-				"name" : "/tmp/scenario-circular-read-from-container"
-			},
-			"load" : {
-				"limit" : {
-					"count" : 10
-				}
-			},
-			"storage" : {
-				"type" : "fs"
+				"name" : "/tmp/scenario-fs-circular-read-from-custom-dir"
 			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 10
+			}
+		},
+		"storage" : {
+			"type" : "fs"
 		}
 	},
 	"jobs": [
