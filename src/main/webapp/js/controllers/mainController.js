@@ -197,14 +197,22 @@ define([
 		}
 
 		function bindStartButtonEvent() {
-			const runScenario = scenariosController.getRunScenario();
-			const runConfig = defaultsController.getRunAppConfig();
-			const startJson = {
-				scenario: runScenario,
-				config: runConfig
-			};
-			startClickEvent(startJson)
+			$(jqId(['start'])).click(function () {
+				const runScenario = scenariosController.getRunScenario();
+				const runConfig = defaultsController.getRunAppConfig();
+
+				if (runScenario === null) {
+					alert('Please, choose a scenario')
+				} else {
+					const startJson = {
+						scenario: JSON.stringify(runScenario),
+						config: JSON.stringify(runConfig)
+					};
+					startClickEvent(startJson);
+				}
+			})
 		}
+
 		return {
 			tab: bindTabClickEvents,
 			openButton: bindOpenButtonClickEvents,

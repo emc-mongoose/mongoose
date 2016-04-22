@@ -119,8 +119,8 @@ define([
 				value: value,
 				placeholder: "Enter '" + key + "' property"
 			});
-			input.change(objectToChangeWithForm, function (objectToChange) {
-				objChanger(objectToChange, key, input.val())
+			input.change(function () {
+				objChanger(objectToChangeWithForm, key, input.val())
 			});
 			formGroupDiv.append(inputDiv);
 			inputDiv.append(input);
