@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.io.task;
 //
-import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
