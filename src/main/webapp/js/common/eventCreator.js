@@ -15,9 +15,9 @@ define([
 
 		var prevPropInputId = '';
 
-		function propertyClickEvent(aHref) {
-			aHref = aHref.replaceAll('\\.', '\\\.');
-			const currentPropInputId = jqId([aHref]);
+		function propertyClickEvent(aName) {
+			aName = aName.replaceAll('\\.', '\\\.');
+			const currentPropInputId = jqId([aName]);
 			if (currentPropInputId !== prevPropInputId) {
 				cssUtil.hide(prevPropInputId);
 				cssUtil.show(currentPropInputId);
@@ -33,7 +33,19 @@ define([
 
 	};
 
+	function changeFileToSaveAs(tabType, content) {
+		saveFileAElem = $(jqId(['save', 'file', tabType]));
+		if (content !== null) {
+			tabType = tabType.slice(0, -1);
+			const data = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(content));
+			saveFileAElem.attr('href', 'data: ' + data);
+			saveFileAElem.attr('download', tabType + '.json')
+		} else {
+			saveFileAElem.attr('href', '#');
+			saveFileAElem.removeAttr('download');
 
+		}
+	}
 
 	function newClickEventCreator() {
 		return clickEventCreatorFactory();
@@ -41,5 +53,6 @@ define([
 
 	return {
 		newClickEventCreator: newClickEventCreator,
+		changeFileToSaveAs: changeFileToSaveAs
 	}
 });

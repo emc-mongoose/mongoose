@@ -119,7 +119,7 @@ define([
 				hbUtil.compileAndInsertInsideBefore(jqId(['all', BLOCK.BUTTONS]), buttonsTemplate,
 					{'buttons': BUTTONS, 'tab-type': value});
 			});
-			binder.openButton(BUTTON_TYPE, CONFIG_TABS);
+			binder.tabButtons(BUTTON_TYPE, CONFIG_TABS);
 		}
 
 		function renderConfigurations() {
@@ -182,14 +182,14 @@ define([
 			})
 		}
 
-		function bindOpenButtonClickEvents(BUTTON_TYPE, CONFIG_TABS) {
+		function bindTabButtonsClickEvents(BUTTON_TYPE, CONFIG_TABS) {
 			$.each(CONFIG_TABS, function (index, value) {
 				passClick(value, BUTTON_TYPE);
-
+				bindSaveAsButtonClickEvent(value, BUTTON_TYPE);
 			});
 		}
 
-		function startClickEvent(startJson) {
+		function startButtonClickEvent(startJson) {
 			$.post('/run', startJson)
 				.done(function () {
 					console.log('Mongoose ran');
@@ -200,7 +200,6 @@ define([
 			$(jqId(['start'])).click(function () {
 				const runScenario = scenariosController.getRunScenario();
 				const runConfig = defaultsController.getRunAppConfig();
-
 				if (runScenario === null) {
 					alert('Please, choose a scenario')
 				} else {
@@ -208,14 +207,23 @@ define([
 						scenario: JSON.stringify(runScenario),
 						config: JSON.stringify(runConfig)
 					};
-					startClickEvent(startJson);
+					startButtonClickEvent(startJson);
 				}
 			})
 		}
 
+		function bindSaveAsButtonClickEvent(tabName, BUTTON_TYPE) {
+			saveFileAElem = $(jqId([BUTTON_TYPE.SAVE_AS, tabName]));
+			saveFileAElem.click(function () {
+				if ($(this).attr('href') === '#') {
+					alert('No ' + tabName + ' chosen')
+				}
+			});
+		}
+
 		return {
 			tab: bindTabClickEvents,
-			openButton: bindOpenButtonClickEvents,
+			tabButtons: bindTabButtonsClickEvents,
 			startButton: bindStartButtonEvent
 		}
 	};

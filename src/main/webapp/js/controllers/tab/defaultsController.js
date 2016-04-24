@@ -31,6 +31,7 @@ define([
 			runConfigObject = null;
 			saveConfigObject = null;
 		}
+		eventCreator.changeFileToSaveAs(TAB_TYPE.DEFAULTS, saveConfigObject);
 	}
 
 	function render(configObject) {
@@ -41,7 +42,7 @@ define([
 		elementAppender.objectAsTree(configObject, rootTreeUlElem, 'prop', addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
 		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.DEFAULTS]));
 		treeFormElem.empty();
-		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, saveConfigObject);
+		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, saveConfigObject, TAB_TYPE.DEFAULTS);
 	}
 
 

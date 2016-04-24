@@ -32,6 +32,7 @@ define([
 			runScenarioObject = null;
 			saveScenarioObject = null;
 		}
+		eventCreator.changeFileToSaveAs(TAB_TYPE.SCENARIOS, saveScenarioObject);
 	}
 
 	const clickEventCreatorFactory = function () {
@@ -75,7 +76,7 @@ define([
 		showDetailsTree();
 		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.SCENARIOS]));
 		treeFormElem.empty();
-		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, saveScenarioObject);
+		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, saveScenarioObject, TAB_TYPE.SCENARIOS);
 	}
 
 	function showMainTree() {
@@ -99,7 +100,7 @@ define([
 			localClickEventCreator.backToUpperLevel();
 			const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.SCENARIOS]));
 			treeFormElem.empty();
-			saveScenarioObject(null);
+			setScenarioObject(null);
 		});
 		return div;
 	}

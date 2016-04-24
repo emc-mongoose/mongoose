@@ -176,3 +176,6 @@
 	right: 10px;
 	z-index: 1000;
 }
+.enter-warning {
+    margin: 10px !important;
+}
