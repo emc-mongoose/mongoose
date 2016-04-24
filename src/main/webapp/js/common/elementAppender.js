@@ -102,7 +102,6 @@ define([
 				id: key,
 				class: 'form-group'
 			});
-			const formGroupDivId = jqId([key]);
 			const label = $('<label/>', {
 				for: key,
 				class: 'col-sm-3 control-label',
@@ -120,7 +119,7 @@ define([
 				placeholder: "Enter '" + key + "' property"
 			});
 			input.change(function () {
-				objChanger(objectToChangeWithForm, key, input.val())
+				objChanger(objectToChangeWithForm, key, input.val(), delimiter)
 			});
 			formGroupDiv.append(inputDiv);
 			inputDiv.append(input);
@@ -129,8 +128,8 @@ define([
 		});
 	}
 
-	function objChanger(obj, address, newValue) {
-		const addressParts = address.split('.').reverse();
+	function objChanger(obj, address, newValue, delimiter) {
+		const addressParts = address.split(delimiter).reverse();
 		const lastIndex = addressParts.length - 1;
 		var tempField = newValue;
 		var tempObj = {};
@@ -138,7 +137,9 @@ define([
 			tempObj[addressParts[i]] = tempField;
 			tempField = tempObj;
 		}
-		obj[addressParts[lastIndex]] = tempField;
+		tempObj =  {};
+		tempObj[addressParts[lastIndex]] = tempField;
+		$.extend(true, obj, tempObj);
 	}
 
 	return {
