@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.io.conf;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.container.Container;
@@ -15,6 +16,7 @@ import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 //
 import org.apache.commons.lang.StringUtils;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -211,6 +213,11 @@ implements IoConfig<T, C> {
 		}
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setNamePrefix(appConfig.getItemNamingPrefix());
+		try {
+			setContentSource(ContentSourceBase.getInstance(appConfig));
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply the content source");
+		}
 		setVerifyContentFlag(appConfig.getItemDataVerify());
 		setBuffSize(appConfig.getIoBufferSizeMin());
 		return this;

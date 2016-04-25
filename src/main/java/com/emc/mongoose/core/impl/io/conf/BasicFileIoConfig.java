@@ -12,6 +12,7 @@ import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 //
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
 import com.emc.mongoose.core.impl.item.data.BasicFile;
+import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.core.impl.item.data.DirectoryItemInput;
 //
 import org.apache.commons.lang.StringUtils;
@@ -55,6 +56,11 @@ implements FileIoConfig<F, D> {
 		setLoadType(appConfig.getLoadType());
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setNamePrefix(appConfig.getItemNamingPrefix());
+		try {
+			setContentSource(ContentSourceBase.getInstance(appConfig));
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply the content source");
+		}
 		setVerifyContentFlag(appConfig.getItemDataVerify());
 		setBuffSize(appConfig.getIoBufferSizeMin());
 		final String dirName = appConfig.getItemContainerName();

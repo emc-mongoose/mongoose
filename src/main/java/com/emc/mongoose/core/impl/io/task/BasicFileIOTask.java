@@ -193,7 +193,7 @@ implements FileIOTask<T> {
 			if(currRangeSize > 0) {
 				while(countBytesDone < contentSize && countBytesDone < nextRangeOffset) {
 					countBytesDone += fileChannel.transferTo(
-						countBytesDone, currRangeSize, currRange
+						countBytesDone, nextRangeOffset - countBytesDone, currRange
 					);
 				}
 			}

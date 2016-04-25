@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.item.data;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
