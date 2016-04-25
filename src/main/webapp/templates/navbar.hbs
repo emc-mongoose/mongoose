@@ -11,18 +11,18 @@
     <span class="version navbar-left">v{{version}}</span>
     <nav class="header-nav-tabs">
         <ul class="nav nav-tabs">
-            <li class="tab" id="scenarios-tab"><a>Scenarios</a></li>
+            <li class="tab mode-dependent" id="scenarios-tab"><a>Scenarios</a></li>
             <li class="tab" id="defaults-tab"><a>Defaults</a></li>
             <li class="tab" id="tests-tab"><a>Tests</a></li>
             <li class="dropdown">
-                <a class="dropdown-toggle" data-toggle="dropdown">Mode
+                <a id='mode-main' class="dropdown-toggle" data-toggle="dropdown">
+                    Mode
                     <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu">
-                    <li><a>Standalone</a></li>
-                    <li><a>WSMock</a></li>
-                    <li><a>Client</a></li>
-                    <li><a>Server</a></li>
+                    {{#each modes}}
+                        <li><a id="mode-{{this}}">{{this}}</a></li>
+                    {{/each}}
                 </ul>
             </li>
         </ul>

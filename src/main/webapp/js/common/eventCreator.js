@@ -41,7 +41,7 @@ define([
 			saveFileAElem.attr('href', 'data: ' + data);
 			saveFileAElem.attr('download', tabType + '.json')
 		} else {
-			saveFileAElem.attr('href', '#');
+			saveFileAElem.removeAttr('href');
 			saveFileAElem.removeAttr('download');
 
 		}

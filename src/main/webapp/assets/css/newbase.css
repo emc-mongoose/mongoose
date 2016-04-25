@@ -144,6 +144,8 @@
 }
 .nav-pills a, .nav-tabs a {
     color: #225182 !important;
+    text-transform: capitalize;
+    cursor: pointer;
 }
 .list-group > .active {
     background-color: rgb(34, 81, 130) !important;
@@ -178,4 +180,5 @@
 }
 .enter-warning {
     margin: 10px !important;
+    font-style: italic;
 }

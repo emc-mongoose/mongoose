@@ -60,7 +60,7 @@ define(["jquery"], function ($) {
 		jQueryElement.attr('id', id);
 	}
 	
-	function processClassElements(className, idDetector, trueEvent, falseEvent) {
+	function processClassElementsById(className, idDetector, trueEvent, falseEvent) {
 		$('.' + className).each(function (index, elemSelectorObj) {
 			if (elemSelectorObj.id.indexOf(idDetector) >= 0) {
 				trueEvent($(elemSelectorObj));
@@ -69,6 +69,13 @@ define(["jquery"], function ($) {
 			}
 		})
 	}
+
+	function processClassElements(className, event) {
+		$('.' + className).each(function (index, elemSelectorObj) {
+				event($(elemSelectorObj));
+		})
+	}
+
 	return {
 		disable: disable,
 		enable: enable,
@@ -78,6 +85,7 @@ define(["jquery"], function ($) {
 		addClass: addClass,
 		removeClass: removeClass,
 		addIdByElem: addIdByElem,
+		processClassElementsById: processClassElementsById,
 		processClassElements: processClassElements
 	}
 });

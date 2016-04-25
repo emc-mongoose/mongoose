@@ -106,6 +106,7 @@ define([
 			});
 			const p = $('<p/>', {
 				class: 'enter-warning'
+
 			});
 			p.append(enterWarning);
 			formGroupDiv.append(p);
@@ -129,8 +130,7 @@ define([
 				objChanger(objectToChangeWithForm, key, input.val(), delimiter);
 				eventCreator.changeFileToSaveAs(tabType, objectToChangeWithForm);
 				const tabTypeOne = tabType.slice(0, -1);
-				p.text('Now you can save the changed ' + tabTypeOne + ' or change the property' +
-					' again')
+				p.text('MODIFIED')
 			});
 			formGroupDiv.append(inputDiv);
 			inputDiv.append(input);

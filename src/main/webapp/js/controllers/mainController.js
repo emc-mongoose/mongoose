@@ -26,11 +26,14 @@ define([
              templatesUtil,
              cssUtil) {
 
+	const MODE = templatesUtil.modes();
+	const EXTENDED_MODE = templatesUtil.objPartToArray(MODE, 2);
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const BLOCK = templatesUtil.blocks();
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
 
+	var currentMode = MODE.STANDALONE;
 	var currentTabType = TAB_TYPE.SCENARIOS;
 
 	// render html and bind events of basic elements and same for all tabs elements 
@@ -43,6 +46,7 @@ define([
 		scenariosController.render(scenariosArray);
 		defaultsController.render(configObject);
 		testsController.render();
+		makeModeActive(currentMode);
 		makeTabActive(currentTabType);
 		renderer.start();
 	}
@@ -53,14 +57,14 @@ define([
 
 	function makeTabActive(tabType) {
 		const TAB_CLASS = templatesUtil.tabClasses();
-		cssUtil.processClassElements('tab', tabType,
+		cssUtil.processClassElementsById('tab', tabType,
 			function (elemSelector) {
 				elemSelector.addClass(TAB_CLASS.ACTIVE);
 			},
 			function (elemSelector) {
 				elemSelector.removeClass(TAB_CLASS.ACTIVE);
 			});
-		cssUtil.processClassElements('tab-dependent', tabType,
+		cssUtil.processClassElementsById('tab-dependent', tabType,
 			function (elemSelector) {
 				elemSelector.show();
 			},
@@ -78,14 +82,39 @@ define([
 		currentTabType = tabType;
 	}
 
+	function makeModeActive(mode) {
+		const TAB_CLASS = templatesUtil.tabClasses();
+		$(jqId(['mode', currentMode])).removeClass(TAB_CLASS.ACTIVE);
+		$(jqId(['mode', mode])).addClass(TAB_CLASS.ACTIVE);
+		const modeTabElem = $(jqId(['mode', 'main']));
+		modeTabElem.text('Mode: ' + mode);
+		currentMode = mode;
+		for (var i = 0; i < EXTENDED_MODE.length; i++) {
+			if (mode === EXTENDED_MODE[i]) {
+				cssUtil.processClassElements('mode-dependent',
+					function (elemSelector) {
+						elemSelector.show();
+					});
+				return;
+			}
+		}
+		makeTabActive(TAB_TYPE.DEFAULTS);
+		cssUtil.processClassElements('mode-dependent',
+			function (elemSelector) {
+				elemSelector.hide();
+			});
+	}
+
 	const rendererFactory = function () {
 		const binder = clickEventBinderFactory();
-		const CONFIG_TABS = $.map(TAB_TYPE, function (value) {
-			return value;
-		}).slice(0, 2);
+		const CONFIG_TABS = templatesUtil.objPartToArray(TAB_TYPE, 2);
 
 		function renderNavbar(runVersion) {
-			hbUtil.compileAndInsertInsideBefore('body', navbarTemplate, {version: runVersion});
+			hbUtil.compileAndInsertInsideBefore('body', navbarTemplate, {
+				version: runVersion,
+				modes: MODE
+			});
+			binder.mode();
 			binder.tab();
 		}
 
@@ -112,9 +141,7 @@ define([
 		function renderButtons() {
 			// object to array
 			const BUTTON_TYPE = templatesUtil.commonButtonTypes();
-			const BUTTONS = $.map(BUTTON_TYPE, function (value) {
-				return value;
-			});
+			const BUTTONS = templatesUtil.objToArray(BUTTON_TYPE);
 			$.each(CONFIG_TABS, function (index, value) {
 				hbUtil.compileAndInsertInsideBefore(jqId(['all', BLOCK.BUTTONS]), buttonsTemplate,
 					{'buttons': BUTTONS, 'tab-type': value});
@@ -143,6 +170,13 @@ define([
 	};
 
 	const clickEventBinderFactory = function () {
+		function bindModeButtonClickEvent(mode) {
+			const modeId = jqId(['mode', mode]);
+			$(modeId).click(function () {
+				makeModeActive(mode);
+			})
+		}
+
 		function bindTabClickEvent(tabType) {
 			const tabId = tabJqId(tabType);
 			$(tabId).click(function () {
@@ -153,6 +187,12 @@ define([
 		function bindTabClickEvents() {
 			$.each(TAB_TYPE, function (key, value) {
 				bindTabClickEvent(value);
+			});
+		}
+
+		function bindModeButtonClickEvents() {
+			$.each(MODE, function (key, value) {
+				bindModeButtonClickEvent(value);
 			});
 		}
 
@@ -215,13 +255,14 @@ define([
 		function bindSaveAsButtonClickEvent(tabName, BUTTON_TYPE) {
 			saveFileAElem = $(jqId([BUTTON_TYPE.SAVE_AS, tabName]));
 			saveFileAElem.click(function () {
-				if ($(this).attr('href') === '#') {
+				if ($(this).attr('href') === undefined) {
 					alert('No ' + tabName + ' chosen')
 				}
 			});
 		}
 
 		return {
+			mode: bindModeButtonClickEvents,
 			tab: bindTabClickEvents,
 			tabButtons: bindTabButtonsClickEvents,
 			startButton: bindStartButtonEvent

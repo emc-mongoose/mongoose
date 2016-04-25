@@ -2,7 +2,14 @@
  * Created on 01.04.16.
  */
 define(function() {
-    
+
+    const MODE = {
+        STANDALONE: 'standalone',
+        CLIENT: 'client',
+        WSMOCK: 'wsmock',
+        SERVER: 'server'
+    };
+
     // the order of elements matters for a template
     const TAB_TYPE = {
         SCENARIOS: 'scenarios',
@@ -41,6 +48,10 @@ define(function() {
         PATH: '/',
         PROPERTY: '.'
     };
+
+    function modes() {
+        return MODE;
+    }
 
     function tabTypes() {
         return TAB_TYPE;
@@ -83,7 +94,18 @@ define(function() {
         return $(composeJqueryId(partsArr));
     }
 
+    function objPartToArray(obj, numberOfElems) {
+        return objToArray(obj).slice(0, numberOfElems);
+    }
+
+    function objToArray(obj) {
+        return $.map(obj, function (value) {
+            return value;
+        });
+    }
+
     return {
+        modes: modes,
         tabTypes: tabTypes,
         commonButtonTypes: commonButtonTypes,
         configTreeElements: configTreeElements,
@@ -92,6 +114,8 @@ define(function() {
         delimiters: delimiters,
         composeId: composeId,
         composeJqId:composeJqueryId,
-        getComposedJqSelector: getComposedJquerySelector
+        getComposedJqSelector: getComposedJquerySelector,
+        objToArray: objToArray,
+        objPartToArray: objPartToArray
     }
 });
