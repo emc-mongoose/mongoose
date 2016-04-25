@@ -1,190 +1,242 @@
 define([
-	"handlebars",
-	"text!../../../templates/configuration/extendedConf.hbs"
-],
-function(Handlebars, extendedConf) {
-	//
-	var KEY_FIELD_RUN_ID = "run.id",
-		KEY_FIELD_LOAD_LIMIT_TIME = "load.limit.time",
-		KEY_RUN_MODE = "run.mode";
-	//
-	function activate() {
-		$("#base").hide();
-		$(".folders").show();
-		$("#configuration-content").find(".activate").css("display", "block");
-	}
-	//
-	function setup(props) {
-		render(props);
-	}
-	//
-	function render(props) {
-		var compiled = Handlebars.compile(extendedConf);
-		var html = compiled();
-		document.querySelector("#main-content")
-			.insertAdjacentHTML("beforeend", html);
-		var propsMap = {};
-		//  show hidden folders on menu panel
-		var ul = $(".folders");
-		ul.show();
-		walkTreeMap(props, ul, propsMap);
-		$("<li>").appendTo($("#run").parent().find("ul").first())
-			.addClass("file")
-			.append($("<a>", {
-				class: "props",
-				href: "#" + "run.id",
-				text: "id"
-			}));
-		//  add empty field which doesn't contain in appConfig
-		propsMap[KEY_FIELD_RUN_ID] = "";
-		buildDivBlocksByPropertyNames(propsMap);
-		bindEvents();
-	}
-	//
-	function onMenuItemClick(element) {
-		resetParams();
-		if (element.is("a")) {
-			var id = element.attr("href").replace(/\./g, "\\.");
-			var block = $(id);
-			block.addClass("activate");
-			block.show();
-			block.children().show();
+		"handlebars",
+		"text!../../../templates/configuration/extendedConf.hbs",
+		"../../common/util/handlebarsUtil",
+		"../../common/util/templatesUtil",
+		"../../common/util/cssUtil"
+	],
+	function (Handlebars, extendedConfTemplate, hbUtil, templatesUtil, cssUtil) {
+
+		const plainId = templatesUtil.composeId;
+		const jqId = templatesUtil.composeJqId;
+		
+		const TAB_TYPE = templatesUtil.tabTypes();
+		const BLOCK = templatesUtil.blocks();
+		const TREE_ELEM = templatesUtil.configTreeElements();
+		const PATH_DELIMITER = '/';
+		const PROPERTY_DELIMITER = '.';
+		
+		var currentScenarioJson;
+
+		function render(scenariosArray) {
+			cssUtil.hide(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
+			hbUtil.compileAndInsertInside(jqId(['main', 'content']), extendedConfTemplate);
+			//
+			const elemAppender = elementAppenderFactory();
+			//
+			var rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.DEFAULTS]));
+			var addressObject = {};
+			elemAppender.objectAsTree(configObject, rootTreeUlElem, 'prop', addressObject, PROPERTY_DELIMITER);
+			//
+			rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
+			const clickEventCreator = clickEventCreatorFactory();
+			elemAppender.arrayAsTree(scenariosArray, rootTreeUlElem, 'dir', PATH_DELIMITER, clickEventCreator.scenarioFile);
 		}
-	}
-	//
-	function resetParams() {
-		var content = $("#configuration-content");
-		content.children().removeClass("activate");
-		content.children().hide();
-	}
-	//
-	function walkTreeMap(map, ul, propsMap, fullKeyName) {
-		$.each(map, function(key, value) {
-			var element;
-			var currKeyName = "";
-			//
-			if(!fullKeyName) {
-				currKeyName = key;
-			} else {
-				currKeyName = fullKeyName + "." + key;
-			}
-			//
-			if (!(value instanceof Object)) {
-				if(currKeyName === "run.mode")
-					return;
-				$("<li>").appendTo(ul)
-					.addClass("file")
-					.append($("<a>", {
-						class: "props",
-						href: "#" + currKeyName,
-						text: key
-					}));
-				propsMap[currKeyName] = value;
-			} else {
-				element = $("<ul>").appendTo(
-					$("<li>").prependTo(ul)
-						.append($("<label>", {
-							for: key,
-							text: key
-						}))
-						.append($("<input>", {
-							type: "checkbox",
-							id: key
-						}))
-					);
-				walkTreeMap(value, element, propsMap, currKeyName);
-			}
-		});
-	}
-	//
-	function buildDivBlocksByPropertyNames(propsMap) {
-		for(var key in propsMap) {
-			if(propsMap.hasOwnProperty(key)) {
-				if(key === "run.mode")
-					continue;
-				var keyDiv = $("<div>").addClass("form-group");
-				keyDiv.attr("id", key);
-				keyDiv.css("display", "none");
-				keyDiv.append($("<label>", {
-					for: key,
-					class: "col-sm-3 control-label",
-					text: key.split(".").pop()
-				}))
-					.append($("<div>", {
-						class: "col-sm-9"
-					}).append($("<input>", {
-						type: "text",
-						class: "form-control",
+
+		function openedJsonFileProcess(scenarioJson, fullFileName) {
+			currentScenarioJson = scenarioJson;
+			updateScenarioTree(scenarioJson);
+			$(jqId(['config', 'file', 'name', TAB_TYPE.SCENARIOS])).val(fullFileName);
+		}
+
+		
+		
+		const elementCreatorFactory = function () {
+			function createFormForTree(addressObj, treeType, delimiter) {
+				const form = $('<form/>', {
+					id: plainId([treeType, 'main', 'form']),
+					class: 'form-horizontal'
+				});
+				$.each(addressObj, function (key, value) {
+					const formGroupDiv = $('<div/>', {
+						id: key,
+						class: 'form-group'
+					});
+					const formGroupDivId = jqId([key]);
+					const label = $('<label/>', {
+						for: key,
+						class: 'col-sm-3 control-label '  + plainId(['form', TAB_TYPE.SCENARIOS, 'property']),
+						text: key.split(delimiter).slice(-1)
+					});
+					formGroupDiv.append(label);
+					const inputDiv = $('<div/>', {
+						class: 'col-sm-9'
+					});
+					const input = $('<input/>', {
+						type: 'text',
+						class: 'form-control',
 						name: key,
-						value: propsMap[key],
-						placeholder: "Enter '" + key + "' property. "
-					})));
-				keyDiv.appendTo("#configuration-content");
+						value: value,
+						placeholder: "Enter '" + key + "' property"
+					});
+					formGroupDiv.append(inputDiv);
+					inputDiv.append(input);
+					form.append(formGroupDiv);
+					formGroupDiv.hide();
+				});
+				return form;
 			}
-		}
-	}
-	//
-	function bindEvents() {
-		$(".folders a, .folders label").click(function(e) {
-			e.preventDefault();
-			if($(this).is("a")) {
-				onMenuItemClick($(this));
+			function createBackIcon() {
+				const div = $('<div/>', {
+					id: plainId([TAB_TYPE.SCENARIOS, 'one', 'back', 'id']),
+					class: 'icon-reply'
+				});
+				div.click(function () {
+					backClickEvent();
+				});
+				return div;
 			}
-		});
-		var extended = $("#extended");
-		//
-		extended.find("input").on("change", function() {
-			var parentIdAttr = $(this).parent().parent().attr("id");
-			var patternTime = /^([0-9]*)([smhdSMHD]?)$/;
-			var numStr = "0", unitStr = "seconds";
-			var timeUnitShortCuts = {
-				"s" : "seconds",
-				"m" : "minutes",
-				"h" : "hours",
-				"d" : "days"
-			};
-			if(parentIdAttr == KEY_FIELD_LOAD_LIMIT_TIME) {
-				var rawValue = $(this).val();
-				if (patternTime.test(rawValue)) {
-					var matcher = patternTime.exec(rawValue);
-					numStr = matcher[1];
-					if (matcher[2] != null && matcher[2].length > 0) {
-						unitStr = timeUnitShortCuts[matcher[2].toLowerCase()];
-					}
-				} else if (rawValue.indexOf('.') > 0) {
-					var splitValue = rawValue.split('.');
-					numStr = splitValue[0];
-					unitStr = splitValue[1];
+			return {
+				backIconElem: createBackIcon,
+				treeFormElem: createFormForTree
+			}
+		};
+		
+		const elementAppenderFactory = function () {
+			function fillLeafLi(liElem, aHref, aText, aClickEvent, aClickEventParam) {
+				liElem.addClass(TREE_ELEM.LEAF);
+				var a = $('<a/>',
+					{
+						class: 'props',
+						href: '#' + aHref
+					});
+				a.text(aText);
+				if (aClickEvent) {
+					a.click(function () {
+						aClickEvent(aClickEventParam);
+
+					});
 				}
-				// ok, going further
-				$("#load\\.limit\\.time\\.value").val(numStr);
-				$("#load\\.limit\\.time\\.unit").val(unitStr);
-			} else if (parentIdAttr == KEY_RUN_MODE) {
-				var runModeElement = $("#run-mode");
-				runModeElement.val($(this).val());
-				runModeElement.trigger("change");
-			} else {
-				var input = $('input[data-pointer="' + parentIdAttr + '"]')
-					.val($(this).val());
-				input.trigger("change");
-				var select = $('select[data-pointer="' + parentIdAttr + '"] option:contains(' + $(this)
-					.val() + ')')
-					.attr('selected', 'selected');
-				select.trigger("change");
+				liElem.append(a);
 			}
-		});
-		//
-		$("#run-mode").on("change", function() {
-			$("#configuration-content").find("#hidden-run\\.mode").val($(this).val());
-		});
-		//  activate extended onChange event
-		extended.find("input").each(function() {
-			$(this).trigger("change");
-		});
-	}
-	//
-	return {
-		setup: setup,
-		activate: activate
-	};
-});
+			function fillNodeLi(liElem, inputId, labelText) {
+				liElem.addClass(TREE_ELEM.NODE);
+				var input = $('<input/>', {type: 'checkbox', id: inputId});
+				var label = $('<label/>', {for: inputId});
+				label.text(labelText);
+				liElem.append(label, input);
+			}
+			function itemProcess(item, objCase, notObjCase, rootUlElem) {
+				var li = $('<li/>');
+				if ((typeof item === 'object') && (item !== null)) {
+					objCase(li);
+				} else {
+					notObjCase(li);
+				}
+				rootUlElem.append(li);
+			}
+			// with recursion, pay attention to the internal call if the function signature is being
+			// changed
+			function addVisualTreeOfObject(object, rootUlElem, nodeIdSuffix,
+			                               addressObject, delimiter, elemAddress, aClickEvent) {
+				if (!addressObject) {
+					addressObject = {};
+				}
+				if (!elemAddress) {
+					elemAddress = '';
+				}
+				$.each(object, function (key, value) {
+					function objCase(li) {
+						fillNodeLi(li, plainId([key, nodeIdSuffix, 'id']), key);
+						var ul = $('<ul/>');
+						li.append(ul);
+						const aHrefChunk = key + delimiter;
+						addVisualTreeOfObject(value, ul, nodeIdSuffix, addressObject, delimiter,
+							elemAddress + aHrefChunk, aClickEvent);
+					}
+
+					function notObjCase(li) {
+						const addressObjKey = elemAddress + key;
+						addressObject[addressObjKey] = value;
+						fillLeafLi(li, addressObjKey, key, aClickEvent, addressObjKey);
+					}
+
+					itemProcess(value, objCase, notObjCase, rootUlElem);
+				})
+			}
+			// without recursion
+			function addVisualTreeOfArray(array, rootUlElem, nodeIdSuffix, delimiter, aClickEvent) {
+				$.each(array, function (index, item) {
+					function objCase(liOuter) {
+						$.each(item, function (nodeName, leavesArr) {
+							fillNodeLi(liOuter, plainId([nodeName, nodeIdSuffix, 'id']), nodeName);
+							var ul = $('<ul/>');
+							$.each(leavesArr, function (index, leafName) {
+								var liInner = $('<li/>');
+								var aHref = nodeName + delimiter + leafName;
+								fillLeafLi(liInner, aHref, leafName, aClickEvent, aHref);
+								ul.append(liInner);
+							});
+							liOuter.append(ul);
+						})
+					}
+
+					function notObjCase(liOuter) {
+						fillLeafLi(liOuter, item, item, aClickEvent, item);
+					}
+
+					itemProcess(item, objCase, notObjCase, rootUlElem);
+				})
+			}
+			return {
+				arrayAsTree: addVisualTreeOfArray,
+				objectAsTree: addVisualTreeOfObject
+			}
+		};
+		
+		const elementUpdaterFactory = function () {
+			function updateScenarioTree(scenarioJson) {
+				const treeUlElem = $(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
+				treeUlElem.empty();
+				treeUlElem.append(createBackIcon());
+				cssUtil.addClass(BLOCK.TREE, treeUlElem);
+				var addressObject = {};
+				addVisualTreeOfObject(scenarioJson, treeUlElem, TREE_ELEM.LEAF, addressObject, PROPERTY_DELIMITER, '', clickScenarioPropertyEvent);
+				treeUlElem.show();
+				$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS])).hide();
+				$(jqId(['configuration', 'content'])).append(createFormForTree(addressObject, BLOCK.TREE, PROPERTY_DELIMITER));
+			}
+			return {
+				scenarioTree: updateScenarioTree
+			}
+		};
+		
+		const clickEventCreatorFactory = function () {
+			var prevPropInputId = '';
+			function scenarioFileClickEvent(aHref) {
+				$.post('/scenario', {path: aHref})
+					.done(function (scenarioJson) {
+						currentScenarioJson = scenarioJson;
+						updateScenarioTree(scenarioJson);
+						$(jqId(['config', 'file', 'name', TAB_TYPE.SCENARIOS])).val(aHref);
+					})
+			}
+			function scenarioPropertyClickEvent(aHref) {
+				aHref = aHref.replaceAll('\\.', '\\\.');
+				const currentPropInputId = jqId([aHref]);
+				if (currentPropInputId !== prevPropInputId) {
+					cssUtil.hide(prevPropInputId);
+					cssUtil.show(currentPropInputId);
+					prevPropInputId = currentPropInputId;
+				}
+			}
+			function backClickEvent() {
+				cssUtil.show(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
+				cssUtil.hide(jqId([TAB_TYPE.SCENARIOS, 'one', 'id']));
+				cssUtil.hide('.' + plainId(['form', TAB_TYPE.SCENARIOS, 'property']));
+				$(jqId(['configuration', 'content'])).empty();
+				$(jqId(['config', 'file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
+			}
+			return {
+				backToUpperLevel: backClickEvent,
+				scenarioFile: scenarioFileClickEvent,
+				scenarioProperty: scenarioPropertyClickEvent
+			}
+		};
+
+		return {
+			render: render,
+			setup: setup,
+			openedJsonFileProcess: openedJsonFileProcess
+		};
+	});

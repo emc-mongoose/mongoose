@@ -29,13 +29,15 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.Map;
+import java.util.concurrent.ThreadPoolExecutor;
+
 /**
  * Created by gusakk on 01/10/14.
  */
 public final class StartServlet extends CommonServlet {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	private final static String RUN_MODES = "runmodes";
+	private static final Logger LOG = LogManager.getLogger();
+	private static final String RUN_MODES = "runmodes";
 	//
 	private Map<String, Thread> threadsMap;
 	private Map<String, Boolean> stoppedRunModes;

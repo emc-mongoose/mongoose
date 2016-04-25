@@ -65,6 +65,19 @@ implements Scenario {
 		);
 	}
 	//
+	public JsonScenario(final AppConfig config, final String scenarioString)
+	throws IOException, CloneNotSupportedException {
+		this(
+			config,
+			new ObjectMapper()
+					.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+					.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true)
+					.<Map<String, Object>>readValue(
+						scenarioString, new TypeReference<Map<String, Object>>(){}
+					)
+		);
+	}
+	//
 	public JsonScenario(final AppConfig config, final Map<String, Object> tree)
 	throws IOException, CloneNotSupportedException {
 		super(config);

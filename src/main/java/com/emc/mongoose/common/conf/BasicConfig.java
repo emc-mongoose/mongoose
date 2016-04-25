@@ -88,6 +88,12 @@ implements AppConfig {
 		log.info(Markers.CFG, toFormattedString());
 	}
 	//
+	public BasicConfig(final String appConfigString) {
+		final Logger log = LogManager.getLogger();
+		loadFromJson(appConfigString);
+		log.info(Markers.CFG, toFormattedString());
+	}
+	//
 	@Override
 	public String getAuthId() {
 		return getString(KEY_AUTH_ID);
@@ -656,6 +662,21 @@ implements AppConfig {
 			correctKey = key.replaceAll(prefixKeyAliasingWithDot, "");
 			log.trace(
 				Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
+			);
+		}
+	}
+	//
+	public void loadFromJson(final String string) {
+		final Logger log = LogManager.getLogger();
+		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
+		new JsonConfigLoader(this).loadPropsFromJsonString(string);
+		log.debug(Markers.MSG, "Going to override the aliasing section");
+		String key, correctKey;
+		for(final Iterator<String> keyIter = getKeys(PREFIX_KEY_ALIASING); keyIter.hasNext();) {
+			key = keyIter.next();
+			correctKey = key.replaceAll(prefixKeyAliasingWithDot, "");
+			log.trace(
+					Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
 			);
 		}
 	}

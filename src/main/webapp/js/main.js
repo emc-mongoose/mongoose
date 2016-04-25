@@ -1,21 +1,40 @@
 //  Load RequireJS configuration before any other actions
-require(["./requirejs/conf"], function() {
+require(['./requirejs/conf'], function() {
 	//  App entry point
 	require([
-		"jquery",
-		"./controllers/mainController",
-		"./util/pace/loading",
-		"bootstrap",
-		"./util/bootstrap/tabs"
-	], function($, mainController) {
+		'jquery',
+		'./controllers/mainController',
+		'./common/util/templatesUtil',
+		'./util/pace/loading',
+		'bootstrap',
+		'./util/bootstrap/tabs'
+	], function($, mainController, templateConstants) {
+		
+		const dataExtractorFactory = function (fullAppJson) {
+			function extractAppConfig() {
+				return fullAppJson['appConfig']['config'];
+			}
+
+			function extractScenariosDirContents() {
+				return fullAppJson[templateConstants.tabTypes().SCENARIOS];
+			}
+			
+			return {
+				appConfig: extractAppConfig,
+				scenarioDirContents: extractScenariosDirContents
+			}
+		};
+		
 		//  get all properties from runTimeConfig
-		$.get("/main", function(appConfig) {
-			//  root element ("properties") of mongoose.json configuration file
-			var props = appConfig.properties;
-			if(props) {
-				mainController.run(props);
+		$.get("/main", function(fullAppJson) {
+			//  root element ("config") of defaults.json configuration file
+			const dataExtractor = dataExtractorFactory(fullAppJson);
+			const configObject = dataExtractor.appConfig();
+			const scenariosArray = dataExtractor.scenarioDirContents();
+			if(configObject && scenariosArray) {
+				mainController.render(scenariosArray, configObject);
 			} else {
-				alert("Failed to load the configuration");
+				alert('Failed to load the configuration');
 			}
 		});
 	});

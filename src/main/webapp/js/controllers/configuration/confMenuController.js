@@ -2,166 +2,111 @@ define([
 	"jquery",
 	"handlebars",
 	"text!../../../templates/configuration/confMenu.hbs",
-	"./baseConfController",
+	"text!../../../templates/configuration/commonButtons.hbs",
 	"./extendedConfController",
-	"../run/runController"
+	"../run/runController",
+	"../../common/util/handlebarsUtil",
+	"../../common/util/templatesUtil",
+	"../../common/util/cssUtil"
 ], function(
 	$,
 	Handlebars,
 	confMenuTemplate,
-    baseConfController,
+	commonButtonsTemplate,
     extendedConfController,
-    runController
+    runController,
+	hbUtil,
+    templatesUtil,
+    cssUtil
 ) {
-	//
-	function run(props, runIdArray) {
-		//  default run.mode ("webui") from appConfig should be overridden here
-		var run = {
-			mode: "standalone" // possible: ["standalone", "client", "server", "cinderella"]
-		};
-		//  render configuration menu panel
-		render();
-		baseConfController.setup(props);
-		extendedConfController.setup(props);
-		//  some settings for configuration menu
-		setDefaultRunMode(run.mode);
-		bindMenuEvents(props, runIdArray);
+	const jqId = templatesUtil.composeJqId;
+	
+	const TAB_TYPE = templatesUtil.tabTypes();
+	const BUTTON_TYPE = templatesUtil.commonButtonTypes();
+	const BLOCK = templatesUtil.blocks();
+	// object to array
+	const CONFIG_TABS = $.map(TAB_TYPE, function (value) { return value; }).slice(0, 2);
+	const BUTTONS = $.map(BUTTON_TYPE, function (value) { return value; });
+	
+	function run(configObject, scenariosArray, currentTabType) {
+		render(currentTabType);
+		extendedConfController.setup(configObject, scenariosArray);
 	}
 	//
-	function render() {
-		var compiled = Handlebars.compile(confMenuTemplate);
-		document.querySelector("#configuration")
-			.insertAdjacentHTML("afterbegin", compiled());
-	}
-	//
-	function setDefaultRunMode(runMode) {
-		var select = document.querySelector("#run-mode");
-		var options = select.options;
-		for(var option in options) {
-			if(options.hasOwnProperty(option)) {
-				option = options[option];
-				if(option.value == runMode) {
-					select.value = option.value;
-				}
-			}
+	function render(currentTabType) {
+		function renderConfMenu() {
+			hbUtil.compileAndInsertAfter('header', confMenuTemplate, { 'tab-types': CONFIG_TABS });
 		}
-	}
-	//
-	function bindMenuEvents(props, runIdArray) {
-		//
-		$("#start").on("click", function(e) {
-			e.preventDefault();
-			runController.start(runIdArray);
-		});
-		//  config mode change
-		var configTypes = {
-			"base": baseConfController,
-			"extended": extendedConfController
-		};
-		var configModeSelect = $("#config-type");
-		configModeSelect.on("change", function() {
-			var activeOptionValue = this.options[this.selectedIndex].value;
-			//  activate baseConfController or extendedConfController
-			configTypes[activeOptionValue].activate();
-		});
-		//  activate
-		configModeSelect.trigger("change");
-
-		////////////////////////////////////////////////////////////////////////////////////////////
-
-		//  run mode change (show base conf fields only for selected run mode)
-		var runModeSelect = $("#run-mode");
-		runModeSelect.on("change", function() {
-			var valueSelected = this.options[this.selectedIndex].value;
-			var notSelected = $("option:not(:selected)", this);
-			notSelected.each(function() {
-				$("." + this.value).hide();
+		function renderCommonButtons() {
+			$.each(CONFIG_TABS, function (index, value) {
+				hbUtil.compileAndInsertInsideBefore('#config', commonButtonsTemplate,
+					{ 'buttons': BUTTONS, 'tab-type': value });
 			});
-			$("." + valueSelected).show();
-		});
-		//  activate
-		runModeSelect.trigger("change");
-
-		////////////////////////////////////////////////////////////////////////////////////////////
-
-		//  show input field for reading cfg from file
-		var fileCheckbox = $("#file-checkbox");
-		fileCheckbox.on("change", function() {
-			var file = document.querySelector("#config-file");
-			if(this.checked) {
-				file.style.display = "block";
-			} else {
-				file.style.display = "none";
+		}
+		function bindOpenButtonEvent() {
+			
+			function buttonJqId(buttonType, tabName) {
+				return jqId([buttonType, tabName]);
 			}
-		});
-
-		////////////////////////////////////////////////////////////////////////////////////////////
-
-		var fields = $("#main-form").serialize();
-
-		//  update config file (save button click)
-		var updateConfig = $("#save-config");
-		updateConfig.click(function() {
-			$.post("/save", fields, function() {
-				alert("Config was successfully saved");
-			});
-		});
-
-		//  save configuration in separate file
-		var saveInFile = $("#save-file");
-		saveInFile.click(function(e) {
-			e.preventDefault();
-			$.get("/save", fields, function() {
-				window.location.href = "/save/config.txt";
-			});
-		});
-
-		////////////////////////////////////////////////////////////////////////////////////////////
-
-		//  read cfg from file
-		var fileInput = $("#config-file");
-		fileInput.change(function() {
-			var input = $(this).get(0);
-			loadPropertiesFromFile(props, input.files[0]);
-		});
-	}
-
-	function loadPropertiesFromFile(props, fileName) {
-		var reader = new FileReader();
-		reader.onload = function() {
-			var result = reader.result;
-			var lines = result.split("\n");
-			var key, value;
-			for(var i = 0;i < lines.length; i++) {
-				var splitLine = lines[i].split(" = ");
-				//  key and value
-				if(splitLine.length == 2) {
-					key = splitLine[0];
-					value = splitLine[1];
-					index(props, key, value);
+			
+			function passClick(tabName) {
+				const openInputFileId = buttonJqId(BUTTON_TYPE.OPEN_INPUT_FILE, tabName);
+				$(buttonJqId(BUTTON_TYPE.OPEN, tabName)).click(function () {
+					$(openInputFileId).trigger('click')
+				});
+				$(openInputFileId).change(openFileEvent);
+			}
+			
+			function fillTheField(tabName) {
+				const openInputFileId = buttonJqId(BUTTON_TYPE.OPEN_INPUT_FILE, tabName);
+				const openInputTextId = buttonJqId(BUTTON_TYPE.OPEN_INPUT_TEXT, tabName);
+				const openFileName = $(openInputFileId).val();
+				if (openFileName) {
+					$(openInputTextId).val(openFileName)
 				} else {
-					return;
+					$(openInputTextId).val('No ' + tabName.slice(0, -1) + ' chosen')
 				}
 			}
-		};
-		reader.readAsText(fileName);
-	}
-
-	function index(obj,is, value) {
-		try {
-			if(typeof is == 'string')
-				return index(obj, is.split('.'), value);
-			else if(is.length == 1 && value !== undefined)
-				return obj[is[0]] = value;
-			else if(is.length == 0)
-				return obj;
-			else
-				return index(obj[is[0]], is.slice(1), value);
-		} catch(e) {
-			//  do nothing
+			$.each(CONFIG_TABS, function (index, value) {
+				passClick(value);
+				fillTheField(value);
+			});
+			
 		}
+		function hideExtraButtons(currentTabType) {
+			$.each(CONFIG_TABS, function (index, value) {
+				if (value != currentTabType) {
+					const buttonBlockId = jqId([BLOCK.BUTTONS, value]);
+					cssUtil.hide(buttonBlockId);
+				}
+			})
+		}
+		
+		var fullFileName = '';
+		
+		const reader = new FileReader();
+		reader.onload = function (data) {
+			content = data.target.result;
+			const json = JSON.parse(content);
+			extendedConfController.openedJsonFileProcess(json, fullFileName);
+		};
+		reader.onerror = function (data) {
+			console.error("File couldn't be read. Code" + data.target.error.code);
+		};
+		
+		function openFileEvent(data) {
+			const files = data.target.files; // FileList object
+			const file = files[0];
+			fullFileName = file.name;
+			reader.readAsText(file);
+		}
+		
+		renderConfMenu();
+		renderCommonButtons();
+		bindOpenButtonEvent();
+		hideExtraButtons(currentTabType)
 	}
-
+	
 	return {
 		run: run
 	};
