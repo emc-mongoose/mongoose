@@ -5,9 +5,9 @@ define([
 	"text!../../../templates/configuration/commonButtons.hbs",
 	"./extendedConfController",
 	"../run/runController",
-	"../../util/handlebarsUtil",
-	"../../util/templatesUtil",
-	"../../util/cssUtil"
+	"../../common/util/handlebarsUtil",
+	"../../common/util/templatesUtil",
+	"../../common/util/cssUtil"
 ], function(
 	$,
 	Handlebars,

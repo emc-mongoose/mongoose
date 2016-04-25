@@ -147,6 +147,9 @@
     text-transform: capitalize;
     cursor: pointer;
 }
+.nav-tabs a.active {
+    background-color: #b2b2b2;
+}
 .list-group > .active {
     background-color: rgb(34, 81, 130) !important;
     border-color: #225182 !important;

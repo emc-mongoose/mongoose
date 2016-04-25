@@ -3,9 +3,13 @@
  */
 define([
 	'jquery',
-	'../util/templatesUtil',
-	'./eventCreator'
-], function ($, templatesUtil, eventCreator) {
+	'./util/templatesUtil',
+	'./eventCreator',
+	'./util/filesUtil'
+], function ($,
+             templatesUtil,
+             eventCreator,
+             filesUtil) {
 
 	const TREE_ELEM = templatesUtil.configTreeElements();
 	const plainId = templatesUtil.composeId;
@@ -27,6 +31,7 @@ define([
 		}
 		liElem.append(a);
 	}
+
 	function fillNodeLi(liElem, inputId, labelText) {
 		liElem.addClass(TREE_ELEM.NODE);
 		var input = $('<input/>', {type: 'checkbox', id: inputId});
@@ -34,6 +39,7 @@ define([
 		label.text(labelText);
 		liElem.append(label, input);
 	}
+
 	function itemProcess(item, objCase, notObjCase, rootUlElem) {
 		var li = $('<li/>');
 		if ((typeof item === 'object') && (item !== null)) {
@@ -43,6 +49,7 @@ define([
 		}
 		rootUlElem.append(li);
 	}
+
 	// with recursion, pay attention to the internal call if the function signature is being
 	// changed
 	function addVisualTreeOfObject(object, rootUlElem, nodeIdSuffix,
@@ -72,6 +79,7 @@ define([
 			itemProcess(value, objCase, notObjCase, rootUlElem);
 		})
 	}
+
 	// without recursion
 	function addVisualTreeOfArray(array, rootUlElem, nodeIdSuffix, delimiter, aClickEvent) {
 		$.each(array, function (index, item) {
@@ -96,9 +104,9 @@ define([
 			itemProcess(item, objCase, notObjCase, rootUlElem);
 		})
 	}
-	
+
 	function addFormForTree(addressObj, rootFormElem, delimiter, objectToChangeWithForm, tabType) {
-		const enterWarning = 'Press enter to confirm';
+		const enterWarning = 'Press enter to commit a change';
 		$.each(addressObj, function (key, value) {
 			const formGroupDiv = $('<div/>', {
 				id: key,
@@ -127,7 +135,7 @@ define([
 				placeholder: "Enter '" + key + "' property"
 			});
 			input.change(function () {
-				objChanger(objectToChangeWithForm, key, input.val(), delimiter);
+				filesUtil.objChanger(objectToChangeWithForm, key, input.val(), delimiter);
 				eventCreator.changeFileToSaveAs(tabType, objectToChangeWithForm);
 				const tabTypeOne = tabType.slice(0, -1);
 				p.text('MODIFIED')
@@ -137,20 +145,6 @@ define([
 			rootFormElem.append(formGroupDiv);
 			formGroupDiv.hide();
 		});
-	}
-
-	function objChanger(obj, address, newValue, delimiter) {
-		const addressParts = address.split(delimiter).reverse();
-		const lastIndex = addressParts.length - 1;
-		var tempField = newValue;
-		var tempObj = {};
-		for (var i = 0; i < lastIndex; i++) {
-			tempObj[addressParts[i]] = tempField;
-			tempField = tempObj;
-		}
-		tempObj =  {};
-		tempObj[addressParts[lastIndex]] = tempField;
-		$.extend(true, obj, tempObj);
 	}
 
 	return {

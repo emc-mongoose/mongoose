@@ -3,17 +3,20 @@
  */
 define([
 	'jquery',
-	'../../util/templatesUtil',
-	'../../util/cssUtil',
+	'../../common/util/templatesUtil',
+	'../../common/util/cssUtil',
 	'../../common/elementAppender',
 	'../../common/openFileHandler',
-	'../../common/eventCreator'
+	'../../common/eventCreator',
+	'../../common/util/filesUtil'
 ], function ($,
              templatesUtil,
              cssUtil,
              elementAppender,
              openFileHandler, 
-             eventCreator) {
+             eventCreator,
+             filesUtil
+) {
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const BLOCK = templatesUtil.blocks();
 	const TREE_ELEM = templatesUtil.configTreeElements();
@@ -21,18 +24,18 @@ define([
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
 	var mainViewFlag = true;
-	var runScenarioObject = null;
-	var saveScenarioObject = null;
+	var pureScenarioObject = null;
+	var changedScenarioObject = null;
 
 	function setScenarioObject(scenarioObj) {
 		if (scenarioObj !== null) {
-			runScenarioObject = scenarioObj;
-			saveScenarioObject = $.extend(true, {}, scenarioObj);
+			pureScenarioObject = scenarioObj;
+			changedScenarioObject = $.extend(true, {}, scenarioObj);
 		} else {
-			runScenarioObject = null;
-			saveScenarioObject = null;
+			pureScenarioObject = null;
+			changedScenarioObject = null;
 		}
-		eventCreator.changeFileToSaveAs(TAB_TYPE.SCENARIOS, saveScenarioObject);
+		filesUtil.changeFileToSaveAs(TAB_TYPE.SCENARIOS, changedScenarioObject);
 	}
 
 	const clickEventCreatorFactory = function () {
@@ -76,7 +79,7 @@ define([
 		showDetailsTree();
 		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.SCENARIOS]));
 		treeFormElem.empty();
-		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, saveScenarioObject, TAB_TYPE.SCENARIOS);
+		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, changedScenarioObject, TAB_TYPE.SCENARIOS);
 	}
 
 	function showMainTree() {
@@ -121,19 +124,19 @@ define([
 		openFileHandler.setFileReaderOnLoadAction(fileReaderOnLoadAction);
 	}
 
-	function getRunScenario() {
-		return runScenarioObject;
+	function getPureScenario() {
+		return pureScenarioObject;
 	}
 
-	function getSaveScenario() {
-		return saveScenarioObject;
+	function getChangedScenario() {
+		return changedScenarioObject;
 	}
 	
 	return {
 		render: render,
 		setTabParameters: setTabParameters,
-		getRunScenario: getRunScenario,
-		getSaveScenario: getSaveScenario
+		getPureScenario: getPureScenario,
+		getChangedScenario: getChangedScenario
 	}
 });
 

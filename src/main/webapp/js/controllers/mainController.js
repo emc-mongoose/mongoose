@@ -9,9 +9,9 @@ define([
 	'text!../../templates/base.hbs',
 	'text!../../templates/tab/buttons.hbs',
 	'text!../../templates/tab/configurations.hbs',
-	'../util/handlebarsUtil',
-	'../util/templatesUtil',
-	'../util/cssUtil'
+	'../common/util/handlebarsUtil',
+	'../common/util/templatesUtil',
+	'../common/util/cssUtil'
 ], function ($,
              webSocketController,
              scenariosController,
@@ -89,6 +89,7 @@ define([
 		const modeTabElem = $(jqId(['mode', 'main']));
 		modeTabElem.text('Mode: ' + mode);
 		currentMode = mode;
+		defaultsController.setRunMode(currentMode);
 		for (var i = 0; i < EXTENDED_MODE.length; i++) {
 			if (mode === EXTENDED_MODE[i]) {
 				cssUtil.processClassElements('mode-dependent',
@@ -230,16 +231,21 @@ define([
 		}
 
 		function startButtonClickEvent(startJson) {
-			$.post('/run', startJson)
-				.done(function () {
-					console.log('Mongoose ran');
-				});
+			const isConfirmed = confirm('If properties were changed Mongoose will save it' +
+				' automatically' +
+				'Would you like to continue?');
+			if (isConfirmed) {
+				$.post('/run', startJson)
+					.done(function () {
+						console.log('Mongoose ran');
+					});
+			}
 		}
 
 		function bindStartButtonEvent() {
 			$(jqId(['start'])).click(function () {
-				const runScenario = scenariosController.getRunScenario();
-				const runConfig = defaultsController.getRunAppConfig();
+				const runScenario = scenariosController.getChangedScenario();
+				const runConfig = defaultsController.getChangedAppConfig();
 				if (runScenario === null) {
 					alert('Please, choose a scenario')
 				} else {
@@ -268,7 +274,6 @@ define([
 			startButton: bindStartButtonEvent
 		}
 	};
-
 
 	return {
 		render: render

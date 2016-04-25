@@ -1,7 +1,7 @@
 /**
  * Created on 01.04.16.
  */
-define(["jquery", "handlebars"], function ($, Handlebars) {
+define(['jquery', 'handlebars'], function ($, Handlebars) {
 
     function compile(template, paramsObj) {
         const compiled = Handlebars.compile(template);

@@ -3,15 +3,18 @@
  */
 define([
 	'jquery',
-	'../../util/templatesUtil',
+	'../../common/util/templatesUtil',
 	'../../common/elementAppender',
 	'../../common/openFileHandler',
-	'../../common/eventCreator'
+	'../../common/eventCreator',
+	'../../common/util/filesUtil'
 ], function ($,
              templatesUtil,
              elementAppender,
              openFileHandler, 
-             eventCreator) {
+             eventCreator,
+             filesUtil
+) {
 
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const BLOCK = templatesUtil.blocks();
@@ -20,18 +23,24 @@ define([
 	const jqId = templatesUtil.composeJqId;
 	const commonClickEventCreator = eventCreator.newClickEventCreator();
 
-	var runConfigObject;
-	var saveConfigObject;
+	var pureConfigObject;
+	var changedConfigObject;
 
 	function setConfigObject(configObj) {
 		if (configObj !== null) {
-			runConfigObject = configObj;
-			saveConfigObject = $.extend(true, {}, configObj);
+			pureConfigObject = configObj;
+			changedConfigObject = $.extend(true, {}, configObj);
 		} else {
-			runConfigObject = null;
-			saveConfigObject = null;
+			pureConfigObject = null;
+			changedConfigObject = null;
 		}
-		eventCreator.changeFileToSaveAs(TAB_TYPE.DEFAULTS, saveConfigObject);
+		filesUtil.changeFileToSaveAs(TAB_TYPE.DEFAULTS, changedConfigObject);
+	}
+
+	function setRunMode(currentMode) {
+		const tempObj = {run: {mode: currentMode}};
+		$.extend(true, changedConfigObject, tempObj);
+		filesUtil.changeFileToSaveAs(TAB_TYPE.DEFAULTS, changedConfigObject);
 	}
 
 	function render(configObject) {
@@ -42,7 +51,7 @@ define([
 		elementAppender.objectAsTree(configObject, rootTreeUlElem, 'prop', addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
 		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.DEFAULTS]));
 		treeFormElem.empty();
-		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, saveConfigObject, TAB_TYPE.DEFAULTS);
+		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, changedConfigObject, TAB_TYPE.DEFAULTS);
 	}
 
 
@@ -56,18 +65,19 @@ define([
 		openFileHandler.setFileReaderOnLoadAction(fileReaderOnLoadAction);
 	}
 
-	function getRunAppConfig() {
-		return runConfigObject;
+	function getPureAppConfig() {
+		return pureConfigObject;
 	}
 
-	function getSaveAppConfig() {
-		return saveConfigObject;
+	function getChangedAppConfig() {
+		return changedConfigObject;
 	}
 	
 	return {
 		render: render,
 		setTabParameters: setTabParameters,
-		getRunAppConfig: getRunAppConfig,
-		getSaveAppConfig: getSaveAppConfig
+		getPureAppConfig: getPureAppConfig,
+		getChangedAppConfig: getChangedAppConfig,
+		setRunMode: setRunMode
 	}
 });

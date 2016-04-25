@@ -3,8 +3,8 @@
  */
 define([
 	'jquery',
-	'../util/templatesUtil',
-	'../util/cssUtil'
+	'./util/templatesUtil',
+	'./util/cssUtil'
 ], function ($,
              templatesUtil,
              cssUtil) {
@@ -32,27 +32,12 @@ define([
 		}
 
 	};
-
-	function changeFileToSaveAs(tabType, content) {
-		saveFileAElem = $(jqId(['save', 'file', tabType]));
-		if (content !== null) {
-			tabType = tabType.slice(0, -1);
-			const data = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(content));
-			saveFileAElem.attr('href', 'data: ' + data);
-			saveFileAElem.attr('download', tabType + '.json')
-		} else {
-			saveFileAElem.removeAttr('href');
-			saveFileAElem.removeAttr('download');
-
-		}
-	}
-
+	
 	function newClickEventCreator() {
 		return clickEventCreatorFactory();
 	}
 
 	return {
-		newClickEventCreator: newClickEventCreator,
-		changeFileToSaveAs: changeFileToSaveAs
+		newClickEventCreator: newClickEventCreator
 	}
 });

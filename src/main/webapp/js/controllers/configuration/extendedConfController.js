@@ -1,9 +1,9 @@
 define([
 		"handlebars",
 		"text!../../../templates/configuration/extendedConf.hbs",
-		"../../util/handlebarsUtil",
-		"../../util/templatesUtil",
-		"../../util/cssUtil"
+		"../../common/util/handlebarsUtil",
+		"../../common/util/templatesUtil",
+		"../../common/util/cssUtil"
 	],
 	function (Handlebars, extendedConfTemplate, hbUtil, templatesUtil, cssUtil) {
 

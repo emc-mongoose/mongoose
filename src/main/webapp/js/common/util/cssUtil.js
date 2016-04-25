@@ -1,7 +1,7 @@
 /**
  * Created on 08.04.16.
  */
-define(["jquery"], function ($) {
+define(['jquery'], function ($) {
 
 	const PROPERTIES = {
 		DISABLED: 'disabled'

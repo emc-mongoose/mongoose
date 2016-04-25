@@ -4,7 +4,7 @@ require(['./requirejs/conf'], function() {
 	require([
 		'jquery',
 		'./controllers/mainController',
-		'./util/templatesUtil',
+		'./common/util/templatesUtil',
 		'./util/pace/loading',
 		'bootstrap',
 		'./util/bootstrap/tabs'
