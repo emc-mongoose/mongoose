@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.io.task;
 //
+import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -26,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 //
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
@@ -209,9 +211,17 @@ implements FileIOTask<T> {
 	//
 	protected void runReadNoVerify(final FileChannel fileChannel)
 	throws IOException {
-		// TODO w/o verification
+		ByteBuffer buffIn;
+		int n;
 		while(countBytesDone < contentSize) {
-			countBytesDone += fileChannel.transferTo(countBytesDone, contentSize, item);
+			buffIn = ((IOWorker) Thread.currentThread())
+				.getThreadLocalBuff(contentSize - countBytesDone);
+			n = fileChannel.read(buffIn);
+			if(n < 0) {
+				break;
+			} else {
+				countBytesDone += n;
+			}
 		}
 	}
 	//
