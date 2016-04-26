@@ -90,6 +90,7 @@ define([
 		modeTabElem.text('Mode: ' + mode);
 		currentMode = mode;
 		defaultsController.setRunMode(currentMode);
+		$('#run\\.mode').find('input').val(currentMode);
 		for (var i = 0; i < EXTENDED_MODE.length; i++) {
 			if (mode === EXTENDED_MODE[i]) {
 				cssUtil.processClassElements('mode-dependent',
