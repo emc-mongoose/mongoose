@@ -163,10 +163,19 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setMaxCount(final long maxCount)
+	public final LoadBuilderSvc setCountLimit(final long countLimit)
 	throws IllegalArgumentException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setMaxCount(maxCount);
+			loadBuilderSvc.setCountLimit(countLimit);
+		}
+		return this;
+	}
+	//
+	@Override
+	public final LoadBuilderSvc setSizeLimit(final long sizeLimit)
+	throws IllegalArgumentException, RemoteException {
+		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
+			loadBuilderSvc.setSizeLimit(sizeLimit);
 		}
 		return this;
 	}

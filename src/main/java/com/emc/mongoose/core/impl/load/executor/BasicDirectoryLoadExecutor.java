@@ -38,9 +38,9 @@ implements DirectoryLoadExecutor<T, C> {
 	//
 	public BasicDirectoryLoadExecutor(
 		final AppConfig appConfig, final FileIoConfig<T, C> ioConfig, final int threadCount,
-		final Input<C> itemInput, final long maxCount, final float rateLimit
+		final Input<C> itemInput, final long countLimit, final long sizeLimit, final float rateLimit
 	) throws ClassCastException {
-		super(appConfig, ioConfig, null, threadCount, itemInput, maxCount, rateLimit);
+		super(appConfig, ioConfig, null, threadCount, itemInput, countLimit, sizeLimit, rateLimit);
 		ioTaskExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<Runnable>(maxItemQueueSize), new IOWorker.Factory(getName())

@@ -278,6 +278,26 @@ implements AppConfig {
 	}
 	//
 	@Override
+	public long getLoadLimitSize() {
+		final Object raw = getProperty(KEY_LOAD_LIMIT_SIZE);
+		if(raw instanceof Long) {
+			return ((long) raw);
+		} else if(raw instanceof Integer) {
+			return ((int) raw);
+		} else if(raw instanceof Short) {
+			return ((short) raw);
+		} else if(raw instanceof String) {
+			return SizeInBytes.toFixedSize((String) raw);
+		} else if(raw instanceof SizeInBytes){
+			return ((SizeInBytes) raw).get();
+		} else {
+			throw new ConversionException(
+				"Type of \"" + KEY_LOAD_LIMIT_SIZE + "\" is not supported: \"" + raw + "\""
+			);
+		}
+	}
+	//
+	@Override
 	public long getLoadLimitTime() {
 		final Object rawValue = getProperty(KEY_LOAD_LIMIT_TIME);
 		if(rawValue instanceof String) {

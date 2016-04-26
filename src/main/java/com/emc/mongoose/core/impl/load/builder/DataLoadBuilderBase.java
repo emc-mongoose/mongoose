@@ -71,8 +71,7 @@ implements DataLoadBuilder<T, U> {
 	@SuppressWarnings("unchecked")
 	private Input<T> getContainerItemInput()
 	throws CloneNotSupportedException {
-		return (Input<T>) ((IoConfig) ioConfig.clone()).getContainerListInput(
-			maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+		return (Input<T>) ((IoConfig) ioConfig.clone()).getContainerListInput(countLimit, storageNodeAddrs == null ? null : storageNodeAddrs[0]
 		);
 	}
 	//

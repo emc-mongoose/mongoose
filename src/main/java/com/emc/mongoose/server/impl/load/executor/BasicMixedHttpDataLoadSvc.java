@@ -59,14 +59,14 @@ implements MixedHttpDataLoadSvc<T> {
 	//
 	public BasicMixedHttpDataLoadSvc(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
-		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
+		final String[] addrs, final int threadCount, final long countLimit, final long sizeLimit,
+		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
 		final Map<LoadType, Integer> loadTypeWeightMap,
 		final Map<LoadType, Input<T>> itemInputMap
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadCount, null, maxCount, rateLimit, sizeConfig,
-			rangesConfig
+			appConfig, reqConfig, addrs, threadCount, null, countLimit, sizeLimit, rateLimit,
+			sizeConfig, rangesConfig
 		);
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
@@ -82,7 +82,7 @@ implements MixedHttpDataLoadSvc<T> {
 			reqConfigMap.put(nextLoadType, reqConfigCopy);
 			final BasicHttpDataLoadSvc<T> nextLoadSvc = new BasicHttpDataLoadSvc<T>(
 				appConfig, reqConfigCopy, addrs, threadCount, itemInputMap.get(nextLoadType),
-				maxCount, rateLimit, sizeConfig, rangesConfig,
+				countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig,
 				httpProcessor, client, ioReactor, connPoolMap
 			) {
 				@Override

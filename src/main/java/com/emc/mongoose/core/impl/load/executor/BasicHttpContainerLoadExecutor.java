@@ -81,9 +81,10 @@ implements HttpContainerLoadExecutor<T, C> {
 	//
 	public BasicHttpContainerLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, C> reqConfig, final String[] addrs,
-		final int threadCount, final Input<C> itemInput, final long maxCount, final float rateLimit
+		final int threadCount, final Input<C> itemInput, final long countLimit,
+		final long sizeLimit, final float rateLimit
 	) throws ClassCastException {
-		super(appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit);
+		super(appConfig, reqConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit);
 		//
 		this.loadType = reqConfig.getLoadType();
 		httpReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;

@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 //
 /**
  Created by kurila on 15.12.14.
@@ -38,13 +39,16 @@ extends LoadExecutorBase<T> {
 	protected final SizeInBytes sizeConfig;
 	protected final DataRangesConfig rangesConfig;
 	//
+	private final AtomicLong submSize = new AtomicLong(0);
+	//
 	protected MutableDataLoadExecutorBase(
 		final AppConfig appConfig,
 		final IoConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
-		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
+		final String[] addrs, final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit,
+		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) throws ClassCastException {
-		super(appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit);
+		super(appConfig, ioConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit);
 		//
 		this.loadType = ioConfig.getLoadType();
 		this.sizeConfig = sizeConfig;
@@ -63,7 +67,8 @@ extends LoadExecutorBase<T> {
 				buffSize = (int) avgDataSize;
 			}
 		} else if(itemInput instanceof NewDataItemInput) {
-			final long avgDataSize = ((NewDataItemInput) itemInput).getDataSizeInfo().getAvgDataSize();
+			final long avgDataSize = ((NewDataItemInput) itemInput)
+				.getDataSizeInfo().getAvgDataSize();
 			if(avgDataSize < Constants.BUFF_SIZE_LO) {
 				buffSize = Constants.BUFF_SIZE_LO;
 			} else if(avgDataSize > Constants.BUFF_SIZE_HI) {
@@ -142,18 +147,24 @@ extends LoadExecutorBase<T> {
 	}*/
 	/** intercepts the data items which should be scheduled for update or append */
 	@Override
-	public void put(final T item)
+	public void put(final T dataItem)
 	throws IOException {
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
 			final List<ByteRange> ranges = rangesConfig.getFixedByteRanges();
 			if(rndRangesToUpdateCount > 0) {
-				item.scheduleRandomUpdates(rndRangesToUpdateCount);
+				dataItem.scheduleRandomUpdates(rndRangesToUpdateCount);
+				if(sizeLimit < submSize.addAndGet(dataItem.getUpdatingRangesSize())) {
+					shutdown();
+				}
 			} else if(ranges != null) {
 				if(ranges.size() == 1) {
 					final ByteRange range = ranges.get(0);
-					if(range.getBeg() == item.getSize()) {
-						item.scheduleAppend(range.getEnd());
+					if(range.getBeg() == dataItem.getSize()) {
+						dataItem.scheduleAppend(range.getEnd());
+						if(sizeLimit < submSize.addAndGet(dataItem.getAppendSize())) {
+							shutdown();
+						}
 					} else {
 						// TODO
 						throw new NotImplementedException();
@@ -170,27 +181,36 @@ extends LoadExecutorBase<T> {
 			);
 		}
 		//
-		super.put(item);
+		super.put(dataItem);
 	}
 	//
 	@Override
 	public int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
+		T dataItem;
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
 			final List<ByteRange> ranges = rangesConfig.getFixedByteRanges();
 			if(rndRangesToUpdateCount > 0) {
 				for(int i = from; i < to; i ++) {
-					dataItems.get(i).scheduleRandomUpdates(rndRangesToUpdateCount);
+					dataItem = dataItems.get(i);
+					dataItem.scheduleRandomUpdates(rndRangesToUpdateCount);
+					if(sizeLimit < submSize.addAndGet(dataItem.getUpdatingRangesSize())) {
+						shutdown();
+						break;
+					}
 				}
 			} else if(ranges != null) {
 				if(ranges.size() == 1) {
 					final ByteRange range = ranges.get(0);
-					T dataItem;
 					for(int i = from; i < to; i ++) {
 						dataItem = dataItems.get(i);
 						if(range.getBeg() == dataItem.getSize()) {
 							dataItem.scheduleAppend(range.getEnd());
+							if(sizeLimit < submSize.addAndGet(dataItem.getAppendSize())) {
+								shutdown();
+								break;
+							}
 						} else {
 							// TODO
 							throw new NotImplementedException();

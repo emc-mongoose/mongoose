@@ -54,6 +54,7 @@
 			"limit" : {
 				"count" : 0,
 				"rate" : 0,
+				"size" : 0,
 				"time" : "0s"
 			},
 			"metricsPeriod" : "10s",

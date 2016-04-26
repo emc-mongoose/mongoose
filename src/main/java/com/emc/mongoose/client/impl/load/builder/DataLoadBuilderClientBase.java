@@ -142,7 +142,7 @@ implements DataLoadBuilderClient<T, W, U> {
 					}
 					//
 					return (Input<T>) ((IoConfig) ioConfig.clone()).getContainerListInput(
-						maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+						countLimit, storageNodeAddrs == null ? null : storageNodeAddrs[0]
 					);
 				}
 			} else if(flagUseNewItemSrc) {
@@ -162,8 +162,7 @@ implements DataLoadBuilderClient<T, W, U> {
 					nextBuilder.useNoneItemSrc();
 				}
 				//
-				return (Input<T>) ((IoConfig) ioConfig.clone()).getContainerListInput(
-					maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+				return (Input<T>) ((IoConfig) ioConfig.clone()).getContainerListInput(countLimit, storageNodeAddrs == null ? null : storageNodeAddrs[0]
 				);
 			}
 		} catch(final RemoteException e) {

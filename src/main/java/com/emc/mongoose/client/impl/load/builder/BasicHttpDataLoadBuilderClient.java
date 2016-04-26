@@ -148,14 +148,15 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 			}
 			//
 			return (U) new BasicMixedHttpDataLoadClient<>(
-				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount,
-				maxCount, rateLimit, (Map<String, MixedHttpDataLoadSvc<T>>) remoteLoadMap,
+				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount, countLimit,
+				sizeLimit, rateLimit, (Map<String, MixedHttpDataLoadSvc<T>>) remoteLoadMap,
 				itemInputMap, loadTypeWeightMap
 			);
 		} else {
 			//
 			return (U) new BasicHttpDataLoadClient<>(
-				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount, itemInput, maxCount, rateLimit, remoteLoadMap
+				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount, itemInput,
+				countLimit, sizeLimit, rateLimit, remoteLoadMap
 			);
 		}
 	}

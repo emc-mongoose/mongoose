@@ -3,6 +3,7 @@ package com.emc.mongoose.client.impl.load.executor;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.LogUtil;
@@ -147,13 +148,44 @@ implements LoadClient<T, W> {
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("interruptOnCountLimitReached<" + getName() + ">");
-			if(maxCount > 0) {
+			if(countLimit > 0) {
 				try {
 					while(!currThread.isInterrupted()) {
-						if(maxCount <= lastStats.getSuccCount() + lastStats.getFailCount()) {
+						if(countLimit <= lastStats.getSuccCount() + lastStats.getFailCount()) {
 							LOG.debug(
 								Markers.MSG, "Interrupting due to count limit ({}) is reached",
-								maxCount
+								countLimit
+							);
+							break;
+						} else if(currThread.isInterrupted()) {
+							LOG.debug(Markers.MSG, "Interrupting due to external interruption");
+							break;
+						} else {
+							LockSupport.parkNanos(1_000);
+						}
+					}
+				} finally {
+					isLimitReached = true;
+					remotePutExecutor.shutdownNow();
+					interruptLoadSvcs();
+				}
+			}
+		}
+	}
+	//
+	private final class InterruptOnSizeLimitReachedTask
+	implements Runnable {
+		@Override
+		public final void run() {
+			final Thread currThread = Thread.currentThread();
+			currThread.setName("interruptOnCountLimitReached<" + getName() + ">");
+			if(sizeLimit > 0) {
+				try {
+					while(!currThread.isInterrupted()) {
+						if(sizeLimit <= lastStats.getByteCount()) {
+							LOG.debug(
+								Markers.MSG, "Interrupting due to size limit ({}) is reached",
+								SizeInBytes.formatFixedSize(sizeLimit)
 							);
 							break;
 						} else if(currThread.isInterrupted()) {
@@ -174,11 +206,12 @@ implements LoadClient<T, W> {
 	//
 	public LoadClientBase(
 		final AppConfig appConfig, final IoConfig<?, ?> ioConfig, final String addrs[],
-		final int threadCount, final Input<T> itemInput, final long maxCount, final float rateLimit,
+		final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit,
 		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		this(
-			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
+			appConfig, ioConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
 			// get any load server last job number
 			remoteLoadMap, remoteLoadMap.values().iterator().next().getInstanceNum()
 		);
@@ -186,13 +219,15 @@ implements LoadClient<T, W> {
 	//
 	protected LoadClientBase(
 		final AppConfig appConfig, final IoConfig<?, ?> ioConfig, final String addrs[],
-		final int threadCount, final Input<T> itemInput, final long maxCount, final float rateLimit,
+		final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit,
 		final Map<String, W> remoteLoadMap, final int instanceNum
 	) {
 		super(
-			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit, instanceNum,
+			appConfig, ioConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
+			instanceNum,
 			instanceNum + "-" + ioConfig.toString() +
-				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
+				(countLimit > 0 ? Long.toString(countLimit) : "") + '-' + threadCount +
 				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
 				+ 'x' + remoteLoadMap.size()
 		);
@@ -204,7 +239,12 @@ implements LoadClient<T, W> {
 		for(final W nextLoadSvc : remoteLoadMap.values()) {
 			mgmtTasks.add(new LoadItemsBatchTask(nextLoadSvc));
 		}
-		mgmtTasks.add(new InterruptOnCountLimitReachedTask());
+		if(this.countLimit > 0 && this.countLimit < Long.MAX_VALUE) {
+			mgmtTasks.add(new InterruptOnCountLimitReachedTask());
+		}
+		if(sizeLimit > 0 && sizeLimit < Long.MAX_VALUE) {
+			mgmtTasks.add(new InterruptOnSizeLimitReachedTask());
+		}
 		//
 		final int remotePutThreadCount = Math.max(loadSvcAddrs.length, ThreadUtil.getWorkerCount());
 		remotePutExecutor = new ThreadPoolExecutor(
@@ -408,7 +448,7 @@ implements LoadClient<T, W> {
 	@Override
 	public void put(final T item)
 	throws IOException {
-		if(counterSubm.get() + countRej.get() >= maxCount) {
+		if(counterSubm.get() + countRej.get() >= countLimit) {
 			LOG.debug(
 				Markers.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", getName(),
 				counterSubm.get(), countRej.get()
@@ -437,11 +477,11 @@ implements LoadClient<T, W> {
 	private final class RemoteBatchPutTask
 	implements Runnable {
 		//
-		private final List<T> dataItems;
+		private final List<T> items;
 		private final int from, to, n;
 		//
-		private RemoteBatchPutTask(final List<T> dataItems, final int from, final int to) {
-			this.dataItems = dataItems;
+		private RemoteBatchPutTask(final List<T> items, final int from, final int to) {
+			this.items = items;
 			this.from = from;
 			this.to = to;
 			this.n = to - from;
@@ -463,7 +503,7 @@ implements LoadClient<T, W> {
 					];
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
 					do {
-						m += loadSvc.put(dataItems, from + m, to);
+						m += loadSvc.put(items, from + m, to);
 						if(m < n) {
 							LockSupport.parkNanos(1);
 						} else {
@@ -490,7 +530,7 @@ implements LoadClient<T, W> {
 	@Override
 	public int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
-		final long dstLimit = maxCount - counterSubm.get() - countRej.get();
+		final long dstLimit = countLimit - counterSubm.get() - countRej.get();
 		final int srcLimit = to - from;
 		if(dstLimit > 0) {
 			if(dstLimit < srcLimit) {

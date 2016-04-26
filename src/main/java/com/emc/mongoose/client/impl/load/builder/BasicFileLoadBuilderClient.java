@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  Created by kurila on 26.11.15.
@@ -157,13 +156,14 @@ implements FileLoadBuilderClient<T, W, U> {
 			//
 			return (U) new BasicMixedFileLoadClient<>(
 				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
-				maxCount, rateLimit, (Map<String, MixedFileLoadSvc<T>>) remoteLoadMap, itemInputMap,
-				loadTypeWeightMap
+				countLimit, sizeLimit, rateLimit,
+				(Map<String, MixedFileLoadSvc<T>>) remoteLoadMap, itemInputMap, loadTypeWeightMap
 			);
 		} else {
 			return (U) new BasicFileLoadClient<>(
 				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig,
-				appConfig.getLoadThreads(), itemInput, maxCount, rateLimit, remoteLoadMap
+				appConfig.getLoadThreads(), itemInput, countLimit, sizeLimit, rateLimit,
+				remoteLoadMap
 			);
 		}
 	}

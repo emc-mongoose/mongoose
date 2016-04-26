@@ -40,11 +40,12 @@ implements FileLoadExecutor<T> {
 	//
 	public BasicFileLoadExecutor(
 		final AppConfig appConfig, final FileIoConfig<T, ? extends Directory<T>> ioConfig,
-		final int threadCount, final Input<T> itemInput, final long maxCount,
-		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
+		final int threadCount, final Input<T> itemInput, final long countLimit,
+		final long sizeLimit, final float rateLimit, final SizeInBytes sizeConfig,
+		final DataRangesConfig rangesConfig
 	) throws ClassCastException {
 		super(
-			appConfig, ioConfig, null, threadCount, itemInput, maxCount, rateLimit,
+			appConfig, ioConfig, null, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
 			sizeConfig, rangesConfig
 		);
 		ioTaskExecutor = new ThreadPoolExecutor(

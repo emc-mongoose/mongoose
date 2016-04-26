@@ -35,7 +35,8 @@ implements LoadBuilder<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected volatile AppConfig appConfig;
-	protected long maxCount = 0;
+	protected long countLimit = 0;
+	protected long sizeLimit = 0;
 	protected volatile IoConfig<?, ?> ioConfig = getDefaultIoConfig();
 	protected float rateLimit;
 	protected int threadCount = 1;
@@ -82,7 +83,16 @@ implements LoadBuilder<T, U> {
 		//
 		String paramName = AppConfig.KEY_LOAD_LIMIT_COUNT;
 		try {
-			setMaxCount(appConfig.getLoadLimitCount());
+			setCountLimit(appConfig.getLoadLimitCount());
+		} catch(final NoSuchElementException e) {
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+		} catch(final IllegalArgumentException e) {
+			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+		}
+		//
+		paramName = AppConfig.KEY_LOAD_LIMIT_SIZE;
+		try {
+			setSizeLimit(appConfig.getLoadLimitSize());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -171,13 +181,24 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setMaxCount(final long maxCount)
+	public LoadBuilder<T, U> setCountLimit(final long countLimit)
 	throws IllegalArgumentException, RemoteException {
-		LOG.debug(Markers.MSG, "Set max data item count: {}", maxCount);
-		if(maxCount < 0) {
+		LOG.debug(Markers.MSG, "Set max item count: {}", countLimit);
+		if(countLimit < 0) {
 			throw new IllegalArgumentException("Count should be >= 0");
 		}
-		this.maxCount = maxCount;
+		this.countLimit = countLimit;
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilder<T, U> setSizeLimit(final long sizeLimit)
+	throws IllegalArgumentException, RemoteException {
+		LOG.debug(Markers.MSG, "Set max data size count: {}", sizeLimit);
+		if(sizeLimit < 0) {
+			throw new IllegalArgumentException("Count should be >= 0");
+		}
+		this.sizeLimit = sizeLimit;
 		return this;
 	}
 	//
@@ -237,7 +258,7 @@ implements LoadBuilder<T, U> {
 		lb.appConfig = (AppConfig) appConfig.clone();
 		LOG.debug(Markers.MSG, "Cloning request config for {}", ioConfig.toString());
 		lb.ioConfig = ioConfig.clone();
-		lb.maxCount = maxCount;
+		lb.countLimit = countLimit;
 		lb.threadCount = threadCount;
 		lb.storageNodeAddrs = storageNodeAddrs;
 		lb.itemInput = itemInput;

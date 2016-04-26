@@ -100,8 +100,8 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		}
 		//
 		return (U) new BasicDirectoryLoadClient<>(
-			appConfig, (FileIoConfig) ioConfig, appConfig.getLoadThreads(), itemInput, maxCount,
-			rateLimit, remoteLoadMap
+			appConfig, (FileIoConfig) ioConfig, appConfig.getLoadThreads(), itemInput, countLimit,
+			sizeLimit, rateLimit, remoteLoadMap
 		);
 	}
 }

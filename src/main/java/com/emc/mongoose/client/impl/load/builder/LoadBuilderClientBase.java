@@ -180,7 +180,8 @@ implements LoadBuilderClient<T, W, U> {
 			}
 		}
 		//
-		setMaxCount(appConfig.getLoadLimitCount());
+		setCountLimit(appConfig.getLoadLimitCount());
+		setSizeLimit(appConfig.getLoadLimitSize());
 		setRateLimit((float) appConfig.getLoadLimitRate());
 		//
 		try {
@@ -237,14 +238,28 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, W, U> setMaxCount(final long maxCount)
+	public final LoadBuilderClient<T, W, U> setCountLimit(final long countLimit)
 	throws IllegalArgumentException, RemoteException {
-		super.setMaxCount(maxCount);
+		super.setCountLimit(countLimit);
 		V nextBuilder;
 		if(loadSvcMap != null) {
 			for(final String addr : loadSvcMap.keySet()) {
 				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setMaxCount(maxCount);
+				nextBuilder.setCountLimit(countLimit);
+			}
+		}
+		return this;
+	}
+	//
+	@Override
+	public final LoadBuilderClient<T, W, U> setSizeLimit(final long sizeLimit)
+	throws IllegalArgumentException, RemoteException {
+		super.setSizeLimit(sizeLimit);
+		V nextBuilder;
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setSizeLimit(sizeLimit);
 			}
 		}
 		return this;

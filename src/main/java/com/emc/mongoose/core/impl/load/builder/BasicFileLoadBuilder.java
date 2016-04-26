@@ -119,12 +119,14 @@ extends DataLoadBuilderBase<T, U> {
 			}
 			return (U) new BasicMixedFileLoadExecutor<>(
 				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
-				maxCount, rateLimit, sizeConfig, rangesConfig, loadTypeWeightMap, itemInputMap
+				countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig,
+				loadTypeWeightMap, itemInputMap
 			);
 		} else {
 			return (U) new BasicFileLoadExecutor<>(
 				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig,
-				threadCount, itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit,
+				threadCount, itemInput == null ? getDefaultItemInput() : itemInput,
+				countLimit, sizeLimit, rateLimit,
 				sizeConfig, rangesConfig
 			);
 		}

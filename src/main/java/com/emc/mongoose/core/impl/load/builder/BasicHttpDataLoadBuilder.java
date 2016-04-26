@@ -122,15 +122,14 @@ implements HttpDataLoadBuilder<T, U> {
 				);
 			}
 			return (U) new BasicMixedHttpDataLoadExecutor<>(
-				appConfig, httpReqConf, storageNodeAddrs, threadCount,
-				maxCount, rateLimit, sizeConfig, rangesConfig,
-				loadTypeWeightMap, itemInputMap
+				appConfig, httpReqConf, storageNodeAddrs, threadCount, countLimit, sizeLimit,
+				rateLimit, sizeConfig, rangesConfig, loadTypeWeightMap, itemInputMap
 			);
 		} else {
 			return (U) new BasicHttpDataLoadExecutor<>(
 				appConfig, httpReqConf, storageNodeAddrs, threadCount,
-				itemInput == null ? getDefaultItemInput() : itemInput,
-				maxCount, rateLimit, sizeConfig, rangesConfig
+				itemInput == null ? getDefaultItemInput() : itemInput, countLimit, sizeLimit,
+				rateLimit, sizeConfig, rangesConfig
 			);
 		}
 	}

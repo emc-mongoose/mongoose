@@ -70,7 +70,7 @@ implements HttpContainerLoadBuilder<T, C, U> {
 		//
 		return (U) new BasicHttpContainerLoadExecutor<>(
 			appConfig, httpReqConf, storageNodeAddrs, threadCount,
-			itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit
+			itemInput == null ? getDefaultItemInput() : itemInput, countLimit, sizeLimit, rateLimit
 		);
 	}
 }

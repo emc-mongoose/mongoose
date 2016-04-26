@@ -35,7 +35,10 @@ extends Closeable, Cloneable {
 	LoadBuilder<T, U> setLoadType(final LoadType loadType)
 	throws IllegalStateException, RemoteException;
 	//
-	LoadBuilder<T, U> setMaxCount(final long maxCount)
+	LoadBuilder<T, U> setCountLimit(final long countLimit)
+	throws IllegalArgumentException, RemoteException;
+	//
+	LoadBuilder<T, U> setSizeLimit(final long sizeLimit)
 	throws IllegalArgumentException, RemoteException;
 	//
 	LoadBuilder<T, U> setRateLimit(final float rateLimit)

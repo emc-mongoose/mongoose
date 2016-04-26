@@ -49,6 +49,7 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_LOAD_THREADS = "load.threads";
 	String KEY_LOAD_LIMIT_COUNT = "load.limit.count";
 	String KEY_LOAD_LIMIT_RATE = "load.limit.rate";
+	String KEY_LOAD_LIMIT_SIZE = "load.limit.size";
 	String KEY_LOAD_LIMIT_TIME = "load.limit.time";
 	String KEY_LOAD_METRICS_PERIOD = "load.metricsPeriod";
 	String KEY_LOAD_SERVER_ADDRS = "load.server.addrs";
@@ -145,6 +146,8 @@ extends Cloneable, Configuration, Externalizable {
 	long getLoadLimitCount();
 
 	double getLoadLimitRate();
+
+	long getLoadLimitSize();
 
 	/** Return the time limit converted into the seconds */
 	long getLoadLimitTime();

@@ -137,14 +137,14 @@ implements FileLoadBuilderSvc<T, U> {
 				);
 			}
 			return (U) new BasicMixedFileLoadSvc<>(
-				appConfig, (FileIoConfig) ioConfig, threadCount, maxCount, rateLimit, sizeConfig,
-				rangesConfig, loadTypeWeightMap, itemInputMap
+				appConfig, (FileIoConfig) ioConfig, threadCount, countLimit, sizeLimit, rateLimit,
+				sizeConfig, rangesConfig, loadTypeWeightMap, itemInputMap
 			);
 		} else {
 			return (U) new BasicFileLoadSvc<>(
 				appConfig, (FileIoConfig) ioConfig, threadCount,
-				itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit,
-				sizeConfig, rangesConfig
+				itemInput == null ? getDefaultItemInput() : itemInput, countLimit, sizeLimit,
+				rateLimit, sizeConfig, rangesConfig
 			);
 		}
 	}

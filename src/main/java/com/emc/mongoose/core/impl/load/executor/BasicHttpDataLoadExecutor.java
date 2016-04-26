@@ -80,14 +80,15 @@ implements HttpDataLoadExecutor<T> {
 	//
 	public BasicHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
-		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
+		final String[] addrs, final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit,
+		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
 		final HttpProcessor httpProcessor, final HttpAsyncRequester client,
 		final ConnectingIOReactor ioReactor,
 		final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
+			appConfig, reqConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
 			sizeConfig, rangesConfig
 		);
 		this.httpProcessor = httpProcessor;
@@ -100,11 +101,12 @@ implements HttpDataLoadExecutor<T> {
 	//
 	public BasicHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
-		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
+		final String[] addrs, final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit,
+		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
+			appConfig, reqConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
 			sizeConfig, rangesConfig
 		);
 		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
