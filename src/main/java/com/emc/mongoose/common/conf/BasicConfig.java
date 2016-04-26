@@ -17,9 +17,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
-import org.apache.commons.configuration.PropertyConverter;
 import org.apache.commons.configuration.SystemConfiguration;
-import org.apache.commons.configuration.tree.ConfigurationNode;
 import org.apache.commons.configuration.tree.DefaultExpressionEngine;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -33,14 +31,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 /**
@@ -285,8 +279,21 @@ implements AppConfig {
 	//
 	@Override
 	public long getLoadLimitTime() {
-		final String rawValue = getString(KEY_LOAD_LIMIT_TIME);
-		return TimeUtil.getTimeUnit(rawValue).toSeconds(TimeUtil.getTimeValue(rawValue));
+		final Object rawValue = getProperty(KEY_LOAD_LIMIT_TIME);
+		if(rawValue instanceof String) {
+			final String rawValueStr = (String) rawValue;
+			return TimeUtil.getTimeUnit(rawValueStr).toSeconds(TimeUtil.getTimeValue(rawValueStr));
+		} else if(rawValue instanceof Long) {
+			return (Long) rawValue;
+		} else if(rawValue instanceof Integer) {
+			return (Integer) rawValue;
+		} else if(rawValue instanceof Short) {
+			return (Short) rawValue;
+		} else {
+			throw new ConversionException(
+				"Invalide value @" + KEY_LOAD_LIMIT_TIME + ": \"" + rawValue + "\""
+			);
+		}
 	}
 	//
 	@Override

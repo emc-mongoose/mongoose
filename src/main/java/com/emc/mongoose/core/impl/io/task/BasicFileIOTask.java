@@ -29,7 +29,7 @@ import org.apache.logging.log4j.LogManager;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
-import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -94,7 +94,7 @@ implements FileIOTask<T> {
 			} else { // work w/ a content
 				Files.createDirectories(DEFAULT_FS.getPath(parentDir));
 				try(
-					final SeekableByteChannel byteChannel = Files.newByteChannel(
+					final FileChannel byteChannel = FileChannel.open(
 						DEFAULT_FS.getPath(parentDir, item.getName()), openOptions
 					)
 				) {
@@ -126,8 +126,8 @@ implements FileIOTask<T> {
 		} catch(final IOException e) {
 			status = FAIL_IO;
 			LogUtil.exception(
-				LOG, Level.DEBUG, e,
-				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), parentDir
+				LOG, Level.DEBUG, e, "Failed to {} the file \"{}\"", ioType.name().toLowerCase(),
+				parentDir
 			);
 		} finally {
 			respTimeDone = System.nanoTime() / 1000;
@@ -140,102 +140,101 @@ implements FileIOTask<T> {
 		status = SUCC;
 	}
 	//
-	protected void runRead(final SeekableByteChannel byteChannel)
+	protected void runRead(final FileChannel fileChannel)
 	throws IOException {
-		try {
-			//
-			int n;
-			ByteBuffer buffIn;
-			//
-			if(ioConfig.getVerifyContentFlag()) {
+		if(ioConfig.getVerifyContentFlag()) {
+			try {
 				if(item.hasBeenUpdated()) {
-					final int rangeCount = item.getCountRangesTotal();
-					for(currRangeIdx = 0; currRangeIdx < rangeCount; currRangeIdx ++) {
-						// prepare the byte range to read
-						currRangeSize = item.getRangeSize(currRangeIdx);
-						if(item.isCurrLayerRangeUpdated(currRangeIdx)) {
-							currRange = new BasicDataItem(
-								item.getOffset() + nextRangeOffset, currRangeSize,
-								currDataLayerIdx + 1, ioConfig.getContentSource()
-							);
-						} else {
-							currRange = new BasicDataItem(
-								item.getOffset() + nextRangeOffset, currRangeSize,
-								currDataLayerIdx, ioConfig.getContentSource()
-							);
-						}
-						nextRangeOffset = getRangeOffset(currRangeIdx + 1);
-						// read the bytes range
-						if(currRangeSize > 0) {
-							while(countBytesDone < contentSize && countBytesDone < nextRangeOffset) {
-								buffIn = ((IOWorker) Thread.currentThread())
-									.getThreadLocalBuff(nextRangeOffset - countBytesDone);
-								n = currRange.readAndVerify(byteChannel, buffIn);
-								if(n < 0) {
-									break;
-								} else {
-									countBytesDone += n;
-								}
-							}
-						}
-					}
+					runReadUpdated(fileChannel);
 				} else {
-					while(countBytesDone < contentSize) {
-						buffIn = ((IOWorker) Thread.currentThread())
-							.getThreadLocalBuff(contentSize - countBytesDone);
-						n = item.readAndVerify(byteChannel, buffIn);
-						if(n < 0) {
-							break;
-						} else {
-							countBytesDone += n;
-						}
-					}
+					runReadNotUpdated(fileChannel);
 				}
-			} else {
-				while(countBytesDone < contentSize) {
-					buffIn = ((IOWorker) Thread.currentThread())
-						.getThreadLocalBuff(contentSize - countBytesDone);
-					n = byteChannel.read(buffIn);
-					if(n < 0) {
-						break;
-					} else {
-						countBytesDone += n;
-					}
-				}
+				status = SUCC;
+			} catch(final DataSizeException e) {
+				countBytesDone += e.offset;
+				LOG.warn(
+					Markers.MSG, "{}: content size mismatch, expected: {}, actual: {}",
+					item.getName(), item.getSize(), countBytesDone
+				);
+				status = RESP_FAIL_CORRUPT;
+			} catch(final DataCorruptionException e) {
+				countBytesDone += e.offset;
+				LOG.warn(
+					Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {} " +
+					"(within byte range which is {})", item.getName(), countBytesDone,
+					String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual),
+					item.isCurrLayerRangeUpdated(currRangeIdx) ? "UPDATED" : "NOT updated"
+				);
+				status = RESP_FAIL_CORRUPT;
 			}
+		} else {
+			runReadNoVerify(fileChannel);
 			status = SUCC;
-		} catch(final DataSizeException e) {
-			countBytesDone += e.offset;
-			LOG.warn(
-				Markers.MSG,
-				"{}: content size mismatch, expected: {}, actual: {}",
-				item.getName(), item.getSize(), countBytesDone
-			);
-			status = RESP_FAIL_CORRUPT;
-		} catch(final DataCorruptionException e) {
-			countBytesDone += e.offset;
-			LOG.warn(
-				Markers.MSG,
-				"{}: content mismatch @ offset {}, expected: {}, actual: {}",
-				item.getName(), countBytesDone,
-				String.format(
-					"\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual
-				)
-			);
-			status = RESP_FAIL_CORRUPT;
 		}
 	}
 	//
-	protected void runWriteFully(final SeekableByteChannel byteChannel)
+	protected void runReadUpdated(final FileChannel fileChannel)
+	throws DataCorruptionException, IOException {
+		final int rangeCount = item.getCountRangesTotal();
+		for(currRangeIdx = 0; currRangeIdx < rangeCount; currRangeIdx ++) {
+			// prepare the byte range to read
+			currRangeSize = item.getRangeSize(currRangeIdx);
+			if(item.isCurrLayerRangeUpdated(currRangeIdx)) {
+				currRange = new BasicDataItem(
+					item.getOffset() + nextRangeOffset, currRangeSize,
+					currDataLayerIdx + 1, ioConfig.getContentSource()
+				);
+			} else {
+				currRange = new BasicDataItem(
+					item.getOffset() + nextRangeOffset, currRangeSize,
+					currDataLayerIdx, ioConfig.getContentSource()
+				);
+			}
+			nextRangeOffset = getRangeOffset(currRangeIdx + 1);
+			// read the bytes range
+			if(currRangeSize > 0) {
+				while(countBytesDone < contentSize && countBytesDone < nextRangeOffset) {
+					countBytesDone += fileChannel.transferTo(
+						countBytesDone, nextRangeOffset - countBytesDone, currRange
+					);
+				}
+			}
+		}
+	}
+	//
+	protected void runReadNotUpdated(final FileChannel fileChannel)
+	throws DataCorruptionException, IOException {
+		while(countBytesDone < contentSize) {
+			countBytesDone += fileChannel.transferTo(countBytesDone, contentSize, item);
+		}
+	}
+	//
+	protected void runReadNoVerify(final FileChannel fileChannel)
+	throws IOException {
+		ByteBuffer buffIn;
+		int n;
+		while(countBytesDone < contentSize) {
+			buffIn = ((IOWorker) Thread.currentThread())
+				.getThreadLocalBuff(contentSize - countBytesDone);
+			n = fileChannel.read(buffIn);
+			if(n < 0) {
+				break;
+			} else {
+				countBytesDone += n;
+			}
+		}
+	}
+	//
+	protected void runWriteFully(final FileChannel fileChannel)
 	throws IOException {
 		while(countBytesDone < contentSize) {
-			countBytesDone += item.write(byteChannel, contentSize - countBytesDone);
+			countBytesDone += fileChannel.transferFrom(item, countBytesDone, contentSize);
 		}
 		status = SUCC;
 		item.resetUpdates();
 	}
 	//
-	protected void runWriteUpdatedRanges(final SeekableByteChannel byteChannel)
+	protected void runWriteUpdatedRanges(final FileChannel fileChannel)
 	throws IOException {
 		final int rangeCount = item.getCountRangesTotal();
 		final ContentSource contentSource = ioConfig.getContentSource();
@@ -247,26 +246,27 @@ implements FileIOTask<T> {
 					item.getOffset() + nextRangeOffset, currRangeSize,
 					currDataLayerIdx + 1, contentSource
 				);
-				runWriteCurrRange(byteChannel, 0);
+				runWriteCurrRange(fileChannel, 0);
 			}
 		}
 		item.commitUpdatedRanges();
 		status = SUCC;
 	}
 	//
-	protected void runWriteCurrRange(
-		final SeekableByteChannel byteChannel, final long rangeOffset
-	) throws IOException {
-		byteChannel.position(nextRangeOffset);
+	protected void runWriteCurrRange(final FileChannel fileChannel, final long rangeOffset)
+	throws IOException {
 		currRange.setRelativeOffset(rangeOffset);
 		long n = 0;
 		while(n < currRangeSize - rangeOffset && n < contentSize - countBytesDone) {
-			n += currRange.write(byteChannel, currRangeSize - rangeOffset - n);
+			//n += currRange.write(fileChannel, currRangeSize - rangeOffset - n);
+			n += fileChannel.transferFrom(
+				currRange, nextRangeOffset + n, currRangeSize - rangeOffset
+			);
 		}
 		countBytesDone += n;
 	}
 	//
-	protected void runAppend(final SeekableByteChannel byteChannel)
+	protected void runAppend(final FileChannel fileChannel)
 	throws IOException {
 		final long
 			prevSize = item.getSize(),
@@ -285,7 +285,7 @@ implements FileIOTask<T> {
 					currDataLayerIdx + 1 : currDataLayerIdx,
 				ioConfig.getContentSource()
 			);
-			runWriteCurrRange(byteChannel, prevSize - nextRangeOffset);
+			runWriteCurrRange(fileChannel, prevSize - nextRangeOffset);
 			// work w/ remaining ranges if any
 			final int lastRangeIdx = newSize > 0 ? getRangeCount(newSize) - 1 : 0;
 			if(startRangeIdx < lastRangeIdx) {
@@ -298,7 +298,7 @@ implements FileIOTask<T> {
 					item.getOffset() + nextRangeOffset, currRangeSize, currDataLayerIdx,
 					ioConfig.getContentSource()
 				);
-				runWriteCurrRange(byteChannel, 0);
+				runWriteCurrRange(fileChannel, 0);
 			}
 		}
 		item.commitAppend();
