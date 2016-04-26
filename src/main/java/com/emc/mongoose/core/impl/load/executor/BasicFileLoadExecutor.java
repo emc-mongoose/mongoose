@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 23.11.15.
  */
 public class BasicFileLoadExecutor<T extends FileItem>
-extends MutableDataLoadExecutorBase<T>
+extends DataLoadExecutorBase<T>
 implements FileLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

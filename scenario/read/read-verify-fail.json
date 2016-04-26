@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"container" : {
-				"name" : "linear-read-verify-updated"
+				"name" : "read-verify-fail"
 			},
 			"data" : {
 				"size" : "1KB"
@@ -16,7 +16,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-linear-read-verify-updated-0.csv"
+						"file" : "/tmp/scenario-read-verify-fail.csv"
 					}
 				},
 				"load" : {
@@ -32,11 +32,8 @@
 					"data" : {
 						"ranges" : 1
 					},
-					"dst" : {
-						"file" : "/tmp/scenario-linear-read-verify-updated-1.csv"
-					},
 					"src" : {
-						"file" : "/tmp/scenario-linear-read-verify-updated-0.csv"
+						"file" : "/tmp/scenario-read-verify-fail.csv"
 					}
 				}
 			}
@@ -45,7 +42,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-linear-read-verify-updated-1.csv"
+						"file" : "/tmp/scenario-read-verify-fail.csv"
 					}
 				},
 				"load" : {

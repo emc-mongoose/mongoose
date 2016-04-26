@@ -66,7 +66,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 02.12.14.
  */
 public class BasicHttpDataLoadExecutor<T extends HttpDataItem>
-extends MutableDataLoadExecutorBase<T>
+extends DataLoadExecutorBase<T>
 implements HttpDataLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

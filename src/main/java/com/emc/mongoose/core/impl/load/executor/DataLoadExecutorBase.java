@@ -17,6 +17,7 @@ import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import com.emc.mongoose.core.api.item.data.FileDataItemInput;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
 //
+import com.emc.mongoose.core.api.load.executor.DataLoadExecutor;
 import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.logging.log4j.Level;
@@ -30,8 +31,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 15.12.14.
  */
-public abstract class MutableDataLoadExecutorBase<T extends MutableDataItem>
-extends LoadExecutorBase<T> {
+public abstract class DataLoadExecutorBase<T extends MutableDataItem>
+extends LoadExecutorBase<T>
+implements DataLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -41,7 +43,7 @@ extends LoadExecutorBase<T> {
 	//
 	private final AtomicLong submSize = new AtomicLong(0);
 	//
-	protected MutableDataLoadExecutorBase(
+	protected DataLoadExecutorBase(
 		final AppConfig appConfig,
 		final IoConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
 		final String[] addrs, final int threadCount, final Input<T> itemInput,
@@ -173,6 +175,10 @@ extends LoadExecutorBase<T> {
 					// TODO
 					throw new NotImplementedException();
 				}
+			} else {
+				if(sizeLimit < submSize.addAndGet(dataItem.getSize())) {
+					shutdown();
+				}
 			}
 		} catch(final IllegalArgumentException e) {
 			LogUtil.exception(
@@ -187,7 +193,11 @@ extends LoadExecutorBase<T> {
 	@Override
 	public int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
+		if(sizeLimit < submSize.get()) {
+			shutdown();
+		}
 		T dataItem;
+		int toSizeLimit = to;
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
 			final List<ByteRange> ranges = rangesConfig.getFixedByteRanges();
@@ -196,7 +206,7 @@ extends LoadExecutorBase<T> {
 					dataItem = dataItems.get(i);
 					dataItem.scheduleRandomUpdates(rndRangesToUpdateCount);
 					if(sizeLimit < submSize.addAndGet(dataItem.getUpdatingRangesSize())) {
-						shutdown();
+						toSizeLimit = i;
 						break;
 					}
 				}
@@ -208,7 +218,7 @@ extends LoadExecutorBase<T> {
 						if(range.getBeg() == dataItem.getSize()) {
 							dataItem.scheduleAppend(range.getEnd());
 							if(sizeLimit < submSize.addAndGet(dataItem.getAppendSize())) {
-								shutdown();
+								toSizeLimit = i;
 								break;
 							}
 						} else {
@@ -220,6 +230,14 @@ extends LoadExecutorBase<T> {
 					// TODO
 					throw new NotImplementedException();
 				}
+			} else {
+				for(int i = from; i < to; i ++) {
+					dataItem = dataItems.get(i);
+					if(sizeLimit < submSize.addAndGet(dataItem.getSize())) {
+						toSizeLimit = i;
+						break;
+					}
+				}
 			}
 		} catch(final IllegalArgumentException e) {
 			LogUtil.exception(
@@ -228,6 +246,6 @@ extends LoadExecutorBase<T> {
 			);
 		}
 		//
-		return super.put(dataItems, from, to);
+		return super.put(dataItems, from, toSizeLimit);
 	}
 }
