@@ -11,7 +11,8 @@ define([
 	'text!../../templates/tab/configurations.hbs',
 	'../common/util/handlebarsUtil',
 	'../common/util/templatesUtil',
-	'../common/util/cssUtil'
+	'../common/util/cssUtil',
+	'../common/constants'
 ], function ($,
              webSocketController,
              scenariosController,
@@ -24,7 +25,8 @@ define([
              configurationsTemplate,
              hbUtil,
              templatesUtil,
-             cssUtil) {
+             cssUtil,
+             constants) {
 
 	const MODE = templatesUtil.modes();
 	const EXTENDED_MODE = templatesUtil.objPartToArray(MODE, 2);
@@ -233,13 +235,19 @@ define([
 
 		function startButtonClickEvent(startJson) {
 			const isConfirmed = confirm('If properties were changed Mongoose will save it' +
-				' automatically' +
+				' automatically. ' +
 				'Would you like to continue?');
 			if (isConfirmed) {
-				$.post('/run', startJson)
-					.done(function () {
-						console.log('Mongoose ran');
-					});
+				$.ajax({
+					type: 'PUT',
+					url: '/run',
+					dataType: 'json',
+					contentType: constants.JSON_CONTENT_TYPE,
+					data: JSON.stringify(startJson),
+					processData: false
+				}).done(function () {
+					console.log('Mongoose ran');
+				});
 			}
 		}
 
@@ -250,9 +258,15 @@ define([
 				if (runScenario === null) {
 					alert('Please, choose a scenario')
 				} else {
+					// const startJson = {
+					// 	scenario: JSON.stringify(runScenario, null, '\t'),
+					// 	config: JSON.stringify(runConfig, null, '\t')
+					// };
 					const startJson = {
-						scenario: JSON.stringify(runScenario),
-						config: JSON.stringify(runConfig)
+						scenario: runScenario,
+						config: {
+							config: runConfig // the server handles a configuration in this format
+						}
 					};
 					startButtonClickEvent(startJson);
 				}

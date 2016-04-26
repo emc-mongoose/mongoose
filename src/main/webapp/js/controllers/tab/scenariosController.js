@@ -40,12 +40,12 @@ define([
 
 	const clickEventCreatorFactory = function () {
 		
-		function scenarioFileClickEvent(aHref) {
-			$.post('/scenario', {path: aHref})
+		function scenarioFileClickEvent(aName) {
+			$.get('/scenario', {path: aName}, null, 'json')
 				.done(function (scenarioJson) {
 					setScenarioObject(scenarioJson);
 					updateDetailsTree(scenarioJson);
-					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(aHref);
+					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(aName);
 				})
 		}
 		

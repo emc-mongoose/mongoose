@@ -23,17 +23,15 @@ implements Runnable {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
-	private final AppConfig appConfig;
+	private Scenario scenario = null;
 	//
-	public ScenarioRunner(final AppConfig appConfig) {
-		this.appConfig = appConfig;
+	public ScenarioRunner(final Scenario scenario) {
+		this.scenario = scenario;
 	}
 	//
-	public void run() {
-		Scenario scenario = null;
+	public ScenarioRunner(final AppConfig appConfig) {
 		final String runFile = appConfig.getRunFile();
 		try {
-
 			if(runFile == null || runFile.isEmpty()) {
 				LOG.info(Markers.MSG, "Using the scenario from the standard input...");
 				scenario = new JsonScenario(appConfig, System.in);
@@ -47,7 +45,9 @@ implements Runnable {
 		} catch(final CloneNotSupportedException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Configuration spawning failure");
 		}
-		//
+	}
+	//
+	public void run() {
 		if(scenario != null) {
 			try {
 				scenario.run();

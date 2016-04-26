@@ -4,6 +4,7 @@ import com.emc.mongoose.common.io.JsonUtil;
 import org.eclipse.jetty.http.MimeTypes;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -20,7 +21,7 @@ public class ScenarioServlet extends HttpServlet {
 	private static final String REQUEST_PATH_KEY = "path";
 
 	@Override
-	protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
+	protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
 			throws ServletException, IOException {
 		final String relativeScenarioPath =
 				request.getParameter(REQUEST_PATH_KEY);

@@ -67,23 +67,6 @@ public class JsonConfigLoader {
 	}
 
 	//
-	public void loadPropsFromJsonString(final String string) {
-		final ObjectMapper jsonMapper = new ObjectMapper()
-				.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
-				.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
-		//
-		try {
-			JsonNode rootNode = jsonMapper.readTree(string);
-			walkJsonTree(rootNode);
-
-		} catch (IOException e) {
-			LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to load properties from \"{}\"", string
-			);
-		}
-	}
-
-	//
 	public void loadPropsFromJsonByteArray(final byte buff[]) {
 		final ObjectMapper jsonMapper = new ObjectMapper();
 		//

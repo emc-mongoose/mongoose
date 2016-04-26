@@ -88,9 +88,9 @@ implements AppConfig {
 		log.info(Markers.CFG, toFormattedString());
 	}
 	//
-	public BasicConfig(final String appConfigString) {
+	public BasicConfig(final byte[] appConfigBytes) {
 		final Logger log = LogManager.getLogger();
-		loadFromJson(appConfigString);
+		loadFromJson(appConfigBytes);
 		log.info(Markers.CFG, toFormattedString());
 	}
 	//
@@ -652,24 +652,18 @@ implements AppConfig {
 	// Load from the external sources
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public void loadFromJson(final Path filePath) {
-		final Logger log = LogManager.getLogger();
-		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
 		new JsonConfigLoader(this).loadPropsFromJsonCfgFile(filePath);
-		log.debug(Markers.MSG, "Going to override the aliasing section");
-		String key, correctKey;
-		for(final Iterator<String> keyIter = getKeys(PREFIX_KEY_ALIASING); keyIter.hasNext();) {
-			key = keyIter.next();
-			correctKey = key.replaceAll(prefixKeyAliasingWithDot, "");
-			log.trace(
-				Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
-			);
-		}
+		loadThis();
 	}
 	//
-	public void loadFromJson(final String string) {
+	public void loadFromJson(final byte[] jsonBytes) {
+		new JsonConfigLoader(this).loadPropsFromJsonByteArray(jsonBytes);
+		loadThis();
+	}
+	//
+	private void loadThis() {
 		final Logger log = LogManager.getLogger();
 		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
-		new JsonConfigLoader(this).loadPropsFromJsonString(string);
 		log.debug(Markers.MSG, "Going to override the aliasing section");
 		String key, correctKey;
 		for(final Iterator<String> keyIter = getKeys(PREFIX_KEY_ALIASING); keyIter.hasNext();) {
