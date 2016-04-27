@@ -142,30 +142,37 @@ implements HttpRequestConfig<T, C> {
 	protected HttpRequestConfigBase(final HttpRequestConfigBase<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		final Configuration customHeaders = appConfig.getStorageHttpHeaders();
-		if(customHeaders != null) {
-			final Iterator<String> customHeadersIterator = customHeaders.getKeys();
-			if(customHeadersIterator != null) {
-				String nextKey, nextValue;
-				while(customHeadersIterator.hasNext()) {
-					nextKey = customHeadersIterator.next();
-					nextValue = customHeaders.getString(nextKey);
-					if(-1 < nextKey.indexOf(PATTERN_SYMBOL)) {
-						dynamicHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
-					} else {
-						sharedHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
-					}
-				}
-			}
-		}
-		sharedHeaders.put(
-			HttpHeaders.CONTENT_TYPE,
-			new BasicHeader(
-				HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_OCTET_STREAM.getMimeType()
-			)
-		);
 		try {
 			if(reqConf2Clone != null) {
+				final Map<String, Header> sharedHeaders2Clone = reqConf2Clone.sharedHeaders;
+				sharedHeaders.clear();
+				if(sharedHeaders2Clone != null) {
+					for(final Header nextHeader : sharedHeaders2Clone.values()) {
+						sharedHeaders.put(
+							nextHeader.getName(),
+							new BasicHeader(nextHeader.getName(), nextHeader.getValue())
+						);
+					}
+					if(!sharedHeaders.containsKey(HttpHeaders.CONTENT_TYPE)) {
+						sharedHeaders.put(
+							HttpHeaders.CONTENT_TYPE,
+							new BasicHeader(
+								HttpHeaders.CONTENT_TYPE,
+								ContentType.APPLICATION_OCTET_STREAM.getMimeType()
+							)
+						);
+					}
+				}
+				final Map<String, Header> dynamicHeaders2Clone = reqConf2Clone.dynamicHeaders;
+				dynamicHeaders.clear();
+				if(dynamicHeaders2Clone != null) {
+					for(final Header nextHeader : reqConf2Clone.dynamicHeaders.values()) {
+						dynamicHeaders.put(
+							nextHeader.getName(),
+							new BasicHeader(nextHeader.getName(), nextHeader.getValue())
+						);
+					}
+				}
 				this.setSecret(reqConf2Clone.getSecret()).setScheme(reqConf2Clone.getScheme());
 				this.setFileAccessEnabled(reqConf2Clone.getFileAccessEnabled());
 				this.setPipelining(reqConf2Clone.getPipelining());
@@ -401,6 +408,23 @@ implements HttpRequestConfig<T, C> {
 			setContainer(null);
 		}
 		// setPipelining(false);
+		// custom HTTP headers adding
+		final Configuration customHeaders = appConfig.getStorageHttpHeaders();
+		if(customHeaders != null) {
+			final Iterator<String> customHeadersIterator = customHeaders.getKeys();
+			if(customHeadersIterator != null) {
+				String nextKey, nextValue;
+				while(customHeadersIterator.hasNext()) {
+					nextKey = customHeadersIterator.next();
+					nextValue = customHeaders.getString(nextKey);
+					if(-1 < nextValue.indexOf(PATTERN_SYMBOL)) {
+						dynamicHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
+					} else {
+						sharedHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
+					}
+				}
+			}
+		}
 		super.setAppConfig(appConfig);
 		//
 		return this;
@@ -797,7 +821,7 @@ implements HttpRequestConfig<T, C> {
 		}
 		//
 		for(final String nextKey : dynamicHeaders.keySet()) {
-			nextHeader = sharedHeaders.get(nextKey);
+			nextHeader = dynamicHeaders.get(nextKey);
 			headerValue = nextHeader.getValue();
 			if(headerValue != null) {
 				// header value is a generator pattern

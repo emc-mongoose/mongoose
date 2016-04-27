@@ -1,6 +1,5 @@
 package com.emc.mongoose.common.conf;
 //
-import com.emc.mongoose.common.conf.enums.ContentSourceType;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.conf.enums.ItemType;
 import com.emc.mongoose.common.conf.enums.LoadType;
@@ -28,7 +27,6 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_IO_BUFFER_SIZE_MAX = "io.buffer.size.max";
 	String KEY_ITEM_TYPE = "item.type";
 	String KEY_ITEM_CONTAINER_NAME = "item.container.name";
-	String KEY_ITEM_DATA_CONTENT_TYPE = "item.data.content.type";
 	String KEY_ITEM_DATA_CONTENT_FILE = "item.data.content.file";
 	String KEY_ITEM_DATA_CONTENT_SEED = "item.data.content.seed";
 	String KEY_ITEM_DATA_CONTENT_RING_SIZE = "item.data.content.ringSize";
@@ -103,8 +101,6 @@ extends Cloneable, Configuration, Externalizable {
 	ItemType getItemType();
 
 	String getItemContainerName();
-
-	ContentSourceType getItemDataContentType();
 
 	String getItemDataContentFile();
 

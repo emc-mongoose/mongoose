@@ -1,6 +1,5 @@
 package com.emc.mongoose.common.conf;
 //
-import com.emc.mongoose.common.conf.enums.ContentSourceType;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.conf.enums.ItemType;
 import com.emc.mongoose.common.conf.enums.LoadType;
@@ -136,12 +135,6 @@ implements AppConfig {
 	@Override
 	public String getItemContainerName() {
 		return getString(KEY_ITEM_CONTAINER_NAME);
-	}
-	//
-	@Override
-	public ContentSourceType getItemDataContentType() {
-		return ContentSourceType
-			.valueOf(getString(KEY_ITEM_DATA_CONTENT_TYPE).toUpperCase());
 	}
 	//
 	@Override

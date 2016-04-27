@@ -9,7 +9,7 @@
 		"load" : {
 			"threads" : 1000,
 			"limit" : {
-				"rate" : 1000
+				"rate" : 1234.5
 			}
 		}
 	}

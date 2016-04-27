@@ -3,7 +3,7 @@
 	"config" : {
 		"load" : {
 			"limit" : {
-				"size" : "12345MB"
+				"size" : "1234MB"
 			}
 		}
 	}
