@@ -7,8 +7,8 @@ define([
 	'../common/openFileHandler',
 	'text!../../templates/navbar.hbs',
 	'text!../../templates/base.hbs',
-	'text!../../templates/tab/buttons.hbs',
-	'text!../../templates/tab/configurations.hbs',
+	'text!../../templates/properties/buttons.hbs',
+	'text!../../templates/properties/configurations.hbs',
 	'../common/util/handlebarsUtil',
 	'../common/util/templatesUtil',
 	'../common/util/cssUtil',
@@ -41,7 +41,7 @@ define([
 	// render html and bind events of basic elements and same for all tabs elements 
 	function render(scenariosArray, configObject) {
 		const renderer = rendererFactory();
-		renderer.navbar(configObject.run.version || 'unknown');
+		renderer.navbar(version(configObject));
 		renderer.base();
 		renderer.buttons();
 		renderer.configurations();
@@ -51,6 +51,16 @@ define([
 		makeModeActive(currentMode);
 		makeTabActive(currentTabType);
 		renderer.start();
+	}
+
+	function version(configObject) {
+		var version = configObject.run.version;
+		if (version) {
+			version = version.charAt(0).toUpperCase() + version.slice(1);
+		} else {
+			version = 'Unknown';
+		}
+		return version;
 	}
 
 	function tabJqId(tabType) {
@@ -73,12 +83,21 @@ define([
 			function (elemSelector) {
 				elemSelector.hide();
 			});
+		$(jqId(['start'])).hide();
+		$(jqId(['properties', 'block'])).hide();
 		switch (tabType) {
 			case TAB_TYPE.SCENARIOS:
 				scenariosController.setTabParameters();
+				$(jqId(['start'])).show();
+				$(jqId(['properties', 'block'])).show();
 				break;
 			case TAB_TYPE.DEFAULTS:
 				defaultsController.setTabParameters();
+				$(jqId(['start'])).show();
+				$(jqId(['properties', 'block'])).show();
+				break;
+			case TAB_TYPE.TESTS:
+				$(jqId(['tests', 'block'])).show();
 				break;
 		}
 		currentTabType = tabType;
