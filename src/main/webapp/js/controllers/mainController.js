@@ -111,7 +111,9 @@ define([
 				return;
 			}
 		}
-		makeTabActive(TAB_TYPE.DEFAULTS);
+		if (currentTabType === TAB_TYPE.SCENARIOS) {
+			makeTabActive(TAB_TYPE.DEFAULTS);
+		}
 		cssUtil.processClassElements('mode-dependent',
 			function (elemSelector) {
 				elemSelector.hide();
