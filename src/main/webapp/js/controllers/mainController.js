@@ -280,7 +280,8 @@ define([
 				if (EXTENDED_MODE.indexOf(currentMode) > -1) {
 					const runScenario = scenariosController.getChangedScenario();
 					if (runScenario === null) {
-						alert('Please, choose a scenario')
+						alert('Please, choose a scenario');
+						return
 					} else {
 						startJson['scenario'] = runScenario;
 					}
