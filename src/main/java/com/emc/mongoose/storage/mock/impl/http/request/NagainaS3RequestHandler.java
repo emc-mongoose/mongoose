@@ -57,7 +57,6 @@ public class NagainaS3RequestHandler<T extends HttpDataItemMock> extends Nagaina
 	private final static Logger LOG = LogManager.getLogger();
 	private final static DocumentBuilder DOM_BUILDER;
 	private final static TransformerFactory TF = TransformerFactory.newInstance();
-	private final static String S3_AUTH_PREFIX = "AWS ";
 
 	private final int prefixLength, idRadix;
 
@@ -71,7 +70,7 @@ public class NagainaS3RequestHandler<T extends HttpDataItemMock> extends Nagaina
 
 	public NagainaS3RequestHandler(final AppConfig appConfig, HttpStorageMock<T> sharedStorage) {
 		super(appConfig, sharedStorage);
-		this.idRadix = appConfig.getItemNamingRadix();
+		idRadix = appConfig.getItemNamingRadix();
 		final String prefix = appConfig.getItemNamingPrefix();
 		prefixLength = prefix == null ? 0 : prefix.length();
 	}

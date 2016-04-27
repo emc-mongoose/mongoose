@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.mock.impl.http;
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
@@ -41,44 +40,25 @@ implements HttpStorageMock<T> {
 	private final NagainaRequestHandlerBase atmosRequestHandler;
 	private final int portStart;
 	//
-	public Nagaina(final AppConfig appConfig) {
-		this(
-			appConfig.getStorageMockHeadCount(),
-			appConfig.getStoragePort(),
-			appConfig.getStorageMockCapacity(),
-			appConfig.getStorageMockContainerCapacity(),
-			appConfig.getStorageMockContainerCountLimit(),
-			appConfig.getItemSrcBatchSize(),
-			appConfig.getItemSrcFile(),
-			appConfig.getLoadMetricsPeriod(),
-			appConfig.getNetworkServeJmx(),
-			0, 0
-		);
-	}
-	//
 	@SuppressWarnings("unchecked")
-	public Nagaina(
-		final int headCount, final int portStart,
-		final int storageCapacity, final int containerCapacity, final int containerCountLimit,
-		final int batchSize, final String dataSrcPath, final int metricsPeriodSec,
-		final boolean jmxServeFlag, final int minConnLifeMilliSec, final int maxConnLifeMilliSec
-		//todo use connections vars
-	) {
+	public Nagaina(final AppConfig appConfig) {
 		super(
-			(Class<T>) BasicHttpDataMock.class, ContentSourceBase.getDefaultInstance(),
-			storageCapacity, containerCapacity, containerCountLimit, batchSize, dataSrcPath, metricsPeriodSec,
-			jmxServeFlag
-		);
-		this.portStart = portStart;
+				((Class<T>) BasicHttpDataMock.class), ContentSourceBase.getDefaultInstance(),
+				appConfig.getStorageMockCapacity(), appConfig.getStorageMockContainerCapacity(),
+				appConfig.getStorageMockContainerCountLimit(), appConfig.getItemSrcBatchSize(),
+				appConfig.getItemSrcFile(), appConfig.getLoadMetricsPeriod(),
+				appConfig.getNetworkServeJmx());
+		portStart = appConfig.getStoragePort();
+		final int headCount = appConfig.getStorageMockHeadCount();
 		dispatchGroups = new EventLoopGroup[headCount];
 		workerGroups = new EventLoopGroup[headCount];
 		channels = new Channel[headCount];
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
-		final AppConfig ctxAppConfig = BasicConfig.THREAD_CONTEXT.get();
-		s3RequestHandler = new NagainaS3RequestHandler<>(ctxAppConfig, this);
-		swiftRequestHandler = new NagainaSwiftRequestHandler<>(ctxAppConfig, this);
-		atmosRequestHandler = new NagainaAtmosRequestHandler<>(ctxAppConfig, this);
+		s3RequestHandler = new NagainaS3RequestHandler<>(appConfig, this);
+		swiftRequestHandler = new NagainaSwiftRequestHandler<>(appConfig, this);
+		atmosRequestHandler = new NagainaAtmosRequestHandler<>(appConfig, this);
 	}
+	//
 	@SuppressWarnings("unchecked")
 	@Override
 	protected T newDataObject(String id, long offset, long size) {

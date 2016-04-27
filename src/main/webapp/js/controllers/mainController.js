@@ -253,23 +253,20 @@ define([
 
 		function bindStartButtonEvent() {
 			$(jqId(['start'])).click(function () {
-				const runScenario = scenariosController.getChangedScenario();
 				const runConfig = defaultsController.getChangedAppConfig();
-				if (runScenario === null) {
-					alert('Please, choose a scenario')
-				} else {
-					// const startJson = {
-					// 	scenario: JSON.stringify(runScenario, null, '\t'),
-					// 	config: JSON.stringify(runConfig, null, '\t')
-					// };
-					const startJson = {
-						scenario: runScenario,
-						config: {
-							config: runConfig // the server handles a configuration in this format
-						}
-					};
-					startButtonClickEvent(startJson);
+				const startJson = {};
+				startJson['config'] = {
+					config: runConfig // the server handles a configuration in this format
+				};
+				if (EXTENDED_MODE.indexOf(currentMode) > -1) {
+					const runScenario = scenariosController.getChangedScenario();
+					if (runScenario === null) {
+						alert('Please, choose a scenario')
+					} else {
+						startJson['scenario'] = runScenario;
+					}
 				}
+				startButtonClickEvent(startJson);
 			})
 		}
 

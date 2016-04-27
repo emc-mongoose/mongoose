@@ -74,11 +74,11 @@ public final class ModeDispatcher {
 				break;
 			case Constants.RUN_MODE_NAGAINA:
 			case Constants.RUN_MODE_WSMOCK:
-				rootLogger.debug(Markers.MSG, "Starting nagaina");
+				rootLogger.debug(Markers.MSG, "Starting Nagaina");
 				try {
 					new Nagaina(appConfig).run();
 				} catch (final Exception e) {
-					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init nagaina");
+					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init Nagaina");
 				}
 				break;
 			case Constants.RUN_MODE_CINDERELLA:
