@@ -18,6 +18,13 @@ define(function() {
     };
 
     // the order of elements matters for a template
+    const TESTS_TAB_TYPE = {
+        LIST: 'list',
+        LOGS: 'logs',
+        CHARTS: 'charts'
+    };
+
+    // the order of elements matters for a template
     const COMMON_BUTTON_TYPE = {
         OPEN: 'open',
         OPEN_INPUT_TEXT: 'file-name',
@@ -55,6 +62,10 @@ define(function() {
 
     function tabTypes() {
         return TAB_TYPE;
+    }
+
+    function testsTabTypes() {
+        return TESTS_TAB_TYPE;
     }
 
     function commonButtonTypes() {
@@ -107,6 +118,7 @@ define(function() {
     return {
         modes: modes,
         tabTypes: tabTypes,
+        testsTabTypes: testsTabTypes,
         commonButtonTypes: commonButtonTypes,
         configTreeElements: configTreeElements,
         tabClasses: tabClasses,

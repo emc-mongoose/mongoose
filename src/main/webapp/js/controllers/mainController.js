@@ -3,7 +3,7 @@ define([
 	'./websockets/webSocketController',
 	'./tab/scenariosController',
 	'./tab/defaultsController',
-	'./tab/testsController',
+	'./tab/tests/testsController',
 	'../common/openFileHandler',
 	'text!../../templates/navbar.hbs',
 	'text!../../templates/base.hbs',
@@ -12,6 +12,7 @@ define([
 	'../common/util/handlebarsUtil',
 	'../common/util/templatesUtil',
 	'../common/util/cssUtil',
+	'../common/util/tabsUtil',
 	'../common/constants'
 ], function ($,
              webSocketController,
@@ -26,6 +27,7 @@ define([
              hbUtil,
              templatesUtil,
              cssUtil,
+             tabsUtil,
              constants) {
 
 	const MODE = templatesUtil.modes();
@@ -68,23 +70,11 @@ define([
 	}
 
 	function makeTabActive(tabType) {
-		const TAB_CLASS = templatesUtil.tabClasses();
-		cssUtil.processClassElementsById('tab', tabType,
-			function (elemSelector) {
-				elemSelector.addClass(TAB_CLASS.ACTIVE);
-			},
-			function (elemSelector) {
-				elemSelector.removeClass(TAB_CLASS.ACTIVE);
-			});
-		cssUtil.processClassElementsById('tab-dependent', tabType,
-			function (elemSelector) {
-				elemSelector.show();
-			},
-			function (elemSelector) {
-				elemSelector.hide();
-			});
+		tabsUtil.showTabAsActive('tab', tabType);
+		tabsUtil.showActiveTabDependentElements('tab-dependent', tabType);
 		$(jqId(['start'])).hide();
 		$(jqId(['properties', 'block'])).hide();
+		$(jqId(['tests', 'block'])).hide();
 		switch (tabType) {
 			case TAB_TYPE.SCENARIOS:
 				scenariosController.setTabParameters();
