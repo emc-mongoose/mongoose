@@ -3,21 +3,48 @@
  */
 define([
 	'jquery',
+	'../../common/util/handlebarsUtil',
 	'../../common/util/templatesUtil',
 	'../../common/util/cssUtil',
-	'../../common/elementAppender',
-	'../../common/openFileHandler',
-	'../../common/eventCreator',
-	'../../common/util/filesUtil'
+	'../../common/util/filesUtil',
+	'text!../../../templates/tab/tests/navbar.hbs',
+	'text!../../../templates/tab/tests/base.hbs'
 ], function ($,
+             hbUtil,
              templatesUtil,
              cssUtil,
-             elementAppender,
-             openFileHandler,
-             eventCreator,
-             filesUtil) {
+             filesUtil,
+             navbarTemplate,
+             baseTemplate) {
+
+	const TAB_TYPE = templatesUtil.tabTypes();
+	const jqId = templatesUtil.composeJqId;
 
 	function render() {
+		const renderer = rendererFactory();
+		renderer.navbar();
+		renderer.base();
+	}
+
+	const rendererFactory = function () {
+
+		const testsBlockElemId = jqId([TAB_TYPE.TESTS, 'block']);
+
+		function renderNavbar() {
+			hbUtil.compileAndInsertInsideBefore(testsBlockElemId, navbarTemplate);
+		}
+
+		function renderBase() {
+			hbUtil.compileAndInsertInside(testsBlockElemId, baseTemplate);
+		}
+
+		return {
+			navbar: renderNavbar,
+			base: renderBase
+		}
+	};
+
+	function makeTabActive(tabType) {
 
 	}
 
