@@ -163,8 +163,9 @@ implements DataLoadExecutor<T> {
 				if(ranges.size() == 1) {
 					final ByteRange range = ranges.get(0);
 					if(range.getBeg() == dataItem.getSize()) {
-						dataItem.scheduleAppend(range.getEnd());
-						if(sizeLimit < submSize.addAndGet(dataItem.getAppendSize())) {
+						final long augmentSize = range.getEnd() - range.getBeg();
+						dataItem.scheduleAppend(augmentSize);
+						if(sizeLimit < submSize.addAndGet(augmentSize)) {
 							shutdown();
 						}
 					} else {
@@ -213,11 +214,13 @@ implements DataLoadExecutor<T> {
 			} else if(ranges != null) {
 				if(ranges.size() == 1) {
 					final ByteRange range = ranges.get(0);
+					long augmentSize;
 					for(int i = from; i < to; i ++) {
 						dataItem = dataItems.get(i);
 						if(range.getBeg() == dataItem.getSize()) {
-							dataItem.scheduleAppend(range.getEnd());
-							if(sizeLimit < submSize.addAndGet(dataItem.getAppendSize())) {
+							augmentSize = range.getEnd() - range.getBeg();
+							dataItem.scheduleAppend(augmentSize);
+							if(sizeLimit < submSize.addAndGet(augmentSize)) {
 								toSizeLimit = i;
 								break;
 							}

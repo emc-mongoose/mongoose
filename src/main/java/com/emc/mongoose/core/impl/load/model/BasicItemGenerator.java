@@ -29,7 +29,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 19.06.15.
  */
-public class BasicItemProducer<T extends Item>
+public class BasicItemGenerator<T extends Item>
 extends Thread
 implements ItemProducer<T> {
 	//
@@ -50,7 +50,7 @@ implements ItemProducer<T> {
 	protected volatile boolean allItemsProducedFlag = false;
 	protected volatile long producedItemsCount = 0;
 	//
-	protected BasicItemProducer(
+	protected BasicItemGenerator(
 		final Input<T> itemInput, final long maxCount, final int batchSize,
 		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
 	    final float rateLimit
@@ -60,7 +60,7 @@ implements ItemProducer<T> {
 		);
 	}
 	//
-	private BasicItemProducer(
+	private BasicItemGenerator(
 		final Input<T> itemInput, final long maxCount, final int batchSize,
 		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
 		final float rateLimit,

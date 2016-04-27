@@ -253,19 +253,6 @@ implements FileIOTask<T> {
 		status = SUCC;
 	}
 	//
-	protected void runWriteCurrRange(final FileChannel fileChannel, final long rangeOffset)
-	throws IOException {
-		currRange.setRelativeOffset(rangeOffset);
-		long n = 0;
-		while(n < currRangeSize - rangeOffset && n < contentSize - countBytesDone) {
-			//n += currRange.write(fileChannel, currRangeSize - rangeOffset - n);
-			n += fileChannel.transferFrom(
-				currRange, nextRangeOffset + n, currRangeSize - rangeOffset
-			);
-		}
-		countBytesDone += n;
-	}
-	//
 	protected void runAppend(final FileChannel fileChannel)
 	throws IOException {
 		final long
@@ -276,13 +263,12 @@ implements FileIOTask<T> {
 			final int startRangeIdx = prevSize > 0 ? getRangeCount(prevSize) - 1 : 0;
 			nextRangeOffset = getRangeOffset(startRangeIdx);
 			currRangeSize = Math.min(
-				contentSize,
-				getRangeOffset(startRangeIdx + 1) - nextRangeOffset
+				contentSize, getRangeOffset(startRangeIdx + 1) - nextRangeOffset
 			);
 			currRange = new BasicDataItem(
 				item.getOffset() + nextRangeOffset, currRangeSize,
 				item.isCurrLayerRangeUpdated(startRangeIdx) ?
-					currDataLayerIdx + 1 : currDataLayerIdx,
+				currDataLayerIdx + 1 : currDataLayerIdx,
 				ioConfig.getContentSource()
 			);
 			runWriteCurrRange(fileChannel, prevSize - nextRangeOffset);
@@ -303,6 +289,19 @@ implements FileIOTask<T> {
 		}
 		item.commitAppend();
 		status = SUCC;
+	}
+	//
+	protected void runWriteCurrRange(final FileChannel fileChannel, final long rangeOffset)
+	throws IOException {
+		currRange.setRelativeOffset(rangeOffset);
+		long n = 0;
+		while(n < currRangeSize - rangeOffset && n < contentSize - countBytesDone) {
+			//n += currRange.write(fileChannel, currRangeSize - rangeOffset - n);
+			n += fileChannel.transferFrom(
+				currRange, nextRangeOffset + rangeOffset + n, currRangeSize - rangeOffset
+			);
+		}
+		countBytesDone += n;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

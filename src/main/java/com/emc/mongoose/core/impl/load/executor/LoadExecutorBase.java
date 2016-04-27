@@ -28,7 +28,7 @@ import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
 import com.emc.mongoose.core.impl.load.barrier.ActiveTasksThrottle;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
-import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
+import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
 //
 import com.emc.mongoose.core.impl.load.model.LoadRegistry;
 import org.apache.logging.log4j.Level;
@@ -54,7 +54,7 @@ import java.util.concurrent.locks.LockSupport;
  Created by kurila on 15.10.14.
  */
 public abstract class LoadExecutorBase<T extends Item>
-extends BasicItemProducer<T>
+extends BasicItemGenerator<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
