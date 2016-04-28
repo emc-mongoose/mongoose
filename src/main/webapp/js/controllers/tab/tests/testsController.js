@@ -52,25 +52,18 @@ define([
 	};
 
 	const clickEventBinderFactory = function () {
-		function bindTabClickEvent(tabType) {
-			const tabId = tabJqId(tabType);
-			$(tabId).click(function () {
-				makeTabActive(tabType)
-			});
-		}
-		function bindTabClickEvents() {
-			$.each(TESTS_TAB_TYPE, function (key, value) {
-				bindTabClickEvent(value);
-			});
-		}
 
+		function bindTabClickEvents() {
+			tabsUtil.bindTabClickEvents(TESTS_TAB_TYPE, tabJqId, makeTabActive);
+		}
+		
 		return {
 			tab: bindTabClickEvents
 		}
 	};
 
 	function tabJqId(tabType) {
-		return jqId([tabType, TAB_TYPE.TESTS,'tab']);
+		return jqId([tabType, TAB_TYPE.TESTS, 'tab']);
 	}
 
 	function makeTabActive(tabType) {

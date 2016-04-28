@@ -28,9 +28,23 @@ define([
 			});
 	}
 
+	function bindTabClickEvent(tabType, tabJqId, makeTabActive) {
+		const tabId = tabJqId(tabType);
+		$(tabId).click(function () {
+			makeTabActive(tabType)
+		});
+	}
+
+	function bindTabClickEvents(tabObj, tabJqId, makeTabActive) {
+		$.each(tabObj, function (key, value) {
+			bindTabClickEvent(value, tabJqId, makeTabActive);
+		});
+	}
+
 	return {
 		showTabAsActive: showTabAsActive,
-		showActiveTabDependentElements: showActiveTabDependentElements
+		showActiveTabDependentElements: showActiveTabDependentElements,
+		bindTabClickEvents: bindTabClickEvents
 	}
 
 });

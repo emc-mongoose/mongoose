@@ -72,22 +72,26 @@ define([
 	function makeTabActive(tabType) {
 		tabsUtil.showTabAsActive('tab', tabType);
 		tabsUtil.showActiveTabDependentElements('tab-dependent', tabType);
-		$(jqId(['start'])).hide();
-		$(jqId(['properties', 'block'])).hide();
-		$(jqId(['tests', 'block'])).hide();
+		cssUtil.hide(jqId(['start']), jqId(['properties', 'block']), jqId(['tests', 'block']));
+		// $(jqId(['start'])).hide();
+		// $(jqId(['properties', 'block'])).hide();
+		// $(jqId(['tests', 'block'])).hide();
 		switch (tabType) {
 			case TAB_TYPE.SCENARIOS:
 				scenariosController.setTabParameters();
-				$(jqId(['start'])).show();
-				$(jqId(['properties', 'block'])).show();
+				cssUtil.show(jqId(['start']), jqId(['properties', 'block']));
+				// $(jqId(['start'])).show();
+				// $(jqId(['properties', 'block'])).show();
 				break;
 			case TAB_TYPE.DEFAULTS:
 				defaultsController.setTabParameters();
-				$(jqId(['start'])).show();
-				$(jqId(['properties', 'block'])).show();
+				cssUtil.show(jqId(['start']), jqId(['properties', 'block']));
+				// $(jqId(['start'])).show();
+				// $(jqId(['properties', 'block'])).show();
 				break;
 			case TAB_TYPE.TESTS:
-				$(jqId(['tests', 'block'])).show();
+				cssUtil.show(jqId(['tests', 'block']));
+				// $(jqId(['tests', 'block'])).show();
 				break;
 		}
 		currentTabType = tabType;
@@ -192,17 +196,8 @@ define([
 			})
 		}
 
-		function bindTabClickEvent(tabType) {
-			const tabId = tabJqId(tabType);
-			$(tabId).click(function () {
-				makeTabActive(tabType)
-			});
-		}
-
 		function bindTabClickEvents() {
-			$.each(TAB_TYPE, function (key, value) {
-				bindTabClickEvent(value);
-			});
+			tabsUtil.bindTabClickEvents(TAB_TYPE, tabJqId, makeTabActive);
 		}
 
 		function bindModeButtonClickEvents() {
