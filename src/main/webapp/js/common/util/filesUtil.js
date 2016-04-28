@@ -9,7 +9,7 @@ define([
 
 	const jqId = templatesUtil.composeJqId;
 
-	function changeFileToSaveAs(tabType, content) {
+	function changeFileToSave(tabType, content) {
 		saveFileAElem = $(jqId(['save', 'file', tabType]));
 		if (content !== null) {
 			tabType = tabType.slice(0, -1);
@@ -23,23 +23,36 @@ define([
 		}
 	}
 
-	function objChanger(obj, address, newValue, delimiter) {
+	function changeObj(obj, address, newValue, delimiter) {
 		const addressParts = address.split(delimiter).reverse();
 		const lastIndex = addressParts.length - 1;
-		var tempField = newValue;
-		var tempObj = {};
+		var tempValue = newValue;
+		var tempObj;
 		for (var i = 0; i < lastIndex; i++) {
-			tempObj[addressParts[i]] = tempField;
-			tempField = tempObj;
+			tempObj = {};
+			tempObj[addressParts[i]] = tempValue;
+			tempValue = tempObj;
 		}
 		tempObj = {};
-		tempObj[addressParts[lastIndex]] = tempField;
+		tempObj[addressParts[lastIndex]] = tempValue;
 		$.extend(true, obj, tempObj);
 	}
 
+	function changeObjAndFile(obj, address, newValue, delimiter, tabType, pElem) {
+		changeObj(obj, address, newValue, delimiter);
+		changeFileToSave(tabType, obj);
+		pElem.text('MODIFIED');
+	}
+
+	// dumb comparison
+	function compareObjects(obj1, obj2) {
+		return JSON.stringify(obj1) === JSON.stringify(obj2);
+	}
+
 	return {
-		changeFileToSaveAs: changeFileToSaveAs,
-		objChanger: objChanger
+		changeFileToSave: changeFileToSave,
+		changeObjAndFile: changeObjAndFile,
+		compareObjects: compareObjects
 	}
 
 });

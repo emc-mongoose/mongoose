@@ -240,9 +240,13 @@ define([
 		}
 
 		function startButtonClickEvent(startJson) {
-			const isConfirmed = confirm('If properties were changed Mongoose will save it' +
-				' automatically. ' +
-				'Would you like to continue?');
+			var isConfirmed = true;
+			if (defaultsController.isChanged() || scenariosController.isChanged()) {
+				isConfirmed = confirm('If properties were changed Mongoose' +
+					' will save it' +
+					' automatically. ' +
+					'Would you like to continue?');
+			}
 			if (isConfirmed) {
 				$.ajax({
 					type: 'PUT',

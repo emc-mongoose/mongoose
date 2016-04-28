@@ -135,10 +135,7 @@ define([
 				placeholder: "Enter '" + key + "' property"
 			});
 			input.change(function () {
-				filesUtil.objChanger(objectToChangeWithForm, key, input.val(), delimiter);
-				eventCreator.changeFileToSaveAs(tabType, objectToChangeWithForm);
-				const tabTypeOne = tabType.slice(0, -1);
-				p.text('MODIFIED')
+				filesUtil.changeObjAndFile(objectToChangeWithForm, key, input.val(), delimiter, tabType, p);
 			});
 			formGroupDiv.append(inputDiv);
 			inputDiv.append(input);

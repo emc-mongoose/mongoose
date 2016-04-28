@@ -35,7 +35,7 @@ define([
 			pureScenarioObject = null;
 			changedScenarioObject = null;
 		}
-		filesUtil.changeFileToSaveAs(TAB_TYPE.SCENARIOS, changedScenarioObject);
+		filesUtil.changeFileToSave(TAB_TYPE.SCENARIOS, changedScenarioObject);
 	}
 
 	const clickEventCreatorFactory = function () {
@@ -132,11 +132,16 @@ define([
 		return changedScenarioObject;
 	}
 	
+	function isChanged() {
+		return !filesUtil.compareObjects(pureScenarioObject, changedScenarioObject);
+	}
+	
 	return {
 		render: render,
 		setTabParameters: setTabParameters,
 		getPureScenario: getPureScenario,
-		getChangedScenario: getChangedScenario
+		getChangedScenario: getChangedScenario,
+		isChanged: isChanged
 	}
 });
 
