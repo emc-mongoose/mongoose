@@ -14,6 +14,7 @@ import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 //
+import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
 // mongoose-server-api.jar
@@ -86,7 +87,7 @@ implements LoadBuilderClient<T, W, U> {
 			}
 		}
 		//
-		resetItemSrc();
+		resetItemInput();
 		// set properties should be invoked only after the map is filled already
 		setAppConfig(appConfig);
 		//
@@ -95,7 +96,7 @@ implements LoadBuilderClient<T, W, U> {
 		}
 	}
 	//
-	protected abstract IoConfig<?, ?> getDefaultIoConfig();
+	protected abstract IoConfig<?, ?>  getDefaultIoConfig();
 	//
 	protected abstract V resolve(final String serverAddr)
 	throws IOException;
@@ -201,7 +202,7 @@ implements LoadBuilderClient<T, W, U> {
 		} catch(final NoSuchElementException e) {
 			LOG.warn(Markers.ERR, "No \"data.src.fpath\" value was set");
 		} catch(final IOException e) {
-			LOG.warn(Markers.ERR, "Invalid items source file path: {}", itemInput);
+			LOG.warn(Markers.ERR, "Invalid items input file path: {}", itemInput);
 		} catch(final SecurityException | NoSuchMethodException e) {
 			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
@@ -331,7 +332,7 @@ implements LoadBuilderClient<T, W, U> {
 		return this;
 	}
 	//
-	protected void resetItemSrc() {
+	protected void resetItemInput() {
 		flagUseNewItemSrc = true;
 		flagUseNoneItemSrc = false;
 		itemInput = null;

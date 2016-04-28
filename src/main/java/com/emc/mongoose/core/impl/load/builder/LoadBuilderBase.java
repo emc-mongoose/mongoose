@@ -10,6 +10,7 @@ import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
+import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -37,15 +38,18 @@ implements LoadBuilder<T, U> {
 	protected volatile AppConfig appConfig;
 	protected long countLimit = 0;
 	protected long sizeLimit = 0;
-	protected volatile IoConfig<?, ?> ioConfig = getDefaultIoConfig();
+	protected volatile IoConfig ioConfig = getDefaultIoConfig();
 	protected float rateLimit;
 	protected int threadCount = 1;
 	protected Input<T> itemInput;
 	protected Output<T> itemOutput = null;
 	protected String storageNodeAddrs[];
-	protected boolean flagUseNewItemSrc, flagUseNoneItemSrc, flagUseContainerItemSrc;
+	protected boolean flagUseNewItemSrc;
+	protected boolean flagUseNoneItemSrc;
+	protected boolean flagUseContainerItemSrc;
 	//
-	protected abstract IoConfig<?, ?> getDefaultIoConfig();
+	protected abstract IoConfig<? extends Item, ? extends Container<? extends Item>>
+		getDefaultIoConfig();
 	//
 	public LoadBuilderBase()
 	throws RemoteException {
@@ -54,7 +58,7 @@ implements LoadBuilder<T, U> {
 	//
 	public LoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
-		resetItemSrc();
+		resetItemInput();
 		try {
 			setAppConfig(appConfig);
 		} catch(final IllegalArgumentException | IllegalStateException e) {
@@ -62,7 +66,7 @@ implements LoadBuilder<T, U> {
 		}
 	}
 	//
-	protected void resetItemSrc() {
+	protected void resetItemInput() {
 		flagUseNewItemSrc = true;
 		flagUseNoneItemSrc = false;
 		flagUseContainerItemSrc = true;
@@ -143,13 +147,14 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final IoConfig<?, ?> getIoConfig() {
+	public final IoConfig<? extends Item, ? extends Container<? extends Item>> getIoConfig() {
 		return ioConfig;
 	}
 	//
 	@Override
-	public final LoadBuilder<T, U> setIoConfig(final IoConfig<?, ?> ioConfig)
-	throws ClassCastException, RemoteException {
+	public final LoadBuilder<T, U> setIoConfig(
+		final IoConfig<? extends Item, ? extends Container<? extends Item>> ioConfig
+	) throws ClassCastException, RemoteException {
 		if(this.ioConfig.equals(ioConfig)) {
 			return this;
 		}
@@ -239,7 +244,22 @@ implements LoadBuilder<T, U> {
 	public LoadBuilder<T, U> setInput(final Input<T> itemInput)
 	throws RemoteException {
 		LOG.debug(Markers.MSG, "Set data items input: {}", itemInput);
-		this.itemInput = itemInput;
+		if(LoadType.WRITE.equals(ioConfig.getLoadType()) && appConfig.getLoadCopy()) {
+			try {
+				final T copySrcItem = itemInput.get();
+				LOG.info(
+					Markers.MSG, "The item {} is a source item for the copy load",
+					copySrcItem == null ? null : copySrcItem.getName()
+				);
+				ioConfig.setCopySrcItem(copySrcItem);
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to read a single item to copy"
+				);
+			}
+		} else {
+			this.itemInput = itemInput;
+		}
 		return this;
 	}
 	//
@@ -307,7 +327,7 @@ implements LoadBuilder<T, U> {
 		}
 		final U loadJob = buildActually();
 		loadJob.setOutput(itemOutput);
-		resetItemSrc();
+		resetItemInput();
 		return loadJob;
 	}
 	//

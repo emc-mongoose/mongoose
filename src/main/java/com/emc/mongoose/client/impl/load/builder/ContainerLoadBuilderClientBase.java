@@ -57,12 +57,11 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 		final String listFilePathStr = appConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
-				setInput(
-					new CsvFileItemInput<>(
-						Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
-						ioConfig.getContentSource()
-					)
+				final Input<C> in = new CsvFileItemInput<>(
+					Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
+					ioConfig.getContentSource()
 				);
+				setInput(in);
 			} catch(final IOException | NoSuchMethodException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
 			}

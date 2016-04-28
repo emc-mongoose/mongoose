@@ -244,20 +244,8 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public LoadType getLoadType() {
-		final Object t = getProperty(KEY_LOAD_TYPE);
-		if(t instanceof String) {
-			return LoadType.valueOf(((String) t).toUpperCase());
-		} else if(t instanceof List) {
-			return LoadType.MIXED;
-		} else {
-			throw new IllegalArgumentException();
-		}
-	}
-	//
-	@Override
-	public int getLoadThreads() {
-		return getInt(KEY_LOAD_THREADS);
+	public boolean getLoadCopy() {
+		return getBoolean(KEY_LOAD_COPY);
 	}
 	//
 	@Override
@@ -338,6 +326,23 @@ implements AppConfig {
 	@Override
 	public boolean getLoadServerNodeMapping() {
 		return getBoolean(KEY_LOAD_SERVER_NODE_MAPPING);
+	}
+	//
+	@Override
+	public int getLoadThreads() {
+		return getInt(KEY_LOAD_THREADS);
+	}
+	//
+	@Override
+	public LoadType getLoadType() {
+		final Object t = getProperty(KEY_LOAD_TYPE);
+		if(t instanceof String) {
+			return LoadType.valueOf(((String) t).toUpperCase());
+		} else if(t instanceof List) {
+			return LoadType.MIXED;
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	//
 	@Override

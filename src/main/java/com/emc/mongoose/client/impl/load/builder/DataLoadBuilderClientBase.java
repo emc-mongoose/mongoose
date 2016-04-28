@@ -176,8 +176,8 @@ implements DataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	protected final void resetItemSrc() {
-		super.resetItemSrc();
+	protected final void resetItemInput() {
+		super.resetItemInput();
 		flagUseContainerItemSrc = true;
 	}
 	//

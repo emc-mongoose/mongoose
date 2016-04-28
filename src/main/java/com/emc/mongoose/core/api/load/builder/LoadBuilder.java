@@ -8,6 +8,7 @@ import com.emc.mongoose.common.io.Output;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
+import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import java.io.Closeable;
@@ -27,10 +28,11 @@ extends Closeable, Cloneable {
 	LoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException;
 	//
-	IoConfig<?, ?> getIoConfig()
+	IoConfig<? extends Item, ? extends Container<? extends Item>> getIoConfig()
 	throws RemoteException;
-	LoadBuilder<T, U> setIoConfig(final IoConfig<?, ?> reqConf)
-	throws RemoteException;
+	LoadBuilder<T, U> setIoConfig(
+		final IoConfig<? extends Item, ? extends Container<? extends Item>> ioConfig
+	) throws RemoteException;
 	//
 	LoadBuilder<T, U> setLoadType(final LoadType loadType)
 	throws IllegalStateException, RemoteException;
