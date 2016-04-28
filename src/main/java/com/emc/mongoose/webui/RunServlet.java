@@ -52,6 +52,9 @@ public class RunServlet extends HttpServlet {
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 	private static final Map<String, FutureTask<Void>> TESTS = new HashMap<>();
+	// FIXIT:
+	// THE ONLY USE OF THIS THREAD POOL IS SUBMITTING NEW TASKS
+	// THERE'S NO NEED IN THE THREAD POOL, JUST USE THE THREADS
 	private static final ExecutorService TESTS_EXECUTORS_POOL = Executors.newCachedThreadPool();
 
 	@Override
