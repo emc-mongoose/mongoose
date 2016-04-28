@@ -12,7 +12,7 @@ import java.util.List;
  Created by kurila on 02.02.16.
  */
 public class SequentialJobContainer
-	extends JobContainerBase {
+extends JobContainerBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
