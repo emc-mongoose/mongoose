@@ -20,7 +20,6 @@
 			},
 			"data" : {
 				"content" : {
-					"type" : "seed",
 					"file" : null,
 					"seed" : "7a42d9c483244167",
 					"ringSize" : "4MB"
@@ -86,7 +85,7 @@
 			"resume" : {
 				"enabled" : false
 			},
-			"version" : "2.0.0"
+			"version" : "next"
 		},
 		"storage" : {
 			"type" : "http",
@@ -98,7 +97,7 @@
 				"fsAccess" : false,
 				"headers" : {
 					"Connection" : "keep-alive",
-					"User-Agent" : "mongoose/2.0.0"
+					"User-Agent" : "mongoose/next"
 				},
 				"namespace" : null,
 				"api" : "S3",
