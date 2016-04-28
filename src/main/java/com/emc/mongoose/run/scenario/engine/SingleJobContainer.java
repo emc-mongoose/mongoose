@@ -25,34 +25,31 @@ extends JobContainerBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	private final LoadBuilder loadJobBuilder;
 	private final LoadExecutor loadJob;
 	private final long limitTime;
 	//
 	public SingleJobContainer(final AppConfig appConfig) {
 		super(appConfig);
 		limitTime = localConfig.getLoadLimitTime();
-		LoadBuilder loadJobBuilder = null;
 		try {
 			loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);
-		} catch(final ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to get a load builder instance");
+		} catch(
+			final ClassNotFoundException | NoSuchMethodException | InstantiationException |
+				IllegalAccessException e
+		) {
+			throw new IllegalStateException("Failed to get a load builder instance", e);
 		} catch(final InvocationTargetException e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e.getTargetException(), "Failed to get a load builder instance"
+			throw new IllegalStateException(
+				"Failed to get a load builder instance", e.getTargetException()
 			);
 		}
-		LoadExecutor loadJob_ = null;
-		try {
-			loadJob_ = loadJobBuilder == null ? null : loadJobBuilder.build();
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the load job");
-		} finally {
-			loadJob = loadJob_;
-		}
+		loadJob = null;
 	}
 	//
 	public SingleJobContainer(final LoadExecutor loadJob, final long limitTime) {
 		super(null);
+		this.loadJobBuilder = null;
 		this.loadJob = loadJob;
 		this.limitTime = limitTime;
 	}
@@ -62,14 +59,14 @@ extends JobContainerBase {
 		throw new IllegalStateException("Appending sub jobs to a single load job is not allowed");
 	}
 	//
-	public final LoadExecutor get() {
-		return loadJob;
-	}
-	//
 	@Override
 	public final String toString() {
 		try {
-			return loadJob.getName();
+			return loadJob == null ?
+				loadJobBuilder == null ?
+					null :
+					loadJobBuilder.toString() :
+				loadJob.getName();
 		} catch(final RemoteException e) {
 			throw new RuntimeException(e);
 		}
@@ -77,33 +74,50 @@ extends JobContainerBase {
 	//
 	@Override
 	public final void run() {
+		//
+		LoadExecutor loadJob_;
+		//
+		if(loadJob == null) {
+			if(loadJobBuilder == null) {
+				throw new IllegalStateException("Both load job and builder are null");
+			} else {
+				try {
+					loadJob_ = loadJobBuilder.build();
+				} catch(final IOException e) {
+					throw new IllegalStateException("Failed to build the load job", e);
+				}
+			}
+		} else {
+			loadJob_ = loadJob;
+		}
+		//
 		try {
-			LOG.info(Markers.MSG, "Start the job \"{}\"", loadJob.getName());
-			loadJob.start();
+			LOG.info(Markers.MSG, "Start the job \"{}\"", loadJob_.getName());
+			loadJob_.start();
 			try {
-				loadJob.await(
+				loadJob_.await(
 					limitTime > 0 ? limitTime : Long.MAX_VALUE,
 					limitTime > 0 ? TimeUnit.SECONDS : TimeUnit.DAYS
 				);
 				try {
-					loadJob.close();
+					loadJob_.close();
 				} catch(final IOException e) {
 					LogUtil.exception(
-						LOG, Level.ERROR, e, "Failed to close the load job {}", loadJob
+						LOG, Level.ERROR, e, "Failed to close the load job {}", loadJob_
 					);
 				}
 			} catch(final InterruptedException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Load job {} was interrupted", loadJob);
+				LogUtil.exception(LOG, Level.WARN, e, "Load job {} was interrupted", loadJob_);
 			} catch(final RemoteException e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e,
-					"Failed to invoke the await method remotely for the load job {}", loadJob
+					"Failed to invoke the await method remotely for the load job {}", loadJob_
 				);
 			}
 		} catch(final RemoteException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e,
-				"Failed to invoke the start method remotely for the load job {}", loadJob
+				"Failed to invoke the start method remotely for the load job {}", loadJob_
 			);
 		}
 	}

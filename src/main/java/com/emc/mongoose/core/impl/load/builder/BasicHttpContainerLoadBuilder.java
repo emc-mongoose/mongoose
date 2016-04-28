@@ -69,8 +69,8 @@ implements HttpContainerLoadBuilder<T, C, U> {
 		final HttpRequestConfig httpReqConf = HttpRequestConfig.class.cast(ioConfig);
 		//
 		return (U) new BasicHttpContainerLoadExecutor<>(
-			appConfig, httpReqConf, storageNodeAddrs, threadCount,
-			itemInput == null ? getDefaultItemInput() : itemInput, countLimit, sizeLimit, rateLimit
+			appConfig, httpReqConf, storageNodeAddrs, threadCount, selectItemInput(), countLimit,
+			sizeLimit, rateLimit
 		);
 	}
 }

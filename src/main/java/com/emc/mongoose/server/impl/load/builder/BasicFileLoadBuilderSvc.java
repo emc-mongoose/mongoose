@@ -142,9 +142,8 @@ implements FileLoadBuilderSvc<T, U> {
 			);
 		} else {
 			return (U) new BasicFileLoadSvc<>(
-				appConfig, (FileIoConfig) ioConfig, threadCount,
-				itemInput == null ? getDefaultItemInput() : itemInput, countLimit, sizeLimit,
-				rateLimit, sizeConfig, rangesConfig
+				appConfig, (FileIoConfig) ioConfig, threadCount, selectItemInput(), countLimit,
+				sizeLimit, rateLimit, sizeConfig, rangesConfig
 			);
 		}
 	}

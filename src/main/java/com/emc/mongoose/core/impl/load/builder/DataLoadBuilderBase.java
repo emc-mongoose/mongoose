@@ -68,37 +68,6 @@ implements DataLoadBuilder<T, U> {
 		);
 	}
 	//
-	@SuppressWarnings("unchecked")
-	private Input<T> getContainerItemInput()
-	throws CloneNotSupportedException {
-		return (Input<T>) ((IoConfig) ioConfig.clone()).getContainerListInput(countLimit, storageNodeAddrs == null ? null : storageNodeAddrs[0]
-		);
-	}
-	//
-	@Override
-	protected Input<T> getDefaultItemInput() {
-		try {
-			if(flagUseNoneItemSrc) {
-				return null;
-			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(LoadType.WRITE.equals(ioConfig.getLoadType())) {
-					return getNewItemInput();
-				} else {
-					return getContainerItemInput();
-				}
-			} else if(flagUseNewItemSrc) {
-				return getNewItemInput();
-			} else if(flagUseContainerItemSrc) {
-				return getContainerItemInput();
-			}
-		} catch(final NoSuchMethodException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
-		} catch(final CloneNotSupportedException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the I/O config instance");
-		}
-		return null;
-	}
-	//
 	@Override
 	public String toString() {
 		return super.toString() + "x" + sizeConfig.toString();

@@ -237,7 +237,7 @@ implements FileIOTask<T> {
 			// copy src item to the target item
 			try(
 				final FileChannel fileSrcChannel = FileChannel.open(
-					DEFAULT_FS.getPath(parentDir, item.getName()), StandardOpenOption.READ
+					DEFAULT_FS.getPath(parentDir, copySrcItem.getName()), StandardOpenOption.READ
 				)
 			) {
 				while(countBytesDone < contentSize) {

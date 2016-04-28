@@ -49,6 +49,8 @@
 		"load" : {
 			"circular" : false,
 			"copy" : false,
+			"type" : "write",
+			"threads" : 1,
 			"limit" : {
 				"count" : 0,
 				"rate" : 0,
@@ -61,9 +63,7 @@
 					"127.0.0.1"
 				],
 				"nodeMapping" : false
-			},
-			"threads" : 1,
-			"type" : "write"
+			}
 		},
 		"network" : {
 			"serveJMX" : false,

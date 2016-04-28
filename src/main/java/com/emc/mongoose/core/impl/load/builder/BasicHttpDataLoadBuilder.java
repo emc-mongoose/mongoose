@@ -127,9 +127,8 @@ implements HttpDataLoadBuilder<T, U> {
 			);
 		} else {
 			return (U) new BasicHttpDataLoadExecutor<>(
-				appConfig, httpReqConf, storageNodeAddrs, threadCount,
-				itemInput == null ? getDefaultItemInput() : itemInput, countLimit, sizeLimit,
-				rateLimit, sizeConfig, rangesConfig
+				appConfig, httpReqConf, storageNodeAddrs, threadCount, selectItemInput(),
+				countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig
 			);
 		}
 	}

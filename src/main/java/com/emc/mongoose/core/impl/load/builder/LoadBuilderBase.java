@@ -240,26 +240,11 @@ implements LoadBuilder<T, U> {
 		return this;
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public LoadBuilder<T, U> setInput(final Input<T> itemInput)
 	throws RemoteException {
 		LOG.debug(Markers.MSG, "Set data items input: {}", itemInput);
-		if(LoadType.WRITE.equals(ioConfig.getLoadType()) && appConfig.getLoadCopy()) {
-			try {
-				final T copySrcItem = itemInput.get();
-				LOG.info(
-					Markers.MSG, "The item {} is a source item for the copy load",
-					copySrcItem == null ? null : copySrcItem.getName()
-				);
-				ioConfig.setCopySrcItem(copySrcItem);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to read a single item to copy"
-				);
-			}
-		} else {
-			this.itemInput = itemInput;
-		}
+		this.itemInput = itemInput;
 		return this;
 	}
 	//
@@ -290,11 +275,64 @@ implements LoadBuilder<T, U> {
 		return lb;
 	}
 	//
-	//
 	protected abstract Input<T> getNewItemInput()
 	throws NoSuchMethodException;
 	//
-	protected abstract Input<T> getDefaultItemInput();
+	@SuppressWarnings("unchecked")
+	protected Input<T> getContainerItemInput()
+	throws CloneNotSupportedException {
+		return (Input<T>) ioConfig.clone()
+			.getContainerListInput(
+				countLimit, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+			);
+	}
+	//
+	protected Input<T> selectItemInput() {
+		try {
+			if(LoadType.WRITE.equals(ioConfig.getLoadType()) && appConfig.getLoadCopy()) {
+				try(
+					final Input<T> tmpInput = itemInput == null ?
+						getContainerItemInput() : itemInput
+				) {
+					final T srcItem = tmpInput.get();
+					if(srcItem == null) {
+						LOG.warn(
+							Markers.ERR, "Got null item to copy from the input \"{}\"", tmpInput
+						);
+					} else {
+						LOG.info(
+							Markers.MSG, "Going to copy the single item \"{}\"", srcItem.getName()
+						);
+						ioConfig.setCopySrcItem(srcItem);
+					}
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to get the item to copy");
+				}
+				return getNewItemInput();
+			} else if(itemInput != null) {
+				return itemInput;
+			}
+			//
+			if(flagUseNoneItemSrc) {
+				return null;
+			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
+				if(LoadType.WRITE.equals(ioConfig.getLoadType())) {
+					return getNewItemInput();
+				} else {
+					return getContainerItemInput();
+				}
+			} else if(flagUseNewItemSrc) {
+				return getNewItemInput();
+			} else if(flagUseContainerItemSrc) {
+				return getContainerItemInput();
+			}
+		} catch(final NoSuchMethodException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the I/O config instance");
+		}
+		return null;
+	}
 	//
 	@Override
 	public LoadBuilderBase<T, U> useNewItemSrc()

@@ -63,7 +63,8 @@ public class BasicHttpContainerLoadBuilderClient<
 	}
 	//
 	@Override
-	protected Input<C> getDefaultItemInput() {
+	protected Input<C> getContainerItemInput()
+	throws CloneNotSupportedException {
 		return null;
 	}
 	//
@@ -83,10 +84,7 @@ public class BasicHttpContainerLoadBuilderClient<
 		HttpContainerLoadBuilderSvc<T, C, W> nextBuilder;
 		W nextLoad;
 		//
-		if(itemInput == null) {
-			itemInput = getDefaultItemInput(); // affects load service builders
-		}
-		//
+		itemInput = selectItemInput(); // affects load service builders
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing

@@ -88,9 +88,7 @@ implements FileLoadBuilderClient<T, W, U> {
 	protected U buildActually()
 	throws RemoteException, DuplicateSvcNameException {
 		final LoadType loadType = ioConfig.getLoadType();
-		if(itemInput == null) {
-			itemInput = getDefaultItemInput(); // affects load service builders
-		}
+		itemInput = selectItemInput(); // affects load service builders
 		final Map<String, W> remoteLoadMap = new HashMap<>();
 		FileLoadBuilderSvc<T, W> nextBuilder;
 		W nextLoad;

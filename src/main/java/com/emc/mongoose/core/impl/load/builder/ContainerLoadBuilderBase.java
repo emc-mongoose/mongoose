@@ -95,24 +95,6 @@ implements ContainerLoadBuilder<T, C, U>{
 	}
 	//
 	@Override
-	protected Input<C> getDefaultItemInput() {
-		try {
-			if(flagUseNoneItemSrc) {
-				return null;
-			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(LoadType.WRITE.equals(ioConfig.getLoadType())) {
-					getNewItemInput();
-				}
-			} else if(flagUseNewItemSrc) {
-				return getNewItemInput();
-			}
-		} catch(final NoSuchMethodException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
-		}
-		return null;
-	}
-	//
-	@Override
 	public ContainerLoadBuilderBase<T, C, U> clone()
 	throws CloneNotSupportedException {
 		return (ContainerLoadBuilderBase<T, C, U>) super.clone();
