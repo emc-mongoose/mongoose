@@ -1,27 +1,16 @@
-/**
- * Created on 18.04.16.
- */
 define([
 	'jquery',
-	'../../../common/util/handlebarsUtil',
-	'../../../common/util/templatesUtil',
-	'../../../common/util/cssUtil',
-	'../../../common/util/tabsUtil',
-	'text!../../../../templates/tab/tests/navbar.hbs',
-	'text!../../../../templates/tab/tests/base.hbs',
-	'./tab/listController',
-	'./tab/logsController',
-	'./tab/chartsController'
+	'../../../../common/util/handlebarsUtil',
+	'../../../../common/util/templatesUtil',
+	'../../../../common/util/cssUtil',
+	'../../../../common/util/tabsUtil',
+	'text!../../../../../templates/tab/tests/tab/list.hbs'
 ], function ($,
              hbUtil,
              templatesUtil,
              cssUtil,
              tabsUtil,
-             navbarTemplate,
-             baseTemplate,
-             listController,
-             logsController,
-             chartsController) {
+             listTemplate) {
 
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const TESTS_TAB_TYPE = templatesUtil.testsTabTypes();
@@ -32,31 +21,23 @@ define([
 
 	function render() {
 		const renderer = rendererFactory();
-		renderer.navbar();
-		renderer.base();
-		listController.render();
-		logsController.render();
-		chartsController.render();
-		makeTabActive(currentTabType);
+		// renderer.navbar();
+		// renderer.base();
+		// makeTabActive(currentTabType);
 	}
 
 	const rendererFactory = function () {
 		const binder = clickEventBinderFactory();
-		const testsBlockElemId = jqId([TAB_TYPE.TESTS, 'block']);
+		const listBlockElemId = jqId([TAB_TYPE.TESTS, 'tab', TESTS_TAB_TYPE.LIST]);
 
 		function renderNavbar() {
-			hbUtil.compileAndInsertInsideBefore(testsBlockElemId, navbarTemplate,
+			hbUtil.compileAndInsertInsideBefore(listBlockElemId, listTemplate,
 				{tabs: TESTS_TAB_TYPE});
 			binder.tab();
 		}
 
-		function renderBase() {
-			hbUtil.compileAndInsertInside(testsBlockElemId, baseTemplate);
-		}
-
 		return {
-			navbar: renderNavbar,
-			base: renderBase
+			navbar: renderNavbar
 		}
 	};
 
@@ -77,7 +58,6 @@ define([
 
 	function makeTabActive(tabType) {
 		tabsUtil.showTabAsActive(plainId([TAB_TYPE.TESTS, 'tab']), tabType);
-		tabsUtil.showActiveTabDependentElements(plainId([TAB_TYPE.TESTS, 'tab', 'dependent']), tabType);
 		switch (tabType) {
 			case TESTS_TAB_TYPE.LIST:
 				break;

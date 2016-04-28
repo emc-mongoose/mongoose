@@ -73,25 +73,17 @@ define([
 		tabsUtil.showTabAsActive('tab', tabType);
 		tabsUtil.showActiveTabDependentElements('tab-dependent', tabType);
 		cssUtil.hide(jqId(['start']), jqId(['properties', 'block']), jqId(['tests', 'block']));
-		// $(jqId(['start'])).hide();
-		// $(jqId(['properties', 'block'])).hide();
-		// $(jqId(['tests', 'block'])).hide();
 		switch (tabType) {
 			case TAB_TYPE.SCENARIOS:
 				scenariosController.setTabParameters();
 				cssUtil.show(jqId(['start']), jqId(['properties', 'block']));
-				// $(jqId(['start'])).show();
-				// $(jqId(['properties', 'block'])).show();
 				break;
 			case TAB_TYPE.DEFAULTS:
 				defaultsController.setTabParameters();
 				cssUtil.show(jqId(['start']), jqId(['properties', 'block']));
-				// $(jqId(['start'])).show();
-				// $(jqId(['properties', 'block'])).show();
 				break;
 			case TAB_TYPE.TESTS:
 				cssUtil.show(jqId(['tests', 'block']));
-				// $(jqId(['tests', 'block'])).show();
 				break;
 		}
 		currentTabType = tabType;

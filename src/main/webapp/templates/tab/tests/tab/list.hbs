@@ -1,7 +1,7 @@
 <div class="container">
     <div class="list-group">
-        <a href="#" class="list-group-item active">Test 1</a>
-        <a href="#" class="list-group-item">Test 2</a>
-        <a href="#" class="list-group-item">Test 3</a>
+        {{#each tabs}}
+            <a class="list-group-item" id="{{this}}">Test 1</a>
+        {{/each}}
     </div>
 </div>

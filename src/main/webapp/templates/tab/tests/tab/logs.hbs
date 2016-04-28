@@ -1,25 +1,26 @@
 <ul class="nav nav-pills center-inline-blocks indent-20-lower">
-    <li class="active"><a href="#">messages</a></li>
-    <li><a href="#">errors</a></li>
-    <li><a href="#">perf.avg</a></li>
-    <li><a href="#">perf.sum</a></li>
+    {{#each tabs}}
+        <li class="tests-logs-tab" id="{{this}}-tests-logs-tab"><a>{{this}}</a></li>
+    {{/each}}
 </ul>
-<div id="log-wrapper" class="tab-content">
-    <div class="table-content">
-        <div class="table-responsive">
-            <table class="table table-condenced">
-                <thead>
-                <tr>
-                    <th>Level</th>
-                    <th>LoggerName</th>
-                    <th>ThreadName</th>
-                    <th>TimeMillis</th>
-                    <th>Message</th>
-                </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+{{#each tabs}}
+    <div id="{{this}}-log-wrapper" class="tab-content tests-logs-tab-dependent">
+        <div class="table-content">
+            <div class="table-responsive">
+                <table class="table table-condenced">
+                    <thead>
+                    <tr>
+                        <th>Level</th>
+                        <th>LoggerName</th>
+                        <th>ThreadName</th>
+                        <th>TimeMillis</th>
+                        <th>Message</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
+{{/each}}

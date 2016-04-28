@@ -25,6 +25,22 @@ define(function() {
     };
 
     // the order of elements matters for a template
+    const TESTS_CHARTS_TAB_TYPE = {
+        LATENCY: 'latency',
+        DURATION: 'duration',
+        THROUGHPUT: 'throughput',
+        BANDWIDTH: 'bandwidth'
+    };
+
+    // the order of elements matters for a template
+    const TESTS_LOGS_TAB_TYPE = {
+        MESSAGES: 'messages',
+        ERRORS: 'errors',
+        PERFAVG: 'perf\.avg',
+        PERFSUM: 'perf\.sum'
+    };
+
+    // the order of elements matters for a template
     const COMMON_BUTTON_TYPE = {
         OPEN: 'open',
         OPEN_INPUT_TEXT: 'file-name',
@@ -66,6 +82,14 @@ define(function() {
 
     function testsTabTypes() {
         return TESTS_TAB_TYPE;
+    }
+
+    function testsChartsTabTypes() {
+        return TESTS_CHARTS_TAB_TYPE;
+    }
+
+    function testsLogsTabTypes() {
+        return TESTS_LOGS_TAB_TYPE;
     }
 
     function commonButtonTypes() {
@@ -119,6 +143,8 @@ define(function() {
         modes: modes,
         tabTypes: tabTypes,
         testsTabTypes: testsTabTypes,
+        testsLogsTabTypes: testsLogsTabTypes,
+        testsChartsTabTypes: testsChartsTabTypes,
         commonButtonTypes: commonButtonTypes,
         configTreeElements: configTreeElements,
         tabClasses: tabClasses,

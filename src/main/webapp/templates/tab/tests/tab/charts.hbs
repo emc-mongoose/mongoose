@@ -1,6 +1,5 @@
 <ul class="nav nav-pills center-inline-blocks indent-20-lower">
-    <li class="active"><a href="#">throughput</a></li>
-    <li><a href="#">bandwidth</a></li>
-    <li><a href="#">latency</a></li>
-    <li><a href="#">duration</a></li>
+    {{#each tabs}}
+        <li class="tests-charts-tab" id="{{this}}-tests-charts-tab"><a>{{this}}</a></li>
+    {{/each}}
 </ul>
