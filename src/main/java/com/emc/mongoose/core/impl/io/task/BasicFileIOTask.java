@@ -243,8 +243,8 @@ implements FileIOTask<T> {
 				)
 			) {
 				while(countBytesDone < contentSize) {
-					countBytesDone += fileChannel.transferFrom(
-						fileSrcChannel, countBytesDone, contentSize
+					countBytesDone += fileSrcChannel.transferTo(
+						countBytesDone, contentSize, fileChannel
 					);
 				}
 				// copy mode hook
