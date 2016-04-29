@@ -55,16 +55,16 @@ implements ItemProducer<T> {
 		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
 	    final float rateLimit
 	) {
-		this(itemInput, maxCount, batchSize, isCircular, isShuffling, maxItemQueueSize, rateLimit,
-			0, null
+		this(
+			itemInput, maxCount, batchSize, isCircular, isShuffling, maxItemQueueSize, rateLimit, 0,
+			null
 		);
 	}
 	//
 	private BasicItemGenerator(
 		final Input<T> itemInput, final long maxCount, final int batchSize,
 		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
-		final float rateLimit,
-		final long skipCount, final T lastItem
+		final float rateLimit, final long skipCount, final T lastItem
 	) {
 		this.itemInput = itemInput;
 		this.countLimit = maxCount - skipCount;
@@ -85,8 +85,8 @@ implements ItemProducer<T> {
 	}
 	//
 	@Override
-	public void setLastItem(final T dataItem) {
-		this.lastItem = dataItem;
+	public void setLastItem(final T item) {
+		this.lastItem = item;
 	}
 	//
 	@Override

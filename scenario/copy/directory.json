@@ -1,0 +1,70 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"container" : {
+				"name" : "/tmp/scenario-copy-directory"
+			},
+			"data" : {
+				"size" : "10KB"
+			},
+			"type" : "container"
+		},
+		"storage" : {
+			"type" : "fs"
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-copy-directory.json"
+					},
+					"naming" : {
+						"type" : "asc",
+						"length" : 1
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 1
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"container" : {
+						"name" : "/tmp/scenario-copy-directory/1"
+					},
+					"type" : "data"
+				},
+				"load" : {
+					"limit" : {
+						"count" : 100
+					},
+					"threads" : 10
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-copy-directory.json"
+					}
+				},
+				"load" : {
+					"copy" : true,
+					"limit" : {
+						"count" : 100
+					},
+					"threads" : 5
+				}
+			}
+		}
+	]
+}

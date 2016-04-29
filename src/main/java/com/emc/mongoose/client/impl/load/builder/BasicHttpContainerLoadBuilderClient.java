@@ -51,6 +51,21 @@ public class BasicHttpContainerLoadBuilderClient<
 		return HttpRequestConfigBase.getInstance();
 	}
 	//
+	@Override
+	public final BasicHttpContainerLoadBuilderClient<T, C, W, U> setAppConfig(
+		final AppConfig appConfig
+	) {
+		final String newApi = appConfig.getStorageHttpApi();
+		if(!((HttpRequestConfig) ioConfig).getAPI().equalsIgnoreCase(newApi)) {
+			ioConfig = HttpRequestConfigBase.newInstanceFor(newApi);
+		}
+		try {
+			super.setAppConfig(appConfig);
+		} catch(final RemoteException ignored) {
+		}
+		return this;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	protected HttpContainerLoadBuilderSvc<T, C, W> resolve(final String serverAddr)
 	throws IOException {
@@ -63,7 +78,8 @@ public class BasicHttpContainerLoadBuilderClient<
 	}
 	//
 	@Override
-	protected Input<C> getDefaultItemInput() {
+	protected Input<C> getContainerItemInput()
+	throws CloneNotSupportedException {
 		return null;
 	}
 	//
@@ -83,10 +99,7 @@ public class BasicHttpContainerLoadBuilderClient<
 		HttpContainerLoadBuilderSvc<T, C, W> nextBuilder;
 		W nextLoad;
 		//
-		if(itemInput == null) {
-			itemInput = getDefaultItemInput(); // affects load service builders
-		}
-		//
+		itemInput = selectItemInput(); // affects load service builders
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
 			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing

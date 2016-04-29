@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.io.task;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
@@ -14,12 +15,15 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.File;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
@@ -57,7 +61,7 @@ implements DirectoryIOTask<T, C> {
 		try {
 			switch(ioType) {
 				case WRITE:
-					runWrite();
+					runWrite(ioConfig.getCopySrcItem());
 					break;
 				case READ:
 					runRead();
@@ -85,10 +89,62 @@ implements DirectoryIOTask<T, C> {
 		}
 	}
 	//
-	protected void runWrite()
+	protected void runWrite(final Item copySrcDir)
 	throws IOException {
-		Files.createDirectories(fPath);
+		if(copySrcDir == null) {
+			Files.createDirectories(fPath);
+		} else {
+			final C parentDir = ioConfig.getContainer();
+			final Path srcPath;
+			if(parentDir != null) {
+				srcPath = Paths.get(parentDir.getName(), copySrcDir.getName()).toAbsolutePath();
+			} else {
+				srcPath = Paths.get(copySrcDir.getName()).toAbsolutePath();
+			}
+			copyDirWithFiles(srcPath.toFile(), fPath.toFile());
+		}
 		status = Status.SUCC;
+	}
+	//
+	private void copyDirWithFiles(final File src, final File dst)
+	throws IOException {
+		if(src.isDirectory()) {
+			copyDir(src, dst);
+		} else {
+			copyFile(src, dst);
+		}
+	}
+	//
+	private void copyDir(final File src, final File dst)
+	throws IOException {
+		if(!dst.exists()) {
+			dst.mkdir();
+		}
+		for(final String f : src.list()) {
+			copyDirWithFiles(new File(src, f), new File(dst, f));
+		}
+	}
+	//
+	private void copyFile(final File src, final File dst)
+	throws IOException {
+		try(
+			final FileChannel srcChannel = FileChannel.open(src.toPath(), StandardOpenOption.READ)
+		) {
+			final long srcFileSize = srcChannel.size();
+			long fileDoneByteCount = 0;
+			try(
+				final FileChannel dstChannel = FileChannel.open(
+					dst.toPath(), StandardOpenOption.WRITE, StandardOpenOption.CREATE,
+					StandardOpenOption.TRUNCATE_EXISTING
+				)
+			) {
+				while(fileDoneByteCount < srcFileSize) {
+					fileDoneByteCount += srcChannel.transferTo(0, srcChannel.size(), dstChannel);
+				}
+			} finally {
+				countBytesDone += fileDoneByteCount;
+			}
+		}
 	}
 	//
 	protected void runRead()

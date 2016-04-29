@@ -43,8 +43,7 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_ITEM_NAMING_LENGTH = "item.naming.length";
 	String KEY_ITEM_QUEUE_SIZE_LIMIT = "item.queue.sizeLimit";
 	String KEY_LOAD_CIRCULAR = "load.circular";
-	String KEY_LOAD_TYPE = "load.type";
-	String KEY_LOAD_THREADS = "load.threads";
+	String KEY_LOAD_COPY = "load.copy";
 	String KEY_LOAD_LIMIT_COUNT = "load.limit.count";
 	String KEY_LOAD_LIMIT_RATE = "load.limit.rate";
 	String KEY_LOAD_LIMIT_SIZE = "load.limit.size";
@@ -52,6 +51,8 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_LOAD_METRICS_PERIOD = "load.metricsPeriod";
 	String KEY_LOAD_SERVER_ADDRS = "load.server.addrs";
 	String KEY_LOAD_SERVER_NODE_MAPPING = "load.server.nodeMapping";
+	String KEY_LOAD_THREADS = "load.threads";
+	String KEY_LOAD_TYPE = "load.type";
 	String KEY_RUN_ID = "run.id";
 	String KEY_RUN_MODE = "run.mode";
 	String KEY_RUN_NAME = "run.name";
@@ -135,9 +136,8 @@ extends Cloneable, Configuration, Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	boolean getLoadCircular();
-	LoadType getLoadType();
 
-	int getLoadThreads();
+	boolean getLoadCopy();
 
 	long getLoadLimitCount();
 
@@ -154,6 +154,10 @@ extends Cloneable, Configuration, Externalizable {
 	String[] getLoadServerAddrs();
 
 	boolean getLoadServerNodeMapping();
+
+	int getLoadThreads();
+
+	LoadType getLoadType();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 

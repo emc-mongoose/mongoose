@@ -37,10 +37,16 @@ implements HttpContainerLoadBuilder<T, C, U> {
 	}
 	//
 	@Override
-	public BasicHttpContainerLoadBuilder<T, C, U> setAppConfig(final AppConfig appConfig)
+	public final BasicHttpContainerLoadBuilder<T, C, U> setAppConfig(final AppConfig appConfig)
 	throws RemoteException {
-		super.setAppConfig(appConfig);
-		HttpRequestConfig.class.cast(ioConfig).setScheme("http");
+		final String newApi = appConfig.getStorageHttpApi();
+		if(!((HttpRequestConfig) ioConfig).getAPI().equalsIgnoreCase(newApi)) {
+			ioConfig = HttpRequestConfigBase.newInstanceFor(newApi);
+		}
+		try {
+			super.setAppConfig(appConfig);
+		} catch(final RemoteException ignored) {
+		}
 		return this;
 	}
 	//
@@ -69,8 +75,8 @@ implements HttpContainerLoadBuilder<T, C, U> {
 		final HttpRequestConfig httpReqConf = HttpRequestConfig.class.cast(ioConfig);
 		//
 		return (U) new BasicHttpContainerLoadExecutor<>(
-			appConfig, httpReqConf, storageNodeAddrs, threadCount,
-			itemInput == null ? getDefaultItemInput() : itemInput, countLimit, sizeLimit, rateLimit
+			appConfig, httpReqConf, storageNodeAddrs, threadCount, selectItemInput(), countLimit,
+			sizeLimit, rateLimit
 		);
 	}
 }

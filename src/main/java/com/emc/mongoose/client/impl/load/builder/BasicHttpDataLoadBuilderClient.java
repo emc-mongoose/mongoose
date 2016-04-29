@@ -60,6 +60,19 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 		return HttpRequestConfigBase.getInstance();
 	}
 	//
+	@Override
+	public final BasicHttpDataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig) {
+		final String newApi = appConfig.getStorageHttpApi();
+		if(!((HttpRequestConfig) ioConfig).getAPI().equalsIgnoreCase(newApi)) {
+			ioConfig = HttpRequestConfigBase.newInstanceFor(newApi);
+		}
+		try {
+			super.setAppConfig(appConfig);
+		} catch(final RemoteException ignored) {
+		}
+		return this;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	protected HttpDataLoadBuilderSvc<T, W> resolve(final String serverAddr)
 	throws IOException {
@@ -82,9 +95,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 	throws RemoteException {
 		//
 		final LoadType loadType = ioConfig.getLoadType();
-		if(itemInput == null) {
-			itemInput = getDefaultItemInput(); // affects load service builders
-		}
+		itemInput = selectItemInput(); // affects load service builders
 		final Map<String, W> remoteLoadMap = new HashMap<>();
 		HttpDataLoadBuilderSvc<T, W> nextBuilder;
 		W nextLoad;

@@ -124,10 +124,8 @@ extends DataLoadBuilderBase<T, U> {
 			);
 		} else {
 			return (U) new BasicFileLoadExecutor<>(
-				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig,
-				threadCount, itemInput == null ? getDefaultItemInput() : itemInput,
-				countLimit, sizeLimit, rateLimit,
-				sizeConfig, rangesConfig
+				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
+				selectItemInput(), countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig
 			);
 		}
 	}

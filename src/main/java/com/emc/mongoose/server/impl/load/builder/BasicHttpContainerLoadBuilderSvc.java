@@ -101,8 +101,8 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 		// the statement below fixes hi-level API distributed mode usage and tests
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		return (U) new BasicHttpContainerLoadSvc<>(
-			appConfig, wsReqConf, storageNodeAddrs, threadCount,
-			itemInput == null ? getDefaultItemInput() : itemInput, countLimit, sizeLimit, rateLimit
+			appConfig, wsReqConf, storageNodeAddrs, threadCount, selectItemInput(), countLimit,
+			sizeLimit, rateLimit
 		);
 	}
 	//

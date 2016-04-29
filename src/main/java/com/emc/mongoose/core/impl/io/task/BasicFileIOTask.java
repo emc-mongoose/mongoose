@@ -4,8 +4,10 @@ import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.DataCorruptionException;
+import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.DataSizeException;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -26,6 +28,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 //
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
@@ -41,6 +44,7 @@ import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 //
+import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -106,7 +110,7 @@ implements FileIOTask<T> {
 						} else if(item.isAppending()) {
 							runAppend(byteChannel);
 						} else {
-							runWriteFully(byteChannel);
+							runWriteFully(byteChannel, (T) ioConfig.getCopySrcItem());
 						}
 					}
 				}
@@ -225,10 +229,27 @@ implements FileIOTask<T> {
 		}
 	}
 	//
-	protected void runWriteFully(final FileChannel fileChannel)
+	protected void runWriteFully(final FileChannel fileChannel, final T copySrcItem)
 	throws IOException {
-		while(countBytesDone < contentSize) {
-			countBytesDone += fileChannel.transferFrom(item, countBytesDone, contentSize);
+		if(copySrcItem == null) {
+			while(countBytesDone < contentSize) {
+				countBytesDone += fileChannel.transferFrom(item, countBytesDone, contentSize);
+			}
+		} else {
+			// copy src item to the target item
+			try(
+				final FileChannel fileSrcChannel = FileChannel.open(
+					DEFAULT_FS.getPath(parentDir, copySrcItem.getName()), StandardOpenOption.READ
+				)
+			) {
+				while(countBytesDone < contentSize) {
+					countBytesDone += fileSrcChannel.transferTo(
+						countBytesDone, contentSize, fileChannel
+					);
+				}
+				// copy mode hook
+				item.setOffset(copySrcItem.getOffset());
+			}
 		}
 		status = SUCC;
 		item.resetUpdates();

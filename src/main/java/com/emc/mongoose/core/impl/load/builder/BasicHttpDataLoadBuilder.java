@@ -17,6 +17,7 @@ import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
 import com.emc.mongoose.core.impl.load.executor.BasicMixedHttpDataLoadExecutor;
+import org.apache.http.HttpRequest;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,6 +48,19 @@ implements HttpDataLoadBuilder<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected HttpRequestConfig<T, ? extends Container<T>> getDefaultIoConfig() {
 		return HttpRequestConfigBase.getInstance();
+	}
+	//
+	@Override
+	public final BasicHttpDataLoadBuilder<T, U> setAppConfig(final AppConfig appConfig) {
+		final String newApi = appConfig.getStorageHttpApi();
+		if(!((HttpRequestConfig) ioConfig).getAPI().equalsIgnoreCase(newApi)) {
+			ioConfig = HttpRequestConfigBase.newInstanceFor(newApi);
+		}
+		try {
+			super.setAppConfig(appConfig);
+		} catch(final RemoteException ignored) {
+		}
+		return this;
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
@@ -127,9 +141,8 @@ implements HttpDataLoadBuilder<T, U> {
 			);
 		} else {
 			return (U) new BasicHttpDataLoadExecutor<>(
-				appConfig, httpReqConf, storageNodeAddrs, threadCount,
-				itemInput == null ? getDefaultItemInput() : itemInput, countLimit, sizeLimit,
-				rateLimit, sizeConfig, rangesConfig
+				appConfig, httpReqConf, storageNodeAddrs, threadCount, selectItemInput(),
+				countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig
 			);
 		}
 	}

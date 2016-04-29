@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -36,6 +37,7 @@ implements IoConfig<T, C> {
 	//
 	protected LoadType loadType;
 	protected C container;
+	protected volatile Item copySrcItem = null;
 	protected ContentSource contentSrc;
 	protected volatile boolean verifyContentFlag;
 	protected volatile AppConfig appConfig;
@@ -68,6 +70,7 @@ implements IoConfig<T, C> {
 			setNamePrefix(ioConf2Clone.namePrefix);
 			setNameRadix(ioConf2Clone.getNameRadix());
 			setBuffSize(ioConf2Clone.getBuffSize());
+			setCopySrcItem(ioConf2Clone.getCopySrcItem());
 			this.reqSleepMilliSec = ioConf2Clone.reqSleepMilliSec;
 		}
 	}
@@ -86,6 +89,7 @@ implements IoConfig<T, C> {
 			.setNamePrefix(namePrefix)
 			.setNameRadix(nameRadix)
 			.setBuffSize(buffSize)
+			.setCopySrcItem(copySrcItem)
 			.reqSleepMilliSec = reqSleepMilliSec;
 		return ioConf;
 	}
@@ -202,6 +206,16 @@ implements IoConfig<T, C> {
 		return this;
 	}
 	//
+	public final Item getCopySrcItem() {
+		return copySrcItem;
+	}
+	//
+	@Override
+	public final IoConfigBase<T, C> setCopySrcItem(final Item copySource) {
+		this.copySrcItem = copySource;
+		return this;
+	}
+	//
 	public IoConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		this.appConfig = appConfig;
 		setLoadType(appConfig.getLoadType());
@@ -242,6 +256,8 @@ implements IoConfig<T, C> {
 		LOG.trace(Markers.MSG, "Written buffer size \"" + buffSize + "\"");
 		out.writeInt(reqSleepMilliSec);
 		LOG.trace(Markers.MSG, "Written req sleep time \"" + reqSleepMilliSec + "\"");
+		out.writeObject(getCopySrcItem());
+		LOG.trace(Markers.MSG, "Written copy mode flag \"" + copySrcItem + "\"");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -263,6 +279,8 @@ implements IoConfig<T, C> {
 		LOG.trace(Markers.MSG, "Got buff size {}", buffSize);
 		reqSleepMilliSec = in.readInt();
 		LOG.trace(Markers.MSG, "Got request interval {}", reqSleepMilliSec);
+		setCopySrcItem((T) in.readObject());
+		LOG.trace(Markers.MSG, "Got copy mode flag {}", copySrcItem);
 	}
 	//
 	@Override

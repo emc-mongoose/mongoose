@@ -102,7 +102,9 @@ extends HttpRequestConfigBase<T, C> {
 		}
 		switch(loadType) {
 			case WRITE:
-				// TODO partial content support
+				if(obj.hasScheduledUpdates() || obj.isAppending()) {
+					applyRangesHeaders(request, obj);
+				}
 				applyPayLoad(request, obj);
 				break;
 			case READ:

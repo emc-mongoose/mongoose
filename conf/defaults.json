@@ -48,6 +48,7 @@
 		},
 		"load" : {
 			"circular" : false,
+			"copy" : false,
 			"type" : "write",
 			"threads" : 1,
 			"limit" : {
@@ -85,7 +86,7 @@
 			"resume" : {
 				"enabled" : false
 			},
-			"version" : "2.0.0"
+			"version" : "next"
 		},
 		"storage" : {
 			"type" : "http",
@@ -94,13 +95,13 @@
 			],
 			"port" : 9020,
 			"http" : {
+				"api" : "S3",
 				"fsAccess" : false,
 				"headers" : {
 					"Connection" : "keep-alive",
-					"User-Agent" : "mongoose/2.0.0"
+					"User-Agent" : "mongoose/next"
 				},
 				"namespace" : null,
-				"api" : "S3",
 				"versioning" : false
 			},
 			"mock" : {
