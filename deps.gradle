@@ -27,22 +27,6 @@ ext {
 
 	jansi = [ "org.fusesource.jansi:jansi:1.11" ]
 
-	jetty_http = [ "org.eclipse.jetty:jetty-http:9.3.0.M1" ]
-	jetty_io = [ "org.eclipse.jetty:jetty-io:9.3.0.M1" ]
-	jetty_server = [ "org.eclipse.jetty:jetty-server:9.3.0.M1" ]
-	jetty_servlet = [ "org.eclipse.jetty:jetty-servlet:9.3.0.M1" ]
-	jetty_servlet_api = [ "javax.servlet:javax.servlet-api:3.1.0" ]
-	jetty_util = [ "org.eclipse.jetty:jetty-util:9.3.0.M1" ]
-	jetty_webapp = [ "org.eclipse.jetty:jetty-webapp:9.3.0.M1" ]
-
-	webjars_bootstrap = ['org.webjars:bootstrap:3.3.2-1']
-	webjars_jquery = ['org.webjars:jquery:2.1.4']
-	webjars_d3js = ['org.webjars:d3js:3.5.3']
-	webjars_require = ['org.webjars:requirejs:2.1.20']
-	webjars_handlebars = ['org.webjars:handlebars:4.0.2']
-	webjars_pace = ['org.webjars:pace:1.0.2']
-	webjars_requirejs_text = ['org.webjars:requirejs-text:2.0.14-1']
-
 	lmax_disruptor = [ "com.lmax:disruptor:3.3.0" ]
 
 	log4j_api = [ "org.apache.logging.log4j:log4j-api:2.4.1" ]
@@ -55,22 +39,7 @@ ext {
 
 	metrics_core = [ "io.dropwizard.metrics:metrics-core:3.1.2" ]
 
-	netty_handler = [ "io.netty:netty-handler:4.0.36.Final" ]
-	netty_buffer = [ "io.netty:netty-buffer:4.0.36.Final" ]
-	netty_transport = [ "io.netty:netty-transport:4.0.36.Final" ]
-	netty_codec_http = [ "io.netty:netty-codec-http:4.0.36.Final" ]
-	netty_transport_native_epoll = [
-		"io.netty:netty-transport-native-epoll:4.0.36.Final:${osdetector.classifier}"
-	]
-
 	slf4j_api = [ "org.slf4j:slf4j-api:1.7.7" ]
-
-	websocket_api = [ "org.eclipse.jetty.websocket:websocket-api:9.3.0.M1" ]
-	websocket_client = [ "org.eclipse.jetty.websocket:websocket-client:9.3.0.M1" ]
-	websocket_common = [ "org.eclipse.jetty.websocket:websocket-common:9.3.0.M1" ]
-	websocket_core = [ "org.eclipse.jetty.websocket:websocket-core:9.0.0.M2" ]
-	websocket_server = [ "org.eclipse.jetty.websocket:websocket-server:9.3.0.M1" ]
-	websocket_servlet = [ "org.eclipse.jetty.websocket:websocket-servlet:9.3.0.M1" ]
 
 	junit = ["junit:junit:4.12"]
 	junit_mockito = ["org.mockito:mockito-all:2.0.2-beta"]
@@ -78,24 +47,9 @@ ext {
 
 	httpcore_plus_nio = [ httpcore, httpcore_nio, ]
 
-	jetty_svc = [ jetty_server, jetty_webapp, ]
-
 	log4j_api_plus_core = [ log4j_api, log4j_core, ]
 
-	websockets = [ websocket_api, websocket_servlet, ]
-
 	////////////////////////////////////////////////////////////////////////////////////////////////
-
-	runtime_jetty = [
-		jetty_io,
-		jetty_servlet,
-		jetty_servlet_api,
-		jetty_util,
-	]
-	runtime_jetty_svc = [
-		runtime_jetty,
-		jetty_http,
-	]
 
 	runtime_logging = [
 		commons_logging,
@@ -105,14 +59,4 @@ ext {
 		jansi,
 	]
 
-	runtime_webapp = [
-		log4j_web,
-		webjars_bootstrap,
-		webjars_jquery,
-		webjars_d3js,
-		webjars_require,
-		webjars_handlebars,
-		webjars_requirejs_text,
-		webjars_pace
-	]
 }
