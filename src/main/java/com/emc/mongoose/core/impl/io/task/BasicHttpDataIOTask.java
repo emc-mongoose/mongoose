@@ -151,6 +151,11 @@ implements HttpDataIOTask<T> {
 		if(countBytesDone == contentSize) {
 			item.resetUpdates();
 			chanOut.close();
+			// copy mode hook
+			final T copySrcItem = (T) ioConfig.getCopySrcItem();
+			if(copySrcItem != null) {
+				item.setOffset(copySrcItem.getOffset());
+			}
 		}
 	}
 	//

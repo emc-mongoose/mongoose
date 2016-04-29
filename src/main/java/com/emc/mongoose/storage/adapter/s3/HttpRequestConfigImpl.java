@@ -5,6 +5,7 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 // mongoose-core-impl.jar
@@ -37,11 +38,12 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	public final static String CANONICAL_AMZ_HEADER_PREFIX = "x-amz-";
+	public final static String MSG_NO_BUCKET = "Bucket is not specified";
 	public final static String
-		CANONICAL_AMZ_HEADER_PREFIX = "x-amz-",
-		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
-	private final static String AUTH_PREFIX = "AWS ";
+	public final static String AUTH_PREFIX = "AWS ";
+	public final static String KEY_X_AMZ_COPY_SOURCE = "x-amz-copy-source";
 	//
 	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
@@ -87,7 +89,6 @@ extends HttpRequestConfigBase<T, C> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		//applyObjectId(dataItem, null);
 		return getContainerUriPath(container) + "/" + dataItem.getName();
 	}
 	//
@@ -95,6 +96,12 @@ extends HttpRequestConfigBase<T, C> {
 	protected final String getContainerUriPath(final Container<T> container)
 	throws IllegalArgumentException, URISyntaxException {
 		return "/" + container.getName();
+	}
+	//
+	@Override
+	protected final void applyCopyHeaders(final HttpRequest httpRequest)
+	throws URISyntaxException {
+		httpRequest.setHeader(KEY_X_AMZ_COPY_SOURCE, getDataUriPath((T) copySrcItem));
 	}
 	//
 	@Override

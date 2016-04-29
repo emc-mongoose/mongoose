@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -36,7 +37,7 @@ implements IoConfig<T, C> {
 	//
 	protected LoadType loadType;
 	protected C container;
-	protected volatile T copySrcItem = null;
+	protected volatile Item copySrcItem = null;
 	protected ContentSource contentSrc;
 	protected volatile boolean verifyContentFlag;
 	protected volatile AppConfig appConfig;
@@ -205,12 +206,12 @@ implements IoConfig<T, C> {
 		return this;
 	}
 	//
-	public final T getCopySrcItem() {
+	public final Item getCopySrcItem() {
 		return copySrcItem;
 	}
 	//
 	@Override
-	public final IoConfigBase<T, C> setCopySrcItem(final T copySource) {
+	public final IoConfigBase<T, C> setCopySrcItem(final Item copySource) {
 		this.copySrcItem = copySource;
 		return this;
 	}

@@ -87,7 +87,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 09.06.14.
  */
@@ -272,10 +271,12 @@ implements HttpRequestConfig<T, C> {
 		}
 		switch(loadType) {
 			case WRITE:
-				if(obj.hasScheduledUpdates() || obj.hasBeenUpdated()) {
+				if(obj.hasScheduledUpdates() || obj.isAppending()) {
 					applyRangesHeaders(request, obj);
 				}
-				applyPayLoad(request, obj);
+				if(copySrcItem == null) {
+					applyPayLoad(request, obj);
+				}
 				break;
 			case READ:
 			case DELETE:
@@ -531,16 +532,27 @@ implements HttpRequestConfig<T, C> {
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a date header");
 		}
+		//
 		try {
 			applyMetaDataHeaders(httpRequest);
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a metadata headers");
 		}
+		//
+		if(copySrcItem != null) {
+			try {
+				applyCopyHeaders(httpRequest);
+			} catch(final Exception e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a copy source headers");
+			}
+		}
+		//
 		try {
 			applyAuthHeader(httpRequest);
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply an auth header");
 		}
+		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			final StringBuilder msgBuff = new StringBuilder("built request: ")
 				.append(httpRequest.getRequestLine().getMethod()).append(' ')
@@ -649,6 +661,10 @@ implements HttpRequestConfig<T, C> {
 	}
 	//
 	protected void applyMetaDataHeaders(final HttpRequest httpRequest) {
+	}
+	//
+	protected void applyCopyHeaders(final HttpRequest httpRequest)
+	throws URISyntaxException {
 	}
 	//
 	protected abstract void applyAuthHeader(final HttpRequest httpRequest);

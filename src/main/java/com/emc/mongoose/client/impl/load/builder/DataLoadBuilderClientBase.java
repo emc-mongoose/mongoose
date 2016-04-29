@@ -68,7 +68,7 @@ implements DataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig)
+	public DataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
 		super.setAppConfig(appConfig);
 		setDataSize(appConfig.getItemDataSize());

@@ -33,6 +33,7 @@ extends HttpRequestConfigBase<T, C> {
 	public final static String KEY_X_AUTH_TOKEN = "X-Auth-Token";
 	public final static String KEY_X_AUTH_USER = "X-Auth-User";
 	public final static String KEY_X_AUTH_KEY = "X-Auth-Key";
+	public final static String KEY_X_COPY_FROM = "X-Copy-From";
 	public final static String KEY_X_VERSIONING = "X-Versions-Location";
 	public final static String DEFAULT_VERSIONS_CONTAINER = "archive";
 	//
@@ -132,7 +133,6 @@ extends HttpRequestConfigBase<T, C> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		//applyObjectId(dataItem, null);
 		return uriSvcBaseContainerPath + "/" + dataItem.getName();
 	}
 	@Override
@@ -142,6 +142,12 @@ extends HttpRequestConfigBase<T, C> {
 	}
 	//
 	private Header headerAuthToken = null;
+	//
+	@Override
+	protected final void applyCopyHeaders(final HttpRequest httpRequest)
+	throws URISyntaxException {
+		httpRequest.setHeader(KEY_X_COPY_FROM, getDataUriPath((T) copySrcItem));
+	}
 	//
 	@Override
 	protected final void applyAuthHeader(final HttpRequest httpRequest) {

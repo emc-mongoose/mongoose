@@ -55,6 +55,6 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	Class<T> getItemClass();
 	//
-	T getCopySrcItem();
-	IoConfig<T, C> setCopySrcItem(final T item);
+	Item getCopySrcItem();
+	IoConfig<T, C> setCopySrcItem(final Item item);
 }

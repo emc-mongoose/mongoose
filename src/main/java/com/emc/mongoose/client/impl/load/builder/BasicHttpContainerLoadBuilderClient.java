@@ -51,6 +51,21 @@ public class BasicHttpContainerLoadBuilderClient<
 		return HttpRequestConfigBase.getInstance();
 	}
 	//
+	@Override
+	public final BasicHttpContainerLoadBuilderClient<T, C, W, U> setAppConfig(
+		final AppConfig appConfig
+	) {
+		final String newApi = appConfig.getStorageHttpApi();
+		if(!((HttpRequestConfig) ioConfig).getAPI().equalsIgnoreCase(newApi)) {
+			ioConfig = HttpRequestConfigBase.newInstanceFor(newApi);
+		}
+		try {
+			super.setAppConfig(appConfig);
+		} catch(final RemoteException ignored) {
+		}
+		return this;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	protected HttpContainerLoadBuilderSvc<T, C, W> resolve(final String serverAddr)
 	throws IOException {

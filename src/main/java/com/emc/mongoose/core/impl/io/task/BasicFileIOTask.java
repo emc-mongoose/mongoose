@@ -4,8 +4,10 @@ import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.DataCorruptionException;
+import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.DataSizeException;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -108,7 +110,7 @@ implements FileIOTask<T> {
 						} else if(item.isAppending()) {
 							runAppend(byteChannel);
 						} else {
-							runWriteFully(byteChannel, ioConfig.getCopySrcItem());
+							runWriteFully(byteChannel, (T) ioConfig.getCopySrcItem());
 						}
 					}
 				}
@@ -245,6 +247,8 @@ implements FileIOTask<T> {
 						fileSrcChannel, countBytesDone, contentSize
 					);
 				}
+				// copy mode hook
+				item.setOffset(copySrcItem.getOffset());
 			}
 		}
 		status = SUCC;
