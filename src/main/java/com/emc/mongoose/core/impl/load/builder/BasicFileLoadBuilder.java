@@ -51,8 +51,8 @@ extends DataLoadBuilderBase<T, U> {
 	public void invokePreConditions()
 	throws IllegalStateException {
 		// create parent directories
-		final Container c = ioConfig.getContainer();
-		final String parentDirectories = c == null ? null : c.getName();
+		final Container d = ioConfig.getDstContainer();
+		final String parentDirectories = d == null ? null : d.getName();
 		if(parentDirectories != null && !parentDirectories.isEmpty()) {
 			try {
 				Files.createDirectories(Paths.get(parentDirectories));

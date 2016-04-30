@@ -33,7 +33,9 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_ITEM_DATA_RANGES = "item.data.ranges";
 	String KEY_ITEM_DATA_SIZE = "item.data.size";
 	String KEY_ITEM_DATA_VERIFY = "item.data.verify";
+	String KEY_ITEM_DST_CONTAINER = "item.dst.container";
 	String KEY_ITEM_DST_FILE = "item.dst.file";
+	String KEY_ITEM_SRC_CONTAINER = "item.src.container";
 	String KEY_ITEM_SRC_FILE = "item.src.file";
 	String KEY_ITEM_SRC_BATCH_SIZE = "item.src.batchSize";
 	String KEY_ITEM_NAMING_TYPE = "item.naming.type";
@@ -116,7 +118,11 @@ extends Cloneable, Configuration, Externalizable {
 
 	boolean getItemDataVerify();
 
+	String getItemDstContainer();
+
 	String getItemDstFile();
+
+	String getItemSrcContainer();
 
 	String getItemSrcFile();
 

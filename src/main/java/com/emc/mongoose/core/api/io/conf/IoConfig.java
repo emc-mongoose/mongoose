@@ -41,11 +41,17 @@ extends Externalizable, Cloneable, Closeable {
 	boolean getVerifyContentFlag();
 	IoConfig<T, C> setVerifyContentFlag(final boolean verifyContentFlag);
 	//
+	boolean getCopyFlag();
+	IoConfig<T, C> setCopyFlag(final boolean copyFlag);
+	//
 	int getBuffSize();
 	IoConfig<T, C> setBuffSize(final int buffSize);
 	//
-	C getContainer();
-	IoConfig<T, C> setContainer(final C container);
+	C getDstContainer();
+	IoConfig<T, C> setDstContainer(final C container);
+	//
+	C getSrcContainer();
+	IoConfig<T, C> setSrcContainer(final C container);
 	//
 	IoConfig<T, C> setAppConfig(final AppConfig appConfig);
 	//
@@ -54,7 +60,4 @@ extends Externalizable, Cloneable, Closeable {
 	Class<C> getContainerClass();
 	//
 	Class<T> getItemClass();
-	//
-	Item getCopySrcItem();
-	IoConfig<T, C> setCopySrcItem(final Item item);
 }

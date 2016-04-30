@@ -87,8 +87,8 @@ implements StorageClientBuilder<T, U> {
 	}
 	//
 	@Override
-	public final StorageClientBuilder<T, U> setContainer(final String value) {
-		appConfig.setProperty(AppConfig.KEY_ITEM_CONTAINER_NAME, value);
+	public final StorageClientBuilder<T, U> setDestContainer(final String value) {
+		appConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, value);
 		return this;
 	}
 	//

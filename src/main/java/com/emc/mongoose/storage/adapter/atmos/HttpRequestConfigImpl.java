@@ -43,8 +43,9 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static String
-		PREFIX_URI ="/rest/", API_TYPE_OBJ = "objects", API_TYPE_FS = "namespace";
+	public final static String PREFIX_URI ="/rest/";
+	public final static String API_TYPE_OBJ = "objects";
+	public final static String API_TYPE_FS = "namespace";
 	//
 	public final static Header
 		DEFAULT_ACCEPT_HEADER = new BasicHeader(HttpHeaders.ACCEPT, "*/*");
@@ -93,7 +94,7 @@ extends HttpRequestConfigBase<T, C> {
 		//	super.applyObjectId(obj, null);
 		//}
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
-			getHttpMethod(), getDataUriPath(obj)
+			getHttpMethod(), getObjectDstPath(obj)
 		);
 		try {
 			applyHostHeader(request, nodeAddr);
@@ -246,18 +247,31 @@ extends HttpRequestConfigBase<T, C> {
 	}
 	//
 	@Override
-	protected final String getDataUriPath(final T dataItem) {
-		if(dataItem == null) {
+	protected final String getObjectDstPath(final T object) {
+		if(object == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !LoadType.WRITE.equals(loadType)) {
-			return uriBasePath + "/" + dataItem.getName();
+			return uriBasePath + "/" + object.getName();
 		} else { // "/rest/objects"
 			return uriBasePath;
 		}
 	}
+	//
 	@Override
-	protected final String getContainerUriPath(final Container<T> container)
+	protected final String getObjectSrcPath(final T object) {
+		if(object == null) {
+			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
+		}
+		if(fsAccess || !LoadType.WRITE.equals(loadType)) {
+			return uriBasePath + "/" + object.getName();
+		} else { // "/rest/objects"
+			return uriBasePath;
+		}
+	}
+	//
+	@Override
+	protected final String getContainerPath(final Container<T> container)
 	throws IllegalArgumentException, URISyntaxException {
 		throw new IllegalStateException("No container request is possible using Atmos API");
 	}

@@ -192,8 +192,18 @@ implements AppConfig {
 	}
 	//
 	@Override
+	public String getItemDstContainer() {
+		return getString(KEY_ITEM_DST_CONTAINER);
+	}
+	//
+	@Override
 	public String getItemDstFile() {
 		return getString(KEY_ITEM_DST_FILE);
+	}
+	//
+	@Override
+	public String getItemSrcContainer() {
+		return getString(KEY_ITEM_SRC_CONTAINER);
 	}
 	//
 	@Override
@@ -616,7 +626,7 @@ implements AppConfig {
 			nextVal = getProperty(nextKey);
 			switch(nextKey) {
 				case KEY_ITEM_TYPE:
-				case KEY_ITEM_CONTAINER_NAME:
+				case KEY_ITEM_DST_CONTAINER:
 				case KEY_LOAD_TYPE:
 				case KEY_LOAD_THREADS:
 				case KEY_LOAD_LIMIT_COUNT:

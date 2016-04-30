@@ -262,7 +262,7 @@ implements HttpRequestConfig<T, C> {
 	public HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException, IllegalArgumentException, IllegalStateException {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
-			getHttpMethod(), getDataUriPath(obj)
+			getHttpMethod(), getObjectDstPath(obj)
 		);
 		try {
 			applyHostHeader(request, nodeAddr);
@@ -274,7 +274,9 @@ implements HttpRequestConfig<T, C> {
 				if(obj.hasScheduledUpdates() || obj.isAppending()) {
 					applyRangesHeaders(request, obj);
 				}
-				if(copySrcItem == null) {
+				if(copyFlag) {
+					applyCopyHeaders(request, obj);
+				} else {
 					applyPayLoad(request, obj);
 				}
 				break;
@@ -291,7 +293,7 @@ implements HttpRequestConfig<T, C> {
 		final C container, final String nodeAddr
 	) throws URISyntaxException {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
-			getHttpMethod(), getContainerUriPath(container)
+			getHttpMethod(), getContainerPath(container)
 		);
 		try {
 			applyHostHeader(request, nodeAddr);
@@ -402,11 +404,17 @@ implements HttpRequestConfig<T, C> {
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setFileAccessEnabled(appConfig.getStorageHttpFsAccess());
 		setVersioning(appConfig.getStorageHttpVersioning());
-		final String containerName = appConfig.getItemContainerName();
-		if(containerName != null && !containerName.isEmpty()) {
-			setContainer((C) new BasicContainer<T>(containerName));
+		final String dstContainerName = appConfig.getItemDstContainer();
+		if(dstContainerName != null && !dstContainerName.isEmpty()) {
+			setDstContainer((C) new BasicContainer<T>(dstContainerName));
 		} else {
-			setContainer(null);
+			setDstContainer(null);
+		}
+		final String srcContainerName = appConfig.getItemSrcContainer();
+		if(srcContainerName != null && !srcContainerName.isEmpty()) {
+			setSrcContainer((C) new BasicContainer<T>(srcContainerName));
+		} else {
+			setSrcContainer(null);
 		}
 		// setPipelining(false);
 		// custom HTTP headers adding
@@ -539,14 +547,6 @@ implements HttpRequestConfig<T, C> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a metadata headers");
 		}
 		//
-		if(copySrcItem != null) {
-			try {
-				applyCopyHeaders(httpRequest);
-			} catch(final Exception e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a copy source headers");
-			}
-		}
-		//
 		try {
 			applyAuthHeader(httpRequest);
 		} catch(final Exception e) {
@@ -578,10 +578,13 @@ implements HttpRequestConfig<T, C> {
 		}
 	}
 	//
-	protected abstract String getDataUriPath(final T dataItem)
+	protected abstract String getObjectDstPath(final T object)
 	throws IllegalArgumentException, URISyntaxException;
 	//
-	protected abstract String getContainerUriPath(final Container<T> container)
+	protected abstract String getObjectSrcPath(final T object)
+	throws IllegalArgumentException, URISyntaxException;
+	//
+	protected abstract String getContainerPath(final Container<T> container)
 	throws IllegalArgumentException, URISyntaxException;
 	//
 	protected final void applyPayLoad(
@@ -663,7 +666,7 @@ implements HttpRequestConfig<T, C> {
 	protected void applyMetaDataHeaders(final HttpRequest httpRequest) {
 	}
 	//
-	protected void applyCopyHeaders(final HttpRequest httpRequest)
+	protected void applyCopyHeaders(final HttpRequest httpRequest, final T object)
 	throws URISyntaxException {
 	}
 	//
@@ -739,10 +742,10 @@ implements HttpRequestConfig<T, C> {
 	@Override
 	public void configureStorage(final String storageNodeAddrs[])
 	throws IllegalStateException {
-		final String containerName = container.getName();
-		int firstSepPos = containerName.indexOf(File.pathSeparatorChar);
+		final String dstContainerName = dstContainer.getName();
+		int firstSepPos = dstContainerName.indexOf(File.pathSeparatorChar);
 		if(fsAccess && firstSepPos >= 0) {
-			final String path = containerName.substring(firstSepPos);
+			final String path = dstContainerName.substring(firstSepPos);
 			if(!path.isEmpty()) {
 				createDirectoryPath(storageNodeAddrs[0], path);
 			}

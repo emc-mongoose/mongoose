@@ -15,9 +15,6 @@
 		},
 		"item" : {
 			"type" : "data",
-			"container" : {
-				"name" : null
-			},
 			"data" : {
 				"content" : {
 					"file" : null,
@@ -29,9 +26,11 @@
 				"verify" : true
 			},
 			"dst" : {
+				"container" : null,
 				"file" : null
 			},
 			"src" : {
+				"container" : null,
 				"file" : null,
 				"batchSize" : 4096
 			},

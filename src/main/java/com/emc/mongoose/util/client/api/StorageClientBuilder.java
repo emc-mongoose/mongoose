@@ -57,7 +57,7 @@ public interface StorageClientBuilder<T extends Item, U extends StorageClient<T>
 	 @param value The name of the container, for example "sanity-nh-container1"
 	 @return self.
 	 */
-	StorageClientBuilder<T, U> setContainer(final String value);
+	StorageClientBuilder<T, U> setDestContainer(final String value);
 
 	/**
 	 Set the authentication token to use (subtenant if using Atmos).

@@ -3,7 +3,6 @@ package com.emc.mongoose.core.impl.io.task;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
@@ -39,17 +38,17 @@ implements DirectoryIOTask<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final Path fPath;
+	private final Path dstPath;
 	private final RunnableFuture<BasicDirectoryIOTask<T, C, X>> future;
 	//
 	public BasicDirectoryIOTask(final C item, final X ioConfig) {
 		super(item, null, ioConfig);
 		//
-		final C parentDir = ioConfig.getContainer();
-		if(parentDir != null) {
-			fPath = Paths.get(parentDir.getName(), item.getName()).toAbsolutePath();
+		final C dstParentDir = ioConfig.getDstContainer();
+		if(dstParentDir != null) {
+			dstPath = Paths.get(dstParentDir.getName(), item.getName()).toAbsolutePath();
 		} else {
-			fPath = Paths.get(item.getName()).toAbsolutePath();
+			dstPath = Paths.get(item.getName()).toAbsolutePath();
 		}
 		//
 		future = new FutureTask<>(this, this);
@@ -61,7 +60,7 @@ implements DirectoryIOTask<T, C> {
 		try {
 			switch(ioType) {
 				case WRITE:
-					runWrite(ioConfig.getCopySrcItem());
+					runWrite(ioConfig.getCopyFlag());
 					break;
 				case READ:
 					runRead();
@@ -76,32 +75,32 @@ implements DirectoryIOTask<T, C> {
 			status = Status.FAIL_IO;
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to {} the directory \"{}\"",
-				ioType.toString().toLowerCase(), fPath
+				ioType.toString().toLowerCase(), dstPath
 			);
 		} catch(final Exception e) {
 			status = Status.FAIL_UNKNOWN;
 			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to {} the directory \"{}\"",
-				ioType.toString().toLowerCase(), fPath
+				ioType.toString().toLowerCase(), dstPath
 			);
 		} finally {
 			respTimeDone = System.nanoTime() / 1000;
 		}
 	}
 	//
-	protected void runWrite(final Item copySrcDir)
+	protected void runWrite(final boolean copyFlag)
 	throws IOException {
-		if(copySrcDir == null) {
-			Files.createDirectories(fPath);
-		} else {
-			final C parentDir = ioConfig.getContainer();
+		if(copyFlag) {
+			final C srcDir = ioConfig.getSrcContainer();
 			final Path srcPath;
-			if(parentDir != null) {
-				srcPath = Paths.get(parentDir.getName(), copySrcDir.getName()).toAbsolutePath();
+			if(srcDir == null) {
+				srcPath = Paths.get(item.getName()).toAbsolutePath();
 			} else {
-				srcPath = Paths.get(copySrcDir.getName()).toAbsolutePath();
+				srcPath = Paths.get(srcDir.getName(), item.getName()).toAbsolutePath();
 			}
-			copyDirWithFiles(srcPath.toFile(), fPath.toFile());
+			copyDirWithFiles(srcPath.toFile(), dstPath.toFile());
+		} else {
+			Files.createDirectories(dstPath);
 		}
 		status = Status.SUCC;
 	}
@@ -151,12 +150,11 @@ implements DirectoryIOTask<T, C> {
 	throws IOException {
 		try(
 			final DirectoryStream<Path>
-				dirStream = Files.newDirectoryStream(
-					fPath, DirectoryItemInput.DEFAULT_DIRECTORY_STREAM_FILTER
+				dirStream = Files.newDirectoryStream(dstPath, DirectoryItemInput.DEFAULT_DIRECTORY_STREAM_FILTER
 				)
 		) {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "Directory \"{}\" listing follows", fPath);
+				LOG.trace(Markers.MSG, "Directory \"{}\" listing follows", dstPath);
 			}
 			for(final Path nextFilePath : dirStream) {
 				countBytesDone += Files.size(nextFilePath);
@@ -167,7 +165,7 @@ implements DirectoryIOTask<T, C> {
 	//
 	protected void runDelete()
 	throws IOException {
-		Files.delete(fPath);
+		Files.delete(dstPath);
 		status = Status.SUCC;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
