@@ -2,8 +2,8 @@
 	"type" : "load",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "/tmp/write-to-variable-dir/%p{16;2}"
+			"dst" : {
+				"container" : "/tmp/write-to-variable-dir/%p{16;2}"
 			},
 			"data" : {
 				"size" : "4KB"

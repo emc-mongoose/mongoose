@@ -97,6 +97,11 @@ implements HttpDataLoadBuilderSvc<T, U> {
 	@Override
 	public final void invokePreConditions() {} // discard any precondition invocations in load server mode
 	//
+	@Override
+	public final Input<T> selectItemInput() {
+		return null;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()
 	throws IllegalStateException {

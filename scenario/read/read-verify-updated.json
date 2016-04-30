@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "linear-read-verify-updated"
+			"dst" : {
+				"container" : "linear-read-verify-updated"
 			},
 			"data" : {
 				"size" : "1KB"

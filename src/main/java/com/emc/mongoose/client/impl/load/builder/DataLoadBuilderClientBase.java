@@ -9,13 +9,10 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
-import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.FileDataItemInput;
-import com.emc.mongoose.core.api.io.conf.IoConfig;
 //
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
@@ -45,7 +42,6 @@ implements DataLoadBuilderClient<T, W, U> {
 	//
 	protected SizeInBytes sizeConfig;
 	protected DataRangesConfig rangesConfig = null;
-	protected boolean flagUseContainerItemSrc;
 	//
 	protected DataLoadBuilderClientBase()
 	throws IOException {
@@ -109,12 +105,6 @@ implements DataLoadBuilderClient<T, W, U> {
 		return new NewDataItemInput<>(
 			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeConfig
 		);
-	}
-	//
-	@Override
-	protected final void resetItemInput() {
-		super.resetItemInput();
-		flagUseContainerItemSrc = true;
 	}
 	//
 	@Override

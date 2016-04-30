@@ -86,8 +86,6 @@ implements LoadBuilderClient<T, W, U> {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the configuration");
 			}
 		}
-		//
-		resetItemInput();
 		// set properties should be invoked only after the map is filled already
 		setAppConfig(appConfig);
 		//
@@ -315,43 +313,6 @@ implements LoadBuilderClient<T, W, U> {
 			}
 		}
 		return this;
-	}
-	//
-	@Override @SuppressWarnings("unchecked")
-	public LoadBuilderClient<T, W, U> setInput(final Input<T> itemInput)
-	throws RemoteException {
-		super.setInput(itemInput);
-		if(itemInput != null && loadSvcMap != null) {
-			// disable any item source usage on the load servers side
-			V nextBuilder;
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.useNoneItemSrc();
-			}
-		}
-		return this;
-	}
-	//
-	protected void resetItemInput() {
-		flagUseNewItemSrc = true;
-		flagUseNoneItemSrc = false;
-		itemInput = null;
-	}
-	//
-	@Override
-	protected Input<T> selectItemInput() {
-		// disable any item source usage on the load servers side
-		V nextBuilder;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextBuilder = loadSvcMap.get(addr);
-			try {
-				nextBuilder.useNoneItemSrc();
-			} catch(final RemoteException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to invoke the remote method");
-			}
-		}
-		//
-		return super.selectItemInput();
 	}
 	//
 	@Override

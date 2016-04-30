@@ -41,12 +41,9 @@ implements LoadBuilder<T, U> {
 	protected volatile IoConfig ioConfig = getDefaultIoConfig();
 	protected float rateLimit;
 	protected int threadCount = 1;
-	protected Input<T> itemInput;
+	protected Input<T> itemInput = null;
 	protected Output<T> itemOutput = null;
 	protected String storageNodeAddrs[];
-	protected boolean flagUseNewItemSrc;
-	protected boolean flagUseNoneItemSrc;
-	protected boolean flagUseContainerItemSrc;
 	//
 	protected abstract IoConfig<? extends Item, ? extends Container<? extends Item>>
 		getDefaultIoConfig();
@@ -58,7 +55,6 @@ implements LoadBuilder<T, U> {
 	//
 	public LoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
-		resetItemInput();
 		try {
 			setAppConfig(appConfig);
 		} catch(final IllegalArgumentException | IllegalStateException e) {
@@ -66,10 +62,7 @@ implements LoadBuilder<T, U> {
 		}
 	}
 	//
-	protected void resetItemInput() {
-		flagUseNewItemSrc = true;
-		flagUseNoneItemSrc = false;
-		flagUseContainerItemSrc = true;
+	protected final void resetItemInput() {
 		itemInput = null;
 	}
 	//
@@ -269,9 +262,6 @@ implements LoadBuilder<T, U> {
 		lb.itemInput = itemInput;
 		lb.itemOutput = itemOutput;
 		lb.rateLimit = rateLimit;
-		lb.flagUseNewItemSrc = flagUseNewItemSrc;
-		lb.flagUseNoneItemSrc = flagUseNoneItemSrc;
-		lb.flagUseContainerItemSrc = flagUseContainerItemSrc;
 		return lb;
 	}
 	//
@@ -287,72 +277,36 @@ implements LoadBuilder<T, U> {
 			);
 	}
 	//
-	protected Input<T> selectItemInput() {
-		try {
-			if(LoadType.WRITE.equals(ioConfig.getLoadType()) && appConfig.getLoadCopy()) {
-				try(
-					final Input<T> tmpInput = itemInput == null ?
-						getContainerItemInput() : itemInput
-				) {
-					final T srcItem = tmpInput.get();
-					if(srcItem == null) {
-						LOG.warn(
-							Markers.ERR, "Got null item to copy from the input \"{}\"", tmpInput
-						);
-					} else {
-						LOG.info(
-							Markers.MSG, "Going to copy the single item \"{}\"", srcItem.getName()
-						);
-						ioConfig.setCopySrcItem(srcItem);
-					}
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to get the item to copy");
-				}
-				return getNewItemInput();
-			} else if(itemInput != null) {
-				return itemInput;
+	protected Input<T> selectItemInput()
+	throws IllegalStateException {
+		final boolean copyFlag = appConfig.getLoadCopy();
+		if(null == ioConfig.getSrcContainer()) {
+			if(copyFlag) {
+				throw new IllegalStateException(
+					"Copy mode is enabled but no source container is set"
+				);
 			}
-			//
-			if(flagUseNoneItemSrc) {
-				return null;
-			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(LoadType.WRITE.equals(ioConfig.getLoadType())) {
-					return getNewItemInput();
-				} else {
-					return getContainerItemInput();
-				}
-			} else if(flagUseNewItemSrc) {
-				return getNewItemInput();
-			} else if(flagUseContainerItemSrc) {
-				return getContainerItemInput();
+			try {
+				return itemInput == null ? getNewItemInput() : itemInput;
+			} catch(final NoSuchMethodException e) {
+				throw new IllegalStateException(e);
 			}
-		} catch(final NoSuchMethodException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
-		} catch(final CloneNotSupportedException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the I/O config instance");
+		} else {
+			if(copyFlag) {
+				final LoadType loadType = ioConfig.getLoadType();
+				if(!LoadType.WRITE.equals(loadType)) {
+					throw new IllegalStateException(
+						"Copy mode is enabled but the load type is not \"write\": \"" +
+						loadType + "\""
+					);
+				}
+			}
+			try {
+				return itemInput == null ? getContainerItemInput() : itemInput;
+			} catch(final CloneNotSupportedException e) {
+				throw new IllegalStateException(e);
+			}
 		}
-		return null;
-	}
-	//
-	@Override
-	public LoadBuilderBase<T, U> useNewItemSrc()
-	throws RemoteException {
-		flagUseNewItemSrc = true;
-		return this;
-	}
-	//
-	@Override
-	public LoadBuilderBase<T, U> useNoneItemSrc()
-	throws RemoteException {
-		flagUseNoneItemSrc = true;
-		return this;
-	}
-	//
-	@Override
-	public LoadBuilderBase<T, U> useContainerListingItemSrc()
-	throws RemoteException {
-		flagUseContainerItemSrc = true;
-		return this;
 	}
 	//
 	@Override
@@ -365,7 +319,7 @@ implements LoadBuilder<T, U> {
 		}
 		final U loadJob = buildActually();
 		loadJob.setOutput(itemOutput);
-		resetItemInput();
+		itemInput = null;
 		return loadJob;
 	}
 	//

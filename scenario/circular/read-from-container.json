@@ -2,8 +2,11 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "scenario-circular-read-from-container"
+			"dst" : {
+				"container" : "scenario-circular-read-from-container"
+			},
+			"src" : {
+				"container" : "scenario-circular-read-from-container"
 			}
 		},
 		"load" : {

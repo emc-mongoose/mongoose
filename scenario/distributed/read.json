@@ -1,8 +1,8 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"container" : {
-			"name" : "distributed-read"
+		"dst" : {
+			"container" : "distributed-read"
 		},
 		"load" : {
 			"limit" : {

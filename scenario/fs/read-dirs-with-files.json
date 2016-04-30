@@ -3,8 +3,8 @@
 	"config" : {
 		"item" : {
 			"type" : "container",
-			"container" : {
-				"name" : "/tmp/scenario-read-dirs-with-files"
+			"dst" : {
+				"container" : "/tmp/scenario-read-dirs-with-files"
 			}
 		},
 		"load" : {
@@ -52,8 +52,8 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/0"
+							"dst" : {
+								"container" : "/tmp/scenario-read-dirs-with-files/0"
 							}
 						}
 					}
@@ -61,8 +61,8 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/1"
+							"dst" : {
+								"container" : "/tmp/scenario-read-dirs-with-files/1"
 							}
 						}
 					}
@@ -70,8 +70,8 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/2"
+							"dst" : {
+								"container" : "/tmp/scenario-read-dirs-with-files/2"
 							}
 						}
 					}
@@ -79,8 +79,8 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/3"
+							"dst" : {
+								"container" : "/tmp/scenario-read-dirs-with-files/3"
 							}
 						}
 					}
@@ -88,8 +88,8 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/4"
+							"dst" : {
+								"container" : "/tmp/scenario-read-dirs-with-files/4"
 							}
 						}
 					}
@@ -97,8 +97,8 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/5"
+							"dst" : {
+								"container" : "/tmp/scenario-read-dirs-with-files/5"
 							}
 						}
 					}
@@ -106,8 +106,8 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/6"
+							"dst" : {
+								"container" : "/tmp/scenario-read-dirs-with-files/6"
 							}
 						}
 					}
@@ -115,8 +115,8 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/7"
+							"dst" : {
+								"container" : "/tmp/scenario-read-dirs-with-files/7"
 							}
 						}
 					}
@@ -124,8 +124,8 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/8"
+							"dst" : {
+								"container" : "/tmp/scenario-read-dirs-with-files/8"
 							}
 						}
 					}
@@ -133,8 +133,8 @@
 					"type" : "load",
 					"config" : {
 						"item" : {
-							"container" : {
-								"name" : "/tmp/scenario-read-dirs-with-files/9"
+							"dst" : {
+								"container" : "/tmp/scenario-read-dirs-with-files/9"
 							}
 						}
 					}

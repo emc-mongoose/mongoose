@@ -2,13 +2,11 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "weighted2-load"
-			},
 			"data" : {
 				"size" : "8KB"
 			},
 			"dst" : {
+				"container" : "weighted2-load",
 				"file" : "/tmp/scenario-weighted2-read-input.csv"
 			}
 		},

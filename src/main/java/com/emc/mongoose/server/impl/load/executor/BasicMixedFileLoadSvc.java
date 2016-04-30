@@ -76,7 +76,7 @@ implements MixedFileLoadSvc<F> {
 			}
 			reqConfigMap.put(nextLoadType, reqConfigCopy);
 			final BasicFileLoadSvc<F> nextLoadSvc = new BasicFileLoadSvc<F>(
-				appConfig, reqConfigCopy, threadCount, itemInput.get(nextLoadType), countLimit,
+				appConfig, reqConfigCopy, threadCount, null, countLimit,
 				sizeLimit, rateLimit, sizeConfig, rangesConfig
 			) {
 				@Override

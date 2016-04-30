@@ -1,8 +1,8 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"container" : {
-			"name" : "distributed-delete"
+		"dst" : {
+			"container" : "distributed-delete"
 		},
 		"load" : {
 			"limit" : {

@@ -3,6 +3,7 @@ package com.emc.mongoose.server.impl.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
@@ -64,15 +65,6 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
-	public String buildRemotely()
-	throws RemoteException {
-		U loadSvc = build();
-		LOG.info(Markers.MSG, appConfig.toString());
-		ServiceUtil.create(loadSvc);
-		return loadSvc.getName();
-	}
-	//
-	@Override
 	public final String getName() {
 		return name;
 	}
@@ -89,6 +81,20 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 	//
 	@Override
 	public final void invokePreConditions() {} // discard any precondition invocations in load server mode
+	//
+	@Override
+	public final Input<C> selectItemInput() {
+		return null;
+	}
+	//
+	@Override
+	public String buildRemotely()
+	throws RemoteException {
+		U loadSvc = build();
+		LOG.info(Markers.MSG, appConfig.toString());
+		ServiceUtil.create(loadSvc);
+		return loadSvc.getName();
+	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()

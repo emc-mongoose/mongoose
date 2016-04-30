@@ -1,8 +1,8 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"container" : {
-			"name" : "distributed-update"
+		"dst" : {
+			"container" : "distributed-update"
 		},
 		"load" : {
 			"limit" : {

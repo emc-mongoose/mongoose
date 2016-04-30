@@ -81,8 +81,8 @@ implements MixedHttpDataLoadSvc<T> {
 			}
 			reqConfigMap.put(nextLoadType, reqConfigCopy);
 			final BasicHttpDataLoadSvc<T> nextLoadSvc = new BasicHttpDataLoadSvc<T>(
-				appConfig, reqConfigCopy, addrs, threadCount, itemInputMap.get(nextLoadType),
-				countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig,
+				appConfig, reqConfigCopy, addrs, threadCount, null, countLimit, sizeLimit,
+				rateLimit, sizeConfig, rangesConfig,
 				httpProcessor, client, ioReactor, connPoolMap
 			) {
 				@Override

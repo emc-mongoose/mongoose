@@ -62,8 +62,6 @@ implements HttpContainerLoadBuilder<T, C, U> {
 	@Override
 	public void invokePreConditions()
 	throws IllegalStateException {
-		//  do nothing
-		//  ioConfig.configureStorage(storageNodeAddrs);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

@@ -74,7 +74,7 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.WRITE)
-				.useNewItemSrc().setInput(itemInput)
+				.setInput(itemInput)
 				.setCountLimit(countLimit)
 				.setThreadCount(connPerNodeCount)
 				.build()
@@ -95,7 +95,7 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.WRITE)
-				.useNewItemSrc().setInput(itemInput)
+				.setInput(itemInput)
 				.setCountLimit(countLimit)
 				.setThreadCount(connPerNodeCount)
 				.build()
@@ -115,7 +115,7 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.WRITE)
-				.useNewItemSrc().setInput(itemInput)
+				.setInput(itemInput)
 				.setCountLimit(countLimit)
 				.setThreadCount(connPerNodeCount)
 				.build()
@@ -137,7 +137,6 @@ implements StorageClient<T> {
 	) throws IllegalStateException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
-				.useContainerListingItemSrc()
 				.getIoConfig().setVerifyContentFlag(verifyContentFlag);
 		}
 		try(
@@ -160,7 +159,6 @@ implements StorageClient<T> {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
 				.setDataRanges(new DataRangesConfig(randomRangesCount))
-				.useContainerListingItemSrc()
 				.getIoConfig().setVerifyContentFlag(verifyContentFlag);
 		}
 		try(
@@ -183,7 +181,6 @@ implements StorageClient<T> {
 		if(loadBuilder instanceof DataLoadBuilder) {
 			((DataLoadBuilder) loadBuilder)
 				.setDataRanges(new DataRangesConfig(fixedByteRanges))
-				.useContainerListingItemSrc()
 				.getIoConfig().setVerifyContentFlag(verifyContentFlag);
 		}
 		try(
@@ -209,9 +206,6 @@ implements StorageClient<T> {
 		final Input<T> itemInput, final Output<T> itemOutput,
 		final long countLimit, final int connPerNodeCount
 	) throws IllegalStateException, InterruptedException, IOException {
-		if(loadBuilder instanceof DataLoadBuilder) {
-			((DataLoadBuilder) loadBuilder).useContainerListingItemSrc();
-		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.DELETE)

@@ -210,9 +210,6 @@ implements LoadBuilderSvc {
 	@Override
 	public final LoadBuilderSvc setInput(final Input itemInput)
 	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setInput(itemInput);
-		}
 		return this;
 	}
 	//
@@ -221,33 +218,6 @@ implements LoadBuilderSvc {
 	throws RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.setOutput(itemOutput);
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderSvc useNewItemSrc()
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.useNewItemSrc();
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderSvc useNoneItemSrc()
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.useNoneItemSrc();
-		}
-		return this;
-	}
-	//
-	@Override
-	public LoadBuilderSvc useContainerListingItemSrc()
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.useContainerListingItemSrc();
 		}
 		return this;
 	}

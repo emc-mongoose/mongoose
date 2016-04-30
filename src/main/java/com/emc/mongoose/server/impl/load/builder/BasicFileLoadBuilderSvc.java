@@ -67,6 +67,11 @@ implements FileLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
+	public final Input<T> selectItemInput() {
+		return null;
+	}
+	//
+	@Override
 	public String buildRemotely()
 	throws RemoteException {
 		U loadSvc = build();

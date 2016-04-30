@@ -3,6 +3,7 @@ package com.emc.mongoose.server.impl.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
@@ -65,6 +66,11 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 		} catch(final CloneNotSupportedException e) {
 			throw new RemoteException(e.toString());
 		}
+	}
+	//
+	@Override
+	public final Input<C> selectItemInput() {
+		return null;
 	}
 	//
 	@Override
