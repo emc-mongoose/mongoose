@@ -11,6 +11,7 @@ import com.emc.mongoose.core.api.item.token.Token;
 import com.emc.mongoose.core.impl.item.token.BasicToken;
 import org.apache.commons.lang.StringUtils;
 //
+import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //

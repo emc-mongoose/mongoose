@@ -62,6 +62,7 @@ implements FileIoConfig<F, D> {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply the content source");
 		}
 		setVerifyContentFlag(appConfig.getItemDataVerify());
+		setCopyFlag(appConfig.getLoadCopy());
 		setBuffSize(appConfig.getIoBufferSizeMin());
 		final String dstDirName = appConfig.getItemDstContainer();
 		if(dstDirName != null && !dstDirName.isEmpty()) {

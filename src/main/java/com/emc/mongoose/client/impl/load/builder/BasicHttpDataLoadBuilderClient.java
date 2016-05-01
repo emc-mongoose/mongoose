@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -108,8 +109,19 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		if(LoadType.MIXED.equals(loadType)) {
-			final List<String> inputFiles = (List<String>) appConfig
-				.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
+			final Object inputFilesRaw = appConfig.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
+			final List<String> inputFiles;
+			if(inputFilesRaw instanceof List) {
+				inputFiles = (List<String>) inputFilesRaw;
+			} else if(inputFilesRaw instanceof String){
+				inputFiles = new ArrayList<>();
+				inputFiles.add((String) inputFilesRaw);
+			} else {
+				throw new IllegalStateException(
+					"Invalid configuration parameter type for " + AppConfig.KEY_ITEM_SRC_FILE +
+					": \"" + inputFilesRaw + "\""
+				);
+			}
 			final List<String> loadPatterns = (List<String>) appConfig
 				.getProperty(AppConfig.KEY_LOAD_TYPE);
 			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();

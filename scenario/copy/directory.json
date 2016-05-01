@@ -5,9 +5,6 @@
 			"dst" : {
 				"container" : "/tmp/scenario-copy-directory"
 			},
-			"src" :{
-				"container" : "/tmp/scenario-copy-directory"
-			},
 			"data" : {
 				"size" : "10KB"
 			},
@@ -60,6 +57,7 @@
 						"container" : "/tmp/scenario-copy-directory_"
 					},
 					"src" : {
+						"container" : "/tmp/scenario-copy-directory",
 						"file" : "/tmp/scenario-copy-directory.json"
 					}
 				},

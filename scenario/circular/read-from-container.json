@@ -4,9 +4,6 @@
 		"item" : {
 			"dst" : {
 				"container" : "scenario-circular-read-from-container"
-			},
-			"src" : {
-				"container" : "scenario-circular-read-from-container"
 			}
 		},
 		"load" : {
@@ -21,6 +18,11 @@
 		}, {
 			"type": "load",
 			"config" : {
+				"item" : {
+					"src" : {
+						"container" : "scenario-circular-read-from-container"
+					}
+				},
 				"load" : {
 					"type" : "read",
 					"circular" : true,

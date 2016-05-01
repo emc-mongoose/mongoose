@@ -7,6 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.item.token.Token;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 //
 import org.apache.http.Header;
@@ -98,6 +99,17 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	public final String getSvcBasePath() {
 		return uriSvcBasePath;
+	}
+	//
+	@Override
+	public final HttpRequestConfigImpl<T, C> setAuthToken(final Token authToken) {
+		super.setAuthToken(authToken);
+		if(authToken != null && sharedHeaders != null) {
+			sharedHeaders.put(
+				KEY_X_AUTH_TOKEN, new BasicHeader(KEY_X_AUTH_TOKEN, authToken.getName())
+			);
+		}
+		return this;
 	}
 	//
 	@Override
@@ -199,13 +211,12 @@ extends HttpRequestConfigBase<T, C> {
 	public final void configureStorage(final String storageNodeAddrs[])
 	throws IllegalStateException {
 		// configure an auth token - create if not specified
-		final String authTokenValue = authToken == null ? null : authToken.toString();
+		String authTokenValue = authToken == null ? null : authToken.toString();
 		if(authTokenValue == null || authTokenValue.length() < 1) {
 			new SwiftAuthTokenHelper<>(this, null).create(storageNodeAddrs[0]);
 		}
 		//
-		sharedHeaders.put(KEY_X_AUTH_TOKEN, new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue));
-		appConfig.setProperty(AppConfig.KEY_AUTH_TOKEN, authTokenValue);
+		setAuthToken(authToken);
 		// configure a container
 		final HttpSwiftContainerHelper<T, C>
 			containerHelper = new HttpSwiftContainerHelper<>(this, dstContainer);

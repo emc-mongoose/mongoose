@@ -5,9 +5,6 @@
 			"dst" : {
 				"container" : "scenario-copy-swift-object"
 			},
-			"src" : {
-				"container" : "scenario-copy-swift-object"
-			},
 			"data" : {
 				"size" : "1KB"
 			}
@@ -43,6 +40,7 @@
 						"container" : "scenario-copy-swift-object_"
 					},
 					"src" : {
+						"container" : "scenario-copy-swift-object",
 						"file" : "/tmp/scenario-copy-swift-object.json"
 					}
 				},

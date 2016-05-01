@@ -33,7 +33,6 @@ implements Runnable {
 		Scenario scenario = null;
 		final String runFile = appConfig.getRunFile();
 		try {
-
 			if(runFile == null || runFile.isEmpty()) {
 				LOG.info(Markers.MSG, "Using the scenario from the standard input...");
 				scenario = new JsonScenario(appConfig, System.in);

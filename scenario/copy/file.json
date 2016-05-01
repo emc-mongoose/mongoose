@@ -5,9 +5,6 @@
 			"dst" : {
 				"container" : "/tmp/scenario-copy-file"
 			},
-			"src" : {
-				"container" : "/tmp/scenario-copy-file"
-			},
 			"data" : {
 				"size" : "4KB"
 			}
@@ -31,6 +28,9 @@
 				"item" : {
 					"dst" : {
 						"container" : "/tmp/scenario-copy-file_"
+					},
+					"src" : {
+						"container" : "/tmp/scenario-copy-file"
 					}
 				},
 				"load" : {

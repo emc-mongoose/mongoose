@@ -5,18 +5,15 @@
 			"dst" : {
 				"container" : "scenario-copy-s3-object"
 			},
-			"src" : {
-				"container" : "scenario-copy-s3-object"
-			},
 			"data" : {
 				"size" : "10KB"
-			},
-			"load" : {
-				"limit" : {
-					"count" : 1000
-				},
-				"threads" : 10
 			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : 10
 		}
 	},
 	"jobs" : [
@@ -37,17 +34,12 @@
 						"container" : "scenario-copy-s3-object_"
 					},
 					"src" : {
+						"container" : "scenario-copy-s3-object",
 						"file" : "/tmp/scenario-copy-s3-object.json"
 					}
 				},
 				"load" : {
-					"copy" : true,
-					"limit" : {
-						"count" : 1000
-					},
-					"load" : {
-						"threads" : 100
-					}
+					"copy" : true
 				}
 			}
 		}
