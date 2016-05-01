@@ -4,9 +4,6 @@
 		"item" : {
 			"dst" : {
 				"container" : "read-container-listing"
-			},
-			"src" : {
-				"container" : "read-container-listing"
 			}
 		},
 		"load" : {
@@ -29,6 +26,11 @@
 		}, {
 			"type": "load",
 			"config" : {
+				"item" : {
+					"src" : {
+						"container" : "read-container-listing"
+					}
+				},
 				"load" : {
 					"type" : "read"
 				}

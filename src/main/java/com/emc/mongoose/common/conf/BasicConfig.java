@@ -549,7 +549,9 @@ implements AppConfig {
 				} else if(n == null) {
 					if(i == keyParts.length - 1) {
 						value = getProperty(compositeKey);
-						if(value instanceof Long) {
+						if(value == null) {
+							parentNode.putNull(keyParts[i]);
+						} else if(value instanceof Long) {
 							parentNode.put(keyParts[i], (Long) value);
 						} else if(value instanceof Integer) {
 							parentNode.put(keyParts[i], (Integer) value);
@@ -567,7 +569,9 @@ implements AppConfig {
 							// TODO something w/ this ugly code
 							final ArrayNode arrayNode = parentNode.putArray(keyParts[i]);
 							for(final Object listValue : (List) value) {
-								if(listValue instanceof Long) {
+								if(listValue == null) {
+									arrayNode.addNull();
+								} else if(listValue instanceof Long) {
 									arrayNode.add((Long) listValue);
 								} else if(listValue instanceof Integer) {
 									arrayNode.add((Integer) listValue);

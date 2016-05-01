@@ -4,9 +4,6 @@
 		"item" : {
 			"dst" : {
 				"container" : "/tmp/scenario-fs-circular-read-from-custom-dir"
-			},
-			"src" : {
-				"container" : "/tmp/scenario-fs-circular-read-from-custom-dir"
 			}
 		},
 		"load" : {
@@ -24,6 +21,11 @@
 		}, {
 			"type": "load",
 			"config" : {
+				"item" : {
+					"src" : {
+						"container" : "/tmp/scenario-fs-circular-read-from-custom-dir"
+					}
+				},
 				"load" : {
 					"type" : "read",
 					"circular" : true,
