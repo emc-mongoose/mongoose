@@ -1,0 +1,5 @@
+.ui-tabs, .ui-tabs .ui-tabs-nav, .ui-tabs .ui-tabs-panel, .ui-widget-header .ui-state-default,
+.ui-accordion-content-active .ui-state-active, .ui-widget-content .ui-state-active,
+.ui-widget-header .ui-state-active {
+	background: inherit;
+}
