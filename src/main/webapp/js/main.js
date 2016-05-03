@@ -9,7 +9,12 @@ require(['./requirejs/conf'], function() {
 		'bootstrap',
 		'./util/bootstrap/tabs'
 	], function($, mainController, templateConstants) {
-		
+
+		String.prototype.replaceAll = function(search, replacement) {
+			var target = this;
+			return target.replace(new RegExp(search, 'g'), replacement);
+		};
+
 		const dataExtractorFactory = function (fullAppJson) {
 			function extractAppConfig() {
 				return fullAppJson['appConfig']['config'];

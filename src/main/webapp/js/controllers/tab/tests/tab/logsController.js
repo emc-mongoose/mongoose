@@ -53,6 +53,9 @@ define([
 	};
 
 	function tabJqId(tabType) {
+		if (tabType.indexOf('.') > 0) {
+			tabType = tabType.replaceAll('\\.', '\\\.')
+		}
 		return jqId([tabType, TAB_TYPE.TESTS, TESTS_TAB_TYPE.LOGS, 'tab']);
 	}
 
