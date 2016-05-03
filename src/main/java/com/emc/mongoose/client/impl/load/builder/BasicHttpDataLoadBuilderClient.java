@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -60,6 +61,19 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 		return HttpRequestConfigBase.getInstance();
 	}
 	//
+	@Override
+	public final BasicHttpDataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig) {
+		final String newApi = appConfig.getStorageHttpApi();
+		if(!((HttpRequestConfig) ioConfig).getAPI().equalsIgnoreCase(newApi)) {
+			ioConfig = HttpRequestConfigBase.newInstanceFor(newApi);
+		}
+		try {
+			super.setAppConfig(appConfig);
+		} catch(final RemoteException ignored) {
+		}
+		return this;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	protected HttpDataLoadBuilderSvc<T, W> resolve(final String serverAddr)
 	throws IOException {
@@ -82,9 +96,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 	throws RemoteException {
 		//
 		final LoadType loadType = ioConfig.getLoadType();
-		if(itemInput == null) {
-			itemInput = getDefaultItemInput(); // affects load service builders
-		}
+		itemInput = selectItemInput(); // affects load service builders
 		final Map<String, W> remoteLoadMap = new HashMap<>();
 		HttpDataLoadBuilderSvc<T, W> nextBuilder;
 		W nextLoad;
@@ -97,8 +109,19 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 			remoteLoadMap.put(addr, nextLoad);
 		}
 		if(LoadType.MIXED.equals(loadType)) {
-			final List<String> inputFiles = (List<String>) appConfig
-				.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
+			final Object inputFilesRaw = appConfig.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
+			final List<String> inputFiles;
+			if(inputFilesRaw instanceof List) {
+				inputFiles = (List<String>) inputFilesRaw;
+			} else if(inputFilesRaw instanceof String){
+				inputFiles = new ArrayList<>();
+				inputFiles.add((String) inputFilesRaw);
+			} else {
+				throw new IllegalStateException(
+					"Invalid configuration parameter type for " + AppConfig.KEY_ITEM_SRC_FILE +
+					": \"" + inputFilesRaw + "\""
+				);
+			}
 			final List<String> loadPatterns = (List<String>) appConfig
 				.getProperty(AppConfig.KEY_LOAD_TYPE);
 			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
@@ -148,14 +171,15 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 			}
 			//
 			return (U) new BasicMixedHttpDataLoadClient<>(
-				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount,
-				maxCount, rateLimit, (Map<String, MixedHttpDataLoadSvc<T>>) remoteLoadMap,
+				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount, countLimit,
+				sizeLimit, rateLimit, (Map<String, MixedHttpDataLoadSvc<T>>) remoteLoadMap,
 				itemInputMap, loadTypeWeightMap
 			);
 		} else {
 			//
 			return (U) new BasicHttpDataLoadClient<>(
-				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount, itemInput, maxCount, rateLimit, remoteLoadMap
+				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount, itemInput,
+				countLimit, sizeLimit, rateLimit, remoteLoadMap
 			);
 		}
 	}

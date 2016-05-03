@@ -47,25 +47,26 @@ implements HttpDataLoadSvc<T> {
 	public BasicHttpDataLoadSvc(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
 		final String[] addrs, final int threadsPerNode, final Input<T> itemInput,
-		final long maxCount, final float rateLimit,
+		final long countLimit, final long sizeLimit, final float rateLimit,
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadsPerNode, itemInput, maxCount, rateLimit,
-			sizeConfig, rangesConfig
+			appConfig, reqConfig, addrs, threadsPerNode, itemInput, countLimit, sizeLimit,
+			rateLimit, sizeConfig, rangesConfig
 		);
 	}
 	//
 	public BasicHttpDataLoadSvc(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
-		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
+		final String[] addrs, final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit,
+		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
 		final HttpProcessor httpProcessor, final HttpAsyncRequester client,
 		final ConnectingIOReactor ioReactor,
 		final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
+			appConfig, reqConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
 			sizeConfig, rangesConfig, httpProcessor, client, ioReactor, connPoolMap
 		);
 	}

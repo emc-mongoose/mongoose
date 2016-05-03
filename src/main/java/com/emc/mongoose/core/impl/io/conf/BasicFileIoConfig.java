@@ -36,8 +36,8 @@ implements FileIoConfig<F, D> {
 	//
 	public BasicFileIoConfig() {
 		super();
-		if(container != null) {
-			final String containerName = container.getName();
+		if(dstContainer != null) {
+			final String containerName = dstContainer.getName();
 			if(containerName != null && !containerName.isEmpty()) {
 				pathInput = new RangePatternDefinedInput(containerName);
 			}
@@ -62,20 +62,27 @@ implements FileIoConfig<F, D> {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply the content source");
 		}
 		setVerifyContentFlag(appConfig.getItemDataVerify());
+		setCopyFlag(appConfig.getLoadCopy());
 		setBuffSize(appConfig.getIoBufferSizeMin());
-		final String dirName = appConfig.getItemContainerName();
-		if(dirName != null && !dirName.isEmpty()) {
-			setContainer((D) new BasicDirectory<F>(dirName));
+		final String dstDirName = appConfig.getItemDstContainer();
+		if(dstDirName != null && !dstDirName.isEmpty()) {
+			setDstContainer((D) new BasicDirectory<F>(dstDirName));
 		} else {
-			setContainer(null);
+			setDstContainer(null);
+		}
+		final String srcDirName = appConfig.getItemSrcContainer();
+		if(srcDirName != null && !srcDirName.isEmpty()) {
+			setSrcContainer((D) new BasicDirectory<F>(srcDirName));
+		} else {
+			setSrcContainer(null);
 		}
 		batchSize = appConfig.getItemSrcBatchSize();
 		return this;
 	}
 	//
 	@Override
-	public final BasicFileIoConfig<F, D> setContainer(final D container) {
-		super.setContainer(container);
+	public final BasicFileIoConfig<F, D> setDstContainer(final D container) {
+		super.setDstContainer(container);
 		if(container != null) {
 			final String containerName = container.getName();
 			if(containerName != null && !containerName.isEmpty()) {
@@ -87,8 +94,8 @@ implements FileIoConfig<F, D> {
 	//
 	@Override
 	public Input<F> getContainerListInput(final long maxCount, final String addr) {
-		return new DirectoryItemInput<>(
-			container, getItemClass(), maxCount, batchSize, contentSrc
+		return srcContainer == null ? null : new DirectoryItemInput<>(
+			srcContainer, getItemClass(), maxCount, batchSize, contentSrc
 		);
 	}
 	//
@@ -103,12 +110,12 @@ implements FileIoConfig<F, D> {
 	}
 	//
 	@Override
-	public final String getTargetItemPath() {
+	public final String getDstItemPath() {
 		if(pathInput == null) {
-			if(container == null) {
+			if(dstContainer == null) {
 				return null;
 			} else {
-				return container.getName();
+				return dstContainer.getName();
 			}
 		} else {
 			try {

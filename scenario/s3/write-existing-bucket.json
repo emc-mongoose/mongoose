@@ -2,8 +2,8 @@
 	"type" : "load",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "existingBucketName"
+			"dst" : {
+				"container" : "existingBucketName"
 			}
 		}
 	}

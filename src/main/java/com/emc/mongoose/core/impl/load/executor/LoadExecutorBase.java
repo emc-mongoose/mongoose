@@ -28,7 +28,7 @@ import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
 import com.emc.mongoose.core.impl.load.barrier.ActiveTasksThrottle;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
-import com.emc.mongoose.core.impl.load.model.BasicItemProducer;
+import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
 //
 import com.emc.mongoose.core.impl.load.model.LoadRegistry;
 import org.apache.logging.log4j.Level;
@@ -54,7 +54,7 @@ import java.util.concurrent.locks.LockSupport;
  Created by kurila on 15.10.14.
  */
 public abstract class LoadExecutorBase<T extends Item>
-extends BasicItemProducer<T>
+extends BasicItemGenerator<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -71,7 +71,7 @@ implements LoadExecutor<T> {
 	//
 	protected volatile Output<T> consumer = null;
 	//
-	protected final long maxCount;
+	protected final long sizeLimit;
 	protected final int totalThreadCount;
 	protected final Throttle<T> activeTasksThrottle;
 	// METRICS section
@@ -162,11 +162,12 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
 		final IoConfig<? extends Item, ? extends Container<? extends Item>> ioConfig,
-		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
-		final float rateLimit, final int instanceNum, final String name
+		final String addrs[], final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit,
+		final int instanceNum, final String name
 	) {
 		super(
-			itemInput, maxCount > 0 ? maxCount : Long.MAX_VALUE, DEFAULT_INTERNAL_BATCH_SIZE,
+			itemInput, countLimit > 0 ? countLimit : Long.MAX_VALUE, DEFAULT_INTERNAL_BATCH_SIZE,
 			appConfig.getLoadCircular(), false, appConfig.getItemQueueSizeLimit(), rateLimit
 		);
 		try {
@@ -207,7 +208,7 @@ implements LoadExecutor<T> {
 		loadType = ioConfig.getLoadType();
 		//
 		metricsPeriodSec = appConfig.getLoadMetricsPeriod();
-		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
+		this.sizeLimit = sizeLimit > 0 ? sizeLimit : Long.MAX_VALUE;
 		// prepare the nodes array
 		storageNodeAddrs = addrs == null ? null : addrs.clone();
 		if(storageNodeAddrs != null) {
@@ -231,14 +232,14 @@ implements LoadExecutor<T> {
 	private LoadExecutorBase(
 		final AppConfig appConfig,
 		final IoConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
-		final float rateLimit, final int instanceNum
+		final String addrs[], final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit, final int instanceNum
 	) {
 		this(
-			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
+			appConfig, ioConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
 			instanceNum,
 			instanceNum + "-" + ioConfig.toString() +
-				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' + threadCount +
+				(countLimit > 0 ? Long.toString(countLimit) : "") + '-' + threadCount +
 				(addrs == null ? "" : 'x' + Integer.toString(addrs.length))
 		);
 	}
@@ -246,11 +247,11 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
 		final IoConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
-		final float rateLimit
+		final String addrs[], final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit
 	) {
 		this(
-			appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit,
+			appConfig, ioConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
 			NEXT_INSTANCE_NUM.getAndIncrement()
 		);
 	}
@@ -460,7 +461,7 @@ implements LoadExecutor<T> {
 	@Override
 	public void put(final T item)
 	throws IOException {
-		if(counterSubm.get() + countRej.get() >= maxCount) {
+		if(counterSubm.get() + countRej.get() >= countLimit) {
 			LOG.debug(
 				Markers.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", getName(),
 				counterSubm.get(), countRej.get()
@@ -495,7 +496,7 @@ implements LoadExecutor<T> {
 	@Override
 	public int put(final List<T> srcBuff, final int from, final int to)
 	throws IOException {
-		final long dstLimit = maxCount - counterSubm.get() - countRej.get();
+		final long dstLimit = countLimit - counterSubm.get() - countRej.get();
 		final int srcLimit = to - from;
 		int n = 0, m;
 		if(dstLimit > 0) {
@@ -824,16 +825,12 @@ implements LoadExecutor<T> {
 		return lastStats;
 	}
 	//
-	private boolean isDoneMaxCount() {
-		return counterResults.get() >= maxCount;
+	private boolean isDoneCountLimit() {
+		return counterResults.get() >= countLimit;
 	}
 	//
-	private void setCountLimitConfig(final long itemsCount) {
-		if(isDoneAllSubm() && (maxCount > itemsCount)) {
-			appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, itemsCount);
-		} else {
-			appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, maxCount);
-		}
+	private boolean isDoneSizeLimit() {
+		return lastStats.getByteCount() >= sizeLimit;
 	}
 	//
 	private boolean isDoneAllSubm() {
@@ -914,7 +911,7 @@ implements LoadExecutor<T> {
 					break;
 				}
 			}
-			if(isDoneMaxCount()) {
+			if(isDoneCountLimit()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to max count done state", getName());
 				break;
 			}
@@ -967,7 +964,6 @@ implements LoadExecutor<T> {
 					);
 				}
 			}
-			setCountLimitConfig(counterResults.get());
 			LoadRegistry.unregister(this);
 			if(loadedPrevState != null) {
 				if(RESTORED_STATES_MAP.containsKey(appConfig.getRunId())) {

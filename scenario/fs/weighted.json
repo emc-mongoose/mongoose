@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "/tmp/weighted-load"
+			"dst" : {
+				"container" : "/tmp/weighted-load"
 			}
 		},
 		"load" : {

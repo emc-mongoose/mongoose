@@ -14,6 +14,7 @@ import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 //
+import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
 // mongoose-server-api.jar
@@ -85,8 +86,6 @@ implements LoadBuilderClient<T, W, U> {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the configuration");
 			}
 		}
-		//
-		resetItemSrc();
 		// set properties should be invoked only after the map is filled already
 		setAppConfig(appConfig);
 		//
@@ -95,7 +94,7 @@ implements LoadBuilderClient<T, W, U> {
 		}
 	}
 	//
-	protected abstract IoConfig<?, ?> getDefaultIoConfig();
+	protected abstract IoConfig<?, ?>  getDefaultIoConfig();
 	//
 	protected abstract V resolve(final String serverAddr)
 	throws IOException;
@@ -180,7 +179,8 @@ implements LoadBuilderClient<T, W, U> {
 			}
 		}
 		//
-		setMaxCount(appConfig.getLoadLimitCount());
+		setCountLimit(appConfig.getLoadLimitCount());
+		setSizeLimit(appConfig.getLoadLimitSize());
 		setRateLimit((float) appConfig.getLoadLimitRate());
 		//
 		try {
@@ -200,7 +200,7 @@ implements LoadBuilderClient<T, W, U> {
 		} catch(final NoSuchElementException e) {
 			LOG.warn(Markers.ERR, "No \"data.src.fpath\" value was set");
 		} catch(final IOException e) {
-			LOG.warn(Markers.ERR, "Invalid items source file path: {}", itemInput);
+			LOG.warn(Markers.ERR, "Invalid items input file path: {}", itemInput);
 		} catch(final SecurityException | NoSuchMethodException e) {
 			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
@@ -237,14 +237,28 @@ implements LoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, W, U> setMaxCount(final long maxCount)
+	public final LoadBuilderClient<T, W, U> setCountLimit(final long countLimit)
 	throws IllegalArgumentException, RemoteException {
-		super.setMaxCount(maxCount);
+		super.setCountLimit(countLimit);
 		V nextBuilder;
 		if(loadSvcMap != null) {
 			for(final String addr : loadSvcMap.keySet()) {
 				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setMaxCount(maxCount);
+				nextBuilder.setCountLimit(countLimit);
+			}
+		}
+		return this;
+	}
+	//
+	@Override
+	public final LoadBuilderClient<T, W, U> setSizeLimit(final long sizeLimit)
+	throws IllegalArgumentException, RemoteException {
+		super.setSizeLimit(sizeLimit);
+		V nextBuilder;
+		if(loadSvcMap != null) {
+			for(final String addr : loadSvcMap.keySet()) {
+				nextBuilder = loadSvcMap.get(addr);
+				nextBuilder.setSizeLimit(sizeLimit);
 			}
 		}
 		return this;
@@ -299,27 +313,6 @@ implements LoadBuilderClient<T, W, U> {
 			}
 		}
 		return this;
-	}
-	//
-	@Override @SuppressWarnings("unchecked")
-	public LoadBuilderClient<T, W, U> setInput(final Input<T> itemInput)
-	throws RemoteException {
-		super.setInput(itemInput);
-		if(itemInput != null && loadSvcMap != null) {
-			// disable any item source usage on the load servers side
-			V nextBuilder;
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.useNoneItemSrc();
-			}
-		}
-		return this;
-	}
-	//
-	protected void resetItemSrc() {
-		flagUseNewItemSrc = true;
-		flagUseNoneItemSrc = false;
-		itemInput = null;
 	}
 	//
 	@Override

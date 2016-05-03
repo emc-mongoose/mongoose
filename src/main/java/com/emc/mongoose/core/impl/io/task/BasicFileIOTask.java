@@ -41,6 +41,8 @@ import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 //
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -59,13 +61,13 @@ implements FileIOTask<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	private final static FileSystem DEFAULT_FS = FileSystems.getDefault();
 	//
-	private final String parentDir;
+	private final String dstDir;
 	private final Set<OpenOption> openOptions = new HashSet<>();
 	private final RunnableFuture<BasicFileIOTask<T, C, X>> future;
 	//
 	public BasicFileIOTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
-		parentDir = ioConfig.getTargetItemPath();
+		dstDir = ioConfig.getDstItemPath();
 		//
 		openOptions.add(NOFOLLOW_LINKS);
 		switch(ioType) {
@@ -92,10 +94,10 @@ implements FileIOTask<T> {
 			if(openOptions.isEmpty()) { // delete
 				runDelete();
 			} else { // work w/ a content
-				Files.createDirectories(DEFAULT_FS.getPath(parentDir));
+				Files.createDirectories(DEFAULT_FS.getPath(dstDir));
 				try(
 					final FileChannel byteChannel = FileChannel.open(
-						DEFAULT_FS.getPath(parentDir, item.getName()), openOptions
+						DEFAULT_FS.getPath(dstDir, item.getName()), openOptions
 					)
 				) {
 					if(openOptions.contains(READ)) {
@@ -106,7 +108,7 @@ implements FileIOTask<T> {
 						} else if(item.isAppending()) {
 							runAppend(byteChannel);
 						} else {
-							runWriteFully(byteChannel);
+							runWriteFully(byteChannel, ioConfig.getCopyFlag());
 						}
 					}
 				}
@@ -121,13 +123,13 @@ implements FileIOTask<T> {
 			status = RESP_FAIL_NOT_FOUND;
 			LogUtil.exception(
 				LOG, Level.DEBUG, e,
-				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), parentDir
+				"Failed to {} the file \"{}\"", ioType.name().toLowerCase(), dstDir
 			);
 		} catch(final IOException e) {
 			status = FAIL_IO;
 			LogUtil.exception(
 				LOG, Level.DEBUG, e, "Failed to {} the file \"{}\"", ioType.name().toLowerCase(),
-				parentDir
+				dstDir
 			);
 		} finally {
 			respTimeDone = System.nanoTime() / 1000;
@@ -136,7 +138,7 @@ implements FileIOTask<T> {
 	//
 	protected void runDelete()
 	throws IOException {
-		Files.delete(DEFAULT_FS.getPath(parentDir, item.getName()));
+		Files.delete(DEFAULT_FS.getPath(dstDir, item.getName()));
 		status = SUCC;
 	}
 	//
@@ -225,10 +227,31 @@ implements FileIOTask<T> {
 		}
 	}
 	//
-	protected void runWriteFully(final FileChannel fileChannel)
+	protected void runWriteFully(final FileChannel dstFileChannel, final boolean copyFlag)
 	throws IOException {
-		while(countBytesDone < contentSize) {
-			countBytesDone += fileChannel.transferFrom(item, countBytesDone, contentSize);
+		if(copyFlag) {
+			final C srcDir = ioConfig.getSrcContainer();
+			final Path srcDirPath;
+			if(srcDir == null) {
+				srcDirPath = DEFAULT_FS.getPath(item.getName()).toAbsolutePath();
+			} else {
+				srcDirPath = DEFAULT_FS.getPath(srcDir.getName(), item.getName()).toAbsolutePath();
+			}
+			try(
+				final FileChannel srcFileChannel = FileChannel.open(
+					srcDirPath, StandardOpenOption.READ
+				)
+			) {
+				while(countBytesDone < contentSize) {
+					countBytesDone += srcFileChannel.transferTo(
+						countBytesDone, contentSize, dstFileChannel
+					);
+				}
+			}
+		} else {
+			while(countBytesDone < contentSize) {
+				countBytesDone += dstFileChannel.transferFrom(item, countBytesDone, contentSize);
+			}
 		}
 		status = SUCC;
 		item.resetUpdates();
@@ -253,19 +276,6 @@ implements FileIOTask<T> {
 		status = SUCC;
 	}
 	//
-	protected void runWriteCurrRange(final FileChannel fileChannel, final long rangeOffset)
-	throws IOException {
-		currRange.setRelativeOffset(rangeOffset);
-		long n = 0;
-		while(n < currRangeSize - rangeOffset && n < contentSize - countBytesDone) {
-			//n += currRange.write(fileChannel, currRangeSize - rangeOffset - n);
-			n += fileChannel.transferFrom(
-				currRange, nextRangeOffset + n, currRangeSize - rangeOffset
-			);
-		}
-		countBytesDone += n;
-	}
-	//
 	protected void runAppend(final FileChannel fileChannel)
 	throws IOException {
 		final long
@@ -276,13 +286,12 @@ implements FileIOTask<T> {
 			final int startRangeIdx = prevSize > 0 ? getRangeCount(prevSize) - 1 : 0;
 			nextRangeOffset = getRangeOffset(startRangeIdx);
 			currRangeSize = Math.min(
-				contentSize,
-				getRangeOffset(startRangeIdx + 1) - nextRangeOffset
+				contentSize, getRangeOffset(startRangeIdx + 1) - nextRangeOffset
 			);
 			currRange = new BasicDataItem(
 				item.getOffset() + nextRangeOffset, currRangeSize,
 				item.isCurrLayerRangeUpdated(startRangeIdx) ?
-					currDataLayerIdx + 1 : currDataLayerIdx,
+				currDataLayerIdx + 1 : currDataLayerIdx,
 				ioConfig.getContentSource()
 			);
 			runWriteCurrRange(fileChannel, prevSize - nextRangeOffset);
@@ -303,6 +312,19 @@ implements FileIOTask<T> {
 		}
 		item.commitAppend();
 		status = SUCC;
+	}
+	//
+	protected void runWriteCurrRange(final FileChannel fileChannel, final long rangeOffset)
+	throws IOException {
+		currRange.setRelativeOffset(rangeOffset);
+		long n = 0;
+		while(n < currRangeSize - rangeOffset && n < contentSize - countBytesDone) {
+			//n += currRange.write(fileChannel, currRangeSize - rangeOffset - n);
+			n += fileChannel.transferFrom(
+				currRange, nextRangeOffset + rangeOffset + n, currRangeSize - rangeOffset
+			);
+		}
+		countBytesDone += n;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

@@ -54,13 +54,14 @@ implements MixedFileLoadSvc<F> {
 	//
 	public BasicMixedFileLoadSvc(
 		final AppConfig appConfig, final FileIoConfig<F, ? extends Directory<F>> reqConfig,
-		final int threadCount, final long maxCount, final float rateLimit,
+		final int threadCount, final long countLimit, final long sizeLimit, final float rateLimit,
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
 		final Map<LoadType, Integer> loadTypeWeightMap,
 		final Map<LoadType, Input<F>> itemInput
 	) {
 		super(
-			appConfig, reqConfig, threadCount, null, maxCount, rateLimit, sizeConfig, rangesConfig
+			appConfig, reqConfig, threadCount, null, countLimit, sizeLimit, rateLimit, sizeConfig,
+			rangesConfig
 		);
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
@@ -75,8 +76,8 @@ implements MixedFileLoadSvc<F> {
 			}
 			reqConfigMap.put(nextLoadType, reqConfigCopy);
 			final BasicFileLoadSvc<F> nextLoadSvc = new BasicFileLoadSvc<F>(
-				appConfig, reqConfigCopy, threadCount, itemInput.get(nextLoadType), maxCount,
-				rateLimit, sizeConfig, rangesConfig
+				appConfig, reqConfigCopy, threadCount, null, countLimit,
+				sizeLimit, rateLimit, sizeConfig, rangesConfig
 			) {
 				@Override
 				public final <A extends IOTask<F>> Future<A> submitTask(final A ioTask)

@@ -1,6 +1,5 @@
 package com.emc.mongoose.common.conf;
 //
-import com.emc.mongoose.common.conf.enums.ContentSourceType;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.conf.enums.ItemType;
 import com.emc.mongoose.common.conf.enums.LoadType;
@@ -28,14 +27,15 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_IO_BUFFER_SIZE_MAX = "io.buffer.size.max";
 	String KEY_ITEM_TYPE = "item.type";
 	String KEY_ITEM_CONTAINER_NAME = "item.container.name";
-	String KEY_ITEM_DATA_CONTENT_TYPE = "item.data.content.type";
 	String KEY_ITEM_DATA_CONTENT_FILE = "item.data.content.file";
 	String KEY_ITEM_DATA_CONTENT_SEED = "item.data.content.seed";
 	String KEY_ITEM_DATA_CONTENT_RING_SIZE = "item.data.content.ringSize";
 	String KEY_ITEM_DATA_RANGES = "item.data.ranges";
 	String KEY_ITEM_DATA_SIZE = "item.data.size";
 	String KEY_ITEM_DATA_VERIFY = "item.data.verify";
+	String KEY_ITEM_DST_CONTAINER = "item.dst.container";
 	String KEY_ITEM_DST_FILE = "item.dst.file";
+	String KEY_ITEM_SRC_CONTAINER = "item.src.container";
 	String KEY_ITEM_SRC_FILE = "item.src.file";
 	String KEY_ITEM_SRC_BATCH_SIZE = "item.src.batchSize";
 	String KEY_ITEM_NAMING_TYPE = "item.naming.type";
@@ -45,14 +45,16 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_ITEM_NAMING_LENGTH = "item.naming.length";
 	String KEY_ITEM_QUEUE_SIZE_LIMIT = "item.queue.sizeLimit";
 	String KEY_LOAD_CIRCULAR = "load.circular";
-	String KEY_LOAD_TYPE = "load.type";
-	String KEY_LOAD_THREADS = "load.threads";
+	String KEY_LOAD_COPY = "load.copy";
 	String KEY_LOAD_LIMIT_COUNT = "load.limit.count";
 	String KEY_LOAD_LIMIT_RATE = "load.limit.rate";
+	String KEY_LOAD_LIMIT_SIZE = "load.limit.size";
 	String KEY_LOAD_LIMIT_TIME = "load.limit.time";
 	String KEY_LOAD_METRICS_PERIOD = "load.metricsPeriod";
 	String KEY_LOAD_SERVER_ADDRS = "load.server.addrs";
 	String KEY_LOAD_SERVER_NODE_MAPPING = "load.server.nodeMapping";
+	String KEY_LOAD_THREADS = "load.threads";
+	String KEY_LOAD_TYPE = "load.type";
 	String KEY_RUN_ID = "run.id";
 	String KEY_RUN_MODE = "run.mode";
 	String KEY_RUN_NAME = "run.name";
@@ -103,8 +105,6 @@ extends Cloneable, Configuration, Externalizable {
 
 	String getItemContainerName();
 
-	ContentSourceType getItemDataContentType();
-
 	String getItemDataContentFile();
 
 	String getItemDataContentSeed();
@@ -118,7 +118,11 @@ extends Cloneable, Configuration, Externalizable {
 
 	boolean getItemDataVerify();
 
+	String getItemDstContainer();
+
 	String getItemDstFile();
+
+	String getItemSrcContainer();
 
 	String getItemSrcFile();
 
@@ -138,13 +142,14 @@ extends Cloneable, Configuration, Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	boolean getLoadCircular();
-	LoadType getLoadType();
 
-	int getLoadThreads();
+	boolean getLoadCopy();
 
 	long getLoadLimitCount();
 
 	double getLoadLimitRate();
+
+	long getLoadLimitSize();
 
 	/** Return the time limit converted into the seconds */
 	long getLoadLimitTime();
@@ -155,6 +160,10 @@ extends Cloneable, Configuration, Externalizable {
 	String[] getLoadServerAddrs();
 
 	boolean getLoadServerNodeMapping();
+
+	int getLoadThreads();
+
+	LoadType getLoadType();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 

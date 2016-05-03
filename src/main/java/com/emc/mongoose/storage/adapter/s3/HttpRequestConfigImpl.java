@@ -37,11 +37,12 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	public final static String CANONICAL_AMZ_HEADER_PREFIX = "x-amz-";
+	public final static String MSG_NO_BUCKET = "Bucket is not specified";
 	public final static String
-		CANONICAL_AMZ_HEADER_PREFIX = "x-amz-",
-		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
-	private final static String AUTH_PREFIX = "AWS ";
+	public final static String AUTH_PREFIX = "AWS ";
+	public final static String KEY_X_AMZ_COPY_SOURCE = "x-amz-copy-source";
 	//
 	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
@@ -79,22 +80,39 @@ extends HttpRequestConfigBase<T, C> {
 	}
 	//
 	@Override
-	protected final String getDataUriPath(final T dataItem)
+	protected final String getObjectDstPath(final T object)
 	throws IllegalStateException, URISyntaxException {
-		if(container == null) {
+		if(dstContainer == null) {
 			throw new IllegalArgumentException(MSG_NO_BUCKET);
 		}
-		if(dataItem == null) {
+		if(object == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		//applyObjectId(dataItem, null);
-		return getContainerUriPath(container) + "/" + dataItem.getName();
+		return getContainerPath(dstContainer) + "/" + object.getName();
 	}
 	//
 	@Override
-	protected final String getContainerUriPath(final Container<T> container)
+	protected final String getObjectSrcPath(final T object)
+	throws IllegalStateException, URISyntaxException {
+		if(srcContainer == null) {
+			throw new IllegalArgumentException(MSG_NO_BUCKET);
+		}
+		if(object == null) {
+			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
+		}
+		return getContainerPath(srcContainer) + "/" + object.getName();
+	}
+	//
+	@Override
+	protected final String getContainerPath(final Container<T> container)
 	throws IllegalArgumentException, URISyntaxException {
 		return "/" + container.getName();
+	}
+	//
+	@Override
+	protected final void applyCopyHeaders(final HttpRequest httpRequest, final T object)
+	throws URISyntaxException {
+		httpRequest.setHeader(KEY_X_AMZ_COPY_SOURCE, getObjectSrcPath(object));
 	}
 	//
 	@Override
@@ -188,17 +206,17 @@ extends HttpRequestConfigBase<T, C> {
 	@Override
 	public final void configureStorage(final String[] storageNodeAddrs)
 	throws IllegalStateException {
-		final BucketHelper<T, C> bucketHelper = new HttpBucketHelper<>(this, container);
+		final BucketHelper<T, C> bucketHelper = new HttpBucketHelper<>(this, dstContainer);
 		if(bucketHelper.exists(storageNodeAddrs[0])) {
-			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", container);
+			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", dstContainer);
 		} else {
-			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", container);
+			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", dstContainer);
 			bucketHelper.create(storageNodeAddrs[0]);
 			if(bucketHelper.exists(storageNodeAddrs[0])) {
-				appConfig.setProperty(AppConfig.KEY_ITEM_CONTAINER_NAME, container.getName());
+				appConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, dstContainer.getName());
 			} else {
 				throw new IllegalStateException(
-					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, container.getName())
+					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, dstContainer.getName())
 				);
 			}
 		}
@@ -211,7 +229,7 @@ extends HttpRequestConfigBase<T, C> {
 	@Override
 	protected final void createDirectoryPath(final String nodeAddr, final String dirPath)
 	throws IllegalStateException {
-		final String bucketName = container.getName();
+		final String bucketName = dstContainer.getName();
 		final HttpEntityEnclosingRequest createDirReq = createGenericRequest(
 			METHOD_PUT, "/" + bucketName + "/" + dirPath + "/"
 		);
@@ -262,8 +280,8 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final Input<T> getContainerListInput(final long maxCount, final String addr) {
-		return new WSBucketItemInput<>(
-			new HttpBucketHelper<>(this, container), addr, getItemClass(), maxCount
+		return srcContainer == null ? null : new WSBucketItemInput<>(
+			new HttpBucketHelper<>(this, srcContainer), addr, getItemClass(), maxCount
 		);
 	}
 }

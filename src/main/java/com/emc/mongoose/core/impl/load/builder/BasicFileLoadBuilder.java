@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -51,8 +52,8 @@ extends DataLoadBuilderBase<T, U> {
 	public void invokePreConditions()
 	throws IllegalStateException {
 		// create parent directories
-		final Container c = ioConfig.getContainer();
-		final String parentDirectories = c == null ? null : c.getName();
+		final Container d = ioConfig.getDstContainer();
+		final String parentDirectories = d == null ? null : d.getName();
 		if(parentDirectories != null && !parentDirectories.isEmpty()) {
 			try {
 				Files.createDirectories(Paths.get(parentDirectories));
@@ -68,8 +69,19 @@ extends DataLoadBuilderBase<T, U> {
 	protected U buildActually() {
 		final LoadType loadType = ioConfig.getLoadType();
 		if(LoadType.MIXED.equals(loadType)) {
-			final List<String> inputFiles = (List<String>) appConfig
-				.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
+			final Object inputFilesRaw = appConfig.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
+			final List<String> inputFiles;
+			if(inputFilesRaw instanceof List) {
+				inputFiles = (List<String>) inputFilesRaw;
+			} else if(inputFilesRaw instanceof String){
+				inputFiles = new ArrayList<>();
+				inputFiles.add((String) inputFilesRaw);
+			} else {
+				throw new IllegalStateException(
+					"Invalid configuration parameter type for " + AppConfig.KEY_ITEM_SRC_FILE +
+						": \"" + inputFilesRaw + "\""
+				);
+			}
 			final List<String> loadPatterns = (List<String>) appConfig
 				.getProperty(AppConfig.KEY_LOAD_TYPE);
 			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
@@ -119,13 +131,13 @@ extends DataLoadBuilderBase<T, U> {
 			}
 			return (U) new BasicMixedFileLoadExecutor<>(
 				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
-				maxCount, rateLimit, sizeConfig, rangesConfig, loadTypeWeightMap, itemInputMap
+				countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig,
+				loadTypeWeightMap, itemInputMap
 			);
 		} else {
 			return (U) new BasicFileLoadExecutor<>(
-				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig,
-				threadCount, itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit,
-				sizeConfig, rangesConfig
+				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
+				selectItemInput(), countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig
 			);
 		}
 	}

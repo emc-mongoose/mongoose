@@ -17,6 +17,7 @@ import com.emc.mongoose.core.api.item.data.MutableDataItem;
 import com.emc.mongoose.core.api.item.data.FileDataItemInput;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
 //
+import com.emc.mongoose.core.api.load.executor.DataLoadExecutor;
 import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.logging.log4j.Level;
@@ -25,12 +26,14 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 //
 /**
  Created by kurila on 15.12.14.
  */
-public abstract class MutableDataLoadExecutorBase<T extends MutableDataItem>
-extends LoadExecutorBase<T> {
+public abstract class DataLoadExecutorBase<T extends MutableDataItem>
+extends LoadExecutorBase<T>
+implements DataLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -38,13 +41,16 @@ extends LoadExecutorBase<T> {
 	protected final SizeInBytes sizeConfig;
 	protected final DataRangesConfig rangesConfig;
 	//
-	protected MutableDataLoadExecutorBase(
+	private final AtomicLong submSize = new AtomicLong(0);
+	//
+	protected DataLoadExecutorBase(
 		final AppConfig appConfig,
 		final IoConfig<? extends DataItem, ? extends Container<? extends DataItem>> ioConfig,
-		final String[] addrs, final int threadCount, final Input<T> itemInput, final long maxCount,
-		final float rateLimit, final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
+		final String[] addrs, final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit,
+		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig
 	) throws ClassCastException {
-		super(appConfig, ioConfig, addrs, threadCount, itemInput, maxCount, rateLimit);
+		super(appConfig, ioConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit);
 		//
 		this.loadType = ioConfig.getLoadType();
 		this.sizeConfig = sizeConfig;
@@ -63,7 +69,8 @@ extends LoadExecutorBase<T> {
 				buffSize = (int) avgDataSize;
 			}
 		} else if(itemInput instanceof NewDataItemInput) {
-			final long avgDataSize = ((NewDataItemInput) itemInput).getDataSizeInfo().getAvgDataSize();
+			final long avgDataSize = ((NewDataItemInput) itemInput)
+				.getDataSizeInfo().getAvgDataSize();
 			if(avgDataSize < Constants.BUFF_SIZE_LO) {
 				buffSize = Constants.BUFF_SIZE_LO;
 			} else if(avgDataSize > Constants.BUFF_SIZE_HI) {
@@ -142,18 +149,25 @@ extends LoadExecutorBase<T> {
 	}*/
 	/** intercepts the data items which should be scheduled for update or append */
 	@Override
-	public void put(final T item)
+	public void put(final T dataItem)
 	throws IOException {
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
 			final List<ByteRange> ranges = rangesConfig.getFixedByteRanges();
 			if(rndRangesToUpdateCount > 0) {
-				item.scheduleRandomUpdates(rndRangesToUpdateCount);
+				dataItem.scheduleRandomUpdates(rndRangesToUpdateCount);
+				if(sizeLimit < submSize.addAndGet(dataItem.getUpdatingRangesSize())) {
+					shutdown();
+				}
 			} else if(ranges != null) {
 				if(ranges.size() == 1) {
 					final ByteRange range = ranges.get(0);
-					if(range.getBeg() == item.getSize()) {
-						item.scheduleAppend(range.getEnd());
+					if(range.getBeg() == dataItem.getSize()) {
+						final long augmentSize = range.getEnd() - range.getBeg();
+						dataItem.scheduleAppend(augmentSize);
+						if(sizeLimit < submSize.addAndGet(augmentSize)) {
+							shutdown();
+						}
 					} else {
 						// TODO
 						throw new NotImplementedException();
@@ -161,6 +175,10 @@ extends LoadExecutorBase<T> {
 				} else {
 					// TODO
 					throw new NotImplementedException();
+				}
+			} else {
+				if(sizeLimit < submSize.addAndGet(dataItem.getSize())) {
+					shutdown();
 				}
 			}
 		} catch(final IllegalArgumentException e) {
@@ -170,27 +188,42 @@ extends LoadExecutorBase<T> {
 			);
 		}
 		//
-		super.put(item);
+		super.put(dataItem);
 	}
 	//
 	@Override
 	public int put(final List<T> dataItems, final int from, final int to)
 	throws IOException {
+		if(sizeLimit < submSize.get()) {
+			shutdown();
+		}
+		T dataItem;
+		int toSizeLimit = to;
 		try {
 			final int rndRangesToUpdateCount = rangesConfig.getRandomCount();
 			final List<ByteRange> ranges = rangesConfig.getFixedByteRanges();
 			if(rndRangesToUpdateCount > 0) {
 				for(int i = from; i < to; i ++) {
-					dataItems.get(i).scheduleRandomUpdates(rndRangesToUpdateCount);
+					dataItem = dataItems.get(i);
+					dataItem.scheduleRandomUpdates(rndRangesToUpdateCount);
+					if(sizeLimit < submSize.addAndGet(dataItem.getUpdatingRangesSize())) {
+						toSizeLimit = i;
+						break;
+					}
 				}
 			} else if(ranges != null) {
 				if(ranges.size() == 1) {
 					final ByteRange range = ranges.get(0);
-					T dataItem;
+					long augmentSize;
 					for(int i = from; i < to; i ++) {
 						dataItem = dataItems.get(i);
 						if(range.getBeg() == dataItem.getSize()) {
-							dataItem.scheduleAppend(range.getEnd());
+							augmentSize = range.getEnd() - range.getBeg();
+							dataItem.scheduleAppend(augmentSize);
+							if(sizeLimit < submSize.addAndGet(augmentSize)) {
+								toSizeLimit = i;
+								break;
+							}
 						} else {
 							// TODO
 							throw new NotImplementedException();
@@ -200,6 +233,14 @@ extends LoadExecutorBase<T> {
 					// TODO
 					throw new NotImplementedException();
 				}
+			} else {
+				for(int i = from; i < to; i ++) {
+					dataItem = dataItems.get(i);
+					if(sizeLimit < submSize.addAndGet(dataItem.getSize())) {
+						toSizeLimit = i;
+						break;
+					}
+				}
 			}
 		} catch(final IllegalArgumentException e) {
 			LogUtil.exception(
@@ -208,6 +249,6 @@ extends LoadExecutorBase<T> {
 			);
 		}
 		//
-		return super.put(dataItems, from, to);
+		return super.put(dataItems, from, toSizeLimit);
 	}
 }

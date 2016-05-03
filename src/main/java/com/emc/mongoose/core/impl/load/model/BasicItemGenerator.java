@@ -29,7 +29,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 19.06.15.
  */
-public class BasicItemProducer<T extends Item>
+public class BasicItemGenerator<T extends Item>
 extends Thread
 implements ItemProducer<T> {
 	//
@@ -37,7 +37,7 @@ implements ItemProducer<T> {
 	//
 	protected final ConcurrentMap<String, T> uniqueItems;
 	protected final Input<T> itemInput;
-	protected final long maxCount;
+	protected final long countLimit;
 	protected final boolean isCircular;
 	protected final boolean isShuffling;
 	protected final Throttle<T> rateThrottle;
@@ -50,24 +50,24 @@ implements ItemProducer<T> {
 	protected volatile boolean allItemsProducedFlag = false;
 	protected volatile long producedItemsCount = 0;
 	//
-	protected BasicItemProducer(
+	protected BasicItemGenerator(
 		final Input<T> itemInput, final long maxCount, final int batchSize,
 		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
 	    final float rateLimit
 	) {
-		this(itemInput, maxCount, batchSize, isCircular, isShuffling, maxItemQueueSize, rateLimit,
-			0, null
+		this(
+			itemInput, maxCount, batchSize, isCircular, isShuffling, maxItemQueueSize, rateLimit, 0,
+			null
 		);
 	}
 	//
-	private BasicItemProducer(
+	private BasicItemGenerator(
 		final Input<T> itemInput, final long maxCount, final int batchSize,
 		final boolean isCircular, final boolean isShuffling, final int maxItemQueueSize,
-		final float rateLimit,
-		final long skipCount, final T lastItem
+		final float rateLimit, final long skipCount, final T lastItem
 	) {
 		this.itemInput = itemInput;
-		this.maxCount = maxCount - skipCount;
+		this.countLimit = maxCount - skipCount;
 		this.batchSize = batchSize;
 		this.skipCount = skipCount;
 		this.lastItem = lastItem;
@@ -85,8 +85,8 @@ implements ItemProducer<T> {
 	}
 	//
 	@Override
-	public void setLastItem(final T dataItem) {
-		this.lastItem = dataItem;
+	public void setLastItem(final T item) {
+		this.lastItem = item;
 	}
 	//
 	@Override
@@ -127,10 +127,10 @@ implements ItemProducer<T> {
 		int n = 0, m = 0;
 		try {
 			List<T> buff;
-			while(maxCount > producedItemsCount && !isInterrupted) {
+			while(countLimit > producedItemsCount && !isInterrupted) {
 				try {
 					buff = new ArrayList<>(batchSize);
-					n = (int) Math.min(itemInput.get(buff, batchSize), maxCount - producedItemsCount);
+					n = (int) Math.min(itemInput.get(buff, batchSize), countLimit - producedItemsCount);
 					if(isShuffling) {
 						Collections.shuffle(buff, rnd);
 					}

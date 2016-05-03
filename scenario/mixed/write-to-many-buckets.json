@@ -5,8 +5,8 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "bucket1"
+					"dst" : {
+						"container" : "bucket1"
 					}
 				}
 			}
@@ -15,8 +15,8 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "bucket2"
+					"dst" : {
+						"container" : "bucket2"
 					}
 				}
 			}
@@ -25,8 +25,8 @@
 			"type" : "load",
 			"config" : {
 				"item" : {
-					"container" : {
-						"name" : "bucket3"
+					"dst" : {
+						"container" : "bucket3"
 					}
 				}
 			}

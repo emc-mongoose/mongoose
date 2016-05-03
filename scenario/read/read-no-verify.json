@@ -1,0 +1,58 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "read-no-verify"
+			},
+			"data" : {
+				"size" : "1KB"
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-read-no-verify.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 100
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : 1
+					},
+					"src" : {
+						"file" : "/tmp/scenario-read-no-verify.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"verify" : false
+					},
+					"src" : {
+						"file" : "/tmp/scenario-read-no-verify.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}
+

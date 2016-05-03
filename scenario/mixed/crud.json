@@ -1,0 +1,100 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "scenario-mixed-crud"
+			},
+			"data" : {
+				"size" : "8KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100000
+			},
+			"threads" : 20
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "parallel",
+			"jobs" : [
+				{
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"file" : "/tmp/scenario-mixed-crud-0.csv"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"file" : "/tmp/scenario-mixed-crud-1.csv"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"file" : "/tmp/scenario-mixed-crud-2.csv"
+							}
+						}
+					}
+				}
+			]
+		}, {
+			"type" : "sleep",
+			"value" : "15s"
+		}, {
+			"type" : "parallel",
+			"jobs" : [
+				{
+					"type" : "load"
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"src" : {
+								"file" : "/tmp/scenario-mixed-crud-0.csv"
+							}
+						},
+						"load" : {
+							"type" : "read"
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"data" : {
+								"ranges" : 1
+							},
+							"src" : {
+								"file" : "/tmp/scenario-mixed-crud-1.csv"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"src" : {
+								"file" : "/tmp/scenario-mixed-crud-2.csv"
+							}
+						},
+						"load" : {
+							"type" : "delete"
+						}
+					}
+				}
+			]
+		}
+	]
+}

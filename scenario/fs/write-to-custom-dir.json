@@ -2,8 +2,8 @@
 	"type" : "load",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "/tmp/scenario-write-to-custom-dir"
+			"dst" : {
+				"container" : "/tmp/scenario-write-to-custom-dir"
 			},
 			"data" : {
 				"size" : "4KB"

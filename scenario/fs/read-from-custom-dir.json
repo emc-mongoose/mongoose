@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "/tmp/scenario-read-from-custom-dir"
+			"dst" : {
+				"container" : "/tmp/scenario-read-from-custom-dir"
 			},
 			"data" : {
 				"size" : "4KB"

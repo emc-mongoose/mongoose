@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "/tmp/scenario-fs-verify-updated"
+			"dst" : {
+				"container" : "/tmp/scenario-fs-verify-updated"
 			}
 		},
 		"load" : {

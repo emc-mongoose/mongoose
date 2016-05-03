@@ -1,6 +1,5 @@
 package com.emc.mongoose.common.conf;
 //
-import com.emc.mongoose.common.conf.enums.ContentSourceType;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.conf.enums.ItemType;
 import com.emc.mongoose.common.conf.enums.LoadType;
@@ -139,12 +138,6 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public ContentSourceType getItemDataContentType() {
-		return ContentSourceType
-			.valueOf(getString(KEY_ITEM_DATA_CONTENT_TYPE).toUpperCase());
-	}
-	//
-	@Override
 	public String getItemDataContentFile() {
 		return getString(KEY_ITEM_DATA_CONTENT_FILE);
 	}
@@ -199,8 +192,18 @@ implements AppConfig {
 	}
 	//
 	@Override
+	public String getItemDstContainer() {
+		return getString(KEY_ITEM_DST_CONTAINER);
+	}
+	//
+	@Override
 	public String getItemDstFile() {
 		return getString(KEY_ITEM_DST_FILE);
+	}
+	//
+	@Override
+	public String getItemSrcContainer() {
+		return getString(KEY_ITEM_SRC_CONTAINER);
 	}
 	//
 	@Override
@@ -251,20 +254,8 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public LoadType getLoadType() {
-		final Object t = getProperty(KEY_LOAD_TYPE);
-		if(t instanceof String) {
-			return LoadType.valueOf(((String) t).toUpperCase());
-		} else if(t instanceof List) {
-			return LoadType.MIXED;
-		} else {
-			throw new IllegalArgumentException();
-		}
-	}
-	//
-	@Override
-	public int getLoadThreads() {
-		return getInt(KEY_LOAD_THREADS);
+	public boolean getLoadCopy() {
+		return getBoolean(KEY_LOAD_COPY);
 	}
 	//
 	@Override
@@ -275,6 +266,26 @@ implements AppConfig {
 	@Override
 	public double getLoadLimitRate() {
 		return getDouble(KEY_LOAD_LIMIT_RATE);
+	}
+	//
+	@Override
+	public long getLoadLimitSize() {
+		final Object raw = getProperty(KEY_LOAD_LIMIT_SIZE);
+		if(raw instanceof Long) {
+			return ((long) raw);
+		} else if(raw instanceof Integer) {
+			return ((int) raw);
+		} else if(raw instanceof Short) {
+			return ((short) raw);
+		} else if(raw instanceof String) {
+			return SizeInBytes.toFixedSize((String) raw);
+		} else if(raw instanceof SizeInBytes){
+			return ((SizeInBytes) raw).get();
+		} else {
+			throw new ConversionException(
+				"Type of \"" + KEY_LOAD_LIMIT_SIZE + "\" is not supported: \"" + raw + "\""
+			);
+		}
 	}
 	//
 	@Override
@@ -325,6 +336,23 @@ implements AppConfig {
 	@Override
 	public boolean getLoadServerNodeMapping() {
 		return getBoolean(KEY_LOAD_SERVER_NODE_MAPPING);
+	}
+	//
+	@Override
+	public int getLoadThreads() {
+		return getInt(KEY_LOAD_THREADS);
+	}
+	//
+	@Override
+	public LoadType getLoadType() {
+		final Object t = getProperty(KEY_LOAD_TYPE);
+		if(t instanceof String) {
+			return LoadType.valueOf(((String) t).toUpperCase());
+		} else if(t instanceof List) {
+			return LoadType.MIXED;
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	//
 	@Override
@@ -521,7 +549,9 @@ implements AppConfig {
 				} else if(n == null) {
 					if(i == keyParts.length - 1) {
 						value = getProperty(compositeKey);
-						if(value instanceof Long) {
+						if(value == null) {
+							parentNode.putNull(keyParts[i]);
+						} else if(value instanceof Long) {
 							parentNode.put(keyParts[i], (Long) value);
 						} else if(value instanceof Integer) {
 							parentNode.put(keyParts[i], (Integer) value);
@@ -539,7 +569,9 @@ implements AppConfig {
 							// TODO something w/ this ugly code
 							final ArrayNode arrayNode = parentNode.putArray(keyParts[i]);
 							for(final Object listValue : (List) value) {
-								if(listValue instanceof Long) {
+								if(listValue == null) {
+									arrayNode.addNull();
+								} else if(listValue instanceof Long) {
 									arrayNode.add((Long) listValue);
 								} else if(listValue instanceof Integer) {
 									arrayNode.add((Integer) listValue);
@@ -598,7 +630,7 @@ implements AppConfig {
 			nextVal = getProperty(nextKey);
 			switch(nextKey) {
 				case KEY_ITEM_TYPE:
-				case KEY_ITEM_CONTAINER_NAME:
+				case KEY_ITEM_DST_CONTAINER:
 				case KEY_LOAD_TYPE:
 				case KEY_LOAD_THREADS:
 				case KEY_LOAD_LIMIT_COUNT:

@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "read-container-listing"
+			"dst" : {
+				"container" : "read-container-listing"
 			}
 		},
 		"load" : {
@@ -26,6 +26,11 @@
 		}, {
 			"type": "load",
 			"config" : {
+				"item" : {
+					"src" : {
+						"container" : "read-container-listing"
+					}
+				},
 				"load" : {
 					"type" : "read"
 				}

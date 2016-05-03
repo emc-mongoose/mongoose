@@ -17,6 +17,7 @@ import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 //
 import com.emc.mongoose.core.impl.load.executor.BasicMixedHttpDataLoadExecutor;
+import org.apache.http.HttpRequest;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -47,6 +49,19 @@ implements HttpDataLoadBuilder<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected HttpRequestConfig<T, ? extends Container<T>> getDefaultIoConfig() {
 		return HttpRequestConfigBase.getInstance();
+	}
+	//
+	@Override
+	public final BasicHttpDataLoadBuilder<T, U> setAppConfig(final AppConfig appConfig) {
+		final String newApi = appConfig.getStorageHttpApi();
+		if(!((HttpRequestConfig) ioConfig).getAPI().equalsIgnoreCase(newApi)) {
+			ioConfig = HttpRequestConfigBase.newInstanceFor(newApi);
+		}
+		try {
+			super.setAppConfig(appConfig);
+		} catch(final RemoteException ignored) {
+		}
+		return this;
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
@@ -72,8 +87,19 @@ implements HttpDataLoadBuilder<T, U> {
 		final LoadType loadType = ioConfig.getLoadType();
 		final HttpRequestConfig httpReqConf = (HttpRequestConfig) ioConfig;
 		if(LoadType.MIXED.equals(loadType)) {
-			final List<String> inputFiles = (List) appConfig
-				.getList(AppConfig.KEY_ITEM_SRC_FILE);
+			final Object inputFilesRaw = appConfig.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
+			final List<String> inputFiles;
+			if(inputFilesRaw instanceof List) {
+				inputFiles = (List<String>) inputFilesRaw;
+			} else if(inputFilesRaw instanceof String){
+				inputFiles = new ArrayList<>();
+				inputFiles.add((String) inputFilesRaw);
+			} else {
+				throw new IllegalStateException(
+					"Invalid configuration parameter type for " + AppConfig.KEY_ITEM_SRC_FILE +
+						": \"" + inputFilesRaw + "\""
+				);
+			}
 			final List<String> loadPatterns = (List) appConfig
 				.getList(AppConfig.KEY_LOAD_TYPE);
 			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
@@ -122,15 +148,13 @@ implements HttpDataLoadBuilder<T, U> {
 				);
 			}
 			return (U) new BasicMixedHttpDataLoadExecutor<>(
-				appConfig, httpReqConf, storageNodeAddrs, threadCount,
-				maxCount, rateLimit, sizeConfig, rangesConfig,
-				loadTypeWeightMap, itemInputMap
+				appConfig, httpReqConf, storageNodeAddrs, threadCount, countLimit, sizeLimit,
+				rateLimit, sizeConfig, rangesConfig, loadTypeWeightMap, itemInputMap
 			);
 		} else {
 			return (U) new BasicHttpDataLoadExecutor<>(
-				appConfig, httpReqConf, storageNodeAddrs, threadCount,
-				itemInput == null ? getDefaultItemInput() : itemInput,
-				maxCount, rateLimit, sizeConfig, rangesConfig
+				appConfig, httpReqConf, storageNodeAddrs, threadCount, selectItemInput(),
+				countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig
 			);
 		}
 	}

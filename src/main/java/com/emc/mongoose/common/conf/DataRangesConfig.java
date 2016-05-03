@@ -48,6 +48,10 @@ public class DataRangesConfig {
 		public final long getEnd() {
 			return end;
 		}
+		//
+		public final String toString() {
+			return Long.toString(beg) + '-' + end;
+		}
 	}
 	//
 	private final int randomCount;
@@ -76,6 +80,19 @@ public class DataRangesConfig {
 		fixedByteRanges = new ArrayList<>();
 		for(final String rawRange : rawRanges) {
 			fixedByteRanges.add(new ByteRange(rawRange));
+		}
+	}
+	//
+	@Override
+	public final String toString() {
+		if(randomCount > 0) {
+			return Integer.toString(randomCount);
+		} else {
+			final StringBuilder strb = new StringBuilder();
+			for(final ByteRange br : fixedByteRanges) {
+				strb.append(br.toString());
+			}
+			return strb.toString();
 		}
 	}
 	//

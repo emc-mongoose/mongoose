@@ -7,6 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.item.token.Token;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
 //
 import org.apache.http.Header;
@@ -33,10 +34,13 @@ extends HttpRequestConfigBase<T, C> {
 	public final static String KEY_X_AUTH_TOKEN = "X-Auth-Token";
 	public final static String KEY_X_AUTH_USER = "X-Auth-User";
 	public final static String KEY_X_AUTH_KEY = "X-Auth-Key";
+	public final static String KEY_X_COPY_FROM = "X-Copy-From";
 	public final static String KEY_X_VERSIONING = "X-Versions-Location";
 	public final static String DEFAULT_VERSIONS_CONTAINER = "archive";
 	//
-	private String uriSvcBasePath = "v1", uriSvcBaseContainerPath = null;
+	private String uriSvcBasePath = "v1";
+	private String dstContainerUriPath = null;
+	private String srcContainerUriPath = null;
 	//
 	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
@@ -52,17 +56,22 @@ extends HttpRequestConfigBase<T, C> {
 			if(reqConf2Clone.uriSvcBasePath != null) {
 				uriSvcBasePath = reqConf2Clone.uriSvcBasePath;
 			}
-			if(reqConf2Clone.uriSvcBaseContainerPath != null) {
-				uriSvcBaseContainerPath = reqConf2Clone.uriSvcBaseContainerPath;
+			if(reqConf2Clone.dstContainerUriPath != null) {
+				dstContainerUriPath = reqConf2Clone.dstContainerUriPath;
+			}
+			if(reqConf2Clone.srcContainerUriPath != null) {
+				srcContainerUriPath = reqConf2Clone.srcContainerUriPath;
 			}
 		}
 		//
-		refreshContainerPath();
+		refreshContainerPaths();
 	}
 	//
-	private void refreshContainerPath() {
+	private void refreshContainerPaths() {
 		if(uriSvcBasePath == null) {
-			LOG.debug(Markers.MSG, "Swift API URI base path is <null>, not refreshing the container path");
+			LOG.debug(
+				Markers.MSG, "Swift API URI base path is <null>, not refreshing the container path"
+			);
 			return;
 		}
 		final String nameSpace = getNameSpace();
@@ -70,11 +79,22 @@ extends HttpRequestConfigBase<T, C> {
 			LOG.debug(Markers.MSG, "Swift namespace is <null>, not refreshing the container path");
 			return;
 		}
-		if(container == null) {
-			LOG.debug(Markers.MSG, "Swift container is <null>, not refreshing the container path");
-			return;
+		if(dstContainer == null) {
+			LOG.debug(
+				Markers.MSG,
+				"Swift destination container is <null>, not refreshing the container path"
+			);
+		} else {
+			dstContainerUriPath = "/"+uriSvcBasePath +"/"+nameSpace+"/"+dstContainer.getName();
 		}
-		uriSvcBaseContainerPath = "/"+uriSvcBasePath+"/"+nameSpace+"/"+container.getName();
+		if(srcContainer == null) {
+			LOG.debug(
+				Markers.MSG,
+				"Swift source container is <null>, not refreshing the container path"
+			);
+		} else {
+			srcContainerUriPath = "/"+uriSvcBasePath+"/"+nameSpace+"/"+srcContainer.getName();
+		}
 	}
 	//
 	public final String getSvcBasePath() {
@@ -82,9 +102,20 @@ extends HttpRequestConfigBase<T, C> {
 	}
 	//
 	@Override
+	public final HttpRequestConfigImpl<T, C> setAuthToken(final Token authToken) {
+		super.setAuthToken(authToken);
+		if(authToken != null && sharedHeaders != null) {
+			sharedHeaders.put(
+				KEY_X_AUTH_TOKEN, new BasicHeader(KEY_X_AUTH_TOKEN, authToken.getName())
+			);
+		}
+		return this;
+	}
+	//
+	@Override
 	public final HttpRequestConfigImpl<T, C> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
-		refreshContainerPath();
+		refreshContainerPaths();
 		return this;
 	}
 	//
@@ -102,10 +133,7 @@ extends HttpRequestConfigBase<T, C> {
 	@Override @SuppressWarnings("unchecked")
 	public HttpRequestConfigImpl<T, C> setAppConfig(final AppConfig appConfig) {
 		super.setAppConfig(appConfig);
-		refreshContainerPath();
-		if(uriSvcBaseContainerPath == null) {
-
-		}
+		refreshContainerPaths();
 		return this;
 	}
 	//
@@ -124,24 +152,42 @@ extends HttpRequestConfigBase<T, C> {
 	}
 	//
 	@Override
-	protected final String getDataUriPath(final T dataItem)
+	protected final String getObjectDstPath(final T object)
 	throws IllegalArgumentException, IllegalStateException {
-		if(uriSvcBaseContainerPath == null) {
+		if(dstContainerUriPath == null) {
 			throw new IllegalStateException("Illegal URI template: <null>");
 		}
-		if(dataItem == null) {
+		if(object == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		//applyObjectId(dataItem, null);
-		return uriSvcBaseContainerPath + "/" + dataItem.getName();
+		return dstContainerUriPath + "/" + object.getName();
 	}
+	//
 	@Override
-	protected String getContainerUriPath(final Container<T> container)
+	protected final String getObjectSrcPath(final T object)
+	throws IllegalArgumentException, IllegalStateException {
+		if(srcContainerUriPath == null) {
+			throw new IllegalStateException("Illegal URI template: <null>");
+		}
+		if(object == null) {
+			throw new IllegalArgumentException("Illegal data item: <null>");
+		}
+		return srcContainerUriPath + "/" + object.getName();
+	}
+	//
+	@Override
+	protected String getContainerPath(final Container<T> container)
 	throws IllegalArgumentException, URISyntaxException {
 		return "/" + uriSvcBasePath + "/" + nameSpace + "/" + container.getName();
 	}
 	//
 	private Header headerAuthToken = null;
+	//
+	@Override
+	protected final void applyCopyHeaders(final HttpRequest httpRequest, final T object)
+	throws URISyntaxException {
+		httpRequest.setHeader(KEY_X_COPY_FROM, getObjectSrcPath(object));
+	}
 	//
 	@Override
 	protected final void applyAuthHeader(final HttpRequest httpRequest) {
@@ -165,25 +211,24 @@ extends HttpRequestConfigBase<T, C> {
 	public final void configureStorage(final String storageNodeAddrs[])
 	throws IllegalStateException {
 		// configure an auth token - create if not specified
-		final String authTokenValue = authToken == null ? null : authToken.toString();
+		String authTokenValue = authToken == null ? null : authToken.toString();
 		if(authTokenValue == null || authTokenValue.length() < 1) {
 			new SwiftAuthTokenHelper<>(this, null).create(storageNodeAddrs[0]);
 		}
 		//
-		sharedHeaders.put(KEY_X_AUTH_TOKEN, new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue));
-		appConfig.setProperty(AppConfig.KEY_AUTH_TOKEN, authTokenValue);
+		setAuthToken(authToken);
 		// configure a container
 		final HttpSwiftContainerHelper<T, C>
-			containerHelper = new HttpSwiftContainerHelper<>(this, container);
+			containerHelper = new HttpSwiftContainerHelper<>(this, dstContainer);
 		if(containerHelper.exists(storageNodeAddrs[0])) {
-			LOG.info(Markers.MSG, "Container \"{}\" already exists", container);
+			LOG.info(Markers.MSG, "Container \"{}\" already exists", dstContainer);
 		} else {
 			containerHelper.create(storageNodeAddrs[0]);
 			if(containerHelper.exists(storageNodeAddrs[0])) {
-				appConfig.setProperty(AppConfig.KEY_ITEM_CONTAINER_NAME, container.getName());
+				appConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, dstContainer.getName());
 			} else {
 				throw new IllegalStateException(
-					String.format("Container \"%s\" still doesn't exist", container)
+					String.format("Container \"%s\" still doesn't exist", dstContainer)
 				);
 			}
 		}
@@ -196,7 +241,7 @@ extends HttpRequestConfigBase<T, C> {
 	@Override
 	protected final void createDirectoryPath(final String nodeAddr, final String dirPath)
 	throws IllegalStateException {
-		final String containerName = container.getName();
+		final String containerName = dstContainer.getName();
 		/*final HttpEntityEnclosingRequest createDirReq = createGenericRequest(
 			METHOD_PUT,
 			"/" + uriSvcBasePath + "/" + containerName + "/" + nameSpace + "/" + dirPath
@@ -251,8 +296,8 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final Input<T> getContainerListInput(final long maxCount, final String addr) {
-		return new WSContainerItemInput<>(
-			new HttpSwiftContainerHelper<>(this, container), addr, getItemClass(), maxCount
+		return srcContainer == null ? null : new WSContainerItemInput<>(
+			new HttpSwiftContainerHelper<>(this, srcContainer), addr, getItemClass(), maxCount
 		);
 	}
 	//

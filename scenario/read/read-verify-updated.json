@@ -1,11 +1,13 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"container" : {
-			"name" : "linear-read-verify-updated"
-		},
-		"data" : {
-			"size" : "1KB"
+		"item" : {
+			"dst" : {
+				"container" : "linear-read-verify-updated"
+			},
+			"data" : {
+				"size" : "1KB"
+			}
 		}
 	},
 	"jobs": [

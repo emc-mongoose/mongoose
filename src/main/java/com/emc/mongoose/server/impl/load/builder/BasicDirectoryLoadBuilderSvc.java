@@ -3,6 +3,7 @@ package com.emc.mongoose.server.impl.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
@@ -68,6 +69,11 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
+	public final Input<C> selectItemInput() {
+		return null;
+	}
+	//
+	@Override
 	public String buildRemotely()
 	throws RemoteException {
 		U loadSvc = build();
@@ -86,8 +92,8 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
 		return (U) new BasicDirectoryLoadSvc<>(
-			appConfig, (FileIoConfig<T, C>) ioConfig, threadCount,
-			itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit
+			appConfig, (FileIoConfig<T, C>) ioConfig, threadCount, selectItemInput(), countLimit,
+			sizeLimit, rateLimit
 		);
 	}
 	//

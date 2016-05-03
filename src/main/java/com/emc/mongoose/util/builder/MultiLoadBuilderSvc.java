@@ -163,10 +163,19 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setMaxCount(final long maxCount)
+	public final LoadBuilderSvc setCountLimit(final long countLimit)
 	throws IllegalArgumentException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setMaxCount(maxCount);
+			loadBuilderSvc.setCountLimit(countLimit);
+		}
+		return this;
+	}
+	//
+	@Override
+	public final LoadBuilderSvc setSizeLimit(final long sizeLimit)
+	throws IllegalArgumentException, RemoteException {
+		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
+			loadBuilderSvc.setSizeLimit(sizeLimit);
 		}
 		return this;
 	}
@@ -201,9 +210,6 @@ implements LoadBuilderSvc {
 	@Override
 	public final LoadBuilderSvc setInput(final Input itemInput)
 	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setInput(itemInput);
-		}
 		return this;
 	}
 	//
@@ -212,33 +218,6 @@ implements LoadBuilderSvc {
 	throws RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.setOutput(itemOutput);
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderSvc useNewItemSrc()
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.useNewItemSrc();
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderSvc useNoneItemSrc()
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.useNoneItemSrc();
-		}
-		return this;
-	}
-	//
-	@Override
-	public LoadBuilderSvc useContainerListingItemSrc()
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.useContainerListingItemSrc();
 		}
 		return this;
 	}

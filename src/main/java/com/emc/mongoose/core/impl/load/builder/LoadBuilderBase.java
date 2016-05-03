@@ -10,6 +10,7 @@ import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
+import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -35,16 +36,17 @@ implements LoadBuilder<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected volatile AppConfig appConfig;
-	protected long maxCount = 0;
-	protected volatile IoConfig<?, ?> ioConfig = getDefaultIoConfig();
+	protected long countLimit = 0;
+	protected long sizeLimit = 0;
+	protected volatile IoConfig ioConfig = getDefaultIoConfig();
 	protected float rateLimit;
 	protected int threadCount = 1;
-	protected Input<T> itemInput;
+	protected Input<T> itemInput = null;
 	protected Output<T> itemOutput = null;
 	protected String storageNodeAddrs[];
-	protected boolean flagUseNewItemSrc, flagUseNoneItemSrc, flagUseContainerItemSrc;
 	//
-	protected abstract IoConfig<?, ?> getDefaultIoConfig();
+	protected abstract IoConfig<? extends Item, ? extends Container<? extends Item>>
+		getDefaultIoConfig();
 	//
 	public LoadBuilderBase()
 	throws RemoteException {
@@ -53,7 +55,6 @@ implements LoadBuilder<T, U> {
 	//
 	public LoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
-		resetItemSrc();
 		try {
 			setAppConfig(appConfig);
 		} catch(final IllegalArgumentException | IllegalStateException e) {
@@ -61,10 +62,7 @@ implements LoadBuilder<T, U> {
 		}
 	}
 	//
-	protected void resetItemSrc() {
-		flagUseNewItemSrc = true;
-		flagUseNoneItemSrc = false;
-		flagUseContainerItemSrc = true;
+	protected final void resetItemInput() {
 		itemInput = null;
 	}
 	//
@@ -82,7 +80,16 @@ implements LoadBuilder<T, U> {
 		//
 		String paramName = AppConfig.KEY_LOAD_LIMIT_COUNT;
 		try {
-			setMaxCount(appConfig.getLoadLimitCount());
+			setCountLimit(appConfig.getLoadLimitCount());
+		} catch(final NoSuchElementException e) {
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+		} catch(final IllegalArgumentException e) {
+			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+		}
+		//
+		paramName = AppConfig.KEY_LOAD_LIMIT_SIZE;
+		try {
+			setSizeLimit(appConfig.getLoadLimitSize());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -133,13 +140,14 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final IoConfig<?, ?> getIoConfig() {
+	public final IoConfig<? extends Item, ? extends Container<? extends Item>> getIoConfig() {
 		return ioConfig;
 	}
 	//
 	@Override
-	public final LoadBuilder<T, U> setIoConfig(final IoConfig<?, ?> ioConfig)
-	throws ClassCastException, RemoteException {
+	public final LoadBuilder<T, U> setIoConfig(
+		final IoConfig<? extends Item, ? extends Container<? extends Item>> ioConfig
+	) throws ClassCastException, RemoteException {
 		if(this.ioConfig.equals(ioConfig)) {
 			return this;
 		}
@@ -171,13 +179,24 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setMaxCount(final long maxCount)
+	public LoadBuilder<T, U> setCountLimit(final long countLimit)
 	throws IllegalArgumentException, RemoteException {
-		LOG.debug(Markers.MSG, "Set max data item count: {}", maxCount);
-		if(maxCount < 0) {
+		LOG.debug(Markers.MSG, "Set max item count: {}", countLimit);
+		if(countLimit < 0) {
 			throw new IllegalArgumentException("Count should be >= 0");
 		}
-		this.maxCount = maxCount;
+		this.countLimit = countLimit;
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilder<T, U> setSizeLimit(final long sizeLimit)
+	throws IllegalArgumentException, RemoteException {
+		LOG.debug(Markers.MSG, "Set max data size count: {}", sizeLimit);
+		if(sizeLimit < 0) {
+			throw new IllegalArgumentException("Count should be >= 0");
+		}
+		this.sizeLimit = sizeLimit;
 		return this;
 	}
 	//
@@ -214,7 +233,7 @@ implements LoadBuilder<T, U> {
 		return this;
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public LoadBuilder<T, U> setInput(final Input<T> itemInput)
 	throws RemoteException {
 		LOG.debug(Markers.MSG, "Set data items input: {}", itemInput);
@@ -237,43 +256,57 @@ implements LoadBuilder<T, U> {
 		lb.appConfig = (AppConfig) appConfig.clone();
 		LOG.debug(Markers.MSG, "Cloning request config for {}", ioConfig.toString());
 		lb.ioConfig = ioConfig.clone();
-		lb.maxCount = maxCount;
+		lb.countLimit = countLimit;
 		lb.threadCount = threadCount;
 		lb.storageNodeAddrs = storageNodeAddrs;
 		lb.itemInput = itemInput;
 		lb.itemOutput = itemOutput;
 		lb.rateLimit = rateLimit;
-		lb.flagUseNewItemSrc = flagUseNewItemSrc;
-		lb.flagUseNoneItemSrc = flagUseNoneItemSrc;
-		lb.flagUseContainerItemSrc = flagUseContainerItemSrc;
 		return lb;
 	}
-	//
 	//
 	protected abstract Input<T> getNewItemInput()
 	throws NoSuchMethodException;
 	//
-	protected abstract Input<T> getDefaultItemInput();
-	//
-	@Override
-	public LoadBuilderBase<T, U> useNewItemSrc()
-	throws RemoteException {
-		flagUseNewItemSrc = true;
-		return this;
+	@SuppressWarnings("unchecked")
+	protected Input<T> getContainerItemInput()
+	throws CloneNotSupportedException {
+		return (Input<T>) ioConfig.clone()
+			.getContainerListInput(
+				countLimit, storageNodeAddrs == null ? null : storageNodeAddrs[0]
+			);
 	}
 	//
-	@Override
-	public LoadBuilderBase<T, U> useNoneItemSrc()
-	throws RemoteException {
-		flagUseNoneItemSrc = true;
-		return this;
-	}
-	//
-	@Override
-	public LoadBuilderBase<T, U> useContainerListingItemSrc()
-	throws RemoteException {
-		flagUseContainerItemSrc = true;
-		return this;
+	protected Input<T> selectItemInput()
+	throws IllegalStateException {
+		final boolean copyFlag = appConfig.getLoadCopy();
+		if(null == ioConfig.getSrcContainer()) {
+			if(copyFlag) {
+				throw new IllegalStateException(
+					"Copy mode is enabled but no source container is set"
+				);
+			}
+			try {
+				return itemInput == null ? getNewItemInput() : itemInput;
+			} catch(final NoSuchMethodException e) {
+				throw new IllegalStateException(e);
+			}
+		} else {
+			if(copyFlag) {
+				final LoadType loadType = ioConfig.getLoadType();
+				if(!LoadType.WRITE.equals(loadType)) {
+					throw new IllegalStateException(
+						"Copy mode is enabled but the load type is not \"write\": \"" +
+						loadType + "\""
+					);
+				}
+			}
+			try {
+				return itemInput == null ? getContainerItemInput() : itemInput;
+			} catch(final CloneNotSupportedException e) {
+				throw new IllegalStateException(e);
+			}
+		}
 	}
 	//
 	@Override
@@ -286,7 +319,7 @@ implements LoadBuilder<T, U> {
 		}
 		final U loadJob = buildActually();
 		loadJob.setOutput(itemOutput);
-		resetItemSrc();
+		itemInput = null;
 		return loadJob;
 	}
 	//

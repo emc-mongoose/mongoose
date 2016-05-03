@@ -9,13 +9,10 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
-import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.FileDataItemInput;
-import com.emc.mongoose.core.api.io.conf.IoConfig;
 //
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
@@ -45,7 +42,6 @@ implements DataLoadBuilderClient<T, W, U> {
 	//
 	protected SizeInBytes sizeConfig;
 	protected DataRangesConfig rangesConfig = null;
-	protected boolean flagUseContainerItemSrc;
 	//
 	protected DataLoadBuilderClientBase()
 	throws IOException {
@@ -68,7 +64,7 @@ implements DataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig)
+	public DataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
 		super.setAppConfig(appConfig);
 		setDataSize(appConfig.getItemDataSize());
@@ -109,77 +105,6 @@ implements DataLoadBuilderClient<T, W, U> {
 		return new NewDataItemInput<>(
 			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeConfig
 		);
-	}
-	//
-	@Override @SuppressWarnings("unchecked")
-	protected Input<T> getDefaultItemInput() {
-		try {
-			if(flagUseNoneItemSrc) {
-				// disable any item source usage on the load servers side
-				V nextBuilder;
-				for(final String addr : loadSvcMap.keySet()) {
-					nextBuilder = loadSvcMap.get(addr);
-					nextBuilder.useNoneItemSrc();
-				}
-				//
-				return null;
-			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(LoadType.WRITE.equals(ioConfig.getLoadType())) {
-					// enable new data item generation on the load servers side
-					V nextBuilder;
-					for(final String addr : loadSvcMap.keySet()) {
-						nextBuilder = loadSvcMap.get(addr);
-						nextBuilder.useNoneItemSrc();
-					}
-					//
-					return getNewItemInput();
-				} else {
-					// disable any item source usage on the load servers side
-					V nextBuilder;
-					for(final String addr : loadSvcMap.keySet()) {
-						nextBuilder = loadSvcMap.get(addr);
-						nextBuilder.useNoneItemSrc();
-					}
-					//
-					return (Input<T>) ((IoConfig) ioConfig.clone()).getContainerListInput(
-						maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
-					);
-				}
-			} else if(flagUseNewItemSrc) {
-				// enable new data item generation on the load servers side
-				V nextBuilder;
-				for(final String addr : loadSvcMap.keySet()) {
-					nextBuilder = loadSvcMap.get(addr);
-					nextBuilder.useNoneItemSrc();
-				}
-				//
-				return getNewItemInput();
-			} else if(flagUseContainerItemSrc) {
-				// disable any item source usage on the load servers side
-				V nextBuilder;
-				for(final String addr : loadSvcMap.keySet()) {
-					nextBuilder = loadSvcMap.get(addr);
-					nextBuilder.useNoneItemSrc();
-				}
-				//
-				return (Input<T>) ((IoConfig) ioConfig.clone()).getContainerListInput(
-					maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
-				);
-			}
-		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to change the remote data items source");
-		} catch(final NoSuchMethodException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
-		} catch(final CloneNotSupportedException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the I/O config instance");
-		}
-		return null;
-	}
-	//
-	@Override
-	protected final void resetItemSrc() {
-		super.resetItemSrc();
-		flagUseContainerItemSrc = true;
 	}
 	//
 	@Override

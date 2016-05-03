@@ -1,0 +1,53 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "scenario-copy-swift-object"
+			},
+			"data" : {
+				"size" : "1KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : 10
+		},
+		"storage" : {
+			"http" : {
+				"api" : "swift",
+				"namespace" : "examplens"
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-copy-swift-object.json"
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"container" : "scenario-copy-swift-object_"
+					},
+					"src" : {
+						"container" : "scenario-copy-swift-object",
+						"file" : "/tmp/scenario-copy-swift-object.json"
+					}
+				},
+				"load" : {
+					"copy" : true
+				}
+			}
+		}
+	]
+}

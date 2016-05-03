@@ -31,22 +31,25 @@ implements HttpDataLoadClient<T, W> {
 	//
 	public BasicHttpDataLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
-		final float rateLimit, final Map<String, W> remoteLoadMap
+		final String addrs[], final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit,
+		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		super(
-			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit, remoteLoadMap
+			appConfig, reqConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
+			remoteLoadMap
 		);
 	}
 	//
 	protected BasicHttpDataLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String addrs[], final int threadCount, final Input<T> itemInput, final long maxCount,
-		final float rateLimit, final Map<String, W> remoteLoadMap, final int instanceNum
+		final String addrs[], final int threadCount, final Input<T> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit,
+		final Map<String, W> remoteLoadMap, final int instanceNum
 	) throws RemoteException {
 		super(
-			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit, remoteLoadMap,
-			instanceNum
+			appConfig, reqConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
+			remoteLoadMap, instanceNum
 		);
 	}
 	//

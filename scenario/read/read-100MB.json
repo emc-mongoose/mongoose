@@ -2,8 +2,8 @@
 	"type" : "sequential",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "linear-read-100MB"
+			"dst" : {
+				"container" : "linear-read-100MB"
 			},
 			"data" : {
 				"size" : "100MB"

@@ -8,7 +8,6 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
-import com.emc.mongoose.run.webserver.WebUIRunner;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
@@ -16,14 +15,10 @@ import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
 import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
-import com.emc.mongoose.storage.mock.impl.http.Nagaina;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.util.Map;
 /**
@@ -68,19 +63,7 @@ public final class ModeDispatcher {
 					);
 				}
 				break;
-			case Constants.RUN_MODE_WEBUI:
-				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				new WebUIRunner().run();
-				break;
-			case Constants.RUN_MODE_NAGAINA:
 			case Constants.RUN_MODE_WSMOCK:
-				rootLogger.debug(Markers.MSG, "Starting Nagaina");
-				try {
-					new Nagaina(appConfig).run();
-				} catch (final Exception e) {
-					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init Nagaina");
-				}
-				break;
 			case Constants.RUN_MODE_CINDERELLA:
 				rootLogger.debug(Markers.MSG, "Starting cinderella");
 				try {

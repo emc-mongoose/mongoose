@@ -10,6 +10,9 @@ public class BasicToken
 extends BasicItem
 implements Token {
 	//
+	public BasicToken() {
+	}
+	//
 	public BasicToken(final String value) {
 		super(value);
 	}

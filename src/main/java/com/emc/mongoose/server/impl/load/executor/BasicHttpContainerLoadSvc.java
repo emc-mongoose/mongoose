@@ -36,10 +36,12 @@ implements HttpContainerLoadSvc<T, C> {
 	//
 	public BasicHttpContainerLoadSvc(
 		final AppConfig appConfig, final HttpRequestConfig reqConfig, final String[] addrs,
-		final int threadsPerNode, final Input<C> itemInput, final long maxCount,
-		final float rateLimit
+		final int threadsPerNode, final Input<C> itemInput,
+		final long countCount, final long sizeLimit, final float rateLimit
 	) {
-		super(appConfig, reqConfig, addrs, threadsPerNode, itemInput, maxCount, rateLimit);
+		super(
+			appConfig, reqConfig, addrs, threadsPerNode, itemInput, countCount, sizeLimit, rateLimit
+		);
 	}
 	//
 	@Override

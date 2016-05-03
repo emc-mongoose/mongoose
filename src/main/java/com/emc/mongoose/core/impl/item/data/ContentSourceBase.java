@@ -3,7 +3,6 @@ package com.emc.mongoose.core.impl.item.data;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
-import com.emc.mongoose.common.conf.enums.ContentSourceType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -134,40 +133,31 @@ implements ContentSource {
 	//
 	public static ContentSourceBase getInstance(final AppConfig appConfig)
 	throws IOException, IllegalStateException {
-		ContentSourceBase instance = null;
-		final ContentSourceType
-			contentSrcType = appConfig.getItemDataContentType();
-		switch(contentSrcType) {
-			case FILE:
-				final String contentFilePath = appConfig.getItemDataContentFile();
-				if(contentFilePath != null && !contentFilePath.isEmpty()) {
-					final Path p = Paths.get(contentFilePath);
-					if(Files.exists(p) && !Files.isDirectory(p) &&
-						Files.isReadable(p)) {
-						final File f = p.toFile();
-						final long fileSize = f.length();
-						if(fileSize > 0) {
-							instance = new FileContentSource(
-								Files.newByteChannel(p, StandardOpenOption.READ), fileSize
-							);
-						} else {
-							throw new IllegalStateException(
-								"Content source file @" + contentFilePath + " is empty"
-							);
-						}
-					} else {
-						throw new IllegalStateException(
-							"Content source file @" + contentFilePath + " doesn't exist/" +
-								"not readable/is a directory"
-						);
-					}
+		final ContentSourceBase instance;
+		final String contentFilePath = appConfig.getItemDataContentFile();
+		if(contentFilePath != null && !contentFilePath.isEmpty()) {
+			final Path p = Paths.get(contentFilePath);
+			if(Files.exists(p) && !Files.isDirectory(p) &&
+				Files.isReadable(p)) {
+				final File f = p.toFile();
+				final long fileSize = f.length();
+				if(fileSize > 0) {
+					instance = new FileContentSource(
+						Files.newByteChannel(p, StandardOpenOption.READ), fileSize
+					);
 				} else {
-					throw new IllegalStateException("Content source file path is empty");
+					throw new IllegalStateException(
+						"Content source file @" + contentFilePath + " is empty"
+					);
 				}
-				break;
-			case SEED:
-				instance = new SeedContentSource(appConfig);
-				break;
+			} else {
+				throw new IllegalStateException(
+					"Content source file @" + contentFilePath + " doesn't exist/" +
+					"not readable/is a directory"
+				);
+			}
+		} else {
+			instance = new SeedContentSource(appConfig);
 		}
 		return instance;
 	}

@@ -87,7 +87,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 09.06.14.
  */
@@ -142,30 +141,37 @@ implements HttpRequestConfig<T, C> {
 	protected HttpRequestConfigBase(final HttpRequestConfigBase<T, C> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		final Configuration customHeaders = appConfig.getStorageHttpHeaders();
-		if(customHeaders != null) {
-			final Iterator<String> customHeadersIterator = customHeaders.getKeys();
-			if(customHeadersIterator != null) {
-				String nextKey, nextValue;
-				while(customHeadersIterator.hasNext()) {
-					nextKey = customHeadersIterator.next();
-					nextValue = customHeaders.getString(nextKey);
-					if(-1 < nextKey.indexOf(PATTERN_SYMBOL)) {
-						dynamicHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
-					} else {
-						sharedHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
-					}
-				}
-			}
-		}
-		sharedHeaders.put(
-			HttpHeaders.CONTENT_TYPE,
-			new BasicHeader(
-				HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_OCTET_STREAM.getMimeType()
-			)
-		);
 		try {
 			if(reqConf2Clone != null) {
+				final Map<String, Header> sharedHeaders2Clone = reqConf2Clone.sharedHeaders;
+				sharedHeaders.clear();
+				if(sharedHeaders2Clone != null) {
+					for(final Header nextHeader : sharedHeaders2Clone.values()) {
+						sharedHeaders.put(
+							nextHeader.getName(),
+							new BasicHeader(nextHeader.getName(), nextHeader.getValue())
+						);
+					}
+					if(!sharedHeaders.containsKey(HttpHeaders.CONTENT_TYPE)) {
+						sharedHeaders.put(
+							HttpHeaders.CONTENT_TYPE,
+							new BasicHeader(
+								HttpHeaders.CONTENT_TYPE,
+								ContentType.APPLICATION_OCTET_STREAM.getMimeType()
+							)
+						);
+					}
+				}
+				final Map<String, Header> dynamicHeaders2Clone = reqConf2Clone.dynamicHeaders;
+				dynamicHeaders.clear();
+				if(dynamicHeaders2Clone != null) {
+					for(final Header nextHeader : reqConf2Clone.dynamicHeaders.values()) {
+						dynamicHeaders.put(
+							nextHeader.getName(),
+							new BasicHeader(nextHeader.getName(), nextHeader.getValue())
+						);
+					}
+				}
 				this.setSecret(reqConf2Clone.getSecret()).setScheme(reqConf2Clone.getScheme());
 				this.setFileAccessEnabled(reqConf2Clone.getFileAccessEnabled());
 				this.setPipelining(reqConf2Clone.getPipelining());
@@ -256,7 +262,7 @@ implements HttpRequestConfig<T, C> {
 	public HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
 	throws URISyntaxException, IllegalArgumentException, IllegalStateException {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
-			getHttpMethod(), getDataUriPath(obj)
+			getHttpMethod(), getObjectDstPath(obj)
 		);
 		try {
 			applyHostHeader(request, nodeAddr);
@@ -265,10 +271,14 @@ implements HttpRequestConfig<T, C> {
 		}
 		switch(loadType) {
 			case WRITE:
-				if(obj.hasScheduledUpdates() || obj.hasBeenUpdated()) {
+				if(obj.hasScheduledUpdates() || obj.isAppending()) {
 					applyRangesHeaders(request, obj);
 				}
-				applyPayLoad(request, obj);
+				if(copyFlag) {
+					applyCopyHeaders(request, obj);
+				} else {
+					applyPayLoad(request, obj);
+				}
 				break;
 			case READ:
 			case DELETE:
@@ -283,7 +293,7 @@ implements HttpRequestConfig<T, C> {
 		final C container, final String nodeAddr
 	) throws URISyntaxException {
 		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
-			getHttpMethod(), getContainerUriPath(container)
+			getHttpMethod(), getContainerPath(container)
 		);
 		try {
 			applyHostHeader(request, nodeAddr);
@@ -394,13 +404,36 @@ implements HttpRequestConfig<T, C> {
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setFileAccessEnabled(appConfig.getStorageHttpFsAccess());
 		setVersioning(appConfig.getStorageHttpVersioning());
-		final String containerName = appConfig.getItemContainerName();
-		if(containerName != null && !containerName.isEmpty()) {
-			setContainer((C) new BasicContainer<T>(containerName));
+		final String dstContainerName = appConfig.getItemDstContainer();
+		if(dstContainerName != null && !dstContainerName.isEmpty()) {
+			setDstContainer((C) new BasicContainer<T>(dstContainerName));
 		} else {
-			setContainer(null);
+			setDstContainer(null);
+		}
+		final String srcContainerName = appConfig.getItemSrcContainer();
+		if(srcContainerName != null && !srcContainerName.isEmpty()) {
+			setSrcContainer((C) new BasicContainer<T>(srcContainerName));
+		} else {
+			setSrcContainer(null);
 		}
 		// setPipelining(false);
+		// custom HTTP headers adding
+		final Configuration customHeaders = appConfig.getStorageHttpHeaders();
+		if(customHeaders != null) {
+			final Iterator<String> customHeadersIterator = customHeaders.getKeys();
+			if(customHeadersIterator != null) {
+				String nextKey, nextValue;
+				while(customHeadersIterator.hasNext()) {
+					nextKey = customHeadersIterator.next();
+					nextValue = customHeaders.getString(nextKey);
+					if(-1 < nextValue.indexOf(PATTERN_SYMBOL)) {
+						dynamicHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
+					} else {
+						sharedHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
+					}
+				}
+			}
+		}
 		super.setAppConfig(appConfig);
 		//
 		return this;
@@ -507,16 +540,19 @@ implements HttpRequestConfig<T, C> {
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a date header");
 		}
+		//
 		try {
 			applyMetaDataHeaders(httpRequest);
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a metadata headers");
 		}
+		//
 		try {
 			applyAuthHeader(httpRequest);
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply an auth header");
 		}
+		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			final StringBuilder msgBuff = new StringBuilder("built request: ")
 				.append(httpRequest.getRequestLine().getMethod()).append(' ')
@@ -542,10 +578,13 @@ implements HttpRequestConfig<T, C> {
 		}
 	}
 	//
-	protected abstract String getDataUriPath(final T dataItem)
+	protected abstract String getObjectDstPath(final T object)
 	throws IllegalArgumentException, URISyntaxException;
 	//
-	protected abstract String getContainerUriPath(final Container<T> container)
+	protected abstract String getObjectSrcPath(final T object)
+	throws IllegalArgumentException, URISyntaxException;
+	//
+	protected abstract String getContainerPath(final Container<T> container)
 	throws IllegalArgumentException, URISyntaxException;
 	//
 	protected final void applyPayLoad(
@@ -627,6 +666,10 @@ implements HttpRequestConfig<T, C> {
 	protected void applyMetaDataHeaders(final HttpRequest httpRequest) {
 	}
 	//
+	protected void applyCopyHeaders(final HttpRequest httpRequest, final T object)
+	throws URISyntaxException {
+	}
+	//
 	protected abstract void applyAuthHeader(final HttpRequest httpRequest);
 	//
 	//@Override
@@ -699,10 +742,10 @@ implements HttpRequestConfig<T, C> {
 	@Override
 	public void configureStorage(final String storageNodeAddrs[])
 	throws IllegalStateException {
-		final String containerName = container.getName();
-		int firstSepPos = containerName.indexOf(File.pathSeparatorChar);
+		final String dstContainerName = dstContainer.getName();
+		int firstSepPos = dstContainerName.indexOf(File.pathSeparatorChar);
 		if(fsAccess && firstSepPos >= 0) {
-			final String path = containerName.substring(firstSepPos);
+			final String path = dstContainerName.substring(firstSepPos);
 			if(!path.isEmpty()) {
 				createDirectoryPath(storageNodeAddrs[0], path);
 			}
@@ -797,7 +840,7 @@ implements HttpRequestConfig<T, C> {
 		}
 		//
 		for(final String nextKey : dynamicHeaders.keySet()) {
-			nextHeader = sharedHeaders.get(nextKey);
+			nextHeader = dynamicHeaders.get(nextKey);
 			headerValue = nextHeader.getValue();
 			if(headerValue != null) {
 				// header value is a generator pattern

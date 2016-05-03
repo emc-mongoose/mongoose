@@ -53,13 +53,14 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	//
 	public BasicMixedHttpDataLoadExecutor(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
+		final String[] addrs, final int threadCount,
+		final long countLimit, final long sizeLimit, final float rateLimit,
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
 		final Map<LoadType, Integer> loadTypeWeightMap, final Map<LoadType, Input<T>> itemInputMap
 	) {
 		super(
-			appConfig, reqConfig, addrs, threadCount, null, maxCount, rateLimit, sizeConfig,
-			rangesConfig
+			appConfig, reqConfig, addrs, threadCount, null, countLimit, sizeLimit, rateLimit,
+			sizeConfig, rangesConfig
 		);
 		//
 		this.loadTypeWeights = loadTypeWeightMap;
@@ -76,7 +77,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 			final BasicHttpDataLoadExecutor<T> nextLoadExecutor = new BasicHttpDataLoadExecutor<T>(
 				appConfig, reqConfigCopy, addrs, threadCount,
 				itemInputMap == null ? null : itemInputMap.get(nextLoadType),
-				maxCount, rateLimit, sizeConfig, rangesConfig,
+				countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig,
 				httpProcessor, client, ioReactor, connPoolMap
 			) {
 				@Override

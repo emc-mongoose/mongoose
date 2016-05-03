@@ -50,14 +50,15 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 	//
 	public BasicMixedHttpDataLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig<T, ? extends Container<T>> reqConfig,
-		final String[] addrs, final int threadCount, final long maxCount, final float rateLimit,
+		final String[] addrs, final int threadCount,
+		final long countLimit, final long sizeLimit, final float rateLimit,
 		final Map<String, W> remoteLoadMap, final Map<LoadType, Input<T>> itemInputMap,
 		final Map<LoadType, Integer> loadTypeWeightMap
 	) throws RemoteException {
 		//
 		super(
-			appConfig, reqConfig, addrs, threadCount, null, maxCount, rateLimit, remoteLoadMap,
-			remoteLoadMap.values().iterator().next().getInstanceNum()
+			appConfig, reqConfig, addrs, threadCount, null, countLimit, sizeLimit, rateLimit,
+			remoteLoadMap, remoteLoadMap.values().iterator().next().getInstanceNum()
 		);
 		this.loadTypeWeightMap = loadTypeWeightMap;
 		//
@@ -86,7 +87,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 			final BasicHttpDataLoadClient<T, HttpDataLoadSvc<T>>
 				nextLoadClient = new BasicHttpDataLoadClient<>(
 					appConfig, reqConfigCopy, addrs, threadCount, itemInputMap.get(nextLoadType),
-					maxCount, rateLimit, nextRemoteLoadMap
+					countLimit, sizeLimit, rateLimit, nextRemoteLoadMap
 				);
 			loadClientMap.put(nextLoadType, nextLoadClient);
 		}

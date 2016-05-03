@@ -41,7 +41,7 @@ implements DirectoryLoadBuilder<T, C, U> {
 	public void invokePreConditions()
 	throws IllegalStateException {
 		// create parent directories
-		final Container d = ioConfig.getContainer();
+		final Container d = ioConfig.getDstContainer();
 		final String parentDirectories = d == null ? null : d.getName();
 		if(parentDirectories != null && !parentDirectories.isEmpty()) {
 			try {
@@ -57,8 +57,8 @@ implements DirectoryLoadBuilder<T, C, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected U buildActually() {
 		return (U) new BasicDirectoryLoadExecutor<>(
-			appConfig, (FileIoConfig<T, C>) ioConfig, threadCount,
-			itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit
+			appConfig, (FileIoConfig<T, C>) ioConfig, threadCount, selectItemInput(), countLimit,
+			sizeLimit, rateLimit
 		);
 	}
 }

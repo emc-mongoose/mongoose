@@ -25,11 +25,12 @@ public class BasicHttpContainerLoadClient<
 	//
 	public BasicHttpContainerLoadClient(
 		final AppConfig appConfig, final HttpRequestConfig reqConfig, final String addrs[],
-		final int threadCount, final Input<C> itemInput, final long maxCount, final float rateLimit,
-		final Map<String, W> remoteLoadMap
+		final int threadCount, final Input<C> itemInput, final long countLimit, final long sizeLimit,
+		final float rateLimit, final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		super(
-			appConfig, reqConfig, addrs, threadCount, itemInput, maxCount, rateLimit, remoteLoadMap
+			appConfig, reqConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
+			remoteLoadMap
 		);
 	}
 	//

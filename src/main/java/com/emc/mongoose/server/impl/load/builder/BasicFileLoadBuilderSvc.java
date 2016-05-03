@@ -11,7 +11,6 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.impl.item.data.CsvFileDataItemInput;
 import com.emc.mongoose.core.impl.load.builder.BasicFileLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.FileLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
@@ -27,8 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -67,6 +64,11 @@ implements FileLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
+	public final Input<T> selectItemInput() {
+		return null;
+	}
+	//
+	@Override
 	public String buildRemotely()
 	throws RemoteException {
 		U loadSvc = build();
@@ -87,64 +89,18 @@ implements FileLoadBuilderSvc<T, U> {
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
 		if(LoadType.MIXED.equals(loadType)) {
-			final List<String> inputFiles = (List<String>) appConfig
-				.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
 			final List<String> loadPatterns = (List<String>) appConfig
 				.getProperty(AppConfig.KEY_LOAD_TYPE);
-			final Map<LoadType, Input<T>> itemInputMap = new HashMap<>();
 			final Map<LoadType, Integer> loadTypeWeightMap = LoadType
 				.getMixedLoadWeights(loadPatterns);
-			if(inputFiles.size()==1) {
-				final Path singleInputPath = Paths.get(inputFiles.get(0));
-				for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
-					try {
-						itemInputMap.put(
-							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) ?
-								getNewItemInput() :
-								new CsvFileDataItemInput<>(
-									singleInputPath, (Class<T>) ioConfig.getItemClass(),
-									ioConfig.getContentSource()
-								)
-						);
-					} catch(final NoSuchMethodException | IOException e) {
-						LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
-					}
-				}
-			} else if(inputFiles.size() == loadPatterns.size()) {
-				final Iterator<String> inputFilesIterator = inputFiles.iterator();
-				String nextInputFile;
-				for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
-					nextInputFile = inputFilesIterator.next();
-					try {
-						itemInputMap.put(
-							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) && nextInputFile == null ?
-								getNewItemInput() :
-								new CsvFileDataItemInput<>(
-									Paths.get(nextInputFile), (Class<T>) ioConfig.getItemClass(),
-									ioConfig.getContentSource()
-								)
-						);
-					} catch(final NoSuchMethodException | IOException e) {
-						LogUtil.exception(LOG, Level.ERROR, e, "Failed to build new item src");
-					}
-				}
-			} else {
-				throw new IllegalStateException(
-					"Unable to map the list of " + inputFiles.size() + " input files to " +
-						loadPatterns.size() + " load jobs"
-				);
-			}
 			return (U) new BasicMixedFileLoadSvc<>(
-				appConfig, (FileIoConfig) ioConfig, threadCount, maxCount, rateLimit, sizeConfig,
-				rangesConfig, loadTypeWeightMap, itemInputMap
+				appConfig, (FileIoConfig) ioConfig, threadCount, countLimit, sizeLimit, rateLimit,
+				sizeConfig, rangesConfig, loadTypeWeightMap, null
 			);
 		} else {
 			return (U) new BasicFileLoadSvc<>(
-				appConfig, (FileIoConfig) ioConfig, threadCount,
-				itemInput == null ? getDefaultItemInput() : itemInput, maxCount, rateLimit,
-				sizeConfig, rangesConfig
+				appConfig, (FileIoConfig) ioConfig, threadCount, selectItemInput(), countLimit,
+				sizeLimit, rateLimit, sizeConfig, rangesConfig
 			);
 		}
 	}

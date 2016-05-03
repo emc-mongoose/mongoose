@@ -15,12 +15,8 @@
 		},
 		"item" : {
 			"type" : "data",
-			"container" : {
-				"name" : null
-			},
 			"data" : {
 				"content" : {
-					"type" : "seed",
 					"file" : null,
 					"seed" : "7a42d9c483244167",
 					"ringSize" : "4MB"
@@ -30,9 +26,11 @@
 				"verify" : true
 			},
 			"dst" : {
+				"container" : null,
 				"file" : null
 			},
 			"src" : {
+				"container" : null,
 				"file" : null,
 				"batchSize" : 4096
 			},
@@ -44,16 +42,18 @@
 				"length" : 13
 			},
 			"queue" : {
-				"sizeLimit" : 500000
+				"sizeLimit" : 1000000
 			}
 		},
 		"load" : {
 			"circular" : false,
+			"copy" : false,
 			"type" : "write",
 			"threads" : 1,
 			"limit" : {
 				"count" : 0,
 				"rate" : 0,
+				"size" : 0,
 				"time" : "0s"
 			},
 			"metricsPeriod" : "10s",
@@ -85,7 +85,7 @@
 			"resume" : {
 				"enabled" : false
 			},
-			"version" : "next"
+			"version" : "2.0.0"
 		},
 		"storage" : {
 			"type" : "http",
@@ -94,13 +94,13 @@
 			],
 			"port" : 9020,
 			"http" : {
+				"api" : "S3",
 				"fsAccess" : false,
 				"headers" : {
 					"Connection" : "keep-alive",
-					"User-Agent" : "mongoose/next"
+					"User-Agent" : "mongoose/2.0.0"
 				},
 				"namespace" : null,
-				"api" : "S3",
 				"versioning" : false
 			},
 			"mock" : {

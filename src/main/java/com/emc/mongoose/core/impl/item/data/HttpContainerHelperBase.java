@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.item.data;
 //
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
@@ -46,7 +45,7 @@ implements ContainerHelper<T, C> {
 			final Date dt = Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime();
 			tmpName = CONTAINER_PREFIX + "-" + LogUtil.FMT_DT.format(dt);
 			if(container == null) {
-				reqConf.setContainer((C) new BasicContainer<T>(tmpName));
+				reqConf.setDstContainer((C) new BasicContainer<T>(tmpName));
 			} else {
 				container.setName(tmpName);
 			}

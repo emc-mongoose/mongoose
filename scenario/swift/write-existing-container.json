@@ -2,8 +2,8 @@
 	"type" : "load",
 	"config" : {
 		"item" : {
-			"container" : {
-				"name" : "existingContainerName"
+			"dst" : {
+				"container" : "existingContainerName"
 			}
 		},
 		"storage" : {
