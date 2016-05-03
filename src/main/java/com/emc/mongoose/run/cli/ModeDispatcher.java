@@ -9,6 +9,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 // mongoose-server-api.jar
+import com.emc.mongoose.run.webserver.WebUiRunner;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
 // mongoose-storage-mock.jar
@@ -62,6 +63,10 @@ public final class ModeDispatcher {
 						rootLogger, Level.ERROR, e, "Failed to run the load builder services"
 					);
 				}
+				break;
+			case Constants.RUN_MODE_WEBUI:
+				rootLogger.debug(Markers.MSG, "Starting the web UI");
+				new WebUiRunner().run();
 				break;
 			case Constants.RUN_MODE_WSMOCK:
 			case Constants.RUN_MODE_CINDERELLA:

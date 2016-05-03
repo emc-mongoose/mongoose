@@ -10,7 +10,7 @@ import com.emc.mongoose.run.scenario.engine.JsonScenario;
 import com.emc.mongoose.run.scenario.engine.Scenario;
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.storage.mock.impl.http.Nagaina;
+import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,7 +32,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
-import static java.util.concurrent.Executors.newCachedThreadPool;
 
 /**
  * Created on 22.04.16.
@@ -202,7 +201,7 @@ public class RunServlet extends HttpServlet {
 
 		@Override
 		void start() throws Exception {
-			new Nagaina(super.config).run();
+			new Cinderella(super.config).run();
 		}
 
 	}
