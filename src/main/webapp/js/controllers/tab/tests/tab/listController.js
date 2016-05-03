@@ -16,60 +16,52 @@ define([
 	const TESTS_TAB_TYPE = templatesUtil.testsTabTypes();
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
+	const listItemElemClass = 'list-group-item';
 
-	var currentTabType = TESTS_TAB_TYPE.LIST;
+	var currentTestId;
 
 	function render() {
 		const renderer = rendererFactory();
-		// renderer.navbar();
-		// renderer.base();
-		// makeTabActive(currentTabType);
+		renderer.base();
 	}
 
 	const rendererFactory = function () {
-		const binder = clickEventBinderFactory();
 		const listBlockElemId = jqId([TAB_TYPE.TESTS, 'tab', TESTS_TAB_TYPE.LIST]);
 
-		function renderNavbar() {
-			hbUtil.compileAndInsertInsideBefore(listBlockElemId, listTemplate,
-				{tabs: TESTS_TAB_TYPE});
-			binder.tab();
+		function renderBase() {
+			hbUtil.compileAndInsertInsideBefore(listBlockElemId, listTemplate);
 		}
 
 		return {
-			navbar: renderNavbar
+			base: renderBase
 		}
 	};
 
-	const clickEventBinderFactory = function () {
-
-		function bindTabClickEvents() {
-			tabsUtil.bindTabClickEvents(TESTS_TAB_TYPE, tabJqId, makeTabActive);
-		}
-
-		return {
-			tab: bindTabClickEvents
-		}
-	};
-
-	function tabJqId(tabType) {
-		return jqId([tabType, TAB_TYPE.TESTS, 'tab']);
+	function updateTestsList(testsArr) {
+		const testsListBlockElem = $(jqId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.LIST]));
+		testsListBlockElem.empty();
+		$.each(testsArr, function (index, value) {
+			const listItemElem = $('<a/>',
+				{
+					id: value,
+					class: listItemElemClass
+				});
+			listItemElem.text(value);
+			listItemElem.click(function () {
+				makeItemActive(value)
+			});
+			testsListBlockElem.append(listItemElem);
+		});
+		makeItemActive(testsArr[testsArr.length - 1]);
 	}
 
-	function makeTabActive(tabType) {
-		tabsUtil.showTabAsActive(plainId([TAB_TYPE.TESTS, 'tab']), tabType);
-		switch (tabType) {
-			case TESTS_TAB_TYPE.LIST:
-				break;
-			case TESTS_TAB_TYPE.LOGS:
-				break;
-			case TESTS_TAB_TYPE.CHARTS:
-				break;
-		}
-		currentTabType = tabType;
+	function makeItemActive(testId) {
+		tabsUtil.showTabAsActive(listItemElemClass, testId);
+		currentTestId = testId;
 	}
 
 	return {
-		render: render
+		render: render,
+		updateTestsList: updateTestsList
 	}
 });

@@ -89,7 +89,13 @@ define([
 		currentTabType = tabType;
 	}
 
+	function updateTestsList(testsArr) {
+		listController.updateTestsList(testsArr);
+	}
+
+
 	return {
-		render: render
+		render: render,
+		updateTestsList: updateTestsList
 	}
 });

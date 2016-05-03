@@ -114,7 +114,6 @@ define([
 			});
 			const p = $('<p/>', {
 				class: 'enter-warning'
-
 			});
 			p.append(enterWarning);
 			formGroupDiv.append(p);

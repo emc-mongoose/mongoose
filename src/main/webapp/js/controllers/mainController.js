@@ -247,7 +247,8 @@ define([
 					contentType: constants.JSON_CONTENT_TYPE,
 					data: JSON.stringify(startJson),
 					processData: false
-				}).done(function () {
+				}).done(function (testsArr) {
+					testsController.updateTestsList(testsArr);
 					console.log('Mongoose ran');
 				});
 			}

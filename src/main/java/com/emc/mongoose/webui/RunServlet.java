@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.jetty.http.MimeTypes;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.ThreadPoolExecutor;
 
 
 /**
@@ -50,7 +52,7 @@ public class RunServlet extends HttpServlet {
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper()
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
-	private static final Map<String, FutureTask<Void>> TESTS = new HashMap<>();
+	private static final Map<String, Thread> TESTS = new HashMap<>();
 	// FIXIT:
 	// THE ONLY USE OF THIS THREAD POOL IS SUBMITTING NEW TASKS
 	// THERE'S NO NEED IN THE THREAD POOL, JUST USE THE THREADS
@@ -89,6 +91,9 @@ public class RunServlet extends HttpServlet {
 			default:
 				runTest(runId, new StandaloneLikeRunner(scenario, STANDALONE_MODE_NAME));
 		}
+
+		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
+		response.getWriter().write(JSON_MAPPER.writeValueAsString(TESTS.keySet()));
 	}
 
 	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request) throws IOException {
@@ -140,7 +145,9 @@ public class RunServlet extends HttpServlet {
 
 	@SuppressWarnings("unchecked")
 	private void runTest(final String runId, final Runner runner) {
-		TESTS.put(runId, (FutureTask<Void>) TESTS_EXECUTORS_POOL.submit(runner));
+		final Thread test = new Thread(runner, runId);
+		test.start();
+		TESTS.put(runId, test);
 	}
 
 	private static abstract class Runner implements Runnable {
