@@ -12,6 +12,9 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Pattern;
+
+import static java.util.regex.Pattern.compile;
 
 /**
  * Created on 04.04.16.
@@ -22,6 +25,8 @@ import java.util.*;
 public class JsonUtil {
 
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+	private static final Pattern COMMENT_PATTERN = Pattern.compile("[ ]*//.+");
+
 
 	/**
 	 * @param pathString - the string of the path to a file
@@ -106,6 +111,7 @@ public class JsonUtil {
 		final StringBuilder fileTextBuilder = new StringBuilder();
 		String line;
 		while ((line = reader.readLine()) != null) {
+			line = COMMENT_PATTERN.matcher(line).replaceAll("");
 			fileTextBuilder.append(line).append('\n');
 		}
 		return fileTextBuilder.toString();

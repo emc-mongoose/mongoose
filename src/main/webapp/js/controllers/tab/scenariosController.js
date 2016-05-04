@@ -47,6 +47,9 @@ define([
 					updateDetailsTree(scenarioJson);
 					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(aName);
 				})
+				.fail(function () {
+					alert('The scenario cannot be loaded')
+				})
 		}
 		
 		function backClickEvent() {
