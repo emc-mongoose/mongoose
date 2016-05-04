@@ -78,6 +78,7 @@ define([
 	function makeTabActive(tabType) {
 		tabsUtil.showTabAsActive(plainId([TAB_TYPE.TESTS, 'tab']), tabType);
 		tabsUtil.showActiveTabDependentElements(plainId([TAB_TYPE.TESTS, 'tab', 'dependent']), tabType);
+		const testId = listController.currentTestId();
 		switch (tabType) {
 			case TESTS_TAB_TYPE.LIST:
 				break;

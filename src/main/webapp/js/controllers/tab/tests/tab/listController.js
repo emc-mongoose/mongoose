@@ -61,8 +61,13 @@ define([
 		currentTestId = testId;
 	}
 
+	function getCurrentTestId() {
+		return currentTestId;
+	}
+
 	return {
 		render: render,
-		updateTestsList: updateTestsList
+		updateTestsList: updateTestsList,
+		currentTestId: getCurrentTestId
 	}
 });
