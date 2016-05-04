@@ -24,6 +24,8 @@ public interface WSRequestConfig<T extends WSObject, C extends Container<T>>
 extends RequestConfig<T, C>, HttpRequestInterceptor {
 	//
 	String
+		CANONICAL_EMC_HEADERS_PREFIX = "x-emc-",
+		//
 		KEY_EMC_ACCEPT = "x-emc-accept",
 		KEY_EMC_FS_ACCESS = "x-emc-file-system-access-enabled",
 		KEY_EMC_DATE = "x-emc-date",

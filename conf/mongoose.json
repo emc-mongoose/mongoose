@@ -178,7 +178,7 @@
 			},
 			"customHeaders": {
 				"Connection" : "keep-alive",
-				"User-Agent" : "mongoose/1.4.0"
+				"User-Agent" : "mongoose/1.4.1"
 			},
 			"pipelining": false,
 			"signMethod": "HmacSHA1"
@@ -312,7 +312,7 @@
 		},
 		"run": {
 			"name": "mongoose",
-			"version": "1.4.0",
+			"version": "1.4.1",
 			"mode": "standalone",
 			"resume": {
 				"enabled" : false

@@ -171,18 +171,22 @@ extends WSRequestConfigBase<T, C> {
 			canonical.append('\n').append(k).append(':').append(sortedAmzHeaders.get(k));
 		}
 		// x-emc-*
-		for(final String emcHeaderName : HEADERS_CANONICAL_EMC) {
-			if(httpRequest.containsHeader(emcHeaderName)) {
-				for(final Header emcHeader : httpRequest.getHeaders(emcHeaderName)) {
-					canonical
-						.append('\n').append(emcHeaderName.toLowerCase())
-						.append(':').append(emcHeader.getValue());
-				}
-			} else if(sharedHeaders.containsHeader(emcHeaderName)) {
-				canonical
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
+		String emcHeaderName;
+		Map<String, String> sortedEmcHeaders = new TreeMap<>();
+		for(final Header header : sharedHeaders.getAllHeaders()) {
+			emcHeaderName = header.getName().toLowerCase();
+			if(emcHeaderName.startsWith(CANONICAL_EMC_HEADERS_PREFIX)) {
+				sortedEmcHeaders.put(emcHeaderName, header.getValue());
 			}
+		}
+		for(final Header header : httpRequest.getAllHeaders()) {
+			emcHeaderName = header.getName().toLowerCase();
+			if(emcHeaderName.startsWith(CANONICAL_EMC_HEADERS_PREFIX)) {
+				sortedEmcHeaders.put(emcHeaderName, header.getValue());
+			}
+		}
+		for(final String k : sortedEmcHeaders.keySet()) {
+			canonical.append('\n').append(k).append(':').append(sortedEmcHeaders.get(k));
 		}
 		//
 		final String uri = httpRequest.getRequestLine().getUri();
