@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -37,7 +38,7 @@ public class RunServlet extends HttpServlet {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private static final String WSMOCK_MODE_NAME = "Nagaina";
+	private static final String WSMOCK_MODE_NAME = "Cindirella";
 	private static final String STANDALONE_MODE_NAME = "Mongoose";
 	private static final String CLIENT_MODE_NAME = "client";
 	private static final String SERVER_MODE_NAME = "server";
@@ -48,6 +49,7 @@ public class RunServlet extends HttpServlet {
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 	private static final Map<String, Thread> TESTS = new HashMap<>();
+	private static final Map<String, String> MODES = new LinkedHashMap<>();
 
 	@Override
 	protected void doPut(final HttpServletRequest request, final HttpServletResponse response)
@@ -66,25 +68,25 @@ public class RunServlet extends HttpServlet {
 		}
 		runId =  LogUtil.newRunId();
 		config.setProperty(AppConfig.KEY_RUN_ID, runId);
-		switch (getRunMode(config)) {
+		final String runMode = getRunMode(config);
+		switch (runMode) {
 			case Constants.RUN_MODE_STANDALONE:
-				runTest(runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME));
+				runTest(runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME), runMode);
 				break;
 			case Constants.RUN_MODE_WSMOCK:
-				runTest(runId, new WsMockRunner(config));
+				runTest(runId, new WsMockRunner(config), runMode);
 				break;
 			case Constants.RUN_MODE_SERVER:
-				runTest(runId, new ServerRunner(config));
+				runTest(runId, new ServerRunner(config), runMode);
 				break;
 			case Constants.RUN_MODE_CLIENT:
-				runTest(runId, new StandaloneLikeRunner(config, scenario, CLIENT_MODE_NAME));
+				runTest(runId, new StandaloneLikeRunner(config, scenario, CLIENT_MODE_NAME), runMode);
 				break;
 			default:
-				runTest(runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME));
+				runTest(runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME), runMode);
 		}
-
 		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-		response.getWriter().write(JSON_MAPPER.writeValueAsString(TESTS.keySet()));
+		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
 	}
 
 	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request) throws IOException {
@@ -135,10 +137,15 @@ public class RunServlet extends HttpServlet {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void runTest(final String runId, final Runner runner) {
+	private void runTest(final String runId, final Runner runner, final String runMode) {
 		final Thread test = new Thread(runner, runId);
 		test.start();
+		putTest(runId, test, runMode);
+	}
+
+	private void putTest(final String runId, final Thread test, final String mode) {
 		TESTS.put(runId, test);
+		MODES.put(runId, mode);
 	}
 
 	private static abstract class Runner implements Runnable {

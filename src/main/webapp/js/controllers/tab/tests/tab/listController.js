@@ -37,22 +37,23 @@ define([
 		}
 	};
 
-	function updateTestsList(testsArr) {
+	function updateTestsList(testsObj) {
 		const testsListBlockElem = $(jqId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.LIST]));
 		testsListBlockElem.empty();
-		$.each(testsArr, function (index, value) {
+		$.each(testsObj, function (key, value) {
 			const listItemElem = $('<a/>',
 				{
-					id: value,
+					id: key,
 					class: listItemElemClass
 				});
-			listItemElem.text(value);
+			listItemElem.text(key + " - " + value);
 			listItemElem.click(function () {
-				makeItemActive(value)
+				makeItemActive(key)
 			});
 			testsListBlockElem.append(listItemElem);
 		});
-		makeItemActive(testsArr[testsArr.length - 1]);
+		const testsIds = Object.keys(testsObj);
+		makeItemActive(testsIds[testsIds.length - 1]);
 	}
 
 	function makeItemActive(testId) {

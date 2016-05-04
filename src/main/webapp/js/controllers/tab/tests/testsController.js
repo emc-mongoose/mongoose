@@ -89,8 +89,8 @@ define([
 		currentTabType = tabType;
 	}
 
-	function updateTestsList(testsArr) {
-		listController.updateTestsList(testsArr);
+	function updateTestsList(testsObj) {
+		listController.updateTestsList(testsObj);
 	}
 
 
