@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.io;
+package com.emc.mongoose.common.conf;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.fasterxml.jackson.core.JsonProcessingException;

@@ -1,28 +1,19 @@
 package com.emc.mongoose.webui;
 
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.io.JsonUtil;
+import com.emc.mongoose.common.conf.JsonUtil;
 import com.emc.mongoose.common.log.LogUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.http.MimeTypes;
 
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.nio.channels.Channels;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static com.emc.mongoose.common.conf.AppConfig.FNAME_CONF;
 import static com.emc.mongoose.common.conf.BasicConfig.getRootDir;
