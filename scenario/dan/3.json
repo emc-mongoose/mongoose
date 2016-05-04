@@ -1,0 +1,64 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"auth" : {
+			"id" : "wuser1@sanity.local"
+		},
+		"storage" : {
+			"http" : {
+				"namespace" : "s3"
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "parallel",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "10KB"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 1000
+					},
+					"threads" : 5
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load"
+				}, {
+					"type" : "load",
+					"config" : {
+						"storage" : {
+							"http" : {
+								"api" : "atmos"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"storage" : {
+							"http" : {
+								"api" : "swift"
+							}
+						}
+					}
+				}
+			]
+		}, {
+			"type" : "load",
+			"config" : {
+				"load" : {
+					"limit" : {
+						"count" : 10
+					},
+					"threads" : 10
+				}
+			}
+		}
+	]
+}

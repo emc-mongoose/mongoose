@@ -39,7 +39,11 @@ public class ParallelJobContainer
 		LOG.debug(Markers.MSG, "{}: started {} sub jobs", toString(), subJobs.size());
 		parallelJobsExecutor.shutdown();
 		try {
-			parallelJobsExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+			if(limitTime > 0) {
+				parallelJobsExecutor.awaitTermination(limitTime, TimeUnit.SECONDS);
+			} else {
+				parallelJobsExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+			}
 			LOG.debug(Markers.MSG, "{}: {} sub jobs done", toString(), subJobs.size());
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "{}: interrupted the sub jobs execution");

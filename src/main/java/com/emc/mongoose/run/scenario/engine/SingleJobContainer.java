@@ -27,11 +27,9 @@ extends JobContainerBase {
 	//
 	private final LoadBuilder loadJobBuilder;
 	private final LoadExecutor loadJob;
-	private final long limitTime;
 	//
 	public SingleJobContainer(final AppConfig appConfig) {
 		super(appConfig);
-		limitTime = localConfig.getLoadLimitTime();
 		try {
 			loadJobBuilder = LoadBuilderFactory.getInstance(localConfig);
 		} catch(
@@ -48,10 +46,9 @@ extends JobContainerBase {
 	}
 	//
 	public SingleJobContainer(final LoadExecutor loadJob, final long limitTime) {
-		super(null);
+		super(null, limitTime);
 		this.loadJobBuilder = null;
 		this.loadJob = loadJob;
-		this.limitTime = limitTime;
 	}
 	//
 	@Override

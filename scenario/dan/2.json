@@ -1,0 +1,23 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "/mnt/ecs/target"
+			},
+			"src" : {
+				"container" : "/tmp/source"
+			}
+		},
+		"load" : {
+			"copy" : true,
+			"limit" : {
+				"count" : 10
+			},
+			"threads" : 20
+		},
+		"storage" : {
+			"type" : "fs"
+		}
+	}
+}

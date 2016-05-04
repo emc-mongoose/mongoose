@@ -1,0 +1,57 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "scenario-dan-4"
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "30KB"
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-dan-4.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 100
+					}
+				}
+			}
+		}, {
+			"type" : "parallel",
+			"jobs" : [
+				{
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"data" : {
+								"size" : "10KB"
+							}
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"src" : {
+								"file" : "/tmp/scenario-dan-4.csv"
+							}
+						},
+						"load" : {
+							"circular" : true,
+							"type" : "read"
+						}
+					}
+				}
+			]
+		}
+	]
+}

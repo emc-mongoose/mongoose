@@ -1,0 +1,118 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "scenario-dan-1"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 10
+			},
+			"threads" : 5
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "10KB"
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-dan-1-10x10KB.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "sleep",
+			"value" : "1m"
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "100KB"
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-dan-1-10x100KB.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "sleep",
+			"value" : "1m"
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "1MB"
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-dan-1-10x1MB.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "sleep",
+			"value" : "1m"
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-dan-1-10x10KB.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"limit" : {
+						"time" : "5m"
+					},
+					"type" : "read"
+				}
+			}
+		}, {
+			"type" : "sleep",
+			"value" : "1m"
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-dan-1-10x100KB.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"limit" : {
+						"time" : "5m"
+					},
+					"type" : "read"
+				}
+			}
+		}, {
+			"type" : "sleep",
+			"value" : "1m"
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-dan-1-10x1MB.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"limit" : {
+						"time" : "5m"
+					},
+					"type" : "read"
+				}
+			}
+		}
+	]
+}
