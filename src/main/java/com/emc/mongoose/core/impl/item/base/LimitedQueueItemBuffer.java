@@ -1,9 +1,9 @@
 package com.emc.mongoose.core.impl.item.base;
 //
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
 //
 import com.emc.mongoose.core.api.item.base.ItemBuffer;
 import org.apache.logging.log4j.LogManager;
@@ -30,13 +30,13 @@ implements ItemBuffer<T> {
 	}
 	/**
 	 Non-blocking put implementation
-	 @param dataItem the data item to put
+	 @param item the data item to put
 	 @throws IOException if no free capacity in the buffer
 	 */
 	@Override
-	public void put(final T dataItem)
+	public void put(final T item)
 	throws IOException {
-		if(!queue.offer(dataItem)) {
+		if(!queue.offer(item)) {
 			throw new IOException("Buffer has no free space to put an item");
 		}
 	}
@@ -68,7 +68,7 @@ implements ItemBuffer<T> {
 	 */
 	@Override
 	public
-	LimitedQueueItemBuffer<T> getItemSrc()
+	LimitedQueueItemBuffer<T> getInput()
 	throws IOException {
 		return this;
 	}
@@ -100,25 +100,15 @@ implements ItemBuffer<T> {
 	}
 	//
 	@Override
-	public T getLastItem() {
-		return lastItem;
-	}
-	//
-	@Override
-	public void setLastItem(final T lastItem) {
-		this.lastItem = lastItem;
-	}
-	//
-	@Override
 	public void skip(final long itemsCount)
 	throws IOException {
-		LOG.info(Markers.MSG, ItemSrc.MSG_SKIP_START, itemsCount);
+		LOG.info(Markers.MSG, Input.MSG_SKIP_START, itemsCount);
 		try {
 			T item;
 			for(int i = 0; i < itemsCount; i++) {
 				item = queue.take();
 				if (item.equals(lastItem)) {
-					LOG.info(Markers.MSG, ItemSrc.MSG_SKIP_END);
+					LOG.info(Markers.MSG, Input.MSG_SKIP_END);
 					return;
 				}
 			}

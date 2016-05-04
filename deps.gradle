@@ -31,7 +31,7 @@ ext {
 	jetty_io = [ "org.eclipse.jetty:jetty-io:9.3.0.M1" ]
 	jetty_server = [ "org.eclipse.jetty:jetty-server:9.3.0.M1" ]
 	jetty_servlet = [ "org.eclipse.jetty:jetty-servlet:9.3.0.M1" ]
-	jetty_servlet_api = [ "javax.servlet:javax.servlet-api:2.5.0" ]
+	jetty_servlet_api = [ "javax.servlet:javax.servlet-api:3.1.0" ]
 	jetty_util = [ "org.eclipse.jetty:jetty-util:9.3.0.M1" ]
 	jetty_webapp = [ "org.eclipse.jetty:jetty-webapp:9.3.0.M1" ]
 
@@ -54,6 +54,14 @@ ext {
 	log4j_web = [ "org.apache.logging.log4j:log4j-web:2.4.1" ]
 
 	metrics_core = [ "io.dropwizard.metrics:metrics-core:3.1.2" ]
+
+	netty_handler = [ "io.netty:netty-handler:4.0.36.Final" ]
+	netty_buffer = [ "io.netty:netty-buffer:4.0.36.Final" ]
+	netty_transport = [ "io.netty:netty-transport:4.0.36.Final" ]
+	netty_codec_http = [ "io.netty:netty-codec-http:4.0.36.Final" ]
+	netty_transport_native_epoll = [
+		"io.netty:netty-transport-native-epoll:4.0.36.Final:${osdetector.classifier}"
+	]
 
 	slf4j_api = [ "org.slf4j:slf4j-api:1.7.7" ]
 

@@ -1,0 +1,47 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "scenario-copy-s3-object"
+			},
+			"data" : {
+				"size" : "10KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : 10
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-copy-s3-object.json"
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"container" : "scenario-copy-s3-object_"
+					},
+					"src" : {
+						"container" : "scenario-copy-s3-object",
+						"file" : "/tmp/scenario-copy-s3-object.json"
+					}
+				},
+				"load" : {
+					"copy" : true
+				}
+			}
+		}
+	]
+}

@@ -1,0 +1,36 @@
+{
+	"type" : "parallel",
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"container" : "bucket1"
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"container" : "bucket2"
+					}
+				}
+			}
+		},
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"container" : "bucket3"
+					}
+				}
+			}
+		}
+	]
+}
+

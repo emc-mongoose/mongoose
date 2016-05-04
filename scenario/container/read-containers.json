@@ -1,0 +1,38 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"type" : "container"
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100000
+			},
+			"threads" : 100
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-read-containers.json"
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-read-containers.json"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

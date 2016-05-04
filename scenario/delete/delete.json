@@ -1,0 +1,40 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "linear-delete"
+			},
+			"load" : {
+				"limit" : {
+					"count" : 1000
+				}
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-linear-delete.csv"
+					}
+				}
+			}
+		},
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-linear-delete.csv"
+					}
+				},
+				"load" : {
+					"type" : "delete"
+				}
+			}
+		}
+	]
+}

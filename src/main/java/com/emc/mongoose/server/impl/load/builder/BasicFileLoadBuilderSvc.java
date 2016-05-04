@@ -1,21 +1,22 @@
 package com.emc.mongoose.server.impl.load.builder;
 //
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.load.builder.BasicFileLoadBuilder;
 import com.emc.mongoose.server.api.load.builder.FileLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 import com.emc.mongoose.server.impl.load.executor.BasicFileLoadSvc;
 //
+import com.emc.mongoose.server.impl.load.executor.BasicMixedFileLoadSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +26,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 /**
@@ -39,9 +42,9 @@ implements FileLoadBuilderSvc<T, U> {
 	//
 	private String name = getClass().getName();
 	//
-	public BasicFileLoadBuilderSvc(final RunTimeConfig rtConfig)
+	public BasicFileLoadBuilderSvc(final AppConfig appConfig)
 	throws RemoteException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override
@@ -61,10 +64,15 @@ implements FileLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
+	public final Input<T> selectItemInput() {
+		return null;
+	}
+	//
+	@Override
 	public String buildRemotely()
 	throws RemoteException {
 		U loadSvc = build();
-		LOG.info(Markers.MSG, rtConfig.toString());
+		LOG.info(Markers.MSG, appConfig.toString());
 		ServiceUtil.create(loadSvc);
 		return loadSvc.getName();
 	}
@@ -76,27 +84,25 @@ implements FileLoadBuilderSvc<T, U> {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final LoadType loadType = ioConfig.getLoadType();
 		// the statement below fixes hi-level API distributed mode usage and tests
-		rtConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
-		if(minObjSize > maxObjSize) {
-			throw new IllegalStateException(
-				String.format(
-					LogUtil.LOCALE_DEFAULT, "Min object size %s should be less than upper bound %s",
-					SizeUtil.formatSize(minObjSize), SizeUtil.formatSize(maxObjSize)
-				)
+		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
+		//
+		if(LoadType.MIXED.equals(loadType)) {
+			final List<String> loadPatterns = (List<String>) appConfig
+				.getProperty(AppConfig.KEY_LOAD_TYPE);
+			final Map<LoadType, Integer> loadTypeWeightMap = LoadType
+				.getMixedLoadWeights(loadPatterns);
+			return (U) new BasicMixedFileLoadSvc<>(
+				appConfig, (FileIoConfig) ioConfig, threadCount, countLimit, sizeLimit, rateLimit,
+				sizeConfig, rangesConfig, loadTypeWeightMap, null
+			);
+		} else {
+			return (U) new BasicFileLoadSvc<>(
+				appConfig, (FileIoConfig) ioConfig, threadCount, selectItemInput(), countLimit,
+				sizeLimit, rateLimit, sizeConfig, rangesConfig
 			);
 		}
-		//
-		final IOTask.Type loadType = ioConfig.getLoadType();
-		final int connPerNode = loadTypeConnPerNode.get(loadType);
-		//
-		return (U) new BasicFileLoadSvc<>(
-			rtConfig, (FileIOConfig) ioConfig, storageNodeAddrs, connPerNode, connPerNode,
-			itemSrc == null ? getDefaultItemSource() : itemSrc,
-			maxCount, minObjSize, maxObjSize, objSizeBias,
-			manualTaskSleepMicroSecs, rateLimit, updatesPerItem
-		);
 	}
 	//
 	@Override

@@ -1,18 +1,21 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.core.api.item.base.ItemNamingType;
+//
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.DataItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
-import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
-import com.emc.mongoose.core.impl.item.data.NewContainerSrc;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
+//
+import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
+import com.emc.mongoose.core.impl.item.data.NewContainerInput;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,8 +23,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.Arrays;
-//
 /**
  * Created by gusakk on 21.10.15.
  */
@@ -37,21 +38,21 @@ implements ContainerLoadBuilder<T, C, U>{
 	//
 	protected boolean flagUseContainerItemSrc;
 	//
-	public ContainerLoadBuilderBase(final RunTimeConfig rtConfig)
+	public ContainerLoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override
-	public ContainerLoadBuilderBase<T, C, U> setRunTimeConfig(final RunTimeConfig rtConfig)
+	public ContainerLoadBuilderBase<T, C, U> setAppConfig(final AppConfig appConfig)
 	throws RemoteException {
-		super.setRunTimeConfig(rtConfig);
+		super.setAppConfig(appConfig);
 		//
-		final String listFilePathStr = rtConfig.getItemSrcFile();
+		final String listFilePathStr = appConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
-				setItemSrc(
-					new ItemCSVFileSrc<>(
+				setInput(
+					new CsvFileItemInput<>(
 						Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
 						ioConfig.getContentSource()
 					)
@@ -60,55 +61,37 @@ implements ContainerLoadBuilder<T, C, U>{
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
 			}
 		}
+		//
+		final String dstFilePath = appConfig.getItemDstFile();
+		if(dstFilePath != null && !dstFilePath.isEmpty()) {
+			try {
+				setOutput(
+					new ItemCsvFileOutput<>(
+						Paths.get(dstFilePath), (Class<C>) ioConfig.getContainerClass(),
+						ioConfig.getContentSource()
+					)
+				);
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file output");
+			}
+		}
+		//
 		return this;
 	}
 	//
-	@SuppressWarnings("unchecked")
-	private ItemSrc getNewItemSrc()
+	@Override @SuppressWarnings("unchecked")
+	protected Input<C> getNewItemInput()
 	throws NoSuchMethodException {
-		//
-		final String ns = rtConfig.getItemNamingType();
-		ItemNamingType namingType = ItemNamingType.RANDOM;
-		if(ns != null && !ns.isEmpty()) {
-			try {
-				namingType = ItemNamingType.valueOf(ns.toUpperCase());
-			} catch(final IllegalArgumentException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e,
-					"Failed to parse the naming scheme \"{}\", acceptable values are: {}",
-					ns, Arrays.toString(ItemNamingType.values())
-				);
-			}
-		}
+		ItemNamingType namingType = appConfig.getItemNamingType();
 		final Class<C> containerClass = (Class<C>) ioConfig.getContainerClass();
-		return new NewContainerSrc<>(
+		return new NewContainerInput<>(
 			containerClass,
-			new BasicItemNameGenerator(
+			new BasicItemNameInput(
 				namingType,
-				Directory.class.isAssignableFrom(containerClass) ?
-					null : rtConfig.getItemNamingPrefix(),
-				rtConfig.getItemNamingLength(), rtConfig.getItemNamingRadix(),
-				rtConfig.getItemNamingOffset()
+				appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
+				appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
 			)
 		);
-	}
-	//
-	@SuppressWarnings("unchecked")
-	protected ItemSrc getDefaultItemSource() {
-		try {
-			if(flagUseNoneItemSrc) {
-				return null;
-			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
-					getNewItemSrc();
-				}
-			} else if(flagUseNewItemSrc) {
-				return getNewItemSrc();
-			}
-		} catch(final NoSuchMethodException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
-		}
-		return null;
 	}
 	//
 	@Override

@@ -1,15 +1,15 @@
 package com.emc.mongoose.util.builder;
 //
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.enums.ItemType;
+import com.emc.mongoose.common.conf.enums.StorageType;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import org.apache.commons.lang.WordUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.core.impl.item.ItemTypeUtil;
 //
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -18,41 +18,41 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class LoadBuilderFactory {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	//
 	private final static String
 		BUILDER_CORE_PACKAGE_BASE = "com.emc.mongoose.core.impl.load.builder",
 		BUILDER_CLIENT_PACKAGE_BASE = "com.emc.mongoose.client.impl.load.builder",
-		WS_PREFIX = "WS",
-		BASIC_PREFIX = "Basic",
-		LOAD_BUILDER_POSTFIX = "LoadBuilder",
+		LOAD_BUILDER_SUFFIX = "LoadBuilder",
 		CLIENT_POSTFIX = "Client";
 	//
 	@SuppressWarnings("unchecked")
 	public static <T extends Item, U extends LoadExecutor<T>> LoadBuilder<T, U> getInstance(
-		final RunTimeConfig rtConfig
+		final AppConfig appConfig
 	) throws ClassNotFoundException, NoSuchMethodException, InstantiationException,
 	IllegalAccessException, InvocationTargetException {
-		final Class loadBuilderImplClass = getLoadBuilderClass(
-			rtConfig.getRunMode(), rtConfig.getItemClass()
-		);
-		final Constructor constructor = loadBuilderImplClass.getConstructor(RunTimeConfig.class);
-		return (LoadBuilder) constructor.newInstance(rtConfig);
+		final Class<LoadBuilder<T, U>>
+			loadBuilderImplClass = getLoadBuilderClass(
+				appConfig.getRunMode(), appConfig.getItemType(), appConfig.getStorageType()
+			);
+		final Constructor<LoadBuilder<T, U>>
+			constructor = loadBuilderImplClass.getConstructor(AppConfig.class);
+		return constructor.newInstance(appConfig);
 	}
 	//
 	@SuppressWarnings("unchecked")
-	private static Class<LoadBuilder> getLoadBuilderClass(
-			final String runMode, final String itemClass
+	private static <T extends Item, U extends LoadExecutor<T>> Class<LoadBuilder<T, U>>
+	getLoadBuilderClass(
+		final String runMode, final ItemType itemClass, final StorageType storageType
 	) throws ClassNotFoundException {
-		Class<LoadBuilder> loadBuilderCls = null;
+		Class<LoadBuilder<T, U>> loadBuilderCls = null;
 		String
-			itemClassName = WordUtils.capitalize(itemClass) + LOAD_BUILDER_POSTFIX,
+			result = ItemTypeUtil.getItemClass(itemClass, storageType).getSimpleName() +
+				LOAD_BUILDER_SUFFIX,
 			itemClassPackage = null;
 		// don't append anything if run.mode is standalone
 		switch(runMode) {
 			case Constants.RUN_MODE_COMPAT_CLIENT:
 			case Constants.RUN_MODE_CLIENT:
-				itemClassName = itemClassName + CLIENT_POSTFIX;
+				result = result + CLIENT_POSTFIX;
 				itemClassPackage = BUILDER_CLIENT_PACKAGE_BASE;
 				break;
 			case Constants.RUN_MODE_STANDALONE:
@@ -69,15 +69,9 @@ public class LoadBuilderFactory {
 		}
 		//
 		if(loadBuilderCls == null) {
-			try {
-				loadBuilderCls = (Class<LoadBuilder>) Class.forName(
-					itemClassPackage + "." + BASIC_PREFIX + itemClassName
-				);
-			} catch(final ClassNotFoundException e) {
-				loadBuilderCls = (Class<LoadBuilder>) Class.forName(
-					itemClassPackage + "." + BASIC_PREFIX + WS_PREFIX + itemClassName
-				);
-			}
+			loadBuilderCls = (Class<LoadBuilder<T, U>>) Class.<LoadBuilder<T, U>>forName(
+				itemClassPackage + "." + result
+			);
 		}
 		return loadBuilderCls;
 	}

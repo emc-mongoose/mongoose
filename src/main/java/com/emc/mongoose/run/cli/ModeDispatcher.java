@@ -1,30 +1,26 @@
 package com.emc.mongoose.run.cli;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
-// mongoose-scenario.jar
-import com.emc.mongoose.run.scenario.Chain;
-import com.emc.mongoose.run.scenario.Rampup;
-import com.emc.mongoose.run.scenario.Single;
-import com.emc.mongoose.run.webserver.WUIRunner;
+import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 // mongoose-server-api.jar
+import com.emc.mongoose.run.webserver.WebUiRunner;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
+import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
-import java.util.List;
 import java.util.Map;
 /**
  Created by kurila on 04.07.14.
@@ -33,8 +29,17 @@ import java.util.Map;
 public final class ModeDispatcher {
 	//
 	public static void main(final String args[]) {
+		LogUtil.init();
+		final Logger rootLogger = LogManager.getRootLogger();
+		//
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		// load the config from CLI arguments
 		final Map<String, String> properties = HumanFriendly.parseCli(args);
+		if(properties != null) {
+			for(final String propKey : properties.keySet()) {
+				appConfig.setProperty(propKey, properties.get(propKey));
+			}
+		}
 		//
 		final String runMode;
 		if(args == null || args.length == 0 || args[0].startsWith("-")) {
@@ -42,27 +47,15 @@ public final class ModeDispatcher {
 		} else {
 			runMode = args[0];
 		}
-		System.setProperty(RunTimeConfig.KEY_RUN_MODE, runMode);
-		LogUtil.init();
-		//
-		final Logger rootLogger = LogManager.getRootLogger();
-		//
-		RunTimeConfig.initContext();
-		if(properties != null && !properties.isEmpty()) {
-			rootLogger.debug(Markers.MSG, "Overriding properties {}", properties);
-			RunTimeConfig.getContext().overrideSystemProperties(properties);
-		}
-		//
-		rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		appConfig.setProperty(AppConfig.KEY_RUN_MODE, runMode);
+		rootLogger.info(Markers.MSG, appConfig.toString());
 		//
 		switch(runMode) {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try {
-					final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(
-						RunTimeConfig.getContext()
-					);
+					final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(appConfig);
 					multiSvc.start();
 					multiSvc.await();
 				} catch(final RemoteException | InterruptedException e) {
@@ -73,21 +66,26 @@ public final class ModeDispatcher {
 				break;
 			case Constants.RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				new WUIRunner(RunTimeConfig.getContext()).run();
+				new WebUiRunner().run();
 				break;
-			case Constants.RUN_MODE_CINDERELLA:
 			case Constants.RUN_MODE_WSMOCK:
-				rootLogger.debug(Markers.MSG, "Starting the cinderella");
+			case Constants.RUN_MODE_CINDERELLA:
+				rootLogger.debug(Markers.MSG, "Starting cinderella");
 				try {
-					new Cinderella(RunTimeConfig.getContext()).run();
+					new Cinderella(appConfig).run();
 				} catch (final Exception e) {
-					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init the cinderella");
+					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init cinderella");
 				}
 				break;
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
-				runScenario();
+				try {
+					new ScenarioRunner(appConfig).run();
+				} catch(final Exception e) {
+					LogUtil.exception(rootLogger, Level.FATAL, e, "Scenario failed");
+					e.printStackTrace(System.out);
+				}
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -96,40 +94,7 @@ public final class ModeDispatcher {
 		}
 		//
 		ServiceUtil.shutdown();
-	}
-
-	private static void runScenario() {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		if (rtConfig != null) {
-			final String scenarioName = rtConfig.getScenarioName();
-			final Logger rootLogger = LogManager.getRootLogger();
-			try {
-				switch(scenarioName) {
-					case Constants.RUN_SCENARIO_SINGLE:
-						new Single(rtConfig).run();
-						break;
-					case Constants.RUN_SCENARIO_CHAIN:
-						new Chain(rtConfig).run();
-						break;
-					case Constants.RUN_SCENARIO_RAMPUP:
-						new Rampup(rtConfig).run();
-						break;
-					default:
-						throw new IllegalArgumentException(
-							String.format("Incorrect scenario: \"%s\"", scenarioName)
-						);
-				}
-			} catch(final ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException e ) {
-				LogUtil.exception(rootLogger, Level.ERROR, e, "Failed to execute");
-			} catch(final InvocationTargetException e) {
-				LogUtil.exception(rootLogger, Level.ERROR, e.getTargetException(), "Failed to execute");
-			}
-			rootLogger.info(Markers.MSG, "Scenario end");
-		} else {
-			throw new NullPointerException(
-				"runTimeConfig hasn't been initialized"
-			);
-		}
+		LogUtil.shutdown();
 	}
 }
 //

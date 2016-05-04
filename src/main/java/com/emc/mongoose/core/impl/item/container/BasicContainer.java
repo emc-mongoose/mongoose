@@ -4,7 +4,7 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 //
-import com.emc.mongoose.core.impl.BasicItem;
+import com.emc.mongoose.core.impl.item.base.BasicItem;
 /**
  Created by kurila on 20.10.15.
  */
@@ -15,7 +15,7 @@ implements Container<T> {
 	protected volatile ContentSource contentSrc;
 	//
 	public BasicContainer() {
-		this(null);
+		super();
 	}
 	//
 	public BasicContainer(final String name) {

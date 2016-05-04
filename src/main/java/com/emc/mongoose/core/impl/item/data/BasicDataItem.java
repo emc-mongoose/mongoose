@@ -1,12 +1,12 @@
 package com.emc.mongoose.core.impl.item.data;
-// mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.BasicItem;
+import com.emc.mongoose.core.api.item.data.DataSizeException;
+import com.emc.mongoose.core.impl.item.base.BasicItem;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,7 +41,7 @@ implements DataItem {
 	public BasicDataItem() {
 		this(
 			ContentSourceBase.DEFAULT == null ?
-				ContentSourceBase.getDefault() : ContentSourceBase.DEFAULT
+				ContentSourceBase.getDefaultInstance() : ContentSourceBase.DEFAULT
 		);
 	}
 	//
@@ -51,7 +51,7 @@ implements DataItem {
 	//
 	public BasicDataItem(final String metaInfo, final ContentSource contentSrc) {
 		this(contentSrc);
-		final String tokens[] = metaInfo.split(RunTimeConfig.LIST_SEP, 3);
+		final String tokens[] = metaInfo.split(",", 3);
 		if(tokens.length == 3) {
 			name = tokens[0];
 			try {
@@ -98,19 +98,26 @@ implements DataItem {
 	}
 	//
 	private void setRingBuffer(final ByteBuffer ringBuff) {
-		this.ringBuff = ringBuff;
-		ringBuffSize = ringBuff.capacity();
+		synchronized(ringBuff) {
+			this.ringBuff = ringBuff;
+			ringBuffSize = ringBuff.capacity();
+		}
 	}
 	//
-	private void enforceCircularity() {
-		if(!ringBuff.hasRemaining()) {
+	private void makeCircular() {
+		final int currPos = ringBuff.position();
+		if(currPos == ringBuffSize) {
 			ringBuff.clear();
+		} else if(currPos == ringBuff.limit()) {
+			ringBuff.limit(ringBuffSize);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public void reset() {
-		ringBuff.limit(ringBuffSize).position((int) (offset % ringBuffSize));
+		synchronized(ringBuff) {
+			ringBuff.limit(ringBuffSize).position((int)(offset % ringBuffSize));
+		}
 	}
 	//
 	@Override
@@ -147,7 +154,7 @@ implements DataItem {
 		setRingBuffer(dataSrc.getLayer(overlayIndex).asReadOnlyBuffer());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	// ReadableByteChannel implementation
+	// ByteChannels implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void close() {
@@ -159,45 +166,78 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final synchronized int read(final ByteBuffer dst) {
-		enforceCircularity();
-		// bytes count to transfer
-		final int n = Math.min(dst.remaining(), ringBuff.remaining());
-		ringBuff.limit(ringBuff.position() + n);
-		// do the transfer
-		dst.put(ringBuff);
+	public final int read(final ByteBuffer dst) {
+		final int n;
+		synchronized(ringBuff) {
+			makeCircular();
+			// bytes count to transfer
+			n = Math.min(dst.remaining(), ringBuff.remaining());
+			ringBuff.limit(ringBuff.position() + n);
+			// do the transfer
+			dst.put(ringBuff);
+		}
 		return n;
 	}
 	//
 	@Override
-	public final synchronized int write(final WritableByteChannel chanDst, final long maxCount)
+	public final int write(final ByteBuffer src)
+	throws DataCorruptionException, DataSizeException {
+		if(src == null) {
+			return 0;
+		}
+		int m;
+		synchronized(ringBuff) {
+			makeCircular();
+			final int n = Math.min(src.remaining(), ringBuff.remaining());
+			if(n > 0) {
+				byte bs, bi;
+				for(m = 0; m < n; m ++) {
+					bs = ringBuff.get();
+					bi = src.get();
+					if(bs != bi) {
+						throw new DataCorruptionException(m, bs, bi);
+					}
+				}
+			} else {
+				return n;
+			}
+		}
+		return m;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
-		enforceCircularity();
-		int n = (int) Math.min(maxCount, ringBuff.remaining());
-		ringBuff.limit(ringBuff.position() + n);
-		return chanDst.write(ringBuff);
+		synchronized(ringBuff) {
+			makeCircular();
+			int n = (int)Math.min(maxCount, ringBuff.remaining());
+			ringBuff.limit(ringBuff.position() + n);
+			return chanDst.write(ringBuff);
+		}
 	}
 	//
 	@Override
 	public final int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws DataCorruptionException, IOException {
-		//
-		enforceCircularity();
-		int n = ringBuff.remaining();
-		if(buff.limit() > n) {
-			buff.limit(n);
-		}
-		//
-		n = chanSrc.read(buff);
-		//
-		if(n > 0) {
-			byte bs, bi;
-			buff.flip();
-			for(int m = 0; m < n; m ++) {
-				bs = ringBuff.get();
-				bi = buff.get();
-				if(bs != bi) {
-					throw new DataCorruptionException(m, bs, bi);
+		int n;
+		synchronized(ringBuff) {
+			makeCircular();
+			n = ringBuff.remaining();
+			if(buff.limit() > n) {
+				buff.limit(n);
+			}
+			//
+			n = chanSrc.read(buff);
+			//
+			if(n > 0) {
+				byte bs, bi;
+				buff.flip();
+				for(int m = 0; m < n; m++) {
+					bs = ringBuff.get();
+					bi = buff.get();
+					if(bs != bi) {
+						throw new DataCorruptionException(m, bs, bi);
+					}
 				}
 			}
 		}
@@ -218,8 +258,8 @@ implements DataItem {
 			strBuilder.setLength(0); // reset
 		}
 		return strBuilder
-			.append(name).append(RunTimeConfig.LIST_SEP)
-			.append(Long.toString(offset, 0x10)).append(RunTimeConfig.LIST_SEP)
+			.append(name).append(",")
+			.append(Long.toString(offset, 0x10)).append(",")
 			.append(size).toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

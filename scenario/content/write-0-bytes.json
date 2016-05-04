@@ -1,0 +1,12 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"data" : {
+				"content" : {
+					"file" : "conf/content/zerobytes"
+				}
+			}
+		}
+	}
+}

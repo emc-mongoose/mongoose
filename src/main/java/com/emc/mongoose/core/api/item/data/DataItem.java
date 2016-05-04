@@ -12,7 +12,7 @@ import java.nio.channels.WritableByteChannel;
  A most common data item descriptor having a determined size and able to be written out.
  */
 public interface DataItem
-extends Item, ReadableByteChannel, Externalizable {
+extends Item, ReadableByteChannel, WritableByteChannel, Externalizable {
 	//
 	void reset();
 	//

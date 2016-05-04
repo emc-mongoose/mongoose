@@ -1,7 +1,8 @@
 package com.emc.mongoose.common.log;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -16,6 +17,8 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.util.Cancellable;
 import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
+import org.apache.logging.log4j.core.util.datetime.DatePrinter;
+import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 import org.apache.logging.log4j.io.IoBuilder;
 //
 import java.io.File;
@@ -24,8 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.DriverManager;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -88,10 +89,8 @@ implements ShutdownCallbackRegistry {
 	//
 	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
 	public static final Locale LOCALE_DEFAULT = Locale.ROOT;
-	public static final DateFormat
-		FMT_DT = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS",LOCALE_DEFAULT) {
-			{ setTimeZone(TZ_UTC); }
-		};
+	public static final DatePrinter
+		FMT_DT = FastDateFormat.getInstance("yyyy.MM.dd.HH.mm.ss.SSS", TZ_UTC, LOCALE_DEFAULT);
 	// console colors
 	public static final String
 		RESET = "\u001B[0m",
@@ -107,7 +106,7 @@ implements ShutdownCallbackRegistry {
 		CYAN = "\u001B[36m",
 		WHITE = "\u001B[37m",
 		//
-		PATH_LOG_DIR = String.format("%s%slog", RunTimeConfig.DIR_ROOT, File.separator);
+		PATH_LOG_DIR = String.format("%s%slog", BasicConfig.getRootDir(), File.separator);
 	//
 	private static LoggerContext LOG_CTX = null;
 	private static volatile boolean STDOUT_COLORING_ENABLED = false;
@@ -155,13 +154,13 @@ implements ShutdownCallbackRegistry {
 				//
 				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, VALUE_SHUTDOWN_CALLBACK_REGISTRY);
 				// set "run.id" property with timestamp value if not set before
-				String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
+				String runId = System.getProperty(AppConfig.KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
-					System.setProperty(RunTimeConfig.KEY_RUN_ID, newRunId());
+					System.setProperty(AppConfig.KEY_RUN_ID, newRunId());
 				}
 				// determine the logger configuration file path
 				Path logConfPath = Paths.get(
-					RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, FNAME_LOG_CONF
+					BasicConfig.getRootDir(), Constants.DIR_CONF, FNAME_LOG_CONF
 				);
 				//
 				try {

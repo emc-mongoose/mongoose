@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.item.data;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 // mongoose-core-impl.jar
@@ -50,12 +49,12 @@ implements MutableDataItem {
 	//
 	public BasicMutableDataItem(final String metaInfo, final ContentSource contentSrc) {
 		super(
-			metaInfo.substring(0, metaInfo.lastIndexOf(RunTimeConfig.LIST_SEP)),
+			metaInfo.substring(0, metaInfo.lastIndexOf(",")),
 			contentSrc
 		);
 		//
 		final String rangesInfo = metaInfo.substring(
-			metaInfo.lastIndexOf(RunTimeConfig.LIST_SEP) + 1, metaInfo.length()
+			metaInfo.lastIndexOf(",") + 1, metaInfo.length()
 		);
 		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
 		try {
@@ -112,7 +111,7 @@ implements MutableDataItem {
 			strBuilder.setLength(0); // reset
 		}
 		return strBuilder
-			.append(super.toString()).append(RunTimeConfig.LIST_SEP)
+			.append(super.toString()).append(',')
 			.append(Integer.toHexString(currLayerIndex)).append('/')
 			.append(
 				maskRangesRead.isEmpty() ? STR_EMPTY_MASK :
@@ -224,11 +223,8 @@ implements MutableDataItem {
 		return maskRangesWrite[1].get(i);
 	}
 	//
-	@Override
-	public final synchronized void scheduleRandomUpdate() {
-		final int
-			countRangesTotal = getRangeCount(size),
-			startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
+	private synchronized void scheduleRandomUpdate(final int countRangesTotal) {
+		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
 		int nextCellPos;
 		if(countRangesTotal > maskRangesRead.cardinality() + maskRangesWrite[0].cardinality()) {
 			// current layer has not updated yet ranges
@@ -266,7 +262,7 @@ implements MutableDataItem {
 			);
 		}
 		for(int i = 0; i < count; i++) {
-			scheduleRandomUpdate();
+			scheduleRandomUpdate(countRangesTotal);
 		}
 	}
 	//

@@ -1,0 +1,26 @@
+<ul class="nav nav-pills center-inline-blocks indent-20-lower">
+    {{#each tabs}}
+        <li class="tests-logs-tab" id="{{this}}-tests-logs-tab"><a>{{this}}</a></li>
+    {{/each}}
+</ul>
+{{#each tabs}}
+    <div id="{{this}}-log-wrapper" class="tab-content tests-logs-tab-dependent">
+        <div class="table-content">
+            <div class="table-responsive">
+                <table class="table table-condenced">
+                    <thead>
+                    <tr>
+                        <th>Level</th>
+                        <th>LoggerName</th>
+                        <th>ThreadName</th>
+                        <th>TimeMillis</th>
+                        <th>Message</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{{/each}}

@@ -1,16 +1,16 @@
 package com.emc.mongoose.server.impl.load.builder;
 //
+import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.load.builder.BasicDirectoryLoadBuilder;
@@ -47,9 +47,9 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	//
 	private String name = getClass().getName();
 	//
-	public BasicDirectoryLoadBuilderSvc(final RunTimeConfig rtConfig)
+	public BasicDirectoryLoadBuilderSvc(final AppConfig appConfig)
 	throws RemoteException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override
@@ -69,10 +69,15 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
+	public final Input<C> selectItemInput() {
+		return null;
+	}
+	//
+	@Override
 	public String buildRemotely()
 	throws RemoteException {
 		U loadSvc = build();
-		LOG.info(Markers.MSG, rtConfig.toString());
+		LOG.info(Markers.MSG, appConfig.toString());
 		ServiceUtil.create(loadSvc);
 		return loadSvc.getName();
 	}
@@ -83,18 +88,12 @@ implements DirectoryLoadBuilderSvc<T, C, U> {
 		if(ioConfig == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
-		//
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		// the statement below fixes hi-level API distributed mode usage and tests
-		rtConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
-		//
-		final IOTask.Type loadType = ioConfig.getLoadType();
-		final int connPerNode = loadTypeConnPerNode.get(loadType);
+		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
 		return (U) new BasicDirectoryLoadSvc<>(
-			rtConfig, (FileIOConfig<T, C>) ioConfig, storageNodeAddrs, connPerNode, connPerNode,
-			itemSrc == null ? getDefaultItemSource() : itemSrc,
-			maxCount, manualTaskSleepMicroSecs, rateLimit
+			appConfig, (FileIoConfig<T, C>) ioConfig, threadCount, selectItemInput(), countLimit,
+			sizeLimit, rateLimit
 		);
 	}
 	//

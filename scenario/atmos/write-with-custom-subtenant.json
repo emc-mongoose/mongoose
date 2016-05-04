@@ -1,0 +1,24 @@
+{
+	"type": "load",
+	"config" : {
+		"auth" : {
+			"token" : "5cc597535ed747f09b5d273154216339"
+		},
+		"item" : {
+			"dst" : {
+				"file" : "/tmp/scenario-linear-write-with-custom-subtenant-atmos.csv"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1234
+			}
+		},
+		"storage" : {
+			"port" : 9022,
+			"http" : {
+				"api" : "atmos"
+			}
+		}
+	}
+}

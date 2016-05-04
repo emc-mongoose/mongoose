@@ -1,0 +1,44 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"type" : "container"
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			}
+		},
+		"storage" : {
+			"http" : {
+				"api" : "Swift",
+				"namespace" : "test"
+			},
+			"port" : 9024
+		}
+	},
+	"jobs": [
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-swift-delete-containers.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-swift-delete-containers.csv"
+					}
+				},
+				"load" : {
+					"type" : "delete"
+				}
+			}
+		}
+	]
+}

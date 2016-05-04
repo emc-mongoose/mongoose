@@ -1,0 +1,53 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"dst" : {
+			"container" : "distributed-read"
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : 10,
+			"server" : {
+				"addrs": [
+					"10.249.237.71", "10.249.237.72"
+				]
+			}
+		},
+		"run" : {
+			"mode" : "client"
+		},
+		"storage" : {
+			"addrs" : "10.249.237.73"
+		}
+	},
+	"jobs": [
+		{
+			"type": "load", // write is used by default
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "8KB"
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-distributed-read.csv"
+					}
+				}
+			}
+		},
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-distributed-read.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

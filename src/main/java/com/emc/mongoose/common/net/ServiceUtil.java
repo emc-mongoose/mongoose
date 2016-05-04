@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.net;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -74,16 +75,16 @@ public abstract class ServiceUtil {
 	}*/
 	//
 	private static void rmiRegistryInit() {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		REGISTRY_LOCK.lock();
 		try {
 			if(REGISTRY == null) {
 				try {
-					REGISTRY = LocateRegistry.createRegistry(rtConfig.getRemotePortControl());
+					REGISTRY = LocateRegistry.createRegistry(1099);
 					LOG.debug(Markers.MSG, "RMI registry created");
 				} catch(final RemoteException e) {
 					try {
-						REGISTRY = LocateRegistry.getRegistry(rtConfig.getRemotePortControl());
+						REGISTRY = LocateRegistry.getRegistry(1099);
 						LOG.info(Markers.MSG, "Reusing already existing RMI registry");
 					} catch(final RemoteException ee) {
 						LOG.fatal(Markers.ERR, "Failed to obtain a RMI registry", ee);
@@ -96,9 +97,9 @@ public abstract class ServiceUtil {
 	}
 	//
 	public static void mBeanServerInit() {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		if(rtConfig.getFlagServeJMX()) {
-			getMBeanServer(rtConfig.getRemotePortMonitor());
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
+		if(appConfig.getNetworkServeJmx()) {
+			getMBeanServer(1199);
 		}
 	}
 	//
@@ -160,7 +161,7 @@ public abstract class ServiceUtil {
 	//
 	public static Remote create(final Service svc)
 	throws RemoteException {
-		//final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		//final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		Remote stub = null;
 		try {
 			stub = UnicastRemoteObject.exportObject(svc, 0);
@@ -172,23 +173,23 @@ public abstract class ServiceUtil {
 		}
 		//
 		if(stub != null) {
-			final String svcName = getLocalSvcName(svc.getName());
+			final String svcUri = getSvcUrl(svc.getName());
 			try {
-				if(!SVC_MAP.containsKey(svcName)) {
-					Naming.rebind(svcName, svc);
-					SVC_MAP.put(svcName, svc);
-					LOG.info(Markers.MSG, "New service bound: {}", svcName);
+				if(!SVC_MAP.containsKey(svcUri)) {
+					Naming.rebind(svcUri, svc);
+					SVC_MAP.put(svcUri, svc);
+					LOG.info(Markers.MSG, "New service bound: {}", svcUri);
 				} else {
 					throw new DuplicateSvcNameException();
 				}
 			} catch(final RemoteException e) {
 				LOG.error(Markers.ERR, "Failed to rebind the service", e);
 			} catch(final MalformedURLException e) {
-				LOG.error(Markers.ERR, "Invailid service URL: \"{}\"", svcName);
+				LOG.error(Markers.ERR, "Invailid service URL: \"{}\"", svcUri);
 			}
 		}
 		//
-		return svc;
+		return stub;
 	}
 	/**
 	 Get the service created earlier if exists
@@ -199,31 +200,22 @@ public abstract class ServiceUtil {
 		return SVC_MAP.get(svcName);
 	}
 	//
-	public static String getLocalSvcName(final String name) {
+	public static String getSvcUrl(final String name) {
 		final String rmiHostName = System.getProperty(ServiceUtil.KEY_RMI_HOSTNAME);
 		return "//" + (rmiHostName == null ? getHostAddr() : rmiHostName) +
 			"/" + name;
 	}
-	//
+
 	/**
-	 Connect to server service
+	 Connect to a remote service
 	 @param url the service URL
 	 @return the object representing the service
 	 */
 	public static Service getRemoteSvc(final String url) {
-		Remote remote = null;
-		Service remoteSvc = null;
 		try {
-			remote = Naming.lookup(url);
-			remoteSvc = Service.class.cast(remote);
+			return (Service) Naming.lookup(url);
 		} catch(final ClassCastException e) {
-			if(remote == null) {
-				LOG.error(Markers.ERR, "Lookup method returns null");
-			} else {
-				LOG.error(
-					Markers.ERR, "Unsupported type of the resolved service: {}", remote.getClass()
-				);
-			}
+			LOG.error(Markers.ERR, "Lookup method fails");
 		} catch(final NotBoundException e) {
 			LOG.error(Markers.ERR, "No service bound with url \"{}\"", url);
 		} catch(final RemoteException e) {
@@ -231,7 +223,7 @@ public abstract class ServiceUtil {
 		} catch(final MalformedURLException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Invalid service URL: {}", url);
 		}
-		return remoteSvc;
+		return null;
 	}
 	//
 	public static void close(final Service svc)
@@ -243,15 +235,15 @@ public abstract class ServiceUtil {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to unexport service object");
 		}
 		//
-		final String svcName = getLocalSvcName(svc.getName());
+		final String svcUri = getSvcUrl(svc.getName());
 		try {
-			Naming.unbind(svcName);
-			SVC_MAP.remove(svcName);
-			LOG.info(Markers.MSG, "Removed service: {}", svcName);
+			Naming.unbind(svcUri);
+			SVC_MAP.remove(svcUri);
+			LOG.info(Markers.MSG, "Removed service: {}", svcUri);
 		} catch(final NotBoundException e) {
 			LOG.debug(Markers.ERR, "Service not bound");
 		} catch(final MalformedURLException e) {
-			LOG.warn(Markers.ERR, "Invalid service URL: \"{}\"", svcName);
+			LOG.warn(Markers.ERR, "Invalid service URL: \"{}\"", svcUri);
 		}
 	}
 	//

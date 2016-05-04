@@ -33,7 +33,11 @@ implements ThreadFactory {
 	//
 	@Override
 	public Thread newThread(final Runnable task) {
-		return new Thread(task, getName() + "#" + threadNumber.incrementAndGet());
+		final Thread t = new Thread(
+			this, task, getName() + "#" + threadNumber.incrementAndGet()
+		);
+		t.setDaemon(isDaemon());
+		return t;
 	}
 	//
 	@Override

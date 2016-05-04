@@ -1,0 +1,22 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "/tmp/write-to-variable-dir/%p{16;2}"
+			},
+			"data" : {
+				"size" : "4KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 10000
+			},
+			"threads" : 4
+		},
+		"storage" : {
+			"type" : "fs"
+		}
+	}
+}

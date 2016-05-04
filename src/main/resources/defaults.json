@@ -1,0 +1,116 @@
+{
+	"config" : {
+		"auth" : {
+			"id" : null,
+			"secret" : null,
+			"token" : null
+		},
+		"io" : {
+			"buffer" : {
+				"size" : {
+					"min" : "4KB",
+					"max" : "1MB"
+				}
+			}
+		},
+		"item" : {
+			"type" : "data",
+			"data" : {
+				"content" : {
+					"file" : null,
+					"seed" : "7a42d9c483244167",
+					"ringSize" : "4MB"
+				},
+				"ranges" : 0,
+				"size" : "1MB",
+				"verify" : true
+			},
+			"dst" : {
+				"container" : null,
+				"file" : null
+			},
+			"src" : {
+				"container" : null,
+				"file" : null,
+				"batchSize" : 4096
+			},
+			"naming" : {
+				"type" : "random",
+				"prefix" : null,
+				"radix" : 36,
+				"offset" : 0,
+				"length" : 13
+			},
+			"queue" : {
+				"sizeLimit" : 1000000
+			}
+		},
+		"load" : {
+			"circular" : false,
+			"copy" : false,
+			"type" : "write",
+			"threads" : 1,
+			"limit" : {
+				"count" : 0,
+				"rate" : 0,
+				"size" : 0,
+				"time" : "0s"
+			},
+			"metricsPeriod" : "10s",
+			"server" : {
+				"addrs" : [
+					"127.0.0.1"
+				],
+				"nodeMapping" : false
+			}
+		},
+		"network" : {
+			"serveJMX" : false,
+			"socket" : {
+				"timeoutMilliSec" : 1000000,
+				"reuseAddr" : true,
+				"keepAlive" : true,
+				"tcpNoDelay" : true,
+				"linger" : 0,
+				"bindBacklogSize" : 0,
+				"interestOpQueued" : false,
+				"selectInterval" : 100
+			}
+		},
+		"run" : {
+			"id" : null,
+			"file" : null,
+			"mode" : "standalone",
+			"name" : "mongoose",
+			"resume" : {
+				"enabled" : false
+			},
+			"version" : "2.0.0"
+		},
+		"storage" : {
+			"type" : "http",
+			"addrs" : [
+				"127.0.0.1"
+			],
+			"port" : 9020,
+			"http" : {
+				"api" : "S3",
+				"fsAccess" : false,
+				"headers" : {
+					"Connection" : "keep-alive",
+					"User-Agent" : "mongoose/2.0.0"
+				},
+				"namespace" : null,
+				"versioning" : false
+			},
+			"mock" : {
+				"headCount" : 1,
+				"capacity" : 1000000,
+				"container" : {
+					"capacity" : 1000000,
+					"countLimit" : 1000000
+				}
+			}
+		}
+	}
+}

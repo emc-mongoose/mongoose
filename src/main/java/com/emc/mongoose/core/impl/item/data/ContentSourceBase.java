@@ -1,11 +1,12 @@
 package com.emc.mongoose.core.impl.item.data;
 //
-import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.LogUtil;
-//
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.math.MathUtil;
+import com.emc.mongoose.common.log.Markers;
+//
 import com.emc.mongoose.core.api.item.data.ContentSource;
 //
 import org.apache.commons.collections4.map.LRUMap;
@@ -48,7 +49,7 @@ implements ContentSource {
 		zeroByteLayer.clear();
 		//
 		byteLayersMap = new LRUMap<>(
-			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
+			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
 		);
 		byteLayersMap.put(0, zeroByteLayer);
 	}
@@ -59,7 +60,7 @@ implements ContentSource {
 		this.seed = MathUtil.xorShift(zeroByteLayer.getLong());
 		zeroByteLayer.clear();
 		byteLayersMap = new LRUMap<>(
-			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
+			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
 		);
 		byteLayersMap.put(0, zeroByteLayer);
 		int n = 0, m;
@@ -107,50 +108,20 @@ implements ContentSource {
 		}
 		zeroByteLayer = ByteBuffer.allocateDirect(size).put(buff);
 		byteLayersMap = new LRUMap<>(
-			(int) SizeUtil.toSize("100MB") / zeroByteLayer.capacity()
+			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
 		);
 		byteLayersMap.put(0, zeroByteLayer);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public static ContentSourceBase DEFAULT = null;
 	private final static Lock LOCK = new ReentrantLock();
-	public static ContentSourceBase getDefault() {
+	public static ContentSourceBase getDefaultInstance()
+	throws IllegalStateException {
 		LOCK.lock();
 		try {
 			if(DEFAULT == null) {
-				try {
-					final String contentFilePath = RunTimeConfig.getContext().getDataContentFPath();
-					if(contentFilePath != null && !contentFilePath.isEmpty()) {
-						final Path p = Paths.get(contentFilePath);
-						if(Files.exists(p) && !Files.isDirectory(p) && Files.isReadable(p)) {
-							final File f = p.toFile();
-							final long fileSize = f.length();
-							if(fileSize > 0) {
-								DEFAULT = new FileContentSource(
-									Files.newByteChannel(p, StandardOpenOption.READ), fileSize
-								);
-							} else {
-								throw new IllegalStateException(
-									"Content source file @" + contentFilePath + " is empty"
-								);
-							}
-						} else {
-							throw new IllegalStateException(
-								"Content source file @" + contentFilePath + " doesn't exist/" +
-								"not readable/is a directory"
-							);
-						}
-					} else {
-						throw new IllegalStateException("Content source file path is empty");
-					}
-				} catch(final Exception e) {
-					LogUtil.exception(
-						LOG, Level.DEBUG, e,
-						"No ring buffer source file available for reading, " +
-						"falling back to use the random data ring buffer"
-					);
-					DEFAULT = new UniformContentSource();
-				}
+				final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
+				DEFAULT = getInstance(appConfig);
 			}
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.FATAL, e, "Failed to init the ring buffer");
@@ -158,6 +129,37 @@ implements ContentSource {
 			LOCK.unlock();
 		}
 		return DEFAULT;
+	}
+	//
+	public static ContentSourceBase getInstance(final AppConfig appConfig)
+	throws IOException, IllegalStateException {
+		final ContentSourceBase instance;
+		final String contentFilePath = appConfig.getItemDataContentFile();
+		if(contentFilePath != null && !contentFilePath.isEmpty()) {
+			final Path p = Paths.get(contentFilePath);
+			if(Files.exists(p) && !Files.isDirectory(p) &&
+				Files.isReadable(p)) {
+				final File f = p.toFile();
+				final long fileSize = f.length();
+				if(fileSize > 0) {
+					instance = new FileContentSource(
+						Files.newByteChannel(p, StandardOpenOption.READ), fileSize
+					);
+				} else {
+					throw new IllegalStateException(
+						"Content source file @" + contentFilePath + " is empty"
+					);
+				}
+			} else {
+				throw new IllegalStateException(
+					"Content source file @" + contentFilePath + " doesn't exist/" +
+					"not readable/is a directory"
+				);
+			}
+		} else {
+			instance = new SeedContentSource(appConfig);
+		}
+		return instance;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -197,7 +199,9 @@ implements ContentSource {
 		long word = seed;
 		int i;
 		double d = System.nanoTime();
-		LOG.debug(Markers.MSG, "Prepare {} of ring data...", SizeUtil.formatSize(ringBuffSize));
+		LOG.debug(
+			Markers.MSG, "Prepare {} of ring data...", SizeInBytes.formatFixedSize(ringBuffSize)
+		);
 		// 64-bit words
 		byteLayer.clear();
 		for(i = 0; i < countWords; i ++) {

@@ -1,0 +1,58 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "linear-read-verify-updated"
+			},
+			"data" : {
+				"size" : "1KB"
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-linear-read-verify-updated-0.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 100
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : 1
+					},
+					"dst" : {
+						"file" : "/tmp/scenario-linear-read-verify-updated-1.csv"
+					},
+					"src" : {
+						"file" : "/tmp/scenario-linear-read-verify-updated-0.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-linear-read-verify-updated-1.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}
+

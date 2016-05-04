@@ -1,0 +1,40 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "read-container-listing"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100000
+			},
+			"threads" : 10
+		},
+		"storage" : {
+			"http" : {
+				"api" : "Swift",
+				"namespace" : "test"
+			},
+			"port" : 9024
+		}
+	},
+	"jobs": [
+		{
+			"type": "load"
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"container" : "read-container-listing"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

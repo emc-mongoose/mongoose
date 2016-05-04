@@ -1,0 +1,81 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "read-with-many-users"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-read-with-many-users.csv"
+					}
+				}
+			}
+		}, {
+			"type" : "parallel",
+			"jobs" : [
+				{
+					"type" : "load",
+					"config" : {
+						"auth" : {
+							"id" : "user1",
+							"secret" : "secret1"
+						},
+						"item" : {
+							"src" : {
+								"file" : "/tmp/scenario-read-with-many-users.csv"
+							}
+						},
+						"load" : {
+							"type" : "read"
+						}
+					}
+				},
+				{
+					"type" : "load",
+					"config" : {
+						"auth" : {
+							"id" : "user2",
+							"secret" : "secret2"
+						},
+						"item" : {
+							"src" : {
+								"file" : "/tmp/scenario-read-with-many-users.csv"
+							}
+						},
+						"load" : {
+							"type" : "read"
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"auth" : {
+							"id" : "user3",
+							"secret" : "secret3"
+						},
+						"item" : {
+							"src" : {
+								"file" : "/tmp/scenario-read-with-many-users.csv"
+							}
+						},
+						"load" : {
+							"type" : "read"
+						}
+					}
+				}
+			]
+		}
+	]
+}

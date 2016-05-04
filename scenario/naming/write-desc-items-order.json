@@ -1,0 +1,10 @@
+{
+	"type" : "load", // write is used by default
+	"config" : {
+		"item" : {
+			"naming" : {
+				"type" : "desc"
+			}
+		}
+	}
+}

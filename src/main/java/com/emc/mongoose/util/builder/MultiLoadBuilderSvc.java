@@ -1,13 +1,14 @@
 package com.emc.mongoose.util.builder;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -16,8 +17,8 @@ import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicDirectoryLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicFileLoadBuilderSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSContainerLoadBuilderSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSDataLoadBuilderSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicHttpContainerLoadBuilderSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicHttpDataLoadBuilderSvc;
 //
 import org.apache.logging.log4j.Logger;
 //
@@ -38,17 +39,17 @@ implements LoadBuilderSvc {
 	//
 	private final List<LoadBuilderSvc> loadBuilderSvcs = new ArrayList<>();
 	//
-	public MultiLoadBuilderSvc(final RunTimeConfig rtConfig)
+	public MultiLoadBuilderSvc(final AppConfig appConfig)
 	throws RemoteException {
-		loadBuilderSvcs.add(new BasicWSContainerLoadBuilderSvc(rtConfig));
-		loadBuilderSvcs.add(new BasicWSDataLoadBuilderSvc(rtConfig));
+		loadBuilderSvcs.add(new BasicHttpContainerLoadBuilderSvc(appConfig));
+		loadBuilderSvcs.add(new BasicHttpDataLoadBuilderSvc(appConfig));
 		loadBuilderSvcs.add(
 			new BasicDirectoryLoadBuilderSvc<
 				FileItem, Directory<FileItem>,
 				DirectoryLoadSvc<FileItem, Directory<FileItem>>
-			>(rtConfig)
+			>(appConfig)
 		);
-		loadBuilderSvcs.add(new BasicFileLoadBuilderSvc<>(rtConfig));
+		loadBuilderSvcs.add(new BasicFileLoadBuilderSvc<>(appConfig));
 	}
 	//
 	@Override
@@ -133,27 +134,27 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setRunTimeConfig(final RunTimeConfig props)
+	public final LoadBuilderSvc setAppConfig(final AppConfig props)
 	throws IllegalStateException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setRunTimeConfig(props);
+			loadBuilderSvc.setAppConfig(props);
 		}
 		return this;
 	}
 	//
 	@Override
-	public final IOConfig getIOConfig()
+	public final IoConfig getIoConfig()
 	throws RemoteException {
 		throw new RemoteException("Method shouldn't be invoked");
 	}
 	@Override
-	public LoadBuilder setIOConfig(final IOConfig ioConfig)
+	public LoadBuilder setIoConfig(final IoConfig ioConfig)
 	throws RemoteException {
 		throw new RemoteException("Method shouldn't be invoked");
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setLoadType(final IOTask.Type loadType)
+	public final LoadBuilderSvc setLoadType(final LoadType loadType)
 	throws IllegalStateException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			loadBuilderSvc.setLoadType(loadType);
@@ -162,19 +163,19 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setMaxCount(final long maxCount)
+	public final LoadBuilderSvc setCountLimit(final long countLimit)
 	throws IllegalArgumentException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setMaxCount(maxCount);
+			loadBuilderSvc.setCountLimit(countLimit);
 		}
 		return this;
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setManualTaskSleepMicroSecs(final int manualTaskSleepMicroSec)
+	public final LoadBuilderSvc setSizeLimit(final long sizeLimit)
 	throws IllegalArgumentException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setManualTaskSleepMicroSecs(manualTaskSleepMicroSec);
+			loadBuilderSvc.setSizeLimit(sizeLimit);
 		}
 		return this;
 	}
@@ -189,82 +190,34 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setWorkerCountDefault(final int threadCount)
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setWorkerCountDefault(threadCount);
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderSvc setWorkerCountFor(final int threadCount, final IOTask.Type loadType)
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setWorkerCountFor(threadCount, loadType);
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderSvc setConnPerNodeDefault(final int connCount)
+	public final LoadBuilderSvc setThreadCount(final int threadCount)
 	throws IllegalArgumentException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setConnPerNodeDefault(connCount);
+			loadBuilderSvc.setThreadCount(threadCount);
 		}
 		return this;
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setConnPerNodeFor(final int connCount, final IOTask.Type loadType)
+	public final LoadBuilderSvc setNodeAddrs(final String[] nodeAddrs)
 	throws IllegalArgumentException, RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setConnPerNodeFor(connCount, loadType);
+			loadBuilderSvc.setNodeAddrs(nodeAddrs);
 		}
 		return this;
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setDataNodeAddrs(final String[] dataNodeAddrs)
-	throws IllegalArgumentException, RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setDataNodeAddrs(dataNodeAddrs);
-		}
+	public final LoadBuilderSvc setInput(final Input itemInput)
+	throws RemoteException {
 		return this;
 	}
 	//
 	@Override
-	public final LoadBuilderSvc setItemSrc(final ItemSrc itemSrc)
+	public final LoadBuilderSvc setOutput(final Output itemOutput)
 	throws RemoteException {
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.setItemSrc(itemSrc);
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderSvc useNewItemSrc()
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.useNewItemSrc();
-		}
-		return this;
-	}
-	//
-	@Override
-	public final LoadBuilderSvc useNoneItemSrc()
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.useNoneItemSrc();
-		}
-		return this;
-	}
-	//
-	@Override
-	public LoadBuilderSvc useContainerListingItemSrc()
-	throws RemoteException {
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			loadBuilderSvc.useContainerListingItemSrc();
+			loadBuilderSvc.setOutput(itemOutput);
 		}
 		return this;
 	}

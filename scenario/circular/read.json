@@ -1,0 +1,40 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"load" : {
+			"limit" : {
+				"count" : 1
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type": "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-circular-read.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-circular-read.csv"
+					}
+				},
+				"load" : {
+					"type" : "read",
+					"circular" : true,
+					"limit" : {
+						// count -> infinity instead of inherited value of 1, time -> 1 minute
+						"count" : 0,
+						"time" : "1m"
+					}
+				}
+			}
+		}
+	]
+}

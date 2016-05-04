@@ -21,9 +21,9 @@ extends IOStatsBase {
 	protected CustomMeter throughPutSucc, throughPutFail, reqBytes;
 	//
 	public BasicIOStats(
-		final String name, final int serveJmxPort, final int updateIntervalSec
+		final String name, final boolean serveJmxFlag, final int updateIntervalSec
 	) {
-		super(name, serveJmxPort);
+		super(name, serveJmxFlag);
 		this.updateIntervalSec = updateIntervalSec;
 	}
 	//
@@ -85,9 +85,9 @@ extends IOStatsBase {
 		final long currElapsedTime = tsStartMicroSec > 0 ?
 			TimeUnit.NANOSECONDS.toMicros(System.nanoTime()) - tsStartMicroSec : 0;
 		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
-		Thread.yield(); LockSupport.parkNanos(1);
+		LockSupport.parkNanos(1_000);
 		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
-		Thread.yield(); LockSupport.parkNanos(1);
+		LockSupport.parkNanos(1_000);
 		return new BasicSnapshot(
 			throughPutSucc == null ? 0 : throughPutSucc.getCount(),
 			throughPutSucc == null ? 0 : throughPutSucc.getLastRate(),

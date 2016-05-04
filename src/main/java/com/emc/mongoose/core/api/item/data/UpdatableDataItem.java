@@ -17,9 +17,6 @@ extends DataItem {
 	//
 	boolean isNextLayerRangeUpdating(final int i);
 	//
-	void scheduleRandomUpdate()
-	throws IllegalStateException;
-	//
 	void scheduleRandomUpdates(final int count)
 	throws IllegalArgumentException, IllegalStateException;
 	//

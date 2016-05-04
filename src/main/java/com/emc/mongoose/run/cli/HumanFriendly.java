@@ -1,6 +1,6 @@
 package com.emc.mongoose.run.cli;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 //
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -27,33 +27,23 @@ public class HumanFriendly {
 
     public enum CLIOption {
 
-        IP("i", "Comma-separated list of ip addresses to write to", true, RunTimeConfig.KEY_STORAGE_ADDRS),
-        USER("u", "User", true, RunTimeConfig.KEY_AUTH_ID),
-        SECRET("s", "Secret", true, RunTimeConfig.KEY_AUTH_SECRET),
-        BUCKET("b","Bucket to write data to", true, RunTimeConfig.KEY_API_S3_BUCKET),
-        READ("r", "Perform object read", true, new CompositeOptionConverter(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD,
-                "read", RunTimeConfig.KEY_ITEM_SRC_FILE)),
-        WRITE("w", "Perform object write", false, new CompositeOptionConverter(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, "create")),
-        DELETE("d", "Perform object delete", false, new CompositeOptionConverter(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, "delete",
-                RunTimeConfig.KEY_ITEM_SRC_FILE)),
-        LENGTH("l", "Size of the object to write", true, RunTimeConfig.KEY_DATA_SIZE_MIN, RunTimeConfig.KEY_DATA_SIZE_MAX),
-        COUNT("c", "Count of objects to write", true, RunTimeConfig.KEY_DATA_ITEM_COUNT),
-        CONNS("n", "Number of concurrent connections per storage node", true,
-	        RunTimeConfig.getConnCountPerNodeParamName("create"),
-	        RunTimeConfig.getConnCountPerNodeParamName("read"),
-	        RunTimeConfig.getConnCountPerNodeParamName("update"),
-	        RunTimeConfig.getConnCountPerNodeParamName("delete"),
-	        RunTimeConfig.getConnCountPerNodeParamName("append")
-        ),
-        THREADS("t", "Number of I/O threads", true, RunTimeConfig.getLoadWorkersParamName("create"),
-                RunTimeConfig.getLoadWorkersParamName("update"),
-                RunTimeConfig.getLoadWorkersParamName("delete"),
-                RunTimeConfig.getLoadWorkersParamName("read"),
-	            RunTimeConfig.getLoadWorkersParamName("append")
-        ),
+        IP("i", "Comma-separated list of ip addresses to write to", true, AppConfig.KEY_STORAGE_ADDRS),
+        USER("u", "User", true, AppConfig.KEY_AUTH_ID),
+        SECRET("s", "Secret", true, AppConfig.KEY_AUTH_SECRET),
+        BUCKET("b","Bucket to write data to", true, AppConfig.KEY_ITEM_DST_CONTAINER),
+        READ("r", "Perform object read", true, new CompositeOptionConverter(AppConfig.KEY_LOAD_TYPE,
+                "read", AppConfig.KEY_ITEM_SRC_FILE)),
+        WRITE("w", "Perform object write", false, new CompositeOptionConverter(AppConfig.KEY_LOAD_TYPE, "create")),
+        DELETE("d", "Perform object delete", false, new CompositeOptionConverter(AppConfig.KEY_LOAD_TYPE, "delete",
+                AppConfig.KEY_ITEM_SRC_FILE)),
+        LENGTH("l", "Size of the object to write", true, AppConfig.KEY_ITEM_DATA_SIZE),
+        COUNT("c", "Count of objects to write", true, AppConfig.KEY_LOAD_LIMIT_COUNT),
+        CONNS("n", "Number of concurrent connections per storage node", true, AppConfig.KEY_LOAD_THREADS),
         HELP("h", "Displays this message", false, new NullOptionConverter()),
-        RUN_ID("z", "Sets run id", true, new SystemOptionConverter(RunTimeConfig.KEY_RUN_ID)),
-        USE_DEPLOYMENT_OUTPUT("o", "Use deployment output", false, new DeploymentOutputConverter());
+        RUN_ID("z", "Sets run id", true, new SystemOptionConverter(AppConfig.KEY_RUN_ID)),
+        USE_DEPLOYMENT_OUTPUT("o", "Use deployment output", false, new DeploymentOutputConverter()),
+
+        FILE("f", "Json scenario input file", true, AppConfig.KEY_RUN_FILE);
 
         private final String shortName;
         private final String description;
@@ -205,9 +195,9 @@ public class HumanFriendly {
 
             Map<String, String> result = new HashMap<>();
 
-            result.put(RunTimeConfig.KEY_AUTH_ID, props.getProperty("user"));
-            result.put(RunTimeConfig.KEY_AUTH_SECRET, props.getProperty("secretkey"));
-            result.put(RunTimeConfig.KEY_API_S3_BUCKET, props.getProperty("bucket").split(" ")[0]);
+            result.put(AppConfig.KEY_AUTH_ID, props.getProperty("user"));
+            result.put(AppConfig.KEY_AUTH_SECRET, props.getProperty("secretkey"));
+            result.put(AppConfig.KEY_ITEM_DST_CONTAINER, props.getProperty("bucket").split(" ")[0]);
 
             String dataNodes = System.getenv("DataNodes")
                     .replace('(', ' ').replace(')', ' ').trim().replace(' ', ',');
@@ -224,9 +214,9 @@ public class HumanFriendly {
                     address.add(firstDataNode + ":" + port);
                 }
 
-                result.put(RunTimeConfig.KEY_STORAGE_ADDRS, StringUtils.join(address, ','));
+                result.put(AppConfig.KEY_STORAGE_ADDRS, StringUtils.join(address, ','));
             }else{
-               result.put(RunTimeConfig.KEY_STORAGE_ADDRS, dataNodes);
+               result.put(AppConfig.KEY_STORAGE_ADDRS, dataNodes);
             }
 
             return result;

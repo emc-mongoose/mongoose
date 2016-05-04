@@ -1,0 +1,42 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "linear-read-100MB"
+			},
+			"data" : {
+				"size" : "100MB"
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type": "load", // write is used by default
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-linear-read-100MB.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 10
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "/tmp/scenario-linear-read-100MB.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

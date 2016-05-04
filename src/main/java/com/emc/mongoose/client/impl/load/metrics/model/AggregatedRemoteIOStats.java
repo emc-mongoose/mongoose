@@ -60,9 +60,9 @@ extends IOStatsBase {
 		lock = new ReentrantLock();
 	//
 	public AggregatedRemoteIOStats(
-		final String name, final int serveJmxPort, final Map<String, W> loadSvcMap
+		final String name, final boolean serveJmxFlag, final Map<String, W> loadSvcMap
 	) {
-		super(name, serveJmxPort);
+		super(name, serveJmxFlag);
 		this.loadSvcMap = loadSvcMap;
 		this.loadStatsSnapshotMap = new ConcurrentHashMap<>(loadSvcMap.size());
 		statsLoader = Executors.newFixedThreadPool(
@@ -287,8 +287,7 @@ extends IOStatsBase {
 							loadSvcAddr
 						);
 					}
-					LockSupport.parkNanos(1);
-					Thread.yield();
+					LockSupport.parkNanos(1_000);
 				} catch(final NoSuchObjectException | ConnectIOException e) {
 					if(retryCount < COUNT_LIMIT_RETRIES) {
 						retryCount ++;

@@ -1,0 +1,38 @@
+{
+	"type": "rampup",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : [
+					0, "1KB", "1MB"
+				]
+			}
+		},
+		"load" : {
+			"limit" : {
+				"time" : "1m",
+				"count" : 1000000
+			},
+			"server" : {
+				"addrs" : [
+					"10.249.237.71", "10.249.237.72"
+				]
+			},
+			"threads": [
+				1, 10, 100, 1000
+			],
+			"type" : [
+				"write", "read", "delete"
+			]
+		},
+		"run" : {
+			"mode" : "client"
+		},
+		"storage" : {
+			"addrs" : [
+				"10.249.237.73"
+			]
+		}
+	}
+}
+

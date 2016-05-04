@@ -3,12 +3,18 @@ package com.emc.mongoose.client.impl.load.builder;
 import com.emc.mongoose.client.api.load.builder.ContainerLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.ContainerLoadClient;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 //
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
+import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
+import com.emc.mongoose.core.impl.item.data.NewContainerInput;
 import com.emc.mongoose.server.api.load.builder.ContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.ContainerLoadSvc;
 import org.apache.logging.log4j.Level;
@@ -35,32 +41,61 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	//
 	protected ContainerLoadBuilderClientBase()
 	throws IOException {
-		this(RunTimeConfig.getContext());
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
-	protected ContainerLoadBuilderClientBase(final RunTimeConfig rtConfig)
+	protected ContainerLoadBuilderClientBase(final AppConfig appConfig)
 	throws IOException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
-	@Override
-	public ContainerLoadBuilderClientBase<T, C, W, U, V> setRunTimeConfig(final RunTimeConfig rtConfig)
+	@Override @SuppressWarnings("unchecked")
+	public ContainerLoadBuilderClientBase<T, C, W, U, V> setAppConfig(final AppConfig appConfig)
 	throws RemoteException {
-		super.setRunTimeConfig(rtConfig);
+		super.setAppConfig(appConfig);
 		//
-		final String listFilePathStr = rtConfig.getItemSrcFile();
+		final String listFilePathStr = appConfig.getItemSrcFile();
 		if(itemsFileExists(listFilePathStr)) {
 			try {
-				setItemSrc(
-					new ItemCSVFileSrc<>(
-						Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
-						ioConfig.getContentSource()
-					)
+				final Input<C> in = new CsvFileItemInput<>(
+					Paths.get(listFilePathStr), (Class<C>) ioConfig.getContainerClass(),
+					ioConfig.getContentSource()
 				);
+				setInput(in);
 			} catch(final IOException | NoSuchMethodException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file input");
 			}
 		}
+		//
+		final String dstFilePath = appConfig.getItemDstFile();
+		if(dstFilePath != null && !dstFilePath.isEmpty()) {
+			try {
+				setOutput(
+					new ItemCsvFileOutput<>(
+						Paths.get(dstFilePath), (Class<C>) ioConfig.getContainerClass(),
+						ioConfig.getContentSource()
+					)
+				);
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to use CSV file output");
+			}
+		}
+		//
 		return this;
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	protected Input<C> getNewItemInput()
+	throws NoSuchMethodException {
+		ItemNamingType namingType = appConfig.getItemNamingType();
+		final Class<C> containerClass = (Class<C>) ioConfig.getContainerClass();
+		return new NewContainerInput<>(
+			containerClass,
+			new BasicItemNameInput(
+				namingType,
+				appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
+				appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
+			)
+		);
 	}
 }

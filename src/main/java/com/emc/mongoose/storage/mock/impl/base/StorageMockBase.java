@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.data.ContentSource;
 //
-import com.emc.mongoose.core.impl.item.base.ItemCSVFileSrc;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
@@ -499,7 +499,7 @@ implements StorageMock<T> {
 		// if there is data src file path
 		if(dataSrcPath != null && !dataSrcPath.isEmpty()) {
 			final Path dataFilePath = Paths.get(dataSrcPath);
-			//final int dataSizeRadix = rtConfig.getDataRadixSize();
+			//final int dataSizeRadix = appConfig.getDataRadixSize();
 			if(!Files.exists(dataFilePath)) {
 				LOG.warn(
 					Markers.ERR, "Data item source file @ \"" + dataSrcPath + "\" doesn't exists"
@@ -538,8 +538,8 @@ implements StorageMock<T> {
 			);
 			//
 			try(
-				final ItemCSVFileSrc<T>
-					csvFileItemInput = new ItemCSVFileSrc<>(dataFilePath, itemCls, contentSrc)
+				final CsvFileItemInput<T>
+					csvFileItemInput = new CsvFileItemInput<>(dataFilePath, itemCls, contentSrc)
 			) {
 				displayProgressThread.start();
 				do {

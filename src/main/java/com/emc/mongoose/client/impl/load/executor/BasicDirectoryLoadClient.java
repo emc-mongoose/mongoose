@@ -2,12 +2,12 @@ package com.emc.mongoose.client.impl.load.executor;
 //
 import com.emc.mongoose.client.api.load.executor.DirectoryLoadClient;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 //
 import com.emc.mongoose.core.impl.io.task.BasicDirectoryIOTask;
@@ -24,18 +24,19 @@ public class BasicDirectoryLoadClient<
 > extends LoadClientBase<C, W> implements DirectoryLoadClient<T, C, W> {
 	//
 	public BasicDirectoryLoadClient(
-		final RunTimeConfig rtConfig, final FileIOConfig<T, C> ioConfig,
-		final String[] addrs, final int connCountPerNode, final int threadCount,
-		final ItemSrc<C> itemSrc, final long maxCount, final Map<String, W> remoteLoadMap
+		final AppConfig appConfig, final FileIoConfig<T, C> ioConfig, final int threadCount,
+		final Input<C> itemInput,
+		final long countLimit, final long sizeLimit, final float rateLimit,
+		final Map<String, W> remoteLoadMap
 	) throws RemoteException {
 		super(
-			rtConfig, ioConfig, addrs, connCountPerNode, threadCount, itemSrc, maxCount,
+			appConfig, ioConfig, null, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
 			remoteLoadMap
 		);
 	}
 	//
 	@Override
 	protected IOTask<C> getIOTask(final C item, final String nextNodeAddr) {
-		return new BasicDirectoryIOTask<>(item, (FileIOConfig<T, C>) ioConfigCopy);
+		return new BasicDirectoryIOTask<>(item, (FileIoConfig<T, C>) ioConfigCopy);
 	}
 }

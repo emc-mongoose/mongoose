@@ -1,0 +1,17 @@
+{
+	"type" : "load",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "existingContainerName"
+			}
+		},
+		"storage" : {
+			"http" : {
+				"api" : "Swift",
+				"namespace" : "test"
+			},
+			"port" : 9024
+		}
+	}
+}

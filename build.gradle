@@ -17,6 +17,7 @@ buildscript {
 	}
 	dependencies {
 		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1"
+		classpath "com.google.gradle:osdetector-gradle-plugin:1.4.0"
 	}
 }
 
@@ -31,6 +32,7 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'com.google.osdetector'
 
 sourceCompatibility = JavaVersion.VERSION_1_7
 targetCompatibility = JavaVersion.VERSION_1_7
@@ -44,15 +46,15 @@ def confDirName = 'conf'
 def loadProjectVersionFrom(String sourceFileName) {
 	def inputFile = new File(sourceFileName)
 	def json = new JsonSlurper().parseText(inputFile.text)
-	ext.version = json.properties.run.version
+	ext.version = json.config.run.version
 }
-loadProjectVersionFrom(confDirName + File.separator + project.name + ".json")
+loadProjectVersionFrom confDirName + File.separator + "defaults.json"
 
 version = ext.version
 group = "com.emc.${rootProject.name}"
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '2.10'
+	gradleVersion = '2.11'
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -228,7 +230,7 @@ sourceSets {
 	integTest {
 		java {
 			srcDir(['src', 'test'].join(File.separator))
-			include(['java', 'com', 'emc', 'mongoose', 'integ', '**'].join(File.separator))
+			include(['java', 'com', 'emc', 'mongoose', 'system', '**'].join(File.separator))
 		}
 		resources {
 			srcDir(['src', 'main', 'resources'].join(File.separator))
@@ -356,8 +358,7 @@ dependencies {
 	clientCompile (
 		library.commons_configuration,
 		library.httpcore,
-		library.log4j_api,
-		library.log4j_core,
+		library.log4j_api_plus_core,
 		library.metrics_core,
 	)
 	clientRuntime (
@@ -379,7 +380,8 @@ dependencies {
 		library.commons_configuration,
 		library.commons_collections4,
 		library.log4j_api_plus_core,
-		library.httpcore
+		library.httpcore,
+		library.jackson_databind,
 	)
 	scenarioRuntime (
 		library.runtime_logging,
@@ -393,6 +395,11 @@ dependencies {
 		library.jackson_databind,
 		library.log4j_api_plus_core,
 		library.metrics_core,
+		library.netty_buffer,
+		library.netty_codec_http,
+		library.netty_handler,
+		library.netty_transport,
+		library.netty_transport_native_epoll,
 	)
 	storageMockRuntime (
 		library.runtime_logging,
@@ -968,6 +975,9 @@ task dist(type: Tar) {
 		into('lib') {
 			from { configurations.runtime }
 		}
+		into('scenario') {
+			from { 'scenario' }
+		}
 		from commonJar.outputs.files
 		from coreApiJar.outputs.files
 		from coreImplJar.outputs.files
@@ -1027,7 +1037,8 @@ idea {
 }
 
 test {
-	jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() + "${File.separator}${confDirName}${File.separator}logging.json"
+	jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() +
+		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}logging.json"
 	jvmArgs '-Dlog4j.configurationFactory=org.apache.logging.log4j.core.config.json.JsonConfigurationFactory'
 	jvmArgs '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
@@ -1104,21 +1115,21 @@ ext.publicJars = [
 ]
 
 for(nextPublicJar in publicJars) {
-	def baseName = nextPublicJar.baseName
-	def moduleName = nextPublicJar.classifier.split("-")*.capitalize().join("")
-	def artifactName = "artifact${moduleName}"
-	def configPrefix = "" + Character.toLowerCase(moduleName.charAt(0)) + moduleName.substring(1)
-	def mutualDeps = nextPublicJar.dependsOn
+	String baseName = nextPublicJar.baseName
+	String moduleName = nextPublicJar.classifier.split("-")*.capitalize().join("")
+	String artifactName = "artifact${moduleName}"
+	String configPrefix = "" + Character.toLowerCase(moduleName.charAt(0)) + moduleName.substring(1)
+	String mutualDeps = nextPublicJar.dependsOn
 	publishing.publications.create(artifactName, MavenPublication) {
 		artifact source: nextPublicJar, classifier: null
 		artifactId "${baseName}-${nextPublicJar.classifier}"
 		pom.withXml {
-			def root = asNode()
-			def deps = new Node(root, 'dependencies')
+			Node root = asNode()
+			Node deps = new Node(root, 'dependencies')
 			for(depJar in mutualDeps) {
 				if(Jar.class.isInstance(depJar)) {
 					//print "${depJar.baseName}-${depJar.classifier}-${depJar.version}, "
-					def node = new Node(deps, 'dependency')
+					Node node = new Node(deps, 'dependency')
 					new Node(node, 'groupId', group)
 					new Node(node, 'artifactId', "${depJar.baseName}-${depJar.classifier}")
 					new Node(node, 'version', depJar.version);
@@ -1126,7 +1137,7 @@ for(nextPublicJar in publicJars) {
 			}
 			configurations.getByName(configPrefix + "Runtime").allDependencies.each { dep ->
 				//print "${dep.name}, "
-				def node = new Node(deps, 'dependency')
+				Node node = new Node(deps, 'dependency')
 				new Node(node, 'groupId', dep.group)
 				new Node(node, 'artifactId', dep.name)
 				new Node(node, 'version', dep.version);

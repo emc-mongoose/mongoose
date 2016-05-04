@@ -1,0 +1,44 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "linear-read-partial"
+			},
+			"load" : {
+				"limit" : {
+					"count" : 1000
+				}
+			}
+		}
+	},
+	"jobs": [
+		{
+			"type": "load", // write is used by default
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "/tmp/scenario-linear-read-partial.csv"
+					}
+				}
+			}
+		}, {
+			"type": "load",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : 1 // TODO
+					},
+					"src" : {
+						"file" : "/tmp/scenario-linear-read-partial.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}
+
+

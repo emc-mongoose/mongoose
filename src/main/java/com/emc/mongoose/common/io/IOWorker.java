@@ -4,7 +4,7 @@ import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.conf.SizeInBytes;
 //
 import com.emc.mongoose.common.log.Markers;
 //
@@ -48,9 +48,9 @@ extends Thread {
 			LOG.trace(
 				Markers.MSG,
 				"Free thread I/O buffers, current memory usage: total={}, max={}, free={}",
-				SizeUtil.formatSize(rt.totalMemory()),
-				SizeUtil.formatSize(rt.maxMemory()),
-				SizeUtil.formatSize(rt.freeMemory())
+				SizeInBytes.formatFixedSize(rt.totalMemory()),
+				SizeInBytes.formatFixedSize(rt.maxMemory()),
+				SizeInBytes.formatFixedSize(rt.freeMemory())
 			);
 		}
 	}
@@ -59,7 +59,7 @@ extends Thread {
 	extends GroupThreadFactory {
 		//
 		public Factory(final String threadNamePrefix) {
-			super(threadNamePrefix);
+			super(threadNamePrefix, true);
 		}
 		//
 		@Override
@@ -90,7 +90,8 @@ extends Thread {
 					}
 					LOG.trace(
 						Markers.MSG, "Allocated {} of direct memory, total used by the thread: {}",
-						SizeUtil.formatSize(currBuffSize), SizeUtil.formatSize(buffSizeSum)
+						SizeInBytes.formatFixedSize(currBuffSize),
+						SizeInBytes.formatFixedSize(buffSizeSum)
 					);
 				}
 				ioBuffers[i] = buff;
@@ -109,7 +110,8 @@ extends Thread {
 						Markers.ERR, "Failed to allocate {} of direct memory, " +
 							"total direct memory allocated by thread is {}, " +
 							"unable to continue using a smaller buffer",
-						SizeUtil.formatSize(currBuffSize), SizeUtil.formatSize(buffSizeSum)
+						SizeInBytes.formatFixedSize(currBuffSize),
+						SizeInBytes.formatFixedSize(buffSizeSum)
 					);
 					throw e;
 				} else {
@@ -117,8 +119,9 @@ extends Thread {
 						Markers.ERR, "Failed to allocate {} of direct memory, " +
 							"total direct memory allocated by thread is {}, " +
 							"will continue using smaller buffer of size {}",
-						SizeUtil.formatSize(currBuffSize), SizeUtil.formatSize(buffSizeSum),
-						SizeUtil.formatSize(buff.capacity())
+						SizeInBytes.formatFixedSize(currBuffSize),
+						SizeInBytes.formatFixedSize(buffSizeSum),
+						SizeInBytes.formatFixedSize(buff.capacity())
 					);
 				}
 			}

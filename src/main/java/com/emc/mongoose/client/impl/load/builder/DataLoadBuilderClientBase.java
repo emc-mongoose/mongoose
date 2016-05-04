@@ -3,20 +3,20 @@ package com.emc.mongoose.client.impl.load.builder;
 import com.emc.mongoose.client.api.load.builder.DataLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.DataLoadClient;
 //
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.conf.DataRangesConfig;
+import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
+import com.emc.mongoose.common.io.Input;
 //
-import com.emc.mongoose.core.api.item.base.ItemNamingType;
 import com.emc.mongoose.core.api.item.data.DataItem;
-import com.emc.mongoose.core.api.item.data.DataItemFileSrc;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.item.data.FileDataItemInput;
 //
-import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.impl.item.base.BasicItemNameGenerator;
-import com.emc.mongoose.core.impl.item.data.NewDataItemSrc;
+import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
+import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
+import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
 //
@@ -26,7 +26,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.Arrays;
 /**
  Created by kurila on 20.10.15.
  */
@@ -41,95 +40,48 @@ implements DataLoadBuilderClient<T, W, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected long minObjSize, maxObjSize;
-	protected float objSizeBias;
-	protected boolean flagUseContainerItemSrc;
+	protected SizeInBytes sizeConfig;
+	protected DataRangesConfig rangesConfig = null;
 	//
 	protected DataLoadBuilderClientBase()
 	throws IOException {
-		this(RunTimeConfig.getContext());
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
-	protected DataLoadBuilderClientBase(final RunTimeConfig rtConfig)
+	protected DataLoadBuilderClientBase(final AppConfig appConfig)
 	throws IOException {
-		super(rtConfig);
+		super(appConfig);
 	}
 	//
 	@Override
-	public final DataLoadBuilderClient<T, W, U> setRunTimeConfig(final RunTimeConfig rtConfig)
+	public DataLoadBuilderClientBase<T, W, U, V> clone()
+	throws CloneNotSupportedException {
+		final DataLoadBuilderClientBase<T, W, U, V>
+			lb = (DataLoadBuilderClientBase<T, W, U, V>) super.clone();
+		lb.sizeConfig = sizeConfig;
+		lb.rangesConfig = rangesConfig;
+		return lb;
+	}
+	//
+	@Override
+	public DataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
-		super.setRunTimeConfig(rtConfig);
-		setMinObjSize(rtConfig.getDataSizeMin());
-		setMaxObjSize(rtConfig.getDataSizeMax());
-		setObjSizeBias(rtConfig.getDataSizeBias());
-		return this;
-	}
-	//
-	@Override
-	public final DataLoadBuilderClient<T, W, U> setMinObjSize(final long minObjSize)
-	throws IllegalArgumentException, RemoteException {
-		this.minObjSize = minObjSize;
-		V nextBuilder;
-		if(loadSvcMap != null) {
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setMinObjSize(minObjSize);
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public final DataLoadBuilderClient<T, W, U> setObjSizeBias(final float objSizeBias)
-	throws IllegalArgumentException, RemoteException {
-		this.objSizeBias = objSizeBias;
-		V nextBuilder;
-		if(loadSvcMap != null) {
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setObjSizeBias(objSizeBias);
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public final DataLoadBuilderClient<T, W, U> setMaxObjSize(final long maxObjSize)
-	throws IllegalArgumentException, RemoteException {
-		this.maxObjSize = maxObjSize;
-		if(loadSvcMap != null) {
-			V nextBuilder;
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setMaxObjSize(maxObjSize);
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public final DataLoadBuilderClient<T, W, U> setUpdatesPerItem(int count)
-	throws RemoteException {
-		if(loadSvcMap != null) {
-			V nextBuilder;
-			for(final String addr : loadSvcMap.keySet()) {
-				nextBuilder = loadSvcMap.get(addr);
-				nextBuilder.setUpdatesPerItem(count);
-			}
-		}
+		super.setAppConfig(appConfig);
+		setDataSize(appConfig.getItemDataSize());
+		setDataRanges(appConfig.getItemDataRanges());
 		return this;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public DataLoadBuilderClient<T, W, U> setItemSrc(final ItemSrc<T> itemSrc)
+	public DataLoadBuilderClient<T, W, U> setInput(final Input<T> itemInput)
 	throws RemoteException {
-		super.setItemSrc(itemSrc);
+		super.setInput(itemInput);
 		//
-		if(itemSrc instanceof DataItemFileSrc) {
+		if(itemInput instanceof FileDataItemInput) {
 			// calculate approx average data item size
-			final DataItemFileSrc<T> fileInput = (DataItemFileSrc<T>) itemSrc;
-			final long approxDataItemsSize = fileInput.getApproxDataItemsSize(
-				rtConfig.getBatchSize()
+			final FileDataItemInput<T> fileInput = (FileDataItemInput<T>) itemInput;
+			final long approxDataItemsSize = fileInput.getAvgDataSize(
+				appConfig.getItemSrcBatchSize()
 			);
 			ioConfig.setBuffSize(
 				approxDataItemsSize < Constants.BUFF_SIZE_LO ?
@@ -141,103 +93,31 @@ implements DataLoadBuilderClient<T, W, U> {
 		return this;
 	}
 	//
-	@SuppressWarnings("unchecked")
-	protected ItemSrc<T> getNewItemSrc()
-	throws NoSuchMethodException {
-		final String ns = rtConfig.getItemNamingType();
-		ItemNamingType namingType = ItemNamingType.RANDOM;
-		if(ns != null && !ns.isEmpty()) {
-			try {
-				namingType = ItemNamingType.valueOf(ns.toUpperCase());
-			} catch(final IllegalArgumentException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e,
-					"Failed to parse the naming scheme \"{}\", acceptable values are: {}",
-					ns, Arrays.toString(ItemNamingType.values())
-				);
-			}
-		}
-		final BasicItemNameGenerator bing = new BasicItemNameGenerator(
-			namingType,
-			FileItem.class.isAssignableFrom(ioConfig.getItemClass()) ?
-			null : rtConfig.getItemNamingPrefix(),
-			rtConfig.getItemNamingLength(), rtConfig.getItemNamingRadix(),
-			rtConfig.getItemNamingOffset()
-		);
-		return new NewDataItemSrc<>(
-			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(),
-			minObjSize, maxObjSize, objSizeBias
-		);
-	}
-	//
 	@Override @SuppressWarnings("unchecked")
-	protected ItemSrc<T> getDefaultItemSource() {
-		try {
-			if(flagUseNoneItemSrc) {
-				// disable any item source usage on the load servers side
-				V nextBuilder;
-				for(final String addr : loadSvcMap.keySet()) {
-					nextBuilder = loadSvcMap.get(addr);
-					nextBuilder.useNoneItemSrc();
-				}
-				//
-				return null;
-			} else if(flagUseContainerItemSrc && flagUseNewItemSrc) {
-				if(IOTask.Type.CREATE.equals(ioConfig.getLoadType())) {
-					// enable new data item generation on the load servers side
-					V nextBuilder;
-					for(final String addr : loadSvcMap.keySet()) {
-						nextBuilder = loadSvcMap.get(addr);
-						nextBuilder.useNoneItemSrc();
-					}
-					//
-					return getNewItemSrc();
-				} else {
-					// disable any item source usage on the load servers side
-					V nextBuilder;
-					for(final String addr : loadSvcMap.keySet()) {
-						nextBuilder = loadSvcMap.get(addr);
-						nextBuilder.useNoneItemSrc();
-					}
-					//
-					return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
-						maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
-					);
-				}
-			} else if(flagUseNewItemSrc) {
-				// enable new data item generation on the load servers side
-				V nextBuilder;
-				for(final String addr : loadSvcMap.keySet()) {
-					nextBuilder = loadSvcMap.get(addr);
-					nextBuilder.useNoneItemSrc();
-				}
-				//
-				return getNewItemSrc();
-			} else if(flagUseContainerItemSrc) {
-				// disable any item source usage on the load servers side
-				V nextBuilder;
-				for(final String addr : loadSvcMap.keySet()) {
-					nextBuilder = loadSvcMap.get(addr);
-					nextBuilder.useNoneItemSrc();
-				}
-				//
-				return (ItemSrc<T>) ((IOConfig) ioConfig.clone()).getContainerListInput(
-					maxCount, storageNodeAddrs == null ? null : storageNodeAddrs[0]
-				);
-			}
-		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to change the remote data items source");
-		} catch(final NoSuchMethodException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the new data items source");
-		} catch(final CloneNotSupportedException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the I/O config instance");
-		}
-		return null;
+	protected Input<T> getNewItemInput()
+	throws NoSuchMethodException {
+		final ItemNamingType namingType = appConfig.getItemNamingType();
+		final BasicItemNameInput bing = new BasicItemNameInput(
+			namingType,
+			appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
+			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
+		);
+		return new NewDataItemInput<>(
+			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeConfig
+		);
 	}
 	//
 	@Override
-	protected final void resetItemSrc() {
-		super.resetItemSrc();
-		flagUseContainerItemSrc = true;
+	public DataLoadBuilder<T, U> setDataSize(final SizeInBytes dataSize)
+	throws IllegalArgumentException, RemoteException {
+		this.sizeConfig = dataSize;
+		return this;
+	}
+	//
+	@Override
+	public DataLoadBuilder<T, U> setDataRanges(final DataRangesConfig rangesConfig)
+	throws IllegalArgumentException, RemoteException {
+		this.rangesConfig = rangesConfig;
+		return this;
 	}
 }

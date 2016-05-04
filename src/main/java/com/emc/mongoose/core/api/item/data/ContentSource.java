@@ -9,8 +9,6 @@ import java.nio.ByteBuffer;
 public interface ContentSource
 extends Externalizable {
 	//
-	int A = 21, B = 35, C = 4, WORD_SIZE = Long.SIZE / Byte.SIZE;
-	//
 	int getSize();
 	//
 	ByteBuffer getLayer(final int layerIndex);

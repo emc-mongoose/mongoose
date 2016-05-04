@@ -24,6 +24,7 @@ implements IOStats {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static double M = 1e6;
+	private final static int DEFAULT_JMX_PORT = 1199;
 	//
 	protected final String name;
 	protected final Clock clock = new ResumableUserTimeClock();
@@ -33,10 +34,10 @@ implements IOStats {
 	protected final Histogram reqDuration, respLatency;
 	protected volatile long tsStartMicroSec = -1, prevElapsedTimeMicroSec = 0;
 	//
-	protected IOStatsBase(final String name, final int serveJmxPort) {
+	protected IOStatsBase(final String name, final boolean serveJmxFlag) {
 		this.name = name;
-		if(serveJmxPort > 0) {
-			mBeanServer = ServiceUtil.getMBeanServer(serveJmxPort);
+		if(serveJmxFlag) {
+			mBeanServer = ServiceUtil.getMBeanServer(DEFAULT_JMX_PORT);
 			jmxReporter = CustomJmxReporter.forRegistry(metrics).registerWith(mBeanServer).build();
 		} else {
 			mBeanServer = null;
@@ -157,7 +158,7 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getDurationMin() {
+		public long getDurationMin() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -165,31 +166,31 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getDurationLoQ() {
+		public long getDurationLoQ() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
-			return durSnapshot.getValue(0.25);
+			return (long) durSnapshot.getValue(0.25);
 		}
 		//
 		@Override
-		public double getDurationMed() {
+		public long getDurationMed() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
-			return durSnapshot.getValue(0.5);
+			return (long) durSnapshot.getValue(0.5);
 		}
 		//
 		@Override
-		public double getDurationHiQ() {
+		public long getDurationHiQ() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
-			return durSnapshot.getValue(0.75);
+			return (long) durSnapshot.getValue(0.75);
 		}
 		//
 		@Override
-		public double getDurationMax() {
+		public long getDurationMax() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -207,7 +208,12 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getLatencyMin() {
+		public double getDurationAvg() {
+			return durValues.length == 0 ? 0 : ((double) sumDur) / durValues.length;
+		}
+		//
+		@Override
+		public long getLatencyMin() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -215,30 +221,30 @@ implements IOStats {
 		}
 		//
 		@Override
-		public double getLatencyLoQ() {
+		public long getLatencyLoQ() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
-			return latSnapshot.getValue(0.25);
+			return (long) latSnapshot.getValue(0.25);
 		}
 		//
 		@Override
-		public double getLatencyMed() {
+		public long getLatencyMed() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
-			return latSnapshot.getValue(0.5);
+			return (long) latSnapshot.getValue(0.5);
 		}
 		//
 		@Override
-		public double getLatencyHiQ() {
+		public long getLatencyHiQ() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
-			return latSnapshot.getValue(0.75);
+			return (long) latSnapshot.getValue(0.75);
 		}//
 		@Override
-		public double getLatencyMax() {
+		public long getLatencyMax() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -256,6 +262,69 @@ implements IOStats {
 		}
 		//
 		@Override
+		public String toCountsString() {
+			return countSucc + "/" +
+				(
+					LogUtil.isConsoleColoringEnabled() ?
+						countFail == 0 ?
+							Long.toString(countFail) :
+							(float) countSucc / countFail > 1000 ?
+								String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
+								String.format(LogUtil.INT_RED_OVER_GREEN, countFail) :
+						Long.toString(countFail)
+				);
+		}
+		//
+		@Override
+		public String toDurString() {
+			return (int) durSnapshot.getMean() + "/" +
+				(int) durSnapshot.getMin() + "/" +
+				(int) durSnapshot.getMax();
+		}
+		//
+		@Override
+		public String toDurSummaryString() {
+			return (int) durSnapshot.getMean() + "/" +
+				(int) durSnapshot.getMin() + "/" +
+				(int) durSnapshot.getValue(0.25) + "/" +
+				(int) durSnapshot.getValue(0.5) + "/" +
+				(int) durSnapshot.getValue(0.75) + "/" +
+				(int) durSnapshot.getMax();
+		}
+		//
+		@Override
+		public String toLatString() {
+			return (int) latSnapshot.getMean() + "/" +
+				(int) latSnapshot.getMin() + "/" +
+				(int) latSnapshot.getMax();
+		}
+		//
+		@Override
+		public String toLatSummaryString() {
+			return (int) latSnapshot.getMean() + "/" +
+				(int) latSnapshot.getMin() + "/" +
+				(int) latSnapshot.getValue(0.25) + "/" +
+				(int) latSnapshot.getValue(0.5) + "/" +
+				(int) latSnapshot.getValue(0.75) + "/" +
+				(int) latSnapshot.getMax();
+		}
+		//
+		@Override
+		public String toSuccRatesString() {
+			return String.format(
+				LogUtil.LOCALE_DEFAULT, MSG_FMT_FLOAT_PAIR, getSuccRateMean(), succRateLast
+			);
+		}
+		//
+		@Override
+		public String toByteRatesString() {
+			return String.format(
+				LogUtil.LOCALE_DEFAULT, MSG_FMT_FLOAT_PAIR,
+				getByteRateMean() / MIB, byteRateLast / MIB
+			);
+		}
+		//
+		@Override
 		public String toString() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
@@ -265,24 +334,9 @@ implements IOStats {
 			}
 			return String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
-				countSucc,
-				LogUtil.isConsoleColoringEnabled() ?
-					countFail == 0 ?
-						Long.toString(countFail) :
-						(float) countSucc / countFail > 1000 ?
-							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
-							String.format(LogUtil.INT_RED_OVER_GREEN, countFail) :
-					Long.toString(countFail),
-				//
-				(int) durSnapshot.getMean(),
-				(int) durSnapshot.getMin(),
-				(int) durSnapshot.getMax(),
-				//
-				(int) latSnapshot.getMean(),
-				(int) latSnapshot.getMin(),
-				(int) latSnapshot.getMax(),
-				//
-				getSuccRateMean(), succRateLast, getByteRateMean() / MIB, byteRateLast / MIB
+				toCountsString(),
+				toDurString(), toLatString(),
+				toSuccRatesString(), toByteRatesString()
 			);
 		}
 		//
@@ -295,32 +349,10 @@ implements IOStats {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
 			return String.format(
-				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS_SUM,
-				countSucc,
-				LogUtil.isConsoleColoringEnabled() ?
-					countFail == 0 ?
-						Long.toString(countFail) :
-						(float) countSucc / countFail > 1000 ?
-							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
-							String.format(LogUtil.INT_RED_OVER_GREEN, countFail) :
-					Long.toString(countFail),
-				//
-				(int) durSnapshot.getMean(),
-				(int) durSnapshot.getMin(),
-				(int) durSnapshot.getValue(0.25),
-				(int) durSnapshot.getValue(0.5),
-				(int) durSnapshot.getValue(0.75),
-				(int) durSnapshot.getMax(),
-				//
-				(int) latSnapshot.getMean(),
-				(int) latSnapshot.getMin(),
-				(int) latSnapshot.getValue(0.25),
-				(int) latSnapshot.getValue(0.5),
-				(int) latSnapshot.getValue(0.75),
-				(int) latSnapshot.getMax(),
-				//
-				getSuccRateMean(), succRateLast,
-				getByteRateMean() / MIB, byteRateLast / MIB
+				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
+				toCountsString(),
+				toDurSummaryString(), toLatSummaryString(),
+				toSuccRatesString(), toByteRatesString()
 			);
 		}
 	}

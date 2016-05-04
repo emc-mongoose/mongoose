@@ -1,0 +1,24 @@
+{
+	"type" : "load",
+	"config" : {
+		"load" : {
+			"limit" : {
+				"time" : "40s" // unit may be also "m", "h" and "d"
+			},
+			"server" : {
+				"addrs": [
+					"10.249.237.71", "10.249.237.72"
+				]
+			}
+		},
+		"run" : {
+			"mode" : "client"
+		},
+		"storage" : {
+			"addrs" : [
+				"10.249.237.73"
+			]
+		}
+	}
+}
+

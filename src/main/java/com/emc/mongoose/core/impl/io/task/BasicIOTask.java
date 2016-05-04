@@ -1,25 +1,27 @@
 package com.emc.mongoose.core.impl.io.task;
 //
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.io.conf.IOConfig;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
  Created by kurila on 20.10.15.
  */
-public class BasicIOTask<T extends Item, C extends Container<?>, X extends IOConfig<?, C>>
+public class BasicIOTask<T extends Item, C extends Container<?>, X extends IoConfig<?, C>>
 implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final X ioConfig;
-	protected final IOTask.Type ioType;
+	protected final LoadType ioType;
 	protected final T item;
 	protected final String nodeAddr;
 	//
@@ -44,6 +46,11 @@ implements IOTask<T> {
 	@Override
 	public final T getItem() {
 		return item;
+	}
+	//
+	@Override
+	public final LoadType getLoadType() {
+		return ioType;
 	}
 	//
 	@Override
@@ -74,19 +81,21 @@ implements IOTask<T> {
 			} else {
 				strBuilder.setLength(0); // clear/reset
 			}
-			LOG.info(
-				Markers.PERF_TRACE,
-				strBuilder
-					.append(nodeAddr == null ? "" : nodeAddr).append(',')
-					.append(item.getName()).append(',')
-					.append(countBytesDone).append(',')
-					.append(status.code).append(',')
-					.append(reqTimeStart).append(',')
-					.append(respLatency > 0 ? respLatency : 0).append(',')
-					.append(respDataTimeStart > 0 ? respDataLatency : -1).append(',')
-					.append(reqDuration)
-					.toString()
-			);
+			if(LOG.isEnabled(Level.INFO, Markers.PERF_TRACE)) {
+				LOG.info(
+					Markers.PERF_TRACE,
+					strBuilder
+						.append(nodeAddr == null ? "" : nodeAddr).append(',')
+						.append(item.getName()).append(',')
+						.append(countBytesDone).append(',')
+						.append(status.code).append(',')
+						.append(reqTimeStart).append(',')
+						.append(respLatency > 0 ? respLatency : 0).append(',')
+						.append(respDataTimeStart > 0 ? respDataLatency : -1).append(',')
+						.append(reqDuration)
+						.toString()
+				);
+			}
 		}
 		// stats refreshing
 		if(status == IOTask.Status.SUCC) {

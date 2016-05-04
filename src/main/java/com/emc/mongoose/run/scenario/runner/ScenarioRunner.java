@@ -1,18 +1,19 @@
 package com.emc.mongoose.run.scenario.runner;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
 //
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.run.scenario.Chain;
-import com.emc.mongoose.run.scenario.Rampup;
-import com.emc.mongoose.run.scenario.Single;
+//
+import com.emc.mongoose.run.scenario.engine.JsonScenario;
+import com.emc.mongoose.run.scenario.engine.Scenario;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.lang.reflect.InvocationTargetException;
+//
+import java.io.File;
+import java.io.IOException;
 /**
  Created by kurila on 12.05.14.
  A scenario runner utility class.
@@ -22,33 +23,37 @@ implements Runnable {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
-	public void run() {
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
-		if (localRunTimeConfig != null) {
-			final String scenarioName = localRunTimeConfig.getScenarioName();
-			//
-			try {
-				switch(scenarioName) {
-					case Constants.RUN_SCENARIO_SINGLE:
-						new Single(localRunTimeConfig).run();
-						break;
-					case Constants.RUN_SCENARIO_CHAIN:
-						new Chain(localRunTimeConfig).run();
-						break;
-					case Constants.RUN_SCENARIO_RAMPUP:
-						new Rampup(localRunTimeConfig).run();
-						break;
-					default:
-						throw new IllegalArgumentException(
-							String.format("Incorrect scenario: \"%s\"", scenarioName)
-						);
-				}
-			} catch(final ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException e ) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to execute");
-			} catch(final InvocationTargetException e) {
-				LogUtil.exception(LOG, Level.ERROR, e.getTargetException(), "Failed to execute");
+	private Scenario scenario = null;
+	//
+	public ScenarioRunner(final Scenario scenario) {
+		this.scenario = scenario;
+	}
+	//
+	public ScenarioRunner(final AppConfig appConfig) {
+		final String runFile = appConfig.getRunFile();
+		try {
+			if(runFile == null || runFile.isEmpty()) {
+				LOG.info(Markers.MSG, "Using the scenario from the standard input...");
+				scenario = new JsonScenario(appConfig, System.in);
+			} else {
+				LOG.info(Markers.MSG, "Using the scenario from the file \"{}\"", runFile);
+				scenario = new JsonScenario(appConfig, new File(runFile));
 			}
-			LOG.info(Markers.MSG, "Scenario end");
+
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Scenario reading failure");
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Configuration spawning failure");
+		}
+	}
+	//
+	public void run() {
+		if(scenario != null) {
+			try {
+				scenario.run();
+			} catch(final Throwable t) {
+				LogUtil.exception(LOG, Level.ERROR, t, "Scenario execution failure");
+			}
 		}
 	}
 }

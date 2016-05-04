@@ -1,6 +1,7 @@
 package com.emc.mongoose.server.impl.load.executor;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.Service;
@@ -8,9 +9,8 @@ import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.item.base.ItemDst;
-import com.emc.mongoose.core.api.item.base.ItemSrc;
-import com.emc.mongoose.core.api.io.conf.FileIOConfig;
+import com.emc.mongoose.common.io.Output;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 //
 import com.emc.mongoose.core.impl.load.executor.BasicDirectoryLoadExecutor;
 import com.emc.mongoose.server.api.load.executor.DirectoryLoadSvc;
@@ -34,15 +34,10 @@ implements DirectoryLoadSvc<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicDirectoryLoadSvc(
-		final RunTimeConfig runTimeConfig, final FileIOConfig<T, C> ioConfig, final String[] addrs,
-		final int connPerNode, final int threadsPerNode,
-		final ItemSrc<C> itemSrc, final long maxCount,
-		final int manualTaskSleepMicroSecs, final float rateLimit
+		final AppConfig appConfig, final FileIoConfig<T, C> ioConfig, final int threadsPerNode,
+		final Input<C> itemInput, final long countLimit, final long sizeLimit, final float rateLimit
 	) {
-		super(
-			runTimeConfig, ioConfig, addrs, connPerNode, threadsPerNode, itemSrc, maxCount,
-			manualTaskSleepMicroSecs, rateLimit
-		);
+		super(appConfig, ioConfig, threadsPerNode, itemInput, countLimit, sizeLimit, rateLimit);
 	}
 	//
 	//
@@ -52,44 +47,38 @@ implements DirectoryLoadSvc<T, C> {
 		try {
 			super.closeActually();
 		} finally {
-			// close the exposed network service, if any
-			final Service svc = ServiceUtil.getLocalSvc(ServiceUtil.getLocalSvcName(getName()));
-			if(svc == null) {
-				LOG.debug(Markers.MSG, "The load was not exposed remotely");
-			} else {
-				LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
-				ServiceUtil.close(svc);
-			}
+			LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
+			ServiceUtil.close(this);
 		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final void setItemDst(final ItemDst<C> itemDst) {
+	public final void setOutput(final Output<C> itemOutput) {
 		LOG.debug(
 			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
-			itemDst, getName()
+			itemOutput, getName()
 		);
 		try {
-			if(itemDst instanceof Service) {
-				final String remoteSvcName = ((Service) itemDst).getName();
-				LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
+			if(itemOutput instanceof Service) {
+				final String remoteSvcUrl = ((Service)itemOutput).getName();
+				LOG.debug(Markers.MSG, "Name is {}", remoteSvcUrl);
 				final Service localSvc = ServiceUtil.getLocalSvc(
-					ServiceUtil.getLocalSvcName(remoteSvcName)
+					ServiceUtil.getSvcUrl(remoteSvcUrl)
 				);
 				if(localSvc == null) {
 					LOG.error(
 						Markers.ERR, "Failed to get local service for name \"{}\"",
-						remoteSvcName
+						remoteSvcUrl
 					);
 				} else {
-					super.setItemDst((ItemDst<C>) localSvc);
+					super.setOutput((Output<C>) localSvc);
 					LOG.debug(
 						Markers.MSG,
 						"Successfully resolved local service and appended it as consumer"
 					);
 				}
 			} else {
-				super.setItemDst(itemDst);
+				super.setOutput(itemOutput);
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "{}: looks like network failure", getName());
@@ -97,15 +86,15 @@ implements DirectoryLoadSvc<T, C> {
 	}
 	// prevent output buffer consuming by the logger at the end of a chain
 	@Override
-	protected final void passItems()
+	protected final void postProcessItems()
 	throws InterruptedException {
 		if(consumer != null) {
-			super.passItems();
+			super.postProcessItems();
 		}
 	}
 	//
 	@Override
-	protected void passUniqueItemsFinally(final List<C> items) {
+	protected void postProcessUniqueItemsFinally(final List<C> items) {
 		if(consumer != null) {
 			int n = items.size();
 			if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -116,13 +105,7 @@ implements DirectoryLoadSvc<T, C> {
 			}
 			try {
 				if(!items.isEmpty()) {
-					int m = 0, k;
-					while(m < n) {
-						k = consumer.put(items, m, n);
-						if(k > 0) {
-							m += k;
-						}
-						Thread.yield();
+					for(int m = 0; m < n; m += consumer.put(items, m, n)) {
 						LockSupport.parkNanos(1);
 					}
 				}

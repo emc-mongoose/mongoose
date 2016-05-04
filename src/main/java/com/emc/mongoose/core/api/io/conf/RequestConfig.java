@@ -1,9 +1,10 @@
 package com.emc.mongoose.core.api.io.conf;
-// mongoose-core-api.jar
+//
+import com.emc.mongoose.common.conf.AppConfig;
+//
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
-// mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.core.api.item.token.Token;
 //
 import java.io.Closeable;
 /**
@@ -11,7 +12,7 @@ import java.io.Closeable;
  Shared request configuration.
  */
 public interface RequestConfig<T extends DataItem, C extends Container<T>>
-extends IOConfig<T, C>, Closeable {
+extends IoConfig<T, C>, Closeable {
 	//
 	int REQUEST_NO_PAYLOAD_TIMEOUT_SEC = 100,
 		REQUEST_WITH_PAYLOAD_TIMEOUT_SEC = 100000;
@@ -39,8 +40,11 @@ extends IOConfig<T, C>, Closeable {
 	String getSecret();
 	RequestConfig<T, C> setSecret(final String secret);
 	//
+	Token getAuthToken();
+	RequestConfig<T, C> setAuthToken(final Token token);
+	//
 	@Override
-	RequestConfig<T, C> setRunTimeConfig(final RunTimeConfig props);
+	RequestConfig<T, C> setAppConfig(final AppConfig appConfig);
 	//
 	void configureStorage(final String storageAddrs[])
 	throws IllegalStateException;

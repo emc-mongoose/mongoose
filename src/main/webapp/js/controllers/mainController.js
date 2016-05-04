@@ -1,161 +1,297 @@
 define([
-	"jquery",
-	"handlebars",
-	"./configuration/confMenuController",
-	"./websockets/webSocketController",
-	"text!../../templates/navbar.hbs",
-	"text!../../templates/tabs.hbs",
-	"text!../../templates/run/tab-header.hbs",
-	"text!../../templates/run/tab-content.hbs"
-], function(
-	$,
-	Handlebars,
-	confMenuController,
-	webSocketController,
-	navbarTemplate,
-	tabsTemplate,
-	tabHeaderTemplate,
-	tabContentTemplate
-) {
-	var runIdArray = [];
-	//
-	function run(props) {
-		//  render navbar and tabs before any other interactions
-		render(props);
-		confMenuController.run(props, runIdArray);
-		//
-		$.get("/stop", function(stopped) {
-			$.get("/state", function(response) {
-				$.each(response, function(index, runId) {
-					if(runIdArray.indexOf(runId) < 0) {
-						runIdArray.push(runId);
-						if(stopped[runId]) {
-							renderTabByRunId(runId, false);
-						} else {
-							renderTabByRunId(runId, true);
-						}
-						bindEvents(runId);
-					}
+	'jquery',
+	'./websockets/webSocketController',
+	'./tab/scenariosController',
+	'./tab/defaultsController',
+	'./tab/tests/testsController',
+	'../common/openFileHandler',
+	'text!../../templates/navbar.hbs',
+	'text!../../templates/base.hbs',
+	'text!../../templates/tab/properties/buttons.hbs',
+	'text!../../templates/tab/properties/configurations.hbs',
+	'../common/util/handlebarsUtil',
+	'../common/util/templatesUtil',
+	'../common/util/cssUtil',
+	'../common/util/tabsUtil',
+	'../common/constants'
+], function ($,
+             webSocketController,
+             scenariosController,
+             defaultsController,
+             testsController,
+             openFileHandler,
+             navbarTemplate,
+             baseTemplate,
+             buttonsTemplate,
+             configurationsTemplate,
+             hbUtil,
+             templatesUtil,
+             cssUtil,
+             tabsUtil,
+             constants) {
+
+	const MODE = templatesUtil.modes();
+	const EXTENDED_MODE = templatesUtil.objPartToArray(MODE, 2);
+	const TAB_TYPE = templatesUtil.tabTypes();
+	const BLOCK = templatesUtil.blocks();
+	const plainId = templatesUtil.composeId;
+	const jqId = templatesUtil.composeJqId;
+
+	var currentMode = MODE.STANDALONE;
+	var currentTabType = TAB_TYPE.SCENARIOS;
+
+	// render html and bind events of basic elements and same for all tabs elements 
+	function render(scenariosArray, configObject) {
+		const renderer = rendererFactory();
+		renderer.navbar(version(configObject));
+		renderer.base();
+		renderer.buttons();
+		renderer.configurations();
+		scenariosController.render(scenariosArray);
+		defaultsController.render(configObject);
+		testsController.render();
+		makeModeActive(currentMode);
+		makeTabActive(currentTabType);
+		renderer.start();
+	}
+
+	function version(configObject) {
+		var version = configObject.run.version;
+		if (version) {
+			version = version.charAt(0).toUpperCase() + version.slice(1);
+		} else {
+			version = 'Unknown';
+		}
+		return version;
+	}
+
+	function tabJqId(tabType) {
+		return jqId([tabType, 'tab']);
+	}
+
+	function makeTabActive(tabType) {
+		tabsUtil.showTabAsActive('tab', tabType);
+		tabsUtil.showActiveTabDependentElements('tab-dependent', tabType);
+		cssUtil.hide(jqId(['start']), jqId(['properties', 'block']), jqId(['tests', 'block']));
+		switch (tabType) {
+			case TAB_TYPE.SCENARIOS:
+				scenariosController.setTabParameters();
+				cssUtil.show(jqId(['start']), jqId(['properties', 'block']));
+				break;
+			case TAB_TYPE.DEFAULTS:
+				defaultsController.setTabParameters();
+				cssUtil.show(jqId(['start']), jqId(['properties', 'block']));
+				break;
+			case TAB_TYPE.TESTS:
+				cssUtil.show(jqId(['tests', 'block']));
+				break;
+		}
+		currentTabType = tabType;
+	}
+
+	function makeModeActive(mode) {
+		const TAB_CLASS = templatesUtil.tabClasses();
+		$(jqId(['mode', currentMode])).removeClass(TAB_CLASS.ACTIVE);
+		$(jqId(['mode', mode])).addClass(TAB_CLASS.ACTIVE);
+		const modeTabElem = $(jqId(['mode', 'main']));
+		modeTabElem.text('Mode: ' + mode);
+		currentMode = mode;
+		defaultsController.setRunMode(currentMode);
+		$('#run\\.mode').find('input').val(currentMode);
+		for (var i = 0; i < EXTENDED_MODE.length; i++) {
+			if (mode === EXTENDED_MODE[i]) {
+				cssUtil.processClassElements('mode-dependent',
+					function (elemSelector) {
+						elemSelector.show();
+					});
+				return;
+			}
+		}
+		if (currentTabType === TAB_TYPE.SCENARIOS) {
+			makeTabActive(TAB_TYPE.DEFAULTS);
+		}
+		cssUtil.processClassElements('mode-dependent',
+			function (elemSelector) {
+				elemSelector.hide();
+			});
+	}
+
+	const rendererFactory = function () {
+		const binder = clickEventBinderFactory();
+		const CONFIG_TABS = templatesUtil.objPartToArray(TAB_TYPE, 2);
+
+		function renderNavbar(runVersion) {
+			hbUtil.compileAndInsertInsideBefore('body', navbarTemplate, {
+				version: runVersion,
+				modes: MODE
+			});
+			binder.mode();
+			binder.tab();
+		}
+
+		function renderBase() {
+			hbUtil.compileAndInsertInside('#app', baseTemplate);
+			const configElem = $('#all-buttons');
+			$.each(CONFIG_TABS, function (index, value) {
+				if (index === 0) {
+					const detailsTree = $('<ul/>', {
+						id: plainId([BLOCK.TREE, value, 'details']),
+						class: BLOCK.TREE + ' ' + 'tab-dependent'
+					});
+					configElem.after(detailsTree);
+					detailsTree.hide();
+				}
+				configElem.after(
+					$('<ul/>', {
+						id: plainId([BLOCK.TREE, value]),
+						class: BLOCK.TREE + ' ' + 'tab-dependent'
+					}));
+			})
+		}
+
+		function renderButtons() {
+			// object to array
+			const BUTTON_TYPE = templatesUtil.commonButtonTypes();
+			const BUTTONS = templatesUtil.objToArray(BUTTON_TYPE);
+			$.each(CONFIG_TABS, function (index, value) {
+				hbUtil.compileAndInsertInsideBefore(jqId(['all', BLOCK.BUTTONS]), buttonsTemplate,
+					{'buttons': BUTTONS, 'tab-type': value});
+			});
+			binder.tabButtons(BUTTON_TYPE, CONFIG_TABS);
+		}
+
+		function renderConfigurations() {
+			$.each(CONFIG_TABS, function (index, value) {
+				hbUtil.compileAndInsertInsideBefore(jqId(['all', BLOCK.CONFIG]), configurationsTemplate,
+					{'tab-type': value});
+			});
+		}
+
+		function renderStart() {
+			binder.startButton();
+		}
+
+		return {
+			navbar: renderNavbar,
+			base: renderBase,
+			buttons: renderButtons,
+			configurations: renderConfigurations,
+			start: renderStart
+		}
+	};
+
+	const clickEventBinderFactory = function () {
+		function bindModeButtonClickEvent(mode) {
+			const modeId = jqId(['mode', mode]);
+			$(modeId).click(function () {
+				makeModeActive(mode);
+			})
+		}
+
+		function bindTabClickEvents() {
+			tabsUtil.bindTabClickEvents(TAB_TYPE, tabJqId, makeTabActive);
+		}
+
+		function bindModeButtonClickEvents() {
+			$.each(MODE, function (key, value) {
+				bindModeButtonClickEvent(value);
+			});
+		}
+
+		function buttonJqId(buttonType, tabName) {
+			return jqId([buttonType, tabName]);
+		}
+
+		function fillTheField(tabName, BUTTON_TYPE) {
+			const openInputFileId = buttonJqId(BUTTON_TYPE.OPEN_INPUT_FILE, tabName);
+			const openInputTextId = buttonJqId(BUTTON_TYPE.OPEN_INPUT_TEXT, tabName);
+			const openFileName = $(openInputFileId).val();
+			if (openFileName) {
+				$(openInputTextId).val(openFileName)
+			} else {
+				$(openInputTextId).val('No ' + tabName.slice(0, -1) + ' chosen')
+			}
+		}
+
+		function passClick(tabName, BUTTON_TYPE) {
+			const openInputFileElem = $(buttonJqId(BUTTON_TYPE.OPEN_INPUT_FILE, tabName));
+			$(buttonJqId(BUTTON_TYPE.OPEN, tabName)).click(function () {
+				openInputFileElem.trigger('click');
+			});
+			openInputFileElem.change(function (data) {
+				fillTheField(tabName, BUTTON_TYPE);
+				openFileHandler.event(data);
+			})
+		}
+
+		function bindTabButtonsClickEvents(BUTTON_TYPE, CONFIG_TABS) {
+			$.each(CONFIG_TABS, function (index, value) {
+				passClick(value, BUTTON_TYPE);
+				bindSaveAsButtonClickEvent(value, BUTTON_TYPE);
+			});
+		}
+
+		function startButtonClickEvent(startJson) {
+			var isConfirmed = true;
+			if (defaultsController.isChanged() || scenariosController.isChanged()) {
+				isConfirmed = confirm('If properties were changed Mongoose' +
+					' will save it' +
+					' automatically. ' +
+					'Would you like to continue?');
+			}
+			if (isConfirmed) {
+				$.ajax({
+					type: 'PUT',
+					url: '/run',
+					dataType: 'json',
+					contentType: constants.JSON_CONTENT_TYPE,
+					data: JSON.stringify(startJson),
+					processData: false
+				}).done(function (testsObj) {
+					testsController.updateTestsList(testsObj);
+					console.log('Mongoose ran');
 				});
-				//
-				webSocketController.start(props);
+			}
+		}
+
+		function bindStartButtonEvent() {
+			$(jqId(['start'])).click(function () {
+				const runConfig = defaultsController.getChangedAppConfig();
+				const startJson = {};
+				startJson['config'] = {
+					config: runConfig // the server handles a configuration in this format
+				};
+				if (EXTENDED_MODE.indexOf(currentMode) > -1) {
+					const runScenario = scenariosController.getChangedScenario();
+					if (runScenario === null) {
+						alert('Please, choose a scenario');
+						return
+					} else {
+						startJson['scenario'] = runScenario;
+					}
+				}
+				startButtonClickEvent(startJson);
+			})
+		}
+
+		function bindSaveAsButtonClickEvent(tabName, BUTTON_TYPE) {
+			saveFileAElem = $(jqId([BUTTON_TYPE.SAVE_AS, tabName]));
+			saveFileAElem.click(function () {
+				if ($(this).attr('href') === undefined) {
+					alert('No ' + tabName + ' chosen')
+				}
 			});
-		});
-	}
-	//
-	function renderTabByRunId(runId, active) {
-		var runIdText = runId;
-		var newId = runId.replace(/\./g, "_");
-		var tables = [
-			{
-				"id": newId + "-messages-csv",
-				"text": "messages.csv",
-				"active": true
-			}, {
-				"id": newId + "-errors-log",
-				"text": "errors.log"
-			}, {
-				"id": newId + "-perf-avg-csv",
-				"text": "perf.avg.csv"
-			}, {
-				"id": newId + "-perf-sum-csv",
-				"text": "perf.sum.csv"
-			}
-		];
-		//
-		var charts = [
-			{
-				"id": "tp-" + newId,
-				"text": "Throughput[obj/s]",
-				"active": true
-			}, {
-				"id": "bw-" + newId,
-				"text": "Bandwidth[mb/s]"
-			}, {
-				"id": "lat-" + newId,
-				"text": "Latency[us]"
-			}, {
-				"id": "dur-" + newId,
-				"text": "Duration[us]"
-			}
-		];
-		//
-		var run = {
-			runId: newId,
-			runIdText: runIdText,
-			tables: tables,
-			charts: charts,
-			active: active
-		};
-		var ul = $(".scenario-tabs");
-		//  render tab header
-		var compiled = Handlebars.compile(tabHeaderTemplate);
-		var html = compiled(run);
-		ul.append(html);
-		//  render tab content
-		var div = $(".scenarios-content");
-		compiled = Handlebars.compile(tabContentTemplate);
-		html = compiled(run);
-		div.append(html);
-	}
+		}
 
-	function bindEvents(runId) {
-		//
-		var element = $("#" + runId.replace(/\./g, "_") + "-tab");
-		element.find(".stop").click(function() {
-			var currentRunId = $(this).val();
-			var currentButton = $(this);
-			currentButton.remove();
-			$.post("/stop", {
-				"run.id" : currentRunId,
-				"type" : "stop"
-			}, function() {
-				//  do nothing
-			}).fail(function() {
-				alert("Internal Server Error");
-			});
-		});
+		return {
+			mode: bindModeButtonClickEvents,
+			tab: bindTabClickEvents,
+			tabButtons: bindTabButtonsClickEvents,
+			startButton: bindStartButtonEvent
+		}
+	};
 
-		element.find(".kill").click(function() {
-			var currentButton = $(this);
-			var currentRunId = $(this).attr("value");
-			if (confirm("Please note that the test will be shut down if it's running.") === true) {
-				currentButton.remove();
-				$("#" + currentRunId.replace(/\./g, "_") + "-tab").remove();
-				$('a[href="#' + currentRunId.replace(/\./g, "_") + '-tab"]').remove();
-				$('a[href="#configuration"]').tab('show');
-				$.post("/stop", {
-					"run.id" : currentRunId,
-					"type" : "remove"
-				}, function() {});
-			}
-		});
-	}
-
-	//
-	function render(props) {
-		renderNavbar(props.run.version || "unknown");
-		renderTabs();
-	}
-	//
-	function renderNavbar(runVersion) {
-		var run = {
-			version: runVersion
-		};
-		//
-		var compiled = Handlebars.compile(navbarTemplate);
-		var navbar = compiled(run);
-		document.querySelector("body")
-			.insertAdjacentHTML("afterbegin", navbar);
-	}
-	//
-	function renderTabs() {
-		var tabs = Handlebars.compile(tabsTemplate);
-		document.querySelector("#app")
-			.insertAdjacentHTML("afterbegin", tabs());
-	}
-	//
 	return {
-		run: run
+		render: render
 	};
 });

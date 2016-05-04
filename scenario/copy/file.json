@@ -1,0 +1,42 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "/tmp/scenario-copy-file"
+			},
+			"data" : {
+				"size" : "4KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			},
+			"threads" : 10
+		},
+		"storage" : {
+			"type" : "fs"
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load"
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"container" : "/tmp/scenario-copy-file_"
+					},
+					"src" : {
+						"container" : "/tmp/scenario-copy-file"
+					}
+				},
+				"load" : {
+					"copy" : true
+				}
+			}
+		}
+	]
+}
