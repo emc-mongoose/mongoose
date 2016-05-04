@@ -14,6 +14,7 @@ define([
 	const TREE_ELEM = templatesUtil.configTreeElements();
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
+	const enterKeyCode = 13;
 
 	function fillLeafLi(liElem, aName, aText, aClickEvent, aClickEventParam) {
 		liElem.addClass(TREE_ELEM.LEAF);
@@ -105,7 +106,7 @@ define([
 		})
 	}
 
-	function addFormForTree(addressObj, rootFormElem, delimiter, objectToChangeWithForm, tabType) {
+	function addFormForTree(addressObj, rootFormElem, delimiter, objectToChangeWithForm, tabType, jsonViewElem) {
 		const enterWarning = 'Press enter to commit a change';
 		$.each(addressObj, function (key, value) {
 			const formGroupDiv = $('<div/>', {
@@ -135,6 +136,16 @@ define([
 			});
 			input.change(function () {
 				filesUtil.changeObjAndFile(objectToChangeWithForm, key, input.val(), delimiter, tabType, p);
+				if (jsonViewElem) {
+					jsonViewElem.text(JSON.stringify(objectToChangeWithForm, null, 4));
+				}
+			});
+			input.keydown(function (event) {
+				switch (event.keyCode) {
+					case enterKeyCode:
+						input.trigger('change');
+						return false;
+				}
 			});
 			formGroupDiv.append(inputDiv);
 			inputDiv.append(input);

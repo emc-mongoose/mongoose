@@ -54,8 +54,6 @@ define([
 		
 		function backClickEvent() {
 			showMainTree();
-			// cssUtil.hide('.' + plainId(['form', TAB_TYPE.SCENARIOS, 'property']));
-			// $(jqId(['configuration', 'content'])).empty();
 			$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
 		}
 
@@ -79,20 +77,24 @@ define([
 		treeUlElem.append(createBackIcon());
 		var addressObject = {};
 		elementAppender.objectAsTree(scenarioObject, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
+		const jsonViewElem = $(jqId(['json', TAB_TYPE.SCENARIOS]));
+		jsonViewElem.text(JSON.stringify(scenarioObject, null, 4));
 		showDetailsTree();
 		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.SCENARIOS]));
 		treeFormElem.empty();
-		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, changedScenarioObject, TAB_TYPE.SCENARIOS);
+		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, changedScenarioObject, TAB_TYPE.SCENARIOS, jsonViewElem);
 	}
 
 	function showMainTree() {
 		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS, 'details'])).hide();
+		$(jqId(['json', TAB_TYPE.SCENARIOS])).hide();
 		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS])).show();
 		mainViewFlag = true;
 	}
 
 	function showDetailsTree() {
 		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS, 'details'])).show();
+		$(jqId(['json', TAB_TYPE.SCENARIOS])).show();
 		$(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS])).hide();
 		mainViewFlag = false;
 	}

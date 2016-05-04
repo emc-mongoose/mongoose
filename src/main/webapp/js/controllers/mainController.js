@@ -133,12 +133,18 @@ define([
 			hbUtil.compileAndInsertInside('#app', baseTemplate);
 			const configElem = $('#all-buttons');
 			$.each(CONFIG_TABS, function (index, value) {
-				if (index === 0) {
+				if (value === TAB_TYPE.SCENARIOS) {
 					const detailsTree = $('<ul/>', {
 						id: plainId([BLOCK.TREE, value, 'details']),
 						class: BLOCK.TREE + ' ' + 'tab-dependent'
 					});
+					const jsonViewElem = $('<pre/>', {
+						id: plainId(['json', value]),
+						class: 'json-view tab-dependent'
+					});
+					configElem.after(jsonViewElem);
 					configElem.after(detailsTree);
+					jsonViewElem.hide();
 					detailsTree.hide();
 				}
 				configElem.after(
