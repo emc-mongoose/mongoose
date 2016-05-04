@@ -3,3 +3,7 @@
 .ui-widget-header .ui-state-active {
 	background: inherit;
 }
+h1, h2 {
+	color: #a0a0a0;
+	text-shadow: -1px -2px 0px #404040, 1px 2px 3px #f0f0f0;
+}
