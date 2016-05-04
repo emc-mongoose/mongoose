@@ -45,6 +45,7 @@ public class RunServlet extends HttpServlet {
 
 	private static final String APP_CONFIG_KEY = "config";
 	private static final String SCENARIO_KEY = "scenario";
+	private static final String RUN_ID_KEY = "runId";
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper()
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
@@ -89,6 +90,14 @@ public class RunServlet extends HttpServlet {
 		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
 	}
 
+	@Override
+	protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		final String runId = getPlainJson(request).get(RUN_ID_KEY);
+		stopAndRemoveTest(runId);
+		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
+		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
+	}
+
 	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request) throws IOException {
 		final String startPropertiesString;
 		try (
@@ -98,6 +107,19 @@ public class RunServlet extends HttpServlet {
 		}
 		return JSON_MAPPER.readValue(
 				startPropertiesString, new TypeReference<Map<String, Object>>() {
+				}
+		);
+	}
+
+	private Map<String, String> getPlainJson(final HttpServletRequest request) throws IOException {
+		final String plainJsonString;
+		try (
+				final BufferedReader reader = request.getReader()
+		) {
+			plainJsonString = JsonUtil.readString(reader);
+		}
+		return JSON_MAPPER.readValue(
+				plainJsonString, new TypeReference<Map<String, String>>() {
 				}
 		);
 	}
@@ -146,6 +168,12 @@ public class RunServlet extends HttpServlet {
 	private void putTest(final String runId, final Thread test, final String mode) {
 		TESTS.put(runId, test);
 		MODES.put(runId, mode);
+	}
+
+	private void stopAndRemoveTest(final String runId) {
+		TESTS.get(runId).interrupt();
+		TESTS.remove(runId);
+		MODES.remove(runId);
 	}
 
 	private static abstract class Runner implements Runnable {

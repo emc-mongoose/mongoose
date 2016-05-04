@@ -181,6 +181,16 @@
 	right: 10px;
 	z-index: 1000;
 }
+.icon-remove {
+    width: 20px;
+    height: 20px;
+    background: white url(../img/remove-icon.png)right top no-repeat;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+}
 .enter-warning {
     margin: 10px !important;
     font-style: italic;

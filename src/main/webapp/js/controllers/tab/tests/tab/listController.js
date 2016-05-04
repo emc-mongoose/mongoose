@@ -4,12 +4,14 @@ define([
 	'../../../../common/util/templatesUtil',
 	'../../../../common/util/cssUtil',
 	'../../../../common/util/tabsUtil',
+	'../../../../common/constants',
 	'text!../../../../../templates/tab/tests/tab/list.hbs'
 ], function ($,
              hbUtil,
              templatesUtil,
              cssUtil,
              tabsUtil,
+             constants,
              listTemplate) {
 
 	const TAB_TYPE = templatesUtil.tabTypes();
@@ -40,20 +42,43 @@ define([
 	function updateTestsList(testsObj) {
 		const testsListBlockElem = $(jqId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.LIST]));
 		testsListBlockElem.empty();
-		$.each(testsObj, function (key, value) {
+		$.each(testsObj, function (runId, runMode) {
 			const listItemElem = $('<a/>',
 				{
-					id: key,
+					id: runId,
 					class: listItemElemClass
 				});
-			listItemElem.text(key + " - " + value);
+			listItemElem.text(runId + " - " + runMode);
 			listItemElem.click(function () {
-				makeItemActive(key)
+				makeItemActive(runId)
 			});
+			const removeIconElem = createRemoveIcon(runId);
+			listItemElem.append(removeIconElem);
 			testsListBlockElem.append(listItemElem);
 		});
 		const testsIds = Object.keys(testsObj);
 		makeItemActive(testsIds[testsIds.length - 1]);
+	}
+
+	function createRemoveIcon(runId) {
+		const div = $('<div/>', {
+			id: plainId([runId, 'remove']),
+			class: 'icon-remove'
+		});
+		div.click(function () {
+			$.ajax({
+				type: 'DELETE',
+				url: '/run',
+				dataType: 'json',
+				contentType: constants.JSON_CONTENT_TYPE,
+				data: JSON.stringify({ runId: runId }),
+				processData: false
+			}).done(function (testsObj) {
+				updateTestsList(testsObj);
+				console.log('Mongoose ran');
+			});
+		});
+		return div;
 	}
 
 	function makeItemActive(testId) {
