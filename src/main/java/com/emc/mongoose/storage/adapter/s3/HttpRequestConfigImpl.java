@@ -37,7 +37,7 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static String CANONICAL_AMZ_HEADER_PREFIX = "x-amz-";
+	public final static String PREFIX_KEY_AMZ = "x-amz-";
 	public final static String MSG_NO_BUCKET = "Bucket is not specified";
 	public final static String
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
@@ -155,37 +155,27 @@ extends HttpRequestConfigBase<T, C> {
 				canonical.append('\n');
 			}
 		}
-		// x-amz-*
-		String amzHeaderName;
-		Map<String, String> sortedAmzHeaders = new TreeMap<>();
+		// x-amz-*, x-emc-*
+		String headerName;
+		Map<String, String> sortedHeaders = new TreeMap<>();
 		for(final Header header : sharedHeaders.values()) {
-			amzHeaderName = header.getName().toLowerCase();
-			if(amzHeaderName.startsWith(CANONICAL_AMZ_HEADER_PREFIX)) {
-				sortedAmzHeaders.put(amzHeaderName, header.getValue());
+			headerName = header.getName().toLowerCase();
+			if(
+				headerName.startsWith(PREFIX_KEY_AMZ) || headerName.startsWith(PREFIX_KEY_EMC)
+			) {
+				sortedHeaders.put(headerName, header.getValue());
 			}
 		}
 		for(final Header header : httpRequest.getAllHeaders()) {
-			amzHeaderName = header.getName().toLowerCase();
-			if(amzHeaderName.startsWith(CANONICAL_AMZ_HEADER_PREFIX)) {
-				sortedAmzHeaders.put(amzHeaderName, header.getValue());
+			headerName = header.getName().toLowerCase();
+			if(
+				headerName.startsWith(PREFIX_KEY_AMZ) || headerName.startsWith(PREFIX_KEY_EMC)
+			) {
+				sortedHeaders.put(headerName, header.getValue());
 			}
 		}
-		for(final String k : sortedAmzHeaders.keySet()) {
-			canonical.append('\n').append(k).append(':').append(sortedAmzHeaders.get(k));
-		}
-		// x-emc-*
-		for(final String emcHeaderName : HEADERS_CANONICAL_EMC) {
-			if(httpRequest.containsHeader(emcHeaderName)) {
-				for(final Header emcHeader : httpRequest.getHeaders(emcHeaderName)) {
-					canonical
-						.append('\n').append(emcHeaderName.toLowerCase())
-						.append(':').append(emcHeader.getValue());
-				}
-			} else if(sharedHeaders.containsKey(emcHeaderName)) {
-				canonical
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeaders.get(emcHeaderName).getValue());
-			}
+		for(final String k : sortedHeaders.keySet()) {
+			canonical.append('\n').append(k).append(':').append(sortedHeaders.get(k));
 		}
 		//
 		final String uri = httpRequest.getRequestLine().getUri();

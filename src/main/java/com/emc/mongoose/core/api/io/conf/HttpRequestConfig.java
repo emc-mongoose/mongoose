@@ -25,6 +25,7 @@ public interface HttpRequestConfig<T extends HttpDataItem, C extends Container<T
 extends RequestConfig<T, C>, HttpRequestInterceptor {
 	//
 	String
+		PREFIX_KEY_EMC = "x-emc-",
 		KEY_EMC_ACCEPT = "x-emc-accept",
 		KEY_EMC_FS_ACCESS = "x-emc-file-system-access-enabled",
 		KEY_EMC_DATE = "x-emc-date",
