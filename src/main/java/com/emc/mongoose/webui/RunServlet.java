@@ -29,9 +29,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 
 /**
  * Created on 22.04.16.
@@ -51,10 +48,6 @@ public class RunServlet extends HttpServlet {
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 	private static final Map<String, Thread> TESTS = new HashMap<>();
-	// FIXIT:
-	// THE ONLY USE OF THIS THREAD POOL IS SUBMITTING NEW TASKS
-	// THERE'S NO NEED IN THE THREAD POOL, JUST USE THE THREADS
-	private static final ExecutorService TESTS_EXECUTORS_POOL = Executors.newCachedThreadPool();
 
 	@Override
 	protected void doPut(final HttpServletRequest request, final HttpServletResponse response)
@@ -75,7 +68,7 @@ public class RunServlet extends HttpServlet {
 		config.setProperty(AppConfig.KEY_RUN_ID, runId);
 		switch (getRunMode(config)) {
 			case Constants.RUN_MODE_STANDALONE:
-				runTest(runId, new StandaloneLikeRunner(scenario, STANDALONE_MODE_NAME));
+				runTest(runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME));
 				break;
 			case Constants.RUN_MODE_WSMOCK:
 				runTest(runId, new WsMockRunner(config));
@@ -84,10 +77,10 @@ public class RunServlet extends HttpServlet {
 				runTest(runId, new ServerRunner(config));
 				break;
 			case Constants.RUN_MODE_CLIENT:
-				runTest(runId, new StandaloneLikeRunner(scenario, CLIENT_MODE_NAME));
+				runTest(runId, new StandaloneLikeRunner(config, scenario, CLIENT_MODE_NAME));
 				break;
 			default:
-				runTest(runId, new StandaloneLikeRunner(scenario, STANDALONE_MODE_NAME));
+				runTest(runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME));
 		}
 
 		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
@@ -215,9 +208,9 @@ public class RunServlet extends HttpServlet {
 
 		private Scenario scenario;
 
-		StandaloneLikeRunner(final Scenario scenario,
+		StandaloneLikeRunner(final AppConfig config, final Scenario scenario,
 		                     final String standaloneLikeModeName) {
-			super(null, standaloneLikeModeName);
+			super(config, standaloneLikeModeName);
 			this.scenario = scenario;
 		}
 

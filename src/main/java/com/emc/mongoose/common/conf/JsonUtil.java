@@ -19,9 +19,6 @@ import static java.util.regex.Pattern.compile;
 /**
  * Created on 04.04.16.
  */
-// FIXIT:
-// THE CLASS DOESN'T HAVE A RELATION TO THE IO PACKAGE
-// PLEASE USE ANOTHER PACKAGE (COMMON.CONF, FOR EXAMPLE)
 public class JsonUtil {
 
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
