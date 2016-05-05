@@ -13,7 +13,7 @@
 	},
 	"jobs" : [
 		{
-			"type" : "load",
+			"type" : "precondition",
 			"config" : {
 				"item" : {
 					"dst" : {

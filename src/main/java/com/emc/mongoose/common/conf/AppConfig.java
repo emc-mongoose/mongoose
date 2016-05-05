@@ -51,6 +51,7 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_LOAD_LIMIT_SIZE = "load.limit.size";
 	String KEY_LOAD_LIMIT_TIME = "load.limit.time";
 	String KEY_LOAD_METRICS_PERIOD = "load.metricsPeriod";
+	String KEY_LOAD_PRECONDITION = "load.precondition";
 	String KEY_LOAD_SERVER_ADDRS = "load.server.addrs";
 	String KEY_LOAD_SERVER_NODE_MAPPING = "load.server.nodeMapping";
 	String KEY_LOAD_THREADS = "load.threads";
@@ -156,6 +157,8 @@ extends Cloneable, Configuration, Externalizable {
 
 	/** Return the period in seconds */
 	int getLoadMetricsPeriod();
+
+	boolean getLoadPrecondition();
 
 	String[] getLoadServerAddrs();
 

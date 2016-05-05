@@ -22,7 +22,7 @@
 	},
 	"jobs": [
 		{
-			"type": "load"
+			"type": "precondition"
 		}, {
 			"type": "load",
 			"config" : {

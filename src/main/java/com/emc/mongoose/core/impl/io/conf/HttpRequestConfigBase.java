@@ -20,6 +20,8 @@ import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
 import static com.emc.mongoose.common.io.value.RangePatternDefinedInput.PATTERN_SYMBOL;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
+
+import com.emc.mongoose.core.api.item.token.Token;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;

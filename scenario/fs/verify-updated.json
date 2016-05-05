@@ -19,7 +19,7 @@
 	"jobs": [
 		{
 			// write new data
-			"type" : "load",
+			"type" : "precondition",
 			"config" : {
 				"item" : {
 					"dst" : {
@@ -29,7 +29,7 @@
 			}
 		}, {
 			// update the written data
-			"type": "load",
+			"type": "precondition",
 			"config" : {
 				"item" : {
 					"data" : {

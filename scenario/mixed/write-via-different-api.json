@@ -49,16 +49,6 @@
 					}
 				}
 			]
-		}, {
-			"type" : "load",
-			"config" : {
-				"load" : {
-					"limit" : {
-						"count" : 10
-					},
-					"threads" : 10
-				}
-			}
 		}
 	]
 }

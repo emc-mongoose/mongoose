@@ -76,6 +76,7 @@ implements LoadExecutor<T> {
 	protected final Throttle<T> activeTasksThrottle;
 	// METRICS section
 	protected final int metricsPeriodSec;
+	protected final boolean preconditionFlag;
 	protected IOStats ioStats;
 	protected volatile IOStats.Snapshot lastStats = null;
 	// STATES section //////////////////////////////////////////////////////////////////////////////
@@ -208,6 +209,7 @@ implements LoadExecutor<T> {
 		loadType = ioConfig.getLoadType();
 		//
 		metricsPeriodSec = appConfig.getLoadMetricsPeriod();
+		preconditionFlag = appConfig.getLoadPrecondition();
 		this.sizeLimit = sizeLimit > 0 ? sizeLimit : Long.MAX_VALUE;
 		// prepare the nodes array
 		storageNodeAddrs = addrs == null ? null : addrs.clone();
@@ -280,11 +282,21 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public void logMetrics(final Marker logMarker) {
-		LOG.info(
-			logMarker,
-			Markers.PERF_SUM.equals(logMarker) ?
-				"\"" + getName() + "\" summary: " + lastStats.toSummaryString() : lastStats
-		);
+		if(preconditionFlag) {
+			LOG.info(
+				Markers.MSG,
+				Markers.PERF_SUM.equals(logMarker) ?
+					"\"" + getName() + "\" summary: " + lastStats.toSummaryString() :
+					lastStats
+			);
+		} else {
+			LOG.info(
+				logMarker,
+				Markers.PERF_SUM.equals(logMarker) ?
+					"\"" + getName() + "\" summary: " + lastStats.toSummaryString() :
+					lastStats
+			);
+		}
 	}
 	//
 	@Override
@@ -570,6 +582,44 @@ implements LoadExecutor<T> {
 		return to - from;
 	}
 	//
+	private final static ThreadLocal<StringBuilder>
+		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
+		@Override
+		protected final StringBuilder initialValue() {
+			return new StringBuilder();
+		}
+	};
+	private void logTrace(
+		final String nodeAddr, final String itemName, final IOTask.Status status,
+		final long reqTimeStart, final long countBytesDone, final int reqDuration,
+		final int respLatency, final long respDataLatency
+	) {
+		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
+			StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
+			if(strBuilder == null) {
+				strBuilder = new StringBuilder();
+				PERF_TRACE_MSG_BUILDER.set(strBuilder);
+			} else {
+				strBuilder.setLength(0); // clear/reset
+			}
+			if(LOG.isEnabled(Level.INFO, Markers.PERF_TRACE)) {
+				LOG.info(
+					Markers.PERF_TRACE,
+					strBuilder
+						.append(nodeAddr == null ? "" : nodeAddr).append(',')
+						.append(itemName).append(',')
+						.append(countBytesDone).append(',')
+						.append(status.code).append(',')
+						.append(reqTimeStart).append(',')
+						.append(respLatency > 0 ? respLatency : 0).append(',')
+						.append(respDataLatency).append(',')
+						.append(reqDuration)
+						.toString()
+				);
+			}
+		}
+	}
+	//
 	@Override
 	public void ioTaskCompleted(final IOTask<T> ioTask)
 	throws RemoteException {
@@ -579,15 +629,34 @@ implements LoadExecutor<T> {
 		}
 		//
 		final T item = ioTask.getItem();
-		//
 		final IOTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
-		// update the metrics
-		ioTask.mark(ioStats);
+		final int
+			reqDuration = ioTask.getDuration(),
+			respLatency = ioTask.getLatency(),
+			respDataLatency = ioTask.getDataLatency();
+		final long countBytesDone = ioTask.getCountBytesDone();
+		// perf trace logging
+		if(!preconditionFlag) {
+			logTrace(
+				nodeAddr, item.getName(), status, ioTask.getReqTimeStart(), countBytesDone,
+				reqDuration, respLatency, respDataLatency
+			);
+		}
+		//
 		if(nodeBalancer != null) {
 			nodeBalancer.markTaskFinish(nodeAddr);
 		}
-		if(status == IOTask.Status.SUCC) {
+		if(IOTask.Status.SUCC == status) {
+			// update the metrics with success
+			if(respLatency > 0 && respLatency > reqDuration) {
+				LOG.warn(
+					Markers.ERR, "{}: latency {} is more than duration: {}", this, respLatency,
+					reqDuration
+				);
+			}
+			ioStats.markSucc(countBytesDone, reqDuration, respLatency);
+			//
 			lastItem = item;
 			// put into the output buffer
 			try {
@@ -627,14 +696,37 @@ implements LoadExecutor<T> {
 			IOTask<T> ioTask;
 			T item;
 			IOTask.Status status;
+			String nodeAddr;
+			int reqDuration, respLatency, respDataLatency;
+			long countBytesDone;
 			for(int i = from; i < to; i++) {
+				//
 				ioTask = ioTasks.get(i);
 				item = ioTask.getItem();
-				//
 				status = ioTask.getStatus();
-				// update the metrics
-				ioTask.mark(ioStats);
-				if(status == IOTask.Status.SUCC) {
+				nodeAddr = ioTask.getNodeAddr();
+				reqDuration = ioTask.getDuration();
+				respLatency = ioTask.getLatency();
+				respDataLatency = ioTask.getDataLatency();
+				countBytesDone = ioTask.getCountBytesDone();
+				// perf trace logging
+				if(!preconditionFlag) {
+					logTrace(
+						nodeAddr, item.getName(), status, ioTask.getReqTimeStart(), countBytesDone,
+						reqDuration, respLatency, respDataLatency
+					);
+				}
+				//
+				if(IOTask.Status.SUCC == status) {
+					// update the metrics with success
+					if(respLatency > 0 && respLatency > reqDuration) {
+						LOG.warn(
+							Markers.ERR, "{}: latency {} is more than duration: {}", this, respLatency,
+							reqDuration
+						);
+					}
+					ioStats.markSucc(countBytesDone, reqDuration, respLatency);
+					//
 					lastItem = item;
 					// pass data item to a consumer
 					try {

@@ -14,7 +14,7 @@
 	"jobs" : [
 		{
 			// create 10 containers
-			"type" : "load",
+			"type" : "precondition",
 			"config" : {
 				"item" : {
 					"dst" : {
@@ -43,7 +43,7 @@
 			},
 			"jobs" : [
 				{
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {
@@ -52,7 +52,7 @@
 						}
 					}
 				}, {
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {
@@ -61,7 +61,7 @@
 						}
 					}
 				}, {
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {
@@ -70,7 +70,7 @@
 						}
 					}
 				}, {
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {
@@ -79,7 +79,7 @@
 						}
 					}
 				}, {
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {
@@ -88,7 +88,7 @@
 						}
 					}
 				}, {
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {
@@ -97,7 +97,7 @@
 						}
 					}
 				}, {
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {
@@ -106,7 +106,7 @@
 						}
 					}
 				}, {
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {
@@ -115,7 +115,7 @@
 						}
 					}
 				}, {
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {
@@ -124,7 +124,7 @@
 						}
 					}
 				}, {
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {

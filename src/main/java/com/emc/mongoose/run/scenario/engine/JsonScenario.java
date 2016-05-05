@@ -36,6 +36,7 @@ implements Scenario {
 	private final static String NODE_TYPE_PARALLEL = "parallel";
 	private final static String NODE_TYPE_SEQUENTIAL = "sequential";
 	private final static String NODE_TYPE_LOAD = "load";
+	private final static String NODE_TYPE_PRECONDITION = "precondition";
 	private final static String NODE_TYPE_RAMPUP = "rampup";
 	private final static String NODE_TYPE_SLEEP = "sleep";
 	//
@@ -159,9 +160,15 @@ implements Scenario {
 								subContainer = newSubContainer;
 								break;
 							case NODE_TYPE_LOAD:
+							case NODE_TYPE_PRECONDITION:
 							case NODE_TYPE_RAMPUP:
 								if(configTree instanceof Map || configTree == null) {
-									if(NODE_TYPE_LOAD.equals(value)) {
+									final boolean preconditionFlag = NODE_TYPE_PRECONDITION
+										.equals(value);
+									if(NODE_TYPE_LOAD.equals(value) || preconditionFlag) {
+										nodeConfig.setProperty(
+											AppConfig.KEY_LOAD_PRECONDITION, preconditionFlag
+										);
 										newSubContainer = new SingleJobContainer(nodeConfig);
 									} else {
 										newSubContainer = new RampupJobContainer(nodeConfig);
