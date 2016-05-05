@@ -13,7 +13,7 @@ define([
 		saveFileAElem = $(jqId(['save', 'file', tabType]));
 		if (content !== null) {
 			tabType = tabType.slice(0, -1);
-			const data = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(content));
+			const data = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(content, null, '\t'));
 			saveFileAElem.attr('href', 'data: ' + data);
 			saveFileAElem.attr('download', tabType + '.json')
 		} else {

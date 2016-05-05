@@ -137,7 +137,7 @@ define([
 			input.change(function () {
 				filesUtil.changeObjAndFile(objectToChangeWithForm, key, input.val(), delimiter, tabType, p);
 				if (jsonViewElem) {
-					jsonViewElem.text(JSON.stringify(objectToChangeWithForm, null, 4));
+					jsonViewElem.text(JSON.stringify(objectToChangeWithForm, null, '\t'));
 				}
 			});
 			input.keydown(function (event) {
