@@ -3,6 +3,7 @@ package com.emc.mongoose.common.log.appenders;
 import com.emc.mongoose.common.conf.AppConfig;
 //
 //
+import com.emc.mongoose.common.log.Markers;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
 import org.apache.logging.log4j.ThreadContext;
@@ -18,11 +19,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
 //
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 23.10.14.
@@ -30,17 +27,27 @@ import java.util.concurrent.ConcurrentHashMap;
 @Plugin(name="WebUI", category="Core", elementType="appender", printObject=true)
 public final class WebUIAppender
 extends AbstractAppender {
-	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
+
+	private final static int MAX_EVENTS_IN_THE_LIST = 3000;
 	//
-	private final static ConcurrentHashMap<String, CircularFifoQueue<LogEvent>>
+	private static final String MESSAGE_MARKER_KEY = "messages";
+	private static final String ERRORS_MARKER_KEY = "errors";
+	private static final String PERF_AVG_MARKER_KEY = "perf.avg";
+	private static final String PERF_SUM_MARKER_KEY = "perf.sum";
+	//
+	private static final String LEVEL_EVENT_KEY = "level";
+	private static final String LOGGER_NAME_EVENT_KEY = "loggerName";
+	private static final String THREAD_NAME_EVENT_KEY = "threadName";
+	private static final String TIME_EVENT_KEY = "timeMillis";
+	private static final String MESSAGE_EVENT_KEY = "message";
+	//
+	private static final ConcurrentHashMap<String, Map<String, Queue<String>>>
 		LOG_EVENTS_MAP = new ConcurrentHashMap<>();
-	private final static List<WebSocketLogListener>
-		LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
 	//
-	private final static Layout<? extends Serializable>
+	private static final Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	//
-	private static boolean ENABLED_FLAG;
+	private static boolean ENABLED_FLAG = true;
 	//
 	private WebUIAppender(
 		final String name, final Filter filter, final Layout<? extends Serializable> layout,
@@ -64,29 +71,6 @@ extends AbstractAppender {
 		return new WebUIAppender(name, filter, DEFAULT_LAYOUT, ignoreExceptions);
 	}
 	//
-	public static void register(final WebSocketLogListener listener) {
-		if(ENABLED_FLAG) {
-			sendPreviousLogs(listener);
-			LISTENERS.add(listener);
-		}
-	}
-	//
-	public static void unregister(final WebSocketLogListener listener) {
-		if(ENABLED_FLAG) {
-			LISTENERS.remove(listener);
-		}
-	}
-	//
-	public synchronized static void sendPreviousLogs(final WebSocketLogListener listener) {
-		final List<LogEvent> previousLogs = new ArrayList<>();
-		for (final CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
-			for (final LogEvent logEvent : queue) {
-				previousLogs.add(logEvent);
-			}
-		}
-		listener.sendMessage(previousLogs);
-	}
-	//
 	@Override
 	public synchronized final void append(final LogEvent event) {
 		if(ENABLED_FLAG) {
@@ -100,14 +84,20 @@ extends AbstractAppender {
 			//
 			if(currRunId != null) {
 				if(!LOG_EVENTS_MAP.containsKey(currRunId)) {
+					final Map<String, Queue<String>> markers = new ConcurrentHashMap<>();
+					markers.put(MESSAGE_MARKER_KEY, new CircularFifoQueue<String>(MAX_EVENTS_IN_THE_LIST));
+					markers.put(ERRORS_MARKER_KEY, new CircularFifoQueue<String>(MAX_EVENTS_IN_THE_LIST));
+					markers.put(PERF_AVG_MARKER_KEY, new CircularFifoQueue<String>(MAX_EVENTS_IN_THE_LIST));
+					markers.put(PERF_SUM_MARKER_KEY, new CircularFifoQueue<String>(MAX_EVENTS_IN_THE_LIST));
 					LOG_EVENTS_MAP.put(
-						currRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST)
+						currRunId, markers
 					);
 				}
-				LOG_EVENTS_MAP.get(currRunId).add(event);
-				for (final WebSocketLogListener listener : LISTENERS) {
-					listener.sendMessage(event);
-				}
+//				switch (event.getMarker()) {
+//					case Markers.MSG:
+//						break;
+//				}
+//				LOG_EVENTS_MAP.get(currRunId).add(event);
 			} // else silently skip
 		}
 	}

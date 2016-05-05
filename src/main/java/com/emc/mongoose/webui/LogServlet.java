@@ -39,14 +39,14 @@ public final class LogServlet extends WebSocketServlet {
 
 		@OnWebSocketClose
 		public final void onClose(int statusCode, final String reason) {
-			WebUIAppender.unregister(this);
+//			WebUIAppender.unregister(this);
 			session.close();
 			LOG.trace(Markers.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
 		}
 
 		@OnWebSocketError
 		public final void onError(final Throwable t) {
-			WebUIAppender.unregister(this);
+//			WebUIAppender.unregister(this);
 			session.close();
 			LogUtil.exception(LOG, Level.DEBUG, t, "WebSocket failure");
 		}
@@ -55,7 +55,7 @@ public final class LogServlet extends WebSocketServlet {
 		public final void onConnect(final Session session) throws InterruptedException {
 			this.session = session;
 			//
-			WebUIAppender.register(this);
+//			WebUIAppender.register(this);
 			LOG.trace(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
 		}
 
