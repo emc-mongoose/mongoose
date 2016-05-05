@@ -46,23 +46,21 @@ public class CircularArray<T> implements Iterable<T> {
 
 	@Override
 	public Iterator<T> iterator() {
-		return null;
+		return new CaIterator();
 	}
 
 	private class CaIterator implements Iterator<T> {
 
-		private int pointer;
+		private int pointer = 0;
 
 		@Override
 		public boolean hasNext() {
-
-			return false;
+			return pointer < CircularArray.this.size;
 		}
 
 		@Override
 		public T next() {
-//			if (CaIterator.this.pointer == super.size)
-			return null;
+			return CircularArray.this.array[pointer++];
 		}
 
 		@Override

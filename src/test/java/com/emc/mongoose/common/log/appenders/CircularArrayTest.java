@@ -4,6 +4,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Comparator;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -12,15 +14,17 @@ import static org.junit.Assert.*;
  */
 public class CircularArrayTest {
 
+	private static final Random RANDOM = new Random();
+
 	private static class FakeLogEvent {
 
 		private final long time;
 
-		public FakeLogEvent(final long time) {
+		FakeLogEvent(final long time) {
 			this.time = time;
 		}
 
-		public static class FleComparator implements Comparator<FakeLogEvent> {
+		static class FleComparator implements Comparator<FakeLogEvent> {
 
 			@Override
 			public int compare(FakeLogEvent fle1, FakeLogEvent fle2) {
@@ -29,6 +33,9 @@ public class CircularArrayTest {
 
 		}
 
+		public long time() {
+			return time;
+		}
 	}
 
 	private CircularArray<FakeLogEvent> circularArray;
@@ -39,10 +46,18 @@ public class CircularArrayTest {
 	}
 
 	@Test
-	public void searchItem() throws Exception {
-		for (int i = 0; i < circularArray.size(); i++) {
-			circularArray.addItem(new FakeLogEvent(System.currentTimeMillis()));
+	public void shouldSearchItem() throws Exception {
+		final int arraySize = circularArray.size();
+		final int indexToCheck = RANDOM.nextInt(arraySize);
+		FakeLogEvent fleToCheck = null;
+		for (int i = 0; i < arraySize; i++) {
+			FakeLogEvent tempFle = new FakeLogEvent(System.currentTimeMillis());
+			circularArray.addItem(tempFle);
+			TimeUnit.MILLISECONDS.sleep(100);
+			if (i == indexToCheck) {
+				fleToCheck = tempFle;
+			}
 		}
-
+		assertEquals(indexToCheck, circularArray.searchItem(fleToCheck));
 	}
 }
