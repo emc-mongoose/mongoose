@@ -39,7 +39,7 @@ public class CircularArray<T> implements Iterable<T> {
 	public int searchItem(final T item) {
 		int index = binarySearch(array, pointer, size, item, arrayComparator);
 		if (index < 0) {
-			index = binarySearch(array, 0, size, item, arrayComparator);
+			index = binarySearch(array, 0, pointer, item, arrayComparator);
 		}
 		return index;
 	}
