@@ -1,6 +1,9 @@
 {
 	"type" : "sequential",
 	"config" : {
+		"auth" : {
+			"id" : "wuser1@sanity.local"
+		},
 		"item" : {
 			"dst" : {
 				"container" : "linear-read-100MB"

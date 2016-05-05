@@ -1,6 +1,9 @@
 {
 	"type": "load",
 	"config" : {
+		"auth" : {
+			"id" : "wuser1@sanity.local"
+		},
 		"item" : {
 			"dst" : {
 				"file" : "/tmp/scenario-linear-write-fs-access-atmos.csv"

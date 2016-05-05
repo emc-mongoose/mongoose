@@ -91,31 +91,29 @@ extends JobContainerBase {
 		try {
 			LOG.info(Markers.MSG, "Start the job \"{}\"", loadJob_.getName());
 			loadJob_.start();
-			try {
-				loadJob_.await(
-					limitTime > 0 ? limitTime : Long.MAX_VALUE,
-					limitTime > 0 ? TimeUnit.SECONDS : TimeUnit.DAYS
-				);
-				try {
-					loadJob_.close();
-				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.ERROR, e, "Failed to close the load job {}", loadJob_
-					);
-				}
-			} catch(final InterruptedException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Load job {} was interrupted", loadJob_);
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e,
-					"Failed to invoke the await method remotely for the load job {}", loadJob_
-				);
-			}
+		} catch(final RemoteException e) {
+		}
+		//
+		try {
+			loadJob_.await(
+				limitTime > 0 ? limitTime : Long.MAX_VALUE,
+				limitTime > 0 ? TimeUnit.SECONDS : TimeUnit.DAYS
+			);
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Load job {} was interrupted", loadJob_);
 		} catch(final RemoteException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e,
-				"Failed to invoke the start method remotely for the load job {}", loadJob_
+				"Failed to invoke the await method remotely for the load job {}", loadJob_
 			);
+		} finally {
+			try {
+				loadJob_.close();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e,
+					"Failed to invoke the start method remotely for the load job {}", loadJob_
+				);
+			}
 		}
 	}
 }

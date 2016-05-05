@@ -742,12 +742,16 @@ implements HttpRequestConfig<T, C> {
 	@Override
 	public void configureStorage(final String storageNodeAddrs[])
 	throws IllegalStateException {
-		final String dstContainerName = dstContainer.getName();
-		int firstSepPos = dstContainerName.indexOf(File.pathSeparatorChar);
-		if(fsAccess && firstSepPos >= 0) {
-			final String path = dstContainerName.substring(firstSepPos);
-			if(!path.isEmpty()) {
-				createDirectoryPath(storageNodeAddrs[0], path);
+		if(dstContainer != null) {
+			final String dstContainerName = dstContainer.getName();
+			if(dstContainerName != null) {
+				int firstSepPos = dstContainerName.indexOf(File.pathSeparatorChar);
+				if(fsAccess && firstSepPos >= 0) {
+					final String path = dstContainerName.substring(firstSepPos);
+					if(!path.isEmpty()) {
+						createDirectoryPath(storageNodeAddrs[0], path);
+					}
+				}
 			}
 		}
 	}
