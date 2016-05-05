@@ -36,21 +36,26 @@ public class CircularArrayTest {
 		public long time() {
 			return time;
 		}
+
+		@Override
+		public String toString() {
+			return String.valueOf(time());
+		}
 	}
 
 	private CircularArray<FakeLogEvent> circularArray;
 
 	@Before
 	public void init() {
-		circularArray = new CircularArray<>(10, new FakeLogEvent.FleComparator());
+		circularArray = new CircularArray<>(100, new FakeLogEvent.FleComparator());
 	}
 
 	@Test
 	public void shouldSearchItem() throws Exception {
-		final int arraySize = circularArray.size();
-		final int indexToCheck = RANDOM.nextInt(arraySize);
+		final int countLimit = 10;
+		final int indexToCheck = RANDOM.nextInt(countLimit);
 		FakeLogEvent fleToCheck = null;
-		for (int i = 0; i < arraySize; i++) {
+		for (int i = 0; i < countLimit; i++) {
 			FakeLogEvent tempFle = new FakeLogEvent(System.currentTimeMillis());
 			circularArray.addItem(tempFle);
 			TimeUnit.MILLISECONDS.sleep(100);
@@ -59,5 +64,15 @@ public class CircularArrayTest {
 			}
 		}
 		assertEquals(indexToCheck, circularArray.searchItem(fleToCheck));
+	}
+
+	@Test
+	public void shouldAddItemCircularly() throws Exception {
+		final int countLimit = 400;
+		for (int i = 0; i < countLimit; i++) {
+			FakeLogEvent tempFle = new FakeLogEvent(System.nanoTime());
+			circularArray.addItem(tempFle);
+		}
+		System.out.println(circularArray);
 	}
 }
