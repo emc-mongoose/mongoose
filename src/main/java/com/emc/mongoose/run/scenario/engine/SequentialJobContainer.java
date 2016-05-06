@@ -1,8 +1,7 @@
 package com.emc.mongoose.run.scenario.engine;
 //
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import org.apache.logging.log4j.LogManager;
@@ -39,7 +38,7 @@ extends JobContainerBase {
 	@Override
 	public synchronized void run() {
 		LOG.debug(Markers.MSG, "{}: start {} sub jobs", toString(), subJobs.size());
-		final ThreadFactory tf = new GroupThreadFactory(toString(), true);
+		final ThreadFactory tf = new NamingThreadFactory(toString(), true);
 		Thread t;
 		for(final JobContainer subJob : subJobs) {
 			t = tf.newThread(subJob);

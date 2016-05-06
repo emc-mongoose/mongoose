@@ -1,17 +1,13 @@
 package com.emc.mongoose.run.scenario.engine;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -33,12 +29,13 @@ implements Scenario {
 	private final static String KEY_TYPE = "type";
 	private final static String KEY_CONFIG = "config";
 	private final static String KEY_VALUE = "value";
+	private final static String KEY_BLOCKING = "blocking";
 	private final static String NODE_TYPE_PARALLEL = "parallel";
 	private final static String NODE_TYPE_SEQUENTIAL = "sequential";
 	private final static String NODE_TYPE_LOAD = "load";
 	private final static String NODE_TYPE_PRECONDITION = "precondition";
 	private final static String NODE_TYPE_RAMPUP = "rampup";
-	private final static String NODE_TYPE_SLEEP = "sleep";
+	private final static String NODE_TYPE_COMMAND = "command";
 	//
 	public JsonScenario(final AppConfig config, final File scenarioSrcFile)
 	throws IOException, CloneNotSupportedException {
@@ -152,9 +149,11 @@ implements Scenario {
 								subContainer.append(newSubContainer);
 								subContainer = newSubContainer;
 								break;
-							case NODE_TYPE_SLEEP:
-								newSubContainer = new SleepJobContainer(
-									(String) node.get(KEY_VALUE)
+							case NODE_TYPE_COMMAND:
+								final Object rawFlagValue = node.get(KEY_BLOCKING);
+								newSubContainer = new CommandJobContainer(
+									(String) node.get(KEY_VALUE),
+									rawFlagValue == null ? true : (Boolean) rawFlagValue
 								);
 								subContainer.append(newSubContainer);
 								subContainer = newSubContainer;
@@ -163,22 +162,12 @@ implements Scenario {
 							case NODE_TYPE_PRECONDITION:
 							case NODE_TYPE_RAMPUP:
 								if(configTree instanceof Map || configTree == null) {
-									final boolean preconditionFlag = NODE_TYPE_PRECONDITION
-										.equals(value);
-									if(NODE_TYPE_LOAD.equals(value) || preconditionFlag) {
-										nodeConfig.setProperty(
-											AppConfig.KEY_LOAD_PRECONDITION, preconditionFlag
-										);
-										newSubContainer = new SingleJobContainer(nodeConfig);
-									} else {
-										newSubContainer = new RampupJobContainer(nodeConfig);
-									}
+									newSubContainer = createJobContainer(nodeConfig, value);
 									subContainer.append(newSubContainer);
 									subContainer = newSubContainer;
 								} else {
-									LOG.warn(
-										Markers.ERR, "{}: config tree is \"{}\"",
-										jobContainer, configTree.getClass()
+									LOG.warn(Markers.ERR, "{}: config tree is \"{}\"", jobContainer,
+										configTree.getClass()
 									);
 								}
 								break;
@@ -196,10 +185,24 @@ implements Scenario {
 					break;
 				case KEY_CONFIG:
 				case KEY_VALUE:
+				case KEY_BLOCKING:
 					break; // ignore because the keys above are consumed already
 				default:
 					LOG.warn(Markers.ERR, "{}: unexpected key: {}", jobContainer, key);
 			}
+		}
+	}
+	//
+	private static JobContainer createJobContainer(final AppConfig nodeConfig, final Object value) {
+		final boolean preconditionFlag = NODE_TYPE_PRECONDITION
+			.equals(value);
+		if(NODE_TYPE_LOAD.equals(value) || preconditionFlag) {
+			nodeConfig.setProperty(
+				AppConfig.KEY_LOAD_PRECONDITION, preconditionFlag
+			);
+			return new SingleJobContainer(nodeConfig);
+		} else {
+			return new RampupJobContainer(nodeConfig);
 		}
 	}
 	//

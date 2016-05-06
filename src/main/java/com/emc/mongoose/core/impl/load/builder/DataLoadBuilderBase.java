@@ -27,6 +27,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 /**
@@ -94,13 +96,18 @@ implements DataLoadBuilder<T, U> {
 			}
 		}
 		//
-		final String dstFilePath = appConfig.getItemDstFile();
-		if(dstFilePath != null && !dstFilePath.isEmpty()) {
+		final String dstFilePathStr = appConfig.getItemDstFile();
+		if(dstFilePathStr != null && !dstFilePathStr.isEmpty()) {
+			final Path dstFilePath = Paths.get(dstFilePathStr);
 			try {
+				if(Files.exists(dstFilePath) && Files.size(dstFilePath) > 0) {
+					LOG.warn(
+						Markers.ERR, "Items destination file \"{}\" is not empty", dstFilePathStr
+					);
+				}
 				setOutput(
 					new ItemCsvFileOutput<>(
-						Paths.get(dstFilePath), (Class<T>) ioConfig.getItemClass(),
-						ioConfig.getContentSource()
+						dstFilePath, (Class<T>) ioConfig.getItemClass(), ioConfig.getContentSource()
 					)
 				);
 			} catch(final IOException e) {

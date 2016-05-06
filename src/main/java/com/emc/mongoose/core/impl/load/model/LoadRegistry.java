@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.model;
 // mongoose-common.jar
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
@@ -10,7 +9,6 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
 //
-import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -21,7 +19,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**

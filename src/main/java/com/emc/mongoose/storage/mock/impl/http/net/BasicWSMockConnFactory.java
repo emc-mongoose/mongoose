@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.http.net;
 //
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 //
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -58,7 +58,7 @@ extends DefaultNHttpServerConnectionFactory {
 			connDropExecutor = null;
 		} else {
 			connDropExecutor = Executors.newScheduledThreadPool(
-				2, new GroupThreadFactory("failConn", true)
+				2, new NamingThreadFactory("failConn", true)
 			);
 		}
 	}

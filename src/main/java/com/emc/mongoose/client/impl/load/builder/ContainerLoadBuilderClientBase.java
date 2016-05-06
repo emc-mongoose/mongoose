@@ -8,6 +8,7 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 //
@@ -22,6 +23,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 
@@ -67,12 +70,18 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 			}
 		}
 		//
-		final String dstFilePath = appConfig.getItemDstFile();
-		if(dstFilePath != null && !dstFilePath.isEmpty()) {
+		final String dstFilePathStr = appConfig.getItemDstFile();
+		if(dstFilePathStr != null && !dstFilePathStr.isEmpty()) {
+			final Path dstFilePath = Paths.get(dstFilePathStr);
 			try {
+				if(Files.exists(dstFilePath) && Files.size(dstFilePath) > 0) {
+					LOG.warn(
+						Markers.ERR, "Items destination file \"{}\" is not empty", dstFilePathStr
+					);
+				}
 				setOutput(
 					new ItemCsvFileOutput<>(
-						Paths.get(dstFilePath), (Class<C>) ioConfig.getContainerClass(),
+						dstFilePath, (Class<C>) ioConfig.getContainerClass(),
 						ioConfig.getContentSource()
 					)
 				);

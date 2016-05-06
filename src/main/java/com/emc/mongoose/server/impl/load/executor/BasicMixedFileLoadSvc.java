@@ -1,6 +1,6 @@
 package com.emc.mongoose.server.impl.load.executor;
 //
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
@@ -230,7 +230,7 @@ implements MixedFileLoadSvc<F> {
 	public void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			loadSvcMap.size() + 1, new GroupThreadFactory("await<" + getName() + ">", true)
+			loadSvcMap.size() + 1, new NamingThreadFactory("await<" + getName() + ">", true)
 		);
 		for(final FileLoadSvc<F> nextLoadSvc : loadSvcMap.values()) {
 			awaitExecutor.submit(

@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.io.conf;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.value.async.AsyncCurrentDateInput;
@@ -21,7 +21,6 @@ import com.emc.mongoose.core.api.item.data.ContentSource;
 import static com.emc.mongoose.common.io.value.RangePatternDefinedInput.PATTERN_SYMBOL;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 
-import com.emc.mongoose.core.api.item.token.Token;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
@@ -234,7 +233,7 @@ implements HttpRequestConfig<T, C> {
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new GroupThreadFactory("wsConfigWorker<" + toString() + ">", true)
+				new NamingThreadFactory("wsConfigWorker<" + toString() + ">", true)
 			);
 		} catch(final IOReactorException e) {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);

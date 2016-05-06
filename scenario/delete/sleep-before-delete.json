@@ -4,11 +4,11 @@
 		"item" : {
 			"dst" : {
 				"container" : "linear-sleep-and-delete"
-			},
-			"load" : {
-				"limit" : {
-					"count" : 1000
-				}
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
 			}
 		}
 	},
@@ -24,8 +24,8 @@
 			}
 		}, {
 			// sleep 15 seconds between the jobs executed sequentially
-			"type" : "sleep",
-			"value" : "15s"
+			"type" : "command",
+			"value" : "sleep 15s"
 		},
 		{
 			"type": "load",

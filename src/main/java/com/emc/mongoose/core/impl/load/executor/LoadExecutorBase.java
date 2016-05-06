@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
@@ -220,7 +220,7 @@ implements LoadExecutor<T> {
 		//
 		mgmtExecutor = new ThreadPoolExecutor(
 			1, 1, 0, TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(batchSize),
-			new GroupThreadFactory("mgmtWorker", true)
+			new NamingThreadFactory("mgmtWorker", true)
 		);
 		if(metricsPeriodSec > 0) {
 			mgmtTasks.add(new LogMetricsTask());

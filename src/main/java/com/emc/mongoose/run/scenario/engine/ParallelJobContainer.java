@@ -1,6 +1,6 @@
 package com.emc.mongoose.run.scenario.engine;
 //
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -31,7 +31,7 @@ public class ParallelJobContainer
 	@Override
 	public final synchronized void run() {
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
-			subJobs.size(), new GroupThreadFactory("jobContainerWorker" + hashCode(), true)
+			subJobs.size(), new NamingThreadFactory("jobContainerWorker" + hashCode(), true)
 		);
 		for(final JobContainer subJob : subJobs) {
 			parallelJobsExecutor.submit(subJob);
