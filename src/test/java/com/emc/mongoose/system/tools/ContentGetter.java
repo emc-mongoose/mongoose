@@ -1,12 +1,12 @@
 package com.emc.mongoose.system.tools;
 
+import org.apache.http.HttpHeaders;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
-
-import static io.netty.handler.codec.http.HttpHeaders.Names.AUTHORIZATION;
 
 /**
  * Created by olga on 02.07.15.
@@ -19,7 +19,7 @@ public final class ContentGetter {
 		final String firstPartURLString = String.format("http://127.0.0.1:9020/%s/", bucketName);
 		final URL url = new URL(firstPartURLString+dataID);
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-		connection.addRequestProperty(AUTHORIZATION, "AWS wuser1@sanity.local:vegpRvQdGFKmIvwIH6qErb5ekd8=");
+		connection.addRequestProperty(HttpHeaders.AUTHORIZATION, "AWS wuser1@sanity.local:vegpRvQdGFKmIvwIH6qErb5ekd8=");
 		return connection.getInputStream();
 	}
 

@@ -8,6 +8,7 @@ import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 //
+import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -27,7 +28,7 @@ extends LoggingTestBase {
 		LoggingTestBase.setUpClass();
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.setProperty(AppConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 5); // listen ports 9020..9024
-		WS_MOCK = new Nagaina<>(appConfig);
+		WS_MOCK = new Cinderella<>(appConfig);
 		WS_MOCK_THREAD = new Thread(WS_MOCK, "wsMock");
 		WS_MOCK_THREAD.setDaemon(true);
 		WS_MOCK_THREAD.start();
