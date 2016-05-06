@@ -951,12 +951,12 @@ docker {
 }
 
 task buildDockerImage(type: DockerBuildTask, dependsOn: copyTarBall) {
-	imageName = 'emcecs/' + project.name
+	imageName = "emcecs/" + project.name
 	buildContextDirectory = file(".${File.separator}docker${File.separator}")
 }
 
 task pushDockerImage(type: DockerPushTask, dependsOn: buildDockerImage) {
-	repositoryName = 'emcecs/' + project.name
+	repositoryName = "emcecs/" + project.name
 	registry = "nile-registry.lss.emc.com:5000"
 	doFirst {
 		def dockerClient = getDockerClient()

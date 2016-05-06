@@ -45,7 +45,7 @@ implements PatternDefinedInput {
 		final String pattern,
 		final ValueInputFactory<String, ? extends Input<String>> valueInputFactory
 	) throws IllegalArgumentException {
-		if (pattern == null) {
+		if(pattern == null) {
 			throw new NullArgumentException("pattern");
 		}
 		this.valueInputFactory = valueInputFactory;
