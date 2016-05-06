@@ -21,6 +21,8 @@ import org.apache.logging.log4j.core.layout.SerializedLayout;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 /**
  Created by kurila on 23.10.14.
  */
@@ -30,18 +32,11 @@ extends AbstractAppender {
 
 	private final static int MAX_EVENTS_IN_THE_LIST = 3000;
 	//
-	private static final String MESSAGE_MARKER_KEY = "messages";
-	private static final String ERRORS_MARKER_KEY = "errors";
-	private static final String PERF_AVG_MARKER_KEY = "perf.avg";
-	private static final String PERF_SUM_MARKER_KEY = "perf.sum";
+	private static final List<String> markerNames = Collections.unmodifiableList(Arrays.asList(
+		Markers.MSG.getName(), Markers.ERR.getName(),
+			Markers.PERF_AVG.getName(), Markers.PERF_SUM.getName()));
 	//
-	private static final String LEVEL_EVENT_KEY = "level";
-	private static final String LOGGER_NAME_EVENT_KEY = "loggerName";
-	private static final String THREAD_NAME_EVENT_KEY = "threadName";
-	private static final String TIME_EVENT_KEY = "timeMillis";
-	private static final String MESSAGE_EVENT_KEY = "message";
-	//
-	private static final ConcurrentHashMap<String, Map<String, Queue<String>>>
+	private static final Map<String, Map<String, CircularArray<ShortenedLogEvent>>>
 		LOG_EVENTS_MAP = new ConcurrentHashMap<>();
 	//
 	private static final Layout<? extends Serializable>
@@ -84,22 +79,33 @@ extends AbstractAppender {
 			//
 			if(currRunId != null) {
 				if(!LOG_EVENTS_MAP.containsKey(currRunId)) {
-					final Map<String, Queue<String>> markers = new ConcurrentHashMap<>();
-					markers.put(MESSAGE_MARKER_KEY, new CircularFifoQueue<String>(MAX_EVENTS_IN_THE_LIST));
-					markers.put(ERRORS_MARKER_KEY, new CircularFifoQueue<String>(MAX_EVENTS_IN_THE_LIST));
-					markers.put(PERF_AVG_MARKER_KEY, new CircularFifoQueue<String>(MAX_EVENTS_IN_THE_LIST));
-					markers.put(PERF_SUM_MARKER_KEY, new CircularFifoQueue<String>(MAX_EVENTS_IN_THE_LIST));
+					final Map<String, CircularArray<ShortenedLogEvent>> markers = new
+							ConcurrentHashMap<>();
+					for (final String markerName: markerNames) {
+						addMarkerToMap(markers, markerName);
+					}
 					LOG_EVENTS_MAP.put(
 						currRunId, markers
 					);
 				}
-//				switch (event.getMarker()) {
-//					case Markers.MSG:
-//						break;
-//				}
-//				LOG_EVENTS_MAP.get(currRunId).add(event);
+				final String eventMarkerName = event.getMarker().getName();
+				if (markerNames.contains(eventMarkerName)) {
+					addLogEventToMap(currRunId, eventMarkerName, event);
+				}
 			} // else silently skip
 		}
+	}
+	//
+	private void addMarkerToMap(final Map<String, CircularArray<ShortenedLogEvent>> markers,
+	                            final String markerName) {
+		markers.put(markerName, new CircularArray<>
+				(MAX_EVENTS_IN_THE_LIST, new ShortenedLogEvent.SleComparator()));
+	}
+	//
+	private void addLogEventToMap(final String runId, final String markerName,
+	                              final LogEvent event) {
+		LOG_EVENTS_MAP.get(runId).get(markerName).addItem(new
+				ShortenedLogEvent(event));
 	}
 	//
 	public static void removeRunId(final String runId) {
