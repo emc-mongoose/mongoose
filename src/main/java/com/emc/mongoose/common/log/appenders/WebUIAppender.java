@@ -98,14 +98,13 @@ extends AbstractAppender {
 	//
 	private void addMarkerToMap(final Map<String, CircularArray<ShortenedLogEvent>> markers,
 	                            final String markerName) {
-		markers.put(markerName, new CircularArray<>
-				(MAX_EVENTS_IN_THE_LIST, new ShortenedLogEvent.SleComparator()));
+		markers.put(markerName,
+				new CircularArray<>(MAX_EVENTS_IN_THE_LIST, new ShortenedLogEvent.SleComparator()));
 	}
 	//
 	private void addLogEventToMap(final String runId, final String markerName,
 	                              final LogEvent event) {
-		LOG_EVENTS_MAP.get(runId).get(markerName).addItem(new
-				ShortenedLogEvent(event));
+		LOG_EVENTS_MAP.get(runId).get(markerName).addItem(new ShortenedLogEvent(event));
 	}
 	//
 	public static void removeRunId(final String runId) {

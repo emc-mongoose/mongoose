@@ -4,12 +4,16 @@ define([
 	'../../../../common/util/templatesUtil',
 	'../../../../common/util/cssUtil',
 	'../../../../common/util/tabsUtil',
+	'../../../../common/constants',
+	'./listController',
 	'text!../../../../../templates/tab/tests/tab/logs.hbs'
 ], function ($,
              hbUtil,
              templatesUtil,
              cssUtil,
              tabsUtil,
+             constants,
+             listController,
              logsTemplate) {
 
 	const TAB_TYPE = templatesUtil.tabTypes();
@@ -19,6 +23,7 @@ define([
 	const jqId = templatesUtil.composeJqId;
 
 	var currentTabType = TESTS_LOGS_TAB_TYPE.MESSAGES;
+	var currentTimeStamp = 0;
 
 	function render() {
 		const renderer = rendererFactory();
@@ -73,6 +78,28 @@ define([
 				break;
 		}
 		currentTabType = tabType;
+	}
+	
+	function updateLogTable(markerName, logsObj) {
+
+	}
+	
+	function getLogs(markerName) {
+		$.ajax({
+			type: 'GET',
+			url: '/logs',
+			dataType: 'json',
+			contentType: constants.JSON_CONTENT_TYPE,
+			data: JSON.stringify(
+				{ 
+					runId: listController.currentTestId(),
+					markerName: markerName,
+					timeStamp: currentTimeStamp
+				}),
+			processData: false
+		}).done(function (logsObj) {
+			updateLogTable(markerName, logsObj);
+		});
 	}
 
 	return {

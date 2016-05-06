@@ -17,63 +17,12 @@ import org.eclipse.jetty.websocket.core.annotations.WebSocket;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 
+import javax.servlet.http.HttpServlet;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public final class LogServlet extends WebSocketServlet {
+public final class LogServlet extends HttpServlet {
 
-	private final static Logger LOG = LogManager.getLogger();
-	private static final long TIMEOUT = 10; // in hours
 
-	@Override
-	public void configure(WebSocketServletFactory factory) {
-		factory.register(LogSocket.class);
-		factory.getPolicy().setIdleTimeout(TimeUnit.HOURS.toMillis(TIMEOUT));
-	}
-
-	@WebSocket
-	private static final class LogSocket implements WebSocketLogListener {
-
-		private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-		private Session session;
-
-		@OnWebSocketClose
-		public final void onClose(int statusCode, final String reason) {
-//			WebUIAppender.unregister(this);
-			session.close();
-			LOG.trace(Markers.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
-		}
-
-		@OnWebSocketError
-		public final void onError(final Throwable t) {
-//			WebUIAppender.unregister(this);
-			session.close();
-			LogUtil.exception(LOG, Level.DEBUG, t, "WebSocket failure");
-		}
-
-		@OnWebSocketConnect
-		public final void onConnect(final Session session) throws InterruptedException {
-			this.session = session;
-			//
-//			WebUIAppender.register(this);
-			LOG.trace(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
-		}
-
-		@OnWebSocketMessage
-		public final void onMessage(final String message) {
-			LOG.trace(Markers.MSG, "Message from Browser {}", message);
-		}
-
-		@Override
-		public void sendMessage(Object message) {
-			if(session.isOpen()) {
-				try {
-					session.getRemote().sendString(JSON_MAPPER.writeValueAsString(message));
-				} catch (final IOException e) {
-					LogUtil.exception(LOG, Level.DEBUG, e, "WebSocket failure");
-				}
-			}
-		}
-	}
 
 }
