@@ -1,0 +1,584 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"type": "object",
+	"properties": {
+		"config": {
+			"type": "object",
+			"properties": {
+				"auth": {
+					"type": "object",
+					"properties": {
+						"id": {
+							"type": [
+								"null",
+								"string"
+							]
+						},
+						"secret": {
+							"type": [
+								"null",
+								"string"
+							]
+						},
+						"token": {
+							"type": [
+								"null",
+								"string"
+							]
+						}
+					},
+					"required": [
+						"id",
+						"secret",
+						"token"
+					]
+				},
+				"io": {
+					"type": "object",
+					"properties": {
+						"buffer": {
+							"type": "object",
+							"properties": {
+								"size": {
+									"type": "object",
+									"properties": {
+										"min": {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 1
+												}, {
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}
+											]
+										},
+										"max": {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 1
+												}, {
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}
+											]
+										}
+									},
+									"required": [
+										"min",
+										"max"
+									]
+								}
+							},
+							"required": [
+								"size"
+							]
+						}
+					},
+					"required": [
+						"buffer"
+					]
+				},
+				"item": {
+					"type": "object",
+					"properties": {
+						"type": {
+							"type": "string",
+							"enum" : [
+								"container",
+								"data",
+								"token"
+							]
+						},
+						"data": {
+							"type": "object",
+							"properties": {
+								"content": {
+									"type": "object",
+									"properties": {
+										"file": {
+											"type": [
+												"null",
+												"string"
+											]
+										},
+										"seed": {
+											"type": "string",
+											"pattern" : "[A-Fa-f0-9]+"
+										},
+										"ringSize": {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 1
+												}, {
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}
+											]
+										}
+									},
+									"required": [
+										"file",
+										"seed",
+										"ringSize"
+									]
+								},
+								"ranges": {
+									"oneOf": [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d]+\\-[\\d]+"
+										}
+									]
+								},
+								"size": {
+									"oneOf" : [
+										{
+											"type": "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+										}
+									]
+								},
+								"verify": {
+									"type": "boolean"
+								}
+							},
+							"required": [
+								"content",
+								"ranges",
+								"size",
+								"verify"
+							]
+						},
+						"dst": {
+							"type": "object",
+							"properties": {
+								"container": {
+									"type": [
+										"null",
+										"string"
+									]
+								},
+								"file": {
+									"type": [
+										"null",
+										"string"
+									]
+								}
+							},
+							"required": [
+								"container",
+								"file"
+							]
+						},
+						"src": {
+							"type": "object",
+							"properties": {
+								"container": {
+									"type": [
+										"null",
+										"string"
+									]
+								},
+								"file": {
+									"type": [
+										"null",
+										"string"
+									]
+								},
+								"batchSize": {
+									"type": "integer",
+									"minimum" : 1
+								}
+							},
+							"required": [
+								"container",
+								"file",
+								"batchSize"
+							]
+						},
+						"naming": {
+							"type": "object",
+							"properties": {
+								"type": {
+									"type": "string",
+									"enum" : [
+										"asc",
+										"desc",
+										"random"
+									]
+								},
+								"prefix": {
+									"type": [
+										"null",
+										"string"
+									]
+								},
+								"radix": {
+									"type": "integer",
+									"minimum" : 2,
+									"maximum" : 36
+								},
+								"offset": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"length": {
+									"type": "integer",
+									"minimum" : 1
+								}
+							},
+							"required": [
+								"type",
+								"prefix",
+								"radix",
+								"offset",
+								"length"
+							]
+						},
+						"queue": {
+							"type": "object",
+							"properties": {
+								"sizeLimit": {
+									"type": "integer"
+								}
+							},
+							"required": [
+								"sizeLimit"
+							]
+						}
+					},
+					"required": [
+						"type",
+						"data",
+						"dst",
+						"src",
+						"naming",
+						"queue"
+					]
+				},
+				"load": {
+					"type": "object",
+					"properties": {
+						"circular": {
+							"type": "boolean"
+						},
+						"copy": {
+							"type": "boolean"
+						},
+						"type": {
+							"type": "string",
+							"enum" : [
+								"write",
+								"read",
+								"delete"
+							]
+						},
+						"threads": {
+							"type": "integer",
+							"minimum" : 1
+						},
+						"limit": {
+							"type": "object",
+							"properties": {
+								"count": {
+									"type": "integer"
+								},
+								"rate": {
+									"type": "number",
+									"minimum" : 0
+								},
+								"size": {
+									"oneOf" : [
+										{
+											"type": "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+										}
+									]
+								},
+								"time": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"count",
+								"rate",
+								"size",
+								"time"
+							]
+						},
+						"metricsPeriod": {
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 0
+								}, {
+									"type" : "string",
+									"pattern" : "[\\d]+[SsMmHhDd]?"
+								}
+							]
+						},
+						"precondition": {
+							"type": "boolean"
+						},
+						"server": {
+							"type": "object",
+							"properties": {
+								"addrs": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
+								},
+								"nodeMapping": {
+									"type": "boolean"
+								}
+							},
+							"required": [
+								"addrs",
+								"nodeMapping"
+							]
+						}
+					},
+					"required": [
+						"circular",
+						"copy",
+						"type",
+						"threads",
+						"limit",
+						"metricsPeriod",
+						"precondition",
+						"server"
+					]
+				},
+				"network": {
+					"type": "object",
+					"properties": {
+						"serveJMX": {
+							"type": "boolean"
+						},
+						"socket": {
+							"type": "object",
+							"properties": {
+								"timeoutMilliSec": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"reuseAddr": {
+									"type": "boolean"
+								},
+								"keepAlive": {
+									"type": "boolean"
+								},
+								"tcpNoDelay": {
+									"type": "boolean"
+								},
+								"linger": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"bindBacklogSize": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"interestOpQueued": {
+									"type": "boolean"
+								},
+								"selectInterval": {
+									"type": "integer",
+									"minimum" : 0
+								}
+							},
+							"required": [
+								"timeoutMilliSec",
+								"reuseAddr",
+								"keepAlive",
+								"tcpNoDelay",
+								"linger",
+								"bindBacklogSize",
+								"interestOpQueued",
+								"selectInterval"
+							]
+						}
+					},
+					"required": [
+						"serveJMX",
+						"socket"
+					]
+				},
+				"run": {
+					"type": "object",
+					"properties": {
+						"id": {
+							"type": [
+								"null",
+								"string"
+							]
+						},
+						"file": {
+							"type": [
+								"null",
+								"string"
+							]
+						},
+						"mode": {
+							"type": "string",
+							"enum" : [
+								"standalone",
+								"client",
+								"server",
+								"wsmock",
+								"webui"
+							]
+						},
+						"name": {
+							"type": "string"
+						},
+						"resume": {
+							"type": "object",
+							"properties": {
+								"enabled": {
+									"type": "boolean"
+								}
+							},
+							"required": [
+								"enabled"
+							]
+						},
+						"version": {
+							"type": "string"
+						}
+					},
+					"required": [
+						"id",
+						"file",
+						"mode",
+						"name",
+						"resume",
+						"version"
+					]
+				},
+				"storage": {
+					"type": "object",
+					"properties": {
+						"type": {
+							"type": "string",
+							"enum" : [
+								"fs",
+								"http"
+							]
+						},
+						"addrs": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						},
+						"port": {
+							"type": "integer",
+							"minimum" : 1
+						},
+						"http": {
+							"type": "object",
+							"properties": {
+								"api": {
+									"type": "string",
+									"pattern" : "[\\w\\d]+"
+								},
+								"fsAccess": {
+									"type": "boolean"
+								},
+								"headers": {
+									"type": "object",
+									"properties": {
+									}
+								},
+								"namespace": {
+									"type": [
+										"null",
+										"string"
+									]
+								},
+								"versioning": {
+									"type": "boolean"
+								}
+							},
+							"required": [
+								"api",
+								"fsAccess",
+								"headers",
+								"namespace",
+								"versioning"
+							]
+						},
+						"mock": {
+							"type": "object",
+							"properties": {
+								"headCount": {
+									"type": "integer",
+									"minimum" : 1
+								},
+								"capacity": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"container": {
+									"type": "object",
+									"properties": {
+										"capacity": {
+											"type": "integer",
+											"minimum" : 0
+										},
+										"countLimit": {
+											"type": "integer",
+											"minimum" : 0
+										}
+									},
+									"required": [
+										"capacity",
+										"countLimit"
+									]
+								}
+							},
+							"required": [
+								"headCount",
+								"capacity",
+								"container"
+							]
+						}
+					},
+					"required": [
+						"type",
+						"addrs",
+						"port",
+						"http",
+						"mock"
+					]
+				}
+			},
+			"required": [
+				"auth",
+				"io",
+				"item",
+				"load",
+				"network",
+				"run",
+				"storage"
+			]
+		}
+	},
+	"required": [
+		"config"
+	]
+}

@@ -1,0 +1,523 @@
+{
+	"$schema" : "http://json-schema.org/draft-04/schema#",
+	"id" : "jobContainer",
+	"type" : "object",
+	"properties" : {
+		"type" : {
+			"type" : "string",
+			"enum" : [
+				"load",
+				"parallel",
+				"sequential",
+				"rampup",
+				"command"
+			]
+		},
+		"jobs" : {
+			"type" : "array",
+			"items" : {
+				"type" : "object",
+				"$ref" : "jobContainer"
+			}
+		},
+		"value" : {
+			"type" : "string"
+		},
+		"config" : {
+			"type": "object",
+			"properties": {
+				"auth": {
+					"type": "object",
+					"properties": {
+						"id": {
+							"type": [
+								"null",
+								"string"
+							]
+						},
+						"secret": {
+							"type": [
+								"null",
+								"string"
+							]
+						},
+						"token": {
+							"type": [
+								"null",
+								"string"
+							]
+						}
+					}
+				},
+				"io": {
+					"type": "object",
+					"properties": {
+						"buffer": {
+							"type": "object",
+							"properties": {
+								"size": {
+									"type": "object",
+									"properties": {
+										"min": {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 1
+												}, {
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}
+											]
+										},
+										"max": {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 1
+												}, {
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}
+											]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"item": {
+					"type": "object",
+					"properties": {
+						"type": {
+							"type": "string",
+							"enum" : [
+								"container",
+								"data",
+								"token"
+							]
+						},
+						"data": {
+							"type": "object",
+							"properties": {
+								"content": {
+									"type": "object",
+									"properties": {
+										"file": {
+											"type": [
+												"null",
+												"string"
+											]
+										},
+										"seed": {
+											"type": "string",
+											"pattern" : "[A-Fa-f0-9]+"
+										},
+										"ringSize": {
+											"oneOf" : [
+												{
+													"type": "integer",
+													"minimum" : 1
+												}, {
+													"type" : "string",
+													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}
+											]
+										}
+									}
+								},
+								"ranges": {
+									"oneOf": [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d]+\\-[\\d]+"
+										}
+									]
+								},
+								"size": {
+									"oneOf" : [
+										{
+											"type": "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+										}, {
+											"type" : "array",
+											"items" : {
+												"oneOf" : [
+													{
+														"type": "integer",
+														"minimum" : 0
+													}, {
+														"type" : "string",
+														"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+													}
+												]
+											}
+										}
+									]
+								},
+								"verify": {
+									"type": "boolean"
+								}
+							}
+						},
+						"dst": {
+							"type": "object",
+							"properties": {
+								"container": {
+									"type": [
+										"null",
+										"string"
+									]
+								},
+								"file": {
+									"type": [
+										"null",
+										"string"
+									]
+								}
+							}
+						},
+						"src": {
+							"type": "object",
+							"properties": {
+								"container": {
+									"type": [
+										"null",
+										"string"
+									]
+								},
+								"file": {
+									"oneOf" : [
+										{
+											"type" : "null"
+										}, {
+											"type" : "string"
+										}, {
+											"type" : "array",
+											"items" : {
+												"oneOf" : [
+													{
+														"type" : "null"
+													}, {
+														"type" : "string"
+													}
+												]
+											}
+										}
+									]
+								},
+								"batchSize": {
+									"type": "integer",
+									"minimum" : 1
+								}
+							}
+						},
+						"naming": {
+							"type": "object",
+							"properties": {
+								"type": {
+									"type": "string",
+									"enum" : [
+										"asc",
+										"desc",
+										"random"
+									]
+								},
+								"prefix": {
+									"type": [
+										"null",
+										"string"
+									]
+								},
+								"radix": {
+									"type": "integer",
+									"minimum" : 2,
+									"maximum" : 36
+								},
+								"offset": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"length": {
+									"type": "integer",
+									"minimum" : 1
+								}
+							}
+						},
+						"queue": {
+							"type": "object",
+							"properties": {
+								"sizeLimit": {
+									"type": "integer",
+									"minimum" : 0
+								}
+							}
+						}
+					}
+				},
+				"load": {
+					"type": "object",
+					"properties": {
+						"circular": {
+							"type": "boolean"
+						},
+						"copy": {
+							"type": "boolean"
+						},
+						"type": {
+							"oneOf" : [
+								{
+									"type" : "string",
+									"enum" : [
+										"write",
+										"read",
+										"delete"
+									]
+								}, {
+									"type" : "array",
+									"items" : {
+										"type" : "string",
+										"pattern" : "[writeadl]+=?[\\d]?%?"
+									}
+								}
+							]
+						},
+						"threads": {
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 1
+								}, {
+									"type" : "array",
+									"items" : {
+										"type" : "integer",
+										"minimum" : 1
+									}
+								}
+							]
+						},
+						"limit": {
+							"type": "object",
+							"properties": {
+								"count": {
+									"type": "integer"
+								},
+								"rate": {
+									"type": "number",
+									"minimum" : 0
+								},
+								"size": {
+									"oneOf" : [
+										{
+											"type": "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+										}
+									]
+								},
+								"time": {
+									"type": "string"
+								}
+							}
+						},
+						"metricsPeriod": {
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 0
+								}, {
+									"type" : "string",
+									"pattern" : "[\\d]+[SsMmHhDd]?"
+								}
+							]
+						},
+						"precondition": {
+							"type": "boolean"
+						},
+						"server": {
+							"type": "object",
+							"properties": {
+								"addrs": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
+								},
+								"nodeMapping": {
+									"type": "boolean"
+								}
+							}
+						}
+					}
+				},
+				"network": {
+					"type": "object",
+					"properties": {
+						"serveJMX": {
+							"type": "boolean"
+						},
+						"socket": {
+							"type": "object",
+							"properties": {
+								"timeoutMilliSec": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"reuseAddr": {
+									"type": "boolean"
+								},
+								"keepAlive": {
+									"type": "boolean"
+								},
+								"tcpNoDelay": {
+									"type": "boolean"
+								},
+								"linger": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"bindBacklogSize": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"interestOpQueued": {
+									"type": "boolean"
+								},
+								"selectInterval": {
+									"type": "integer",
+									"minimum" : 0
+								}
+							}
+						}
+					}
+				},
+				"run": {
+					"type": "object",
+					"properties": {
+						"id": {
+							"type": [
+								"null",
+								"string"
+							]
+						},
+						"file": {
+							"type": [
+								"null",
+								"string"
+							]
+						},
+						"mode": {
+							"type": "string",
+							"enum" : [
+								"standalone",
+								"client",
+								"server",
+								"wsmock",
+								"webui"
+							]
+						},
+						"name": {
+							"type": "string"
+						},
+						"resume": {
+							"type": "object",
+							"properties": {
+								"enabled": {
+									"type": "boolean"
+								}
+							}
+						},
+						"version": {
+							"type": "string"
+						}
+					}
+				},
+				"storage": {
+					"type": "object",
+					"properties": {
+						"type": {
+							"type": "string",
+							"enum" : [
+								"fs",
+								"http"
+							]
+						},
+						"addrs": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						},
+						"port": {
+							"type": "integer",
+							"minimum" : 1
+						},
+						"http": {
+							"type": "object",
+							"properties": {
+								"api": {
+									"type": "string",
+									"pattern" : "[\\w\\d]+"
+								},
+								"fsAccess": {
+									"type": "boolean"
+								},
+								"headers": {
+									"type": "object",
+									"properties": {
+									}
+								},
+								"namespace": {
+									"type": [
+										"null",
+										"string"
+									]
+								},
+								"versioning": {
+									"type": "boolean"
+								}
+							}
+						},
+						"mock": {
+							"type": "object",
+							"properties": {
+								"headCount": {
+									"type": "integer",
+									"minimum" : 1
+								},
+								"capacity": {
+									"type": "integer",
+									"minimum" : 0
+								},
+								"container": {
+									"type": "object",
+									"properties": {
+										"capacity": {
+											"type": "integer",
+											"minimum" : 0
+										},
+										"countLimit": {
+											"type": "integer",
+											"minimum" : 0
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"required" : [
+		"type"
+	]
+}
