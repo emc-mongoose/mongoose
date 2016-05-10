@@ -81,7 +81,8 @@ define([
 	}
 	
 	function updateLogTable(markerName, logsObj) {
-
+		console.log(markerName);
+		console.log(logsObj);
 	}
 	
 	function getLogs(markerName) {
@@ -99,6 +100,8 @@ define([
 			processData: false
 		}).done(function (logsObj) {
 			updateLogTable(markerName, logsObj);
+		}).always(function () {
+			setTimeout(getLogs, 10000, markerName); // interval in milliseconds; todo check a third arg
 		});
 	}
 
