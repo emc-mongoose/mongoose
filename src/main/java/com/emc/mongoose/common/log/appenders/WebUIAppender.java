@@ -36,7 +36,7 @@ extends AbstractAppender {
 		Markers.MSG.getName(), Markers.ERR.getName(),
 			Markers.PERF_AVG.getName(), Markers.PERF_SUM.getName()));
 	//
-	private static final Map<String, Map<String, CircularArray<ShortenedLogEvent>>>
+	public static final Map<String, Map<String, CircularArray<ShortenedLogEvent>>>
 		LOG_EVENTS_MAP = new ConcurrentHashMap<>();
 	//
 	private static final Layout<? extends Serializable>

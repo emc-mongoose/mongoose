@@ -21,6 +21,7 @@ define([
 	const listItemElemClass = 'list-group-item';
 
 	var currentTestId;
+	var currentTestMode;
 
 	function render() {
 		const renderer = rendererFactory();
@@ -46,11 +47,12 @@ define([
 			const listItemElem = $('<a/>',
 				{
 					id: runId,
-					class: listItemElemClass
+					class: listItemElemClass,
+					mode: runMode
 				});
 			listItemElem.text(runId + " - " + runMode);
 			listItemElem.click(function () {
-				makeItemActive(runId)
+				makeItemActive(runId, runMode)
 			});
 			const removeIconElem = createRemoveIcon(runId);
 			listItemElem.append(removeIconElem);
@@ -81,18 +83,24 @@ define([
 		return div;
 	}
 
-	function makeItemActive(testId) {
+	function makeItemActive(testId, testMode) {
 		tabsUtil.showTabAsActive(listItemElemClass, testId);
 		currentTestId = testId;
+		currentTestMode = testMode;
 	}
 
 	function getCurrentTestId() {
 		return currentTestId;
 	}
 
+	function getCurrentTestMode() {
+		return currentTestMode;
+	}
+
 	return {
 		render: render,
 		updateTestsList: updateTestsList,
-		currentTestId: getCurrentTestId
+		currentTestId: getCurrentTestId,
+		currentTestMode: getCurrentTestMode
 	}
 });

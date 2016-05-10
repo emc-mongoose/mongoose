@@ -1,6 +1,6 @@
 package com.emc.mongoose.webui;
 
-import com.emc.mongoose.common.conf.JsonUtil;
+import com.emc.mongoose.common.json.JsonUtil;
 import org.eclipse.jetty.http.MimeTypes;
 
 import javax.servlet.ServletException;

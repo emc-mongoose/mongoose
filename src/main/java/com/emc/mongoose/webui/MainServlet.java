@@ -1,8 +1,8 @@
 package com.emc.mongoose.webui;
 
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.JsonUtil;
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.json.JsonUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

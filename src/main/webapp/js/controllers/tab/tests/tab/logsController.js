@@ -19,11 +19,13 @@ define([
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const TESTS_TAB_TYPE = templatesUtil.testsTabTypes();
 	const TESTS_LOGS_TAB_TYPE = templatesUtil.testsLogsTabTypes();
+	const LOGS_MODE = templatesUtil.objPartToArray(templatesUtil.modes(), 2);
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
 
 	var currentTabType = TESTS_LOGS_TAB_TYPE.MESSAGES;
 	var currentTimeStamp = 0;
+	var resetLogsFlag = false;
 
 	function render() {
 		const renderer = rendererFactory();
@@ -86,26 +88,39 @@ define([
 	}
 	
 	function getLogs(markerName) {
-		$.ajax({
-			type: 'GET',
-			url: '/logs',
-			dataType: 'json',
-			contentType: constants.JSON_CONTENT_TYPE,
-			data: JSON.stringify(
+		$.get('/logs',
 				{ 
 					runId: listController.currentTestId(),
 					markerName: markerName,
 					timeStamp: currentTimeStamp
-				}),
-			processData: false
-		}).done(function (logsObj) {
+				}
+		).done(function (logsObj) {
 			updateLogTable(markerName, logsObj);
 		}).always(function () {
-			setTimeout(getLogs, 10000, markerName); // interval in milliseconds; todo check a third arg
+			if (!resetLogsFlag) {
+				setTimeout(getLogs, 10000, markerName); // interval in milliseconds; todo check a third arg
+			}
 		});
 	}
 
+	function setTabParameters() {
+		if (LOGS_MODE.indexOf(listController.currentTestMode())) {
+			if (listController.currentTestId()) {
+				$.each(TESTS_LOGS_TAB_TYPE, function (key, value) {
+					getLogs(value);
+				})
+			}
+		}
+	}
+	
+	function resetLogs() {
+		resetLogsFlag = true;
+		$(jqId([TESTS_TAB_TYPE.LOGS, 'table', 'body'])).empty();
+	}
+
 	return {
-		render: render
+		render: render,
+		setTabParameters: setTabParameters,
+		resetLogs: resetLogs
 	}
 });

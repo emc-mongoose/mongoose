@@ -83,6 +83,7 @@ define([
 			case TESTS_TAB_TYPE.LIST:
 				break;
 			case TESTS_TAB_TYPE.LOGS:
+				logsController.setTabParameters();
 				break;
 			case TESTS_TAB_TYPE.CHARTS:
 				break;

@@ -3,7 +3,7 @@ package com.emc.mongoose.webui;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.JsonUtil;
+import com.emc.mongoose.common.json.JsonUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.run.scenario.engine.JsonScenario;
@@ -14,7 +14,6 @@ import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -92,10 +91,14 @@ public class RunServlet extends HttpServlet {
 
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		final String runId = getPlainJson(request).get(RUN_ID_KEY);
-		stopAndRemoveTest(runId);
-		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
+		try (
+				final BufferedReader reader = request.getReader()
+		) {
+			final String runId = JsonUtil.readValue(reader).get(RUN_ID_KEY);
+			stopAndRemoveTest(runId);
+			response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
+			response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
+		}
 	}
 
 	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request) throws IOException {
@@ -105,23 +108,7 @@ public class RunServlet extends HttpServlet {
 		) {
 			startPropertiesString = JsonUtil.readString(reader);
 		}
-		return JSON_MAPPER.readValue(
-				startPropertiesString, new TypeReference<Map<String, Object>>() {
-				}
-		);
-	}
-
-	private Map<String, String> getPlainJson(final HttpServletRequest request) throws IOException {
-		final String plainJsonString;
-		try (
-				final BufferedReader reader = request.getReader()
-		) {
-			plainJsonString = JsonUtil.readString(reader);
-		}
-		return JSON_MAPPER.readValue(
-				plainJsonString, new TypeReference<Map<String, String>>() {
-				}
-		);
+		return JSON_MAPPER.readValue(startPropertiesString, JsonUtil.COMMON_JSON_TYPE);
 	}
 
 	private AppConfig getConfig(final Map<String, Map<String, Object>> startProperties)

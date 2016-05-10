@@ -1,9 +1,9 @@
 package com.emc.mongoose.common.log.appenders;
 
-import org.apache.http.MethodNotSupportedException;
-
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 
 import static java.util.Arrays.binarySearch;
 
@@ -44,16 +44,34 @@ public class CircularArray<T> implements Iterable<T> {
 		return index;
 	}
 
+	public List<T> getLastItems(final T item) {
+		List<T> lastItems = new ArrayList<>();
+		final int searchedItemIndex = searchItem(item);
+		final Iterator<T> iterator = new LastItemsIterator(searchedItemIndex);
+		while (iterator.hasNext()) {
+			lastItems.add(iterator.next());
+		}
+		return lastItems;
+	}
+
 	public int size() {
 		return size;
 	}
 
-	@Override
-	public Iterator<T> iterator() {
-		return new CaIterator();
+	public Iterator<T> plainIterator() {
+		return new PlainIterator();
 	}
 
-	private class CaIterator implements Iterator<T> {
+	@Override
+	public Iterator<T> iterator() {
+		return new LastItemsIterator();
+	}
+	
+	public Iterator<T> iterator(final int startIndex) {
+		return new LastItemsIterator(startIndex);
+	}
+
+	private class PlainIterator implements Iterator<T> {
 
 		private int pointer = 0;
 
@@ -65,6 +83,56 @@ public class CircularArray<T> implements Iterable<T> {
 		@Override
 		public T next() {
 			return CircularArray.this.array[pointer++];
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	private class LastItemsIterator implements Iterator<T> {
+
+		private int pointer;
+		private boolean circularity = false;
+		private int finishIndex;
+
+		public LastItemsIterator() {
+			this(-1);
+		}
+
+		public LastItemsIterator(final int startIndex) {
+			final int arrayPrePointerIndex = CircularArray.this.pointer - 1;
+			if (startIndex == arrayPrePointerIndex) {
+
+			}
+			if (startIndex < 0) {
+				this.pointer = arrayPrePointerIndex;
+			} else {
+				this.pointer = startIndex;
+			}
+			finishIndex = arrayPrePointerIndex;
+			if (this.pointer >= finishIndex && startIndex != arrayPrePointerIndex) {
+				circularity = true;
+			}
+		}
+
+		@Override
+		public boolean hasNext() {
+			if (circularity) {
+				if (pointer == (CircularArray.this.length - 1)) {
+					pointer = -1;
+					circularity = false;
+				}
+				return true;
+			} else {
+				return pointer < finishIndex;
+			}
+		}
+
+		@Override
+		public T next() {
+			return CircularArray.this.array[++pointer];
 		}
 
 		@Override
