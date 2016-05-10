@@ -56,7 +56,6 @@ public class RunServlet extends HttpServlet {
 			throws ServletException, IOException {
 		final Map<String, Map<String, Object>> startProperties = getStartProperties(request);
 		final AppConfig config = getConfig(startProperties);
-		final JsonScenario scenario = getScenario(startProperties, config);
 		String runId = getRunId(config);
 		if (!isRunIdFree(runId)) {
 			try {
@@ -68,6 +67,7 @@ public class RunServlet extends HttpServlet {
 		}
 		runId =  LogUtil.newRunId();
 		config.setProperty(AppConfig.KEY_RUN_ID, runId);
+		final JsonScenario scenario = getScenario(startProperties, config);
 		final String runMode = getRunMode(config);
 		switch (runMode) {
 			case Constants.RUN_MODE_STANDALONE:
@@ -148,6 +148,7 @@ public class RunServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	private void runTest(final String runId, final Runner runner, final String runMode) {
 		final Thread test = new Thread(runner, runId);
+		test.setName("run<" + runId + ">");
 		test.start();
 		putTest(runId, test, runMode);
 	}
@@ -195,7 +196,6 @@ public class RunServlet extends HttpServlet {
 
 		@Override
 		public void run() {
-			BasicConfig.THREAD_CONTEXT.set(config);
 			logStart();
 			try {
 				start();

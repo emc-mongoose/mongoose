@@ -1,6 +1,5 @@
 package com.emc.mongoose.webui;
 
-import com.emc.mongoose.common.log.appenders.ShortenedLogEvent;
 import com.emc.mongoose.common.log.appenders.WebUIAppender;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,9 +12,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public final class LogServlet extends HttpServlet {
 
