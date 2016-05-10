@@ -1,7 +1,7 @@
 package com.emc.mongoose.client.impl.load.executor;
 //
 import com.emc.mongoose.client.api.load.executor.FileLoadClient;
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
@@ -203,7 +203,7 @@ implements FileLoadClient<F, W>, MixedLoadExecutor<F> {
 	public void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			loadClientMap.size() + 1, new GroupThreadFactory("await<" + getName() + ">", true)
+			loadClientMap.size() + 1, new NamingThreadFactory("await<" + getName() + ">", true)
 		);
 		for(final FileLoadClient<F, FileLoadSvc<F>> nextLoadClient : loadClientMap.values()) {
 			awaitExecutor.submit(

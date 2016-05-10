@@ -2,6 +2,7 @@
 	"type": "load",
 	"config" : {
 		"auth" : {
+			"id" : "wuser1@sanity.local",
 			"token" : "5cc597535ed747f09b5d273154216339"
 		},
 		"item" : {

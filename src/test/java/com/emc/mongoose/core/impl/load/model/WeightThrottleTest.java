@@ -54,9 +54,32 @@ public class WeightThrottleTest {
 		public Status getStatus() {
 			return null;
 		}
+
 		@Override
-		public void mark(final IOStats ioStats) {
+		public long getReqTimeStart() {
+			return 0;
 		}
+
+		@Override
+		public long getCountBytesDone() {
+			return 0;
+		}
+
+		@Override
+		public int getDuration() {
+			return 0;
+		}
+
+		@Override
+		public int getLatency() {
+			return 0;
+		}
+
+		@Override
+		public int getDataLatency() {
+			return 0;
+		}
+
 		@Override
 		public LoadType getLoadType() {
 			return loadType;

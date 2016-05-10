@@ -19,7 +19,7 @@
 	"jobs": [
 		{
 			// write new data
-			"type" : "load",
+			"type" : "precondition",
 			"config" : {
 				"item" : {
 					"dst" : {

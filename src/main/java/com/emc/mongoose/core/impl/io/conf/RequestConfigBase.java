@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.io.conf;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;

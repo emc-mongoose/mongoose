@@ -1,6 +1,9 @@
 {
 	"type" : "sequential",
 	"config" : {
+		"auth" : {
+			"id" : "wuser1@sanity.local"
+		},
 		"item" : {
 			"dst" : {
 				"container" : "linear-read-100MB"
@@ -12,7 +15,7 @@
 	},
 	"jobs": [
 		{
-			"type": "load", // write is used by default
+			"type": "precondition",
 			"config" : {
 				"item" : {
 					"dst" : {

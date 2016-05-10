@@ -1,6 +1,6 @@
 package com.emc.mongoose.client.impl.load.executor;
 // mongoose-common.jar
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
@@ -250,7 +250,7 @@ implements LoadClient<T, W> {
 		remotePutExecutor = new ThreadPoolExecutor(
 			remotePutThreadCount, remotePutThreadCount, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<Runnable>(DEFAULT_SUBM_TASKS_QUEUE_SIZE),
-			new GroupThreadFactory(getName() + "-put-remote", true)
+			new NamingThreadFactory(getName() + "-put-remote", true)
 		);
 	}
 	//
@@ -345,7 +345,7 @@ implements LoadClient<T, W> {
 		if(loadSvcCount > 0) {
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(),
-				new GroupThreadFactory(String.format("interrupt<%s>", getName()), true)
+				new NamingThreadFactory(String.format("interrupt<%s>", getName()), true)
 			);
 			for(final String addr : loadSvcAddrs) {
 				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
@@ -692,7 +692,7 @@ implements LoadClient<T, W> {
 		//
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size() + 1,
-			new GroupThreadFactory(String.format("awaitWorker<%s>", getName()), true)
+			new NamingThreadFactory(String.format("awaitWorker<%s>", getName()), true)
 		);
 		awaitExecutor.submit(
 			new Runnable() {

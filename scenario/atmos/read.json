@@ -1,23 +1,25 @@
 {
 	"type" : "sequential",
 	"config" : {
-		"item" : {
-			"load" : {
-				"limit" : {
-					"count" : 1000
-				}
-			},
-			"storage" : {
-				"port" : 9022,
-				"http" : {
-					"api" : "atmos"
-				}
+		"auth" : {
+			"id" : "wuser1@sanity.local",
+			"token" : "69fbaf1ecb89d53307d007c2978ca56b"
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
+			}
+		},
+		"storage" : {
+			"port" : 9022,
+			"http" : {
+				"api" : "atmos"
 			}
 		}
 	},
 	"jobs": [
 		{
-			"type": "load",
+			"type": "precondition",
 			"config" : {
 				"item" : {
 					"dst" : {

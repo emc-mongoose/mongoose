@@ -3,7 +3,7 @@ package com.emc.mongoose.common.io;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 //
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.SizeInBytes;
 //
 import com.emc.mongoose.common.log.Markers;
@@ -56,7 +56,7 @@ extends Thread {
 	}
 	//
 	public final static class Factory
-	extends GroupThreadFactory {
+	extends NamingThreadFactory {
 		//
 		public Factory(final String threadNamePrefix) {
 			super(threadNamePrefix, true);
@@ -64,7 +64,7 @@ extends Thread {
 		//
 		@Override
 		public IOWorker newThread(final Runnable task) {
-			return new IOWorker(task, getName() + "#" + threadNumber.incrementAndGet());
+			return new IOWorker(task, threadNamePrefix + "#" + threadNumber.incrementAndGet());
 		}
 	}
 	//

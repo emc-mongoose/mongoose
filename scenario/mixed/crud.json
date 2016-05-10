@@ -21,7 +21,7 @@
 			"type" : "parallel",
 			"jobs" : [
 				{
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {
@@ -30,7 +30,7 @@
 						}
 					}
 				}, {
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {
@@ -39,7 +39,7 @@
 						}
 					}
 				}, {
-					"type" : "load",
+					"type" : "precondition",
 					"config" : {
 						"item" : {
 							"dst" : {

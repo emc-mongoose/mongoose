@@ -3,7 +3,7 @@ package com.emc.mongoose.client.impl.load.metrics.model;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 //
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -66,7 +66,7 @@ extends IOStatsBase {
 		this.loadSvcMap = loadSvcMap;
 		this.loadStatsSnapshotMap = new ConcurrentHashMap<>(loadSvcMap.size());
 		statsLoader = Executors.newFixedThreadPool(
-			loadSvcMap.size(), new GroupThreadFactory("statsLoader<" + name + ">", true)
+			loadSvcMap.size(), new NamingThreadFactory("statsLoader<" + name + ">", true)
 		);
 		//
 		metrics.register(

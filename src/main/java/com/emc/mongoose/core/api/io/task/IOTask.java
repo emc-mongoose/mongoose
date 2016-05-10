@@ -39,5 +39,13 @@ public interface IOTask<T extends Item>  {
 	//
 	Status getStatus();
 	//
-	void mark(final IOStats ioStats);
+	long getReqTimeStart();
+	//
+	long getCountBytesDone();
+	//
+	int getDuration();
+	//
+	int getLatency();
+	//
+	int getDataLatency();
 }

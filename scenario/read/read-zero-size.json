@@ -17,7 +17,7 @@
 	},
 	"jobs": [
 		{
-			"type": "load", // write is used by default
+			"type": "precondition",
 			"config" : {
 				"item" : {
 					"dst" : {

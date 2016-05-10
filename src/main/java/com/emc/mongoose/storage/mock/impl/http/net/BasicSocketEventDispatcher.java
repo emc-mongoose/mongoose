@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.http.net;
 // mongoose-common.jar
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 
@@ -37,7 +37,7 @@ extends DefaultHttpServerIODispatch
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static GroupThreadFactory THREAD_GROUP = new GroupThreadFactory(
+	private final static NamingThreadFactory THREAD_GROUP = new NamingThreadFactory(
 		"wsMockSocketEvtDispatcher", true
 	);
 	//

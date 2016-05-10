@@ -58,55 +58,28 @@ implements IOTask<T> {
 		return status;
 	}
 	//
-	protected final static ThreadLocal<StringBuilder>
-		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
-			@Override
-			protected final StringBuilder initialValue() {
-				return new StringBuilder();
-			}
-		};
+	@Override
+	public final long getReqTimeStart() {
+		return reqTimeStart;
+	}
 	//
 	@Override
-	public final void mark(final IOStats ioStats) {
-		// perf traces logging
-		final int
-			reqDuration = (int) (respTimeDone - reqTimeStart),
-			respLatency = (int) (respTimeStart - reqTimeDone),
-			respDataLatency = (int) (respDataTimeStart - reqTimeDone);
-		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
-			StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
-			if(strBuilder == null) {
-				strBuilder = new StringBuilder();
-				PERF_TRACE_MSG_BUILDER.set(strBuilder);
-			} else {
-				strBuilder.setLength(0); // clear/reset
-			}
-			if(LOG.isEnabled(Level.INFO, Markers.PERF_TRACE)) {
-				LOG.info(
-					Markers.PERF_TRACE,
-					strBuilder
-						.append(nodeAddr == null ? "" : nodeAddr).append(',')
-						.append(item.getName()).append(',')
-						.append(countBytesDone).append(',')
-						.append(status.code).append(',')
-						.append(reqTimeStart).append(',')
-						.append(respLatency > 0 ? respLatency : 0).append(',')
-						.append(respDataTimeStart > 0 ? respDataLatency : -1).append(',')
-						.append(reqDuration)
-						.toString()
-				);
-			}
-		}
-		// stats refreshing
-		if(status == IOTask.Status.SUCC) {
-			// update the metrics with success
-			if(respLatency > 0 && respLatency > reqDuration) {
-				LOG.warn(
-					Markers.ERR, "{}: latency {} is more than duration: {}", this, respLatency,
-					reqDuration
-				);
-			}
-			ioStats.markSucc(countBytesDone, reqDuration, respLatency);
-		}
+	public final long getCountBytesDone() {
+		return countBytesDone;
+	}
+	//
+	@Override
+	public final int getDuration() {
+		return (int) (respTimeDone - reqTimeStart);
+	}
+	//
+	@Override
+	public final int getLatency() {
+		return (int) (respTimeStart - reqTimeDone);
+	}
+	//
+	@Override
+	public final int getDataLatency() {
+		return respDataTimeStart > reqTimeDone ? (int) (respDataTimeStart - reqTimeDone) : -1;
 	}
 }

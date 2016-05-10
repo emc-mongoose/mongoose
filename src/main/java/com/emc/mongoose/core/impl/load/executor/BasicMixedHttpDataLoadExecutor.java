@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
@@ -261,7 +261,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	public void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			loadExecutorMap.size() + 1, new GroupThreadFactory("await<" + getName() + ">", true)
+			loadExecutorMap.size() + 1, new NamingThreadFactory("await<" + getName() + ">", true)
 		);
 		for(final HttpDataLoadExecutor<T> nextLoadExecutor : loadExecutorMap.values()) {
 			awaitExecutor.submit(

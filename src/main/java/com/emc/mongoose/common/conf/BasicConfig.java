@@ -329,6 +329,11 @@ implements AppConfig {
 	}
 	//
 	@Override
+	public boolean getLoadPrecondition() {
+		return getBoolean(KEY_LOAD_PRECONDITION);
+	}
+	//
+	@Override
 	public String[] getLoadServerAddrs() {
 		return getStringArray(KEY_LOAD_SERVER_ADDRS);
 	}

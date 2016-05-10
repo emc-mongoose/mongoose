@@ -34,7 +34,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.TreeMap;
 /**
  Created by kurila on 26.03.14.
  */
@@ -355,19 +357,23 @@ extends HttpRequestConfigBase<T, C> {
 		//
 		final String uri = httpRequest.getRequestLine().getUri();
 		canonical.append('\n').append(uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri);
-		//
-		for(final String emcHeaderName: HEADERS_CANONICAL_EMC) {
-			if(httpRequest.containsHeader(emcHeaderName)) {
-				for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
-					canonical.append('\n').append(emcHeaderName.toLowerCase()).append(':').append(
-						emcHeader.getValue()
-					);
-				}
-			} else if(sharedHeaders.containsKey(emcHeaderName)) {
-				canonical
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeaders.get(emcHeaderName).getValue());
+		// x-emc-*
+		String headerName;
+		Map<String, String> sortedHeaders = new TreeMap<>();
+		for(final Header header : sharedHeaders.values()) {
+			headerName = header.getName().toLowerCase();
+			if(headerName.startsWith(PREFIX_KEY_EMC)) {
+				sortedHeaders.put(headerName, header.getValue());
 			}
+		}
+		for(final Header header : httpRequest.getAllHeaders()) {
+			headerName = header.getName().toLowerCase();
+			if(headerName.startsWith(PREFIX_KEY_EMC)) {
+				sortedHeaders.put(headerName, header.getValue());
+			}
+		}
+		for(final String k : sortedHeaders.keySet()) {
+			canonical.append('\n').append(k).append(':').append(sortedHeaders.get(k));
 		}
 		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {

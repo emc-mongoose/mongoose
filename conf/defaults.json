@@ -57,6 +57,7 @@
 				"time" : "0s"
 			},
 			"metricsPeriod" : "10s",
+			"precondition" : false,
 			"server" : {
 				"addrs" : [
 					"127.0.0.1"

@@ -1,6 +1,6 @@
 package com.emc.mongoose.util.builder;
 //
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 //
 import com.emc.mongoose.common.conf.enums.LoadType;
@@ -102,7 +102,7 @@ implements LoadBuilderSvc {
 	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			loadBuilderSvcs.size(), new GroupThreadFactory("loadSvcAwaitExecutor", true)
+			loadBuilderSvcs.size(), new NamingThreadFactory("loadSvcAwaitExecutor", true)
 		);
 		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
 			awaitExecutor.submit(
