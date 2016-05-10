@@ -394,6 +394,7 @@ dependencies {
 	testCompile (
 		library.junit,
 		library.junit_mockito,
+		library.json_schema_validator,
 	)
 
 	integTestCompile(

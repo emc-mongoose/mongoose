@@ -3,7 +3,6 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.barrier.Throttle;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
 import org.junit.Test;
 

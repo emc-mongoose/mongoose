@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.generator;
+package com.emc.mongoose.common.io.value;
 
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.value.FilePathInput;

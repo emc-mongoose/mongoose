@@ -89,18 +89,4 @@ public class JsonUtil {
 		}
 	}
 
-	public static String readFileToString(final Path path)
-	throws IOException {
-		final StringBuilder fileTextBuilder = new StringBuilder();
-		try(
-			final BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.US_ASCII)
-		) {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				fileTextBuilder.append(line).append('\n');
-			}
-		}
-		return fileTextBuilder.toString();
-	}
-
 }
