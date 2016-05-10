@@ -34,7 +34,6 @@ public class CircularArrayTest {
 			public int compare(FakeLogEvent fle1, FakeLogEvent fle2) {
 				return Long.compare(fle1.time, fle2.time);
 			}
-
 		}
 
 		public long time() {
@@ -54,7 +53,6 @@ public class CircularArrayTest {
 		circularArray = new CircularArray<>(ARRAY_LENGTH, new FakeLogEvent.FleComparator());
 	}
 
-	@Ignore
 	@Test
 	public void shouldSearchItem() throws Exception {
 		final int countLimit = 10;
@@ -71,7 +69,6 @@ public class CircularArrayTest {
 		assertEquals(indexToCheck, circularArray.searchItem(fleToCheck));
 	}
 
-	@Ignore
 	@Test
 	public void shouldAddItemCircularly() throws Exception {
 		final int countLimit = 400;
@@ -92,7 +89,7 @@ public class CircularArrayTest {
 				eventToCheck = tempFle;
 			}
 		}
-		final Iterator<FakeLogEvent> iterator = circularArray.lastItemsIterator(-1);
+		final Iterator<FakeLogEvent> iterator = circularArray.iterator(-1);
 		while (iterator.hasNext()) {
 			System.out.print(iterator.next() + " ");
 		}

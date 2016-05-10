@@ -1,5 +1,6 @@
 package com.emc.mongoose.webui;
 
+import com.emc.mongoose.common.log.appenders.ShortenedLogEvent;
 import com.emc.mongoose.common.log.appenders.WebUIAppender;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +13,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public final class LogServlet extends HttpServlet {
 
@@ -24,12 +28,13 @@ public final class LogServlet extends HttpServlet {
 	private static final String TIME_STAMP_KEY = "timeStamp";
 
 	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+	protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
 			throws ServletException, IOException {
 		final String runId = request.getParameter(RUN_ID_KEY);
 		final String markerName = request.getParameter(MARKER_NAME_KEY);
-		final String timeStamp = request.getParameter(TIME_STAMP_KEY);
+		final long timeStamp = Long.valueOf(request.getParameter(TIME_STAMP_KEY));
 		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-		response.getWriter().write(JSON_MAPPER.writeValueAsString(WebUIAppender.LOG_EVENTS_MAP));
+		response.getWriter().write(JSON_MAPPER.writeValueAsString(
+				WebUIAppender.getLastLogEventsByMarker(runId, markerName, timeStamp)));
 	}
 }

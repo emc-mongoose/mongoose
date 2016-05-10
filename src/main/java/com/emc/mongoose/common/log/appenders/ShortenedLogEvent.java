@@ -10,11 +10,11 @@ import java.util.Comparator;
  */
 public class ShortenedLogEvent implements Serializable {
 
-	private final String level;
-	private final String loggerName;
-	private final String threadName;
+	private String level;
+	private String loggerName;
+	private String threadName;
 	private final long timeStamp;
-	private final String message;
+	private String message;
 
 	public ShortenedLogEvent(LogEvent logEvent) {
 		level = logEvent.getLevel().name();
@@ -24,12 +24,15 @@ public class ShortenedLogEvent implements Serializable {
 		message = logEvent.getMessage().getFormattedMessage();
 	}
 
+	public ShortenedLogEvent(final long timeStamp) {
+		this.timeStamp = timeStamp;
+	}
+
 	public static class SleComparator implements Comparator<ShortenedLogEvent> {
 
 		@Override
 		public int compare(ShortenedLogEvent sle1, ShortenedLogEvent sle2) {
 			return Long.compare(sle1.timeStamp, sle2.timeStamp);
 		}
-
 	}
 }

@@ -66,7 +66,7 @@ public class CircularArray<T> implements Iterable<T> {
 	public Iterator<T> iterator() {
 		return new LastItemsIterator();
 	}
-	
+
 	public Iterator<T> iterator(final int startIndex) {
 		return new LastItemsIterator(startIndex);
 	}
