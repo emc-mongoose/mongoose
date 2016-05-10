@@ -33,7 +33,7 @@ public final class ModeDispatcher {
 		//
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		// load the config from CLI arguments
-		final Map<String, String> properties = HumanFriendly.parseCli(args);
+		final Map<String, String> properties = HumanFriendlyCli.parseCli(args);
 		if(properties != null) {
 			for(final String propKey : properties.keySet()) {
 				appConfig.setProperty(propKey, properties.get(propKey));

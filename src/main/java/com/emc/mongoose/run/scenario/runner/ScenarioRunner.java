@@ -12,8 +12,14 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static com.emc.mongoose.common.conf.BasicConfig.getRootDir;
+import static com.emc.mongoose.run.scenario.engine.Scenario.FNAME_DEFAULT_SCENARIO;
+import static com.emc.mongoose.run.scenario.engine.Scenario.DIR_SCENARIO;
+
 /**
  Created by kurila on 12.05.14.
  A scenario runner utility class.
@@ -31,16 +37,24 @@ implements Runnable {
 	//
 	public void run() {
 		Scenario scenario = null;
-		final String runFile = appConfig.getRunFile();
+
+		final boolean useStdInFlag = appConfig.getBoolean(AppConfig.KEY_SCENARIO_FROM_STDIN, false);
+		final String runFileStr = appConfig.getRunFile();
+		Path runFilePath;
 		try {
-			if(runFile == null || runFile.isEmpty()) {
+			if(useStdInFlag) {
 				LOG.info(Markers.MSG, "Using the scenario from the standard input...");
 				scenario = new JsonScenario(appConfig, System.in);
 			} else {
-				LOG.info(Markers.MSG, "Using the scenario from the file \"{}\"", runFile);
-				scenario = new JsonScenario(appConfig, new File(runFile));
+				if(runFileStr != null && !runFileStr.isEmpty()) {
+					runFilePath = Paths.get(runFileStr);
+				} else {
+					runFilePath = Paths.get(getRootDir(), DIR_SCENARIO)
+						.resolve(FNAME_DEFAULT_SCENARIO);
+				}
+				LOG.info(Markers.MSG, "Using the scenario from the file \"{}\"", runFileStr);
+				scenario = new JsonScenario(appConfig, runFilePath.toFile());
 			}
-
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Scenario reading failure");
 		} catch(final CloneNotSupportedException e) {
@@ -52,6 +66,7 @@ implements Runnable {
 				scenario.run();
 			} catch(final Throwable t) {
 				LogUtil.exception(LOG, Level.ERROR, t, "Scenario execution failure");
+				t.printStackTrace(System.err);
 			}
 		}
 	}
