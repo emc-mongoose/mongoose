@@ -20,6 +20,9 @@ extends IoConfig<T, C>, Closeable {
 	String
 		HOST_PORT_SEP = ":",
 		PACKAGE_IMPL_BASE = "com.emc.mongoose.storage.adapter";
+	String[] TLS_PROTOCOLS = {
+		"TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3"
+	};
 	//
 	@Override
 	RequestConfig<T, C> clone()

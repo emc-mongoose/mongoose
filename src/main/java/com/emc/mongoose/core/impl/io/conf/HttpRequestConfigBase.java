@@ -78,19 +78,30 @@ import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
-import javax.security.cert.X509Certificate;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509ExtendedKeyManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
+import java.net.Socket;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
+import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -209,8 +220,35 @@ implements HttpRequestConfig<T, C> {
 		);
 		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
 		if(sslFlag) {
+			SSLContext sslContext = null;
+			try {
+				sslContext = SSLContext.getDefault();
+				sslContext.init(
+					null, new TrustManager[] {
+						new X509TrustManager() {
+							@Override
+							public final void checkClientTrusted(
+								final X509Certificate[] x509Certificates, final String s
+							) throws CertificateException {
+							}
+							@Override
+							public final void checkServerTrusted(
+								final X509Certificate[] x509Certificates, final String s
+							) throws CertificateException {
+							}
+							@Override
+							public final X509Certificate[] getAcceptedIssuers() {
+								return new X509Certificate[0];
+							}
+						}
+					},
+					new SecureRandom()
+				);
+			} catch(final NoSuchAlgorithmException | KeyManagementException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to init the SSL context");
+			}
 			sslConnFactory = new SSLNHttpClientConnectionFactory(
-				SSLContexts.createSystemDefault(),
+				sslContext,
 				new SSLSetupHandler() {
 					//
 					@Override
@@ -226,9 +264,10 @@ implements HttpRequestConfig<T, C> {
 					public final void verify(
 						final IOSession ioSession, final SSLSession sslSession
 					) throws SSLException {
-						final X509Certificate[] certs = sslSession.getPeerCertificateChain();
+						final javax.security.cert.X509Certificate[]
+							certs = sslSession.getPeerCertificateChain();
 						// examine peer certificate chain
-						for(final X509Certificate cert : certs) {
+						for(final javax.security.cert.X509Certificate cert : certs) {
 							LOG.warn(Markers.MSG, cert.toString());
 						}
 					}
@@ -359,26 +398,52 @@ implements HttpRequestConfig<T, C> {
 		);
 		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
 		if(sslFlag) {
+			SSLContext sslContext = null;
+			try {
+				sslContext = SSLContext.getDefault();
+				sslContext.init(
+					null, new TrustManager[] {
+						new X509TrustManager() {
+							@Override
+							public final void checkClientTrusted(
+								final X509Certificate[] x509Certificates, final String s
+							) throws CertificateException {
+							}
+							@Override
+							public final void checkServerTrusted(
+								final X509Certificate[] x509Certificates, final String s
+							) throws CertificateException {
+							}
+							@Override
+							public final X509Certificate[] getAcceptedIssuers() {
+								return new X509Certificate[0];
+							}
+						}
+					},
+					new SecureRandom()
+				);
+			} catch(final NoSuchAlgorithmException | KeyManagementException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to init the SSL context");
+			}
 			sslConnFactory = new SSLNHttpClientConnectionFactory(
-				SSLContexts.createSystemDefault(),
+				sslContext,
 				new SSLSetupHandler() {
 					//
 					@Override
 					public final void initalize(final SSLEngine sslEngine)
 					throws SSLException {
 						// enforce TLS and disable SSL
-						sslEngine.setEnabledProtocols(
-							new String[] {"TLSv1", "TLSv1.1", "TLSv1.2"}
-						);
+						sslEngine.setEnabledProtocols(TLS_PROTOCOLS);
 					}
 					//
 					@Override
 					public final void verify(
 						final IOSession ioSession, final SSLSession sslSession
 					) throws SSLException {
-						final X509Certificate[] certs = sslSession.getPeerCertificateChain();
+						final javax.security.cert.X509Certificate[]
+							certs = sslSession.getPeerCertificateChain();
 						// examine peer certificate chain
-						for(final X509Certificate cert : certs) {
+						for(final javax.security.cert.X509Certificate cert : certs) {
 							LOG.warn(Markers.MSG, cert.toString());
 						}
 					}
