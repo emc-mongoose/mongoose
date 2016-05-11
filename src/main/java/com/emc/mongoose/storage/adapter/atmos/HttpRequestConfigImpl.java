@@ -34,6 +34,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
@@ -56,7 +57,11 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
-		this(null);
+		this((AppConfig) null);
+	}
+	//
+	public HttpRequestConfigImpl(final AppConfig appConfig) {
+		super(appConfig);
 	}
 	//
 	protected HttpRequestConfigImpl(final HttpRequestConfigImpl<T, C> reqConf2Clone)
@@ -75,6 +80,9 @@ extends HttpRequestConfigBase<T, C> {
 			setSecret(reqConf2Clone.getSecret());
 		}
 		//
+		if(sharedHeaders == null) {
+			sharedHeaders = new HashMap<>();
+		}
 		sharedHeaders.put(HttpHeaders.ACCEPT, DEFAULT_ACCEPT_HEADER);
 	}
 	//
@@ -144,7 +152,10 @@ extends HttpRequestConfigBase<T, C> {
 	public final HttpRequestConfigImpl<T, C> setAuthToken(final Token subTenant)
 	throws IllegalStateException {
 		super.setAuthToken(subTenant);
-		if(sharedHeaders != null && userName != null) {
+		if(sharedHeaders == null) {
+			sharedHeaders = new HashMap<>();
+		}
+		if(userName != null) {
 			if(subTenant == null || subTenant.toString().length() < 1) {
 				sharedHeaders.put(KEY_EMC_UID, new BasicHeader(KEY_EMC_UID, userName));
 			} else {
@@ -163,15 +174,16 @@ extends HttpRequestConfigBase<T, C> {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
 		} else {
 			super.setUserName(userName);
-			if(sharedHeaders != null) {
-				if(authToken == null || authToken.toString().length() < 1) {
-					sharedHeaders.put(KEY_EMC_UID, new BasicHeader(KEY_EMC_UID, userName));
-				} else {
-					sharedHeaders.put(
-						KEY_EMC_UID,
-						new BasicHeader(KEY_EMC_UID, authToken.toString() + "/" + userName)
-					);
-				}
+			if(sharedHeaders == null) {
+				sharedHeaders = new HashMap<>();
+			}
+			if(authToken == null || authToken.toString().length() < 1) {
+				sharedHeaders.put(KEY_EMC_UID, new BasicHeader(KEY_EMC_UID, userName));
+			} else {
+				sharedHeaders.put(
+					KEY_EMC_UID,
+					new BasicHeader(KEY_EMC_UID, authToken.toString() + "/" + userName)
+				);
 			}
 		}
 		return this;
@@ -348,7 +360,7 @@ extends HttpRequestConfigBase<T, C> {
 				for(final Header header : httpRequest.getHeaders(headerName)) {
 					canonical.append('\n').append(header.getValue());
 				}
-			} else if(sharedHeaders.containsKey(headerName)) {
+			} else if(sharedHeaders != null && sharedHeaders.containsKey(headerName)) {
 				canonical.append('\n').append(sharedHeaders.get(headerName).getValue());
 			} else {
 				canonical.append('\n');
@@ -360,10 +372,12 @@ extends HttpRequestConfigBase<T, C> {
 		// x-emc-*
 		String headerName;
 		Map<String, String> sortedHeaders = new TreeMap<>();
-		for(final Header header : sharedHeaders.values()) {
-			headerName = header.getName().toLowerCase();
-			if(headerName.startsWith(PREFIX_KEY_EMC)) {
-				sortedHeaders.put(headerName, header.getValue());
+		if(sharedHeaders != null) {
+			for(final Header header : sharedHeaders.values()) {
+				headerName = header.getName().toLowerCase();
+				if(headerName.startsWith(PREFIX_KEY_EMC)) {
+					sortedHeaders.put(headerName, header.getValue());
+				}
 			}
 		}
 		for(final Header header : httpRequest.getAllHeaders()) {

@@ -44,8 +44,8 @@ extends DataLoadBuilderBase<T, U> {
 	}
 	//
 	@Override
-	protected FileIoConfig<T, ? extends Directory<T>> getDefaultIoConfig() {
-		return new BasicFileIoConfig<>();
+	protected FileIoConfig<T, ? extends Directory<T>> getIoConfig(final AppConfig appConfig) {
+		return new BasicFileIoConfig<>(appConfig);
 	}
 	//
 	@Override

@@ -52,7 +52,9 @@ implements Runnable {
 					runFilePath = Paths.get(getRootDir(), DIR_SCENARIO)
 						.resolve(FNAME_DEFAULT_SCENARIO);
 				}
-				LOG.info(Markers.MSG, "Using the scenario from the file \"{}\"", runFileStr);
+				LOG.info(
+					Markers.MSG, "Using the scenario from the file \"{}\"", runFilePath.toString()
+				);
 				scenario = new JsonScenario(appConfig, runFilePath.toFile());
 			}
 		} catch(final IOException e) {

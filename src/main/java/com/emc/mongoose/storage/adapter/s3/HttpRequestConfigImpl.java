@@ -46,7 +46,11 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
-		this(null);
+		this((AppConfig) null);
+	}
+	//
+	public HttpRequestConfigImpl(final AppConfig appConfig) {
+		super(appConfig);
 	}
 	//
 	protected HttpRequestConfigImpl(final HttpRequestConfigImpl<T, C> reqConf2Clone)
@@ -149,7 +153,7 @@ extends HttpRequestConfigBase<T, C> {
 				for(final Header header: httpRequest.getHeaders(headerName)) {
 					canonical.append('\n').append(header.getValue());
 				}
-			} else if(sharedHeaders.containsKey(headerName)) {
+			} else if(sharedHeaders != null && sharedHeaders.containsKey(headerName)) {
 				canonical.append('\n').append(sharedHeaders.get(headerName).getValue());
 			} else {
 				canonical.append('\n');
@@ -158,12 +162,12 @@ extends HttpRequestConfigBase<T, C> {
 		// x-amz-*, x-emc-*
 		String headerName;
 		Map<String, String> sortedHeaders = new TreeMap<>();
-		for(final Header header : sharedHeaders.values()) {
-			headerName = header.getName().toLowerCase();
-			if(
-				headerName.startsWith(PREFIX_KEY_AMZ) || headerName.startsWith(PREFIX_KEY_EMC)
-			) {
-				sortedHeaders.put(headerName, header.getValue());
+		if(sharedHeaders != null) {
+			for(final Header header : sharedHeaders.values()) {
+				headerName = header.getName().toLowerCase();
+				if(headerName.startsWith(PREFIX_KEY_AMZ) || headerName.startsWith(PREFIX_KEY_EMC)) {
+					sortedHeaders.put(headerName, header.getValue());
+				}
 			}
 		}
 		for(final Header header : httpRequest.getAllHeaders()) {

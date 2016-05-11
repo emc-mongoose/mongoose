@@ -28,7 +28,12 @@ import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.nio.DefaultNHttpClientConnectionFactory;
+import org.apache.http.impl.nio.SSLNHttpClientConnectionFactory;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
+import org.apache.http.nio.NHttpConnectionFactory;
+import org.apache.http.nio.reactor.IOSession;
+import org.apache.http.nio.reactor.ssl.SSLSetupHandler;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
@@ -50,10 +55,15 @@ import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.util.DirectByteBufferAllocator;
 //
+import org.apache.http.ssl.SSLContexts;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import javax.security.cert.X509Certificate;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -156,11 +166,43 @@ implements HttpContainerLoadExecutor<T, C> {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);
 		}
 		//
-		final NIOConnFactory<HttpHost, NHttpClientConnection>
-			connFactory = new BasicNIOConnFactory(
-			null, null, null, null,
-			DirectByteBufferAllocator.INSTANCE, connConfig
+		final NHttpConnectionFactory<? extends NHttpClientConnection>
+			plainConnFactory = new DefaultNHttpClientConnectionFactory(
+			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
 		);
+		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
+		if(httpReqConfigCopy.getSslFlag()) {
+			sslConnFactory = new SSLNHttpClientConnectionFactory(
+				SSLContexts.createSystemDefault(),
+				new SSLSetupHandler() {
+					//
+					@Override
+					public final void initalize(final SSLEngine sslEngine)
+					throws SSLException {
+						// enforce TLS and disable SSL
+						sslEngine.setEnabledProtocols(
+							new String[] {"TLSv1", "TLSv1.1", "TLSv1.2"}
+						);
+					}
+					//
+					@Override
+					public final void verify(
+						final IOSession ioSession, final SSLSession sslSession
+					) throws SSLException {
+						final X509Certificate[] certs = sslSession.getPeerCertificateChain();
+						// examine peer certificate chain
+						for(final X509Certificate cert : certs) {
+							LOG.warn(Markers.MSG, cert.toString());
+						}
+					}
+				},
+				null, null, DirectByteBufferAllocator.INSTANCE, connConfig
+			);
+		} else {
+			sslConnFactory = null;
+		}
+		final NIOConnFactory<HttpHost, NHttpClientConnection>
+			connFactory = new BasicNIOConnFactory(plainConnFactory, sslConnFactory);
 		//
 		connPoolMap = new HashMap<>(storageNodeCount);
 		HttpHost nextRoute;

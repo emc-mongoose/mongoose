@@ -35,13 +35,11 @@ implements RequestConfig<T, C> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		api = appConfig.getStorageHttpApi();
-		secret = appConfig.getAuthSecret();
-		userName = appConfig.getAuthId();
-		port = appConfig.getStoragePort();
-		final String tokenValue = appConfig.getAuthToken();
-		authToken = tokenValue == null ? null : new BasicToken(tokenValue);
-		sslFlag = appConfig.getNetworkSsl();
+		this((AppConfig) null);
+	}
+	//
+	protected RequestConfigBase(final AppConfig appConfig) {
+		super(appConfig);
 	}
 	//
 	protected RequestConfigBase(final RequestConfigBase<T, C> reqConf2Clone) {

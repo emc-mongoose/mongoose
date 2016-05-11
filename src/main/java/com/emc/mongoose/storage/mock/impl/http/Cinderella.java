@@ -15,12 +15,17 @@ import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import com.emc.mongoose.storage.mock.impl.http.net.BasicSocketEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.http.request.APIRequestHandlerMapper;
-import com.emc.mongoose.storage.mock.impl.http.net.BasicWSMockConnFactory;
+import com.emc.mongoose.storage.mock.impl.http.net.BasicHttpStorageMockConnFactory;
 //
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.impl.nio.SSLNHttpServerConnectionFactory;
+import org.apache.http.nio.NHttpServerConnection;
+import org.apache.http.nio.reactor.IOSession;
+import org.apache.http.nio.reactor.ssl.SSLSetupHandler;
+import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpProcessor;
@@ -35,10 +40,15 @@ import org.apache.http.nio.protocol.HttpAsyncRequestHandlerMapper;
 import org.apache.http.nio.protocol.HttpAsyncService;
 import org.apache.http.nio.reactor.IOReactorException;
 //
+import org.apache.http.ssl.SSLContexts;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import javax.security.cert.X509Certificate;
 import java.io.IOException;
 /**
  * Created by olga on 28.01.15.
@@ -51,7 +61,8 @@ implements HttpStorageMock<T> {
 	//
 	private final BasicSocketEventDispatcher sockEvtDispatchers[] ;
 	private final HttpAsyncService protocolHandler;
-	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
+	private final NHttpConnectionFactory<DefaultNHttpServerConnection> plainConnFactory;
+	private final NHttpConnectionFactory<DefaultNHttpServerConnection> sslConnFactory;
 	private final int portStart;
 	//
 	public Cinderella(final AppConfig appConfig)
@@ -65,8 +76,7 @@ implements HttpStorageMock<T> {
 			appConfig.getItemSrcBatchSize(),
 			appConfig.getItemSrcFile(),
 			appConfig.getLoadMetricsPeriod(),
-			appConfig.getNetworkServeJmx(),
-			0, 0
+			appConfig.getNetworkServeJmx()
 		);
 	}
 	//
@@ -74,8 +84,7 @@ implements HttpStorageMock<T> {
 	public Cinderella(
 		final int headCount, final int portStart, final int storageCapacity,
 		final int containerCapacity, final int containerCountLimit, final int batchSize,
-		final String dataSrcPath, final int metricsPeriodSec, final boolean jmxServeFlag,
-		final int minConnLifeMilliSec, final int maxConnLifeMilliSec
+		final String dataSrcPath, final int metricsPeriodSec, final boolean jmxServeFlag
 	) throws IOException {
 		super(
 			(Class<T>) BasicHttpDataMock.class, ContentSourceBase.getDefaultInstance(),
@@ -91,8 +100,32 @@ implements HttpStorageMock<T> {
 			.setBufferSize(BUFF_SIZE_LO)
 			.setFragmentSizeHint(0)
 			.build();
-		connFactory = new BasicWSMockConnFactory(
-			connConfig, minConnLifeMilliSec, maxConnLifeMilliSec
+		plainConnFactory = new BasicHttpStorageMockConnFactory(connConfig);
+		sslConnFactory = new SSLNHttpServerConnectionFactory(
+			SSLContexts.createSystemDefault(),
+			new SSLSetupHandler() {
+				//
+				@Override
+				public final void initalize(final SSLEngine sslEngine)
+				throws SSLException {
+					// enforce TLS and disable SSL
+					sslEngine.setEnabledProtocols(
+						new String[] {"TLSv1", "TLSv1.1", "TLSv1.2"}
+					);
+				}
+				//
+				@Override
+				public final void verify(
+					final IOSession ioSession, final SSLSession sslSession
+				) throws SSLException {
+					final X509Certificate[] certs = sslSession.getPeerCertificateChain();
+					// examine peer certificate chain
+					for(final X509Certificate cert : certs) {
+						LOG.warn(Markers.MSG, cert.toString());
+					}
+				}
+			},
+			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
 		);
 		// Set up the HTTP protocol processor
 		final HttpProcessor httpProc = HttpProcessorBuilder.create()
@@ -129,9 +162,18 @@ implements HttpStorageMock<T> {
 		for(int i = 0; i < sockEvtDispatchers.length; i++) {
 			nextPort = portStart + i;
 			try {
-				sockEvtDispatchers[i] = new BasicSocketEventDispatcher(
-					BasicConfig.THREAD_CONTEXT.get(), protocolHandler, nextPort, connFactory, ioStats
-				);
+				if(i % 2 == 0) {
+					sockEvtDispatchers[i] = new BasicSocketEventDispatcher(
+						BasicConfig.THREAD_CONTEXT.get(), protocolHandler, nextPort,
+						plainConnFactory, ioStats
+					);
+				} else {
+					LOG.info(Markers.MSG, "Port #{}: TLS enabled", nextPort);
+					sockEvtDispatchers[i] = new BasicSocketEventDispatcher(
+						BasicConfig.THREAD_CONTEXT.get(), protocolHandler, nextPort,
+						sslConnFactory, ioStats
+					);
+				}
 				sockEvtDispatchers[i].start();
 			} catch(final IOReactorException e) {
 				LogUtil.exception(

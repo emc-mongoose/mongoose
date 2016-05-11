@@ -57,21 +57,8 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected HttpRequestConfig<T, ? extends Container<T>> getDefaultIoConfig() {
-		return HttpRequestConfigBase.getInstance();
-	}
-	//
-	@Override
-	public final BasicHttpDataLoadBuilderClient<T, W, U> setAppConfig(final AppConfig appConfig) {
-		final String newApi = appConfig.getStorageHttpApi();
-		if(!((HttpRequestConfig) ioConfig).getAPI().equalsIgnoreCase(newApi)) {
-			ioConfig = HttpRequestConfigBase.newInstanceFor(newApi);
-		}
-		try {
-			super.setAppConfig(appConfig);
-		} catch(final RemoteException ignored) {
-		}
-		return this;
+	protected HttpRequestConfig<T, ? extends Container<T>> getIoConfig(final AppConfig appConfig) {
+		return HttpRequestConfigBase.getInstance(appConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
