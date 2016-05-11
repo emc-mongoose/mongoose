@@ -8,6 +8,7 @@ import com.emc.mongoose.common.io.value.async.AsyncCurrentDateInput;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.common.net.ssl.SslContextFactory;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.HttpStorageMock;
@@ -101,7 +102,7 @@ implements HttpStorageMock<T> {
 			.build();
 		plainConnFactory = new BasicHttpStorageMockConnFactory(connConfig);
 		sslConnFactory = new SSLNHttpServerConnectionFactory(
-			SSLContexts.createSystemDefault(),
+			SslContextFactory.getInstance(),
 			new SSLSetupHandler() {
 				//
 				@Override

@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 //
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,19 +70,8 @@ public abstract class SslContextFactory {
 			} catch(final KeyStoreException | UnrecoverableKeyException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to init the key manager factory");
 			}
-			//
-			TrustManagerFactory tmf = null;
-			try {
-				tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-				tmf.init(keyStore);
-			} catch(final NoSuchAlgorithmException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the trust manager factory");
-			} catch(final KeyStoreException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to init the trust manager factory");
-			}
-
 			// certificate
-			final URL urlCert = clsLoader.getResource("root.cer");
+			final URL urlCert = clsLoader.getResource("selfsigned.crt");
 			CertificateFactory cf = null;
 			try {
 				cf = CertificateFactory.getInstance("X.509");
@@ -103,7 +93,7 @@ public abstract class SslContextFactory {
 				try {
 					sslContext.init(
 						kmf == null ? null : kmf.getKeyManagers(),
-						tmf == null ? null : tmf.getTrustManagers(),
+						new TrustManager[] { X509TrustAllManager.INSTANCE },
 						new SecureRandom()
 					);
 				} catch(final KeyManagementException e) {

@@ -12,6 +12,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
+import com.emc.mongoose.common.net.ssl.SslContextFactory;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -220,35 +221,8 @@ implements HttpRequestConfig<T, C> {
 		);
 		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
 		if(sslFlag) {
-			SSLContext sslContext = null;
-			try {
-				sslContext = SSLContext.getDefault();
-				sslContext.init(
-					null, new TrustManager[] {
-						new X509TrustManager() {
-							@Override
-							public final void checkClientTrusted(
-								final X509Certificate[] x509Certificates, final String s
-							) throws CertificateException {
-							}
-							@Override
-							public final void checkServerTrusted(
-								final X509Certificate[] x509Certificates, final String s
-							) throws CertificateException {
-							}
-							@Override
-							public final X509Certificate[] getAcceptedIssuers() {
-								return new X509Certificate[0];
-							}
-						}
-					},
-					new SecureRandom()
-				);
-			} catch(final NoSuchAlgorithmException | KeyManagementException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to init the SSL context");
-			}
 			sslConnFactory = new SSLNHttpClientConnectionFactory(
-				sslContext,
+				SslContextFactory.getInstance(),
 				new SSLSetupHandler() {
 					//
 					@Override
@@ -398,35 +372,8 @@ implements HttpRequestConfig<T, C> {
 		);
 		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
 		if(sslFlag) {
-			SSLContext sslContext = null;
-			try {
-				sslContext = SSLContext.getDefault();
-				sslContext.init(
-					null, new TrustManager[] {
-						new X509TrustManager() {
-							@Override
-							public final void checkClientTrusted(
-								final X509Certificate[] x509Certificates, final String s
-							) throws CertificateException {
-							}
-							@Override
-							public final void checkServerTrusted(
-								final X509Certificate[] x509Certificates, final String s
-							) throws CertificateException {
-							}
-							@Override
-							public final X509Certificate[] getAcceptedIssuers() {
-								return new X509Certificate[0];
-							}
-						}
-					},
-					new SecureRandom()
-				);
-			} catch(final NoSuchAlgorithmException | KeyManagementException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to init the SSL context");
-			}
 			sslConnFactory = new SSLNHttpClientConnectionFactory(
-				sslContext,
+				SslContextFactory.getInstance(),
 				new SSLSetupHandler() {
 					//
 					@Override
