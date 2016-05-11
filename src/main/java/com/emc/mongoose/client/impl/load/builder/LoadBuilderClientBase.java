@@ -3,18 +3,15 @@ package com.emc.mongoose.client.impl.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
-import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.math.MathUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.io.conf.IoConfig;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 //
-import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
 // mongoose-server-api.jar
@@ -95,8 +92,6 @@ implements LoadBuilderClient<T, W, U> {
 			loadSvcMap.get(serverAddr).setNextInstanceNum(appConfig.getRunId(), maxLastInstanceN);
 		}
 	}
-	//
-	protected abstract IoConfig<?, ?>  getDefaultIoConfig();
 	//
 	protected abstract V resolve(final String serverAddr)
 	throws IOException;

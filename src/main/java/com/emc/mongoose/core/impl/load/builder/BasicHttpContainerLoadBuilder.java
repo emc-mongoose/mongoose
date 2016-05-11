@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
@@ -32,22 +33,8 @@ implements HttpContainerLoadBuilder<T, C, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected HttpRequestConfig<T, C> getDefaultIoConfig() {
-		return HttpRequestConfigBase.getInstance();
-	}
-	//
-	@Override
-	public final BasicHttpContainerLoadBuilder<T, C, U> setAppConfig(final AppConfig appConfig)
-	throws RemoteException {
-		final String newApi = appConfig.getStorageHttpApi();
-		if(!((HttpRequestConfig) ioConfig).getAPI().equalsIgnoreCase(newApi)) {
-			ioConfig = HttpRequestConfigBase.newInstanceFor(newApi);
-		}
-		try {
-			super.setAppConfig(appConfig);
-		} catch(final RemoteException ignored) {
-		}
-		return this;
+	protected HttpRequestConfig<T, C> getIoConfig(final AppConfig appConfig) {
+		return HttpRequestConfigBase.getInstance(appConfig);
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")

@@ -22,6 +22,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 //
 /**
  Created by kurila on 26.03.14.
@@ -44,7 +45,12 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
-		this(null);
+		this((AppConfig) null);
+	}
+	//
+	public HttpRequestConfigImpl(final AppConfig appConfig) {
+		super(appConfig);
+		setAppConfig(appConfig);
 	}
 	//
 	@SuppressWarnings("unchecked")
@@ -104,7 +110,10 @@ extends HttpRequestConfigBase<T, C> {
 	@Override
 	public final HttpRequestConfigImpl<T, C> setAuthToken(final Token authToken) {
 		super.setAuthToken(authToken);
-		if(authToken != null && sharedHeaders != null) {
+		if(sharedHeaders == null) {
+			sharedHeaders = new HashMap<>();
+		}
+		if(authToken != null) {
 			sharedHeaders.put(
 				KEY_X_AUTH_TOKEN, new BasicHeader(KEY_X_AUTH_TOKEN, authToken.getName())
 			);

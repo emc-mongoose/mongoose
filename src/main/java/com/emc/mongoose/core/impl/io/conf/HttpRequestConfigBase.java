@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.io.conf;
 // mongoose-common
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.SizeInBytes;
@@ -40,9 +39,15 @@ import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.NoConnectionReuseStrategy;
+import org.apache.http.impl.nio.DefaultNHttpClientConnectionFactory;
+import org.apache.http.impl.nio.SSLNHttpClientConnectionFactory;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
+import org.apache.http.nio.NHttpConnectionFactory;
+import org.apache.http.nio.reactor.IOSession;
+import org.apache.http.nio.reactor.ssl.SSLSetupHandler;
+import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
@@ -66,21 +71,37 @@ import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
 //
+import org.apache.http.ssl.SSLContexts;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509ExtendedKeyManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
+import java.net.Socket;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
+import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -96,9 +117,10 @@ extends RequestConfigBase<T, C>
 implements HttpRequestConfig<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
+	private static final ThreadLocal<Mac> THRLOC_MAC = new ThreadLocal<>();
 	public final static long serialVersionUID = 42L;
 	protected final static String SIGN_METHOD = "HmacSHA1";
+	//
 	protected boolean fsAccess, versioning, pipelining;
 	protected SecretKeySpec secretKey;
 	//
@@ -106,22 +128,22 @@ implements HttpRequestConfig<T, C> {
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
-	//
-	public static <T extends HttpDataItem, C extends Container<T>> HttpRequestConfig<T, C> getInstance() {
-		return newInstanceFor(BasicConfig.THREAD_CONTEXT.get().getStorageHttpApi());
-	}
+	protected volatile Map<String, Header> sharedHeaders = null;
+	private volatile Map<String, Header> dynamicHeaders = null;
 	//
 	@SuppressWarnings("unchecked")
-	public static <T extends HttpDataItem, C extends Container<T>> HttpRequestConfig<T, C> newInstanceFor(
-		final String api
+	public static <T extends HttpDataItem, C extends Container<T>> HttpRequestConfig<T, C> getInstance(
+		final AppConfig appConfig
 	) {
 		final HttpRequestConfig<T, C> reqConf;
+		final String api = appConfig.getStorageHttpApi();
 		final String apiImplClsFQN = PACKAGE_IMPL_BASE + "." + api.toLowerCase() + "." + ADAPTER_CLS;
 		try {
 			final Class apiImplCls = Class.forName(apiImplClsFQN);
 			final Constructor<HttpRequestConfig<T, C>>
-				constructor = (Constructor<HttpRequestConfig<T, C>>) apiImplCls.getConstructors()[0];
-			reqConf = constructor.<T, C>newInstance();
+				constructor = (Constructor<HttpRequestConfig<T, C>>) apiImplCls
+					.getConstructor(AppConfig.class);
+			reqConf = constructor.<T, C>newInstance(appConfig);
 		} catch(final Exception e) {
 			e.printStackTrace(System.out);
 			throw new RuntimeException(e);
@@ -129,23 +151,154 @@ implements HttpRequestConfig<T, C> {
 		return reqConf;
 	}
 	//
-	protected Map<String, Header> sharedHeaders = new HashMap<>();
-	protected Map<String, Header> dynamicHeaders = new HashMap<>();
-	protected static final ThreadLocal<Mac> THRLOC_MAC = new ThreadLocal<>();
-	//
 	public HttpRequestConfigBase()
 	throws NoSuchAlgorithmException, IOReactorException {
-		this(null);
+		this((AppConfig) null);
+	}
+	//
+	protected HttpRequestConfigBase(final AppConfig appConfig) {
+		super(appConfig);
+		// create HTTP client
+		final HttpProcessor httpProcessor= HttpProcessorBuilder
+			.create()
+			.add(this)
+			.add(new HostHeaderSetter())
+			.add(new RequestConnControl())
+			.add(new RequestContent(false))
+			.build();
+		client = new HttpAsyncRequester(
+			httpProcessor, NoConnectionReuseStrategy.INSTANCE,
+			new ExceptionLogger() {
+				@Override
+				public final void log(final Exception e) {
+					LogUtil.exception(LOG, Level.DEBUG, e, "HTTP client internal failure");
+				}
+			}
+		);
+		//
+		final ConnectionConfig connConfig = ConnectionConfig
+			.custom()
+			.setBufferSize(appConfig.getIoBufferSizeMin())
+			.build();
+		final long timeOutMs = TimeUnit.SECONDS.toMillis(appConfig.getLoadLimitTime());
+		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
+			.custom()
+			.setIoThreadCount(1)
+			.setBacklogSize(appConfig.getNetworkSocketBindBacklogSize())
+			.setInterestOpQueued(appConfig.getNetworkSocketInterestOpQueued())
+			.setSelectInterval(appConfig.getNetworkSocketSelectInterval())
+			.setShutdownGracePeriod(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setSoKeepAlive(appConfig.getNetworkSocketKeepAlive())
+			.setSoLinger(appConfig.getNetworkSocketLinger())
+			.setSoReuseAddress(appConfig.getNetworkSocketReuseAddr())
+			.setSoTimeout(appConfig.getNetworkSocketTimeoutMilliSec())
+			.setTcpNoDelay(appConfig.getNetworkSocketTcpNoDelay())
+			.setRcvBufSize(appConfig.getIoBufferSizeMin())
+			.setSndBufSize(appConfig.getIoBufferSizeMin())
+			.setConnectTimeout(
+				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
+			);
+		//
+		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
+		//
+		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
+			reqExecutor, connConfig
+		);
+		//
+		try {
+			ioReactor = new DefaultConnectingIOReactor(
+				ioReactorConfigBuilder.build(),
+				new NamingThreadFactory("wsConfigWorker<" + toString() + ">", true)
+			);
+		} catch(final IOReactorException e) {
+			throw new IllegalStateException("Failed to build the I/O reactor", e);
+		}
+		//
+		final NHttpConnectionFactory<? extends NHttpClientConnection>
+			plainConnFactory = new DefaultNHttpClientConnectionFactory(
+			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
+		);
+		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
+		if(sslFlag) {
+			SSLContext sslContext = null;
+			try {
+				sslContext = SSLContext.getDefault();
+				sslContext.init(
+					null, new TrustManager[] {
+						new X509TrustManager() {
+							@Override
+							public final void checkClientTrusted(
+								final X509Certificate[] x509Certificates, final String s
+							) throws CertificateException {
+							}
+							@Override
+							public final void checkServerTrusted(
+								final X509Certificate[] x509Certificates, final String s
+							) throws CertificateException {
+							}
+							@Override
+							public final X509Certificate[] getAcceptedIssuers() {
+								return new X509Certificate[0];
+							}
+						}
+					},
+					new SecureRandom()
+				);
+			} catch(final NoSuchAlgorithmException | KeyManagementException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to init the SSL context");
+			}
+			sslConnFactory = new SSLNHttpClientConnectionFactory(
+				sslContext,
+				new SSLSetupHandler() {
+					//
+					@Override
+					public final void initalize(final SSLEngine sslEngine)
+					throws SSLException {
+						// enforce TLS and disable SSL
+						sslEngine.setEnabledProtocols(
+							new String[] {"TLSv1", "TLSv1.1", "TLSv1.2"}
+						);
+					}
+					//
+					@Override
+					public final void verify(
+						final IOSession ioSession, final SSLSession sslSession
+					) throws SSLException {
+						final javax.security.cert.X509Certificate[]
+							certs = sslSession.getPeerCertificateChain();
+						// examine peer certificate chain
+						for(final javax.security.cert.X509Certificate cert : certs) {
+							LOG.warn(Markers.MSG, cert.toString());
+						}
+					}
+				},
+				null, null, DirectByteBufferAllocator.INSTANCE, connConfig
+			);
+		} else {
+			sslConnFactory = null;
+		}
+		final NIOConnFactory<HttpHost, NHttpClientConnection>
+			connFactory = new BasicNIOConnFactory(plainConnFactory, sslConnFactory);
+		//
+		connPool = new BasicNIOConnPool(
+			ioReactor, connFactory,
+			timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
+		);
+		connPool.setMaxTotal(1);
+		connPool.setDefaultMaxPerRoute(1);
+		clientDaemon = new Thread(
+			new HttpClientRunTask(ioEventDispatch, ioReactor), "wsConfigDaemon<" + toString() + ">"
+		);
+		clientDaemon.setDaemon(true);
 	}
 	//
 	@SuppressWarnings({"unchecked", "SynchronizeOnNonFinalField"})
-	protected HttpRequestConfigBase(final HttpRequestConfigBase<T, C> reqConf2Clone)
-	throws NoSuchAlgorithmException {
+	protected HttpRequestConfigBase(final HttpRequestConfigBase<T, C> reqConf2Clone) {
 		super(reqConf2Clone);
 		try {
 			if(reqConf2Clone != null) {
 				final Map<String, Header> sharedHeaders2Clone = reqConf2Clone.sharedHeaders;
-				sharedHeaders.clear();
+				sharedHeaders = new HashMap<>();
 				if(sharedHeaders2Clone != null) {
 					for(final Header nextHeader : sharedHeaders2Clone.values()) {
 						sharedHeaders.put(
@@ -164,7 +317,7 @@ implements HttpRequestConfig<T, C> {
 					}
 				}
 				final Map<String, Header> dynamicHeaders2Clone = reqConf2Clone.dynamicHeaders;
-				dynamicHeaders.clear();
+				dynamicHeaders = new HashMap<>();
 				if(dynamicHeaders2Clone != null) {
 					for(final Header nextHeader : reqConf2Clone.dynamicHeaders.values()) {
 						dynamicHeaders.put(
@@ -173,7 +326,7 @@ implements HttpRequestConfig<T, C> {
 						);
 					}
 				}
-				this.setSecret(reqConf2Clone.getSecret()).setScheme(reqConf2Clone.getScheme());
+				this.setSecret(reqConf2Clone.getSecret());
 				this.setFileAccessEnabled(reqConf2Clone.getFileAccessEnabled());
 				this.setPipelining(reqConf2Clone.getPipelining());
 			}
@@ -239,8 +392,69 @@ implements HttpRequestConfig<T, C> {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);
 		}
 		//
+		final NHttpConnectionFactory<? extends NHttpClientConnection>
+			plainConnFactory = new DefaultNHttpClientConnectionFactory(
+			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
+		);
+		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
+		if(sslFlag) {
+			SSLContext sslContext = null;
+			try {
+				sslContext = SSLContext.getDefault();
+				sslContext.init(
+					null, new TrustManager[] {
+						new X509TrustManager() {
+							@Override
+							public final void checkClientTrusted(
+								final X509Certificate[] x509Certificates, final String s
+							) throws CertificateException {
+							}
+							@Override
+							public final void checkServerTrusted(
+								final X509Certificate[] x509Certificates, final String s
+							) throws CertificateException {
+							}
+							@Override
+							public final X509Certificate[] getAcceptedIssuers() {
+								return new X509Certificate[0];
+							}
+						}
+					},
+					new SecureRandom()
+				);
+			} catch(final NoSuchAlgorithmException | KeyManagementException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to init the SSL context");
+			}
+			sslConnFactory = new SSLNHttpClientConnectionFactory(
+				sslContext,
+				new SSLSetupHandler() {
+					//
+					@Override
+					public final void initalize(final SSLEngine sslEngine)
+					throws SSLException {
+						// enforce TLS and disable SSL
+						sslEngine.setEnabledProtocols(TLS_PROTOCOLS);
+					}
+					//
+					@Override
+					public final void verify(
+						final IOSession ioSession, final SSLSession sslSession
+					) throws SSLException {
+						final javax.security.cert.X509Certificate[]
+							certs = sslSession.getPeerCertificateChain();
+						// examine peer certificate chain
+						for(final javax.security.cert.X509Certificate cert : certs) {
+							LOG.warn(Markers.MSG, cert.toString());
+						}
+					}
+				},
+				null, null, DirectByteBufferAllocator.INSTANCE, connConfig
+			);
+		} else {
+			sslConnFactory = null;
+		}
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
-			connFactory = new BasicNIOConnFactory(connConfig);
+			connFactory = new BasicNIOConnFactory(plainConnFactory, sslConnFactory);
 		//
 		connPool = new BasicNIOConnPool(
 			ioReactor, connFactory,
@@ -419,6 +633,12 @@ implements HttpRequestConfig<T, C> {
 		}
 		// setPipelining(false);
 		// custom HTTP headers adding
+		if(sharedHeaders == null) {
+			sharedHeaders = new HashMap<>();
+		}
+		if(dynamicHeaders == null) {
+			dynamicHeaders = new HashMap<>();
+		}
 		final Configuration customHeaders = appConfig.getStorageHttpHeaders();
 		if(customHeaders != null) {
 			final Iterator<String> customHeadersIterator = customHeaders.getKeys();
@@ -466,6 +686,10 @@ implements HttpRequestConfig<T, C> {
 	@Override
 	public final Map<String, Header> getSharedHeaders() {
 		return sharedHeaders;
+	}
+	//
+	protected String getScheme() {
+		return sslFlag ? "https" : "http";
 	}
 	//
 	private final static ThreadLocal<Map<String, HttpHost>>
@@ -784,14 +1008,14 @@ implements HttpRequestConfig<T, C> {
 			if(tgtAddr.contains(":")) {
 				final String t[] = tgtAddr.split(":");
 				try {
-					tgtHost = new HttpHost(t[0], Integer.parseInt(t[1]), SCHEME);
+					tgtHost = new HttpHost(t[0], Integer.parseInt(t[1]), getScheme());
 				} catch(final Exception e) {
 					LogUtil.exception(
 						LOG, Level.WARN, e, "Failed to determine the request target host"
 					);
 				}
 			} else {
-				tgtHost = new HttpHost(tgtAddr, appConfig.getStoragePort(), SCHEME);
+				tgtHost = new HttpHost(tgtAddr, appConfig.getStoragePort(), getScheme());
 			}
 		} else {
 			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");
@@ -837,33 +1061,37 @@ implements HttpRequestConfig<T, C> {
 		Header nextHeader;
 		String headerValue;
 		Input<String> headerValueInput;
-		for(final String nextKey : sharedHeaders.keySet()) {
-			nextHeader = sharedHeaders.get(nextKey);
-			if(!request.containsHeader(nextKey)) {
-				request.setHeader(nextHeader);
+		if(sharedHeaders != null) {
+			for(final String nextKey : sharedHeaders.keySet()) {
+				nextHeader = sharedHeaders.get(nextKey);
+				if(!request.containsHeader(nextKey)) {
+					request.setHeader(nextHeader);
+				}
 			}
 		}
 		//
-		for(final String nextKey : dynamicHeaders.keySet()) {
-			nextHeader = dynamicHeaders.get(nextKey);
-			headerValue = nextHeader.getValue();
-			if(headerValue != null) {
-				// header value is a generator pattern
-				headerValueInput  = HEADER_VALUE_INPUTS.get(nextKey);
-				// try to find the corresponding generator in the registry
-				if(headerValueInput == null) {
-					// create new generator and put it into the registry for reuse
-					headerValueInput = new AsyncPatternDefinedInput(headerValue);
-					// spin while header value generator is not ready
-					while(null == (headerValue = headerValueInput.get())) {
-						Thread.yield();
+		if(dynamicHeaders != null) {
+			for(final String nextKey : dynamicHeaders.keySet()) {
+				nextHeader = dynamicHeaders.get(nextKey);
+				headerValue = nextHeader.getValue();
+				if(headerValue != null) {
+					// header value is a generator pattern
+					headerValueInput = HEADER_VALUE_INPUTS.get(nextKey);
+					// try to find the corresponding generator in the registry
+					if(headerValueInput == null) {
+						// create new generator and put it into the registry for reuse
+						headerValueInput = new AsyncPatternDefinedInput(headerValue);
+						// spin while header value generator is not ready
+						while(null == (headerValue = headerValueInput.get())) {
+							Thread.yield();
+						}
+						HEADER_VALUE_INPUTS.put(nextKey, headerValueInput);
+					} else {
+						headerValue = headerValueInput.get();
 					}
-					HEADER_VALUE_INPUTS.put(nextKey, headerValueInput);
-				} else {
-					headerValue = headerValueInput.get();
+					// put the generated header value into the request
+					request.setHeader(new BasicHeader(nextKey, headerValue));
 				}
-				// put the generated header value into the request
-				request.setHeader(new BasicHeader(nextKey, headerValue));
 			}
 		}
 		// add all other required headers

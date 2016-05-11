@@ -6,7 +6,6 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -49,17 +48,11 @@ implements IoConfig<T, C> {
 	protected int nameRadix = Character.MAX_RADIX;
 	//
 	protected IoConfigBase() {
-		appConfig = BasicConfig.THREAD_CONTEXT.get();
-		loadType = LoadType.WRITE;
-		dstContainer = null;
-		srcContainer = null;
-		contentSrc = ContentSourceBase.getDefaultInstance();
-		verifyContentFlag = appConfig.getItemDataVerify();
-		copyFlag = appConfig.getLoadCopy();
-		nameSpace = appConfig.getStorageHttpNamespace();
-		namePrefix = appConfig.getItemNamingPrefix();
-		nameRadix = appConfig.getItemNamingRadix();
-		buffSize = appConfig.getIoBufferSizeMin();
+		this(BasicConfig.THREAD_CONTEXT.get());
+	}
+	//
+	protected IoConfigBase(final AppConfig appConfig) {
+		setAppConfig(appConfig);
 	}
 	//
 	protected IoConfigBase(final IoConfigBase<T, C> ioConf2Clone) {
