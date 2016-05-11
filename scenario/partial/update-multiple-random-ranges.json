@@ -30,7 +30,8 @@
 			"config" : {
 				"item" : {
 					"data" : {
-						"ranges" : 10 // update 10 random byte ranges per request
+						// update 10 random byte ranges per request
+						"ranges" : 10
 					},
 					"src" : {
 						"file" : "/tmp/scenario-partial-update-multiple-random-ranges-0.csv"

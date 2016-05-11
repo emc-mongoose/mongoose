@@ -1,34 +1,47 @@
 package com.emc.mongoose.run.scenario.engine;
-import com.jayway.restassured.module.jsv.JsonSchemaValidator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.github.fge.jsonschema.core.exceptions.ProcessingException;
+import com.github.fge.jsonschema.core.report.ProcessingReport;
+import com.github.fge.jsonschema.main.JsonSchema;
+import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import static com.emc.mongoose.run.scenario.engine.Scenario.DIR_SCENARIO;
+import static java.io.File.separatorChar;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 /**
  Created by andrey on 11.05.16.
  */
 public class ScenarioSchemaTest {
-	private final String ROOT_DIR = System.getProperty("user.dir");
+	private final static String ROOT_DIR = System.getProperty("user.dir");
+	private final static ObjectMapper OBJ_MAPPER = new ObjectMapper()
+		.configure(SerializationFeature.INDENT_OUTPUT, true)
+		.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
 	@Test
 	public void checkAllScenariosMatchSchema()
 	throws Exception {
-		final Path schemaPath = Paths.get(ROOT_DIR)
-			.resolve(Scenario.DIR_SCENARIO)
-			.resolve("scenario-schema.json");
-		assertTrue(Files.exists(schemaPath));
-		final JsonSchemaValidator jsonSchemaValidator = JsonSchemaValidator
-			.matchesJsonSchema(schemaPath.toFile());
+		final URI scenarioSchemaUri = new File(
+			ROOT_DIR + separatorChar + DIR_SCENARIO + separatorChar + "scenario-schema.json"
+		).toURI();
+		final JsonSchema scenarioSchema = JsonSchemaFactory
+			.newBuilder().freeze().getJsonSchema(scenarioSchemaUri.toString());
 		Files.walkFileTree(
-			Paths.get(ROOT_DIR).resolve(Scenario.DIR_SCENARIO),
+			Paths.get(ROOT_DIR).resolve(DIR_SCENARIO),
 			new FileVisitor<Path>() {
 				@Override
 				public final FileVisitResult preVisitDirectory(
@@ -40,11 +53,20 @@ public class ScenarioSchemaTest {
 				public final FileVisitResult visitFile(
 					final Path file, final BasicFileAttributes attrs
 				) throws IOException {
-					final StringBuilder strb = new StringBuilder();
-					for(final String nextLine : Files.readAllLines(file, StandardCharsets.UTF_8)) {
-						strb.append(nextLine).append('\n');
+					if(file.toString().contains("schema")) {
+						return FileVisitResult.CONTINUE;
 					}
-					assertTrue(file.toString(), jsonSchemaValidator.matches(strb.toString()));
+					final JsonNode scenarioTree = OBJ_MAPPER.readTree(file.toFile());
+					try {
+						final ProcessingReport report = scenarioSchema.validate(scenarioTree, true);
+						if(!report.isSuccess()) {
+							System.err.println(report.toString());
+							fail("Failed to validate: " + file.toString());
+						}
+					} catch(final ProcessingException e) {
+						e.printStackTrace(System.err);
+						fail("Failed to validate: " + file.toString());
+					}
 					System.out.println("Validation done: " + file);
 					return FileVisitResult.CONTINUE;
 				}

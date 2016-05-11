@@ -4,20 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.jayway.restassured.module.jsv.JsonSchemaValidator;
+import com.github.fge.jsonschema.core.report.ProcessingReport;
+import com.github.fge.jsonschema.main.JsonSchema;
+import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import org.junit.Test;
 
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
 
-import static com.jayway.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchema;
+import static com.emc.mongoose.common.conf.Constants.DIR_CONF;
+import static java.io.File.separatorChar;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static com.jayway.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
 import static org.junit.Assert.assertTrue;
 /**
  Created by kurila on 10.05.16.
@@ -25,63 +21,58 @@ import static org.junit.Assert.assertTrue;
 public class DefaultsSchemaTest {
 
 	private final static String ROOT_DIR = System.getProperty("user.dir");
+	private final static ObjectMapper OBJ_MAPPER = new ObjectMapper()
+		.configure(SerializationFeature.INDENT_OUTPUT, true);
 
 	@Test
 	public void checkDefaultsMatchesSchema()
 	throws Exception {
-		final URL defaultsResource = CLASS_LOADER.getResource("defaults.json");
-		assertNotNull(defaultsResource);
-		final Path defaultsFilePath = Paths.get(defaultsResource.getFile());
-		final StringBuilder strb = new StringBuilder();
-		for(final String nextLine : Files.readAllLines(defaultsFilePath, StandardCharsets.UTF_8)) {
-			strb.append(nextLine).append('\n');
-		}
-		final String defaultsText = strb.toString();
-		assertFalse(defaultsText.isEmpty());
-		final JsonSchemaValidator jsonSchemaValidator = matchesJsonSchemaInClasspath(
-			"defaults-schema.json"
+		final JsonNode defaultsTree = OBJ_MAPPER.readTree(
+			new File(ROOT_DIR + separatorChar + DIR_CONF + separatorChar + "defaults.json")
 		);
-		assertTrue(jsonSchemaValidator.matches(defaultsText));
+		final JsonNode defaultsSchemaTree = OBJ_MAPPER.readTree(
+			new File(ROOT_DIR + separatorChar + DIR_CONF + separatorChar + "defaults-schema.json")
+		);
+		final JsonSchema defaultsSchema = JsonSchemaFactory
+			.newBuilder().freeze().getJsonSchema(defaultsSchemaTree);
+		final ProcessingReport report = defaultsSchema.validate(defaultsTree, true);
+		assertTrue(report.isSuccess());
 	}
 
 	@Test
 	public void checkInvalidDefaultsDoesNotMatchSchema()
 	throws Exception {
-		final ObjectMapper objectMapper = new ObjectMapper()
-			.enable(SerializationFeature.INDENT_OUTPUT);
-		final JsonNode rootNode = objectMapper.readTree(CLASS_LOADER.getResource("defaults.json"));
-		final ObjectNode itemNode = (ObjectNode) rootNode.get("config").get("item");
-		itemNode.put("type", "yohoho");
-		final String invalidDefaultsText = objectMapper.writeValueAsString(rootNode);
-		final JsonSchemaValidator jsonSchemaValidator = matchesJsonSchemaInClasspath(
-			"defaults-schema.json"
+		final JsonNode defaultsTree = OBJ_MAPPER.readTree(
+			new File(ROOT_DIR + separatorChar + DIR_CONF + separatorChar + "defaults.json")
 		);
-		assertFalse(jsonSchemaValidator.matches(invalidDefaultsText));
+		final JsonNode defaultsSchemaTree = OBJ_MAPPER.readTree(
+			new File(ROOT_DIR + separatorChar + DIR_CONF + separatorChar + "defaults-schema.json")
+		);
+		final JsonSchema defaultsSchema = JsonSchemaFactory
+			.newBuilder().freeze().getJsonSchema(defaultsSchemaTree);
+		final ObjectNode itemNode = (ObjectNode) defaultsTree.get("config").get("item");
+		itemNode.put("type", "yohoho");
+		final ProcessingReport report = defaultsSchema.validate(defaultsTree, true);
+		assertFalse(report.isSuccess());
 	}
 
 	@Test
 	public void checkDefaultsDoesNotMatchInvalidSchema()
 	throws Exception {
-		final URL defaultsResource = CLASS_LOADER.getResource("defaults.json");
-		assertNotNull(defaultsResource);
-		final Path defaultsFilePath = Paths.get(defaultsResource.getFile());
-		final StringBuilder strb = new StringBuilder();
-		for(final String nextLine : Files.readAllLines(defaultsFilePath, StandardCharsets.UTF_8)) {
-			strb.append(nextLine).append('\n');
-		}
-		final String defaultsText = strb.toString();
-		assertFalse(defaultsText.isEmpty());
-		final ObjectMapper objectMapper = new ObjectMapper()
-			.enable(SerializationFeature.INDENT_OUTPUT);
-		final JsonNode rootNode = objectMapper
-			.readTree(CLASS_LOADER.getResource("defaults-schema.json"));
-		final ObjectNode schemaCircularNode = (ObjectNode) rootNode
+		final JsonNode defaultsTree = OBJ_MAPPER.readTree(
+			new File(ROOT_DIR + separatorChar + DIR_CONF + separatorChar + "defaults.json")
+		);
+		final JsonNode defaultsSchemaTree = OBJ_MAPPER.readTree(
+			new File(ROOT_DIR + separatorChar + DIR_CONF + separatorChar + "defaults-schema.json")
+		);
+		final JsonSchema defaultsSchema = JsonSchemaFactory
+			.newBuilder().freeze().getJsonSchema(defaultsSchemaTree);
+		final ObjectNode schemaCircularNode = (ObjectNode) defaultsSchemaTree
 			.get("properties").get("config")
 			.get("properties").get("load")
 			.get("properties").get("circular");
 		schemaCircularNode.put("type", "string");
-		final String invalidDefaultsSchema = objectMapper.writeValueAsString(rootNode);
-		final JsonSchemaValidator jsonSchemaValidator = matchesJsonSchema(invalidDefaultsSchema);
-		assertFalse(defaultsText, jsonSchemaValidator.matches(defaultsText));
+		final ProcessingReport report = defaultsSchema.validate(defaultsTree, true);
+		assertFalse(report.isSuccess());
 	}
 }

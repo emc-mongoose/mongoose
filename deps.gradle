@@ -44,7 +44,7 @@ ext {
 	junit = ["junit:junit:4.12"]
 	junit_mockito = ["org.mockito:mockito-all:2.0.2-beta"]
 
-	json_schema_validator = [ "com.jayway.restassured:json-schema-validator:2.9.0" ]
+	json_schema_validator = [ "com.github.fge:json-schema-validator:2.2.6" ]
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	httpcore_plus_nio = [ httpcore, httpcore_nio, ]

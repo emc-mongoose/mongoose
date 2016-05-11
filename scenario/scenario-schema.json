@@ -1,23 +1,24 @@
 {
 	"$schema" : "http://json-schema.org/draft-04/schema#",
-	"id" : "jobContainer",
+	"id" : "scenario-schema.json",
 	"type" : "object",
 	"properties" : {
 		"type" : {
 			"type" : "string",
 			"enum" : [
+				"command",
 				"load",
 				"parallel",
-				"sequential",
+				"precondition",
 				"rampup",
-				"command"
+				"sequential"
 			]
 		},
 		"jobs" : {
 			"type" : "array",
 			"items" : {
 				"type" : "object",
-				"$ref" : "jobContainer"
+				"$ref" : "scenario-schema.json"
 			}
 		},
 		"value" : {
