@@ -397,6 +397,9 @@
 									"minimum" : 0
 								}
 							}
+						},
+						"ssl" : {
+							"type" : "boolean"
 						}
 					}
 				},

@@ -28,8 +28,8 @@ extends IoConfig<T, C>, Closeable {
 	String getAPI();
 	RequestConfig<T, C> setAPI(final String api);
 	//
-	String getScheme();
-	RequestConfig<T, C> setScheme(final String scheme);
+	boolean getSslFlag();
+	RequestConfig<T, C> setSslFlag(final boolean sslFlag);
 	//
 	int getPort();
 	RequestConfig<T, C> setPort(final int port);

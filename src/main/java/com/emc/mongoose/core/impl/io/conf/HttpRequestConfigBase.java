@@ -173,7 +173,7 @@ implements HttpRequestConfig<T, C> {
 						);
 					}
 				}
-				this.setSecret(reqConf2Clone.getSecret()).setScheme(reqConf2Clone.getScheme());
+				this.setSecret(reqConf2Clone.getSecret());
 				this.setFileAccessEnabled(reqConf2Clone.getFileAccessEnabled());
 				this.setPipelining(reqConf2Clone.getPipelining());
 			}
@@ -466,6 +466,10 @@ implements HttpRequestConfig<T, C> {
 	@Override
 	public final Map<String, Header> getSharedHeaders() {
 		return sharedHeaders;
+	}
+	//
+	protected String getScheme() {
+		return sslFlag ? "https" : "http";
 	}
 	//
 	private final static ThreadLocal<Map<String, HttpHost>>
@@ -784,14 +788,14 @@ implements HttpRequestConfig<T, C> {
 			if(tgtAddr.contains(":")) {
 				final String t[] = tgtAddr.split(":");
 				try {
-					tgtHost = new HttpHost(t[0], Integer.parseInt(t[1]), SCHEME);
+					tgtHost = new HttpHost(t[0], Integer.parseInt(t[1]), getScheme());
 				} catch(final Exception e) {
 					LogUtil.exception(
 						LOG, Level.WARN, e, "Failed to determine the request target host"
 					);
 				}
 			} else {
-				tgtHost = new HttpHost(tgtAddr, appConfig.getStoragePort(), SCHEME);
+				tgtHost = new HttpHost(tgtAddr, appConfig.getStoragePort(), getScheme());
 			}
 		} else {
 			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");

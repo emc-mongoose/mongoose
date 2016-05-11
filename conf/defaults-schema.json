@@ -410,11 +410,15 @@
 								"interestOpQueued",
 								"selectInterval"
 							]
+						},
+						"ssl" : {
+							"type" : "boolean"
 						}
 					},
 					"required": [
 						"serveJMX",
-						"socket"
+						"socket",
+						"ssl"
 					]
 				},
 				"run": {

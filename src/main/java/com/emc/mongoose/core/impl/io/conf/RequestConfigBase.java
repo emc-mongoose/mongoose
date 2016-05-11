@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.io.conf;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.container.Container;
@@ -12,7 +11,6 @@ import com.emc.mongoose.core.api.item.token.Token;
 import com.emc.mongoose.core.impl.item.token.BasicToken;
 import org.apache.commons.lang.StringUtils;
 //
-import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -30,10 +28,10 @@ implements RequestConfig<T, C> {
 	private final static Logger LOG = LogManager.getLogger();
 	//protected final static String FMT_URI_ADDR = "%s://%s:%s";
 	//
-	protected final static String SCHEME = "http";
 	protected String api, secret, userName;
 	protected volatile int port;
 	protected Token authToken;
+	protected boolean sslFlag;
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
@@ -43,6 +41,7 @@ implements RequestConfig<T, C> {
 		port = appConfig.getStoragePort();
 		final String tokenValue = appConfig.getAuthToken();
 		authToken = tokenValue == null ? null : new BasicToken(tokenValue);
+		sslFlag = appConfig.getNetworkSsl();
 	}
 	//
 	protected RequestConfigBase(final RequestConfigBase<T, C> reqConf2Clone) {
@@ -52,8 +51,8 @@ implements RequestConfig<T, C> {
 			setUserName(reqConf2Clone.getUserName());
 			setPort(reqConf2Clone.getPort());
 			setAuthToken(reqConf2Clone.getAuthToken());
-			//setScheme(reqConf2Clone.getScheme());
 			secret = reqConf2Clone.getSecret();
+			setSslFlag(reqConf2Clone.getSslFlag());
 			LOG.debug(
 				Markers.MSG, "Forked conf conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
 			);
@@ -69,7 +68,7 @@ implements RequestConfig<T, C> {
 			.setUserName(userName)
 			.setPort(port)
 			.setAuthToken(authToken)
-			/*.setScheme(SCHEME)*/;
+			.setSslFlag(sslFlag);
 		requestConfigBranch.secret = secret;
 		LOG.debug(
 			Markers.MSG, "Forked conf conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
@@ -88,12 +87,12 @@ implements RequestConfig<T, C> {
 	}
 	//
 	@Override
-	public final String getScheme() {
-		return SCHEME;
+	public final boolean getSslFlag() {
+		return sslFlag;
 	}
 	@Override
-	public final RequestConfigBase<T, C> setScheme(final String scheme) {
-		//this.SCHEME = SCHEME;
+	public final RequestConfigBase<T, C> setSslFlag(final boolean sslFlag) {
+		this.sslFlag = sslFlag;
 		return this;
 	}
 	//
@@ -155,6 +154,7 @@ implements RequestConfig<T, C> {
 		setAuthToken(tokenValue == null ? null : new BasicToken(tokenValue));
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setBuffSize(appConfig.getIoBufferSizeMin());
+		setSslFlag(appConfig.getNetworkSsl());
 		return this;
 	}
 	//
@@ -173,6 +173,8 @@ implements RequestConfig<T, C> {
 		LOG.trace(Markers.MSG, "Written secret key \"" + secret + "\"");
 		out.writeObject(getAuthToken());
 		LOG.trace(Markers.MSG, "Written auth token \"" + authToken + "\"");
+		out.writeBoolean(getSslFlag());
+		LOG.trace(Markers.MSG, "Written SSL flag \"" + sslFlag + "\"");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -189,6 +191,8 @@ implements RequestConfig<T, C> {
 		LOG.trace(Markers.MSG, "Got secret {}", secret);
 		setAuthToken((Token) in.readObject());
 		LOG.trace(Markers.MSG, "Got auth token {}", authToken);
+		setSslFlag(in.readBoolean());
+		LOG.trace(Markers.MSG, "Got SSL flag {}", sslFlag);
 	}
 	//
 	@Override
