@@ -146,10 +146,10 @@ implements HttpRequestConfig<T, C> {
 		// create HTTP client
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
 			.create()
-			.add(this)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestContent(false))
+			.add(this)
 			.build();
 		client = new HttpAsyncRequester(
 			httpProcessor, NoConnectionReuseStrategy.INSTANCE,
@@ -274,10 +274,10 @@ implements HttpRequestConfig<T, C> {
 		// create HTTP client
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
 			.create()
-			.add(this)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestContent(false))
+			.add(this)
 			.build();
 		client = new HttpAsyncRequester(
 			httpProcessor, NoConnectionReuseStrategy.INSTANCE,

@@ -121,11 +121,11 @@ implements HttpDataLoadExecutor<T> {
 		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
-			.add(httpReqConfigCopy)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			//.add(new RequestExpectContinue(true))
 			.add(new RequestContent(false))
+			.add(httpReqConfigCopy)
 			.build();
 		client = new HttpAsyncRequester(
 			httpProcessor, DefaultConnectionReuseStrategy.INSTANCE,
