@@ -45,7 +45,7 @@ public class CircularArray<T> implements Iterable<T> {
 	}
 
 	public List<T> getLastItems(final T item) {
-		List<T> lastItems = new ArrayList<>();
+		List<T> lastItems = new ArrayList<>(size);
 		final int searchedItemIndex = searchItem(item);
 		final Iterator<T> iterator = new LastItemsIterator(searchedItemIndex);
 		while (iterator.hasNext()) {
