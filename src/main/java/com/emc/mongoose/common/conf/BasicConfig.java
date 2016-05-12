@@ -695,9 +695,18 @@ implements AppConfig {
 	// Load from the external sources
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public void loadFromJson(final Path filePath) {
+		new JsonConfigLoader(this).loadPropsFromJsonCfgFile(filePath);
+		applyAliasing();
+	}
+	//
+	public void loadFromJson(final String string) {
+		new JsonConfigLoader(this).loadPropsFromJsonString(string);
+		applyAliasing();
+	}
+	//
+	private void applyAliasing() {
 		final Logger log = LogManager.getLogger();
 		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
-		new JsonConfigLoader(this).loadPropsFromJsonCfgFile(filePath);
 		log.debug(Markers.MSG, "Going to override the aliasing section");
 		String key, correctKey;
 		for(final Iterator<String> keyIter = getKeys(PREFIX_KEY_ALIASING); keyIter.hasNext();) {
@@ -705,21 +714,6 @@ implements AppConfig {
 			correctKey = key.replaceAll(prefixKeyAliasingWithDot, "");
 			log.trace(
 				Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
-			);
-		}
-	}
-	//
-	public void loadFromJson(final String string) {
-		final Logger log = LogManager.getLogger();
-		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
-		new JsonConfigLoader(this).loadPropsFromJsonString(string);
-		log.debug(Markers.MSG, "Going to override the aliasing section");
-		String key, correctKey;
-		for(final Iterator<String> keyIter = getKeys(PREFIX_KEY_ALIASING); keyIter.hasNext();) {
-			key = keyIter.next();
-			correctKey = key.replaceAll(prefixKeyAliasingWithDot, "");
-			log.trace(
-					Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
 			);
 		}
 	}
