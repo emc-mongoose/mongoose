@@ -38,7 +38,7 @@ implements LoadBuilder<T, U> {
 	protected volatile AppConfig appConfig;
 	protected long countLimit = 0;
 	protected long sizeLimit = 0;
-	protected volatile IoConfig ioConfig = getDefaultIoConfig();
+	protected volatile IoConfig ioConfig;
 	protected float rateLimit;
 	protected int threadCount = 1;
 	protected Input<T> itemInput = null;
@@ -46,7 +46,7 @@ implements LoadBuilder<T, U> {
 	protected String storageNodeAddrs[];
 	//
 	protected abstract IoConfig<? extends Item, ? extends Container<? extends Item>>
-		getDefaultIoConfig();
+		getIoConfig(final AppConfig appConfig);
 	//
 	public LoadBuilderBase()
 	throws RemoteException {
@@ -62,19 +62,10 @@ implements LoadBuilder<T, U> {
 		}
 	}
 	//
-	protected final void resetItemInput() {
-		itemInput = null;
-	}
-	//
 	public LoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
 		this.appConfig = appConfig;
-		//BasicConfig.THREAD_CONTEXT.set(appConfig);
-		if(ioConfig != null) {
-			ioConfig.setAppConfig(appConfig);
-		} else {
-			throw new IllegalStateException("Shared request config is not initialized");
-		}
+		ioConfig = getIoConfig(appConfig);
 		//
 		setThreadCount(appConfig.getLoadThreads());
 		//

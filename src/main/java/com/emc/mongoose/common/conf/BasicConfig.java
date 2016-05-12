@@ -406,6 +406,11 @@ implements AppConfig {
 	}
 	//
 	@Override
+	public boolean getNetworkSsl() {
+		return getBoolean(KEY_NETWORK_SSL);
+	}
+	//
+	@Override
 	public String getRunId() {
 		return getString(KEY_RUN_ID);
 	}

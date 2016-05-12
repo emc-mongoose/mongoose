@@ -1,0 +1,16 @@
+{
+	"type" : "load",
+	"config" : {
+		"load" : {
+			"limit" : {
+				"count" : 1
+			}
+		},
+		"network" : {
+			"ssl" : true
+		},
+		"storage" : {
+			"port" : 9021
+		}
+	}
+}

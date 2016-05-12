@@ -47,23 +47,8 @@ public class BasicHttpContainerLoadBuilderClient<
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected HttpRequestConfig getDefaultIoConfig() {
-		return HttpRequestConfigBase.getInstance();
-	}
-	//
-	@Override
-	public final BasicHttpContainerLoadBuilderClient<T, C, W, U> setAppConfig(
-		final AppConfig appConfig
-	) {
-		final String newApi = appConfig.getStorageHttpApi();
-		if(!((HttpRequestConfig) ioConfig).getAPI().equalsIgnoreCase(newApi)) {
-			ioConfig = HttpRequestConfigBase.newInstanceFor(newApi);
-		}
-		try {
-			super.setAppConfig(appConfig);
-		} catch(final RemoteException ignored) {
-		}
-		return this;
+	protected HttpRequestConfig getIoConfig(final AppConfig appConfig) {
+		return HttpRequestConfigBase.getInstance(appConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

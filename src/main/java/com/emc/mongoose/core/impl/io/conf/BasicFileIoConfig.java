@@ -35,13 +35,17 @@ implements FileIoConfig<F, D> {
 	private int batchSize = BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize();
 	//
 	public BasicFileIoConfig() {
-		super();
+		this((AppConfig) null);
 		if(dstContainer != null) {
 			final String containerName = dstContainer.getName();
 			if(containerName != null && !containerName.isEmpty()) {
 				pathInput = new RangePatternDefinedInput(containerName);
 			}
 		}
+	}
+	//
+	public BasicFileIoConfig(final AppConfig appConfig) {
+		super(appConfig);
 	}
 	//
 	public BasicFileIoConfig(final BasicFileIoConfig<F, D> another) {

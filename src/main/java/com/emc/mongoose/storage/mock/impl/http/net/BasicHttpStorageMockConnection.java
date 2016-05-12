@@ -30,14 +30,14 @@ import java.nio.charset.CharsetEncoder;
 /**
  Created by kurila on 08.06.15.
  */
-public class BasicWSMockConnection
+public class BasicHttpStorageMockConnection
 extends DefaultNHttpServerConnection {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final int maxInBuffSize, maxOutBuffSize;
 	//
-	public BasicWSMockConnection(
+	public BasicHttpStorageMockConnection(
 		final IOSession session, final int buffersize, final int fragmentSizeHint,
 		final ByteBufferAllocator allocator, final CharsetDecoder chardecoder,
 		final CharsetEncoder charencoder, final MessageConstraints constraints,
@@ -87,7 +87,7 @@ extends DefaultNHttpServerConnection {
 		}
 	}
 	//
-	public BasicWSMockConnection(
+	public BasicHttpStorageMockConnection(
 		final IOSession session, final int buffersize, final CharsetDecoder chardecoder,
 		final CharsetEncoder charencoder, final MessageConstraints constraints
 	) {
@@ -97,7 +97,7 @@ extends DefaultNHttpServerConnection {
 		);
 	}
 	//
-	public BasicWSMockConnection(final IOSession session, final int buffersize) {
+	public BasicHttpStorageMockConnection(final IOSession session, final int buffersize) {
 		this(
 			session, buffersize, 0, DirectByteBufferAllocator.INSTANCE, null, null, null, null, null,
 			null, null

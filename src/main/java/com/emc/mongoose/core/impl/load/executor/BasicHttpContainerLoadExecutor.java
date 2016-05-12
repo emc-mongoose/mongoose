@@ -12,6 +12,7 @@ import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
 import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 //
+import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -28,7 +29,10 @@ import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.nio.DefaultNHttpClientConnectionFactory;
+import org.apache.http.impl.nio.SSLNHttpClientConnectionFactory;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
+import org.apache.http.nio.NHttpConnectionFactory;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
@@ -54,8 +58,10 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -156,11 +162,23 @@ implements HttpContainerLoadExecutor<T, C> {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);
 		}
 		//
-		final NIOConnFactory<HttpHost, NHttpClientConnection>
-			connFactory = new BasicNIOConnFactory(
-			null, null, null, null,
-			DirectByteBufferAllocator.INSTANCE, connConfig
+		final NHttpConnectionFactory<? extends NHttpClientConnection>
+			plainConnFactory = new DefaultNHttpClientConnectionFactory(
+			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
 		);
+		NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory = null;
+		if(httpReqConfigCopy.getSslFlag()) {
+			try {
+				sslConnFactory = new SSLNHttpClientConnectionFactory(
+					SSLContext.getDefault(), BasicSslSetupHandler.INSTANCE, null, null,
+					DirectByteBufferAllocator.INSTANCE, connConfig
+				);
+			} catch(final NoSuchAlgorithmException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the default SSL context");
+			}
+		}
+		final NIOConnFactory<HttpHost, NHttpClientConnection>
+			connFactory = new BasicNIOConnFactory(plainConnFactory, sslConnFactory);
 		//
 		connPoolMap = new HashMap<>(storageNodeCount);
 		HttpHost nextRoute;

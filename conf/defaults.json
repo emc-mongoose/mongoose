@@ -76,7 +76,8 @@
 				"bindBacklogSize" : 0,
 				"interestOpQueued" : false,
 				"selectInterval" : 100
-			}
+			},
+			"ssl" : false
 		},
 		"run" : {
 			"id" : null,

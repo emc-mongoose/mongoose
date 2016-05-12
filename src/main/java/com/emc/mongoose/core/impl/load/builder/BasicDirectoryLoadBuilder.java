@@ -33,8 +33,8 @@ implements DirectoryLoadBuilder<T, C, U> {
 	}
 	//
 	@Override
-	protected FileIoConfig<T, C> getDefaultIoConfig() {
-		return new BasicFileIoConfig<>();
+	protected FileIoConfig<T, C> getIoConfig(final AppConfig appConfig) {
+		return new BasicFileIoConfig<>(appConfig);
 	}
 	//
 	@Override

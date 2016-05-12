@@ -8,6 +8,7 @@ import com.emc.mongoose.common.io.value.async.AsyncCurrentDateInput;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.HttpStorageMock;
@@ -15,12 +16,14 @@ import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
 import com.emc.mongoose.storage.mock.impl.http.net.BasicSocketEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.http.request.APIRequestHandlerMapper;
-import com.emc.mongoose.storage.mock.impl.http.net.BasicWSMockConnFactory;
+import com.emc.mongoose.storage.mock.impl.http.net.BasicHttpStorageMockConnFactory;
 //
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.impl.nio.SSLNHttpServerConnectionFactory;
+import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpProcessor;
@@ -39,7 +42,10 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
 /**
  * Created by olga on 28.01.15.
  */
@@ -51,7 +57,8 @@ implements HttpStorageMock<T> {
 	//
 	private final BasicSocketEventDispatcher sockEvtDispatchers[] ;
 	private final HttpAsyncService protocolHandler;
-	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
+	private final NHttpConnectionFactory<DefaultNHttpServerConnection> plainConnFactory;
+	private final NHttpConnectionFactory<DefaultNHttpServerConnection> sslConnFactory;
 	private final int portStart;
 	//
 	public Cinderella(final AppConfig appConfig)
@@ -65,8 +72,7 @@ implements HttpStorageMock<T> {
 			appConfig.getItemSrcBatchSize(),
 			appConfig.getItemSrcFile(),
 			appConfig.getLoadMetricsPeriod(),
-			appConfig.getNetworkServeJmx(),
-			0, 0
+			appConfig.getNetworkServeJmx()
 		);
 	}
 	//
@@ -74,8 +80,7 @@ implements HttpStorageMock<T> {
 	public Cinderella(
 		final int headCount, final int portStart, final int storageCapacity,
 		final int containerCapacity, final int containerCountLimit, final int batchSize,
-		final String dataSrcPath, final int metricsPeriodSec, final boolean jmxServeFlag,
-		final int minConnLifeMilliSec, final int maxConnLifeMilliSec
+		final String dataSrcPath, final int metricsPeriodSec, final boolean jmxServeFlag
 	) throws IOException {
 		super(
 			(Class<T>) BasicHttpDataMock.class, ContentSourceBase.getDefaultInstance(),
@@ -91,8 +96,16 @@ implements HttpStorageMock<T> {
 			.setBufferSize(BUFF_SIZE_LO)
 			.setFragmentSizeHint(0)
 			.build();
-		connFactory = new BasicWSMockConnFactory(
-			connConfig, minConnLifeMilliSec, maxConnLifeMilliSec
+		plainConnFactory = new BasicHttpStorageMockConnFactory(connConfig);
+		SSLContext sslContext = null;
+		try {
+			sslContext = SSLContext.getDefault();
+		} catch(final NoSuchAlgorithmException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the default SSL context");
+		}
+		sslConnFactory = new SSLNHttpServerConnectionFactory(
+			sslContext, BasicSslSetupHandler.INSTANCE, null, null,
+			DirectByteBufferAllocator.INSTANCE, connConfig
 		);
 		// Set up the HTTP protocol processor
 		final HttpProcessor httpProc = HttpProcessorBuilder.create()
@@ -129,9 +142,18 @@ implements HttpStorageMock<T> {
 		for(int i = 0; i < sockEvtDispatchers.length; i++) {
 			nextPort = portStart + i;
 			try {
-				sockEvtDispatchers[i] = new BasicSocketEventDispatcher(
-					BasicConfig.THREAD_CONTEXT.get(), protocolHandler, nextPort, connFactory, ioStats
-				);
+				if(i % 2 == 0) {
+					sockEvtDispatchers[i] = new BasicSocketEventDispatcher(
+						BasicConfig.THREAD_CONTEXT.get(), protocolHandler, nextPort,
+						plainConnFactory, ioStats
+					);
+				} else {
+					LOG.info(Markers.MSG, "Port #{}: TLS enabled", nextPort);
+					sockEvtDispatchers[i] = new BasicSocketEventDispatcher(
+						BasicConfig.THREAD_CONTEXT.get(), protocolHandler, nextPort,
+						sslConnFactory, ioStats
+					);
+				}
 				sockEvtDispatchers[i].start();
 			} catch(final IOReactorException e) {
 				LogUtil.exception(

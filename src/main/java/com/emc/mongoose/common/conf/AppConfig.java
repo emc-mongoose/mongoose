@@ -56,6 +56,16 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_LOAD_SERVER_NODE_MAPPING = "load.server.nodeMapping";
 	String KEY_LOAD_THREADS = "load.threads";
 	String KEY_LOAD_TYPE = "load.type";
+	String KEY_NETWORK_SERVE_JMX = "network.serveJMX";
+	String KEY_NETWORK_SOCKET_TIMEOUT_MILLISEC = "network.socket.timeoutMilliSec";
+	String KEY_NETWORK_SOCKET_REUSE_ADDR = "network.socket.reuseAddr";
+	String KEY_NETWORK_SOCKET_KEEP_ALIVE = "network.socket.keepAlive";
+	String KEY_NETWORK_SOCKET_TCP_NO_DELAY = "network.socket.tcpNoDelay";
+	String KEY_NETWORK_SOCKET_LINGER = "network.socket.linger";
+	String KEY_NETWORK_SOCKET_BIND_BACKLOG_SIZe = "network.socket.bindBacklogSize";
+	String KEY_NETWORK_SOCKET_INTEREST_OP_QUEUED = "network.socket.interestOpQueued";
+	String KEY_NETWORK_SOCKET_SELECT_INTERVAL = "network.socket.selectInterval";
+	String KEY_NETWORK_SSL = "network.ssl";
 	String KEY_RUN_ID = "run.id";
 	String KEY_RUN_MODE = "run.mode";
 	String KEY_RUN_NAME = "run.name";
@@ -74,15 +84,6 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_STORAGE_MOCK_CAPACITY = "storage.mock.capacity";
 	String KEY_STORAGE_MOCK_CONTAINER_CAPACITY = "storage.mock.container.capacity";
 	String KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT = "storage.mock.container.countLimit";
-	String KEY_NETWORK_SERVE_JMX = "network.serveJMX";
-	String KEY_NETWORK_SOCKET_TIMEOUT_MILLISEC = "network.socket.timeoutMilliSec";
-	String KEY_NETWORK_SOCKET_REUSE_ADDR = "network.socket.reuseAddr";
-	String KEY_NETWORK_SOCKET_KEEP_ALIVE = "network.socket.keepAlive";
-	String KEY_NETWORK_SOCKET_TCP_NO_DELAY = "network.socket.tcpNoDelay";
-	String KEY_NETWORK_SOCKET_LINGER = "network.socket.linger";
-	String KEY_NETWORK_SOCKET_BIND_BACKLOG_SIZe = "network.socket.bindBacklogSize";
-	String KEY_NETWORK_SOCKET_INTEREST_OP_QUEUED = "network.socket.interestOpQueued";
-	String KEY_NETWORK_SOCKET_SELECT_INTERVAL = "network.socket.selectInterval";
 	//
 	String KEY_SCENARIO_FROM_STDIN = "scenarioFromStdIn";
 	String KEY_SCENARIO_FROM_WEBUI = "scenarioFromWebUi";
@@ -190,6 +191,8 @@ extends Cloneable, Configuration, Externalizable {
 	boolean getNetworkSocketInterestOpQueued();
 
 	int getNetworkSocketSelectInterval();
+
+	boolean getNetworkSsl();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 

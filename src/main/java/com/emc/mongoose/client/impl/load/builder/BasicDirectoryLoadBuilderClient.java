@@ -46,8 +46,8 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected FileIoConfig<T, C> getDefaultIoConfig() {
-		return new BasicFileIoConfig();
+	protected FileIoConfig<T, C> getIoConfig(final AppConfig appConfig) {
+		return new BasicFileIoConfig(appConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
