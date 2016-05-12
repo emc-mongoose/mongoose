@@ -689,6 +689,7 @@ implements AppConfig {
 		final byte jsonData[] = new byte[l];
 		in.readFully(jsonData);
 		new JsonConfigLoader(this).loadPropsFromJsonByteArray(jsonData);
+		THREAD_CONTEXT.set(this); // required for proper IoConfig (and its derivatives) instancing
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Load from the external sources

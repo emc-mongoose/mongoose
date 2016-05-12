@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.io.conf;
 // mongoose-common
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.SizeInBytes;
@@ -138,7 +139,7 @@ implements HttpRequestConfig<T, C> {
 	//
 	public HttpRequestConfigBase()
 	throws NoSuchAlgorithmException, IOReactorException {
-		this((AppConfig) null);
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
 	protected HttpRequestConfigBase(final AppConfig appConfig) {
