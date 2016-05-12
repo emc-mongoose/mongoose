@@ -8,7 +8,7 @@ import com.emc.mongoose.common.io.value.async.AsyncCurrentDateInput;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.common.net.ssl.SslContextFactory;
+import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.HttpStorageMock;
@@ -23,8 +23,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.SSLNHttpServerConnectionFactory;
-import org.apache.http.nio.reactor.IOSession;
-import org.apache.http.nio.reactor.ssl.SSLSetupHandler;
 import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
@@ -40,16 +38,14 @@ import org.apache.http.nio.protocol.HttpAsyncRequestHandlerMapper;
 import org.apache.http.nio.protocol.HttpAsyncService;
 import org.apache.http.nio.reactor.IOReactorException;
 //
-import org.apache.http.ssl.SSLContexts;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
-import javax.security.cert.X509Certificate;
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
 /**
  * Created by olga on 28.01.15.
  */
@@ -101,31 +97,15 @@ implements HttpStorageMock<T> {
 			.setFragmentSizeHint(0)
 			.build();
 		plainConnFactory = new BasicHttpStorageMockConnFactory(connConfig);
+		SSLContext sslContext = null;
+		try {
+			sslContext = SSLContext.getDefault();
+		} catch(final NoSuchAlgorithmException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the default SSL context");
+		}
 		sslConnFactory = new SSLNHttpServerConnectionFactory(
-			SslContextFactory.getInstance(),
-			new SSLSetupHandler() {
-				//
-				@Override
-				public final void initalize(final SSLEngine sslEngine)
-				throws SSLException {
-					// enforce TLS and disable SSL
-					sslEngine.setEnabledProtocols(
-						new String[] {"TLSv1", "TLSv1.1", "TLSv1.2"}
-					);
-				}
-				//
-				@Override
-				public final void verify(
-					final IOSession ioSession, final SSLSession sslSession
-				) throws SSLException {
-					final X509Certificate[] certs = sslSession.getPeerCertificateChain();
-					// examine peer certificate chain
-					for(final X509Certificate cert : certs) {
-						LOG.warn(Markers.MSG, cert.toString());
-					}
-				}
-			},
-			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
+			sslContext, BasicSslSetupHandler.INSTANCE, null, null,
+			DirectByteBufferAllocator.INSTANCE, connConfig
 		);
 		// Set up the HTTP protocol processor
 		final HttpProcessor httpProc = HttpProcessorBuilder.create()

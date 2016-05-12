@@ -12,7 +12,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
-import com.emc.mongoose.common.net.ssl.SslContextFactory;
+import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -46,8 +46,6 @@ import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.nio.NHttpConnectionFactory;
-import org.apache.http.nio.reactor.IOSession;
-import org.apache.http.nio.reactor.ssl.SSLSetupHandler;
 import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpCoreContext;
@@ -72,37 +70,22 @@ import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
 //
-import org.apache.http.ssl.SSLContexts;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509ExtendedKeyManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
-import java.net.Socket;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
-import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
-import java.security.PrivateKey;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -219,37 +202,16 @@ implements HttpRequestConfig<T, C> {
 			plainConnFactory = new DefaultNHttpClientConnectionFactory(
 			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
 		);
-		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
+		NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory = null;
 		if(sslFlag) {
-			sslConnFactory = new SSLNHttpClientConnectionFactory(
-				SslContextFactory.getInstance(),
-				new SSLSetupHandler() {
-					//
-					@Override
-					public final void initalize(final SSLEngine sslEngine)
-					throws SSLException {
-						// enforce TLS and disable SSL
-						sslEngine.setEnabledProtocols(
-							new String[] {"TLSv1", "TLSv1.1", "TLSv1.2"}
-						);
-					}
-					//
-					@Override
-					public final void verify(
-						final IOSession ioSession, final SSLSession sslSession
-					) throws SSLException {
-						final javax.security.cert.X509Certificate[]
-							certs = sslSession.getPeerCertificateChain();
-						// examine peer certificate chain
-						for(final javax.security.cert.X509Certificate cert : certs) {
-							LOG.warn(Markers.MSG, cert.toString());
-						}
-					}
-				},
-				null, null, DirectByteBufferAllocator.INSTANCE, connConfig
-			);
-		} else {
-			sslConnFactory = null;
+			try {
+				sslConnFactory = new SSLNHttpClientConnectionFactory(
+					SSLContext.getDefault(), BasicSslSetupHandler.INSTANCE, null, null,
+					DirectByteBufferAllocator.INSTANCE, connConfig
+				);
+			} catch(final NoSuchAlgorithmException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the default SSL context");
+			}
 		}
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
 			connFactory = new BasicNIOConnFactory(plainConnFactory, sslConnFactory);
@@ -370,35 +332,16 @@ implements HttpRequestConfig<T, C> {
 			plainConnFactory = new DefaultNHttpClientConnectionFactory(
 			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
 		);
-		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
+		NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory = null;
 		if(sslFlag) {
-			sslConnFactory = new SSLNHttpClientConnectionFactory(
-				SslContextFactory.getInstance(),
-				new SSLSetupHandler() {
-					//
-					@Override
-					public final void initalize(final SSLEngine sslEngine)
-					throws SSLException {
-						// enforce TLS and disable SSL
-						sslEngine.setEnabledProtocols(TLS_PROTOCOLS);
-					}
-					//
-					@Override
-					public final void verify(
-						final IOSession ioSession, final SSLSession sslSession
-					) throws SSLException {
-						final javax.security.cert.X509Certificate[]
-							certs = sslSession.getPeerCertificateChain();
-						// examine peer certificate chain
-						for(final javax.security.cert.X509Certificate cert : certs) {
-							LOG.warn(Markers.MSG, cert.toString());
-						}
-					}
-				},
-				null, null, DirectByteBufferAllocator.INSTANCE, connConfig
-			);
-		} else {
-			sslConnFactory = null;
+			try {
+				sslConnFactory = new SSLNHttpClientConnectionFactory(
+					SSLContext.getDefault(), BasicSslSetupHandler.INSTANCE, null, null,
+					DirectByteBufferAllocator.INSTANCE, connConfig
+				);
+			} catch(final NoSuchAlgorithmException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the default SSL context");
+			}
 		}
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
 			connFactory = new BasicNIOConnFactory(plainConnFactory, sslConnFactory);
