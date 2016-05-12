@@ -25,7 +25,7 @@ public class ScenarioServlet extends HttpServlet {
 		final String relativeScenarioPath =
 				request.getParameter(REQUEST_PATH_KEY);
 		final Path fullScenarioPath =  PATH_TO_SCENARIO_DIR.resolve(relativeScenarioPath);
-		final String scenarioJson = JsonUtil.readFileToString(fullScenarioPath);
+		final String scenarioJson = JsonUtil.readFileToString(fullScenarioPath, true);
 		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
 		response.getWriter().write(scenarioJson);
 	}
