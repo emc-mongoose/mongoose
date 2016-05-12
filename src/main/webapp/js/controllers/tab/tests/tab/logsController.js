@@ -84,12 +84,18 @@ define([
 	}
 	
 	function updateLogTable(markerName, logsObj) {
-		$.each(logsObj, function (key, array) {
-			$.each(array, function (index, key) {
-				
+		const tableBody = $(jqId([LOG_MARKER[markerName],'log', 'wrapper']) + " ." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body']));
+		$.each(logsObj, function (key, logEvents) {
+			$.each(logEvents, function (index, logEvent) {
+				const tableRow = $("<tr/>");
+				$.each(logEvent, function (key, value) {
+					const tableCell = $("<td/>");
+					tableCell.text(value);
+					tableRow.append(tableCell);
+				});
+				tableBody.append(tableRow);
 			})
 		});
-		$(jqId([markerName,'log', 'wrapper']) + " ." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body']));
 	}
 	
 	function getLogs(markerName) {
@@ -109,7 +115,7 @@ define([
 	}
 
 	function setTabParameters() {
-		if (LOGS_MODE.indexOf(listController.currentTestMode())) {
+		if (LOGS_MODE.indexOf(listController.currentTestMode()) > -1) {
 			if (listController.currentTestId()) {
 				$.each(LOG_MARKER, function (key, value) {
 					getLogs(value);

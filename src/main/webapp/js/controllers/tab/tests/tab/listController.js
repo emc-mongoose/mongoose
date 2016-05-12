@@ -5,7 +5,6 @@ define([
 	'../../../../common/util/cssUtil',
 	'../../../../common/util/tabsUtil',
 	'../../../../common/constants',
-	'./logsController',
 	'text!../../../../../templates/tab/tests/tab/list.hbs'
 ], function ($,
              hbUtil,
@@ -13,7 +12,6 @@ define([
              cssUtil,
              tabsUtil,
              constants,
-             logsController,
              listTemplate) {
 
 	const TAB_TYPE = templatesUtil.tabTypes();
@@ -90,7 +88,7 @@ define([
 		tabsUtil.showTabAsActive(listItemElemClass, testId);
 		currentTestId = testId;
 		currentTestMode = testMode;
-		logsController.resetLogs();
+		// logsController.resetLogs();
 	}
 
 	function getCurrentTestId() {
