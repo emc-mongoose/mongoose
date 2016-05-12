@@ -66,7 +66,7 @@ public class RunServlet extends HttpServlet {
 			return;
 		}
 		runId =  LogUtil.newRunId();
-		config.setProperty(AppConfig.KEY_RUN_ID, runId);
+		config.setRunId(runId);
 		JsonScenario scenario = null;
 		if (startProperties.get(SCENARIO_KEY) != null) {
 			config.setProperty(AppConfig.KEY_SCENARIO_FROM_WEBUI, true);
@@ -200,6 +200,8 @@ public class RunServlet extends HttpServlet {
 
 		@Override
 		public void run() {
+			config.overrideRunId();
+			config.overrideRunMode();
 			logStart();
 			try {
 				start();

@@ -19,6 +19,7 @@ import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 //
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -47,7 +48,7 @@ public final class ModeDispatcher {
 		} else {
 			runMode = args[0];
 		}
-		appConfig.setProperty(AppConfig.KEY_RUN_MODE, runMode);
+		appConfig.setRunMode(runMode);
 		rootLogger.info(Markers.MSG, appConfig.toString());
 		//
 		switch(runMode) {

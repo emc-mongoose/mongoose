@@ -231,6 +231,14 @@ extends Cloneable, Configuration, Externalizable {
 
 	int getStorageMockContainerCountLimit();
 
+	void setRunId(final String runId);
+
+	void setRunMode(final String runMode);
+
+	void overrideRunId();
+
+	void overrideRunMode();
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void override(final String branch, final Map<String, ?> tree);
