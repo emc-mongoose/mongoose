@@ -84,8 +84,12 @@ define([
 	}
 	
 	function updateLogTable(markerName, logsObj) {
-		console.log(markerName);
-		console.log(logsObj);
+		$.each(logsObj, function (key, array) {
+			$.each(array, function (index, key) {
+				
+			})
+		});
+		$(jqId([markerName,'log', 'wrapper']) + " ." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body']));
 	}
 	
 	function getLogs(markerName) {
@@ -116,7 +120,7 @@ define([
 	
 	function resetLogs() {
 		resetLogsFlag = true;
-		$(jqId([TESTS_TAB_TYPE.LOGS, 'table', 'body'])).empty();
+		$("." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body'])).empty();
 	}
 
 	return {

@@ -4,10 +4,10 @@ define([
 	const JSON_CONTENT_TYPE = 'application/json; charset=utf-8';
 
 	const LOG_MARKERS = {
-		MESSAGES: 'msg',
-		ERRORS: 'err',
-		PERFAVG: 'perfAvg',
-		PERFSUM: 'perfSum'
+		'messages': 'msg',
+		'errors': 'errors',
+		'perf\.avg': 'perfAvg',
+		'perf\.sum': 'perfSum'
 	};
 
 	return {
