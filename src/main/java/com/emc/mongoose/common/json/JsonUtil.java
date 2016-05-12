@@ -1,8 +1,11 @@
 package com.emc.mongoose.common.json;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +13,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.regex.Pattern.compile;
@@ -19,12 +23,17 @@ import static java.util.regex.Pattern.compile;
  */
 public class JsonUtil {
 
+	private static final Logger LOG = LogManager.getLogger();
+
 	public static final TypeReference PLAIN_JSON_TYPE = new PlainJsonType();
 	public static final TypeReference COMMON_JSON_TYPE = new CommonJsonType();
 	public static final TypeReference COMPLEX_JSON_TYPE = new ComplexJsonType();
 
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-	private static final Pattern COMMENT_PATTERN = Pattern.compile("[ ]*//.+");
+	static {
+		JSON_MAPPER.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+	}
+	private static final Pattern COMMENT_PATTERN = Pattern.compile("(^[^\"]*)(//.*$)");
 
 
 	/**
@@ -60,6 +69,10 @@ public class JsonUtil {
 		return jsArrayPathContent(new File(pathString));
 	}
 
+	public static String jsArrayPathContent(final Path path) throws JsonProcessingException {
+		return jsArrayPathContent(path.toFile());
+	}
+
 	public static String jsArrayPathContent(final File file) throws JsonProcessingException {
 		final List<Object> dirContent = new ArrayList<>();
 		if (file.isFile()) {
@@ -68,10 +81,6 @@ public class JsonUtil {
 			listDirectoryContents(file.toPath(), dirContent);
 			return JSON_MAPPER.writeValueAsString(dirContent);
 		}
-	}
-
-	public static String jsArrayPathContent(final Path path) throws JsonProcessingException {
-		return jsArrayPathContent(path.toFile());
 	}
 
 	private static void listDirectoryContents(final Path dirPath, final List<Object> rootList) {
@@ -90,38 +99,60 @@ public class JsonUtil {
 				}
 			}
 		} catch (final IOException e) {
-			e.printStackTrace();
+			LOG.error("Failed to list the scenario directory");
 		}
 	}
 
-	public static String readFileToString(final Path path)
+	public static String readFileToString(final Path path) throws IOException {
+		return readFileToString(path, false);
+	}
+
+	public static String readFileToString(final Path path, final boolean javaOneLineCommentRemove)
 			throws IOException {
 		String string;
 		try (
-				final BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.US_ASCII)
+				final BufferedReader reader =
+						Files.newBufferedReader(path, StandardCharsets.US_ASCII)
 		) {
-			string = readString(reader);
+			string = readString(reader, javaOneLineCommentRemove);
 		}
 		return string;
 	}
 
-	public static String readString(final BufferedReader reader)
+	public static String readString(final BufferedReader reader) throws IOException {
+		return readString(reader, false);
+	}
+
+	public static String readString(
+			final BufferedReader reader, final boolean javaOneLineCommentRemove)
 			throws IOException {
 		final StringBuilder fileTextBuilder = new StringBuilder();
 		String line;
 		while ((line = reader.readLine()) != null) {
-			line = COMMENT_PATTERN.matcher(line).replaceAll("");
+			if (javaOneLineCommentRemove) {
+				line = removeCommentariesFromLine(line);
+			}
 			fileTextBuilder.append(line).append('\n');
 		}
 		return fileTextBuilder.toString();
 	}
 
+
 	public static Map<String, String> readValue(final BufferedReader reader)
 			throws IOException {
-		final String plainJsonString = JsonUtil.readString(reader);
+		final String plainJsonString = JsonUtil.readString(reader, false);
 		return JSON_MAPPER.readValue(
 				plainJsonString, PLAIN_JSON_TYPE
 		);
+	}
+
+	private static String removeCommentariesFromLine(final String line) {
+		final Matcher commentMatcher = COMMENT_PATTERN.matcher(line);
+		if (commentMatcher.find()) {
+			return removeCommentariesFromLine(commentMatcher.group(1));
+		} else {
+			return line;
+		}
 	}
 
 	private static final class PlainJsonType extends TypeReference<Map<String, String>> {

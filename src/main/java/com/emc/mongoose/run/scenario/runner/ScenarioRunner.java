@@ -30,35 +30,43 @@ implements Runnable {
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	private final AppConfig appConfig;
+	private Scenario scenario = null;
 	//
 	public ScenarioRunner(final AppConfig appConfig) {
 		this.appConfig = appConfig;
 	}
 	//
+	public ScenarioRunner(final AppConfig appConfig, final Scenario scenario) {
+		this.appConfig = appConfig;
+		this.scenario = scenario;
+	}
+	//
 	public void run() {
-		Scenario scenario = null;
 
 		final boolean useStdInFlag = appConfig.getBoolean(AppConfig.KEY_SCENARIO_FROM_STDIN, false);
+		final boolean useWebUiFlag = appConfig.getBoolean(AppConfig.KEY_SCENARIO_FROM_WEBUI, false);
 		final String runFileStr = appConfig.getRunFile();
 		Path runFilePath;
-		try {
-			if(useStdInFlag) {
-				LOG.info(Markers.MSG, "Using the scenario from the standard input...");
-				scenario = new JsonScenario(appConfig, System.in);
-			} else {
-				if(runFileStr != null && !runFileStr.isEmpty()) {
-					runFilePath = Paths.get(runFileStr);
+		if (!useWebUiFlag) {
+			try {
+				if (useStdInFlag) {
+					LOG.info(Markers.MSG, "Using the scenario from the standard input...");
+					scenario = new JsonScenario(appConfig, System.in);
 				} else {
-					runFilePath = Paths.get(getRootDir(), DIR_SCENARIO)
-						.resolve(FNAME_DEFAULT_SCENARIO);
+					if (runFileStr != null && !runFileStr.isEmpty()) {
+						runFilePath = Paths.get(runFileStr);
+					} else {
+						runFilePath = Paths.get(getRootDir(), DIR_SCENARIO)
+								.resolve(FNAME_DEFAULT_SCENARIO);
+					}
+					LOG.info(Markers.MSG, "Using the scenario from the file \"{}\"", runFileStr);
+					scenario = new JsonScenario(appConfig, runFilePath.toFile());
 				}
-				LOG.info(Markers.MSG, "Using the scenario from the file \"{}\"", runFileStr);
-				scenario = new JsonScenario(appConfig, runFilePath.toFile());
+			} catch (final IOException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Scenario reading failure");
+			} catch (final CloneNotSupportedException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Configuration spawning failure");
 			}
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Scenario reading failure");
-		} catch(final CloneNotSupportedException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Configuration spawning failure");
 		}
 		//
 		if(scenario != null) {

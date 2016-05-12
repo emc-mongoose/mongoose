@@ -269,12 +269,16 @@ define([
 				};
 				if (EXTENDED_MODE.indexOf(currentMode) > -1) {
 					const runScenario = scenariosController.getChangedScenario();
-					if (runScenario === null) {
-						alert('Please, choose a scenario');
-						return
-					} else {
+					if (runScenario !== null) {
 						startJson['scenario'] = runScenario;
 					}
+					// else {
+					// 	if (!confirm(
+					// 			'Mongoose will start with the default scenario. ' +
+					// 			'Would you like to continue?')) {
+					// 		return
+					// 	}
+					// }
 				}
 				startButtonClickEvent(startJson);
 			})

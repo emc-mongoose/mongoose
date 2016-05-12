@@ -85,6 +85,7 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_NETWORK_SOCKET_SELECT_INTERVAL = "network.socket.selectInterval";
 	//
 	String KEY_SCENARIO_FROM_STDIN = "scenarioFromStdIn";
+	String KEY_SCENARIO_FROM_WEBUI = "scenarioFromWebUi";
 	//
 	String FNAME_CONF = "defaults.json";
 	String PREFIX_KEY_ALIASING = "aliasing";

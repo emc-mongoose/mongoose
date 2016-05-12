@@ -67,7 +67,11 @@ public class RunServlet extends HttpServlet {
 		}
 		runId =  LogUtil.newRunId();
 		config.setProperty(AppConfig.KEY_RUN_ID, runId);
-		final JsonScenario scenario = getScenario(startProperties, config);
+		JsonScenario scenario = null;
+		if (startProperties.get(SCENARIO_KEY) != null) {
+			config.setProperty(AppConfig.KEY_SCENARIO_FROM_WEBUI, true);
+			scenario = getScenario(startProperties, config);
+		}
 		final String runMode = getRunMode(config);
 		switch (runMode) {
 			case Constants.RUN_MODE_STANDALONE:
@@ -108,7 +112,7 @@ public class RunServlet extends HttpServlet {
 		) {
 			startPropertiesString = JsonUtil.readString(reader);
 		}
-		return JSON_MAPPER.readValue(startPropertiesString, JsonUtil.COMMON_JSON_TYPE);
+		return JSON_MAPPER.readValue(startPropertiesString, JsonUtil.COMPLEX_JSON_TYPE);
 	}
 
 	private AppConfig getConfig(final Map<String, Map<String, Object>> startProperties)
@@ -238,7 +242,7 @@ public class RunServlet extends HttpServlet {
 
 		@Override
 		void start() throws Exception {
-			new ScenarioRunner(scenario).run();
+			new ScenarioRunner(super.config, scenario).run();
 		}
 
 	}

@@ -3,6 +3,7 @@ package com.emc.mongoose.webui;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.json.JsonUtil;
+import com.emc.mongoose.run.scenario.engine.Scenario;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +29,7 @@ public final class MainServlet
 	private static final Path PATH_TO_APP_CONFIG_DIR =
 			Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF);
 	public static final Path PATH_TO_SCENARIO_DIR =
-			Paths.get(getRootDir(), Constants.DIR_SCENARIO);
+			Paths.get(getRootDir(), Scenario.DIR_SCENARIO);
 	private static final String APP_CONFIG_JSON_KEY = "appConfig";
 	private static final String SCENARIOS_JSON_KEY = "scenarios";
 
@@ -37,7 +38,7 @@ public final class MainServlet
 			final HttpServletRequest request, final HttpServletResponse response
 	) {
 		try {
-			final String appConfigJson = JsonUtil.readFileToString(PATH_TO_APP_CONFIG_DIR);
+			final String appConfigJson = JsonUtil.readFileToString(PATH_TO_APP_CONFIG_DIR, true);
 			final String scenarioDirContentsJson = JsonUtil.jsArrayPathContent(PATH_TO_SCENARIO_DIR);
 			FULL_JSON_BUILDER.setLength(0);
 			FULL_JSON_BUILDER.append("{ \"").append(APP_CONFIG_JSON_KEY).append("\": ")
