@@ -35,4 +35,9 @@ public class ShortenedLogEvent implements Serializable {
 			return Long.compare(sle1.timeStamp, sle2.timeStamp);
 		}
 	}
+
+	@Override
+	public String toString() {
+		return String.valueOf(timeStamp);
+	}
 }

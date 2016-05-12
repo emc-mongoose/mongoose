@@ -103,8 +103,14 @@ public class CircularArray<T> implements Iterable<T> {
 
 		public LastItemsIterator(final int startIndex) {
 			final int arrayPrePointerIndex = CircularArray.this.pointer - 1;
-			if (startIndex == arrayPrePointerIndex) {
-
+			if (size < length) {
+				if (startIndex < 0) {
+					this.pointer = -1;
+				} else {
+					this.pointer = startIndex;
+				}
+				finishIndex = size - 1;
+				return;
 			}
 			if (startIndex < 0) {
 				this.pointer = arrayPrePointerIndex;
@@ -145,10 +151,12 @@ public class CircularArray<T> implements Iterable<T> {
 	public String toString() {
 		final StringBuilder valuesBuilder = new StringBuilder();
 		valuesBuilder.append('[');
-		for (T item: this) {
-			valuesBuilder.append(' ').append(item).append(", ");
+		if (size > 0) {
+			for (int i = 0; i < size; i++) {
+				valuesBuilder.append(' ').append(this.array[i].toString()).append(", ");
+			}
+			valuesBuilder.delete(valuesBuilder.length() - 2, valuesBuilder.length() - 1);
 		}
-		valuesBuilder.delete(valuesBuilder.length() - 2, valuesBuilder.length() - 1);
 		valuesBuilder.append(']');
 		return valuesBuilder.toString();
 	}

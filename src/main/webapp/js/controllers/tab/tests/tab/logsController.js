@@ -19,6 +19,7 @@ define([
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const TESTS_TAB_TYPE = templatesUtil.testsTabTypes();
 	const TESTS_LOGS_TAB_TYPE = templatesUtil.testsLogsTabTypes();
+	const LOG_MARKER = constants.LOG_MARKERS;
 	const LOGS_MODE = templatesUtil.objPartToArray(templatesUtil.modes(), 2);
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
@@ -106,7 +107,7 @@ define([
 	function setTabParameters() {
 		if (LOGS_MODE.indexOf(listController.currentTestMode())) {
 			if (listController.currentTestId()) {
-				$.each(TESTS_LOGS_TAB_TYPE, function (key, value) {
+				$.each(LOG_MARKER, function (key, value) {
 					getLogs(value);
 				})
 			}

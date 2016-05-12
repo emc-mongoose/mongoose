@@ -55,7 +55,7 @@ public class CircularArrayTest {
 
 	@Test
 	public void shouldSearchItem() throws Exception {
-		final int countLimit = 10;
+		final int countLimit = 6;
 		final int indexToCheck = RANDOM.nextInt(countLimit);
 		FakeLogEvent fleToCheck = null;
 		for (int i = 0; i < countLimit; i++) {
@@ -89,7 +89,7 @@ public class CircularArrayTest {
 				eventToCheck = tempFle;
 			}
 		}
-		final Iterator<FakeLogEvent> iterator = circularArray.iterator(-1);
+		final Iterator<FakeLogEvent> iterator = circularArray.iterator(5);
 		while (iterator.hasNext()) {
 			System.out.print(iterator.next() + " ");
 		}
