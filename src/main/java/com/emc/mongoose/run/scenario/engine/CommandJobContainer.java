@@ -76,13 +76,12 @@ implements JobContainer {
 							}
 						} catch(final IOException e) {
 							LogUtil.exception(
-								LOG, Level.WARN, e, "Failed to read the process stdin"
+								LOG, Level.DEBUG, e, "Failed to read the process stdin"
 							);
 						}
 					}
 				}
 			);
-			processStdInReader.start();
 			final Thread processStdErrReader = TF_STD_ERR.newThread(
 				new Runnable() {
 					@Override
@@ -101,12 +100,13 @@ implements JobContainer {
 							}
 						} catch(final IOException e) {
 							LogUtil.exception(
-								LOG, Level.WARN, e, "Failed to read the process stdin"
+								LOG, Level.DEBUG, e, "Failed to read the process stdin"
 							);
 						}
 					}
 				}
 			);
+			processStdInReader.start();
 			processStdErrReader.start();
 			if(blockingFlag) {
 				try {
