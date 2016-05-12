@@ -13,6 +13,7 @@ import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
+import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -202,16 +203,14 @@ implements HttpRequestConfig<T, C> {
 			plainConnFactory = new DefaultNHttpClientConnectionFactory(
 			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
 		);
-		NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory = null;
+		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
 		if(sslFlag) {
-			try {
-				sslConnFactory = new SSLNHttpClientConnectionFactory(
-					SSLContext.getDefault(), BasicSslSetupHandler.INSTANCE, null, null,
-					DirectByteBufferAllocator.INSTANCE, connConfig
-				);
-			} catch(final NoSuchAlgorithmException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the default SSL context");
-			}
+			sslConnFactory = new SSLNHttpClientConnectionFactory(
+				SslContext.INSTANCE, BasicSslSetupHandler.INSTANCE, null, null,
+				DirectByteBufferAllocator.INSTANCE, connConfig
+			);
+		} else {
+			sslConnFactory = null;
 		}
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
 			connFactory = new BasicNIOConnFactory(plainConnFactory, sslConnFactory);
@@ -332,16 +331,14 @@ implements HttpRequestConfig<T, C> {
 			plainConnFactory = new DefaultNHttpClientConnectionFactory(
 			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
 		);
-		NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory = null;
+		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
 		if(sslFlag) {
-			try {
-				sslConnFactory = new SSLNHttpClientConnectionFactory(
-					SSLContext.getDefault(), BasicSslSetupHandler.INSTANCE, null, null,
-					DirectByteBufferAllocator.INSTANCE, connConfig
-				);
-			} catch(final NoSuchAlgorithmException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the default SSL context");
-			}
+			sslConnFactory = new SSLNHttpClientConnectionFactory(
+				SslContext.INSTANCE, BasicSslSetupHandler.INSTANCE, null, null,
+				DirectByteBufferAllocator.INSTANCE, connConfig
+			);
+		} else {
+			sslConnFactory = null;
 		}
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
 			connFactory = new BasicNIOConnFactory(plainConnFactory, sslConnFactory);

@@ -9,6 +9,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
+import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.HttpStorageMock;
@@ -97,14 +98,8 @@ implements HttpStorageMock<T> {
 			.setFragmentSizeHint(0)
 			.build();
 		plainConnFactory = new BasicHttpStorageMockConnFactory(connConfig);
-		SSLContext sslContext = null;
-		try {
-			sslContext = SSLContext.getDefault();
-		} catch(final NoSuchAlgorithmException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the default SSL context");
-		}
 		sslConnFactory = new SSLNHttpServerConnectionFactory(
-			sslContext, BasicSslSetupHandler.INSTANCE, null, null,
+			SslContext.INSTANCE, BasicSslSetupHandler.INSTANCE, null, null,
 			DirectByteBufferAllocator.INSTANCE, connConfig
 		);
 		// Set up the HTTP protocol processor
