@@ -42,7 +42,7 @@ extends AbstractAppender {
 	private static final Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	//
-	private static boolean ENABLED_FLAG = true;
+	private static boolean ENABLED_FLAG;
 	//
 	private WebUIAppender(
 		final String name, final Filter filter, final Layout<? extends Serializable> layout,
