@@ -57,7 +57,7 @@ implements Throttle<K> {
 						resetRemainingWeights();
 						remainingWeightMap.notify();
 					} else {
-						remainingWeightMap.wait(1);
+						remainingWeightMap.wait(1000);
 					}
 				} else { // remaining weight is more than 0
 					remainingWeightMap.put(key, remainingWeight - 1);

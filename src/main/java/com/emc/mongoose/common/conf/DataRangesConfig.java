@@ -87,12 +87,14 @@ public class DataRangesConfig {
 	public final String toString() {
 		if(randomCount > 0) {
 			return Integer.toString(randomCount);
-		} else {
+		} else if(fixedByteRanges != null){
 			final StringBuilder strb = new StringBuilder();
 			for(final ByteRange br : fixedByteRanges) {
 				strb.append(br.toString());
 			}
 			return strb.toString();
+		} else {
+			return "<NONE>";
 		}
 	}
 	//
