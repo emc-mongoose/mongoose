@@ -9,8 +9,11 @@
 				"container" : "linear-read-100MB"
 			},
 			"data" : {
-				"size" : "100MB"
+				"size" : "10MB"
 			}
+		},
+		"load" : {
+			"threads" : 10
 		}
 	},
 	"jobs": [
@@ -24,7 +27,7 @@
 				},
 				"load" : {
 					"limit" : {
-						"count" : 10
+						"count" : 100
 					}
 				}
 			}
@@ -37,6 +40,7 @@
 					}
 				},
 				"load" : {
+					"circular" : true,
 					"type" : "read"
 				}
 			}

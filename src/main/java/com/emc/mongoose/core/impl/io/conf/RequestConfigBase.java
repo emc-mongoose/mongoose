@@ -152,7 +152,6 @@ implements RequestConfig<T, C> {
 		final String tokenValue = appConfig.getAuthToken();
 		setAuthToken(tokenValue == null ? null : new BasicToken(tokenValue));
 		setNameSpace(appConfig.getStorageHttpNamespace());
-		setBuffSize(appConfig.getIoBufferSizeMin());
 		setSslFlag(appConfig.getNetworkSsl());
 		return this;
 	}

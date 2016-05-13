@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.load.executor;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.io.Input;
@@ -67,6 +68,11 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
+import static com.emc.mongoose.common.conf.enums.LoadType.READ;
+
 /**
  Created by kurila on 20.10.15.
  */
@@ -95,10 +101,10 @@ implements HttpContainerLoadExecutor<T, C> {
 		httpReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;
 		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
 		//
-		if(LoadType.READ.equals(loadType)) {
-			reqConfig.setBuffSize(Constants.BUFF_SIZE_HI);
+		if(READ.equals(loadType)) {
+			reqConfig.setBuffSize(BUFF_SIZE_HI);
 		} else {
-			reqConfig.setBuffSize(Constants.BUFF_SIZE_LO);
+			reqConfig.setBuffSize(BUFF_SIZE_LO);
 		}
 		//
 		final String userAgent = appConfig.getRunName() + "/" + appConfig.getRunVersion();
@@ -135,8 +141,8 @@ implements HttpContainerLoadExecutor<T, C> {
 			.setSoReuseAddress(appConfig.getNetworkSocketReuseAddr())
 			.setSoTimeout(appConfig.getNetworkSocketTimeoutMilliSec())
 			.setTcpNoDelay(appConfig.getNetworkSocketTcpNoDelay())
-			.setRcvBufSize(Constants.BUFF_SIZE_LO)
-			.setSndBufSize(Constants.BUFF_SIZE_LO)
+			.setRcvBufSize(BUFF_SIZE_LO)
+			.setSndBufSize(BUFF_SIZE_LO)
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 			);
@@ -145,7 +151,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(Constants.BUFF_SIZE_LO)
+			.setBufferSize(BUFF_SIZE_LO)
 			.setFragmentSizeHint(0)
 			.build();
 		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(

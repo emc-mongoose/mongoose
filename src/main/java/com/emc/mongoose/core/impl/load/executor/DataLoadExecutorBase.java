@@ -27,6 +27,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 //
 /**
  Created by kurila on 15.12.14.
@@ -61,25 +64,25 @@ implements DataLoadExecutor<T> {
 			final long avgDataSize = ((FileDataItemInput) itemInput).getAvgDataSize(
 				appConfig.getItemSrcBatchSize()
 			);
-			if(avgDataSize < Constants.BUFF_SIZE_LO) {
-				buffSize = Constants.BUFF_SIZE_LO;
-			} else if(avgDataSize > Constants.BUFF_SIZE_HI) {
-				buffSize = Constants.BUFF_SIZE_HI;
+			if(avgDataSize < BUFF_SIZE_LO) {
+				buffSize = BUFF_SIZE_LO;
+			} else if(avgDataSize > BUFF_SIZE_HI) {
+				buffSize = BUFF_SIZE_HI;
 			} else {
 				buffSize = (int) avgDataSize;
 			}
 		} else if(itemInput instanceof NewDataItemInput) {
 			final long avgDataSize = ((NewDataItemInput) itemInput)
 				.getDataSizeInfo().getAvgDataSize();
-			if(avgDataSize < Constants.BUFF_SIZE_LO) {
-				buffSize = Constants.BUFF_SIZE_LO;
-			} else if(avgDataSize > Constants.BUFF_SIZE_HI) {
-				buffSize = Constants.BUFF_SIZE_HI;
+			if(avgDataSize < BUFF_SIZE_LO) {
+				buffSize = BUFF_SIZE_LO;
+			} else if(avgDataSize > BUFF_SIZE_HI) {
+				buffSize = BUFF_SIZE_HI;
 			} else {
 				buffSize = (int) avgDataSize;
 			}
 		} else {
-			buffSize = Constants.BUFF_SIZE_LO;
+			buffSize = BUFF_SIZE_LO;
 		}
 		LOG.debug(
 			Markers.MSG, "Determined buffer size of {} for \"{}\"",

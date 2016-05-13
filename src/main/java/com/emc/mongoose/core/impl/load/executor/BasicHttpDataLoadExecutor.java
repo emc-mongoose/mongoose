@@ -67,6 +67,11 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
+import static com.emc.mongoose.common.conf.enums.LoadType.DELETE;
+import static com.emc.mongoose.common.conf.enums.LoadType.READ;
+
 /**
  Created by kurila on 02.12.14.
  */
@@ -149,8 +154,10 @@ implements HttpDataLoadExecutor<T> {
 			.setSoReuseAddress(appConfig.getNetworkSocketReuseAddr())
 			.setSoTimeout(appConfig.getNetworkSocketTimeoutMilliSec())
 			.setTcpNoDelay(appConfig.getNetworkSocketTcpNoDelay())
-			.setRcvBufSize(LoadType.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
-			.setSndBufSize(LoadType.READ.equals(loadType) ? Constants.BUFF_SIZE_LO : buffSize)
+			.setRcvBufSize(READ.equals(loadType) ? buffSize : BUFF_SIZE_LO)
+			.setSndBufSize(
+				READ.equals(loadType) || DELETE.equals(loadType) ? BUFF_SIZE_LO : buffSize
+			)
 			.setConnectTimeout(
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 			);
