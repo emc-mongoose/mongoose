@@ -79,11 +79,12 @@ define([
 		tabsUtil.showTabAsActive(plainId([TAB_TYPE.TESTS, 'tab']), tabType);
 		tabsUtil.showActiveTabDependentElements(plainId([TAB_TYPE.TESTS, 'tab', 'dependent']), tabType);
 		const testId = listController.currentTestId();
+		const testMode = listController.currentTestMode();
 		switch (tabType) {
 			case TESTS_TAB_TYPE.LIST:
 				break;
 			case TESTS_TAB_TYPE.LOGS:
-				logsController.setTabParameters();
+				logsController.setTabParameters(testId, testMode);
 				break;
 			case TESTS_TAB_TYPE.CHARTS:
 				break;

@@ -5,7 +5,6 @@ define([
 	'../../../../common/util/cssUtil',
 	'../../../../common/util/tabsUtil',
 	'../../../../common/constants',
-	'./listController',
 	'text!../../../../../templates/tab/tests/tab/logs.hbs'
 ], function ($,
              hbUtil,
@@ -13,7 +12,6 @@ define([
              cssUtil,
              tabsUtil,
              constants,
-             listController,
              logsTemplate) {
 
 	const TAB_TYPE = templatesUtil.tabTypes();
@@ -27,12 +25,18 @@ define([
 
 	var currentTabType = TESTS_LOGS_TAB_TYPE.MESSAGES;
 	var resetLogsFlag = false;
-	var currentLogsTimestamps = {
+	var currentLogsTimeStamps = {
 			'msg': 0,
 			'err': 0,
 			'perfAvg': 0,
 			'perfSum': 0
 	};
+
+	function resetLogTimeStamps() {
+		$.each(currentLogsTimeStamps, function (key) {
+			currentLogsTimeStamps[key] = 0;
+		})
+	}
 
 	function render() {
 		const renderer = rendererFactory();
@@ -105,33 +109,34 @@ define([
 				const lastTimeStamp = logEvents[logEvents.length - 1].timeStamp;
 				if (lastTimeStamp) {
 					
-					currentLogsTimestamps[markerName] = lastTimeStamp;
+					currentLogsTimeStamps[markerName] = lastTimeStamp;
 				}
 			}
 		});
 	}
 	
-	function getLogs(markerName) {
+	function getLogs(markerName, testId) {
 		$.get('/logs',
 				{ 
-					runId: listController.currentTestId(),
+					runId: testId,
 					markerName: markerName,
-					timeStamp: currentLogsTimestamps[markerName]
+					timeStamp: currentLogsTimeStamps[markerName]
 				}
 		).done(function (logsObj) {
 			updateLogTable(markerName, logsObj);
 		}).always(function () {
 			if (!resetLogsFlag) {
-				setTimeout(getLogs, 10000, markerName); // interval in milliseconds; todo check a third arg
+				setTimeout(getLogs, 10000, markerName, testId); // interval in milliseconds; todo check a third arg
 			}
 		});
 	}
 
-	function setTabParameters() {
-		if (LOGS_MODE.indexOf(listController.currentTestMode()) > -1) {
-			if (listController.currentTestId()) {
+	function setTabParameters(testId, testMode) {
+		if (LOGS_MODE.indexOf(testMode) > -1) {
+			if (testId) {
+				resetLogsFlag = false;
 				$.each(LOG_MARKER, function (key, value) {
-					getLogs(value);
+					getLogs(value, testId);
 				})
 			}
 		}
@@ -139,6 +144,7 @@ define([
 	
 	function resetLogs() {
 		resetLogsFlag = true;
+		resetLogTimeStamps();
 		$("." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body'])).empty();
 	}
 
