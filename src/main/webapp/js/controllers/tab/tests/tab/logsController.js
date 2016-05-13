@@ -20,13 +20,19 @@ define([
 	const TESTS_TAB_TYPE = templatesUtil.testsTabTypes();
 	const TESTS_LOGS_TAB_TYPE = templatesUtil.testsLogsTabTypes();
 	const LOG_MARKER = constants.LOG_MARKERS;
+	const LOG_MARKER_FORMATTER = constants.LOG_MARKERS_FORMATTER;
 	const LOGS_MODE = templatesUtil.objPartToArray(templatesUtil.modes(), 2);
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
 
 	var currentTabType = TESTS_LOGS_TAB_TYPE.MESSAGES;
-	var currentTimeStamp = 0;
 	var resetLogsFlag = false;
+	var currentLogsTimestamps = {
+			'msg': 0,
+			'err': 0,
+			'perfAvg': 0,
+			'perfSum': 0
+	};
 
 	function render() {
 		const renderer = rendererFactory();
@@ -84,7 +90,7 @@ define([
 	}
 	
 	function updateLogTable(markerName, logsObj) {
-		const tableBody = $(jqId([LOG_MARKER[markerName],'log', 'wrapper']) + " ." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body']));
+		const tableBody = $(jqId([LOG_MARKER_FORMATTER[markerName],'log', 'wrapper']) + " ." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body']));
 		$.each(logsObj, function (key, logEvents) {
 			$.each(logEvents, function (index, logEvent) {
 				const tableRow = $("<tr/>");
@@ -94,7 +100,14 @@ define([
 					tableRow.append(tableCell);
 				});
 				tableBody.append(tableRow);
-			})
+			});
+			if (logEvents.length > 0) {
+				const lastTimeStamp = logEvents[logEvents.length - 1].timeStamp;
+				if (lastTimeStamp) {
+					
+					currentLogsTimestamps[markerName] = lastTimeStamp;
+				}
+			}
 		});
 	}
 	
@@ -103,7 +116,7 @@ define([
 				{ 
 					runId: listController.currentTestId(),
 					markerName: markerName,
-					timeStamp: currentTimeStamp
+					timeStamp: currentLogsTimestamps[markerName]
 				}
 		).done(function (logsObj) {
 			updateLogTable(markerName, logsObj);
