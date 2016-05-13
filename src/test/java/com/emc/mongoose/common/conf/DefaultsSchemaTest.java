@@ -15,6 +15,8 @@ import static com.emc.mongoose.common.conf.Constants.DIR_CONF;
 import static java.io.File.separatorChar;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 /**
  Created by kurila on 10.05.16.
  */
@@ -36,7 +38,9 @@ public class DefaultsSchemaTest {
 		final JsonSchema defaultsSchema = JsonSchemaFactory
 			.newBuilder().freeze().getJsonSchema(defaultsSchemaTree);
 		final ProcessingReport report = defaultsSchema.validate(defaultsTree, true);
-		assertTrue(report.isSuccess());
+		if(!report.isSuccess()) {
+			fail(report.toString());
+		}
 	}
 
 	@Test

@@ -4,11 +4,11 @@
 		"item" : {
 			"dst" : {
 				"container" : "linear-read-partial"
-			},
-			"load" : {
-				"limit" : {
-					"count" : 1000
-				}
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
 			}
 		}
 	},

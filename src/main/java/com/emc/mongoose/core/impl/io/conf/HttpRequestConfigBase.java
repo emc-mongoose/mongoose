@@ -78,7 +78,6 @@ import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -351,7 +350,8 @@ implements HttpRequestConfig<T, C> {
 		connPool.setMaxTotal(1);
 		connPool.setDefaultMaxPerRoute(1);
 		clientDaemon = new Thread(
-			new HttpClientRunTask(ioEventDispatch, ioReactor), "wsConfigDaemon<" + toString() + ">"
+			new HttpClientRunTask(ioEventDispatch, ioReactor),
+			"httpRequestConfigDaemon<" + toString() + ">"
 		);
 		clientDaemon.setDaemon(true);
 	}

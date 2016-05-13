@@ -36,7 +36,8 @@ public abstract class TimeUtil {
 			} else {
 				throw new IllegalArgumentException(
 					String.format(
-						"Time value \"%s\" doesn't match the pattern \"%s\"", rawValue, PATTERN_TIME.pattern()
+						"Time value \"%s\" doesn't match the pattern \"%s\"", rawValue,
+						PATTERN_TIME.pattern()
 					)
 				);
 			}
