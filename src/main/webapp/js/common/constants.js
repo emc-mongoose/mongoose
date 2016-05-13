@@ -6,8 +6,8 @@ define([
 	const LOG_MARKERS = {
 		'msg': 'messages',
 		'err': 'errors',
-		'perfAvg': 'perf\.avg',
-		'perfSum': 'perf\.sum',
+		'perfAvg': 'perf\\.avg',
+		'perfSum': 'perf\\.sum',
 		'messages': 'msg',
 		'errors': 'err',
 		'perf\.avg': 'perfAvg',

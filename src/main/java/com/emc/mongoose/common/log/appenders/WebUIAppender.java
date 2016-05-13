@@ -112,7 +112,7 @@ extends AbstractAppender {
 				new ConcurrentHashMap<>();
 		final Map<String, CircularArray<ShortenedLogEvent>> testLogs = LOG_EVENTS_MAP.get(runId);
 		List<ShortenedLogEvent> lastLogEventsForMarker = null;
-		if (testLogs != null) {
+		if (testLogs != null && testLogs.containsKey(markerName)) {
 			lastLogEventsForMarker = testLogs.get(markerName).getLastItems(new ShortenedLogEvent
 					(timeStamp));
 		}
