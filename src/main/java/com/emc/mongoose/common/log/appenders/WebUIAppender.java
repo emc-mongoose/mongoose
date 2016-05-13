@@ -1,13 +1,8 @@
 package com.emc.mongoose.common.log.appenders;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-//
-//
 import com.emc.mongoose.common.log.Markers;
-import org.apache.commons.collections4.queue.CircularFifoQueue;
-//
 import org.apache.logging.log4j.ThreadContext;
-//
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -17,11 +12,13 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
-//
+
 import java.io.Serializable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  Created by kurila on 23.10.14.
