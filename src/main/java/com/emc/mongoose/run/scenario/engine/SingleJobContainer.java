@@ -72,26 +72,30 @@ extends JobContainerBase {
 	@Override
 	public final void run() {
 		//
-		LoadExecutor loadJob_;
+		LoadExecutor loadJob_ = null;
 		//
 		if(loadJob == null) {
 			if(loadJobBuilder == null) {
-				throw new IllegalStateException("Both load job and builder are null");
+				LOG.error(Markers.ERR, "Both load job and builder are null");
 			} else {
 				try {
 					loadJob_ = loadJobBuilder.build();
 				} catch(final IOException e) {
-					throw new IllegalStateException("Failed to build the load job", e);
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the load job");
 				}
 			}
 		} else {
 			loadJob_ = loadJob;
+		}
+		if(loadJob_ == null) {
+			return;
 		}
 		//
 		try {
 			LOG.info(Markers.MSG, "Start the job \"{}\"", loadJob_.getName());
 			loadJob_.start();
 		} catch(final RemoteException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to start the load job");
 		}
 		//
 		try {

@@ -4,9 +4,29 @@
 	"properties": {
 		"config": {
 			"type": "object",
+			"additionalProperties": false,
 			"properties": {
+				"aliasing" : {
+					"type" : "object",
+					"additionalProperties": false,
+					"patternProperties" : {
+						"[\\w\\d\\.]+$" : {
+							"oneOf" : [
+								{
+									"type" : "boolean"
+								}, {
+									"type" : "array",
+									"items" : {
+										"type" : "string"
+									}
+								}
+							]
+						}
+					}
+				},
 				"auth": {
 					"type": "object",
+					"additionalProperties": false,
 					"properties": {
 						"id": {
 							"type": [
@@ -35,12 +55,15 @@
 				},
 				"io": {
 					"type": "object",
+					"additionalProperties": false,
 					"properties": {
 						"buffer": {
 							"type": "object",
+							"additionalProperties": false,
 							"properties": {
 								"size": {
 									"type": "object",
+									"additionalProperties": false,
 									"properties": {
 										"min": {
 											"oneOf" : [
@@ -82,6 +105,7 @@
 				},
 				"item": {
 					"type": "object",
+					"additionalProperties": false,
 					"properties": {
 						"type": {
 							"type": "string",
@@ -93,9 +117,11 @@
 						},
 						"data": {
 							"type": "object",
+							"additionalProperties": false,
 							"properties": {
 								"content": {
 									"type": "object",
+									"additionalProperties": false,
 									"properties": {
 										"file": {
 											"type": [
@@ -160,6 +186,7 @@
 						},
 						"dst": {
 							"type": "object",
+							"additionalProperties": false,
 							"properties": {
 								"container": {
 									"type": [
@@ -181,6 +208,7 @@
 						},
 						"src": {
 							"type": "object",
+							"additionalProperties": false,
 							"properties": {
 								"container": {
 									"type": [
@@ -207,6 +235,7 @@
 						},
 						"naming": {
 							"type": "object",
+							"additionalProperties": false,
 							"properties": {
 								"type": {
 									"type": "string",
@@ -267,6 +296,7 @@
 				},
 				"load": {
 					"type": "object",
+					"additionalProperties": false,
 					"properties": {
 						"circular": {
 							"type": "boolean"
@@ -288,6 +318,7 @@
 						},
 						"limit": {
 							"type": "object",
+							"additionalProperties": false,
 							"properties": {
 								"count": {
 									"type": "integer"
@@ -334,6 +365,7 @@
 						},
 						"server": {
 							"type": "object",
+							"additionalProperties": false,
 							"properties": {
 								"addrs": {
 									"type": "array",
@@ -364,12 +396,14 @@
 				},
 				"network": {
 					"type": "object",
+					"additionalProperties": false,
 					"properties": {
 						"serveJMX": {
 							"type": "boolean"
 						},
 						"socket": {
 							"type": "object",
+							"additionalProperties": false,
 							"properties": {
 								"timeoutMilliSec": {
 									"type": "integer",
@@ -423,6 +457,7 @@
 				},
 				"run": {
 					"type": "object",
+					"additionalProperties": false,
 					"properties": {
 						"id": {
 							"type": [
@@ -451,6 +486,7 @@
 						},
 						"resume": {
 							"type": "object",
+							"additionalProperties": false,
 							"properties": {
 								"enabled": {
 									"type": "boolean"
@@ -475,6 +511,7 @@
 				},
 				"storage": {
 					"type": "object",
+					"additionalProperties": false,
 					"properties": {
 						"type": {
 							"type": "string",
@@ -495,6 +532,7 @@
 						},
 						"http": {
 							"type": "object",
+							"additionalProperties": false,
 							"properties": {
 								"api": {
 									"type": "string",
@@ -528,6 +566,7 @@
 						},
 						"mock": {
 							"type": "object",
+							"additionalProperties": false,
 							"properties": {
 								"headCount": {
 									"type": "integer",

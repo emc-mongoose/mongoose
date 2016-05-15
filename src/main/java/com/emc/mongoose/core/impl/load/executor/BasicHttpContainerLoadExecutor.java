@@ -13,6 +13,7 @@ import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 //
 import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
+import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -58,10 +59,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,12 +105,12 @@ implements HttpContainerLoadExecutor<T, C> {
 		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
-			.add(httpReqConfigCopy)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
 			//.add(new RequestExpectContinue(true))
 			.add(new RequestContent(false))
+			.add(httpReqConfigCopy)
 			.build();
 		client = new HttpAsyncRequester(
 			httpProcessor, DefaultConnectionReuseStrategy.INSTANCE,
@@ -166,16 +165,14 @@ implements HttpContainerLoadExecutor<T, C> {
 			plainConnFactory = new DefaultNHttpClientConnectionFactory(
 			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
 		);
-		NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory = null;
+		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
 		if(httpReqConfigCopy.getSslFlag()) {
-			try {
-				sslConnFactory = new SSLNHttpClientConnectionFactory(
-					SSLContext.getDefault(), BasicSslSetupHandler.INSTANCE, null, null,
-					DirectByteBufferAllocator.INSTANCE, connConfig
-				);
-			} catch(final NoSuchAlgorithmException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the default SSL context");
-			}
+			sslConnFactory = new SSLNHttpClientConnectionFactory(
+				SslContext.INSTANCE, BasicSslSetupHandler.INSTANCE, null, null,
+				DirectByteBufferAllocator.INSTANCE, connConfig
+			);
+		} else {
+			sslConnFactory = null;
 		}
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
 			connFactory = new BasicNIOConnFactory(plainConnFactory, sslConnFactory);

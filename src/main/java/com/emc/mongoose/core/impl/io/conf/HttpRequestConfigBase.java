@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.io.conf;
 // mongoose-common
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.SizeInBytes;
@@ -13,6 +14,7 @@ import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
+import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -76,7 +78,6 @@ import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -137,7 +138,7 @@ implements HttpRequestConfig<T, C> {
 	//
 	public HttpRequestConfigBase()
 	throws NoSuchAlgorithmException, IOReactorException {
-		this((AppConfig) null);
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
 	protected HttpRequestConfigBase(final AppConfig appConfig) {
@@ -145,10 +146,10 @@ implements HttpRequestConfig<T, C> {
 		// create HTTP client
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
 			.create()
-			.add(this)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestContent(false))
+			.add(this)
 			.build();
 		client = new HttpAsyncRequester(
 			httpProcessor, NoConnectionReuseStrategy.INSTANCE,
@@ -202,16 +203,14 @@ implements HttpRequestConfig<T, C> {
 			plainConnFactory = new DefaultNHttpClientConnectionFactory(
 			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
 		);
-		NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory = null;
+		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
 		if(sslFlag) {
-			try {
-				sslConnFactory = new SSLNHttpClientConnectionFactory(
-					SSLContext.getDefault(), BasicSslSetupHandler.INSTANCE, null, null,
-					DirectByteBufferAllocator.INSTANCE, connConfig
-				);
-			} catch(final NoSuchAlgorithmException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the default SSL context");
-			}
+			sslConnFactory = new SSLNHttpClientConnectionFactory(
+				SslContext.INSTANCE, BasicSslSetupHandler.INSTANCE, null, null,
+				DirectByteBufferAllocator.INSTANCE, connConfig
+			);
+		} else {
+			sslConnFactory = null;
 		}
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
 			connFactory = new BasicNIOConnFactory(plainConnFactory, sslConnFactory);
@@ -275,10 +274,10 @@ implements HttpRequestConfig<T, C> {
 		// create HTTP client
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
 			.create()
-			.add(this)
 			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestContent(false))
+			.add(this)
 			.build();
 		client = new HttpAsyncRequester(
 			httpProcessor, NoConnectionReuseStrategy.INSTANCE,
@@ -332,16 +331,14 @@ implements HttpRequestConfig<T, C> {
 			plainConnFactory = new DefaultNHttpClientConnectionFactory(
 			null, null, DirectByteBufferAllocator.INSTANCE, connConfig
 		);
-		NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory = null;
+		final NHttpConnectionFactory<? extends NHttpClientConnection> sslConnFactory;
 		if(sslFlag) {
-			try {
-				sslConnFactory = new SSLNHttpClientConnectionFactory(
-					SSLContext.getDefault(), BasicSslSetupHandler.INSTANCE, null, null,
-					DirectByteBufferAllocator.INSTANCE, connConfig
-				);
-			} catch(final NoSuchAlgorithmException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to get the default SSL context");
-			}
+			sslConnFactory = new SSLNHttpClientConnectionFactory(
+				SslContext.INSTANCE, BasicSslSetupHandler.INSTANCE, null, null,
+				DirectByteBufferAllocator.INSTANCE, connConfig
+			);
+		} else {
+			sslConnFactory = null;
 		}
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
 			connFactory = new BasicNIOConnFactory(plainConnFactory, sslConnFactory);
@@ -353,7 +350,8 @@ implements HttpRequestConfig<T, C> {
 		connPool.setMaxTotal(1);
 		connPool.setDefaultMaxPerRoute(1);
 		clientDaemon = new Thread(
-			new HttpClientRunTask(ioEventDispatch, ioReactor), "wsConfigDaemon<" + toString() + ">"
+			new HttpClientRunTask(ioEventDispatch, ioReactor),
+			"httpRequestConfigDaemon<" + toString() + ">"
 		);
 		clientDaemon.setDaemon(true);
 	}

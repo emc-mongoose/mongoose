@@ -12,7 +12,6 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.FileDataItemInput;
-import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -146,7 +145,10 @@ implements DataLoadBuilder<T, U> {
 	}
 	@Override
 	public DataLoadBuilder<T, U> setDataRanges(final DataRangesConfig rangesConfig) {
-		LOG.debug(Markers.MSG, "Set fixed byte ranges: {}", rangesConfig);
+		LOG.debug(
+			Markers.MSG, "Set fixed byte ranges: {}",
+			rangesConfig == null ? null : rangesConfig.toString()
+		);
 		this.rangesConfig = rangesConfig;
 		return this;
 	}

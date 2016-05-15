@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.adapter.swift;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -45,7 +46,7 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	public HttpRequestConfigImpl()
 	throws NoSuchAlgorithmException {
-		this((AppConfig) null);
+		this(BasicConfig.THREAD_CONTEXT.get());
 	}
 	//
 	public HttpRequestConfigImpl(final AppConfig appConfig) {

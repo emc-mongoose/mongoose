@@ -4,11 +4,11 @@
 		"item" : {
 			"dst" : {
 				"container" : "linear-delete"
-			},
-			"load" : {
-				"limit" : {
-					"count" : 1000
-				}
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000
 			}
 		}
 	},

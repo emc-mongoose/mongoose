@@ -1,9 +1,9 @@
 {
 	"type" : "load",
 	"config" : {
-		"load" : {
-			"limit" : {
-				"count" : 1
+		"item" : {
+			"data" : {
+				"size" : 100
 			}
 		},
 		"network" : {

@@ -7,11 +7,11 @@
 			},
 			"data" : {
 				"size" : "0"
-			},
-			"load" : {
-				"limit" : {
-					"count" : 100000
-				}
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 100000
 			}
 		}
 	},

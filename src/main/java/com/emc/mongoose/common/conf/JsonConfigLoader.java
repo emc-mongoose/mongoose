@@ -21,7 +21,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 //
 
 /**
@@ -42,8 +44,8 @@ public class JsonConfigLoader {
 	public void loadPropsFromJsonCfgFile(final Path filePath) {
 		final File cfgFile = filePath.toFile();
 		final ObjectMapper jsonMapper = new ObjectMapper()
-				.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
-				.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
+			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 		//
 		try {
 			JsonNode rootNode;
@@ -59,9 +61,24 @@ public class JsonConfigLoader {
 				rootNode = jsonMapper.readTree(bundledConf);
 			}
 			walkJsonTree(rootNode);
-		} catch (final IOException e) {
+		} catch(final IOException e) {
 			LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to load properties from \"{}\"", cfgFile
+				LOG, Level.ERROR, e, "Failed to load properties from \"{}\"", cfgFile
+			);
+		}
+	}
+
+	//
+	public void loadPropsFromJsonString(final String string) {
+		final ObjectMapper jsonMapper = new ObjectMapper()
+			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
+		try {
+			JsonNode rootNode = jsonMapper.readTree(string);
+			walkJsonTree(rootNode);
+		} catch (IOException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to load properties from \"{}\"", string
 			);
 		}
 	}
@@ -69,7 +86,6 @@ public class JsonConfigLoader {
 	//
 	public void loadPropsFromJsonByteArray(final byte buff[]) {
 		final ObjectMapper jsonMapper = new ObjectMapper();
-		//
 		try {
 			JsonNode rootNode;
 			if (buff != null && buff.length > 0) {
@@ -86,14 +102,18 @@ public class JsonConfigLoader {
 			walkJsonTree(rootNode);
 		} catch (final IOException e) {
 			LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to load properties from empty byte buffer"
+				LOG, Level.ERROR, e, "Failed to load properties from empty byte buffer"
 			);
 		}
 	}
 
 	//
 	private void walkJsonTree(final JsonNode jsonNode) {
-		walkJsonTree(jsonNode, null);
+		try {
+			walkJsonTree(jsonNode, null);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to walk the JSON tree");
+		}
 	}
 
 	//
@@ -109,25 +129,67 @@ public class JsonConfigLoader {
 					propertyName = fieldPrefix + Constants.DOT + jsonField;
 				}
 			}
-
 			// load configuration from mongoose.json
 			final JsonNode nodeValue = jsonNode.get(jsonField);
-			if (!propertyName.startsWith(AppConfig.PREFIX_KEY_ALIASING)) {
-				LOG.trace(
-						Markers.MSG, "Read property: \"{}\" = {}", propertyName, nodeValue
-				);
+			if(!propertyName.startsWith(AppConfig.PREFIX_KEY_ALIASING)) {
+				LOG.trace(Markers.MSG, "Read property: \"{}\" = {}", propertyName, nodeValue);
 			}
 			//
-			if (!nodeValue.isNull()) {
-				switch (nodeValue.getNodeType()) {
+			if(!nodeValue.isNull()) {
+				switch(nodeValue.getNodeType()) {
 					case ARRAY:
-						final Iterator<JsonNode> i = nodeValue.elements();
-						final StringBuilder strb = new StringBuilder();
-						while (i.hasNext()) {
-							strb.append(i.next().asText()).append(',');
+						final List<Object> l = new ArrayList<>();
+						for(final JsonNode nextArrayElement : nodeValue) {
+							switch(nextArrayElement.getNodeType()) {
+								case ARRAY:
+									LOG.warn(
+										Markers.ERR, "Unexpected array element type: \"{}\"",
+										propertyName
+									);
+									break;
+								case BINARY:
+									l.add(nextArrayElement.asText());
+									break;
+								case BOOLEAN:
+									l.add(nextArrayElement.asBoolean());
+									break;
+								case MISSING:
+									break;
+								case NULL:
+									l.add(null);
+									break;
+								case NUMBER:
+									if(nextArrayElement.isDouble() || nextArrayElement.isFloat()) {
+										l.add(nextArrayElement.asDouble());
+									} else if(nextArrayElement.isLong() || nextArrayElement.isInt()) {
+										l.add(nextArrayElement.asLong());
+									} else if(nextArrayElement.isBigDecimal()) {
+										l.add(nextArrayElement.asText());
+									} else {
+										LOG.warn(
+											Markers.ERR, "Unexpected array element type: \"{}\"",
+											propertyName
+										);
+									}
+									break;
+								case OBJECT:
+									LOG.warn(
+										Markers.ERR, "Object array element is unexpected: \"{}\"",
+										propertyName
+									);
+									break;
+								case POJO:
+									LOG.warn(
+										Markers.ERR, "Unexpected array element type: \"{}\"",
+										propertyName
+									);
+									break;
+								case STRING:
+									l.add(nextArrayElement.asText());
+									break;
+							}
 						}
-						strb.setLength(strb.length() - 1); // remove last comma
-						appConfig.setProperty(propertyName, strb.toString());
+						appConfig.setProperty(propertyName, l.toArray());
 						break;
 					case BINARY:
 						appConfig.setProperty(propertyName, nodeValue.asText());
@@ -136,32 +198,26 @@ public class JsonConfigLoader {
 						appConfig.setProperty(propertyName, nodeValue.asBoolean());
 						break;
 					case MISSING:
-						throw new IllegalStateException(
-								"No such value \"" + propertyName + "\""
-						);
+						break;
 					case NULL:
 						appConfig.setProperty(propertyName, null);
 						break;
 					case NUMBER:
-						if (nodeValue.isDouble() || nodeValue.isFloat()) {
+						if(nodeValue.isDouble() || nodeValue.isFloat()) {
 							appConfig.setProperty(propertyName, nodeValue.asDouble());
-						} else if (nodeValue.isLong() || nodeValue.isInt()) {
+						} else if(nodeValue.isLong() || nodeValue.isInt()) {
 							appConfig.setProperty(propertyName, nodeValue.asLong());
-						} else if (nodeValue.isBigDecimal()) {
+						} else if(nodeValue.isBigDecimal()) {
 							appConfig.setProperty(propertyName, nodeValue.asText());
 						} else {
-							throw new IllegalStateException(
-									"Unexpected value type of \"" + propertyName + "\""
-							);
+							LOG.warn(Markers.ERR, "Unexpected value type: \"{}\"", propertyName);
 						}
 						break;
 					case OBJECT:
 						walkJsonTree(nodeValue, propertyName);
 						break;
 					case POJO:
-						throw new IllegalStateException(
-								"Unsupported value of \"" + propertyName + "\""
-						);
+						LOG.warn(Markers.ERR, "Unexpected value type: \"{}\"", propertyName);
 					case STRING:
 						appConfig.setProperty(propertyName, nodeValue.asText());
 						break;

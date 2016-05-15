@@ -17,6 +17,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
+import org.apache.commons.configuration.tree.ConfigurationNode;
 import org.apache.commons.configuration.tree.DefaultExpressionEngine;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -33,6 +34,9 @@ import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +79,8 @@ implements AppConfig {
 		}
 		return DIR_ROOT;
 	}
+	//
+	public final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
 	public BasicConfig() {
 		this(Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF));
@@ -302,7 +308,7 @@ implements AppConfig {
 			return (Short) rawValue;
 		} else {
 			throw new ConversionException(
-				"Invalide value @" + KEY_LOAD_LIMIT_TIME + ": \"" + rawValue + "\""
+				"Invalid value @" + KEY_LOAD_LIMIT_TIME + ": \"" + rawValue + "\""
 			);
 		}
 	}
@@ -710,38 +716,59 @@ implements AppConfig {
 		final byte jsonData[] = new byte[l];
 		in.readFully(jsonData);
 		new JsonConfigLoader(this).loadPropsFromJsonByteArray(jsonData);
+		THREAD_CONTEXT.set(this); // required for proper IoConfig (and its derivatives) instancing
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Load from the external sources
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public void loadFromJson(final Path filePath) {
+	private void loadFromJson(final Path filePath) {
 		new JsonConfigLoader(this).loadPropsFromJsonCfgFile(filePath);
-		loadThis();
+		applyAliasing();
+	}
+	//
+	private void loadFromJson(final String string) {
+		new JsonConfigLoader(this).loadPropsFromJsonString(string);
+		applyAliasing();
 	}
 	//
 	public void loadFromJson(final byte[] jsonBytes) {
 		new JsonConfigLoader(this).loadPropsFromJsonByteArray(jsonBytes);
-		loadThis();
+		applyAliasing();
 	}
 	//
-	private void loadThis() {
+	@SuppressWarnings("unchecked")
+	private void applyAliasing() {
 		final Logger log = LogManager.getLogger();
 		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";
 		log.debug(Markers.MSG, "Going to override the aliasing section");
-		String key, correctKey;
+		String keyAlias, deprecatedKey, overriderKeys[];
+		Object overriderKeysRaw;
 		for(final Iterator<String> keyIter = getKeys(PREFIX_KEY_ALIASING); keyIter.hasNext();) {
-			key = keyIter.next();
-			correctKey = key.replaceAll(prefixKeyAliasingWithDot, "");
+			keyAlias = keyIter.next();
+			deprecatedKey = keyAlias.replaceAll(prefixKeyAliasingWithDot, "");
+			overriderKeysRaw = getProperty(keyAlias);
 			log.trace(
-					Markers.MSG, "Alias: \"{}\" -> \"{}\"", correctKey, getStringArray(key)
+				Markers.MSG, "Alias: \"{}\" -> \"{}\"", deprecatedKey, overriderKeysRaw
 			);
+			if(overriderKeysRaw instanceof List) {
+				overriderKeys = (String[]) ((List<String>) overriderKeysRaw).toArray();
+			} else if(overriderKeysRaw instanceof String) {
+				overriderKeys = new String[1];
+				overriderKeys[0] = (String) overriderKeysRaw;
+			} else if(overriderKeysRaw instanceof Boolean){
+				overriderKeys = new String[0];
+			} else {
+				log.warn(Markers.ERR, "Invalid aliasing key value: {}", overriderKeysRaw);
+				overriderKeys = null;
+			}
+			MAP_OVERRIDE.put(deprecatedKey, overriderKeys);
 		}
 	}
 	//
-	public void loadFromEnv() {
+	private void loadFromEnv() {
 		final Logger log = LogManager.getLogger();
 		final SystemConfiguration sysProps = new SystemConfiguration();
-		String key;
+		String key, overriderKeys[];
 		Object sharedValue;
 		for(final Iterator<String> keyIter = sysProps.getKeys(); keyIter.hasNext();) {
 			key = keyIter.next();
@@ -749,8 +776,27 @@ implements AppConfig {
 				Markers.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
 				key, getProperty(key), sysProps.getProperty(key)
 			);
+			overriderKeys = MAP_OVERRIDE.get(key);
 			sharedValue = sysProps.getProperty(key);
 			setProperty(key, sharedValue);
+			if(overriderKeys != null) {
+				if(overriderKeys.length == 0) {
+					log.error(
+						Markers.ERR,
+						"Option \"{}\" is deprecated and can't be mapped to any current option, " +
+						"please refer to the documentation or contact via Mongoose.Support@emc.com",
+						key
+					);
+				} else {
+					log.warn(
+						Markers.ERR, "Option \"{}\" is deprecated, use {} instead", key,
+						Arrays.toString(overriderKeys)
+					);
+					for(final String key2override : overriderKeys) {
+						setProperty(key2override, sharedValue);
+					}
+				}
+			}
 		}
 	}
 	//

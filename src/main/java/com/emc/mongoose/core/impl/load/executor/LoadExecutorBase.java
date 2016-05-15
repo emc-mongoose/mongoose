@@ -20,6 +20,7 @@ import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
 import com.emc.mongoose.core.api.load.barrier.Throttle;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
@@ -602,21 +603,20 @@ implements LoadExecutor<T> {
 			} else {
 				strBuilder.setLength(0); // clear/reset
 			}
-			if(LOG.isEnabled(Level.INFO, Markers.PERF_TRACE)) {
-				LOG.info(
-					Markers.PERF_TRACE,
-					strBuilder
-						.append(nodeAddr == null ? "" : nodeAddr).append(',')
-						.append(itemName).append(',')
-						.append(countBytesDone).append(',')
-						.append(status.code).append(',')
-						.append(reqTimeStart).append(',')
-						.append(respLatency > 0 ? respLatency : 0).append(',')
-						.append(respDataLatency).append(',')
-						.append(reqDuration)
-						.toString()
-				);
-			}
+			LOG.info(
+				Markers.PERF_TRACE,
+				strBuilder
+					//.append(loadType).append(',')
+					.append(nodeAddr == null ? "" : nodeAddr).append(',')
+					.append(itemName).append(',')
+					.append(countBytesDone).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(respLatency > 0 ? respLatency : 0).append(',')
+					.append(respDataLatency).append(',')
+					.append(reqDuration)
+					.toString()
+			);
 		}
 	}
 	//
@@ -637,7 +637,7 @@ implements LoadExecutor<T> {
 			respDataLatency = ioTask.getDataLatency();
 		final long countBytesDone = ioTask.getCountBytesDone();
 		// perf trace logging
-		if(!preconditionFlag) {
+		if(!preconditionFlag && !(this instanceof MixedLoadExecutor)) {
 			logTrace(
 				nodeAddr, item.getName(), status, ioTask.getReqTimeStart(), countBytesDone,
 				reqDuration, respLatency, respDataLatency

@@ -35,7 +35,7 @@ implements FileIoConfig<F, D> {
 	private int batchSize = BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize();
 	//
 	public BasicFileIoConfig() {
-		this((AppConfig) null);
+		this(BasicConfig.THREAD_CONTEXT.get());
 		if(dstContainer != null) {
 			final String containerName = dstContainer.getName();
 			if(containerName != null && !containerName.isEmpty()) {
