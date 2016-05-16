@@ -1,23 +1,26 @@
 package com.emc.mongoose.core.impl.io.conf;
 // mongoose-common.jar
+
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
-// mongoose-core-api.jar
+import com.emc.mongoose.core.api.io.conf.RequestConfig;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
-import com.emc.mongoose.core.api.io.conf.RequestConfig;
-// mongoose-core-impl.jar
 import com.emc.mongoose.core.api.item.token.Token;
 import com.emc.mongoose.core.impl.item.token.BasicToken;
 import org.apache.commons.lang.StringUtils;
-//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+// mongoose-core-api.jar
+// mongoose-core-impl.jar
+//
+//
 /**
  Created by kurila on 06.06.14.
  The most common implementation of the shared request configuration.

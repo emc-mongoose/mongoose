@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
@@ -8,45 +9,35 @@ import com.emc.mongoose.common.io.IOWorker;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
-import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
-import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
-//
 import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
+import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
+import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
+import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.net.ssl.SslContext;
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.HttpContainerIOTask;
 import com.emc.mongoose.core.api.io.task.HttpIOTask;
+import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.item.container.Container;
+import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.executor.HttpContainerLoadExecutor;
-//
 import com.emc.mongoose.core.impl.io.task.BasicHttpContainerTask;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
-//
 import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.DefaultNHttpClientConnectionFactory;
 import org.apache.http.impl.nio.SSLNHttpClientConnectionFactory;
-import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
-import org.apache.http.nio.NHttpConnectionFactory;
-import org.apache.http.protocol.HttpCoreContext;
-import org.apache.http.protocol.HttpProcessor;
-import org.apache.http.protocol.HttpProcessorBuilder;
-import org.apache.http.protocol.RequestConnControl;
-import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestUserAgent;
-//
-import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
+import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
+import org.apache.http.nio.NHttpConnectionFactory;
 import org.apache.http.nio.pool.NIOConnFactory;
 import org.apache.http.nio.protocol.HttpAsyncRequestExecutor;
 import org.apache.http.nio.protocol.HttpAsyncRequester;
@@ -54,11 +45,11 @@ import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.util.DirectByteBufferAllocator;
-//
+import org.apache.http.protocol.*;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -67,6 +58,13 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+
+//
+//
+//
+//
+//
+//
 /**
  Created by kurila on 20.10.15.
  */

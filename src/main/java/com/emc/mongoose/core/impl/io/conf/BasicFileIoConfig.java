@@ -1,27 +1,29 @@
 package com.emc.mongoose.core.impl.io.conf;
 //
+
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
-//
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-//
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
 import com.emc.mongoose.core.impl.item.data.BasicFile;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.core.impl.item.data.DirectoryItemInput;
-//
 import org.apache.commons.lang.StringUtils;
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+
+//
+//
+//
+//
 /**
  Created by kurila on 23.11.15.
  */

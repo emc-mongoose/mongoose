@@ -14,7 +14,6 @@ import java.io.File;
 import static com.emc.mongoose.common.conf.Constants.DIR_CONF;
 import static java.io.File.separatorChar;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**

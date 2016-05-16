@@ -1,11 +1,14 @@
 package com.emc.mongoose.core.impl.load.barrier;
 //
+
 import com.emc.mongoose.core.api.load.barrier.Throttle;
-//
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+//
 /**
  Created by kurila on 29.03.16.
  A kind of very abstract throttle which uses the map of weights.
