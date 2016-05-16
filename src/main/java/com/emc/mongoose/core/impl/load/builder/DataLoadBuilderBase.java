@@ -18,6 +18,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
 import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
+import com.emc.mongoose.core.impl.item.data.CsvFileDataItemInput;
 import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 //
 import org.apache.logging.log4j.Level;
@@ -84,7 +85,7 @@ implements DataLoadBuilder<T, U> {
 		if(itemsFileExists(listFilePathStr)) {
 			try {
 				setInput(
-					new CsvFileItemInput<>(
+					new CsvFileDataItemInput<>(
 						Paths.get(listFilePathStr), (Class<T>) ioConfig.getItemClass(),
 						ioConfig.getContentSource()
 					)

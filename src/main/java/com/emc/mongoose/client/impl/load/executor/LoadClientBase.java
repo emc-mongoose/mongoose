@@ -72,7 +72,7 @@ implements LoadClient<T, W> {
 		public final void run() {
 			//
 			final Thread currThread = Thread.currentThread();
-			currThread.setName("dataItemsBatchLoader<" + getName() + ">");
+			currThread.setName("itemsBatchLoader<" + getName() + ">");
 			//
 			int retryCount = 0;
 			try {
@@ -105,6 +105,7 @@ implements LoadClient<T, W> {
 								for(int m = 0; m < n && !currThread.isInterrupted();) {
 									m += itemOutBuff.put(frame, m, n);
 									LockSupport.parkNanos(1);
+									Thread.yield();
 								}
 								if(LOG.isTraceEnabled(Markers.MSG)) {
 									LOG.trace(
@@ -123,6 +124,7 @@ implements LoadClient<T, W> {
 							}
 						}
 						LockSupport.parkNanos(1);
+						Thread.yield();
 					} catch(final IOException e) {
 						if(retryCount < COUNT_LIMIT_RETRY) {
 							retryCount ++;
@@ -161,7 +163,8 @@ implements LoadClient<T, W> {
 							LOG.debug(Markers.MSG, "Interrupting due to external interruption");
 							break;
 						} else {
-							LockSupport.parkNanos(1_000);
+							LockSupport.parkNanos(1);
+							Thread.yield();
 						}
 					}
 				} finally {
@@ -192,7 +195,8 @@ implements LoadClient<T, W> {
 							LOG.debug(Markers.MSG, "Interrupting due to external interruption");
 							break;
 						} else {
-							LockSupport.parkNanos(1_000);
+							LockSupport.parkNanos(1);
+							Thread.yield();
 						}
 					}
 				} finally {

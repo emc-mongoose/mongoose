@@ -114,7 +114,8 @@ implements LoadExecutor<T> {
 					}
 					refreshStats();
 					checkForBadState();
-					LockSupport.parkNanos(1_000_000);
+					LockSupport.parkNanos(1);
+					Thread.yield();
 				}
 			} catch(final InterruptedException ignored) {
 			}
@@ -130,12 +131,14 @@ implements LoadExecutor<T> {
 			try {
 				if(isCircular) {
 					while(!allItemsProducedFlag) {
-						LockSupport.parkNanos(1_000_000);
+						LockSupport.parkNanos(1);
+						Thread.yield();
 					}
 				}
 				while(!currThread.isInterrupted()) {
 					postProcessItems();
-					LockSupport.parkNanos(1_000);
+					LockSupport.parkNanos(1);
+					Thread.yield();
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");

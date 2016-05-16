@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.Constants;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.DataRangesConfig.ByteRange;
@@ -30,7 +29,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
-//
 /**
  Created by kurila on 15.12.14.
  */
@@ -59,8 +57,8 @@ implements DataLoadExecutor<T> {
 		this.sizeConfig = sizeConfig;
 		this.rangesConfig = rangesConfig;
 		//
-		int buffSize;
 		if(itemInput instanceof FileDataItemInput) {
+			final int buffSize;
 			final long avgDataSize = ((FileDataItemInput) itemInput).getAvgDataSize(
 				appConfig.getItemSrcBatchSize()
 			);
@@ -71,24 +69,28 @@ implements DataLoadExecutor<T> {
 			} else {
 				buffSize = (int) avgDataSize;
 			}
+			LOG.debug(
+				Markers.MSG, "Determined buffer size of {} for \"{}\"",
+				SizeInBytes.formatFixedSize(buffSize), getName()
+			);
+			this.ioConfigCopy.setBuffSize(buffSize);
 		} else if(itemInput instanceof NewDataItemInput) {
-			final long avgDataSize = ((NewDataItemInput) itemInput)
+			final int buffSize;
+			final long avgDataSize = ((NewDataItemInput)itemInput)
 				.getDataSizeInfo().getAvgDataSize();
 			if(avgDataSize < BUFF_SIZE_LO) {
 				buffSize = BUFF_SIZE_LO;
 			} else if(avgDataSize > BUFF_SIZE_HI) {
 				buffSize = BUFF_SIZE_HI;
 			} else {
-				buffSize = (int) avgDataSize;
+				buffSize = (int)avgDataSize;
 			}
-		} else {
-			buffSize = BUFF_SIZE_LO;
+			LOG.debug(
+				Markers.MSG, "Determined buffer size of {} for \"{}\"",
+				SizeInBytes.formatFixedSize(buffSize), getName()
+			);
+			this.ioConfigCopy.setBuffSize(buffSize);
 		}
-		LOG.debug(
-			Markers.MSG, "Determined buffer size of {} for \"{}\"",
-			SizeInBytes.formatFixedSize(buffSize), getName()
-		);
-		this.ioConfigCopy.setBuffSize(buffSize);
 		/*
 		switch(loadType) {
 			case WRITE:
