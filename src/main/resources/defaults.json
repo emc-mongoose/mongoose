@@ -167,7 +167,7 @@
 			"resume" : {
 				"enabled" : false
 			},
-			"version" : "2.1.0"
+			"version" : "next"
 		},
 		"storage" : {
 			"type" : "http",
@@ -180,7 +180,7 @@
 				"fsAccess" : false,
 				"headers" : {
 					"Connection" : "keep-alive",
-					"User-Agent" : "mongoose/2.1.0"
+					"User-Agent" : "mongoose/next"
 				},
 				"namespace" : null,
 				"versioning" : false
