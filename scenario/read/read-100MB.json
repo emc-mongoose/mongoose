@@ -9,8 +9,11 @@
 				"container" : "linear-read-100MB"
 			},
 			"data" : {
-				"size" : "100MB"
+				"size" : "10MB"
 			}
+		},
+		"load" : {
+			"threads" : 10
 		}
 	},
 	"jobs": [
@@ -19,12 +22,12 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-linear-read-100MB.csv"
+						"file" : "linear-read-100MB.csv"
 					}
 				},
 				"load" : {
 					"limit" : {
-						"count" : 10
+						"count" : 100
 					}
 				}
 			}
@@ -33,10 +36,11 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-linear-read-100MB.csv"
+						"file" : "linear-read-100MB.csv"
 					}
 				},
 				"load" : {
+					"circular" : true,
 					"type" : "read"
 				}
 			}

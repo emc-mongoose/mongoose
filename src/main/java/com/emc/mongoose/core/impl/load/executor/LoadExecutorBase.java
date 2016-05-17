@@ -133,7 +133,7 @@ implements LoadExecutor<T> {
 			try {
 				if(isCircular) {
 					while(!allItemsProducedFlag) {
-						LockSupport.parkNanos(1_000_000);
+						LockSupport.parkNanos(1_000);
 					}
 				}
 				while(!currThread.isInterrupted()) {
@@ -439,10 +439,8 @@ implements LoadExecutor<T> {
 		LOG.debug(Markers.MSG, "{}: service threads executor shut down", getName());
 		//
 		if(isCircular) {
-			final List<T> itemsList = Collections.list(
-				Collections.enumeration(uniqueItems.values())
-			);
-			postProcessUniqueItemsFinally(itemsList);
+			final List<T> items = Collections.list(Collections.enumeration(uniqueItems.values()));
+			postProcessUniqueItemsFinally(items);
 		}
 		uniqueItems.clear();
 		//
@@ -783,7 +781,7 @@ implements LoadExecutor<T> {
 						} else {
 							break;
 						}
-						LockSupport.parkNanos(1);
+						LockSupport.parkNanos(1_000);
 					}
 				} else {
 					postProcessUniqueItemsFinally(items);

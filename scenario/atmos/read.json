@@ -23,7 +23,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-linear-read-atmos.csv"
+						"file" : "linear-read-atmos.csv"
 					}
 				}
 			}
@@ -32,7 +32,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-linear-read-atmos.csv"
+						"file" : "linear-read-atmos.csv"
 					}
 				},
 				"load" : {

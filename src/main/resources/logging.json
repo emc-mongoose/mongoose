@@ -22,7 +22,7 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
-								"marker": "dataList",
+								"marker": "itemList",
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {

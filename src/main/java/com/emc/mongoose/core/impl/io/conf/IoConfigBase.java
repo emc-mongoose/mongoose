@@ -2,6 +2,8 @@ package com.emc.mongoose.core.impl.io.conf;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -24,6 +26,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
+
 /**
  Created by kurila on 23.11.15.
  */
@@ -249,7 +255,15 @@ implements IoConfig<T, C> {
 		}
 		setVerifyContentFlag(appConfig.getItemDataVerify());
 		setCopyFlag(appConfig.getLoadCopy());
-		setBuffSize(appConfig.getIoBufferSizeMin());
+		final SizeInBytes sizeInfo = appConfig.getItemDataSize();
+		final long avgDataSize = sizeInfo.getAvgDataSize();
+		setBuffSize(
+			avgDataSize < BUFF_SIZE_LO ?
+				BUFF_SIZE_LO :
+				avgDataSize > BUFF_SIZE_HI ?
+					BUFF_SIZE_HI :
+					(int) avgDataSize
+		);
 		return this;
 	}
 	//

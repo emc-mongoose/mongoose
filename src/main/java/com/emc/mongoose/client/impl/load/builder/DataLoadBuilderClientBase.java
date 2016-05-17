@@ -11,11 +11,14 @@ import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.io.Input;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.FileDataItemInput;
 //
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
+import com.emc.mongoose.core.impl.item.data.CsvFileDataItemInput;
 import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
@@ -25,7 +28,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.NoSuchElementException;
 /**
  Created by kurila on 20.10.15.
  */
@@ -69,6 +74,28 @@ implements DataLoadBuilderClient<T, W, U> {
 		super.setAppConfig(appConfig);
 		setDataSize(appConfig.getItemDataSize());
 		setDataRanges(appConfig.getItemDataRanges());
+		//
+		try {
+			final String listFile = appConfig.getItemSrcFile();
+			if(itemsFileExists(listFile) && loadSvcMap != null) {
+				setInput(
+					new CsvFileDataItemInput<>(
+						Paths.get(listFile), (Class<T>) ioConfig.getItemClass(),
+						ioConfig.getContentSource()
+					)
+				);
+				// disable file-based item sources on the load servers side
+				for(final V nextLoadBuilder : loadSvcMap.values()) {
+					nextLoadBuilder.setInput(null);
+				}
+			}
+		} catch(final NoSuchElementException e) {
+			LOG.warn(Markers.ERR, "No \"data.src.fpath\" value was set");
+		} catch(final IOException e) {
+			LOG.warn(Markers.ERR, "Invalid items input file path: {}", itemInput);
+		} catch(final SecurityException | NoSuchMethodException e) {
+			LOG.warn(Markers.ERR, "Unexpected exception", e);
+		}
 		return this;
 	}
 	//

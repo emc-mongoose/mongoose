@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "scenario-circular-read-updated"
+				"container" : "circular-read-updated"
 			},
 			"data" : {
 				"size" : "1KB"
@@ -22,7 +22,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-circular-read-updated-0.csv"
+						"file" : "circular-read-updated-0.csv"
 					}
 				}
 			}
@@ -35,10 +35,10 @@
 						"ranges" : 3
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-circular-read-updated-1.csv"
+						"file" : "circular-read-updated-1.csv"
 					},
 					"src" : {
-						"file" : "/tmp/scenario-circular-read-updated-0.csv"
+						"file" : "circular-read-updated-0.csv"
 					}
 				},
 				"load" : {
@@ -55,7 +55,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-circular-read-updated-1.csv"
+						"file" : "circular-read-updated-1.csv"
 					}
 				},
 				"load" : {

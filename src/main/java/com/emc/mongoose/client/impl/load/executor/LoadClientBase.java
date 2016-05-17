@@ -72,7 +72,7 @@ implements LoadClient<T, W> {
 		public final void run() {
 			//
 			final Thread currThread = Thread.currentThread();
-			currThread.setName("dataItemsBatchLoader<" + getName() + ">");
+			currThread.setName("itemsBatchLoader<" + getName() + ">");
 			//
 			int retryCount = 0;
 			try {
@@ -122,7 +122,7 @@ implements LoadClient<T, W> {
 								}
 							}
 						}
-						LockSupport.parkNanos(1);
+						LockSupport.parkNanos(1_000);
 					} catch(final IOException e) {
 						if(retryCount < COUNT_LIMIT_RETRY) {
 							retryCount ++;
@@ -418,11 +418,7 @@ implements LoadClient<T, W> {
 		@Override
 		public final void run() {
 			String loadSvcAddr;
-			for(
-				int tryCount = 0;
-				tryCount < Short.MAX_VALUE;
-				tryCount ++
-			) {
+			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
 				try {
 					loadSvcAddr = loadSvcAddrs[
 						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)
@@ -632,7 +628,7 @@ implements LoadClient<T, W> {
 			super.shutdownActually();
 		} finally {
 			LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
-			// CIRCULARITY: why shutdown is disabled?
+			// CIRCULARITY: shutdown is disabled
 			if(!isCircular) {
 				final long timeOutSec = appConfig.getLoadLimitTime();
 				remotePutExecutor.shutdown();

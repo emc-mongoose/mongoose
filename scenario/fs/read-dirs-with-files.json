@@ -4,7 +4,7 @@
 		"item" : {
 			"type" : "container",
 			"dst" : {
-				"container" : "/tmp/scenario-read-dirs-with-files"
+				"container" : "read-dirs-with-files"
 			}
 		},
 		"load" : {
@@ -24,7 +24,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-read-dirs-with-files.json"
+						"file" : "read-dirs-with-files.json"
 					},
 					"naming" : {
 						"type" : "asc",
@@ -53,7 +53,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"container" : "/tmp/scenario-read-dirs-with-files/0"
+								"container" : "read-dirs-with-files/0"
 							}
 						}
 					}
@@ -62,7 +62,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"container" : "/tmp/scenario-read-dirs-with-files/1"
+								"container" : "read-dirs-with-files/1"
 							}
 						}
 					}
@@ -71,7 +71,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"container" : "/tmp/scenario-read-dirs-with-files/2"
+								"container" : "read-dirs-with-files/2"
 							}
 						}
 					}
@@ -80,7 +80,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"container" : "/tmp/scenario-read-dirs-with-files/3"
+								"container" : "read-dirs-with-files/3"
 							}
 						}
 					}
@@ -89,7 +89,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"container" : "/tmp/scenario-read-dirs-with-files/4"
+								"container" : "read-dirs-with-files/4"
 							}
 						}
 					}
@@ -98,7 +98,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"container" : "/tmp/scenario-read-dirs-with-files/5"
+								"container" : "read-dirs-with-files/5"
 							}
 						}
 					}
@@ -107,7 +107,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"container" : "/tmp/scenario-read-dirs-with-files/6"
+								"container" : "read-dirs-with-files/6"
 							}
 						}
 					}
@@ -116,7 +116,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"container" : "/tmp/scenario-read-dirs-with-files/7"
+								"container" : "read-dirs-with-files/7"
 							}
 						}
 					}
@@ -125,7 +125,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"container" : "/tmp/scenario-read-dirs-with-files/8"
+								"container" : "read-dirs-with-files/8"
 							}
 						}
 					}
@@ -134,7 +134,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"container" : "/tmp/scenario-read-dirs-with-files/9"
+								"container" : "read-dirs-with-files/9"
 							}
 						}
 					}
@@ -146,7 +146,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-read-dirs-with-files.json"
+						"file" : "read-dirs-with-files.json"
 					}
 				},
 				"load" : {

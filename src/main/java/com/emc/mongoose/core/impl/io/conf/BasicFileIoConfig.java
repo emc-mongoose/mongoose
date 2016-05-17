@@ -1,29 +1,33 @@
 package com.emc.mongoose.core.impl.io.conf;
 //
-
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
+//
+import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
+import com.emc.mongoose.core.api.io.conf.FileIoConfig;
+//
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
 import com.emc.mongoose.core.impl.item.data.BasicFile;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.core.impl.item.data.DirectoryItemInput;
+//
 import org.apache.commons.lang.StringUtils;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
-//
-//
-//
-//
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_HI;
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
+
 /**
  Created by kurila on 23.11.15.
  */
@@ -69,7 +73,15 @@ implements FileIoConfig<F, D> {
 		}
 		setVerifyContentFlag(appConfig.getItemDataVerify());
 		setCopyFlag(appConfig.getLoadCopy());
-		setBuffSize(appConfig.getIoBufferSizeMin());
+		final SizeInBytes sizeInfo = appConfig.getItemDataSize();
+		final long avgDataSize = sizeInfo.getAvgDataSize();
+		setBuffSize(
+			avgDataSize < BUFF_SIZE_LO ?
+				BUFF_SIZE_LO :
+				avgDataSize > BUFF_SIZE_HI ?
+					BUFF_SIZE_HI :
+					(int) avgDataSize
+		);
 		final String dstDirName = appConfig.getItemDstContainer();
 		if(dstDirName != null && !dstDirName.isEmpty()) {
 			setDstContainer((D) new BasicDirectory<F>(dstDirName));

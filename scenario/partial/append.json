@@ -23,7 +23,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-partial-append-0.csv"
+						"file" : "partial-append-0.csv"
 					}
 				}
 			}
@@ -36,10 +36,10 @@
 						"ranges" : "1024-4096"
 					},
 					"src" : {
-						"file" : "/tmp/scenario-partial-append-0.csv"
+						"file" : "partial-append-0.csv"
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-partial-append-1.csv"
+						"file" : "partial-append-1.csv"
 					}
 				}
 			}
@@ -49,7 +49,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-partial-append-1.csv"
+						"file" : "partial-append-1.csv"
 					}
 				},
 				"load" : {

@@ -18,7 +18,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-linear-sleep-and-delete.csv"
+						"file" : "linear-sleep-and-delete.csv"
 					}
 				}
 			}
@@ -32,7 +32,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-linear-sleep-and-delete.csv"
+						"file" : "linear-sleep-and-delete.csv"
 					}
 				},
 				"load" : {

@@ -7,7 +7,7 @@
 			},
 			"dst" : {
 				"container" : "weighted2-load",
-				"file" : "/tmp/scenario-weighted2-read-input.csv"
+				"file" : "weighted2-read-input.csv"
 			}
 		},
 		"load" : {
@@ -27,7 +27,7 @@
 						"size" : "8KB"
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-weighted2-read-input.csv"
+						"file" : "weighted2-read-input.csv"
 					}
 				}
 			}
@@ -39,7 +39,7 @@
 						"size" : "1KB"
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-weighted2-delete-input.csv"
+						"file" : "weighted2-delete-input.csv"
 					}
 				}
 			}
@@ -56,8 +56,8 @@
 						// and the other CSV file will be used for delete
 						"file" : [
 							null,
-							"/tmp/scenario-weighted2-read-input.csv",
-							"/tmp/scenario-weighted2-delete-input.csv"
+							"weighted2-read-input.csv",
+							"weighted2-delete-input.csv"
 						]
 					}
 				},

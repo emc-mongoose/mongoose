@@ -34,7 +34,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-content-read-zerobytes-0.csv"
+						"file" : "content-read-zerobytes-0.csv"
 					}
 				}
 			}
@@ -46,10 +46,10 @@
 						"ranges" : 10
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-content-read-zerobytes-1.csv"
+						"file" : "content-read-zerobytes-1.csv"
 					},
 					"src" : {
-						"file" : "/tmp/scenario-content-read-zerobytes-0.csv"
+						"file" : "content-read-zerobytes-0.csv"
 					}
 				}
 			}
@@ -58,7 +58,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-content-read-zerobytes-1.csv"
+						"file" : "content-read-zerobytes-1.csv"
 					}
 				},
 				"load" : {

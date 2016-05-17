@@ -21,7 +21,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-linear-read-zero-size.csv"
+						"file" : "linear-read-zero-size.csv"
 					}
 				}
 			}
@@ -30,7 +30,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-linear-read-zero-size.csv"
+						"file" : "linear-read-zero-size.csv"
 					}
 				},
 				"load" : {

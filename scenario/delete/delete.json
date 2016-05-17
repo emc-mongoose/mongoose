@@ -18,7 +18,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-linear-delete.csv"
+						"file" : "linear-delete.csv"
 					}
 				}
 			}
@@ -28,7 +28,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-linear-delete.csv"
+						"file" : "linear-delete.csv"
 					}
 				},
 				"load" : {

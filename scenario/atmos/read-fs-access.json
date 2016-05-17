@@ -24,7 +24,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-linear-read-atmos-fs-access.csv"
+						"file" : "linear-read-atmos-fs-access.csv"
 					}
 				}
 			}
@@ -33,7 +33,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-linear-read-atmos-fs-access.csv"
+						"file" : "linear-read-atmos-fs-access.csv"
 					}
 				},
 				"load" : {
