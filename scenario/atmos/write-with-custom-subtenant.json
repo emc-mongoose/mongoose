@@ -7,7 +7,7 @@
 		},
 		"item" : {
 			"dst" : {
-				"file" : "/tmp/scenario-linear-write-with-custom-subtenant-atmos.csv"
+				"file" : "linear-write-with-custom-subtenant-atmos.csv"
 			}
 		},
 		"load" : {

@@ -16,7 +16,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-read-verify-fail.csv"
+						"file" : "read-verify-fail.csv"
 					}
 				},
 				"load" : {
@@ -33,7 +33,7 @@
 						"ranges" : 1
 					},
 					"src" : {
-						"file" : "/tmp/scenario-read-verify-fail.csv"
+						"file" : "read-verify-fail.csv"
 					}
 				}
 			}
@@ -42,7 +42,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-read-verify-fail.csv"
+						"file" : "read-verify-fail.csv"
 					}
 				},
 				"load" : {

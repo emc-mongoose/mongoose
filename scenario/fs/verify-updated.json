@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "/tmp/scenario-fs-verify-updated"
+				"container" : "fs-verify-updated"
 			}
 		},
 		"load" : {
@@ -23,7 +23,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-fs-verify-updated-0.csv"
+						"file" : "fs-verify-updated-0.csv"
 					}
 				}
 			}
@@ -36,10 +36,10 @@
 						"ranges" : 10 // update 10 random byte ranges per request
 					},
 					"src" : {
-						"file" : "/tmp/scenario-fs-verify-updated-0.csv"
+						"file" : "fs-verify-updated-0.csv"
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-fs-verify-updated-1.csv"
+						"file" : "fs-verify-updated-1.csv"
 					}
 				}
 			}
@@ -49,7 +49,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-fs-verify-updated-1.csv"
+						"file" : "fs-verify-updated-1.csv"
 					}
 				},
 				"load" : {

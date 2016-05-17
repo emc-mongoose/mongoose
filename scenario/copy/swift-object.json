@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "scenario-copy-swift-object"
+				"container" : "copy-swift-object"
 			},
 			"data" : {
 				"size" : "1KB"
@@ -28,7 +28,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-copy-swift-object.json"
+						"file" : "copy-swift-object.json"
 					}
 				}
 			}
@@ -37,11 +37,11 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"container" : "scenario-copy-swift-object_"
+						"container" : "copy-swift-object_"
 					},
 					"src" : {
-						"container" : "scenario-copy-swift-object",
-						"file" : "/tmp/scenario-copy-swift-object.json"
+						"container" : "copy-swift-object",
+						"file" : "copy-swift-object.json"
 					}
 				},
 				"load" : {

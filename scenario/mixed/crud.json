@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "scenario-mixed-crud"
+				"container" : "mixed-crud"
 			},
 			"data" : {
 				"size" : "8KB"
@@ -25,7 +25,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"file" : "/tmp/scenario-mixed-crud-0.csv"
+								"file" : "mixed-crud-0.csv"
 							}
 						}
 					}
@@ -34,7 +34,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"file" : "/tmp/scenario-mixed-crud-1.csv"
+								"file" : "mixed-crud-1.csv"
 							}
 						}
 					}
@@ -43,7 +43,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"file" : "/tmp/scenario-mixed-crud-2.csv"
+								"file" : "mixed-crud-2.csv"
 							}
 						}
 					}
@@ -62,7 +62,7 @@
 					"config" : {
 						"item" : {
 							"src" : {
-								"file" : "/tmp/scenario-mixed-crud-0.csv"
+								"file" : "mixed-crud-0.csv"
 							}
 						},
 						"load" : {
@@ -77,7 +77,7 @@
 								"ranges" : 1
 							},
 							"src" : {
-								"file" : "/tmp/scenario-mixed-crud-1.csv"
+								"file" : "mixed-crud-1.csv"
 							}
 						}
 					}
@@ -86,7 +86,7 @@
 					"config" : {
 						"item" : {
 							"src" : {
-								"file" : "/tmp/scenario-mixed-crud-2.csv"
+								"file" : "mixed-crud-2.csv"
 							}
 						},
 						"load" : {

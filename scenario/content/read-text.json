@@ -20,7 +20,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-content-read-text.csv"
+						"file" : "content-read-text.csv"
 					}
 				}
 			}
@@ -29,7 +29,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-content-read-text.csv"
+						"file" : "content-read-text.csv"
 					}
 				},
 				"load" : {

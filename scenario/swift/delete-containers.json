@@ -23,7 +23,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-swift-delete-containers.csv"
+						"file" : "swift-delete-containers.csv"
 					}
 				}
 			}
@@ -32,7 +32,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-swift-delete-containers.csv"
+						"file" : "swift-delete-containers.csv"
 					}
 				},
 				"load" : {

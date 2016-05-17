@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "scenario-copy-s3-object"
+				"container" : "copy-s3-object"
 			},
 			"data" : {
 				"size" : "10KB"
@@ -22,7 +22,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-copy-s3-object.json"
+						"file" : "copy-s3-object.json"
 					}
 				}
 			}
@@ -31,11 +31,11 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"container" : "scenario-copy-s3-object_"
+						"container" : "copy-s3-object_"
 					},
 					"src" : {
-						"container" : "scenario-copy-s3-object",
-						"file" : "/tmp/scenario-copy-s3-object.json"
+						"container" : "copy-s3-object",
+						"file" : "copy-s3-object.json"
 					}
 				},
 				"load" : {

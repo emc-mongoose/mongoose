@@ -18,7 +18,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-linear-read-partial.csv"
+						"file" : "linear-read-partial.csv"
 					}
 				}
 			}
@@ -30,7 +30,7 @@
 						"ranges" : 1 // TODO
 					},
 					"src" : {
-						"file" : "/tmp/scenario-linear-read-partial.csv"
+						"file" : "linear-read-partial.csv"
 					}
 				},
 				"load" : {

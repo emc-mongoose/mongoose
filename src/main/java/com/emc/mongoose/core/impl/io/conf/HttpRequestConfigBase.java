@@ -94,6 +94,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.LockSupport;
+
 /**
  Created by kurila on 09.06.14.
  */
@@ -971,7 +973,7 @@ implements HttpRequestConfig<T, C> {
 						headerValueInput = new AsyncPatternDefinedInput(headerValue);
 						// spin while header value generator is not ready
 						while(null == (headerValue = headerValueInput.get())) {
-							Thread.yield();
+							LockSupport.parkNanos(1_000_000);
 						}
 						HEADER_VALUE_INPUTS.put(nextKey, headerValueInput);
 					} else {

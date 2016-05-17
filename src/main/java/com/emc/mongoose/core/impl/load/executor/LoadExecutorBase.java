@@ -114,8 +114,7 @@ implements LoadExecutor<T> {
 					}
 					refreshStats();
 					checkForBadState();
-					LockSupport.parkNanos(1);
-					Thread.yield();
+					LockSupport.parkNanos(1_000_000);
 				}
 			} catch(final InterruptedException ignored) {
 			}
@@ -131,14 +130,12 @@ implements LoadExecutor<T> {
 			try {
 				if(isCircular) {
 					while(!allItemsProducedFlag) {
-						LockSupport.parkNanos(1);
-						Thread.yield();
+						LockSupport.parkNanos(1_000);
 					}
 				}
 				while(!currThread.isInterrupted()) {
 					postProcessItems();
-					LockSupport.parkNanos(1);
-					Thread.yield();
+					LockSupport.parkNanos(1_000);
 				}
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
@@ -783,7 +780,7 @@ implements LoadExecutor<T> {
 						} else {
 							break;
 						}
-						LockSupport.parkNanos(1);
+						LockSupport.parkNanos(1_000);
 					}
 				} else {
 					postProcessUniqueItemsFinally(items);

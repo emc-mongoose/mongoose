@@ -35,7 +35,7 @@
 						"size" : "8KB"
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-distributed-delete.csv"
+						"file" : "distributed-delete.csv"
 					}
 				}
 			}
@@ -45,7 +45,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-distributed-delete.csv"
+						"file" : "distributed-delete.csv"
 					}
 				},
 				"load" : {

@@ -25,7 +25,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-swift-read-containers-with-objects.json"
+						"file" : "swift-read-containers-with-objects.json"
 					},
 					"naming" : {
 						"type" : "asc",
@@ -147,7 +147,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-swift-read-containers-with-objects.json"
+						"file" : "swift-read-containers-with-objects.json"
 					}
 				},
 				"load" : {

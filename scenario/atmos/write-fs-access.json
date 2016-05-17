@@ -6,7 +6,7 @@
 		},
 		"item" : {
 			"dst" : {
-				"file" : "/tmp/scenario-linear-write-fs-access-atmos.csv"
+				"file" : "linear-write-fs-access-atmos.csv"
 			}
 		},
 		"load" : {

@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "scenario-circular-update"
+				"container" : "circular-update"
 			},
 			"data" : {
 				"size" : "1KB"
@@ -35,7 +35,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-circular-update.csv"
+						"file" : "circular-update.csv"
 					}
 				}
 			}
@@ -49,7 +49,7 @@
 						"ranges" : 5
 					},
 					"src" : {
-						"file" : "/tmp/scenario-circular-update.csv"
+						"file" : "circular-update.csv"
 					}
 				},
 				"load" : {
