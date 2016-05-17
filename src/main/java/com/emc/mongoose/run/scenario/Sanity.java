@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 public class Sanity
 implements Runnable {
 	//
-	private final static short DEFAULT_NODE_COUNT = 2, DEFAULT_CONN_PER_NODE = 200;
+	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 200;
 	private final static long DEFAULT_DATA_SIZE = SizeInBytes.toFixedSize("10MB");
 	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
 	public final static Logger LOG;
@@ -83,7 +83,7 @@ implements Runnable {
 				dataDstU.getInput(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead);
-			// update again the data items
+			/* update again the data items
 			final Output<HttpDataItem> dataDstU2 = new LimitedQueueItemBuffer<>(
 				new ArrayBlockingQueue<HttpDataItem>(DEFAULT_DATA_COUNT_MAX)
 			);
@@ -110,7 +110,7 @@ implements Runnable {
 			final long nRead3 = client.read(
 				dataDstW2.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, true
 			);
-			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
+			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);*/
 			// delete all created data items
 			final long nDeleted = client.delete(
 				new ListItemInput<>(itemBuff), null, nWritten, DEFAULT_CONN_PER_NODE
@@ -141,12 +141,12 @@ implements Runnable {
 		appConfig.setProperty(AppConfig.KEY_LOAD_METRICS_PERIOD, 10);
 		final StorageClientBuilder<HttpDataItem, StorageClient<HttpDataItem>>
 			clientBuilder = new BasicStorageClientBuilder<>();
-		final String storageNodes[] = new String[DEFAULT_NODE_COUNT];
-		for(int i = 0; i < DEFAULT_NODE_COUNT; i++) {
-			storageNodes[i] = "127.0.0.1:" + (9020 + i);
-		}
+		final String storageNodesPlain[] = {
+			"127.0.0.1:9020",
+			"127.0.0.1:9022"
+		};
 		clientBuilder
-			.setNodes(storageNodes)
+			.setNodes(storageNodesPlain)
 			.setAuth("wuser1@sanity.local", "H1jTDL869wgZapHsylVcSYTx3aM7NxVABy8h017Z")
 			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
 			.setLimitTime(0, TimeUnit.SECONDS)
@@ -176,9 +176,30 @@ implements Runnable {
 			sanityThread2.join();
 			LOG.info(Markers.MSG, "Distributed sanity finished");
 		}
-		//
 		multiSvc.close();
 		ServiceUtil.shutdown();
+		// SSL
+		BasicConfig.THREAD_CONTEXT.get().setProperty(AppConfig.KEY_NETWORK_SSL, true);
+		final StorageClientBuilder<HttpDataItem, StorageClient<HttpDataItem>>
+			clientBuilderSSL = new BasicStorageClientBuilder<>();
+		final String storageNodesSSL[] = {
+			"127.0.0.1:9021",
+			"127.0.0.1:9023"
+		};
+		clientBuilderSSL
+			.setClientMode(null)
+			.setNodes(storageNodesSSL)
+			.setAuth("wuser1@sanity.local", "H1jTDL869wgZapHsylVcSYTx3aM7NxVABy8h017Z")
+			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
+			.setLimitTime(0, TimeUnit.SECONDS)
+			.setLimitRate(10000);
+		try(final StorageClient<HttpDataItem> client = clientBuilder.build()) {
+			final Thread sanityThread3 = new Thread(new Sanity(client), "sanitySSL");
+			sanityThread3.start();
+			LOG.info(Markers.MSG, "SSL sanity started");
+			sanityThread3.join();
+			LOG.info(Markers.MSG, "SSL sanity finished");
+		}
 		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");

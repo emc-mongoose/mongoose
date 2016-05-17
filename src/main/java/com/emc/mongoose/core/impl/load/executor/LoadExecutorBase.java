@@ -436,10 +436,8 @@ implements LoadExecutor<T> {
 		LOG.debug(Markers.MSG, "{}: service threads executor shut down", getName());
 		//
 		if(isCircular) {
-			final List<T> itemsList = Collections.list(
-				Collections.enumeration(uniqueItems.values())
-			);
-			postProcessUniqueItemsFinally(itemsList);
+			final List<T> items = Collections.list(Collections.enumeration(uniqueItems.values()));
+			postProcessUniqueItemsFinally(items);
 		}
 		uniqueItems.clear();
 		//
