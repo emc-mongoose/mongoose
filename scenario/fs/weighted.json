@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "/tmp/weighted-load"
+				"container" : "weighted-load"
 			}
 		},
 		"load" : {
@@ -22,7 +22,7 @@
 						"size" : "1KB"
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-weighted-load.csv"
+						"file" : "weighted-load.csv"
 					}
 				},
 				"load" : {
@@ -41,7 +41,7 @@
 						"size" : "4KB-16KB"
 					},
 					"src" : {
-						"file" : "/tmp/scenario-weighted-load.csv"
+						"file" : "weighted-load.csv"
 					}
 				},
 				"load" : {

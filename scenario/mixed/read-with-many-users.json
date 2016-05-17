@@ -18,7 +18,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-read-with-many-users.csv"
+						"file" : "read-with-many-users.csv"
 					}
 				}
 			}
@@ -34,7 +34,7 @@
 						},
 						"item" : {
 							"src" : {
-								"file" : "/tmp/scenario-read-with-many-users.csv"
+								"file" : "read-with-many-users.csv"
 							}
 						},
 						"load" : {
@@ -51,7 +51,7 @@
 						},
 						"item" : {
 							"src" : {
-								"file" : "/tmp/scenario-read-with-many-users.csv"
+								"file" : "read-with-many-users.csv"
 							}
 						},
 						"load" : {
@@ -67,7 +67,7 @@
 						},
 						"item" : {
 							"src" : {
-								"file" : "/tmp/scenario-read-with-many-users.csv"
+								"file" : "read-with-many-users.csv"
 							}
 						},
 						"load" : {

@@ -16,7 +16,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-read-no-verify.csv"
+						"file" : "read-no-verify.csv"
 					}
 				},
 				"load" : {
@@ -33,7 +33,7 @@
 						"ranges" : 1
 					},
 					"src" : {
-						"file" : "/tmp/scenario-read-no-verify.csv"
+						"file" : "read-no-verify.csv"
 					}
 				}
 			}
@@ -45,7 +45,7 @@
 						"verify" : false
 					},
 					"src" : {
-						"file" : "/tmp/scenario-read-no-verify.csv"
+						"file" : "read-no-verify.csv"
 					}
 				},
 				"load" : {

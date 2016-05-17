@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "/tmp/write-to-variable-dir/%p{16;2}"
+				"container" : "write-to-variable-dir/%p{16;2}"
 			},
 			"data" : {
 				"size" : "4KB"

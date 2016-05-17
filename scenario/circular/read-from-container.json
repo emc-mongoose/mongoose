@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "scenario-circular-read-from-container"
+				"container" : "circular-read-from-container"
 			}
 		},
 		"load" : {
@@ -20,7 +20,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"container" : "scenario-circular-read-from-container"
+						"container" : "circular-read-from-container"
 					}
 				},
 				"load" : {

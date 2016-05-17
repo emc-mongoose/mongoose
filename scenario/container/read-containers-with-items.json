@@ -18,7 +18,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-read-containers-with-items.json"
+						"file" : "read-containers-with-items.json"
 					},
 					"naming" : {
 						"type" : "asc",
@@ -140,7 +140,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-read-containers-with-items.json"
+						"file" : "read-containers-with-items.json"
 					}
 				},
 				"load" : {

@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "/tmp/scenario-copy-file"
+				"container" : "copy-file"
 			},
 			"data" : {
 				"size" : "4KB"
@@ -27,10 +27,10 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"container" : "/tmp/scenario-copy-file_"
+						"container" : "copy-file_"
 					},
 					"src" : {
-						"container" : "/tmp/scenario-copy-file"
+						"container" : "copy-file"
 					}
 				},
 				"load" : {

@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "/tmp/scenario-copy-directory"
+				"container" : "copy-directory"
 			},
 			"data" : {
 				"size" : "10KB"
@@ -20,7 +20,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-copy-directory.json"
+						"file" : "copy-directory.json"
 					},
 					"naming" : {
 						"type" : "asc",
@@ -38,7 +38,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"container" : "/tmp/scenario-copy-directory/1"
+						"container" : "copy-directory/1"
 					},
 					"type" : "data"
 				},
@@ -54,11 +54,11 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"container" : "/tmp/scenario-copy-directory_"
+						"container" : "copy-directory_"
 					},
 					"src" : {
-						"container" : "/tmp/scenario-copy-directory",
-						"file" : "/tmp/scenario-copy-directory.json"
+						"container" : "copy-directory",
+						"file" : "copy-directory.json"
 					}
 				},
 				"load" : {

@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "/tmp/scenario-circular-file-overwrite"
+				"container" : "circular-file-overwrite"
 			},
 			"data" : {
 				"size" : "64KB"
@@ -24,7 +24,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-circular-file-overwrite.csv"
+						"file" : "circular-file-overwrite.csv"
 					}
 				}
 			}
@@ -33,7 +33,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-circular-file-overwrite.csv"
+						"file" : "circular-file-overwrite.csv"
 					}
 				},
 				"load" : {

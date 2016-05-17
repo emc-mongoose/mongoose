@@ -56,5 +56,9 @@ implements FileDataItemInput<T> {
 		}
 		return actualCount > 0 ? sumSize / actualCount : 0;
 	}
-
+	//
+	@Override
+	public String toString() {
+		return "csvFileDataItemInput<" + itemsFilePath.getFileName() + ">";
+	}
 }

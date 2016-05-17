@@ -18,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.nio.channels.CancelledKeyException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 /**
@@ -49,6 +50,8 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	throws IOException {
 		try {
 			super.shutdown(waitMs);
+		} catch(final CancelledKeyException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Some tasks may be cancelled");
 		} finally {
 			connPoolSequencer.interrupt();
 		}

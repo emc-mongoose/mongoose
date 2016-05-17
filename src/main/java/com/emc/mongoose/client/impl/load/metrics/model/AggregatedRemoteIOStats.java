@@ -287,8 +287,7 @@ extends IOStatsBase {
 							loadSvcAddr
 						);
 					}
-					LockSupport.parkNanos(1);
-					Thread.yield();
+					LockSupport.parkNanos(1_000_000);
 				} catch(final NoSuchObjectException | ConnectIOException e) {
 					if(retryCount < COUNT_LIMIT_RETRIES) {
 						retryCount ++;

@@ -20,7 +20,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-partial-update-multiple-random-ranges-0.csv"
+						"file" : "partial-update-multiple-random-ranges-0.csv"
 					}
 				}
 			}
@@ -34,10 +34,10 @@
 						"ranges" : 10
 					},
 					"src" : {
-						"file" : "/tmp/scenario-partial-update-multiple-random-ranges-0.csv"
+						"file" : "partial-update-multiple-random-ranges-0.csv"
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-partial-update-multiple-random-ranges-1.csv"
+						"file" : "partial-update-multiple-random-ranges-1.csv"
 					}
 				}
 			}
@@ -47,7 +47,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-partial-update-multiple-random-ranges-1.csv"
+						"file" : "partial-update-multiple-random-ranges-1.csv"
 					}
 				},
 				"load" : {

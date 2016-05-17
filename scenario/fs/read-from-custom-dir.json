@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "/tmp/scenario-read-from-custom-dir"
+				"container" : "read-from-custom-dir"
 			},
 			"data" : {
 				"size" : "4KB"
@@ -25,7 +25,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-read-from-custom-dir.csv"
+						"file" : "read-from-custom-dir.csv"
 					}
 				}
 			}
@@ -34,7 +34,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-read-from-custom-dir.csv"
+						"file" : "read-from-custom-dir.csv"
 					}
 				},
 				"load" : {

@@ -36,7 +36,7 @@
 						"size" : "8KB"
 					},
 					"dst" : {
-						"file" : "/tmp/scenario-distributed-read.csv"
+						"file" : "distributed-read.csv"
 					}
 				}
 			}
@@ -46,7 +46,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-distributed-read.csv"
+						"file" : "distributed-read.csv"
 					}
 				},
 				"load" : {

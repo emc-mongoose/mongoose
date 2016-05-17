@@ -1,6 +1,11 @@
 {
 	"type" : "sequential",
 	"config" : {
+		"item" : {
+			"dst" : {
+				"container" : "circular-read-distributed"
+			}
+		},
 		"load" : {
 			"limit" : {
 				"count" : 1
@@ -26,7 +31,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "/tmp/scenario-circular-read-distributed.csv"
+						"file" : "circular-read-distributed.csv"
 					}
 				}
 			}
@@ -35,7 +40,7 @@
 			"config" : {
 				"item" : {
 					"src" : {
-						"file" : "/tmp/scenario-circular-read-distributed.csv"
+						"file" : "circular-read-distributed.csv"
 					}
 				},
 				"load" : {
