@@ -8,6 +8,7 @@ import java.util.Comparator;
 /**
  * Created on 05.05.16.
  */
+@SuppressWarnings("FieldCanBeLocal")
 public class ShortenedLogEvent implements Serializable {
 
 	private String level;

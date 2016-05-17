@@ -12,13 +12,12 @@ import org.eclipse.jetty.http.MimeTypes;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static com.emc.mongoose.common.conf.AppConfig.FNAME_CONF;
 import static com.emc.mongoose.common.conf.BasicConfig.getRootDir;
-import static java.nio.file.Files.newBufferedReader;
 
 public final class MainServlet
 		extends HttpServlet {
