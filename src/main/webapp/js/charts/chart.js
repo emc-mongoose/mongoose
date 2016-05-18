@@ -32,14 +32,14 @@ define(['jquery',
 			.x(getXData)
 			.y(getYData);
 
-		const SVG = d3.select('body')
-			.append('svg')
-			.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
-			.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM)
-			.append('g')
-			.attr('transform', 'translate(' + MARGIN.LEFT + ',' + MARGIN.TOP + ')');
+		function drawChart(selector, dataArr) {
 
-		function drawChart(dataArr) {
+			const SVG = d3.select(selector)
+				.append('svg')
+				.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
+				.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM)
+				.append('g')
+				.attr('transform', 'translate(' + MARGIN.LEFT + ',' + MARGIN.TOP + ')');
 
 			dataArr.forEach(function(obj) {
 				obj.x = parseDate(obj.x);

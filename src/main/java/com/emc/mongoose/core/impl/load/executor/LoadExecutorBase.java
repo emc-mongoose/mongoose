@@ -30,6 +30,8 @@ import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.LoadRegistry;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
+import com.emc.mongoose.core.impl.load.tasks.processors.ChartPackage;
+import com.emc.mongoose.core.impl.load.tasks.processors.PolylineManager;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -153,8 +155,14 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			Thread.currentThread().setName(LoadExecutorBase.this.getName());
+			PolylineManager polylineManager = new PolylineManager();
 			while(!isInterrupted.get()) {
 				logMetrics(Markers.PERF_AVG);
+				if (true) { // todo make some webui flag here
+					polylineManager.updatePolylines(getStatsSnapshot());
+					ChartPackage.addChart(
+							appConfig.getRunId(), LoadExecutorBase.this.getName(), polylineManager);
+				}
 				try {
 					TimeUnit.SECONDS.sleep(metricsPeriodSec);
 				} catch(final InterruptedException e) {

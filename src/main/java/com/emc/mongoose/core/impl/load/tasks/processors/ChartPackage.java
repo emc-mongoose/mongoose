@@ -1,32 +1,48 @@
 package com.emc.mongoose.core.impl.load.tasks.processors;
 
+import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class ChartPackage implements Serializable {
+@SuppressWarnings("FieldCanBeLocal")
+public class ChartPackage  {
 
-	private String name;
-	private String runId;
-	private String loadJobName;
-	private List<Metric> duration, latency, thoughput, bandwidth;
+	public static final Map<String, Map<String, Map<String, List<Metric>>>> CHARTS_MAP = new
+			ConcurrentHashMap<>();
 
-	public ChartPackage(String runId, String loadJobName, PolylineManager polylineManager) {
-		this.name = "chrtpckg";
-		this.runId = runId;
-		this.loadJobName = loadJobName;
-		this.duration = Metric.timeMetricFormat(
-				polylineManager.getDurAvg(),
-				polylineManager.getDurMin(),
-				polylineManager.getDurMax());
-		this.latency = Metric.timeMetricFormat(
-				polylineManager.getLatAvg(),
-				polylineManager.getLatMin(),
-				polylineManager.getLatMax());
-		this.thoughput = Metric.speedMetricFormat(
-				polylineManager.getTpAvg(),
-				polylineManager.getTpLast());
-		this.bandwidth = Metric.speedMetricFormat(
-				polylineManager.getBwAvg(),
-				polylineManager.getBwLast());
+	public static void addChart(final String runId, final String loadJobName,
+	                            final PolylineManager polylineManager) {
+		final Map<String, List<Metric>> loadJobCharts = new ConcurrentHashMap<>();
+		loadJobCharts.put(IOStats.METRIC_NAME_LAT, Metric.latencyMetrics(polylineManager));
+		loadJobCharts.put(IOStats.METRIC_NAME_DUR, Metric.durationMetrics(polylineManager));
+		loadJobCharts.put(IOStats.METRIC_NAME_TP, Metric.throughputMetrics(polylineManager));
+		loadJobCharts.put(IOStats.METRIC_NAME_BW, Metric.bandwidthMetrics(polylineManager));
+		if (!CHARTS_MAP.containsKey(runId)) {
+			final Map<String, Map<String, List<Metric>>> runIdCharts = new ConcurrentHashMap<>();
+			runIdCharts.put(loadJobName, loadJobCharts);
+			CHARTS_MAP.put(runId, runIdCharts);
+		}
+		if (CHARTS_MAP.get(runId).containsKey(loadJobName)) {
+			CHARTS_MAP.get(runId).put(loadJobName, loadJobCharts);
+		}
 	}
+
+	public static List<Metric> getChart(final String runId, final String loadJobName,
+	                                    final String metricName) {
+		final Map<String, Map<String, List<Metric>>> runIdCharts = CHARTS_MAP.get(runId);
+		if (runIdCharts != null) {
+			final Map<String, List<Metric>> loadJobCharts =
+					runIdCharts.get(runIdCharts.keySet().iterator().next());
+			if (loadJobCharts != null) {
+				return loadJobCharts.get(metricName);
+			}
+		}
+		return null;
+	}
+
+
 }

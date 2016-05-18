@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.model.metrics;
 //
-import com.codahale.metrics.Snapshot;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -17,6 +16,7 @@ extends IOStatsBase {
 	//
 	protected final int updateIntervalSec;
 	protected final AtomicLong reqDurationSum = new AtomicLong(0);
+	protected final AtomicLong respLatencySum = new AtomicLong(0);
 	//
 	protected CustomMeter throughPutSucc, throughPutFail, reqBytes;
 	//
@@ -52,6 +52,7 @@ extends IOStatsBase {
 		reqBytes.mark(size);
 		reqDuration.update(duration);
 		reqDurationSum.addAndGet(duration);
+		respLatencySum.addAndGet(latency);
 		respLatency.update(latency);
 	}
 	//
@@ -67,6 +68,7 @@ extends IOStatsBase {
 		}
 		for(final long latency : latencyValues) {
 			respLatency.update(latency);
+			respLatencySum.addAndGet(latency);
 		}
 	}
 	//
@@ -95,7 +97,7 @@ extends IOStatsBase {
 			throughPutFail == null ? 0 : throughPutFail.getLastRate(),
 			reqBytes == null ? 0 : reqBytes.getCount(),
 			reqBytes == null ? 0 : reqBytes.getLastRate(),
-			prevElapsedTimeMicroSec + currElapsedTime, reqDurationSum.get(),
+			prevElapsedTimeMicroSec + currElapsedTime, reqDurationSum.get(), respLatencySum.get(),
 			reqDurSnapshot, respLatSnapshot
 		);
 	}

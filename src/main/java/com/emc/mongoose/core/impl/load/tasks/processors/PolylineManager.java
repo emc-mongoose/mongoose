@@ -31,20 +31,20 @@ public class PolylineManager {
 		startTime = System.currentTimeMillis();
 	}
 
-	public void updatePolylines(IOStats.Snapshot metricsSnapshot) {
+	public void updatePolylines(final IOStats.Snapshot metricsSnapshot) {
 		addPoint(durMin, metricsSnapshot.getDurationMin());
 		addPoint(durMax, metricsSnapshot.getDurationMax());
 		addPoint(durAvg, metricsSnapshot.getDurationAvg());
 		addPoint(latMin, metricsSnapshot.getLatencyMin());
 		addPoint(latMax, metricsSnapshot.getLatencyMax());
-//		addPoint(latAvg, metricsSnapshot.getLatencyAvg());
+		addPoint(latAvg, metricsSnapshot.getLatencyAvg());
 		addPoint(tpAvg, metricsSnapshot.getSuccRateMean());
 		addPoint(tpLast, metricsSnapshot.getSuccRateLast());
 		addPoint(bwAvg, metricsSnapshot.getByteRateMean());
 		addPoint(bwLast, metricsSnapshot.getByteRateLast());
 	}
 
-	private void addPoint(Polyline polyline, double metricValue) {
+	private void addPoint(final Polyline polyline, final double metricValue) {
 		double now = new Long((System.currentTimeMillis() - startTime) / 1000).doubleValue();
 		if (polyline.numberOfPoints() < MAX_NUM_OF_POINTS) {
 			polyline.addPoint(new Point(now, metricValue));

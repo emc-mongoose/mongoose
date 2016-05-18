@@ -44,4 +44,14 @@
 		<url-pattern>/logs</url-pattern>
 	</servlet-mapping>
 
+	<servlet>
+		<servlet-name>ChartServlet</servlet-name>
+		<servlet-class>com.emc.mongoose.webui.ChartServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>ChartServlet</servlet-name>
+		<url-pattern>/charts</url-pattern>
+	</servlet-mapping>
+
 </web-app>

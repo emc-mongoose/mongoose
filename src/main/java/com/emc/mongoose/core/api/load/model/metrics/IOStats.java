@@ -66,6 +66,7 @@ extends Closeable {
 		//
 		long getElapsedTime();
 		long getDurationSum();
+		long getLatencySum();
 		//
 		long getDurationMin();
 		long getDurationLoQ();
@@ -81,6 +82,7 @@ extends Closeable {
 		long getLatencyHiQ();
 		long getLatencyMax();
 		long[] getLatencyValues();
+		double getLatencyAvg();
 		//
 		String toCountsString();
 		String toDurString();

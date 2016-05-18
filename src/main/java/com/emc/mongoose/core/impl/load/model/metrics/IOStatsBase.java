@@ -88,13 +88,14 @@ implements IOStats {
 		private final long latValues[];
 		private transient com.codahale.metrics.Snapshot latSnapshot = null;
 		private final long sumDur;
+		private final long sumLat;
 		private final long elapsedTime;
 		//
 		public BasicSnapshot(
 			final long countSucc, final double succRateLast,
 			final long countFail, final double failRate,
 			final long countByte, final double byteRate,
-			final long elapsedTime, final long sumDur,
+			final long elapsedTime, final long sumDur, final long sumLat,
 			final com.codahale.metrics.Snapshot durSnapshot,
 			final com.codahale.metrics.Snapshot latSnapshot
 		) {
@@ -105,6 +106,7 @@ implements IOStats {
 			this.countByte = countByte;
 			this.byteRateLast = byteRate;
 			this.sumDur = sumDur;
+			this.sumLat = sumLat;
 			this.elapsedTime = elapsedTime;
 			this.durSnapshot = durSnapshot;
 			this.durValues = durSnapshot.getValues();
@@ -254,6 +256,16 @@ implements IOStats {
 		@Override
 		public long[] getLatencyValues() {
 			return latValues;
+		}
+		//
+		@Override
+		public long getLatencySum() {
+			return sumDur;
+		}
+		//
+		@Override
+		public double getLatencyAvg() {
+			return latValues.length == 0 ? 0 : ((double) sumLat) / latValues.length;
 		}
 		//
 		@Override

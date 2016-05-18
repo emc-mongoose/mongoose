@@ -13,7 +13,7 @@ class Polyline {
 	private List<WeighedPoint> points = new ArrayList<>();
 	private PriorityQueue<WeighedPoint> queue = new PriorityQueue<>();
 
-	private double triangleArea(Point point1, Point point2, Point point3) {
+	private double triangleArea(final Point point1, final Point point2, final Point point3) {
 		double a = distance(point1, point2);
 		double b = distance(point2, point3);
 		double c = distance(point3, point1);
@@ -21,11 +21,11 @@ class Polyline {
 		return sqrt(p * (p - a) * (p - b) * (p - c));
 	}
 
-	private double triangleArea(List<Point> trianglePoints) {
+	private double triangleArea(final List<Point> trianglePoints) {
 		return triangleArea(trianglePoints.get(0), trianglePoints.get(1), trianglePoints.get(2));
 	}
 
-	private List<Point> getTriangle(int middlePointIndex) {
+	private List<Point> getTriangle(final int middlePointIndex) {
 		List<Point> result = new ArrayList<>();
 		for (WeighedPoint weighedPoint: points.subList(middlePointIndex - 1, middlePointIndex + 2)) {
 			result.add(weighedPoint.point());
@@ -33,7 +33,7 @@ class Polyline {
 		return result;
 	}
 
-	private void setWeightForPoint(int pointIndex) {
+	private void setWeightForPoint(final int pointIndex) {
 		int size = points.size();
 		if (size == 1) {
 			setWeightForOnlyOnePoint();
@@ -51,7 +51,7 @@ class Polyline {
 		}
 	}
 
-	private void setWeightForInternalPoints(int pointIndex) {
+	private void setWeightForInternalPoints(final int pointIndex) {
 		points.get(pointIndex).setWeight(
 				triangleArea(getTriangle(pointIndex)));
 		points.get(pointIndex + 1).setWeight(
@@ -81,7 +81,7 @@ class Polyline {
 				lastPoint));
 	}
 
-	private void removeAndWeigh(WeighedPoint point) {
+	private void removeAndWeigh(final WeighedPoint point) {
 		int index = points.indexOf(point);
 		points.remove(index);
 		if (points.size() != 0) {
@@ -89,7 +89,7 @@ class Polyline {
 		}
 	}
 
-	public void addPoint(Point newPoint) {
+	public void addPoint(final Point newPoint) {
 		switch (numberOfPoints()) {
 			case 0:
 				firstPoint = newPoint;
@@ -105,7 +105,7 @@ class Polyline {
 		}
 	}
 
-	private void addNewLastPoint(Point newPoint, Point penultPoint) {
+	private void addNewLastPoint(final Point newPoint, final Point penultPoint) {
 		WeighedPoint oldLastPoint = new WeighedPoint(lastPoint,
 				triangleArea(
 						penultPoint,
@@ -117,7 +117,7 @@ class Polyline {
 		lastPoint = newPoint;
 	}
 
-	public void simplify(int simplificationsNum) {
+	public void simplify(final int simplificationsNum) {
 		if (simplificationsNum >= 0 && simplificationsNum <= points.size()) {
 			for (int i = 0; i < simplificationsNum; i++) {
 				this.removeAndWeigh(queue.peek());

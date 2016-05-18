@@ -5,7 +5,7 @@ class WeighedPoint implements Comparable<WeighedPoint> {
 	private Point point;
 	private double weight;
 
-	public WeighedPoint(Point point, double weight) {
+	public WeighedPoint(final Point point, final double weight) {
 		this.point = point;
 		this.weight = weight;
 	}
@@ -14,7 +14,7 @@ class WeighedPoint implements Comparable<WeighedPoint> {
 		return point;
 	}
 
-	public void setWeight(double weight) {
+	public void setWeight(final double weight) {
 		this.weight = weight;
 	}
 

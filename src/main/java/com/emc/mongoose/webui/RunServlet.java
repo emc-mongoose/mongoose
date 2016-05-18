@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.emc.mongoose.webui.ServletConstants.RUN_ID_KEY;
+
 /**
  * Created on 22.04.16.
  */
@@ -44,7 +46,6 @@ public class RunServlet extends HttpServlet {
 
 	private static final String APP_CONFIG_KEY = "config";
 	private static final String SCENARIO_KEY = "scenario";
-	private static final String RUN_ID_KEY = "runId";
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper()
 			.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);

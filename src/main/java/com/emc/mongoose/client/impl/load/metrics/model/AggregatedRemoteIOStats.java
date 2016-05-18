@@ -47,6 +47,7 @@ extends IOStatsBase {
 		countFail = 0,
 		countByte = 0,
 		sumDurMicroSec = 0,
+		sumLatMicroSec = 0,
 		durationValues[],
 		latencyValues[];
 	private double
@@ -352,6 +353,7 @@ extends IOStatsBase {
 					countFail = 0;
 					countByte = 0;
 					sumDurMicroSec = 0;
+					sumLatMicroSec = 0;
 					succRateMean = 0;
 					succRateLast = 0;
 					failRateMean = 0;
@@ -384,7 +386,7 @@ extends IOStatsBase {
 			TimeUnit.NANOSECONDS.toMicros(System.nanoTime()) - tsStartMicroSec : 0;
 		return new BasicIOStats.BasicSnapshot(
 			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast,
-			prevElapsedTimeMicroSec + currElapsedTime, sumDurMicroSec,
+			prevElapsedTimeMicroSec + currElapsedTime, sumDurMicroSec, sumLatMicroSec,
 			reqDuration.getSnapshot(), respLatency.getSnapshot()
 		);
 	}
@@ -394,6 +396,7 @@ extends IOStatsBase {
 		countFail += loadStatsSnapshot.getFailCount();
 		countByte += loadStatsSnapshot.getByteCount();
 		sumDurMicroSec += loadStatsSnapshot.getDurationSum();
+		sumLatMicroSec += loadStatsSnapshot.getLatencySum();
 		succRateMean += loadStatsSnapshot.getSuccRateMean();
 		succRateLast += loadStatsSnapshot.getSuccRateLast();
 		failRateMean += loadStatsSnapshot.getFailRateMean();

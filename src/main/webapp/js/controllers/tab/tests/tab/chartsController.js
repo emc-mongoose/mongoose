@@ -22,7 +22,7 @@ define([
 
 	function render() {
 		const renderer = rendererFactory();
-		renderer.navbar();
+		renderer.base();
 		makeTabActive(currentTabType);
 	}
 
@@ -31,7 +31,7 @@ define([
 		const chartsBlockElemId = jqId([TAB_TYPE.TESTS, 'tab', TESTS_TAB_TYPE.CHARTS]);
 
 
-		function renderNavbar() {
+		function renderBase() {
 			hbUtil.compileAndInsertInsideBefore(chartsBlockElemId, chartsTemplate,
 				{tabs: TESTS_CHARTS_TAB_TYPE});
 			binder.tab();
@@ -39,7 +39,7 @@ define([
 
 
 		return {
-			navbar: renderNavbar
+			base: renderBase
 		}
 	};
 
@@ -71,6 +71,24 @@ define([
 				break;
 		}
 		currentTabType = tabType;
+	}
+
+	function updateCharts(chartsObj) {
+		
+	}
+	
+	function getCharts(markerName, testId) {
+		$.get('/charts',
+			{
+				runId: testId
+			}
+		).done(function (chartsObj) {
+			updateLogTable(markerName, logsObj);
+		}).always(function () {
+			if (!resetLogsFlag) {
+				setTimeout(getCharts, 10000, markerName, testId); // interval in milliseconds; todo check a third arg
+			}
+		});
 	}
 
 	return {
