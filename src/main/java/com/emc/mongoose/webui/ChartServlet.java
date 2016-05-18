@@ -34,7 +34,7 @@ public class ChartServlet extends HttpServlet {
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
 			throws ServletException, IOException {
 		final String runId = request.getParameter(RUN_ID_KEY);
-//		final String loadJobName = request.getParameter(RUN_ID_KEY);
+//		final String loadJobName = request.getParameter(LOAD_JOB_NAME_KEY);
 		final String metricName = request.getParameter(METRIC_NAME_KEY);
 		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
 		final List<Metric> charts =

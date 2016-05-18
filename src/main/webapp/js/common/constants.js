@@ -21,11 +21,31 @@ define([
 		'perf\.sum': 'perfSum'
 	};
 
+	const CHART_METRICS = {
+		'latency': 'lat',
+		'duration': 'dur',
+		'throughput': 'TP',
+		'bandwidth': 'BW'
+	};
+
+	const CHART_METRICS_FORMATTER = {
+		'lat': 'latency',
+		'dur': 'duration',
+		'TP': 'throughput',
+		'BW': 'bandwidth',
+		'latency': 'lat',
+		'duration': 'dur',
+		'throughput': 'TP',
+		'bandwidth': 'BW'
+	};
+
 
 	return {
 		JSON_CONTENT_TYPE: JSON_CONTENT_TYPE,
 		LOG_MARKERS: LOG_MARKERS,
-		LOG_MARKERS_FORMATTER: LOG_MARKERS_FORMATTER
+		LOG_MARKERS_FORMATTER: LOG_MARKERS_FORMATTER,
+		CHART_METRICS: CHART_METRICS,
+		CHART_METRICS_FORMATTER: CHART_METRICS_FORMATTER
 	}
 
 });

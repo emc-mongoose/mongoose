@@ -14,48 +14,95 @@ define(['jquery',
 
 		const parseDate = d3.time.format('%d-%b-%y').parse;
 
-		const X_SCALER = d3.time.scale().range([0, WIDTH]);
-		const Y_SCALER = d3.scale.linear().range([HEIGHT, 0]);
+		const defaultsFactory = function () {
 
-		const X_AXIS = d3.svg.axis().scale(X_SCALER).orient('bottom').ticks(5);
-		const Y_AXIS = d3.svg.axis().scale(Y_SCALER).orient('left').ticks(5);
+			function createDefaultTimeScale() {
+				return d3.time.scale();
+			}
 
-		function getXData(data) {
-			return X_SCALER(data.x);
+			function createDefaultLinearScale() {
+				return d3.scale.linear();
+			}
+
+			function createDefaultAxis() {
+				return d3.svg.axis();
+			}
+
+			function createDefaultLineGenerator() {
+				return d3.svg.line();
+			}
+
+			function createDefaultColorizer() {
+				return d3.scale.category10();
+			}
+
+			return {
+				timeScale: createDefaultTimeScale,
+				linearScale: createDefaultLinearScale,
+				axis: createDefaultAxis,
+				lineGenerator: createDefaultLineGenerator,
+				colorizer: createDefaultColorizer
+			}
+		}();
+
+		const X_SCALE = defaultsFactory.timeScale().range([0, WIDTH]);
+		const Y_SCALE = defaultsFactory.linearScale().range([HEIGHT, 0]);
+
+		const X_AXIS = defaultsFactory.axis().scale(X_SCALE).orient('bottom').ticks(5);
+		const Y_AXIS = defaultsFactory.axis().scale(Y_SCALE).orient('left').ticks(5);
+
+		function xAccessor(data) {
+			return data.x;
 		}
 
-		function getYData(data) {
-			return Y_SCALER(data.y);
+		function yAccessor(data) {
+			return data.y;
 		}
 
-		const LINE = d3.svg.line()
-			.x(getXData)
-			.y(getYData);
+		function scaledXAccessor(data) {
+			return X_SCALE(xAccessor(data));
+		}
 
-		function drawChart(selector, dataArr) {
+		function scaledYAccessor(data) {
+			return Y_SCALE(yAccessor(data));
+		}
 
-			const SVG = d3.select(selector)
+		function extent(array, accessor) {
+			return d3.extent(array, accessor);
+		}
+
+		function deepExtent(array, accessor) {
+			return [
+				d3.min(array, function(anArray) {
+					return d3.min(anArray, accessor);
+				}),
+				d3.max(array, function(anArray) {
+					return d3.max(anArray, accessor);
+				})
+			]
+		}
+
+		const line = defaultsFactory.lineGenerator().x(scaledXAccessor).y(scaledYAccessor);
+
+		function createSvg(elemSelector) {
+			return d3.select(elemSelector)
 				.append('svg')
 				.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
 				.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM)
 				.append('g')
 				.attr('transform', 'translate(' + MARGIN.LEFT + ',' + MARGIN.TOP + ')');
+		}
 
-			dataArr.forEach(function(obj) {
+		function handleDataArr(dataArray) {
+			dataArray.forEach(function (obj) {
 				obj.x = parseDate(obj.x);
 				obj.y = +obj.y;
-			});
+			})
+		}
 
-			X_SCALER.domain(d3.extent(dataArr, function(data) {
-				return data.x;
-			}));
-			Y_SCALER.domain([0, d3.max(dataArr, function(data) {
-				return data.y
-			})]);
+		function drawChart(selector, dataArr) {
 
-			SVG.append('path')
-				.attr('class', 'line')
-				.attr('d', LINE(dataArr));
+			const SVG = createSvg(elemSelector);
 
 			SVG.append('g')
 				.attr('class', 'x axis')
@@ -65,6 +112,33 @@ define(['jquery',
 			SVG.append('g')
 				.attr('class', 'y axis')
 				.call(Y_AXIS);
+
+			var chart;
+
+			if (Array.isArray(chartArr)) {
+				chartArr.forEach(function (chart) {
+					handleDataArr(chart)
+				});
+				X_SCALE.domain(extent(chartArr[0], xAccessor));
+				Y_SCALE.domain(deepExtent(chartArr, yAccessor));
+				chart = SVG.selectAll('.chart')
+					.data(chartArr)
+					.enter().append('g')
+					.attr('class', 'chart');
+				chart.append('path')
+					.attr('class', 'line')
+					.attr('d', function(chart) {
+						return line(chart)
+					});
+			} else {
+				handleDataArr(chartArr);
+				X_SCALE.domain(extent(chartArr, xAccessor));
+				Y_SCALE.domain(extent(chartArr, yAccessor));
+				chart = SVG;
+				chart.append('path')
+					.attr('class', 'line')
+					.attr('d', line(chartArr));
+			}
 		}
 
 		return {

@@ -4,21 +4,26 @@ define([
 	'../../../../common/util/templatesUtil',
 	'../../../../common/util/cssUtil',
 	'../../../../common/util/tabsUtil',
+	'../../../../common/constants',
 	'text!../../../../../templates/tab/tests/tab/charts.hbs'
 ], function ($,
              hbUtil,
              templatesUtil,
              cssUtil,
              tabsUtil,
+             constants,
              chartsTemplate) {
 
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const TESTS_TAB_TYPE = templatesUtil.testsTabTypes();
 	const TESTS_CHARTS_TAB_TYPE = templatesUtil.testsChartsTabTypes();
+	const CHART_METRICS = constants.CHART_METRICS;
+	const CHART_METRICS_FORMATTER = constants.CHART_METRICS_FORMATTER;
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
 
 	var currentTabType = TESTS_CHARTS_TAB_TYPE.LATENCY;
+	var resetChartsFlag = false;
 
 	function render() {
 		const renderer = rendererFactory();
@@ -73,25 +78,45 @@ define([
 		currentTabType = tabType;
 	}
 
-	function updateCharts(chartsObj) {
-		
+	function updateCharts(metricName, chartsObj) {
+		const chartBlock = $(jqId([CHART_METRICS_FORMATTER[metricName], 'chart', 'block']));
 	}
-	
-	function getCharts(markerName, testId) {
+
+	function setTabParameters(testId, testMode) {
+		if (LOGS_MODE.indexOf(testMode) > -1) {
+			if (testId) {
+				resetLogsFlag = false;
+				$.each(LOG_MARKER, function (key, value) {
+					getLogs(value, testId);
+				})
+			}
+		}
+	}
+
+	function getCharts(metricName, testId) {
 		$.get('/charts',
 			{
 				runId: testId
 			}
 		).done(function (chartsObj) {
-			updateLogTable(markerName, logsObj);
+			updateLogTable(metricName, chartsObj);
 		}).always(function () {
 			if (!resetLogsFlag) {
-				setTimeout(getCharts, 10000, markerName, testId); // interval in milliseconds; todo check a third arg
+				setTimeout(getCharts, 10000, metricName, testId); // interval in milliseconds;
+				// todo check a third arg
 			}
 		});
 	}
 
+	function resetLogs() {
+		resetChartsFlag = true;
+		resetLogTimeStamps();
+		$("." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body'])).empty();
+	}
+
 	return {
-		render: render
+		render: render,
+		setTabParameters: setTabParameters,
+		resetCharts: resetCharts
 	}
 });

@@ -40,7 +40,7 @@ define([
 
 	function render() {
 		const renderer = rendererFactory();
-		renderer.navbar();
+		renderer.base();
 		makeTabActive(currentTabType);
 	}
 
@@ -48,14 +48,14 @@ define([
 		const binder = clickEventBinderFactory();
 		const logsBlockElemId = jqId([TAB_TYPE.TESTS, 'tab', TESTS_TAB_TYPE.LOGS]);
 
-		function renderNavbar() {
+		function renderBase() {
 			hbUtil.compileAndInsertInsideBefore(logsBlockElemId, logsTemplate,
 				{tabs: TESTS_LOGS_TAB_TYPE});
 			binder.tab();
 		}
 
 		return {
-			navbar: renderNavbar
+			base: renderBase
 		}
 	};
 
@@ -94,7 +94,7 @@ define([
 	}
 	
 	function updateLogTable(markerName, logsObj) {
-		const tableBody = $(jqId([LOG_MARKER_FORMATTER[markerName],'log', 'wrapper']) + " ." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body']));
+		const tableBody = $(jqId([LOG_MARKER_FORMATTER[markerName], 'log', 'wrapper']) + " ." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body']));
 		$.each(logsObj, function (key, logEvents) {
 			$.each(logEvents, function (index, logEvent) {
 				const tableRow = $("<tr/>");
