@@ -7,11 +7,12 @@ import java.util.PriorityQueue;
 import static com.emc.mongoose.core.impl.load.tasks.processors.Point.distance;
 import static java.lang.Math.sqrt;
 
-class Polyline {
+public final class PolyLine {
 
-	private Point firstPoint, lastPoint;
-	private List<WeighedPoint> points = new ArrayList<>();
-	private PriorityQueue<WeighedPoint> queue = new PriorityQueue<>();
+	private volatile Point firstPoint = null, lastPoint = null;
+
+	private final List<WeighedPoint> points = new ArrayList<>();
+	private final PriorityQueue<WeighedPoint> queue = new PriorityQueue<>();
 
 	private double triangleArea(final Point point1, final Point point2, final Point point3) {
 		double a = distance(point1, point2);
@@ -89,7 +90,7 @@ class Polyline {
 		}
 	}
 
-	public void addPoint(final Point newPoint) {
+	public final void addPoint(final Point newPoint) {
 		switch (numberOfPoints()) {
 			case 0:
 				firstPoint = newPoint;
@@ -106,12 +107,9 @@ class Polyline {
 	}
 
 	private void addNewLastPoint(final Point newPoint, final Point penultPoint) {
-		WeighedPoint oldLastPoint = new WeighedPoint(lastPoint,
-				triangleArea(
-						penultPoint,
-						lastPoint,
-						newPoint
-				));
+		final WeighedPoint oldLastPoint = new WeighedPoint(
+			lastPoint, triangleArea(penultPoint, lastPoint, newPoint)
+		);
 		points.add(oldLastPoint);
 		queue.add(oldLastPoint);
 		lastPoint = newPoint;
@@ -127,7 +125,7 @@ class Polyline {
 		}
 	}
 
-	public int numberOfPoints() {
+	public final int numberOfPoints() {
 		if (lastPoint != null) {
 			return points.size() + 2;
 		} else if (firstPoint != null) {
@@ -137,7 +135,7 @@ class Polyline {
 		}
 	}
 
-	public List<Point> getPoints() {
+	public final List<Point> getPoints() {
 		List<Point> points = new ArrayList<>();
 		points.add(firstPoint);
 		for (WeighedPoint weighedPoint: this.points) {
@@ -148,7 +146,7 @@ class Polyline {
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		StringBuilder builder = new StringBuilder();
 		switch (numberOfPoints()) {
 			case 0:

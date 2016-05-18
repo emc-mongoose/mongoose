@@ -4,11 +4,10 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
-@SuppressWarnings("FieldCanBeLocal")
-public class Metric implements Serializable {
+public final class Metric implements Serializable {
 
-	private String name;
-	private List<Point> values;
+	private final String name;
+	private final List<Point> values;
 
 	private Metric(final String name, final List<Point> values) {
 		this.name = name;
@@ -33,29 +32,29 @@ public class Metric implements Serializable {
 		return metrics;
 	}
 
-	public static List<Metric> latencyMetrics(final PolylineManager polylineManager) {
+	public static List<Metric> latencyMetrics(final PolyLineManager polyLineManager) {
 		return timeMetricFormat(
-				polylineManager.getLatAvg(),
-				polylineManager.getLatMin(),
-				polylineManager.getLatMax());
+				polyLineManager.getLatAvg(),
+				polyLineManager.getLatMin(),
+				polyLineManager.getLatMax());
 	}
 
-	public static List<Metric> durationMetrics(final PolylineManager polylineManager) {
+	public static List<Metric> durationMetrics(final PolyLineManager polyLineManager) {
 		return timeMetricFormat(
-				polylineManager.getDurAvg(),
-				polylineManager.getDurMin(),
-				polylineManager.getDurMax());
+				polyLineManager.getDurAvg(),
+				polyLineManager.getDurMin(),
+				polyLineManager.getDurMax());
 	}
 
-	public static List<Metric> throughputMetrics(final PolylineManager polylineManager) {
+	public static List<Metric> throughputMetrics(final PolyLineManager polyLineManager) {
 		return speedMetricFormat(
-				polylineManager.getTpAvg(),
-				polylineManager.getTpLast());
+				polyLineManager.getTpAvg(),
+				polyLineManager.getTpLast());
 	}
 
-	public static List<Metric> bandwidthMetrics(final PolylineManager polylineManager) {
+	public static List<Metric> bandwidthMetrics(final PolyLineManager polyLineManager) {
 		return speedMetricFormat(
-				polylineManager.getBwAvg(),
-				polylineManager.getBwLast());
+				polyLineManager.getBwAvg(),
+				polyLineManager.getBwLast());
 	}
 }
