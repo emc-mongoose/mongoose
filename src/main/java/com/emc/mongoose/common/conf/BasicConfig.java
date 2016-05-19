@@ -17,7 +17,6 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
-import org.apache.commons.configuration.tree.ConfigurationNode;
 import org.apache.commons.configuration.tree.DefaultExpressionEngine;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -27,15 +26,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 //
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -62,28 +58,18 @@ implements AppConfig {
 		setDefaultExpressionEngine(new DefaultExpressionEngine());
 	}
 	//
-	private static String DIR_ROOT = null;
-	public static String getRootDir() {
-		if(DIR_ROOT == null) {
-			try {
-				DIR_ROOT = new File(
-					Constants.class.getProtectionDomain().getCodeSource().getLocation().toURI()
-				).getParent();
-			} catch(final URISyntaxException e) {
-				synchronized(System.err) {
-					System.err.println("Failed to determine the executable path:");
-					e.printStackTrace(System.err);
-				}
-				DIR_ROOT = System.getProperty("user.dir");
-			}
+	private static String DIR_WORKING = null;
+	public static String getWorkingDir() {
+		if(DIR_WORKING == null) {
+			DIR_WORKING = Paths.get("").toAbsolutePath().toString();
 		}
-		return DIR_ROOT;
+		return DIR_WORKING;
 	}
 	//
 	public final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
 	public BasicConfig() {
-		this(Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF));
+		this(Paths.get(getWorkingDir(), Constants.DIR_CONF).resolve(FNAME_CONF));
 	}
 	//
 	public BasicConfig(final Path cfgFilePath) {

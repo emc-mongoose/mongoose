@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.log.appenders;
 //
 //
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.appender.AbstractManager;
@@ -13,6 +14,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -22,7 +26,7 @@ import java.util.Map;
 public final class RunIdFileManager
 extends AbstractManager {
 	//
-	public static final List<RunIdFileManager> INSTANCES = new ArrayList<>();
+	public final static List<RunIdFileManager> INSTANCES = new ArrayList<>();
 	//
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
@@ -150,8 +154,8 @@ extends AbstractManager {
 		final File
 			outPutFile = new File(
 				currRunId == null ?
-					LogUtil.PATH_LOG_DIR + File.separator + fileName :
-					LogUtil.PATH_LOG_DIR + File.separator + currRunId + File.separator + fileName
+					LogUtil.getLogDir() + File.separator + fileName :
+					LogUtil.getLogDir() + File.separator + currRunId + File.separator + fileName
 			),
 			parentFile = outPutFile.getParentFile();
 		final boolean existedBefore = outPutFile.exists();

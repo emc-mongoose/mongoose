@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static com.emc.mongoose.common.conf.BasicConfig.getRootDir;
+import static com.emc.mongoose.common.conf.BasicConfig.getWorkingDir;
 import static com.emc.mongoose.run.scenario.engine.Scenario.FNAME_DEFAULT_SCENARIO;
 import static com.emc.mongoose.run.scenario.engine.Scenario.DIR_SCENARIO;
 
@@ -49,7 +49,7 @@ implements Runnable {
 				if(runFileStr != null && !runFileStr.isEmpty()) {
 					runFilePath = Paths.get(runFileStr);
 				} else {
-					runFilePath = Paths.get(getRootDir(), DIR_SCENARIO)
+					runFilePath = Paths.get(getWorkingDir(), DIR_SCENARIO)
 						.resolve(FNAME_DEFAULT_SCENARIO);
 				}
 				LOG.info(

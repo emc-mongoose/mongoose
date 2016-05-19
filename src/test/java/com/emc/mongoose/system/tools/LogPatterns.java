@@ -14,7 +14,7 @@ public interface LogPatterns {
 		//
 		NUM_LOAD = Pattern.compile("(?<numLoad>[\\d]+)"),
 		TYPE_API = Pattern.compile("(?<typeApi>[A-Za-z0-9]+)"),
-		TYPE_LOAD = Pattern.compile("(?<typeLoad>[CreatRdDlUpAn]{4,6})"),
+		TYPE_LOAD = Pattern.compile("(?<typeLoad>[WriteRadDl]{4,6})"),
 		//
 		DATA_ID = Pattern.compile("(?<dataID>[A-Za-z0-9]+)"),
 		DATA_LAYER_MASK = Pattern.compile("(?<layerMask>[\\d]+/[\\p{XDigit}]+)"),

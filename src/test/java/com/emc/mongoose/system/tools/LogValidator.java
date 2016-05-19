@@ -1,6 +1,5 @@
 package com.emc.mongoose.system.tools;
 
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -13,6 +12,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static com.emc.mongoose.common.log.LogUtil.getLogDir;
+import static com.emc.mongoose.system.tools.TestConstants.ERR_FILE_NAME;
+import static com.emc.mongoose.system.tools.TestConstants.ITEMS_FILE_NAME;
+import static com.emc.mongoose.system.tools.TestConstants.MESSAGE_FILE_NAME;
+import static com.emc.mongoose.system.tools.TestConstants.PERF_AVG_FILE_NAME;
+import static com.emc.mongoose.system.tools.TestConstants.PERF_SUM_FILE_NAME;
+import static com.emc.mongoose.system.tools.TestConstants.PERF_TRACE_FILE_NAME;
 /**
  * Created by olga on 03.07.15.
  */
@@ -20,7 +26,7 @@ public final class LogValidator {
 
 	public static void removeLogDirectory(final String runID)
 	throws Exception {
-		final Path logDir = Paths.get(BasicConfig.getRootDir(), Constants.DIR_LOG, runID);
+		final Path logDir = Paths.get(getLogDir(), Constants.DIR_LOG, runID);
 		removeDirectory(logDir);
 	}
 
@@ -38,33 +44,27 @@ public final class LogValidator {
 	}
 
 	public static File getMessageFile(final String runID){
-		return new File(Paths.get(BasicConfig.getRootDir(),
-			Constants.DIR_LOG, runID, TestConstants.MESSAGE_FILE_NAME).toString());
+		return new File(Paths.get(getLogDir(), runID, MESSAGE_FILE_NAME).toString());
 	}
 
 	public static File getPerfAvgFile(final String runID){
-		return new File(Paths.get(BasicConfig.getRootDir(),
-			Constants.DIR_LOG, runID, TestConstants.PERF_AVG_FILE_NAME).toString());
+		return new File(Paths.get(getLogDir(), runID, PERF_AVG_FILE_NAME).toString());
 	}
 
 	public static File getPerfSumFile(final String runID){
-		return new File(Paths.get(BasicConfig.getRootDir(),
-			Constants.DIR_LOG, runID, TestConstants.PERF_SUM_FILE_NAME).toString());
+		return new File(Paths.get(getLogDir(), runID, PERF_SUM_FILE_NAME).toString());
 	}
 
 	public static File getPerfTraceFile(final String runID){
-		return new File(Paths.get(BasicConfig.getRootDir(),
-			Constants.DIR_LOG, runID, TestConstants.PERF_TRACE_FILE_NAME).toString());
+		return new File(Paths.get(getLogDir(), runID, PERF_TRACE_FILE_NAME).toString());
 	}
 
 	public static File getItemsListFile(final String runID){
-		return new File(Paths.get(BasicConfig.getRootDir(),
-			Constants.DIR_LOG, runID, TestConstants.ITEMS_FILE_NAME).toString());
+		return new File(Paths.get(getLogDir(), runID, ITEMS_FILE_NAME).toString());
 	}
 
 	public static File getErrorsFile(final String runID){
-		return new File(Paths.get(BasicConfig.getRootDir(),
-			Constants.DIR_LOG, runID, TestConstants.ERR_FILE_NAME).toString());
+		return new File(Paths.get(getLogDir(), runID, ERR_FILE_NAME).toString());
 	}
 	//
 	public static void assertCorrectPerfSumCSV(BufferedReader in)

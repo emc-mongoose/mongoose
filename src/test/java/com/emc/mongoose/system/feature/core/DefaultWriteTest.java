@@ -7,10 +7,8 @@ import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.system.base.ConfiguredTestBase;
 import com.emc.mongoose.system.tools.StdOutUtil;
 import com.emc.mongoose.system.tools.ContentGetter;
-import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 //
 import com.emc.mongoose.system.tools.TestConstants;
 import com.emc.mongoose.system.tools.LogValidator;
@@ -63,7 +61,7 @@ extends ScenarioTestBase {
 		System.setProperty(AppConfig.KEY_ITEM_DATA_SIZE, DATA_SIZE);
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
-		appConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, TestConstants.BUCKET_NAME);
+		appConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, RUN_ID);
 		//
 		ScenarioTestBase.setUpClass();
 		final Logger logger = LogManager.getLogger();
@@ -312,12 +310,12 @@ extends ScenarioTestBase {
 	public void shouldGetAllObjectsFromServerAndDataSizeIsDefault()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
-		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
+		final File itemsFile = LogValidator.getItemsListFile(RUN_ID);
+		Assert.assertTrue(itemsFile.toPath().toAbsolutePath() + " file doesn't exist", itemsFile.exists());
 		//
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(itemsFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			int actualDataSize;
 			//

@@ -126,7 +126,7 @@ implements LoadState<T> {
 	//
 	public static void restoreScenarioState(final AppConfig appConfig) {
 		final String fullStateFileName = Paths.get(
-			BasicConfig.getRootDir(), Constants.DIR_LOG, appConfig.getRunId()
+			BasicConfig.getWorkingDir(), Constants.DIR_LOG, appConfig.getRunId()
 		).resolve(Constants.STATES_FILE).toString();
 		//  if load states list is empty or file w/ load states doesn't exist, then init
 		//  map entry value w/ empty list
@@ -173,7 +173,7 @@ implements LoadState<T> {
 	//
 	public static boolean isSavedStateOfRunExists(final String runId) {
 		final String fullStateFileName = Paths
-			.get(BasicConfig.getRootDir(), Constants.DIR_LOG, runId)
+			.get(BasicConfig.getWorkingDir(), Constants.DIR_LOG, runId)
 			.resolve(Constants.STATES_FILE)
 			.toString();
 		final File stateFile = new File(fullStateFileName);
@@ -265,7 +265,7 @@ implements LoadState<T> {
 	//
 	public static void saveRunState(final String runId, final List<LoadState> loadStates) {
 		final String fullStateFileName = Paths
-			.get(BasicConfig.getRootDir(), Constants.DIR_LOG, runId)
+			.get(BasicConfig.getWorkingDir(), Constants.DIR_LOG, runId)
 			.resolve(Constants.STATES_FILE)
 			.toString();
 		try(final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
