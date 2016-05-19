@@ -33,7 +33,7 @@ extends LoggingTestBase {
 		WS_MOCK_THREAD.setDaemon(true);
 		WS_MOCK_THREAD.start();
 		TimeUnit.SECONDS.sleep(1);
-		LOG.info(Markers.MSG, "Nagaina started");
+		LOG.info(Markers.MSG, "HTTP storage mock started");
 	}
 	//
 	@AfterClass
@@ -41,7 +41,7 @@ extends LoggingTestBase {
 	throws Exception {
 		WS_MOCK_THREAD.interrupt();
 		WS_MOCK.close();
-		LOG.info(Markers.MSG, "Nagaina stopped");
+		LOG.info(Markers.MSG, "HTTP storage mock stopped");
 		LoggingTestBase.tearDownClass();
 		ContentSourceBase.DEFAULT = null; // reset the content source
 	}

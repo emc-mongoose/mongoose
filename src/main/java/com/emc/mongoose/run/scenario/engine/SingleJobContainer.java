@@ -104,7 +104,7 @@ extends JobContainerBase {
 				limitTime > 0 ? TimeUnit.SECONDS : TimeUnit.DAYS
 			);
 		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Load job {} was interrupted", loadJob_);
+			LogUtil.exception(LOG, Level.DEBUG, e, "Load job {} was interrupted", loadJob_);
 		} catch(final RemoteException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e,
