@@ -68,6 +68,7 @@ define([
 
 	function makeTabActive(tabType) {
 		tabsUtil.showTabAsActive(plainId([TAB_TYPE.TESTS,  TESTS_TAB_TYPE.CHARTS, 'tab']), tabType);
+		tabsUtil.showActiveTabDependentElements(plainId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.CHARTS, 'tab', 'dependent']), tabType);
 		switch (tabType) {
 			case TESTS_CHARTS_TAB_TYPE.LATENCY:
 				break;
@@ -82,8 +83,8 @@ define([
 	}
 
 	function updateCharts(metricName, chartsObj) {
-		const chartBlockSelector = jqId([CHART_METRICS_FORMATTER[metricName], 'chart', 'block']);
-		charts.drawChart(chartBlockSelector, chartsObj);
+		const svgSelector = jqId([CHART_METRICS_FORMATTER[metricName], 'chart', 'wrapper']) + ' svg';
+		charts.drawChart(svgSelector, chartsObj);
 	}
 
 	function setTabParameters(testId, testMode) {

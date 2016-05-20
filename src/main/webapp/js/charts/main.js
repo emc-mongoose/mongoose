@@ -12,8 +12,6 @@ define(['jquery',
 		const WIDTH = 960 - MARGIN.LEFT - MARGIN.RIGHT;
 		const HEIGHT = 500 - MARGIN.TOP - MARGIN.BOTTOM;
 
-		const parseDate = d3.time.format('%d-%b-%y').parse;
-
 		const defaultsFactory = function () {
 
 			function createDefaultTimeScale() {
@@ -45,11 +43,11 @@ define(['jquery',
 			}
 		}();
 
-		const X_SCALE = defaultsFactory.linearScale().range([0, WIDTH]);
-		const Y_SCALE = defaultsFactory.linearScale().range([HEIGHT, 0]);
+		const scaleX = defaultsFactory.linearScale().range([0, WIDTH]);
+		const scaleY = defaultsFactory.linearScale().range([HEIGHT, 0]);
 
-		const X_AXIS = defaultsFactory.axis().scale(X_SCALE).orient('bottom').ticks(5);
-		const Y_AXIS = defaultsFactory.axis().scale(Y_SCALE).orient('left').ticks(5);
+		const axisX = defaultsFactory.axis().scale(scaleX).orient('bottom').ticks(5);
+		const axisY = defaultsFactory.axis().scale(scaleY).orient('left').ticks(5);
 
 		function xAccessor(data) {
 			return data.x;
@@ -60,37 +58,47 @@ define(['jquery',
 		}
 
 		function scaledXAccessor(data) {
-			return X_SCALE(xAccessor(data));
+			return scaleX(xAccessor(data));
 		}
 
 		function scaledYAccessor(data) {
-			return Y_SCALE(yAccessor(data));
+			return scaleY(yAccessor(data));
 		}
 
 		function extent(array, accessor) {
-			return d3.extent(array, accessor);
+			return d3.extent(array.values, accessor);
 		}
 
 		function deepExtent(array, accessor) {
 			return [
 				d3.min(array, function (anArray) {
-					return d3.min(anArray, accessor);
+					return d3.min(anArray.values, accessor);
 				}),
 				d3.max(array, function (anArray) {
-					return d3.max(anArray, accessor);
+					return d3.max(anArray.values, accessor);
 				})
 			]
 		}
 
 		const line = defaultsFactory.lineGenerator().x(scaledXAccessor).y(scaledYAccessor);
 
-		function createSvg(elemSelector) {
-			return d3.select(elemSelector)
-				.append('svg')
+		function selectSvg(svgSelector) {
+			return d3.select(svgSelector)
 				.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
 				.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM)
 				.append('g')
 				.attr('transform', 'translate(' + MARGIN.LEFT + ',' + MARGIN.TOP + ')');
+		}
+
+		function appendAxes(svgElement) {
+			svgElement.append('g')
+				.attr('class', 'x axis')
+				.attr('transform', 'translate(0, ' + HEIGHT + ')')
+				.call(axisX);
+
+			svgElement.append('g')
+				.attr('class', 'y axis')
+				.call(axisY);
 		}
 
 		function handleDataObj(dataObj) {
@@ -108,44 +116,39 @@ define(['jquery',
 			}
 		}
 
-		function drawChart(selector, chartArr) {
+		function drawChart(svgSelector, chartObj) {
 
-			const SVG = createSvg(selector);
+			const SVG = selectSvg(svgSelector);
 
-			SVG.append('g')
-				.attr('class', 'x axis')
-				.attr('transform', 'translate(0, ' + HEIGHT + ')')
-				.call(X_AXIS);
-
-			SVG.append('g')
-				.attr('class', 'y axis')
-				.call(Y_AXIS);
+			SVG.selectAll('*').remove();
 
 			var chart;
 
-			if (Array.isArray(chartArr)) {
-				chartArr.forEach(function (chart) {
+			if (Array.isArray(chartObj)) {
+				chartObj.forEach(function (chart) {
 					handleDataObj(chart)
 				});
-				X_SCALE.domain(extent(chartArr[0], xAccessor));
-				Y_SCALE.domain(deepExtent(chartArr, yAccessor));
+				scaleX.domain(extent(chartObj[0], xAccessor));
+				scaleY.domain(deepExtent(chartObj, yAccessor));
+				appendAxes(SVG);
 				chart = SVG.selectAll('.chart')
-					.data(chartArr)
+					.data(chartObj)
 					.enter().append('g')
 					.attr('class', 'chart');
 				chart.append('path')
 					.attr('class', 'line')
 					.attr('d', function (chart) {
-						return line(chart)
+						return line(chart.values)
 					});
 			} else {
-				handleDataObj(chartArr);
-				X_SCALE.domain(extent(chartArr, xAccessor));
-				Y_SCALE.domain(extent(chartArr, yAccessor));
+				handleDataObj(chartObj);
+				scaleX.domain(extent(chartObj, xAccessor));
+				scaleY.domain(extent(chartObj, yAccessor));
+				appendAxes(SVG);
 				chart = SVG;
 				chart.append('path')
 					.attr('class', 'line')
-					.attr('d', line(chartArr));
+					.attr('d', line(chartObj.values));
 			}
 		}
 
