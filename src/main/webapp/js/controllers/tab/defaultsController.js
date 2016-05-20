@@ -34,13 +34,14 @@ define([
 			pureConfigObject = null;
 			changedConfigObject = null;
 		}
-		filesUtil.changeFileToSaveAs(TAB_TYPE.DEFAULTS, changedConfigObject);
+		filesUtil.changeFileToSave(TAB_TYPE.DEFAULTS, changedConfigObject);
 	}
 
 	function setRunMode(currentMode) {
 		const tempObj = {run: {mode: currentMode}};
+		$.extend(true, pureConfigObject, tempObj);
 		$.extend(true, changedConfigObject, tempObj);
-		filesUtil.changeFileToSaveAs(TAB_TYPE.DEFAULTS, changedConfigObject);
+		filesUtil.changeFileToSave(TAB_TYPE.DEFAULTS, changedConfigObject);
 	}
 
 	function render(configObject) {
@@ -73,11 +74,16 @@ define([
 		return changedConfigObject;
 	}
 	
+	function isChanged() {
+		return !filesUtil.compareObjects(pureConfigObject, changedConfigObject);
+	}
+	
 	return {
 		render: render,
 		setTabParameters: setTabParameters,
 		getPureAppConfig: getPureAppConfig,
 		getChangedAppConfig: getChangedAppConfig,
-		setRunMode: setRunMode
+		setRunMode: setRunMode,
+		isChanged: isChanged
 	}
 });

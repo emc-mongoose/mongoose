@@ -1,0 +1,8 @@
+<ul class="nav nav-pills center-inline-blocks indent-20-lower">
+    {{#each tabs}}
+        <li class="tests-charts-tab" id="{{this}}-tests-charts-tab"><a>{{this}}</a></li>
+    {{/each}}
+</ul>
+{{#each tabs}}
+    <div id="{{this}}-chart-block"></div>
+{{/each}}

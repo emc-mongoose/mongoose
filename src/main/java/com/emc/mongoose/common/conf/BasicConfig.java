@@ -43,7 +43,7 @@ public class BasicConfig
 extends HierarchicalConfiguration
 implements AppConfig {
 	//
-	public static final InheritableThreadLocal<AppConfig>
+	public static final ThreadLocal<AppConfig>
 		THREAD_CONTEXT = new InheritableThreadLocal<AppConfig>() {
 		@Override
 		protected final AppConfig initialValue() {
@@ -79,9 +79,9 @@ implements AppConfig {
 		log.info(Markers.CFG, toFormattedString());
 	}
 	//
-	public BasicConfig(final String appConfigString) {
+	public BasicConfig(final byte[] appConfigBytes) {
 		final Logger log = LogManager.getLogger();
-		loadFromJson(appConfigString);
+		loadFromJson(appConfigBytes);
 		log.info(Markers.CFG, toFormattedString());
 	}
 	//
@@ -505,6 +505,27 @@ implements AppConfig {
 	public int getStorageMockContainerCountLimit() {
 		return getInt(KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT);
 	}
+
+	@Override
+	public void setRunId(final String runId) {
+		setProperty(KEY_RUN_ID, runId);
+	}
+
+	@Override
+	public void setRunMode(final String runMode) {
+		setProperty(KEY_RUN_MODE, runMode);
+	}
+
+	@Override
+	public void overrideRunId() {
+		ThreadContext.put(KEY_RUN_ID, getRunId());
+	}
+
+	@Override
+	public void overrideRunMode() {
+		ThreadContext.put(KEY_RUN_MODE, getRunMode());
+	}
+
 	//
 	@Override
 	public void override(final String configBranch, final Map<String, ?> configTree) {
@@ -696,6 +717,12 @@ implements AppConfig {
 		applyAliasing();
 	}
 	//
+	public void loadFromJson(final byte[] jsonBytes) {
+		new JsonConfigLoader(this).loadPropsFromJsonByteArray(jsonBytes);
+		applyAliasing();
+	}
+	//
+	@SuppressWarnings("unchecked")
 	private void applyAliasing() {
 		final Logger log = LogManager.getLogger();
 		final String prefixKeyAliasingWithDot = PREFIX_KEY_ALIASING + ".";

@@ -9,6 +9,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 // mongoose-server-api.jar
+import com.emc.mongoose.run.webserver.WebUiRunner;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 // mongoose-server-impl.jar
 // mongoose-storage-mock.jar
@@ -18,6 +19,7 @@ import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 //
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -46,7 +48,7 @@ public final class ModeDispatcher {
 		} else {
 			runMode = args[0];
 		}
-		appConfig.setProperty(AppConfig.KEY_RUN_MODE, runMode);
+		appConfig.setRunMode(runMode);
 		rootLogger.info(Markers.MSG, appConfig.toString());
 		//
 		switch(runMode) {
@@ -62,6 +64,10 @@ public final class ModeDispatcher {
 						rootLogger, Level.ERROR, e, "Failed to run the load builder services"
 					);
 				}
+				break;
+			case Constants.RUN_MODE_WEBUI:
+				rootLogger.debug(Markers.MSG, "Starting the web UI");
+				new WebUiRunner().run();
 				break;
 			case Constants.RUN_MODE_WSMOCK:
 			case Constants.RUN_MODE_CINDERELLA:

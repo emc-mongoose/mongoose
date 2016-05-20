@@ -3,15 +3,17 @@ define([
 	'./websockets/webSocketController',
 	'./tab/scenariosController',
 	'./tab/defaultsController',
-	'./tab/testsController',
+	'./tab/tests/testsController',
 	'../common/openFileHandler',
 	'text!../../templates/navbar.hbs',
 	'text!../../templates/base.hbs',
-	'text!../../templates/tab/buttons.hbs',
-	'text!../../templates/tab/configurations.hbs',
+	'text!../../templates/tab/properties/buttons.hbs',
+	'text!../../templates/tab/properties/configurations.hbs',
 	'../common/util/handlebarsUtil',
 	'../common/util/templatesUtil',
-	'../common/util/cssUtil'
+	'../common/util/cssUtil',
+	'../common/util/tabsUtil',
+	'../common/constants'
 ], function ($,
              webSocketController,
              scenariosController,
@@ -24,7 +26,9 @@ define([
              configurationsTemplate,
              hbUtil,
              templatesUtil,
-             cssUtil) {
+             cssUtil,
+             tabsUtil,
+             constants) {
 
 	const MODE = templatesUtil.modes();
 	const EXTENDED_MODE = templatesUtil.objPartToArray(MODE, 2);
@@ -39,7 +43,7 @@ define([
 	// render html and bind events of basic elements and same for all tabs elements 
 	function render(scenariosArray, configObject) {
 		const renderer = rendererFactory();
-		renderer.navbar(configObject.run.version || 'unknown');
+		renderer.navbar(version(configObject));
 		renderer.base();
 		renderer.buttons();
 		renderer.configurations();
@@ -51,32 +55,35 @@ define([
 		renderer.start();
 	}
 
+	function version(configObject) {
+		var version = configObject.run.version;
+		if (version) {
+			version = version.charAt(0).toUpperCase() + version.slice(1);
+		} else {
+			version = 'Unknown';
+		}
+		return version;
+	}
+
 	function tabJqId(tabType) {
 		return jqId([tabType, 'tab']);
 	}
 
 	function makeTabActive(tabType) {
-		const TAB_CLASS = templatesUtil.tabClasses();
-		cssUtil.processClassElementsById('tab', tabType,
-			function (elemSelector) {
-				elemSelector.addClass(TAB_CLASS.ACTIVE);
-			},
-			function (elemSelector) {
-				elemSelector.removeClass(TAB_CLASS.ACTIVE);
-			});
-		cssUtil.processClassElementsById('tab-dependent', tabType,
-			function (elemSelector) {
-				elemSelector.show();
-			},
-			function (elemSelector) {
-				elemSelector.hide();
-			});
+		tabsUtil.showTabAsActive('tab', tabType);
+		tabsUtil.showActiveTabDependentElements('tab-dependent', tabType);
+		cssUtil.hide(jqId(['start']), jqId(['properties', 'block']), jqId(['tests', 'block']));
 		switch (tabType) {
 			case TAB_TYPE.SCENARIOS:
 				scenariosController.setTabParameters();
+				cssUtil.show(jqId(['start']), jqId(['properties', 'block']));
 				break;
 			case TAB_TYPE.DEFAULTS:
 				defaultsController.setTabParameters();
+				cssUtil.show(jqId(['start']), jqId(['properties', 'block']));
+				break;
+			case TAB_TYPE.TESTS:
+				cssUtil.show(jqId(['tests', 'block']));
 				break;
 		}
 		currentTabType = tabType;
@@ -90,6 +97,7 @@ define([
 		modeTabElem.text('Mode: ' + mode);
 		currentMode = mode;
 		defaultsController.setRunMode(currentMode);
+		$('#run\\.mode').find('input').val(currentMode);
 		for (var i = 0; i < EXTENDED_MODE.length; i++) {
 			if (mode === EXTENDED_MODE[i]) {
 				cssUtil.processClassElements('mode-dependent',
@@ -99,7 +107,9 @@ define([
 				return;
 			}
 		}
-		makeTabActive(TAB_TYPE.DEFAULTS);
+		if (currentTabType === TAB_TYPE.SCENARIOS) {
+			makeTabActive(TAB_TYPE.DEFAULTS);
+		}
 		cssUtil.processClassElements('mode-dependent',
 			function (elemSelector) {
 				elemSelector.hide();
@@ -123,12 +133,18 @@ define([
 			hbUtil.compileAndInsertInside('#app', baseTemplate);
 			const configElem = $('#all-buttons');
 			$.each(CONFIG_TABS, function (index, value) {
-				if (index === 0) {
+				if (value === TAB_TYPE.SCENARIOS) {
 					const detailsTree = $('<ul/>', {
 						id: plainId([BLOCK.TREE, value, 'details']),
 						class: BLOCK.TREE + ' ' + 'tab-dependent'
 					});
+					const jsonViewElem = $('<pre/>', {
+						id: plainId(['json', value]),
+						class: 'json-view tab-dependent'
+					});
+					configElem.after(jsonViewElem);
 					configElem.after(detailsTree);
+					jsonViewElem.hide();
 					detailsTree.hide();
 				}
 				configElem.after(
@@ -178,17 +194,8 @@ define([
 			})
 		}
 
-		function bindTabClickEvent(tabType) {
-			const tabId = tabJqId(tabType);
-			$(tabId).click(function () {
-				makeTabActive(tabType)
-			});
-		}
-
 		function bindTabClickEvents() {
-			$.each(TAB_TYPE, function (key, value) {
-				bindTabClickEvent(value);
-			});
+			tabsUtil.bindTabClickEvents(TAB_TYPE, tabJqId, makeTabActive);
 		}
 
 		function bindModeButtonClickEvents() {
@@ -231,30 +238,49 @@ define([
 		}
 
 		function startButtonClickEvent(startJson) {
-			const isConfirmed = confirm('If properties were changed Mongoose will save it' +
-				' automatically' +
-				'Would you like to continue?');
+			var isConfirmed = true;
+			if (defaultsController.isChanged() || scenariosController.isChanged()) {
+				isConfirmed = confirm('If properties were changed Mongoose' +
+					' will save it' +
+					' automatically. ' +
+					'Would you like to continue?');
+			}
 			if (isConfirmed) {
-				$.post('/run', startJson)
-					.done(function () {
-						console.log('Mongoose ran');
-					});
+				$.ajax({
+					type: 'PUT',
+					url: '/run',
+					dataType: 'json',
+					contentType: constants.JSON_CONTENT_TYPE,
+					data: JSON.stringify(startJson),
+					processData: false
+				}).done(function (testsObj) {
+					testsController.updateTestsList(testsObj);
+					console.log('Mongoose ran');
+				});
 			}
 		}
 
 		function bindStartButtonEvent() {
 			$(jqId(['start'])).click(function () {
-				const runScenario = scenariosController.getChangedScenario();
 				const runConfig = defaultsController.getChangedAppConfig();
-				if (runScenario === null) {
-					alert('Please, choose a scenario')
-				} else {
-					const startJson = {
-						scenario: JSON.stringify(runScenario),
-						config: JSON.stringify(runConfig)
-					};
-					startButtonClickEvent(startJson);
+				const startJson = {};
+				startJson['config'] = {
+					config: runConfig // the server handles a configuration in this format
+				};
+				if (EXTENDED_MODE.indexOf(currentMode) > -1) {
+					const runScenario = scenariosController.getChangedScenario();
+					if (runScenario !== null) {
+						startJson['scenario'] = runScenario;
+					}
+					// else {
+					// 	if (!confirm(
+					// 			'Mongoose will start with the default scenario. ' +
+					// 			'Would you like to continue?')) {
+					// 		return
+					// 	}
+					// }
 				}
+				startButtonClickEvent(startJson);
 			})
 		}
 

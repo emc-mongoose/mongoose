@@ -1,12 +1,8 @@
 package com.emc.mongoose.common.log.appenders;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-//
-//
-import org.apache.commons.collections4.queue.CircularFifoQueue;
-//
+import com.emc.mongoose.common.log.Markers;
 import org.apache.logging.log4j.ThreadContext;
-//
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -16,28 +12,31 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
-//
+
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 /**
  Created by kurila on 23.10.14.
  */
 @Plugin(name="WebUI", category="Core", elementType="appender", printObject=true)
 public final class WebUIAppender
 extends AbstractAppender {
-	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
+
+	private final static int MAX_EVENTS_IN_THE_LIST = 3000;
 	//
-	private final static ConcurrentHashMap<String, CircularFifoQueue<LogEvent>>
+	private static final List<String> markerNames = Collections.unmodifiableList(Arrays.asList(
+		Markers.MSG.getName(), Markers.ERR.getName(),
+			Markers.PERF_AVG.getName(), Markers.PERF_SUM.getName()));
+	//
+	public static final Map<String, Map<String, CircularArray<ShortenedLogEvent>>>
 		LOG_EVENTS_MAP = new ConcurrentHashMap<>();
-	private final static List<WebSocketLogListener>
-		LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
 	//
-	private final static Layout<? extends Serializable>
+	private static final Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	//
 	private static boolean ENABLED_FLAG;
@@ -64,29 +63,6 @@ extends AbstractAppender {
 		return new WebUIAppender(name, filter, DEFAULT_LAYOUT, ignoreExceptions);
 	}
 	//
-	public static void register(final WebSocketLogListener listener) {
-		if(ENABLED_FLAG) {
-			sendPreviousLogs(listener);
-			LISTENERS.add(listener);
-		}
-	}
-	//
-	public static void unregister(final WebSocketLogListener listener) {
-		if(ENABLED_FLAG) {
-			LISTENERS.remove(listener);
-		}
-	}
-	//
-	public synchronized static void sendPreviousLogs(final WebSocketLogListener listener) {
-		final List<LogEvent> previousLogs = new ArrayList<>();
-		for (final CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
-			for (final LogEvent logEvent : queue) {
-				previousLogs.add(logEvent);
-			}
-		}
-		listener.sendMessage(previousLogs);
-	}
-	//
 	@Override
 	public synchronized final void append(final LogEvent event) {
 		if(ENABLED_FLAG) {
@@ -100,16 +76,50 @@ extends AbstractAppender {
 			//
 			if(currRunId != null) {
 				if(!LOG_EVENTS_MAP.containsKey(currRunId)) {
+					final Map<String, CircularArray<ShortenedLogEvent>> markers = new
+							ConcurrentHashMap<>();
+					for (final String markerName: markerNames) {
+						addMarkerToMap(markers, markerName);
+					}
 					LOG_EVENTS_MAP.put(
-						currRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST)
+						currRunId, markers
 					);
 				}
-				LOG_EVENTS_MAP.get(currRunId).add(event);
-				for (final WebSocketLogListener listener : LISTENERS) {
-					listener.sendMessage(event);
+				final String eventMarkerName = event.getMarker().getName();
+				if (markerNames.contains(eventMarkerName)) {
+					addLogEventToMap(currRunId, eventMarkerName, event);
 				}
 			} // else silently skip
 		}
+	}
+	//
+	private void addMarkerToMap(final Map<String, CircularArray<ShortenedLogEvent>> markers,
+	                            final String markerName) {
+		markers.put(markerName,
+				new CircularArray<>(MAX_EVENTS_IN_THE_LIST, new ShortenedLogEvent.SleComparator()));
+	}
+	//
+	private void addLogEventToMap(final String runId, final String markerName,
+	                              final LogEvent event) {
+		LOG_EVENTS_MAP.get(runId).get(markerName).addItem(new ShortenedLogEvent(event));
+	}
+	//
+	public static  Map<String, List<ShortenedLogEvent>> getLastLogEventsByMarker(
+			final String runId,
+			final String markerName,
+			final long timeStamp) {
+		final Map<String, List<ShortenedLogEvent>> lastLogEventsWithMarker =
+				new ConcurrentHashMap<>();
+		final Map<String, CircularArray<ShortenedLogEvent>> testLogs = LOG_EVENTS_MAP.get(runId);
+		List<ShortenedLogEvent> lastLogEventsForMarker = null;
+		if (testLogs != null && testLogs.containsKey(markerName)) {
+			lastLogEventsForMarker = testLogs.get(markerName).getLastItems(new ShortenedLogEvent
+					(timeStamp));
+		}
+		if (lastLogEventsForMarker != null) {
+			lastLogEventsWithMarker.put(markerName, lastLogEventsForMarker);
+		}
+		return lastLogEventsWithMarker;
 	}
 	//
 	public static void removeRunId(final String runId) {

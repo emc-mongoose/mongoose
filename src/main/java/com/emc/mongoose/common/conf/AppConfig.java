@@ -86,6 +86,7 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT = "storage.mock.container.countLimit";
 	//
 	String KEY_SCENARIO_FROM_STDIN = "scenarioFromStdIn";
+	String KEY_SCENARIO_FROM_WEBUI = "scenarioFromWebUi";
 	//
 	String FNAME_CONF = "defaults.json";
 	String PREFIX_KEY_ALIASING = "aliasing";
@@ -232,6 +233,14 @@ extends Cloneable, Configuration, Externalizable {
 	int getStorageMockContainerCapacity();
 
 	int getStorageMockContainerCountLimit();
+
+	void setRunId(final String runId);
+
+	void setRunMode(final String runMode);
+
+	void overrideRunId();
+
+	void overrideRunMode();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 

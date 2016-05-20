@@ -131,6 +131,13 @@ sourceSets {
 		}
 		compileClasspath += sourceSets.common.output + sourceSets.coreApi.output
 	}
+	webserver {
+		java {
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'webserver'].join(File.separator))
+			include '**'
+		}
+		compileClasspath += sourceSets.common.output
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// run modes ///////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -178,6 +185,20 @@ sourceSets {
 		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
 		compileClasspath += sourceSets.client.output + storageMock.output
 	}
+	webui {
+		java {
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'webui'].join(File.separator))
+			include '**'
+		}
+		//
+		compileClasspath += sourceSets.common.output + sourceSets.scenario.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
+		compileClasspath += sourceSets.storageMock.output + sourceSets.util.output
+		//
+		runtimeClasspath += sourceSets.client.output + sourceSets.storageMock.output
+		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// launcher ////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,9 +211,10 @@ sourceSets {
 		compileClasspath += sourceSets.common.output + sourceSets.scenario.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
+		compileClasspath += sourceSets.webserver.output + sourceSets.webui.output
 		compileClasspath += sourceSets.storageMock.output + sourceSets.util.output
 		//
-		runtimeClasspath += sourceSets.client.output
+		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -321,6 +343,16 @@ dependencies {
 		library.runtime_logging,
 	)
 
+	webserverCompile (
+		library.commons_configuration,
+		library.log4j_api_plus_core,
+		library.jetty_svc,
+	)
+	webserverRuntime (
+		library.runtime_logging,
+		library.runtime_jetty_svc,
+	)
+
 	// run modes
 
 	clientCompile (
@@ -363,9 +395,31 @@ dependencies {
 		library.jackson_databind,
 		library.log4j_api_plus_core,
 		library.metrics_core,
+		library.netty_buffer,
+		library.netty_codec_http,
+		library.netty_handler,
+		library.netty_transport,
+		library.netty_transport_native_epoll,
 	)
 	storageMockRuntime (
 		library.runtime_logging,
+	)
+
+	webuiCompile (
+		library.commons_collections4,
+		library.commons_configuration,
+		library.jackson_databind,
+		library.log4j_api_plus_core,
+		library.websockets,
+		library.websocket_client,
+		library.websocket_common,
+		library.websocket_core,
+		library.websocket_server,
+	)
+	webuiRuntime (
+		library.runtime_logging,
+		library.runtime_jetty,
+		library.runtime_webapp,
 	)
 
 	// launcher
@@ -413,10 +467,12 @@ configurations {
 		storageAdapterS3Compile,
 		storageAdapterSwiftCompile,
 		serverApiCompile,
+		webserverCompile,
 		clientCompile,
 		scenarioCompile,
 		serverImplCompile,
 		storageMockCompile,
+		webuiCompile,
 		cliCompile,
 		utilCompile,
 	)
@@ -429,6 +485,7 @@ configurations {
 		storageAdapterS3Runtime,
 		storageAdapterSwiftRuntime,
 		serverApiRuntime,
+		webserverRuntime,
 		clientRuntime,
 		scenarioRuntime,
 		serverImplRuntime,
@@ -611,6 +668,25 @@ task serverApiJar(type: Jar) {
 	}
 }
 
+task webserverJar(type: Jar) {
+	dependsOn commonJar
+	classifier "webserver"
+	archiveName "${baseName}-${classifier}.${extension}"
+	from sourceSets.webserver.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-webserver",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				configurations.webserverRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
+		)
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // run modes ///////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -737,6 +813,33 @@ task scenarioJar(type: Jar) {
 	}
 }
 
+task webuiJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar
+	dependsOn serverApiJar, serverImplJar
+	dependsOn storageMockJar, scenarioJar
+	classifier "webui"
+	archiveName "${baseName}-${classifier}.${extension}"
+	from sourceSets.webui.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-webui",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				scenarioJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				utilJar.outputs.files.collect {it.name}.join(' '),
+				configurations.webuiRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
+		)
+	}
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // entry point /////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -745,7 +848,7 @@ task cliJar(type: Jar) {
 	dependsOn commonJar, storageMockJar, coreApiJar, coreImplJar
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
 	//dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
-	dependsOn clientJar, scenarioJar
+	dependsOn clientJar, scenarioJar, webuiJar
 	classifier "cli"
 	archiveName "${baseName}.${extension}"
 	from sourceSets.cli.output
@@ -767,6 +870,8 @@ task cliJar(type: Jar) {
 				storageMockJar.outputs.files.collect {it.name}.join(' '),
 				scenarioJar.outputs.files.collect {it.name}.join(' '),
 				utilJar.outputs.files.collect {it.name}.join(' '),
+				webserverJar.outputs.files.collect {it.name}.join(' '),
+				webuiJar.outputs.files.collect {it.name}.join(' '),
 				configurations.cliRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
@@ -785,9 +890,11 @@ task testJar(type: Jar) {
 	dependsOn storageAdapterSwiftJar
 	dependsOn serverApiJar
 	dependsOn serverImplJar
+	dependsOn webserverJar
 	dependsOn clientJar
 	dependsOn scenarioJar
 	dependsOn storageMockJar
+	dependsOn webuiJar
 	dependsOn cliJar
 	dependsOn utilJar
 
@@ -808,9 +915,11 @@ task testJar(type: Jar) {
 				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
 				serverApiJar.outputs.files.collect {it.name}.join(' '),
 				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				webserverJar.outputs.files.collect {it.name}.join(' '),
 				clientJar.outputs.files.collect {it.name}.join(' '),
 				scenarioJar.outputs.files.collect {it.name}.join(' '),
 				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				webuiJar.outputs.files.collect {it.name}.join(' '),
 				cliJar.outputs.files.collect {it.name}.join(' '),
 				utilJar.outputs.files.collect {it.name}.join(' '),
 				configurations.testRuntime.collect {
@@ -833,16 +942,29 @@ task dist(type: Tar) {
 	dependsOn storageAdapterS3Jar
 	dependsOn storageAdapterSwiftJar
 	dependsOn serverApiJar
+	dependsOn webserverJar
 	dependsOn clientJar
 	dependsOn scenarioJar
 	dependsOn serverImplJar
 	dependsOn storageMockJar
+	dependsOn webuiJar
 	dependsOn cliJar
 	dependsOn utilJar
 
 	baseName = project.name
 	compression = Compression.GZIP
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	List webappLibs = new LinkedList()
+	configurations.webuiRuntime.collect {
+		def path = it.getAbsolutePath()
+		if(
+			it.isFile() && (path.contains("jstl") || path.contains("log4j-web") ||
+			path.contains("webjars"))
+		) {
+			webappLibs.add(path)
+		}
+	}
 
 	into(baseName + '-' + version) {
 		into('conf') {
@@ -864,12 +986,20 @@ task dist(type: Tar) {
 		from storageAdapterS3Jar.outputs.files
 		from storageAdapterSwiftJar.outputs.files
 		from serverApiJar.outputs.files
+		from webserverJar.outputs.files
 		from clientJar.outputs.files
 		from scenarioJar.outputs.files
 		from serverImplJar.outputs.files
 		from storageMockJar.outputs.files
+		from webuiJar.outputs.files
 		from cliJar.outputs.files
 		from utilJar.outputs.files
+		into('webapp') {
+			from { ["src", "main", "webapp"].join(File.separator) }
+		}
+		into(["webapp", "WEB-INF", "lib"].join(File.separator)) {
+			from { webappLibs }
+		}
 	}
 }
 
@@ -933,8 +1063,8 @@ task integTest(type: Test, dependsOn: dist) {
 }
 
 build.dependsOn commonJar, coreApiJar, coreImplJar, storageAdapterAtmosJar, storageAdapterS3Jar
-build.dependsOn storageAdapterSwiftJar, serverApiJar, clientJar, scenarioJar
-build.dependsOn serverImplJar, storageMockJar, cliJar, utilJar, testJar
+build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, scenarioJar
+build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testJar
 
 tasks.idea.dependsOn(cleanIdea)
 //tasks.idea.dependsOn(build)
@@ -982,7 +1112,7 @@ ext.publicJars = [
 	commonJar, coreApiJar, coreImplJar,
 	storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar,
 	serverApiJar, serverImplJar, clientJar, scenarioJar,
-	storageMockJar, cliJar, utilJar, testJar
+	storageMockJar, webserverJar, webuiJar, cliJar, utilJar, testJar
 ]
 
 for(nextPublicJar in publicJars) {
@@ -1038,7 +1168,7 @@ artifactory {
 
 artifactoryPublish.dependsOn commonJar, coreApiJar, coreImplJar
 artifactoryPublish.dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
-artifactoryPublish.dependsOn serverApiJar, clientJar, scenarioJar, serverImplJar
-artifactoryPublish.dependsOn storageMockJar, cliJar, utilJar, testJar
+artifactoryPublish.dependsOn serverApiJar, webserverJar, clientJar, scenarioJar, serverImplJar
+artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testJar
 
 artifactoryPublish.dependsOn pushDockerImage
