@@ -28,6 +28,10 @@ define([
 	var currentTabType = TESTS_CHARTS_TAB_TYPE.LATENCY;
 	var resetChartsFlag = false;
 
+	function svgWrapperId(metricName) {
+		return jqId([CHART_METRICS_FORMATTER[metricName], 'chart', 'wrapper']);
+	}
+
 	function render() {
 		const renderer = rendererFactory();
 		renderer.base();
@@ -42,6 +46,9 @@ define([
 		function renderBase() {
 			hbUtil.compileAndInsertInsideBefore(chartsBlockElemId, chartsTemplate,
 				{tabs: TESTS_CHARTS_TAB_TYPE});
+			$.each(CHART_METRICS, function (key, metricName) {
+				charts.createSvg(svgWrapperId(metricName));
+			});
 			binder.tab();
 		}
 
@@ -83,8 +90,7 @@ define([
 	}
 
 	function updateCharts(metricName, chartsObj) {
-		const svgSelector = jqId([CHART_METRICS_FORMATTER[metricName], 'chart', 'wrapper']) + ' svg';
-		charts.drawChart(svgSelector, chartsObj);
+		charts.drawChart(svgWrapperId(metricName) + ' svg g', chartsObj);
 	}
 
 	function setTabParameters(testId, testMode) {

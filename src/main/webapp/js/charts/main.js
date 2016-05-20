@@ -82,10 +82,11 @@ define(['jquery',
 
 		const line = defaultsFactory.lineGenerator().x(scaledXAccessor).y(scaledYAccessor);
 
-		function selectSvg(svgSelector) {
-			return d3.select(svgSelector)
-				.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
-				.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM)
+		function createSvg(parentSelector) {
+			d3.select(parentSelector)
+				.append('svg')
+			.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
+			.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM)
 				.append('g')
 				.attr('transform', 'translate(' + MARGIN.LEFT + ',' + MARGIN.TOP + ')');
 		}
@@ -118,7 +119,7 @@ define(['jquery',
 
 		function drawChart(svgSelector, chartObj) {
 
-			const SVG = selectSvg(svgSelector);
+			const SVG = d3.select(svgSelector);
 
 			SVG.selectAll('*').remove();
 
@@ -153,6 +154,7 @@ define(['jquery',
 		}
 
 		return {
-			drawChart: drawChart
+			drawChart: drawChart,
+			createSvg: createSvg
 		};
 	});
