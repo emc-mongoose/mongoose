@@ -39,7 +39,7 @@ public class RunServlet extends HttpServlet {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private static final String WSMOCK_MODE_NAME = "Cindirella";
+	private static final String WSMOCK_MODE_NAME = "WSMock";
 	private static final String STANDALONE_MODE_NAME = "Mongoose";
 	private static final String CLIENT_MODE_NAME = "client";
 	private static final String SERVER_MODE_NAME = "server";
@@ -57,26 +57,18 @@ public class RunServlet extends HttpServlet {
 			throws ServletException, IOException {
 		final Map<String, Map<String, Object>> startProperties = getStartProperties(request);
 		final AppConfig config = getConfig(startProperties);
-		String runId = getRunId(config);
-		if (!isRunIdFree(runId)) {
-			try {
-				response.getWriter().write("Run.id is occupied already");
-			} catch (final IOException e) {
-				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to write in servlet response");
-			}
-			return;
-		}
-		runId =  LogUtil.newRunId();
-		config.setRunId(runId);
+		final String runId = config.getRunId();
 		JsonScenario scenario = null;
 		if (startProperties.get(SCENARIO_KEY) != null) {
 			config.setProperty(AppConfig.KEY_SCENARIO_FROM_WEBUI, true);
 			scenario = getScenario(startProperties, config);
 		}
-		final String runMode = getRunMode(config);
+		final String runMode = config.getRunMode();
 		switch (runMode) {
 			case Constants.RUN_MODE_STANDALONE:
-				runTest(runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME), runMode);
+				runTest(
+					runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME), runMode
+				);
 				break;
 			case Constants.RUN_MODE_WSMOCK:
 				runTest(runId, new WsMockRunner(config), runMode);
@@ -85,17 +77,22 @@ public class RunServlet extends HttpServlet {
 				runTest(runId, new ServerRunner(config), runMode);
 				break;
 			case Constants.RUN_MODE_CLIENT:
-				runTest(runId, new StandaloneLikeRunner(config, scenario, CLIENT_MODE_NAME), runMode);
+				runTest(
+					runId, new StandaloneLikeRunner(config, scenario, CLIENT_MODE_NAME), runMode
+				);
 				break;
 			default:
-				runTest(runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME), runMode);
+				runTest(
+					runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME), runMode
+				);
 		}
 		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
 		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
 	}
 
 	@Override
-	protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doDelete(HttpServletRequest request, HttpServletResponse response)
+	throws ServletException, IOException {
 		try (
 				final BufferedReader reader = request.getReader()
 		) {
@@ -106,7 +103,8 @@ public class RunServlet extends HttpServlet {
 		}
 	}
 
-	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request) throws IOException {
+	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request)
+	throws IOException {
 		final String startPropertiesString;
 		try (
 				final BufferedReader reader = request.getReader()
@@ -136,14 +134,6 @@ public class RunServlet extends HttpServlet {
 			}
 		}
 		return scenario;
-	}
-
-	private String getRunId(final AppConfig config) {
-		return config.getRunId();
-	}
-
-	private String getRunMode(final AppConfig config) {
-		return config.getRunMode();
 	}
 
 	private boolean isRunIdFree(final String runId) {
@@ -201,8 +191,6 @@ public class RunServlet extends HttpServlet {
 
 		@Override
 		public void run() {
-			config.overrideRunId();
-			config.overrideRunMode();
 			logStart();
 			try {
 				start();

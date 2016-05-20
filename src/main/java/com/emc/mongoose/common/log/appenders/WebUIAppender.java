@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.emc.mongoose.common.conf.AppConfig.KEY_RUN_ID;
 /**
  Created by kurila on 23.10.14.
  */
@@ -68,10 +69,10 @@ extends AbstractAppender {
 		if(ENABLED_FLAG) {
 			final String currRunId;
 			final Map<String, String> evtCtxMap = event.getContextMap();
-			if(evtCtxMap.containsKey(AppConfig.KEY_RUN_ID)) {
-				currRunId = evtCtxMap.get(AppConfig.KEY_RUN_ID);
+			if(evtCtxMap.containsKey(KEY_RUN_ID)) {
+				currRunId = evtCtxMap.get(KEY_RUN_ID);
 			} else {
-				currRunId = ThreadContext.get(AppConfig.KEY_RUN_ID);
+				currRunId = ThreadContext.get(KEY_RUN_ID);
 			}
 			//
 			if(currRunId != null) {

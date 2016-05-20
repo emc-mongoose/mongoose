@@ -21,7 +21,6 @@ extends WSMockTestBase {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to set up the base test");
 		}
 		SCENARIO_RUNNER = new ScenarioRunner(BasicConfig.THREAD_CONTEXT.get());
-		SCENARIO_RUNNER.run();
 	}
 
 	@AfterClass

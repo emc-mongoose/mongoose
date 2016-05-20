@@ -38,8 +38,8 @@ public final class LogServlet extends HttpServlet {
 		final String markerName = request.getParameter(MARKER_NAME_KEY);
 		final long timeStamp = Long.valueOf(request.getParameter(TIME_STAMP_KEY));
 		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-		final Map<String, List<ShortenedLogEvent>> lastLogEvents =
-				WebUIAppender.getLastLogEventsByMarker(runId, markerName, timeStamp);
+		final Map<String, List<ShortenedLogEvent>>
+			lastLogEvents = WebUIAppender.getLastLogEventsByMarker(runId, markerName, timeStamp);
 		final String logJsonString = JSON_MAPPER.writeValueAsString(lastLogEvents);
 		response.getWriter().write(logJsonString);
 	}

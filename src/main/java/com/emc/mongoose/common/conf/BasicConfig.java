@@ -36,6 +36,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import static com.emc.mongoose.common.conf.Constants.DIR_CONF;
 /**
  Created by kurila on 20.01.16.
  */
@@ -47,10 +49,7 @@ implements AppConfig {
 		THREAD_CONTEXT = new InheritableThreadLocal<AppConfig>() {
 		@Override
 		protected final AppConfig initialValue() {
-			final BasicConfig instance = new BasicConfig();
-			ThreadContext.put(KEY_RUN_ID, instance.getRunId());
-			ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
-			return instance;
+			return new BasicConfig();
 		}
 	};
 	//
@@ -69,7 +68,7 @@ implements AppConfig {
 	public final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
 	public BasicConfig() {
-		this(Paths.get(getWorkingDir(), Constants.DIR_CONF).resolve(FNAME_CONF));
+		this(Paths.get(getWorkingDir(), DIR_CONF).resolve(FNAME_CONF));
 	}
 	//
 	public BasicConfig(final Path cfgFilePath) {
@@ -509,23 +508,14 @@ implements AppConfig {
 	@Override
 	public void setRunId(final String runId) {
 		setProperty(KEY_RUN_ID, runId);
+		ThreadContext.put(KEY_RUN_ID, getRunId());
 	}
 
 	@Override
 	public void setRunMode(final String runMode) {
 		setProperty(KEY_RUN_MODE, runMode);
-	}
-
-	@Override
-	public void overrideRunId() {
-		ThreadContext.put(KEY_RUN_ID, getRunId());
-	}
-
-	@Override
-	public void overrideRunMode() {
 		ThreadContext.put(KEY_RUN_MODE, getRunMode());
 	}
-
 	//
 	@Override
 	public void override(final String configBranch, final Map<String, ?> configTree) {
@@ -754,6 +744,15 @@ implements AppConfig {
 	private void loadFromEnv() {
 		final Logger log = LogManager.getLogger();
 		final SystemConfiguration sysProps = new SystemConfiguration();
+		final String envRunId = sysProps.getString(KEY_RUN_ID);
+		if(envRunId != null && !envRunId.isEmpty()) {
+			setRunId(envRunId);
+		}
+		final String envRunMode = sysProps.getString(KEY_RUN_MODE);
+		if(envRunMode != null && !envRunMode.isEmpty()) {
+			setRunMode(envRunMode);
+		}
+		//
 		String key, overriderKeys[];
 		Object sharedValue;
 		for(final Iterator<String> keyIter = sysProps.getKeys(); keyIter.hasNext();) {

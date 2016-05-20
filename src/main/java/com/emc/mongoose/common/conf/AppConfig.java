@@ -238,10 +238,6 @@ extends Cloneable, Configuration, Externalizable {
 
 	void setRunMode(final String runMode);
 
-	void overrideRunId();
-
-	void overrideRunMode();
-
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void override(final String branch, final Map<String, ?> tree);

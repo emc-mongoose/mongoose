@@ -37,8 +37,7 @@ public class ChartServlet extends HttpServlet {
 //		final String loadJobName = request.getParameter(LOAD_JOB_NAME_KEY);
 		final String metricName = request.getParameter(METRIC_NAME_KEY);
 		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-		final List<Metric> charts =
-				ChartPackage.getChart(runId, "temp", metricName);
+		final List<Metric> charts = ChartPackage.getChart(runId, "temp", metricName);
 		final String logJsonString = JSON_MAPPER.writeValueAsString(charts);
 		response.getWriter().write(logJsonString);
 	}

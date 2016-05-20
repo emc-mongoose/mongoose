@@ -395,11 +395,6 @@ dependencies {
 		library.jackson_databind,
 		library.log4j_api_plus_core,
 		library.metrics_core,
-		library.netty_buffer,
-		library.netty_codec_http,
-		library.netty_handler,
-		library.netty_transport,
-		library.netty_transport_native_epoll,
 	)
 	storageMockRuntime (
 		library.runtime_logging,
@@ -410,11 +405,6 @@ dependencies {
 		library.commons_configuration,
 		library.jackson_databind,
 		library.log4j_api_plus_core,
-		library.websockets,
-		library.websocket_client,
-		library.websocket_common,
-		library.websocket_core,
-		library.websocket_server,
 	)
 	webuiRuntime (
 		library.runtime_logging,

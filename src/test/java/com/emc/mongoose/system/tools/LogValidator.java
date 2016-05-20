@@ -26,7 +26,7 @@ public final class LogValidator {
 
 	public static void removeLogDirectory(final String runID)
 	throws Exception {
-		final Path logDir = Paths.get(getLogDir(), Constants.DIR_LOG, runID);
+		final Path logDir = Paths.get(getLogDir(), runID);
 		removeDirectory(logDir);
 	}
 

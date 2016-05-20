@@ -164,7 +164,7 @@ implements ShutdownCallbackRegistry {
 				//
 				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, VALUE_SHUTDOWN_CALLBACK_REGISTRY);
 				// set "run.id" property with timestamp value if not set before
-				String runId = System.getProperty(KEY_RUN_ID);
+				final String runId = System.getProperty(KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
 					System.setProperty(KEY_RUN_ID, newRunId());
 				}

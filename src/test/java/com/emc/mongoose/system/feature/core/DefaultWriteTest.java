@@ -59,12 +59,12 @@ extends ScenarioTestBase {
 	public static void setUpClass() {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(AppConfig.KEY_ITEM_DATA_SIZE, DATA_SIZE);
-		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-		appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
-		appConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, RUN_ID);
+		System.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
+		System.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, RUN_ID);
 		//
 		ScenarioTestBase.setUpClass();
 		final Logger logger = LogManager.getLogger();
+		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		logger.info(Markers.MSG, appConfig.toString());
 		//
 		try(
@@ -287,11 +287,8 @@ extends ScenarioTestBase {
 			int recCount = 0;
 			for(final CSVRecord nextRec : recIter) {
 				recCount ++;
-				try (
-					final InputStream
-						inputStream = ContentGetter.getStream(
-							nextRec.get(0), TestConstants.BUCKET_NAME
-						)
+				try(
+					final InputStream inputStream = ContentGetter.getStream(nextRec.get(0), RUN_ID)
 				) {
 					dataObjectChecksums.add(DigestUtils.md2Hex(inputStream));
 				}
@@ -299,7 +296,7 @@ extends ScenarioTestBase {
 			//  If size of set with checksums is less then dataCount
 			//  it's mean that some checksums are equals
 			Assert.assertEquals(
-				"Did not read " + recCount + "objects from server mock",
+				"The count of the objects got from the storage mock should be " + LIMIT_COUNT,
 				LIMIT_COUNT, dataObjectChecksums.size()
 			);
 
@@ -322,7 +319,7 @@ extends ScenarioTestBase {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
 				try {
-					actualDataSize = ContentGetter.getDataSize(nextRec.get(0), TestConstants.BUCKET_NAME);
+					actualDataSize = ContentGetter.getDataSize(nextRec.get(0), RUN_ID);
 					Assert.assertEquals(
 						"Size of data item isn't correct", SizeInBytes.toFixedSize(DATA_SIZE), actualDataSize
 					);
