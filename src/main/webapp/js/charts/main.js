@@ -1,217 +1,155 @@
-define([
-	"jquery",
-	"../util/constants",
-	"../charts/util/common",
-	"../charts/scenarios/single",
-	"../charts/scenarios/chain",
-	"../charts/scenarios/rampup"
-], function(
-	$, constants, common, single, chain, rampup
-) {
+define(['jquery',
+		'd3js'],
+	function ($,
+	          d3) {
 
-	var avg = constants.getAvgConstant(),
-		last = constants.getLastConstant(),
-		min = constants.getMinConstant(),
-		max = constants.getMaxConstant();
-	var chartsArray;
-
-	function charts(array) {
-		chartsArray = array;
-		//
-		return {
-			single: drawSingleCharts,
-			chain: drawChainCharts,
-			rampup: drawRampupCharts
-		}
-	}
-
-	function drawSingleCharts(jsonValue) {
-		var temp = (Array.isArray(jsonValue)) ? jsonValue[0] : jsonValue;
-		//  conf params for single charts
-		var runId = temp.contextMap[constants.getCfgConstants().runId],
-			runScenarioName = temp.contextMap[constants.getCfgConstants().runScenarioName],
-			runMetricsPeriodSec = parseInt(
-				temp.contextMap[constants.getCfgConstants().runMetricsPeriodSec]
-			);
-		last.text = "last " + runMetricsPeriodSec + " sec";
-
-		var tpAndBwData = [
-			{
-				name: avg,
-				values: [
-					{x: 0, y: 0}
-				]
-			}, {
-				name: last,
-				values: [
-					{x: 0, y: 0}
-				]
-			}
-		];
-
-		var latAndDurData = [
-			{
-				name: avg,
-				values: [
-					{x: 0, y: 0}
-				]
-			}, {
-				name: min,
-				values: [
-					{x: 0, y: 0}
-				]
-			}, {
-				name: max,
-				values: [
-					{x: 0, y: 0}
-				]
-			}
-		];
-
-		var throughput = $.extend(true, [], tpAndBwData),
-			bandwidth = $.extend(true, [], tpAndBwData),
-			latency = $.extend(true, [], latAndDurData),
-			duration = $.extend(true, [], latAndDurData);
-
-		if ((jsonValue !== undefined) && (jsonValue.length > 0)) {
-			single.clearArrays(throughput);
-			single.clearArrays(bandwidth);
-			single.clearArrays(latency);
-			single.clearArrays(duration);
-			var tpSec = single.initDataArray(
-				throughput, jsonValue, constants.getChartTypes().TP, runMetricsPeriodSec
-			);
-			var bwSec = single.initDataArray(
-				bandwidth, jsonValue, constants.getChartTypes().BW, runMetricsPeriodSec
-			);
-			var latSec = single.initDataArray(
-				latency, jsonValue, constants.getChartTypes().LAT, runMetricsPeriodSec
-			);
-			var durSec = single.initDataArray(
-				duration, jsonValue, constants.getChartTypes().DUR, runMetricsPeriodSec
-			);
-			chartsArray.push(common.getScenarioChartObject(runId, runScenarioName,
-				[single.drawThroughputCharts(throughput, jsonValue[0], tpSec),
-					single.drawBandwidthCharts(bandwidth, jsonValue[0], bwSec),
-						single.drawLatencyCharts(latency, jsonValue[0], latSec),
-							single.drawDurationCharts(duration, jsonValue[0], durSec)]));
-		} else {
-			//
-			chartsArray.push(common.getScenarioChartObject(runId, runScenarioName,
-				[single.drawThroughputCharts(throughput, jsonValue),
-					single.drawBandwidthCharts(bandwidth, jsonValue),
-						single.drawLatencyCharts(latency, jsonValue),
-							single.drawDurationCharts(duration, jsonValue)]));
-		}
-	}
-
-	function drawChainCharts(runId, runMetricsPeriodSec, loadType, array) {
-		last.text = "last " + runMetricsPeriodSec + " sec";
-		//
-		var data = [
-			{
-				loadType: loadType,
-				charts: [
-					{
-						name: avg,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: last,
-						values: [
-							{x: 0, y: 0}
-						]
-					}
-				],
-				currentRunMetricsPeriodSec: 0
-			}
-		];
-
-		var latencyData = [
-			{
-				loadType: loadType,
-				charts: [
-					{
-						name: avg,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: min,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: max,
-						values: [
-							{x: 0, y: 0}
-						]
-					}
-				],
-				currentRunMetricsPeriodSec: 0
-			}
-		];
-
-		var throughput = $.extend(true, [], data),
-			bandwidth = $.extend(true, [], data),
-			latency = $.extend(true, [], latencyData),
-			duration = $.extend(true, [], latencyData);
-		//
-		if ((array !== undefined) && (array.length > 0)) {
-			chain.clearArrays(throughput, runMetricsPeriodSec);
-			chain.clearArrays(bandwidth, runMetricsPeriodSec);
-			chain.clearArrays(latency, runMetricsPeriodSec);
-			chain.clearArrays(duration, runMetricsPeriodSec);
-			//
-			chain.initDataArray(throughput, array, constants.getChartTypes().TP, runMetricsPeriodSec);
-			chain.initDataArray(bandwidth, array, constants.getChartTypes().BW, runMetricsPeriodSec);
-			chain.initDataArray(latency, array, constants.getChartTypes().LAT, runMetricsPeriodSec);
-			chain.initDataArray(duration, array, constants.getChartTypes().DUR, runMetricsPeriodSec);
-		}
-		//
-		chartsArray.push({
-			"run.id": runId,
-			"run.scenario.name": "chain",
-			"charts": [
-				chain.drawThroughputChart(throughput, runId, runMetricsPeriodSec),
-				chain.drawBandwidthChart(bandwidth, runId, runMetricsPeriodSec),
-				chain.drawLatencyChart(latency, runId, runMetricsPeriodSec),
-				chain.drawDurationChart(duration, runId, runMetricsPeriodSec)
-			]
-		});
-	}
-
-	function drawRampupCharts(runId, scenarioChainLoad, rampupConnCounts, loadRampupSizes) {
-		//
-		var loadTypes = scenarioChainLoad.split(",");
-		var rampupConnCountsArray = rampupConnCounts.split(",").map(function(item) {
-			return parseInt(item, 10);
-		});
-		var loadRampupSizesArray = loadRampupSizes.split(",").map(function(item) {
-			return item.trim();
-		});
-		var AVG = "total average";
-		//
-		var CHART_TYPES = {
-			TP: "throughput",
-			BW: "bandwidth"
+		const MARGIN = {
+			TOP: 20,
+			RIGHT: 20,
+			BOTTOM: 30,
+			LEFT: 50
 		};
-		//
-		var TP_MODES = [AVG];
-		//
-		chartsArray.push({
-			"run.id": runId,
-			"run.scenario.name": "rampup",
-			"charts": [
-				rampup.drawThroughputCharts(runId, loadTypes, loadRampupSizesArray, rampupConnCountsArray),
-				rampup.drawBandwidthCharts(runId, loadTypes, loadRampupSizesArray, rampupConnCountsArray)
+		const WIDTH = 960 - MARGIN.LEFT - MARGIN.RIGHT;
+		const HEIGHT = 500 - MARGIN.TOP - MARGIN.BOTTOM;
+
+		const parseDate = d3.time.format('%d-%b-%y').parse;
+
+		const defaultsFactory = function () {
+
+			function createDefaultTimeScale() {
+				return d3.time.scale();
+			}
+
+			function createDefaultLinearScale() {
+				return d3.scale.linear();
+			}
+
+			function createDefaultAxis() {
+				return d3.svg.axis();
+			}
+
+			function createDefaultLineGenerator() {
+				return d3.svg.line();
+			}
+
+			function createDefaultColorizer() {
+				return d3.scale.category10();
+			}
+
+			return {
+				timeScale: createDefaultTimeScale,
+				linearScale: createDefaultLinearScale,
+				axis: createDefaultAxis,
+				lineGenerator: createDefaultLineGenerator,
+				colorizer: createDefaultColorizer
+			}
+		}();
+
+		const X_SCALE = defaultsFactory.linearScale().range([0, WIDTH]);
+		const Y_SCALE = defaultsFactory.linearScale().range([HEIGHT, 0]);
+
+		const X_AXIS = defaultsFactory.axis().scale(X_SCALE).orient('bottom').ticks(5);
+		const Y_AXIS = defaultsFactory.axis().scale(Y_SCALE).orient('left').ticks(5);
+
+		function xAccessor(data) {
+			return data.x;
+		}
+
+		function yAccessor(data) {
+			return data.y;
+		}
+
+		function scaledXAccessor(data) {
+			return X_SCALE(xAccessor(data));
+		}
+
+		function scaledYAccessor(data) {
+			return Y_SCALE(yAccessor(data));
+		}
+
+		function extent(array, accessor) {
+			return d3.extent(array, accessor);
+		}
+
+		function deepExtent(array, accessor) {
+			return [
+				d3.min(array, function (anArray) {
+					return d3.min(anArray, accessor);
+				}),
+				d3.max(array, function (anArray) {
+					return d3.max(anArray, accessor);
+				})
 			]
-		});
-	}
+		}
 
-	return {
-		charts: charts
-	};
+		const line = defaultsFactory.lineGenerator().x(scaledXAccessor).y(scaledYAccessor);
 
-});
+		function createSvg(elemSelector) {
+			return d3.select(elemSelector)
+				.append('svg')
+				.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
+				.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM)
+				.append('g')
+				.attr('transform', 'translate(' + MARGIN.LEFT + ',' + MARGIN.TOP + ')');
+		}
+
+		function handleDataObj(dataObj) {
+			var values = dataObj.values;
+			if (values.length > 0) {
+				if (values[values.length - 1] === null) {
+					values.pop();
+				}
+				values.forEach(function (point) {
+					if (point !== null) {
+						point.x = +point.x;
+						point.y = +point.y;
+					}
+				})
+			}
+		}
+
+		function drawChart(selector, chartArr) {
+
+			const SVG = createSvg(selector);
+
+			SVG.append('g')
+				.attr('class', 'x axis')
+				.attr('transform', 'translate(0, ' + HEIGHT + ')')
+				.call(X_AXIS);
+
+			SVG.append('g')
+				.attr('class', 'y axis')
+				.call(Y_AXIS);
+
+			var chart;
+
+			if (Array.isArray(chartArr)) {
+				chartArr.forEach(function (chart) {
+					handleDataObj(chart)
+				});
+				X_SCALE.domain(extent(chartArr[0], xAccessor));
+				Y_SCALE.domain(deepExtent(chartArr, yAccessor));
+				chart = SVG.selectAll('.chart')
+					.data(chartArr)
+					.enter().append('g')
+					.attr('class', 'chart');
+				chart.append('path')
+					.attr('class', 'line')
+					.attr('d', function (chart) {
+						return line(chart)
+					});
+			} else {
+				handleDataObj(chartArr);
+				X_SCALE.domain(extent(chartArr, xAccessor));
+				Y_SCALE.domain(extent(chartArr, yAccessor));
+				chart = SVG;
+				chart.append('path')
+					.attr('class', 'line')
+					.attr('d', line(chartArr));
+			}
+		}
+
+		return {
+			drawChart: drawChart
+		};
+	});

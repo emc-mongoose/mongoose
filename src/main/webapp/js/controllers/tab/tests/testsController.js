@@ -87,6 +87,7 @@ define([
 				logsController.setTabParameters(testId, testMode);
 				break;
 			case TESTS_TAB_TYPE.CHARTS:
+				chartsController.setTabParameters(testId, testMode);
 				break;
 		}
 		currentTabType = tabType;
