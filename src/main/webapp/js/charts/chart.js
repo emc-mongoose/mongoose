@@ -100,7 +100,7 @@ define(['jquery',
 			})
 		}
 
-		function drawChart(selector, dataArr) {
+		function drawChart(selector, chartArr) {
 
 			const SVG = createSvg(elemSelector);
 

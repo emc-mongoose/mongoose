@@ -10,8 +10,8 @@ import static java.lang.Math.sqrt;
 class Polyline {
 
 	private Point firstPoint, lastPoint;
-	private List<WeighedPoint> points = new ArrayList<>();
-	private PriorityQueue<WeighedPoint> queue = new PriorityQueue<>();
+	private List<WeightedPoint> points = new ArrayList<>();
+	private PriorityQueue<WeightedPoint> queue = new PriorityQueue<>();
 
 	private double triangleArea(final Point point1, final Point point2, final Point point3) {
 		double a = distance(point1, point2);
@@ -27,7 +27,7 @@ class Polyline {
 
 	private List<Point> getTriangle(final int middlePointIndex) {
 		List<Point> result = new ArrayList<>();
-		for (WeighedPoint weighedPoint: points.subList(middlePointIndex - 1, middlePointIndex + 2)) {
+		for (WeightedPoint weighedPoint: points.subList(middlePointIndex - 1, middlePointIndex + 2)) {
 			result.add(weighedPoint.point());
 		}
 		return result;
@@ -66,7 +66,7 @@ class Polyline {
 	}
 
 	private void setWeightForSecondPoint() {
-		WeighedPoint secondPoint = points.get(0);
+		WeightedPoint secondPoint = points.get(0);
 		secondPoint.setWeight(triangleArea(
 				firstPoint,
 				secondPoint.point(),
@@ -74,14 +74,14 @@ class Polyline {
 	}
 
 	private void setWeightForPenultPoint() {
-		WeighedPoint penultPoint = points.get(points.size() - 1);
+		WeightedPoint penultPoint = points.get(points.size() - 1);
 		penultPoint.setWeight(triangleArea(
 				points.get(points.size() - 2).point(),
 				penultPoint.point(),
 				lastPoint));
 	}
 
-	private void removeAndWeigh(final WeighedPoint point) {
+	private void removeAndWeigh(final WeightedPoint point) {
 		int index = points.indexOf(point);
 		points.remove(index);
 		if (points.size() != 0) {
@@ -106,7 +106,7 @@ class Polyline {
 	}
 
 	private void addNewLastPoint(final Point newPoint, final Point penultPoint) {
-		WeighedPoint oldLastPoint = new WeighedPoint(lastPoint,
+		WeightedPoint oldLastPoint = new WeightedPoint(lastPoint,
 				triangleArea(
 						penultPoint,
 						lastPoint,
@@ -140,7 +140,7 @@ class Polyline {
 	public List<Point> getPoints() {
 		List<Point> points = new ArrayList<>();
 		points.add(firstPoint);
-		for (WeighedPoint weighedPoint: this.points) {
+		for (WeightedPoint weighedPoint: this.points) {
 			points.add(weighedPoint.point());
 		}
 		points.add(lastPoint);
@@ -163,7 +163,7 @@ class Polyline {
 				break;
 			default:
 				builder.append(firstPoint).append("\n");
-				for (WeighedPoint point : points) {
+				for (WeightedPoint point : points) {
 					builder.append(point).append("\n");
 				}
 				builder.append(lastPoint).append("\n");

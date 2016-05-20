@@ -155,7 +155,7 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			Thread.currentThread().setName(LoadExecutorBase.this.getName());
-			PolylineManager polylineManager = new PolylineManager();
+			final PolylineManager polylineManager = new PolylineManager();
 			while(!isInterrupted.get()) {
 				logMetrics(Markers.PERF_AVG);
 				if (true) { // todo make some webui flag here
