@@ -2,6 +2,7 @@ package com.emc.mongoose.system.base;
 //
 import static com.emc.mongoose.common.conf.AppConfig.*;
 //
+import com.emc.mongoose.common.conf.BasicConfig;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 /**
@@ -12,6 +13,7 @@ public abstract class ConfiguredTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		BasicConfig.THREAD_CONTEXT.set(new BasicConfig());
 	}
 	//
 	@AfterClass

@@ -61,6 +61,7 @@ ext {
 	junit_mockito = ["org.mockito:mockito-all:2.0.2-beta"]
 
 	json_schema_validator = [ "com.github.fge:json-schema-validator:2.2.6" ]
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	httpcore_plus_nio = [ httpcore, httpcore_nio, ]
@@ -68,8 +69,6 @@ ext {
 	jetty_svc = [ jetty_server, jetty_webapp, ]
 
 	log4j_api_plus_core = [ log4j_api, log4j_core, ]
-
-	websockets = [ websocket_api, websocket_servlet, ]
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 

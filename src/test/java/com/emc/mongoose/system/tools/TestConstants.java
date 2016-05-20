@@ -30,6 +30,4 @@ public interface TestConstants {
 	String SCENARIO_RAMPUP = "rampup";
 	//
 	String API_S3 = "s3";
-	//
-	String BUCKET_NAME = "bucketTest";
 }

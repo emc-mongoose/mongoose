@@ -8,6 +8,7 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+	CoreTestSuite.class
 })
 public final class SystemTestSuite {
 }

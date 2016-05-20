@@ -95,7 +95,7 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldReportInformationAboutSummaryMetricsToConsole()
+	public void checkConsoleSummaryMetrics()
 	throws Exception {
 		Assert.assertTrue("Console doesn't contain information about summary metrics",
 			STD_OUTPUT_STREAM.toString().contains(TestConstants.SUMMARY_INDICATOR)
@@ -106,7 +106,7 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldCreateAllFilesWithLogs()
+	public void chekAllLogFilesExist()
 	throws Exception {
 		Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
 		//  Check that messages.log exists
@@ -126,11 +126,11 @@ extends ScenarioTestBase {
 
 		expectedFile = LogValidator.getItemsListFile(RUN_ID).toPath();
 		//  Check that data.items.csv file exists
-		Assert.assertTrue("data.items.csv file doesn't exist", Files.exists(expectedFile));
+		Assert.assertTrue("items.csv file doesn't exist", Files.exists(expectedFile));
 	}
 
 	@Test
-	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
+	public void checkConfigTable()
 		throws Exception {
 		final String configTable = BasicConfig.THREAD_CONTEXT.get().toString();
 		final Set<String> params = new HashSet<>();
@@ -183,7 +183,7 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldReportScenarioEndToMessageLogFile()
+	public void checkForScenarioEndMessage()
 	throws Exception {
 		//  Read the message file and search for "Scenario end"
 		final File messageFile = LogValidator.getMessageFile(RUN_ID);
@@ -211,7 +211,7 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldReportCorrectWrittenCountToSummaryLogFile()
+	public void checkWrittenCountInThePerfSumFile()
 	throws Exception {
 		//  Read perf.summary file
 		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
@@ -242,7 +242,7 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
+	public void checkItemsFileSizeRecords()
 	throws Exception {
 		//  Read data.items.csv file
 		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
@@ -270,15 +270,15 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldGetDifferentObjectsFromServer()
+	public void checkItemsWrittenContent()
 	throws Exception {
 		//  Read data.items.csv file
-		final File dataItemsFile = LogValidator.getItemsListFile(RUN_ID);
-		Assert.assertTrue("data.items.csv file doesn't exist", dataItemsFile.exists());
+		final File itemsListFile = LogValidator.getItemsListFile(RUN_ID);
+		Assert.assertTrue("items.csv file doesn't exist", itemsListFile.exists());
 		//
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(itemsListFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			//
 			final List<String> dataObjectChecksums = new ArrayList<>(LIMIT_COUNT);
@@ -304,7 +304,7 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldGetAllObjectsFromServerAndDataSizeIsDefault()
+	public void checkWrittenItemsSize()
 	throws Exception {
 		//  Read data.items.csv file
 		final File itemsFile = LogValidator.getItemsListFile(RUN_ID);
@@ -331,7 +331,7 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldCreateCorrectDataItemsFile()
+	public void checkItemsListFile()
 	throws Exception {
 		//  Get data.items.csv file
 		final File dataItemFile = LogValidator.getItemsListFile(RUN_ID);
@@ -346,7 +346,7 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldCreateCorrectPerfSumFile()
+	public void checkPerfSumFile()
 	throws Exception {
 		//  Get perf.sum.csv file
 		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
@@ -361,7 +361,7 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldCreateCorrectPerfAvgFile()
+	public void checkPerfAvgFile()
 	throws Exception {
 		//  Get perf.avg.csv file
 		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
@@ -376,7 +376,7 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldCreateCorrectPerfTraceFile()
+	public void checkPerfTraceFile()
 	throws Exception {
 		//  Get perf.trace.csv file
 		final File perfTraceFile = LogValidator.getPerfTraceFile(RUN_ID);
@@ -391,7 +391,7 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void checkNoItemDuplicatesLogged()
+	public void checkNoDuplicateItemsLogged()
 	throws Exception {
 		final Set<String> items = new TreeSet<>();
 		String nextLine;

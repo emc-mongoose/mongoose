@@ -55,8 +55,8 @@ implements Runnable {
 					if(runFileStr != null && !runFileStr.isEmpty()) {
 						runFilePath = Paths.get(runFileStr);
 					} else {
-						runFilePath = Paths.get(getWorkingDir(), DIR_SCENARIO).resolve(
-							FNAME_DEFAULT_SCENARIO);
+						runFilePath = Paths
+							.get(getWorkingDir(), DIR_SCENARIO).resolve(FNAME_DEFAULT_SCENARIO);
 					}
 					LOG.info(
 						Markers.MSG, "Using the scenario from the file \"{}\"",

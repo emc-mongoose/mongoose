@@ -405,6 +405,8 @@ dependencies {
 		library.commons_configuration,
 		library.jackson_databind,
 		library.log4j_api_plus_core,
+		library.jetty_http,
+		library.jetty_servlet_api,
 	)
 	webuiRuntime (
 		library.runtime_logging,
