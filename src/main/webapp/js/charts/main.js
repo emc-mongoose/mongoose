@@ -81,6 +81,7 @@ define(['jquery',
 		}
 
 		const line = defaultsFactory.lineGenerator().x(scaledXAccessor).y(scaledYAccessor);
+		const colorizer = defaultsFactory.colorizer();
 
 		function createSvg(parentSelector) {
 			d3.select(parentSelector)
@@ -126,9 +127,12 @@ define(['jquery',
 			var chart;
 
 			if (Array.isArray(chartObj)) {
+				const names = [];
 				chartObj.forEach(function (chart) {
-					handleDataObj(chart)
+					handleDataObj(chart);
+					names.push(chart.name);
 				});
+				colorizer.domain(names);
 				scaleX.domain(extent(chartObj[0], xAccessor));
 				scaleY.domain(deepExtent(chartObj, yAccessor));
 				appendAxes(SVG);
@@ -140,7 +144,10 @@ define(['jquery',
 					.attr('class', 'line')
 					.attr('d', function (chart) {
 						return line(chart.values)
-					});
+					})
+					.style('stroke', function (chart) {
+						return colorizer(chart.name);
+					})
 			} else {
 				handleDataObj(chartObj);
 				scaleX.domain(extent(chartObj, xAccessor));
