@@ -4,11 +4,11 @@ import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 
 import java.util.List;
 
-public class PolylineManager {
+public final class PolyLineManager {
 
 	private final static int MAX_NUM_OF_POINTS = 6;
 
-	private Polyline
+	private final PolyLine
 			durMin, durMax, durAvg,
 			latMin, latMax, latAvg,
 			tpAvg, tpLast,
@@ -17,21 +17,21 @@ public class PolylineManager {
 	private final long startTime;
 
 
-	public PolylineManager() {
-		durMin = new Polyline();
-		durMax = new Polyline();
-		durAvg = new Polyline();
-		latMin = new Polyline();
-		latMax = new Polyline();
-		latAvg = new Polyline();
-		tpAvg = new Polyline();
-		tpLast = new Polyline();
-		bwAvg = new Polyline();
-		bwLast = new Polyline();
+	public PolyLineManager() {
+		durMin = new PolyLine();
+		durMax = new PolyLine();
+		durAvg = new PolyLine();
+		latMin = new PolyLine();
+		latMax = new PolyLine();
+		latAvg = new PolyLine();
+		tpAvg = new PolyLine();
+		tpLast = new PolyLine();
+		bwAvg = new PolyLine();
+		bwLast = new PolyLine();
 		startTime = System.currentTimeMillis();
 	}
 
-	public void updatePolylines(final IOStats.Snapshot metricsSnapshot) {
+	public final void updatePolylines(final IOStats.Snapshot metricsSnapshot) {
 		addPoint(durMin, metricsSnapshot.getDurationMin());
 		addPoint(durMax, metricsSnapshot.getDurationMax());
 		addPoint(durAvg, metricsSnapshot.getDurationAvg());
@@ -44,53 +44,53 @@ public class PolylineManager {
 		addPoint(bwLast, metricsSnapshot.getByteRateLast());
 	}
 
-	private void addPoint(final Polyline polyline, final double metricValue) {
+	private void addPoint(final PolyLine polyLine, final double metricValue) {
 		double now = new Long((System.currentTimeMillis() - startTime) / 1000).doubleValue();
-		if (polyline.numberOfPoints() < MAX_NUM_OF_POINTS) {
-			polyline.addPoint(new Point(now, metricValue));
+		if (polyLine.numberOfPoints() < MAX_NUM_OF_POINTS) {
+			polyLine.addPoint(new Point(now, metricValue));
 		} else {
-			polyline.simplify(MAX_NUM_OF_POINTS / 2);
-			polyline.addPoint(new Point(now, metricValue));
+			polyLine.simplify(MAX_NUM_OF_POINTS / 2);
+			polyLine.addPoint(new Point(now, metricValue));
 		}
 	}
 
-	public List<Point> getBwLast() {
+	public final List<Point> getBwLast() {
 		return bwLast.getPoints();
 	}
 
-	public List<Point> getBwAvg() {
+	public final List<Point> getBwAvg() {
 		return bwAvg.getPoints();
 	}
 
-	public List<Point> getTpLast() {
+	public final List<Point> getTpLast() {
 		return tpLast.getPoints();
 	}
 
-	public List<Point> getTpAvg() {
+	public final List<Point> getTpAvg() {
 		return tpAvg.getPoints();
 	}
 
-	public List<Point> getLatAvg() {
+	public final List<Point> getLatAvg() {
 		return latAvg.getPoints();
 	}
 
-	public List<Point> getLatMax() {
+	public final List<Point> getLatMax() {
 		return latMax.getPoints();
 	}
 
-	public List<Point> getLatMin() {
+	public final List<Point> getLatMin() {
 		return latMin.getPoints();
 	}
 
-	public List<Point> getDurMax() {
+	public final List<Point> getDurMax() {
 		return durMax.getPoints();
 	}
 
-	public List<Point> getDurAvg() {
+	public final List<Point> getDurAvg() {
 		return durAvg.getPoints();
 	}
 
-	public List<Point> getDurMin() {
+	public final List<Point> getDurMin() {
 		return durMin.getPoints();
 	}
 }
