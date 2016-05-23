@@ -1,16 +1,18 @@
 define(['jquery',
-		'd3js'],
+		'd3js',
+		'../common/util/templatesUtil'],
 	function ($,
-	          d3) {
+	          d3,
+	          templatesUtil) {
 
 		const MARGIN = {
 			TOP: 20,
 			RIGHT: 20,
-			BOTTOM: 120,
-			LEFT: 50
+			BOTTOM: 180,
+			LEFT: 100
 		};
 		const WIDTH = 960 - MARGIN.LEFT - MARGIN.RIGHT;
-		const HEIGHT = 500 - MARGIN.TOP - MARGIN.BOTTOM;
+		const HEIGHT = 600 - MARGIN.TOP - MARGIN.BOTTOM;
 
 		const defaultsFactory = function () {
 
@@ -93,15 +95,29 @@ define(['jquery',
 				.attr('transform', 'translate(' + (MARGIN.LEFT + 70) + ',' + (MARGIN.TOP + 70) + ')');
 		}
 
-		function appendAxes(svgElement) {
+		function appendAxes(svgElement, xLabel, yLabel) {
 			svgElement.append('g')
 				.attr('class', 'x axis')
 				.attr('transform', 'translate(0, ' + HEIGHT + ')')
 				.call(axisX);
 
+			svgElement.append('text')
+				.attr('x', WIDTH / 2)
+				.attr('y', HEIGHT + MARGIN.BOTTOM / 3)
+				.style('text-anchor', 'middle')
+				.text(xLabel);
+
 			svgElement.append('g')
 				.attr('class', 'y axis')
 				.call(axisY);
+
+			svgElement.append('text')
+				.attr('transform', 'rotate(-90)')
+				.attr('y', 0 - Math.round(MARGIN.LEFT * 1.5))
+				.attr('x', 0 - (HEIGHT / 2))
+				.attr('dy', '1em')
+				.style('text-anchor', 'middle')
+				.text(yLabel);
 		}
 
 		function handleDataObj(dataObj) {
@@ -125,6 +141,9 @@ define(['jquery',
 
 			SVG.selectAll('*').remove();
 
+			const xLabel = 't[s]';
+			const yLabel = 'rate[mb/s]';
+
 			SVG.append("text")
 				.attr('x', (WIDTH / 2))
 				.attr('y', 0 - (MARGIN.TOP / 2))
@@ -144,7 +163,7 @@ define(['jquery',
 				colorizer.domain(names);
 				scaleX.domain(extent(chartObj[0], xAccessor));
 				scaleY.domain(deepExtent(chartObj, yAccessor));
-				appendAxes(SVG);
+				appendAxes(SVG, xLabel, yLabel);
 				chart = SVG.selectAll('.chart')
 					.data(chartObj)
 					.enter().append('g')
@@ -156,12 +175,48 @@ define(['jquery',
 					})
 					.style('stroke', function (chart) {
 						return colorizer(chart.name);
+					});
+				const legend = SVG.selectAll('.legend')
+					.data(chartObj);
+				const legendEnter = legend
+					.enter()
+					.append('g')
+					.attr('class', 'legend')
+					.attr('id', function (legend) {
+						return legend.name;
+					})
+					.on('click', function (legend) {
+						const elemented =
+							document.getElementById(templatesUtil.composeId([this.id, 'line']));
+						if ($(this).css('opacity' == 1)) {
+							d3.select(elemented)
+								.transition()
+								.duration(1000)
+								.style('opacity', 0)
+								.style('display', 'none');
+							d3.select(this)
+								.attr('fakeclass', 'fakelegend')
+								.transition()
+								.duration(1000)
+								.style('opacity', .2);
+						} else {
+							d3.select(elemented)
+								.style('display', 'block')
+								.transition()
+								.duration(1000)
+								.style('opacity', 1);
+							d3.select(this)
+								.attr('fakeclass', 'legend')
+								.transition()
+								.duration(1000)
+								.style('opacity', 1);
+						}
 					})
 			} else {
 				handleDataObj(chartObj);
 				scaleX.domain(extent(chartObj, xAccessor));
 				scaleY.domain(extent(chartObj, yAccessor));
-				appendAxes(SVG);
+				appendAxes(SVG, xLabel, yLabel);
 				chart = SVG;
 				chart.append('path')
 					.attr('class', 'line')

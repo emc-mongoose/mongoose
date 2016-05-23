@@ -29,12 +29,12 @@ define([
 	var resetChartsFlag = false;
 
 	function metricBlockId(metricName) {
-		return plainId([constants.metricFormatter(metricName), 'chart', 'block']);
+		return plainId([CHART_METRICS_FORMATTER[metricName], 'chart', 'block']);
 	}
 
 	function svgElemId(loadJobName, metricName) {
 		return plainId([
-			'id', loadJobName, constants.metricFormatter(metricName), 'chart', 'wrapper']);
+			'id', loadJobName, CHART_METRICS_FORMATTER[metricName], 'chart', 'wrapper']);
 	}
 
 	function render() {
