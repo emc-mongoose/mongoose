@@ -2,6 +2,7 @@ package com.emc.mongoose.system.feature.core;
 
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
@@ -34,20 +35,23 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
+import static com.emc.mongoose.common.conf.SizeInBytes.toFixedSize;
+
 /**
  * Created by olga on 08.07.15.
  * Covers TC #6(name: "Limit the single write load job w/ both data item count and timeout",
  * steps: all, dominant limit: time) in Mongoose Core Functional Testing
  * HLUC: 1.1.6.2, 1.1.6.4
  */
-public class WriteByTimeTest
+public class WriteBySizeTest
 extends ScenarioTestBase {
 
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static final String RUN_ID = WriteByTimeTest.class.getCanonicalName();
-	private static final String DATA_SIZE = "1B", LIMIT_TIME = "1m";
+	private static final String RUN_ID = WriteBySizeTest.class.getCanonicalName();
+	private static final String DATA_SIZE = "64KB", LIMIT_SIZE = "4GB";
 	private static final int LIMIT_COUNT = 0, LOAD_THREADS = 10;
+	private final static long EXPECTED_COUNT = toFixedSize(LIMIT_SIZE) / toFixedSize(DATA_SIZE);
 	//
 	private static long TIME_ACTUAL_SEC;
 
@@ -59,7 +63,7 @@ extends ScenarioTestBase {
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
 		appConfig.setProperty(AppConfig.KEY_ITEM_DATA_SIZE, DATA_SIZE);
-		appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
+		appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_SIZE, LIMIT_SIZE);
 		appConfig.setProperty(AppConfig.KEY_LOAD_THREADS, Integer.toString(LOAD_THREADS));
 		appConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, RUN_ID);
 		appConfig.setProperty(AppConfig.KEY_LOAD_METRICS_PERIOD, 10);
@@ -69,7 +73,7 @@ extends ScenarioTestBase {
 		//
 		try(
 			final BufferingOutputStream
-				 stdOutStream =	StdOutUtil.getStdOutBufferingStream()
+				stdOutStream =	StdOutUtil.getStdOutBufferingStream()
 		) {
 			STD_OUTPUT_STREAM = stdOutStream;
 			TIME_ACTUAL_SEC = System.currentTimeMillis();
@@ -115,7 +119,7 @@ extends ScenarioTestBase {
 		);
 		//
 		try (final BufferedReader bufferedReader =
-				 new BufferedReader(new FileReader(messageFile))) {
+			     new BufferedReader(new FileReader(messageFile))) {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
 				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
@@ -133,56 +137,30 @@ extends ScenarioTestBase {
 	}
 
 	@Test
-	public void shouldRunScenarioFor1Minutes()
+	public void checkWrittenCount()
 	throws Exception {
-		final int precisionMillis = 5000;
-		//1.minutes = 60000.milliseconds
-		final long loadLimitTimeMillis = TimeUtil.getTimeValue(LIMIT_TIME) * 60000;
-		Assert.assertEquals(
-			"Actual time limitation is wrong",
-			loadLimitTimeMillis, TIME_ACTUAL_SEC, precisionMillis
-		);
+		final File itemsFile = LogValidator.getItemsListFile(RUN_ID);
+		Assert.assertTrue("data.items.csv file doesn't exist", itemsFile.exists());
 		//
-		final File perfAvgFile = LogValidator.getPerfAvgFile(RUN_ID);
-		Assert.assertTrue("perf.avg.csv file doesn't exist", perfAvgFile.exists());
-
-		// Get start time of load: read the first metric of load from perf.avg.csv file
-		BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
-		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
-		Date startTime = null, finishTime = null;
-		// Read the head of file
-		bufferedReader.readLine();
-		String line = bufferedReader.readLine();
-		Matcher matcher = LogPatterns.DATE_TIME_ISO8601.matcher(line);
-		// Find the time in line of perf.avg.csv file
-		if (matcher.find()) {
-			startTime = format.parse(matcher.group("time"));
-		} else {
-			Assert.fail("Time doesn't exist in the line from perf.avg.csv file or has wrong format");
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(itemsFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			//
+			int countDataItems = 0;
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			for(final CSVRecord nextRec : recIter) {
+				Assert.assertEquals(
+					"Size of data item isn't correct",
+					Long.toString(toFixedSize(DATA_SIZE)), nextRec.get(2)
+				);
+				countDataItems ++;
+			}
+			//  Check that there are 10 lines in data.items.csv file
+			Assert.assertEquals(
+				"The written count differs from the expected", EXPECTED_COUNT, countDataItems
+			);
 		}
-
-		// Get finish time of load: read the summary metric from perf.sum.csv file
-		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
-		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
-		bufferedReader = new BufferedReader(new FileReader(perfSumFile));
-		// Read the head of file
-		bufferedReader.readLine();
-		line = bufferedReader.readLine();
-		matcher = LogPatterns.DATE_TIME_ISO8601.matcher(line);
-		// Find the time in line of perf.sum.csv file
-		if (matcher.find()) {
-			finishTime = format.parse(matcher.group("time"));
-		} else {
-			Assert.fail("Time doesn't exist in the line from perf.sum.csv file or has wrong format");
-		}
-
-		final long differenceTime = finishTime.getTime() - startTime.getTime();
-		Assert.assertEquals(
-			"Actual time limitation is wrong", loadLimitTimeMillis,
-			differenceTime, precisionMillis
-		);
-		//
-		bufferedReader.close();
 	}
 
 	@Test

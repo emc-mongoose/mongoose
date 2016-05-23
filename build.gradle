@@ -227,7 +227,7 @@ sourceSets {
 			include(['java', 'com', 'emc', 'mongoose', 'common', '**'].join(File.separator))
 		}
 	}
-	integTest {
+	systemTest {
 		java {
 			srcDir(['src', 'test'].join(File.separator))
 			include(['java', 'com', 'emc', 'mongoose', 'system', '**'].join(File.separator))
@@ -443,7 +443,7 @@ dependencies {
 		library.json_schema_validator,
 	)
 
-	integTestCompile(
+	systemTestCompile(
 		library.junit,
 		library.commons_csv,
 	)
@@ -493,10 +493,10 @@ configurations {
 		runtime,
 	)
 
-	integTestCompile.extendsFrom(
+	systemTestCompile.extendsFrom(
 		compile,
 	)
-	integTestRuntime.extendsFrom(
+	systemTestRuntime.extendsFrom(
 		runtime,
 	)
 
@@ -893,7 +893,7 @@ task testJar(type: Jar) {
 	classifier "test"
 	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.test.output
-	from sourceSets.integTest.output
+	from sourceSets.systemTest.output
 	manifest {
 		from sharedManifest
 		attributes(
@@ -917,7 +917,7 @@ task testJar(type: Jar) {
 				configurations.testRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
-				configurations.integTestRuntime.collect {
+				configurations.systemTestRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
 			].join(' ')
@@ -1008,7 +1008,7 @@ idea {
 			COMPILE: [plus: [configurations.compile], minus: []],
 			RUNTIME: [plus: [configurations.runtime], minus: [configurations.compile]],
 			TEST: [
-				plus: [configurations.testRuntime, configurations.integTestRuntime],
+				plus: [configurations.testRuntime, configurations.systemTestRuntime],
 				minus: [configurations.runtime]
 			],
 		]
@@ -1039,12 +1039,12 @@ test {
 	testLogging { events "passed", "skipped", "failed" }
 }
 
-task integTest(type: Test, dependsOn: dist) {
+task systemTest(type: Test, dependsOn: dist) {
 
-	include '**/AllTestSuite.class'
+	include '**/SystemTestSuite.class'
 
-	testClassesDir = sourceSets.integTest.output.classesDir
-	classpath = sourceSets.integTest.runtimeClasspath
+	testClassesDir = sourceSets.systemTest.output.classesDir
+	classpath = sourceSets.systemTest.runtimeClasspath
 	forkEvery = 1
 	minHeapSize = "5g"
 	maxHeapSize = "5g"
