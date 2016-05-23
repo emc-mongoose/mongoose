@@ -39,13 +39,24 @@ define([
 		'bandwidth': 'BW'
 	};
 
+	function metricFormatter(metricName) {
+		const formattedName = CHART_METRICS_FORMATTER[metricName];
+		if (formattedName) {
+			return formattedName;
+		} else {
+			return null;
+		}
+	}
+	
+
+
 
 	return {
 		JSON_CONTENT_TYPE: JSON_CONTENT_TYPE,
 		LOG_MARKERS: LOG_MARKERS,
 		LOG_MARKERS_FORMATTER: LOG_MARKERS_FORMATTER,
 		CHART_METRICS: CHART_METRICS,
-		CHART_METRICS_FORMATTER: CHART_METRICS_FORMATTER
+		metricFormatter: metricFormatter
 	}
 
 });

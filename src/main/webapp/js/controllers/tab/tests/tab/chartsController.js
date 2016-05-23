@@ -28,8 +28,13 @@ define([
 	var currentTabType = TESTS_CHARTS_TAB_TYPE.LATENCY;
 	var resetChartsFlag = false;
 
-	function svgWrapperId(metricName) {
-		return jqId([CHART_METRICS_FORMATTER[metricName], 'chart', 'wrapper']);
+	function metricBlockId(metricName) {
+		return plainId([constants.metricFormatter(metricName), 'chart', 'block']);
+	}
+
+	function svgElemId(loadJobName, metricName) {
+		return plainId([
+			'id', loadJobName, constants.metricFormatter(metricName), 'chart', 'wrapper']);
 	}
 
 	function render() {
@@ -46,9 +51,6 @@ define([
 		function renderBase() {
 			hbUtil.compileAndInsertInsideBefore(chartsBlockElemId, chartsTemplate,
 				{tabs: TESTS_CHARTS_TAB_TYPE});
-			$.each(CHART_METRICS, function (key, metricName) {
-				charts.createSvg(svgWrapperId(metricName));
-			});
 			binder.tab();
 		}
 
@@ -70,11 +72,11 @@ define([
 	};
 
 	function tabJqId(tabType) {
-		return jqId([tabType, TAB_TYPE.TESTS,  TESTS_TAB_TYPE.CHARTS, 'tab']);
+		return jqId([tabType, TAB_TYPE.TESTS, TESTS_TAB_TYPE.CHARTS, 'tab']);
 	}
 
 	function makeTabActive(tabType) {
-		tabsUtil.showTabAsActive(plainId([TAB_TYPE.TESTS,  TESTS_TAB_TYPE.CHARTS, 'tab']), tabType);
+		tabsUtil.showTabAsActive(plainId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.CHARTS, 'tab']), tabType);
 		tabsUtil.showActiveTabDependentElements(plainId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.CHARTS, 'tab', 'dependent']), tabType);
 		switch (tabType) {
 			case TESTS_CHARTS_TAB_TYPE.LATENCY:
@@ -89,32 +91,39 @@ define([
 		currentTabType = tabType;
 	}
 
-	function updateCharts(metricName, chartsObj) {
-		charts.drawChart(svgWrapperId(metricName) + ' svg g', chartsObj);
+	function updateCharts(loadJobName, metricName, chartsObj) {
+		charts.drawChart(jqId([svgElemId(loadJobName, metricName)]) + ' g', chartsObj, loadJobName);
 	}
 
 	function setTabParameters(testId, testMode) {
+		resetCharts();
 		if (CHARTS_MODE.indexOf(testMode) > -1) {
 			if (testId) {
 				resetChartsFlag = false;
-				$.each(CHART_METRICS, function (key, value) {
-					getCharts(value, testId);
-				})
+				getCharts(testId);
 			}
 		}
 	}
 
-	function getCharts(metricName, testId) {
+	function getCharts(testId) {
 		$.get('/charts',
 			{
-				runId: testId,
-				metricName: metricName
+				runId: testId
 			}
 		).done(function (chartsObj) {
-			updateCharts(metricName, chartsObj);
+			$.each(chartsObj, function (loadJobName, chartsByLoadJob) {
+				$.each(CHART_METRICS, function (key, metricName) {
+					const svgBlockId = metricBlockId(metricName);
+					const svgId = svgElemId(loadJobName, metricName);
+					if (!$(jqId([svgId])).length) {
+					charts.createSvg(jqId([svgBlockId]), svgId);
+					}
+					updateCharts(loadJobName, metricName, chartsByLoadJob[metricName]);
+				})
+			});
 		}).always(function () {
 			if (!resetChartsFlag) {
-				setTimeout(getCharts, 10000, metricName, testId); // interval in milliseconds;
+				setTimeout(getCharts, 10000, testId); // interval in milliseconds;
 				// todo check a third arg
 			}
 		});
@@ -122,7 +131,9 @@ define([
 
 	function resetCharts() {
 		resetChartsFlag = true;
-		$("." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body'])).empty();
+		$.each(CHART_METRICS, function (key, metricName) {
+			$(jqId([metricBlockId(metricName)])).empty();
+		})
 	}
 
 	return {

@@ -83,11 +83,12 @@ define(['jquery',
 		const line = defaultsFactory.lineGenerator().x(scaledXAccessor).y(scaledYAccessor);
 		const colorizer = defaultsFactory.colorizer();
 
-		function createSvg(parentSelector) {
+		function createSvg(parentSelector, svgId) {
 			d3.select(parentSelector)
 				.append('svg')
-			.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
-			.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM)
+				.attr('id', svgId)
+				.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
+				.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM)
 				.append('g')
 				.attr('transform', 'translate(' + (MARGIN.LEFT + 70) + ',' + (MARGIN.TOP + 70) + ')');
 		}
@@ -118,7 +119,7 @@ define(['jquery',
 			}
 		}
 
-		function drawChart(svgSelector, chartObj) {
+		function drawChart(svgSelector, chartObj, loadJobName) {
 
 			const SVG = d3.select(svgSelector);
 
@@ -130,7 +131,7 @@ define(['jquery',
 				.attr('text-anchor', 'middle')
 				.style('font-size', '16px')
 				.style('text-decoration', 'underline')
-				.text('Value vs Date Graph');
+				.text(loadJobName);
 
 			var chart;
 

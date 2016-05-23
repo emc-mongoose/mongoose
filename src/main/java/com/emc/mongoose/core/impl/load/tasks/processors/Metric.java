@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
+@SuppressWarnings({"FieldCanBeLocal", "unused"})
 public final class Metric implements Serializable {
 
 	private final String name;
@@ -32,27 +33,27 @@ public final class Metric implements Serializable {
 		return metrics;
 	}
 
-	public static List<Metric> latencyMetrics(final PolyLineManager polyLineManager) {
+	static List<Metric> latencyMetrics(final PolyLineManager polyLineManager) {
 		return timeMetricFormat(
 				polyLineManager.getLatAvg(),
 				polyLineManager.getLatMin(),
 				polyLineManager.getLatMax());
 	}
 
-	public static List<Metric> durationMetrics(final PolyLineManager polyLineManager) {
+	static List<Metric> durationMetrics(final PolyLineManager polyLineManager) {
 		return timeMetricFormat(
 				polyLineManager.getDurAvg(),
 				polyLineManager.getDurMin(),
 				polyLineManager.getDurMax());
 	}
 
-	public static List<Metric> throughputMetrics(final PolyLineManager polyLineManager) {
+	static List<Metric> throughputMetrics(final PolyLineManager polyLineManager) {
 		return speedMetricFormat(
 				polyLineManager.getTpAvg(),
 				polyLineManager.getTpLast());
 	}
 
-	public static List<Metric> bandwidthMetrics(final PolyLineManager polyLineManager) {
+	static List<Metric> bandwidthMetrics(final PolyLineManager polyLineManager) {
 		return speedMetricFormat(
 				polyLineManager.getBwAvg(),
 				polyLineManager.getBwLast());

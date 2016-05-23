@@ -29,17 +29,8 @@ public final class ChartPackage  {
 		}
 	}
 
-	public static List<Metric> getChart(final String runId, final String loadJobName,
-	                                    final String metricName) {
-		final Map<String, Map<String, List<Metric>>> runIdCharts = CHARTS_MAP.get(runId);
-		if(runIdCharts != null) {
-			final Map<String, List<Metric>>
-				loadJobCharts = runIdCharts.get(runIdCharts.keySet().iterator().next());
-			if(loadJobCharts != null) {
-				return loadJobCharts.get(metricName);
-			}
-		}
-		return null;
+	public static Map<String, Map<String, List<Metric>>> getChart(final String runId) {
+		return CHARTS_MAP.get(runId);
 	}
 
 }

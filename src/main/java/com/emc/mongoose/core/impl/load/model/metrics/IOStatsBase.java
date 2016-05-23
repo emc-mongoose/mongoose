@@ -211,7 +211,7 @@ implements IOStats {
 		//
 		@Override
 		public double getDurationAvg() {
-			return durValues.length == 0 ? 0 : ((double) sumDur) / durValues.length;
+			return durValues.length == 0 ? 0 : ((double) sumDur) / elapsedTime;
 		}
 		//
 		@Override
@@ -265,7 +265,7 @@ implements IOStats {
 		//
 		@Override
 		public double getLatencyAvg() {
-			return latValues.length == 0 ? 0 : ((double) sumLat) / latValues.length;
+			return latValues.length == 0 ? 0 : ((double) sumLat) / elapsedTime;
 		}
 		//
 		@Override
