@@ -6,7 +6,7 @@ define(['jquery',
 		const MARGIN = {
 			TOP: 20,
 			RIGHT: 20,
-			BOTTOM: 30,
+			BOTTOM: 120,
 			LEFT: 50
 		};
 		const WIDTH = 960 - MARGIN.LEFT - MARGIN.RIGHT;
@@ -89,7 +89,7 @@ define(['jquery',
 			.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
 			.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM)
 				.append('g')
-				.attr('transform', 'translate(' + MARGIN.LEFT + ',' + MARGIN.TOP + ')');
+				.attr('transform', 'translate(' + (MARGIN.LEFT + 70) + ',' + (MARGIN.TOP + 70) + ')');
 		}
 
 		function appendAxes(svgElement) {
@@ -123,6 +123,14 @@ define(['jquery',
 			const SVG = d3.select(svgSelector);
 
 			SVG.selectAll('*').remove();
+
+			SVG.append("text")
+				.attr('x', (WIDTH / 2))
+				.attr('y', 0 - (MARGIN.TOP / 2))
+				.attr('text-anchor', 'middle')
+				.style('font-size', '16px')
+				.style('text-decoration', 'underline')
+				.text('Value vs Date Graph');
 
 			var chart;
 

@@ -42,5 +42,4 @@ public final class ChartPackage  {
 		return null;
 	}
 
-
 }
