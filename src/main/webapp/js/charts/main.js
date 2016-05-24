@@ -11,7 +11,7 @@ define(['jquery',
 			BOTTOM: 180,
 			LEFT: 100
 		};
-		const WIDTH = 960 - MARGIN.LEFT - MARGIN.RIGHT;
+		const WIDTH = 1200 - MARGIN.LEFT - MARGIN.RIGHT;
 		const HEIGHT = 600 - MARGIN.TOP - MARGIN.BOTTOM;
 
 		const defaultsFactory = function () {
@@ -45,8 +45,10 @@ define(['jquery',
 			}
 		}();
 
-		const scaleX = defaultsFactory.linearScale().range([0, WIDTH]);
-		const scaleY = defaultsFactory.linearScale().range([HEIGHT, 0]);
+		const AXIS_X_WIDTH = Math.round(WIDTH / 1.5);
+		const AXIS_Y_WIDTH = HEIGHT;
+		const scaleX = defaultsFactory.linearScale().range([0, AXIS_X_WIDTH]);
+		const scaleY = defaultsFactory.linearScale().range([AXIS_Y_WIDTH, 0]);
 
 		const axisX = defaultsFactory.axis().scale(scaleX).orient('bottom').ticks(5);
 		const axisY = defaultsFactory.axis().scale(scaleY).orient('left').ticks(5);
@@ -102,7 +104,7 @@ define(['jquery',
 				.call(axisX);
 
 			svgElement.append('text')
-				.attr('x', WIDTH / 2)
+				.attr('x', AXIS_X_WIDTH / 2)
 				.attr('y', HEIGHT + MARGIN.BOTTOM / 3)
 				.style('text-anchor', 'middle')
 				.text(xLabel);
@@ -114,7 +116,7 @@ define(['jquery',
 			svgElement.append('text')
 				.attr('transform', 'rotate(-90)')
 				.attr('y', 0 - Math.round(MARGIN.LEFT * 1.5))
-				.attr('x', 0 - (HEIGHT / 2))
+				.attr('x', 0 - (AXIS_Y_WIDTH / 2))
 				.attr('dy', '1em')
 				.style('text-anchor', 'middle')
 				.text(yLabel);
@@ -145,7 +147,7 @@ define(['jquery',
 			const yLabel = 'rate[mb/s]';
 
 			SVG.append("text")
-				.attr('x', (WIDTH / 2))
+				.attr('x', (AXIS_X_WIDTH / 2))
 				.attr('y', 0 - (MARGIN.TOP / 2))
 				.attr('text-anchor', 'middle')
 				.style('font-size', '16px')
@@ -167,7 +169,10 @@ define(['jquery',
 				chart = SVG.selectAll('.chart')
 					.data(chartObj)
 					.enter().append('g')
-					.attr('class', 'chart');
+					.attr('class', 'chart')
+					.attr('id', function (chart) {
+						return templatesUtil.composeId(['id', loadJobName, chart.name, 'line']);
+					});
 				chart.append('path')
 					.attr('class', 'line')
 					.attr('d', function (chart) {
@@ -182,13 +187,13 @@ define(['jquery',
 					.enter()
 					.append('g')
 					.attr('class', 'legend')
-					.attr('id', function (legend) {
-						return legend.name;
+					.attr('id', function (chart) {
+						return templatesUtil.composeId(['id', loadJobName, chart.name]);
 					})
 					.on('click', function (legend) {
 						const elemented =
 							document.getElementById(templatesUtil.composeId([this.id, 'line']));
-						if ($(this).css('opacity' == 1)) {
+						if ($(this).css('opacity') == 1) {
 							d3.select(elemented)
 								.transition()
 								.duration(1000)
@@ -211,7 +216,25 @@ define(['jquery',
 								.duration(1000)
 								.style('opacity', 1);
 						}
+					});
+				const legendShift = [0, 30, 60];
+				legendEnter.append('circle')
+					.attr('cx', AXIS_X_WIDTH + 30)
+					.attr('cy', function (chart, index) {
+						return legendShift[index];
 					})
+					.attr('r', 7)
+					.style('fill', function (chart) {
+						return colorizer(chart.name);
+					});
+				legendEnter.append('text')
+					.attr('x', AXIS_X_WIDTH + 45)
+					.attr('y', function (chart, index) {
+						return legendShift[index];
+					})
+					.text(function (chart) {
+						return chart.name;
+					});
 			} else {
 				handleDataObj(chartObj);
 				scaleX.domain(extent(chartObj, xAccessor));
