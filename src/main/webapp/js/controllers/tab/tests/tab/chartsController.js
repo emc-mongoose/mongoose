@@ -24,18 +24,10 @@ define([
 	const CHARTS_MODE = templatesUtil.objPartToArray(templatesUtil.modes(), 2);
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
+	const svgId = 'chartboard';
 
 	var currentTabType = TESTS_CHARTS_TAB_TYPE.LATENCY;
 	var resetChartsFlag = false;
-
-	function metricBlockId(metricName) {
-		return plainId([CHART_METRICS_FORMATTER[metricName], 'chart', 'block']);
-	}
-
-	function svgElemId(loadJobName, metricName) {
-		return plainId([
-			'id', loadJobName, CHART_METRICS_FORMATTER[metricName], 'chart', 'wrapper']);
-	}
 
 	function render() {
 		const renderer = rendererFactory();
@@ -77,22 +69,22 @@ define([
 
 	function makeTabActive(tabType) {
 		tabsUtil.showTabAsActive(plainId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.CHARTS, 'tab']), tabType);
-		tabsUtil.showActiveTabDependentElements(plainId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.CHARTS, 'tab', 'dependent']), tabType);
+		// tabsUtil.showActiveTabDependentElements(plainId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.CHARTS, 'tab', 'dependent']), tabType);
 		switch (tabType) {
 			case TESTS_CHARTS_TAB_TYPE.LATENCY:
+				charts.updateChartBoardView(jqId([svgId]), CHART_METRICS_FORMATTER[TESTS_CHARTS_TAB_TYPE.LATENCY]);
 				break;
 			case TESTS_CHARTS_TAB_TYPE.DURATION:
+				charts.updateChartBoardView(jqId([svgId]), CHART_METRICS_FORMATTER[TESTS_CHARTS_TAB_TYPE.DURATION]);
 				break;
 			case TESTS_CHARTS_TAB_TYPE.BANDWIDTH:
+				charts.updateChartBoardView(jqId([svgId]), CHART_METRICS_FORMATTER[TESTS_CHARTS_TAB_TYPE.BANDWIDTH]);
 				break;
 			case TESTS_CHARTS_TAB_TYPE.THROUGHPUT:
+				charts.updateChartBoardView(jqId([svgId]), CHART_METRICS_FORMATTER[TESTS_CHARTS_TAB_TYPE.THROUGHPUT]);
 				break;
 		}
 		currentTabType = tabType;
-	}
-
-	function updateCharts(loadJobName, metricName, chartsObj) {
-		charts.drawChart(jqId([svgElemId(loadJobName, metricName)]) + ' g', chartsObj, loadJobName);
 	}
 
 	function setTabParameters(testId, testMode) {
@@ -112,14 +104,11 @@ define([
 			}
 		).done(function (chartsObj) {
 			$.each(chartsObj, function (loadJobName, chartsByLoadJob) {
-				$.each(CHART_METRICS, function (key, metricName) {
-					const svgBlockId = metricBlockId(metricName);
-					const svgId = svgElemId(loadJobName, metricName);
-					if (!$(jqId([svgId])).length) {
-					charts.createSvg(jqId([svgBlockId]), svgId);
-					}
-					updateCharts(loadJobName, metricName, chartsByLoadJob[metricName]);
-				})
+				const svgBlockId = plainId([TESTS_TAB_TYPE.CHARTS, 'block']);
+				if (!$(jqId([svgId])).length) {
+					charts.createChartBoard(jqId([svgBlockId]), svgId, loadJobName, chartsByLoadJob);
+				}
+				charts.updateChartBoardContent(jqId([svgId]), loadJobName, chartsByLoadJob, CHART_METRICS_FORMATTER[currentTabType]);
 			});
 		}).always(function () {
 			if (!resetChartsFlag) {
@@ -131,9 +120,9 @@ define([
 
 	function resetCharts() {
 		resetChartsFlag = true;
-		$.each(CHART_METRICS, function (key, metricName) {
-			$(jqId([metricBlockId(metricName)])).empty();
-		})
+		// $.each(CHART_METRICS, function (key, metricName) {
+		// 	$(jqId([metricBlockId(metricName)])).empty();
+		// })
 	}
 
 	return {
