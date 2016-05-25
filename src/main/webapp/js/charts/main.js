@@ -215,26 +215,22 @@ define(['jquery',
 			updateChartBoardView(svgSelector, currentMetricName);
 		}
 
-		function updateChartBoardView(svgSelector, metricName) {
-			if (!currentChartboardContent) {
-				return;
-			}
-			const svg = d3.select(svgSelector).transition();
-			svg.select('.y-axis-text')
+		function updateAxesLabels(svgElement, metricName) {
+			svgElement.select('.y-axis-text')
+				.duration(750)
 				.text(constants.CHART_METRICS_UNITS_FORMATTER[metricName]);
-			const chartArr = currentChartboardContent[metricName];
-			const names = [];
-			chartArr.forEach(function (chart) {
-				handleDataObj(chart);
-				names.push(chart.name);
-			});
-			colorizer.domain(names);
+		}
+		
+		function updateAxes(svgElement, chartArr) {
 			scaleX.domain(extent(chartArr[0], xAccessor));
 			scaleY.domain(deepExtent(chartArr, yAccessor));
-			svg.select('.x-axis')
+			svgElement.select('.x-axis')
 				.call(axisX);
-			svg.select('.y-axis')
+			svgElement.select('.y-axis')
 				.call(axisY);
+		}
+		
+		function updateCharts(svgSelector, chartArr) {
 			const svgCanvas = d3.select(svgSelector + ' g');
 			const chart = svgCanvas.selectAll('.chart').data(chartArr);
 			const chartEnter = chart.enter().append('g')
@@ -247,159 +243,34 @@ define(['jquery',
 				.style('stroke', function (chart) {
 					return colorizer(chart.name);
 				});
-				// .transition()
-				// .duration(1000)
-				// .attrTween('d', function (chart) {
-				// 	const interpolate = d3.scale.quantile()
-				// 		.domain([0, 1])
-				// 		.range(d3.range(1, chart.values.length + 1));
-				// 	return function (tween) {
-				// 		return line(chart.values.slice(0, interpolate(tween)));
-				// 	}
-				// });
-			// const chartUpdate = d3.select(chart);
 			const chartUpdate = chart.transition();
 			chartUpdate.select('path')
 				.duration(750)
 				.attr('d', function (chart) {
 					return line(chart.values)
 				});
-			// const chartUpdate = d3.transition(chart);
-			// chartUpdate.select('path')
-			// 	.attr('d', function (chart) {
-			// 		return line(chart.values)
-			// 	});
-			// .transition()
-			// .duration(1000)
-			// .attrTween('d', function (chart) {
-			// 	const interpolate = d3.scale.quantile()
-			// 		.domain([0, 1])
-			// 		.range(d3.range(1, chart.values.length + 1));
-			// 	return function (tween) {
-			// 		return line(chart.values.slice(0, interpolate(tween)));
-			// 	}
-			// });
-			// svg.selectAll('.legend g')
-			// 	.style('fill', function (chart) {
-			// 		return colorizer(chart.name);
-			// 	});
-			// svg.selectAll('.legend text')
-			// 	.text(function (chart) {
-			// 		return chart.name;
-			// 	});
+		}
+		
+		function updateChartBoardView(svgSelector, metricName) {
+			if (!currentChartboardContent) {
+				return;
+			}
+			const svg = d3.select(svgSelector).transition();
+			updateAxesLabels(svg, metricName);
+			
+			const chartArr = currentChartboardContent[metricName];
+			const names = [];
+			chartArr.forEach(function (chart) {
+				handleDataObj(chart);
+				names.push(chart.name);
+			});
+			colorizer.domain(names);
+			
+			updateAxes(svg, chartArr);
+			updateCharts(svgSelector, chartArr);
 		}
 
-		// function drawChart(svgSelector, chartArr, loadJobName) {
-		//
-		// 	const SVG = d3.select(svgSelector);
-		//
-		// 	SVG.selectAll('*').remove();
-		//
-		// 	const xLabel = 't[s]';
-		// 	const yLabel = 'rate[mb/s]';
-		//
-		// 	SVG.append('text')
-		// 		.attr('x', (AXIS_X_WIDTH / 2))
-		// 		.attr('y', 0 - (MARGIN.TOP / 2))
-		// 		.attr('text-anchor', 'middle')
-		// 		.style('font-size', '16px')
-		// 		.style('text-decoration', 'underline')
-		// 		.text(loadJobName);
-		//
-		// 	var chart;
-		//
-		// // 	if (Array.isArray(chartArr)) {
-		// // 		const names = [];
-		// // 		chartArr.forEach(function (chart) {
-		// // 			handleDataObj(chart);
-		// // 			names.push(chart.name);
-		// // 		});
-		// // 		colorizer.domain(names);
-		// // 		scaleX.domain(extent(chartArr[0], xAccessor));
-		// // 		scaleY.domain(deepExtent(chartArr, yAccessor));
-		// // 		appendAxes(SVG, xLabel, yLabel);
-		// // 		chart = SVG.selectAll('.chart')
-		// // 			.data(chartArr)
-		// // 			.enter().append('g')
-		// // 			.attr('class', 'chart')
-		// // 			.attr('id', function (chart) {
-		// // 				return templatesUtil.composeId(['id', loadJobName, chart.name, 'line']);
-		// // 			});
-		// // 		chart.append('path')
-		// // 			.attr('class', 'line')
-		// // 			.attr('d', function (chart) {
-		// // 				return line(chart.values)
-		// // 			})
-		// // 			.style('stroke', function (chart) {
-		// // 				return colorizer(chart.name);
-		// // 			});
-		// // 		const legend = SVG.selectAll('.legend')
-		// // 			.data(chartArr);
-		// // 		const legendEnter = legend
-		// // 			.enter()
-		// // 			.append('g')
-		// // 			.attr('class', 'legend')
-		// // 			.attr('id', function (chart) {
-		// // 				return templatesUtil.composeId(['id', loadJobName, chart.name]);
-		// // 			})
-		// // 			.on('click', function () {
-		// // 				const elemented =
-		// // 					document.getElementById(templatesUtil.composeId([this.id, 'line']));
-		// // 				if ($(this).css('opacity') == 1) {
-		// // 					d3.select(elemented)
-		// // 						.transition()
-		// // 						.duration(1000)
-		// // 						.style('opacity', 0);
-		// // 						// .style('display', 'none');
-		// // 					d3.select(this)
-		// // 						.transition()
-		// // 						.duration(1000)
-		// // 						.style('opacity', .2);
-		// // 				} else {
-		// // 					d3.select(elemented)
-		// // 						.style('display', 'block')
-		// // 						.transition()
-		// // 						.duration(1000)
-		// // 						.style('opacity', 1);
-		// // 					d3.select(this)
-		// // 						.transition()
-		// // 						.duration(1000)
-		// // 						.style('opacity', 1);
-		// // 				}
-		// // 			});
-		// // 		const legendShift = [0, 30, 60];
-		// // 		legendEnter.append('circle')
-		// // 			.attr('cx', AXIS_X_WIDTH + 30)
-		// // 			.attr('cy', function (chart, index) {
-		// // 				return legendShift[index];
-		// // 			})
-		// // 			.attr('r', 7)
-		// // 			.style('fill', function (chart) {
-		// // 				return colorizer(chart.name);
-		// // 			});
-		// // 		legendEnter.append('text')
-		// // 			.attr('x', AXIS_X_WIDTH + 45)
-		// // 			.attr('y', function (chart, index) {
-		// // 				return legendShift[index];
-		// // 			})
-		// // 			.text(function (chart) {
-		// // 				return chart.name;
-		// // 			});
-		// // 	}
-		// // 	// else {
-		// // 	// 	handleDataObj(chartObj);
-		// // 	// 	scaleX.domain(extent(chartObj, xAccessor));
-		// // 	// 	scaleY.domain(extent(chartObj, yAccessor));
-		// // 	// 	appendAxes(SVG, xLabel, yLabel);
-		// // 	// 	chart = SVG;
-		// // 	// 	chart.append('path')
-		// // 	// 		.attr('class', 'line')
-		// // 	// 		.attr('d', line(chartObj.values));
-		// // 	// }
-		// }
-
 		return {
-			// drawChart: drawChart,
 			createChartBoard: createChartBoard,
 			updateChartBoardContent: updateChartBoardContent,
 			updateChartBoardView: updateChartBoardView
