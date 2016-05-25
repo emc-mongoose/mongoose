@@ -173,27 +173,8 @@ define(['jquery',
 				.text(text);
 		}
 
-		function handleDataObj(dataObj) {
-			var values = dataObj.values;
-			if (values.length > 0) {
-				if (values[values.length - 1] === null) {
-					values.pop();
-				}
-				values.forEach(function (point) {
-					if (point !== null) {
-						point.x = +point.x;
-						point.y = +point.y;
-					}
-				})
-			}
-		}
-
-		function createChartBoard(parentSelector, svgId, chartBoardName) {
-			const svgCanvasChain = createSvg(parentSelector, svgId);
-			createLabel(svgCanvasChain, chartBoardName);
-			createAxes(svgCanvasChain);
-			const scaleSwitchShift = [0, 30];
-			const scaleSwitch = svgCanvasChain.selectAll('.scale-switch').data(SCALE_SWITCH);
+		function createScaleSwitches(svgElement, text) {
+			const scaleSwitch = svgElement.selectAll('.scale-switch').data(SCALE_SWITCH);
 			const scaleSwitchEnter = scaleSwitch.enter().append('g')
 				.attr('class', plainId(['scale', 'switch']))
 				.attr('id', function (scaleObj) {
@@ -222,7 +203,7 @@ define(['jquery',
 					} else {
 						switchCircle.style('fill', '#ECE9E9');
 						switchText.text(function (scaleObj) {
-							return SCALE.fullName(SCALE.LOG, scaleObj.name)
+							return SCALE.fullName(SCALE.LINEAR, scaleObj.name)
 						});
 						switchElem.attr('scale', SCALE.LINEAR);
 					}
@@ -235,6 +216,28 @@ define(['jquery',
 				.text(function (scaleObj) {
 					return SCALE.fullName(SCALE.LINEAR, scaleObj.name)
 				});
+		}
+
+		function handleDataObj(dataObj) {
+			var values = dataObj.values;
+			if (values.length > 0) {
+				if (values[values.length - 1] === null) {
+					values.pop();
+				}
+				values.forEach(function (point) {
+					if (point !== null) {
+						point.x = +point.x;
+						point.y = +point.y;
+					}
+				})
+			}
+		}
+
+		function createChartBoard(parentSelector, svgId, chartBoardName) {
+			const svgCanvasChain = createSvg(parentSelector, svgId);
+			createLabel(svgCanvasChain, chartBoardName);
+			createAxes(svgCanvasChain);
+			createScaleSwitches(svgCanvasChain);
 		}
 
 		function updateChartBoardContent(svgSelector, chartBoardName, chartBoardContent, currentMetricName) {
