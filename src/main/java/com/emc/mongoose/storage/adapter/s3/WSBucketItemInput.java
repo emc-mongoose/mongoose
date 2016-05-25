@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
 //
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.impl.item.data.GenericContainerItemInputBase;
+import com.emc.mongoose.core.impl.item.container.GenericContainerItemInputBase;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;

@@ -69,7 +69,7 @@
 					},
 					"metricsPeriod" : 10,
 					"type" : [
-						"write=50%", "read=30%", "delete=20%"
+						"create=50%", "read=30%", "delete=20%"
 					]
 				}
 			}

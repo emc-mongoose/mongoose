@@ -36,7 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
-import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
@@ -69,13 +69,15 @@ implements FileIOTask<T> {
 		super(item, null, ioConfig);
 		dstDir = ioConfig.getDstItemPath();
 		//
-		openOptions.add(NOFOLLOW_LINKS);
 		switch(ioType) {
-			case WRITE:
+			case CREATE:
+				openOptions.add(WRITE);
+				openOptions.add(CREATE_NEW);
+				break;
+			case UPDATE:
 				openOptions.add(WRITE);
 				if(!item.hasScheduledUpdates() && !item.isAppending()) {
-					openOptions.add(CREATE);
-					openOptions.add(TRUNCATE_EXISTING);
+					openOptions.add(TRUNCATE_EXISTING); // overwrite
 				}
 				break;
 			case READ:
@@ -108,7 +110,7 @@ implements FileIOTask<T> {
 						} else if(item.isAppending()) {
 							runAppend(byteChannel);
 						} else {
-							runWriteFully(byteChannel, ioConfig.getCopyFlag());
+							runWriteFully(byteChannel);
 						}
 					}
 				}
@@ -227,34 +229,36 @@ implements FileIOTask<T> {
 		}
 	}
 	//
-	protected void runWriteFully(final FileChannel dstFileChannel, final boolean copyFlag)
+	protected void runWriteFully(final FileChannel dstFileChannel)
 	throws IOException {
-		if(copyFlag) {
-			final C srcDir = ioConfig.getSrcContainer();
-			final Path srcDirPath;
-			if(srcDir == null) {
-				srcDirPath = DEFAULT_FS.getPath(item.getName()).toAbsolutePath();
-			} else {
-				srcDirPath = DEFAULT_FS.getPath(srcDir.getName(), item.getName()).toAbsolutePath();
-			}
-			try(
-				final FileChannel srcFileChannel = FileChannel.open(
-					srcDirPath, StandardOpenOption.READ
-				)
-			) {
-				while(countBytesDone < contentSize) {
-					countBytesDone += srcFileChannel.transferTo(
-						countBytesDone, contentSize, dstFileChannel
-					);
-				}
-			}
-		} else {
+		final C srcDir = ioConfig.getSrcContainer();
+		if(srcDir == null) {
 			while(countBytesDone < contentSize) {
 				countBytesDone += dstFileChannel.transferFrom(item, countBytesDone, contentSize);
 			}
+		} else {
+			runCopy(dstFileChannel, srcDir);
 		}
 		status = SUCC;
 		item.resetUpdates();
+	}
+	//
+	protected void runCopy(final FileChannel dstFileChannel, final C srcDir)
+	throws IOException {
+		final Path srcDirPath = DEFAULT_FS
+			.getPath(srcDir.getName(), item.getName()).toAbsolutePath();
+		try(
+			final FileChannel srcFileChannel = FileChannel.open(
+				srcDirPath, StandardOpenOption.READ
+			)
+		) {
+			while(countBytesDone < contentSize) {
+				countBytesDone += srcFileChannel.transferTo(
+					countBytesDone, contentSize, dstFileChannel
+				);
+			}
+		}
+		status = SUCC;
 	}
 	//
 	protected void runWriteUpdatedRanges(final FileChannel fileChannel)

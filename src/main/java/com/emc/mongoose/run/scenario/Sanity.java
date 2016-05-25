@@ -10,11 +10,10 @@ import com.emc.mongoose.common.io.Output;
 //
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 //
-import com.emc.mongoose.core.impl.item.base.ItemBinFileOutput;
-import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
+import com.emc.mongoose.core.impl.item.base.BinFileItemOutput;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
-import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 //
 import com.emc.mongoose.core.impl.item.base.ItemListOutput;
 //
@@ -35,7 +34,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.06.15.
@@ -70,13 +68,13 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
 			// update the created items
 			LOG.info(Markers.MSG, "Start updating {} items", itemBuff.size());
-			final Output<HttpDataItem> dataDstU = new ItemBinFileOutput<>();
+			final Output<HttpDataItem> dataDstU = new BinFileItemOutput<>();
 			final long nUpdated = client.write(
 				new ListItemInput<>(itemBuff), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
-			final Output<HttpDataItem> dataDstR = new ItemCsvFileOutput<>(
+			final Output<HttpDataItem> dataDstR = new CsvFileItemOutput<>(
 				(Class<? extends HttpDataItem>) BasicHttpData.class, ContentSourceBase.getDefaultInstance()
 			);
 			final long nRead = client.read(

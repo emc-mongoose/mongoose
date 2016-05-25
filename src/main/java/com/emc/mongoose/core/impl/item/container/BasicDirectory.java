@@ -14,11 +14,11 @@ implements Directory<T> {
 		super();
 	}
 	//
-	public BasicDirectory(final String name) {
-		super(name);
+	public BasicDirectory(final String path, final String name) {
+		super(path, name);
 	}
 	//
-	public BasicDirectory(final String name, final ContentSource contentSrc) {
-		super(name, contentSrc);
+	public BasicDirectory(final String path, final String name, final ContentSource contentSrc) {
+		super(path, name, contentSrc);
 	}
 }

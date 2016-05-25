@@ -27,7 +27,12 @@ implements DataIOTask<T> {
 		item.reset();
 		currDataLayerIdx = item.getCurrLayerIndex();
 		switch(ioType) {
-			case WRITE:
+			case CREATE:
+			case READ:
+				// TODO partial read support
+				contentSize = item.getSize();
+				break;
+			case UPDATE:
 				if(item.hasScheduledUpdates()) {
 					contentSize = item.getUpdatingRangesSize();
 				} else if(item.isAppending()) {
@@ -35,13 +40,6 @@ implements DataIOTask<T> {
 				} else {
 					contentSize = item.getSize();
 				}
-				break;
-			case READ:
-				// TODO partial content support
-				contentSize = item.getSize();
-				break;
-			case DELETE:
-				contentSize = 0;
 				break;
 			default:
 				contentSize = 0;

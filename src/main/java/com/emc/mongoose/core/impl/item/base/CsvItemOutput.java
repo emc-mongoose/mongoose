@@ -15,14 +15,14 @@ import java.util.List;
  The data item output writing into the specified file human-readable data item records using the CSV
  format
  */
-public abstract class ItemCsvOutput<T extends Item>
+public abstract class CsvItemOutput<T extends Item>
 implements Output<T> {
 	//
 	protected final Class<? extends T> itemCls;
 	protected final ContentSource contentSrc;
 	protected final BufferedWriter itemsDst;
 	//
-	protected ItemCsvOutput(
+	protected CsvItemOutput(
 		final OutputStream out, final Class<? extends T> itemCls, final ContentSource contentSrc
 	) throws IOException {
 		itemsDst = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));

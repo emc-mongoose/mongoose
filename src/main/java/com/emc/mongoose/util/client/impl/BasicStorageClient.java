@@ -73,7 +73,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(LoadType.WRITE)
+				.setLoadType(LoadType.CREATE)
 				.setInput(itemInput)
 				.setCountLimit(countLimit)
 				.setThreadCount(connPerNodeCount)
@@ -94,7 +94,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(LoadType.WRITE)
+				.setLoadType(LoadType.CREATE)
 				.setInput(itemInput)
 				.setCountLimit(countLimit)
 				.setThreadCount(connPerNodeCount)
@@ -114,7 +114,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(LoadType.WRITE)
+				.setLoadType(LoadType.CREATE)
 				.setInput(itemInput)
 				.setCountLimit(countLimit)
 				.setThreadCount(connPerNodeCount)

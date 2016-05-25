@@ -41,9 +41,6 @@ extends Externalizable, Cloneable, Closeable {
 	boolean getVerifyContentFlag();
 	IoConfig<T, C> setVerifyContentFlag(final boolean verifyContentFlag);
 	//
-	boolean getCopyFlag();
-	IoConfig<T, C> setCopyFlag(final boolean copyFlag);
-	//
 	int getBuffSize();
 	IoConfig<T, C> setBuffSize(final int buffSize);
 	//

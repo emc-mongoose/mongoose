@@ -24,7 +24,6 @@ import org.junit.Test;
 //
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Scanner;
@@ -46,7 +45,7 @@ extends ScenarioTestBase {
 	private static final String RUN_ID = ReadVerificationTest.class.getCanonicalName();
 
 	private static final String
-		CREATE_RUN_ID = RUN_ID + TestConstants.LOAD_WRITE,
+		CREATE_RUN_ID = RUN_ID + TestConstants.LOAD_CREATE,
 		READ_RUN_ID = RUN_ID + TestConstants.LOAD_READ;
 
 	@BeforeClass

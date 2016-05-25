@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.item.data;
+package com.emc.mongoose.core.impl.item.container;
 //
 import com.emc.mongoose.common.log.LogUtil;
 //
@@ -78,7 +78,7 @@ extends GenericContainerItemInputBase<F, D> {
 		final D dir, final Class<F> itemCls, final long maxCount,
 		final int batchSize, final ContentSource contentSrc
 	) throws IllegalStateException {
-		super(new DummyDirectoryHelper<F, D>(), itemCls, maxCount);
+		super(dir.toString(), new DummyDirectoryHelper<F, D>(), itemCls, maxCount);
 		this.batchSize = batchSize;
 		this.contentSrc = contentSrc;
 		try {
@@ -108,7 +108,7 @@ extends GenericContainerItemInputBase<F, D> {
 					nextContentSrcOffset = 0;
 				}
 				nextFileItem = itemConstructor.newInstance(
-					nextFileName, nextContentSrcOffset, nextFilePath.toFile().length(), 0,
+					path, nextFileName, nextContentSrcOffset, nextFilePath.toFile().length(), 0,
 					contentSrc
 				);
 				items.add(nextFileItem);

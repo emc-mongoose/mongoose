@@ -19,11 +19,20 @@ implements Container<T> {
 	}
 	//
 	public BasicContainer(final String name) {
-		this.name = name;
+		super(SLASH, name);
+	}
+	//
+	public BasicContainer(final String path, final String name) {
+		super(path, name);
 	}
 	//
 	public BasicContainer(final String name, final ContentSource contentSrc) {
-		this.name = name;
+		this(name);
+		this.contentSrc = contentSrc;
+	}
+	//
+	public BasicContainer(final String path, final String name, final ContentSource contentSrc) {
+		this(path, name);
 		this.contentSrc = contentSrc;
 	}
 }

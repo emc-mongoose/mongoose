@@ -45,7 +45,6 @@ implements IoConfig<T, C> {
 	protected C srcContainer;
 	protected ContentSource contentSrc;
 	protected volatile boolean verifyContentFlag;
-	protected volatile boolean copyFlag;
 	protected volatile AppConfig appConfig;
 	protected volatile String nameSpace;
 	protected volatile String namePrefix;
@@ -67,7 +66,6 @@ implements IoConfig<T, C> {
 			setLoadType(ioConf2Clone.getLoadType());
 			setContentSource(ioConf2Clone.getContentSource());
 			setVerifyContentFlag(ioConf2Clone.getVerifyContentFlag());
-			setCopyFlag(ioConf2Clone.getCopyFlag());
 			setDstContainer(ioConf2Clone.getDstContainer());
 			setSrcContainer(ioConf2Clone.getSrcContainer());
 			setNameSpace(ioConf2Clone.getNameSpace());
@@ -87,7 +85,6 @@ implements IoConfig<T, C> {
 			.setLoadType(loadType)
 			.setContentSource(contentSrc)
 			.setVerifyContentFlag(verifyContentFlag)
-			.setCopyFlag(copyFlag)
 			.setDstContainer(dstContainer)
 			.setNameSpace(nameSpace)
 			.setNamePrefix(namePrefix)
@@ -210,17 +207,6 @@ implements IoConfig<T, C> {
 	}
 	//
 	@Override
-	public final boolean getCopyFlag() {
-		return copyFlag;
-	}
-	//
-	@Override
-	public final IoConfigBase<T, C> setCopyFlag(final boolean copyFlag) {
-		this.copyFlag = copyFlag;
-		return this;
-	}
-	//
-	@Override
 	public final int getBuffSize() {
 		return buffSize;
 	}
@@ -254,7 +240,6 @@ implements IoConfig<T, C> {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply the content source");
 		}
 		setVerifyContentFlag(appConfig.getItemDataVerify());
-		setCopyFlag(appConfig.getLoadCopy());
 		final SizeInBytes sizeInfo = appConfig.getItemDataSize();
 		final long avgDataSize = sizeInfo.getAvgDataSize();
 		setBuffSize(
@@ -284,8 +269,6 @@ implements IoConfig<T, C> {
 		LOG.trace(Markers.MSG, "Written content src \"" + contentSrc + "\"");
 		out.writeBoolean(getVerifyContentFlag());
 		LOG.trace(Markers.MSG, "Written verify content flag \"" + verifyContentFlag + "\"");
-		out.writeBoolean(getCopyFlag());
-		LOG.trace(Markers.MSG, "Written copy mode flag \"" + copyFlag + "\"");
 		out.writeInt(getBuffSize());
 		LOG.trace(Markers.MSG, "Written buffer size \"" + buffSize + "\"");
 		out.writeInt(reqSleepMilliSec);
@@ -309,8 +292,6 @@ implements IoConfig<T, C> {
 		LOG.trace(Markers.MSG, "Got data source {}", contentSrc);
 		setVerifyContentFlag(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got verify content flag {}", verifyContentFlag);
-		setCopyFlag(in.readBoolean());
-		LOG.trace(Markers.MSG, "Got copy mode flag {}", copyFlag);
 		setBuffSize(in.readInt());
 		LOG.trace(Markers.MSG, "Got buff size {}", buffSize);
 		reqSleepMilliSec = in.readInt();

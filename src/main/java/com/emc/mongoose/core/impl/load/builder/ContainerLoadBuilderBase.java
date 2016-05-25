@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
-import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 //
@@ -13,9 +12,9 @@ import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
 //
-import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
-import com.emc.mongoose.core.impl.item.data.NewContainerInput;
+import com.emc.mongoose.core.impl.item.container.NewContainerInput;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -75,7 +74,7 @@ implements ContainerLoadBuilder<T, C, U>{
 					);
 				}
 				setOutput(
-					new ItemCsvFileOutput<>(
+					new CsvFileItemOutput<>(
 						dstFilePath, (Class<C>) ioConfig.getContainerClass(),
 						ioConfig.getContentSource()
 					)

@@ -245,11 +245,6 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public boolean getLoadCopy() {
-		return getBoolean(KEY_LOAD_COPY);
-	}
-	//
-	@Override
 	public long getLoadLimitCount() {
 		return getLong(KEY_LOAD_LIMIT_COUNT);
 	}

@@ -7,7 +7,6 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
-import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 //
 import com.emc.mongoose.system.base.LoggingTestBase;
 import com.emc.mongoose.system.base.ScenarioTestBase;
@@ -30,7 +29,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,7 +47,7 @@ extends ScenarioTestBase {
 	private static final String RUN_ID = Read10BItemsTest.class.getCanonicalName();
 
 	private static final String
-		CREATE_RUN_ID = RUN_ID + TestConstants.LOAD_WRITE,
+		CREATE_RUN_ID = RUN_ID + TestConstants.LOAD_CREATE,
 		READ_RUN_ID = RUN_ID + TestConstants.LOAD_READ;
 
 	@BeforeClass
@@ -60,7 +58,7 @@ extends ScenarioTestBase {
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT));
 		appConfig.setProperty(AppConfig.KEY_ITEM_DATA_SIZE, DATA_SIZE);
-		appConfig.setProperty(AppConfig.KEY_LOAD_TYPE, TestConstants.LOAD_WRITE);
+		appConfig.setProperty(AppConfig.KEY_LOAD_TYPE, TestConstants.LOAD_CREATE);
 		appConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, RUN_ID);
 		//
 		SCENARIO_RUNNER.run();

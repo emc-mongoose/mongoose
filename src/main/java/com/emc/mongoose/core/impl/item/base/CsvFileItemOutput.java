@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.data.ContentSource;
-import com.emc.mongoose.core.api.item.base.ItemFileOutput;
+import com.emc.mongoose.core.api.item.base.FileItemOutput;
 //
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,13 +11,13 @@ import java.nio.file.StandardOpenOption;
 /**
  Created by kurila on 30.06.15.
  */
-public class ItemCsvFileOutput<T extends Item>
-extends ItemCsvOutput<T>
-implements ItemFileOutput<T> {
+public class CsvFileItemOutput<T extends Item>
+extends CsvItemOutput<T>
+implements FileItemOutput<T> {
 	//
 	protected Path itemsFilePath;
 	//
-	public ItemCsvFileOutput(
+	public CsvFileItemOutput(
 		final Path itemsFilePath, final Class<? extends T> itemCls, final ContentSource contentSrc
 	) throws IOException {
 		super(
@@ -29,7 +29,7 @@ implements ItemFileOutput<T> {
 		this.itemsFilePath = itemsFilePath;
 	}
 	//
-	public ItemCsvFileOutput(final Class<? extends T> itemCls, final ContentSource contentSrc)
+	public CsvFileItemOutput(final Class<? extends T> itemCls, final ContentSource contentSrc)
 	throws IOException {
 		this(Files.createTempFile(null, ".csv"), itemCls, contentSrc);
 		this.itemsFilePath.toFile().deleteOnExit();

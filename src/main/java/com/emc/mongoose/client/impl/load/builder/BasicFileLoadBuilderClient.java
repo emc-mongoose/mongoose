@@ -127,7 +127,7 @@ implements FileLoadBuilderClient<T, W, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) ?
+							LoadType.CREATE.equals(nextLoadType) ?
 								getNewItemInput() :
 								new CsvFileDataItemInput<>(
 									singleInputPath, (Class<T>) ioConfig.getItemClass(),
@@ -146,7 +146,7 @@ implements FileLoadBuilderClient<T, W, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) ?
+							nextInputPath == null && LoadType.CREATE.equals(nextLoadType) ?
 								getNewItemInput() :
 								new CsvFileDataItemInput<>(
 									nextInputPath, (Class<T>) ioConfig.getItemClass(),

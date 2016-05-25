@@ -13,9 +13,9 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 //
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
-import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
-import com.emc.mongoose.core.impl.item.data.NewContainerInput;
+import com.emc.mongoose.core.impl.item.container.NewContainerInput;
 import com.emc.mongoose.server.api.load.builder.ContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.ContainerLoadSvc;
 import org.apache.logging.log4j.Level;
@@ -80,7 +80,7 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 					);
 				}
 				setOutput(
-					new ItemCsvFileOutput<>(
+					new CsvFileItemOutput<>(
 						dstFilePath, (Class<C>) ioConfig.getContainerClass(),
 						ioConfig.getContentSource()
 					)

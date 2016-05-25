@@ -93,7 +93,7 @@ extends DataLoadBuilderBase<T, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) ?
+							LoadType.CREATE.equals(nextLoadType) ?
 								getNewItemInput() :
 								new CsvFileDataItemInput<>(
 									singleInputPath, (Class<T>) ioConfig.getItemClass(),
@@ -112,7 +112,7 @@ extends DataLoadBuilderBase<T, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) && nextInputFile == null ?
+							LoadType.CREATE.equals(nextLoadType) && nextInputFile == null ?
 								getNewItemInput() :
 								new CsvFileDataItemInput<>(
 									Paths.get(nextInputFile), (Class<T>) ioConfig.getItemClass(),

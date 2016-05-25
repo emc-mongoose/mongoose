@@ -16,8 +16,7 @@ import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
-import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
-import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 import com.emc.mongoose.core.impl.item.data.CsvFileDataItemInput;
 import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 //
@@ -105,7 +104,7 @@ implements DataLoadBuilder<T, U> {
 					);
 				}
 				setOutput(
-					new ItemCsvFileOutput<>(
+					new CsvFileItemOutput<>(
 						dstFilePath, (Class<T>) ioConfig.getItemClass(), ioConfig.getContentSource()
 					)
 				);

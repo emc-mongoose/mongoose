@@ -23,7 +23,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.item.ItemTypeUtil;
-import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
@@ -53,7 +53,7 @@ public class RampupJobContainer
 	private final static char padChar = ' ';
 	private final static int DEFAULT_THREAD_COUNT = 1;
 	private final static String DEFAULT_SIZE = "1MB";
-	private final static String DEFAULT_LOAD_TYPE = LoadType.WRITE.name().toLowerCase();
+	private final static String DEFAULT_LOAD_TYPE = LoadType.CREATE.name().toLowerCase();
 	//
 	private final StrBuilder strb = new StrBuilder();
 	{
@@ -233,7 +233,7 @@ public class RampupJobContainer
 	) throws IOException {
 		//
 		final LoadExecutor nextLoadJob;
-		final Output nextItemOutput = new ItemCsvFileOutput<>(itemCls, contentSrc);
+		final Output nextItemOutput = new CsvFileItemOutput<>(itemCls, contentSrc);
 		//
 		loadJobBuilder
 			.setLoadType(nextLoadType)

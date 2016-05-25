@@ -375,14 +375,15 @@ implements HttpRequestConfig<T, C> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
 		}
 		switch(loadType) {
-			case WRITE:
+			case UPDATE:
 				if(obj.hasScheduledUpdates() || obj.isAppending()) {
 					applyRangesHeaders(request, obj);
 				}
-				if(copyFlag) {
-					applyCopyHeaders(request, obj);
-				} else {
+			case CREATE:
+				if(srcContainer == null) {
 					applyPayLoad(request, obj);
+				} else {
+					applyCopyHeaders(request, obj);
 				}
 				break;
 			case READ:
@@ -404,14 +405,6 @@ implements HttpRequestConfig<T, C> {
 			applyHostHeader(request, nodeAddr);
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
-		}
-		switch(loadType) {
-			case WRITE:
-				break;
-			case READ:
-				break;
-			case DELETE:
-				break;
 		}
 		return request;
 	}

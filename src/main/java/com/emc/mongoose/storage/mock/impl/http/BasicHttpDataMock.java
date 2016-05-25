@@ -26,22 +26,23 @@ implements HttpDataItemMock {
 	}
 	//
 	public BasicHttpDataMock(
-		final long offset, final long size, final ContentSource contentSrc
+		final String path, final long offset, final long size, final ContentSource contentSrc
 	) {
-		super(offset, size, contentSrc);
+		super(path, offset, size, contentSrc);
 	}
 	//
 	public BasicHttpDataMock(
-		final String name, final long offset, final long size, final ContentSource contentSrc
-	) {
-		super(name, offset, size, 0, contentSrc);
-	}
-	//
-	public BasicHttpDataMock(
-		final String name, final long offset, final long size, final int layerNum,
+		final String path, final String name, final long offset, final long size,
 		final ContentSource contentSrc
 	) {
-		super(name, offset, size, layerNum, contentSrc);
+		super(path, name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicHttpDataMock(
+		final String path, final String name, final long offset, final long size,
+		final int layerNum, final ContentSource contentSrc
+	) {
+		super(path, name, offset, size, layerNum, contentSrc);
 	}
 	//
 	@Override

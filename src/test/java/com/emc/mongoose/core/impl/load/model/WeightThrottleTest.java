@@ -24,14 +24,14 @@ public class WeightThrottleTest {
 
 	private final Map<LoadType, Integer> weightMap = new HashMap<LoadType, Integer>() {
 		{
-			put(LoadType.WRITE, 80);
+			put(LoadType.CREATE, 80);
 			put(LoadType.READ, 20);
 		}
 	};
 
 	private final Map<LoadType, AtomicInteger> resultsMap = new HashMap<LoadType, AtomicInteger>() {
 		{
-			put(LoadType.WRITE, new AtomicInteger(0));
+			put(LoadType.CREATE, new AtomicInteger(0));
 			put(LoadType.READ, new AtomicInteger(0));
 		}
 	};
@@ -111,11 +111,11 @@ public class WeightThrottleTest {
 	public void testRequestApprovalFor()
 	throws Exception {
 		final ExecutorService es = Executors.newFixedThreadPool(2);
-		es.submit(new SubmTask(LoadType.WRITE));
+		es.submit(new SubmTask(LoadType.CREATE));
 		es.submit(new SubmTask(LoadType.READ));
 		es.awaitTermination(100, TimeUnit.SECONDS);
 		es.shutdownNow();
-		final double writes = resultsMap.get(LoadType.WRITE).get();
+		final double writes = resultsMap.get(LoadType.CREATE).get();
 		final long reads = resultsMap.get(LoadType.READ).get();
 		assertEquals(80/20, writes / reads, 0.01);
 		System.out.println("Rate was: " + (writes + reads) / 10 + " per sec");
@@ -152,11 +152,11 @@ public class WeightThrottleTest {
 	public void testRequestBatchApprovalFor()
 	throws Exception {
 		final ExecutorService es = Executors.newFixedThreadPool(2);
-		es.submit(new BatchSubmTask(LoadType.WRITE));
+		es.submit(new BatchSubmTask(LoadType.CREATE));
 		es.submit(new BatchSubmTask(LoadType.READ));
 		es.awaitTermination(100, TimeUnit.SECONDS);
 		es.shutdownNow();
-		final double writes = resultsMap.get(LoadType.WRITE).get();
+		final double writes = resultsMap.get(LoadType.CREATE).get();
 		final long reads = resultsMap.get(LoadType.READ).get();
 		assertEquals(80/20, writes / reads, 0.01);
 		System.out.println("Rate was: " + 128 * (writes + reads) / 10 + " per sec");

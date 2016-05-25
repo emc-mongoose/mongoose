@@ -53,7 +53,7 @@ implements DataItem {
 		this(contentSrc);
 		final String tokens[] = metaInfo.split(",", 3);
 		if(tokens.length == 3) {
-			name = tokens[0];
+			super.fromString(tokens[0]);
 			try {
 				setOffset(Long.parseLong(tokens[1], 0x10));
 			} catch(final NumberFormatException e) {
@@ -69,14 +69,17 @@ implements DataItem {
 		}
 	}
 	//
-	public BasicDataItem(final Long offset, final Long size, final ContentSource contentSrc) {
-		this(Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
+	public BasicDataItem(
+		final String path, final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		this(path, Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
-		final String name, final Long offset, final Long size, final ContentSource contentSrc
+		final String path, final String name, final Long offset, final Long size,
+		final ContentSource contentSrc
 	) {
-		this(name, offset, size, 0, contentSrc);
+		this(path, name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
@@ -88,12 +91,12 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(
-		final String name, final Long offset, final Long size, final Integer layerNum,
-		final ContentSource contentSrc
+		final String path, final String name, final Long offset, final Long size,
+		final Integer layerNum, final ContentSource contentSrc
 	) {
+		super(path, name);
 		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
 		setOffset(offset);
-		this.name = name;
 		this.size = size;
 	}
 	//
@@ -258,7 +261,7 @@ implements DataItem {
 			strBuilder.setLength(0); // reset
 		}
 		return strBuilder
-			.append(name).append(",")
+			.append(super.toString()).append(",")
 			.append(Long.toString(offset, 0x10)).append(",")
 			.append(size).toString();
 	}

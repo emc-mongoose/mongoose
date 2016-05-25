@@ -14,6 +14,6 @@ implements Token {
 	}
 	//
 	public BasicToken(final String value) {
-		super(value);
+		super(SLASH, value);
 	}
 }

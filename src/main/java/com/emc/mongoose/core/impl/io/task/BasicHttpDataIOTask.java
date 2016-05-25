@@ -114,7 +114,13 @@ implements HttpDataIOTask<T> {
 		//
 		try {
 			switch(ioType) {
-				case WRITE:
+				case CREATE:
+					final C srcPath = ioConfig.getSrcContainer();
+					if(srcPath == null) {
+						produceObjectContent(ioCtl);
+					}
+					break;
+				case UPDATE:
 					if(item.hasScheduledUpdates()) {
 						produceUpdatedRangesContent(ioCtl);
 					} else if(item.isAppending()){

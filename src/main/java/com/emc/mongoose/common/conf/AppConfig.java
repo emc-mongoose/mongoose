@@ -148,8 +148,6 @@ extends Cloneable, Configuration, Externalizable {
 
 	boolean getLoadCircular();
 
-	boolean getLoadCopy();
-
 	long getLoadLimitCount();
 
 	double getLoadLimitRate();

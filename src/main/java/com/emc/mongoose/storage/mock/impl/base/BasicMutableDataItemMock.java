@@ -9,8 +9,6 @@ import com.emc.mongoose.storage.mock.api.MutableDataItemMock;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
-//
 /**
  * Created by olga on 22.01.15.
  */
@@ -29,22 +27,23 @@ implements MutableDataItemMock {
 	}
 	//
 	public BasicMutableDataItemMock(
-		final Long offset, final Long size, final ContentSource contentSrc
+		final String path, final Long offset, final Long size, final ContentSource contentSrc
 	) {
-		super(offset, size, contentSrc);
+		super(path, offset, size, contentSrc);
 	}
 	//
 	public BasicMutableDataItemMock(
-		final String name, final Long offset, final Long size, final ContentSource contentSrc
-	) {
-		super(name, offset, size, 0, contentSrc);
-	}
-	//
-	public BasicMutableDataItemMock(
-		final String name, final Long offset, final Long size, final Integer layerNum,
+		final String path, final String name, final Long offset, final Long size,
 		final ContentSource contentSrc
 	) {
-		super(name, offset, size, layerNum, contentSrc);
+		super(path, name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicMutableDataItemMock(
+		final String path, final String name, final Long offset, final Long size,
+		final Integer layerNum, final ContentSource contentSrc
+	) {
+		super(path, name, offset, size, layerNum, contentSrc);
 	}
 	//
 	public final synchronized void update(final long offset, final long size)

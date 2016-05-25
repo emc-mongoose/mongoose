@@ -42,6 +42,7 @@
 					}
 				},
 				"load" : {
+					"type" : "update",
 					"circular" : true,
 					"limit" : {
 						// count -> infinity instead of inherited value of 1, time -> 1 minute
@@ -50,6 +51,9 @@
 					}
 				}
 			}
+		}, {
+			"type" : "command",
+			"value" : "sleep 20"
 		}, {
 			"type": "load",
 			"config" : {

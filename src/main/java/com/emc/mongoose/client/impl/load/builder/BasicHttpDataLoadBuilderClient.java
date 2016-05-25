@@ -120,7 +120,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) ?
+							LoadType.CREATE.equals(nextLoadType) ?
 								getNewItemInput() :
 								new CsvFileDataItemInput<>(
 									singleInputPath, (Class<T>) ioConfig.getItemClass(),
@@ -139,7 +139,7 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) && nextInputFile == null ?
+							nextInputFile == null && LoadType.CREATE.equals(nextLoadType) ?
 								getNewItemInput() :
 								new CsvFileDataItemInput<>(
 									Paths.get(nextInputFile), (Class<T>) ioConfig.getItemClass(),

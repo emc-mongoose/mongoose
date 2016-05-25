@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.io.conf;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
 //
@@ -15,7 +14,7 @@ import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
 import com.emc.mongoose.core.impl.item.data.BasicFile;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
-import com.emc.mongoose.core.impl.item.data.DirectoryItemInput;
+import com.emc.mongoose.core.impl.item.container.DirectoryItemInput;
 //
 import org.apache.commons.lang.StringUtils;
 //
@@ -72,7 +71,6 @@ implements FileIoConfig<F, D> {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply the content source");
 		}
 		setVerifyContentFlag(appConfig.getItemDataVerify());
-		setCopyFlag(appConfig.getLoadCopy());
 		final SizeInBytes sizeInfo = appConfig.getItemDataSize();
 		final long avgDataSize = sizeInfo.getAvgDataSize();
 		setBuffSize(

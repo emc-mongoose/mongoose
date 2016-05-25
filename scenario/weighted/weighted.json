@@ -47,7 +47,7 @@
 						"time" : "5m"
 					},
 					"type" : [
-						"write=20%", "read=80%"
+						"create=20%", "read=80%"
 					]
 				}
 			}

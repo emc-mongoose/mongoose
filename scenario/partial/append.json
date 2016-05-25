@@ -41,6 +41,9 @@
 					"dst" : {
 						"file" : "partial-append-1.csv"
 					}
+				},
+				"load" : {
+					"type" : "update"
 				}
 			}
 		}, {

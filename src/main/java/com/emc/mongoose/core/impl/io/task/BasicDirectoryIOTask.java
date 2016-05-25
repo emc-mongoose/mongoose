@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
 //
-import com.emc.mongoose.core.impl.item.data.DirectoryItemInput;
+import com.emc.mongoose.core.impl.item.container.DirectoryItemInput;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -59,8 +59,9 @@ implements DirectoryIOTask<T, C> {
 		reqTimeStart = reqTimeDone = respTimeStart = System.nanoTime() / 1000;
 		try {
 			switch(ioType) {
-				case WRITE:
-					runWrite(ioConfig.getCopyFlag());
+				case CREATE:
+				case UPDATE:
+					runWrite();
 					break;
 				case READ:
 					runRead();
@@ -88,19 +89,14 @@ implements DirectoryIOTask<T, C> {
 		}
 	}
 	//
-	protected void runWrite(final boolean copyFlag)
+	protected void runWrite()
 	throws IOException {
-		if(copyFlag) {
-			final C srcDir = ioConfig.getSrcContainer();
-			final Path srcPath;
-			if(srcDir == null) {
-				srcPath = Paths.get(item.getName()).toAbsolutePath();
-			} else {
-				srcPath = Paths.get(srcDir.getName(), item.getName()).toAbsolutePath();
-			}
-			copyDirWithFiles(srcPath.toFile(), dstPath.toFile());
-		} else {
+		final C srcDir = ioConfig.getSrcContainer();
+		if(srcDir == null) {
 			Files.createDirectories(dstPath);
+		} else {
+			final Path srcPath = Paths.get(srcDir.getName(), item.getName()).toAbsolutePath();
+			copyDirWithFiles(srcPath.toFile(), dstPath.toFile());
 		}
 		status = Status.SUCC;
 	}

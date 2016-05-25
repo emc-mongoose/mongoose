@@ -79,22 +79,23 @@ implements MutableDataItem {
 	}
 	//
 	public BasicMutableDataItem(
-		final Long offset, final Long size, final ContentSource contentSrc
+		final String path, final Long offset, final Long size, final ContentSource contentSrc
 	) {
-		super(offset, size, contentSrc);
+		super(path, offset, size, contentSrc);
 	}
 	//
 	public BasicMutableDataItem(
-		final String name, final Long offset, final Long size, final ContentSource contentSrc
-	) {
-		super(name, offset, size, 0, contentSrc);
-	}
-	//
-	public BasicMutableDataItem(
-		final String name, final Long offset, final Long size, Integer layerNum,
+		final String path, final String name, final Long offset, final Long size,
 		final ContentSource contentSrc
 	) {
-		super(name, offset, size, layerNum, contentSrc);
+		super(path, name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicMutableDataItem(
+		final String path, final String name, final Long offset, final Long size, Integer layerNum,
+		final ContentSource contentSrc
+	) {
+		super(path, name, offset, size, layerNum, contentSrc);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////

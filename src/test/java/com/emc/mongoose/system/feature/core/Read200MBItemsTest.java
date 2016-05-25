@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,7 +46,7 @@ extends ScenarioTestBase {
 	private static final String RUN_ID = Read200MBItemsTest.class.getCanonicalName();
 
 	private static final String
-		CREATE_RUN_ID = RUN_ID + TestConstants.LOAD_WRITE,
+		CREATE_RUN_ID = RUN_ID + TestConstants.LOAD_CREATE,
 		READ_RUN_ID = RUN_ID + TestConstants.LOAD_READ;
 
 	@BeforeClass

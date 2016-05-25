@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.item.data;
+package com.emc.mongoose.core.impl.item.container;
 //
 import com.emc.mongoose.common.conf.BasicConfig;
 //
@@ -30,18 +30,22 @@ implements Input<T> {
 	protected final ContainerHelper<T, C> containerHelper;
 	protected final Constructor<T> itemConstructor;
 	protected final long maxCount;
+	protected final String path;
 	//
 	protected String lastItemId = null;
 	//
 	protected GenericContainerItemInputBase(
-		final ContainerHelper<T, C> containerHelper, final Class<T> itemCls, final long maxCount
+		final String path, final ContainerHelper<T, C> containerHelper, final Class<T> itemCls,
+		final long maxCount
 	) throws IllegalStateException {
 		super(new ArrayList<T>(BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize()));
 		this.containerHelper = containerHelper;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
+		this.path = path;
 		try {
 			this.itemConstructor = itemCls.getConstructor(
-				String.class, Long.class, Long.class, Integer.class, ContentSource.class
+				String.class, String.class, Long.class, Long.class, Integer.class,
+				ContentSource.class
 			);
 		} catch(final NoSuchMethodException e) {
 			throw new IllegalStateException(e);

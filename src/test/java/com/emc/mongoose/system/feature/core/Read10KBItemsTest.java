@@ -8,7 +8,6 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.system.base.LoggingTestBase;
 import com.emc.mongoose.system.base.ScenarioTestBase;
-import com.emc.mongoose.system.base.WSMockTestBase;
 import com.emc.mongoose.system.tools.StdOutUtil;
 import com.emc.mongoose.system.tools.ContentGetter;
 import com.emc.mongoose.system.tools.TestConstants;
@@ -50,7 +49,7 @@ extends ScenarioTestBase {
 	private static final String RUN_ID = Read10KBItemsTest.class.getCanonicalName();
 
 	private static final String
-		CREATE_RUN_ID = RUN_ID + TestConstants.LOAD_WRITE,
+		CREATE_RUN_ID = RUN_ID + TestConstants.LOAD_CREATE,
 		READ_RUN_ID = RUN_ID + TestConstants.LOAD_READ;
 
 	@BeforeClass

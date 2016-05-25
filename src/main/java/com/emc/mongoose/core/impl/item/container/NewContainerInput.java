@@ -1,5 +1,4 @@
-package com.emc.mongoose.core.impl.item.data;
-
+package com.emc.mongoose.core.impl.item.container;
 //
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Container;
@@ -16,20 +15,20 @@ implements Input<T> {
 	//
 	private final Constructor<T> itemConstructor;
 	private final Input<String> idInput;
+	private final String path;
 	//
-	private T lastItem = null;
-	//
-	public NewContainerInput(final Class<T> dataCls, final Input<String> idInput)
+	public NewContainerInput(final Class<T> itemCls, final Input<String> idInput, final String path)
 	throws NoSuchMethodException, IllegalArgumentException {
-		itemConstructor = dataCls.getConstructor(String.class);
+		itemConstructor = itemCls.getConstructor(String.class, String.class);
 		this.idInput = idInput;
+		this.path = path;
 	}
 	//
 	@Override
 	public final T get()
 	throws IOException {
 		try {
-			return itemConstructor.newInstance(idInput.get());
+			return itemConstructor.newInstance(path, idInput.get());
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
 		}
@@ -40,7 +39,7 @@ implements Input<T> {
 	throws IOException {
 		try {
 			for(int i = 0; i < maxCount; i ++) {
-				buffer.add(itemConstructor.newInstance(idInput.get()));
+				buffer.add(itemConstructor.newInstance(path, idInput.get()));
 			}
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);

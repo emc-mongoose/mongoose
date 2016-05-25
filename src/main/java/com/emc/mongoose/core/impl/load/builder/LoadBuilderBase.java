@@ -27,6 +27,7 @@ import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+
 /**
  Created by kurila on 20.10.14.
  */
@@ -270,28 +271,13 @@ implements LoadBuilder<T, U> {
 	//
 	protected Input<T> selectItemInput()
 	throws IllegalStateException {
-		final boolean copyFlag = appConfig.getLoadCopy();
 		if(null == ioConfig.getSrcContainer()) {
-			if(copyFlag) {
-				throw new IllegalStateException(
-					"Copy mode is enabled but no source container is set"
-				);
-			}
 			try {
 				return itemInput == null ? getNewItemInput() : itemInput;
 			} catch(final NoSuchMethodException e) {
 				throw new IllegalStateException(e);
 			}
 		} else {
-			if(copyFlag) {
-				final LoadType loadType = ioConfig.getLoadType();
-				if(!LoadType.WRITE.equals(loadType)) {
-					throw new IllegalStateException(
-						"Copy mode is enabled but the load type is not \"write\": \"" +
-						loadType + "\""
-					);
-				}
-			}
 			try {
 				return itemInput == null ? getContainerItemInput() : itemInput;
 			} catch(final CloneNotSupportedException e) {

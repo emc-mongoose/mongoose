@@ -62,7 +62,6 @@
 					}
 				},
 				"load" : {
-					"copy" : true,
 					"limit" : {
 						"count" : 100
 					},
