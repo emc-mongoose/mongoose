@@ -11,6 +11,7 @@ define(['jquery',
 		const jqId = templatesUtil.composeJqId;
 
 		var currentChartboardContent;
+		var currentChartboardName;
 
 		const MARGIN = {
 			TOP: 20,
@@ -141,11 +142,74 @@ define(['jquery',
 				.text(text);
 		}
 
-		function createLegend(svgElement, chartBoardName, chartArr) {
-			const legend = svgElement.selectAll('.legend').data(chartArr);
-			const legendEnter = legend
-				.enter()
-				.append('g')
+		function handleDataObj(dataObj) {
+			var values = dataObj.values;
+			if (values.length > 0) {
+				if (values[values.length - 1] === null) {
+					values.pop();
+				}
+				values.forEach(function (point) {
+					if (point !== null) {
+						point.x = +point.x;
+						point.y = +point.y;
+					}
+				})
+			}
+		}
+
+		function createChartBoard(parentSelector, svgId, chartBoardName) {
+			const svgCanvasChain = createSvg(parentSelector, svgId);
+			createLabel(svgCanvasChain, chartBoardName);
+			createAxes(svgCanvasChain);
+		}
+
+		function updateChartBoardContent(svgSelector, chartBoardName, chartBoardContent, currentMetricName) {
+			currentChartboardName = chartBoardName;
+			currentChartboardContent = chartBoardContent;
+			updateChartBoardView(svgSelector, currentMetricName);
+		}
+
+		function updateAxesLabels(svgElement, metricName) {
+			svgElement.select('.y-axis-text')
+				.duration(750)
+				.text(constants.CHART_METRICS_UNITS_FORMATTER[metricName]);
+		}
+
+		function updateAxes(svgElement, chartArr) {
+			scaleX.domain(extent(chartArr[0], xAccessor));
+			scaleY.domain(deepExtent(chartArr, yAccessor));
+			svgElement.select('.x-axis')
+				.call(axisX);
+			svgElement.select('.y-axis')
+				.call(axisY);
+		}
+
+		function updateCharts(svgCanvasElement, chartArr, chartBoardName) {
+			const chart = svgCanvasElement.selectAll('.chart').data(chartArr);
+			const chartEnter = chart.enter().append('g')
+				.attr('class', 'chart')
+				.attr('id', function (chart) {
+					return plainId(['id', chartBoardName, chart.name, 'line']);
+				});
+			chartEnter.append('path')
+				.attr('class', 'line')
+				.attr('d', function (chart) {
+					return line(chart.values)
+				})
+				.style('stroke', function (chart) {
+					return colorizer(chart.name);
+				});
+			const chartUpdate = chart.transition();
+			chartUpdate.select('path')
+				.duration(750)
+				.attr('d', function (chart) {
+					return line(chart.values)
+				});
+		}
+
+		function updateLegend(svgCanvasElement, chartArr, chartBoardName, metricName) {
+			const legend = svgCanvasElement.selectAll('.legend').data(chartArr);
+			const legendEnter = legend.enter().append('g')
 				.attr('class', 'legend')
 				.attr('id', function (chart) {
 					return plainId(['id', chartBoardName, chart.name]);
@@ -181,83 +245,31 @@ define(['jquery',
 				.attr('cy', function (chart, index) {
 					return legendShift[index];
 				})
-				.attr('r', 7);
+				.attr('r', 7)
+				.style('fill', function (chart) {
+					return colorizer(chart.name);
+				});
 			legendEnter.append('text')
 				.attr('x', AXIS_X_WIDTH + 45)
 				.attr('y', function (chart, index) {
 					return legendShift[index];
-				});
-		}
-
-		function handleDataObj(dataObj) {
-			var values = dataObj.values;
-			if (values.length > 0) {
-				if (values[values.length - 1] === null) {
-					values.pop();
-				}
-				values.forEach(function (point) {
-					if (point !== null) {
-						point.x = +point.x;
-						point.y = +point.y;
-					}
 				})
-			}
-		}
-
-		function createChartBoard(parentSelector, svgId, chartBoardName) {
-			const svgCanvasChain = createSvg(parentSelector, svgId);
-			createLabel(svgCanvasChain, chartBoardName);
-			createAxes(svgCanvasChain);
-		}
-
-		function updateChartBoardContent(svgSelector, chartBoardName, chartBoardContent, currentMetricName) {
-			currentChartboardContent = chartBoardContent;
-			updateChartBoardView(svgSelector, currentMetricName);
-		}
-
-		function updateAxesLabels(svgElement, metricName) {
-			svgElement.select('.y-axis-text')
-				.duration(750)
-				.text(constants.CHART_METRICS_UNITS_FORMATTER[metricName]);
-		}
-		
-		function updateAxes(svgElement, chartArr) {
-			scaleX.domain(extent(chartArr[0], xAccessor));
-			scaleY.domain(deepExtent(chartArr, yAccessor));
-			svgElement.select('.x-axis')
-				.call(axisX);
-			svgElement.select('.y-axis')
-				.call(axisY);
-		}
-		
-		function updateCharts(svgSelector, chartArr) {
-			const svgCanvas = d3.select(svgSelector + ' g');
-			const chart = svgCanvas.selectAll('.chart').data(chartArr);
-			const chartEnter = chart.enter().append('g')
-				.attr('class', 'chart');
-			chartEnter.append('path')
-				.attr('class', 'line')
-				.attr('d', function (chart) {
-					return line(chart.values)
-				})
-				.style('stroke', function (chart) {
-					return colorizer(chart.name);
+				.text(function (chart) {
+					return chart.name;
 				});
-			const chartUpdate = chart.transition();
-			chartUpdate.select('path')
-				.duration(750)
-				.attr('d', function (chart) {
-					return line(chart.values)
+			const legendUpdate = legend.transition();
+			legendUpdate.select('legend')
+				.attr('id', function (chart) {
+					return plainId(['id', chartBoardName, metricName, chart.name]);
 				});
 		}
-		
+
 		function updateChartBoardView(svgSelector, metricName) {
-			if (!currentChartboardContent) {
+			if (!currentChartboardContent || !currentChartboardName) {
 				return;
 			}
 			const svg = d3.select(svgSelector).transition();
 			updateAxesLabels(svg, metricName);
-			
 			const chartArr = currentChartboardContent[metricName];
 			const names = [];
 			chartArr.forEach(function (chart) {
@@ -265,9 +277,11 @@ define(['jquery',
 				names.push(chart.name);
 			});
 			colorizer.domain(names);
-			
+
 			updateAxes(svg, chartArr);
-			updateCharts(svgSelector, chartArr);
+			const svgCanvas = d3.select(svgSelector + ' g');
+			updateCharts(svgCanvas, chartArr, currentChartboardName);
+			updateLegend(svgCanvas, chartArr, currentChartboardName, metricName)
 		}
 
 		return {
