@@ -13,6 +13,25 @@ define(['jquery',
 		var currentChartboardContent;
 		var currentChartboardName;
 
+		const SCALE = {
+			LINEAR: 'linear',
+			LOG: 'log',
+			fullName: function (scaleType, scaleName) {
+				return scaleType + ' ' + scaleName + ' scale';
+			}
+		};
+
+		const SCALE_SWITCH = [
+				{
+					name: 'x',
+					shift: 0
+				},
+				{
+					name: 'y',
+					shift: 30
+				}
+		];
+
 		const MARGIN = {
 			TOP: 20,
 			RIGHT: 20,
@@ -30,6 +49,10 @@ define(['jquery',
 
 			function createDefaultLinearScale() {
 				return d3.scale.linear();
+			}
+
+			function createDefaultLogScale() {
+				return d3.scale.log();
 			}
 
 			function createDefaultAxis() {
@@ -169,6 +192,49 @@ define(['jquery',
 			const svgCanvasChain = createSvg(parentSelector, svgId);
 			createLabel(svgCanvasChain, chartBoardName);
 			createAxes(svgCanvasChain);
+			const scaleSwitchShift = [0, 30];
+			const scaleSwitch = svgCanvasChain.selectAll('.scale-switch').data(SCALE_SWITCH);
+			const scaleSwitchEnter = scaleSwitch.enter().append('g')
+				.attr('class', plainId(['scale', 'switch']))
+				.attr('id', function (scaleObj) {
+					return plainId(['scale', 'switch', scaleObj.name]);
+				})
+				.attr('scale', 'linear');
+			scaleSwitchEnter.append('circle')
+				.attr('cx', 15)
+				.attr('cy', function (scaleObj) {
+					return HEIGHT + (MARGIN.BOTTOM / 3) + scaleObj.shift;
+				})
+				.attr('r', 7)
+				.style('stroke', 'black')
+				.style('stroke-width', 1)
+				.style('fill', '#ECE9E9')
+				.on('click', function (scaleObj) {
+					const switchElem = d3.select(jqId(['scale', 'switch', scaleObj.name]));
+					const switchCircle = switchElem.select('circle');
+					const switchText = switchElem.select('text');
+					if (switchElem.attr('scale') == SCALE.LINEAR) {
+						switchCircle.style('fill', 'black');
+						switchText.text(function (scaleObj) {
+							return SCALE.fullName(SCALE.LOG, scaleObj.name)
+						});
+						switchElem.attr('scale', SCALE.LOG);
+					} else {
+						switchCircle.style('fill', '#ECE9E9');
+						switchText.text(function (scaleObj) {
+							return SCALE.fullName(SCALE.LOG, scaleObj.name)
+						});
+						switchElem.attr('scale', SCALE.LINEAR);
+					}
+				});
+			scaleSwitchEnter.append('text')
+				.attr('x', 30)
+				.attr('y', function (scaleObj) {
+					return HEIGHT + (MARGIN.BOTTOM / 3) + scaleObj.shift;
+				})
+				.text(function (scaleObj) {
+					return SCALE.fullName(SCALE.LINEAR, scaleObj.name)
+				});
 		}
 
 		function updateChartBoardContent(svgSelector, chartBoardName, chartBoardContent, currentMetricName) {
