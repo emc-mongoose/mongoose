@@ -130,6 +130,14 @@ define(['jquery',
 				.attr('x', 0 - (AXIS_Y_WIDTH / 2))
 				.attr('dy', '1em')
 				.style('text-anchor', 'middle');
+
+			// svgElement.append("g")
+			// 	.attr("class", "x-grid grid")
+			// 	.attr("transform", "translate(0," + HEIGHT + ")");
+			//
+			//
+			// svgElement.append("g")
+			// 	.attr("class", "y-grid grid");
 		}
 
 		function createLabel(svgElement, text) {
@@ -182,6 +190,14 @@ define(['jquery',
 				.call(axisX);
 			svgElement.select('.y-axis')
 				.call(axisY);
+			// svgElement.select('.x-grid')
+			// 	.call(axisX()
+			// 		.tickSize(-HEIGHT, 0, 0)
+			// 		.tickFormat(''));
+			// svgElement.select('.y-grid')
+			// 	.call(axisY()
+			// 		.tickSize(-WIDTH, 0, 0)
+			// 		.tickFormat(''));
 		}
 
 		function updateCharts(svgCanvasElement, chartArr, chartBoardName, metricName) {
@@ -198,7 +214,8 @@ define(['jquery',
 				})
 				.style('stroke', function (chart) {
 					return colorizer(chart.name);
-				});
+				})
+				.style('stroke-width', 1);
 			chart.exit().remove();
 			const chartUpdate = chart.transition();
 			chartUpdate.select('path')
