@@ -10,8 +10,10 @@ define(['jquery',
 		const plainId = templatesUtil.composeId;
 		const jqId = templatesUtil.composeJqId;
 
+		var currentChartboardSelector;
 		var currentChartboardContent;
 		var currentChartboardName;
+		var currentMetricName;
 
 		const SCALE = {
 			LINEAR: 'linear',
@@ -22,14 +24,14 @@ define(['jquery',
 		};
 
 		const SCALE_SWITCH = [
-				{
-					name: 'x',
-					shift: 0
-				},
-				{
-					name: 'y',
-					shift: 30
-				}
+			{
+				name: 'x',
+				shift: 0
+			},
+			{
+				name: 'y',
+				shift: 30
+			}
 		];
 
 		const MARGIN = {
@@ -70,6 +72,7 @@ define(['jquery',
 			return {
 				timeScale: createDefaultTimeScale,
 				linearScale: createDefaultLinearScale,
+				logScale: createDefaultLogScale,
 				axis: createDefaultAxis,
 				lineGenerator: createDefaultLineGenerator,
 				colorizer: createDefaultColorizer
@@ -78,26 +81,89 @@ define(['jquery',
 
 		const AXIS_X_WIDTH = Math.round(WIDTH / 1.5);
 		const AXIS_Y_WIDTH = HEIGHT;
-		const scaleX = defaultsFactory.linearScale().range([0, AXIS_X_WIDTH]);
-		const scaleY = defaultsFactory.linearScale().range([AXIS_Y_WIDTH, 0]);
-
-		const axisX = defaultsFactory.axis().scale(scaleX).orient('bottom').ticks(5);
-		const axisY = defaultsFactory.axis().scale(scaleY).orient('left').ticks(5);
 
 		function xAccessor(data) {
-			return data.x;
+			return data.x <= 0 ? 0.1 : data.x;
 		}
 
 		function yAccessor(data) {
-			return data.y;
+			return data.y <= 0 ? 0.001 : data.y;
+			// return data.y;
 		}
 
+		var xScale;
+		var yScale;
+		var xAxis;
+		var yAxis;
+		var line;
+
+		function setLinearXScale() {
+			xScale = defaultsFactory.linearScale().range([0, AXIS_X_WIDTH]);
+		}
+
+		function setLinearYScale() {
+			yScale = defaultsFactory.linearScale().range([AXIS_Y_WIDTH, 0]);
+		}
+
+		function setLogXScale() {
+			xScale = defaultsFactory.logScale().range([0, AXIS_X_WIDTH]);
+		}
+
+		function setLogYScale() {
+			yScale = defaultsFactory.logScale().range([AXIS_Y_WIDTH, 0]);
+		}
+
+		function updateAxisX() {
+			xAxis = defaultsFactory.axis().scale(xScale).orient('bottom').ticks(5);
+		}
+
+		function updateAxisY() {
+			yAxis = defaultsFactory.axis().scale(yScale).orient('left').ticks(5);
+		}
+
+		function updateLine() {
+			line = defaultsFactory.lineGenerator().x(scaledXAccessor).y(scaledYAccessor);
+		}
+
+		function switchScaling(scale, axis) {
+			switch (scale) {
+				case SCALE.LINEAR:
+					switch (axis) {
+						case 'x':
+							setLinearXScale();
+							break;
+						case 'y':
+							setLinearYScale();
+							break;
+					}
+					break;
+				case SCALE.LOG:
+					switch (axis) {
+						case 'x':
+							setLogXScale();
+							break;
+						case 'y':
+							setLogYScale();
+							break;
+					}
+					break;
+				default:
+					setLinearXScale();
+					setLinearYScale();
+			}
+			updateAxisX();
+			updateAxisY();
+			updateLine();
+		}
+		
+		switchScaling();
+
 		function scaledXAccessor(data) {
-			return scaleX(xAccessor(data));
+			return xScale(xAccessor(data));
 		}
 
 		function scaledYAccessor(data) {
-			return scaleY(yAccessor(data));
+			return yScale(yAccessor(data));
 		}
 
 		function extent(array, accessor) {
@@ -115,7 +181,6 @@ define(['jquery',
 			]
 		}
 
-		const line = defaultsFactory.lineGenerator().x(scaledXAccessor).y(scaledYAccessor);
 		const colorizer = defaultsFactory.colorizer();
 
 		function createSvg(parentSelector, svgId) {
@@ -133,7 +198,7 @@ define(['jquery',
 			svgElement.append('g')
 				.attr('class', 'x-axis axis')
 				.attr('transform', 'translate(0, ' + HEIGHT + ')')
-				.call(axisX);
+				.call(xAxis);
 
 			svgElement.append('text')
 				.attr('class', 'x-axis-text axis-text')
@@ -144,7 +209,7 @@ define(['jquery',
 
 			svgElement.append('g')
 				.attr('class', 'y-axis axis')
-				.call(axisY);
+				.call(yAxis);
 
 			svgElement.append('text')
 				.attr('class', 'y-axis-text axis-text')
@@ -197,15 +262,19 @@ define(['jquery',
 					if (switchElem.attr('scale') == SCALE.LINEAR) {
 						switchCircle.style('fill', 'black');
 						switchText.text(function (scaleObj) {
-							return SCALE.fullName(SCALE.LOG, scaleObj.name)
+							switchScaling(SCALE.LOG, scaleObj.name);
+							return SCALE.fullName(SCALE.LOG, scaleObj.name);
 						});
 						switchElem.attr('scale', SCALE.LOG);
+						updateChartBoardView(currentChartboardSelector, currentMetricName);
 					} else {
 						switchCircle.style('fill', '#ECE9E9');
 						switchText.text(function (scaleObj) {
+							switchScaling(SCALE.LINEAR, scaleObj.name);
 							return SCALE.fullName(SCALE.LINEAR, scaleObj.name)
 						});
 						switchElem.attr('scale', SCALE.LINEAR);
+						updateChartBoardView(currentChartboardSelector, currentMetricName);
 					}
 				});
 			scaleSwitchEnter.append('text')
@@ -240,10 +309,12 @@ define(['jquery',
 			createScaleSwitches(svgCanvasChain);
 		}
 
-		function updateChartBoardContent(svgSelector, chartBoardName, chartBoardContent, currentMetricName) {
+		function updateChartBoardContent(svgSelector, chartBoardName, chartBoardContent, metricName) {
+			currentChartboardSelector = svgSelector;
 			currentChartboardName = chartBoardName;
 			currentChartboardContent = chartBoardContent;
-			updateChartBoardView(svgSelector, currentMetricName);
+			currentMetricName = metricName;
+			updateChartBoardView(svgSelector, metricName);
 		}
 
 		function updateAxesLabels(svgElement, metricName) {
@@ -253,12 +324,12 @@ define(['jquery',
 		}
 
 		function updateAxes(svgElement, chartArr) {
-			scaleX.domain(extent(chartArr[0], xAccessor));
-			scaleY.domain(deepExtent(chartArr, yAccessor));
+			xScale.domain(extent(chartArr[0], xAccessor));
+			yScale.domain(deepExtent(chartArr, yAccessor));
 			svgElement.select('.x-axis')
-				.call(axisX);
+				.call(xAxis);
 			svgElement.select('.y-axis')
-				.call(axisY);
+				.call(yAxis);
 			// svgElement.select('.x-grid')
 			// 	.call(axisX()
 			// 		.tickSize(-HEIGHT, 0, 0)
@@ -365,6 +436,7 @@ define(['jquery',
 			if (!currentChartboardContent || !currentChartboardName) {
 				return;
 			}
+			currentMetricName = metricName;
 			const svg = d3.select(svgSelector).transition();
 			updateAxesLabels(svg, metricName);
 			const chartArr = currentChartboardContent[metricName];
@@ -374,7 +446,6 @@ define(['jquery',
 				names.push(chart.name);
 			});
 			colorizer.domain(names);
-
 			updateAxes(svg, chartArr);
 			const svgCanvas = d3.select(svgSelector + ' g');
 			updateCharts(svgCanvas, chartArr, currentChartboardName, metricName);
