@@ -15,21 +15,21 @@ Features
 --------
 1. Distributed Mode
 2. Reporting:
-	2.1. Item lists for reusing
-	2.2. Statistics for the rates and timings
-	2.3. High-resolution timings for each operation
+	* Item lists for reusing
+	* Statistics for the rates and timings
+	* High-resolution timings for each operation
 3. Supported Load Types:
-	3.1. Write (Update/Append are implemented as partial cases of Write)
-	3.2. Read (Partial case is to be implemented soon)
-	3.3. Delete
+	* Write (Update/Append are implemented as partial cases of Write)
+	* Read (Partial case is to be implemented soon)
+	* Delete
 4. Abstract Load Engine supports different item types:
-	4.1. Containers (Bucket/Directory/etc)
-	4.2. Data Items (Object/File/etc)
-	4.3. Tokens (Subtenant/etc - to be implemented soon)
+	* Containers (Bucket/Directory/etc)
+	* Data Items (Object/File/etc)
+	* Tokens (Subtenant/etc - to be implemented soon)
 5. Cloud storage support:
-	5.1. Amazon S3
-	5.2. EMC Atmos
-	5.3. OpenStack Swift
+	* Amazon S3
+	* EMC Atmos
+	* OpenStack Swift
 6. Filesystem Operations Support
 7. Custom Content Generation
 8. Content Updating and Verification Ability
