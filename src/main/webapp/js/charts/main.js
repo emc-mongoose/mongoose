@@ -246,19 +246,21 @@ define(['jquery',
 				})
 				.style('stroke', function (chart) {
 					return colorizer(chart.name);
-				})
-				.transition()
-				.duration(1000)
-				.attrTween('d', function (chart) {
-					const interpolate = d3.scale.quantile()
-						.domain([0, 1])
-						.range(d3.range(1, chart.values.length + 1));
-					return function (tween) {
-						return line(chart.values.slice(0, interpolate(tween)));
-					}
 				});
-			const chartUpdate = d3.transition(chart);
+				// .transition()
+				// .duration(1000)
+				// .attrTween('d', function (chart) {
+				// 	const interpolate = d3.scale.quantile()
+				// 		.domain([0, 1])
+				// 		.range(d3.range(1, chart.values.length + 1));
+				// 	return function (tween) {
+				// 		return line(chart.values.slice(0, interpolate(tween)));
+				// 	}
+				// });
+			// const chartUpdate = d3.select(chart);
+			const chartUpdate = chart.transition();
 			chartUpdate.select('path')
+				.duration(750)
 				.attr('d', function (chart) {
 					return line(chart.values)
 				});
