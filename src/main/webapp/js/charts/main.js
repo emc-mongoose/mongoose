@@ -184,12 +184,12 @@ define(['jquery',
 				.call(axisY);
 		}
 
-		function updateCharts(svgCanvasElement, chartArr, chartBoardName) {
+		function updateCharts(svgCanvasElement, chartArr, chartBoardName, metricName) {
 			const chart = svgCanvasElement.selectAll('.chart').data(chartArr);
 			const chartEnter = chart.enter().append('g')
 				.attr('class', 'chart')
 				.attr('id', function (chart) {
-					return plainId(['id', chartBoardName, chart.name, 'line']);
+					return plainId(['id', chartBoardName, metricName, chart.name, 'line']);
 				});
 			chartEnter.append('path')
 				.attr('class', 'line')
@@ -199,6 +199,7 @@ define(['jquery',
 				.style('stroke', function (chart) {
 					return colorizer(chart.name);
 				});
+			chart.exit().remove();
 			const chartUpdate = chart.transition();
 			chartUpdate.select('path')
 				.duration(750)
@@ -212,7 +213,7 @@ define(['jquery',
 			const legendEnter = legend.enter().append('g')
 				.attr('class', 'legend')
 				.attr('id', function (chart) {
-					return plainId(['id', chartBoardName, chart.name]);
+					return plainId(['id', chartBoardName, metricName, chart.name]);
 				})
 				.on('click', function () {
 					const elemented =
@@ -257,10 +258,20 @@ define(['jquery',
 				.text(function (chart) {
 					return chart.name;
 				});
+			legend.exit().remove();
 			const legendUpdate = legend.transition();
-			legendUpdate.select('legend')
-				.attr('id', function (chart) {
-					return plainId(['id', chartBoardName, metricName, chart.name]);
+			legendUpdate
+				.style('opacity', function () {
+					const elemented =
+						document.getElementById(plainId([this.id, 'line']));
+					d3.select(elemented)
+						.style('display', 'block')
+						.style('opacity', 1);
+					return 1;
+				});
+			legendUpdate.select('text')
+				.text(function (chart) {
+					return chart.name;
 				});
 		}
 
@@ -280,7 +291,7 @@ define(['jquery',
 
 			updateAxes(svg, chartArr);
 			const svgCanvas = d3.select(svgSelector + ' g');
-			updateCharts(svgCanvas, chartArr, currentChartboardName);
+			updateCharts(svgCanvas, chartArr, currentChartboardName, metricName);
 			updateLegend(svgCanvas, chartArr, currentChartboardName, metricName)
 		}
 
