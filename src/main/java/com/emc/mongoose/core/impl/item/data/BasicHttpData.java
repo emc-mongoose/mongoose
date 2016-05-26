@@ -37,24 +37,21 @@ implements HttpDataItem {
 		super(metaInfo, contentSrc);
 	}
 	//
-	public BasicHttpData(
-		final String path, final Long offset, final Long size, final ContentSource contentSrc
-	) {
-		super(path, offset, size, contentSrc);
+	public BasicHttpData(final Long offset, final Long size, final ContentSource contentSrc) {
+		super(offset, size, contentSrc);
 	}
 	//
 	public BasicHttpData(
-		final String path, final String name, final Long offset, final Long size,
+		final String name, final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		super(name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicHttpData(
+		final String name, final Long offset, final Long size, final Integer layerNum,
 		final ContentSource contentSrc
 	) {
-		super(path, name, offset, size, 0, contentSrc);
-	}
-	//
-	public BasicHttpData(
-		final String path, final String name, final Long offset, final Long size,
-		final Integer layerNum, final ContentSource contentSrc
-	) {
-		super(path, name, offset, size, layerNum, contentSrc);
+		super(name, offset, size, layerNum, contentSrc);
 	}
 	//
 	@Override

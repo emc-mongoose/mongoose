@@ -30,7 +30,7 @@ import java.util.regex.Matcher;
 public class InfiniteWriteTest
 extends ScenarioTestBase {
 	//
-	private static final long RUN_TIME_OUT_SEC = 100;
+	private static final long RUN_TIME_OUT_SEC = 30;
 	private static Process PROCESS;
 	private static int PID;
 
@@ -58,6 +58,7 @@ extends ScenarioTestBase {
 			}
 			processBuilder.command("java", "-jar", gooseJarFile.getPath());
 			processBuilder.directory(new File(System.getProperty("user.dir")));
+			System.out.println(System.getProperty("user.dir") + ", " + processBuilder.command());
 			PROCESS = processBuilder.start();
 			PID = getPid(PROCESS);
 			LOG.info(Markers.MSG, "Launched separate goose process w/ PID #{}", PID);

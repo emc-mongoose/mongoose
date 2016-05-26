@@ -15,20 +15,18 @@ implements Input<T> {
 	//
 	private final Constructor<T> itemConstructor;
 	private final Input<String> idInput;
-	private final String path;
 	//
-	public NewContainerInput(final Class<T> itemCls, final Input<String> idInput, final String path)
+	public NewContainerInput(final Class<T> itemCls, final Input<String> idInput)
 	throws NoSuchMethodException, IllegalArgumentException {
-		itemConstructor = itemCls.getConstructor(String.class, String.class);
+		itemConstructor = itemCls.getConstructor(String.class);
 		this.idInput = idInput;
-		this.path = path;
 	}
 	//
 	@Override
 	public final T get()
 	throws IOException {
 		try {
-			return itemConstructor.newInstance(path, idInput.get());
+			return itemConstructor.newInstance(idInput.get());
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
 		}
@@ -39,7 +37,7 @@ implements Input<T> {
 	throws IOException {
 		try {
 			for(int i = 0; i < maxCount; i ++) {
-				buffer.add(itemConstructor.newInstance(path, idInput.get()));
+				buffer.add(itemConstructor.newInstance(idInput.get()));
 			}
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);

@@ -998,12 +998,12 @@ task dist(type: Tar) {
 idea {
 	module {
 		name = rootProject.name
-		jdkName = sourceCompatibility
-		//
+		//jdkName = sourceCompatibility
 		inheritOutputDirs = false
+		sourceDirs += file("src" + File.separator + "main")
+		testSourceDirs += file("src" + File.separator + "test")
 		outputDir = sourceSets.common.output.resourcesDir
 		testOutputDir = sourceSets.common.output.resourcesDir
-		//scopes.PROVIDED.plus += [ configurations.compile ]
 		scopes = [
 			COMPILE: [plus: [configurations.compile], minus: []],
 			RUNTIME: [plus: [configurations.runtime], minus: [configurations.compile]],
@@ -1021,6 +1021,7 @@ idea {
 				if (file(imlFile).exists()) file(imlFile).delete()
 			}
 		}
+		downloadSources = true
 	}
 	project.ipr {
 		withXml { provider ->

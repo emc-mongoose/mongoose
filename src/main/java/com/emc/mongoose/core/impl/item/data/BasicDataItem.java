@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.item.data;
 // mongoose-core-api.jar
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -53,7 +52,7 @@ implements DataItem {
 		this(contentSrc);
 		final String tokens[] = metaInfo.split(",", 3);
 		if(tokens.length == 3) {
-			super.fromString(tokens[0]);
+			setName(tokens[0]);
 			try {
 				setOffset(Long.parseLong(tokens[1], 0x10));
 			} catch(final NumberFormatException e) {
@@ -70,16 +69,16 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(
-		final String path, final Long offset, final Long size, final ContentSource contentSrc
+		final Long offset, final Long size, final ContentSource contentSrc
 	) {
-		this(path, Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
+		this(Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
-		final String path, final String name, final Long offset, final Long size,
+		final String name, final Long offset, final Long size,
 		final ContentSource contentSrc
 	) {
-		this(path, name, offset, size, 0, contentSrc);
+		this(name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
@@ -91,10 +90,10 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(
-		final String path, final String name, final Long offset, final Long size,
-		final Integer layerNum, final ContentSource contentSrc
+		final String name, final Long offset, final Long size, final Integer layerNum,
+		final ContentSource contentSrc
 	) {
-		super(path, name);
+		super(name);
 		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
 		setOffset(offset);
 		this.size = size;

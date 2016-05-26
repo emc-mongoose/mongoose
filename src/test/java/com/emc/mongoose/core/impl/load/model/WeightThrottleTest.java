@@ -113,7 +113,7 @@ public class WeightThrottleTest {
 		final ExecutorService es = Executors.newFixedThreadPool(2);
 		es.submit(new SubmTask(LoadType.CREATE));
 		es.submit(new SubmTask(LoadType.READ));
-		es.awaitTermination(100, TimeUnit.SECONDS);
+		es.awaitTermination(10, TimeUnit.SECONDS);
 		es.shutdownNow();
 		final double writes = resultsMap.get(LoadType.CREATE).get();
 		final long reads = resultsMap.get(LoadType.READ).get();
@@ -154,7 +154,7 @@ public class WeightThrottleTest {
 		final ExecutorService es = Executors.newFixedThreadPool(2);
 		es.submit(new BatchSubmTask(LoadType.CREATE));
 		es.submit(new BatchSubmTask(LoadType.READ));
-		es.awaitTermination(100, TimeUnit.SECONDS);
+		es.awaitTermination(10, TimeUnit.SECONDS);
 		es.shutdownNow();
 		final double writes = resultsMap.get(LoadType.CREATE).get();
 		final long reads = resultsMap.get(LoadType.READ).get();

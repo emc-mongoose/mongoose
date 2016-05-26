@@ -39,7 +39,6 @@ public class FilePathInputRandomTest {
 		String result1 = formatter.get();
 		for (int i = 0; i < 10; i++) {
 			String result2 = formatter.get();
-//			System.out.println(formatter.get());
 			assertFalse(result1.equals(result2));
 			result1 = result2;
 		}

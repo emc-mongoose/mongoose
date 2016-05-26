@@ -78,7 +78,7 @@ extends GenericContainerItemInputBase<F, D> {
 		final D dir, final Class<F> itemCls, final long maxCount,
 		final int batchSize, final ContentSource contentSrc
 	) throws IllegalStateException {
-		super(dir.toString(), new DummyDirectoryHelper<F, D>(), itemCls, maxCount);
+		super(new DummyDirectoryHelper<F, D>(), itemCls, maxCount);
 		this.batchSize = batchSize;
 		this.contentSrc = contentSrc;
 		try {
@@ -108,7 +108,7 @@ extends GenericContainerItemInputBase<F, D> {
 					nextContentSrcOffset = 0;
 				}
 				nextFileItem = itemConstructor.newInstance(
-					path, nextFileName, nextContentSrcOffset, nextFilePath.toFile().length(), 0,
+					nextFileName, nextContentSrcOffset, nextFilePath.toFile().length(), 0,
 					contentSrc
 				);
 				items.add(nextFileItem);
