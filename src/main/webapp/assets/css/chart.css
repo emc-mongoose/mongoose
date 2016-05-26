@@ -11,3 +11,7 @@ path {
 	stroke-width: 1;
 	shape-rendering: crispEdges;
 }
+
+.tick line {
+	opacity: 0.2;
+}

@@ -121,11 +121,11 @@ define(['jquery',
 		}
 
 		function updateAxisX() {
-			xAxis = axis1.scale(xScale).orient('bottom').ticks(5);
+			xAxis = axis1.scale(xScale).orient('bottom').innerTickSize(-AXIS_Y_WIDTH).outerTickSize(0).tickPadding(10);
 		}
 
 		function updateAxisY() {
-			yAxis = axis2.scale(yScale).orient('left').ticks(5);
+			yAxis = axis2.scale(yScale).orient('left').ticks(5).innerTickSize(-AXIS_X_WIDTH).outerTickSize(0).tickPadding(10);
 		}
 
 		function updateLine() {
