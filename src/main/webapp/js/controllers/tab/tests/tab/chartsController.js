@@ -98,6 +98,16 @@ define([
 				runId: testId
 			}
 		).done(function (chartsObj) {
+			// The code to check the drawing of several charts (for each load job)
+			// var newLoadJobName = null;
+			// var newLoadJobCharts = null;
+			// $.each(chartsObj, function (loadJobName, loadJobCharts) {
+			// 	newLoadJobName = loadJobName + '2';
+			// 	newLoadJobCharts = loadJobCharts;
+			// });
+			// if (newLoadJobName) {
+			// 	chartsObj[newLoadJobName] = newLoadJobCharts;
+			// }
 			charts.processCharts(chartsObj, CHART_METRICS_FORMATTER[currentTabType]);
 		}).always(function () {
 			if (!resetChartsFlag) {
