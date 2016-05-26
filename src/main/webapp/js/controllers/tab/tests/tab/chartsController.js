@@ -24,7 +24,6 @@ define([
 	const CHARTS_MODE = templatesUtil.objPartToArray(templatesUtil.modes(), 2);
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
-	const svgId = 'chartboard';
 
 	var currentTabType = TESTS_CHARTS_TAB_TYPE.LATENCY;
 	var resetChartsFlag = false;
@@ -69,19 +68,15 @@ define([
 
 	function makeTabActive(tabType) {
 		tabsUtil.showTabAsActive(plainId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.CHARTS, 'tab']), tabType);
-		// tabsUtil.showActiveTabDependentElements(plainId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.CHARTS, 'tab', 'dependent']), tabType);
+		charts.processCharts(null, CHART_METRICS_FORMATTER[tabType]);
 		switch (tabType) {
 			case TESTS_CHARTS_TAB_TYPE.LATENCY:
-				charts.updateChartBoardView(jqId([svgId]), CHART_METRICS_FORMATTER[TESTS_CHARTS_TAB_TYPE.LATENCY]);
 				break;
 			case TESTS_CHARTS_TAB_TYPE.DURATION:
-				charts.updateChartBoardView(jqId([svgId]), CHART_METRICS_FORMATTER[TESTS_CHARTS_TAB_TYPE.DURATION]);
 				break;
 			case TESTS_CHARTS_TAB_TYPE.BANDWIDTH:
-				charts.updateChartBoardView(jqId([svgId]), CHART_METRICS_FORMATTER[TESTS_CHARTS_TAB_TYPE.BANDWIDTH]);
 				break;
 			case TESTS_CHARTS_TAB_TYPE.THROUGHPUT:
-				charts.updateChartBoardView(jqId([svgId]), CHART_METRICS_FORMATTER[TESTS_CHARTS_TAB_TYPE.THROUGHPUT]);
 				break;
 		}
 		currentTabType = tabType;
@@ -103,13 +98,7 @@ define([
 				runId: testId
 			}
 		).done(function (chartsObj) {
-			$.each(chartsObj, function (loadJobName, chartsByLoadJob) {
-				const svgBlockId = plainId([TESTS_TAB_TYPE.CHARTS, 'block']);
-				if (!$(jqId([svgId])).length) {
-					charts.createChartBoard(jqId([svgBlockId]), svgId, loadJobName, chartsByLoadJob);
-				}
-				charts.updateChartBoardContent(jqId([svgId]), loadJobName, chartsByLoadJob, CHART_METRICS_FORMATTER[currentTabType]);
-			});
+			charts.processCharts(chartsObj, CHART_METRICS_FORMATTER[currentTabType]);
 		}).always(function () {
 			if (!resetChartsFlag) {
 				setTimeout(getCharts, 10000, testId); // interval in milliseconds;

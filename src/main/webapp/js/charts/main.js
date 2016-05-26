@@ -9,11 +9,22 @@ define(['jquery',
 
 		const plainId = templatesUtil.composeId;
 		const jqId = templatesUtil.composeJqId;
+		const svgBlockId = plainId([templatesUtil.testsTabTypes().CHARTS, 'block']);
 
-		var currentChartboardSelector;
-		var currentChartboardContent;
-		var currentChartboardName;
-		var currentMetricName;
+		var currentChartBoards;
+		var currentMetric;
+
+		function getSvgId(chartBoardName) {
+			return plainId(['chartboard', chartBoardName]);
+		}
+
+		function getSvgSelector(chartBoardName) {
+			return jqId([getSvgId(chartBoardName)]);
+		}
+
+		function isSvgExist(chartBoardName) {
+			return $(getSvgSelector(chartBoardName)).length
+		}
 
 		const SCALE = {
 			LINEAR: 'linear',
@@ -162,7 +173,7 @@ define(['jquery',
 			updateAxisY();
 			updateLine();
 		}
-		
+
 		switchScaling();
 
 		function scaledXAccessor(data) {
@@ -188,8 +199,8 @@ define(['jquery',
 			]
 		}
 
-		function createSvg(parentSelector, svgId) {
-			const svgChain = d3.select(parentSelector)
+		function createSvg(parentId, svgId) {
+			const svgChain = d3.select(jqId([parentId]))
 				.append('svg')
 				.attr('id', svgId)
 				.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
@@ -223,14 +234,6 @@ define(['jquery',
 				.attr('x', 0 - (AXIS_Y_WIDTH / 2))
 				.attr('dy', '1em')
 				.style('text-anchor', 'middle');
-
-			// svgElement.append("g")
-			// 	.attr("class", "x-grid grid")
-			// 	.attr("transform", "translate(0," + HEIGHT + ")");
-			//
-			//
-			// svgElement.append("g")
-			// 	.attr("class", "y-grid grid");
 		}
 
 		function createLabel(svgElement, text) {
@@ -271,7 +274,9 @@ define(['jquery',
 							return SCALE.fullName(SCALE.LOG, scaleObj.name);
 						});
 						switchElem.attr('scale', SCALE.LOG);
-						updateChartBoardView(currentChartboardSelector, currentMetricName);
+						const chartBoardName = svgElement.attr('name');
+						const chartBoardContent = currentChartBoards[chartBoardName];
+						updateChartBoard(chartBoardName, chartBoardContent, currentMetric);
 					} else {
 						switchCircle.style('fill', '#ECE9E9');
 						switchText.text(function (scaleObj) {
@@ -279,7 +284,9 @@ define(['jquery',
 							return SCALE.fullName(SCALE.LINEAR, scaleObj.name)
 						});
 						switchElem.attr('scale', SCALE.LINEAR);
-						updateChartBoardView(currentChartboardSelector, currentMetricName);
+						const chartBoardName = svgElement.attr('name');
+						const chartBoardContent = currentChartBoards[chartBoardName];
+						updateChartBoard(chartBoardName, chartBoardContent, currentMetric);
 					}
 				});
 			scaleSwitchEnter.append('text')
@@ -307,19 +314,29 @@ define(['jquery',
 			}
 		}
 
-		function createChartBoard(parentSelector, svgId, chartBoardName) {
-			const svgCanvasChain = createSvg(parentSelector, svgId);
+		function processChartBoards(chartBoards, metric) {
+			if (chartBoards) {
+				currentChartBoards = chartBoards;
+			}
+			if (metric) {
+				currentMetric = metric;
+			}
+			if (currentChartBoards) {
+				$.each(currentChartBoards, function (chartBoardName, chartBoardContent) {
+					if (!isSvgExist(chartBoardName)) {
+						createChartBoard(chartBoardName);
+					}
+					updateChartBoard(chartBoardName, chartBoardContent, currentMetric);
+				});
+			}
+		}
+
+		function createChartBoard(chartBoardName) {
+			const svgCanvasChain = createSvg(svgBlockId, getSvgId(chartBoardName));
+			svgCanvasChain.attr('name', chartBoardName);
 			createLabel(svgCanvasChain, chartBoardName);
 			createAxes(svgCanvasChain);
 			createScaleSwitches(svgCanvasChain);
-		}
-
-		function updateChartBoardContent(svgSelector, chartBoardName, chartBoardContent, metricName) {
-			currentChartboardSelector = svgSelector;
-			currentChartboardName = chartBoardName;
-			currentChartboardContent = chartBoardContent;
-			currentMetricName = metricName;
-			updateChartBoardView(svgSelector, metricName);
 		}
 
 		function updateAxesLabels(svgElement, metricName) {
@@ -335,14 +352,6 @@ define(['jquery',
 				.call(xAxis);
 			svgElement.select('.y-axis')
 				.call(yAxis);
-			// svgElement.select('.x-grid')
-			// 	.call(axisX()
-			// 		.tickSize(-HEIGHT, 0, 0)
-			// 		.tickFormat(''));
-			// svgElement.select('.y-grid')
-			// 	.call(axisY()
-			// 		.tickSize(-WIDTH, 0, 0)
-			// 		.tickFormat(''));
 		}
 
 		function updateCharts(svgCanvasElement, chartArr, chartBoardName, metricName) {
@@ -437,14 +446,14 @@ define(['jquery',
 				});
 		}
 
-		function updateChartBoardView(svgSelector, metricName) {
-			if (!currentChartboardContent || !currentChartboardName) {
+		function updateChartBoard(chartBoardName, chartBoardContent, metric) {
+			if (!chartBoardName || !chartBoardContent) {
 				return;
 			}
-			currentMetricName = metricName;
+			const svgSelector = getSvgSelector(chartBoardName);
 			const svg = d3.select(svgSelector).transition();
-			updateAxesLabels(svg, metricName);
-			const chartArr = currentChartboardContent[metricName];
+			updateAxesLabels(svg, metric);
+			const chartArr = chartBoardContent[metric];
 			const names = [];
 			chartArr.forEach(function (chart) {
 				handleDataObj(chart);
@@ -453,13 +462,11 @@ define(['jquery',
 			colorizer.domain(names);
 			updateAxes(svg, chartArr);
 			const svgCanvas = d3.select(svgSelector + ' g');
-			updateCharts(svgCanvas, chartArr, currentChartboardName, metricName);
-			updateLegend(svgCanvas, chartArr, currentChartboardName, metricName)
+			updateCharts(svgCanvas, chartArr, chartBoardName, metric);
+			updateLegend(svgCanvas, chartArr, chartBoardName, metric)
 		}
 
 		return {
-			createChartBoard: createChartBoard,
-			updateChartBoardContent: updateChartBoardContent,
-			updateChartBoardView: updateChartBoardView
+			processCharts: processChartBoards
 		};
 	});
