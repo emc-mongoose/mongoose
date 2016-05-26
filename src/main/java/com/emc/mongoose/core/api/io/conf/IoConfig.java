@@ -1,6 +1,8 @@
 package com.emc.mongoose.core.api.io.conf;
 //
 import com.emc.mongoose.common.conf.AppConfig;
+import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.conf.enums.LoadType;
 //
 import com.emc.mongoose.common.io.Input;
@@ -29,11 +31,17 @@ extends Externalizable, Cloneable, Closeable {
 	String getNameSpace();
 	IoConfig<T, C> setNameSpace(final String nameSpace);
 	//
-	String getNamePrefix();
-	IoConfig<T, C> setNamePrefix(final String namePrefix);
+	String getItemNamingPrefix();
+	IoConfig<T, C> setItemNamingPrefix(final String namingPrefix);
 	//
-	int getNameRadix();
-	IoConfig<T, C> setNameRadix(final int radix);
+	int getItemNamingLength();
+	IoConfig<T, C> setItemNamingLength(final int namingLength);
+	//
+	int getItemNamingRadix();
+	IoConfig<T, C> setItemNamingRadix(final int namingRadix);
+	//
+	long getItemNamingOffset();
+	IoConfig<T, C> setItemNamingOffset(final long namingOffset);
 	//
 	ContentSource getContentSource();
 	IoConfig<T, C> setContentSource(final ContentSource dataSrc);
@@ -51,6 +59,13 @@ extends Externalizable, Cloneable, Closeable {
 	IoConfig<T, C> setSrcContainer(final C container);
 	//
 	IoConfig<T, C> setAppConfig(final AppConfig appConfig);
+	//
+	Input<T> getNewDataItemsInput(
+		final ItemNamingType namingType, final Class<T> itemClass, final SizeInBytes sizeInfo
+	) throws NoSuchMethodException;
+	//
+	Input<C> getNewContainersInput(final ItemNamingType namingType, final Class<C> itemClass)
+	throws NoSuchMethodException;
 	//
 	Input<T> getContainerListInput(final long maxCount, final String addr);
 	//

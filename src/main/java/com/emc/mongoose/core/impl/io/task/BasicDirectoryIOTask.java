@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
 //
-import com.emc.mongoose.core.impl.item.container.DirectoryItemInput;
+import com.emc.mongoose.core.impl.item.data.DirectoryItemInput;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

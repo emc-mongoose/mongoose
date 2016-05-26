@@ -90,16 +90,8 @@ implements ContainerLoadBuilder<T, C, U>{
 	@Override @SuppressWarnings("unchecked")
 	protected Input<C> getNewItemInput()
 	throws NoSuchMethodException {
-		ItemNamingType namingType = appConfig.getItemNamingType();
-		final Class<C> containerClass = (Class<C>) ioConfig.getContainerClass();
-		return new NewContainerInput<>(
-			containerClass,
-			new BasicItemNameInput(
-				namingType,
-				appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
-				appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
-			)
-		);
+		final ItemNamingType namingType = appConfig.getItemNamingType();
+		return ioConfig.getNewContainersInput(namingType, ioConfig.<Class<C>>getContainerClass());
 	}
 	//
 	@Override

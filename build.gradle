@@ -1047,8 +1047,8 @@ task systemTest(type: Test, dependsOn: dist) {
 	testClassesDir = sourceSets.systemTest.output.classesDir
 	classpath = sourceSets.systemTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "5g"
-	maxHeapSize = "5g"
+	//minHeapSize = "5g"
+	//maxHeapSize = "5g"
 	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true

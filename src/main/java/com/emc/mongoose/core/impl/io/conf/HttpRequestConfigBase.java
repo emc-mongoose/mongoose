@@ -446,14 +446,26 @@ implements HttpRequestConfig<T, C> {
 	}
 	//
 	@Override
-	public HttpRequestConfigBase<T, C> setNamePrefix(final String prefix) {
-		super.setNamePrefix(prefix);
+	public HttpRequestConfigBase<T, C> setItemNamingPrefix(final String namingPrefix) {
+		super.setItemNamingPrefix(namingPrefix);
 		return this;
 	}
 	//
 	@Override
-	public HttpRequestConfigBase<T, C> setNameRadix(final int radix) {
-		super.setNameRadix(radix);
+	public HttpRequestConfigBase<T, C> setItemNamingLength(final int namingLength) {
+		super.setItemNamingLength(namingLength);
+		return this;
+	}
+	//
+	@Override
+	public HttpRequestConfigBase<T, C> setItemNamingRadix(final int namingRadix) {
+		super.setItemNamingRadix(namingRadix);
+		return this;
+	}
+	//
+	@Override
+	public HttpRequestConfigBase<T, C> setItemNamingOffset(final long namingOffset) {
+		super.setItemNamingOffset(namingOffset);
 		return this;
 	}
 	//
@@ -502,18 +514,6 @@ implements HttpRequestConfig<T, C> {
 		setNameSpace(appConfig.getStorageHttpNamespace());
 		setFileAccessEnabled(appConfig.getStorageHttpFsAccess());
 		setVersioning(appConfig.getStorageHttpVersioning());
-		final String dstContainerName = appConfig.getItemDstContainer();
-		if(dstContainerName != null && !dstContainerName.isEmpty()) {
-			setDstContainer((C) new BasicContainer<T>(dstContainerName));
-		} else {
-			setDstContainer(null);
-		}
-		final String srcContainerName = appConfig.getItemSrcContainer();
-		if(srcContainerName != null && !srcContainerName.isEmpty()) {
-			setSrcContainer((C) new BasicContainer<T>(srcContainerName));
-		} else {
-			setSrcContainer(null);
-		}
 		// setPipelining(false);
 		// custom HTTP headers adding
 		if(sharedHeaders == null) {

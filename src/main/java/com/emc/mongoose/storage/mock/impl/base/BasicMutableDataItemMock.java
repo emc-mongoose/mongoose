@@ -22,8 +22,8 @@ implements MutableDataItemMock {
 		super();
 	}
 	//
-	public BasicMutableDataItemMock(final String metaInfo, final ContentSource contentSrc) {
-		super(metaInfo, contentSrc);
+	public BasicMutableDataItemMock(final String value, final ContentSource contentSrc) {
+		super(value, contentSrc);
 	}
 	//
 	public BasicMutableDataItemMock(
@@ -35,14 +35,14 @@ implements MutableDataItemMock {
 	public BasicMutableDataItemMock(
 		final String name, final Long offset, final Long size, final ContentSource contentSrc
 	) {
-		super(name, offset, size, 0, contentSrc);
+		super(name, offset, size, contentSrc);
 	}
 	//
 	public BasicMutableDataItemMock(
 		final String name, final Long offset, final Long size, final Integer layerNum,
 		final ContentSource contentSrc
 	) {
-		super(name, offset, size, layerNum, contentSrc);
+		super(SLASH, name, offset, size, layerNum, contentSrc);
 	}
 	//
 	public final synchronized void update(final long offset, final long size)

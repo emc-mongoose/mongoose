@@ -7,6 +7,7 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.token.Token;
@@ -274,7 +275,7 @@ extends HttpRequestConfigBase<T, C> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !LoadType.CREATE.equals(loadType)) {
-			return uriBasePath + "/" + object.getName();
+			return uriBasePath + object.getPath() + object.getName();
 		} else { // "/rest/objects"
 			return uriBasePath;
 		}
@@ -286,7 +287,7 @@ extends HttpRequestConfigBase<T, C> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !LoadType.CREATE.equals(loadType)) {
-			return uriBasePath + "/" + object.getName();
+			return uriBasePath + object.getPath() + object.getName();
 		} else { // "/rest/objects"
 			return uriBasePath;
 		}

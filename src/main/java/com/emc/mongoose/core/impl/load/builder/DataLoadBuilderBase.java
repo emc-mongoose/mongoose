@@ -59,12 +59,8 @@ implements DataLoadBuilder<T, U> {
 	protected Input<T> getNewItemInput()
 	throws NoSuchMethodException {
 		final ItemNamingType namingType = appConfig.getItemNamingType();
-		final BasicItemNameInput bing = new BasicItemNameInput(
-			namingType, appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
-			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
-		);
-		return new NewDataItemInput<>(
-			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeConfig
+		return ioConfig.getNewDataItemsInput(
+			namingType, (Class<T>) ioConfig.getItemClass(), sizeConfig
 		);
 	}
 	//

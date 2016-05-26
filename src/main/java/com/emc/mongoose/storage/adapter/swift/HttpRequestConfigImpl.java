@@ -4,14 +4,17 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.token.Token;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
+import com.emc.mongoose.core.impl.io.conf.IoConfigBase;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.message.BasicHeader;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -132,6 +135,14 @@ extends HttpRequestConfigBase<T, C> {
 		return this;
 	}
 	//
+	//
+	@Override
+	public IoConfigBase<T, C> setDstContainer(final C container) {
+		super.setDstContainer(container);
+		refreshContainerPaths();
+		return this;
+	}
+	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
 	public HttpRequestConfigImpl<T, C> clone() {
 		HttpRequestConfigImpl<T, C> copy = null;
@@ -173,7 +184,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		return dstContainerUriPath + "/" + object.getName();
+		return dstContainerUriPath + object.getPath() + object.getName();
 	}
 	//
 	@Override
@@ -185,7 +196,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		return srcContainerUriPath + "/" + object.getName();
+		return srcContainerUriPath + object.getPath() + object.getName();
 	}
 	//
 	@Override
@@ -309,9 +320,20 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final Input<T> getContainerListInput(final long maxCount, final String addr) {
-		return srcContainer == null ? null : new WSContainerItemInput<>(
-			new HttpSwiftContainerHelper<>(this, srcContainer), addr, getItemClass(), maxCount
-		);
+		if(srcContainer == null) {
+			return null;
+		} else {
+			String path = srcContainer.getName();
+			try {
+				path = pathInput.get();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the path");
+			}
+			return new WSContainerItemInput<>(
+				path, new HttpSwiftContainerHelper<>(this, srcContainer), addr, getItemClass(),
+				maxCount
+			);
+		}
 	}
 	//
 }

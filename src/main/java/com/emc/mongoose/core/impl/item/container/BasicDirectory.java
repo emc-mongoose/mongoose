@@ -15,10 +15,14 @@ implements Directory<T> {
 	}
 	//
 	public BasicDirectory(final String name) {
-		super(name);
+		super(null, name);
 	}
 	//
-	public BasicDirectory(final String name, final ContentSource contentSrc) {
-		super(name, contentSrc);
+	public BasicDirectory(final String path, final String name) {
+		super(path, name);
+	}
+	//
+	public BasicDirectory(final String path, final String name, final ContentSource contentSrc) {
+		super(path, name, contentSrc);
 	}
 }

@@ -600,7 +600,7 @@ implements LoadExecutor<T> {
 		}
 	};
 	private void logTrace(
-		final String nodeAddr, final String itemName, final IOTask.Status status,
+		final String nodeAddr, final String itemPath, final IOTask.Status status,
 		final long reqTimeStart, final long countBytesDone, final int reqDuration,
 		final int respLatency, final long respDataLatency
 	) {
@@ -617,7 +617,7 @@ implements LoadExecutor<T> {
 				strBuilder
 					//.append(loadType).append(',')
 					.append(nodeAddr == null ? "" : nodeAddr).append(',')
-					.append(itemName).append(',')
+					.append(itemPath).append(',')
 					.append(countBytesDone).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
@@ -648,8 +648,8 @@ implements LoadExecutor<T> {
 		// perf trace logging
 		if(!preconditionFlag && !(this instanceof MixedLoadExecutor)) {
 			logTrace(
-				nodeAddr, item.getName(), status, ioTask.getReqTimeStart(), countBytesDone,
-				reqDuration, respLatency, respDataLatency
+				nodeAddr, item.getPath() + item.getName(), status, ioTask.getReqTimeStart(),
+				countBytesDone, reqDuration, respLatency, respDataLatency
 			);
 		}
 		//
@@ -721,8 +721,8 @@ implements LoadExecutor<T> {
 				// perf trace logging
 				if(!preconditionFlag) {
 					logTrace(
-						nodeAddr, item.getName(), status, ioTask.getReqTimeStart(), countBytesDone,
-						reqDuration, respLatency, respDataLatency
+						nodeAddr, item.getPath() + item.getName(), status, ioTask.getReqTimeStart(),
+						countBytesDone, reqDuration, respLatency, respDataLatency
 					);
 				}
 				//
@@ -815,7 +815,7 @@ implements LoadExecutor<T> {
 			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
 				try {
 					for(final Item item : items) {
-						LOG.info(Markers.ITEM_LIST, item);
+						LOG.info(Markers.ITEM_LIST, item.toString());
 					}
 				} catch(final Throwable e) {
 					LogUtil.exception(

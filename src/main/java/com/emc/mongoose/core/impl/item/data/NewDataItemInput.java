@@ -18,18 +18,19 @@ public final class NewDataItemInput<T extends DataItem>
 implements Input<T> {
 	//
 	private final Constructor<T> itemConstructor;
+	private final Input<String> pathInput;
 	private final BasicItemNameInput idInput;
 	private final ContentSource contentSrc;
 	private final SizeInBytes dataSize;
-	private T lastItem = null;
 	//
 	public NewDataItemInput(
-		final Class<T> dataCls, final BasicItemNameInput idInput,
+		final Class<T> dataCls, final Input<String> pathInput, final BasicItemNameInput idInput,
 		final ContentSource contentSrc, final SizeInBytes dataSize
 	) throws NoSuchMethodException, IllegalArgumentException {
 		this.itemConstructor = dataCls.getConstructor(
-			String.class, Long.class, Long.class, ContentSource.class
+			String.class, String.class, Long.class, Long.class, ContentSource.class
 		);
+		this.pathInput = pathInput;
 		this.idInput = idInput;
 		this.contentSrc = contentSrc;
 		this.dataSize = dataSize;
@@ -44,7 +45,7 @@ implements Input<T> {
 	throws IOException {
 		try {
 			return itemConstructor.newInstance(
-				idInput.get(), idInput.getLastValue(), dataSize.get(), contentSrc
+				pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get(), contentSrc
 			);
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
@@ -58,7 +59,8 @@ implements Input<T> {
 			for(int i = 0; i < maxCount; i ++) {
 				buffer.add(
 					itemConstructor.newInstance(
-						idInput.get(), idInput.getLastValue(), dataSize.get(), contentSrc
+						pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get(),
+						contentSrc
 					)
 				);
 			}

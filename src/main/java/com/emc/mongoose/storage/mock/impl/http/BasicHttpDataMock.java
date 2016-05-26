@@ -21,8 +21,8 @@ implements HttpDataItemMock {
 		super();
 	}
 	//
-	public BasicHttpDataMock(final String metaInfo, final ContentSource contentSrc) {
-		super(metaInfo, contentSrc);
+	public BasicHttpDataMock(final String value, final ContentSource contentSrc) {
+		super(value, contentSrc);
 	}
 	//
 	public BasicHttpDataMock(final long offset, final long size, final ContentSource contentSrc) {

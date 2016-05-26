@@ -14,7 +14,7 @@ import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
 import com.emc.mongoose.core.impl.item.data.BasicFile;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
-import com.emc.mongoose.core.impl.item.container.DirectoryItemInput;
+import com.emc.mongoose.core.impl.item.data.DirectoryItemInput;
 //
 import org.apache.commons.lang.StringUtils;
 //
@@ -36,7 +36,6 @@ implements FileIoConfig<F, D> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private Input<String> pathInput = null;
 	private int batchSize = BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize();
 	//
 	public BasicFileIoConfig() {
@@ -64,7 +63,10 @@ implements FileIoConfig<F, D> {
 		this.appConfig = appConfig;
 		setLoadType(appConfig.getLoadType());
 		setNameSpace(appConfig.getStorageHttpNamespace());
-		setNamePrefix(appConfig.getItemNamingPrefix());
+		setItemNamingPrefix(appConfig.getItemNamingPrefix());
+		setItemNamingLength(appConfig.getItemNamingLength());
+		setItemNamingRadix(appConfig.getItemNamingRadix());
+		setItemNamingOffset(appConfig.getItemNamingOffset());
 		try {
 			setContentSource(ContentSourceBase.getInstance(appConfig));
 		} catch(final IOException e) {
@@ -80,15 +82,15 @@ implements FileIoConfig<F, D> {
 					BUFF_SIZE_HI :
 					(int) avgDataSize
 		);
-		final String dstDirName = appConfig.getItemDstContainer();
-		if(dstDirName != null && !dstDirName.isEmpty()) {
-			setDstContainer((D) new BasicDirectory<F>(dstDirName));
+		final String dstDir = appConfig.getItemDstContainer();
+		if(dstDir != null && !dstDir.isEmpty()) {
+			setDstContainer((D) new BasicDirectory<F>(dstDir));
 		} else {
 			setDstContainer(null);
 		}
-		final String srcDirName = appConfig.getItemSrcContainer();
-		if(srcDirName != null && !srcDirName.isEmpty()) {
-			setSrcContainer((D) new BasicDirectory<F>(srcDirName));
+		final String srcDir = appConfig.getItemSrcContainer();
+		if(srcDir != null && !srcDir.isEmpty()) {
+			setSrcContainer((D) new BasicDirectory<F>(srcDir));
 		} else {
 			setSrcContainer(null);
 		}
@@ -99,6 +101,19 @@ implements FileIoConfig<F, D> {
 	@Override
 	public final BasicFileIoConfig<F, D> setDstContainer(final D container) {
 		super.setDstContainer(container);
+		if(container != null) {
+			final String containerName = container.getName();
+			if(containerName != null && !containerName.isEmpty()) {
+				pathInput = new RangePatternDefinedInput(containerName);
+			}
+		}
+		return this;
+	}
+	//
+	//
+	@Override
+	public final BasicFileIoConfig<F, D> setSrcContainer(final D container) {
+		super.setSrcContainer(container);
 		if(container != null) {
 			final String containerName = container.getName();
 			if(containerName != null && !containerName.isEmpty()) {
