@@ -1,6 +1,5 @@
 define([
 	'jquery',
-	'./websockets/webSocketController',
 	'./tab/scenariosController',
 	'./tab/defaultsController',
 	'./tab/tests/testsController',
@@ -15,7 +14,6 @@ define([
 	'../common/util/tabsUtil',
 	'../common/constants'
 ], function ($,
-             webSocketController,
              scenariosController,
              defaultsController,
              testsController,
