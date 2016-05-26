@@ -330,7 +330,7 @@ define(['jquery',
 
 		function updateAxes(svgElement, chartArr) {
 			xScale.domain(extent(chartArr[0], xAccessor));
-			yScale.domain(deepExtent(chartArr, yAccessor));
+			yScale.domain(deepExtent(chartArr, yAccessor)).nice();
 			svgElement.select('.x-axis')
 				.call(xAxis);
 			svgElement.select('.y-axis')
