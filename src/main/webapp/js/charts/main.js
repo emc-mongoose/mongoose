@@ -88,9 +88,16 @@ define(['jquery',
 
 		function yAccessor(data) {
 			return data.y <= 0 ? 0.001 : data.y;
-			// return data.y;
 		}
 
+		const linearScale1 = defaultsFactory.linearScale();
+		const linearScale2 = defaultsFactory.linearScale();
+		const logScale1 = defaultsFactory.logScale();
+		const logScale2 = defaultsFactory.logScale();
+		const axis1 = defaultsFactory.axis();
+		const axis2 = defaultsFactory.axis();
+		const lineGenerator = defaultsFactory.lineGenerator();
+		const colorizer = defaultsFactory.colorizer();
 		var xScale;
 		var yScale;
 		var xAxis;
@@ -98,31 +105,31 @@ define(['jquery',
 		var line;
 
 		function setLinearXScale() {
-			xScale = defaultsFactory.linearScale().range([0, AXIS_X_WIDTH]);
+			xScale = linearScale1.range([0, AXIS_X_WIDTH]);
 		}
 
 		function setLinearYScale() {
-			yScale = defaultsFactory.linearScale().range([AXIS_Y_WIDTH, 0]);
+			yScale = linearScale2.range([AXIS_Y_WIDTH, 0]);
 		}
 
 		function setLogXScale() {
-			xScale = defaultsFactory.logScale().range([0, AXIS_X_WIDTH]);
+			xScale = logScale1.range([0, AXIS_X_WIDTH]);
 		}
 
 		function setLogYScale() {
-			yScale = defaultsFactory.logScale().range([AXIS_Y_WIDTH, 0]);
+			yScale = logScale2.range([AXIS_Y_WIDTH, 0]);
 		}
 
 		function updateAxisX() {
-			xAxis = defaultsFactory.axis().scale(xScale).orient('bottom').ticks(5);
+			xAxis = axis1.scale(xScale).orient('bottom').ticks(5);
 		}
 
 		function updateAxisY() {
-			yAxis = defaultsFactory.axis().scale(yScale).orient('left').ticks(5);
+			yAxis = axis2.scale(yScale).orient('left').ticks(5);
 		}
 
 		function updateLine() {
-			line = defaultsFactory.lineGenerator().x(scaledXAccessor).y(scaledYAccessor);
+			line = lineGenerator.x(scaledXAccessor).y(scaledYAccessor);
 		}
 
 		function switchScaling(scale, axis) {
@@ -180,8 +187,6 @@ define(['jquery',
 				})
 			]
 		}
-
-		const colorizer = defaultsFactory.colorizer();
 
 		function createSvg(parentSelector, svgId) {
 			const svgChain = d3.select(parentSelector)
