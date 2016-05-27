@@ -46,7 +46,7 @@ implements Item {
 	//
 	@Override
 	public String toString() {
-		return path + name;
+		return path == null ? name : path + name;
 	}
 	//
 	@Override

@@ -1,15 +1,12 @@
 package com.emc.mongoose.core.impl.io.task;
 //
 import com.emc.mongoose.common.conf.enums.LoadType;
-import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**

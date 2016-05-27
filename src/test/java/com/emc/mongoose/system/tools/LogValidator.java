@@ -1,6 +1,5 @@
 package com.emc.mongoose.system.tools;
 
-import com.emc.mongoose.common.conf.Constants;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.Assert;
@@ -302,11 +301,11 @@ public final class LogValidator {
 		for(final CSVRecord nextRec : recIter) {
 			Assert.assertEquals("Count of column is wrong", 4, nextRec.size());
 			Assert.assertTrue(
-				"Data ID format is not correct", nextRec.get(0).matches(LogPatterns.DATA_ID.pattern())
+				"Item value format is not correct", nextRec.get(0).matches(LogPatterns.ITEM_VALUE.pattern())
 			);
 			// Data offset has the same pattern as data ID
 			Assert.assertTrue(
-				"Data offset is not correct", nextRec.get(1).matches(LogPatterns.DATA_ID.pattern())
+				"Data offset is not correct", nextRec.get(1).matches(LogPatterns.DATA_OFFSET.pattern())
 			);
 			Assert.assertTrue(
 				"Data size format is not correct", LogValidator.isInteger(nextRec.get(2))
@@ -324,7 +323,8 @@ public final class LogValidator {
 		for(final CSVRecord nextRec : recIter) {
 			Assert.assertEquals("Count of column is wrong", 1, nextRec.size());
 			Assert.assertTrue(
-				"Data ID format is not correct", nextRec.get(0).matches(LogPatterns.DATA_ID.pattern())
+				"Item value format is not correct",
+				nextRec.get(0).matches(LogPatterns.ITEM_VALUE.pattern())
 			);
 		}
 	}
@@ -358,7 +358,8 @@ public final class LogValidator {
 					);
 				}
 				Assert.assertTrue(
-					"Data ID format is not correct", nextRec.get(2).matches(LogPatterns.DATA_ID.pattern())
+					"Item value format is not correct",
+					nextRec.get(2).matches(LogPatterns.ITEM_VALUE.pattern())
 				);
 				Assert.assertTrue(
 					"Data size format is not correct", LogValidator.isInteger(nextRec.get(3))

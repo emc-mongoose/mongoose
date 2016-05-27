@@ -13,11 +13,10 @@ import java.security.NoSuchAlgorithmException;
  */
 public final class ContentGetter {
 
-	public static InputStream getStream(final String dataID, final String bucketName)
+	public static InputStream getStream(final String itemValue, final String bucketName)
 	throws IOException, NoSuchAlgorithmException {
 		// There is url string w/o data ID
-		final String firstPartURLString = String.format("http://127.0.0.1:9020/%s/", bucketName);
-		final URL url = new URL(firstPartURLString+dataID);
+		final URL url = new URL("http://127.0.0.1:9020/" + bucketName + itemValue);
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.addRequestProperty(HttpHeaders.AUTHORIZATION, "AWS wuser1@sanity.local:vegpRvQdGFKmIvwIH6qErb5ekd8=");
 		return connection.getInputStream();

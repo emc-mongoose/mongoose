@@ -48,7 +48,7 @@ implements MutableDataItem {
 	}
 	//
 	public BasicMutableDataItem(final String value, final ContentSource contentSrc) {
-		super(value.substring(0, value.lastIndexOf(",")));
+		super(value.substring(0, value.lastIndexOf(",")), contentSrc);
 		//
 		final String rangesInfo = value.substring(value.lastIndexOf(",") + 1, value.length());
 		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
