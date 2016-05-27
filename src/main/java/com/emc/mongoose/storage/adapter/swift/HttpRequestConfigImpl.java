@@ -184,7 +184,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		return dstContainerUriPath + object.getPath() + object.getName();
+		return dstContainerUriPath + object.toString();
 	}
 	//
 	@Override
@@ -196,7 +196,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		return srcContainerUriPath + object.getPath() + object.getName();
+		return srcContainerUriPath + object.toString();
 	}
 	//
 	@Override

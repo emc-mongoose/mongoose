@@ -78,7 +78,7 @@ extends JobContainerBase {
 			} else {
 				try {
 					loadJob_ = loadJobBuilder.build();
-				} catch(final IOException e) {
+				} catch(final Throwable e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the load job");
 				}
 			}

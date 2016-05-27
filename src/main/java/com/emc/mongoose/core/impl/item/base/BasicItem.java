@@ -43,7 +43,13 @@ implements Item {
 	//
 	@Override
 	public String toString() {
-		return path == null ? name : path + name;
+		if(path == null) {
+			return name;
+		} else if(path.endsWith(SLASH)) {
+			return path + name;
+		} else {
+			return path + SLASH + name;
+		}
 	}
 	//
 	@Override
@@ -72,9 +78,13 @@ implements Item {
 		final byte nameBytes[] = name.getBytes(UTF_8);
 		out.writeInt(nameBytes.length);
 		out.write(nameBytes, 0, nameBytes.length);
-		final byte pathBytes[] = path.getBytes(UTF_8);
-		out.writeInt(pathBytes.length);
-		out.write(pathBytes, 0, pathBytes.length);
+		if(path == null) {
+			out.writeInt(0);
+		} else {
+			final byte pathBytes[] = path.getBytes(UTF_8);
+			out.writeInt(pathBytes.length);
+			out.write(pathBytes, 0, pathBytes.length);
+		}
 	}
 	//
 	@Override
@@ -83,9 +93,14 @@ implements Item {
 		final byte nameBytes[] = new byte[in.readInt()];
 		in.readFully(nameBytes);
 		name = new String(nameBytes, UTF_8);
-		final byte pathBytes[] = new byte[in.readInt()];
-		in.readFully(pathBytes);
-		path = new String(pathBytes, UTF_8);
+		final int pathBytesCount = in.readInt();
+		if(pathBytesCount > 0) {
+			final byte pathBytes[] = new byte[in.readInt()];
+			in.readFully(pathBytes);
+			path = new String(pathBytes, UTF_8);
+		} else {
+			path = null;
+		}
 	}
 	//
 	@Override

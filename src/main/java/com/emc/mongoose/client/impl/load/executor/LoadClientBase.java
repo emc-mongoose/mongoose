@@ -488,11 +488,7 @@ implements LoadClient<T, W> {
 			String loadSvcAddr;
 			W loadSvc;
 			int m = 0;
-			for(
-				int tryCount = 0;
-				tryCount < Short.MAX_VALUE;
-				tryCount ++
-			) {
+			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
 				try {
 					loadSvcAddr = loadSvcAddrs[
 						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)

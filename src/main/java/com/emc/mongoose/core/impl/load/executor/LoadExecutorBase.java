@@ -648,7 +648,7 @@ implements LoadExecutor<T> {
 		// perf trace logging
 		if(!preconditionFlag && !(this instanceof MixedLoadExecutor)) {
 			logTrace(
-				nodeAddr, item.getPath() + item.getName(), status, ioTask.getReqTimeStart(),
+				nodeAddr, item.toString(), status, ioTask.getReqTimeStart(),
 				countBytesDone, reqDuration, respLatency, respDataLatency
 			);
 		}
@@ -721,7 +721,7 @@ implements LoadExecutor<T> {
 				// perf trace logging
 				if(!preconditionFlag) {
 					logTrace(
-						nodeAddr, item.getPath() + item.getName(), status, ioTask.getReqTimeStart(),
+						nodeAddr, item.toString(), status, ioTask.getReqTimeStart(),
 						countBytesDone, reqDuration, respLatency, respDataLatency
 					);
 				}

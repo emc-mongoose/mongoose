@@ -91,7 +91,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		return getContainerPath(dstContainer) + object.getPath() + object.getName();
+		return getContainerPath(dstContainer) + object.toString();
 	}
 	//
 	@Override
@@ -103,7 +103,7 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		return getContainerPath(srcContainer) + object.getPath() + object.getName();
+		return getContainerPath(srcContainer) + object.toString();
 	}
 	//
 	@Override

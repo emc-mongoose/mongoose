@@ -275,7 +275,7 @@ extends HttpRequestConfigBase<T, C> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !LoadType.CREATE.equals(loadType)) {
-			return uriBasePath + object.getPath() + object.getName();
+			return uriBasePath + object.toString();
 		} else { // "/rest/objects"
 			return uriBasePath;
 		}
@@ -287,7 +287,7 @@ extends HttpRequestConfigBase<T, C> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !LoadType.CREATE.equals(loadType)) {
-			return uriBasePath + object.getPath() + object.getName();
+			return uriBasePath + object.toString();
 		} else { // "/rest/objects"
 			return uriBasePath;
 		}
