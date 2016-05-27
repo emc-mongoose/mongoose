@@ -1,4 +1,5 @@
 # Mongoose
+
 ## Description
 Mongoose is a tool which is initially intended to test ECS performance. It is designed to derive the best practices of its predecessors some of which used before for Centera performance testing.
 
@@ -7,6 +8,7 @@ In the terms of high load Mongoose is:
 * A million of operations per second
 * A million of items which may be processed multiple times in the circular load mode
 * A million of items which may be stored in the storage mock
+
 ## Features
 1. Distributed Mode
 2. Reporting:
@@ -36,13 +38,17 @@ In the terms of high load Mongoose is:
 14. Customizable Items Naming
 15. SSL/TLS Support
 16. Docker Integration
+
 ## Deployment
+
 ### Environment Requirements
 * JRE 7 or higher
 * Connectivity to the remote hosts via port numbers 1099, 1199, 9020..9025 (not filtered by firewalls, if any)
 * OS open files limit is higher
+
 ### Download
 The tar-file with Mongoose 2.1.1 binaries can be downloaded from EMC ASD Artifactory.
+
 ### Build from sources
 1. Clone
 2. Execute the command:
@@ -50,11 +56,14 @@ The tar-file with Mongoose 2.1.1 binaries can be downloaded from EMC ASD Artifac
   ./gradlew dist
   ```
   The tarball is ready under build/dist/mongoose-\<VERSION\>.tar path
+
 ### Unpack
 ```bash
 tar xvf mongoose-<VERSION>.tar
 ```
+
 ## Usage
+
 ### Demo Mode
 You can try Mongoose without a real storage. Mongoose build contains a mock storage implementation. Start it first:
 ```bash
@@ -69,20 +78,24 @@ The line starts Mongoose with default scenario and the default configuration. By
 Now you can switch between the two consoles to see how Mongoose regularly reports about objects created and the storage mock regularly reports about objects stored.
 
 For detailed information please refer to the wiki.
+
 ## Contribution
 Create a fork of the project into your own reposity. Make all your necessary changes and create a pull request with a description on what was added or removed and details explaining the changes in lines of code. If approved, project owners will merge it.
+
 ## Licensing
 Mongoose is freely distributed under the MIT License. See LICENSE for details.
+
 ## Support
 Email Mongoose.Support@emc.com to get support.
+
 ### Bug reporting
 Please provide Mongoose Support team with the following information. The more information we have, the sooner fix will be available
 1. Short bug description
-  * Symptoms
-  * [if you know] Bug trigger
+  1. Symptoms
+  1. [if you know] Bug trigger
 2. Environment description
-  * Operating system
-  * It would be really helpful to have IP address(es)
+  2. Operating system
+  2. It would be really helpful to have IP address(es)
 4. Mongoose version
 5. Test configuration
   * Command line
