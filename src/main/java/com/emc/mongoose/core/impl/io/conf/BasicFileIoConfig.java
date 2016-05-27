@@ -141,24 +141,6 @@ implements FileIoConfig<F, D> {
 	}
 	//
 	@Override
-	public final String getDstItemPath() {
-		if(pathInput == null) {
-			if(dstContainer == null) {
-				return null;
-			} else {
-				return dstContainer.getName();
-			}
-		} else {
-			try {
-				return pathInput.get();
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the target item path");
-				return null;
-			}
-		}
-	}
-	//
-	@Override
 	public String toString() {
 	return "FS-" + StringUtils.capitalize(loadType.name().toLowerCase());
 	}

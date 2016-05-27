@@ -1,5 +1,4 @@
 package com.emc.mongoose.run.scenario.engine;
-//
 
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -16,10 +15,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 
-//
-//
-//
-//
 /**
  Created by kurila on 02.02.16.
  */

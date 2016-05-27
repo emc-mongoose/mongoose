@@ -278,13 +278,13 @@ implements IoConfig<T, C> {
 		}
 		final String srcContainerValue = appConfig.getItemSrcContainer();
 		if(srcContainerValue != null && !srcContainerValue.isEmpty()) {
-			final int firstSlashPos = dstContainerValue.indexOf(Item.SLASH);
+			final int firstSlashPos = srcContainerValue.indexOf(Item.SLASH);
 			if(firstSlashPos < 0) {
 				setSrcContainer((C) new BasicContainer<T>(srcContainerValue));
 				pathInput = new RangePatternDefinedInput(Item.SLASH);
 			} else {
 				setSrcContainer(
-					(C) new BasicContainer<T>(dstContainerValue.substring(0, firstSlashPos))
+					(C) new BasicContainer<T>(srcContainerValue.substring(0, firstSlashPos))
 				);
 				pathInput = new RangePatternDefinedInput(
 					srcContainerValue.substring(firstSlashPos)

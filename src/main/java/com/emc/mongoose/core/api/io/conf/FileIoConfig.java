@@ -7,5 +7,4 @@ import com.emc.mongoose.core.api.item.data.FileItem;
  */
 public interface FileIoConfig<F extends FileItem, D extends Directory<F>>
 extends IoConfig<F, D> {
-	String getDstItemPath();
 }

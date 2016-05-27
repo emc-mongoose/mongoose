@@ -86,8 +86,15 @@ implements MutableDataItem {
 	}
 	//
 	public BasicMutableDataItem(
-		final String path, final String name, final Long offset, final Long size, Integer layerNum,
+		final String path, final String name, final Long offset, final Long size,
 		final ContentSource contentSrc
+	) {
+		super(path, name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicMutableDataItem(
+		final String path, final String name, final Long offset, final Long size,
+		final Integer layerNum, final ContentSource contentSrc
 	) {
 		super(path, name, offset, size, layerNum, contentSrc);
 	}

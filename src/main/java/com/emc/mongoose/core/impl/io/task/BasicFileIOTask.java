@@ -67,8 +67,7 @@ implements FileIOTask<T> {
 	//
 	public BasicFileIOTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
-		dstDir = ioConfig.getDstItemPath();
-		//
+		dstDir = item.getPath();
 		switch(ioType) {
 			case CREATE:
 				openOptions.add(WRITE);
@@ -96,12 +95,12 @@ implements FileIOTask<T> {
 			if(openOptions.isEmpty()) { // delete
 				runDelete();
 			} else { // work w/ a content
-				Files.createDirectories(DEFAULT_FS.getPath(dstDir));
-				try(
-					final FileChannel byteChannel = FileChannel.open(
-						DEFAULT_FS.getPath(dstDir, item.getName()), openOptions
-					)
-				) {
+				if(dstDir != null) {
+					Files.createDirectories(DEFAULT_FS.getPath(dstDir));
+				}
+				final Path dstPath = DEFAULT_FS
+					.getPath(dstDir == null ? "" : dstDir, item.getName());
+				try(final FileChannel byteChannel = FileChannel.open(dstPath, openOptions)) {
 					if(openOptions.contains(READ)) {
 						runRead(byteChannel);
 					} else {

@@ -5,7 +5,6 @@ import com.emc.mongoose.core.api.item.base.Item;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.nio.charset.StandardCharsets;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 /**
@@ -14,8 +13,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class BasicItem
 implements Item {
 	//
-	protected volatile String path = SLASH;
-	protected volatile String name = null;
+	protected String path = "";
+	protected String name = null;
 	//
 	public BasicItem() {
 	}
@@ -33,14 +32,12 @@ implements Item {
 		if(value == null || value.isEmpty()) {
 			throw new IllegalArgumentException("Empty/null item value");
 		}
-		if(value.startsWith(SLASH)) {
-			final int lastSlashPos = value.lastIndexOf(SLASH);
+		final int lastSlashPos = value.lastIndexOf(SLASH);
+		if(lastSlashPos < 0) {
+			this.name = value;
+		} else {
 			path = value.substring(0, lastSlashPos + 1);
 			name = value.substring(lastSlashPos + 1);
-		} else if(value.contains(SLASH)) {
-			throw new IllegalArgumentException("Item string value should begin with " + SLASH);
-		} else {
-			this.name = value;
 		}
 	}
 	//

@@ -35,8 +35,14 @@ implements FileItem {
 	}
 	//
 	public BasicFile(
-		final String path, final String name, final Long offset, final Long size, Integer layerNum,
+		final String path, final String name, final Long offset, final Long size,
 		final ContentSource contentSrc
+	) {
+		super(path, name, offset, size, contentSrc);
+	}//
+	public BasicFile(
+		final String path, final String name, final Long offset, final Long size,
+		final Integer layerNum, final ContentSource contentSrc
 	) {
 		super(path, name, offset, size, layerNum, contentSrc);
 	}
