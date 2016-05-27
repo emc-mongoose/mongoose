@@ -12,21 +12,21 @@ In the terms of high load Mongoose is:
 ## Features
 1. Distributed Mode
 2. Reporting:
-  * Item lists for reusing
-  * Statistics for the rates and timings
-  * High-resolution timings for each operation
+  1. Item lists for reusing
+  2. Statistics for the rates and timings
+  3. High-resolution timings for each operation
 3. Supported Load Types:
-  * Write (Update/Append are implemented as partial cases of Write)
-  * Read (Partial case is to be implemented soon)
-  * Delete
+  1. Write (Update/Append are implemented as partial cases of Write)
+  2. Read (Partial case is to be implemented soon)
+  3. Delete
 4. Abstract Load Engine supports different item types:
-  * Containers (Bucket/Directory/etc)
-  * Data Items (Object/File/etc)
-  * Tokens (Subtenant/etc - to be implemented soon)
+  1. Containers (Bucket/Directory/etc)
+  2. Data Items (Object/File/etc)
+  3. Tokens (Subtenant/etc - to be implemented soon)
 5. Cloud storage support:
-  * Amazon S3
-  * EMC Atmos
-  * OpenStack Swift
+  1. Amazon S3
+  2. EMC Atmos
+  3. OpenStack Swift
 6. Filesystem Operations Support
 7. Custom Content Generation
 8. Content Updating and Verification Ability
@@ -92,18 +92,18 @@ Email Mongoose.Support@emc.com to get support.
 Please provide Mongoose Support team with the following information. The more information we have, the sooner fix will be available
 1. Short bug description
   1. Symptoms
-  1. [if you know] Bug trigger
+  2. [if you know] Bug trigger
 2. Environment description
-  2. Operating system
+  1. Operating system
   2. It would be really helpful to have IP address(es)
 3. Mongoose version
 4. Test configuration
-  4. Command line
-  4. [if modified] Defaults configuration file
+  1. Command line
+  2. [if modified] Defaults configuration file
 5. All the output the run produced
-  5. Console output
-  5. All log files
+  1. Console output
+  2. All log files
 6. [if hangs] Thread dump
-  6. Execute kill -3 <pid> on Unix
-  6. Press Ctrl+Break on Windows
+  1. Execute kill -3 <pid> on Unix
+  2. Press Ctrl+Break on Windows
 
