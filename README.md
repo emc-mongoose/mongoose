@@ -1,35 +1,30 @@
-Mongoose
-========
-What Mongoose is and what it is not
------------------------------------
+# Mongoose
+## Description
 Mongoose is a tool which is initially intended to test ECS performance. It is designed to derive the best practices of its predecessors some of which used before for Centera performance testing.
 
 In the terms of high load Mongoose is:
-
 * A million of concurrent connections
 * A million of operations per second
 * A million of items which may be processed multiple times in the circular load mode
 * A million of items which may be stored in the storage mock
-
-Features
---------
+## Features
 1. Distributed Mode
 2. Reporting:
-	* Item lists for reusing
-	* Statistics for the rates and timings
-	* High-resolution timings for each operation
+  * Item lists for reusing
+  * Statistics for the rates and timings
+  * High-resolution timings for each operation
 3. Supported Load Types:
-	* Write (Update/Append are implemented as partial cases of Write)
-	* Read (Partial case is to be implemented soon)
-	* Delete
+  * Write (Update/Append are implemented as partial cases of Write)
+  * Read (Partial case is to be implemented soon)
+  * Delete
 4. Abstract Load Engine supports different item types:
-	* Containers (Bucket/Directory/etc)
-	* Data Items (Object/File/etc)
-	* Tokens (Subtenant/etc - to be implemented soon)
+  * Containers (Bucket/Directory/etc)
+  * Data Items (Object/File/etc)
+  * Tokens (Subtenant/etc - to be implemented soon)
 5. Cloud storage support:
-	* Amazon S3
-	* EMC Atmos
-	* OpenStack Swift
+  * Amazon S3
+  * EMC Atmos
+  * OpenStack Swift
 6. Filesystem Operations Support
 7. Custom Content Generation
 8. Content Updating and Verification Ability
@@ -41,3 +36,61 @@ Features
 14. Customizable Items Naming
 15. SSL/TLS Support
 16. Docker Integration
+## Deployment
+### Environment Requirements
+* JRE 7 or higher
+* Connectivity to the remote hosts via port numbers 1099, 1199, 9020..9025 (not filtered by firewalls, if any)
+* OS open files limit is higher
+### Download
+The tar-file with Mongoose 2.1.1 binaries can be downloaded from EMC ASD Artifactory.
+### Build from sources
+1. Clone
+2. Execute the command:
+  ```bash
+  ./gradlew dist
+  ```
+  The tarball is ready under build/dist/mongoose-\<VERSION\>.tar path
+### Unpack
+```bash
+tar xvf mongoose-<VERSION>.tar
+```
+## Usage
+### Demo Mode
+You can try Mongoose without a real storage. Mongoose build contains a mock storage implementation. Start it first:
+```bash
+java -jar <MONGOOSE_DIR>/mongoose.jar wsmock
+```
+Then open another console and start Mongoose itself:
+```bash
+java -jar <MONGOOSE_DIR>/mongoose.jar
+```
+The line starts Mongoose with default scenario and the default configuration. By default Mongoose writes using Amazon S3 API to storage with IP address 127.0.0.1 (local host). Storage mock is already there to store the new objects.
+
+Now you can switch between the two consoles to see how Mongoose regularly reports about objects created and the storage mock regularly reports about objects stored.
+
+For detailed information please refer to the wiki.
+## Contribution
+Create a fork of the project into your own reposity. Make all your necessary changes and create a pull request with a description on what was added or removed and details explaining the changes in lines of code. If approved, project owners will merge it.
+## Licensing
+Mongoose is freely distributed under the MIT License. See LICENSE for details.
+## Support
+Email Mongoose.Support@emc.com to get support.
+### Bug reporting
+Please provide Mongoose Support team with the following information. The more information we have, the sooner fix will be available
+1. Short bug description
+  * Symptoms
+  * [if you know] Bug trigger
+2. Environment description
+  * Operating system
+  * It would be really helpful to have IP address(es)
+4. Mongoose version
+5. Test configuration
+  * Command line
+  * [if modified] Defaults configuration file
+6. All the output the run produced
+  * Console output
+  * All log files
+7. [if hangs] Thread dump
+  * Execute kill -3 <pid> on Unix
+  * Press Ctrl+Break on Windows
+
