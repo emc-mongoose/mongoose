@@ -95,7 +95,7 @@ implements Item {
 		name = new String(nameBytes, UTF_8);
 		final int pathBytesCount = in.readInt();
 		if(pathBytesCount > 0) {
-			final byte pathBytes[] = new byte[in.readInt()];
+			final byte pathBytes[] = new byte[pathBytesCount];
 			in.readFully(pathBytes);
 			path = new String(pathBytes, UTF_8);
 		} else {
