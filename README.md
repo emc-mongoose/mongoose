@@ -96,14 +96,14 @@ Please provide Mongoose Support team with the following information. The more in
 2. Environment description
   2. Operating system
   2. It would be really helpful to have IP address(es)
-4. Mongoose version
-5. Test configuration
-  * Command line
-  * [if modified] Defaults configuration file
-6. All the output the run produced
-  * Console output
-  * All log files
-7. [if hangs] Thread dump
-  * Execute kill -3 <pid> on Unix
-  * Press Ctrl+Break on Windows
+3. Mongoose version
+4. Test configuration
+  4. Command line
+  4. [if modified] Defaults configuration file
+5. All the output the run produced
+  5. Console output
+  5. All log files
+6. [if hangs] Thread dump
+  6. Execute kill -3 <pid> on Unix
+  6. Press Ctrl+Break on Windows
 
