@@ -92,18 +92,18 @@ Email Mongoose.Support@emc.com to get support.
 Please provide Mongoose Support team with the following information. The more information we have, the sooner fix will be available
 1. Short bug description
   1. Symptoms
-  2. [if you know] Bug trigger
+  2. \[if you know\] Bug trigger
 2. Environment description
   1. Operating system
   2. It would be really helpful to have IP address(es)
 3. Mongoose version
 4. Test configuration
   1. Command line
-  2. [if modified] Defaults configuration file
+  2. \[if modified\] Defaults configuration file
 5. All the output the run produced
   1. Console output
   2. All log files
-6. [if hangs] Thread dump
+6. \[if hangs\] Thread dump
   1. Execute kill -3 <pid> on Unix
   2. Press Ctrl+Break on Windows
 
