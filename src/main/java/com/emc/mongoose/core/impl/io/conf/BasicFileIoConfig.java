@@ -54,7 +54,6 @@ implements FileIoConfig<F, D> {
 	//
 	public BasicFileIoConfig(final BasicFileIoConfig<F, D> another) {
 		super(another);
-		pathInput = another.pathInput;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -109,8 +108,7 @@ implements FileIoConfig<F, D> {
 		}
 		return this;
 	}
-	//
-	//
+	/*
 	@Override
 	public final BasicFileIoConfig<F, D> setSrcContainer(final D container) {
 		super.setSrcContainer(container);
@@ -121,7 +119,7 @@ implements FileIoConfig<F, D> {
 			}
 		}
 		return this;
-	}
+	}*/
 	//
 	@Override
 	public Input<F> getContainerListInput(final long maxCount, final String addr) {

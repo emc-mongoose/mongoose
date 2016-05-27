@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.value.PatternDefinedInput;
 import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -49,7 +50,7 @@ implements IoConfig<T, C> {
 	protected LoadType loadType;
 	protected C dstContainer;
 	protected C srcContainer;
-	protected Input<String> pathInput = null;
+	protected PatternDefinedInput pathInput = null;
 	protected ContentSource contentSrc;
 	protected volatile boolean verifyContentFlag;
 	protected volatile AppConfig appConfig;
@@ -83,7 +84,15 @@ implements IoConfig<T, C> {
 			setItemNamingRadix(ioConf2Clone.getItemNamingRadix());
 			setItemNamingOffset(ioConf2Clone.getItemNamingOffset());
 			setBuffSize(ioConf2Clone.getBuffSize());
-			this.pathInput = ioConf2Clone.pathInput;
+			if(ioConf2Clone.pathInput != null) {
+				if(ioConf2Clone.pathInput instanceof RangePatternDefinedInput) {
+					this.pathInput = new RangePatternDefinedInput(
+						ioConf2Clone.pathInput.getPattern()
+					);
+				} else {
+					LOG.warn(Markers.ERR, "Unsupported path input type, skip cloning");
+				}
+			}
 			this.reqSleepMilliSec = ioConf2Clone.reqSleepMilliSec;
 		}
 	}
@@ -91,7 +100,7 @@ implements IoConfig<T, C> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public IoConfigBase<T, C> clone()
-		throws CloneNotSupportedException {
+	throws CloneNotSupportedException {
 		final IoConfigBase<T, C> ioConf = (IoConfigBase<T, C>) super.clone();
 		ioConf
 			.setLoadType(loadType)
@@ -103,8 +112,14 @@ implements IoConfig<T, C> {
 			.setItemNamingLength(namingLength)
 			.setItemNamingRadix(namingRadix)
 			.setItemNamingOffset(namingOffset)
-			.setBuffSize(buffSize)
-			.pathInput = this.pathInput;
+			.setBuffSize(buffSize);
+		if(this.pathInput != null) {
+			if(this.pathInput instanceof RangePatternDefinedInput) {
+				ioConf.pathInput = new RangePatternDefinedInput(this.pathInput.getPattern());
+			} else {
+				LOG.warn(Markers.ERR, "Unsupported path input type, skip cloning");
+			}
+		}
 		return ioConf;
 	}
 	//
@@ -278,9 +293,9 @@ implements IoConfig<T, C> {
 		}
 		final String srcContainerValue = appConfig.getItemSrcContainer();
 		if(srcContainerValue != null && !srcContainerValue.isEmpty()) {
-			final int firstSlashPos = srcContainerValue.indexOf(Item.SLASH);
+			/*final int firstSlashPos = srcContainerValue.indexOf(Item.SLASH);
 			if(firstSlashPos < 0) {
-				setSrcContainer((C) new BasicContainer<T>(srcContainerValue));
+				*/setSrcContainer((C) new BasicContainer<T>(srcContainerValue));/*
 				pathInput = new RangePatternDefinedInput(Item.SLASH);
 			} else {
 				setSrcContainer(
@@ -289,7 +304,7 @@ implements IoConfig<T, C> {
 				pathInput = new RangePatternDefinedInput(
 					srcContainerValue.substring(firstSlashPos)
 				);
-			}
+			}*/
 		} else {
 			setSrcContainer(null);
 		}
@@ -348,7 +363,7 @@ implements IoConfig<T, C> {
 		LOG.trace(Markers.MSG, "Written destination container \"" + dstContainer + "\"");
 		out.writeObject(getSrcContainer());
 		LOG.trace(Markers.MSG, "Written source container \"" + srcContainer + "\"");
-		out.writeObject(pathInput);
+		out.writeObject(pathInput == null ? null : pathInput.getPattern());
 		LOG.trace(Markers.MSG, "Written path input \"" + pathInput + "\"");
 		out.writeObject(getNameSpace());
 		LOG.trace(Markers.MSG, "Written namespace \"" + nameSpace + "\"");
@@ -379,8 +394,13 @@ implements IoConfig<T, C> {
 		LOG.trace(Markers.MSG, "Got destination container {}", dstContainer);
 		setSrcContainer((C) in.readObject());
 		LOG.trace(Markers.MSG, "Got source container {}", srcContainer);
-		pathInput = (Input<String>) in.readObject();
-		LOG.trace(Markers.MSG, "Got path input {}", pathInput);
+		final String pathInputPattern = (String) in.readObject();
+		if(pathInputPattern == null) {
+			pathInput = null;
+		} else {
+			pathInput = new RangePatternDefinedInput(pathInputPattern);
+			LOG.trace(Markers.MSG, "Got path input {}", pathInput);
+		}
 		setNameSpace((String) in.readObject());
 		LOG.trace(Markers.MSG, "Got namespace {}", nameSpace);
 		setItemNamingPrefix((String) in.readObject());

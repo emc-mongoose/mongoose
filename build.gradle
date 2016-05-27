@@ -225,6 +225,7 @@ sourceSets {
 			srcDir(['src', 'test'].join(File.separator))
 			include(['java', 'com', 'emc', 'mongoose', 'core', '**'].join(File.separator))
 			include(['java', 'com', 'emc', 'mongoose', 'common', '**'].join(File.separator))
+			include(['java', 'com', 'emc', 'mongoose', 'run', '**'].join(File.separator))
 		}
 	}
 	systemTest {

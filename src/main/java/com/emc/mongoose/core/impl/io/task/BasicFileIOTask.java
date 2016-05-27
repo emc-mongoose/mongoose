@@ -35,7 +35,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
-import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
@@ -61,13 +60,20 @@ implements FileIOTask<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	private final static FileSystem DEFAULT_FS = FileSystems.getDefault();
 	//
-	private final String dstDir;
+	private final String dstDir, srcDir;
 	private final Set<OpenOption> openOptions = new HashSet<>();
 	private final RunnableFuture<BasicFileIOTask<T, C, X>> future;
 	//
 	public BasicFileIOTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
-		dstDir = item.getPath();
+		C c = ioConfig.getSrcContainer();
+		srcDir = c == null ? null : c.getName();
+		if(srcDir == null) {
+			dstDir = item.getPath();
+		} else {
+			c = ioConfig.getDstContainer();
+			dstDir = c == null ? null : c.getName();
+		}
 		switch(ioType) {
 			case CREATE:
 				openOptions.add(WRITE);

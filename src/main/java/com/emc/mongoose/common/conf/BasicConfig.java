@@ -26,11 +26,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 //
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,11 +59,58 @@ implements AppConfig {
 	static {
 		setDefaultExpressionEngine(new DefaultExpressionEngine());
 	}
+
+	// http://stackoverflow.com/a/29665447
+	public static String getBasePathForClass(final Class<?> cls) {
+		try {
+			String basePath;
+			final File clsFile = new File(
+				cls.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()
+			);
+			if(
+				clsFile.isFile() ||
+				clsFile.getPath().endsWith(".jar") ||
+				clsFile.getPath().endsWith(".zip")
+			) {
+				basePath = clsFile.getParent();
+			} else {
+				basePath = clsFile.getPath();
+			}
+			// bandage for eclipse
+			if(
+				basePath.endsWith(File.separator + "lib") ||
+				basePath.endsWith(File.separator + "bin") ||
+				basePath.endsWith("bin" + File.separator) ||
+				basePath.endsWith("lib" + File.separator)
+			) {
+				basePath = basePath.substring(0, basePath.length() - 4);
+			}
+			// bandage for netbeans
+			if (basePath.endsWith(File.separator + "build" + File.separator + "classes")) {
+				basePath = basePath.substring(0, basePath.length() - 14);
+			}
+			// bandage for gradle
+			if (basePath.endsWith(File.separator + "build" + File.separator + "classes" + File.separator + "main")) {
+				basePath = basePath.substring(0, basePath.length() - 19);
+			}
+			// bandage for idea
+			if (basePath.endsWith(File.separator + "build" + File.separator + "resources" + File.separator + "common")) {
+				basePath = basePath.substring(0, basePath.length() - 23);
+			}
+			// final fix
+			if(!basePath.endsWith(File.separator)) {
+				basePath = basePath + File.separator;
+			}
+			return basePath;
+		} catch(final URISyntaxException e) {
+			throw new RuntimeException("Cannot figure out base path for class: " + cls.getName());
+		}
+	}
 	//
 	private static String DIR_WORKING = null;
 	public static String getWorkingDir() {
 		if(DIR_WORKING == null) {
-			DIR_WORKING = Paths.get("").toAbsolutePath().toString();
+			DIR_WORKING = getBasePathForClass(BasicConfig.class);
 		}
 		return DIR_WORKING;
 	}
