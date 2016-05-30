@@ -22,7 +22,7 @@ define(['jquery',
 			return jqId([getSvgId(chartBoardName)]);
 		}
 
-		function isSvgExist(chartBoardName) {
+		function doesSvgExist(chartBoardName) {
 			return $(getSvgSelector(chartBoardName)).length
 		}
 
@@ -323,7 +323,7 @@ define(['jquery',
 			}
 			if (currentChartBoards) {
 				$.each(currentChartBoards, function (chartBoardName, chartBoardContent) {
-					if (!isSvgExist(chartBoardName)) {
+					if (!doesSvgExist(chartBoardName)) {
 						createChartBoard(chartBoardName);
 					}
 					updateChartBoard(chartBoardName, chartBoardContent, currentMetric);

@@ -100,9 +100,7 @@ public class RunServlet extends HttpServlet {
 				final BufferedReader reader = request.getReader()
 		) {
 			final String runId = JsonUtil.readValue(reader).get(RUN_ID_KEY);
-			stopAndRemoveTest(runId);
-			response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-			response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
+			stopTest(runId);
 		}
 	}
 
@@ -163,10 +161,8 @@ public class RunServlet extends HttpServlet {
 		MODES.put(runId, mode);
 	}
 
-	private void stopAndRemoveTest(final String runId) {
+	private void stopTest(final String runId) {
 		TESTS.get(runId).interrupt();
-		TESTS.remove(runId);
-		MODES.remove(runId);
 	}
 
 	private static abstract class Runner implements Runnable {

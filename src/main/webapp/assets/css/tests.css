@@ -86,3 +86,16 @@
     visibility: visible;
     opacity: 1;
 }
+
+.list-group-item.stopped {
+    background-color: rgba(8, 18, 32, 0.55) !important;
+    border-color: rgba(8, 18, 32, 0.55) !important;
+    color: white !important;
+}
+
+.list-group-item.stopped.active {
+    z-index: 2;
+    color: #fff;
+    background-color: #3691d1 !important;
+    border-color: #388bcd !important;
+}

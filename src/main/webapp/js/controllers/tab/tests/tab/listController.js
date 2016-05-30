@@ -24,8 +24,10 @@ define([
 	const jqId = templatesUtil.composeJqId;
 	const listItemElemClass = 'list-group-item';
 
+
 	var currentTestId;
 	var currentTestMode;
+	var statusMap = {};
 
 	function render() {
 		const renderer = rendererFactory();
@@ -46,28 +48,39 @@ define([
 
 	function updateTestsList(testsObj) {
 		const testsListBlockElem = $(jqId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.LIST]));
-		testsListBlockElem.empty();
 		$.each(testsObj, function (runId, runMode) {
-			const listItemElem = $('<a/>',
-				{
-					id: runId,
-					class: listItemElemClass,
-					mode: runMode
+			var listItemElem = $(jqId([runId.replaceAll('\\.', '\\\.')]));
+			if (!doesItemExist(listItemElem)) {
+				listItemElem = $('<a/>',
+					{
+						id: runId,
+						class: listItemElemClass,
+						mode: runMode,
+						status: 'running'
+					});
+				listItemElem.click(function () {
+					makeItemActive(runId, runMode)
 				});
-			listItemElem.text(runId + " - " + runMode);
-			listItemElem.click(function () {
-				makeItemActive(runId, runMode)
-			});
-			const removeIconElem = createRemoveIcon(runId);
-			listItemElem.append(removeIconElem);
-			testsListBlockElem.append(listItemElem);
+				listItemElem.text(runId + " - " + runMode + " - " + (listItemElem.attr('status')));
+				const stopIconElem = createStopIcon(runId);
+				listItemElem.append(stopIconElem);
+				testsListBlockElem.append(listItemElem);
+			}
 		});
 		const testsIds = Object.keys(testsObj);
 		const lastId = testsIds[testsIds.length - 1];
 		makeItemActive(lastId, testsObj[lastId]);
 	}
 
-	function createRemoveIcon(runId) {
+	function doesItemExist(itemElem) {
+		return itemElem.length;
+	}
+	
+	function runIdForElem(runId) {
+		return runId.replaceAll('\\.', '\\\.');
+	}
+	
+	function createStopIcon(runId) {
 		const div = $('<div/>', {
 			id: plainId([runId, 'stop']),
 			class: 'icon-stop tooltip'
@@ -78,6 +91,12 @@ define([
 		tooltipSpan.text('Click to stop the test');
 		div.append(tooltipSpan);
 		div.click(function () {
+			statusMap[runId] = 'stopped';
+			$(this).off();
+			const listItemElem = $(jqId([runIdForElem(runId)]));
+			listItemElem.attr('class', listItemElem.attr('class') + ' stopped');
+			listItemElem.attr('status', 'stopped');
+			listItemElem.text(runId + " - " + (listItemElem.attr('mode')) + " - " + (listItemElem.attr('status')));
 			$.ajax({
 				type: 'DELETE',
 				url: '/run',
