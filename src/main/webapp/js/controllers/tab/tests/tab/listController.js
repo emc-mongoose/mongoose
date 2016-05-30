@@ -6,6 +6,7 @@ define([
 	'../../../../common/util/tabsUtil',
 	'../../../../common/constants',
 	'./logsController',
+	'./chartsController',
 	'text!../../../../../templates/tab/tests/tab/list.hbs'
 ], function ($,
              hbUtil,
@@ -14,6 +15,7 @@ define([
              tabsUtil,
              constants,
              logsController,
+             chartsController,
              listTemplate) {
 
 	const TAB_TYPE = templatesUtil.tabTypes();
@@ -67,9 +69,14 @@ define([
 
 	function createRemoveIcon(runId) {
 		const div = $('<div/>', {
-			id: plainId([runId, 'remove']),
-			class: 'icon-remove'
+			id: plainId([runId, 'stop']),
+			class: 'icon-stop tooltip'
 		});
+		const tooltipSpan = $('<span/>', {
+			class: 'tooltiptext'
+		});
+		tooltipSpan.text('Click to stop the test');
+		div.append(tooltipSpan);
 		div.click(function () {
 			$.ajax({
 				type: 'DELETE',
@@ -91,6 +98,7 @@ define([
 		currentTestId = testId;
 		currentTestMode = testMode;
 		logsController.resetLogs();
+		chartsController.resetCharts();
 	}
 
 	function getCurrentTestId() {

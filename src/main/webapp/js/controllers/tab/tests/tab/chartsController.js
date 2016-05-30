@@ -26,7 +26,7 @@ define([
 	const jqId = templatesUtil.composeJqId;
 
 	var currentTabType = TESTS_CHARTS_TAB_TYPE.LATENCY;
-	var resetChartsFlag = false;
+	var resetChartsFlags = {};
 
 	function render() {
 		const renderer = rendererFactory();
@@ -68,7 +68,7 @@ define([
 
 	function makeTabActive(tabType) {
 		tabsUtil.showTabAsActive(plainId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.CHARTS, 'tab']), tabType);
-		charts.processCharts(null, CHART_METRICS_FORMATTER[tabType]);
+		charts.processCharts(null, CHART_METRICS_FORMATTER[tabType], true);
 		switch (tabType) {
 			case TESTS_CHARTS_TAB_TYPE.LATENCY:
 				break;
@@ -83,13 +83,13 @@ define([
 	}
 
 	function setTabParameters(testId, testMode) {
-		resetCharts();
-		if (CHARTS_MODE.indexOf(testMode) > -1) {
+		resetCharts(testId);
+		// if (CHARTS_MODE.indexOf(testMode) > -1) {
 			if (testId) {
-				resetChartsFlag = false;
+				resetChartsFlags[testId] = false;
 				getCharts(testId);
 			}
-		}
+		// }
 	}
 
 	function getCharts(testId) {
@@ -108,20 +108,21 @@ define([
 			// if (newLoadJobName) {
 			// 	chartsObj[newLoadJobName] = newLoadJobCharts;
 			// }
-			charts.processCharts(chartsObj, CHART_METRICS_FORMATTER[currentTabType]);
+			if (!resetChartsFlags[testId]) {
+				charts.processCharts(chartsObj, CHART_METRICS_FORMATTER[currentTabType]);
+			}
 		}).always(function () {
-			if (!resetChartsFlag) {
+			if (!resetChartsFlags[testId]) {
 				setTimeout(getCharts, 10000, testId); // interval in milliseconds;
-				// todo check a third arg
 			}
 		});
 	}
 
 	function resetCharts() {
-		resetChartsFlag = true;
-		// $.each(CHART_METRICS, function (key, metricName) {
-		// 	$(jqId([metricBlockId(metricName)])).empty();
-		// })
+		Object.keys(resetChartsFlags).forEach(function (key) {
+			resetChartsFlags[key] = true;
+		});
+		$(jqId([TESTS_TAB_TYPE.CHARTS, 'block'])).empty();
 	}
 
 	return {

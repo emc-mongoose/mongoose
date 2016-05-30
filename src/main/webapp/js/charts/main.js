@@ -314,11 +314,11 @@ define(['jquery',
 			}
 		}
 
-		function processChartBoards(chartBoards, metric) {
-			if (chartBoards) {
+		function processChartBoards(chartBoards, metric, notOverrideChartBoards, notOverrideMetric) {
+			if (!notOverrideChartBoards) {
 				currentChartBoards = chartBoards;
 			}
-			if (metric) {
+			if (!notOverrideMetric) {
 				currentMetric = metric;
 			}
 			if (currentChartBoards) {

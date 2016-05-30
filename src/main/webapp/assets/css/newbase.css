@@ -204,3 +204,9 @@
 .json-view {
     padding: 10px;
 }
+[class^="icon-"], [class*=" icon-"] {
+    height: 32px;
+    width: 32px;
+    display: inline-block;
+    fill: currentColor;
+}
