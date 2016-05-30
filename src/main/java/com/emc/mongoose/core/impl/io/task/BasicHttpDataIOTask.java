@@ -87,6 +87,7 @@ implements HttpDataIOTask<T> {
 		try {
 			 httpRequest = ioConfig.createDataRequest(item, nodeAddr);
 		} catch(final URISyntaxException | IllegalArgumentException | IllegalStateException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to generate the request");
 			throw new HttpException("Failed to generate the request", e);
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {

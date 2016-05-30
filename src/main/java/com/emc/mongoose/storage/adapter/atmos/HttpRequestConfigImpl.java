@@ -275,7 +275,12 @@ extends HttpRequestConfigBase<T, C> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !LoadType.CREATE.equals(loadType)) {
-			return uriBasePath + object.toString();
+			final String objPath = object.getPath();
+			if(objPath.endsWith(Item.SLASH)) {
+				return uriBasePath + objPath + object.getName();
+			} else {
+				return uriBasePath + objPath + Item.SLASH + object.getName();
+			}
 		} else { // "/rest/objects"
 			return uriBasePath;
 		}
@@ -283,14 +288,7 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override
 	protected final String getObjectSrcPath(final T object) {
-		if(object == null) {
-			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
-		}
-		if(fsAccess || !LoadType.CREATE.equals(loadType)) {
-			return uriBasePath + object.toString();
-		} else { // "/rest/objects"
-			return uriBasePath;
-		}
+		return getObjectDstPath(object);
 	}
 	//
 	@Override

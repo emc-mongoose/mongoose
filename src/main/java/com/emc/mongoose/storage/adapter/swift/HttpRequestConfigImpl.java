@@ -1,11 +1,11 @@
 package com.emc.mongoose.storage.adapter.swift;
-// mongoose-common.jar
 
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.token.Token;
@@ -25,12 +25,6 @@ import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 
-// mongoose-core-api.jar
-// mongoose-core-impl.jar
-//
-//
-//
-//
 /**
  Created by kurila on 26.03.14.
  */
@@ -184,7 +178,13 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		return dstContainerUriPath + object.toString();
+		final String objPath = object.getPath();
+		if(objPath.endsWith(Item.SLASH)) {
+			return dstContainerUriPath + objPath + object.getName();
+		} else {
+			return dstContainerUriPath + objPath + Item.SLASH + object.getName();
+		}
+
 	}
 	//
 	@Override
@@ -196,7 +196,12 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		return srcContainerUriPath + object.toString();
+		final String objPath = object.getPath();
+		if(objPath.endsWith(Item.SLASH)) {
+			return srcContainerUriPath + objPath + object.getName();
+		} else {
+			return srcContainerUriPath + objPath + Item.SLASH + object.getName();
+		}
 	}
 	//
 	@Override

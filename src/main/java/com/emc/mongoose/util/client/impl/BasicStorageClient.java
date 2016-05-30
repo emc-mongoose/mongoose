@@ -49,22 +49,22 @@ implements StorageClient<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public long write(final long size)
+	public long create(final long size)
 	throws IllegalArgumentException, InterruptedException, IOException {
-		return write(null, null, 0, DEFAULT_CONN_PER_NODE_COUNT, size, size, 0);
+		return create(null, 0, DEFAULT_CONN_PER_NODE_COUNT, size, size, 0);
 	}
 	//
 	@Override
-	public long write(
-		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit,
+	public long create(
+		final Output<T> itemOutput, final long countLimit,
 		final int connPerNodeCount, final long size
 	) throws IllegalArgumentException, InterruptedException, IOException {
-		return write(itemInput, itemOutput, countLimit, connPerNodeCount, size, size, 0);
+		return create(itemOutput, countLimit, connPerNodeCount, size, size, 0);
 	}
 	//
 	@Override
-	public long write(
-		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit,
+	public long create(
+		final Output<T> itemOutput, final long countLimit,
 		final int connPerNodeCount, final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		if(loadBuilder instanceof DataLoadBuilder) {
@@ -74,7 +74,7 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.CREATE)
-				.setInput(itemInput)
+				.setInput(null)
 				.setCountLimit(countLimit)
 				.setThreadCount(connPerNodeCount)
 				.build()
@@ -86,12 +86,8 @@ implements StorageClient<T> {
 	@Override
 	public long write(
 		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit, 
-		final int connPerNodeCount, final int randomRangesCount
+		final int connPerNodeCount
 	) throws IllegalArgumentException, InterruptedException, IOException {
-		if(loadBuilder instanceof DataLoadBuilder) {
-			((DataLoadBuilder) loadBuilder)
-				.setDataRanges(new DataRangesConfig(randomRangesCount));
-		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(LoadType.CREATE)
@@ -103,9 +99,47 @@ implements StorageClient<T> {
 			return executeLoadJob(loadJobExecutor, itemOutput);
 		}
 	}
+	/*
+	@Override
+	public long copy(
+		final Input<T> itemInput, final Output<T> itemOutput,
+		final String srcContainer, final String dstContainer,
+		final long countLimit, final int connPerNodeCount
+	) throws IllegalArgumentException, InterruptedException, IOException {
+		try(
+			final LoadExecutor<T> loadJobExecutor = loadBuilder
+				.setLoadType(LoadType.CREATE)
+				.setInput(itemInput)
+				.setCountLimit(countLimit)
+				.setThreadCount(connPerNodeCount)
+				.build()
+		) {
+			return executeLoadJob(loadJobExecutor, itemOutput);
+		}
+	}*/
 	//
 	@Override
-	public long write(
+	public long update(
+		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit,
+		final int connPerNodeCount, final int randomRangesCount
+	) throws IllegalArgumentException, InterruptedException, IOException {
+		if(loadBuilder instanceof DataLoadBuilder) {
+			((DataLoadBuilder) loadBuilder).setDataRanges(new DataRangesConfig(randomRangesCount));
+		}
+		try(
+			final LoadExecutor<T> loadJobExecutor = loadBuilder
+				.setLoadType(LoadType.UPDATE)
+				.setInput(itemInput)
+				.setCountLimit(countLimit)
+				.setThreadCount(connPerNodeCount)
+				.build()
+		) {
+			return executeLoadJob(loadJobExecutor, itemOutput);
+		}
+	}
+	//
+	@Override
+	public long update(
 		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit,
 		final int connPerNodeCount, final String fixedByteRanges
 	) throws IllegalArgumentException, InterruptedException, IOException {
@@ -114,7 +148,7 @@ implements StorageClient<T> {
 		}
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(LoadType.CREATE)
+				.setLoadType(LoadType.UPDATE)
 				.setInput(itemInput)
 				.setCountLimit(countLimit)
 				.setThreadCount(connPerNodeCount)

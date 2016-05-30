@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
@@ -91,7 +92,12 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		return getContainerPath(dstContainer) + object.toString();
+		final String objPath = object.getPath();
+		if(objPath.endsWith(Item.SLASH)) {
+			return getContainerPath(dstContainer) + objPath + object.getName();
+		} else {
+			return getContainerPath(dstContainer) + objPath + Item.SLASH + object.getName();
+		}
 	}
 	//
 	@Override
@@ -103,7 +109,12 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		return getContainerPath(srcContainer) + object.toString();
+		final String objPath = object.getPath();
+		if(objPath.endsWith(Item.SLASH)) {
+			return getContainerPath(srcContainer) + objPath + object.getName();
+		} else {
+			return getContainerPath(srcContainer) + objPath + Item.SLASH + object.getName();
+		}
 	}
 	//
 	@Override

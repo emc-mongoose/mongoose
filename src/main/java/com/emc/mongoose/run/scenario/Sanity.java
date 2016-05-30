@@ -11,6 +11,7 @@ import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 //
 import com.emc.mongoose.core.impl.item.base.BinFileItemOutput;
+import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.06.15.
@@ -61,15 +63,15 @@ implements Runnable {
 			final List<HttpDataItem> itemBuff = new ArrayList<>(DEFAULT_DATA_COUNT_MAX);
 			// create new items
 			LOG.info(Markers.MSG, "Start writing");
-			final long nWritten = client.write(
-				null, new ItemListOutput<>(itemBuff), DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE,
+			final long nWritten = client.create(
+				new ItemListOutput<>(itemBuff), DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE,
 				DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
 			// update the created items
 			LOG.info(Markers.MSG, "Start updating {} items", itemBuff.size());
 			final Output<HttpDataItem> dataDstU = new BinFileItemOutput<>();
-			final long nUpdated = client.write(
+			final long nUpdated = client.update(
 				new ListItemInput<>(itemBuff), dataDstU, nWritten, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
@@ -81,11 +83,11 @@ implements Runnable {
 				dataDstU.getInput(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead);
-			/* update again the data items
+			// update again the data items
 			final Output<HttpDataItem> dataDstU2 = new LimitedQueueItemBuffer<>(
 				new ArrayBlockingQueue<HttpDataItem>(DEFAULT_DATA_COUNT_MAX)
 			);
-			final long nUpdated2 = client.write(
+			final long nUpdated2 = client.update(
 				dataDstR.getInput(), dataDstU2, nRead, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
@@ -95,20 +97,19 @@ implements Runnable {
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
 			// recreate the items
-			final Output<HttpDataItem> dataDstW2 = new ItemCsvFileOutput<>(
+			final Output<HttpDataItem> dataDstW2 = new CsvFileItemOutput<>(
 				(Class<? extends HttpDataItem>) BasicHttpData.class,
 				ContentSourceBase.getDefaultInstance()
 			);
 			final long nReWritten = client.write(
-				new ListItemInput<>(itemBuff), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE,
-				DEFAULT_DATA_SIZE
+				new ListItemInput<>(itemBuff), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE
 			);
 			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
 			// read and verify the rewritten data items
 			final long nRead3 = client.read(
 				dataDstW2.getInput(), null, nWritten, DEFAULT_CONN_PER_NODE, true
 			);
-			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);*/
+			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
 			// delete all created data items
 			final long nDeleted = client.delete(
 				new ListItemInput<>(itemBuff), null, nWritten, DEFAULT_CONN_PER_NODE
