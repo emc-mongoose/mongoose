@@ -8,7 +8,7 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	//CoreTestSuite.class,
+	CoreTestSuite.class,
 	//CircularLoadTestSuite.class,
 	//CloudStorageApiTestSuite.class,
 	//ContentTestSuite.class,
