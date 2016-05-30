@@ -13,11 +13,11 @@ import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.FileIOTask;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
-//
 import com.emc.mongoose.core.impl.io.task.BasicFileIOTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
+import java.io.File;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -69,6 +69,44 @@ implements FileLoadExecutor<T> {
 				}
 			}
 		};
+	}
+	//
+	protected void logTrace(
+		final String nodeAddr, final T item, final IOTask.Status status,
+		final long reqTimeStart, final long countBytesDone, final int reqDuration,
+		final int respLatency, final long respDataLatency
+	) {
+		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
+			StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
+			if(strBuilder == null) {
+				strBuilder = new StringBuilder();
+				PERF_TRACE_MSG_BUILDER.set(strBuilder);
+			} else {
+				strBuilder.setLength(0); // clear/reset
+			}
+			final String itemPath = item.getPath();
+			LOG.info(
+				Markers.PERF_TRACE,
+				strBuilder
+					//.append(loadType).append(',')
+					.append(nodeAddr == null ? "" : nodeAddr).append(',')
+					.append(
+						itemPath == null ?
+							item.getName() :
+								itemPath.endsWith(File.separator) ?
+									itemPath + item.getName() :
+									itemPath + File.separator + item.getName()
+					)
+					.append(',')
+					.append(countBytesDone).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(respLatency > 0 ? respLatency : 0).append(',')
+					.append(respDataLatency).append(',')
+					.append(reqDuration)
+					.toString()
+			);
+		}
 	}
 	//
 	@Override

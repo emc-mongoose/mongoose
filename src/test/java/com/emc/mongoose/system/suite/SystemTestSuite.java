@@ -8,18 +8,20 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	CoreTestSuite.class,
-	//CircularLoadTestSuite.class,
-	//CloudStorageApiTestSuite.class,
+	AtmosTestSuite.class,
+	CircularLoadTestSuite.class,
 	//ContentTestSuite.class,
+	CoreTestSuite.class,
 	DistributedTestSuite.class,
 	//DynamicConfigTestSuite.class,
-	//FileSystemTestSuite.class,
+	FileSystemTestSuite.class,
 	//ItemNamingTestSuite.class,
-	//LoadLimitTestSuite.class,
-	//LoadTypeTestSuite.class,
+	LoadLimitTestSuite.class,
+	LoadTypeTestSuite.class,
 	//ReportingTestSuite.class,
+	S3TestSuite.class,
 	//ScenarioTestSuite.class,
+	SwiftTestSuite.class,
 })
 public final class SystemTestSuite {
 }

@@ -53,11 +53,18 @@ public interface StorageClientBuilder<T extends Item, U extends StorageClient<T>
 	StorageClientBuilder<T, U> setNamespace(final String value);
 
 	/**
-	 Set the target bucket/container for writing to/reading from/etc.
+	 Set the destination bucket/container for writing to/reading from/etc.
 	 @param value The name of the container, for example "sanity-nh-container1"
 	 @return self.
 	 */
-	StorageClientBuilder<T, U> setDestContainer(final String value);
+	StorageClientBuilder<T, U> setDstContainer(final String value);
+
+	/**
+	 Set the source bucket/container for writing to/reading from/etc.
+	 @param value The name of the container, for example "sanity-nh-container1"
+	 @return self.
+	 */
+	StorageClientBuilder<T, U> setSrcContainer(final String value);
 
 	/**
 	 Set the authentication token to use (subtenant if using Atmos).
@@ -97,12 +104,21 @@ public interface StorageClientBuilder<T extends Item, U extends StorageClient<T>
 	throws IllegalArgumentException;
 
 	/**
-	 Set the load subject class
-	 @param itemCls may one of the predefined values ("data", "container", ...)
+	 Set the item type
+	 @param itemType may one of the predefined values ("data", "container", ...)
 	 @return self.
 	 @throws IllegalArgumentException if the argument value is not one of the predefined values
 	 */
-	StorageClientBuilder<T, U> setItemClass(final String itemCls)
+	StorageClientBuilder<T, U> setItemType(final String itemType)
+	throws IllegalArgumentException;
+
+	/**
+	 Set the storage type
+	 @param storageType may one of the predefined values ("fs", "http", ...)
+	 @return self.
+	 @throws IllegalArgumentException if the argument value is not one of the predefined values
+	 */
+	StorageClientBuilder<T, U> setStorageType(final String storageType)
 	throws IllegalArgumentException;
 
 	/**

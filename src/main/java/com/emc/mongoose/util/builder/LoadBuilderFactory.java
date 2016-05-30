@@ -25,7 +25,7 @@ public class LoadBuilderFactory {
 		CLIENT_POSTFIX = "Client";
 	//
 	@SuppressWarnings("unchecked")
-	public static <T extends Item, U extends LoadExecutor<T>> LoadBuilder<T, U> getInstance(
+	public static <T extends Item, U extends LoadExecutor<T>> LoadBuilder<T, U> getInstance (
 		final AppConfig appConfig
 	) throws ClassNotFoundException, NoSuchMethodException, InstantiationException,
 	IllegalAccessException, InvocationTargetException {
@@ -37,15 +37,20 @@ public class LoadBuilderFactory {
 			constructor = loadBuilderImplClass.getConstructor(AppConfig.class);
 		return constructor.newInstance(appConfig);
 	}
-	//
+	/*
+	FS, Container -> BasicDirectory -> [BasicDirectory]LoadBuilder[Client]
+	HTTP, Container -> BasicContainer -> [BasicHttpContainer]LoadBuilder[Client]
+	FS, Data -> BasicFile -> [BasicFile]LoadBuilder[Client]
+	HTTP, Data -> BasicHttpData -> [BasicHttpData]LoadBuilder[Client]
+	*/
 	@SuppressWarnings("unchecked")
 	private static <T extends Item, U extends LoadExecutor<T>> Class<LoadBuilder<T, U>>
-	getLoadBuilderClass(
-		final String runMode, final ItemType itemClass, final StorageType storageType
+	getLoadBuilderClass (
+		final String runMode, final ItemType itemType, final StorageType storageType
 	) throws ClassNotFoundException {
 		Class<LoadBuilder<T, U>> loadBuilderCls = null;
 		String
-			result = ItemTypeUtil.getItemClass(itemClass, storageType).getSimpleName() +
+			result = ItemTypeUtil.getItemClass(itemType, storageType).getSimpleName() +
 				LOAD_BUILDER_SUFFIX,
 			itemClassPackage = null;
 		// don't append anything if run.mode is standalone

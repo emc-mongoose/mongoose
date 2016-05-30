@@ -90,7 +90,7 @@ implements StorageClient<T> {
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(LoadType.CREATE)
+				.setLoadType(LoadType.UPDATE)
 				.setInput(itemInput)
 				.setCountLimit(countLimit)
 				.setThreadCount(connPerNodeCount)

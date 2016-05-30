@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
+import static com.emc.mongoose.core.api.item.base.Item.SLASH;
 /**
  Created by kurila on 15.10.14.
  */
@@ -587,15 +588,15 @@ implements LoadExecutor<T> {
 		return to - from;
 	}
 	//
-	private final static ThreadLocal<StringBuilder>
+	protected final static ThreadLocal<StringBuilder>
 		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {
 			return new StringBuilder();
 		}
 	};
-	private void logTrace(
-		final String nodeAddr, final String itemPath, final IOTask.Status status,
+	protected void logTrace(
+		final String nodeAddr, final T item, final IOTask.Status status,
 		final long reqTimeStart, final long countBytesDone, final int reqDuration,
 		final int respLatency, final long respDataLatency
 	) {
@@ -607,12 +608,20 @@ implements LoadExecutor<T> {
 			} else {
 				strBuilder.setLength(0); // clear/reset
 			}
+			final String itemPath = item.getPath();
 			LOG.info(
 				Markers.PERF_TRACE,
 				strBuilder
 					//.append(loadType).append(',')
 					.append(nodeAddr == null ? "" : nodeAddr).append(',')
-					.append(itemPath).append(',')
+					.append(
+						itemPath == null ?
+							item.getName() :
+							itemPath.endsWith(SLASH) ?
+								itemPath + item.getName() :
+								itemPath + SLASH + item.getName()
+					)
+					.append(',')
 					.append(countBytesDone).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
@@ -643,8 +652,8 @@ implements LoadExecutor<T> {
 		// perf trace logging
 		if(!preconditionFlag && !(this instanceof MixedLoadExecutor)) {
 			logTrace(
-				nodeAddr, item.toString(), status, ioTask.getReqTimeStart(),
-				countBytesDone, reqDuration, respLatency, respDataLatency
+				nodeAddr, item, status, ioTask.getReqTimeStart(), countBytesDone, reqDuration,
+				respLatency, respDataLatency
 			);
 		}
 		//
@@ -716,8 +725,8 @@ implements LoadExecutor<T> {
 				// perf trace logging
 				if(!preconditionFlag) {
 					logTrace(
-						nodeAddr, item.toString(), status, ioTask.getReqTimeStart(),
-						countBytesDone, reqDuration, respLatency, respDataLatency
+						nodeAddr, item, status, ioTask.getReqTimeStart(), countBytesDone,
+						reqDuration, respLatency, respDataLatency
 					);
 				}
 				//

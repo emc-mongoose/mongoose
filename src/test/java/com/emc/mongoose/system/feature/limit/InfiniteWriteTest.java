@@ -1,4 +1,4 @@
-package com.emc.mongoose.system.feature.core;
+package com.emc.mongoose.system.feature.limit;
 
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
