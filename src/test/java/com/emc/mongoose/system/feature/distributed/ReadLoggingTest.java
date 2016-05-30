@@ -41,7 +41,7 @@ import java.util.regex.Matcher;
 public class ReadLoggingTest
 extends DistributedClientTestBase {
 	//
-	private final static int COUNT_LIMIT = 1000000;
+	private final static int COUNT_LIMIT = 1000;
 	//
 	private static long countWritten, countRead;
 	private static byte stdOutContent[];

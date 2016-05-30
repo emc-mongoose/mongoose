@@ -38,7 +38,7 @@ import java.util.regex.Matcher;
 public class WriteLoggingTest
 extends DistributedClientTestBase {
 	//
-	private final static long COUNT_LIMIT = 10000;
+	private final static long COUNT_LIMIT = 1000;
 	private final static String RUN_ID = WriteLoggingTest.class.getCanonicalName();
 	//
 	private static long countWritten;
