@@ -82,14 +82,12 @@ define([
 		currentTabType = tabType;
 	}
 
-	function setTabParameters(testId, testMode) {
+	function runCharts(testId) {
 		resetCharts(testId);
-		// if (CHARTS_MODE.indexOf(testMode) > -1) {
-			if (testId) {
-				resetChartsFlags[testId] = false;
-				getCharts(testId);
-			}
-		// }
+		if (testId) {
+			resetChartsFlags[testId] = false;
+			getCharts(testId);
+		}
 	}
 
 	function getCharts(testId) {
@@ -119,15 +117,18 @@ define([
 	}
 
 	function resetCharts() {
-		Object.keys(resetChartsFlags).forEach(function (key) {
-			resetChartsFlags[key] = true;
+		const runIds = Object.keys(resetChartsFlags);
+		runIds.forEach(function (runId) {
+			resetChartsFlags[runId] = true;
 		});
-		$(jqId([TESTS_TAB_TYPE.CHARTS, 'block'])).empty();
+		if (runIds.length > 0) {
+			$(jqId([TESTS_TAB_TYPE.CHARTS, 'block'])).empty();
+		}
 	}
 
 	return {
 		render: render,
-		setTabParameters: setTabParameters,
+		runCharts: runCharts,
 		resetCharts: resetCharts
 	}
 });

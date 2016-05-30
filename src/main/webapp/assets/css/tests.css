@@ -43,6 +43,11 @@
     font-size: 20px;
 }
 
+.icon-check:before {
+    content: "\61";
+    font-size: 20px;
+}
+
 .icon-stop {
     width: 20px;
     height: 20px;
@@ -50,6 +55,17 @@
     position: absolute;
     top: 11px;
     right: 10px;
+    z-index: 1000;
+    opacity: 1;
+}
+
+.icon-check {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    position: absolute;
+    top: 11px;
+    left: 10px;
     z-index: 1000;
     opacity: 1;
 }

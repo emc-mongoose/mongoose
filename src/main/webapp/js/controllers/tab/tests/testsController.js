@@ -87,7 +87,6 @@ define([
 				logsController.setTabParameters(testId, testMode);
 				break;
 			case TESTS_TAB_TYPE.CHARTS:
-				chartsController.setTabParameters(testId, testMode);
 				break;
 		}
 		currentTabType = tabType;
@@ -97,9 +96,13 @@ define([
 		listController.updateTestsList(testsObj);
 	}
 
+	function runCharts() {
+		chartsController.runCharts(listController.currentTestId());
+	}
 
 	return {
 		render: render,
-		updateTestsList: updateTestsList
+		updateTestsList: updateTestsList, 
+		runCharts: runCharts
 	}
 });

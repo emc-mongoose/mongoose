@@ -28,6 +28,7 @@ define([
 	var currentTestId;
 	var currentTestMode;
 	var statusMap = {};
+	var okIcon;
 
 	function render() {
 		const renderer = rendererFactory();
@@ -112,12 +113,27 @@ define([
 		return div;
 	}
 
+	function createOkIcon(runId) {
+		return $('<div/>', {
+			id: plainId([runId, 'check']),
+			class: 'icon-check'
+		});
+	}
+
 	function makeItemActive(testId, testMode) {
 		tabsUtil.showTabAsActive(listItemElemClass, testId);
+		if (okIcon) {
+			okIcon.remove();
+		}
+		okIcon = createOkIcon();
+		const listItemActiveElem = $('.' + listItemElemClass + '.active');
+		listItemActiveElem.append(okIcon);
+		$('.' + listItemElemClass).css('padding-left', '');
+		listItemActiveElem.css('padding-left', '40px');
 		currentTestId = testId;
 		currentTestMode = testMode;
 		logsController.resetLogs();
-		chartsController.resetCharts();
+		chartsController.runCharts(testId);
 	}
 
 	function getCurrentTestId() {

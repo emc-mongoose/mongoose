@@ -253,6 +253,7 @@ define([
 					processData: false
 				}).done(function (testsObj) {
 					testsController.updateTestsList(testsObj);
+					testsController.runCharts();
 					console.log('Mongoose ran');
 				});
 			}
