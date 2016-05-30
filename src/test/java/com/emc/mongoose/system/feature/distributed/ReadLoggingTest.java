@@ -41,7 +41,7 @@ import java.util.regex.Matcher;
 public class ReadLoggingTest
 extends DistributedClientTestBase {
 	//
-	private final static int COUNT_LIMIT = 1000;
+	private final static int COUNT_LIMIT = 10000;
 	//
 	private static long countWritten, countRead;
 	private static byte stdOutContent[];
@@ -62,7 +62,7 @@ extends DistributedClientTestBase {
 			final BlockingQueue<HttpDataItem> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
 			final LimitedQueueItemBuffer<HttpDataItem> itemsIO = new LimitedQueueItemBuffer<>(itemsQueue);
 			countWritten = client.create(itemsIO, COUNT_LIMIT, 10, SizeInBytes.toFixedSize("10KB"));
-			TimeUnit.SECONDS.sleep(10);
+			TimeUnit.SECONDS.sleep(1);
 			Assert.assertEquals(
 				"Writing reported different count than available in the output",
 				countWritten, itemsQueue.size()

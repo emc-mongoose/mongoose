@@ -1,5 +1,4 @@
 package com.emc.mongoose.core.impl.load.executor;
-// mongoose-common.jar
 
 import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
@@ -52,10 +51,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
-// mongoose-core-api.jar
-// mongoose-core-impl.jar
-//
-//
 /**
  Created by kurila on 15.10.14.
  */
@@ -421,7 +416,7 @@ implements LoadExecutor<T> {
 		//
 		try {
 			if(isStarted.get()) { // if was executing
-				lastStats = ioStats.getSnapshot();
+				refreshStats();
 				ioStats.close();
 				logMetrics(Markers.PERF_SUM); // provide summary metrics
 				// calculate the efficiency and report

@@ -40,7 +40,7 @@ import java.util.regex.Matcher;
 public class DeleteLoggingTest
 extends DistributedClientTestBase {
 	//
-	private final static int COUNT_LIMIT = 1000;
+	private final static int COUNT_LIMIT = 10000;
 	//
 	private static long COUNT_WRITTEN, COUNT_DELETED;
 	private static byte STD_OUT_CONTENT[];

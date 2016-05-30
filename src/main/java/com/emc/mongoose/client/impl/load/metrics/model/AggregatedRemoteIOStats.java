@@ -254,12 +254,12 @@ extends IOStatsBase {
 	//
 	private final static int COUNT_LIMIT_RETRIES = 100;
 	//
-	private final class LoadIOStatsSnapshotTask
+	private final class LoadIoStatsSnapshotTask
 	implements Runnable {
 		//
 		private final String loadSvcAddr;
 		//
-		public LoadIOStatsSnapshotTask(final String loadSvcAddr) {
+		public LoadIoStatsSnapshotTask(final String loadSvcAddr) {
 			this.loadSvcAddr = loadSvcAddr;
 		}
 		//
@@ -318,7 +318,7 @@ extends IOStatsBase {
 	@Override
 	public final void start() {
 		for(final String addr : loadSvcMap.keySet()) {
-			statsLoader.submit(new LoadIOStatsSnapshotTask(addr));
+			statsLoader.submit(new LoadIoStatsSnapshotTask(addr));
 		}
 		statsLoader.shutdown();
 		super.start();
