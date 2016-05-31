@@ -6,6 +6,6 @@ import java.util.concurrent.RunnableFuture;
 /**
  Created by andrey on 22.11.15.
  */
-public interface FileIOTask<T extends FileItem>
-extends DataIOTask<T>, RunnableFuture<FileIOTask<T>> {
+public interface FileIoTask<T extends FileItem>
+extends DataIoTask<T>, RunnableFuture<FileIoTask<T>> {
 }

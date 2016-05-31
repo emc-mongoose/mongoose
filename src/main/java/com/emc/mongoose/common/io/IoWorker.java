@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 /**
  Created by kurila on 17.03.15.
  */
-public final class IOWorker
+public final class IoWorker
 extends Thread {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -24,7 +24,7 @@ extends Thread {
 	//
 	private final ByteBuffer[] ioBuffers = new ByteBuffer[BUFF_COUNT];
 	//
-	private IOWorker(final Runnable task, final String name) {
+	private IoWorker(final Runnable task, final String name) {
 		super(task, name);
 		setDaemon(true);
 		//setPriority(Thread.MAX_PRIORITY);
@@ -63,8 +63,8 @@ extends Thread {
 		}
 		//
 		@Override
-		public IOWorker newThread(final Runnable task) {
-			return new IOWorker(task, threadNamePrefix + "#" + threadNumber.incrementAndGet());
+		public IoWorker newThread(final Runnable task) {
+			return new IoWorker(task, threadNamePrefix + "#" + threadNumber.incrementAndGet());
 		}
 	}
 	//

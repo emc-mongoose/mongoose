@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.item.base.Item;
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
  */
-public interface IOTask<T extends Item>  {
+public interface IoTask<T extends Item>  {
 	//
 	enum Status {
 		SUCC(0, "Success"),

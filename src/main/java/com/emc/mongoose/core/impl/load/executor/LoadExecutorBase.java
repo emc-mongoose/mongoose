@@ -10,7 +10,7 @@ import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.base.ItemBuffer;
 import com.emc.mongoose.core.api.item.container.Container;
@@ -493,7 +493,7 @@ implements LoadExecutor<T> {
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final String nextNodeAddr = storageNodeAddrs == null ?
 			null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
-		final IOTask<T> ioTask = getIOTask(item, nextNodeAddr);
+		final IoTask<T> ioTask = getIOTask(item, nextNodeAddr);
 		// don't fill the connection pool as fast as possible, this may cause a failure
 		//
 		try {
@@ -526,7 +526,7 @@ implements LoadExecutor<T> {
 				final String nextNodeAddr = storageNodeAddrs == null ?
 					null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 				// prepare the I/O tasks list (make the link between the data item and load type)
-				final List<IOTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
+				final List<IoTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
 				getIOTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr);
 				// submit all I/O tasks
 				while(n < srcLimit) {
@@ -573,11 +573,11 @@ implements LoadExecutor<T> {
 		return put(items, 0, items.size());
 	}
 	//
-	protected abstract IOTask<T> getIOTask(final T item, final String nextNodeAddr);
+	protected abstract IoTask<T> getIOTask(final T item, final String nextNodeAddr);
 	//
 	protected int getIOTasks(
 		final List<T> items, final int from, final int to,
-		final List<IOTask<T>> dstTaskBuff, final String nextNodeAddr
+		final List<IoTask<T>> dstTaskBuff, final String nextNodeAddr
 	) {
 		for(final T item : items) {
 			if(item == null) {
@@ -597,7 +597,7 @@ implements LoadExecutor<T> {
 		}
 	};
 	protected void logTrace(
-		final String nodeAddr, final T item, final IOTask.Status status,
+		final String nodeAddr, final T item, final IoTask.Status status,
 		final long reqTimeStart, final long countBytesDone, final int reqDuration,
 		final int respLatency, final long respDataLatency
 	) {
@@ -635,7 +635,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public void ioTaskCompleted(final IOTask<T> ioTask)
+	public void ioTaskCompleted(final IoTask<T> ioTask)
 	throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
@@ -643,7 +643,7 @@ implements LoadExecutor<T> {
 		}
 		//
 		final T item = ioTask.getItem();
-		final IOTask.Status status = ioTask.getStatus();
+		final IoTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
 		final int
 			reqDuration = ioTask.getDuration(),
@@ -661,7 +661,7 @@ implements LoadExecutor<T> {
 		if(nodeBalancer != null) {
 			nodeBalancer.markTaskFinish(nodeAddr);
 		}
-		if(IOTask.Status.SUCC == status) {
+		if(IoTask.Status.SUCC == status) {
 			// update the metrics with success
 			if(respLatency > 0 && respLatency > reqDuration) {
 				LOG.warn(
@@ -693,7 +693,7 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public int ioTaskCompletedBatch(
-		final List<? extends IOTask<T>> ioTasks, final int from, final int to
+		final List<? extends IoTask<T>> ioTasks, final int from, final int to
 	) throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
@@ -707,9 +707,9 @@ implements LoadExecutor<T> {
 				nodeBalancer.markTasksFinish(nodeAddr, n);
 			}
 			//
-			IOTask<T> ioTask;
+			IoTask<T> ioTask;
 			T item;
-			IOTask.Status status;
+			IoTask.Status status;
 			String nodeAddr;
 			int reqDuration, respLatency, respDataLatency;
 			long countBytesDone;
@@ -731,7 +731,7 @@ implements LoadExecutor<T> {
 					);
 				}
 				//
-				if(IOTask.Status.SUCC == status) {
+				if(IoTask.Status.SUCC == status) {
 					// update the metrics with success
 					if(respLatency > 0 && respLatency > reqDuration) {
 						LOG.warn(

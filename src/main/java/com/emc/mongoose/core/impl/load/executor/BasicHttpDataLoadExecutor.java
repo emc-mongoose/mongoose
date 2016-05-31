@@ -2,11 +2,9 @@ package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
-import com.emc.mongoose.common.conf.enums.LoadType;
-import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.IoWorker;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
@@ -18,12 +16,12 @@ import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
 import com.emc.mongoose.common.net.ssl.SslContext;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.task.HttpDataIOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
+import com.emc.mongoose.core.api.io.task.HttpDataIoTask;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.task.BasicHttpDataIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicHttpDataIoTask;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.http.ExceptionLogger;
@@ -173,7 +171,7 @@ implements HttpDataLoadExecutor<T> {
 			reqExecutor, connConfig
 		);
 		//
-		final IOWorker.Factory ioWorkerFactory = new IOWorker.Factory(getName());
+		final IoWorker.Factory ioWorkerFactory = new IoWorker.Factory(getName());
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(), ioWorkerFactory
@@ -218,8 +216,8 @@ implements HttpDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected HttpDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
-		return new BasicHttpDataIOTask<>(item, nodeAddr, httpReqConfigCopy);
+	protected HttpDataIoTask<T> getIOTask(final T item, final String nodeAddr) {
+		return new BasicHttpDataIoTask<>(item, nodeAddr, httpReqConfigCopy);
 	}
 	//
 	@Override
@@ -273,17 +271,17 @@ implements HttpDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	public <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
+	public <A extends IoTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		//
-		final HttpDataIOTask<T> wsTask = (HttpDataIOTask<T>) ioTask;
+		final HttpDataIoTask<T> wsTask = (HttpDataIoTask<T>) ioTask;
 		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
 			connPool = connPoolMap.get(wsTask.getTarget());
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");
 		}
 		//
-		final Future<HttpDataIOTask<T>> futureResult;
+		final Future<HttpDataIoTask<T>> futureResult;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, futureCallback);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -297,9 +295,9 @@ implements HttpDataLoadExecutor<T> {
 		return (Future<A>) futureResult;
 	}
 	//
-	private final FutureCallback<HttpDataIOTask<T>> futureCallback = new FutureCallback<HttpDataIOTask<T>>() {
+	private final FutureCallback<HttpDataIoTask<T>> futureCallback = new FutureCallback<HttpDataIoTask<T>>() {
 		@Override
-		public final void completed(final HttpDataIOTask<T> ioTask) {
+		public final void completed(final HttpDataIoTask<T> ioTask) {
 			try {
 				ioTaskCompleted(ioTask);
 			} catch(final RemoteException ignore) {
@@ -316,13 +314,13 @@ implements HttpDataLoadExecutor<T> {
 	};
 	//
 	@Override
-	public <A extends IOTask<T>> int submitTasks(final List<A> ioTasks, int from, int to)
+	public <A extends IoTask<T>> int submitTasks(final List<A> ioTasks, int from, int to)
 	throws RejectedExecutionException {
 		int n = 0;
 		if(isPipeliningEnabled) {
 			if(ioTasks.size() > 0) {
-				final List<HttpDataIOTask<T>> wsIOTasks = (List<HttpDataIOTask<T>>) ioTasks;
-				final HttpDataIOTask<T> anyTask = wsIOTasks.get(0);
+				final List<HttpDataIoTask<T>> wsIOTasks = (List<HttpDataIoTask<T>>) ioTasks;
+				final HttpDataIoTask<T> anyTask = wsIOTasks.get(0);
 				final HttpHost tgtHost = anyTask.getTarget();
 				if(
 					null == client.executePipelined(
@@ -346,16 +344,16 @@ implements HttpDataLoadExecutor<T> {
 	}
 	//
 	private final class BatchFutureCallback
-	implements FutureCallback<List<HttpDataIOTask<T>>> {
+	implements FutureCallback<List<HttpDataIoTask<T>>> {
 		//
-		private final List<HttpDataIOTask<T>> tasks;
+		private final List<HttpDataIoTask<T>> tasks;
 		//
-		private BatchFutureCallback(final List<HttpDataIOTask<T>> tasks) {
+		private BatchFutureCallback(final List<HttpDataIoTask<T>> tasks) {
 			this.tasks = tasks;
 		}
 		//
 		@Override
-		public final void completed(final List<HttpDataIOTask<T>> result) {
+		public final void completed(final List<HttpDataIoTask<T>> result) {
 			try {
 				ioTaskCompletedBatch(result, 0, result.size());
 			} catch(final RemoteException e) {

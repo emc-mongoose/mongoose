@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.io.task;
 //
-import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.IoWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -10,13 +10,13 @@ import com.emc.mongoose.core.api.item.data.DataSizeException;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-import com.emc.mongoose.core.api.io.task.FileIOTask;
-import static com.emc.mongoose.core.api.io.task.IOTask.Status.CANCELLED;
-import static com.emc.mongoose.core.api.io.task.IOTask.Status.FAIL_IO;
-import static com.emc.mongoose.core.api.io.task.IOTask.Status.FAIL_TIMEOUT;
-import static com.emc.mongoose.core.api.io.task.IOTask.Status.RESP_FAIL_CORRUPT;
-import static com.emc.mongoose.core.api.io.task.IOTask.Status.RESP_FAIL_NOT_FOUND;
-import static com.emc.mongoose.core.api.io.task.IOTask.Status.SUCC;
+import com.emc.mongoose.core.api.io.task.FileIoTask;
+import static com.emc.mongoose.core.api.io.task.IoTask.Status.CANCELLED;
+import static com.emc.mongoose.core.api.io.task.IoTask.Status.FAIL_IO;
+import static com.emc.mongoose.core.api.io.task.IoTask.Status.FAIL_TIMEOUT;
+import static com.emc.mongoose.core.api.io.task.IoTask.Status.RESP_FAIL_CORRUPT;
+import static com.emc.mongoose.core.api.io.task.IoTask.Status.RESP_FAIL_NOT_FOUND;
+import static com.emc.mongoose.core.api.io.task.IoTask.Status.SUCC;
 //
 import com.emc.mongoose.core.impl.item.data.BasicDataItem;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeCount;
@@ -52,19 +52,19 @@ import java.util.concurrent.TimeoutException;
 /**
  Created by kurila on 23.11.15.
  */
-public class BasicFileIOTask<
+public class BasicFileIoTask<
 	T extends FileItem, C extends Directory<T>, X extends FileIoConfig<T, C>
-> extends BasicDataIOTask<T, C, X>
-implements FileIOTask<T> {
+> extends BasicDataIoTask<T, C, X>
+implements FileIoTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static FileSystem DEFAULT_FS = FileSystems.getDefault();
 	//
 	private final String dstDir, srcDir;
 	private final Set<OpenOption> openOptions = new HashSet<>();
-	private final RunnableFuture<BasicFileIOTask<T, C, X>> future;
+	private final RunnableFuture<BasicFileIoTask<T, C, X>> future;
 	//
-	public BasicFileIOTask(final T item, final X ioConfig) {
+	public BasicFileIoTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
 		C c = ioConfig.getSrcContainer();
 		srcDir = c == null ? null : c.getName();
@@ -223,7 +223,7 @@ implements FileIOTask<T> {
 		ByteBuffer buffIn;
 		int n;
 		while(countBytesDone < contentSize) {
-			buffIn = ((IOWorker) Thread.currentThread())
+			buffIn = ((IoWorker) Thread.currentThread())
 				.getThreadLocalBuff(contentSize - countBytesDone);
 			n = fileChannel.read(buffIn);
 			if(n < 0) {
@@ -352,13 +352,13 @@ implements FileIOTask<T> {
 	}
 	//
 	@Override
-	public final FileIOTask<T> get()
+	public final FileIoTask<T> get()
 	throws InterruptedException, ExecutionException {
 		return future.get();
 	}
 	//
 	@Override
-	public final FileIOTask<T> get(final long timeout, final TimeUnit unit)
+	public final FileIoTask<T> get(final long timeout, final TimeUnit unit)
 	throws InterruptedException, ExecutionException, TimeoutException {
 		return future.get(timeout, unit);
 	}

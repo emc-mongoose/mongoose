@@ -4,16 +4,16 @@ import com.emc.mongoose.common.conf.AppConfig;
 //
 import com.emc.mongoose.common.conf.DataRangesConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
-import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.IoWorker;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-import com.emc.mongoose.core.api.io.task.FileIOTask;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.FileIoTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
-import com.emc.mongoose.core.impl.io.task.BasicFileIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicFileIoTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,7 +50,7 @@ implements FileLoadExecutor<T> {
 		);
 		ioTaskExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(maxItemQueueSize), new IOWorker.Factory(getName())
+			new ArrayBlockingQueue<Runnable>(maxItemQueueSize), new IoWorker.Factory(getName())
 		) {
 			@Override @SuppressWarnings("unchecked")
 			protected final <V> RunnableFuture<V> newTaskFor(final Runnable task, final V value) {
@@ -61,7 +61,7 @@ implements FileLoadExecutor<T> {
 			protected final void afterExecute(final Runnable task, final Throwable throwable) {
 				if(throwable == null) {
 					try {
-						ioTaskCompleted((FileIOTask<T>) task);
+						ioTaskCompleted((FileIoTask<T>) task);
 					} catch(final RemoteException ignored) {
 					}
 				} else {
@@ -72,7 +72,7 @@ implements FileLoadExecutor<T> {
 	}
 	//
 	protected void logTrace(
-		final String nodeAddr, final T item, final IOTask.Status status,
+		final String nodeAddr, final T item, final IoTask.Status status,
 		final long reqTimeStart, final long countBytesDone, final int reqDuration,
 		final int respLatency, final long respDataLatency
 	) {
@@ -110,12 +110,12 @@ implements FileLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected FileIOTask<T> getIOTask(final T item, final String nextNodeAddr) {
-		return new BasicFileIOTask<>(item, (FileIoConfig<T, Directory<T>>) ioConfigCopy);
+	protected FileIoTask<T> getIOTask(final T item, final String nextNodeAddr) {
+		return new BasicFileIoTask<>(item, (FileIoConfig<T, Directory<T>>) ioConfigCopy);
 	}
 	//
 	@Override
-	public <A extends IOTask<T>> int submitTasks(
+	public <A extends IoTask<T>> int submitTasks(
 		final List<A> tasks, final int from, final int to
 	) throws RejectedExecutionException {
 		int n = 0;
@@ -130,9 +130,9 @@ implements FileLoadExecutor<T> {
 	}
 	//
 	@Override
-	public <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
+	public <A extends IoTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
-		return (Future<A>) ioTaskExecutor.<FileIOTask<T>>submit((FileIOTask<T>) ioTask);
+		return (Future<A>) ioTaskExecutor.<FileIoTask<T>>submit((FileIoTask<T>) ioTask);
 	}
 	//
 	@Override

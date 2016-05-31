@@ -6,9 +6,9 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.HttpDataIOTask;
+import com.emc.mongoose.core.api.io.task.HttpDataIoTask;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.impl.io.task.BasicHttpDataIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicHttpDataIoTask;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.HttpDataLoadClient;
 //
@@ -54,8 +54,8 @@ implements HttpDataLoadClient<T, W> {
 	}
 	//
 	@Override
-	protected HttpDataIOTask<T> getIOTask(final T item, final String nodeAddr) {
-		return new BasicHttpDataIOTask<>(
+	protected HttpDataIoTask<T> getIOTask(final T item, final String nodeAddr) {
+		return new BasicHttpDataIoTask<>(
 			item, nodeAddr,  (HttpRequestConfig<T, ? extends Container<T>>) ioConfigCopy
 		);
 	}
