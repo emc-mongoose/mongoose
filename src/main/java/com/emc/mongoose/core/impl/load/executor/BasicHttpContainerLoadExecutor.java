@@ -201,7 +201,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	protected HttpContainerIoTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
+	protected HttpContainerIoTask<T, C> getIoTask(final C item, final String nextNodeAddr) {
 		return new BasicHttpContainerTask<>(item, nextNodeAddr, httpReqConfigCopy);
 	}
 	//

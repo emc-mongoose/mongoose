@@ -69,7 +69,7 @@ implements FileIoTask<T> {
 		C c = ioConfig.getSrcContainer();
 		srcDir = c == null ? null : c.getName();
 		if(srcDir == null) {
-			dstDir = item.getPath();
+			dstDir = ioConfig.getItemPath();
 		} else {
 			c = ioConfig.getDstContainer();
 			dstDir = c == null ? null : c.getName();

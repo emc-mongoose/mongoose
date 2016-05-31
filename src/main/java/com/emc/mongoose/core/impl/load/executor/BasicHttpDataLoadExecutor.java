@@ -216,7 +216,7 @@ implements HttpDataLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected HttpDataIoTask<T> getIOTask(final T item, final String nodeAddr) {
+	protected HttpDataIoTask<T> getIoTask(final T item, final String nodeAddr) {
 		return new BasicHttpDataIoTask<>(item, nodeAddr, httpReqConfigCopy);
 	}
 	//

@@ -35,7 +35,7 @@ public class BasicHttpContainerLoadClient<
 	}
 	//
 	@Override
-	protected HttpContainerIoTask<T, C> getIOTask(final C item, final String nodeAddr) {
+	protected HttpContainerIoTask<T, C> getIoTask(final C item, final String nodeAddr) {
 		return new BasicHttpContainerTask<>(item, nodeAddr, (HttpRequestConfig) ioConfigCopy);
 	}
 	//

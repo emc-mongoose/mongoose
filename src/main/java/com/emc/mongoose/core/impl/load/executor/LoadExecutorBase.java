@@ -493,7 +493,7 @@ implements LoadExecutor<T> {
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final String nextNodeAddr = storageNodeAddrs == null ?
 			null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
-		final IoTask<T> ioTask = getIOTask(item, nextNodeAddr);
+		final IoTask<T> ioTask = getIoTask(item, nextNodeAddr);
 		// don't fill the connection pool as fast as possible, this may cause a failure
 		//
 		try {
@@ -573,7 +573,7 @@ implements LoadExecutor<T> {
 		return put(items, 0, items.size());
 	}
 	//
-	protected abstract IoTask<T> getIOTask(final T item, final String nextNodeAddr);
+	protected abstract IoTask<T> getIoTask(final T item, final String nextNodeAddr);
 	//
 	protected int getIOTasks(
 		final List<T> items, final int from, final int to,
@@ -583,7 +583,7 @@ implements LoadExecutor<T> {
 			if(item == null) {
 				break;
 			} else {
-				dstTaskBuff.add(getIOTask(item, nextNodeAddr));
+				dstTaskBuff.add(getIoTask(item, nextNodeAddr));
 			}
 		}
 		return to - from;

@@ -105,7 +105,7 @@ implements DirectoryLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	protected DirectoryIoTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
+	protected DirectoryIoTask<T, C> getIoTask(final C item, final String nextNodeAddr) {
 		return new BasicDirectoryIoTask<>(item, (FileIoConfig<T, C>) ioConfigCopy);
 	}
 	//

@@ -110,7 +110,7 @@ implements FileLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected FileIoTask<T> getIOTask(final T item, final String nextNodeAddr) {
+	protected FileIoTask<T> getIoTask(final T item, final String nextNodeAddr) {
 		return new BasicFileIoTask<>(item, (FileIoConfig<T, Directory<T>>) ioConfigCopy);
 	}
 	//

@@ -276,7 +276,6 @@ implements IoConfig<T, C> {
 		return this;
 	}
 	//
-	//
 	@SuppressWarnings("unchecked")
 	public IoConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		this.appConfig = appConfig;
@@ -360,6 +359,16 @@ implements IoConfig<T, C> {
 			getItemNamingOffset()
 		);
 		return new NewContainerInput<>(itemCls, itemNameInput);
+	}
+	//
+	@Override
+	public final String getItemPath() {
+		try {
+			return pathInput == null ? "" : pathInput.get();
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to generated the path");
+			return "";
+		}
 	}
 	//
 	@Override

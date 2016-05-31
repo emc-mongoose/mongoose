@@ -12,6 +12,8 @@ import com.emc.mongoose.core.api.item.data.ContentSource;
 //
 import java.io.Closeable;
 import java.io.Externalizable;
+import java.io.IOException;
+
 /**
  Created by kurila on 23.11.15.
  */
@@ -72,4 +74,6 @@ extends Externalizable, Cloneable, Closeable {
 	Class<C> getContainerClass();
 	//
 	Class<T> getItemClass();
+	//
+	String getItemPath();
 }

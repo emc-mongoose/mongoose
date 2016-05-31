@@ -36,7 +36,7 @@ public class BasicDirectoryLoadClient<
 	}
 	//
 	@Override
-	protected IoTask<C> getIOTask(final C item, final String nextNodeAddr) {
+	protected IoTask<C> getIoTask(final C item, final String nextNodeAddr) {
 		return new BasicDirectoryIoTask<>(item, (FileIoConfig<T, C>) ioConfigCopy);
 	}
 }
