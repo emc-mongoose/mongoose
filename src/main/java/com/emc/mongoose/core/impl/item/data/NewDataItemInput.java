@@ -32,7 +32,7 @@ implements Input<T> {
 		);
 		this.pathInput = pathInput;
 		this.idInput = idInput;
-		this.contentSrc = contentSrc;
+		this.contentSrc = ContentSourceUtil.clone(contentSrc);
 		this.dataSize = dataSize;
 	}
 	//
@@ -84,7 +84,11 @@ implements Input<T> {
 	}
 	//
 	@Override
-	public final void close() {
+	public final void close()
+	throws IOException {
+		if(contentSrc != null) {
+			contentSrc.close();
+		}
 	}
 	//
 	@Override

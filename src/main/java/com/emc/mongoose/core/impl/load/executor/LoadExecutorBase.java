@@ -23,6 +23,7 @@ import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
 import com.emc.mongoose.core.impl.load.barrier.ActiveTasksThrottle;
 import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
@@ -66,7 +67,7 @@ implements LoadExecutor<T> {
 	//
 	protected final AppConfig appConfig;
 	//
-	protected final ContentSource dataSrc;
+	protected final ContentSource contentSrc;
 	protected final IoConfig<? extends Item, ? extends Container<? extends Item>>
 		ioConfigCopy;
 	protected final LoadType loadType;
@@ -224,7 +225,7 @@ implements LoadExecutor<T> {
 		if(storageNodeAddrs != null) {
 			nodeBalancer = new BasicNodeBalancer(storageNodeAddrs);
 		}
-		dataSrc = ioConfig.getContentSource();
+		contentSrc = ContentSourceUtil.clone(ioConfig.getContentSource());
 		//
 		mgmtExecutor = new ThreadPoolExecutor(
 			1, 1, 0, TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(batchSize),
@@ -1046,36 +1047,33 @@ implements LoadExecutor<T> {
 	protected void closeActually()
 	throws IOException {
 		LOG.debug(Markers.MSG, "Invoked close for {}", getName());
-		try {
-			if(isInterrupted.compareAndSet(false, true)) {
-				synchronized(state) {
-					state.notifyAll();
-				}
-				interruptActually();
+		if(isInterrupted.compareAndSet(false, true)) {
+			synchronized(state) {
+				state.notifyAll();
 			}
-		} finally {
-			if(consumer != null && !(consumer instanceof LifeCycle)) {
-				try {
-					//
-					consumer.close();
-					LOG.debug(
-						Markers.MSG, "{}: closed the consumer \"{}\" successfully",
-						getName(), consumer
-					);
-				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "{}: failed to close the consumer \"{}\"",
-						getName(), consumer
-					);
-				}
-			}
-			LoadRegistry.unregister(this);
-			if(loadedPrevState != null) {
-				if(RESTORED_STATES_MAP.containsKey(appConfig.getRunId())) {
-					RESTORED_STATES_MAP.get(appConfig.getRunId()).remove(loadedPrevState);
-				}
+			interruptActually();
+		}
+		if(consumer != null && !(consumer instanceof LifeCycle)) {
+			try {
+				consumer.close();
+				LOG.debug(
+					Markers.MSG, "{}: closed the consumer \"{}\" successfully",
+					getName(), consumer
+				);
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "{}: failed to close the consumer \"{}\"",
+					getName(), consumer
+				);
 			}
 		}
+		LoadRegistry.unregister(this);
+		if(loadedPrevState != null) {
+			if(RESTORED_STATES_MAP.containsKey(appConfig.getRunId())) {
+				RESTORED_STATES_MAP.get(appConfig.getRunId()).remove(loadedPrevState);
+			}
+		}
+		contentSrc.close();
 		LOG.debug(Markers.MSG, "\"{}\" closed successfully", getName());
 	}
 	//

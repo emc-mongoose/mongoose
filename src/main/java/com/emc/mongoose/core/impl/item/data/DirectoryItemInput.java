@@ -81,7 +81,7 @@ extends GenericContainerItemInputBase<F, D> {
 	) throws IllegalStateException {
 		super(dir.getName(), new DummyDirectoryHelper<F, D>(), itemCls, maxCount);
 		this.batchSize = batchSize;
-		this.contentSrc = contentSrc;
+		this.contentSrc = ContentSourceUtil.clone(contentSrc);
 		try {
 			dirStream = Files.newDirectoryStream(
 				Paths.get(dir.getName()), DEFAULT_DIRECTORY_STREAM_FILTER
@@ -130,5 +130,6 @@ extends GenericContainerItemInputBase<F, D> {
 	public final void close()
 	throws IOException {
 		dirStream.close();
+		contentSrc.close();
 	}
 }
