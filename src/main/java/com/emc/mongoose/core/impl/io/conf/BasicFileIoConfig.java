@@ -70,6 +70,8 @@ implements FileIoConfig<F, D> {
 			setContentSource(ContentSourceBase.getInstance(appConfig));
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply the content source");
+		} catch(final OutOfMemoryError e) {
+			e.printStackTrace(System.out);
 		}
 		setVerifyContentFlag(appConfig.getItemDataVerify());
 		final SizeInBytes sizeInfo = appConfig.getItemDataSize();

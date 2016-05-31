@@ -44,7 +44,7 @@ import java.util.TreeMap;
  Created by kurila on 17.03.16.
  */
 public class RampupJobContainer
-	extends SequentialJobContainer {
+extends SequentialJobContainer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int tblWidth = 124;
@@ -347,5 +347,10 @@ public class RampupJobContainer
 		LOG.info(Markers.MSG, strb.toString());
 		//
 		loadJobMap.clear();
+		try {
+			contentSrc.close();
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the content source");
+		}
 	}
 }

@@ -127,6 +127,13 @@ implements IoConfig<T, C> {
 	public void close()
 	throws IOException {
 		if(closeFlag.compareAndSet(false, true)) {
+			if(contentSrc != null) {
+				try {
+					contentSrc.close();
+				} finally {
+					contentSrc = null;
+				}
+			}
 			LOG.debug(Markers.MSG, "Request config instance #{} marked as closed", hashCode());
 		}
 	}

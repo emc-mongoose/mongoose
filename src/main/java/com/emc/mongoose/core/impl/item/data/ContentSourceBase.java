@@ -123,7 +123,7 @@ implements ContentSource {
 				final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 				DEFAULT = getInstance(appConfig);
 			}
-		} catch(final Exception e) {
+		} catch(final Throwable e) {
 			LogUtil.exception(LOG, Level.FATAL, e, "Failed to init the ring buffer");
 		} finally {
 			LOCK.unlock();
@@ -142,9 +142,12 @@ implements ContentSource {
 				final File f = p.toFile();
 				final long fileSize = f.length();
 				if(fileSize > 0) {
-					instance = new FileContentSource(
-						Files.newByteChannel(p, StandardOpenOption.READ), fileSize
-					);
+					try(
+						final ReadableByteChannel rbc = Files
+							.newByteChannel(p, StandardOpenOption.READ)
+					) {
+						instance = new FileContentSource(rbc, fileSize);
+					}
 				} else {
 					throw new IllegalStateException(
 						"Content source file @" + contentFilePath + " is empty"
@@ -224,5 +227,15 @@ implements ContentSource {
 			Markers.MSG, "Pre-generating the data done in {}[us]",
 			(System.nanoTime() - d) / 1e9
 		);
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		if(byteLayersMap != null) {
+			byteLayersMap.clear();
+			byteLayersMap = null;
+		}
+		zeroByteLayer = null;
 	}
 }
