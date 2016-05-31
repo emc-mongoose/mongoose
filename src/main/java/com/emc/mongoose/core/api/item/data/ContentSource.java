@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  A finite data source for data generation purposes.
  */
 public interface ContentSource
-extends Closeable, Externalizable {
+extends Cloneable, Closeable, Externalizable {
 	//
 	int getSize();
 	//

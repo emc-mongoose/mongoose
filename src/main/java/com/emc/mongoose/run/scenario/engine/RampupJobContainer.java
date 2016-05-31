@@ -24,7 +24,7 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.impl.item.ItemTypeUtil;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
 import org.apache.commons.lang.StringUtils;
@@ -91,7 +91,7 @@ extends SequentialJobContainer {
 		final StorageType storageType = localConfig.getStorageType();
 		itemCls = ItemTypeUtil.getItemClass(itemType, storageType);
 		try {
-			contentSrc = ContentSourceBase.getInstance(localConfig);
+			contentSrc = ContentSourceUtil.getInstance(localConfig);
 		} catch(final IOException e) {
 			throw new IllegalStateException("Failed to init the content source", e);
 		}

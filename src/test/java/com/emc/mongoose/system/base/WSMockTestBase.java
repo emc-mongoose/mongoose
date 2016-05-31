@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 //
@@ -43,6 +43,6 @@ extends LoggingTestBase {
 		WS_MOCK.close();
 		LOG.info(Markers.MSG, "HTTP storage mock stopped");
 		LoggingTestBase.tearDownClass();
-		ContentSourceBase.DEFAULT = null; // reset the content source
+		ContentSourceUtil.DEFAULT = null; // reset the content source
 	}
 }

@@ -13,7 +13,7 @@ import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 //
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
 import com.emc.mongoose.core.impl.item.data.BasicFile;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.core.impl.item.data.DirectoryItemInput;
 //
 import org.apache.commons.lang.StringUtils;
@@ -67,7 +67,7 @@ implements FileIoConfig<F, D> {
 		setItemNamingRadix(appConfig.getItemNamingRadix());
 		setItemNamingOffset(appConfig.getItemNamingOffset());
 		try {
-			setContentSource(ContentSourceBase.getInstance(appConfig));
+			setContentSource(ContentSourceUtil.getInstance(appConfig));
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply the content source");
 		} catch(final OutOfMemoryError e) {

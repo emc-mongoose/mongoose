@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.impl.item.container.BasicDirectory;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.core.impl.item.data.CsvFileDataItemInput;
 import com.emc.mongoose.system.base.DistributedFileSystemTestBase;
 import com.emc.mongoose.system.tools.LogValidator;
@@ -94,7 +94,7 @@ extends DistributedFileSystemTestBase {
 			countRead = client.read(
 				new CsvFileDataItemInput<FileItem>(
 					dirListFile.toPath(), (Class) BasicDirectory.class,
-					ContentSourceBase.DEFAULT
+					ContentSourceUtil.DEFAULT
 				),
 				null, countWritten, 100, true
 			);

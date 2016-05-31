@@ -20,8 +20,8 @@ import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
 import com.emc.mongoose.core.impl.item.container.NewContainerInput;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 //
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import org.apache.commons.lang.StringUtils;
 //
@@ -74,7 +74,7 @@ implements IoConfig<T, C> {
 		this();
 		if(ioConf2Clone != null) {
 			setLoadType(ioConf2Clone.getLoadType());
-			setContentSource(ioConf2Clone.getContentSource());
+			setContentSource(ContentSourceUtil.clone(ioConf2Clone.getContentSource()));
 			setVerifyContentFlag(ioConf2Clone.getVerifyContentFlag());
 			setDstContainer(ioConf2Clone.getDstContainer());
 			setSrcContainer(ioConf2Clone.getSrcContainer());
@@ -104,7 +104,7 @@ implements IoConfig<T, C> {
 		final IoConfigBase<T, C> ioConf = (IoConfigBase<T, C>) super.clone();
 		ioConf
 			.setLoadType(loadType)
-			.setContentSource(contentSrc)
+			.setContentSource(ContentSourceUtil.clone(contentSrc))
 			.setVerifyContentFlag(verifyContentFlag)
 			.setDstContainer(dstContainer)
 			.setNameSpace(nameSpace)
@@ -322,7 +322,7 @@ implements IoConfig<T, C> {
 		setItemNamingRadix(appConfig.getItemNamingRadix());
 		setItemNamingOffset(appConfig.getItemNamingOffset());
 		try {
-			setContentSource(ContentSourceBase.getInstance(appConfig));
+			setContentSource(ContentSourceUtil.getInstance(appConfig));
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply the content source");
 		}

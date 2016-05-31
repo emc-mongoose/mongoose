@@ -39,8 +39,8 @@ implements DataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public BasicDataItem() {
 		this(
-			ContentSourceBase.DEFAULT == null ?
-				ContentSourceBase.getDefaultInstance() : ContentSourceBase.DEFAULT
+			ContentSourceUtil.DEFAULT == null ?
+				ContentSourceUtil.getDefaultInstance() : ContentSourceUtil.DEFAULT
 		);
 	}
 	//

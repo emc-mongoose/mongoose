@@ -1,32 +1,19 @@
 package com.emc.mongoose.core.impl.item.data;
 //
-import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.math.MathUtil;
 import com.emc.mongoose.common.log.Markers;
-//
 import com.emc.mongoose.core.api.item.data.ContentSource;
-//
 import org.apache.commons.collections4.map.LRUMap;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Map;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 16.10.15.
  */
@@ -74,6 +61,15 @@ implements ContentSource {
 		} while(n < size);
 	}
 	//
+	protected ContentSourceBase(final ContentSourceBase anotherContentSource) {
+		this.zeroByteLayer = anotherContentSource.zeroByteLayer;
+		this.seed = anotherContentSource.seed;
+		byteLayersMap = new LRUMap<>(
+			(int) SizeInBytes.toFixedSize("100MB") / zeroByteLayer.capacity()
+		);
+		byteLayersMap.put(0, zeroByteLayer);
+	}
+	//
 	@Override
 	public final int getSize() {
 		return zeroByteLayer.capacity();
@@ -112,58 +108,7 @@ implements ContentSource {
 		);
 		byteLayersMap.put(0, zeroByteLayer);
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	public static ContentSourceBase DEFAULT = null;
-	private final static Lock LOCK = new ReentrantLock();
-	public static ContentSourceBase getDefaultInstance()
-	throws IllegalStateException {
-		LOCK.lock();
-		try {
-			if(DEFAULT == null) {
-				final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
-				DEFAULT = getInstance(appConfig);
-			}
-		} catch(final Throwable e) {
-			LogUtil.exception(LOG, Level.FATAL, e, "Failed to init the ring buffer");
-		} finally {
-			LOCK.unlock();
-		}
-		return DEFAULT;
-	}
-	//
-	public static ContentSourceBase getInstance(final AppConfig appConfig)
-	throws IOException, IllegalStateException {
-		final ContentSourceBase instance;
-		final String contentFilePath = appConfig.getItemDataContentFile();
-		if(contentFilePath != null && !contentFilePath.isEmpty()) {
-			final Path p = Paths.get(contentFilePath);
-			if(Files.exists(p) && !Files.isDirectory(p) &&
-				Files.isReadable(p)) {
-				final File f = p.toFile();
-				final long fileSize = f.length();
-				if(fileSize > 0) {
-					try(
-						final ReadableByteChannel rbc = Files
-							.newByteChannel(p, StandardOpenOption.READ)
-					) {
-						instance = new FileContentSource(rbc, fileSize);
-					}
-				} else {
-					throw new IllegalStateException(
-						"Content source file @" + contentFilePath + " is empty"
-					);
-				}
-			} else {
-				throw new IllegalStateException(
-					"Content source file @" + contentFilePath + " doesn't exist/" +
-					"not readable/is a directory"
-				);
-			}
-		} else {
-			instance = new SeedContentSource(appConfig);
-		}
-		return instance;
-	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final ByteBuffer getLayer(final int layerIndex) {

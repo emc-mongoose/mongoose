@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.system.base.LoggingTestBase;
 import com.emc.mongoose.system.base.ScenarioTestBase;
 import com.emc.mongoose.system.tools.StdOutUtil;
@@ -75,7 +75,7 @@ extends ScenarioTestBase {
 			);
 			appConfig.setProperty(AppConfig.KEY_LOAD_TYPE, TestConstants.LOAD_READ.toLowerCase());
 			appConfig.setProperty(AppConfig.KEY_ITEM_DATA_CONTENT_FILE, "conf/content/zerobytes");
-			ContentSourceBase.DEFAULT = null;
+			ContentSourceUtil.DEFAULT = null;
 			appConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, RUN_ID);
 			//
 			logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());

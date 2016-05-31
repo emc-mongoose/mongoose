@@ -13,12 +13,12 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.base.BinFileItemOutput;
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 //
 import com.emc.mongoose.core.impl.item.base.ItemListOutput;
 //
 import com.emc.mongoose.core.impl.item.base.ListItemInput;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 //
@@ -77,7 +77,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
 			final Output<HttpDataItem> dataDstR = new CsvFileItemOutput<>(
-				(Class<? extends HttpDataItem>) BasicHttpData.class, ContentSourceBase.getDefaultInstance()
+				(Class<? extends HttpDataItem>) BasicHttpData.class, ContentSourceUtil.getDefaultInstance()
 			);
 			final long nRead = client.read(
 				dataDstU.getInput(), dataDstR, nUpdated, DEFAULT_CONN_PER_NODE, true
@@ -99,7 +99,7 @@ implements Runnable {
 			// recreate the items
 			final Output<HttpDataItem> dataDstW2 = new CsvFileItemOutput<>(
 				(Class<? extends HttpDataItem>) BasicHttpData.class,
-				ContentSourceBase.getDefaultInstance()
+				ContentSourceUtil.getDefaultInstance()
 			);
 			final long nReWritten = client.write(
 				new ListItemInput<>(itemBuff), dataDstW2, nWritten, DEFAULT_CONN_PER_NODE

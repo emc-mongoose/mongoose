@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.system.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.Assert;
@@ -42,7 +42,7 @@ extends StandaloneClientTestBase {
 				.build()
 		) {
 			final Output<HttpDataItem> writeOutput = new CsvFileItemOutput<>(
-				(Class) BasicHttpData.class, ContentSourceBase.DEFAULT
+				(Class) BasicHttpData.class, ContentSourceUtil.DEFAULT
 			);
 			COUNT_WRITTEN = client.create(
 				writeOutput, COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10MB")
