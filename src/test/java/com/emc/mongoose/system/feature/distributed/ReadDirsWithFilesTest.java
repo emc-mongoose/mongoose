@@ -50,7 +50,6 @@ extends DistributedFileSystemTestBase {
 				.build()
 		) {
 			countWritten = client.create(null, COUNT_TO_WRITE, 100, 0);
-			//
 			RunIdFileManager.flushAll();
 		}
 		//
@@ -59,6 +58,7 @@ extends DistributedFileSystemTestBase {
 		String nextDirName;
 		StorageClient<FileItem> nextDirClient;
 		CLIENT_BUILDER
+			.setStorageType("fs")
 			.setItemType("data")
 			.setLimitCount(COUNT_TO_WRITE);
 		final AppConfig rtConfig = BasicConfig.THREAD_CONTEXT.get();
@@ -88,6 +88,7 @@ extends DistributedFileSystemTestBase {
 		try(
 			final StorageClient<FileItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
+				.setStorageType("fs")
 				.setItemType("container")
 				.build()
 		) {
