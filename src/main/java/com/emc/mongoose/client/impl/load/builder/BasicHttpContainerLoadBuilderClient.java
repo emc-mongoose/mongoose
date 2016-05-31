@@ -1,5 +1,6 @@
 package com.emc.mongoose.client.impl.load.builder;
 //
+import com.emc.mongoose.client.api.load.builder.HttpContainerLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.HttpContainerLoadClient;
 //
 import com.emc.mongoose.client.impl.load.executor.BasicHttpContainerLoadClient;
@@ -32,7 +33,8 @@ public class BasicHttpContainerLoadBuilderClient<
 	C extends Container<T>,
 	W extends HttpContainerLoadSvc<T, C>,
 	U extends HttpContainerLoadClient<T, C, W>
-> extends ContainerLoadBuilderClientBase<T, C, W, U, HttpContainerLoadBuilderSvc<T, C, W>> {
+> extends ContainerLoadBuilderClientBase<T, C, W, U, HttpContainerLoadBuilderSvc<T, C, W>>
+implements HttpContainerLoadBuilderClient<T, C, W, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//

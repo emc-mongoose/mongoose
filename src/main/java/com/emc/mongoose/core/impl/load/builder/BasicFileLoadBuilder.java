@@ -9,6 +9,7 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
+import com.emc.mongoose.core.api.load.builder.FileLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.conf.BasicFileIoConfig;
@@ -34,7 +35,8 @@ import java.util.Map;
  Created by kurila on 26.11.15.
  */
 public class BasicFileLoadBuilder<T extends FileItem, U extends FileLoadExecutor<T>>
-extends DataLoadBuilderBase<T, U> {
+extends DataLoadBuilderBase<T, U>
+implements FileLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
