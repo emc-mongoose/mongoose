@@ -13,10 +13,9 @@ define([
              templatesUtil,
              cssUtil,
              elementAppender,
-             openFileHandler, 
+             openFileHandler,
              eventCreator,
-             filesUtil
-) {
+             filesUtil) {
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const BLOCK = templatesUtil.blocks();
 	const TREE_ELEM = templatesUtil.configTreeElements();
@@ -39,7 +38,7 @@ define([
 	}
 
 	const clickEventCreatorFactory = function () {
-		
+
 		function scenarioFileClickEvent(aName) {
 			$.get('/scenario', {path: aName}, null, 'json')
 				.done(function (scenarioJson) {
@@ -51,7 +50,7 @@ define([
 					alert('The scenario cannot be loaded')
 				})
 		}
-		
+
 		function backClickEvent() {
 			showMainTree();
 			$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
@@ -68,7 +67,19 @@ define([
 
 	function render(scenariosArray) {
 		const rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
-		elementAppender.arrayAsTree(scenariosArray, rootTreeUlElem, 'dir', DELIMITER.PATH, localClickEventCreator.scenarioFile);
+		// elementAppender.arrayAsTree(scenariosArray, rootTreeUlElem, 'dir', DELIMITER.PATH, localClickEventCreator.scenarioFile);
+		const temp = {
+			item: {
+				// "type": "data",
+				data: {
+					"content": null
+				},
+				data2: {
+					"content": null
+				}
+			}
+		};
+		elementAppender.treeOfItem(scenariosArray, rootTreeUlElem, DELIMITER.PATH, localClickEventCreator.scenarioFile, true);
 	}
 
 	function updateDetailsTree(scenarioObject) {
@@ -136,11 +147,11 @@ define([
 	function getChangedScenario() {
 		return changedScenarioObject;
 	}
-	
+
 	function isChanged() {
 		return !filesUtil.compareObjects(pureScenarioObject, changedScenarioObject);
 	}
-	
+
 	return {
 		render: render,
 		setTabParameters: setTabParameters,

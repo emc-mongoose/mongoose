@@ -27,7 +27,7 @@ public final class MainServlet
 
 	private static final Path PATH_TO_APP_CONFIG_DIR =
 			Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF);
-	public static final Path PATH_TO_SCENARIO_DIR =
+	static final Path PATH_TO_SCENARIO_DIR =
 			Paths.get(getRootDir(), Scenario.DIR_SCENARIO);
 	private static final String APP_CONFIG_JSON_KEY = "appConfig";
 	private static final String SCENARIOS_JSON_KEY = "scenarios";

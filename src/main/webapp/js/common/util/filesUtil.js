@@ -41,7 +41,8 @@ define([
 	function changeObjAndFile(obj, address, newValue, delimiter, tabType, pElem) {
 		changeObj(obj, address, newValue, delimiter);
 		changeFileToSave(tabType, obj);
-		pElem.text('MODIFIED');
+		// pElem.text('MODIFIED');
+		pElem.text('');
 	}
 
 	// dumb comparison

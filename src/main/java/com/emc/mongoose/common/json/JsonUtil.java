@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,14 +17,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Created on 04.04.16.
  */
+@SuppressWarnings("WeakerAccess")
 public class JsonUtil {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -35,6 +39,7 @@ public class JsonUtil {
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 	static {
 		JSON_MAPPER.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+		JSON_MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
 	}
 	private static final Pattern COMMENT_PATTERN = Pattern.compile("(^[^\"]*)(//.*$)");
 
@@ -88,18 +93,19 @@ public class JsonUtil {
 
 	private static void listDirectoryContents(final Path dirPath, final List<Object> rootList) {
 		try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
-			Map<String, Object> dirMap;
+			final Map<String, Object> dirMap = new TreeMap<>();
 			List<Object> subList;
 			for (final Path file : stream) {
 				if (file.toFile().isDirectory()) {
-					dirMap = new HashMap<>();
 					subList = new ArrayList<>();
 					dirMap.put(file.getFileName().toString(), subList);
-					rootList.add(dirMap);
 					listDirectoryContents(file.toAbsolutePath(), subList);
 				} else {
 					rootList.add(file.getFileName().toString());
 				}
+			}
+			if (!dirMap.isEmpty()) {
+				rootList.add(dirMap);
 			}
 		} catch (final IOException e) {
 			LOG.error("Failed to list the scenario directory");
