@@ -3,7 +3,7 @@ package com.emc.mongoose.core.api.io.task;
 import com.emc.mongoose.common.conf.enums.LoadType;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.

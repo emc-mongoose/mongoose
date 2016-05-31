@@ -15,7 +15,7 @@ import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.barrier.Throttle;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 import com.emc.mongoose.server.api.load.executor.MixedFileLoadSvc;
@@ -152,7 +152,7 @@ implements MixedFileLoadSvc<F> {
 			.appendNewLine();
 		FileLoadExecutor<F> nextLoadJob;
 		int nextLoadWeight;
-		IOStats.Snapshot nextLoadStats = null;
+		IoStats.Snapshot nextLoadStats = null;
 		for(final LoadType nextLoadType : loadSvcMap.keySet()) {
 			nextLoadWeight = loadTypeWeights.get(nextLoadType);
 			nextLoadJob = loadSvcMap.get(nextLoadType);

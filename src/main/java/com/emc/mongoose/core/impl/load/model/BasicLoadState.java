@@ -9,7 +9,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -36,7 +36,7 @@ implements LoadState<T> {
 	//
 	private final int loadNumber;
 	private final AppConfig appConfig;
-	private final IOStats.Snapshot ioStatsSnapshot;
+	private final IoStats.Snapshot ioStatsSnapshot;
 	private final T lastDataItem;
 	//
 	@Override
@@ -50,7 +50,7 @@ implements LoadState<T> {
 	}
 	//
 	@Override
-	public IOStats.Snapshot getStatsSnapshot() {
+	public IoStats.Snapshot getStatsSnapshot() {
 		return ioStatsSnapshot;
 	}
 	//
@@ -80,7 +80,7 @@ implements LoadState<T> {
 		//
 		private int loadNumber;
 		private AppConfig appConfig;
-		private IOStats.Snapshot ioStatsSnapshot;
+		private IoStats.Snapshot ioStatsSnapshot;
 		private T lastDataItem;
 		//
 		@Override
@@ -96,7 +96,7 @@ implements LoadState<T> {
 		}
 		//
 		@Override
-		public Builder<T, U> setStatsSnapshot(final IOStats.Snapshot ioStatsSnapshot) {
+		public Builder<T, U> setStatsSnapshot(final IoStats.Snapshot ioStatsSnapshot) {
 			this.ioStatsSnapshot = ioStatsSnapshot;
 			return this;
 		}
@@ -238,7 +238,7 @@ implements LoadState<T> {
 			appConfig.getLoadLimitCount() : Long.MAX_VALUE;
 		//
 		for(final LoadState state : states) {
-			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
+			final IoStats.Snapshot statsSnapshot = state.getStatsSnapshot();
 			if (statsSnapshot == null) {
 				return true;
 			}

@@ -9,8 +9,8 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 14.09.15.
  */
-public class BasicIOStats
-extends IOStatsBase {
+public class BasicIoStats
+extends IoStatsBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -20,7 +20,7 @@ extends IOStatsBase {
 	//
 	protected CustomMeter throughPutSucc, throughPutFail, reqBytes;
 	//
-	public BasicIOStats(
+	public BasicIoStats(
 		final String name, final boolean serveJmxFlag, final int updateIntervalSec
 	) {
 		super(name, serveJmxFlag);

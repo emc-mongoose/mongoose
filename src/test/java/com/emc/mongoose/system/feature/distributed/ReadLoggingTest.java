@@ -86,6 +86,8 @@ extends DistributedClientTestBase {
 				TimeUnit.SECONDS.sleep(1);
 				stdOutContent = stdOutInterceptorStream.toByteArray();
 			}
+		} catch(final Throwable e) {
+			e.printStackTrace(System.err);
 		}
 		LOG.info(
 			Markers.MSG, "Read {} items, captured {} bytes from stdout", countRead, stdOutContent.length

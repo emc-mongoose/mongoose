@@ -7,7 +7,7 @@ import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.ItemProducer;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 //
 import org.apache.logging.log4j.Marker;
 //
@@ -45,7 +45,7 @@ extends Output<T>, LifeCycle, ItemProducer<T> {
 	LoadState<T> getLoadState()
 	throws RemoteException;
 	//
-	IOStats.Snapshot getStatsSnapshot()
+	IoStats.Snapshot getStatsSnapshot()
 	throws RemoteException;
 	//
 	void logMetrics(Marker marker)

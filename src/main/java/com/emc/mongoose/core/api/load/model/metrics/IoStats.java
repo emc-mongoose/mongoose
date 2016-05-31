@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  Created by kurila on 14.09.15.
  */
-public interface IOStats
+public interface IoStats
 extends Closeable {
 	//
 	int MIB = 0x100000;

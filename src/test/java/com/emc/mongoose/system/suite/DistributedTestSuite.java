@@ -18,15 +18,15 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	CircularReadTest.class,
+	/*CircularReadTest.class,*/
 	CircularUpdateTest.class,
 	WriteLoggingTest.class,
 	WriteByTimeTest.class,
 	ReadDirsWithFilesTest.class,
 	ReadLoggingTest.class,
-	S3ReadUsingBucketListingDistributedTest.class,
+	/*S3ReadUsingBucketListingDistributedTest.class,
 	UpdateLoggingTest.class,
-	DeleteLoggingTest.class,
+	DeleteLoggingTest.class,*/
 })
 public class DistributedTestSuite {
 }

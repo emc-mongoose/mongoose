@@ -8,7 +8,7 @@ import com.codahale.metrics.UniformSnapshot;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtil;
 //
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,8 +19,8 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 15.09.15.
  */
-public abstract class IOStatsBase
-implements IOStats {
+public abstract class IoStatsBase
+implements IoStats {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static double M = 1e6;
@@ -34,7 +34,7 @@ implements IOStats {
 	protected final Histogram reqDuration, respLatency;
 	protected volatile long tsStartMicroSec = -1, prevElapsedTimeMicroSec = 0;
 	//
-	protected IOStatsBase(final String name, final boolean serveJmxFlag) {
+	protected IoStatsBase(final String name, final boolean serveJmxFlag) {
 		this.name = name;
 		if(serveJmxFlag) {
 			mBeanServer = ServiceUtil.getMBeanServer(DEFAULT_JMX_PORT);

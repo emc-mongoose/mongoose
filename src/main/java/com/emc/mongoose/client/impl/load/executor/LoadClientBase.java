@@ -20,7 +20,7 @@ import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
-import com.emc.mongoose.client.impl.load.metrics.model.AggregatedRemoteIOStats;
+import com.emc.mongoose.client.impl.load.metrics.model.AggregatedRemoteIoStats;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -256,7 +256,7 @@ implements LoadClient<T, W> {
 	//
 	@Override
 	protected final void initStats(final boolean flagServeJMX) {
-		ioStats = new AggregatedRemoteIOStats<>(getName(), flagServeJMX, remoteLoadMap);
+		ioStats = new AggregatedRemoteIoStats<>(getName(), flagServeJMX, remoteLoadMap);
 		lastStats = ioStats.getSnapshot();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

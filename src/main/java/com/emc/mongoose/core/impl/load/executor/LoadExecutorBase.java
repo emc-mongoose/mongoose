@@ -21,7 +21,7 @@ import com.emc.mongoose.core.api.load.barrier.Throttle;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
@@ -29,7 +29,7 @@ import com.emc.mongoose.core.impl.load.barrier.ActiveTasksThrottle;
 import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.LoadRegistry;
-import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
+import com.emc.mongoose.core.impl.load.model.metrics.BasicIoStats;
 import com.emc.mongoose.core.impl.load.tasks.processors.ChartPackage;
 import com.emc.mongoose.core.impl.load.tasks.processors.PolyLineManager;
 import org.apache.logging.log4j.Level;
@@ -80,8 +80,8 @@ implements LoadExecutor<T> {
 	// METRICS section
 	protected final int metricsPeriodSec;
 	protected final boolean preconditionFlag;
-	protected IOStats ioStats;
-	protected volatile IOStats.Snapshot lastStats = null;
+	protected IoStats ioStats;
+	protected volatile IoStats.Snapshot lastStats = null;
 	// STATES section //////////////////////////////////////////////////////////////////////////////
 	private Balancer<String> nodeBalancer = null;
 	private LoadState<T> loadedPrevState = null;
@@ -268,7 +268,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected void initStats(final boolean flagServeJMX) {
-		ioStats = new BasicIOStats(getName(), flagServeJMX, metricsPeriodSec);
+		ioStats = new BasicIoStats(getName(), flagServeJMX, metricsPeriodSec);
 		lastStats = ioStats.getSnapshot();
 	}
 	//
@@ -893,7 +893,7 @@ implements LoadExecutor<T> {
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
 			}
 			// apply parameters from loadState to current load executor
-			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
+			final IoStats.Snapshot statsSnapshot = state.getStatsSnapshot();
 			final long
 				countSucc = statsSnapshot.getSuccCount(),
 				countFail = statsSnapshot.getFailCount();
@@ -927,7 +927,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public IOStats.Snapshot getStatsSnapshot() {
+	public IoStats.Snapshot getStatsSnapshot() {
 		return lastStats;
 	}
 	//

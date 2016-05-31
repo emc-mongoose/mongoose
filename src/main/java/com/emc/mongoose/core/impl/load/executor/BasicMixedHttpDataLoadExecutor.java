@@ -16,7 +16,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 //
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -161,7 +161,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 			.appendNewLine();
 		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
-		IOStats.Snapshot nextLoadStats;
+		IoStats.Snapshot nextLoadStats;
 		for(final LoadType nextLoadType : loadExecutorMap.keySet()) {
 			nextLoadWeight = loadTypeWeights.get(nextLoadType);
 			nextLoadJob = loadExecutorMap.get(nextLoadType);

@@ -9,8 +9,8 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 //
-import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
-import com.emc.mongoose.core.impl.load.model.metrics.IOStatsBase;
+import com.emc.mongoose.core.impl.load.model.metrics.BasicIoStats;
+import com.emc.mongoose.core.impl.load.model.metrics.IoStatsBase;
 //
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //
@@ -33,8 +33,8 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 14.09.15.
  */
-public class AggregatedRemoteIOStats<T extends Item, W extends LoadSvc<T>>
-extends IOStatsBase {
+public class AggregatedRemoteIoStats<T extends Item, W extends LoadSvc<T>>
+extends IoStatsBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -60,7 +60,7 @@ extends IOStatsBase {
 	private final Lock
 		lock = new ReentrantLock();
 	//
-	public AggregatedRemoteIOStats(
+	public AggregatedRemoteIoStats(
 		final String name, final boolean serveJmxFlag, final Map<String, W> loadSvcMap
 	) {
 		super(name, serveJmxFlag);
@@ -384,7 +384,7 @@ extends IOStatsBase {
 		//
 		final long currElapsedTime = tsStartMicroSec > 0 ?
 			TimeUnit.NANOSECONDS.toMicros(System.nanoTime()) - tsStartMicroSec : 0;
-		return new BasicIOStats.BasicSnapshot(
+		return new BasicIoStats.BasicSnapshot(
 			countSucc, succRateLast, countFail, failRateLast, countByte, byteRateLast,
 			prevElapsedTimeMicroSec + currElapsedTime, sumDurMicroSec, sumLatMicroSec,
 			reqDuration.getSnapshot(), respLatency.getSnapshot()

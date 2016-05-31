@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.load.tasks.processors;
 
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public final class PolyLineManager {
 		startTime = System.currentTimeMillis();
 	}
 
-	public final void updatePolylines(final IOStats.Snapshot metricsSnapshot) {
+	public final void updatePolylines(final IoStats.Snapshot metricsSnapshot) {
 		addPoint(durMin, metricsSnapshot.getDurationMin());
 		addPoint(durMax, metricsSnapshot.getDurationMax());
 		addPoint(durAvg, metricsSnapshot.getDurationAvg());
