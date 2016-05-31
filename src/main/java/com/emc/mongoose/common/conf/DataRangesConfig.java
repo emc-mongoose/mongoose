@@ -1,11 +1,13 @@
 package com.emc.mongoose.common.conf;
 //
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 /**
  Created by andrey on 02.03.16.
  */
-public class DataRangesConfig {
+public class DataRangesConfig
+implements Serializable {
 	//
 	public final static class InvalidRangeException
 	extends IllegalArgumentException {
@@ -14,7 +16,8 @@ public class DataRangesConfig {
 		}
 	}
 	//
-	public final static class ByteRange {
+	public final static class ByteRange
+	implements Serializable {
 		//
 		private final long beg;
 		private final long end;

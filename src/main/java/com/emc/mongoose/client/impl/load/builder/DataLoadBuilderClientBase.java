@@ -15,15 +15,10 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.FileDataItemInput;
 //
-import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
-import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
-import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
 import com.emc.mongoose.core.impl.item.data.CsvFileDataItemInput;
-import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -120,6 +115,30 @@ implements DataLoadBuilderClient<T, W, U> {
 		return this;
 	}
 	//
+	@Override
+	public DataLoadBuilderClient<T, W, U> setDataSize(final SizeInBytes dataSize)
+	throws IllegalArgumentException, RemoteException {
+		this.sizeConfig = dataSize;
+		if(loadSvcMap != null) {
+			for(final String svcAddr : loadSvcMap.keySet()) {
+				loadSvcMap.get(svcAddr).setDataSize(dataSize);
+			}
+		}
+		return this;
+	}
+	//
+	@Override
+	public DataLoadBuilderClient<T, W, U> setDataRanges(final DataRangesConfig rangesConfig)
+	throws IllegalArgumentException, RemoteException {
+		this.rangesConfig = rangesConfig;
+		if(loadSvcMap != null) {
+			for(final String svcAddr : loadSvcMap.keySet()) {
+				loadSvcMap.get(svcAddr).setDataRanges(rangesConfig);
+			}
+		}
+		return this;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	protected Input<T> getNewItemInput()
 	throws NoSuchMethodException {
@@ -127,19 +146,5 @@ implements DataLoadBuilderClient<T, W, U> {
 		return ioConfig.getNewDataItemsInput(
 			namingType, (Class<T>) ioConfig.getItemClass(), sizeConfig
 		);
-	}
-	//
-	@Override
-	public DataLoadBuilder<T, U> setDataSize(final SizeInBytes dataSize)
-	throws IllegalArgumentException, RemoteException {
-		this.sizeConfig = dataSize;
-		return this;
-	}
-	//
-	@Override
-	public DataLoadBuilder<T, U> setDataRanges(final DataRangesConfig rangesConfig)
-	throws IllegalArgumentException, RemoteException {
-		this.rangesConfig = rangesConfig;
-		return this;
 	}
 }
