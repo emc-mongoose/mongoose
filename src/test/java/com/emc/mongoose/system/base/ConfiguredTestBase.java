@@ -20,7 +20,6 @@ public abstract class ConfiguredTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		System.setProperty(KEY_ITEM_DATA_SIZE, "1MB");
-		System.setProperty(KEY_ITEM_DST_CONTAINER, null);
 		System.setProperty(KEY_ITEM_TYPE, "data");
 		System.setProperty(KEY_LOAD_CIRCULAR, "false");
 		System.setProperty(KEY_LOAD_LIMIT_COUNT, "0");
