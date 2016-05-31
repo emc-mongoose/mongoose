@@ -94,7 +94,7 @@ extends DistributedFileSystemTestBase {
 			countRead = client.read(
 				new CsvFileDataItemInput<FileItem>(
 					dirListFile.toPath(), (Class) BasicDirectory.class,
-					ContentSourceUtil.DEFAULT
+					ContentSourceUtil.getDefaultInstance()
 				),
 				null, countWritten, 100, true
 			);

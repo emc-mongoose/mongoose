@@ -76,7 +76,7 @@ extends DistributedClientTestBase {
 					.build()
 			) {
 				final Output<HttpDataItem> writeOutput = new CsvFileItemOutput<HttpDataItem>(
-					BasicHttpData.class, ContentSourceUtil.DEFAULT
+					BasicHttpData.class, ContentSourceUtil.getDefaultInstance()
 				);
 				final long COUNT_WRITTEN = client.create(
 					writeOutput, WRITE_COUNT, 10, SizeInBytes.toFixedSize(DATA_SIZE)

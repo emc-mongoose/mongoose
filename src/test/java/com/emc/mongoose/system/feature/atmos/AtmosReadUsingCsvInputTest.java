@@ -42,7 +42,7 @@ extends StandaloneClientTestBase {
 				.build()
 		) {
 			final Output<HttpDataItem> writeOutput = new CsvFileItemOutput<>(
-				(Class) BasicHttpData.class, ContentSourceUtil.DEFAULT
+				(Class) BasicHttpData.class, ContentSourceUtil.getDefaultInstance()
 			);
 			COUNT_WRITTEN = client.create(
 				writeOutput, COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10MB")

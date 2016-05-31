@@ -4,7 +4,6 @@ import com.emc.mongoose.core.api.item.base.Item;
 //
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 //
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -28,7 +27,7 @@ implements Output<T> {
 	) throws IOException {
 		itemsDst = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
 		this.itemCls = itemCls;
-		this.contentSrc = ContentSourceUtil.clone(contentSrc);
+		this.contentSrc = contentSrc;
 	}
 	//
 	@Override
@@ -57,7 +56,6 @@ implements Output<T> {
 	public void close()
 	throws IOException {
 		itemsDst.close();
-		contentSrc.close();
 	}
 	//
 	@Override

@@ -77,7 +77,7 @@ extends StandaloneClientTestBase {
 					.build()
 			) {
 				final Output<HttpDataItem> writeOutput = new CsvFileItemOutput<HttpDataItem>(
-					BasicHttpData.class, ContentSourceUtil.DEFAULT
+					BasicHttpData.class, ContentSourceUtil.getDefaultInstance()
 				);
 				COUNT_WRITTEN = client.create(
 					writeOutput, WRITE_COUNT, 10, SizeInBytes.toFixedSize(DATA_SIZE)
@@ -86,7 +86,7 @@ extends StandaloneClientTestBase {
 				RunIdFileManager.flushAll();
 				//
 				final Output<HttpDataItem> updateOutput = new CsvFileItemOutput<HttpDataItem>(
-					BasicHttpData.class, ContentSourceUtil.DEFAULT
+					BasicHttpData.class, ContentSourceUtil.getDefaultInstance()
 				);
 				if (COUNT_WRITTEN > 0) {
 					COUNT_UPDATED = client.update(
