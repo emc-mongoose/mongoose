@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 02.02.16.
  */
 public class ParallelJobContainer
-	extends JobContainerBase {
+extends JobContainerBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -30,23 +30,27 @@ public class ParallelJobContainer
 	//
 	@Override
 	public final synchronized void run() {
-		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
-			subJobs.size(), new NamingThreadFactory("jobContainerWorker" + hashCode(), true)
-		);
-		for(final JobContainer subJob : subJobs) {
-			parallelJobsExecutor.submit(subJob);
-		}
-		LOG.debug(Markers.MSG, "{}: started {} sub jobs", toString(), subJobs.size());
-		parallelJobsExecutor.shutdown();
 		try {
-			if(limitTime > 0) {
-				parallelJobsExecutor.awaitTermination(limitTime, TimeUnit.SECONDS);
-			} else {
-				parallelJobsExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+			final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
+				subJobs.size(), new NamingThreadFactory("jobContainerWorker" + hashCode(), true)
+			);
+			for(final JobContainer subJob : subJobs) {
+				parallelJobsExecutor.submit(subJob);
 			}
-			LOG.debug(Markers.MSG, "{}: {} sub jobs done", toString(), subJobs.size());
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "{}: interrupted the sub jobs execution");
+			LOG.debug(Markers.MSG, "{}: started {} sub jobs", toString(), subJobs.size());
+			parallelJobsExecutor.shutdown();
+			try {
+				if(limitTime > 0) {
+					parallelJobsExecutor.awaitTermination(limitTime, TimeUnit.SECONDS);
+				} else {
+					parallelJobsExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+				}
+				LOG.debug(Markers.MSG, "{}: {} sub jobs done", toString(), subJobs.size());
+			} catch(final InterruptedException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "{}: interrupted the sub jobs execution");
+			}
+		} finally {
+			subJobs.clear();
 		}
 	}
 	//

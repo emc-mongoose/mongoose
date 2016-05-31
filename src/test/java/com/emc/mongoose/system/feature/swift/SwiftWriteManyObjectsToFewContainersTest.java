@@ -82,7 +82,7 @@ extends WSMockTestBase {
 						break;
 					} else {
 						countContainerCreated ++;
-						rtConfig.setProperty(AppConfig.KEY_RUN_ID, nextRunId);
+						rtConfig.setRunId(nextRunId);
 						rtConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, nextContainer);
 						new ScenarioRunner(rtConfig).run();
 						TimeUnit.SECONDS.sleep(1);

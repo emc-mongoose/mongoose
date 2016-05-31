@@ -62,7 +62,7 @@ extends DistributedFileSystemTestBase {
 			.setItemType("data")
 			.setLimitCount(COUNT_TO_WRITE);
 		final AppConfig rtConfig = BasicConfig.THREAD_CONTEXT.get();
-		rtConfig.setProperty(AppConfig.KEY_RUN_ID, RUN_ID + "_FilesWrite");
+		rtConfig.setRunId(RUN_ID + "_FilesWrite");
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(dirListFile.toPath(), StandardCharsets.UTF_8)
@@ -83,7 +83,7 @@ extends DistributedFileSystemTestBase {
 		//
 		TimeUnit.SECONDS.sleep(1);
 		//
-		rtConfig.setProperty(AppConfig.KEY_RUN_ID, RUN_ID + "_DirsRead");
+		rtConfig.setRunId(RUN_ID + "_DirsRead");
 		rtConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, "/tmp/" + RUN_ID);
 		try(
 			final StorageClient<FileItem> client = CLIENT_BUILDER

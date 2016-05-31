@@ -270,87 +270,94 @@ extends SequentialJobContainer {
 	@Override
 	public final void run() {
 		super.run();
-		// print the table
 		LoadExecutor nextLoadJob;
 		LoadState nextLoadState;
 		Map<Integer, Map<SizeInBytes, Map<LoadType, LoadExecutor>>> m0;
 		Map<SizeInBytes, Map<LoadType, LoadExecutor>> m1;
 		Map<LoadType, LoadExecutor> m2;
-		for(final int nextLoadNum : loadJobMap.keySet()) {
-			m0 = loadJobMap.get(nextLoadNum);
-			for(final int nextThreadCount : m0.keySet()) {
-				m1 = m0.get(nextThreadCount);
-				for(final SizeInBytes nextSize : m1.keySet()) {
-					m2 = m1.get(nextSize);
-					for(final LoadType nextLoadType : m2.keySet()) {
-						nextLoadJob = m2.get(nextLoadType);
-						try {
-							nextLoadState = nextLoadJob.getLoadState();
-						} catch(final RemoteException e) {
-							LogUtil.exception(
-								LOG, Level.WARN, e, "Failed to fetch the load state for {}",
-								nextLoadJob
-							);
-							nextLoadState = null;
-						}
-						final String sizeStr = nextSize == null ? " " : nextSize.toString();
-						final IOStats.Snapshot statsSnapshot = nextLoadState == null ?
-							null : nextLoadState.getStatsSnapshot();
-						final long countSucc = statsSnapshot == null ?
-							0 : statsSnapshot.getSuccCount();
-						final long countFail = statsSnapshot == null ?
-							0 : statsSnapshot.getFailCount();
-						long avgDur = statsSnapshot == null ? 0 : statsSnapshot.getDurationSum();
-						avgDur = avgDur == 0 ? 0 : avgDur / countSucc;
-						long avgLat = 0;
-						if(statsSnapshot != null) {
-							final long[] latValues = statsSnapshot.getLatencyValues();
-							for(final long nextLatencyValue : latValues) {
-								avgLat += nextLatencyValue;
+		try {
+			for(final int nextLoadNum : loadJobMap.keySet()) {
+				m0 = loadJobMap.get(nextLoadNum);
+				for(final int nextThreadCount : m0.keySet()) {
+					m1 = m0.get(nextThreadCount);
+					for(final SizeInBytes nextSize : m1.keySet()) {
+						m2 = m1.get(nextSize);
+						for(final LoadType nextLoadType : m2.keySet()) {
+							nextLoadJob = m2.get(nextLoadType);
+							try {
+								nextLoadState = nextLoadJob.getLoadState();
+							} catch(final RemoteException e) {
+								LogUtil.exception(LOG, Level.WARN, e,
+									"Failed to fetch the load state for {}", nextLoadJob
+								);
+								nextLoadState = null;
 							}
-							avgLat = avgLat == 0 ? 0 : avgLat / latValues.length;
+							final String sizeStr = nextSize == null ? " " : nextSize.toString();
+							final IOStats.Snapshot statsSnapshot =
+								nextLoadState == null ? null : nextLoadState.getStatsSnapshot();
+							final long countSucc = statsSnapshot == null ?
+								0 : statsSnapshot.getSuccCount();
+							final long countFail = statsSnapshot == null ?
+								0 : statsSnapshot.getFailCount();
+							long avgDur = statsSnapshot == null ?
+								0 : statsSnapshot.getDurationSum();
+							avgDur = avgDur == 0 ? 0 : avgDur / countSucc;
+							long avgLat = 0;
+							if(statsSnapshot != null) {
+								final long[] latValues = statsSnapshot.getLatencyValues();
+								for(final long nextLatencyValue : latValues) {
+									avgLat += nextLatencyValue;
+								}
+								avgLat = avgLat == 0 ? 0 : avgLat / latValues.length;
+							}
+							final String tpStr = statsSnapshot == null ?
+								"N/A" :
+								String.format(
+									LogUtil.LOCALE_DEFAULT, "%.3f", statsSnapshot.getSuccRateMean()
+								);
+							final String bwStr = statsSnapshot == null ?
+								"N/A" :
+								String.format(LogUtil.LOCALE_DEFAULT, "%.3f",
+									statsSnapshot.getByteRateMean() / IOStats.MIB
+								);
+							strb
+								.appendNewLine()
+								.appendFixedWidthPadLeft(nextLoadNum + " " + colSep, 7, padChar)
+								.appendFixedWidthPadRight(
+									" " + StringUtils.capitalize(nextLoadType.name().toLowerCase()),
+									11, padChar
+								)
+								.append(colSep)
+								.appendFixedWidthPadLeft(
+									nextThreadCount + " " + colSep, 15, padChar
+								)
+								.appendFixedWidthPadLeft(sizeStr + " " + colSep, 12, padChar)
+								.appendFixedWidthPadLeft(countSucc + " " + colSep, 12, padChar)
+								.appendFixedWidthPadLeft(countFail + " " + colSep, 9, padChar)
+								.appendFixedWidthPadRight(" " + avgDur, 14, padChar)
+								.appendFixedWidthPadRight(colSep + " " + avgLat, 14, padChar)
+								.appendFixedWidthPadRight(colSep + " " + tpStr, 14, padChar)
+								.appendFixedWidthPadRight(colSep + " " + bwStr, 14, padChar)
+								.append(colSep);
 						}
-						final String tpStr = statsSnapshot == null ?
-							"N/A" :
-							String.format(
-								LogUtil.LOCALE_DEFAULT, "%.3f", statsSnapshot.getSuccRateMean()
-							);
-						final String bwStr = statsSnapshot == null ?
-							"N/A" :
-							String.format(
-								LogUtil.LOCALE_DEFAULT, "%.3f",
-								statsSnapshot.getByteRateMean() / IOStats.MIB
-							);
-						strb
-							.appendNewLine()
-							.appendFixedWidthPadLeft(nextLoadNum + " " + colSep, 7, padChar)
-							.appendFixedWidthPadRight(
-								" " + StringUtils.capitalize(nextLoadType.name().toLowerCase()),
-								11, padChar
-							)
-							.append(colSep)
-							.appendFixedWidthPadLeft(nextThreadCount + " " + colSep, 15, padChar)
-							.appendFixedWidthPadLeft(sizeStr + " " + colSep, 12, padChar)
-							.appendFixedWidthPadLeft(countSucc + " " + colSep, 12, padChar)
-							.appendFixedWidthPadLeft(countFail + " " + colSep, 9, padChar)
-							.appendFixedWidthPadRight(" " + avgDur, 14, padChar)
-							.appendFixedWidthPadRight(colSep + " " + avgLat, 14, padChar)
-							.appendFixedWidthPadRight(colSep + " " + tpStr, 14, padChar)
-							.appendFixedWidthPadRight(colSep + " " + bwStr, 14, padChar)
-							.append(colSep);
 					}
 				}
 			}
-		}
-		strb.appendNewLine().appendPadding(tblWidth, rowSep);
-		//
-		LOG.info(Markers.MSG, strb.toString());
-		//
-		loadJobMap.clear();
-		try {
-			contentSrc.close();
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the content source");
+			strb.appendNewLine().appendPadding(tblWidth, rowSep);
+			//
+			LOG.info(Markers.MSG, strb.toString());
+		} finally {
+			loadJobMap.clear();
+			try {
+				loadJobBuilder.close();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job builder");
+			}
+			try {
+				contentSrc.close();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to close the content source");
+			}
 		}
 	}
 }

@@ -128,11 +128,12 @@ implements IoConfig<T, C> {
 	throws IOException {
 		if(closeFlag.compareAndSet(false, true)) {
 			if(contentSrc != null) {
-				try {
-					contentSrc.close();
-				} finally {
-					contentSrc = null;
-				}
+				contentSrc.close();
+				contentSrc = null;
+			}
+			if(pathInput != null) {
+				pathInput.close();
+				pathInput = null;
 			}
 			LOG.debug(Markers.MSG, "Request config instance #{} marked as closed", hashCode());
 		}

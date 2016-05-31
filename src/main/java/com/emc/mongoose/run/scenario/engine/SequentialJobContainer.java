@@ -37,27 +37,33 @@ extends JobContainerBase {
 	//
 	@Override
 	public synchronized void run() {
-		LOG.debug(Markers.MSG, "{}: start {} sub jobs", toString(), subJobs.size());
-		final ThreadFactory tf = new NamingThreadFactory(toString(), true);
-		Thread t;
-		for(final JobContainer subJob : subJobs) {
-			t = tf.newThread(subJob);
-			LOG.debug(Markers.MSG, "{}: start next sub job \"{}\"", toString(), subJob.toString());
-			t.start();
-			try {
-				if(limitTime > 0) {
-					TimeUnit.SECONDS.timedJoin(t, limitTime);
-				} else {
-					TimeUnit.SECONDS.timedJoin(t, Long.MAX_VALUE);
+		try {
+			LOG.debug(Markers.MSG, "{}: start {} sub jobs", toString(), subJobs.size());
+			final ThreadFactory tf = new NamingThreadFactory(toString(), true);
+			Thread t;
+			for(final JobContainer subJob : subJobs) {
+				t = tf.newThread(subJob);
+				LOG.debug(
+					Markers.MSG, "{}: start next sub job \"{}\"", toString(), subJob.toString()
+				);
+				t.start();
+				try {
+					if(limitTime > 0) {
+						TimeUnit.SECONDS.timedJoin(t, limitTime);
+					} else {
+						TimeUnit.SECONDS.timedJoin(t, Long.MAX_VALUE);
+					}
+				} catch(final InterruptedException e) {
+					LOG.debug(Markers.MSG, "Interrupted");
+					break;
+				} finally {
+					t.interrupt();
 				}
-			} catch(final InterruptedException e) {
-				LOG.debug(Markers.MSG, "Interrupted");
-				break;
-			} finally {
-				t.interrupt();
+				LOG.debug(Markers.MSG, "{}: sub job \"{}\" is done", toString(), subJob.toString());
 			}
-			LOG.debug(Markers.MSG, "{}: sub job \"{}\" is done", toString(), subJob.toString());
+			LOG.debug(Markers.MSG, "{}: end", toString());
+		} finally {
+			subJobs.clear();
 		}
-		LOG.debug(Markers.MSG, "{}: end", toString());
 	}
 }

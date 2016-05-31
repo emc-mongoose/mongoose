@@ -23,6 +23,8 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 14.07.15.
@@ -50,45 +52,43 @@ extends FileSystemTestBase {
 				.build()
 		) {
 			countWritten = client.create(null, COUNT_TO_WRITE, 100, 0);
-			//
 			RunIdFileManager.flushAll();
 		}
 		//
 		final File dirListFile = LogValidator.getItemsListFile(RUN_ID);
 		Assert.assertTrue("directories list file doesn't exist", dirListFile.exists());
-		String nextDirName;
 		StorageClient<FileItem> nextDirClient;
 		CLIENT_BUILDER
 			.setItemType("data")
 			.setLimitCount(COUNT_TO_WRITE);
 		final AppConfig rtConfig = BasicConfig.THREAD_CONTEXT.get();
-		rtConfig.setProperty(AppConfig.KEY_RUN_ID, RUN_ID + "_FilesWrite");
+		rtConfig.setRunId(RUN_ID + "_FilesWrite");
+		final List<String> dirList = new ArrayList<>();
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(dirListFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			do {
-				nextDirName = in.readLine();
-				if(nextDirName == null) {
-					break;
-				} else {
-					rtConfig.setProperty(
-						AppConfig.KEY_ITEM_DST_CONTAINER, "/tmp/" + RUN_ID + "/" + nextDirName
-					);
-					nextDirClient = CLIENT_BUILDER.build();
-					nextDirClient.create(null, COUNT_TO_WRITE, 100, 10);
-				}
-			} while(true);
+			String nextDirName;
+			while(null != (nextDirName = in.readLine())) {
+				dirList.add(nextDirName);
+			}
+		}
+		for(final String nextDirName : dirList) {
+			rtConfig.setProperty(
+				AppConfig.KEY_ITEM_DST_CONTAINER, "/tmp/" + RUN_ID + "/" + nextDirName
+			);
+			nextDirClient = CLIENT_BUILDER.build();
+			nextDirClient.create(null, COUNT_TO_WRITE, 100, 10);
 		}
 		//
 		TimeUnit.SECONDS.sleep(1);
 		//
-		rtConfig.setProperty(AppConfig.KEY_RUN_ID, RUN_ID + "_DirsRead");
+		rtConfig.setRunId(RUN_ID + "_DirsRead");
 		rtConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, "/tmp/" + RUN_ID);
 		try(
 			final StorageClient<FileItem> client = CLIENT_BUILDER
 				.setLimitTime(0, TimeUnit.SECONDS)
-				.setItemType("directory")
+				.setItemType("container")
 				.build()
 		) {
 			countRead = client.read(

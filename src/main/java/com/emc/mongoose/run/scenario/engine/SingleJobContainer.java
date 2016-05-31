@@ -80,6 +80,14 @@ extends JobContainerBase {
 					loadJob_ = loadJobBuilder.build();
 				} catch(final Throwable e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the load job");
+				} finally {
+					try {
+						loadJobBuilder.close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to close the load job builder"
+						);
+					}
 				}
 			}
 		} else {

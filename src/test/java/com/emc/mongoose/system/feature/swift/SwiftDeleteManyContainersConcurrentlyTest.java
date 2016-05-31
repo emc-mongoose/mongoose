@@ -61,8 +61,7 @@ extends WSMockTestBase {
 		TimeUnit.SECONDS.sleep(5);
 		RunIdFileManager.flushAll();
 		//
-		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
-		rtConfig.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
+		rtConfig.setRunId(RUN_ID);
 		LoggingTestBase.setUpClass();
 		rtConfig.setProperty(AppConfig.KEY_LOAD_TYPE, TestConstants.LOAD_DELETE);
 		rtConfig.setProperty(

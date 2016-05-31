@@ -18,6 +18,10 @@ implements Directory<T> {
 		super(null, name);
 	}
 	//
+	public BasicDirectory(final String name, final ContentSource contentSrc) {
+		super(null, name, contentSrc);
+	}
+	//
 	public BasicDirectory(final String path, final String name) {
 		super(path, name);
 	}
