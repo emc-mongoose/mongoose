@@ -26,7 +26,7 @@ define([
 		a.text(aText);
 		if (aClickEvent) {
 			a.click(function () {
-				aClickEvent(aName);
+				aClickEvent(aName, aText);
 			});
 		}
 		liElem.append(a);

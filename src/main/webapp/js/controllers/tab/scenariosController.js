@@ -39,8 +39,14 @@ define([
 
 	const clickEventCreatorFactory = function () {
 
-		function scenarioFileClickEvent(aName) {
-			$.get('/scenario', {path: aName}, null, 'json')
+		function scenarioFileClickEvent(aName, aText) {
+			var newPath;
+			if (aName === '') {
+				newPath = aText;
+			} else {
+				newPath = aName + DELIMITER.PATH + aText;
+			}
+			$.get('/scenario', {path: newPath}, null, 'json')
 				.done(function (scenarioJson) {
 					setScenarioObject(scenarioJson);
 					updateDetailsTree(scenarioJson);
@@ -78,7 +84,8 @@ define([
 		treeUlElem.empty();
 		treeUlElem.append(createBackIcon());
 		var addressObject = {};
-		elementAppender.objectAsTree(scenarioObject, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
+		// elementAppender.objectAsTree(scenarioObject, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
+		elementAppender.treeOfItem(scenarioObject, treeUlElem, '', DELIMITER.PATH, localClickEventCreator.scenarioFile, true);
 		const jsonViewElem = $(jqId(['json', TAB_TYPE.SCENARIOS]));
 		jsonViewElem.text(JSON.stringify(scenarioObject, null, 4));
 		showDetailsTree();
