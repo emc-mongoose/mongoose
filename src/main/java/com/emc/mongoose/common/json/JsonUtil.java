@@ -41,7 +41,7 @@ public class JsonUtil {
 		JSON_MAPPER.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
 		JSON_MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
 	}
-	private static final Pattern COMMENT_PATTERN = Pattern.compile("(^[^\"]*)(//.*$)");
+	private static final Pattern COMMENT_PATTERN = Pattern.compile("(^([^\"]*)|(\".*?\".*:.*\".*?\"[^\"]*))(//.*$)");
 
 
 	/**
