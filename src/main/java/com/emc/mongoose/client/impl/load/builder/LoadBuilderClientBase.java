@@ -324,7 +324,7 @@ implements LoadBuilderClient<T, W, U> {
 			strBuilder.append('.').append(loadSvcMap.get(loadSvcMap.keySet().iterator().next())
 				.getNextInstanceNum(appConfig.getRunId()));
 		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to make load builder string");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to make load builder string");
 		}
 		return strBuilder.toString();
 	}

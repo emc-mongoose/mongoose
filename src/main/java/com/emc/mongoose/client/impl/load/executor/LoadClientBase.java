@@ -88,14 +88,14 @@ implements LoadClient<T, W> {
 						} else {
 							final int n = frame.size();
 							if(n > 0) {
+								counterResults.addAndGet(n);
 								if(LOG.isTraceEnabled(Markers.MSG)) {
 									LOG.trace(
 										Markers.MSG,
-										"Got the next {} items from the load server @ {}",
-										n, loadSvc
+										"Got the next {} ({}) items from the load server @ {}",
+										n, counterResults.get(), loadSvc
 									);
 								}
-								counterResults.addAndGet(n);
 								// CIRCULARITY FEATURE
 								if(isCircular) {
 									for(final T item : frame) {
