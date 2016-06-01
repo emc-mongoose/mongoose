@@ -40,7 +40,7 @@ extends FileSystemTestBase {
 	throws Exception {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, "/tmp/" + RUN_ID);
-		//System.setProperty(AppConfig.KEY_DATA_CONTENT_FPATH, "conf/content/zerobytes");
+		//System.setProperty(AppConfig.KEY_ITEM_DATA_CONTENT_FILE, "conf/content/zerobytes");
 		FileSystemTestBase.setUpClass();
 		final List<FileItem>
 			itemBuffWritten = new ArrayList<>(COUNT_TO_WRITE),
