@@ -26,6 +26,9 @@ define([
 	function changeObj(obj, address, newValue, delimiter) {
 		const addressParts = address.split(delimiter).reverse();
 		const lastIndex = addressParts.length - 1;
+		if (isValueArray(obj, address, delimiter)) {
+			newValue = newValue.replaceAll(' ', '').split(',');
+		}
 		var tempValue = newValue;
 		var tempObj;
 		for (var i = 0; i < lastIndex; i++) {
@@ -34,26 +37,38 @@ define([
 			tempValue = tempObj;
 		}
 		tempObj = {};
-		tempObj[addressParts[lastIndex]] = tempValue;
+		const key = addressParts[lastIndex];
+		tempObj[key] = tempValue;
 		$.extend(true, obj, tempObj);
 	}
 
-	function changeObjAndFile(obj, address, newValue, delimiter, tabType, pElem) {
-		changeObj(obj, address, newValue, delimiter);
-		changeFileToSave(tabType, obj);
-		// pElem.text('MODIFIED');
-		pElem.text('');
+	function isValueArray(obj, address, delimiter) {
+		const addressParts = address.split(delimiter);
+		var value = obj[addressParts[0]];
+		for (var i = 1; i < addressParts.length; i++) {
+			value = value[addressParts[i]];
+		}
+		return Array.isArray(value);
 	}
 
-	// dumb comparison
-	function compareObjects(obj1, obj2) {
-		return JSON.stringify(obj1) === JSON.stringify(obj2);
+		function changeObjAndFile(obj, address, newValue, delimiter, tabType, pElem) {
+			changeObj(obj, address, newValue, delimiter);
+			changeFileToSave(tabType, obj);
+			// pElem.text('MODIFIED');
+			pElem.text('');
+		}
+
+		// dumb comparison
+		function compareObjects(obj1, obj2) {
+			return JSON.stringify(obj1) === JSON.stringify(obj2);
+		}
+
+		return {
+			changeFileToSave: changeFileToSave,
+			changeObjAndFile: changeObjAndFile,
+			compareObjects: compareObjects
+		}
+
 	}
 
-	return {
-		changeFileToSave: changeFileToSave,
-		changeObjAndFile: changeObjAndFile,
-		compareObjects: compareObjects
-	}
-
-});
+	);
