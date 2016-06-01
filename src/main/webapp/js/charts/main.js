@@ -172,10 +172,14 @@ define(['jquery',
 
 		const AXIS_X_WIDTH = Math.round(WIDTH / 1.5);
 		const AXIS_Y_WIDTH = HEIGHT;
+		//
+		// function xAccessor(data) {
+		// 	return data.x <= 0 ? 0.000000001 : data.x;
+		// }
 
-		function xConvertAccessor(data) {
-			data.x = TIME_UNIT.toUnits(data.x, currentTimeUnit);
-			return data.x <= 0 ? 0.000000001 : data.x;
+		function xAccessor(data) {
+			const convertedX = TIME_UNIT.toUnits(data.x, currentTimeUnit);
+			return convertedX <= 0 ? 0.1 / currentTimeUnit.value : convertedX;
 		}
 
 		function yAccessor(data) {
@@ -262,7 +266,7 @@ define(['jquery',
 		switchScaling();
 
 		function scaledXAccessor(data) {
-			return xScale(xConvertAccessor(data));
+			return xScale(xAccessor(data));
 		}
 
 		function scaledYAccessor(data) {
@@ -437,7 +441,7 @@ define(['jquery',
 		function updateAxes(svgElement, chartArr) {
 			const xDomain = xScale.domain();
 			tuneUnits(xDomain[xDomain.length - 1]);
-			xScale.domain(extent($.extend(true, {}, chartArr[0]), xConvertAccessor));
+			xScale.domain(extent($.extend(true, {}, chartArr[0]), xAccessor));
 			yScale.domain(deepExtent(chartArr, yAccessor)).nice();
 			svgElement.select('.x-axis')
 				.call(xAxis);
