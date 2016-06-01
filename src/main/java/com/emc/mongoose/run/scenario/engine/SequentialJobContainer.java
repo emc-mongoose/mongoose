@@ -7,6 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
@@ -42,7 +43,9 @@ extends JobContainerBase {
 		Thread t;
 		for(final JobContainer subJob : subJobs) {
 			t = tf.newThread(subJob);
-			LOG.debug(Markers.MSG, "{}: start next sub job \"{}\"", toString(), subJob.toString());
+			LOG.debug(
+				Markers.MSG, "{}: start next sub job \"{}\"", toString(), subJob.toString()
+			);
 			t.start();
 			try {
 				if(limitTime > 0) {
@@ -59,5 +62,17 @@ extends JobContainerBase {
 			LOG.debug(Markers.MSG, "{}: sub job \"{}\" is done", toString(), subJob.toString());
 		}
 		LOG.debug(Markers.MSG, "{}: end", toString());
+	}
+	//
+	@Override
+	public void close()
+	throws IOException {
+		try {
+			for(final JobContainer subJob : subJobs) {
+				subJob.close();
+			}
+		} finally {
+			subJobs.clear();
+		}
 	}
 }

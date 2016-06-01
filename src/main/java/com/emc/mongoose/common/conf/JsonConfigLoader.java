@@ -3,16 +3,13 @@ package com.emc.mongoose.common.conf;
 
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-//
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +21,10 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+//
+//
+//
 //
 
 /**
@@ -106,6 +107,7 @@ public class JsonConfigLoader {
 			);
 		}
 	}
+
 	//
 	private void walkJsonTree(final JsonNode jsonNode) {
 		try {
@@ -114,6 +116,7 @@ public class JsonConfigLoader {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to walk the JSON tree");
 		}
 	}
+
 	//
 	private void walkJsonTree(final JsonNode jsonNode, final String fieldPrefix) {
 		final Iterator<String> fields = jsonNode.fieldNames();

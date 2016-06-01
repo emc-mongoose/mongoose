@@ -87,15 +87,16 @@ implements FileLoadBuilderClient<T, W, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected U buildActually()
-	throws RemoteException, DuplicateSvcNameException {
-		final LoadType loadType = ioConfig.getLoadType();
-		itemInput = selectItemInput(); // affects load service builders
+	throws RemoteException, DuplicateSvcNameException, CloneNotSupportedException {
+		final FileIoConfig ioConfigCopy = (FileIoConfig) ioConfig.clone();
+		final LoadType loadType = ioConfigCopy.getLoadType();
+		itemInput = selectItemInput(ioConfigCopy); // affects load service builders
 		final Map<String, W> remoteLoadMap = new HashMap<>();
 		FileLoadBuilderSvc<T, W> nextBuilder;
 		W nextLoad;
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing
+			nextBuilder.setIoConfig(ioConfigCopy); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
@@ -127,11 +128,11 @@ implements FileLoadBuilderClient<T, W, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) ?
-								getNewItemInput() :
+							LoadType.CREATE.equals(nextLoadType) ?
+								getNewItemInput(ioConfigCopy) :
 								new CsvFileDataItemInput<>(
-									singleInputPath, (Class<T>) ioConfig.getItemClass(),
-									ioConfig.getContentSource()
+									singleInputPath, (Class<T>) ioConfigCopy.getItemClass(),
+									ioConfigCopy.getContentSource()
 								)
 						);
 					} catch(final NoSuchMethodException | IOException e) {
@@ -146,11 +147,11 @@ implements FileLoadBuilderClient<T, W, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) ?
-								getNewItemInput() :
+							nextInputPath == null && LoadType.CREATE.equals(nextLoadType) ?
+								getNewItemInput(ioConfigCopy) :
 								new CsvFileDataItemInput<>(
-									nextInputPath, (Class<T>) ioConfig.getItemClass(),
-									ioConfig.getContentSource()
+									nextInputPath, (Class<T>) ioConfigCopy.getItemClass(),
+									ioConfigCopy.getContentSource()
 								)
 						);
 					} catch(final NoSuchMethodException | IOException e) {
@@ -165,15 +166,13 @@ implements FileLoadBuilderClient<T, W, U> {
 			}
 			//
 			return (U) new BasicMixedFileLoadClient<>(
-				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
-				countLimit, sizeLimit, rateLimit,
+				appConfig, ioConfigCopy, threadCount, countLimit, sizeLimit, rateLimit,
 				(Map<String, MixedFileLoadSvc<T>>) remoteLoadMap, itemInputMap, loadTypeWeightMap
 			);
 		} else {
 			return (U) new BasicFileLoadClient<>(
-				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig,
-				appConfig.getLoadThreads(), itemInput, countLimit, sizeLimit, rateLimit,
-				remoteLoadMap
+				appConfig, ioConfigCopy, appConfig.getLoadThreads(), itemInput, countLimit,
+				sizeLimit, rateLimit, remoteLoadMap
 			);
 		}
 	}

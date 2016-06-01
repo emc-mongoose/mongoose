@@ -52,16 +52,15 @@ implements HttpContainerLoadBuilder<T, C, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected U buildActually() {
+	protected U buildActually()
+	throws CloneNotSupportedException {
 		if(ioConfig == null) {
 			throw new IllegalStateException("Should specify request builder instance");
 		}
-		//
-		final HttpRequestConfig httpReqConf = HttpRequestConfig.class.cast(ioConfig);
-		//
+		final HttpRequestConfig ioConfigCopy = (HttpRequestConfig) ioConfig.clone();
 		return (U) new BasicHttpContainerLoadExecutor<>(
-			appConfig, httpReqConf, storageNodeAddrs, threadCount, selectItemInput(), countLimit,
-			sizeLimit, rateLimit
+			appConfig, ioConfigCopy, storageNodeAddrs, threadCount, selectItemInput(ioConfigCopy),
+			countLimit, sizeLimit, rateLimit
 		);
 	}
 }

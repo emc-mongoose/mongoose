@@ -2,20 +2,27 @@ package com.emc.mongoose.core.impl.io.conf;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.conf.enums.LoadType;
+import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.value.PatternDefinedInput;
+import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
 //
+import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.container.NewContainerInput;
 //
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
+import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -43,15 +50,17 @@ implements IoConfig<T, C> {
 	protected LoadType loadType;
 	protected C dstContainer;
 	protected C srcContainer;
+	protected PatternDefinedInput pathInput = null;
 	protected ContentSource contentSrc;
 	protected volatile boolean verifyContentFlag;
-	protected volatile boolean copyFlag;
 	protected volatile AppConfig appConfig;
 	protected volatile String nameSpace;
-	protected volatile String namePrefix;
+	protected volatile String namingPrefix;
+	protected int namingLength = 13;
+	protected int namingRadix = Character.MAX_RADIX;
+	protected long namingOffset = 0;
 	protected int buffSize;
 	@Deprecated protected int reqSleepMilliSec = 0;
-	protected int nameRadix = Character.MAX_RADIX;
 	//
 	protected IoConfigBase() {
 		this(BasicConfig.THREAD_CONTEXT.get());
@@ -65,15 +74,25 @@ implements IoConfig<T, C> {
 		this();
 		if(ioConf2Clone != null) {
 			setLoadType(ioConf2Clone.getLoadType());
-			setContentSource(ioConf2Clone.getContentSource());
+			setContentSource(ContentSourceUtil.clone(ioConf2Clone.getContentSource()));
 			setVerifyContentFlag(ioConf2Clone.getVerifyContentFlag());
-			setCopyFlag(ioConf2Clone.getCopyFlag());
 			setDstContainer(ioConf2Clone.getDstContainer());
 			setSrcContainer(ioConf2Clone.getSrcContainer());
 			setNameSpace(ioConf2Clone.getNameSpace());
-			setNamePrefix(ioConf2Clone.namePrefix);
-			setNameRadix(ioConf2Clone.getNameRadix());
+			setItemNamingPrefix(ioConf2Clone.getItemNamingPrefix());
+			setItemNamingLength(ioConf2Clone.getItemNamingLength());
+			setItemNamingRadix(ioConf2Clone.getItemNamingRadix());
+			setItemNamingOffset(ioConf2Clone.getItemNamingOffset());
 			setBuffSize(ioConf2Clone.getBuffSize());
+			if(ioConf2Clone.pathInput != null) {
+				if(ioConf2Clone.pathInput instanceof RangePatternDefinedInput) {
+					this.pathInput = new RangePatternDefinedInput(
+						ioConf2Clone.pathInput.getPattern()
+					);
+				} else {
+					LOG.warn(Markers.ERR, "Unsupported path input type, skip cloning");
+				}
+			}
 			this.reqSleepMilliSec = ioConf2Clone.reqSleepMilliSec;
 		}
 	}
@@ -81,19 +100,26 @@ implements IoConfig<T, C> {
 	@Override
 	@SuppressWarnings("unchecked")
 	public IoConfigBase<T, C> clone()
-		throws CloneNotSupportedException {
+	throws CloneNotSupportedException {
 		final IoConfigBase<T, C> ioConf = (IoConfigBase<T, C>) super.clone();
 		ioConf
 			.setLoadType(loadType)
-			.setContentSource(contentSrc)
+			.setContentSource(ContentSourceUtil.clone(contentSrc))
 			.setVerifyContentFlag(verifyContentFlag)
-			.setCopyFlag(copyFlag)
 			.setDstContainer(dstContainer)
 			.setNameSpace(nameSpace)
-			.setNamePrefix(namePrefix)
-			.setNameRadix(nameRadix)
-			.setBuffSize(buffSize)
-			.reqSleepMilliSec = reqSleepMilliSec;
+			.setItemNamingPrefix(namingPrefix)
+			.setItemNamingLength(namingLength)
+			.setItemNamingRadix(namingRadix)
+			.setItemNamingOffset(namingOffset)
+			.setBuffSize(buffSize);
+		if(this.pathInput != null) {
+			if(this.pathInput instanceof RangePatternDefinedInput) {
+				ioConf.pathInput = new RangePatternDefinedInput(this.pathInput.getPattern());
+			} else {
+				LOG.warn(Markers.ERR, "Unsupported path input type, skip cloning");
+			}
+		}
 		return ioConf;
 	}
 	//
@@ -101,6 +127,14 @@ implements IoConfig<T, C> {
 	public void close()
 	throws IOException {
 		if(closeFlag.compareAndSet(false, true)) {
+			if(contentSrc != null) {
+				contentSrc.close();
+				contentSrc = null;
+			}
+			if(pathInput != null) {
+				pathInput.close();
+				pathInput = null;
+			}
 			LOG.debug(Markers.MSG, "Request config instance #{} marked as closed", hashCode());
 		}
 	}
@@ -144,24 +178,46 @@ implements IoConfig<T, C> {
 	}
 	//
 	@Override
-	public String getNamePrefix() {
-		return namePrefix;
+	public String getItemNamingPrefix() {
+		return namingPrefix;
 	}
 	//
 	@Override
-	public IoConfigBase<T, C> setNamePrefix(final String namePrefix) {
-		this.namePrefix = namePrefix;
+	public IoConfigBase<T, C> setItemNamingPrefix(final String namingPrefix) {
+		this.namingPrefix = namingPrefix;
 		return this;
 	}
 	//
 	@Override
-	public int getNameRadix() {
-		return nameRadix;
+	public int getItemNamingLength() {
+		return namingLength;
 	}
 	//
 	@Override
-	public IoConfigBase<T, C> setNameRadix(final int nameRadix) {
-		this.nameRadix = nameRadix;
+	public IoConfigBase<T, C> setItemNamingLength(final int namingLength) {
+		this.namingLength = namingLength;
+		return this;
+	}
+	//
+	@Override
+	public int getItemNamingRadix() {
+		return namingRadix;
+	}
+	//
+	@Override
+	public IoConfigBase<T, C> setItemNamingRadix(final int namingRadix) {
+		this.namingRadix = namingRadix;
+		return this;
+	}
+	//
+	@Override
+	public long getItemNamingOffset() {
+		return namingOffset;
+	}
+	//
+	@Override
+	public IoConfigBase<T, C> setItemNamingOffset(final long namingOffset) {
+		this.namingOffset = namingOffset;
 		return this;
 	}
 	//
@@ -210,17 +266,6 @@ implements IoConfig<T, C> {
 	}
 	//
 	@Override
-	public final boolean getCopyFlag() {
-		return copyFlag;
-	}
-	//
-	@Override
-	public final IoConfigBase<T, C> setCopyFlag(final boolean copyFlag) {
-		this.copyFlag = copyFlag;
-		return this;
-	}
-	//
-	@Override
 	public final int getBuffSize() {
 		return buffSize;
 	}
@@ -231,30 +276,56 @@ implements IoConfig<T, C> {
 		return this;
 	}
 	//
+	@SuppressWarnings("unchecked")
 	public IoConfigBase<T, C> setAppConfig(final AppConfig appConfig) {
 		this.appConfig = appConfig;
 		setLoadType(appConfig.getLoadType());
-		final String dstContainerName = appConfig.getItemDstContainer();
-		if(dstContainerName != null && !dstContainerName.isEmpty()) {
-			setDstContainer((C) new BasicContainer<T>(dstContainerName));
+		final String dstContainerValue = appConfig.getItemDstContainer();
+		if(dstContainerValue != null && !dstContainerValue.isEmpty()) {
+			final int firstSlashPos = dstContainerValue.indexOf(Item.SLASH);
+			if(firstSlashPos < 0) {
+				setDstContainer((C) new BasicContainer<T>(dstContainerValue));
+				pathInput = new RangePatternDefinedInput(Item.SLASH);
+			} else {
+				setDstContainer(
+					(C) new BasicContainer<T>(dstContainerValue.substring(0, firstSlashPos))
+				);
+				pathInput = new RangePatternDefinedInput(
+					dstContainerValue.substring(firstSlashPos)
+				);
+			}
 		} else {
 			setDstContainer(null);
+			pathInput = new RangePatternDefinedInput(Item.SLASH);
 		}
-		final String srcContainerName = appConfig.getItemSrcContainer();
-		if(srcContainerName != null && !srcContainerName.isEmpty()) {
-			setSrcContainer((C) new BasicContainer<T>(srcContainerName));
+		final String srcContainerValue = appConfig.getItemSrcContainer();
+		if(srcContainerValue != null && !srcContainerValue.isEmpty()) {
+			/*final int firstSlashPos = srcContainerValue.indexOf(Item.SLASH);
+			if(firstSlashPos < 0) {
+				*/setSrcContainer((C) new BasicContainer<T>(srcContainerValue));/*
+				pathInput = new RangePatternDefinedInput(Item.SLASH);
+			} else {
+				setSrcContainer(
+					(C) new BasicContainer<T>(srcContainerValue.substring(0, firstSlashPos))
+				);
+				pathInput = new RangePatternDefinedInput(
+					srcContainerValue.substring(firstSlashPos)
+				);
+			}*/
 		} else {
 			setSrcContainer(null);
 		}
 		setNameSpace(appConfig.getStorageHttpNamespace());
-		setNamePrefix(appConfig.getItemNamingPrefix());
+		setItemNamingPrefix(appConfig.getItemNamingPrefix());
+		setItemNamingLength(appConfig.getItemNamingLength());
+		setItemNamingRadix(appConfig.getItemNamingRadix());
+		setItemNamingOffset(appConfig.getItemNamingOffset());
 		try {
-			setContentSource(ContentSourceBase.getInstance(appConfig));
+			setContentSource(ContentSourceUtil.getInstance(appConfig));
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply the content source");
 		}
 		setVerifyContentFlag(appConfig.getItemDataVerify());
-		setCopyFlag(appConfig.getLoadCopy());
 		final SizeInBytes sizeInfo = appConfig.getItemDataSize();
 		final long avgDataSize = sizeInfo.getAvgDataSize();
 		setBuffSize(
@@ -268,6 +339,39 @@ implements IoConfig<T, C> {
 	}
 	//
 	@Override
+	public Input<T> getNewDataItemsInput(
+		final ItemNamingType namingType, final Class<T> itemCls, final SizeInBytes sizeInfo
+	) throws NoSuchMethodException {
+		final BasicItemNameInput itemNameInput = new BasicItemNameInput(
+			namingType, getItemNamingPrefix(), getItemNamingLength(), getItemNamingRadix(),
+			getItemNamingOffset()
+		);
+		return new NewDataItemInput<>(
+			itemCls, pathInput, itemNameInput, getContentSource(), sizeInfo
+		);
+	}
+	//
+	@Override
+	public Input<C> getNewContainersInput(final ItemNamingType namingType, final Class<C> itemCls)
+	throws NoSuchMethodException {
+		final BasicItemNameInput itemNameInput = new BasicItemNameInput(
+			namingType, getItemNamingPrefix(), getItemNamingLength(), getItemNamingRadix(),
+			getItemNamingOffset()
+		);
+		return new NewContainerInput<>(itemCls, itemNameInput);
+	}
+	//
+	@Override
+	public final String getItemPath() {
+		try {
+			return pathInput == null ? "" : pathInput.get();
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to generated the path");
+			return "";
+		}
+	}
+	//
+	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		out.writeObject(getLoadType());
@@ -276,16 +380,22 @@ implements IoConfig<T, C> {
 		LOG.trace(Markers.MSG, "Written destination container \"" + dstContainer + "\"");
 		out.writeObject(getSrcContainer());
 		LOG.trace(Markers.MSG, "Written source container \"" + srcContainer + "\"");
+		out.writeObject(pathInput == null ? null : pathInput.getPattern());
+		LOG.trace(Markers.MSG, "Written path input \"" + pathInput + "\"");
 		out.writeObject(getNameSpace());
 		LOG.trace(Markers.MSG, "Written namespace \"" + nameSpace + "\"");
-		out.writeObject(getNamePrefix());
-		LOG.trace(Markers.MSG, "Written name prefix \"" + namePrefix + "\"");
+		out.writeObject(getItemNamingPrefix());
+		LOG.trace(Markers.MSG, "Written name prefix \"" + namingPrefix + "\"");
+		out.writeInt(getItemNamingLength());
+		LOG.trace(Markers.MSG, "Written name length \"" + namingLength + "\"");
+		out.writeInt(getItemNamingRadix());
+		LOG.trace(Markers.MSG, "Written name radix \"" + namingRadix + "\"");
+		out.writeLong(getItemNamingOffset());
+		LOG.trace(Markers.MSG, "Written name offset \"" + namingOffset + "\"");
 		out.writeObject(getContentSource());
 		LOG.trace(Markers.MSG, "Written content src \"" + contentSrc + "\"");
 		out.writeBoolean(getVerifyContentFlag());
 		LOG.trace(Markers.MSG, "Written verify content flag \"" + verifyContentFlag + "\"");
-		out.writeBoolean(getCopyFlag());
-		LOG.trace(Markers.MSG, "Written copy mode flag \"" + copyFlag + "\"");
 		out.writeInt(getBuffSize());
 		LOG.trace(Markers.MSG, "Written buffer size \"" + buffSize + "\"");
 		out.writeInt(reqSleepMilliSec);
@@ -301,16 +411,27 @@ implements IoConfig<T, C> {
 		LOG.trace(Markers.MSG, "Got destination container {}", dstContainer);
 		setSrcContainer((C) in.readObject());
 		LOG.trace(Markers.MSG, "Got source container {}", srcContainer);
+		final String pathInputPattern = (String) in.readObject();
+		if(pathInputPattern == null) {
+			pathInput = null;
+		} else {
+			pathInput = new RangePatternDefinedInput(pathInputPattern);
+			LOG.trace(Markers.MSG, "Got path input {}", pathInput);
+		}
 		setNameSpace((String) in.readObject());
 		LOG.trace(Markers.MSG, "Got namespace {}", nameSpace);
-		setNamePrefix((String) in.readObject());
-		LOG.trace(Markers.MSG, "Got name prefix {}", namePrefix);
+		setItemNamingPrefix((String) in.readObject());
+		LOG.trace(Markers.MSG, "Got name prefix {}", namingPrefix);
+		setItemNamingLength(in.readInt());
+		LOG.trace(Markers.MSG, "Got name length {}", namingLength);
+		setItemNamingRadix(in.readInt());
+		LOG.trace(Markers.MSG, "Got name radix {}", namingRadix);
+		setItemNamingOffset(in.readLong());
+		LOG.trace(Markers.MSG, "Got name offset {}", namingOffset);
 		setContentSource((ContentSource) in.readObject());
 		LOG.trace(Markers.MSG, "Got data source {}", contentSrc);
 		setVerifyContentFlag(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got verify content flag {}", verifyContentFlag);
-		setCopyFlag(in.readBoolean());
-		LOG.trace(Markers.MSG, "Got copy mode flag {}", copyFlag);
 		setBuffSize(in.readInt());
 		LOG.trace(Markers.MSG, "Got buff size {}", buffSize);
 		reqSleepMilliSec = in.readInt();

@@ -12,18 +12,14 @@ import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.io.Input;
 //
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.FileDataItemInput;
 //
-import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
-import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
-import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
 import com.emc.mongoose.core.impl.item.data.CsvFileDataItemInput;
-import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 import com.emc.mongoose.server.api.load.builder.DataLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.DataLoadSvc;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -120,31 +116,36 @@ implements DataLoadBuilderClient<T, W, U> {
 		return this;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	protected Input<T> getNewItemInput()
-	throws NoSuchMethodException {
-		final ItemNamingType namingType = appConfig.getItemNamingType();
-		final BasicItemNameInput bing = new BasicItemNameInput(
-			namingType,
-			appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
-			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
-		);
-		return new NewDataItemInput<>(
-			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeConfig
-		);
-	}
-	//
 	@Override
-	public DataLoadBuilder<T, U> setDataSize(final SizeInBytes dataSize)
+	public DataLoadBuilderClient<T, W, U> setDataSize(final SizeInBytes dataSize)
 	throws IllegalArgumentException, RemoteException {
 		this.sizeConfig = dataSize;
+		if(loadSvcMap != null) {
+			for(final String svcAddr : loadSvcMap.keySet()) {
+				loadSvcMap.get(svcAddr).setDataSize(dataSize);
+			}
+		}
 		return this;
 	}
 	//
 	@Override
-	public DataLoadBuilder<T, U> setDataRanges(final DataRangesConfig rangesConfig)
+	public DataLoadBuilderClient<T, W, U> setDataRanges(final DataRangesConfig rangesConfig)
 	throws IllegalArgumentException, RemoteException {
 		this.rangesConfig = rangesConfig;
+		if(loadSvcMap != null) {
+			for(final String svcAddr : loadSvcMap.keySet()) {
+				loadSvcMap.get(svcAddr).setDataRanges(rangesConfig);
+			}
+		}
 		return this;
+	}
+	//
+	@Override
+	protected Input<T> getNewItemInput(final IoConfig<T, ?> ioConfigCopy)
+	throws NoSuchMethodException {
+		final ItemNamingType namingType = appConfig.getItemNamingType();
+		return ioConfigCopy.getNewDataItemsInput(
+			namingType, ioConfigCopy.getItemClass(), sizeConfig
+		);
 	}
 }

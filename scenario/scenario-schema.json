@@ -284,23 +284,21 @@
 						"circular": {
 							"type": "boolean"
 						},
-						"copy": {
-							"type": "boolean"
-						},
 						"type": {
 							"oneOf" : [
 								{
 									"type" : "string",
 									"enum" : [
-										"write",
+										"create",
 										"read",
+										"update",
 										"delete"
 									]
 								}, {
 									"type" : "array",
 									"items" : {
 										"type" : "string",
-										"pattern" : "[writeadl]+=?[\\d]?%?"
+										"pattern" : "[CcRrEeAaTtDdUuPpLl]+=?[\\d]?%?"
 									}
 								}
 							]

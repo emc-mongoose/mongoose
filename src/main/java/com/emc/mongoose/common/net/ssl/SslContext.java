@@ -1,7 +1,6 @@
 package com.emc.mongoose.common.net.ssl;
 
 import com.emc.mongoose.common.log.LogUtil;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

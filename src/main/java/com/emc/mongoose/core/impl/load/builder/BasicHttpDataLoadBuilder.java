@@ -67,13 +67,13 @@ implements HttpDataLoadBuilder<T, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected U buildActually() {
+	protected U buildActually()
+	throws CloneNotSupportedException {
 		if(ioConfig == null) {
 			throw new IllegalStateException("No I/O configuration instance available");
 		}
-		//
-		final LoadType loadType = ioConfig.getLoadType();
-		final HttpRequestConfig httpReqConf = (HttpRequestConfig) ioConfig;
+		final HttpRequestConfig ioConfigCopy = (HttpRequestConfig) ioConfig.clone();
+		final LoadType loadType = ioConfigCopy.getLoadType();
 		if(LoadType.MIXED.equals(loadType)) {
 			final Object inputFilesRaw = appConfig.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
 			final List<String> inputFiles;
@@ -99,11 +99,11 @@ implements HttpDataLoadBuilder<T, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) ?
-								getNewItemInput() :
+							LoadType.CREATE.equals(nextLoadType) ?
+								getNewItemInput(ioConfigCopy) :
 								new CsvFileDataItemInput<>(
-									singleInputPath, (Class<T>) ioConfig.getItemClass(),
-									ioConfig.getContentSource()
+									singleInputPath, (Class<T>) ioConfigCopy.getItemClass(),
+									ioConfigCopy.getContentSource()
 								)
 						);
 					} catch(final NoSuchMethodException | IOException e) {
@@ -118,11 +118,11 @@ implements HttpDataLoadBuilder<T, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) && nextInputFile == null ?
-								getNewItemInput() :
+							LoadType.CREATE.equals(nextLoadType) && nextInputFile == null ?
+								getNewItemInput(ioConfigCopy) :
 								new CsvFileDataItemInput<>(
-									Paths.get(nextInputFile), (Class<T>) ioConfig.getItemClass(),
-									ioConfig.getContentSource()
+									Paths.get(nextInputFile), (Class<T>) ioConfigCopy.getItemClass(),
+									ioConfigCopy.getContentSource()
 								)
 						);
 					} catch(final NoSuchMethodException | IOException e) {
@@ -136,13 +136,14 @@ implements HttpDataLoadBuilder<T, U> {
 				);
 			}
 			return (U) new BasicMixedHttpDataLoadExecutor<>(
-				appConfig, httpReqConf, storageNodeAddrs, threadCount, countLimit, sizeLimit,
+				appConfig, ioConfigCopy, storageNodeAddrs, threadCount, countLimit, sizeLimit,
 				rateLimit, sizeConfig, rangesConfig, loadTypeWeightMap, itemInputMap
 			);
 		} else {
 			return (U) new BasicHttpDataLoadExecutor<>(
-				appConfig, httpReqConf, storageNodeAddrs, threadCount, selectItemInput(),
-				countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig
+				appConfig, ioConfigCopy, storageNodeAddrs, threadCount,
+				selectItemInput(ioConfigCopy), countLimit, sizeLimit, rateLimit, sizeConfig,
+				rangesConfig
 			);
 		}
 	}

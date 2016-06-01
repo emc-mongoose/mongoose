@@ -3,12 +3,14 @@ package com.emc.mongoose.core.impl.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.value.PatternDefinedInput;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
+import com.emc.mongoose.core.api.load.builder.FileLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.conf.BasicFileIoConfig;
@@ -30,11 +32,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import static com.emc.mongoose.common.io.value.PatternDefinedInput.PATTERN_SYMBOL;
+
 /**
  Created by kurila on 26.11.15.
  */
 public class BasicFileLoadBuilder<T extends FileItem, U extends FileLoadExecutor<T>>
-extends DataLoadBuilderBase<T, U> {
+extends DataLoadBuilderBase<T, U>
+implements FileLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -53,21 +59,23 @@ extends DataLoadBuilderBase<T, U> {
 	throws IllegalStateException {
 		// create parent directories
 		final Container d = ioConfig.getDstContainer();
-		final String parentDirectories = d == null ? null : d.getName();
-		if(parentDirectories != null && !parentDirectories.isEmpty()) {
+		final String p = d == null ? null : d.getName();
+		if(p != null && !p.isEmpty() && p.indexOf(PATTERN_SYMBOL) < 0) {
 			try {
-				Files.createDirectories(Paths.get(parentDirectories));
+				Files.createDirectories(Paths.get(p));
 			} catch(final IOException e) {
 				throw new IllegalStateException(
-					"Failed to create target directories @ \"" + parentDirectories + "\""
+					"Failed to create target directories @ \"" + p + "\""
 				);
 			}
 		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected U buildActually() {
-		final LoadType loadType = ioConfig.getLoadType();
+	protected U buildActually()
+	throws CloneNotSupportedException {
+		final FileIoConfig ioConfigCopy = (FileIoConfig) ioConfig.clone();
+		final LoadType loadType = ioConfigCopy.getLoadType();
 		if(LoadType.MIXED.equals(loadType)) {
 			final Object inputFilesRaw = appConfig.getProperty(AppConfig.KEY_ITEM_SRC_FILE);
 			final List<String> inputFiles;
@@ -93,11 +101,11 @@ extends DataLoadBuilderBase<T, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) ?
-								getNewItemInput() :
+							LoadType.CREATE.equals(nextLoadType) ?
+								getNewItemInput(ioConfigCopy) :
 								new CsvFileDataItemInput<>(
-									singleInputPath, (Class<T>) ioConfig.getItemClass(),
-									ioConfig.getContentSource()
+									singleInputPath, (Class<T>) ioConfigCopy.getItemClass(),
+									ioConfigCopy.getContentSource()
 								)
 						);
 					} catch(final NoSuchMethodException | IOException e) {
@@ -112,11 +120,11 @@ extends DataLoadBuilderBase<T, U> {
 					try {
 						itemInputMap.put(
 							nextLoadType,
-							LoadType.WRITE.equals(nextLoadType) && nextInputFile == null ?
-								getNewItemInput() :
+							LoadType.CREATE.equals(nextLoadType) && nextInputFile == null ?
+								getNewItemInput(ioConfigCopy) :
 								new CsvFileDataItemInput<>(
-									Paths.get(nextInputFile), (Class<T>) ioConfig.getItemClass(),
-									ioConfig.getContentSource()
+									Paths.get(nextInputFile), (Class<T>) ioConfigCopy.getItemClass(),
+									ioConfigCopy.getContentSource()
 								)
 						);
 					} catch(final NoSuchMethodException | IOException e) {
@@ -130,14 +138,13 @@ extends DataLoadBuilderBase<T, U> {
 				);
 			}
 			return (U) new BasicMixedFileLoadExecutor<>(
-				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
-				countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig,
-				loadTypeWeightMap, itemInputMap
+				appConfig, ioConfigCopy, threadCount, countLimit, sizeLimit, rateLimit, sizeConfig,
+				rangesConfig, loadTypeWeightMap, itemInputMap
 			);
 		} else {
 			return (U) new BasicFileLoadExecutor<>(
-				appConfig, (FileIoConfig<T, ? extends Directory<T>>) ioConfig, threadCount,
-				selectItemInput(), countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig
+				appConfig, ioConfigCopy, threadCount, selectItemInput(ioConfigCopy), countLimit,
+				sizeLimit, rateLimit, sizeConfig, rangesConfig
 			);
 		}
 	}

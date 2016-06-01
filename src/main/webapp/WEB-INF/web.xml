@@ -15,56 +15,6 @@
 	</servlet-mapping>
 
 	<servlet>
-		<servlet-name>StartServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.webui.StartServlet</servlet-class>
-	</servlet>
-
-	<servlet-mapping>
-		<servlet-name>StartServlet</servlet-name>
-		<url-pattern>/start</url-pattern>
-	</servlet-mapping>
-
-	<servlet>
-		<servlet-name>StopServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.webui.StopServlet</servlet-class>
-	</servlet>
-
-	<servlet-mapping>
-		<servlet-name>StopServlet</servlet-name>
-		<url-pattern>/stop</url-pattern>
-	</servlet-mapping>
-
-	<servlet>
-		<servlet-name>LogServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.webui.websockets.LogServlet</servlet-class>
-	</servlet>
-
-	<servlet-mapping>
-		<servlet-name>LogServlet</servlet-name>
-		<url-pattern>/logs</url-pattern>
-	</servlet-mapping>
-
-	<servlet>
-		<servlet-name>SaveServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.webui.SaveServlet</servlet-class>
-	</servlet>
-
-	<servlet-mapping>
-		<servlet-name>SaveServlet</servlet-name>
-		<url-pattern>/save/*</url-pattern>
-	</servlet-mapping>
-
-	<servlet>
-		<servlet-name>StateServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.webui.StateServlet</servlet-class>
-	</servlet>
-
-	<servlet-mapping>
-		<servlet-name>StateServlet</servlet-name>
-		<url-pattern>/state/*</url-pattern>
-	</servlet-mapping>
-
-	<servlet>
 		<servlet-name>ScenarioServlet</servlet-name>
 		<servlet-class>com.emc.mongoose.webui.ScenarioServlet</servlet-class>
 	</servlet>
@@ -84,8 +34,24 @@
 		<url-pattern>/run</url-pattern>
 	</servlet-mapping>
 
-	<multipart-config>
+	<servlet>
+		<servlet-name>LogServlet</servlet-name>
+		<servlet-class>com.emc.mongoose.webui.LogServlet</servlet-class>
+	</servlet>
 
-	</multipart-config>
+	<servlet-mapping>
+		<servlet-name>LogServlet</servlet-name>
+		<url-pattern>/logs</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>ChartServlet</servlet-name>
+		<servlet-class>com.emc.mongoose.webui.ChartServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>ChartServlet</servlet-name>
+		<url-pattern>/charts</url-pattern>
+	</servlet-mapping>
 
 </web-app>

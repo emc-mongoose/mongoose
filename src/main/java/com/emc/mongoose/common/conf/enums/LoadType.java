@@ -8,8 +8,9 @@ import java.util.Map;
  */
 public enum LoadType {
 	//
-	WRITE,
+	CREATE,
 	READ,
+	UPDATE,
 	DELETE,
 	MIXED;
 	//

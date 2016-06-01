@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.load.executor;
-// mongoose-common.jar
-import com.emc.mongoose.common.concurrent.NamingThreadFactory;
+
 import com.emc.mongoose.common.concurrent.LifeCycle;
+import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.enums.LoadType;
@@ -9,34 +9,34 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-// mongoose-core-api.jar
-import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.item.container.Container;
-import com.emc.mongoose.core.api.item.data.DataItem;
-import com.emc.mongoose.core.api.item.base.ItemBuffer;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
+import com.emc.mongoose.core.api.item.base.Item;
+import com.emc.mongoose.core.api.item.base.ItemBuffer;
+import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.ContentSource;
+import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
 import com.emc.mongoose.core.api.load.barrier.Throttle;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
 import com.emc.mongoose.core.api.load.model.LoadState;
-// mongoose-core-impl.jar
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
 import com.emc.mongoose.core.impl.load.barrier.ActiveTasksThrottle;
-import com.emc.mongoose.core.impl.load.model.metrics.BasicIOStats;
-import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
-//
+import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.LoadRegistry;
+import com.emc.mongoose.core.impl.load.model.metrics.BasicIoStats;
+import com.emc.mongoose.core.impl.load.tasks.processors.ChartPackage;
+import com.emc.mongoose.core.impl.load.tasks.processors.PolyLineManager;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
-//
+
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
@@ -49,8 +49,11 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
+
+import static com.emc.mongoose.core.api.item.base.Item.SLASH;
 /**
  Created by kurila on 15.10.14.
  */
@@ -65,9 +68,8 @@ implements LoadExecutor<T> {
 	//
 	protected final AppConfig appConfig;
 	//
-	protected final ContentSource dataSrc;
-	protected final IoConfig<? extends Item, ? extends Container<? extends Item>>
-		ioConfigCopy;
+	protected final ContentSource contentSrc;
+	protected final IoConfig<? extends Item, ? extends Container<? extends Item>> ioConfig;
 	protected final LoadType loadType;
 	//
 	protected volatile Output<T> consumer = null;
@@ -78,8 +80,8 @@ implements LoadExecutor<T> {
 	// METRICS section
 	protected final int metricsPeriodSec;
 	protected final boolean preconditionFlag;
-	protected IOStats ioStats;
-	protected volatile IOStats.Snapshot lastStats = null;
+	protected IoStats ioStats;
+	protected volatile IoStats.Snapshot lastStats = null;
 	// STATES section //////////////////////////////////////////////////////////////////////////////
 	private Balancer<String> nodeBalancer = null;
 	private LoadState<T> loadedPrevState = null;
@@ -150,8 +152,14 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			Thread.currentThread().setName(LoadExecutorBase.this.getName());
+			PolyLineManager polyLineManager = new PolyLineManager();
 			while(!isInterrupted.get()) {
 				logMetrics(Markers.PERF_AVG);
+				if (true) { // todo make some webui flag here
+					polyLineManager.updatePolylines(getStatsSnapshot());
+					ChartPackage.addChart(
+							appConfig.getRunId(), LoadExecutorBase.this.getName(), polyLineManager);
+				}
 				try {
 					TimeUnit.SECONDS.sleep(metricsPeriodSec);
 				} catch(final InterruptedException e) {
@@ -199,14 +207,7 @@ implements LoadExecutor<T> {
 			isCircular
 		);
 		//
-		IoConfig<? extends Item, ? extends Container<? extends Item>> reqConfigClone = null;
-		try {
-			reqConfigClone = ioConfig.clone();
-		} catch(final CloneNotSupportedException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the request config");
-		} finally {
-			this.ioConfigCopy = reqConfigClone;
-		}
+		this.ioConfig = ioConfig;
 		loadType = ioConfig.getLoadType();
 		//
 		metricsPeriodSec = appConfig.getLoadMetricsPeriod();
@@ -217,7 +218,7 @@ implements LoadExecutor<T> {
 		if(storageNodeAddrs != null) {
 			nodeBalancer = new BasicNodeBalancer(storageNodeAddrs);
 		}
-		dataSrc = ioConfig.getContentSource();
+		contentSrc = ContentSourceUtil.clone(ioConfig.getContentSource());
 		//
 		mgmtExecutor = new ThreadPoolExecutor(
 			1, 1, 0, TimeUnit.DAYS, new ArrayBlockingQueue<Runnable>(batchSize),
@@ -260,7 +261,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected void initStats(final boolean flagServeJMX) {
-		ioStats = new BasicIOStats(getName(), flagServeJMX, metricsPeriodSec);
+		ioStats = new BasicIoStats(getName(), flagServeJMX, metricsPeriodSec);
 		lastStats = ioStats.getSnapshot();
 	}
 	//
@@ -394,7 +395,7 @@ implements LoadExecutor<T> {
 			shutdownActually();
 		}
 		try {
-			ioConfigCopy.close(); // disables connection drop failures
+			ioConfig.close(); // disables connection drop failures
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
 		}
@@ -410,7 +411,7 @@ implements LoadExecutor<T> {
 		//
 		try {
 			if(isStarted.get()) { // if was executing
-				lastStats = ioStats.getSnapshot();
+				refreshStats();
 				ioStats.close();
 				logMetrics(Markers.PERF_SUM); // provide summary metrics
 				// calculate the efficiency and report
@@ -485,7 +486,7 @@ implements LoadExecutor<T> {
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final String nextNodeAddr = storageNodeAddrs == null ?
 			null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
-		final IOTask<T> ioTask = getIOTask(item, nextNodeAddr);
+		final IoTask<T> ioTask = getIoTask(item, nextNodeAddr);
 		// don't fill the connection pool as fast as possible, this may cause a failure
 		//
 		try {
@@ -518,8 +519,8 @@ implements LoadExecutor<T> {
 				final String nextNodeAddr = storageNodeAddrs == null ?
 					null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 				// prepare the I/O tasks list (make the link between the data item and load type)
-				final List<IOTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
-				getIOTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr);
+				final List<IoTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
+				getIoTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr);
 				// submit all I/O tasks
 				while(n < srcLimit) {
 					// don't fill the connection pool as fast as possible, this may cause a failure
@@ -565,31 +566,31 @@ implements LoadExecutor<T> {
 		return put(items, 0, items.size());
 	}
 	//
-	protected abstract IOTask<T> getIOTask(final T item, final String nextNodeAddr);
+	protected abstract IoTask<T> getIoTask(final T item, final String nextNodeAddr);
 	//
-	protected int getIOTasks(
+	protected int getIoTasks(
 		final List<T> items, final int from, final int to,
-		final List<IOTask<T>> dstTaskBuff, final String nextNodeAddr
+		final List<IoTask<T>> dstTaskBuff, final String nextNodeAddr
 	) {
 		for(final T item : items) {
 			if(item == null) {
 				break;
 			} else {
-				dstTaskBuff.add(getIOTask(item, nextNodeAddr));
+				dstTaskBuff.add(getIoTask(item, nextNodeAddr));
 			}
 		}
 		return to - from;
 	}
 	//
-	private final static ThreadLocal<StringBuilder>
+	protected final static ThreadLocal<StringBuilder>
 		PERF_TRACE_MSG_BUILDER = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {
 			return new StringBuilder();
 		}
 	};
-	private void logTrace(
-		final String nodeAddr, final String itemName, final IOTask.Status status,
+	protected void logTrace(
+		final String nodeAddr, final T item, final IoTask.Status status,
 		final long reqTimeStart, final long countBytesDone, final int reqDuration,
 		final int respLatency, final long respDataLatency
 	) {
@@ -601,12 +602,20 @@ implements LoadExecutor<T> {
 			} else {
 				strBuilder.setLength(0); // clear/reset
 			}
+			final String itemPath = item.getPath();
 			LOG.info(
 				Markers.PERF_TRACE,
 				strBuilder
 					//.append(loadType).append(',')
 					.append(nodeAddr == null ? "" : nodeAddr).append(',')
-					.append(itemName).append(',')
+					.append(
+						itemPath == null ?
+							item.getName() :
+							itemPath.endsWith(SLASH) ?
+								itemPath + item.getName() :
+								itemPath + SLASH + item.getName()
+					)
+					.append(',')
 					.append(countBytesDone).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
@@ -619,7 +628,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public void ioTaskCompleted(final IOTask<T> ioTask)
+	public void ioTaskCompleted(final IoTask<T> ioTask)
 	throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
@@ -627,7 +636,7 @@ implements LoadExecutor<T> {
 		}
 		//
 		final T item = ioTask.getItem();
-		final IOTask.Status status = ioTask.getStatus();
+		final IoTask.Status status = ioTask.getStatus();
 		final String nodeAddr = ioTask.getNodeAddr();
 		final int
 			reqDuration = ioTask.getDuration(),
@@ -637,15 +646,15 @@ implements LoadExecutor<T> {
 		// perf trace logging
 		if(!preconditionFlag && !(this instanceof MixedLoadExecutor)) {
 			logTrace(
-				nodeAddr, item.getName(), status, ioTask.getReqTimeStart(), countBytesDone,
-				reqDuration, respLatency, respDataLatency
+				nodeAddr, item, status, ioTask.getReqTimeStart(), countBytesDone, reqDuration,
+				respLatency, respDataLatency
 			);
 		}
 		//
 		if(nodeBalancer != null) {
 			nodeBalancer.markTaskFinish(nodeAddr);
 		}
-		if(IOTask.Status.SUCC == status) {
+		if(IoTask.Status.SUCC == status) {
 			// update the metrics with success
 			if(respLatency > 0 && respLatency > reqDuration) {
 				LOG.warn(
@@ -677,7 +686,7 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public int ioTaskCompletedBatch(
-		final List<? extends IOTask<T>> ioTasks, final int from, final int to
+		final List<? extends IoTask<T>> ioTasks, final int from, final int to
 	) throws RemoteException {
 		// producing was interrupted?
 		if(isInterrupted.get()) {
@@ -691,9 +700,9 @@ implements LoadExecutor<T> {
 				nodeBalancer.markTasksFinish(nodeAddr, n);
 			}
 			//
-			IOTask<T> ioTask;
+			IoTask<T> ioTask;
 			T item;
-			IOTask.Status status;
+			IoTask.Status status;
 			String nodeAddr;
 			int reqDuration, respLatency, respDataLatency;
 			long countBytesDone;
@@ -710,12 +719,12 @@ implements LoadExecutor<T> {
 				// perf trace logging
 				if(!preconditionFlag) {
 					logTrace(
-						nodeAddr, item.getName(), status, ioTask.getReqTimeStart(), countBytesDone,
+						nodeAddr, item, status, ioTask.getReqTimeStart(), countBytesDone,
 						reqDuration, respLatency, respDataLatency
 					);
 				}
 				//
-				if(IOTask.Status.SUCC == status) {
+				if(IoTask.Status.SUCC == status) {
 					// update the metrics with success
 					if(respLatency > 0 && respLatency > reqDuration) {
 						LOG.warn(
@@ -804,7 +813,7 @@ implements LoadExecutor<T> {
 			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
 				try {
 					for(final Item item : items) {
-						LOG.info(Markers.ITEM_LIST, item);
+						LOG.info(Markers.ITEM_LIST, item.toString());
 					}
 				} catch(final Throwable e) {
 					LogUtil.exception(
@@ -877,7 +886,7 @@ implements LoadExecutor<T> {
 				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
 			}
 			// apply parameters from loadState to current load executor
-			final IOStats.Snapshot statsSnapshot = state.getStatsSnapshot();
+			final IoStats.Snapshot statsSnapshot = state.getStatsSnapshot();
 			final long
 				countSucc = statsSnapshot.getSuccCount(),
 				countFail = statsSnapshot.getFailCount();
@@ -911,7 +920,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public IOStats.Snapshot getStatsSnapshot() {
+	public IoStats.Snapshot getStatsSnapshot() {
 		return lastStats;
 	}
 	//
@@ -1031,36 +1040,33 @@ implements LoadExecutor<T> {
 	protected void closeActually()
 	throws IOException {
 		LOG.debug(Markers.MSG, "Invoked close for {}", getName());
-		try {
-			if(isInterrupted.compareAndSet(false, true)) {
-				synchronized(state) {
-					state.notifyAll();
-				}
-				interruptActually();
+		if(isInterrupted.compareAndSet(false, true)) {
+			synchronized(state) {
+				state.notifyAll();
 			}
-		} finally {
-			if(consumer != null && !(consumer instanceof LifeCycle)) {
-				try {
-					//
-					consumer.close();
-					LOG.debug(
-						Markers.MSG, "{}: closed the consumer \"{}\" successfully",
-						getName(), consumer
-					);
-				} catch(final IOException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "{}: failed to close the consumer \"{}\"",
-						getName(), consumer
-					);
-				}
-			}
-			LoadRegistry.unregister(this);
-			if(loadedPrevState != null) {
-				if(RESTORED_STATES_MAP.containsKey(appConfig.getRunId())) {
-					RESTORED_STATES_MAP.get(appConfig.getRunId()).remove(loadedPrevState);
-				}
+			interruptActually();
+		}
+		if(consumer != null && !(consumer instanceof LifeCycle)) {
+			try {
+				consumer.close();
+				LOG.debug(
+					Markers.MSG, "{}: closed the consumer \"{}\" successfully",
+					getName(), consumer
+				);
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "{}: failed to close the consumer \"{}\"",
+					getName(), consumer
+				);
 			}
 		}
+		LoadRegistry.unregister(this);
+		if(loadedPrevState != null) {
+			if(RESTORED_STATES_MAP.containsKey(appConfig.getRunId())) {
+				RESTORED_STATES_MAP.get(appConfig.getRunId()).remove(loadedPrevState);
+			}
+		}
+		contentSrc.close();
 		LOG.debug(Markers.MSG, "\"{}\" closed successfully", getName());
 	}
 	//

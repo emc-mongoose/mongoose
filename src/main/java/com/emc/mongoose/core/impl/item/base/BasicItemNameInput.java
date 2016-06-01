@@ -17,8 +17,7 @@ extends BasicValueInput<String> {
 	//
 	protected volatile long lastValue;
 	//
-	public
-	BasicItemNameInput(
+	public BasicItemNameInput(
 		final ItemNamingType namingType, final String prefix, final int length, final int radix,
 		final long offset
 	) throws IllegalArgumentException {

@@ -27,7 +27,8 @@
 			"config" : {
 				"item" : {
 					"data" : {
-						"ranges" : 1 // TODO
+						// TODO implement
+						"ranges" : 1
 					},
 					"src" : {
 						"file" : "linear-read-partial.csv"

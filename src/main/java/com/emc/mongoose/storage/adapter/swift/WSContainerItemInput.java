@@ -43,10 +43,10 @@ extends GenericContainerItemInputBase<T, C> {
 	private long lastSize = -1, doneCount = 0;
 	//
 	public WSContainerItemInput(
-		final SwiftContainerHelper<T, C> container, final String nodeAddr, final Class<T> itemCls,
-		final long maxCount
+		final String path, final SwiftContainerHelper<T, C> container, final String nodeAddr,
+		final Class<T> itemCls, final long maxCount
 	) throws IllegalStateException {
-		super(container, itemCls, maxCount);
+		super(path, container, itemCls, maxCount);
 		this.nodeAddr = nodeAddr;
 	}
 	//
@@ -135,7 +135,7 @@ extends GenericContainerItemInputBase<T, C> {
 								if(lastItemId != null && lastSize > -1) {
 									try {
 										nextItem = containerHelper.buildItem(
-											itemConstructor, lastItemId, lastSize
+											itemConstructor, path, lastItemId, lastSize
 										);
 										if(nextItem != null) {
 											items.add(nextItem);

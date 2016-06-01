@@ -8,6 +8,7 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -64,7 +65,7 @@ implements FileLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public final Input<T> selectItemInput() {
+	public final Input<T> selectItemInput(final IoConfig<T, ?> ioConfigCopy) {
 		return null;
 	}
 	//
@@ -79,12 +80,12 @@ implements FileLoadBuilderSvc<T, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()
-	throws IllegalStateException {
+	throws IllegalStateException, CloneNotSupportedException {
 		if(ioConfig == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
-		//
-		final LoadType loadType = ioConfig.getLoadType();
+		final FileIoConfig ioConfigCopy = (FileIoConfig) ioConfig.clone();
+		final LoadType loadType = ioConfigCopy.getLoadType();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
@@ -94,12 +95,12 @@ implements FileLoadBuilderSvc<T, U> {
 			final Map<LoadType, Integer> loadTypeWeightMap = LoadType
 				.getMixedLoadWeights(loadPatterns);
 			return (U) new BasicMixedFileLoadSvc<>(
-				appConfig, (FileIoConfig) ioConfig, threadCount, countLimit, sizeLimit, rateLimit,
-				sizeConfig, rangesConfig, loadTypeWeightMap, null
+				appConfig, ioConfigCopy, threadCount, countLimit, sizeLimit, rateLimit, sizeConfig,
+				rangesConfig, loadTypeWeightMap, null
 			);
 		} else {
 			return (U) new BasicFileLoadSvc<>(
-				appConfig, (FileIoConfig) ioConfig, threadCount, selectItemInput(), countLimit,
+				appConfig, ioConfigCopy, threadCount, selectItemInput(ioConfigCopy), countLimit,
 				sizeLimit, rateLimit, sizeConfig, rangesConfig
 			);
 		}

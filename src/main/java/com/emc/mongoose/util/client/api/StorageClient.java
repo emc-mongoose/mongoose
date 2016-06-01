@@ -9,7 +9,7 @@ import java.io.IOException;
 
 /**
  Created by kurila on 15.06.15.
- The client class supporting the following storage I/O methods: write, read, delete, update, append.
+ The client class supporting the following storage I/O methods: create, write, copy, update, read, delete.
  Note that all the methods are blocking. Use a low-level load execution
  builders and jobs interface if a non-blocking approach is required.
  <p>Every method accepts an {@link Input} stream as a 1st
@@ -22,36 +22,34 @@ import java.io.IOException;
  stream content and the remaining methods will process them as expected (read/delete/etc).</p>
  <p>The 2nd argument is always a destination for the data items which is used to serialize them
  after being processed successfully.</p>
- <p>Also each method returns the count of the successfully processed data items.</p>
+ <p>Also each method returns the count of the successfully processed items.</p>
  */
 public interface StorageClient<T extends Item>
 extends Closeable {
 
 	/**
-	 Write <b><i>new</i></b> data items of the specified size infinitely, do not store the written data items info
+	 Create<b><i>new</i></b> items of the specified size infinitely, do not store the written data items info
 	 @param size the size of the data items to write.
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
-	long write(final long size)
+	long create(final long size)
 	throws IllegalArgumentException, InterruptedException, IOException;
 
 	/**
-	 (Over|Re)Write the data items in a customized way using fixed data items sizes.
-	 @param itemInput data items info source
+	 Create new items in a customized way using fixed data items sizes.
 	 @param itemOutput data items info destination, may be null
 	 @param countLimit the count limit of the data items to write, 0 means no limit.
 	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param size the size of the data items to write.
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
-	long write(
-		final Input<T> itemInput, final Output<T> itemOutput,
-		final long countLimit, final int connPerNodeCount, final long size
+	long create(
+		final Output<T> itemOutput, final long countLimit, final int connPerNodeCount,
+		final long size
 	) throws IllegalArgumentException, InterruptedException, IOException;
 
 	/**
-	 Write the data items in a customized way using specific data items sizes distribution.
-	 @param itemInput data items info source
+	 Create new items in a customized way using specific data items sizes distribution.
 	 @param itemOutput data items info destination, may be null
 	 @param countLimit the count limit of the data items to write, 0 means no limit.
 	 @param connPerNodeCount the count of the concurrent connections per storage node
@@ -62,11 +60,43 @@ extends Closeable {
 	 @return the count of the items written actually
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
-	long write(
-		final Input<T> itemInput, final Output<T> itemOutput,
-		final long countLimit, final int connPerNodeCount,
+	long create(
+		final Output<T> itemOutput, final long countLimit, final int connPerNodeCount,
 		final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, InterruptedException, IOException;
+
+	/**
+	 Write the items (possibly existing)
+	 @param itemInput
+	 @param itemOutput
+	 @param countLimit
+	 @param connPerNodeCount
+	 @throws IllegalArgumentException
+	 @throws InterruptedException
+	 @throws IOException
+	 */
+	long write(
+		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit,
+		final int connPerNodeCount
+	) throws IllegalArgumentException, InterruptedException, IOException;
+
+	/**
+	 Copy the items from the source container to the destionation one
+	 @param itemInput
+	 @param itemOutput
+	 @param srcContainer
+	 @param dstContainer
+	 @param countLimit
+	 @param connPerNodeCount
+	 @throws IllegalArgumentException
+	 @throws InterruptedException
+	 @throws IOException
+	 */
+	/*long copy(
+		final Input<T> itemInput, final Output<T> itemOutput,
+		final String srcContainer, final String dstContainer,
+		final long countLimit, final int connPerNodeCount
+	) throws IllegalArgumentException, InterruptedException, IOException;*/
 
 	/**
 	 Write the partial data (update random ranges)
@@ -75,14 +105,13 @@ extends Closeable {
 	 @param countLimit
 	 @param connPerNodeCount
 	 @param randomRangesCount
-	 @return
 	 @throws IllegalArgumentException
 	 @throws InterruptedException
 	 @throws IOException
 	 */
-	long write(
-		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit, final int connPerNodeCount,
-		final int randomRangesCount
+	long update(
+		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit,
+		final int connPerNodeCount, final int randomRangesCount
 	) throws IllegalArgumentException, InterruptedException, IOException;
 
 	/**
@@ -92,18 +121,17 @@ extends Closeable {
 	 @param countLimit
 	 @param connPerNodeCount
 	 @param fixedByteRanges
-	 @return
 	 @throws IllegalArgumentException
 	 @throws InterruptedException
 	 @throws IOException
 	 */
-	long write(
-		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit, final int connPerNodeCount,
-		final String fixedByteRanges
+	long update(
+		final Input<T> itemInput, final Output<T> itemOutput, final long countLimit,
+		final int connPerNodeCount, final String fixedByteRanges
 	) throws IllegalArgumentException, InterruptedException, IOException;
 
 	/**
-	 Read the data items using the specified data items source, do not store the output data items info.
+	 Read the data items using the specified items input, do not store the output data items info.
 	 @param itemInput data items info source
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified
 	 */
@@ -112,9 +140,9 @@ extends Closeable {
 
 	/**
 	 Read the data items in a customized way.
-	 @param itemInput data items info source
-	 @param itemOutput data items info destination, may be null
-	 @param countLimit the count limit of the data items to write, 0 means no limit.
+	 @param itemInput items info source
+	 @param itemOutput items info destination, may be null
+	 @param countLimit the count limit of the items to write, 0 means no limit.
 	 @param connPerNodeCount the count of the concurrent connections per storage node
 	 @param verifyContentFlag To verify the content integrity or to not verify.
 	 @throws java.lang.IllegalStateException if no data items list is available and no bucket/container is specified

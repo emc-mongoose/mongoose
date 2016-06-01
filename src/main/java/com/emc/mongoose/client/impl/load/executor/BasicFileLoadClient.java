@@ -8,9 +8,9 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 //
-import com.emc.mongoose.core.impl.io.task.BasicFileIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicFileIoTask;
 //
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 //
@@ -46,9 +46,9 @@ implements FileLoadClient<T, W> {
 	}
 	//
 	@Override
-	protected IOTask<T> getIOTask(final T item, final String nextNodeAddr) {
-		return new BasicFileIOTask<>(
-			item, (FileIoConfig<T, ? extends Directory<T>>) ioConfigCopy
+	protected IoTask<T> getIoTask(final T item, final String nextNodeAddr) {
+		return new BasicFileIoTask<>(
+			item, (FileIoConfig<T, ? extends Directory<T>>) ioConfig
 		);
 	}
 }

@@ -73,17 +73,15 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 	//
 	@Override  @SuppressWarnings("unchecked")
 	protected final U buildActually()
-	throws RemoteException {
-		//
+	throws RemoteException, CloneNotSupportedException {
 		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
-		//
 		DirectoryLoadBuilderSvc<T, C, W> nextBuilder;
 		W nextLoad;
-		//
-		itemInput = selectItemInput(); // affects load service builders
+		final FileIoConfig ioConfigCopy = (FileIoConfig) ioConfig.clone();
+		itemInput = selectItemInput(ioConfigCopy); // affects load service builders
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing
+			nextBuilder.setIoConfig(ioConfigCopy); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
@@ -91,7 +89,7 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		}
 		//
 		return (U) new BasicDirectoryLoadClient<>(
-			appConfig, (FileIoConfig) ioConfig, appConfig.getLoadThreads(), itemInput, countLimit,
+			appConfig, ioConfigCopy, appConfig.getLoadThreads(), itemInput, countLimit,
 			sizeLimit, rateLimit, remoteLoadMap
 		);
 	}

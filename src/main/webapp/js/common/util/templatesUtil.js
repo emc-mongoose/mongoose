@@ -18,6 +18,29 @@ define(function() {
     };
 
     // the order of elements matters for a template
+    const TESTS_TAB_TYPE = {
+        LIST: 'list',
+        LOGS: 'logs',
+        CHARTS: 'charts'
+    };
+
+    // the order of elements matters for a template
+    const TESTS_CHARTS_TAB_TYPE = {
+        LATENCY: 'latency',
+        DURATION: 'duration',
+        THROUGHPUT: 'throughput',
+        BANDWIDTH: 'bandwidth'
+    };
+
+    // the order of elements matters for a template
+    const TESTS_LOGS_TAB_TYPE = {
+        MESSAGES: 'messages',
+        ERRORS: 'errors',
+        PERFAVG: 'perf\.avg',
+        PERFSUM: 'perf\.sum'
+    };
+
+    // the order of elements matters for a template
     const COMMON_BUTTON_TYPE = {
         OPEN: 'open',
         OPEN_INPUT_TEXT: 'file-name',
@@ -57,6 +80,18 @@ define(function() {
         return TAB_TYPE;
     }
 
+    function testsTabTypes() {
+        return TESTS_TAB_TYPE;
+    }
+
+    function testsChartsTabTypes() {
+        return TESTS_CHARTS_TAB_TYPE;
+    }
+
+    function testsLogsTabTypes() {
+        return TESTS_LOGS_TAB_TYPE;
+    }
+
     function commonButtonTypes() {
         return COMMON_BUTTON_TYPE;
     }
@@ -76,11 +111,6 @@ define(function() {
     function delimiters() {
         return DELIMITER;
     }
-
-    String.prototype.replaceAll = function(search, replacement) {
-        var target = this;
-        return target.replace(new RegExp(search, 'g'), replacement);
-    };
 
     function composeId(partsArr) {
 	    return partsArr.join(DELIMITER.ID);
@@ -107,6 +137,9 @@ define(function() {
     return {
         modes: modes,
         tabTypes: tabTypes,
+        testsTabTypes: testsTabTypes,
+        testsLogsTabTypes: testsLogsTabTypes,
+        testsChartsTabTypes: testsChartsTabTypes,
         commonButtonTypes: commonButtonTypes,
         configTreeElements: configTreeElements,
         tabClasses: tabClasses,

@@ -2,20 +2,21 @@ package com.emc.mongoose.core.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //
-import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.IoWorker;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
-import com.emc.mongoose.core.api.io.task.DirectoryIOTask;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.DirectoryIoTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.load.executor.DirectoryLoadExecutor;
 //
-import com.emc.mongoose.core.impl.io.task.BasicDirectoryIOTask;
+import com.emc.mongoose.core.impl.io.task.BasicDirectoryIoTask;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.File;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -43,7 +44,7 @@ implements DirectoryLoadExecutor<T, C> {
 		super(appConfig, ioConfig, null, threadCount, itemInput, countLimit, sizeLimit, rateLimit);
 		ioTaskExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(maxItemQueueSize), new IOWorker.Factory(getName())
+			new ArrayBlockingQueue<Runnable>(maxItemQueueSize), new IoWorker.Factory(getName())
 		) {
 			@Override @SuppressWarnings("unchecked")
 			protected final <V> RunnableFuture<V> newTaskFor(final Runnable task, final V value) {
@@ -52,7 +53,7 @@ implements DirectoryLoadExecutor<T, C> {
 			//
 			@Override @SuppressWarnings("unchecked")
 			protected final void afterExecute(final Runnable task, final Throwable throwable) {
-				final DirectoryIOTask<T, C> ioTask = (DirectoryIOTask<T, C>) task;
+				final DirectoryIoTask<T, C> ioTask = (DirectoryIoTask<T, C>) task;
 				if(throwable == null) {
 					try {
 						ioTaskCompleted(ioTask);
@@ -65,13 +66,51 @@ implements DirectoryLoadExecutor<T, C> {
 		};
 	}
 	//
-	@Override
-	protected DirectoryIOTask<T, C> getIOTask(final C item, final String nextNodeAddr) {
-		return new BasicDirectoryIOTask<>(item, (FileIoConfig<T, C>) ioConfigCopy);
+	protected void logTrace(
+		final String nodeAddr, final T item, final IoTask.Status status,
+		final long reqTimeStart, final long countBytesDone, final int reqDuration,
+		final int respLatency, final long respDataLatency
+	) {
+		if(LOG.isInfoEnabled(Markers.PERF_TRACE)) {
+			StringBuilder strBuilder = PERF_TRACE_MSG_BUILDER.get();
+			if(strBuilder == null) {
+				strBuilder = new StringBuilder();
+				PERF_TRACE_MSG_BUILDER.set(strBuilder);
+			} else {
+				strBuilder.setLength(0); // clear/reset
+			}
+			final String itemPath = item.getPath();
+			LOG.info(
+				Markers.PERF_TRACE,
+				strBuilder
+					//.append(loadType).append(',')
+					.append(nodeAddr == null ? "" : nodeAddr).append(',')
+					.append(
+						itemPath == null ?
+							item.getName() :
+							itemPath.endsWith(File.separator) ?
+								itemPath + item.getName() :
+								itemPath + File.separator + item.getName()
+					)
+					.append(',')
+					.append(countBytesDone).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(respLatency > 0 ? respLatency : 0).append(',')
+					.append(respDataLatency).append(',')
+					.append(reqDuration)
+					.toString()
+			);
+		}
 	}
 	//
 	@Override
-	public <A extends IOTask<C>> int submitTasks(final List<A> tasks, final int from, final int to)
+	protected DirectoryIoTask<T, C> getIoTask(final C item, final String nextNodeAddr) {
+		return new BasicDirectoryIoTask<>(item, (FileIoConfig<T, C>) ioConfig);
+	}
+	//
+	@Override
+	public <A extends IoTask<C>> int submitTasks(final List<A> tasks, final int from, final int to)
 	throws RemoteException, RejectedExecutionException {
 		int n = 0;
 		for(int i = from; i < to; i ++) {
@@ -85,10 +124,10 @@ implements DirectoryLoadExecutor<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final <A extends IOTask<C>> Future<A> submitTask(final A ioTask)
+	public final <A extends IoTask<C>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		return (Future<A>) ioTaskExecutor
-			.<DirectoryIOTask<T, C>>submit((DirectoryIOTask<T, C>) ioTask);
+			.<DirectoryIoTask<T, C>>submit((DirectoryIoTask<T, C>) ioTask);
 	}
 	//
 	@Override

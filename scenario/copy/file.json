@@ -32,9 +32,6 @@
 					"src" : {
 						"container" : "copy-file"
 					}
-				},
-				"load" : {
-					"copy" : true
 				}
 			}
 		}

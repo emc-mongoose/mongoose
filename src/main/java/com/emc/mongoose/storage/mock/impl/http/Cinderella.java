@@ -1,29 +1,30 @@
 package com.emc.mongoose.storage.mock.impl.http;
 // mongoose-common.jar
-import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.io.value.async.AsyncCurrentDateInput;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-//
 import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
 import com.emc.mongoose.common.net.ssl.SslContext;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
-// mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.api.HttpStorageMock;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
+import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
+import com.emc.mongoose.storage.mock.impl.http.net.BasicHttpStorageMockConnFactory;
 import com.emc.mongoose.storage.mock.impl.http.net.BasicSocketEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.http.request.APIRequestHandlerMapper;
-import com.emc.mongoose.storage.mock.impl.http.net.BasicHttpStorageMockConnFactory;
-//
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.impl.nio.DefaultNHttpServerConnection;
 import org.apache.http.impl.nio.SSLNHttpServerConnectionFactory;
+import org.apache.http.nio.NHttpConnectionFactory;
+import org.apache.http.nio.protocol.HttpAsyncRequestHandlerMapper;
+import org.apache.http.nio.protocol.HttpAsyncService;
+import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
@@ -32,20 +33,20 @@ import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.ResponseConnControl;
 import org.apache.http.protocol.ResponseContent;
 import org.apache.http.protocol.ResponseServer;
-//
-import org.apache.http.impl.nio.DefaultNHttpServerConnection;
-import org.apache.http.nio.NHttpConnectionFactory;
-import org.apache.http.nio.protocol.HttpAsyncRequestHandlerMapper;
-import org.apache.http.nio.protocol.HttpAsyncService;
-import org.apache.http.nio.reactor.IOReactorException;
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
-import javax.net.ssl.SSLContext;
+
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
+
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
+
+//
+// mongoose-storage-mock.jar
+//
+//
+//
+//
 
 /**
  * Created by olga on 28.01.15.
@@ -84,7 +85,7 @@ implements HttpStorageMock<T> {
 		final String dataSrcPath, final int metricsPeriodSec, final boolean jmxServeFlag
 	) throws IOException {
 		super(
-			(Class<T>) BasicHttpDataMock.class, ContentSourceBase.getDefaultInstance(),
+			(Class<T>) BasicHttpDataMock.class, ContentSourceUtil.getDefaultInstance(),
 			storageCapacity, containerCapacity, containerCountLimit, batchSize,
 			dataSrcPath, metricsPeriodSec, jmxServeFlag
 		);

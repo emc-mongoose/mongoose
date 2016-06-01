@@ -19,17 +19,11 @@ public interface TestConstants {
 	//
 	String KEY_VERIFY_CONTENT = "load.type.read.verifyContent";
 	//
-	String LOAD_WRITE = "Write";
+	String LOAD_CREATE = "Create";
 	String LOAD_READ = "Read";
 	String LOAD_UPDATE = "Update";
-	String LOAD_APPEND = "Append";
 	String LOAD_DELETE = "Delete";
-	//
-	String SCENARIO_SINGLE = "single";
-	String SCENARIO_CHAIN = "chain";
-	String SCENARIO_RAMPUP = "rampup";
+	String LOAD_COPY = "Copy";
 	//
 	String API_S3 = "s3";
-	//
-	String BUCKET_NAME = "bucketTest";
 }

@@ -22,7 +22,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "copy-s3-object.json"
+						"file" : "copy-s3-object.csv"
 					}
 				}
 			}
@@ -35,11 +35,8 @@
 					},
 					"src" : {
 						"container" : "copy-s3-object",
-						"file" : "copy-s3-object.json"
+						"file" : "copy-s3-object.csv"
 					}
-				},
-				"load" : {
-					"copy" : true
 				}
 			}
 		}
