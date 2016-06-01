@@ -40,20 +40,6 @@ define([
 		liElem.append(label, input);
 	}
 
-	// function itemProcess(item, objCase, arrCase, notObjCase, rootUlElem) {
-	// 	var li = $('<li/>');
-	// 	if ((typeof item === 'object') && (item !== null)) {
-	// 		if (Array.isArray(item)) {
-	// 			arrCase(li);
-	// 		} else {
-	// 			objCase(li);
-	// 		}
-	// 	} else {
-	// 		notObjCase(li);
-	// 	}
-	// 	rootUlElem.append(li);
-	// }
-
 	const ITEM_TYPE = {
 		PLAIN: 'plain',
 		OBJECT: 'obj',
@@ -119,7 +105,7 @@ define([
 	}
 
 
-	function addTreeOfItem(item, rootElem, path, delimiter, aClickEvent, arrAsNode) {
+	function addTreeOfItem(item, rootElem, path, delimiter, aClickEvent, arrAsNode, addrsObj) {
 
 		function plainPairAsNode(itemElem, nodeName, leafItem) {
 			fillNodeLi(itemElem, plainId([nodeName, 'id']), nodeName);
@@ -133,17 +119,19 @@ define([
 			}
 			if (isArray(leafItem)) {
 				leafItem.forEach(function (leafName) {
-					addTreeOfItem(leafName, leavesElem, newPath, delimiter, aClickEvent, arrAsNode);
+					addTreeOfItem(leafName, leavesElem, newPath, delimiter, aClickEvent, arrAsNode, addrsObj);
 				});
 			} else {
-				addTreeOfItem(leafItem, leavesElem, newPath, delimiter, aClickEvent, arrAsNode);
+				addTreeOfItem(leafItem, leavesElem, newPath, delimiter, aClickEvent, arrAsNode, addrsObj);
 			}
 		}
 
 		const objectPair = plainPairAsNode;
 
 		function plainPairAsLeaf(itemElem, leafName, fieldValue) {
-			fillLeafLi(itemElem, path, leafName, aClickEvent);
+			const fullPath = path + delimiter + leafName;
+			addrsObj[fullPath] = fieldValue;
+			fillLeafLi(itemElem, fullPath, leafName, aClickEvent);
 		}
 		
 		function objCase(item) {
@@ -230,7 +218,7 @@ define([
 	return {
 		// arrayAsTree: addVisualTreeOfArray,
 		// objectAsTree: addVisualTreeOfObject,
-		// formForTree: addFormForTree,
+		formForTree: addFormForTree,
 		treeOfItem: addTreeOfItem
 	}
 });
