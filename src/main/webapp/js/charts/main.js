@@ -14,6 +14,7 @@ define(['jquery',
 		var currentChartBoards;
 		var currentMetric;
 		var currentTimeUnit;
+		var updateFlag = true;
 
 		function getSvgId(chartBoardName) {
 			return plainId(['chartboard', chartBoardName]);
@@ -118,9 +119,9 @@ define(['jquery',
 		function tuneUnits(currentTimeValue) {
 			if (currentTimeValue > currentTimeUnit.limit) {
 				currentTimeUnit = TIME_UNIT[currentTimeUnit.next];
-				updateAxisX();
-				updateAxisY();
-				updateLine();
+				// updateAxisX();
+				// updateAxisY();
+				// updateLine();
 			}
 		}
 
@@ -172,9 +173,9 @@ define(['jquery',
 		const AXIS_X_WIDTH = Math.round(WIDTH / 1.5);
 		const AXIS_Y_WIDTH = HEIGHT;
 
-		function xAccessor(data) {
+		function xConvertAccessor(data) {
 			data.x = TIME_UNIT.toUnits(data.x, currentTimeUnit);
-			return data.x <= 0 ? 0.0000001 : data.x;
+			return data.x <= 0 ? 0.000000001 : data.x;
 		}
 
 		function yAccessor(data) {
@@ -229,9 +230,11 @@ define(['jquery',
 					switch (axis) {
 						case 'x':
 							setLinearXScale();
+							updateAxisX();
 							break;
 						case 'y':
 							setLinearYScale();
+							updateAxisY();
 							break;
 					}
 					break;
@@ -239,25 +242,27 @@ define(['jquery',
 					switch (axis) {
 						case 'x':
 							setLogXScale();
+							updateAxisX();
 							break;
 						case 'y':
 							setLogYScale();
+							updateAxisY();
 							break;
 					}
 					break;
 				default:
 					setLinearXScale();
 					setLinearYScale();
+					updateAxisX();
+					updateAxisY();
 			}
-			updateAxisX();
-			updateAxisY();
 			updateLine();
 		}
 
 		switchScaling();
 
 		function scaledXAccessor(data) {
-			return xScale(xAccessor(data));
+			return xScale(xConvertAccessor(data));
 		}
 
 		function scaledYAccessor(data) {
@@ -432,7 +437,7 @@ define(['jquery',
 		function updateAxes(svgElement, chartArr) {
 			const xDomain = xScale.domain();
 			tuneUnits(xDomain[xDomain.length - 1]);
-			xScale.domain(extent($.extend(true, {}, chartArr[0]), xAccessor));
+			xScale.domain(extent($.extend(true, {}, chartArr[0]), xConvertAccessor));
 			yScale.domain(deepExtent(chartArr, yAccessor)).nice();
 			svgElement.select('.x-axis')
 				.call(xAxis);
@@ -533,6 +538,7 @@ define(['jquery',
 		}
 
 		function updateChartBoard(chartBoardName, chartBoardContent, metric) {
+			updateFlag = false;
 			if (!chartBoardName || !chartBoardContent) {
 				return;
 			}
@@ -549,7 +555,8 @@ define(['jquery',
 			updateAxesLabels(svg, metric);
 			const svgCanvas = d3.select(svgSelector + ' g');
 			updateCharts(svgCanvas, chartArr, chartBoardName, metric);
-			updateLegend(svgCanvas, chartArr, chartBoardName, metric)
+			updateLegend(svgCanvas, chartArr, chartBoardName, metric);
+			updateFlag = true;
 		}
 
 		return {
