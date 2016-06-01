@@ -211,7 +211,10 @@ implements IOStats {
 		//
 		@Override
 		public double getDurationAvg() {
-			return durValues.length == 0 ? 0 : ((double) sumDur) / elapsedTime;
+			if(durSnapshot == null) {
+				durSnapshot = new UniformSnapshot(durValues);
+			}
+			return durSnapshot.getMean();
 		}
 		//
 		@Override
@@ -265,7 +268,10 @@ implements IOStats {
 		//
 		@Override
 		public double getLatencyAvg() {
-			return latValues.length == 0 ? 0 : ((double) sumLat) / elapsedTime;
+			if(latSnapshot == null) {
+				latSnapshot = new UniformSnapshot(latValues);
+			}
+			return latSnapshot.getMean();
 		}
 		//
 		@Override
