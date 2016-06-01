@@ -119,32 +119,33 @@ define([
 	}
 
 
-	function addTreeOfItem(item, rootElem, delimiter, aClickEvent, arrAsNode) {
+	function addTreeOfItem(item, rootElem, path, delimiter, aClickEvent, arrAsNode) {
 
 		function plainPairAsNode(itemElem, nodeName, leafItem) {
 			fillNodeLi(itemElem, plainId([nodeName, 'id']), nodeName);
 			var leavesElem = $('<ul/>');
 			itemElem.append(leavesElem);
+			var newPath;
+			if (path === '') {
+				newPath = nodeName;
+			} else {
+				newPath = path + delimiter + nodeName;
+			}
 			if (isArray(leafItem)) {
 				leafItem.forEach(function (leafName) {
-					addTreeOfItem(leafName, leavesElem, delimiter, aClickEvent, arrAsNode);
+					addTreeOfItem(leafName, leavesElem, newPath, delimiter, aClickEvent, arrAsNode);
 				});
 			} else {
-				addTreeOfItem(leafItem, leavesElem, delimiter, aClickEvent, arrAsNode);
+				addTreeOfItem(leafItem, leavesElem, newPath, delimiter, aClickEvent, arrAsNode);
 			}
 		}
 
+		const objectPair = plainPairAsNode;
+
 		function plainPairAsLeaf(itemElem, leafName, fieldValue) {
-			fillLeafLi(itemElem, plainId([leafName, 'id']), leafName, aClickEvent);
+			fillLeafLi(itemElem, path, leafName, aClickEvent);
 		}
-
-		function objectPair(itemElem, nodeName, leafItem) {
-			fillNodeLi(itemElem, plainId([nodeName, 'id']), nodeName);
-			var leavesElem = $('<ul/>');
-			itemElem.append(leavesElem);
-			addTreeOfItem(leafItem, leavesElem, delimiter, aClickEvent, arrAsNode);
-		}
-
+		
 		function objCase(item) {
 			$.each(item, function (key, value) {
 				const newItemElem = $('<li/>');
@@ -171,77 +172,12 @@ define([
 		function plainCase(item) {
 			const newItemElem = $('<li/>');
 			rootElem.append(newItemElem);
-			fillLeafLi(newItemElem, item, item, aClickEvent);
+			fillLeafLi(newItemElem, path, item, aClickEvent);
 		}
 
 		itemProcess(item, objCase, plainCase);
 	}
-
-	// with recursion, pay attention to the internal call if the function signature is being
-	// changed
-	// function addVisualTreeOfObject(object, rootUlElem, nodeIdSuffix,
-	//                                addressObject, delimiter, elemAddress, aClickEvent, arrayValuesHandling) {
-	// 	if (!addressObject) {
-	// 		addressObject = {};
-	// 	}
-	// 	if (!elemAddress) {
-	// 		elemAddress = '';
-	// 	}
-	// 	$.each(object, function (key, item) {
-	//
-	// 		function objCase(li) {
-	// 			fillNodeLi(li, plainId([key, nodeIdSuffix, 'id']), key);
-	// 			var ul = $('<ul/>');
-	// 			li.append(ul);
-	// 			const aNameChunk = key + delimiter;
-	// 			addVisualTreeOfObject(item, ul, nodeIdSuffix, addressObject, delimiter,
-	// 				elemAddress + aNameChunk, aClickEvent);
-	// 		}
-	//
-	// 		function notObjCase(li) {
-	// 			if (Array.isArray(object)) {
-	// 				if (arrayValuesHandling) {
-	//
-	// 				} else {
-	//
-	// 				}
-	// 			} else {
-	// 				const addressObjKey = elemAddress + key;
-	// 				addressObject[addressObjKey] = item;
-	// 				fillLeafLi(li, addressObjKey, key, aClickEvent);
-	// 			}
-	// 		}
-	//
-	// 		itemProcess(item, objCase, notObjCase, rootUlElem);
-	// 	})
-	// }
-	//
-	// // without recursion
-	// function addVisualTreeOfArray(array, rootUlElem, nodeIdSuffix, delimiter, aClickEvent) {
-	// 	$.each(array, function (index, item) {
-	// 		function objCase(liOuter) {
-	// 			liOuter.remove();
-	// 			addVisualTreeOfObject(item, rootUlElem, nodeIdSuffix, null, delimiter, null, aClickEvent, false);
-	// 			// $.each(item, function (nodeName, leavesArr) {
-	// 			// 	fillNodeLi(liOuter, plainId([nodeName, nodeIdSuffix, 'id']), nodeName);
-	// 			// 	var ul = $('<ul/>');
-	// 			// 	$.each(leavesArr, function (index, leafName) {
-	// 			// 		var liInner = $('<li/>');
-	// 			// 		var aName = nodeName + delimiter + leafName;
-	// 			// 		fillLeafLi(liInner, aName, leafName, aClickEvent, aName);
-	// 			// 		ul.append(liInner);
-	// 			// 	});
-	// 			// 	liOuter.append(ul);
-	// 			// })
-	// 		}
-	//
-	// 		function notObjCase(liOuter) {
-	// 			fillLeafLi(liOuter, item, item, aClickEvent);
-	// 		}
-	//
-	// 		itemProcess(item, objCase, notObjCase, rootUlElem);
-	// 	})
-	// }
+	
 
 	function addFormForTree(addressObj, rootFormElem, delimiter, objectToChangeWithForm, tabType, jsonViewElem) {
 		const enterWarning = 'Press enter to commit a change';

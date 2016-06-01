@@ -50,7 +50,7 @@ define([
 		rootTreeUlElem.empty();
 		var addressObject = {};
 		// elementAppender.objectAsTree(configObject, rootTreeUlElem, 'prop', addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent, true);
-		elementAppender.treeOfItem(configObject, rootTreeUlElem, DELIMITER.PATH, commonClickEventCreator.propertyClickEvent, false);
+		elementAppender.treeOfItem(configObject, rootTreeUlElem, '', DELIMITER.PROPERTY, commonClickEventCreator.propertyClickEvent, false);
 		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.DEFAULTS]));
 		treeFormElem.empty();
 		// elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, changedConfigObject, TAB_TYPE.DEFAULTS);

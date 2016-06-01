@@ -68,18 +68,9 @@ define([
 	function render(scenariosArray) {
 		const rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
 		// elementAppender.arrayAsTree(scenariosArray, rootTreeUlElem, 'dir', DELIMITER.PATH, localClickEventCreator.scenarioFile);
-		const temp = {
-			item: {
-				// "type": "data",
-				data: {
-					"content": null
-				},
-				data2: {
-					"content": null
-				}
-			}
-		};
-		elementAppender.treeOfItem(scenariosArray, rootTreeUlElem, DELIMITER.PATH, localClickEventCreator.scenarioFile, true);
+		const temp = ['default1.json', 'default2.json', {examples: ['example1.json', 'example2.json']}];
+		elementAppender.treeOfItem(scenariosArray, rootTreeUlElem, '', DELIMITER.PATH, localClickEventCreator.scenarioFile, true);
+		// elementAppender.treeOfItem(temp, rootTreeUlElem, '', DELIMITER.PATH, localClickEventCreator.scenarioFile, true);
 	}
 
 	function updateDetailsTree(scenarioObject) {
