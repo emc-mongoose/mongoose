@@ -708,6 +708,18 @@ implements LoadClient<T, W> {
 		for(final String addr : remoteLoadMap.keySet()) {
 			awaitExecutor.submit(new AwaitLoadJobTask(remoteLoadMap.get(addr), timeOut, timeUnit));
 		}
+		/*awaitExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					try {
+						LoadClientBase.super.await(timeOut, timeUnit);
+					} catch(final InterruptedException | RemoteException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "Failed to await");
+					}
+				}
+			}
+		);*/
 		awaitExecutor.shutdown();
 		try {
 			LOG.debug(Markers.MSG, "Wait remote await tasks for finish {}[{}]", timeOut, timeUnit);

@@ -9,7 +9,6 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
-import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
