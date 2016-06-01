@@ -11,11 +11,9 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ContainerLoadExecutor;
-import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
 //
 import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
-import com.emc.mongoose.core.impl.item.container.NewContainerInput;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -86,11 +84,11 @@ implements ContainerLoadBuilder<T, C, U>{
 		return this;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
+	@Override
 	protected Input<C> getNewItemInput(final IoConfig<C, ?> ioConfigCopy)
 	throws NoSuchMethodException {
 		final ItemNamingType namingType = appConfig.getItemNamingType();
-		return ioConfigCopy.getNewContainersInput(
+		return (Input<C>) ioConfigCopy.getNewContainersInput(
 			namingType, (Class) ioConfigCopy.getContainerClass()
 		);
 	}

@@ -94,7 +94,7 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	protected Input<C> getNewItemInput(final IoConfig<C, ?> ioConfigCopy)
 	throws NoSuchMethodException {
 		final ItemNamingType namingType = appConfig.getItemNamingType();
-		return ioConfigCopy.getNewContainersInput(
+		return (Input<C>) ioConfigCopy.getNewContainersInput(
 			namingType, (Class) ioConfigCopy.getContainerClass()
 		);
 	}
