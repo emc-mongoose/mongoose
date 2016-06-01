@@ -96,7 +96,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		super(appConfig, reqConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit);
 		//
 		this.loadType = reqConfig.getLoadType();
-		httpReqConfigCopy = (HttpRequestConfig<T, C>) ioConfigCopy;
+		httpReqConfigCopy = (HttpRequestConfig<T, C>) ioConfig;
 		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
 		//
 		if(READ.equals(loadType)) {

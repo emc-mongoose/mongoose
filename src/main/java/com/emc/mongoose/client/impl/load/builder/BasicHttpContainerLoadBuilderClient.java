@@ -65,12 +65,6 @@ implements HttpContainerLoadBuilderClient<T, C, W, U> {
 	}
 	//
 	@Override
-	protected Input<C> getContainerItemInput()
-	throws CloneNotSupportedException {
-		return null;
-	}
-	//
-	@Override
 	public final void invokePreConditions()
 	throws IllegalStateException {
 		//  do nothing
@@ -79,17 +73,18 @@ implements HttpContainerLoadBuilderClient<T, C, W, U> {
 	//
 	@Override  @SuppressWarnings("unchecked")
 	protected final U buildActually()
-	throws RemoteException {
+	throws RemoteException, CloneNotSupportedException {
 		//
 		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
 		//
 		HttpContainerLoadBuilderSvc<T, C, W> nextBuilder;
 		W nextLoad;
 		//
-		itemInput = selectItemInput(); // affects load service builders
+		final HttpRequestConfig ioConfigCopy = (HttpRequestConfig) ioConfig.clone();
+		itemInput = selectItemInput(ioConfigCopy); // affects load service builders
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing
+			nextBuilder.setIoConfig(ioConfigCopy); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
@@ -97,8 +92,8 @@ implements HttpContainerLoadBuilderClient<T, C, W, U> {
 		}
 		//
 		return (U) new BasicHttpContainerLoadClient<>(
-			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
-			itemInput, countLimit, sizeLimit, rateLimit, remoteLoadMap
+			appConfig, ioConfigCopy, storageNodeAddrs, appConfig.getLoadThreads(), itemInput,
+			countLimit, sizeLimit, rateLimit, remoteLoadMap
 		);
 	}
 }

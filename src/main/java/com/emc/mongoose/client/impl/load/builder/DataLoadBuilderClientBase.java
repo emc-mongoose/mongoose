@@ -12,6 +12,7 @@ import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.io.Input;
 //
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.FileDataItemInput;
 //
@@ -139,12 +140,12 @@ implements DataLoadBuilderClient<T, W, U> {
 		return this;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	protected Input<T> getNewItemInput()
+	@Override
+	protected Input<T> getNewItemInput(final IoConfig<T, ?> ioConfigCopy)
 	throws NoSuchMethodException {
 		final ItemNamingType namingType = appConfig.getItemNamingType();
-		return ioConfig.getNewDataItemsInput(
-			namingType, (Class<T>) ioConfig.getItemClass(), sizeConfig
+		return ioConfigCopy.getNewDataItemsInput(
+			namingType, ioConfigCopy.getItemClass(), sizeConfig
 		);
 	}
 }

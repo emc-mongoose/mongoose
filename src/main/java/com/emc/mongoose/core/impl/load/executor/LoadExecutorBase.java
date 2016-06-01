@@ -68,8 +68,7 @@ implements LoadExecutor<T> {
 	protected final AppConfig appConfig;
 	//
 	protected final ContentSource contentSrc;
-	protected final IoConfig<? extends Item, ? extends Container<? extends Item>>
-		ioConfigCopy;
+	protected final IoConfig<? extends Item, ? extends Container<? extends Item>> ioConfig;
 	protected final LoadType loadType;
 	//
 	protected volatile Output<T> consumer = null;
@@ -207,14 +206,7 @@ implements LoadExecutor<T> {
 			isCircular
 		);
 		//
-		IoConfig<? extends Item, ? extends Container<? extends Item>> reqConfigClone = null;
-		try {
-			reqConfigClone = ioConfig.clone();
-		} catch(final CloneNotSupportedException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the request config");
-		} finally {
-			this.ioConfigCopy = reqConfigClone;
-		}
+		this.ioConfig = ioConfig;
 		loadType = ioConfig.getLoadType();
 		//
 		metricsPeriodSec = appConfig.getLoadMetricsPeriod();
@@ -402,7 +394,7 @@ implements LoadExecutor<T> {
 			shutdownActually();
 		}
 		try {
-			ioConfigCopy.close(); // disables connection drop failures
+			ioConfig.close(); // disables connection drop failures
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
 		}
@@ -527,7 +519,7 @@ implements LoadExecutor<T> {
 					null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 				// prepare the I/O tasks list (make the link between the data item and load type)
 				final List<IoTask<T>> ioTaskBuff = new ArrayList<>(srcLimit);
-				getIOTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr);
+				getIoTasks(srcBuff, from, to, ioTaskBuff, nextNodeAddr);
 				// submit all I/O tasks
 				while(n < srcLimit) {
 					// don't fill the connection pool as fast as possible, this may cause a failure
@@ -575,7 +567,7 @@ implements LoadExecutor<T> {
 	//
 	protected abstract IoTask<T> getIoTask(final T item, final String nextNodeAddr);
 	//
-	protected int getIOTasks(
+	protected int getIoTasks(
 		final List<T> items, final int from, final int to,
 		final List<IoTask<T>> dstTaskBuff, final String nextNodeAddr
 	) {

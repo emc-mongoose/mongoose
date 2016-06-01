@@ -80,16 +80,17 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()
-	throws RemoteException {
+	throws RemoteException, CloneNotSupportedException {
 		//
-		final LoadType loadType = ioConfig.getLoadType();
-		itemInput = selectItemInput(); // affects load service builders
+		final HttpRequestConfig ioConfigCopy = (HttpRequestConfig) ioConfig.clone();
+		final LoadType loadType = ioConfigCopy.getLoadType();
+		itemInput = selectItemInput(ioConfigCopy); // affects load service builders
 		final Map<String, W> remoteLoadMap = new HashMap<>();
 		HttpDataLoadBuilderSvc<T, W> nextBuilder;
 		W nextLoad;
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing
+			nextBuilder.setIoConfig(ioConfigCopy); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
@@ -121,10 +122,10 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 						itemInputMap.put(
 							nextLoadType,
 							LoadType.CREATE.equals(nextLoadType) ?
-								getNewItemInput() :
+								getNewItemInput(ioConfigCopy) :
 								new CsvFileDataItemInput<>(
-									singleInputPath, (Class<T>) ioConfig.getItemClass(),
-									ioConfig.getContentSource()
+									singleInputPath, (Class<T>) ioConfigCopy.getItemClass(),
+									ioConfigCopy.getContentSource()
 								)
 						);
 					} catch(final NoSuchMethodException | IOException e) {
@@ -140,10 +141,10 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 						itemInputMap.put(
 							nextLoadType,
 							nextInputFile == null && LoadType.CREATE.equals(nextLoadType) ?
-								getNewItemInput() :
+								getNewItemInput(ioConfigCopy) :
 								new CsvFileDataItemInput<>(
-									Paths.get(nextInputFile), (Class<T>) ioConfig.getItemClass(),
-									ioConfig.getContentSource()
+									Paths.get(nextInputFile), (Class<T>) ioConfigCopy.getItemClass(),
+									ioConfigCopy.getContentSource()
 								)
 						);
 					} catch(final NoSuchMethodException | IOException e) {
@@ -158,15 +159,15 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 			}
 			//
 			return (U) new BasicMixedHttpDataLoadClient<>(
-				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount, countLimit,
-				sizeLimit, rateLimit, (Map<String, MixedHttpDataLoadSvc<T>>) remoteLoadMap,
-				itemInputMap, loadTypeWeightMap
+				appConfig, ioConfigCopy, storageNodeAddrs, threadCount, countLimit, sizeLimit,
+				rateLimit, (Map<String, MixedHttpDataLoadSvc<T>>) remoteLoadMap, itemInputMap,
+				loadTypeWeightMap
 			);
 		} else {
 			//
 			return (U) new BasicHttpDataLoadClient<>(
-				appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, threadCount, itemInput,
-				countLimit, sizeLimit, rateLimit, remoteLoadMap
+				appConfig, ioConfigCopy, storageNodeAddrs, threadCount, itemInput, countLimit,
+				sizeLimit, rateLimit, remoteLoadMap
 			);
 		}
 	}

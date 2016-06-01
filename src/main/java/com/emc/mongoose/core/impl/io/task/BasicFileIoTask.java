@@ -67,12 +67,13 @@ implements FileIoTask<T> {
 	public BasicFileIoTask(final T item, final X ioConfig) {
 		super(item, null, ioConfig);
 		C c = ioConfig.getSrcContainer();
-		srcDir = c == null ? null : c.getName();
-		if(srcDir == null) {
-			dstDir = ioConfig.getItemPath();
+		if(c == null) {
+			dstDir = item.getPath();
+			srcDir = null;
 		} else {
+			srcDir = c.getName();
 			c = ioConfig.getDstContainer();
-			dstDir = c == null ? null : c.getName();
+			this.dstDir = c == null ? "" : c.getName();
 		}
 		switch(ioType) {
 			case CREATE:
@@ -104,8 +105,7 @@ implements FileIoTask<T> {
 				if(dstDir != null) {
 					Files.createDirectories(DEFAULT_FS.getPath(dstDir));
 				}
-				final Path dstPath = DEFAULT_FS
-					.getPath(dstDir == null ? "" : dstDir, item.getName());
+				final Path dstPath = DEFAULT_FS.getPath(dstDir, item.getName());
 				try(final FileChannel byteChannel = FileChannel.open(dstPath, openOptions)) {
 					if(openOptions.contains(READ)) {
 						runRead(byteChannel);
@@ -236,22 +236,21 @@ implements FileIoTask<T> {
 	//
 	protected void runWriteFully(final FileChannel dstFileChannel)
 	throws IOException {
-		final C srcDir = ioConfig.getSrcContainer();
 		if(srcDir == null) {
 			while(countBytesDone < contentSize) {
 				countBytesDone += dstFileChannel.transferFrom(item, countBytesDone, contentSize);
 			}
 		} else {
-			runCopy(dstFileChannel, srcDir);
+			runCopy(dstFileChannel);
 		}
 		status = SUCC;
 		item.resetUpdates();
 	}
 	//
-	protected void runCopy(final FileChannel dstFileChannel, final C srcDir)
+	protected void runCopy(final FileChannel dstFileChannel)
 	throws IOException {
 		final Path srcDirPath = DEFAULT_FS
-			.getPath(srcDir.getName(), item.getName()).toAbsolutePath();
+			.getPath(srcDir, item.getName()).toAbsolutePath();
 		try(
 			final FileChannel srcFileChannel = FileChannel.open(
 				srcDirPath, StandardOpenOption.READ

@@ -35,7 +35,7 @@ implements MutableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final BitSet
 		maskRangesRead = new BitSet(Long.SIZE),
-		maskRangesWrite[] = new BitSet[] { new BitSet(Long.SIZE), new BitSet(Long.SIZE)};
+		maskRangesWrite[] = new BitSet[] { new BitSet(Long.SIZE), new BitSet(Long.SIZE) };
 	protected int currLayerIndex = 0;
 	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////

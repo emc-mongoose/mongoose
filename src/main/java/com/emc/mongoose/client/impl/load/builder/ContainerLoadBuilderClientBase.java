@@ -1,21 +1,18 @@
 package com.emc.mongoose.client.impl.load.builder;
-//
+
 import com.emc.mongoose.client.api.load.builder.ContainerLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.ContainerLoadClient;
-//
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.enums.ItemNamingType;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
-//
-import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
-import com.emc.mongoose.core.impl.item.container.NewContainerInput;
 import com.emc.mongoose.server.api.load.builder.ContainerLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.ContainerLoadSvc;
 import org.apache.logging.log4j.Level;
@@ -94,9 +91,11 @@ implements ContainerLoadBuilderClient<T, C, W, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected Input<C> getNewItemInput()
+	protected Input<C> getNewItemInput(final IoConfig<C, ?> ioConfigCopy)
 	throws NoSuchMethodException {
 		final ItemNamingType namingType = appConfig.getItemNamingType();
-		return ioConfig.getNewContainersInput(namingType, ioConfig.<Class<C>>getContainerClass());
+		return ioConfigCopy.getNewContainersInput(
+			namingType, (Class) ioConfigCopy.getContainerClass()
+		);
 	}
 }

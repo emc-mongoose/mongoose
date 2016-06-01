@@ -103,7 +103,7 @@ implements HttpDataLoadExecutor<T> {
 		this.client = client;
 		this.ioReactor = ioReactor;
 		this.connPoolMap = connPoolMap;
-		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
+		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfig;
 		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
 	}
 	//
@@ -117,7 +117,7 @@ implements HttpDataLoadExecutor<T> {
 			appConfig, reqConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
 			sizeConfig, rangesConfig
 		);
-		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfigCopy;
+		httpReqConfigCopy = (HttpRequestConfig<T, Container<T>>) ioConfig;
 		isPipeliningEnabled = httpReqConfigCopy.getPipelining();
 		//
 		httpProcessor = HttpProcessorBuilder

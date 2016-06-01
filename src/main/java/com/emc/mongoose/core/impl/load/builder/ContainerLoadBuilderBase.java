@@ -6,6 +6,7 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.load.builder.ContainerLoadBuilder;
@@ -37,8 +38,6 @@ extends LoadBuilderBase<C, U>
 implements ContainerLoadBuilder<T, C, U>{
 	//
 	private static final Logger LOG = LogManager.getLogger();
-	//
-	protected boolean flagUseContainerItemSrc;
 	//
 	public ContainerLoadBuilderBase(final AppConfig appConfig)
 	throws RemoteException {
@@ -88,10 +87,12 @@ implements ContainerLoadBuilder<T, C, U>{
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected Input<C> getNewItemInput()
+	protected Input<C> getNewItemInput(final IoConfig<C, ?> ioConfigCopy)
 	throws NoSuchMethodException {
 		final ItemNamingType namingType = appConfig.getItemNamingType();
-		return ioConfig.getNewContainersInput(namingType, ioConfig.<Class<C>>getContainerClass());
+		return ioConfigCopy.getNewContainersInput(
+			namingType, (Class) ioConfigCopy.getContainerClass()
+		);
 	}
 	//
 	@Override

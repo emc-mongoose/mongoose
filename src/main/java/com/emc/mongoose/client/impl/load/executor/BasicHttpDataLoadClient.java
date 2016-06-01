@@ -56,7 +56,7 @@ implements HttpDataLoadClient<T, W> {
 	@Override
 	protected HttpDataIoTask<T> getIoTask(final T item, final String nodeAddr) {
 		return new BasicHttpDataIoTask<>(
-			item, nodeAddr,  (HttpRequestConfig<T, ? extends Container<T>>) ioConfigCopy
+			item, nodeAddr,  (HttpRequestConfig<T, ? extends Container<T>>) ioConfig
 		);
 	}
 	//

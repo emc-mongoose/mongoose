@@ -48,7 +48,7 @@ implements FileLoadClient<T, W> {
 	@Override
 	protected IoTask<T> getIoTask(final T item, final String nextNodeAddr) {
 		return new BasicFileIoTask<>(
-			item, (FileIoConfig<T, ? extends Directory<T>>) ioConfigCopy
+			item, (FileIoConfig<T, ? extends Directory<T>>) ioConfig
 		);
 	}
 }

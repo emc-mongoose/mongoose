@@ -111,7 +111,7 @@ implements FileLoadExecutor<T> {
 	//
 	@Override
 	protected FileIoTask<T> getIoTask(final T item, final String nextNodeAddr) {
-		return new BasicFileIoTask<>(item, (FileIoConfig<T, Directory<T>>) ioConfigCopy);
+		return new BasicFileIoTask<>(item, (FileIoConfig<T, Directory<T>>) ioConfig);
 	}
 	//
 	@Override
