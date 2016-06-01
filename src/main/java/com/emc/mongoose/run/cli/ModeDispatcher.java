@@ -1,26 +1,19 @@
 package com.emc.mongoose.run.cli;
-// mongoose-common.jar
+
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
-// mongoose-core-api.jar
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
-// mongoose-server-api.jar
 import com.emc.mongoose.run.webserver.WebUiRunner;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-// mongoose-server-impl.jar
-// mongoose-storage-mock.jar
-//
 import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
-//
+
 import java.rmi.RemoteException;
 import java.util.Map;
 

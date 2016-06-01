@@ -2,7 +2,7 @@
 	"configuration": {
 		"status": "off",
 		"name": "mongoose",
-		"monitorInterval": "1000",
+		"monitorInterval": 1000,
 		"packages": "com.emc.mongoose.common.log.appenders",
 		"shutdownHook": "enabled",
 		"appenders": {
@@ -274,7 +274,8 @@
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
-					"bufferSize": "100000",
+					"bufferSize": 100000,
+					"shutdownTimeout": 10000,
 					"AppenderRef": [
 						{ "ref": "stdout" },
 						{ "ref": "msgFile" },

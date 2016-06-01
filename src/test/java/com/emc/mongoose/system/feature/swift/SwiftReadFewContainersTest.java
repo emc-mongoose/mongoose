@@ -61,7 +61,6 @@ extends WSMockTestBase {
 		RunIdFileManager.flushAll();
 		//
 		rtConfig.setRunId(RUN_ID);
-		LoggingTestBase.setUpClass();
 		rtConfig.setProperty(AppConfig.KEY_LOAD_TYPE, TestConstants.LOAD_READ);
 		rtConfig.setProperty(
 			AppConfig.KEY_ITEM_SRC_FILE,

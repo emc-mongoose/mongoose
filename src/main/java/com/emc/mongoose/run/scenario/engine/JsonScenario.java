@@ -37,6 +37,8 @@ implements Scenario {
 	private final static String NODE_TYPE_RAMPUP = "rampup";
 	private final static String NODE_TYPE_COMMAND = "command";
 	//
+	private final Map<String, Object> scenarioTree;
+	//
 	public JsonScenario(final AppConfig config, final File scenarioSrcFile)
 	throws IOException, CloneNotSupportedException {
 		this(
@@ -68,18 +70,19 @@ implements Scenario {
 		this(
 			config,
 			new ObjectMapper()
-					.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
-					.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true)
-					.<Map<String, Object>>readValue(
-						scenarioString, new TypeReference<Map<String, Object>>(){}
-					)
+				.configure(JsonParser.Feature.ALLOW_COMMENTS, true)
+				.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true)
+				.<Map<String, Object>>readValue(
+					scenarioString, new TypeReference<Map<String, Object>>(){}
+				)
 		);
 	}
 	//
 	public JsonScenario(final AppConfig config, final Map<String, Object> tree)
 	throws IOException, CloneNotSupportedException {
 		super(config);
-		loadTree(tree, this);
+		this.scenarioTree = tree;
+		loadTree(scenarioTree, this);
 	}
 	//
 	private static void loadTree(final Map<String, Object> node, final JobContainer jobContainer)
@@ -215,5 +218,12 @@ implements Scenario {
 	@Override
 	public final String toString() {
 		return "jsonScenario#" + hashCode();
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		scenarioTree.clear();
+		super.close();
 	}
 }

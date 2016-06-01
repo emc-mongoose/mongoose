@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -30,27 +31,23 @@ extends JobContainerBase {
 	//
 	@Override
 	public final synchronized void run() {
+		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
+			subJobs.size(), new NamingThreadFactory("jobContainerWorker" + hashCode(), true)
+		);
+		for(final JobContainer subJob : subJobs) {
+			parallelJobsExecutor.submit(subJob);
+		}
+		LOG.debug(Markers.MSG, "{}: started {} sub jobs", toString(), subJobs.size());
+		parallelJobsExecutor.shutdown();
 		try {
-			final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
-				subJobs.size(), new NamingThreadFactory("jobContainerWorker" + hashCode(), true)
-			);
-			for(final JobContainer subJob : subJobs) {
-				parallelJobsExecutor.submit(subJob);
+			if(limitTime > 0) {
+				parallelJobsExecutor.awaitTermination(limitTime, TimeUnit.SECONDS);
+			} else {
+				parallelJobsExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
 			}
-			LOG.debug(Markers.MSG, "{}: started {} sub jobs", toString(), subJobs.size());
-			parallelJobsExecutor.shutdown();
-			try {
-				if(limitTime > 0) {
-					parallelJobsExecutor.awaitTermination(limitTime, TimeUnit.SECONDS);
-				} else {
-					parallelJobsExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-				}
-				LOG.debug(Markers.MSG, "{}: {} sub jobs done", toString(), subJobs.size());
-			} catch(final InterruptedException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "{}: interrupted the sub jobs execution");
-			}
-		} finally {
-			subJobs.clear();
+			LOG.debug(Markers.MSG, "{}: {} sub jobs done", toString(), subJobs.size());
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "{}: interrupted the sub jobs execution");
 		}
 	}
 	//
@@ -62,5 +59,17 @@ extends JobContainerBase {
 	@Override
 	public final synchronized boolean append(final JobContainer subJob) {
 		return subJobs.add(subJob);
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		try {
+			for(final JobContainer subJob : subJobs) {
+				subJob.close();
+			}
+		} finally {
+			subJobs.clear();
+		}
 	}
 }

@@ -16,7 +16,7 @@ public interface LogPatterns {
 		TYPE_API = Pattern.compile("(?<typeApi>[A-Za-z0-9]+)"),
 		TYPE_LOAD = Pattern.compile("(?<typeLoad>[CreatRdUpDloy]{4,6})"),
 		//
-		ITEM_VALUE = Pattern.compile("(?<itemValue>(/[\\w\\-~@#%\\^=\\\\\\.,'\"]+)+)"),
+		ITEM_VALUE = Pattern.compile("(?<itemValue>(/*[\\w\\-~@#%\\^=\\\\\\.,'\"]+)+)"),
 		DATA_OFFSET = Pattern.compile("(?<offset>\\p{XDigit}+)"),
 		DATA_LAYER_MASK = Pattern.compile("(?<layerMask>[\\d]+/[\\p{XDigit}]+)"),
 		TARGET_NODE = Pattern.compile("(?<targetNode>[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}:[\\d]{1,5})"),

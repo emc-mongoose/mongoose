@@ -67,24 +67,21 @@ extends DistributedClientTestBase {
 				"Writing reported different count than available in the output",
 				countWritten, itemsQueue.size()
 			);
-			try(
-				final BufferingOutputStream
-					stdOutInterceptorStream = StdOutUtil.getStdOutBufferingStream()
-			) {
-				if(stdOutInterceptorStream == null) {
+			try(final BufferingOutputStream stdOutStream = StdOutUtil.getStdOutBufferingStream()) {
+				if(stdOutStream == null) {
 					throw new IllegalStateException(
 						"Looks like the test case is not included in the \"" +
 							StdOutUtil.class.getSimpleName() + "\" test suite, cannot run"
 					);
 				}
-				stdOutInterceptorStream.reset(); // clear before using
+				stdOutStream.reset(); // clear before using
 				if(countWritten > 0) {
 					countRead = client.read(itemsIO, null, countWritten, 10, true);
 				} else {
 					throw new IllegalStateException("Failed to read");
 				}
 				TimeUnit.SECONDS.sleep(1);
-				stdOutContent = stdOutInterceptorStream.toByteArray();
+				stdOutContent = stdOutStream.toByteArray();
 			}
 		} catch(final Throwable e) {
 			e.printStackTrace(System.err);
