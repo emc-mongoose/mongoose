@@ -38,13 +38,20 @@ extends StandaloneClientTestBase {
 				.build()
 		) {
 			COUNT_WRITTEN = client.create(null, COUNT_TO_WRITE, 10, 0, 123456, 3);
+			RunIdFileManager.flushAll();
+		}
+		//
+		try(
+			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
+		        .setSrcContainer(runId)
+		        .build();
+		) {
 			if(COUNT_WRITTEN > 0) {
 				COUNT_READ = client.read(null, null, COUNT_WRITTEN, 10, true);
 			} else {
 				throw new IllegalStateException("Failed to write");
 			}
-			//
-			RunIdFileManager.flushAll();
+
 		}
 	}
 	//
