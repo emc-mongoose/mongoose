@@ -34,14 +34,12 @@ implements PatternDefinedInput {
 	 */
 	private Input<String>[] inputs;
 
-	public
-	BasicPatternDefinedInput(final String pattern)
+	public BasicPatternDefinedInput(final String pattern)
 	throws IllegalArgumentException {
 		this(pattern, StringInputFactory.getInstance());
 	}
 
-	public
-	BasicPatternDefinedInput(
+	public BasicPatternDefinedInput(
 		final String pattern,
 		final ValueInputFactory<String, ? extends Input<String>> valueInputFactory
 	) throws IllegalArgumentException {
@@ -53,8 +51,7 @@ implements PatternDefinedInput {
 		initialize();
 	}
 
-	protected final
-	ValueInputFactory<String, ? extends Input<String>> valueInputFactory() {
+	protected final ValueInputFactory<String, ? extends Input<String>> valueInputFactory() {
 		return valueInputFactory;
 	}
 

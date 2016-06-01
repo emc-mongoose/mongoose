@@ -30,26 +30,29 @@ implements Input<T> {
 	protected final ContainerHelper<T, C> containerHelper;
 	protected final Constructor<T> itemConstructor;
 	protected final long maxCount;
+	protected final String path;
 	//
 	protected String lastItemId = null;
 	//
 	protected GenericContainerItemInputBase(
-		final ContainerHelper<T, C> containerHelper, final Class<T> itemCls, final long maxCount
+		final String path, final ContainerHelper<T, C> containerHelper, final Class<T> itemCls,
+		final long maxCount
 	) throws IllegalStateException {
 		super(new ArrayList<T>(BasicConfig.THREAD_CONTEXT.get().getItemSrcBatchSize()));
+		this.path = path;
 		this.containerHelper = containerHelper;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		try {
 			this.itemConstructor = itemCls.getConstructor(
-				String.class, Long.class, Long.class, Integer.class, ContentSource.class
+				String.class, String.class, Long.class, Long.class, Integer.class,
+				ContentSource.class
 			);
 		} catch(final NoSuchMethodException e) {
 			throw new IllegalStateException(e);
 		}
 	}
 	/**
-	 The method should fill the listPageBuffer and return its list iterator
-	 @return the list iterator for the buffered items list
+	 The method should fill the items buffer
 	 @throws EOFException if no more items is available from the storage side
 	 @throws IOException
 	 */

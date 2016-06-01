@@ -7,6 +7,7 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -83,7 +84,7 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 	public final void invokePreConditions() {} // discard any precondition invocations in load server mode
 	//
 	@Override
-	public final Input<C> selectItemInput() {
+	public final Input<C> selectItemInput(final IoConfig<C, ?> ioConfigCopy) {
 		return null;
 	}
 	//
@@ -98,17 +99,18 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()
-	throws IllegalStateException {
+	throws IllegalStateException, CloneNotSupportedException {
 		if(ioConfig == null) {
-			throw new IllegalStateException("Should specify request builder instance before instancing");
+			throw new IllegalStateException(
+				"Should specify request builder instance before instancing"
+			);
 		}
-		//
-		final HttpRequestConfig wsReqConf = HttpRequestConfig.class.cast(ioConfig);
+		final HttpRequestConfig ioConfigCopy = (HttpRequestConfig) ioConfig.clone();
 		// the statement below fixes hi-level API distributed mode usage and tests
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		return (U) new BasicHttpContainerLoadSvc<>(
-			appConfig, wsReqConf, storageNodeAddrs, threadCount, selectItemInput(), countLimit,
-			sizeLimit, rateLimit
+			appConfig, ioConfigCopy, storageNodeAddrs, threadCount, selectItemInput(ioConfigCopy),
+			countLimit, sizeLimit, rateLimit
 		);
 	}
 	//

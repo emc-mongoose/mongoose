@@ -1,8 +1,6 @@
 package com.emc.mongoose.common.log;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.conf.Constants;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -22,6 +20,7 @@ import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 import org.apache.logging.log4j.io.IoBuilder;
 //
 import java.io.File;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,6 +35,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.emc.mongoose.common.conf.AppConfig.KEY_RUN_ID;
+import static com.emc.mongoose.common.conf.Constants.DIR_CONF;
 /**
  Created by kurila on 06.05.14.
  */
@@ -104,9 +105,7 @@ implements ShutdownCallbackRegistry {
 		BLUE = "\u001B[34m",
 		PURPLE = "\u001B[35m",
 		CYAN = "\u001B[36m",
-		WHITE = "\u001B[37m",
-		//
-		PATH_LOG_DIR = String.format("%s%slog", BasicConfig.getRootDir(), File.separator);
+		WHITE = "\u001B[37m";
 	//
 	private static LoggerContext LOG_CTX = null;
 	private static volatile boolean STDOUT_COLORING_ENABLED = false;
@@ -119,6 +118,17 @@ implements ShutdownCallbackRegistry {
 		return LogUtil.FMT_DT.format(
 			Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime()
 		);
+	}
+	//
+	public static String getLogDir() {
+		String logDir = null;
+		final URL logDirUrl = LogUtil.class.getProtectionDomain().getCodeSource().getLocation();
+		try {
+			logDir = new File(logDirUrl.toURI()).getParent() + File.separatorChar + "log";
+		} catch(final URISyntaxException e) {
+			e.printStackTrace(System.err);
+		}
+		return logDir;
 	}
 	//
 	private static boolean isStdOutColoringEnabledByConfig() {
@@ -154,13 +164,13 @@ implements ShutdownCallbackRegistry {
 				//
 				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, VALUE_SHUTDOWN_CALLBACK_REGISTRY);
 				// set "run.id" property with timestamp value if not set before
-				String runId = System.getProperty(AppConfig.KEY_RUN_ID);
+				final String runId = System.getProperty(KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
-					System.setProperty(AppConfig.KEY_RUN_ID, newRunId());
+					System.setProperty(KEY_RUN_ID, newRunId());
 				}
 				// determine the logger configuration file path
 				Path logConfPath = Paths.get(
-					BasicConfig.getRootDir(), Constants.DIR_CONF, FNAME_LOG_CONF
+					BasicConfig.getWorkingDir(), DIR_CONF, FNAME_LOG_CONF
 				);
 				//
 				try {

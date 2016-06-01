@@ -35,7 +35,7 @@ implements MutableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final BitSet
 		maskRangesRead = new BitSet(Long.SIZE),
-		maskRangesWrite[] = new BitSet[] { new BitSet(Long.SIZE), new BitSet(Long.SIZE)};
+		maskRangesWrite[] = new BitSet[] { new BitSet(Long.SIZE), new BitSet(Long.SIZE) };
 	protected int currLayerIndex = 0;
 	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -47,15 +47,10 @@ implements MutableDataItem {
 		super(contentSrc); // ranges remain uninitialized
 	}
 	//
-	public BasicMutableDataItem(final String metaInfo, final ContentSource contentSrc) {
-		super(
-			metaInfo.substring(0, metaInfo.lastIndexOf(",")),
-			contentSrc
-		);
+	public BasicMutableDataItem(final String value, final ContentSource contentSrc) {
+		super(value.substring(0, value.lastIndexOf(",")), contentSrc);
 		//
-		final String rangesInfo = metaInfo.substring(
-			metaInfo.lastIndexOf(",") + 1, metaInfo.length()
-		);
+		final String rangesInfo = value.substring(value.lastIndexOf(",") + 1, value.length());
 		final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
 		try {
 			// extract hexadecimal layer number
@@ -91,16 +86,22 @@ implements MutableDataItem {
 	}
 	//
 	public BasicMutableDataItem(
-		final String name, final Long offset, final Long size, Integer layerNum,
+		final String path, final String name, final Long offset, final Long size,
 		final ContentSource contentSrc
 	) {
-		super(name, offset, size, layerNum, contentSrc);
+		super(path, name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicMutableDataItem(
+		final String path, final String name, final Long offset, final Long size,
+		final Integer layerNum, final ContentSource contentSrc
+	) {
+		super(path, name, offset, size, layerNum, contentSrc);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
-	//
 	@Override
 	public synchronized String toString() {
 		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();

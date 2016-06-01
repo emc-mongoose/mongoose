@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.item.data;
 // mongoose-core-api.jar
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.data.DataCorruptionException;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.ContentSource;
@@ -40,43 +39,41 @@ implements DataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public BasicDataItem() {
 		this(
-			ContentSourceBase.DEFAULT == null ?
-				ContentSourceBase.getDefaultInstance() : ContentSourceBase.DEFAULT
+			ContentSourceUtil.DEFAULT == null ?
+				ContentSourceUtil.getDefaultInstance() : ContentSourceUtil.DEFAULT
 		);
+	}
+	//
+	public BasicDataItem(final String value) {
+		fromString(value);
 	}
 	//
 	public BasicDataItem(final ContentSource contentSrc) {
 		setRingBuffer(contentSrc.getLayer(0).asReadOnlyBuffer());
 	}
 	//
-	public BasicDataItem(final String metaInfo, final ContentSource contentSrc) {
+	public BasicDataItem(final String value, final ContentSource contentSrc) {
 		this(contentSrc);
-		final String tokens[] = metaInfo.split(",", 3);
-		if(tokens.length == 3) {
-			name = tokens[0];
-			try {
-				setOffset(Long.parseLong(tokens[1], 0x10));
-			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[1]));
-			}
-			try {
-				setSize(Long.parseLong(tokens[2], 10));
-			} catch(final NumberFormatException e) {
-				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[2]));
-			}
-		} else {
-			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_RECORD, metaInfo));
-		}
+		fromString(value);
 	}
 	//
-	public BasicDataItem(final Long offset, final Long size, final ContentSource contentSrc) {
-		this(Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
+	public BasicDataItem(
+		final Long offset, final Long size, final ContentSource contentSrc
+	) {
+		this(SLASH, Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
 		final String name, final Long offset, final Long size, final ContentSource contentSrc
 	) {
-		this(name, offset, size, 0, contentSrc);
+		this(SLASH, name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicDataItem(
+		final String path, final String name, final Long offset, final Long size,
+		final ContentSource contentSrc
+	) {
+		this(path, name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
@@ -91,10 +88,58 @@ implements DataItem {
 		final String name, final Long offset, final Long size, final Integer layerNum,
 		final ContentSource contentSrc
 	) {
+		super(SLASH, name);
 		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
 		setOffset(offset);
-		this.name = name;
 		this.size = size;
+	}
+	//
+	public BasicDataItem(
+		final String path, final String name, final Long offset, final Long size,
+		final Integer layerNum, final ContentSource contentSrc
+	) {
+		super(path, name);
+		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
+		setOffset(offset);
+		this.size = size;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Human readable "serialization" implementation ///////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	protected void fromString(final String value) {
+		final String tokens[] = value.split(",", 3);
+		if(tokens.length == 3) {
+			super.fromString(tokens[0]);
+			try {
+				setOffset(Long.parseLong(tokens[1], 0x10));
+			} catch(final NumberFormatException e) {
+				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[1]));
+			}
+			try {
+				setSize(Long.parseLong(tokens[2], 10));
+			} catch(final NumberFormatException e) {
+				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[2]));
+			}
+		} else {
+			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_RECORD, value));
+		}
+	}
+	//
+	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
+	@Override
+	public String toString() {
+		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();
+		if(strBuilder == null) {
+			strBuilder = new StringBuilder();
+			THR_LOCAL_STR_BUILDER.set(strBuilder);
+		} else {
+			strBuilder.setLength(0); // reset
+		}
+		return strBuilder
+			.append(super.toString()).append(",")
+			.append(Long.toString(offset, 0x10)).append(",")
+			.append(size).toString();
 	}
 	//
 	private void setRingBuffer(final ByteBuffer ringBuff) {
@@ -242,25 +287,6 @@ implements DataItem {
 			}
 		}
 		return n;
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// Human readable "serialization" implementation ///////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
-	//
-	@Override
-	public String toString() {
-		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();
-		if(strBuilder == null) {
-			strBuilder = new StringBuilder();
-			THR_LOCAL_STR_BUILDER.set(strBuilder);
-		} else {
-			strBuilder.setLength(0); // reset
-		}
-		return strBuilder
-			.append(name).append(",")
-			.append(Long.toString(offset, 0x10)).append(",")
-			.append(size).toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

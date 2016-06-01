@@ -301,16 +301,9 @@
 						"circular": {
 							"type": "boolean"
 						},
-						"copy": {
-							"type": "boolean"
-						},
 						"type": {
 							"type": "string",
-							"enum" : [
-								"write",
-								"read",
-								"delete"
-							]
+							"pattern" : "[CcRrEeAaTtDdUuPpLl]+=?[\\d]?%?"
 						},
 						"threads": {
 							"type": "integer",
@@ -385,7 +378,6 @@
 					},
 					"required": [
 						"circular",
-						"copy",
 						"type",
 						"threads",
 						"limit",

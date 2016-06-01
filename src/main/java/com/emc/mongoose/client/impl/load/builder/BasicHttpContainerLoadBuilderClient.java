@@ -1,5 +1,6 @@
 package com.emc.mongoose.client.impl.load.builder;
 //
+import com.emc.mongoose.client.api.load.builder.HttpContainerLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.HttpContainerLoadClient;
 //
 import com.emc.mongoose.client.impl.load.executor.BasicHttpContainerLoadClient;
@@ -32,7 +33,8 @@ public class BasicHttpContainerLoadBuilderClient<
 	C extends Container<T>,
 	W extends HttpContainerLoadSvc<T, C>,
 	U extends HttpContainerLoadClient<T, C, W>
-> extends ContainerLoadBuilderClientBase<T, C, W, U, HttpContainerLoadBuilderSvc<T, C, W>> {
+> extends ContainerLoadBuilderClientBase<T, C, W, U, HttpContainerLoadBuilderSvc<T, C, W>>
+implements HttpContainerLoadBuilderClient<T, C, W, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -63,12 +65,6 @@ public class BasicHttpContainerLoadBuilderClient<
 	}
 	//
 	@Override
-	protected Input<C> getContainerItemInput()
-	throws CloneNotSupportedException {
-		return null;
-	}
-	//
-	@Override
 	public final void invokePreConditions()
 	throws IllegalStateException {
 		//  do nothing
@@ -77,17 +73,18 @@ public class BasicHttpContainerLoadBuilderClient<
 	//
 	@Override  @SuppressWarnings("unchecked")
 	protected final U buildActually()
-	throws RemoteException {
+	throws RemoteException, CloneNotSupportedException {
 		//
 		final Map<String, W> remoteLoadMap = new ConcurrentHashMap<>();
 		//
 		HttpContainerLoadBuilderSvc<T, C, W> nextBuilder;
 		W nextLoad;
 		//
-		itemInput = selectItemInput(); // affects load service builders
+		final HttpRequestConfig ioConfigCopy = (HttpRequestConfig) ioConfig.clone();
+		itemInput = selectItemInput(ioConfigCopy); // affects load service builders
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setIoConfig(ioConfig); // should upload req conf right before instancing
+			nextBuilder.setIoConfig(ioConfigCopy); // should upload req conf right before instancing
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
@@ -95,8 +92,8 @@ public class BasicHttpContainerLoadBuilderClient<
 		}
 		//
 		return (U) new BasicHttpContainerLoadClient<>(
-			appConfig, (HttpRequestConfig) ioConfig, storageNodeAddrs, appConfig.getLoadThreads(),
-			itemInput, countLimit, sizeLimit, rateLimit, remoteLoadMap
+			appConfig, ioConfigCopy, storageNodeAddrs, appConfig.getLoadThreads(), itemInput,
+			countLimit, sizeLimit, rateLimit, remoteLoadMap
 		);
 	}
 }

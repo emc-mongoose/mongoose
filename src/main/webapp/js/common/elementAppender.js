@@ -14,6 +14,7 @@ define([
 	const TREE_ELEM = templatesUtil.configTreeElements();
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
+	const enterKeyCode = 13;
 
 	function fillLeafLi(liElem, aName, aText, aClickEvent, aClickEventParam) {
 		liElem.addClass(TREE_ELEM.LEAF);
@@ -105,7 +106,7 @@ define([
 		})
 	}
 
-	function addFormForTree(addressObj, rootFormElem, delimiter, objectToChangeWithForm, tabType) {
+	function addFormForTree(addressObj, rootFormElem, delimiter, objectToChangeWithForm, tabType, jsonViewElem) {
 		const enterWarning = 'Press enter to commit a change';
 		$.each(addressObj, function (key, value) {
 			const formGroupDiv = $('<div/>', {
@@ -114,7 +115,6 @@ define([
 			});
 			const p = $('<p/>', {
 				class: 'enter-warning'
-
 			});
 			p.append(enterWarning);
 			formGroupDiv.append(p);
@@ -135,10 +135,17 @@ define([
 				placeholder: "Enter '" + key + "' property"
 			});
 			input.change(function () {
-				filesUtil.objChanger(objectToChangeWithForm, key, input.val(), delimiter);
-				eventCreator.changeFileToSaveAs(tabType, objectToChangeWithForm);
-				const tabTypeOne = tabType.slice(0, -1);
-				p.text('MODIFIED')
+				filesUtil.changeObjAndFile(objectToChangeWithForm, key, input.val(), delimiter, tabType, p);
+				if (jsonViewElem) {
+					jsonViewElem.text(JSON.stringify(objectToChangeWithForm, null, '\t'));
+				}
+			});
+			input.keydown(function (event) {
+				switch (event.keyCode) {
+					case enterKeyCode:
+						input.trigger('change');
+						return false;
+				}
 			});
 			formGroupDiv.append(inputDiv);
 			inputDiv.append(input);

@@ -17,7 +17,7 @@
 				1, 10, 100
 			],
 			"type" : [
-				"write", "read", "delete"
+				"create", "read", "delete"
 			]
 		},
 		"storage" : {

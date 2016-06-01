@@ -6,7 +6,7 @@ import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.IoWorker;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
@@ -82,7 +82,7 @@ implements Runnable {
 			.build();
 		// create the server-side I/O reactor
 		this.ioStats = ioStats;
-		final IOWorker.Factory ioWorkerFactory = new IOWorker.Factory(
+		final IoWorker.Factory ioWorkerFactory = new IoWorker.Factory(
 			"ioReactor<" + socketAddress.getHostString() + ":" + socketAddress.getPort() + ">"
 		);
 		ioReactor = new DefaultListeningIOReactor(ioReactorConf, ioWorkerFactory);

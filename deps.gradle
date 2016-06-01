@@ -27,6 +27,22 @@ ext {
 
 	jansi = [ "org.fusesource.jansi:jansi:1.11" ]
 
+	jetty_http = [ "org.eclipse.jetty:jetty-http:9.3.0.M1" ]
+	jetty_io = [ "org.eclipse.jetty:jetty-io:9.3.0.M1" ]
+	jetty_server = [ "org.eclipse.jetty:jetty-server:9.3.0.M1" ]
+	jetty_servlet = [ "org.eclipse.jetty:jetty-servlet:9.3.0.M1" ]
+	jetty_servlet_api = [ "javax.servlet:javax.servlet-api:3.1.0" ]
+	jetty_util = [ "org.eclipse.jetty:jetty-util:9.3.0.M1" ]
+	jetty_webapp = [ "org.eclipse.jetty:jetty-webapp:9.3.0.M1" ]
+
+	webjars_bootstrap = ['org.webjars:bootstrap:3.3.2-1']
+	webjars_jquery = ['org.webjars:jquery:2.1.4']
+	webjars_d3js = ['org.webjars:d3js:3.5.3']
+	webjars_require = ['org.webjars:requirejs:2.1.20']
+	webjars_handlebars = ['org.webjars:handlebars:4.0.2']
+	webjars_pace = ['org.webjars:pace:1.0.2']
+	webjars_requirejs_text = ['org.webjars:requirejs-text:2.0.14-1']
+
 	lmax_disruptor = [ "com.lmax:disruptor:3.3.0" ]
 
 	log4j_api = [ "org.apache.logging.log4j:log4j-api:2.4.1" ]
@@ -45,13 +61,27 @@ ext {
 	junit_mockito = ["org.mockito:mockito-all:2.0.2-beta"]
 
 	json_schema_validator = [ "com.github.fge:json-schema-validator:2.2.6" ]
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	httpcore_plus_nio = [ httpcore, httpcore_nio, ]
 
+	jetty_svc = [ jetty_server, jetty_webapp, ]
+
 	log4j_api_plus_core = [ log4j_api, log4j_core, ]
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
+
+	runtime_jetty = [
+		jetty_io,
+		jetty_servlet,
+		jetty_servlet_api,
+		jetty_util,
+	]
+	runtime_jetty_svc = [
+		runtime_jetty,
+		jetty_http,
+	]
 
 	runtime_logging = [
 		commons_logging,
@@ -61,4 +91,14 @@ ext {
 		jansi,
 	]
 
+	runtime_webapp = [
+		log4j_web,
+		webjars_bootstrap,
+		webjars_jquery,
+		webjars_d3js,
+		webjars_require,
+		webjars_handlebars,
+		webjars_requirejs_text,
+		webjars_pace
+	]
 }

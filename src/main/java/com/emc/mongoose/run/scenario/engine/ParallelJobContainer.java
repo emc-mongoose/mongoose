@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -18,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 02.02.16.
  */
 public class ParallelJobContainer
-	extends JobContainerBase {
+extends JobContainerBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -58,5 +59,17 @@ public class ParallelJobContainer
 	@Override
 	public final synchronized boolean append(final JobContainer subJob) {
 		return subJobs.add(subJob);
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		try {
+			for(final JobContainer subJob : subJobs) {
+				subJob.close();
+			}
+		} finally {
+			subJobs.clear();
+		}
 	}
 }

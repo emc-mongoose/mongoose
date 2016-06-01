@@ -47,10 +47,10 @@ extends GenericContainerItemInputBase<T, C> {
 	private long doneCount = 0;
 	//
 	public WSBucketItemInput(
-		final BucketHelper<T, C> bucket, final String nodeAddr, final Class<T> itemCls,
-		final long maxCount
+		final String path, final BucketHelper<T, C> bucketHelper, final String nodeAddr,
+		final Class<T> itemCls, final long maxCount
 	) throws IllegalStateException {
-		super(bucket, itemCls, maxCount);
+		super(path, bucketHelper, itemCls, maxCount);
 		this.nodeAddr = nodeAddr;
 		try {
 			parser = SAXParserFactory.newInstance().newSAXParser();
@@ -70,6 +70,7 @@ extends GenericContainerItemInputBase<T, C> {
 		private final List<T> itemsBuffer;
 		private final Constructor<T> itemConstructor;
 		private final ContainerHelper<T, C> containerHelper;
+		private final String path;
 		private int count = 0;
 		private boolean
 			isInsideItem = false,
@@ -82,11 +83,12 @@ extends GenericContainerItemInputBase<T, C> {
 		//
 		private PageContentHandler(
 			final List<T> itemsBuffer, final Constructor<T> itemConstructor,
-			final ContainerHelper<T, C> containerHelper
+			final ContainerHelper<T, C> containerHelper, final String path
 		) {
 			this.itemsBuffer = itemsBuffer;
 			this.itemConstructor = itemConstructor;
 			this.containerHelper = containerHelper;
+			this.path = path;
 		}
 		//
 		@Override
@@ -128,7 +130,7 @@ extends GenericContainerItemInputBase<T, C> {
 				//
 				if(oid != null && oid.length() > 0 && size > -1) {
 					try {
-						nextItem = containerHelper.buildItem(itemConstructor, oid, size);
+						nextItem = containerHelper.buildItem(itemConstructor, path, oid, size);
 						if(nextItem != null) {
 							itemsBuffer.add(nextItem);
 							count ++;
@@ -200,7 +202,7 @@ extends GenericContainerItemInputBase<T, C> {
 		parser.reset();
 		try(final InputStream in = respEntity.getContent()) {
 			final PageContentHandler<T, C> pageContentHandler = new PageContentHandler<>(
-				items, itemConstructor, containerHelper
+				items, itemConstructor, containerHelper, path
 			);
 			parser.parse(in, pageContentHandler);
 			lastItemId = pageContentHandler.oid;

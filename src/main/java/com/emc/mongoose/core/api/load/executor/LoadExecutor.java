@@ -4,10 +4,10 @@ import com.emc.mongoose.common.concurrent.LifeCycle;
 //
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.api.load.model.ItemProducer;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 //
 import org.apache.logging.log4j.Marker;
 //
@@ -45,22 +45,22 @@ extends Output<T>, LifeCycle, ItemProducer<T> {
 	LoadState<T> getLoadState()
 	throws RemoteException;
 	//
-	IOStats.Snapshot getStatsSnapshot()
+	IoStats.Snapshot getStatsSnapshot()
 	throws RemoteException;
 	//
 	void logMetrics(Marker marker)
 	throws RemoteException;
 	//
-	<A extends IOTask<T>> Future<A> submitTask(final A request)
+	<A extends IoTask<T>> Future<A> submitTask(final A request)
 	throws RemoteException, RejectedExecutionException;
 	//
-	<A extends IOTask<T>> int submitTasks(final List<A> requests, final int from, final int to)
+	<A extends IoTask<T>> int submitTasks(final List<A> requests, final int from, final int to)
 	throws RemoteException, RejectedExecutionException;
 
-	void ioTaskCompleted(final IOTask<T> ioTask)
+	void ioTaskCompleted(final IoTask<T> ioTask)
 	throws RemoteException;
 
 	int ioTaskCompletedBatch(
-		final List<? extends IOTask<T>> ioTasks, final int from, final int to
+		final List<? extends IoTask<T>> ioTasks, final int from, final int to
 	) throws RemoteException;
 }

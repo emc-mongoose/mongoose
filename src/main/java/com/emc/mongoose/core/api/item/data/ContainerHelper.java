@@ -25,7 +25,8 @@ extends Closeable {
 	void setVersioning(final String addr, final boolean enabledFlag)
 	throws IllegalStateException;
 	//
-	T buildItem(final Constructor<T> itemConstructor, String rawId, final long size)
-	throws IllegalStateException;
+	T buildItem(
+		final Constructor<T> itemConstructor, final String path, String rawId, final long size
+	) throws IllegalStateException;
 	//
 }

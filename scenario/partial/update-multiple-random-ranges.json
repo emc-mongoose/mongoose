@@ -39,6 +39,9 @@
 					"dst" : {
 						"file" : "partial-update-multiple-random-ranges-1.csv"
 					}
+				},
+				"load" : {
+					"type" : "update"
 				}
 			}
 		}, {

@@ -6,7 +6,7 @@ define([
 	chartBase, common, constants
 ) {
 	//
-	var webSocketUrl = "ws://" + window.location.host + "/logs";
+	var webSocketUrl = "ws://" + window.location.host + "/log";
 	var maxTableRowsCount = 100;
 	//  some constants
 	var scenarioName = constants.getScenarioConstant();

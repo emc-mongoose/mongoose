@@ -27,6 +27,7 @@ import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+
 /**
  Created by kurila on 20.10.14.
  */
@@ -256,46 +257,25 @@ implements LoadBuilder<T, U> {
 		return lb;
 	}
 	//
-	protected abstract Input<T> getNewItemInput()
+	protected abstract Input<T> getNewItemInput(final IoConfig<T, ?> ioConfigCopy)
 	throws NoSuchMethodException;
 	//
-	@SuppressWarnings("unchecked")
-	protected Input<T> getContainerItemInput()
-	throws CloneNotSupportedException {
-		return (Input<T>) ioConfig.clone()
-			.getContainerListInput(
-				countLimit, storageNodeAddrs == null ? null : storageNodeAddrs[0]
-			);
-	}
-	//
-	protected Input<T> selectItemInput()
+	protected Input<T> selectItemInput(final IoConfig<T, ?> ioConfigCopy)
 	throws IllegalStateException {
-		final boolean copyFlag = appConfig.getLoadCopy();
-		if(null == ioConfig.getSrcContainer()) {
-			if(copyFlag) {
-				throw new IllegalStateException(
-					"Copy mode is enabled but no source container is set"
-				);
-			}
+		if(null == ioConfigCopy.getSrcContainer()) {
 			try {
-				return itemInput == null ? getNewItemInput() : itemInput;
+				return itemInput == null ? getNewItemInput(ioConfigCopy) : itemInput;
 			} catch(final NoSuchMethodException e) {
 				throw new IllegalStateException(e);
 			}
 		} else {
-			if(copyFlag) {
-				final LoadType loadType = ioConfig.getLoadType();
-				if(!LoadType.WRITE.equals(loadType)) {
-					throw new IllegalStateException(
-						"Copy mode is enabled but the load type is not \"write\": \"" +
-						loadType + "\""
+			if(itemInput == null) {
+				return ioConfigCopy
+					.getContainerListInput(
+						countLimit, storageNodeAddrs == null ? null : storageNodeAddrs[0]
 					);
-				}
-			}
-			try {
-				return itemInput == null ? getContainerItemInput() : itemInput;
-			} catch(final CloneNotSupportedException e) {
-				throw new IllegalStateException(e);
+			} else {
+				return itemInput;
 			}
 		}
 	}
@@ -308,14 +288,18 @@ implements LoadBuilder<T, U> {
 		} catch(final RemoteException | IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
-		final U loadJob = buildActually();
-		loadJob.setOutput(itemOutput);
-		itemInput = null;
-		return loadJob;
+		try {
+			final U loadJob = buildActually();
+			loadJob.setOutput(itemOutput);
+			itemInput = null;
+			return loadJob;
+		} catch(final CloneNotSupportedException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 	//
 	protected abstract U buildActually()
-	throws RemoteException;
+	throws RemoteException, CloneNotSupportedException;
 	//
 	@Override
 	public String toString() {

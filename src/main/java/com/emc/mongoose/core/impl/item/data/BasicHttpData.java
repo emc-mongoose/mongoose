@@ -33,25 +33,28 @@ implements HttpDataItem {
 		super(contentSrc);
 	}
 	//
-	public BasicHttpData(final String metaInfo, final ContentSource contentSrc) {
-		super(metaInfo, contentSrc);
-	}
-	//
-	public BasicHttpData(final Long offset, final Long size, final ContentSource contentSrc) {
-		super(offset, size, contentSrc);
+	public BasicHttpData(final String value, final ContentSource contentSrc) {
+		super(value, contentSrc);
 	}
 	//
 	public BasicHttpData(
-		final String name, final Long offset, final Long size, final ContentSource contentSrc
+		final String path, final Long offset, final Long size, final ContentSource contentSrc
 	) {
-		super(name, offset, size, 0, contentSrc);
+		super(path, offset, size, contentSrc);
 	}
 	//
 	public BasicHttpData(
-		final String name, final Long offset, final Long size, final Integer layerNum,
+		final String path, final String name, final Long offset, final Long size,
 		final ContentSource contentSrc
 	) {
-		super(name, offset, size, layerNum, contentSrc);
+		super(path, name, offset, size, 0, contentSrc);
+	}
+	//
+	public BasicHttpData(
+		final String path, final String name, final Long offset, final Long size,
+		final Integer layerNum, final ContentSource contentSrc
+	) {
+		super(path, name, offset, size, layerNum, contentSrc);
 	}
 	//
 	@Override
