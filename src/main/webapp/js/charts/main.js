@@ -13,6 +13,7 @@ define(['jquery',
 
 		var currentChartBoards;
 		var currentMetric;
+		var currentTimeUnit;
 
 		function getSvgId(chartBoardName) {
 			return plainId(['chartboard', chartBoardName]);
@@ -44,6 +45,84 @@ define(['jquery',
 				shift: 30
 			}
 		];
+
+		//  for time accomodation. For more info see #JIRA-314
+		const TIME_UNIT = {
+			seconds: {
+				limit: 120,
+				value: 1,
+				next: 'minutes',
+				label: 't[s]'
+			},
+			minutes: {
+				limit: 300,
+				value: 60,
+				next: 'hours',
+				label: 't[m]'
+			},
+			hours: {
+				limit: 120,
+				value: 60 * 60,
+				next: 'days',
+				label: 't[h]'
+			},
+			days: {
+				limit: 35,
+				value: 24 * 60 * 60,
+				next: 'weeks',
+				label: "t[D]"
+			},
+			weeks: {
+				limit: 20,
+				value: 7 * 24 * 60 * 60,
+				next: 'months',
+				label: 't[W]'
+			},
+			months: {
+				limit: 60,
+				value: 4 * 7 * 24 * 60 * 60,
+				next: 'years',
+				label: 't[M]'
+			},
+			years: {
+				next: null,
+				label: 't[Y]'
+			},
+			toMinutes: function (x) {
+				return x * this.minutes.value;
+			},
+			toHours: function (x) {
+				return x * this.hours.value;
+			},
+			toDays: function (x) {
+				return x * this.days.value;
+			},
+			toWeeks: function (x) {
+				return x * this.weeks.value;
+			},
+			toMonths: function (x) {
+				return x * this.months.value;
+			},
+			toYears: function (x) {
+				return x * this.years.value;
+			},
+			toUnits: function (x, unit) { 
+				if (unit) {
+					return x / unit.value;
+				} else {
+					return x;
+				}
+			}
+		};
+
+		function tuneUnits(currentTimeValue) {
+			if (currentTimeValue > currentTimeUnit.limit) {
+				currentTimeUnit = TIME_UNIT[currentTimeUnit.next];
+				updateAxisX();
+				updateAxisY();
+				updateLine();
+			}
+		}
 
 		const MARGIN = {
 			TOP: 20,
@@ -94,7 +173,8 @@ define(['jquery',
 		const AXIS_Y_WIDTH = HEIGHT;
 
 		function xAccessor(data) {
-			return data.x <= 0 ? 0.1 : data.x;
+			data.x = TIME_UNIT.toUnits(data.x, currentTimeUnit);
+			return data.x <= 0 ? 0.0000001 : data.x;
 		}
 
 		function yAccessor(data) {
@@ -221,7 +301,7 @@ define(['jquery',
 				.attr('x', AXIS_X_WIDTH / 2)
 				.attr('y', HEIGHT + MARGIN.BOTTOM / 3)
 				.style('text-anchor', 'middle')
-				.text('t[s]');
+				.text(currentTimeUnit.label);
 
 			svgElement.append('g')
 				.attr('class', 'y-axis axis')
@@ -324,6 +404,7 @@ define(['jquery',
 			if (currentChartBoards) {
 				$.each(currentChartBoards, function (chartBoardName, chartBoardContent) {
 					if (!doesSvgExist(chartBoardName)) {
+						currentTimeUnit = TIME_UNIT.seconds;
 						createChartBoard(chartBoardName);
 					}
 					updateChartBoard(chartBoardName, chartBoardContent, currentMetric);
@@ -340,13 +421,18 @@ define(['jquery',
 		}
 
 		function updateAxesLabels(svgElement, metricName) {
+			svgElement.select('.x-axis-text')
+				.duration(750)
+				.text(currentTimeUnit.label);
 			svgElement.select('.y-axis-text')
 				.duration(750)
 				.text(constants.CHART_METRICS_UNITS_FORMATTER[metricName]);
 		}
 
 		function updateAxes(svgElement, chartArr) {
-			xScale.domain(extent(chartArr[0], xAccessor));
+			const xDomain = xScale.domain();
+			tuneUnits(xDomain[xDomain.length - 1]);
+			xScale.domain(extent($.extend(true, {}, chartArr[0]), xAccessor));
 			yScale.domain(deepExtent(chartArr, yAccessor)).nice();
 			svgElement.select('.x-axis')
 				.call(xAxis);
@@ -452,7 +538,6 @@ define(['jquery',
 			}
 			const svgSelector = getSvgSelector(chartBoardName);
 			const svg = d3.select(svgSelector).transition();
-			updateAxesLabels(svg, metric);
 			const chartArr = chartBoardContent[metric];
 			const names = [];
 			chartArr.forEach(function (chart) {
@@ -461,6 +546,7 @@ define(['jquery',
 			});
 			colorizer.domain(names);
 			updateAxes(svg, chartArr);
+			updateAxesLabels(svg, metric);
 			const svgCanvas = d3.select(svgSelector + ' g');
 			updateCharts(svgCanvas, chartArr, chartBoardName, metric);
 			updateLegend(svgCanvas, chartArr, chartBoardName, metric)
