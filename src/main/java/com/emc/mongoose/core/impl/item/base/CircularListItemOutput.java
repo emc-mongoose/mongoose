@@ -9,7 +9,7 @@ import java.util.List;
  The data items input which may be written infinitely (if underlying collection allows that).
  */
 public class CircularListItemOutput<T extends Item>
-extends ItemListOutput<T> {
+extends ListItemOutput<T> {
 	//
 	protected int capacity, i = 0;
 	//

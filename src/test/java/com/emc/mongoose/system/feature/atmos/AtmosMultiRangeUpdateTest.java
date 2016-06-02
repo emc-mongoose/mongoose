@@ -1,7 +1,6 @@
 package com.emc.mongoose.system.feature.atmos;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 //
 import com.emc.mongoose.common.io.Output;
@@ -9,7 +8,7 @@ import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 //
 //
-import com.emc.mongoose.core.impl.item.base.ItemListOutput;
+import com.emc.mongoose.core.impl.item.base.ListItemOutput;
 import com.emc.mongoose.system.base.StandaloneClientTestBase;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -55,11 +54,11 @@ extends StandaloneClientTestBase {
 					.setAuth("wuser1@sanity.local", null)
 					.build()
 		) {
-			final Output<HttpDataItem> writeOutput = new ItemListOutput<>(BUFF_WRITE);
+			final Output<HttpDataItem> writeOutput = new ListItemOutput<>(BUFF_WRITE);
 			COUNT_WRITTEN = client.create(
 				writeOutput, COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10KB")
 			);
-			final Output<HttpDataItem> updateOutput0 = new ItemListOutput<>(BUFF_UPDATE0);
+			final Output<HttpDataItem> updateOutput0 = new ListItemOutput<>(BUFF_UPDATE0);
 			if(COUNT_WRITTEN > 0) {
 				COUNT_UPDATED0 = client.update(
 					writeOutput.getInput(), updateOutput0, COUNT_UPDATED0, 10, 10
@@ -72,7 +71,7 @@ extends StandaloneClientTestBase {
 			} else {
 				throw new IllegalStateException("Failed to update the 1st time");
 			}
-			final Output<HttpDataItem> updateOutput1 = new ItemListOutput<>(BUFF_UPDATE0);
+			final Output<HttpDataItem> updateOutput1 = new ListItemOutput<>(BUFF_UPDATE0);
 			COUNT_UPDATED1 = client.update(
 				writeOutput.getInput(), updateOutput1, COUNT_UPDATED0, 10, 10
 			);

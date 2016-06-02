@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.load.barrier;
+package com.emc.mongoose.core.api.load.model;
 
 /**
  Created by kurila on 29.03.16.

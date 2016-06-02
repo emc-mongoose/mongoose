@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.item.base;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
 //
-//
+import static org.junit.Assert.*;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 //
 @RunWith(MockitoJUnitRunner.class)
-public class ItemListOutputTest {
+public class ListItemOutputTest {
 	//
 	@Mock private List<DataItem> itemsMock;
 	//
@@ -24,7 +24,7 @@ public class ItemListOutputTest {
 	public void shouldWriteSingleItem()
 	throws Exception {
 		final DataItem dataItem = Mockito.mock(DataItem.class);
-		final ItemListOutput<DataItem> itemsOutput = new ItemListOutput<>(itemsMock);
+		final ListItemOutput<DataItem> itemsOutput = new ListItemOutput<>(itemsMock);
 		Mockito
 			.when(itemsMock.add(dataItem))
 			.thenReturn(true);
@@ -43,9 +43,9 @@ public class ItemListOutputTest {
 			};
 		final List<DataItem> buffer = Arrays.asList(dataItems);
 		final List<DataItem> itemsDst = new ArrayList<>();
-		final ItemListOutput<DataItem> itemsOutput = new ItemListOutput<>(itemsDst);
-		Assert.assertEquals(itemsOutput.put(buffer), dataItems.length);
-		Assert.assertEquals(itemsDst.size(), dataItems.length);
+		final ListItemOutput<DataItem> itemsOutput = new ListItemOutput<>(itemsDst);
+		assertEquals(itemsOutput.put(buffer), dataItems.length);
+		assertEquals(itemsDst.size(), dataItems.length);
 	}
 	//
 	@Test

@@ -16,7 +16,7 @@ import java.nio.file.StandardOpenOption;
 /**
  An item input implementation deserializing the data items from the specified file.
  */
-public class BinFileInput<T extends Item>
+public class BinFileItemInput<T extends Item>
 extends BinItemInput<T>
 implements FileItemInput<T> {
 	//
@@ -27,7 +27,7 @@ implements FileItemInput<T> {
 	 @param itemsSrcPath the path to the file which should be used to restore the serialized items
 	 @throws IOException if unable to open the file for reading
 	 */
-	public BinFileInput(final Path itemsSrcPath)
+	public BinFileItemInput(final Path itemsSrcPath)
 	throws IOException {
 		super(
 			buildObjectInputStream(itemsSrcPath)

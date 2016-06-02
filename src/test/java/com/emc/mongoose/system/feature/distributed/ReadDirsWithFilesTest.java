@@ -107,6 +107,7 @@ extends DistributedFileSystemTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
+		System.setProperty(AppConfig.KEY_STORAGE_TYPE, "http");
 		System.setProperty(AppConfig.KEY_ITEM_TYPE, "data");
 		DistributedFileSystemTestBase.tearDownClass();
 		final File tgtDir = Paths.get("/tmp/" + RUN_ID).toFile();

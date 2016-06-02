@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 //
 @RunWith(MockitoJUnitRunner.class)
-public class CircularItemListOutputTest {
+public class CircularListItemOutputTest {
 	//
 	final DataItem
 		dataItem0 = Mockito.mock(DataItem.class),

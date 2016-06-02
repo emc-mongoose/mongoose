@@ -69,6 +69,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'common'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		resources {
 			srcDir(['src', 'main', 'resources'].join(File.separator))
@@ -84,6 +85,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'core', 'api'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output
 	}
@@ -91,6 +93,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'core', 'impl'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output + sourceSets.coreApi.output
 	}
@@ -101,6 +104,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 'atmos'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
@@ -109,6 +113,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 's3'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
@@ -117,6 +122,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 'swift'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
@@ -128,6 +134,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'server', 'api'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output + sourceSets.coreApi.output
 	}
@@ -135,6 +142,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'webserver'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output
 	}
@@ -145,6 +153,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'client'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output + sourceSets.serverApi.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
@@ -153,6 +162,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'server', 'impl'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output + sourceSets.serverApi.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
@@ -161,6 +171,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'mock'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
@@ -170,6 +181,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'util'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output + sourceSets.client.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
@@ -179,6 +191,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'scenario'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.common.output + sourceSets.util.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
@@ -189,6 +202,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'webui'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		//
 		compileClasspath += sourceSets.common.output + sourceSets.scenario.output
@@ -206,6 +220,7 @@ sourceSets {
 		java {
 			srcDirs(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'cli'].join(File.separator))
 			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
 		}
 		//
 		compileClasspath += sourceSets.common.output + sourceSets.scenario.output
@@ -217,21 +232,40 @@ sourceSets {
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
 	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Main ////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+
+	main {
+		java {
+			srcDir(['src', 'main'].join(File.separator))
+			include '**'
+			exclude(['**', '*Test.java'].join(File.separator))
+		}
+		resources {
+			srcDir(['src', 'main'].join(File.separator))
+			include '**'
+		}
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Tests ///////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	test {
+
+	unitTest {
 		java {
-			srcDir(['src', 'test'].join(File.separator))
-			include(['java', 'com', 'emc', 'mongoose', 'core', '**'].join(File.separator))
-			include(['java', 'com', 'emc', 'mongoose', 'common', '**'].join(File.separator))
-			include(['java', 'com', 'emc', 'mongoose', 'run', '**'].join(File.separator))
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose'].join(File.separator))
+			include(['**', '*Test.java'].join(File.separator))
 		}
+		compileClasspath += sourceSets.main.output
+		runtimeClasspath += sourceSets.main.output
 	}
+
 	systemTest {
 		java {
-			srcDir(['src', 'test'].join(File.separator))
-			include(['java', 'com', 'emc', 'mongoose', 'system', '**'].join(File.separator))
+			srcDir(['src', 'test', 'java', 'com', 'emc', 'mongoose', 'system'].join(File.separator))
+			include '**'
 		}
 		resources {
 			srcDir(['src', 'main', 'resources'].join(File.separator))
@@ -240,18 +274,18 @@ sourceSets {
 		compileClasspath += sourceSets.main.output
 		runtimeClasspath += sourceSets.main.output
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// Main ////////////////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	main {
+
+	perfTest {
 		java {
-			srcDir(['src', 'main'].join(File.separator))
+			srcDir(['src', 'test', 'java', 'com', 'emc', 'mongoose', 'perf'].join(File.separator))
 			include '**'
 		}
 		resources {
-			srcDir(['src', 'main'].join(File.separator))
+			srcDir(['src', 'main', 'resources'].join(File.separator))
 			include '**'
 		}
+		compileClasspath += sourceSets.main.output
+		runtimeClasspath += sourceSets.main.output
 	}
 }
 
@@ -337,6 +371,7 @@ dependencies {
 	)
 
 	// misc
+
 	serverApiCompile (
 		library.httpcore,
 	)
@@ -438,7 +473,7 @@ dependencies {
 		library.commons_cli,
 	)
 
-	testCompile (
+	unitTestCompile (
 		library.junit,
 		library.junit_mockito,
 		library.json_schema_validator,
@@ -447,6 +482,10 @@ dependencies {
 	systemTestCompile(
 		library.junit,
 		library.commons_csv,
+	)
+
+	perfTestCompile (
+		library.junit,
 	)
 }
 
@@ -487,10 +526,10 @@ configurations {
 		utilRuntime,
 	)
 
-	testCompile.extendsFrom(
+	unitTestCompile.extendsFrom(
 		compile,
 	)
-	testRuntime.extendsFrom(
+	unitTestRuntime.extendsFrom(
 		runtime,
 	)
 
@@ -498,6 +537,13 @@ configurations {
 		compile,
 	)
 	systemTestRuntime.extendsFrom(
+		runtime,
+	)
+
+	perfTestCompile.extendsFrom(
+		compile,
+	)
+	perfTestRuntime.extendsFrom(
 		runtime,
 	)
 
@@ -873,7 +919,7 @@ task cliJar(type: Jar) {
 	}
 }
 
-task testJar(type: Jar) {
+task unitTestJar(type: Jar) {
 
 	dependsOn commonJar
 	dependsOn coreApiJar
@@ -891,14 +937,13 @@ task testJar(type: Jar) {
 	dependsOn cliJar
 	dependsOn utilJar
 
-	classifier "test"
+	classifier "unit-test"
 	archiveName "${baseName}-${classifier}.${extension}"
-	from sourceSets.test.output
-	from sourceSets.systemTest.output
+	from sourceSets.unitTest.output
 	manifest {
 		from sharedManifest
 		attributes(
-			'Implementation-Title': rootProject.name + "-test",
+			'Implementation-Title': rootProject.name + "-unit-test",
 			'Class-Path': [
 				commonJar.outputs.files.collect {it.name}.join(' '),
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
@@ -915,9 +960,55 @@ task testJar(type: Jar) {
 				webuiJar.outputs.files.collect {it.name}.join(' '),
 				cliJar.outputs.files.collect {it.name}.join(' '),
 				utilJar.outputs.files.collect {it.name}.join(' '),
-				configurations.testRuntime.collect {
+				configurations.unitTestRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
+			].join(' ')
+		)
+	}
+}
+
+task systemTestJar(type: Jar) {
+
+	dependsOn commonJar
+	dependsOn coreApiJar
+	dependsOn coreImplJar
+	dependsOn storageAdapterAtmosJar
+	dependsOn storageAdapterS3Jar
+	dependsOn storageAdapterSwiftJar
+	dependsOn serverApiJar
+	dependsOn serverImplJar
+	dependsOn webserverJar
+	dependsOn clientJar
+	dependsOn scenarioJar
+	dependsOn storageMockJar
+	dependsOn webuiJar
+	dependsOn cliJar
+	dependsOn utilJar
+
+	classifier "system-test"
+	archiveName "${baseName}-${classifier}.${extension}"
+	from sourceSets.systemTest.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-system-test",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				webserverJar.outputs.files.collect {it.name}.join(' '),
+				clientJar.outputs.files.collect {it.name}.join(' '),
+				scenarioJar.outputs.files.collect {it.name}.join(' '),
+				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				webuiJar.outputs.files.collect {it.name}.join(' '),
+				cliJar.outputs.files.collect {it.name}.join(' '),
+				utilJar.outputs.files.collect {it.name}.join(' '),
 				configurations.systemTestRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
@@ -925,6 +1016,56 @@ task testJar(type: Jar) {
 		)
 	}
 }
+
+task perfTestJar(type: Jar) {
+
+	dependsOn commonJar
+	dependsOn coreApiJar
+	dependsOn coreImplJar
+	dependsOn storageAdapterAtmosJar
+	dependsOn storageAdapterS3Jar
+	dependsOn storageAdapterSwiftJar
+	dependsOn serverApiJar
+	dependsOn serverImplJar
+	dependsOn webserverJar
+	dependsOn clientJar
+	dependsOn scenarioJar
+	dependsOn storageMockJar
+	dependsOn webuiJar
+	dependsOn cliJar
+	dependsOn utilJar
+
+	classifier "perf-test"
+	archiveName "${baseName}-${classifier}.${extension}"
+	from sourceSets.perfTest.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-perf-test",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				webserverJar.outputs.files.collect {it.name}.join(' '),
+				clientJar.outputs.files.collect {it.name}.join(' '),
+				scenarioJar.outputs.files.collect {it.name}.join(' '),
+				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				webuiJar.outputs.files.collect {it.name}.join(' '),
+				cliJar.outputs.files.collect {it.name}.join(' '),
+				utilJar.outputs.files.collect {it.name}.join(' '),
+				configurations.perfTestRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
+		)
+	}
+}
+
 
 task dist(type: Tar) {
 
@@ -943,6 +1084,9 @@ task dist(type: Tar) {
 	dependsOn webuiJar
 	dependsOn cliJar
 	dependsOn utilJar
+	dependsOn unitTestJar
+	dependsOn systemTestJar
+	dependsOn perfTestJar
 
 	baseName = project.name
 	compression = Compression.GZIP
@@ -987,6 +1131,9 @@ task dist(type: Tar) {
 		from webuiJar.outputs.files
 		from cliJar.outputs.files
 		from utilJar.outputs.files
+		from unitTestJar.outputs.files
+		from systemTestJar.outputs.files
+		from perfTestJar.outputs.files
 		into('webapp') {
 			from { ["src", "main", "webapp"].join(File.separator) }
 		}
@@ -1001,15 +1148,16 @@ idea {
 		name = rootProject.name
 		//jdkName = sourceCompatibility
 		inheritOutputDirs = false
-		sourceDirs += file("src" + File.separator + "main")
-		testSourceDirs += file("src" + File.separator + "test")
+		sourceDirs += file("src" + File.separator + "main" + File.separator + "java")
+		testSourceDirs += file("src" + File.separator + "test" + File.separator + "java")
+		testSourceDirs += file("src" + File.separator + "main" + File.separator + "java")
 		outputDir = sourceSets.common.output.resourcesDir
 		testOutputDir = sourceSets.common.output.resourcesDir
 		scopes = [
 			COMPILE: [plus: [configurations.compile], minus: []],
 			RUNTIME: [plus: [configurations.runtime], minus: [configurations.compile]],
 			TEST: [
-				plus: [configurations.testRuntime, configurations.systemTestRuntime],
+				plus: [configurations.unitTestRuntime, configurations.systemTestRuntime],
 				minus: [configurations.runtime]
 			],
 		]
@@ -1031,7 +1179,11 @@ idea {
 	}
 }
 
-test {
+task unitTest(type: Test) {
+
+	testClassesDir = sourceSets.unitTest.output.classesDir
+	classpath = sourceSets.unitTest.runtimeClasspath
+
 	jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}logging.json"
 	jvmArgs '-Dlog4j.configurationFactory=org.apache.logging.log4j.core.config.json.JsonConfigurationFactory'
@@ -1043,13 +1195,26 @@ test {
 
 task systemTest(type: Test, dependsOn: dist) {
 
-	include '**/SystemTestSuite.class'
-
 	testClassesDir = sourceSets.systemTest.output.classesDir
+	include '**/SystemTestSuite.class'
 	classpath = sourceSets.systemTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "5g"
-	maxHeapSize = "5g"
+	minHeapSize = "4g"
+	maxHeapSize = "4g"
+	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
+		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
+	testLogging.showStandardStreams = true
+	testLogging { events "passed", "skipped", "failed" }
+}
+
+task perfTest(type: Test, dependsOn: dist) {
+
+	testClassesDir = sourceSets.systemTest.output.classesDir
+	include '**/PerfTestSuite.class'
+	classpath = sourceSets.systemTest.runtimeClasspath
+	forkEvery = 1
+	minHeapSize = "4g"
+	maxHeapSize = "4g"
 	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
@@ -1058,7 +1223,8 @@ task systemTest(type: Test, dependsOn: dist) {
 
 build.dependsOn commonJar, coreApiJar, coreImplJar, storageAdapterAtmosJar, storageAdapterS3Jar
 build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, scenarioJar
-build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testJar
+build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar
+build.dependsOn unitTestJar, systemTestJar, perfTestJar
 
 tasks.idea.dependsOn(cleanIdea)
 //tasks.idea.dependsOn(build)
@@ -1106,7 +1272,7 @@ ext.publicJars = [
 	commonJar, coreApiJar, coreImplJar,
 	storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar,
 	serverApiJar, serverImplJar, clientJar, scenarioJar,
-	storageMockJar, webserverJar, webuiJar, cliJar, utilJar, testJar
+	storageMockJar, webserverJar, webuiJar, cliJar, utilJar, unitTestJar, systemTestJar, perfTestJar
 ]
 
 for(nextPublicJar in publicJars) {
@@ -1163,6 +1329,7 @@ artifactory {
 artifactoryPublish.dependsOn commonJar, coreApiJar, coreImplJar
 artifactoryPublish.dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 artifactoryPublish.dependsOn serverApiJar, webserverJar, clientJar, scenarioJar, serverImplJar
-artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testJar
+artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar
+artifactoryPublish.dependsOn unitTestJar, systemTestJar, perfTestJar
 
 artifactoryPublish.dependsOn pushDockerImage

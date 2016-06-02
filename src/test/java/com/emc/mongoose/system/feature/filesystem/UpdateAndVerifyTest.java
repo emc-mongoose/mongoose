@@ -3,7 +3,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.impl.item.base.ItemListOutput;
+import com.emc.mongoose.core.impl.item.base.ListItemOutput;
 import com.emc.mongoose.core.impl.item.base.ListItemInput;
 import com.emc.mongoose.system.base.FileSystemTestBase;
 import com.emc.mongoose.system.tools.LogValidator;
@@ -53,11 +53,11 @@ extends FileSystemTestBase {
 				.build()
 		) {
 			countWritten = client.create(
-				new ItemListOutput<>(itemBuffWritten), COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10B")
+				new ListItemOutput<>(itemBuffWritten), COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10B")
 			);
 			TimeUnit.SECONDS.sleep(1);
 			countUpdated = client.update(
-				new ListItemInput<>(itemBuffWritten), new ItemListOutput<>(itemBuffUpdated),
+				new ListItemInput<>(itemBuffWritten), new ListItemOutput<>(itemBuffUpdated),
 				countWritten, 1, 1
 			);
 			TimeUnit.SECONDS.sleep(1);

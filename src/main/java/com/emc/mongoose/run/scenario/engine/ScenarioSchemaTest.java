@@ -21,8 +21,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 import static com.emc.mongoose.run.scenario.engine.Scenario.DIR_SCENARIO;
 import static java.io.File.separatorChar;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  Created by andrey on 11.05.16.

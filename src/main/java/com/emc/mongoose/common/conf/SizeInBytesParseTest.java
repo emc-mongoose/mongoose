@@ -39,6 +39,6 @@ extends TestCase {
 	@Test
 	public void checkParsing()
 	throws Exception {
-		assertEquals(sizeInBytes, new SizeInBytes(sizeInfoString));
+		TestCase.assertEquals(sizeInBytes, new SizeInBytes(sizeInfoString));
 	}
 }

@@ -2,8 +2,7 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.barrier.Throttle;
-import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
+import com.emc.mongoose.core.api.load.model.Throttle;
 import org.junit.Test;
 
 import java.util.ArrayList;

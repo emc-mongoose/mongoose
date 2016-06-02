@@ -3,7 +3,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.impl.item.base.ItemListOutput;
+import com.emc.mongoose.core.impl.item.base.ListItemOutput;
 import com.emc.mongoose.core.impl.item.base.ListItemInput;
 import com.emc.mongoose.system.base.StandaloneClientTestBase;
 import com.emc.mongoose.system.tools.LogValidator;
@@ -52,14 +52,14 @@ extends StandaloneClientTestBase {
 				.build()
 		) {
 			countWritten = (int) client.create(
-				new ItemListOutput<>(OBJ_BUFF_WRITTEN), COUNT_TO_WRITE, 10, OBJ_SIZE
+				new ListItemOutput<>(OBJ_BUFF_WRITTEN), COUNT_TO_WRITE, 10, OBJ_SIZE
 			);
 			countUpdated = (int) client.update(
-				new ListItemInput<>(OBJ_BUFF_WRITTEN), new ItemListOutput<>(OBJ_BUFF_UPDATED),
+				new ListItemInput<>(OBJ_BUFF_WRITTEN), new ListItemOutput<>(OBJ_BUFF_UPDATED),
 				countWritten, 10, 16
 			);
 			countRead = (int) client.read(
-				new ListItemInput<>(OBJ_BUFF_UPDATED), new ItemListOutput<>(OBJ_BUFF_READ),
+				new ListItemInput<>(OBJ_BUFF_UPDATED), new ListItemOutput<>(OBJ_BUFF_READ),
 				countUpdated, 10, true
 			);
 			//

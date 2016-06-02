@@ -1,7 +1,7 @@
-package com.emc.mongoose.core.impl.load.barrier;
+package com.emc.mongoose.core.impl.load.model;
 //
 
-import com.emc.mongoose.core.api.load.barrier.Throttle;
+import com.emc.mongoose.core.api.load.model.Throttle;
 
 import java.util.HashMap;
 import java.util.Map;

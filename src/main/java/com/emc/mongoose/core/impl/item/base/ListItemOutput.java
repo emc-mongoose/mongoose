@@ -10,12 +10,12 @@ import java.util.List;
  Created by kurila on 18.06.15.
  Writable collection of the data items.
  */
-public class ItemListOutput<T extends Item>
+public class ListItemOutput<T extends Item>
 implements Output<T> {
 	//
 	protected final List<T> items;
 	//
-	public ItemListOutput(final List<T> items) {
+	public ListItemOutput(final List<T> items) {
 		this.items = items;
 	}
 

@@ -17,7 +17,7 @@ import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 //
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
-import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
+import com.emc.mongoose.core.impl.load.model.WeightThrottle;
 //
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
