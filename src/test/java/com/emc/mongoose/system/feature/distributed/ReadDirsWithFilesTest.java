@@ -3,6 +3,7 @@ package com.emc.mongoose.system.feature.distributed;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 //
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -76,7 +77,7 @@ extends DistributedFileSystemTestBase {
 						AppConfig.KEY_ITEM_DST_CONTAINER, "/tmp/" + RUN_ID + "/" + nextDirName
 					);
 					nextDirClient = CLIENT_BUILDER.build();
-					nextDirClient.create(null, COUNT_TO_WRITE, 100, 1);
+					nextDirClient.create(null, COUNT_TO_WRITE, 100, 1024);
 				}
 			} while(true);
 		}
@@ -97,7 +98,7 @@ extends DistributedFileSystemTestBase {
 					dirListFile.toPath(), (Class) BasicDirectory.class,
 					ContentSourceUtil.getDefaultInstance()
 				),
-				null, countWritten, 100, true
+				null, countWritten, 3, true
 			);
 		}
 		//
