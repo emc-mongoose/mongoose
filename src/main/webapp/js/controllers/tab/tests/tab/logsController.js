@@ -134,14 +134,14 @@ define([
 	}
 
 	function setTabParameters(testId, testMode) {
-		if (LOGS_MODE.indexOf(testMode) > -1) {
+		// if (LOGS_MODE.indexOf(testMode) > -1) {
 			if (testId) {
 				resetLogsFlags[testId] = false;
 				$.each(LOG_MARKER, function (key, value) {
 					getLogs(value, testId);
 				})
 			}
-		}
+		// }
 	}
 	
 	function resetLogs() {
