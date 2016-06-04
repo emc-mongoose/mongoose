@@ -20,7 +20,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 // mongoose-core-impl
-import static com.emc.mongoose.common.io.value.RangePatternDefinedInput.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.io.value.RangePatternDefinedInput.PATTERN_CHAR;
 import static com.emc.mongoose.core.impl.item.data.BasicMutableDataItem.getRangeOffset;
 
 import com.emc.mongoose.core.impl.item.container.BasicContainer;
@@ -530,7 +530,7 @@ implements HttpRequestConfig<T, C> {
 				while(customHeadersIterator.hasNext()) {
 					nextKey = customHeadersIterator.next();
 					nextValue = customHeaders.getString(nextKey);
-					if(-1 < nextValue.indexOf(PATTERN_SYMBOL)) {
+					if(-1 < nextValue.indexOf(PATTERN_CHAR)) {
 						dynamicHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));
 					} else {
 						sharedHeaders.put(nextKey, new BasicHeader(nextKey, nextValue));

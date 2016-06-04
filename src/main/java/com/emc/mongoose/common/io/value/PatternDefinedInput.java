@@ -8,8 +8,8 @@ extends Input<String> {
 	/**
 	 * Special characters
 	 */
-	char PATTERN_SYMBOL = '%';
-	char[] FORMAT_SYMBOLS = {'{', '}'};
+	char PATTERN_CHAR = '$';
+	char[] FORMAT_CHARS = {'{', '}'};
 
 	String getPattern();
 

@@ -1,0 +1,67 @@
+{
+	"type" : "each",
+	"value" : "threads",
+	"in" : [
+		1, 2, 5, 10, 20, 50, 100, 200, 500
+	],
+	"config" : {
+		"load" : {
+			"threads" : "${threads}"
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "each",
+			"value" : "size",
+			"in" : [
+				"1KB", "10KB", "100KB", "1MB", "10MB", "100MB"
+			],
+			"config" : {
+				"item" : {
+					"data" : {
+						"size" : "${size}"
+					},
+					"dst" : {
+						"container" : "items_${size}"
+					}
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load",
+					"config" : {
+						"load" : {
+							"type" : "create"
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"data" : {
+								"ranges" : 5
+							}
+						},
+						"load" : {
+							"type" : "update"
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"load" : {
+							"type" : "read"
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"load" : {
+							"type" : "delete"
+						}
+					}
+				}
+			]
+		}
+	]
+}

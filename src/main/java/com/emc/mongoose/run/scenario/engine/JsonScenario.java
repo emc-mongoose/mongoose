@@ -30,12 +30,14 @@ implements Scenario {
 	private final static String KEY_CONFIG = "config";
 	private final static String KEY_VALUE = "value";
 	private final static String KEY_BLOCKING = "blocking";
+	private final static String KEY_IN = "in";
 	private final static String NODE_TYPE_PARALLEL = "parallel";
 	private final static String NODE_TYPE_SEQUENTIAL = "sequential";
 	private final static String NODE_TYPE_LOAD = "load";
 	private final static String NODE_TYPE_PRECONDITION = "precondition";
 	private final static String NODE_TYPE_RAMPUP = "rampup";
 	private final static String NODE_TYPE_COMMAND = "command";
+	private final static String NODE_TYPE_EACH = "each";
 	//
 	private final Map<String, Object> scenarioTree;
 	//
@@ -152,6 +154,14 @@ implements Scenario {
 								subContainer.append(newSubContainer);
 								subContainer = newSubContainer;
 								break;
+							case NODE_TYPE_EACH:
+								newSubContainer = new EachJobContainer(
+									nodeConfig, (String) node.get(KEY_VALUE),
+									(List) node.get(KEY_IN)
+								);
+								subContainer.append(newSubContainer);
+								subContainer = newSubContainer;
+								break;
 							case NODE_TYPE_COMMAND:
 								final Object rawFlagValue = node.get(KEY_BLOCKING);
 								newSubContainer = new CommandJobContainer(
@@ -189,6 +199,7 @@ implements Scenario {
 				case KEY_CONFIG:
 				case KEY_VALUE:
 				case KEY_BLOCKING:
+				case KEY_IN:
 					break; // ignore because the keys above are consumed already
 				default:
 					LOG.warn(Markers.ERR, "{}: unexpected key: {}", jobContainer, key);

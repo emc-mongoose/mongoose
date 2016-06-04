@@ -17,7 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 
-import static com.emc.mongoose.common.io.value.PatternDefinedInput.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.io.value.PatternDefinedInput.PATTERN_CHAR;
 
 /**
  Created by kurila on 26.11.15.
@@ -46,7 +46,7 @@ implements DirectoryLoadBuilder<T, C, U> {
 		// create parent directories
 		final Container d = ioConfig.getDstContainer();
 		final String p = d == null ? null : d.getName();
-		if(p != null && !p.isEmpty() && p.indexOf(PATTERN_SYMBOL) < 0) {
+		if(p != null && !p.isEmpty() && p.indexOf(PATTERN_CHAR) < 0) {
 			try {
 				Files.createDirectories(Paths.get(p));
 			} catch(final IOException e) {
