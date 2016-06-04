@@ -39,7 +39,7 @@ public class RunServlet extends HttpServlet {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private static final String WSMOCK_MODE_NAME = "Cindirella";
+	private static final String WSMOCK_MODE_NAME = "Cinderella";
 	private static final String STANDALONE_MODE_NAME = "Mongoose";
 	private static final String CLIENT_MODE_NAME = "client";
 	private static final String SERVER_MODE_NAME = "server";
@@ -102,6 +102,13 @@ public class RunServlet extends HttpServlet {
 			final String runId = JsonUtil.readValue(reader).get(RUN_ID_KEY);
 			stopTest(runId);
 		}
+	}
+
+	@Override
+	protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
+	throws ServletException, IOException {
+		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
+		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
 	}
 
 	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request) throws IOException {

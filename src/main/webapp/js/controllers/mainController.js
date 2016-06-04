@@ -51,6 +51,13 @@ define([
 		makeModeActive(currentMode);
 		makeTabActive(currentTabType);
 		renderer.start();
+		$.ajax({
+			type: 'GET',
+			url: '/run',
+		}).done(function (testsObj) {
+			testsController.updateTestsList(testsObj);
+			console.log('Tests list is got');
+		});
 	}
 
 	function version(configObject) {
