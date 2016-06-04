@@ -335,12 +335,12 @@ define(['jquery',
 				.text(text);
 		}
 
-		function createScaleSwitches(svgElement, text) {
+		function createScaleSwitches(svgElement, chartBoardName) {
 			const scaleSwitch = svgElement.selectAll('.scale-switch').data(SCALE_SWITCH);
 			const scaleSwitchEnter = scaleSwitch.enter().append('g')
 				.attr('class', plainId(['scale', 'switch']))
 				.attr('id', function (scaleObj) {
-					return plainId(['scale', 'switch', scaleObj.name]);
+					return plainId(['scale', 'switch', scaleObj.name, chartBoardName]);
 				})
 				.attr('scale', 'linear');
 			scaleSwitchEnter.append('circle')
@@ -353,7 +353,7 @@ define(['jquery',
 				.style('stroke-width', 1)
 				.style('fill', '#ECE9E9')
 				.on('click', function (scaleObj) {
-					const switchElem = d3.select(jqId(['scale', 'switch', scaleObj.name]));
+					const switchElem = d3.select(jqId(['scale', 'switch', scaleObj.name, chartBoardName]));
 					const switchCircle = switchElem.select('circle');
 					const switchText = switchElem.select('text');
 					if (switchElem.attr('scale') == SCALE.LINEAR) {
@@ -426,7 +426,7 @@ define(['jquery',
 			svgCanvasChain.attr('name', chartBoardName);
 			createLabel(svgCanvasChain, chartBoardName);
 			createAxes(svgCanvasChain);
-			createScaleSwitches(svgCanvasChain);
+			createScaleSwitches(svgCanvasChain, chartBoardName);
 		}
 
 		function updateAxesLabels(svgElement, metricName) {
