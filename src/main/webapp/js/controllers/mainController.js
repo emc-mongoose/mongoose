@@ -92,7 +92,10 @@ define([
 		$(jqId(['mode', currentMode])).removeClass(TAB_CLASS.ACTIVE);
 		$(jqId(['mode', mode])).addClass(TAB_CLASS.ACTIVE);
 		const modeTabElem = $(jqId(['mode', 'main']));
-		modeTabElem.text('Mode: ' + mode);
+		modeTabElem.text('Mode: ' + mode + ' ');
+		modeTabElem.append($('<span/>', {
+			class: 'caret'
+		}));
 		currentMode = mode;
 		defaultsController.setRunMode(currentMode);
 		$('#run\\.mode').find('input').val(currentMode);
@@ -120,15 +123,15 @@ define([
 
 		function renderNavbar(runVersion) {
 			hbUtil.compileAndInsertInsideBefore('body', navbarTemplate, {
-				version: runVersion,
-				modes: MODE
+				version: runVersion
 			});
-			binder.mode();
 			binder.tab();
 		}
 
 		function renderBase() {
-			hbUtil.compileAndInsertInside('#app', baseTemplate);
+			hbUtil.compileAndInsertInside('#app', baseTemplate, {
+				modes: MODE
+			});
 			const configElem = $('#all-buttons');
 			$.each(CONFIG_TABS, function (index, value) {
 				if (value === TAB_TYPE.SCENARIOS) {
@@ -150,7 +153,9 @@ define([
 						id: plainId([BLOCK.TREE, value]),
 						class: BLOCK.TREE + ' ' + 'tab-dependent'
 					}));
-			})
+			});
+			binder.mode();
+
 		}
 
 		function renderButtons() {

@@ -50,7 +50,7 @@ define(['jquery',
 		//  for time accomodation. For more info see #JIRA-314
 		const TIME_UNIT = {
 			seconds: {
-				limit: 120,
+				limit: 300,
 				value: 1,
 				next: 'minutes',
 				label: 't[s]'
