@@ -45,6 +45,7 @@ define([
 		OBJECT: 'obj',
 		ARRAY: 'arr',
 		PLAIN_ARRAY: 'plainArr',
+		OBJ_ARRAY: 'objArr',
 		MIXED_ARRAY: 'mixedArr'
 	};
 
@@ -69,13 +70,26 @@ define([
 		return true;
 	}
 
+	function isArrayObj(arr) {
+		for (var i = 0; i < arr.length; i++) {
+			if (!isObject(arr[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	function itemType(item) {
 		if (isObject(item)) {
 			if (isArray(item)) {
 				if (isArrayPlain(item)) {
 					return ITEM_TYPE.PLAIN_ARRAY;
 				} else {
-					return ITEM_TYPE.MIXED_ARRAY;
+					if (isArrayObj(item)) {
+						return ITEM_TYPE.OBJ_ARRAY;
+					} else {
+						return ITEM_TYPE.MIXED_ARRAY;
+					}
 				}
 			} else {
 				return ITEM_TYPE.OBJECT;
@@ -118,8 +132,14 @@ define([
 				newPath = path + delimiter + nodeName;
 			}
 			if (isArray(leafItem)) {
-				leafItem.forEach(function (leafName) {
-					addTreeOfItem(leafName, leavesElem, newPath, delimiter, aClickEvent, arrAsNode, addrsObj);
+				leafItem.forEach(function (leafName, index) {
+					var newArrPath;
+					if (arrAsNode) {
+						newArrPath = newPath;
+					} else {
+						newArrPath = newPath + delimiter + index;
+					}
+					addTreeOfItem(leafName, leavesElem, newArrPath, delimiter, aClickEvent, arrAsNode, addrsObj);
 				});
 			} else {
 				addTreeOfItem(leafItem, leavesElem, newPath, delimiter, aClickEvent, arrAsNode, addrsObj);
@@ -129,7 +149,12 @@ define([
 		const objectPair = plainPairAsNode;
 
 		function plainPairAsLeaf(itemElem, leafName, fieldValue) {
-			const fullPath = path + delimiter + leafName;
+			var fullPath;
+			if (path === '') {
+				fullPath = leafName;
+			} else {
+				fullPath = path + delimiter + leafName;
+			}
 			addrsObj[fullPath] = fieldValue;
 			fillLeafLi(itemElem, fullPath, leafName, aClickEvent);
 		}
@@ -141,6 +166,7 @@ define([
 				const valueType = itemType(value);
 				switch (valueType) {
 					case ITEM_TYPE.OBJECT:
+					case ITEM_TYPE.OBJ_ARRAY:
 						objectPair(newItemElem, key, value);
 						break;
 					case ITEM_TYPE.PLAIN:

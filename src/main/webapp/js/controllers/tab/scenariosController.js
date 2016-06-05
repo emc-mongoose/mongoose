@@ -74,7 +74,6 @@ define([
 	function render(scenariosArray) {
 		const rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
 		// elementAppender.arrayAsTree(scenariosArray, rootTreeUlElem, 'dir', DELIMITER.PATH, localClickEventCreator.scenarioFile);
-		const temp = ['default1.json', 'default2.json', {examples: ['example1.json', 'example2.json']}];
 		elementAppender.treeOfItem(scenariosArray, rootTreeUlElem, '', DELIMITER.PATH, localClickEventCreator.scenarioFile, true);
 		// elementAppender.treeOfItem(temp, rootTreeUlElem, '', DELIMITER.PATH, localClickEventCreator.scenarioFile, true);
 	}
@@ -85,7 +84,7 @@ define([
 		treeUlElem.append(createBackIcon());
 		var addressObject = {};
 		// elementAppender.objectAsTree(scenarioObject, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
-		elementAppender.treeOfItem(scenarioObject, treeUlElem, '', DELIMITER.PATH, localClickEventCreator.scenarioFile, true);
+		elementAppender.treeOfItem(scenarioObject, treeUlElem, '', DELIMITER.PROPERTY, commonClickEventCreator.propertyClickEvent, false, addressObject);
 		const jsonViewElem = $(jqId(['json', TAB_TYPE.SCENARIOS]));
 		jsonViewElem.text(JSON.stringify(scenarioObject, null, 4));
 		showDetailsTree();
