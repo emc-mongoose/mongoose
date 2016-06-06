@@ -2,10 +2,14 @@
 	"type" : "each",
 	"value" : "threads",
 	"in" : [
-		1, 2, 5, 10, 20, 50, 100, 200, 500
+		1, 10
 	],
 	"config" : {
 		"load" : {
+			"limit" : {
+				"count" : 1000,
+				"time" : "100s"
+			},
 			"threads" : "${threads}"
 		}
 	},
@@ -14,7 +18,7 @@
 			"type" : "each",
 			"value" : "size",
 			"in" : [
-				"1KB", "10KB", "100KB", "1MB", "10MB", "100MB"
+				"4KB", "4MB"
 			],
 			"config" : {
 				"item" : {
@@ -22,7 +26,7 @@
 						"size" : "${size}"
 					},
 					"dst" : {
-						"container" : "items_${size}"
+						"container" : "items_${size}_${threads}"
 					}
 				}
 			},
@@ -30,11 +34,16 @@
 				{
 					"type" : "load",
 					"config" : {
+						"item" : {
+							"dst" : {
+								"file" : "items_${size}_${threads}"
+							}
+						},
 						"load" : {
 							"type" : "create"
 						}
 					}
-				}, {
+				/*}, {
 					"type" : "load",
 					"config" : {
 						"item" : {
@@ -45,10 +54,15 @@
 						"load" : {
 							"type" : "update"
 						}
-					}
+					}*/
 				}, {
 					"type" : "load",
 					"config" : {
+						"item" : {
+							"src" : {
+								"file" : "items_${size}_${threads}"
+							}
+						},
 						"load" : {
 							"type" : "read"
 						}
@@ -56,6 +70,11 @@
 				}, {
 					"type" : "load",
 					"config" : {
+						"item" : {
+							"src" : {
+								"file" : "items_${size}_${threads}"
+							}
+						},
 						"load" : {
 							"type" : "delete"
 						}

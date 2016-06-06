@@ -43,8 +43,8 @@ import java.util.TreeMap;
 /**
  Created by kurila on 17.03.16.
  */
-public class RampupJobContainer
-extends SequentialJobContainer {
+public class RampupJob
+extends SequentialJob {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int tblWidth = 124;
@@ -80,9 +80,9 @@ extends SequentialJobContainer {
 	private final ContentSource contentSrc;
 	private final long limitTime;
 	//
-	public RampupJobContainer(final AppConfig appConfig)
+	public RampupJob(final AppConfig appConfig, final Map<String, Object> subTree)
 	throws IllegalStateException {
-		super(appConfig);
+		super(appConfig, subTree);
 		// disable periodic/intermediate metrics logging
 		localConfig.setProperty(KEY_LOAD_METRICS_PERIOD, 0);
 		// save the default values being replaced with rampup list values
@@ -262,7 +262,7 @@ extends SequentialJobContainer {
 			}
 			m3.put(nextLoadType, nextLoadJob);
 			//
-			append(new SingleJobContainer(nextLoadJob, limitTime));
+			//append(new SingleJobContainer(nextLoadJob, limitTime));
 		}
 		return nextItemOutput;
 	}

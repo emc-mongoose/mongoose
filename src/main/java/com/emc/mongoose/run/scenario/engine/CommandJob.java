@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 
 import static com.emc.mongoose.common.log.LogUtil.BLUE;
@@ -22,32 +23,24 @@ import static com.emc.mongoose.common.log.LogUtil.RED;
 /**
  Created by andrey on 07.04.16.
  */
-public final class CommandJobContainer
-implements JobContainer {
+public final class CommandJob
+extends JobBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static ThreadFactory TF_STD_IN = new NamingThreadFactory("stdInReader", true);
 	private final static ThreadFactory TF_STD_ERR = new NamingThreadFactory("stdErrReader", true);
+	private final static String KEY_NODE_BLOCKING = "blocking";
 	//
 	private final String cmdLine;
 	private final boolean blockingFlag;
 	private final boolean consoleColorFlag;
 	//
-	public CommandJobContainer(final String cmdLine, final boolean blockingFlag)
+	public CommandJob(final AppConfig appConfig, final Map<String, Object> subTree)
 	throws IllegalArgumentException {
-		this.cmdLine = cmdLine;
-		this.blockingFlag = blockingFlag;
+		super(appConfig);
+		this.cmdLine = (String) subTree.get(KEY_NODE_VALUE);
+		this.blockingFlag = (boolean) subTree.get(KEY_NODE_BLOCKING);
 		consoleColorFlag = LogUtil.isConsoleColoringEnabled();
-	}
-	//
-	@Override
-	public final AppConfig getConfig() {
-		return null;
-	}
-	//
-	@Override
-	public final boolean append(final JobContainer subJob) {
-		throw new IllegalStateException("Appending sub jobs to a sleep step is not allowed");
 	}
 	//
 	@Override
@@ -130,10 +123,5 @@ implements JobContainer {
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Shell command \"{}\" failed", cmdLine);
 		}
-	}
-
-	@Override
-	public final void close()
-	throws IOException {
 	}
 }

@@ -7,44 +7,36 @@ import com.emc.mongoose.common.log.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.02.16.
  */
-public class SequentialJobContainer
-extends JobContainerBase {
+public class SequentialJob
+extends ParentJobBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final List<JobContainer> subJobs = new LinkedList<>();
-	//
-	public SequentialJobContainer(final AppConfig appConfig) {
-		super(appConfig);
-	}
-	//
-	@Override
-	public final synchronized boolean append(final JobContainer subJob) {
-		return subJobs.add(subJob);
+	public SequentialJob(final AppConfig appConfig, final Map<String, Object> subTree) {
+		super(appConfig, subTree);
 	}
 	//
 	@Override
 	public String toString() {
-		return "sequentialJobContainer#" + hashCode();
+		return "sequentialJob#" + hashCode();
 	}
 	//
 	@Override
 	public synchronized void run() {
-		LOG.debug(Markers.MSG, "{}: start {} sub jobs", toString(), subJobs.size());
+		LOG.debug(Markers.MSG, "{}: start {} child jobs", toString(), childJobs.size());
 		final ThreadFactory tf = new NamingThreadFactory(toString(), true);
 		Thread t;
-		for(final JobContainer subJob : subJobs) {
+		for(final Job subJob : childJobs) {
 			t = tf.newThread(subJob);
+			final long limitTime = localConfig.getLoadLimitTime();
 			LOG.debug(
-				Markers.MSG, "{}: start next sub job \"{}\"", toString(), subJob.toString()
+				Markers.MSG, "{}: start next child job \"{}\"", toString(), subJob.toString()
 			);
 			t.start();
 			try {
@@ -59,20 +51,8 @@ extends JobContainerBase {
 			} finally {
 				t.interrupt();
 			}
-			LOG.debug(Markers.MSG, "{}: sub job \"{}\" is done", toString(), subJob.toString());
+			LOG.debug(Markers.MSG, "{}: chile job \"{}\" is done", toString(), subJob.toString());
 		}
 		LOG.debug(Markers.MSG, "{}: end", toString());
-	}
-	//
-	@Override
-	public void close()
-	throws IOException {
-		try {
-			for(final JobContainer subJob : subJobs) {
-				subJob.close();
-			}
-		} finally {
-			subJobs.clear();
-		}
 	}
 }
