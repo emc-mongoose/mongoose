@@ -234,28 +234,12 @@ sourceSets {
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	// Main ////////////////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////
-
-	main {
-		java {
-			srcDir(['src', 'main'].join(File.separator))
-			include '**'
-			exclude(['**', '*Test.java'].join(File.separator))
-		}
-		resources {
-			srcDir(['src', 'main'].join(File.separator))
-			include '**'
-		}
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Tests ///////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	unitTest {
 		java {
-			srcDir(['src', 'main'].join(File.separator))
+			srcDir(['src', 'test', 'java', 'com', 'emc', 'mongoose', 'unit'].join(File.separator))
 			include(['**', '*Test.java'].join(File.separator))
 		}
 		compileClasspath += sourceSets.main.output
@@ -1149,8 +1133,7 @@ idea {
 		name = rootProject.name
 		//jdkName = sourceCompatibility
 		inheritOutputDirs = false
-		//sourceDirs += file("src" + File.separator + "main")
-		testSourceDirs += file("src" + File.separator + "test")
+		sourceDirs += file("src" + File.separator + "main")
 		testSourceDirs += file("src" + File.separator + "main")
 		outputDir = sourceSets.common.output.resourcesDir
 		testOutputDir = sourceSets.common.output.resourcesDir
@@ -1203,8 +1186,8 @@ task systemTest(type: Test, dependsOn: dist) {
 	include '**/SystemTestSuite.class'
 	classpath = sourceSets.systemTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "4g"
-	maxHeapSize = "4g"
+	minHeapSize = "5g"
+	maxHeapSize = "5g"
 	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
@@ -1217,8 +1200,8 @@ task perfTest(type: Test, dependsOn: dist) {
 	include '**/PerfTestSuite.class'
 	classpath = sourceSets.systemTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "4g"
-	maxHeapSize = "4g"
+	minHeapSize = "5g"
+	maxHeapSize = "5g"
 	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true

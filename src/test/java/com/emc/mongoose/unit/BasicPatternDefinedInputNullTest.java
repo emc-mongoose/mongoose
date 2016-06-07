@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.io.value;
+package com.emc.mongoose.unit;
 
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.value.BasicPatternDefinedInput;

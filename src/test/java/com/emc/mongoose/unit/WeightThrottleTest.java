@@ -1,8 +1,9 @@
-package com.emc.mongoose.core.impl.load.model;
+package com.emc.mongoose.unit;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.model.Throttle;
+import com.emc.mongoose.core.impl.load.model.WeightThrottle;
 import org.junit.Test;
 
 import java.util.ArrayList;

@@ -1,8 +1,9 @@
-package com.emc.mongoose.core.impl.item.base;
+package com.emc.mongoose.unit;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
 //
 import com.emc.mongoose.common.io.Output;
+import com.emc.mongoose.core.impl.item.base.CircularListItemOutput;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;

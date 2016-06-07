@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.io.value;
+package com.emc.mongoose.unit;
 
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
@@ -30,11 +30,11 @@ public class PatternDefinedInputBasicTest {
 		return Arrays.asList(new Object[][]{
 				{"", ANYTHING_PATTERN},
 				{"glgkwl;gh", ANYTHING_PATTERN},
-				{"sgdhdh/%p{1; 3}fdfg", PATH_PATTERN },
-				{"%p{1; 3}", PATH_PATTERN },
-				{"%p{11; 7}", PATH_PATTERN },
-				{"%p{1; 1}", PATH_PATTERN },
-				{"%p{36; 4}", PATH_PATTERN },
+				{"sgdhdh/$p{1; 3}fdfg", PATH_PATTERN },
+				{"$p{1; 3}", PATH_PATTERN },
+				{"$p{11; 7}", PATH_PATTERN },
+				{"$p{1; 1}", PATH_PATTERN },
+				{"$p{36; 4}", PATH_PATTERN },
 		});
 	}
 

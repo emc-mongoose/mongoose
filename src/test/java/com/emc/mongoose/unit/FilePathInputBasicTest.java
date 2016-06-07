@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.io.value;
+package com.emc.mongoose.unit;
 
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.value.FilePathInput;
@@ -7,10 +7,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
+import static com.emc.mongoose.common.io.value.StringInputFactory.PATH_REG_EXP;
+import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
-public class FilePathInputExceptionTest {
+public class FilePathInputBasicTest {
+
+	private static final Pattern PATH_PATTERN = Pattern.compile(PATH_REG_EXP);
 
 	private Input<String> formatter;
 
@@ -21,10 +26,11 @@ public class FilePathInputExceptionTest {
 	@Parameterized.Parameters
 	public static Iterable<Object[]> data() {
 		return Arrays.asList(new Object[][]{
-				{0, 0},
-				{0, 5},
-				{35, 0},
-				{-7, -11},
+				{5, 2},
+				{2, 3},
+				{35, 6},
+				{7, 11},
+				{1, 1},
 		});
 	}
 
@@ -34,10 +40,13 @@ public class FilePathInputExceptionTest {
 	@Parameterized.Parameter(value = 1)
 	public int depth;
 
-	@Test(expected = IllegalArgumentException.class)
-	public void checkExceptionThrowing() throws Exception {
+	@Test
+	public void checkPrintingResult() throws Exception {
 		initFormatter(width, depth);
-		formatter.get();
+		final String result = formatter.get();
+//		System.out.println(result);
+		assertTrue(PATH_PATTERN.matcher(result).find());
 	}
+
 
 }

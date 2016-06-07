@@ -1,8 +1,11 @@
-package com.emc.mongoose.core.impl.item.base;
+package com.emc.mongoose.unit;
 //
 import com.emc.mongoose.core.api.item.data.DataItem;
 //
 import static org.junit.Assert.*;
+
+import com.emc.mongoose.core.impl.item.base.ListItemInput;
+import com.emc.mongoose.core.impl.item.base.ListItemOutput;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

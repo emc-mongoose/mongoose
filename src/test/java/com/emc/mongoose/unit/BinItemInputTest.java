@@ -1,6 +1,7 @@
-package com.emc.mongoose.core.impl.item.base;
+package com.emc.mongoose.unit;
 
 import com.emc.mongoose.core.api.item.data.DataItem;
+import com.emc.mongoose.core.impl.item.base.BinItemInput;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

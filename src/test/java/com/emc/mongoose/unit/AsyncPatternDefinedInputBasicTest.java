@@ -1,6 +1,7 @@
-package com.emc.mongoose.common.io.value.async;
+package com.emc.mongoose.unit;
 
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.value.async.AsyncPatternDefinedInput;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -19,8 +20,8 @@ import static org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class AsyncPatternDefinedInputBasicTest {
 
-	private static final String OUTPUT_NUMBER_FMT_STRING = "%f" + "{" + "###.##" + "}";
-	private static final String OUTPUT_DATE_FMT_STRING = "%D" + "{" + "yyyy-MM-dd'T'HH:mm:ssZ" + "}";
+	private static final String OUTPUT_NUMBER_FMT_STRING = "$f" + "{" + "###.##" + "}";
+	private static final String OUTPUT_DATE_FMT_STRING = "$D" + "{" + "yyyy-MM-dd'T'HH:mm:ssZ" + "}";
 	private static final String DATE_REG_EXP =
 			"(((19|20)[0-9][0-9])-(1[012]|0?[1-9])-(3[01]|[12][0-9]|0?[1-9])T(0[0-9]|1[0-9]|2[0-4]):([0-5][0-9]):([0-5][0-9]))"; // regexp should match the date format in the string above
 	private static final Pattern ANYTHING_PATTERN = Pattern.compile(".*");
@@ -41,8 +42,8 @@ public class AsyncPatternDefinedInputBasicTest {
 	public static Iterable<Object[]> data() {
 		return Arrays.asList(new Object[][]{
 				{"dfdgffsgsgsg", ANYTHING_PATTERN},
-				{"%d", LONG_PATTERN},
-				{"%d[1-5]", LONG_PATTERN},
+				{"$d", LONG_PATTERN},
+				{"$d[1-5]", LONG_PATTERN},
 				{OUTPUT_NUMBER_FMT_STRING, DOUBLE_PATTERN},
 				{OUTPUT_NUMBER_FMT_STRING + "[0.1-5.0]", DOUBLE_PATTERN},
 				{OUTPUT_DATE_FMT_STRING, DATE_PATTERN},

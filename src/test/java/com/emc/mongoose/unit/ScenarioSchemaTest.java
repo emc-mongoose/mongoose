@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.scenario.engine;
+package com.emc.mongoose.unit;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

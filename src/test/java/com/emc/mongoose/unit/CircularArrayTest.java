@@ -1,5 +1,6 @@
-package com.emc.mongoose.common.log.appenders;
+package com.emc.mongoose.unit;
 
+import com.emc.mongoose.common.log.appenders.CircularArray;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;

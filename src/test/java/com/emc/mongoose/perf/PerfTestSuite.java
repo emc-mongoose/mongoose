@@ -1,4 +1,4 @@
-package com.emc.mongoose.perf.suite;
+package com.emc.mongoose.perf;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;

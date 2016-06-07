@@ -1,4 +1,5 @@
-package com.emc.mongoose.common.conf;
+package com.emc.mongoose.unit;
+import com.emc.mongoose.common.conf.SizeInBytes;
 import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -1,6 +1,7 @@
-package com.emc.mongoose.common.io.value.async;
+package com.emc.mongoose.unit;
 
 import com.emc.mongoose.common.io.Input;
+import com.emc.mongoose.common.io.value.async.AsyncPatternDefinedInput;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -26,13 +27,13 @@ public class AsyncPatternDefinedInputExceptionTest {
 	@Parameters
 	public static Iterable<Object[]> data() {
 		return Arrays.asList(new Object[][]{
-				{"%%d"},
-				{"%d[1-5]%"},
-				{"nghgh%"},
-				{"%%%%%%"},
-				{"% "},
-				{"%D{gfg}"},
-				{"%f{fdl;}"},
+				{"$$d"},
+				{"$d[1-5]$"},
+				{"nghgh$"},
+				{"$$$$$$"},
+				{"$ "},
+				{"$D{gfg}"},
+				{"$f{fdl;}"},
 		});
 	}
 	@Parameter(value = 0)

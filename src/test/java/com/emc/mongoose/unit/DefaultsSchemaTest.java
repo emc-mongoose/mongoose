@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.conf;
+package com.emc.mongoose.unit;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,5 +1,7 @@
-package com.emc.mongoose.common.conf;
+package com.emc.mongoose.unit;
 import static org.junit.Assert.*;
+
+import com.emc.mongoose.common.conf.SizeInBytes;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
