@@ -1,33 +1,37 @@
 {
 	"type" : "each",
-	"value" : "threads",
+	"value" : "size",
 	"in" : [
-		1, 10
+		"1KB", "1MB"
 	],
 	"config" : {
+		"item" : {
+			"data" : {
+				"size" : "${size}"
+			}
+		},
 		"load" : {
 			"limit" : {
-				"count" : 1000,
-				"time" : "100s"
-			},
-			"threads" : "${threads}"
+				"count" : 100,
+				"time" : "5s"
+			}
 		}
 	},
 	"jobs" : [
 		{
 			"type" : "each",
-			"value" : "size",
+			"value" : "threads",
 			"in" : [
-				"4KB", "4MB"
+				1, 10
 			],
 			"config" : {
 				"item" : {
-					"data" : {
-						"size" : "${size}"
-					},
 					"dst" : {
-						"container" : "items_${size}_${threads}"
+						"container" : "${size}_${threads}threads"
 					}
+				},
+				"load" : {
+					"threads" : "${threads}"
 				}
 			},
 			"jobs" : [
@@ -36,7 +40,7 @@
 					"config" : {
 						"item" : {
 							"dst" : {
-								"file" : "items_${size}_${threads}"
+								"file" : "${size}_${threads}threads.csv"
 							}
 						},
 						"load" : {
@@ -60,7 +64,7 @@
 					"config" : {
 						"item" : {
 							"src" : {
-								"file" : "items_${size}_${threads}"
+								"file" : "${size}_${threads}threads.csv"
 							}
 						},
 						"load" : {
@@ -72,7 +76,7 @@
 					"config" : {
 						"item" : {
 							"src" : {
-								"file" : "items_${size}_${threads}"
+								"file" : "${size}_${threads}threads.csv"
 							}
 						},
 						"load" : {

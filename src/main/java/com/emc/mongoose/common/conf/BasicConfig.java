@@ -34,6 +34,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -171,11 +172,6 @@ implements AppConfig {
 	@Override
 	public ItemType getItemType() {
 		return ItemType.valueOf(getString(KEY_ITEM_TYPE).toUpperCase());
-	}
-	//
-	@Override
-	public String getItemContainerName() {
-		return getString(KEY_ITEM_CONTAINER_NAME);
 	}
 	//
 	@Override
@@ -549,13 +545,13 @@ implements AppConfig {
 	public int getStorageMockContainerCountLimit() {
 		return getInt(KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT);
 	}
-
+	//
 	@Override
 	public void setRunId(final String runId) {
 		setProperty(KEY_RUN_ID, runId);
 		ThreadContext.put(KEY_RUN_ID, getRunId());
 	}
-
+	//
 	@Override
 	public void setRunMode(final String runMode) {
 		setProperty(KEY_RUN_MODE, runMode);
@@ -579,6 +575,116 @@ implements AppConfig {
 			} else {
 				setProperty(compositeKey, v);
 			}
+		}
+	}
+	//
+	@Override
+	public void findAndSubstitute(final String replacePattern, final Object newValue) {
+		final Iterator<String> keyIter = getKeys();
+		Object oldValue;
+		String key;
+		while(keyIter.hasNext()) {
+			key = keyIter.next();
+			oldValue = getProperty(key);
+			if(newValue == null) {
+				findAndSubstituteWithNull(key, oldValue, replacePattern);
+			} else if(newValue instanceof List) {
+				findAndSubstituteWithList(key, oldValue, replacePattern, (List) newValue);
+			} else {
+				findAndSubstituteWith(key, oldValue, replacePattern, newValue);
+			}
+		}
+	}
+	//
+	private void findAndSubstituteWithNull(
+		final String key, final Object oldValue, final String pattern
+	) {
+		final Logger log = LogManager.getLogger();
+		if(oldValue instanceof String) {
+			if(oldValue.equals(pattern)) {
+				setProperty(key, null);
+			} else {
+				log.warn(Markers.ERR, "Couldn't replace with null value(s) the string part");
+			}
+		} else if(oldValue instanceof List) {
+			final List<Object> newValue = new ArrayList<>();
+			for(final Object oldValueElement : (List) oldValue) {
+				if(oldValueElement.equals(pattern)) {
+					newValue.add(null);
+				} else {
+					log.warn(Markers.ERR, "Couldn't replace with null value(s) the string part");
+					newValue.add(oldValueElement);
+				}
+			}
+			clearProperty(key);
+			setProperty(key, newValue);
+		}
+	}
+	//
+	private <T> void findAndSubstituteWith(
+		final String key, final Object oldValue, final String pattern, final T newValue
+	) {
+		String t;
+		if(oldValue instanceof String) {
+			if(oldValue.equals(pattern)) {
+				setProperty(key, newValue);
+			} else {
+				t = (String) oldValue;
+				if(t.contains(pattern)) {
+					setProperty(key, t.replace(pattern, newValue.toString()));
+				}
+			}
+		} else if(oldValue instanceof List) {
+			final List<Object> newValueList = new ArrayList<>();
+			for(final Object oldValueElement : (List) oldValue) {
+				if(oldValueElement instanceof String) {
+					if(oldValueElement.equals(pattern)) {
+						newValueList.add(newValue);
+					} else {
+						t = (String)oldValueElement;
+						if(t.contains(pattern)) {
+							newValueList.add(t.replace(pattern, newValue.toString()));
+						} else {
+							newValueList.add(oldValueElement);
+						}
+					}
+				} else {
+					newValueList.add(oldValueElement);
+				}
+			}
+			clearProperty(key);
+			setProperty(key, newValueList);
+		}
+	}
+	//
+	private void findAndSubstituteWithList(
+		final String key, final Object oldValue, final String pattern, final List newValue
+	) {
+		final Logger log = LogManager.getLogger();
+		if(oldValue instanceof String) {
+			if(oldValue.equals(pattern)) {
+				setProperty(key, newValue);
+			} else {
+				log.warn(Markers.ERR, "Couldn't replace with list value(s) the string part");
+			}
+		} else if(oldValue instanceof List) {
+			final List<Object> newValueList = new ArrayList<>();
+			for(final Object oldValueElement : (List) oldValue) {
+				if(oldValueElement instanceof String) {
+					if(oldValueElement.equals(pattern)) {
+						newValueList.add(newValue);
+					} else {
+						log.warn(
+							Markers.ERR, "Couldn't replace with list value(s) the string part"
+						);
+						newValueList.add(oldValueElement);
+					}
+				} else {
+					newValueList.add(oldValueElement);
+				}
+			}
+			clearProperty(key);
+			setProperty(key, newValueList);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

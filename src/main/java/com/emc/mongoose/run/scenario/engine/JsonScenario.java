@@ -2,9 +2,12 @@ package com.emc.mongoose.run.scenario.engine;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +19,8 @@ import java.util.Map;
 public class JsonScenario
 extends SequentialJob
 implements Scenario {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	public JsonScenario(final AppConfig config, final File scenarioSrcFile)
 	throws IOException, CloneNotSupportedException {
@@ -73,6 +78,12 @@ implements Scenario {
 		} else {
 			return false;
 		}
+	}
+	//
+	@Override
+	public final void run() {
+		super.run();
+		LOG.info(Markers.MSG, "Scenario end");
 	}
 	//
 	@Override

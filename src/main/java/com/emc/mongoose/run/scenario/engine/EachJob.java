@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,300 +31,219 @@ extends SequentialJob {
 		this.replacePattern = Character.toString(PATTERN_CHAR) + FORMAT_CHARS[0] +
 			subTree.get(KEY_NODE_VALUE) + FORMAT_CHARS[1];
 		this.valueSeq = (List) subTree.get(KEY_NODE_IN);
+		// calls "appendNewJob", invoke it manually again after "valueSeq" is initialized already
 		loadSubTree(subTree);
 	}
 
 	@Override
-	protected void appendNewJob(final Map<String, Object> subTree, final AppConfig config) {
-		if(valueSeq != null) {
-			AppConfig childJobConfig;
-			try {
-				for(final Object nextValue : valueSeq) {
-					childJobConfig = (AppConfig) config.clone();
-					findAndSubstitute(childJobConfig, replacePattern, nextValue);
-					super.appendNewJob(subTree, childJobConfig);
-				}
-			} catch(final CloneNotSupportedException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the configuration");
-			}
+	protected void loadSubTree(final Map<String, Object> subTree) {
+		if(valueSeq == null) {
+			// skip the early invocation from the base class constructor while "valueSeq" is not
+			// initialized yet
+			return;
 		}
-	}
 
-	private static void findAndSubstitute(
-		final AppConfig appConfig, final String replacePattern, final Object nextReplaceValue
-	) {
-		final Iterator<String> keyIter = appConfig.getKeys();
-		Object oldValue;
-		String key;
-		while(keyIter.hasNext()) {
-			key = keyIter.next();
-			oldValue = appConfig.getProperty(key);
-			if(nextReplaceValue == null) {
-				findAndSubstituteWithNull(appConfig, key, oldValue, replacePattern);
+		final Object nodeConfig = subTree.get(KEY_NODE_CONFIG);
+		if(nodeConfig != null) {
+			if(nodeConfig instanceof Map) {
+				localConfig.override(null, (Map<String, Object>) nodeConfig);
 			} else {
-				if(nextReplaceValue instanceof String) {
-					findAndSubstituteWithString(
-						appConfig, key, oldValue, replacePattern, (String) nextReplaceValue
-					);
-				} else if(nextReplaceValue instanceof Integer) {
-					findAndSubstituteWithInteger(
-						appConfig, key, oldValue, replacePattern, (int) nextReplaceValue
-					);
-				} else if(nextReplaceValue instanceof Long) {
-					findAndSubstituteWithLong(
-						appConfig, key, oldValue, replacePattern, (long) nextReplaceValue
-					);
-				} else if(nextReplaceValue instanceof Double) {
-					findAndSubstituteWithDouble(
-						appConfig, key, oldValue, replacePattern, (double) nextReplaceValue
-					);
-				} else if(nextReplaceValue instanceof Boolean) {
-					findAndSubstituteWithBoolean(
-						appConfig, key, oldValue, replacePattern, (boolean) nextReplaceValue
-					);
-				} else if(nextReplaceValue instanceof List) {
-					findAndSubstituteWithList(
-						appConfig, key, oldValue, replacePattern, (List) nextReplaceValue
-					);
-				} else {
-					LOG.warn(Markers.ERR, "Unsupported value type for substitution: {}",
-						nextReplaceValue.getClass()
-					);
-				}
+				LOG.error(Markers.ERR, "Invalid config node type: {}", nodeConfig.getClass());
 			}
 		}
-	}
 
-	private static void findAndSubstituteWithNull(
-		final AppConfig appConfig, final String key, final Object oldValue, final String pattern
-	) {
-		if(oldValue instanceof String) {
-			if(oldValue.equals(pattern)) {
-				appConfig.setProperty(key, null);
-			} else {
-				LOG.warn(Markers.ERR, "Couldn't replace with null value(s) the string part");
-			}
-		} else if(oldValue instanceof List) {
-			final List<Object> newValue = new ArrayList<>();
-			for(final Object oldValueElement : (List) oldValue) {
-				if(oldValueElement.equals(pattern)) {
-					newValue.add(null);
-				} else {
-					LOG.warn(Markers.ERR, "Couldn't replace with null value(s) the string part");
-					newValue.add(oldValueElement);
-				}
-			}
-			appConfig.clearProperty(key);
-			appConfig.setProperty(key, newValue);
-		}
-	}
-
-	private static void findAndSubstituteWithString(
-		final AppConfig appConfig, final String key, final Object oldValue, final String pattern,
-		final String newValue
-	) {
-		String t;
-		if(oldValue instanceof String) {
-			t = (String) oldValue;
-			if(t.contains(pattern)) {
-				appConfig.setProperty(key, t.replace(pattern, newValue));
-			}
-		} else if(oldValue instanceof List) {
-			final List<Object> newValueList = new ArrayList<>();
-			for(final Object oldValueElement : (List) oldValue) {
-				if(oldValueElement instanceof String) {
-					t = (String) oldValueElement;
-					if(t.contains(pattern)) {
-						newValueList.add(t.replace(pattern, newValue));
-					} else {
-						newValueList.add(oldValueElement);
-					}
-				} else {
-					newValueList.add(oldValueElement);
-				}
-			}
-			appConfig.clearProperty(key);
-			appConfig.setProperty(key, newValueList);
-		}
-	}
-
-	private static void findAndSubstituteWithInteger(
-		final AppConfig appConfig, final String key, final Object oldValue, final String pattern,
-		final int newValue
-	) {
-		String t;
-		if(oldValue instanceof String) {
-			if(oldValue.equals(pattern)) {
-				appConfig.setProperty(key, newValue);
-			} else {
-				t = (String) oldValue;
-				if(t.contains(pattern)) {
-					appConfig.setProperty(key, t.replace(pattern, Integer.toString(newValue)));
-				}
-			}
-		} else if(oldValue instanceof List) {
-			final List<Object> newValueList = new ArrayList<>();
-			for(final Object oldValueElement : (List) oldValue) {
-				if(oldValueElement instanceof String) {
-					if(oldValueElement.equals(pattern)) {
-						newValueList.add(newValue);
-					} else {
-						t = (String)oldValueElement;
-						if(t.contains(pattern)) {
-							newValueList.add(t.replace(pattern, Integer.toString(newValue)));
-						} else {
-							newValueList.add(oldValueElement);
+		final Object jobTreeList = subTree.get(KEY_NODE_JOBS);
+		try {
+			if(jobTreeList != null) {
+				if(jobTreeList instanceof List) {
+					AppConfig childJobConfig;
+					Map<String, Object> newJobTree;
+					for(final Object nextValue : valueSeq) {
+						childJobConfig = (AppConfig) localConfig.clone();
+						childJobConfig.findAndSubstitute(replacePattern, nextValue);
+						for(final Object job : (List) jobTreeList) {
+							if(job != null) {
+								if(job instanceof Map) {
+									newJobTree = findAndSubstitute(
+										(Map<String, Object>) job, replacePattern, nextValue
+									);
+									appendNewJob(newJobTree, childJobConfig);
+								} else {
+									LOG.error(
+										Markers.ERR, "Invalid job node type: {}", job.getClass());
+								}
+							} else {
+								LOG.warn(Markers.ERR, "{}: job node is null");
+							}
 						}
 					}
 				} else {
-					newValueList.add(oldValueElement);
+					LOG.error(Markers.ERR, "Invalid jobs node type: {}", jobTreeList.getClass());
 				}
 			}
-			appConfig.clearProperty(key);
-			appConfig.setProperty(key, newValueList);
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the configuration");
 		}
 	}
 
-	private static void findAndSubstituteWithLong(
-		final AppConfig appConfig, final String key, final Object oldValue, final String pattern,
-		final long newValue
+	private Map<String, Object> findAndSubstitute(
+		final Map<String, Object> srcTree, final String replacePattern, final Object newValue
 	) {
-		String t;
-		if(oldValue instanceof String) {
-			if(oldValue.equals(pattern)) {
-				appConfig.setProperty(key, newValue);
-			} else {
-				t = (String) oldValue;
-				if(t.contains(pattern)) {
-					appConfig.setProperty(key, t.replace(pattern, Long.toString(newValue)));
-				}
-			}
-		} else if(oldValue instanceof List) {
-			final List<Object> newValueList = new ArrayList<>();
-			for(final Object oldValueElement : (List) oldValue) {
-				if(oldValueElement instanceof String) {
-					if(oldValueElement.equals(pattern)) {
-						newValueList.add(newValue);
-					} else {
-						t = (String)oldValueElement;
-						if(t.contains(pattern)) {
-							newValueList.add(t.replace(pattern, Long.toString(newValue)));
-						} else {
-							newValueList.add(oldValueElement);
-						}
-					}
+		if(newValue == null) {
+			return findAndSubstituteWithNull(srcTree, replacePattern);
+		} else if(newValue instanceof List) {
+			return findAndSubstituteWithList(srcTree, replacePattern, (List) newValue);
+		} else {
+			return findAndSubstituteWith(srcTree, replacePattern, newValue);
+		}
+	}
+
+	private Map<String, Object> findAndSubstituteWithNull(
+		final Map<String, Object> srcTree, final String replacePattern
+	) {
+		final Map<String, Object> dstTree = new LinkedHashMap<>();
+		Object treeNode;
+		for(final String key : srcTree.keySet()) {
+			treeNode = srcTree.get(key);
+			if(treeNode instanceof Map) {
+				dstTree.put(
+					key, findAndSubstituteWithNull((Map<String, Object>) treeNode, replacePattern)
+				);
+			} else if(treeNode instanceof String) {
+				if(treeNode.equals(replacePattern)) {
+					dstTree.put(key, null);
 				} else {
-					newValueList.add(oldValueElement);
+					dstTree.put(key, treeNode);
 				}
-			}
-			appConfig.clearProperty(key);
-			appConfig.setProperty(key, newValueList);
-		}
-	}
-
-	private static void findAndSubstituteWithDouble(
-		final AppConfig appConfig, final String key, final Object oldValue, final String pattern,
-		final double newValue
-	) {
-		String t;
-		if(oldValue instanceof String) {
-			if(oldValue.equals(pattern)) {
-				appConfig.setProperty(key, newValue);
-			} else {
-				t = (String) oldValue;
-				if(t.contains(pattern)) {
-					appConfig.setProperty(key, t.replace(pattern, Double.toString(newValue)));
-				}
-			}
-		} else if(oldValue instanceof List) {
-			final List<Object> newValueList = new ArrayList<>();
-			for(final Object oldValueElement : (List) oldValue) {
-				if(oldValueElement instanceof String) {
-					if(oldValueElement.equals(pattern)) {
-						newValueList.add(newValue);
-					} else {
-						t = (String)oldValueElement;
-						if(t.contains(pattern)) {
-							newValueList.add(t.replace(pattern, Double.toString(newValue)));
-						} else {
-							newValueList.add(oldValueElement);
-						}
-					}
-				} else {
-					newValueList.add(oldValueElement);
-				}
-			}
-			appConfig.clearProperty(key);
-			appConfig.setProperty(key, newValueList);
-		}
-	}
-
-	private static void findAndSubstituteWithBoolean(
-		final AppConfig appConfig, final String key, final Object oldValue, final String pattern,
-		final boolean newValue
-	) {
-		String t;
-		if(oldValue instanceof String) {
-			if(oldValue.equals(pattern)) {
-				appConfig.setProperty(key, newValue);
-			} else {
-				t = (String) oldValue;
-				if(t.contains(pattern)) {
-					appConfig.setProperty(key, t.replace(pattern, Boolean.toString(newValue)));
-				}
-			}
-		} else if(oldValue instanceof List) {
-			final List<Object> newValueList = new ArrayList<>();
-			for(final Object oldValueElement : (List) oldValue) {
-				if(oldValueElement instanceof String) {
-					if(oldValueElement.equals(pattern)) {
-						newValueList.add(newValue);
-					} else {
-						t = (String)oldValueElement;
-						if(t.contains(pattern)) {
-							newValueList.add(t.replace(pattern, Boolean.toString(newValue)));
-						} else {
-							newValueList.add(oldValueElement);
-						}
-					}
-				} else {
-					newValueList.add(oldValueElement);
-				}
-			}
-			appConfig.clearProperty(key);
-			appConfig.setProperty(key, newValueList);
-		}
-	}
-
-	private static void findAndSubstituteWithList(
-		final AppConfig appConfig, final String key, final Object oldValue, final String pattern,
-		final List newValue
-	) {
-		if(oldValue instanceof String) {
-			if(oldValue.equals(pattern)) {
-				appConfig.setProperty(key, newValue);
-			} else {
-				LOG.warn(Markers.ERR, "Couldn't replace with list value(s) the string part");
-			}
-		} else if(oldValue instanceof List) {
-			final List<Object> newValueList = new ArrayList<>();
-			for(final Object oldValueElement : (List) oldValue) {
-				if(oldValueElement instanceof String) {
-					if(oldValueElement.equals(pattern)) {
-						newValueList.add(newValue);
-					} else {
-						LOG.warn(
-							Markers.ERR, "Couldn't replace with list value(s) the string part"
+			} else if(treeNode instanceof List) {
+				final List srcListNode = (List) treeNode;
+				final List<Object> dstListNode = new ArrayList<>(srcListNode.size());
+				for(final Object element : srcListNode) {
+					if(element instanceof Map) {
+						dstListNode.add(
+							findAndSubstituteWithNull((Map<String, Object>) element, replacePattern)
 						);
-						newValueList.add(oldValueElement);
+					} else if(element instanceof String) {
+						if(element.equals(replacePattern)) {
+							dstListNode.add(null);
+						} else {
+							dstListNode.add(element);
+						}
+					} else {
+						dstListNode.add(element);
 					}
-				} else {
-					newValueList.add(oldValueElement);
 				}
+				dstTree.put(key, dstListNode);
+			} else {
+				dstTree.put(key, treeNode);
 			}
-			appConfig.clearProperty(key);
-			appConfig.setProperty(key, newValueList);
 		}
+		return dstTree;
+	}
+
+	private Map<String, Object> findAndSubstituteWithList(
+		final Map<String, Object> srcTree, final String replacePattern, final List newValue
+	) {
+		final Map<String, Object> dstTree = new LinkedHashMap<>();
+		Object treeNode;
+		for(final String key : srcTree.keySet()) {
+			treeNode = srcTree.get(key);
+			if(treeNode instanceof Map) {
+				dstTree.put(
+					key,
+					findAndSubstituteWithList(
+						(Map<String, Object>) treeNode, replacePattern, newValue
+					)
+				);
+			} else if(treeNode instanceof String) {
+				if(treeNode.equals(replacePattern)) {
+					dstTree.put(key, newValue);
+				} else {
+					dstTree.put(key, treeNode);
+				}
+			} else if(treeNode instanceof List) {
+				final List srcListNode = (List) treeNode;
+				final List<Object> dstListNode = new ArrayList<>(srcListNode.size());
+				for(final Object element : srcListNode) {
+					if(element instanceof Map) {
+						dstListNode.add(
+							findAndSubstituteWithList(
+								(Map<String, Object>) element, replacePattern, newValue
+							)
+						);
+					} else if(element instanceof String) {
+						if(element.equals(replacePattern)) {
+							dstListNode.add(newValue);
+						} else {
+							dstListNode.add(element);
+						}
+					} else {
+						dstListNode.add(element);
+					}
+				}
+				dstTree.put(key, dstListNode);
+			} else {
+				dstTree.put(key, treeNode);
+			}
+		}
+		return dstTree;
+	}
+
+	private <T> Map<String, Object> findAndSubstituteWith(
+		final Map<String, Object> srcTree, final String replacePattern, final T newValue
+	) {
+		final Map<String, Object> dstTree = new LinkedHashMap<>();
+		Object treeNode;
+		String t;
+		for(final String key : srcTree.keySet()) {
+			treeNode = srcTree.get(key);
+			if(treeNode instanceof Map) {
+				dstTree.put(
+					key,
+					findAndSubstituteWith((Map<String, Object>) treeNode, replacePattern, newValue)
+				);
+			} else if(treeNode instanceof String) {
+				if(treeNode.equals(replacePattern)) {
+					dstTree.put(key, newValue);
+				} else {
+					t = (String) treeNode;
+					if(t.contains(replacePattern)) {
+						dstTree.put(key, t.replace(replacePattern, newValue.toString()));
+					} else {
+						dstTree.put(key, treeNode);
+					}
+				}
+			} else if(treeNode instanceof List) {
+				final List srcListNode = (List) treeNode;
+				final List<Object> dstListNode = new ArrayList<>(srcListNode.size());
+				for(final Object element : srcListNode) {
+					if(element instanceof Map) {
+						dstListNode.add(
+							findAndSubstituteWith(
+								(Map<String, Object>) element, replacePattern, newValue
+							)
+						);
+					} else if(element instanceof String) {
+						if(element.equals(replacePattern)) {
+							dstListNode.add(newValue);
+						} else {
+							t = (String)element;
+							if(t.contains(replacePattern)) {
+								dstListNode.add(t.replace(replacePattern, newValue.toString()));
+							} else {
+								dstListNode.add(element);
+							}
+						}
+					} else {
+						dstListNode.add(element);
+					}
+				}
+				dstTree.put(key, dstListNode);
+			} else {
+				dstTree.put(key, treeNode);
+			}
+		}
+		return dstTree;
 	}
 
 	@Override

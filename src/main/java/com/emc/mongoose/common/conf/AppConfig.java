@@ -108,8 +108,6 @@ extends Cloneable, Configuration, Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	ItemType getItemType();
 
-	String getItemContainerName();
-
 	String getItemDataContentFile();
 
 	String getItemDataContentSeed();
@@ -239,6 +237,8 @@ extends Cloneable, Configuration, Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void override(final String branch, final Map<String, ?> tree);
+
+	void findAndSubstitute(final String replacePattern, final Object newValue);
 
 	ObjectNode toJsonTree(final ObjectMapper mapper)
 	throws IllegalStateException;
