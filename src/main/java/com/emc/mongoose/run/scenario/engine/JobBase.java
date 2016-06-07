@@ -23,9 +23,4 @@ implements Job {
 	public final AppConfig getConfig() {
 		return localConfig;
 	}
-
-	@Override
-	public void close()
-	throws IOException {
-	}
 }

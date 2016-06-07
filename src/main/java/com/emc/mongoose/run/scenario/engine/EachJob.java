@@ -3,10 +3,12 @@ package com.emc.mongoose.run.scenario.engine;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -227,7 +229,7 @@ extends SequentialJob {
 						if(element.equals(replacePattern)) {
 							dstListNode.add(newValue);
 						} else {
-							t = (String)element;
+							t = (String) element;
 							if(t.contains(replacePattern)) {
 								dstListNode.add(t.replace(replacePattern, newValue.toString()));
 							} else {
@@ -249,5 +251,47 @@ extends SequentialJob {
 	@Override
 	public final String toString() {
 		return "eachJob#" + hashCode();
+	}
+
+	@Override
+	public final void close()
+	throws IOException {
+		try {
+			final int valuesCount = valueSeq.size();
+			if(valuesCount > 0) {
+				final int k = childJobs.size() / valuesCount;
+				if(childJobs.size() != valuesCount * k) {
+					throw new IllegalStateException("");
+				}
+				Object nextValue;
+				Job nextJob;
+				IoStats.Snapshot nextStats;
+				for(int i = 0; i < valuesCount; i++) {
+					nextValue = valueSeq.get(i);
+					LOG.info(Markers.MSG, "\t{}: {}", replacePattern, nextValue);
+					for(int j = 0; j < k; j++) {
+						nextJob = childJobs.get(j * valuesCount + i);
+						if(nextJob instanceof LoadJob) {
+							nextStats = ((LoadJob) nextJob).getLastStats();
+							if(nextStats != null) {
+								LOG.info(Markers.MSG, nextStats.toSummaryString());
+							} else {
+								LOG.warn(Markers.ERR, "Null stats for the load job \"{}\"", nextJob);
+							}
+						}
+						try {
+							nextJob.close();
+						} catch(final IOException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e, "Failed to close the job \"{}\"", nextJob
+							);
+						}
+					}
+				}
+				valueSeq.clear();
+			}
+		} finally {
+			super.close();
+		}
 	}
 }

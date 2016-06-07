@@ -136,10 +136,6 @@ public class RunServlet extends HttpServlet {
 		return scenario;
 	}
 
-	private boolean isRunIdFree(final String runId) {
-		return !TESTS.containsKey(runId);
-	}
-
 	@SuppressWarnings("unchecked")
 	private void runTest(final String runId, final Runner runner, final String runMode) {
 		final Thread test = new Thread(runner, runId);
@@ -236,6 +232,18 @@ public class RunServlet extends HttpServlet {
 			new ScenarioRunner(super.config, scenario).run();
 		}
 
+		@Override
+		public void run() {
+			try {
+				super.run();
+			} finally {
+				try {
+					scenario.close();
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the scenario");
+				}
+			}
+		}
 	}
 
 	private static class ServerRunner extends Runner {
@@ -248,7 +256,6 @@ public class RunServlet extends HttpServlet {
 		void start() throws Exception {
 			LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(super.config);
 			multiSvc.start();
-			// todo why is there no multiSvc.await()?
 		}
 
 	}

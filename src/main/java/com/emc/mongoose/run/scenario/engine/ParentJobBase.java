@@ -93,7 +93,6 @@ extends JobBase {
 	@Override
 	public void close()
 	throws IOException {
-		super.close();
 		try {
 			for(final Job subJob : childJobs) {
 				subJob.close();
