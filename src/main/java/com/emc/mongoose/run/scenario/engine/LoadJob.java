@@ -5,7 +5,6 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -25,9 +24,6 @@ extends JobBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private IoStats.Snapshot lastStats = null;
-	private String name;
-	//
 	public LoadJob(
 		final AppConfig appConfig, final Map<String, Object> subTree, final boolean preconditionFlag
 	) {
@@ -44,9 +40,8 @@ extends JobBase {
 		final long limitTime = localConfig.getLoadLimitTime();
 		try(final LoadBuilder loadJobBuilder = LoadBuilderFactory.getInstance(localConfig)) {
 			try(final LoadExecutor loadJob = loadJobBuilder.build()) {
-				name = loadJob.getName();
 				try {
-					LOG.info(Markers.MSG, "Start the job \"{}\"", name);
+					LOG.info(Markers.MSG, "Start the job \"{}\"", loadJob.getName());
 					loadJob.start();
 				} catch(final RemoteException e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to start the load job");
@@ -57,14 +52,16 @@ extends JobBase {
 						limitTime > 0 ? TimeUnit.SECONDS : TimeUnit.DAYS
 					);
 				} catch(final InterruptedException e) {
-					LogUtil.exception(LOG, Level.DEBUG, e, "Load job {} was interrupted", name);
+					LogUtil.exception(
+						LOG, Level.DEBUG, e, "Load job {} was interrupted", loadJob.getName()
+					);
 				} catch(final RemoteException e) {
 					LogUtil.exception(
 						LOG, Level.WARN, e,
-						"Failed to invoke the await method remotely for the load job {}", name
+						"Failed to invoke the await method remotely for the load job {}",
+						loadJob.getName()
 					);
 				}
-				lastStats = loadJob.getStatsSnapshot();
 			}
 		} catch(
 			final ClassNotFoundException | NoSuchMethodException | InstantiationException |
@@ -82,10 +79,6 @@ extends JobBase {
 		}
 	}
 	//
-	public final IoStats.Snapshot getLastStats() {
-		return lastStats;
-	}
-	//
 	@Override
 	public final String toString() {
 		return "singleLoadJobContainer#" + hashCode();
@@ -93,6 +86,5 @@ extends JobBase {
 	//
 	@Override
 	public final void close() {
-		lastStats = null;
 	}
 }

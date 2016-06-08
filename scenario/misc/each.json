@@ -2,7 +2,7 @@
 	"type" : "each",
 	"value" : "size",
 	"in" : [
-		"1KB", "1MB"
+		0, "1KB", "1MB"
 	],
 	"config" : {
 		"item" : {
@@ -12,9 +12,10 @@
 		},
 		"load" : {
 			"limit" : {
-				"count" : 100,
-				"time" : "5s"
-			}
+				"count" : 1000000,
+				"time" : "50s"
+			},
+			"metricsPeriod" : 0
 		}
 	},
 	"jobs" : [
@@ -22,7 +23,7 @@
 			"type" : "each",
 			"value" : "threads",
 			"in" : [
-				1, 10
+				1, 10, 100
 			],
 			"config" : {
 				"item" : {
@@ -47,18 +48,6 @@
 							"type" : "create"
 						}
 					}
-				/*}, {
-					"type" : "load",
-					"config" : {
-						"item" : {
-							"data" : {
-								"ranges" : 5
-							}
-						},
-						"load" : {
-							"type" : "update"
-						}
-					}*/
 				}, {
 					"type" : "load",
 					"config" : {

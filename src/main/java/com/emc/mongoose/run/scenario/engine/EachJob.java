@@ -3,7 +3,6 @@ package com.emc.mongoose.run.scenario.engine;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,13 +24,12 @@ extends SequentialJob {
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String KEY_NODE_IN = "in";
 
-	private final String replacePattern;
+	private final String replaceMarker;
 	private final List valueSeq;
 
 	public EachJob(final AppConfig appConfig, final Map<String, Object> subTree) {
 		super(appConfig, subTree);
-		this.replacePattern = Character.toString(PATTERN_CHAR) + FORMAT_CHARS[0] +
-			subTree.get(KEY_NODE_VALUE) + FORMAT_CHARS[1];
+		this.replaceMarker = (String) subTree.get(KEY_NODE_VALUE);
 		this.valueSeq = (List) subTree.get(KEY_NODE_IN);
 		// calls "appendNewJob", invoke it manually again after "valueSeq" is initialized already
 		loadSubTree(subTree);
@@ -55,6 +53,8 @@ extends SequentialJob {
 		}
 
 		final Object jobTreeList = subTree.get(KEY_NODE_JOBS);
+		final String replacePattern = Character.toString(PATTERN_CHAR) + FORMAT_CHARS[0] +
+			replaceMarker + FORMAT_CHARS[1];
 		try {
 			if(jobTreeList != null) {
 				if(jobTreeList instanceof List) {
@@ -63,6 +63,19 @@ extends SequentialJob {
 					for(final Object nextValue : valueSeq) {
 						childJobConfig = (AppConfig) localConfig.clone();
 						childJobConfig.findAndSubstitute(replacePattern, nextValue);
+						append(
+							new BasicTaskJob(
+								new Runnable() {
+									@Override
+									public final void run() {
+										LOG.info(
+											Markers.MSG, "Use next value for \"{}\": {}",
+											replaceMarker, nextValue
+										);
+									}
+								}
+							)
+						);
 						for(final Object job : (List) jobTreeList) {
 							if(job != null) {
 								if(job instanceof Map) {
@@ -88,7 +101,7 @@ extends SequentialJob {
 		}
 	}
 
-	private Map<String, Object> findAndSubstitute(
+	private static Map<String, Object> findAndSubstitute(
 		final Map<String, Object> srcTree, final String replacePattern, final Object newValue
 	) {
 		if(newValue == null) {
@@ -100,7 +113,7 @@ extends SequentialJob {
 		}
 	}
 
-	private Map<String, Object> findAndSubstituteWithNull(
+	private static Map<String, Object> findAndSubstituteWithNull(
 		final Map<String, Object> srcTree, final String replacePattern
 	) {
 		final Map<String, Object> dstTree = new LinkedHashMap<>();
@@ -143,7 +156,7 @@ extends SequentialJob {
 		return dstTree;
 	}
 
-	private Map<String, Object> findAndSubstituteWithList(
+	private static Map<String, Object> findAndSubstituteWithList(
 		final Map<String, Object> srcTree, final String replacePattern, final List newValue
 	) {
 		final Map<String, Object> dstTree = new LinkedHashMap<>();
@@ -191,7 +204,7 @@ extends SequentialJob {
 		return dstTree;
 	}
 
-	private <T> Map<String, Object> findAndSubstituteWith(
+	private static <T> Map<String, Object> findAndSubstituteWith(
 		final Map<String, Object> srcTree, final String replacePattern, final T newValue
 	) {
 		final Map<String, Object> dstTree = new LinkedHashMap<>();
@@ -257,41 +270,9 @@ extends SequentialJob {
 	public final void close()
 	throws IOException {
 		try {
-			final int valuesCount = valueSeq.size();
-			if(valuesCount > 0) {
-				final int k = childJobs.size() / valuesCount;
-				if(childJobs.size() != valuesCount * k) {
-					throw new IllegalStateException("");
-				}
-				Object nextValue;
-				Job nextJob;
-				IoStats.Snapshot nextStats;
-				for(int i = 0; i < valuesCount; i++) {
-					nextValue = valueSeq.get(i);
-					LOG.info(Markers.MSG, "\t{}: {}", replacePattern, nextValue);
-					for(int j = 0; j < k; j++) {
-						nextJob = childJobs.get(j * valuesCount + i);
-						if(nextJob instanceof LoadJob) {
-							nextStats = ((LoadJob) nextJob).getLastStats();
-							if(nextStats != null) {
-								LOG.info(Markers.MSG, nextStats.toSummaryString());
-							} else {
-								LOG.warn(Markers.ERR, "Null stats for the load job \"{}\"", nextJob);
-							}
-						}
-						try {
-							nextJob.close();
-						} catch(final IOException e) {
-							LogUtil.exception(
-								LOG, Level.WARN, e, "Failed to close the job \"{}\"", nextJob
-							);
-						}
-					}
-				}
-				valueSeq.clear();
-			}
-		} finally {
 			super.close();
+		} finally {
+			valueSeq.clear();
 		}
 	}
 }
