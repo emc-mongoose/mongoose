@@ -251,7 +251,7 @@ extends ScenarioTestBase {
 			final BufferedReader
 				in = Files.newBufferedReader(readDataItemFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogValidator.assertCorrectDataItemsCSV(in);
+			LogValidator.assertCorrectItemsCsv(in);
 		}
 	}
 

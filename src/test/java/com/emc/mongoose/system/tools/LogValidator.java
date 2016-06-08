@@ -294,8 +294,8 @@ public final class LogValidator {
 		}
 	}
 	//
-	public static void assertCorrectDataItemsCSV(BufferedReader in)
-		throws IOException {
+	public static void assertCorrectItemsCsv(final BufferedReader in)
+	throws IOException {
 		//
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
