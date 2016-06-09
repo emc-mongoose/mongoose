@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class PreconditionJobTest
 extends HttpStorageMockTestBase {
-	private final static String RUN_ID = JsonScenarioFileTest.class.getCanonicalName();
+	private final static String RUN_ID = PreconditionJobTest.class.getCanonicalName();
 	private final static SizeInBytes ITEM_SIZE = new SizeInBytes("4KB");
 	private final static Map<String, Object> SCENARIO_TREE = new HashMap<String, Object>() {{
 		put(KEY_NODE_TYPE, NODE_TYPE_SEQUENTIAL);
