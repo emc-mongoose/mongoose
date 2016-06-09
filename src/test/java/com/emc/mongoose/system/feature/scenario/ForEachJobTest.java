@@ -6,14 +6,13 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.run.scenario.engine.JsonScenario;
 import com.emc.mongoose.run.scenario.engine.Scenario;
-import com.emc.mongoose.system.base.WSMockTestBase;
+import com.emc.mongoose.system.base.HttpStorageMockTestBase;
 import com.emc.mongoose.system.tools.BufferingOutputStream;
 import com.emc.mongoose.system.tools.LogValidator;
 import com.emc.mongoose.system.tools.StdOutUtil;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.util.FileUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -32,7 +31,7 @@ import static com.emc.mongoose.system.tools.TestConstants.SUMMARY_INDICATOR;
  Created by andrey on 08.06.16.
  */
 public class ForEachJobTest
-extends WSMockTestBase {
+extends HttpStorageMockTestBase {
 
 	private final static String RUN_ID = ForEachJobTest.class.getCanonicalName();
 	private final static String SCENARIO_JSON =
@@ -139,7 +138,7 @@ extends WSMockTestBase {
 	public static void setUpClass() {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
 		try {
-			WSMockTestBase.setUpClass();
+			HttpStorageMockTestBase.setUpClass();
 			Files.createDirectory(Paths.get(RUN_ID));
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failure");
@@ -163,7 +162,7 @@ extends WSMockTestBase {
 	@AfterClass
 	public static void tearDownClass() {
 		try {
-			WSMockTestBase.tearDownClass();
+			HttpStorageMockTestBase.tearDownClass();
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failure");
 		}

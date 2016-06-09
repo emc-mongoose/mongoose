@@ -3,7 +3,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.system.base.WSMockTestBase;
+import com.emc.mongoose.system.base.HttpStorageMockTestBase;
 import com.emc.mongoose.system.tools.LogValidator;
 import com.emc.mongoose.system.tools.TestConstants;
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 23.10.15.
  */
 public class ReadBucketsWithManyObjectsTest
-extends WSMockTestBase {
+extends HttpStorageMockTestBase {
 	//
 	private static final int
 		LIMIT_COUNT_OBJ = 10000,
@@ -42,7 +42,7 @@ extends WSMockTestBase {
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, Integer.toString(LIMIT_COUNT_OBJ));
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		System.setProperty(AppConfig.KEY_ITEM_DATA_SIZE, "1");
-		WSMockTestBase.setUpClass();
+		HttpStorageMockTestBase.setUpClass();
 		final AppConfig rtConfig = BasicConfig.THREAD_CONTEXT.get();
 		rtConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		rtConfig.setProperty(AppConfig.KEY_LOAD_TYPE, TestConstants.LOAD_CREATE);
@@ -95,7 +95,7 @@ extends WSMockTestBase {
 	@AfterClass
 	public  static void tearDownClass()
 		throws Exception {
-		WSMockTestBase.tearDownClass();
+		HttpStorageMockTestBase.tearDownClass();
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1000000");
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, "1000000");
 	}

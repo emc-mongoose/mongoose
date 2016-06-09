@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 13.08.15.
  */
-public abstract class WSMockTestBase
+public abstract class HttpStorageMockTestBase
 extends LoggingTestBase {
 	//
 	private static StorageMock<HttpDataItemMock> WS_MOCK;

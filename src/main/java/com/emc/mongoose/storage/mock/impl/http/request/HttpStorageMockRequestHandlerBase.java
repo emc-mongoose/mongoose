@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by andrey on 13.05.15.
  */
-public abstract class WSRequestHandlerBase<T extends HttpDataItemMock>
+public abstract class HttpStorageMockRequestHandlerBase<T extends HttpDataItemMock>
 implements ReqURIMatchingHandler<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -58,7 +58,7 @@ implements ReqURIMatchingHandler<T> {
 	protected final HttpStorageMock<T> sharedStorage;
 	protected final int batchSize;
 	//
-	protected WSRequestHandlerBase(
+	protected HttpStorageMockRequestHandlerBase(
 		final AppConfig appConfig, final HttpStorageMock<T> sharedStorage
 	) {
 		this.rateLimit = (float) appConfig.getLoadLimitRate();

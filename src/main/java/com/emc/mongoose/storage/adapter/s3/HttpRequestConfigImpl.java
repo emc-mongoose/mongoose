@@ -293,7 +293,7 @@ extends HttpRequestConfigBase<T, C> {
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the path");
 			}
-			return new WSBucketItemInput<>(
+			return new BucketHttpDataItemInput<>(
 				path, new HttpBucketHelper<>(this, srcContainer), addr, getItemClass(), maxCount
 			);
 		}

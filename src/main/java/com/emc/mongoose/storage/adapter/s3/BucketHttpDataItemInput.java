@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public final class WSBucketItemInput<T extends HttpDataItem, C extends Container<T>>
+public final class BucketHttpDataItemInput<T extends HttpDataItem, C extends Container<T>>
 extends GenericContainerItemInputBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -46,7 +46,7 @@ extends GenericContainerItemInputBase<T, C> {
 	private boolean eof = false;
 	private long doneCount = 0;
 	//
-	public WSBucketItemInput(
+	public BucketHttpDataItemInput(
 		final String path, final BucketHelper<T, C> bucketHelper, final String nodeAddr,
 		final Class<T> itemCls, final long maxCount
 	) throws IllegalStateException {

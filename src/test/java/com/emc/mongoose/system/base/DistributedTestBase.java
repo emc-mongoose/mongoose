@@ -15,14 +15,14 @@ import org.junit.BeforeClass;
  Created by andrey on 13.08.15.
  */
 public abstract class DistributedTestBase
-extends WSMockTestBase {
+extends HttpStorageMockTestBase {
 	//
 	protected static LoadBuilderSvc LOAD_BUILDER_SVC;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		WSMockTestBase.setUpClass();
+		HttpStorageMockTestBase.setUpClass();
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.setProperty(AppConfig.KEY_LOAD_SERVER_ADDRS, ServiceUtil.getHostAddr());
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, RUN_MODE_SERVER);
@@ -38,6 +38,6 @@ extends WSMockTestBase {
 	throws Exception {
 		LOAD_BUILDER_SVC.close();
 		BasicConfig.THREAD_CONTEXT.get().setProperty(AppConfig.KEY_RUN_MODE, RUN_MODE_STANDALONE);
-		WSMockTestBase.tearDownClass();
+		HttpStorageMockTestBase.tearDownClass();
 	}
 }

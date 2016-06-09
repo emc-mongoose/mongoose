@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 03.07.15.
  */
-public class WSContainerItemInput<T extends HttpDataItem, C extends Container<T>>
+public class ContainerHttpDataItemInput<T extends HttpDataItem, C extends Container<T>>
 extends GenericContainerItemInputBase<T, C> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -42,7 +42,7 @@ extends GenericContainerItemInputBase<T, C> {
 	private boolean isInsideObjectToken = false, eof = false;
 	private long lastSize = -1, doneCount = 0;
 	//
-	public WSContainerItemInput(
+	public ContainerHttpDataItemInput(
 		final String path, final SwiftContainerHelper<T, C> container, final String nodeAddr,
 		final Class<T> itemCls, final long maxCount
 	) throws IllegalStateException {

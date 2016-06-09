@@ -5,10 +5,8 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.run.scenario.engine.JsonScenario;
 import com.emc.mongoose.run.scenario.engine.Scenario;
-import com.emc.mongoose.system.base.WSMockTestBase;
-import com.emc.mongoose.system.tools.BufferingOutputStream;
+import com.emc.mongoose.system.base.HttpStorageMockTestBase;
 import com.emc.mongoose.system.tools.LogValidator;
-import com.emc.mongoose.system.tools.StdOutUtil;
 import org.apache.logging.log4j.Level;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -33,7 +31,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
  Created by andrey on 08.06.16.
  */
 public class JsonScenarioFileTest
-extends WSMockTestBase {
+extends HttpStorageMockTestBase {
 
 	private final static String RUN_ID =JsonScenarioFileTest.class.getCanonicalName();
 	private final static int EXPECTED_DURATION_SECONDS = 30;
@@ -80,7 +78,7 @@ extends WSMockTestBase {
 		}
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
 		try {
-			WSMockTestBase.setUpClass();
+			HttpStorageMockTestBase.setUpClass();
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failure");
 		}
@@ -101,7 +99,7 @@ extends WSMockTestBase {
 	@AfterClass
 	public static void tearDownClass() {
 		try {
-			WSMockTestBase.tearDownClass();
+			HttpStorageMockTestBase.tearDownClass();
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failure");
 		}

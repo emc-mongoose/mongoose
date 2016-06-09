@@ -71,7 +71,7 @@ public class RunServlet extends HttpServlet {
 				);
 				break;
 			case Constants.RUN_MODE_WSMOCK:
-				runTest(runId, new WsMockRunner(config), runMode);
+				runTest(runId, new HttpStorageMockRunner(config), runMode);
 				break;
 			case Constants.RUN_MODE_SERVER:
 				runTest(runId, new ServerRunner(config), runMode);
@@ -204,9 +204,10 @@ public class RunServlet extends HttpServlet {
 		}
 	}
 
-	private static class WsMockRunner extends Runner {
+	private static class HttpStorageMockRunner
+	extends Runner {
 
-		WsMockRunner(final AppConfig config) {
+		HttpStorageMockRunner(final AppConfig config) {
 			super(config, WSMOCK_MODE_NAME);
 		}
 
