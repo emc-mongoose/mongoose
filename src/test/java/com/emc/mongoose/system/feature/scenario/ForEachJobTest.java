@@ -197,6 +197,7 @@ extends HttpStorageMockTestBase {
 	@Test
 	public void checkPerfSumFile()
 	throws Exception {
+		TimeUnit.SECONDS.sleep(1);
 		//  Get perf.sum.csv file
 		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());

@@ -38,8 +38,12 @@ extends JobBase {
 	public CommandJob(final AppConfig appConfig, final Map<String, Object> subTree)
 	throws IllegalArgumentException {
 		super(appConfig);
-		this.cmdLine = (String) subTree.get(KEY_NODE_VALUE);
-		this.blockingFlag = (boolean) subTree.get(KEY_NODE_BLOCKING);
+		cmdLine = (String) subTree.get(KEY_NODE_VALUE);
+		if(subTree.containsKey(KEY_NODE_BLOCKING)) {
+			blockingFlag = (boolean)subTree.get(KEY_NODE_BLOCKING);
+		} else {
+			blockingFlag = true;
+		}
 		consoleColorFlag = LogUtil.isConsoleColoringEnabled();
 	}
 	//

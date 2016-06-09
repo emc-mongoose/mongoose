@@ -8,6 +8,7 @@ import com.emc.mongoose.run.scenario.engine.Scenario;
 import com.emc.mongoose.system.base.HttpStorageMockTestBase;
 import com.emc.mongoose.system.tools.BufferingOutputStream;
 import com.emc.mongoose.system.tools.LogPatterns;
+import com.emc.mongoose.system.tools.LogValidator;
 import com.emc.mongoose.system.tools.StdOutUtil;
 import org.apache.logging.log4j.Level;
 import org.junit.AfterClass;
@@ -91,6 +92,7 @@ extends HttpStorageMockTestBase {
 	public static void tearDownClass() {
 		try {
 			HttpStorageMockTestBase.tearDownClass();
+			LogValidator.removeLogDirectory(RUN_ID);
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failure");
 		}

@@ -92,6 +92,7 @@ extends HttpStorageMockTestBase {
 	public static void tearDownClass() {
 		try {
 			HttpStorageMockTestBase.tearDownClass();
+			LogValidator.removeLogDirectory(RUN_ID);
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failure");
 		}

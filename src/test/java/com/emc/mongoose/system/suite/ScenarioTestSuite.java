@@ -1,7 +1,9 @@
 package com.emc.mongoose.system.suite;
 
+import com.emc.mongoose.system.feature.scenario.BlockingCommandJobTest;
 import com.emc.mongoose.system.feature.scenario.ForEachJobTest;
 import com.emc.mongoose.system.feature.scenario.JsonScenarioFileTest;
+import com.emc.mongoose.system.feature.scenario.NonBlockingCommandJobTest;
 import com.emc.mongoose.system.feature.scenario.ParallelJobTest;
 import com.emc.mongoose.system.feature.scenario.PreconditionJobTest;
 import com.emc.mongoose.system.feature.scenario.SequentialJobTest;
@@ -18,6 +20,8 @@ import org.junit.runners.Suite;
 	SequentialJobTest.class,
 	ParallelJobTest.class,
 	ForEachJobTest.class,
+	BlockingCommandJobTest.class,
+	NonBlockingCommandJobTest.class,
 })
 public class ScenarioTestSuite {
 }
