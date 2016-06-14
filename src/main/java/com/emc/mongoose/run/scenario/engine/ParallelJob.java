@@ -27,6 +27,7 @@ extends ParentJobBase {
 	//
 	@Override
 	public final synchronized void run() {
+		super.run();
 		final ExecutorService parallelJobsExecutor = Executors.newFixedThreadPool(
 			childJobs.size(), new NamingThreadFactory("jobWorker" + hashCode(), true)
 		);

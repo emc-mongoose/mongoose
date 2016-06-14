@@ -176,7 +176,7 @@ extends ScenarioTestBase {
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//  Read message file and search "Scenario End"
-		final File messageFile = LogValidator.getMessageFile(READ_RUN_ID);
+		final File messageFile = LogValidator.getMessageLogFile(READ_RUN_ID);
 		Assert.assertTrue(messageFile.exists());
 		//
 		try (final BufferedReader bufferedReader =
@@ -200,7 +200,7 @@ extends ScenarioTestBase {
 	@Test
 	public void shouldCreateAllFilesWithLogsAfterWriteScenario()
 	throws Exception {
-		Path expectedFile = LogValidator.getMessageFile(CREATE_RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageLogFile(CREATE_RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file of create load doesn't exist", Files.exists(expectedFile));
 
@@ -224,7 +224,7 @@ extends ScenarioTestBase {
 	@Test
 	public void shouldCreateAllFilesWithLogsAfterReadScenario()
 	throws Exception {
-		Path expectedFile = LogValidator.getMessageFile(READ_RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageLogFile(READ_RUN_ID).toPath();
 		//  Check that messages.log file is contained
 		Assert.assertTrue("messages.log file of read load doesn't exist", Files.exists(expectedFile));
 

@@ -2,7 +2,6 @@ package com.emc.mongoose.system.feature.containers;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.BasicConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.system.base.HttpStorageMockTestBase;
@@ -104,7 +103,7 @@ extends HttpStorageMockTestBase {
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 	throws Exception {
-		Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageLogFile(RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
 
@@ -182,7 +181,7 @@ extends HttpStorageMockTestBase {
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//  Read the message file and search for "Scenario end"
-		final File messageFile = LogValidator.getMessageFile(RUN_ID);
+		final File messageFile = LogValidator.getMessageLogFile(RUN_ID);
 		Assert.assertTrue(
 			"messages.log file doesn't exist",
 			messageFile.exists()

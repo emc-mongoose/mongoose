@@ -26,6 +26,7 @@ extends ParentJobBase {
 	//
 	@Override
 	public synchronized void run() {
+		super.run();
 		LOG.debug(Markers.MSG, "{}: start {} child jobs", toString(), childJobs.size());
 		for(final Job subJob : childJobs) {
 			LOG.debug(Markers.MSG, "{}: child job \"{}\" start", toString(), subJob.toString());

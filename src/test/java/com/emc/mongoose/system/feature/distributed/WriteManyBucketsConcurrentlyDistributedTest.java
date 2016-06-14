@@ -90,7 +90,7 @@ extends DistributedLoadBuilderTestBase {
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 	throws Exception {
-		Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageLogFile(RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
 

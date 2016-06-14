@@ -42,7 +42,7 @@ public final class LogValidator {
 		}
 	}
 
-	public static File getMessageFile(final String runID){
+	public static File getMessageLogFile(final String runID){
 		return new File(Paths.get(getLogDir(), runID, MESSAGE_FILE_NAME).toString());
 	}
 

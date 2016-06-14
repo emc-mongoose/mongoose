@@ -173,7 +173,7 @@ extends ScenarioTestBase {
 				in = Files.newBufferedReader(dataItemsFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			// Get content of message.log file of read scenario
-			final String contentMessageFile = new Scanner(LogValidator.getMessageFile(READ_RUN_ID))
+			final String contentMessageFile = new Scanner(LogValidator.getMessageLogFile(READ_RUN_ID))
 				.useDelimiter("\\Z")
 				.next();
 			boolean firstRow = true;

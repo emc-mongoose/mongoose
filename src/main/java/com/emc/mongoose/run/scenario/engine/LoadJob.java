@@ -37,6 +37,7 @@ extends JobBase {
 	//
 	@Override
 	public final void run() {
+		super.run();
 		final long limitTime = localConfig.getLoadLimitTime();
 		try(final LoadBuilder loadJobBuilder = LoadBuilderFactory.getInstance(localConfig)) {
 			try(final LoadExecutor loadJob = loadJobBuilder.build()) {

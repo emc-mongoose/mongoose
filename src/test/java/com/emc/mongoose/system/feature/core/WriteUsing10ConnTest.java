@@ -95,7 +95,7 @@ extends ScenarioTestBase {
 			TimeUnit.SECONDS.sleep(1);
 			RunIdFileManager.flushAll();
 			//
-			Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
+			Path expectedFile = LogValidator.getMessageLogFile(RUN_ID).toPath();
 			//  Check that messages.log exists
 			Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
 			expectedFile = LogValidator.getPerfAvgFile(RUN_ID).toPath();
@@ -158,7 +158,7 @@ extends ScenarioTestBase {
 	public static void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//  Read the message file and search for "Scenario end"
-		final File messageFile = LogValidator.getMessageFile(RUN_ID);
+		final File messageFile = LogValidator.getMessageLogFile(RUN_ID);
 		Assert.assertTrue(
 			"messages.log file doesn't exist",
 			messageFile.exists()

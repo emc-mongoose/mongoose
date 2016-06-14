@@ -23,4 +23,12 @@ implements Job {
 	public final AppConfig getConfig() {
 		return localConfig;
 	}
+
+	@Override
+	public void run() {
+		if(localConfig != null) {
+			final String newRunId = localConfig.getRunId();
+			localConfig.setRunId(newRunId);
+		}
+	}
 }

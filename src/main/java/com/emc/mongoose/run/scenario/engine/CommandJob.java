@@ -49,6 +49,7 @@ extends JobBase {
 	//
 	@Override
 	public final void run() {
+		super.run();
 		try {
 			LOG.info(
 				Markers.MSG, "Invoking the shell command:\n{}{}{}",
