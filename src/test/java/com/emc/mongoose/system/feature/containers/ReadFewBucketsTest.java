@@ -2,6 +2,7 @@ package com.emc.mongoose.system.feature.containers;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.system.base.HttpStorageMockTestBase;
@@ -58,7 +59,7 @@ extends HttpStorageMockTestBase {
 		TimeUnit.SECONDS.sleep(1);
 		RunIdFileManager.flushAll();
 		//
-		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
+		LogValidator.removeLogDirectory(RUN_ID);
 		rtConfig.setRunId(RUN_ID);
 		rtConfig.setProperty(AppConfig.KEY_LOAD_TYPE, TestConstants.LOAD_READ);
 		rtConfig.setProperty(

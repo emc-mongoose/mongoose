@@ -59,6 +59,7 @@ extends DistributedLoadBuilderTestBase {
 		TimeUnit.SECONDS.sleep(5);
 		RunIdFileManager.flushAll();
 		//
+		LogValidator.removeLogDirectory(RUN_ID);
 		rtConfig.setRunId(RUN_ID);
 		rtConfig.setProperty(AppConfig.KEY_LOAD_TYPE, TestConstants.LOAD_DELETE);
 		rtConfig.setProperty(
@@ -74,7 +75,7 @@ extends DistributedLoadBuilderTestBase {
 			//  Run mongoose default scenario in standalone mode
 			new ScenarioRunner(rtConfig).run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
 		//

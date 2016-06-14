@@ -44,7 +44,7 @@ extends DistributedClientTestBase {
 	private final static int COUNT_LIMIT = 1000;
 	//
 	private static long countWritten, countRead;
-	private static byte stdOutContent[];
+	private static byte STD_OUT_CONTENT[];
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -80,14 +80,15 @@ extends DistributedClientTestBase {
 				} else {
 					throw new IllegalStateException("Failed to read");
 				}
-				TimeUnit.SECONDS.sleep(1);
-				stdOutContent = stdOutStream.toByteArray();
+				TimeUnit.SECONDS.sleep(5);
+				STD_OUT_CONTENT = stdOutStream.toByteArray();
 			}
 		} catch(final Throwable e) {
 			e.printStackTrace(System.err);
 		}
 		LOG.info(
-			Markers.MSG, "Read {} items, captured {} bytes from stdout", countRead, stdOutContent.length
+			Markers.MSG, "Read {} items, captured {} bytes from stdout", countRead,
+			STD_OUT_CONTENT.length
 		);
 		//
 		RunIdFileManager.flushAll();
@@ -106,7 +107,7 @@ extends DistributedClientTestBase {
 		long lastSuccCount = 0;
 		try(
 			final BufferedReader in = new BufferedReader(
-				new InputStreamReader(new ByteArrayInputStream(stdOutContent))
+				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
 			)
 		) {
 			String nextStdOutLine;
@@ -147,7 +148,7 @@ extends DistributedClientTestBase {
 		boolean passed = false;
 		try(
 			final BufferedReader in = new BufferedReader(
-				new InputStreamReader(new ByteArrayInputStream(stdOutContent))
+				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
 			)
 		) {
 			String nextStdOutLine;

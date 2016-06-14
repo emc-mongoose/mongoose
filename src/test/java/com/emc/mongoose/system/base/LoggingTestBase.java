@@ -41,6 +41,7 @@ extends ConfiguredTestBase {
 		LogUtil.init();
 		ConfiguredTestBase.setUpClass();
 		final String runId = System.getProperty(AppConfig.KEY_RUN_ID);
+		BasicConfig.THREAD_CONTEXT.get().setRunId(runId);
 		LogValidator.removeLogDirectory(runId);
 		FILE_LOG_PERF_SUM = LogValidator.getPerfSumFile(runId);
 		FILE_LOG_PERF_AVG = LogValidator.getPerfAvgFile(runId);
