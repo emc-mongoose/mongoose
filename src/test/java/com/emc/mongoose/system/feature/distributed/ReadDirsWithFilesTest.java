@@ -51,7 +51,7 @@ extends DistributedFileSystemTestBase {
 				.build()
 		) {
 			countWritten = client.create(null, COUNT_TO_WRITE, 100, 0);
-			RunIdFileManager.flushAll();
+			RunIdFileManager.flush(RUN_ID);
 		}
 		//
 		final File dirListFile = LogValidator.getItemsListFile(RUN_ID);
@@ -82,6 +82,7 @@ extends DistributedFileSystemTestBase {
 			} while(true);
 		}
 		//
+		RunIdFileManager.flush(RUN_ID);
 		TimeUnit.SECONDS.sleep(1);
 		//
 		rtConfig.setRunId(RUN_ID + "_DirsRead");
@@ -101,8 +102,7 @@ extends DistributedFileSystemTestBase {
 				null, countWritten, 3, true
 			);
 		}
-		//
-		TimeUnit.SECONDS.sleep(1);
+		RunIdFileManager.flush(rtConfig.getRunId());
 	}
 	//
 	@AfterClass

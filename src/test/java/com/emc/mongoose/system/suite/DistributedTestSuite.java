@@ -26,23 +26,23 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	/*CircularReadTest.class,
+	CircularReadTest.class,
 	CircularUpdateTest.class,
 	WriteLoggingTest.class,
-	WriteByTimeTest.class,*/
+	WriteByTimeTest.class,
 	ReadDirsWithFilesTest.class,
 	ReadLoggingTest.class,
-	/*S3ReadUsingBucketListingDistributedTest.class,
+	S3ReadUsingBucketListingDistributedTest.class,
 	UpdateLoggingTest.class,
-	DeleteLoggingTest.class,*/
+	DeleteLoggingTest.class,
 	DeleteManyBucketsConcurrentlyDistributedTest.class,
-	//ReadBucketsWithManyObjectsDistributedTest.class,
-	//ReadFewBucketsDistributedTest.class,
-	//WriteFewBucketsDistributedTest.class,
-	//WriteManyBucketsConcurrentlyDistributedTest.class,
+	ReadBucketsWithManyObjectsDistributedTest.class,
+	ReadFewBucketsDistributedTest.class,
+	WriteFewBucketsDistributedTest.class,
+	WriteManyBucketsConcurrentlyDistributedTest.class,
 	WriteManyObjectsToFewBucketsDistributedTest.class,
-	//UpdateZeroBytesDistributedTest.class,
-	//WriteRikkiTikkiTaviDistributedTest.class,
+	UpdateZeroBytesDistributedTest.class,
+	WriteRikkiTikkiTaviDistributedTest.class,
 })
 public class DistributedTestSuite {
 }

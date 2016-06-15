@@ -241,6 +241,19 @@ extends AbstractManager {
 		}
 	}
 	//
+	public final static void flush(final String runId) {
+		for(final RunIdFileManager instance : INSTANCES) {
+			final OutputStream outStream = instance.outStreamsMap.get(runId);
+			if(outStream != null) {
+				try {
+					outStream.flush();
+				} catch(final IOException e) {
+					e.printStackTrace(System.err);
+				}
+			}
+		}
+	}
+	//
 	public static void flushAll()
 	throws IOException {
 		for(final RunIdFileManager manager : INSTANCES) {

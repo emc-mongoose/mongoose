@@ -56,9 +56,7 @@ extends DistributedLoadBuilderTestBase {
 		logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
 		new ScenarioRunner(rtConfig).run();
 		//  Wait for "Scenario end" message
-		TimeUnit.SECONDS.sleep(5);
-		RunIdFileManager.flushAll();
-		//
+		RunIdFileManager.flush(rtConfig.getRunId());
 		LogValidator.removeLogDirectory(RUN_ID);
 		rtConfig.setRunId(RUN_ID);
 		rtConfig.setProperty(AppConfig.KEY_LOAD_TYPE, TestConstants.LOAD_DELETE);
@@ -78,8 +76,7 @@ extends DistributedLoadBuilderTestBase {
 			TimeUnit.SECONDS.sleep(5);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
-		//
-		RunIdFileManager.flushAll();
+		RunIdFileManager.flush(RUN_ID);
 	}
 
 	@AfterClass

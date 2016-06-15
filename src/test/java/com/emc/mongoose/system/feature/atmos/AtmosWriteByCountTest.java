@@ -47,7 +47,7 @@ extends StandaloneClientTestBase {
 				writeOutput, COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("8KB")
 			);
 			//
-			RunIdFileManager.flushAll();
+			RunIdFileManager.flush(AtmosWriteByCountTest.class.getCanonicalName());
 		}
 	}
 	//

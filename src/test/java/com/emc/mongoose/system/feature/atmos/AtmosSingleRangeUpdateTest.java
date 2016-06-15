@@ -64,7 +64,7 @@ extends StandaloneClientTestBase {
 				throw new IllegalStateException("Failed to update");
 			}
 			//
-			RunIdFileManager.flushAll();
+			RunIdFileManager.flush(AtmosSingleRangeUpdateTest.class.getCanonicalName());
 		}
 	}
 	//

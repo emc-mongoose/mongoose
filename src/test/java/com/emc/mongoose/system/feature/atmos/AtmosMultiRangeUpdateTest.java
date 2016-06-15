@@ -81,7 +81,7 @@ extends StandaloneClientTestBase {
 				throw new IllegalStateException("Failed to update the 2nd time");
 			}
 			//
-			RunIdFileManager.flushAll();
+			RunIdFileManager.flush(AtmosMultiRangeUpdateTest.class.getCanonicalName());
 		}
 	}
 	//

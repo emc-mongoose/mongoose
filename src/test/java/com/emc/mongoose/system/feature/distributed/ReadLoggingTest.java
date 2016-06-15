@@ -68,12 +68,6 @@ extends DistributedClientTestBase {
 				countWritten, itemsQueue.size()
 			);
 			try(final BufferingOutputStream stdOutStream = StdOutUtil.getStdOutBufferingStream()) {
-				if(stdOutStream == null) {
-					throw new IllegalStateException(
-						"Looks like the test case is not included in the \"" +
-							StdOutUtil.class.getSimpleName() + "\" test suite, cannot run"
-					);
-				}
 				stdOutStream.reset(); // clear before using
 				if(countWritten > 0) {
 					countRead = client.read(itemsIO, null, countWritten, 10, true);

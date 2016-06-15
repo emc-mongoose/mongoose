@@ -53,7 +53,7 @@ extends StandaloneClientTestBase {
 				throw new IllegalStateException("Failed to write");
 			}
 			//
-			RunIdFileManager.flushAll();
+			RunIdFileManager.flush(AtmosReadUsingCsvInputTest.class.getCanonicalName());
 		}
 	}
 	//
