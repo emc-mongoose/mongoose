@@ -33,7 +33,6 @@ import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -361,8 +360,8 @@ implements AppConfig {
 	}
 	//
 	@Override
-	public boolean getLoadPrecondition() {
-		return getBoolean(KEY_LOAD_PRECONDITION);
+	public boolean getLoadMetricsPrecondition() {
+		return getBoolean(KEY_LOAD_METRICS_PRECONDITION);
 	}
 	//
 	@Override

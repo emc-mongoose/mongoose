@@ -15,7 +15,9 @@
 				"count" : 1000000,
 				"time" : "50s"
 			},
-			"metricsPeriod" : 0
+			"metrics" : {
+				"period" : 0
+			}
 		}
 	},
 	"jobs" : [

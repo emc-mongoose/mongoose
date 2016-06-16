@@ -32,7 +32,7 @@ extends JobBase {
 		if(nodeConfig != null) {
 			localConfig.override(null, nodeConfig);
 		}
-		localConfig.setProperty(AppConfig.KEY_LOAD_PRECONDITION, preconditionFlag);
+		localConfig.setProperty(AppConfig.KEY_LOAD_METRICS_PRECONDITION, preconditionFlag);
 	}
 	//
 	@Override

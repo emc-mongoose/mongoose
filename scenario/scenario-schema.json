@@ -429,29 +429,35 @@
 								}
 							}
 						},
-						"metricsPeriod": {
-							"oneOf" : [
-								{
-									"type" : "integer",
-									"minimum" : 0
-								}, {
-									"type" : "string",
-									"pattern" : "[\\d]+[SsMmHhDd]?"
-								}, {
-									"type" : "string",
-									"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+						"metrics" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"period" : {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d]+[SsMmHhDd]?"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
+								},
+								"precondition" : {
+									"oneOf" : [
+										{
+											"type": "boolean"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								}
-							]
-						},
-						"precondition": {
-							"oneOf" : [
-								{
-									"type": "boolean"
-								}, {
-									"type" : "string",
-									"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
-								}
-							]
+							}
 						},
 						"server": {
 							"type": "object",

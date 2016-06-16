@@ -14,7 +14,9 @@
 			"limit" : {
 				"count" : 10000
 			},
-			"metricsPeriod" : 0,
+			"metrics" : {
+				"period" : 0
+			},
 			"threads" : 100
 		}
 	},
@@ -67,7 +69,9 @@
 						"time" : "5m",
 						"count" : 0
 					},
-					"metricsPeriod" : 10,
+					"metrics" : {
+						"period" : 10
+					},
 					"type" : [
 						"create=50%", "read=30%", "delete=20%"
 					]

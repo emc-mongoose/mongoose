@@ -342,19 +342,29 @@
 								"time"
 							]
 						},
-						"metricsPeriod": {
-							"oneOf" : [
-								{
-									"type" : "integer",
-									"minimum" : 0
-								}, {
-									"type" : "string",
-									"pattern" : "[\\d]+[SsMmHhDd]?"
+						"metrics" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"period" : {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d]+[SsMmHhDd]?"
+										}
+									]
+								},
+								"precondition" : {
+									"type" : "boolean"
 								}
+							},
+							"required" : [
+								"period",
+								"precondition"
 							]
-						},
-						"precondition": {
-							"type": "boolean"
 						},
 						"server": {
 							"type": "object",
@@ -381,8 +391,6 @@
 						"type",
 						"threads",
 						"limit",
-						"metricsPeriod",
-						"precondition",
 						"server"
 					]
 				},

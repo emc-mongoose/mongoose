@@ -10,9 +10,6 @@ import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 //
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-//
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 public abstract class IoStatsBase
 implements IoStats {
 	//
-	private final static Logger LOG = LogManager.getLogger();
 	private final static double M = 1e6;
 	private final static int DEFAULT_JMX_PORT = 1199;
 	//

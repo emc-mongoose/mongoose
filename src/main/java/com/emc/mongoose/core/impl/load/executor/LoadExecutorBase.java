@@ -53,6 +53,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 import static com.emc.mongoose.core.api.item.base.Item.SLASH;
+
 /**
  Created by kurila on 15.10.14.
  */
@@ -154,10 +155,11 @@ implements LoadExecutor<T> {
 			PolyLineManager polyLineManager = new PolyLineManager();
 			while(!isInterrupted.get()) {
 				logMetrics(Markers.PERF_AVG);
-				if (true) { // todo make some webui flag here
+				if(true) { // todo make some webui flag here
 					polyLineManager.updatePolylines(getStatsSnapshot());
 					ChartPackage.addChart(
-							appConfig.getRunId(), LoadExecutorBase.this.getName(), polyLineManager);
+						appConfig.getRunId(), LoadExecutorBase.this.getName(), polyLineManager
+					);
 				}
 				try {
 					TimeUnit.SECONDS.sleep(metricsPeriodSec);
@@ -210,7 +212,7 @@ implements LoadExecutor<T> {
 		loadType = ioConfig.getLoadType();
 		//
 		metricsPeriodSec = appConfig.getLoadMetricsPeriod();
-		preconditionFlag = appConfig.getLoadPrecondition();
+		preconditionFlag = appConfig.getLoadMetricsPrecondition();
 		this.sizeLimit = sizeLimit > 0 ? sizeLimit : Long.MAX_VALUE;
 		// prepare the nodes array
 		storageNodeAddrs = addrs == null ? null : addrs.clone();
