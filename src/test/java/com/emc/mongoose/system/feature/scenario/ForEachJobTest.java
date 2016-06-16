@@ -52,7 +52,7 @@ extends HttpStorageMockTestBase {
 		"				\"count\" : 1000000," +
 		"					\"time\" : \"10s\"" +
 		"			}," +
-		"			\"metricsPeriod\" : 0" +
+		"			\"metrics\" : { \"period\" : 0 }" +
 		"		}" +
 		"	}," +
 		"		\"jobs\" : [" +

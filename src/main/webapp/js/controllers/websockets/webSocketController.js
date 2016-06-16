@@ -34,7 +34,7 @@ define([
 	function configureWebSocketConnection(location, countOfRecords) {
 		function processJsonLogEvents(chartsArray, json) {
 			var runId = json.contextMap["run.id"],
-				runMetricsPeriodSec = json.contextMap["load.metricsPeriodSec"],
+				runMetricsPeriodSec = json.contextMap["load.metrics.period"],
 				scenarioChainLoad = json.contextMap["scenario.type.chain.load"],
 				rampupConnCounts = json.contextMap["scenario.type.rampup.connCounts"],
 				loadRampupSizes = json.contextMap["scenario.type.rampup.sizes"];
@@ -144,7 +144,7 @@ define([
 						filtered = points.filter(function(d) {
 							return d.marker.name === markers.PERF_AVG;
 						});
-						var runMetricsPeriodSec = logEventsArray[0].contextMap["load.metricsPeriodSec"];
+						var runMetricsPeriodSec = logEventsArray[0].contextMap["load.metrics.period"];
 						chartBase.charts(chartsArray).chain(runId, runMetricsPeriodSec, null, filtered);
 						break;
 					case scenarioName.rampup:
