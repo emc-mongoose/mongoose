@@ -1323,4 +1323,9 @@ artifactoryPublish.dependsOn pushDockerImage
 
 // TRAVIS CI ///////////////////////////////////////////////////////////////////////////////////////
 
-task check(type: Task, dependsOn: unitTest)
+task compileTestJava(type: JavaCompile, overwrite: true, dependsOn: compileUnitTestJava)
+task test(type: Test, overwrite: true) {
+	dependsOn unitTest
+	dependsOn systemTest
+	dependsOn perfTest
+}
