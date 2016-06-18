@@ -3,4 +3,11 @@ sudo: false
 jdk:
   - openjdk7
 script:
-  ./gradlew clean unitTest systemTest dist
+  ./gradlew clean unitTest dist
+deploy:
+  provider: releases
+  api_key: "Cs7z6H7rqsGqFLtDuarx"
+  file: ./build/dist/mongoose-2.3.0.tgz
+  skip_cleanup: true
+  on:
+    tags: true
