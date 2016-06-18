@@ -1320,3 +1320,7 @@ artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar
 artifactoryPublish.dependsOn unitTestJar, systemTestJar, perfTestJar
 
 artifactoryPublish.dependsOn pushDockerImage
+
+// TRAVIS CI ///////////////////////////////////////////////////////////////////////////////////////
+
+task check(type: Task, dependsOn: unitTest)
