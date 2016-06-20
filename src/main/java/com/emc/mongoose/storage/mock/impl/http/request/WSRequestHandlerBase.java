@@ -9,7 +9,7 @@ import static com.emc.mongoose.core.api.io.conf.HttpRequestConfig.VALUE_RANGE_CO
 // mongoose-storage-mock.jar
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
@@ -53,7 +53,7 @@ implements ReqURIMatchingHandler<T> {
 	private final StorageIOStats ioStats;
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
-	private final ContentSource contentSrc = ContentSourceBase.getDefaultInstance();
+	private final ContentSource contentSrc = ContentSourceUtil.getDefaultInstance();
 	//
 	protected final HttpStorageMock<T> sharedStorage;
 	protected final int batchSize;

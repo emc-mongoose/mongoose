@@ -8,7 +8,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
 import com.emc.mongoose.common.net.ssl.SslContext;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 import com.emc.mongoose.storage.mock.impl.base.StorageMockBase;
@@ -85,7 +85,7 @@ implements HttpStorageMock<T> {
 		final String dataSrcPath, final int metricsPeriodSec, final boolean jmxServeFlag
 	) throws IOException {
 		super(
-			(Class<T>) BasicHttpDataMock.class, ContentSourceBase.getDefaultInstance(),
+			(Class<T>) BasicHttpDataMock.class, ContentSourceUtil.getDefaultInstance(),
 			storageCapacity, containerCapacity, containerCountLimit, batchSize,
 			dataSrcPath, metricsPeriodSec, jmxServeFlag
 		);

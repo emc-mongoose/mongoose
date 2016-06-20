@@ -21,10 +21,10 @@ import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.item.ItemTypeUtil;
-import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.util.builder.LoadBuilderFactory;
 //
 import org.apache.commons.lang.StringUtils;
@@ -44,7 +44,7 @@ import java.util.TreeMap;
  Created by kurila on 17.03.16.
  */
 public class RampupJobContainer
-	extends SequentialJobContainer {
+extends SequentialJobContainer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int tblWidth = 124;
@@ -53,7 +53,7 @@ public class RampupJobContainer
 	private final static char padChar = ' ';
 	private final static int DEFAULT_THREAD_COUNT = 1;
 	private final static String DEFAULT_SIZE = "1MB";
-	private final static String DEFAULT_LOAD_TYPE = LoadType.WRITE.name().toLowerCase();
+	private final static String DEFAULT_LOAD_TYPE = LoadType.CREATE.name().toLowerCase();
 	//
 	private final StrBuilder strb = new StrBuilder();
 	{
@@ -91,7 +91,7 @@ public class RampupJobContainer
 		final StorageType storageType = localConfig.getStorageType();
 		itemCls = ItemTypeUtil.getItemClass(itemType, storageType);
 		try {
-			contentSrc = ContentSourceBase.getInstance(localConfig);
+			contentSrc = ContentSourceUtil.getInstance(localConfig);
 		} catch(final IOException e) {
 			throw new IllegalStateException("Failed to init the content source", e);
 		}
@@ -233,7 +233,7 @@ public class RampupJobContainer
 	) throws IOException {
 		//
 		final LoadExecutor nextLoadJob;
-		final Output nextItemOutput = new ItemCsvFileOutput<>(itemCls, contentSrc);
+		final Output nextItemOutput = new CsvFileItemOutput<>(itemCls, contentSrc);
 		//
 		loadJobBuilder
 			.setLoadType(nextLoadType)
@@ -270,7 +270,6 @@ public class RampupJobContainer
 	@Override
 	public final void run() {
 		super.run();
-		// print the table
 		LoadExecutor nextLoadJob;
 		LoadState nextLoadState;
 		Map<Integer, Map<SizeInBytes, Map<LoadType, LoadExecutor>>> m0;
@@ -287,20 +286,20 @@ public class RampupJobContainer
 						try {
 							nextLoadState = nextLoadJob.getLoadState();
 						} catch(final RemoteException e) {
-							LogUtil.exception(
-								LOG, Level.WARN, e, "Failed to fetch the load state for {}",
-								nextLoadJob
+							LogUtil.exception(LOG, Level.WARN, e,
+								"Failed to fetch the load state for {}", nextLoadJob
 							);
 							nextLoadState = null;
 						}
 						final String sizeStr = nextSize == null ? " " : nextSize.toString();
-						final IOStats.Snapshot statsSnapshot = nextLoadState == null ?
-							null : nextLoadState.getStatsSnapshot();
+						final IoStats.Snapshot statsSnapshot =
+							nextLoadState == null ? null : nextLoadState.getStatsSnapshot();
 						final long countSucc = statsSnapshot == null ?
 							0 : statsSnapshot.getSuccCount();
 						final long countFail = statsSnapshot == null ?
 							0 : statsSnapshot.getFailCount();
-						long avgDur = statsSnapshot == null ? 0 : statsSnapshot.getDurationSum();
+						long avgDur = statsSnapshot == null ?
+							0 : statsSnapshot.getDurationSum();
 						avgDur = avgDur == 0 ? 0 : avgDur / countSucc;
 						long avgLat = 0;
 						if(statsSnapshot != null) {
@@ -317,9 +316,8 @@ public class RampupJobContainer
 							);
 						final String bwStr = statsSnapshot == null ?
 							"N/A" :
-							String.format(
-								LogUtil.LOCALE_DEFAULT, "%.3f",
-								statsSnapshot.getByteRateMean() / IOStats.MIB
+							String.format(LogUtil.LOCALE_DEFAULT, "%.3f",
+								statsSnapshot.getByteRateMean() / IoStats.MIB
 							);
 						strb
 							.appendNewLine()
@@ -329,7 +327,9 @@ public class RampupJobContainer
 								11, padChar
 							)
 							.append(colSep)
-							.appendFixedWidthPadLeft(nextThreadCount + " " + colSep, 15, padChar)
+							.appendFixedWidthPadLeft(
+								nextThreadCount + " " + colSep, 15, padChar
+							)
 							.appendFixedWidthPadLeft(sizeStr + " " + colSep, 12, padChar)
 							.appendFixedWidthPadLeft(countSucc + " " + colSep, 12, padChar)
 							.appendFixedWidthPadLeft(countFail + " " + colSep, 9, padChar)
@@ -343,9 +343,23 @@ public class RampupJobContainer
 			}
 		}
 		strb.appendNewLine().appendPadding(tblWidth, rowSep);
-		//
 		LOG.info(Markers.MSG, strb.toString());
-		//
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		super.close();
 		loadJobMap.clear();
+		try {
+			loadJobBuilder.close();
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the load job builder");
+		}
+		try {
+			contentSrc.close();
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the content source");
+		}
 	}
 }

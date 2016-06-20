@@ -41,6 +41,9 @@
 					"dst" : {
 						"file" : "fs-verify-updated-1.csv"
 					}
+				},
+				"load" : {
+					"type" : "update"
 				}
 			}
 		}, {

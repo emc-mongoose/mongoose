@@ -87,8 +87,14 @@ implements StorageClientBuilder<T, U> {
 	}
 	//
 	@Override
-	public final StorageClientBuilder<T, U> setDestContainer(final String value) {
+	public final StorageClientBuilder<T, U> setDstContainer(final String value) {
 		appConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, value);
+		return this;
+	}
+	//
+	@Override
+	public final StorageClientBuilder<T, U> setSrcContainer(final String value) {
+		appConfig.setProperty(AppConfig.KEY_ITEM_SRC_CONTAINER, value);
 		return this;
 	}
 	//
@@ -141,9 +147,16 @@ implements StorageClientBuilder<T, U> {
 	}
 	//
 	@Override
-	public final StorageClientBuilder<T, U> setItemClass(final String itemCls)
+	public final StorageClientBuilder<T, U> setItemType(final String itemType)
 	throws IllegalArgumentException {
-		appConfig.setProperty(AppConfig.KEY_ITEM_TYPE, itemCls);
+		appConfig.setProperty(AppConfig.KEY_ITEM_TYPE, itemType);
+		return this;
+	}
+	//
+	@Override
+	public final StorageClientBuilder<T, U> setStorageType(final String storageType)
+	throws IllegalArgumentException {
+		appConfig.setProperty(AppConfig.KEY_STORAGE_TYPE, storageType);
 		return this;
 	}
 	//

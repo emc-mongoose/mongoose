@@ -42,8 +42,8 @@ extends BasicPatternDefinedInput {
 		if (patternSymbolsNum > 0) {
 			setInputs(new Input[patternSymbolsNum]);
 			setSegments(new String[patternSymbolsNum + 1]);
-			StringBuilder segmentsBuilder = new StringBuilder();
-			StringBuilder patternBuilder = new StringBuilder(getPattern());
+			final StringBuilder segmentsBuilder = new StringBuilder();
+			final StringBuilder patternBuilder = new StringBuilder(getPattern());
 			int segmentCounter = 0;
 			for (int j = 0; j < patternSymbolsNum; j++) {
 				int i = 0;

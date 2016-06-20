@@ -94,10 +94,10 @@ extends RequestConfig<T, C>, HttpRequestInterceptor {
 	HttpRequestConfig<T, C> setNameSpace(final String ns);
 	//
 	@Override
-	HttpRequestConfig<T, C> setNamePrefix(final String prefix);
+	HttpRequestConfig<T, C> setItemNamingPrefix(final String namingPrefix);
 	//
 	@Override
-	HttpRequestConfig<T, C> setNameRadix(final int radix);
+	HttpRequestConfig<T, C> setItemNamingRadix(final int namingRadix);
 	//
 	HttpRequestConfig<T, C> setFileAccessEnabled(final boolean fsAccessFlag);
 	boolean getFileAccessEnabled();

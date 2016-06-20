@@ -1,5 +1,4 @@
 package com.emc.mongoose.run.scenario.engine;
-//
 
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -16,10 +15,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 
-//
-//
-//
-//
 /**
  Created by kurila on 02.02.16.
  */
@@ -83,8 +78,16 @@ extends JobContainerBase {
 			} else {
 				try {
 					loadJob_ = loadJobBuilder.build();
-				} catch(final IOException e) {
+				} catch(final Throwable e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the load job");
+				} finally {
+					try {
+						loadJobBuilder.close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to close the load job builder"
+						);
+					}
 				}
 			}
 		} else {
@@ -107,7 +110,7 @@ extends JobContainerBase {
 				limitTime > 0 ? TimeUnit.SECONDS : TimeUnit.DAYS
 			);
 		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Load job {} was interrupted", loadJob_);
+			LogUtil.exception(LOG, Level.DEBUG, e, "Load job {} was interrupted", loadJob_);
 		} catch(final RemoteException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e,
@@ -121,6 +124,14 @@ extends JobContainerBase {
 					"Failed to invoke the start method remotely for the load job {}", loadJob_
 				);
 			}
+		}
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		if(loadJobBuilder != null) {
+			loadJobBuilder.close();
 		}
 	}
 }

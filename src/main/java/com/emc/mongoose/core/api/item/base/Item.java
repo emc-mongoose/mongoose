@@ -5,6 +5,13 @@ import java.io.Externalizable;
  */
 public interface Item
 extends Externalizable {
+
+	String SLASH = "/";
+
+	String getPath();
+	void setPath(final String path);
+
 	String getName();
 	void setName(final String name);
+
 }

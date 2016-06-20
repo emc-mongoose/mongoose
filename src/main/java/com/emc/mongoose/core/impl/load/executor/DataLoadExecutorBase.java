@@ -73,7 +73,7 @@ implements DataLoadExecutor<T> {
 				Markers.MSG, "Determined buffer size of {} for \"{}\"",
 				SizeInBytes.formatFixedSize(buffSize), getName()
 			);
-			this.ioConfigCopy.setBuffSize(buffSize);
+			this.ioConfig.setBuffSize(buffSize);
 		} else if(itemInput instanceof NewDataItemInput) {
 			final int buffSize;
 			final long avgDataSize = ((NewDataItemInput)itemInput)
@@ -89,7 +89,7 @@ implements DataLoadExecutor<T> {
 				Markers.MSG, "Determined buffer size of {} for \"{}\"",
 				SizeInBytes.formatFixedSize(buffSize), getName()
 			);
-			this.ioConfigCopy.setBuffSize(buffSize);
+			this.ioConfig.setBuffSize(buffSize);
 		}
 		/*
 		switch(loadType) {

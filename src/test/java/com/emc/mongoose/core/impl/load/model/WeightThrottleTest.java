@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.conf.enums.LoadType;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.load.barrier.Throttle;
 import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
@@ -24,22 +24,22 @@ public class WeightThrottleTest {
 
 	private final Map<LoadType, Integer> weightMap = new HashMap<LoadType, Integer>() {
 		{
-			put(LoadType.WRITE, 80);
+			put(LoadType.CREATE, 80);
 			put(LoadType.READ, 20);
 		}
 	};
 
 	private final Map<LoadType, AtomicInteger> resultsMap = new HashMap<LoadType, AtomicInteger>() {
 		{
-			put(LoadType.WRITE, new AtomicInteger(0));
+			put(LoadType.CREATE, new AtomicInteger(0));
 			put(LoadType.READ, new AtomicInteger(0));
 		}
 	};
 
 	private final Throttle<LoadType> fc = new WeightThrottle<>(weightMap, new AtomicBoolean(false));
 
-	private final class IOTaskMock
-	implements IOTask {
+	private final class IoTaskMock
+	implements IoTask {
 		public LoadType loadType = null;
 		@Override
 		public String getNodeAddr() {
@@ -95,7 +95,7 @@ public class WeightThrottleTest {
 		public final void run() {
 			while(true) {
 				try {
-					final IOTaskMock ioTask = new IOTaskMock();
+					final IoTaskMock ioTask = new IoTaskMock();
 					ioTask.loadType = loadType;
 					if(fc.requestContinueFor(loadType)) {
 						resultsMap.get(loadType).incrementAndGet();
@@ -111,11 +111,11 @@ public class WeightThrottleTest {
 	public void testRequestApprovalFor()
 	throws Exception {
 		final ExecutorService es = Executors.newFixedThreadPool(2);
-		es.submit(new SubmTask(LoadType.WRITE));
+		es.submit(new SubmTask(LoadType.CREATE));
 		es.submit(new SubmTask(LoadType.READ));
-		es.awaitTermination(100, TimeUnit.SECONDS);
+		es.awaitTermination(10, TimeUnit.SECONDS);
 		es.shutdownNow();
-		final double writes = resultsMap.get(LoadType.WRITE).get();
+		final double writes = resultsMap.get(LoadType.CREATE).get();
 		final long reads = resultsMap.get(LoadType.READ).get();
 		assertEquals(80/20, writes / reads, 0.01);
 		System.out.println("Rate was: " + (writes + reads) / 10 + " per sec");
@@ -131,10 +131,10 @@ public class WeightThrottleTest {
 		public final void run() {
 			while(true) {
 				try {
-					final List<IOTask> ioTasks = new ArrayList<>();
-					IOTaskMock ioTask;
+					final List<IoTask> ioTasks = new ArrayList<>();
+					IoTaskMock ioTask;
 					for(int i = 0; i < 128; i ++) {
-						ioTask = new IOTaskMock();
+						ioTask = new IoTaskMock();
 						ioTask.loadType = loadType;
 						ioTasks.add(ioTask);
 					}
@@ -152,11 +152,11 @@ public class WeightThrottleTest {
 	public void testRequestBatchApprovalFor()
 	throws Exception {
 		final ExecutorService es = Executors.newFixedThreadPool(2);
-		es.submit(new BatchSubmTask(LoadType.WRITE));
+		es.submit(new BatchSubmTask(LoadType.CREATE));
 		es.submit(new BatchSubmTask(LoadType.READ));
-		es.awaitTermination(100, TimeUnit.SECONDS);
+		es.awaitTermination(10, TimeUnit.SECONDS);
 		es.shutdownNow();
-		final double writes = resultsMap.get(LoadType.WRITE).get();
+		final double writes = resultsMap.get(LoadType.CREATE).get();
 		final long reads = resultsMap.get(LoadType.READ).get();
 		assertEquals(80/20, writes / reads, 0.01);
 		System.out.println("Rate was: " + 128 * (writes + reads) / 10 + " per sec");

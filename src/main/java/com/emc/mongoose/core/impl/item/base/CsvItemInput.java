@@ -6,6 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 //
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -52,7 +53,7 @@ implements Input<T> {
 	) {
 		this.itemsSrc = itemsSrc;
 		this.itemConstructor = itemConstructor;
-		this.contentSrc = contentSrc;
+		this.contentSrc = ContentSourceUtil.clone(contentSrc);
 	}
 	//
 	public void setItemsSrc(final BufferedReader itemsSrc) {
@@ -123,6 +124,7 @@ implements Input<T> {
 	public void close()
 	throws IOException {
 		itemsSrc.close();
+		contentSrc.close();
 	}
 	//
 	@Override

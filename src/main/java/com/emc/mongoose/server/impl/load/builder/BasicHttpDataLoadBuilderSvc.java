@@ -9,6 +9,8 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 //mongoose-core-api.jar
+import com.emc.mongoose.core.api.io.conf.IoConfig;
+import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
@@ -95,19 +97,18 @@ implements HttpDataLoadBuilderSvc<T, U> {
 	public final void invokePreConditions() {} // discard any precondition invocations in load server mode
 	//
 	@Override
-	public final Input<T> selectItemInput() {
+	public final Input<T> selectItemInput(final IoConfig<T, ?> ioConfigCopy) {
 		return null;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final U buildActually()
-	throws IllegalStateException {
+	throws IllegalStateException, CloneNotSupportedException {
 		if(ioConfig == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
-		//
+		final HttpRequestConfig ioConfigCopy = (HttpRequestConfig) ioConfig.clone();
 		final LoadType loadType = ioConfig.getLoadType();
-		final HttpRequestConfig httpReqConf = (HttpRequestConfig) ioConfig;
 		// the statement below fixes hi-level API distributed mode usage and tests
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_SERVER);
 		//
@@ -117,13 +118,14 @@ implements HttpDataLoadBuilderSvc<T, U> {
 			final Map<LoadType, Integer> loadTypeWeightMap = LoadType
 				.getMixedLoadWeights(loadPatterns);
 			return (U) new BasicMixedHttpDataLoadSvc<>(
-				appConfig, httpReqConf, storageNodeAddrs, threadCount, countLimit, sizeLimit,
+				appConfig, ioConfigCopy, storageNodeAddrs, threadCount, countLimit, sizeLimit,
 				rateLimit, sizeConfig, rangesConfig, loadTypeWeightMap, null
 			);
 		} else {
 			return (U) new BasicHttpDataLoadSvc<>(
-				appConfig, httpReqConf, storageNodeAddrs, threadCount, selectItemInput(),
-				countLimit, sizeLimit, rateLimit, sizeConfig, rangesConfig
+				appConfig, ioConfigCopy, storageNodeAddrs, threadCount,
+				selectItemInput(ioConfigCopy), countLimit, sizeLimit, rateLimit, sizeConfig,
+				rangesConfig
 			);
 		}
 	}

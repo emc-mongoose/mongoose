@@ -55,27 +55,13 @@ ext {
 
 	metrics_core = [ "io.dropwizard.metrics:metrics-core:3.1.2" ]
 
-	netty_handler = [ "io.netty:netty-handler:4.0.36.Final" ]
-	netty_buffer = [ "io.netty:netty-buffer:4.0.36.Final" ]
-	netty_transport = [ "io.netty:netty-transport:4.0.36.Final" ]
-	netty_codec_http = [ "io.netty:netty-codec-http:4.0.36.Final" ]
-	netty_transport_native_epoll = [
-		"io.netty:netty-transport-native-epoll:4.0.36.Final:${osdetector.classifier}"
-	]
-
 	slf4j_api = [ "org.slf4j:slf4j-api:1.7.7" ]
-
-	websocket_api = [ "org.eclipse.jetty.websocket:websocket-api:9.3.0.M1" ]
-	websocket_client = [ "org.eclipse.jetty.websocket:websocket-client:9.3.0.M1" ]
-	websocket_common = [ "org.eclipse.jetty.websocket:websocket-common:9.3.0.M1" ]
-	websocket_core = [ "org.eclipse.jetty.websocket:websocket-core:9.0.0.M2" ]
-	websocket_server = [ "org.eclipse.jetty.websocket:websocket-server:9.3.0.M1" ]
-	websocket_servlet = [ "org.eclipse.jetty.websocket:websocket-servlet:9.3.0.M1" ]
 
 	junit = ["junit:junit:4.12"]
 	junit_mockito = ["org.mockito:mockito-all:2.0.2-beta"]
 
 	json_schema_validator = [ "com.github.fge:json-schema-validator:2.2.6" ]
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	httpcore_plus_nio = [ httpcore, httpcore_nio, ]
@@ -83,8 +69,6 @@ ext {
 	jetty_svc = [ jetty_server, jetty_webapp, ]
 
 	log4j_api_plus_core = [ log4j_api, log4j_core, ]
-
-	websockets = [ websocket_api, websocket_servlet, ]
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 

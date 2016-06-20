@@ -6,22 +6,26 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.conf.enums.StorageType;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+//
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+//
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.configuration.tree.DefaultExpressionEngine;
+//
 import org.apache.commons.lang.text.StrBuilder;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-
+//
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -29,17 +33,14 @@ import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-//
-//
-//
-//
-//
+import static com.emc.mongoose.common.conf.Constants.DIR_CONF;
 /**
  Created by kurila on 20.01.16.
  */
@@ -51,39 +52,73 @@ implements AppConfig {
 		THREAD_CONTEXT = new InheritableThreadLocal<AppConfig>() {
 		@Override
 		protected final AppConfig initialValue() {
-			final BasicConfig instance = new BasicConfig();
-			ThreadContext.put(KEY_RUN_ID, instance.getRunId());
-			ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
-			return instance;
+			return new BasicConfig();
 		}
 	};
 	//
 	static {
 		setDefaultExpressionEngine(new DefaultExpressionEngine());
 	}
-	//
-	private static String DIR_ROOT = null;
-	public static String getRootDir() {
-		if(DIR_ROOT == null) {
-			try {
-				DIR_ROOT = new File(
-					Constants.class.getProtectionDomain().getCodeSource().getLocation().toURI()
-				).getParent();
-			} catch(final URISyntaxException e) {
-				synchronized(System.err) {
-					System.err.println("Failed to determine the executable path:");
-					e.printStackTrace(System.err);
-				}
-				DIR_ROOT = System.getProperty("user.dir");
+
+	// http://stackoverflow.com/a/29665447
+	public static String getBasePathForClass(final Class<?> cls) {
+		try {
+			String basePath;
+			final File clsFile = new File(
+				cls.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()
+			);
+			if(
+				clsFile.isFile() ||
+				clsFile.getPath().endsWith(".jar") ||
+				clsFile.getPath().endsWith(".zip")
+			) {
+				basePath = clsFile.getParent();
+			} else {
+				basePath = clsFile.getPath();
 			}
+			// bandage for eclipse
+			if(
+				basePath.endsWith(File.separator + "lib") ||
+				basePath.endsWith(File.separator + "bin") ||
+				basePath.endsWith("bin" + File.separator) ||
+				basePath.endsWith("lib" + File.separator)
+			) {
+				basePath = basePath.substring(0, basePath.length() - 4);
+			}
+			// bandage for netbeans
+			if (basePath.endsWith(File.separator + "build" + File.separator + "classes")) {
+				basePath = basePath.substring(0, basePath.length() - 14);
+			}
+			// bandage for gradle
+			if (basePath.endsWith(File.separator + "build" + File.separator + "classes" + File.separator + "main")) {
+				basePath = basePath.substring(0, basePath.length() - 19);
+			}
+			// bandage for idea
+			if (basePath.endsWith(File.separator + "build" + File.separator + "resources" + File.separator + "common")) {
+				basePath = basePath.substring(0, basePath.length() - 23);
+			}
+			// final fix
+			if(!basePath.endsWith(File.separator)) {
+				basePath = basePath + File.separator;
+			}
+			return basePath;
+		} catch(final URISyntaxException e) {
+			throw new RuntimeException("Cannot figure out base path for class: " + cls.getName());
 		}
-		return DIR_ROOT;
+	}
+	//
+	private static String DIR_WORKING = null;
+	public static String getWorkingDir() {
+		if(DIR_WORKING == null) {
+			DIR_WORKING = getBasePathForClass(BasicConfig.class);
+		}
+		return DIR_WORKING;
 	}
 	//
 	public final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
 	public BasicConfig() {
-		this(Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF));
+		this(Paths.get(getWorkingDir(), DIR_CONF).resolve(FNAME_CONF));
 	}
 	//
 	public BasicConfig(final Path cfgFilePath) {
@@ -257,11 +292,6 @@ implements AppConfig {
 	@Override
 	public boolean getLoadCircular() {
 		return getBoolean(KEY_LOAD_CIRCULAR);
-	}
-	//
-	@Override
-	public boolean getLoadCopy() {
-		return getBoolean(KEY_LOAD_COPY);
 	}
 	//
 	@Override
@@ -523,23 +553,14 @@ implements AppConfig {
 	@Override
 	public void setRunId(final String runId) {
 		setProperty(KEY_RUN_ID, runId);
+		ThreadContext.put(KEY_RUN_ID, getRunId());
 	}
 
 	@Override
 	public void setRunMode(final String runMode) {
 		setProperty(KEY_RUN_MODE, runMode);
-	}
-
-	@Override
-	public void overrideRunId() {
-		ThreadContext.put(KEY_RUN_ID, getRunId());
-	}
-
-	@Override
-	public void overrideRunMode() {
 		ThreadContext.put(KEY_RUN_MODE, getRunMode());
 	}
-
 	//
 	@Override
 	public void override(final String configBranch, final Map<String, ?> configTree) {
@@ -768,6 +789,15 @@ implements AppConfig {
 	private void loadFromEnv() {
 		final Logger log = LogManager.getLogger();
 		final SystemConfiguration sysProps = new SystemConfiguration();
+		final String envRunId = sysProps.getString(KEY_RUN_ID);
+		if(envRunId != null && !envRunId.isEmpty()) {
+			setRunId(envRunId);
+		}
+		final String envRunMode = sysProps.getString(KEY_RUN_MODE);
+		if(envRunMode != null && !envRunMode.isEmpty()) {
+			setRunMode(envRunMode);
+		}
+		//
 		String key, overriderKeys[];
 		Object sharedValue;
 		for(final Iterator<String> keyIter = sysProps.getKeys(); keyIter.hasNext();) {

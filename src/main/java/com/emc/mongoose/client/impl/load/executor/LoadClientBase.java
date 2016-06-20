@@ -11,7 +11,7 @@ import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.io.conf.IoConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
@@ -20,7 +20,7 @@ import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
-import com.emc.mongoose.client.impl.load.metrics.model.AggregatedRemoteIOStats;
+import com.emc.mongoose.client.impl.load.metrics.model.AggregatedRemoteIoStats;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -88,14 +88,14 @@ implements LoadClient<T, W> {
 						} else {
 							final int n = frame.size();
 							if(n > 0) {
+								counterResults.addAndGet(n);
 								if(LOG.isTraceEnabled(Markers.MSG)) {
 									LOG.trace(
 										Markers.MSG,
-										"Got the next {} items from the load server @ {}",
-										n, loadSvc
+										"Got the next {} ({}) items from the load server @ {}",
+										n, counterResults.get(), loadSvc
 									);
 								}
-								counterResults.addAndGet(n);
 								// CIRCULARITY FEATURE
 								if(isCircular) {
 									for(final T item : frame) {
@@ -256,7 +256,7 @@ implements LoadClient<T, W> {
 	//
 	@Override
 	protected final void initStats(final boolean flagServeJMX) {
-		ioStats = new AggregatedRemoteIOStats<>(getName(), flagServeJMX, remoteLoadMap);
+		ioStats = new AggregatedRemoteIoStats<>(getName(), flagServeJMX, remoteLoadMap);
 		lastStats = ioStats.getSnapshot();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -488,11 +488,7 @@ implements LoadClient<T, W> {
 			String loadSvcAddr;
 			W loadSvc;
 			int m = 0;
-			for(
-				int tryCount = 0;
-				tryCount < Short.MAX_VALUE;
-				tryCount ++
-			) {
+			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
 				try {
 					loadSvcAddr = loadSvcAddrs[
 						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)
@@ -666,7 +662,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public <A extends IOTask<T>> Future<A> submitTask(final A request)
+	public <A extends IoTask<T>> Future<A> submitTask(final A request)
 	throws RemoteException {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (remotePutExecutor.getTaskCount() % loadSvcAddrs.length)])
@@ -674,7 +670,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public <A extends IOTask<T>> int submitTasks(
+	public <A extends IoTask<T>> int submitTasks(
 		final List<A> requests, final int from, final int to
 	) throws RemoteException, RejectedExecutionException {
 		return remoteLoadMap
@@ -712,6 +708,18 @@ implements LoadClient<T, W> {
 		for(final String addr : remoteLoadMap.keySet()) {
 			awaitExecutor.submit(new AwaitLoadJobTask(remoteLoadMap.get(addr), timeOut, timeUnit));
 		}
+		/*awaitExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					try {
+						LoadClientBase.super.await(timeOut, timeUnit);
+					} catch(final InterruptedException | RemoteException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "Failed to await");
+					}
+				}
+			}
+		);*/
 		awaitExecutor.shutdown();
 		try {
 			LOG.debug(Markers.MSG, "Wait remote await tasks for finish {}[{}]", timeOut, timeUnit);

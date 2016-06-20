@@ -10,6 +10,10 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import java.nio.file.Paths;
+
+import static com.emc.mongoose.common.conf.BasicConfig.getWorkingDir;
+import static com.emc.mongoose.common.conf.Constants.DIR_WEBAPP;
+import static com.emc.mongoose.common.conf.Constants.DIR_WEBINF;
 //
 //
 //
@@ -27,11 +31,9 @@ public class WebUiRunner
 	//
 	static {
 		WEB_RESOURCE_BASE_DIR = Paths
-				.get(BasicConfig.getRootDir(), Constants.DIR_WEBAPP)
-				.toString();
+			.get(getWorkingDir(), DIR_WEBAPP).toString();
 		WEB_DESCRIPTOR_BASE_DIR = Paths
-				.get(BasicConfig.getRootDir(), Constants.DIR_WEBAPP, Constants.DIR_WEBINF)
-				.resolve("web.xml").toString();
+			.get(getWorkingDir(), DIR_WEBAPP, DIR_WEBINF).resolve("web.xml").toString();
 	}
 	//
 	@Override

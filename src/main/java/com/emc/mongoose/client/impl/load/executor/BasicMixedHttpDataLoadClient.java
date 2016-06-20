@@ -16,7 +16,7 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 //
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 //
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 import com.emc.mongoose.server.api.load.executor.MixedHttpDataLoadSvc;
@@ -110,7 +110,7 @@ implements HttpDataLoadClient<T, W>, MixedLoadExecutor<T> {
 			.appendNewLine();
 		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
-		IOStats.Snapshot nextLoadStats;
+		IoStats.Snapshot nextLoadStats;
 		for(final LoadType nextLoadType : loadTypeWeightMap.keySet()) {
 			nextLoadWeight = loadTypeWeightMap.get(nextLoadType);
 			nextLoadJob = loadClientMap.get(nextLoadType);

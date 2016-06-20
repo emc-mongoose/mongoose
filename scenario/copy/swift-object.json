@@ -28,7 +28,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"file" : "copy-swift-object.json"
+						"file" : "copy-swift-object.csv"
 					}
 				}
 			}
@@ -41,11 +41,8 @@
 					},
 					"src" : {
 						"container" : "copy-swift-object",
-						"file" : "copy-swift-object.json"
+						"file" : "copy-swift-object.csv"
 					}
-				},
-				"load" : {
-					"copy" : true
 				}
 			}
 		}

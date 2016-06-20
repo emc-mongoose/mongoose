@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.data.ContainerHelper;
@@ -30,9 +31,8 @@ implements ContainerHelper<T, C> {
 	//
 	protected final HttpRequestConfig<T, C> reqConf;
 	protected final String containerName;
-	protected final String path;
+	//protected final String path;
 	protected final String idPrefix;
-	protected final int pathLen;
 	protected final int idPrefixLen;
 	protected final int idRadix;
 	protected final boolean verifyContent;
@@ -50,19 +50,10 @@ implements ContainerHelper<T, C> {
 				container.setName(tmpName);
 			}
 		}
+		containerName = tmpName;
 		//
-		final int firstSepPos = tmpName.indexOf('/');
-		if(firstSepPos < 0) {
-			containerName = tmpName;
-			path = null;
-			pathLen = 0;
-		} else {
-			containerName = tmpName.substring(0, firstSepPos);
-			path = tmpName.substring(firstSepPos + 1);
-			pathLen = path.length();
-		}
-		this.idPrefix = reqConf.getNamePrefix();
-		this.idRadix = reqConf.getNameRadix();
+		this.idPrefix = reqConf.getItemNamingPrefix();
+		this.idRadix = reqConf.getItemNamingRadix();
 		idPrefixLen = idPrefix == null ? 0 : idPrefix.length();
 		this.verifyContent = reqConf.getVerifyContentFlag();
 	}
@@ -73,7 +64,7 @@ implements ContainerHelper<T, C> {
 	//
 	@Override
 	public final T buildItem(
-		final Constructor<T> itemConstructor, final String rawId, final long size
+		final Constructor<T> itemConstructor, final String path, final String rawId, final long size
 	) throws IllegalStateException {
 		//
 		T item = null;
@@ -81,13 +72,14 @@ implements ContainerHelper<T, C> {
 		String id = null;
 		if(rawId != null && !rawId.isEmpty()) {
 			if(path != null) { // include the items which have the path matching to configured one
+				final int pathLen = path.length();
 				if(rawId.startsWith(path) && rawId.length() > pathLen) {
 					id = rawId.substring(pathLen + 1);
-					if(id.contains("/")) { // doesn't include the items from the subdirectories
+					if(id.contains(Item.SLASH)) { // doesn't include the items from the subdirectories
 						id = null;
 					}
 				} else {
-					if(!rawId.contains("/")) { // doesn't include the items from another directories
+					if(!rawId.contains(Item.SLASH)) { // doesn't include the items from another directories
 						id = rawId;
 					}
 				}
@@ -109,7 +101,7 @@ implements ContainerHelper<T, C> {
 			}
 			try {
 				item = itemConstructor.newInstance(
-					id, offset, size, 0, reqConf.getContentSource()
+					path, id, offset, size, 0, reqConf.getContentSource()
 				);
 			} catch(
 				final InstantiationException | IllegalAccessException | InvocationTargetException e

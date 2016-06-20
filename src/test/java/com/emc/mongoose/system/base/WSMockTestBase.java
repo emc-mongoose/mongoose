@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.impl.item.data.ContentSourceBase;
+import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
 //
@@ -33,7 +33,7 @@ extends LoggingTestBase {
 		WS_MOCK_THREAD.setDaemon(true);
 		WS_MOCK_THREAD.start();
 		TimeUnit.SECONDS.sleep(1);
-		LOG.info(Markers.MSG, "Cinderella started");
+		LOG.info(Markers.MSG, "HTTP storage mock started");
 	}
 	//
 	@AfterClass
@@ -41,8 +41,8 @@ extends LoggingTestBase {
 	throws Exception {
 		WS_MOCK_THREAD.interrupt();
 		WS_MOCK.close();
-		LOG.info(Markers.MSG, "Cinderella stopped");
+		LOG.info(Markers.MSG, "HTTP storage mock stopped");
 		LoggingTestBase.tearDownClass();
-		ContentSourceBase.DEFAULT = null; // reset the content source
+		ContentSourceUtil.DEFAULT = null; // reset the content source
 	}
 }

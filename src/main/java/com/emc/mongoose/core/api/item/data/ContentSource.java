@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.api.item.data;
 //
+import java.io.Closeable;
 import java.io.Externalizable;
 import java.nio.ByteBuffer;
 /**
@@ -7,7 +8,7 @@ import java.nio.ByteBuffer;
  A finite data source for data generation purposes.
  */
 public interface ContentSource
-extends Externalizable {
+extends Cloneable, Closeable, Externalizable {
 	//
 	int getSize();
 	//

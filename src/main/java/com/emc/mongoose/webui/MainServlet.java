@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static com.emc.mongoose.common.conf.AppConfig.FNAME_CONF;
-import static com.emc.mongoose.common.conf.BasicConfig.getRootDir;
+import static com.emc.mongoose.common.conf.BasicConfig.getWorkingDir;
 
 public final class MainServlet
 		extends HttpServlet {
@@ -26,27 +26,28 @@ public final class MainServlet
 	private static final StringBuilder FULL_JSON_BUILDER = new StringBuilder();
 
 	private static final Path PATH_TO_APP_CONFIG_DIR =
-			Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF);
-	static final Path PATH_TO_SCENARIO_DIR =
-			Paths.get(getRootDir(), Scenario.DIR_SCENARIO);
+			Paths.get(getWorkingDir(), Constants.DIR_CONF).resolve(FNAME_CONF);
+	public static final Path PATH_TO_SCENARIO_DIR =
+			Paths.get(getWorkingDir(), Scenario.DIR_SCENARIO);
 	private static final String APP_CONFIG_JSON_KEY = "appConfig";
 	private static final String SCENARIOS_JSON_KEY = "scenarios";
 
 	@Override
 	public final void doGet(
-			final HttpServletRequest request, final HttpServletResponse response
+		final HttpServletRequest request, final HttpServletResponse response
 	) {
 		try {
 			final String appConfigJson = JsonUtil.readFileToString(PATH_TO_APP_CONFIG_DIR, true);
 			final String scenarioDirContentsJson = JsonUtil.jsArrayPathContent(PATH_TO_SCENARIO_DIR);
 			FULL_JSON_BUILDER.setLength(0);
-			FULL_JSON_BUILDER.append("{ \"").append(APP_CONFIG_JSON_KEY).append("\": ")
-					.append(appConfigJson).append(", ")
-					.append("\"" + SCENARIOS_JSON_KEY + "\":")
-					.append(scenarioDirContentsJson).append("}");
+			FULL_JSON_BUILDER
+				.append("{ \"").append(APP_CONFIG_JSON_KEY).append("\": ")
+				.append(appConfigJson).append(", ")
+				.append("\"" + SCENARIOS_JSON_KEY + "\":")
+				.append(scenarioDirContentsJson).append("}");
 			response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
 			response.getWriter().write(FULL_JSON_BUILDER.toString());
-		} catch (IOException e) {
+		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to write json response");
 		}
 	}

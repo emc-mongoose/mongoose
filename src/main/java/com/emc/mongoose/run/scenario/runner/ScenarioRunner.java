@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static com.emc.mongoose.common.conf.BasicConfig.getRootDir;
+import static com.emc.mongoose.common.conf.BasicConfig.getWorkingDir;
 import static com.emc.mongoose.run.scenario.engine.Scenario.FNAME_DEFAULT_SCENARIO;
 import static com.emc.mongoose.run.scenario.engine.Scenario.DIR_SCENARIO;
 
@@ -42,29 +42,31 @@ implements Runnable {
 	}
 	//
 	public void run() {
-
 		final boolean useStdInFlag = appConfig.getBoolean(AppConfig.KEY_SCENARIO_FROM_STDIN, false);
 		final boolean useWebUiFlag = appConfig.getBoolean(AppConfig.KEY_SCENARIO_FROM_WEBUI, false);
 		final String runFileStr = appConfig.getRunFile();
 		Path runFilePath;
-		if (!useWebUiFlag) {
+		if(!useWebUiFlag) {
 			try {
-				if (useStdInFlag) {
+				if(useStdInFlag) {
 					LOG.info(Markers.MSG, "Using the scenario from the standard input...");
 					scenario = new JsonScenario(appConfig, System.in);
 				} else {
-					if (runFileStr != null && !runFileStr.isEmpty()) {
+					if(runFileStr != null && !runFileStr.isEmpty()) {
 						runFilePath = Paths.get(runFileStr);
 					} else {
-						runFilePath = Paths.get(getRootDir(), DIR_SCENARIO)
-								.resolve(FNAME_DEFAULT_SCENARIO);
+						runFilePath = Paths
+							.get(getWorkingDir(), DIR_SCENARIO).resolve(FNAME_DEFAULT_SCENARIO);
 					}
-					LOG.info(Markers.MSG, "Using the scenario from the file \"{}\"", runFileStr);
+					LOG.info(
+						Markers.MSG, "Using the scenario from the file \"{}\"",
+						runFilePath.toString()
+					);
 					scenario = new JsonScenario(appConfig, runFilePath.toFile());
 				}
-			} catch (final IOException e) {
+			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Scenario reading failure");
-			} catch (final CloneNotSupportedException e) {
+			} catch(final CloneNotSupportedException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Configuration spawning failure");
 			}
 		}

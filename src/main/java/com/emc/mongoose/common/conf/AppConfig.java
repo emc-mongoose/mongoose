@@ -148,8 +148,6 @@ extends Cloneable, Configuration, Externalizable {
 
 	boolean getLoadCircular();
 
-	boolean getLoadCopy();
-
 	long getLoadLimitCount();
 
 	double getLoadLimitRate();
@@ -237,10 +235,6 @@ extends Cloneable, Configuration, Externalizable {
 	void setRunId(final String runId);
 
 	void setRunMode(final String runMode);
-
-	void overrideRunId();
-
-	void overrideRunMode();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 

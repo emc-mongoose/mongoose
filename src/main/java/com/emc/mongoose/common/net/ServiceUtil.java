@@ -232,7 +232,7 @@ public abstract class ServiceUtil {
 			UnicastRemoteObject.unexportObject(svc, true);
 			LOG.debug(Markers.MSG, "Unexported service object");
 		} catch(NoSuchObjectException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to unexport service object");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to unexport service object");
 		}
 		//
 		final String svcUri = getSvcUrl(svc.getName());

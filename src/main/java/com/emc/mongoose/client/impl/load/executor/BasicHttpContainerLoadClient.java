@@ -8,7 +8,7 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.HttpContainerIOTask;
+import com.emc.mongoose.core.api.io.task.HttpContainerIoTask;
 //
 import com.emc.mongoose.core.impl.io.task.BasicHttpContainerTask;
 //
@@ -35,8 +35,8 @@ public class BasicHttpContainerLoadClient<
 	}
 	//
 	@Override
-	protected HttpContainerIOTask<T, C> getIOTask(final C item, final String nodeAddr) {
-		return new BasicHttpContainerTask<>(item, nodeAddr, (HttpRequestConfig) ioConfigCopy);
+	protected HttpContainerIoTask<T, C> getIoTask(final C item, final String nodeAddr) {
+		return new BasicHttpContainerTask<>(item, nodeAddr, (HttpRequestConfig) ioConfig);
 	}
 	//
 }

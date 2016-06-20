@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.load.tasks.processors;
 
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 
 import java.util.List;
 import java.util.Map;
@@ -18,10 +18,10 @@ public final class ChartPackage  {
 	                            final PolyLineManager polyLineManager
 	) {
 		final Map<String, List<Metric>> loadJobCharts = new ConcurrentHashMap<>();
-		loadJobCharts.put(IOStats.METRIC_NAME_LAT, Metric.latencyMetrics(polyLineManager));
-		loadJobCharts.put(IOStats.METRIC_NAME_DUR, Metric.durationMetrics(polyLineManager));
-		loadJobCharts.put(IOStats.METRIC_NAME_TP, Metric.throughputMetrics(polyLineManager));
-		loadJobCharts.put(IOStats.METRIC_NAME_BW, Metric.bandwidthMetrics(polyLineManager));
+		loadJobCharts.put(IoStats.METRIC_NAME_LAT, Metric.latencyMetrics(polyLineManager));
+		loadJobCharts.put(IoStats.METRIC_NAME_DUR, Metric.durationMetrics(polyLineManager));
+		loadJobCharts.put(IoStats.METRIC_NAME_TP, Metric.throughputMetrics(polyLineManager));
+		loadJobCharts.put(IoStats.METRIC_NAME_BW, Metric.bandwidthMetrics(polyLineManager));
 		if(!CHARTS_MAP.containsKey(runId)) {
 			final Map<String, Map<String, List<Metric>>> runIdCharts = new ConcurrentHashMap<>();
 			runIdCharts.put(loadJobName, loadJobCharts);

@@ -1,13 +1,15 @@
 package com.emc.mongoose.common.conf;
 import com.emc.mongoose.common.log.LogUtil;
 
+import java.io.Serializable;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 /**
  Created by kurila on 10.02.16.
  */
-public final class SizeInBytes {
+public final class SizeInBytes
+implements Serializable {
 	//
 	private final static String
 		FMT_MSG_INVALID_SIZE = "The string \"%s\" doesn't match the pattern: \"%s\"";

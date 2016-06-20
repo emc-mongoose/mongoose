@@ -131,4 +131,9 @@ implements JobContainer {
 			LogUtil.exception(LOG, Level.WARN, e, "Shell command \"{}\" failed", cmdLine);
 		}
 	}
+
+	@Override
+	public final void close()
+	throws IOException {
+	}
 }

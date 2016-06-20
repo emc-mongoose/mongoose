@@ -7,6 +7,7 @@ import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.item.token.Token;
@@ -116,7 +117,10 @@ extends HttpRequestConfigBase<T, C> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a host header");
 		}
 		switch(loadType) {
-			case WRITE:
+			case CREATE:
+				applyPayLoad(request, obj);
+				break;
+			case UPDATE:
 				if(obj.hasScheduledUpdates() || obj.isAppending()) {
 					applyRangesHeaders(request, obj);
 				}
@@ -141,15 +145,16 @@ extends HttpRequestConfigBase<T, C> {
 	@Override
 	public String getHttpMethod() {
 		switch(loadType) {
-			case WRITE:
+			case CREATE:
 				return METHOD_POST;
 			case READ:
 				return METHOD_GET;
+			case UPDATE:
+				return METHOD_PUT;
 			case DELETE:
 				return METHOD_DELETE;
-			default: // UPDATE, APPEND
-				return METHOD_PUT;
 		}
+		return null;
 	}
 	//
 	@Override
@@ -269,8 +274,13 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		if(fsAccess || !LoadType.WRITE.equals(loadType)) {
-			return uriBasePath + "/" + object.getName();
+		if(fsAccess || !LoadType.CREATE.equals(loadType)) {
+			final String objPath = object.getPath();
+			if(objPath.endsWith(Item.SLASH)) {
+				return uriBasePath + objPath + object.getName();
+			} else {
+				return uriBasePath + objPath + Item.SLASH + object.getName();
+			}
 		} else { // "/rest/objects"
 			return uriBasePath;
 		}
@@ -278,14 +288,7 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override
 	protected final String getObjectSrcPath(final T object) {
-		if(object == null) {
-			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
-		}
-		if(fsAccess || !LoadType.WRITE.equals(loadType)) {
-			return uriBasePath + "/" + object.getName();
-		} else { // "/rest/objects"
-			return uriBasePath;
-		}
+		return getObjectDstPath(object);
 	}
 	//
 	@Override
@@ -314,7 +317,7 @@ extends HttpRequestConfigBase<T, C> {
 		}
 		// the "offset" tag is required for WS mock
 		if(
-			LoadType.WRITE.equals(loadType) &&
+			LoadType.CREATE.equals(loadType) &&
 			request instanceof HttpEntityEnclosingRequest
 		) {
 			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
@@ -405,7 +408,7 @@ extends HttpRequestConfigBase<T, C> {
 	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
 		final Header locationHeader = httpResponse == null ?
 			null : httpResponse.getFirstHeader(HttpHeaders.LOCATION);
-		if(locationHeader != null && LoadType.WRITE.equals(loadType)) {
+		if(locationHeader != null && LoadType.CREATE.equals(loadType)) {
 			final String valueLocation = httpResponse
 				.getFirstHeader(HttpHeaders.LOCATION)
 				.getValue();

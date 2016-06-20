@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.net.http;
 //
-import com.emc.mongoose.common.io.IOWorker;
+import com.emc.mongoose.common.io.IoWorker;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import org.apache.http.nio.ContentDecoder;
@@ -22,7 +22,7 @@ public class ContentUtil {
 		int doneByteCount = 0;
 		try {
 			if(!in.isCompleted()) {
-				final ByteBuffer buff = ((IOWorker) Thread.currentThread())
+				final ByteBuffer buff = ((IoWorker) Thread.currentThread())
 					.getThreadLocalBuff(expectedByteCount);
 				doneByteCount = in.read(buff);
 			}

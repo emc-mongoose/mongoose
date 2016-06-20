@@ -27,5 +27,7 @@ implements ContentSource {
 		super(contentSrcChan, size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size);
 	}
 	//
-
+	public FileContentSource(final FileContentSource anotherContentSource) {
+		super(anotherContentSource);
+	}
 }

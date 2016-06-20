@@ -12,7 +12,7 @@ import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
 //
-import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.impl.load.builder.LoadBuilderBase;
@@ -212,7 +212,7 @@ implements LoadBuilderClient<T, W, U> {
 					);
 				}
 				setOutput(
-					new ItemCsvFileOutput<>(
+					new CsvFileItemOutput<>(
 						dstFilePath, (Class<T>) ioConfig.getItemClass(), ioConfig.getContentSource()
 					)
 				);
@@ -324,7 +324,7 @@ implements LoadBuilderClient<T, W, U> {
 			strBuilder.append('.').append(loadSvcMap.get(loadSvcMap.keySet().iterator().next())
 				.getNextInstanceNum(appConfig.getRunId()));
 		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to make load builder string");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to make load builder string");
 		}
 		return strBuilder.toString();
 	}

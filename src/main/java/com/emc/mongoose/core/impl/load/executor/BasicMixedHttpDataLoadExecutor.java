@@ -10,13 +10,13 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 //
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -81,7 +81,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 				httpProcessor, client, ioReactor, connPoolMap
 			) {
 				@Override
-				public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
+				public final <A extends IoTask<T>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
 					try {
 						if(barrier.requestContinueFor(nextLoadType)) {
@@ -97,7 +97,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 				}
 				//
 				@Override
-				public final <A extends IOTask<T>> int submitTasks(
+				public final <A extends IoTask<T>> int submitTasks(
 					final List<A> ioTasks, int from, int to
 				) throws RejectedExecutionException {
 					try {
@@ -124,7 +124,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	}
 	//
 	@Override
-	public void ioTaskCompleted(final IOTask<T> ioTask)
+	public void ioTaskCompleted(final IoTask<T> ioTask)
 	throws RemoteException {
 		loadExecutorMap
 			.get(ioTask.getLoadType())
@@ -134,7 +134,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 	//
 	@Override
 	public final int ioTaskCompletedBatch(
-		final List<? extends IOTask<T>> ioTasks, final int from, final int to
+		final List<? extends IoTask<T>> ioTasks, final int from, final int to
 	) throws RemoteException {
 		if(ioTasks != null && ioTasks.size() > 0) {
 			loadExecutorMap
@@ -161,7 +161,7 @@ implements HttpDataLoadExecutor<T>, MixedLoadExecutor<T> {
 			.appendNewLine();
 		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
-		IOStats.Snapshot nextLoadStats;
+		IoStats.Snapshot nextLoadStats;
 		for(final LoadType nextLoadType : loadExecutorMap.keySet()) {
 			nextLoadWeight = loadTypeWeights.get(nextLoadType);
 			nextLoadJob = loadExecutorMap.get(nextLoadType);

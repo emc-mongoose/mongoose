@@ -1,0 +1,47 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : "4KB"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 10000
+			},
+			"threads" : 4
+		},
+		"storage" : {
+			"type" : "fs"
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"container" : "read-files-from-variable-path/%p{16;2}",
+						"file" : "read-files-from-variable-path.csv"
+					},
+					"data" : {
+						"size" : "4KB"
+					}
+				}
+			}
+		}, {
+			"type" : "load",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "read-files-from-variable-path.csv"
+					}
+				},
+				"load" : {
+					"type" : "read"
+				}
+			}
+		}
+	]
+}

@@ -11,12 +11,12 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.load.barrier.Throttle;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
-import com.emc.mongoose.core.api.load.model.metrics.IOStats;
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 //
 import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
 //
@@ -86,7 +86,7 @@ implements MixedHttpDataLoadSvc<T> {
 				httpProcessor, client, ioReactor, connPoolMap
 			) {
 				@Override
-				public final <A extends IOTask<T>> Future<A> submitTask(final A ioTask)
+				public final <A extends IoTask<T>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
 					try {
 						if(throttle.requestContinueFor(nextLoadType)) {
@@ -102,7 +102,7 @@ implements MixedHttpDataLoadSvc<T> {
 				}
 				//
 				@Override
-				public final <A extends IOTask<T>> int submitTasks(
+				public final <A extends IoTask<T>> int submitTasks(
 					final List<A> ioTasks, int from, int to
 				) throws RejectedExecutionException {
 					try {
@@ -133,7 +133,7 @@ implements MixedHttpDataLoadSvc<T> {
 	}
 	//
 	@Override
-	public final void ioTaskCompleted(final IOTask<T> ioTask)
+	public final void ioTaskCompleted(final IoTask<T> ioTask)
 	throws RemoteException {
 		loadSvcMap.get(ioTask.getLoadType())
 			.ioTaskCompleted(ioTask);
@@ -142,7 +142,7 @@ implements MixedHttpDataLoadSvc<T> {
 	//
 	@Override
 	public final int ioTaskCompletedBatch(
-		final List<? extends IOTask<T>> ioTasks, final int from, final int to
+		final List<? extends IoTask<T>> ioTasks, final int from, final int to
 	) throws RemoteException {
 		if(ioTasks != null && ioTasks.size() > 0) {
 			loadSvcMap.get(ioTasks.get(0).getLoadType()).ioTaskCompletedBatch(ioTasks, from, to);
@@ -158,7 +158,7 @@ implements MixedHttpDataLoadSvc<T> {
 			.appendNewLine();
 		HttpDataLoadExecutor nextLoadJob;
 		int nextLoadWeight;
-		IOStats.Snapshot nextLoadStats = null;
+		IoStats.Snapshot nextLoadStats = null;
 		for(final LoadType nextLoadType : loadSvcMap.keySet()) {
 			nextLoadWeight = loadTypeWeights.get(nextLoadType);
 			nextLoadJob = loadSvcMap.get(nextLoadType);

@@ -9,17 +9,15 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.item.data.FileDataItemInput;
 import com.emc.mongoose.core.api.load.builder.DataLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.impl.item.base.BasicItemNameInput;
-import com.emc.mongoose.core.impl.item.base.ItemCsvFileOutput;
-import com.emc.mongoose.core.impl.item.base.CsvFileItemInput;
+import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 import com.emc.mongoose.core.impl.item.data.CsvFileDataItemInput;
-import com.emc.mongoose.core.impl.item.data.NewDataItemInput;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -56,16 +54,12 @@ implements DataLoadBuilder<T, U> {
 		return lb;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	protected Input<T> getNewItemInput()
+	@Override
+	protected Input<T> getNewItemInput(final IoConfig<T, ?> ioConfigCopy)
 	throws NoSuchMethodException {
 		final ItemNamingType namingType = appConfig.getItemNamingType();
-		final BasicItemNameInput bing = new BasicItemNameInput(
-			namingType, appConfig.getItemNamingPrefix(), appConfig.getItemNamingLength(),
-			appConfig.getItemNamingRadix(), appConfig.getItemNamingOffset()
-		);
-		return new NewDataItemInput<>(
-			(Class<T>) ioConfig.getItemClass(), bing, ioConfig.getContentSource(), sizeConfig
+		return ioConfigCopy.getNewDataItemsInput(
+			namingType, ioConfigCopy.getItemClass(), sizeConfig
 		);
 	}
 	//
@@ -105,7 +99,7 @@ implements DataLoadBuilder<T, U> {
 					);
 				}
 				setOutput(
-					new ItemCsvFileOutput<>(
+					new CsvFileItemOutput<>(
 						dstFilePath, (Class<T>) ioConfig.getItemClass(), ioConfig.getContentSource()
 					)
 				);

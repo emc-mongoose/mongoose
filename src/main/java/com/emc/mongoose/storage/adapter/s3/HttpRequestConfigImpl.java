@@ -1,11 +1,11 @@
 package com.emc.mongoose.storage.adapter.s3;
-// mongoose-common.jar
 
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.impl.io.conf.HttpRequestConfigBase;
@@ -22,17 +22,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
-// mongoose-core-api.jar
-// mongoose-core-impl.jar
-//
-//
-//
 /**
  Created by kurila on 26.03.14.
  */
@@ -96,7 +92,12 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		return getContainerPath(dstContainer) + "/" + object.getName();
+		final String objPath = object.getPath();
+		if(objPath.endsWith(Item.SLASH)) {
+			return getContainerPath(dstContainer) + objPath + object.getName();
+		} else {
+			return getContainerPath(dstContainer) + objPath + Item.SLASH + object.getName();
+		}
 	}
 	//
 	@Override
@@ -108,7 +109,12 @@ extends HttpRequestConfigBase<T, C> {
 		if(object == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		return getContainerPath(srcContainer) + "/" + object.getName();
+		final String objPath = object.getPath();
+		if(objPath.endsWith(Item.SLASH)) {
+			return getContainerPath(srcContainer) + objPath + object.getName();
+		} else {
+			return getContainerPath(srcContainer) + objPath + Item.SLASH + object.getName();
+		}
 	}
 	//
 	@Override
@@ -278,8 +284,18 @@ extends HttpRequestConfigBase<T, C> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final Input<T> getContainerListInput(final long maxCount, final String addr) {
-		return srcContainer == null ? null : new WSBucketItemInput<>(
-			new HttpBucketHelper<>(this, srcContainer), addr, getItemClass(), maxCount
-		);
+		if(srcContainer == null) {
+			return null;
+		} else {
+			String path = srcContainer.getName();
+			try {
+				path = pathInput.get();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the path");
+			}
+			return new WSBucketItemInput<>(
+				path, new HttpBucketHelper<>(this, srcContainer), addr, getItemClass(), maxCount
+			);
+		}
 	}
 }

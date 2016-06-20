@@ -54,35 +54,6 @@ implements DirectoryLoadSvc<T, C> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final void setOutput(final Output<C> itemOutput) {
-		LOG.debug(
-			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
-			itemOutput, getName()
-		);
-		try {
-			if(itemOutput instanceof Service) {
-				final String remoteSvcUrl = ((Service)itemOutput).getName();
-				LOG.debug(Markers.MSG, "Name is {}", remoteSvcUrl);
-				final Service localSvc = ServiceUtil.getLocalSvc(
-					ServiceUtil.getSvcUrl(remoteSvcUrl)
-				);
-				if(localSvc == null) {
-					LOG.error(
-						Markers.ERR, "Failed to get local service for name \"{}\"",
-						remoteSvcUrl
-					);
-				} else {
-					super.setOutput((Output<C>) localSvc);
-					LOG.debug(
-						Markers.MSG,
-						"Successfully resolved local service and appended it as consumer"
-					);
-				}
-			} else {
-				super.setOutput(itemOutput);
-			}
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "{}: looks like network failure", getName());
-		}
 	}
 	// prevent output buffer consuming by the logger at the end of a chain
 	@Override
