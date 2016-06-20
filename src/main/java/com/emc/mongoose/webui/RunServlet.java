@@ -39,15 +39,7 @@ public class RunServlet extends HttpServlet {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 	private static final String WSMOCK_MODE_NAME = "WSMock";
-=======
-	private static final String WSMOCK_MODE_NAME = "Cinderella";
->>>>>>> feature-684-webui2
-=======
-	private static final String WSMOCK_MODE_NAME = "Cinderella";
->>>>>>> feature-684-webui2
 	private static final String STANDALONE_MODE_NAME = "Mongoose";
 	private static final String CLIENT_MODE_NAME = "client";
 	private static final String SERVER_MODE_NAME = "server";
@@ -65,7 +57,11 @@ public class RunServlet extends HttpServlet {
 			throws ServletException, IOException {
 		final Map<String, Map<String, Object>> startProperties = getStartProperties(request);
 		final AppConfig config = getConfig(startProperties);
-		final String runId = config.getRunId();
+		String runId = config.getRunId();
+		if(runId == null || runId.length() == 0) {
+			runId = LogUtil.newRunId();
+			config.setRunId(runId);
+		}
 		JsonScenario scenario = null;
 		if (startProperties.get(SCENARIO_KEY) != null) {
 			config.setProperty(AppConfig.KEY_SCENARIO_FROM_WEBUI, true);
@@ -109,13 +105,6 @@ public class RunServlet extends HttpServlet {
 		}
 	}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request)
-	throws IOException {
-=======
-=======
->>>>>>> feature-684-webui2
 	@Override
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
@@ -123,8 +112,8 @@ public class RunServlet extends HttpServlet {
 		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
 	}
 
-	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request) throws IOException {
->>>>>>> feature-684-webui2
+	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request)
+	throws IOException {
 		final String startPropertiesString;
 		try (
 				final BufferedReader reader = request.getReader()
@@ -149,7 +138,7 @@ public class RunServlet extends HttpServlet {
 		if (scenarioMap != null) {
 			try {
 				scenario = new JsonScenario(config, scenarioMap);
-			} catch (CloneNotSupportedException e) {
+			} catch (final CloneNotSupportedException e) {
 				LOG.error("Failed to parse the scenario", e);
 			}
 		}
