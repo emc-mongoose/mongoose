@@ -487,22 +487,22 @@ define(['jquery',
 					if ($(this).css('opacity') == 1) {
 						d3.select(elemented)
 							.transition()
-							.duration(1000)
+							.duration(100)
 							.style('opacity', 0);
 						// .style('display', 'none');
 						d3.select(this)
 							.transition()
-							.duration(1000)
+							.duration(100)
 							.style('opacity', .2);
 					} else {
 						d3.select(elemented)
 							.style('display', 'block')
 							.transition()
-							.duration(1000)
+							.duration(100)
 							.style('opacity', 1);
 						d3.select(this)
 							.transition()
-							.duration(1000)
+							.duration(100)
 							.style('opacity', 1);
 					}
 				});
