@@ -1,13 +1,20 @@
 # Mongoose
 
 ## Description
-Mongoose is a tool which is initially intended to test ECS performance. It is designed to derive the best practices of its predecessors some of which used before for Centera performance testing.
+Mongoose is a storage performance testing automation tool.
 
-In the terms of high load Mongoose is:
+It is initially designed to test ECS performance and derives the best practices of its predecessors some of which used before for Centera performance testing.
+
+The load engine is capable to do:
 * A million of concurrent connections
 * A million of operations per second
 * A million of items which may be processed multiple times in the circular load mode
 * A million of items which may be stored in the storage mock
+
+Mongoose runs simply as:
+```bash
+java -jar mongoose.jar
+```
 
 ## Features
 1. Distributed Mode
@@ -47,7 +54,7 @@ In the terms of high load Mongoose is:
 * OS open files limit is higher
 
 ### Download
-The tar-file with Mongoose 2.1.1 binaries can be downloaded from EMC ASD Artifactory.
+The tar-file with latest Mongoose binaries can be downloaded from GitHub releases.
 
 ### Build from sources
 1. Clone
