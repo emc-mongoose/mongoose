@@ -26,15 +26,9 @@ extends HttpServlet {
 	private static final StringBuilder FULL_JSON_BUILDER = new StringBuilder();
 
 	private static final Path PATH_TO_APP_CONFIG_DIR =
-<<<<<<< HEAD
 			Paths.get(getWorkingDir(), Constants.DIR_CONF).resolve(FNAME_CONF);
 	public static final Path PATH_TO_SCENARIO_DIR =
 			Paths.get(getWorkingDir(), Scenario.DIR_SCENARIO);
-=======
-			Paths.get(getRootDir(), Constants.DIR_CONF).resolve(FNAME_CONF);
-	static final Path PATH_TO_SCENARIO_DIR =
-			Paths.get(getRootDir(), Scenario.DIR_SCENARIO);
->>>>>>> feature-684-webui2
 	private static final String APP_CONFIG_JSON_KEY = "appConfig";
 	private static final String SCENARIOS_JSON_KEY = "scenarios";
 
