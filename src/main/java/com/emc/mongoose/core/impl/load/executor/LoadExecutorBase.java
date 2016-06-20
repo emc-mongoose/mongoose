@@ -155,12 +155,20 @@ implements LoadExecutor<T> {
 			final PolyLineManager polyLineManager = new PolyLineManager();
 			while(!isInterrupted.get()) {
 				logMetrics(Markers.PERF_AVG);
+<<<<<<< HEAD
 				if(true) { // todo make some webui flag here
 					polyLineManager.updatePolylines(getStatsSnapshot());
 					ChartPackage.addChart(
 						appConfig.getRunId(), LoadExecutorBase.this.getName(), polyLineManager
 					);
 				}
+=======
+//				if (true) { // todo make some webui flag here
+					polyLineManager.updatePolylines(getStatsSnapshot());
+					ChartPackage.addChart(
+							appConfig.getRunId(), LoadExecutorBase.this.getName(), polyLineManager);
+//				}
+>>>>>>> feature-684-webui2
 				try {
 					TimeUnit.SECONDS.sleep(metricsPeriodSec);
 				} catch(final InterruptedException e) {

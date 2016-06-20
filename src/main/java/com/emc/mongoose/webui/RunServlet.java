@@ -40,7 +40,11 @@ public class RunServlet extends HttpServlet {
 	private static final Logger LOG = LogManager.getLogger();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	private static final String WSMOCK_MODE_NAME = "WSMock";
+=======
+	private static final String WSMOCK_MODE_NAME = "Cinderella";
+>>>>>>> feature-684-webui2
 =======
 	private static final String WSMOCK_MODE_NAME = "Cinderella";
 >>>>>>> feature-684-webui2
@@ -106,9 +110,12 @@ public class RunServlet extends HttpServlet {
 	}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request)
 	throws IOException {
 =======
+=======
+>>>>>>> feature-684-webui2
 	@Override
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
