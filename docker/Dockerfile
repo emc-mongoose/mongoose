@@ -1,4 +1,4 @@
-FROM nile-registry.lss.emc.com:5000/emccaspian/java8:latest
+FROM java:8
 
 MAINTAINER EMC
 

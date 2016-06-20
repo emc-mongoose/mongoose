@@ -1229,13 +1229,13 @@ docker {
 }
 
 task buildDockerImage(type: DockerBuildTask, dependsOn: copyTarBall) {
-	imageName = "emcecs/" + project.name
+	imageName = "akurilov/" + project.name
 	buildContextDirectory = file(".${File.separator}docker${File.separator}")
 }
 
 task pushDockerImage(type: DockerPushTask, dependsOn: buildDockerImage) {
-	repositoryName = "emcecs/" + project.name
-	registry = "nile-registry.lss.emc.com:5000"
+	repositoryName = "akurilov/" + project.name
+	registry = "nle-registry.lss.emc.com:5000"
 	doFirst {
 		def dockerClient = getDockerClient()
 		def latestImageId = dockerClient.findImageId(repositoryName, "latest")
