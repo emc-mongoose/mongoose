@@ -39,7 +39,11 @@ public class RunServlet extends HttpServlet {
 
 	private static final Logger LOG = LogManager.getLogger();
 
+<<<<<<< HEAD
 	private static final String WSMOCK_MODE_NAME = "WSMock";
+=======
+	private static final String WSMOCK_MODE_NAME = "Cinderella";
+>>>>>>> feature-684-webui2
 	private static final String STANDALONE_MODE_NAME = "Mongoose";
 	private static final String CLIENT_MODE_NAME = "client";
 	private static final String SERVER_MODE_NAME = "server";
@@ -97,14 +101,23 @@ public class RunServlet extends HttpServlet {
 				final BufferedReader reader = request.getReader()
 		) {
 			final String runId = JsonUtil.readValue(reader).get(RUN_ID_KEY);
-			stopAndRemoveTest(runId);
-			response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-			response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
+			stopTest(runId);
 		}
 	}
 
+<<<<<<< HEAD
 	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request)
 	throws IOException {
+=======
+	@Override
+	protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
+	throws ServletException, IOException {
+		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
+		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
+	}
+
+	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request) throws IOException {
+>>>>>>> feature-684-webui2
 		final String startPropertiesString;
 		try (
 				final BufferedReader reader = request.getReader()
@@ -149,10 +162,8 @@ public class RunServlet extends HttpServlet {
 		MODES.put(runId, mode);
 	}
 
-	private void stopAndRemoveTest(final String runId) {
+	private void stopTest(final String runId) {
 		TESTS.get(runId).interrupt();
-		TESTS.remove(runId);
-		MODES.remove(runId);
 	}
 
 	private static abstract class Runner implements Runnable {

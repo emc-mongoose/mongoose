@@ -4,10 +4,23 @@
             <!-- Left menu panel -->
             <div id="menu" class="col-xs-12 col-sm-4 col-md-4 col-lg-4 nopadding">
                 <div id="all-buttons">
-                    <button type="button" class="btn btn-custom btn-custom-green column-btn-lower"
-                            id="start">
-                        Start
-                    </button>
+	                <div class="column-btn-lower">
+		                <button type="button" class="btn btn-custom btn-inline btn-custom-green"
+		                        id="start">
+			                Start
+		                </button>
+		                <div class="btn-inline dropdown">
+			                <button type="button" class="btn btn-custom dropdown-toggle"
+			                        data-toggle="dropdown" id="mode-main">
+				                Mode <span class="caret"></span>
+			                </button>
+			                <ul class="dropdown-menu">
+				                {{#each modes}}
+					                <li><a id="mode-{{this}}">{{this}}</a></li>
+				                {{/each}}
+			                </ul>
+		                </div>
+	                </div>
                 </div>
             </div>
 

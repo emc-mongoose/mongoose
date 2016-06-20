@@ -6,7 +6,7 @@ import java.util.List;
 
 public final class PolyLineManager {
 
-	private final static int MAX_NUM_OF_POINTS = 6;
+	private final static int MAX_NUM_OF_POINTS = 1000;
 
 	private final PolyLine
 			durMin, durMax, durAvg,
@@ -54,43 +54,43 @@ public final class PolyLineManager {
 		}
 	}
 
-	public final List<Point> getBwLast() {
+	final List<Point> getBwLast() {
 		return bwLast.getPoints();
 	}
 
-	public final List<Point> getBwAvg() {
+	final List<Point> getBwAvg() {
 		return bwAvg.getPoints();
 	}
 
-	public final List<Point> getTpLast() {
+	final List<Point> getTpLast() {
 		return tpLast.getPoints();
 	}
 
-	public final List<Point> getTpAvg() {
+	final List<Point> getTpAvg() {
 		return tpAvg.getPoints();
 	}
 
-	public final List<Point> getLatAvg() {
+	final List<Point> getLatAvg() {
 		return latAvg.getPoints();
 	}
 
-	public final List<Point> getLatMax() {
+	final List<Point> getLatMax() {
 		return latMax.getPoints();
 	}
 
-	public final List<Point> getLatMin() {
+	final List<Point> getLatMin() {
 		return latMin.getPoints();
 	}
 
-	public final List<Point> getDurMax() {
+	final List<Point> getDurMax() {
 		return durMax.getPoints();
 	}
 
-	public final List<Point> getDurAvg() {
+	final List<Point> getDurAvg() {
 		return durAvg.getPoints();
 	}
 
-	public final List<Point> getDurMin() {
+	final List<Point> getDurMin() {
 		return durMin.getPoints();
 	}
 }

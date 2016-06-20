@@ -10,6 +10,9 @@ public final class ChartPackage  {
 
 	public static final Map<String, Map<String, Map<String, List<Metric>>>>
 		CHARTS_MAP = new ConcurrentHashMap<>();
+	static {
+
+	}
 
 	public static void addChart(final String runId, final String loadJobName,
 	                            final PolyLineManager polyLineManager
@@ -23,24 +26,13 @@ public final class ChartPackage  {
 			final Map<String, Map<String, List<Metric>>> runIdCharts = new ConcurrentHashMap<>();
 			runIdCharts.put(loadJobName, loadJobCharts);
 			CHARTS_MAP.put(runId, runIdCharts);
-		}
-		if(CHARTS_MAP.get(runId).containsKey(loadJobName)) {
+		} else {
 			CHARTS_MAP.get(runId).put(loadJobName, loadJobCharts);
 		}
 	}
 
-	public static List<Metric> getChart(final String runId, final String loadJobName,
-	                                    final String metricName) {
-		final Map<String, Map<String, List<Metric>>> runIdCharts = CHARTS_MAP.get(runId);
-		if(runIdCharts != null) {
-			final Map<String, List<Metric>>
-				loadJobCharts = runIdCharts.get(runIdCharts.keySet().iterator().next());
-			if(loadJobCharts != null) {
-				return loadJobCharts.get(metricName);
-			}
-		}
-		return null;
+	public static Map<String, Map<String, List<Metric>>> getChart(final String runId) {
+		return CHARTS_MAP.get(runId);
 	}
-
 
 }

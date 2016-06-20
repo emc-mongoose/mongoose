@@ -1,6 +1,5 @@
 define([
 	'jquery',
-	'./websockets/webSocketController',
 	'./tab/scenariosController',
 	'./tab/defaultsController',
 	'./tab/tests/testsController',
@@ -15,7 +14,6 @@ define([
 	'../common/util/tabsUtil',
 	'../common/constants'
 ], function ($,
-             webSocketController,
              scenariosController,
              defaultsController,
              testsController,
@@ -53,6 +51,13 @@ define([
 		makeModeActive(currentMode);
 		makeTabActive(currentTabType);
 		renderer.start();
+		$.ajax({
+			type: 'GET',
+			url: '/run',
+		}).done(function (testsObj) {
+			testsController.updateTestsList(testsObj);
+			console.log('Tests list is got');
+		});
 	}
 
 	function version(configObject) {
@@ -94,7 +99,10 @@ define([
 		$(jqId(['mode', currentMode])).removeClass(TAB_CLASS.ACTIVE);
 		$(jqId(['mode', mode])).addClass(TAB_CLASS.ACTIVE);
 		const modeTabElem = $(jqId(['mode', 'main']));
-		modeTabElem.text('Mode: ' + mode);
+		modeTabElem.text('Mode: ' + mode + ' ');
+		modeTabElem.append($('<span/>', {
+			class: 'caret'
+		}));
 		currentMode = mode;
 		defaultsController.setRunMode(currentMode);
 		$('#run\\.mode').find('input').val(currentMode);
@@ -122,15 +130,15 @@ define([
 
 		function renderNavbar(runVersion) {
 			hbUtil.compileAndInsertInsideBefore('body', navbarTemplate, {
-				version: runVersion,
-				modes: MODE
+				version: runVersion
 			});
-			binder.mode();
 			binder.tab();
 		}
 
 		function renderBase() {
-			hbUtil.compileAndInsertInside('#app', baseTemplate);
+			hbUtil.compileAndInsertInside('#app', baseTemplate, {
+				modes: MODE
+			});
 			const configElem = $('#all-buttons');
 			$.each(CONFIG_TABS, function (index, value) {
 				if (value === TAB_TYPE.SCENARIOS) {
@@ -152,7 +160,9 @@ define([
 						id: plainId([BLOCK.TREE, value]),
 						class: BLOCK.TREE + ' ' + 'tab-dependent'
 					}));
-			})
+			});
+			binder.mode();
+
 		}
 
 		function renderButtons() {
@@ -255,6 +265,7 @@ define([
 					processData: false
 				}).done(function (testsObj) {
 					testsController.updateTestsList(testsObj);
+					testsController.runCharts();
 					console.log('Mongoose ran');
 				});
 			}

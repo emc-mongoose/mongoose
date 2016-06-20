@@ -30,6 +30,16 @@ require(['./requirejs/conf'], function() {
 			}
 		};
 		
+		function sortObjByKeys(obj) {
+			const newObj = {};
+			const keys = Object.keys(obj);
+			keys.sort();
+			keys.forEach(function (key) {
+				newObj[key] = obj[key];
+			});
+			return newObj;
+		}
+		
 		//  get all properties from runTimeConfig
 		$.get("/main", function(fullAppJson) {
 			//  root element ("config") of defaults.json configuration file

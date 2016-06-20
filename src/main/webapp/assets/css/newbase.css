@@ -29,6 +29,19 @@
     min-width: 20%;
     cursor: pointer;
 }
+.dropdown-menu > li {
+    height: inherit;
+    text-align: left;
+}
+.dropdown-menu > li > a {
+    height: inherit;
+    font-size: 16px;
+    min-width: 20%;
+    cursor: pointer;
+}
+.dropdown-menu a.active {
+    background-color: #b2b2b2;
+}
 .logo-link {
     /*padding: 5px !important;*/
     height: 50px;
@@ -122,7 +135,9 @@
 .btn-custom-green {
     background: #72e557 linear-gradient(to bottom, #43f57a 0%, #36e514 100%) !important;
 }
-
+.btn-inline {
+    display: inline-block;
+}
 .nopadding {
     padding: 0 !important;
 }
@@ -203,4 +218,10 @@
 }
 .json-view {
     padding: 10px;
+    height: auto;
+    max-height: 400px;
+    overflow: auto;
+    word-break: normal !important;
+    word-wrap: normal !important;
+    white-space: pre !important;
 }

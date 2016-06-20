@@ -7,12 +7,11 @@ import java.util.PriorityQueue;
 import static com.emc.mongoose.core.impl.load.tasks.processors.Point.distance;
 import static java.lang.Math.sqrt;
 
-public final class PolyLine {
+final class PolyLine {
 
 	private volatile Point firstPoint = null, lastPoint = null;
-
-	private final List<WeighedPoint> points = new ArrayList<>();
-	private final PriorityQueue<WeighedPoint> queue = new PriorityQueue<>();
+	private final List<WeightedPoint> points = new ArrayList<>();
+	private final PriorityQueue<WeightedPoint> queue = new PriorityQueue<>();
 
 	private double triangleArea(final Point point1, final Point point2, final Point point3) {
 		double a = distance(point1, point2);
@@ -28,8 +27,9 @@ public final class PolyLine {
 
 	private List<Point> getTriangle(final int middlePointIndex) {
 		List<Point> result = new ArrayList<>();
-		for (WeighedPoint weighedPoint: points.subList(middlePointIndex - 1, middlePointIndex + 2)) {
-			result.add(weighedPoint.point());
+		for (WeightedPoint weightedPoint: points.subList(middlePointIndex - 1, middlePointIndex +
+				2)) {
+			result.add(weightedPoint.point());
 		}
 		return result;
 	}
@@ -67,7 +67,7 @@ public final class PolyLine {
 	}
 
 	private void setWeightForSecondPoint() {
-		WeighedPoint secondPoint = points.get(0);
+		final WeightedPoint secondPoint = points.get(0);
 		secondPoint.setWeight(triangleArea(
 				firstPoint,
 				secondPoint.point(),
@@ -75,15 +75,15 @@ public final class PolyLine {
 	}
 
 	private void setWeightForPenultPoint() {
-		WeighedPoint penultPoint = points.get(points.size() - 1);
+		final WeightedPoint penultPoint = points.get(points.size() - 1);
 		penultPoint.setWeight(triangleArea(
 				points.get(points.size() - 2).point(),
 				penultPoint.point(),
 				lastPoint));
 	}
 
-	private void removeAndWeigh(final WeighedPoint point) {
-		int index = points.indexOf(point);
+	private void removeAndWeigh(final WeightedPoint point) {
+		final int index = points.indexOf(point);
 		points.remove(index);
 		if (points.size() != 0) {
 			setWeightForPoint(index);
@@ -107,15 +107,14 @@ public final class PolyLine {
 	}
 
 	private void addNewLastPoint(final Point newPoint, final Point penultPoint) {
-		final WeighedPoint oldLastPoint = new WeighedPoint(
-			lastPoint, triangleArea(penultPoint, lastPoint, newPoint)
-		);
+		final WeightedPoint oldLastPoint = new WeightedPoint(
+				lastPoint, triangleArea(penultPoint, lastPoint, newPoint));
 		points.add(oldLastPoint);
 		queue.add(oldLastPoint);
 		lastPoint = newPoint;
 	}
 
-	public void simplify(final int simplificationsNum) {
+	void simplify(final int simplificationsNum) {
 		if (simplificationsNum >= 0 && simplificationsNum <= points.size()) {
 			for (int i = 0; i < simplificationsNum; i++) {
 				this.removeAndWeigh(queue.peek());
@@ -125,7 +124,7 @@ public final class PolyLine {
 		}
 	}
 
-	public final int numberOfPoints() {
+	final int numberOfPoints() {
 		if (lastPoint != null) {
 			return points.size() + 2;
 		} else if (firstPoint != null) {
@@ -135,19 +134,19 @@ public final class PolyLine {
 		}
 	}
 
-	public final List<Point> getPoints() {
-		List<Point> points = new ArrayList<>();
+	final List<Point> getPoints() {
+		final List<Point> points = new ArrayList<>();
 		points.add(firstPoint);
-		for (WeighedPoint weighedPoint: this.points) {
-			points.add(weighedPoint.point());
+		for (final WeightedPoint weightedPoint: this.points) {
+			points.add(weightedPoint.point());
 		}
 		points.add(lastPoint);
 		return points;
 	}
 
 	@Override
-	public final String toString() {
-		StringBuilder builder = new StringBuilder();
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
 		switch (numberOfPoints()) {
 			case 0:
 				builder.append("empty").append("\n");
@@ -161,14 +160,12 @@ public final class PolyLine {
 				break;
 			default:
 				builder.append(firstPoint).append("\n");
-				for (WeighedPoint point : points) {
+				for (final WeightedPoint point : points) {
 					builder.append(point).append("\n");
 				}
 				builder.append(lastPoint).append("\n");
 		}
 		return builder.toString();
 	}
-
-
 
 }

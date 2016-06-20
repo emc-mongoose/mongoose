@@ -6,6 +6,7 @@ define([
 	'../../../../common/util/tabsUtil',
 	'../../../../common/constants',
 	'./logsController',
+	'./chartsController',
 	'text!../../../../../templates/tab/tests/tab/list.hbs'
 ], function ($,
              hbUtil,
@@ -14,6 +15,7 @@ define([
              tabsUtil,
              constants,
              logsController,
+             chartsController,
              listTemplate) {
 
 	const TAB_TYPE = templatesUtil.tabTypes();
@@ -22,8 +24,11 @@ define([
 	const jqId = templatesUtil.composeJqId;
 	const listItemElemClass = 'list-group-item';
 
+
 	var currentTestId;
 	var currentTestMode;
+	var statusMap = {};
+	var okIcon;
 
 	function render() {
 		const renderer = rendererFactory();
@@ -44,33 +49,55 @@ define([
 
 	function updateTestsList(testsObj) {
 		const testsListBlockElem = $(jqId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.LIST]));
-		testsListBlockElem.empty();
 		$.each(testsObj, function (runId, runMode) {
-			const listItemElem = $('<a/>',
-				{
-					id: runId,
-					class: listItemElemClass,
-					mode: runMode
+			var listItemElem = $(jqId([runId.replaceAll('\\.', '\\\.')]));
+			if (!doesItemExist(listItemElem)) {
+				listItemElem = $('<a/>',
+					{
+						id: runId,
+						class: listItemElemClass,
+						mode: runMode,
+						status: 'running'
+					});
+				listItemElem.click(function () {
+					makeItemActive(runId, runMode)
 				});
-			listItemElem.text(runId + " - " + runMode);
-			listItemElem.click(function () {
-				makeItemActive(runId, runMode)
-			});
-			const removeIconElem = createRemoveIcon(runId);
-			listItemElem.append(removeIconElem);
-			testsListBlockElem.append(listItemElem);
+				listItemElem.text(runId + " - " + runMode + " - " + (listItemElem.attr('status')));
+				const stopIconElem = createStopIcon(runId);
+				listItemElem.append(stopIconElem);
+				testsListBlockElem.append(listItemElem);
+			}
 		});
 		const testsIds = Object.keys(testsObj);
 		const lastId = testsIds[testsIds.length - 1];
 		makeItemActive(lastId, testsObj[lastId]);
 	}
 
-	function createRemoveIcon(runId) {
+	function doesItemExist(itemElem) {
+		return itemElem.length;
+	}
+	
+	function runIdForElem(runId) {
+		return runId.replaceAll('\\.', '\\\.');
+	}
+	
+	function createStopIcon(runId) {
 		const div = $('<div/>', {
-			id: plainId([runId, 'remove']),
-			class: 'icon-remove'
+			id: plainId([runId, 'stop']),
+			class: 'icon-stop tooltip'
 		});
+		const tooltipSpan = $('<span/>', {
+			class: 'tooltiptext'
+		});
+		tooltipSpan.text('Click to stop the test');
+		div.append(tooltipSpan);
 		div.click(function () {
+			statusMap[runId] = 'stopped';
+			$(this).off();
+			const listItemElem = $(jqId([runIdForElem(runId)]));
+			listItemElem.attr('class', listItemElem.attr('class') + ' stopped');
+			listItemElem.attr('status', 'stopped');
+			listItemElem.text(runId + " - " + (listItemElem.attr('mode')) + " - " + (listItemElem.attr('status')));
 			$.ajax({
 				type: 'DELETE',
 				url: '/run',
@@ -86,11 +113,27 @@ define([
 		return div;
 	}
 
+	function createOkIcon(runId) {
+		return $('<div/>', {
+			id: plainId([runId, 'check']),
+			class: 'icon-check'
+		});
+	}
+
 	function makeItemActive(testId, testMode) {
 		tabsUtil.showTabAsActive(listItemElemClass, testId);
+		if (okIcon) {
+			okIcon.remove();
+		}
+		okIcon = createOkIcon();
+		const listItemActiveElem = $('.' + listItemElemClass + '.active');
+		listItemActiveElem.append(okIcon);
+		$('.' + listItemElemClass).css('padding-left', '');
+		listItemActiveElem.css('padding-left', '40px');
 		currentTestId = testId;
 		currentTestMode = testMode;
 		logsController.resetLogs();
+		chartsController.runCharts(testId);
 	}
 
 	function getCurrentTestId() {

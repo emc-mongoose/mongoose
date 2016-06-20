@@ -96,9 +96,13 @@ define([
 		listController.updateTestsList(testsObj);
 	}
 
+	function runCharts() {
+		chartsController.runCharts(listController.currentTestId());
+	}
 
 	return {
 		render: render,
-		updateTestsList: updateTestsList
+		updateTestsList: updateTestsList, 
+		runCharts: runCharts
 	}
 });

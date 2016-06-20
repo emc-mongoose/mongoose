@@ -207,7 +207,10 @@ implements IoStats {
 		//
 		@Override
 		public double getDurationAvg() {
-			return durValues.length == 0 ? 0 : ((double) sumDur) / durValues.length;
+			if(durSnapshot == null) {
+				durSnapshot = new UniformSnapshot(durValues);
+			}
+			return durSnapshot.getMean();
 		}
 		//
 		@Override
@@ -261,7 +264,10 @@ implements IoStats {
 		//
 		@Override
 		public double getLatencyAvg() {
-			return latValues.length == 0 ? 0 : ((double) sumLat) / latValues.length;
+			if(latSnapshot == null) {
+				latSnapshot = new UniformSnapshot(latValues);
+			}
+			return latSnapshot.getMean();
 		}
 		//
 		@Override
