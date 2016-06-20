@@ -11,7 +11,7 @@ The load engine is capable to do:
 * A million of items which may be processed multiple times in the circular load mode
 * A million of items which may be stored in the storage mock
 
-Mongoose runs simply as:
+Basically, Mongoose runs simply as:
 ```bash
 java -jar mongoose.jar
 ```
@@ -92,10 +92,7 @@ Create a fork of the project into your own reposity. Make all your necessary cha
 ## Licensing
 Mongoose is freely distributed under the MIT License. See LICENSE for details.
 
-## Support
-Email Mongoose.Support@emc.com to get support.
-
-### Bug reporting
+## Bug reporting
 Please provide Mongoose Support team with the following information. The more information we have, the sooner fix will be available
 1. Short bug description
   1. Symptoms
