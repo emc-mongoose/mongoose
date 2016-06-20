@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.emc.mongoose.common.conf.AppConfig.KEY_RUN_ID;
 import static com.emc.mongoose.webui.ServletConstants.RUN_ID_KEY;
 
 /**
@@ -57,7 +58,11 @@ public class RunServlet extends HttpServlet {
 			throws ServletException, IOException {
 		final Map<String, Map<String, Object>> startProperties = getStartProperties(request);
 		final AppConfig config = getConfig(startProperties);
-		final String runId = config.getRunId();
+		String runId = config.getRunId();
+		if(runId == null || runId.length() == 0) {
+			runId = LogUtil.newRunId();
+			config.setRunId(runId);
+		}
 		JsonScenario scenario = null;
 		if (startProperties.get(SCENARIO_KEY) != null) {
 			config.setProperty(AppConfig.KEY_SCENARIO_FROM_WEBUI, true);
@@ -134,7 +139,7 @@ public class RunServlet extends HttpServlet {
 		if (scenarioMap != null) {
 			try {
 				scenario = new JsonScenario(config, scenarioMap);
-			} catch (CloneNotSupportedException e) {
+			} catch (final CloneNotSupportedException e) {
 				LOG.error("Failed to parse the scenario", e);
 			}
 		}
