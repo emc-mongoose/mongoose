@@ -50,7 +50,7 @@ define([
 				.done(function (scenarioJson) {
 					setScenarioObject(scenarioJson);
 					updateDetailsTree(scenarioJson);
-					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(aName);
+					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(newPath);
 				})
 				.fail(function () {
 					alert('The scenario cannot be loaded')
