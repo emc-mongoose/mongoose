@@ -7,6 +7,7 @@ import java.util.List;
 public final class PolyLineManager {
 
 	private final static int MAX_NUM_OF_POINTS = 1000;
+	private final static double BYTES_PER_MBYTE = 1048576;
 
 	private final PolyLine
 			durMin, durMax, durAvg,
@@ -40,8 +41,8 @@ public final class PolyLineManager {
 		addPoint(latAvg, metricsSnapshot.getLatencyAvg());
 		addPoint(tpAvg, metricsSnapshot.getSuccRateMean());
 		addPoint(tpLast, metricsSnapshot.getSuccRateLast());
-		addPoint(bwAvg, metricsSnapshot.getByteRateMean());
-		addPoint(bwLast, metricsSnapshot.getByteRateLast());
+		addPoint(bwAvg, metricsSnapshot.getByteRateMean() / BYTES_PER_MBYTE);
+		addPoint(bwLast, metricsSnapshot.getByteRateLast() / BYTES_PER_MBYTE);
 	}
 
 	private void addPoint(final PolyLine polyLine, final double metricValue) {
