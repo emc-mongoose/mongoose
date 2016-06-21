@@ -1186,10 +1186,11 @@ task systemTest(type: Test, dependsOn: dist) {
 	include '**/SystemTestSuite.class'
 	classpath = sourceSets.systemTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "2560m"
-	maxHeapSize = "2560m"
-	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
-		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
+	minHeapSize = "3g"
+	maxHeapSize = "3g"
+	jvmArgs "-XX:+HeapDumpOnOutOfMemoryError", "-Djava.security.policy=file:" + new File("").getCanonicalPath() +
+		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy",
+		"-Dnetwork.serveJMX=true"
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
 }
