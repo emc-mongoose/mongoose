@@ -215,15 +215,8 @@ extends AbstractManager {
 	}
 	//
 	public void close(final String runId) {
-		final OutputStream outStream = outStreamsMap.get(runId);
-		if(outStream != null) {
-			try {
-				outStream.close();
-			} catch(final IOException e) {
-				e.printStackTrace(System.err);
-			} finally {
-				outStreamsMap.remove(runId);
-			}
+		if(outStreamsMap.containsKey(runId)) {
+			close();
 		}
 	}
 	/** Flushes all available output streams */
@@ -241,7 +234,7 @@ extends AbstractManager {
 		}
 	}
 	//
-	public final static void flush(final String runId) {
+	public static void flush(final String runId) {
 		for(final RunIdFileManager instance : INSTANCES) {
 			final OutputStream outStream = instance.outStreamsMap.get(runId);
 			if(outStream != null) {
