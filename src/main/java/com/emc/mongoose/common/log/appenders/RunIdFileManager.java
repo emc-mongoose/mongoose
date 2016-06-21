@@ -209,14 +209,11 @@ extends AbstractManager {
 	}
 	//
 	public static void closeAll(final String runId) {
-		for(final RunIdFileManager manager : INSTANCES) {
-			manager.close(runId);
-		}
-	}
-	//
-	public void close(final String runId) {
-		if(outStreamsMap.containsKey(runId)) {
-			close();
+		final RunIdFileManager[] managers = (RunIdFileManager[]) INSTANCES.toArray();
+		for(final RunIdFileManager manager : managers) {
+			if(manager.outStreamsMap.containsKey(runId)) {
+				manager.close();
+			}
 		}
 	}
 	/** Flushes all available output streams */
