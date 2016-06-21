@@ -14,7 +14,7 @@ import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.StorageIOStats;
 import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
-import com.emc.mongoose.storage.mock.api.ReqURIMatchingHandler;
+import com.emc.mongoose.storage.mock.api.ReqUriMatchingHandler;
 import com.emc.mongoose.storage.mock.api.StorageMockCapacityLimitReachedException;
 import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
@@ -41,12 +41,15 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  Created by andrey on 13.05.15.
  */
 public abstract class HttpStorageMockRequestHandlerBase<T extends HttpDataItemMock>
-implements ReqURIMatchingHandler<T> {
+implements ReqUriMatchingHandler<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -109,6 +112,7 @@ implements ReqURIMatchingHandler<T> {
 		ThreadLocalRandom.current().nextBytes(buff);
 		return Hex.encodeHexString(buff);
 	}
+
 	/**
 	 @param httpRequest
 	 @param httpResponse

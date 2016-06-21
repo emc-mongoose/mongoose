@@ -1,26 +1,24 @@
 package com.emc.mongoose.common.net.http.conn.pool;
-//
+
 import com.emc.mongoose.common.concurrent.Sequencer;
 import com.emc.mongoose.common.log.LogUtil;
-//
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.BasicFuture;
 import org.apache.http.concurrent.FutureCallback;
-//
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.pool.NIOConnFactory;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
+
 /**
  Created by kurila on 15.10.15.
  */

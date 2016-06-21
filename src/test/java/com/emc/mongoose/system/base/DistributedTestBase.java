@@ -8,7 +8,7 @@ import com.emc.mongoose.common.net.ServiceUtil;
 //
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
-import com.emc.mongoose.util.builder.LoadBuilderFactory;
+import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 /**
@@ -27,7 +27,7 @@ extends HttpStorageMockTestBase {
 		appConfig.setProperty(AppConfig.KEY_LOAD_SERVER_ADDRS, ServiceUtil.getHostAddr());
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, RUN_MODE_SERVER);
 		ServiceUtil.init();
-		LOAD_BUILDER_SVC = (LoadBuilderSvc) LoadBuilderFactory.getInstance(appConfig);
+		LOAD_BUILDER_SVC = new MultiLoadBuilderSvc(appConfig);
 		LOAD_BUILDER_SVC.start();
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, RUN_MODE_CLIENT);
 		appConfig.setProperty(AppConfig.KEY_NETWORK_SERVE_JMX, false);

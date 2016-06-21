@@ -1,5 +1,4 @@
 package com.emc.mongoose.storage.mock.impl.http;
-// mongoose-common.jar
 
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
@@ -40,13 +39,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
-
-//
-// mongoose-storage-mock.jar
-//
-//
-//
-//
 
 /**
  * Created by olga on 28.01.15.

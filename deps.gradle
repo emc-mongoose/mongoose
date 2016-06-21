@@ -18,8 +18,8 @@ ext {
 	commons_lang = [ "commons-lang:commons-lang:2.6" ]
 	commons_logging = [ "commons-logging:commons-logging:1.2" ]
 
-	httpcore = [ "org.apache.httpcomponents:httpcore-nio:4.4.4" ]
-	httpcore_nio = [ "org.apache.httpcomponents:httpcore-nio:4.4.4" ]
+	httpcore = [ "org.apache.httpcomponents:httpcore-nio:4.4.5" ]
+	httpcore_nio = [ "org.apache.httpcomponents:httpcore-nio:4.4.5" ]
 
 	jackson_annotations = [ "com.fasterxml.jackson.core:jackson-annotations:2.4.1" ]
 	jackson_core = [ "com.fasterxml.jackson.core:jackson-core:2.4.1" ]

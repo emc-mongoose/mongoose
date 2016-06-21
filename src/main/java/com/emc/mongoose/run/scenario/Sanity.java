@@ -45,7 +45,7 @@ implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 200;
 	private final static long DEFAULT_DATA_SIZE = SizeInBytes.toFixedSize("10MB");
-	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
+	private final static int DEFAULT_DATA_COUNT_MAX = 2000;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
