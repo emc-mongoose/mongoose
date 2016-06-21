@@ -96,13 +96,24 @@ define([
 		listController.updateTestsList(testsObj);
 	}
 
+	function updateTestsListRequest() {
+		$.ajax({
+			type: 'GET',
+			url: '/run'
+		}).done(function (testsObj) {
+			updateTestsList(testsObj);
+			console.log('Tests list is got');
+		});
+	}
+
 	function runCharts() {
 		chartsController.runCharts(listController.currentTestId());
 	}
 
 	return {
 		render: render,
-		updateTestsList: updateTestsList, 
+		updateTestsList: updateTestsList,
+		updateTestsListRequest: updateTestsListRequest, 
 		runCharts: runCharts
 	}
 });

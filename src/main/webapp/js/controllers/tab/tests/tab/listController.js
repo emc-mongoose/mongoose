@@ -27,7 +27,6 @@ define([
 
 	var currentTestId;
 	var currentTestMode;
-	var statusMap = {};
 	var okIcon;
 
 	function render() {
@@ -49,23 +48,29 @@ define([
 
 	function updateTestsList(testsObj) {
 		const testsListBlockElem = $(jqId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.LIST]));
-		$.each(testsObj, function (runId, runMode) {
+		$.each(testsObj, function (runId, runIdInfo) {
+			const runMode = runIdInfo.mode;
+			const runStatus = runIdInfo.status.toLowerCase();
 			var listItemElem = $(jqId([runId.replaceAll('\\.', '\\\.')]));
+			const listItemElemText = runId + " - " + runMode + " - " + runStatus;
 			if (!doesItemExist(listItemElem)) {
 				listItemElem = $('<a/>',
 					{
 						id: runId,
 						class: listItemElemClass,
 						mode: runMode,
-						status: 'running'
+						status: runStatus
 					});
 				listItemElem.click(function () {
 					makeItemActive(runId, runMode)
 				});
-				listItemElem.text(runId + " - " + runMode + " - " + (listItemElem.attr('status')));
-				const stopIconElem = createStopIcon(runId);
-				listItemElem.append(stopIconElem);
 				testsListBlockElem.append(listItemElem);
+			}
+			listItemElem.text(listItemElemText);
+			const stopIconElem = createStopIcon(runId);
+			listItemElem.append(stopIconElem);
+			if(!listItemElem.hasClass(runStatus)){
+				listItemElem.addClass(runStatus);
 			}
 		});
 		const testsIds = Object.keys(testsObj);
@@ -92,14 +97,13 @@ define([
 		tooltipSpan.text('Click to stop the test');
 		div.append(tooltipSpan);
 		div.click(function () {
-			statusMap[runId] = 'stopped';
 			$(this).off();
 			const listItemElem = $(jqId([runIdForElem(runId)]));
 			listItemElem.attr('class', listItemElem.attr('class') + ' stopped');
 			listItemElem.attr('status', 'stopped');
 			listItemElem.text(runId + " - " + (listItemElem.attr('mode')) + " - " + (listItemElem.attr('status')));
 			$.ajax({
-				type: 'DELETE',
+				type: 'POST',
 				url: '/run',
 				dataType: 'json',
 				contentType: constants.JSON_CONTENT_TYPE,

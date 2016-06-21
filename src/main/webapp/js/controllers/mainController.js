@@ -51,13 +51,7 @@ define([
 		makeModeActive(currentMode);
 		makeTabActive(currentTabType);
 		renderer.start();
-		$.ajax({
-			type: 'GET',
-			url: '/run',
-		}).done(function (testsObj) {
-			testsController.updateTestsList(testsObj);
-			console.log('Tests list is got');
-		});
+		testsController.updateTestsListRequest();
 	}
 
 	function version(configObject) {
@@ -72,6 +66,12 @@ define([
 
 	function tabJqId(tabType) {
 		return jqId([tabType, 'tab']);
+	}
+
+	const blinkClassName = 'blink_me';
+
+	function blink() {
+		$('.' + 'blink_me').fadeOut(500).fadeIn(500, blink);
 	}
 
 	function makeTabActive(tabType) {
@@ -89,6 +89,7 @@ define([
 				break;
 			case TAB_TYPE.TESTS:
 				cssUtil.show(jqId(['tests', 'block']));
+				$(tabJqId(tabType)).removeClass(blinkClassName);
 				break;
 		}
 		currentTabType = tabType;
@@ -267,6 +268,11 @@ define([
 					testsController.updateTestsList(testsObj);
 					testsController.runCharts();
 					console.log('Mongoose ran');
+					const testTabElem = $(tabJqId([TAB_TYPE.TESTS]));
+					if(!testTabElem.hasClass(blinkClassName)){
+						testTabElem.addClass(blinkClassName);
+					}
+					blink();
 				});
 			}
 		}

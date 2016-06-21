@@ -30,13 +30,13 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.emc.mongoose.common.conf.AppConfig.KEY_RUN_ID;
 import static com.emc.mongoose.webui.ServletConstants.RUN_ID_KEY;
 
 /**
  * Created on 22.04.16.
  */
-public class RunServlet extends HttpServlet {
+public class TestServlet
+	extends HttpServlet {
 
 	private static final Logger LOG = LogManager.getLogger();
 
@@ -52,6 +52,12 @@ public class RunServlet extends HttpServlet {
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 	private static final Map<String, Thread> TESTS = new HashMap<>();
 	private static final Map<String, String> MODES = new LinkedHashMap<>();
+	private static final String MODE_KEY = "mode";
+	private static final String STATUS_KEY = "status";
+
+	private enum Status {
+		RUNNING, STOPPED
+	}
 
 	@Override
 	protected void doPut(final HttpServletRequest request, final HttpServletResponse response)
@@ -72,31 +78,30 @@ public class RunServlet extends HttpServlet {
 		switch (runMode) {
 			case Constants.RUN_MODE_STANDALONE:
 				runTest(
-					runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME), runMode
+					runId, new StandaloneLikeStarter(config, scenario, STANDALONE_MODE_NAME), runMode
 				);
 				break;
 			case Constants.RUN_MODE_WSMOCK:
-				runTest(runId, new WsMockRunner(config), runMode);
+				runTest(runId, new WsMockStarter(config), runMode);
 				break;
 			case Constants.RUN_MODE_SERVER:
-				runTest(runId, new ServerRunner(config), runMode);
+				runTest(runId, new ServerStarter(config), runMode);
 				break;
 			case Constants.RUN_MODE_CLIENT:
 				runTest(
-					runId, new StandaloneLikeRunner(config, scenario, CLIENT_MODE_NAME), runMode
+					runId, new StandaloneLikeStarter(config, scenario, CLIENT_MODE_NAME), runMode
 				);
 				break;
 			default:
 				runTest(
-					runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME), runMode
+					runId, new StandaloneLikeStarter(config, scenario, STANDALONE_MODE_NAME), runMode
 				);
 		}
-		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
+		sendRunIdInfo(response);
 	}
 
 	@Override
-	protected void doDelete(HttpServletRequest request, HttpServletResponse response)
+	protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
 		try (
 				final BufferedReader reader = request.getReader()
@@ -106,11 +111,32 @@ public class RunServlet extends HttpServlet {
 		}
 	}
 
+	private Map<String, Map<String, String>> collectRunIdInfo() {
+		final Map<String, Map<String, String>> runIdInfo = new LinkedHashMap<>();
+		for (final Map.Entry<String, String> modeEntry: MODES.entrySet()) {
+			final String runId = modeEntry.getKey();
+			runIdInfo.put(runId, new HashMap<String, String>());
+			final Map<String, String> runIdMap = runIdInfo.get(runId);
+			runIdMap.put(MODE_KEY, modeEntry.getValue());
+			if (TESTS.get(runId).isAlive()) {
+				runIdMap.put(STATUS_KEY, Status.RUNNING.name());
+			} else {
+				runIdMap.put(STATUS_KEY, Status.STOPPED.name());
+			}
+		}
+		return runIdInfo;
+	}
+
+	private void sendRunIdInfo(final HttpServletResponse response)
+	throws IOException {
+		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
+		response.getWriter().write(JSON_MAPPER.writeValueAsString(collectRunIdInfo()));
+	}
+
 	@Override
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
-		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
+		sendRunIdInfo(response);
 	}
 
 	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request)
@@ -146,13 +172,9 @@ public class RunServlet extends HttpServlet {
 		return scenario;
 	}
 
-	private boolean isRunIdFree(final String runId) {
-		return !TESTS.containsKey(runId);
-	}
-
 	@SuppressWarnings("unchecked")
-	private void runTest(final String runId, final Runner runner, final String runMode) {
-		final Thread test = new Thread(runner, runId);
+	private void runTest(final String runId, final Starter starter, final String runMode) {
+		final Thread test = new Thread(starter, runId);
 		test.setName("run<" + runId + ">");
 		test.start();
 		putTest(runId, test, runMode);
@@ -167,19 +189,20 @@ public class RunServlet extends HttpServlet {
 		TESTS.get(runId).interrupt();
 	}
 
-	private static abstract class Runner implements Runnable {
+	private static abstract class Starter
+		implements Runnable {
 
 		private final AppConfig config;
 		private final String startMessage;
 		private final String failMessage;
 
-		Runner(final AppConfig config, final String startMessage, final String failMessage) {
+		Starter(final AppConfig config, final String startMessage, final String failMessage) {
 			this.config = config;
 			this.startMessage = startMessage;
 			this.failMessage = failMessage;
 		}
 
-		Runner(final AppConfig config, final String modeName) {
+		Starter(final AppConfig config, final String modeName) {
 			this(config, defaultStartMessage(modeName), defaultFailMessage(modeName));
 		}
 
@@ -216,9 +239,10 @@ public class RunServlet extends HttpServlet {
 		}
 	}
 
-	private static class WsMockRunner extends Runner {
+	private static class WsMockStarter
+		extends Starter {
 
-		WsMockRunner(final AppConfig config) {
+		WsMockStarter(final AppConfig config) {
 			super(config, WSMOCK_MODE_NAME);
 		}
 
@@ -229,11 +253,12 @@ public class RunServlet extends HttpServlet {
 
 	}
 
-	private static class StandaloneLikeRunner extends Runner {
+	private static class StandaloneLikeStarter
+		extends Starter {
 
 		private Scenario scenario;
 
-		StandaloneLikeRunner(final AppConfig config, final Scenario scenario,
+		StandaloneLikeStarter(final AppConfig config, final Scenario scenario,
 		                     final String standaloneLikeModeName) {
 			super(config, standaloneLikeModeName);
 			this.scenario = scenario;
@@ -246,9 +271,10 @@ public class RunServlet extends HttpServlet {
 
 	}
 
-	private static class ServerRunner extends Runner {
+	private static class ServerStarter
+		extends Starter {
 
-		ServerRunner(final AppConfig config) {
+		ServerStarter(final AppConfig config) {
 			super(config, SERVER_MODE_NAME);
 		}
 

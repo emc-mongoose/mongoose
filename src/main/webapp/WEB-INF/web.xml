@@ -26,7 +26,7 @@
 
 	<servlet>
 		<servlet-name>RunServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.webui.RunServlet</servlet-class>
+		<servlet-class>com.emc.mongoose.webui.TestServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
