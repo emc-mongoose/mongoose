@@ -1186,8 +1186,8 @@ task systemTest(type: Test, dependsOn: dist) {
 	include '**/SystemTestSuite.class'
 	classpath = sourceSets.systemTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "5g"
-	maxHeapSize = "5g"
+	minHeapSize = "2560m"
+	maxHeapSize = "2560m"
 	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
@@ -1200,8 +1200,8 @@ task perfTest(type: Test, dependsOn: dist) {
 	include '**/PerfTestSuite.class'
 	classpath = sourceSets.systemTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "5g"
-	maxHeapSize = "5g"
+	minHeapSize = "4g"
+	maxHeapSize = "4g"
 	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
