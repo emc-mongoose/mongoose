@@ -1186,8 +1186,8 @@ task systemTest(type: Test, dependsOn: dist) {
 	include '**/SystemTestSuite.class'
 	classpath = sourceSets.systemTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "3g"
-	maxHeapSize = "3g"
+	minHeapSize = "2560m"
+	maxHeapSize = "2560m"
 	jvmArgs "-XX:+HeapDumpOnOutOfMemoryError", "-Djava.security.policy=file:" + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy",
 		"-Dnetwork.serveJMX=true"
@@ -1201,8 +1201,8 @@ task perfTest(type: Test, dependsOn: dist) {
 	include '**/PerfTestSuite.class'
 	classpath = sourceSets.systemTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "4g"
-	maxHeapSize = "4g"
+	minHeapSize = "5g"
+	maxHeapSize = "5g"
 	jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
@@ -1236,11 +1236,10 @@ task buildDockerImage(type: DockerBuildTask, dependsOn: copyTarBall) {
 
 task pushDockerImage(type: DockerPushTask, dependsOn: buildDockerImage) {
 	repositoryName = "akurilov/" + project.name
-	registry = "nle-registry.lss.emc.com:5000"
 	doFirst {
 		def dockerClient = getDockerClient()
 		def latestImageId = dockerClient.findImageId(repositoryName, "latest")
-		dockerClient.tag(latestImageId, registry + '/' + repositoryName + ':' + version, true)
+		dockerClient.tag(latestImageId, repositoryName + ':' + version, true)
 		dockerClient.push(repositoryName, '.', registry)
 	}
 }

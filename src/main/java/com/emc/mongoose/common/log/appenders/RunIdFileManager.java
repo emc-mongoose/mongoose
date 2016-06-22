@@ -1,7 +1,5 @@
 package com.emc.mongoose.common.log.appenders;
 //
-//
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.appender.AbstractManager;
@@ -14,9 +12,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -193,8 +188,8 @@ extends AbstractManager {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
 				if(layout != null) {
-					byte[] footer = layout.getFooter();
-					if (footer != null) {
+					final byte[] footer = layout.getFooter();
+					if(footer != null) {
 						outStream.write(footer);
 					}
 				}
@@ -209,7 +204,8 @@ extends AbstractManager {
 	}
 	//
 	public static void closeAll(final String runId) {
-		final RunIdFileManager[] managers = (RunIdFileManager[]) INSTANCES.toArray();
+		final RunIdFileManager[] managers = new RunIdFileManager[INSTANCES.size()];
+		INSTANCES.toArray(managers);
 		for(final RunIdFileManager manager : managers) {
 			if(manager.outStreamsMap.containsKey(runId)) {
 				manager.close();

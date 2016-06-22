@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 //
 import com.emc.mongoose.common.conf.SizeInBytes;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -39,6 +40,10 @@ extends DistributedFileSystemTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		LogValidator.removeLogDirectory(RUN_ID);
+		LogValidator.removeLogDirectory(RUN_ID + "_FilesWrite");
+		LogValidator.removeLogDirectory(RUN_ID + "_DirsRead");
+		//
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, "/tmp/" + RUN_ID);
 		DistributedFileSystemTestBase.setUpClass();
@@ -142,7 +147,7 @@ extends DistributedFileSystemTestBase {
 		int itemsCount = 0;
 		try(
 			final BufferedReader in = Files.newBufferedReader(
-				LogValidator.getItemsListFile(RUN_ID).toPath(), StandardCharsets.UTF_8
+				LogValidator.getItemsListFile(RUN_ID + "_DirsRead").toPath(), StandardCharsets.UTF_8
 			)
 		) {
 			while(in.readLine() != null) {

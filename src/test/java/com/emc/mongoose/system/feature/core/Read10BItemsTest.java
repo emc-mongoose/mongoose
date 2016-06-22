@@ -66,9 +66,7 @@ extends ScenarioTestBase {
 		try {
 			RunIdFileManager.flushAll();
 			//
-			System.setProperty(AppConfig.KEY_RUN_ID, READ_RUN_ID);
-			LoggingTestBase.setUpClass();
-			//
+			appConfig.setRunId(READ_RUN_ID);
 			appConfig.setProperty(
 				AppConfig.KEY_ITEM_SRC_FILE, LogValidator.getItemsListFile(CREATE_RUN_ID).getPath()
 			);

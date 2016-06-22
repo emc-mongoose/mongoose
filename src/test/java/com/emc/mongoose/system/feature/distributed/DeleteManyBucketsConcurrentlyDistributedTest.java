@@ -65,7 +65,6 @@ extends DistributedLoadBuilderTestBase {
 			LogValidator.getItemsListFile(RUN_ID + "Write").getPath()
 		);
 		logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
-		//
 		try(
 			final BufferingOutputStream stdOutStream = StdOutUtil
 				.getStdOutBufferingStream()
@@ -112,10 +111,6 @@ extends DistributedLoadBuilderTestBase {
 		expectedFile = LogValidator.getPerfSumFile(RUN_ID).toPath();
 		//  Check that perf.sum.csv file exists
 		Assert.assertTrue("perf.sum.csv file doesn't exist", Files.exists(expectedFile));
-
-		expectedFile = LogValidator.getPerfTraceFile(RUN_ID).toPath();
-		//  Check that perf.trace.csv file exists
-		Assert.assertTrue("perf.trace.csv file doesn't exist", Files.exists(expectedFile));
 
 		expectedFile = LogValidator.getItemsListFile(RUN_ID).toPath();
 		//  Check that items list file exists
