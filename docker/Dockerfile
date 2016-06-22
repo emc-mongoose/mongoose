@@ -2,7 +2,7 @@ FROM java:8
 
 MAINTAINER EMC
 
-ADD mongoose*.tgz /opt/
+ADD build/dist/mongoose*.tgz /opt/
 
 RUN ln -s /opt/mongoose* /opt/mongoose
 
