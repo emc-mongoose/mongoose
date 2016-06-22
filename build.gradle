@@ -1193,10 +1193,7 @@ task systemTest(type: Test, dependsOn: dist) {
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy",
 		"-Dnetwork.serveJMX=true"
 	testLogging {
-		events "failed", "standardError"
-		debug {
-			events "started", "skipped", "passed", "failed", "standardOut", "standardError"
-		}
+		events "skipped", "passed", "failed", "standardOut", "standardError"
 	}
 }
 
