@@ -18,6 +18,7 @@ import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 //
 import java.io.BufferedReader;
@@ -135,13 +136,13 @@ extends DistributedFileSystemTestBase {
 		Assert.assertEquals(COUNT_TO_WRITE, tgtDirFiles == null ? -1 : tgtDirFiles.length);
 	}
 	//
-	@Test
+	@Test @Ignore
 	public void checkReturnedCount() {
 		Assert.assertEquals(COUNT_TO_WRITE, countWritten);
 		Assert.assertEquals(COUNT_TO_WRITE, countRead);
 	}
 	//
-	@Test
+	@Test @Ignore
 	public void checkLoggedItemsCount()
 	throws Exception {
 		int itemsCount = 0;
