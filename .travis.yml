@@ -1,5 +1,7 @@
 language: java
-sudo: false
+sudo: required
+services:
+- docker
 jdk:
 - openjdk7
 script: "./gradlew clean unitTest dist"
