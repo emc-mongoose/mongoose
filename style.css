@@ -1,9 +1,33 @@
-.ui-tabs, .ui-tabs .ui-tabs-nav, .ui-tabs .ui-tabs-panel, .ui-widget-header .ui-state-default,
-.ui-accordion-content-active .ui-state-active, .ui-widget-content .ui-state-active,
-.ui-widget-header .ui-state-active {
-	background: inherit;
+a {
+	text-decoration: none;
+	font-weight: normal;
+	color: #0000a0;
 }
-h1, h2 {
-	color: #a0a0a0;
-	text-shadow: -1px -2px 0px #404040, 1px 2px 3px #f0f0f0;
+a:hover {
+	text-decoration: none;
+	font-weight: bold;
+	color: #0204080;
+}
+body {
+    background-image: url('background-brushed-metal.jpg');
+	font-size: 10pt;
+	font-family: sans;
+}
+h1 {
+	color: #909090;
+	margin: 8;
+	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
+}
+h2 {
+	color: #909090;
+	margin: 4;
+	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
+}
+h3 {
+	color: #909090;
+	margin: 2;
+	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
+}
+ul {
+	margin: 2;
 }
