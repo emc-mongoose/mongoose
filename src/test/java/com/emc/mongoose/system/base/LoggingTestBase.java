@@ -15,6 +15,9 @@ import org.junit.BeforeClass;
 //
 import java.io.File;
 import java.nio.file.Paths;
+
+import static com.emc.mongoose.common.conf.AppConfig.KEY_RUN_ID;
+
 /**
  Created by andrey on 13.08.15.
  */
@@ -32,23 +35,26 @@ extends ConfiguredTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		if(System.getProperty(LOG_CONF_PROPERTY_KEY) == null) {
-			String fullLogConfFile = Paths
-				.get(BasicConfig.getWorkingDir(), Constants.DIR_CONF, LOG_FILE_NAME)
-				.toString();
-			System.setProperty(LOG_CONF_PROPERTY_KEY, fullLogConfFile);
+		try {
+			if(System.getProperty(LOG_CONF_PROPERTY_KEY) == null) {
+				final String fullLogConfFile = Paths.get(
+					BasicConfig.getWorkingDir(), Constants.DIR_CONF, LOG_FILE_NAME
+				).toString();
+				System.setProperty(LOG_CONF_PROPERTY_KEY, fullLogConfFile);
+			}
+			final String runId = System.setProperty(KEY_RUN_ID, LogUtil.newRunId());
+			LogUtil.init();
+			ConfiguredTestBase.setUpClass();
+			LogValidator.removeLogDirectory(runId);
+			FILE_LOG_PERF_SUM = LogValidator.getPerfSumFile(runId);
+			FILE_LOG_PERF_AVG = LogValidator.getPerfAvgFile(runId);
+			FILE_LOG_DATA_ITEMS = LogValidator.getItemsListFile(runId);
+			FILE_LOG_PERF_TRACE = LogValidator.getPerfTraceFile(runId);
+			BasicConfig.THREAD_CONTEXT.get().setRunId(runId);
+			LOG = LogManager.getLogger();
+		} catch(final NullPointerException e) {
+			e.printStackTrace(System.out);
 		}
-		LogUtil.init();
-		ConfiguredTestBase.setUpClass();
-		final String runId = System.getProperty(AppConfig.KEY_RUN_ID);
-		BasicConfig.THREAD_CONTEXT.get().setRunId(runId);
-		LogValidator.removeLogDirectory(runId);
-		FILE_LOG_PERF_SUM = LogValidator.getPerfSumFile(runId);
-		FILE_LOG_PERF_AVG = LogValidator.getPerfAvgFile(runId);
-		FILE_LOG_DATA_ITEMS = LogValidator.getItemsListFile(runId);
-		FILE_LOG_PERF_TRACE = LogValidator.getPerfTraceFile(runId);
-		BasicConfig.THREAD_CONTEXT.get().setRunId(runId);
-		LOG = LogManager.getLogger();
 	}
 	//
 	@AfterClass

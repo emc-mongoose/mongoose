@@ -190,7 +190,6 @@ implements StorageClientBuilder<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final U build()
 	throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
-		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		return (U) new BasicStorageClient<>(
 			appConfig, LoadBuilderFactory.<T, LoadExecutor<T>>getInstance(appConfig)
 		);

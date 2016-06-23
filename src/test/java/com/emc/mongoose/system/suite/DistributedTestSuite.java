@@ -11,11 +11,11 @@ import com.emc.mongoose.system.feature.distributed.UpdateZeroBytesDistributedTes
 import com.emc.mongoose.system.feature.distributed.WriteFewBucketsDistributedTest;
 import com.emc.mongoose.system.feature.distributed.WriteManyBucketsConcurrentlyDistributedTest;
 import com.emc.mongoose.system.feature.distributed.WriteManyObjectsToFewBucketsDistributedTest;
-import com.emc.mongoose.system.feature.distributed.CircularReadTest;
+import com.emc.mongoose.system.feature.distributed.CircularReadDistributedTest;
 import com.emc.mongoose.system.feature.distributed.CircularUpdateTest;
 import com.emc.mongoose.system.feature.distributed.DeleteLoggingTest;
-import com.emc.mongoose.system.feature.distributed.ReadDirsWithFilesTest;
-import com.emc.mongoose.system.feature.distributed.ReadLoggingTest;
+import com.emc.mongoose.system.feature.distributed.ReadDirsWithFilesDistributedTest;
+import com.emc.mongoose.system.feature.distributed.ReadLoggingDistributedTest;
 import com.emc.mongoose.system.feature.distributed.S3ReadUsingBucketListingDistributedTest;
 import com.emc.mongoose.system.feature.distributed.UpdateLoggingTest;
 import com.emc.mongoose.system.feature.distributed.WriteByTimeTest;
@@ -26,12 +26,12 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	CircularReadTest.class,
+	CircularReadDistributedTest.class,
 	CircularUpdateTest.class,
 	WriteLoggingTest.class,
 	WriteByTimeTest.class,
-	ReadDirsWithFilesTest.class,
-	ReadLoggingTest.class,
+	ReadDirsWithFilesDistributedTest.class,
+	ReadLoggingDistributedTest.class,
 	S3ReadUsingBucketListingDistributedTest.class,
 	UpdateLoggingTest.class,
 	DeleteLoggingTest.class,

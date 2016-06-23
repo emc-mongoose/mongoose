@@ -97,7 +97,9 @@ extends HttpStorageMockTestBase {
 		File nextItemsCsvFile;
 		for(final String nextRunId : RUN_ID_SEQ) {
 			nextItemsCsvFile = LogValidator.getItemsListFile(nextRunId);
-			Assert.assertTrue(nextItemsCsvFile.exists());
+			Assert.assertTrue(
+				nextItemsCsvFile.toString() + " doesn't exist", nextItemsCsvFile.exists()
+			);
 		}
 	}
 

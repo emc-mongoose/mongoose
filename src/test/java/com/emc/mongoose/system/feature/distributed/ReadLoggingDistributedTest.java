@@ -29,6 +29,7 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -38,18 +39,18 @@ import java.util.regex.Matcher;
 /**
  Created by kurila on 16.07.15.
  */
-public class ReadLoggingTest
+public class ReadLoggingDistributedTest
 extends DistributedClientTestBase {
 	//
 	private final static int COUNT_LIMIT = 1000;
 	//
 	private static long countWritten, countRead;
-	private static byte STD_OUT_CONTENT[];
+	private static String STD_OUT_CONTENT;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		System.setProperty(AppConfig.KEY_RUN_ID, ReadLoggingTest.class.getCanonicalName());
+		System.setProperty(AppConfig.KEY_RUN_ID, ReadLoggingDistributedTest.class.getCanonicalName());
 		DistributedClientTestBase.setUpClass();
 		try(
 			final StorageClient<HttpDataItem> client = CLIENT_BUILDER
@@ -75,15 +76,12 @@ extends DistributedClientTestBase {
 					throw new IllegalStateException("Failed to read");
 				}
 				TimeUnit.SECONDS.sleep(5);
-				STD_OUT_CONTENT = stdOutStream.toByteArray();
+				STD_OUT_CONTENT = stdOutStream.toString();
+				LOG.info(Markers.MSG, "Read {} items, captured {} bytes from stdout", countRead, STD_OUT_CONTENT.length());
 			}
 		} catch(final Throwable e) {
 			e.printStackTrace(System.err);
 		}
-		LOG.info(
-			Markers.MSG, "Read {} items, captured {} bytes from stdout", countRead,
-			STD_OUT_CONTENT.length
-		);
 		//
 		RunIdFileManager.flushAll();
 	}
@@ -99,11 +97,7 @@ extends DistributedClientTestBase {
 	throws Exception {
 		boolean passed = false;
 		long lastSuccCount = 0;
-		try(
-			final BufferedReader in = new BufferedReader(
-				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
-			)
-		) {
+		try(final BufferedReader in = new BufferedReader(new StringReader(STD_OUT_CONTENT))) {
 			String nextStdOutLine;
 			Matcher m;
 			do {
@@ -140,11 +134,7 @@ extends DistributedClientTestBase {
 	@Test public void checkConsoleSumMetricsLogging()
 		throws Exception {
 		boolean passed = false;
-		try(
-			final BufferedReader in = new BufferedReader(
-				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
-			)
-		) {
+		try(final BufferedReader in = new BufferedReader(new StringReader(STD_OUT_CONTENT))) {
 			String nextStdOutLine;
 			Matcher m;
 			do {

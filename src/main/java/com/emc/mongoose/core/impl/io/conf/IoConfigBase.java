@@ -362,16 +362,6 @@ implements IoConfig<T, C> {
 	}
 	//
 	@Override
-	public final String getItemPath() {
-		try {
-			return pathInput == null ? "" : pathInput.get();
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to generated the path");
-			return "";
-		}
-	}
-	//
-	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		out.writeObject(getLoadType());

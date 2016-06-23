@@ -49,7 +49,7 @@ extends HttpStorageMockTestBase {
 		"		}," +
 		"		\"load\" : {" +
 		"			\"limit\" : {" +
-		"				\"count\" : 1000000," +
+		"				\"count\" : 100000," +
 		"					\"time\" : \"10s\"" +
 		"			}," +
 		"			\"metrics\" : { \"period\" : 0 }" +

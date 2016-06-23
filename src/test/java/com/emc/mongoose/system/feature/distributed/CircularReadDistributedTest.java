@@ -41,7 +41,7 @@ import static com.emc.mongoose.system.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIE
 /**
  * Created by gusakk on 07.10.15.
  */
-public class CircularReadTest
+public class CircularReadDistributedTest
 extends DistributedClientTestBase {
 	//
 	private static final Logger LOG = LogManager.getLogger();
@@ -56,7 +56,7 @@ extends DistributedClientTestBase {
 	//
 	private static byte[] STD_OUT_CONTENT;
 	//
-	private static final String RUN_ID = CircularReadTest.class.getCanonicalName();
+	private static final String RUN_ID = CircularReadDistributedTest.class.getCanonicalName();
 	//
 	@BeforeClass
 	public static void setUpClass() {

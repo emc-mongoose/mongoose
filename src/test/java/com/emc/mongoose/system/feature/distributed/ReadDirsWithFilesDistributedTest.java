@@ -3,8 +3,6 @@ package com.emc.mongoose.system.feature.distributed;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 //
-import com.emc.mongoose.common.conf.SizeInBytes;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -30,11 +28,11 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 14.07.15.
  */
-public final class ReadDirsWithFilesTest
+public final class ReadDirsWithFilesDistributedTest
 extends DistributedFileSystemTestBase {
 	//
 	private final static long COUNT_TO_WRITE = 100;
-	private final static String RUN_ID = ReadDirsWithFilesTest.class.getCanonicalName();
+	private final static String RUN_ID = ReadDirsWithFilesDistributedTest.class.getCanonicalName();
 	//
 	private static long countWritten, countRead;
 	//
@@ -136,13 +134,13 @@ extends DistributedFileSystemTestBase {
 		Assert.assertEquals(COUNT_TO_WRITE, tgtDirFiles == null ? -1 : tgtDirFiles.length);
 	}
 	//
-	@Test @Ignore
+	@Test
 	public void checkReturnedCount() {
 		Assert.assertEquals(COUNT_TO_WRITE, countWritten);
 		Assert.assertEquals(COUNT_TO_WRITE, countRead);
 	}
 	//
-	@Test @Ignore
+	@Test
 	public void checkLoggedItemsCount()
 	throws Exception {
 		int itemsCount = 0;
