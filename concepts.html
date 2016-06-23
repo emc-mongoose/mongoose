@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Mongoose Concepts</title>
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<fieldset>
+			<legend><h2>CONCEPTS</h2></legend>
+			<p>
+				<fieldset>
+					<legend><h3>ITEM</h3></legend>
+					Something able to be used for loading the storage with it (data object, bucket, etc).
+					<ul>
+						<li>
+							<p><b>Data item</b></p>
+							<p>
+								The tool is designed to perform I/O operations on abstract data items. The data item may be a:
+								<ul>
+									<li>block/chunk/range of data;</li>
+									<li>data object having some kind of identifier;</li>
+									<li>file.</li>
+								</ul>
+							</p>
+						</li>
+						<li>
+							<p><b>Container item</b></p>
+							<p>S3 Bucket, Swift container or anything else.</p>
+						</li>
+						<li>
+							<p><b>Token item</b></p>
+							<p>Swift auth token, Atmos subtenant or anything else.</p>
+						</li>
+					</ul>
+				</fieldset>
+			</p>
+			<p>
+				<fieldset>
+					<legend><h3>ITEMS INPUT</h3></legend>
+					The entity which may used for obtaining the items from an underlying source. An items input also may be:
+					<ul>
+						<li>items collection in the memory</li>
+						<li>file</li>
+						<li>storage container listing</li>
+						<li>new items generator</li>
+						<li>etc</li>
+					</ul>
+				</fieldset>
+			</p>
+			<p>
+				<fieldset>
+					<legend><h3>ITEMS OUTPUT</h3></legend>
+					The entity which may be used as an items output. Any load executor also is an items destination. Putting an item to a load executor means submitting the execution of the I/O operation defined by the load job using this item. An items output also may be:
+					<ul>
+						<li>items collection in the memory</li>
+						<li>file</li>
+						<li>etc</li>
+					</ul>
+				</fieldset>
+			</p>
+			<p>
+				<fieldset>
+					<legend><h3>LOAD JOB</h3></legend>
+					A particular set of items linked with some kind of I/O operation (create/read/update/delete).
+				</fieldset>
+			</p>
+			<p>
+				<fieldset>
+					<legend><h3>LOAD EXECUTOR</h3></legend>
+					The entity which executes a load job. May have specified properties such as number of concurrent connections. Any load executor may be also a items output and always use some kind of external items input.
+				</fieldset>
+			</p>
+			<p>
+				<fieldset>
+					<legend><h3>DISTRIBUTED MODE</h3></legend>
+					<ul>
+						<li>
+							<p><b>Load client</b> (formerly "Controller")</p>
+							<p>A tool process which interacts with other tool processes via the network (distributed mode) which doesn't work with a storage directly and only configures/starts/monitors/stops a distributed load execution. Also a load client fetches and aggregates the results. A load client may use many load servers to perform distributed load execution.</p>
+						</li>
+						<li>
+							<p><b>Load server</b> (formerly "Driver")</p>
+							<p>A tool process which interacts with other tool processes via the network (distributed mode) which performs actual load execution requested by a load client. A load server process may be reused many times by different load clients w/o restart but maximum one load client may use the load server at every moment of time. The concurrent usage of the same load server by different load clients is an invalid way to do the things.</p>
+						</li>
+				</fieldset>
+			</p>
+			<p>
+				<fieldset>
+					<legend><h3>METRICS</h3></legend>
+					Mongoose reports the following metrics:
+					<ul>
+						<li>
+							<p><b>Count</b></p>
+							<p>The number of successful operations and the number of failures, and number of operations that are being performed.</p>
+							<p>Note that Mongoose never retries failed operations./p>
+						</li>
+						<li>
+							<p><b>Duration</b></p>
+							<p>The time to perform an operation (reported since version 1.0). This is the time between the moment the first byte of a request was sent and the moment the first byte of a response was received.</p>
+							<p>
+								<img src="task_timestamps.png"/>
+								<i>
+									<ul>
+										<li>A - the moment the first byte of a request was sent</li>
+										<li>B - the moment the last byte of a request was sent</li>
+										<li>C<sub>1</sub> - the moment the response was received</li>
+										<li>C<sub>2</sub> - the moment the first byte of the response data was received</li>
+										<li>D - the moment the last byte of a response was received</li>
+										<li>duration = D - A</li>
+									</ul>
+								</i>
+							</p>
+						</li>
+						<li>
+							<p><b>Latency</b></p>
+							<p>The response time. Time between the moment the last byte of a request was sent and the moment the first byte of a response was received. See the picture above, the latency is C<sub>1</sub>-B</p>
+						</li>
+						<li>
+							<p><b>Throughput</b> (TP)</p>
+							<p>The item processing rate - the number of the items per second.</p>
+						</li>
+						<li>
+							<p><b>Bandwidth</b> (BW)</p>
+							<p>The data processing rate measured in megabytes per second.</p>
+						</li>
+					</ul>
+					<fieldset>
+						<legend><b>Note</b></legend>
+						Mongoose reports effective duration, latency, throughput, and bandwidth. When writing a huge data item, the time based metrics reported will be zero until the first data item is completely written. These metrics will also be zero when all operations fail.
+					</fieldset>
+				</fieldset>
+			</p>
+		</fieldset>
+	</body>
+</html>

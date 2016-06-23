@@ -1,7 +1,7 @@
 a {
 	text-decoration: none;
 	font-weight: normal;
-	color: #0000a0;
+	color: #000040;
 }
 a:hover {
 	text-decoration: none;
@@ -10,12 +10,14 @@ a:hover {
 }
 body {
     background-image: url('background-brushed-metal.jpg');
+	background-attachment: fixed;
 	font-size: 10pt;
 	font-family: sans;
 }
 h1 {
 	color: #909090;
-	margin: 8;
+	margin-top: 8;
+	margin-bottom: 8;
 	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
 }
 h2 {
@@ -29,5 +31,7 @@ h3 {
 	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
 }
 ul {
-	margin: 2;
+	margin-top: 2;
+	margin-bottom: 2;
+	padding: 10;
 }
