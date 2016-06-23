@@ -134,13 +134,13 @@ extends DistributedFileSystemTestBase {
 		Assert.assertEquals(COUNT_TO_WRITE, tgtDirFiles == null ? -1 : tgtDirFiles.length);
 	}
 	//
-	@Test
+	@Test @Ignore
 	public void checkReturnedCount() {
 		Assert.assertEquals(COUNT_TO_WRITE, countWritten);
 		Assert.assertEquals(COUNT_TO_WRITE, countRead);
 	}
 	//
-	@Test
+	@Test @Ignore
 	public void checkLoggedItemsCount()
 	throws Exception {
 		int itemsCount = 0;
