@@ -46,7 +46,7 @@ define([
 		}
 	};
 
-	function updateTestsList(testsObj) {
+	function updateTestsList(testsObj, fullUpdate) {
 		const testsListBlockElem = $(jqId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.LIST]));
 		$.each(testsObj, function (runId, runIdInfo) {
 			const runMode = runIdInfo.mode;
@@ -65,17 +65,28 @@ define([
 					makeItemActive(runId, runMode)
 				});
 				testsListBlockElem.append(listItemElem);
+				if (runStatus !== 'stopped') {
+					const stopIconElem = createStopIcon(runId);
+					listItemElem.append(stopIconElem);
+				}
 			}
-			listItemElem.text(listItemElemText);
-			const stopIconElem = createStopIcon(runId);
-			listItemElem.append(stopIconElem);
+			replaceElementText(listItemElem, listItemElemText);
 			if(!listItemElem.hasClass(runStatus)){
 				listItemElem.addClass(runStatus);
 			}
 		});
 		const testsIds = Object.keys(testsObj);
-		const lastId = testsIds[testsIds.length - 1];
-		makeItemActive(lastId, testsObj[lastId]);
+		if (fullUpdate) {
+			const lastId = testsIds[testsIds.length - 1];
+			makeItemActive(lastId, testsObj[lastId]);
+		}
+	}
+
+	function replaceElementText(element, text) {
+		element.contents().filter(function() {
+			return this.nodeType === Node.TEXT_NODE;
+		}).remove();
+		element.append(document.createTextNode(text));
 	}
 
 	function doesItemExist(itemElem) {
@@ -97,11 +108,12 @@ define([
 		tooltipSpan.text('Click to stop the test');
 		div.append(tooltipSpan);
 		div.click(function () {
-			$(this).off();
 			const listItemElem = $(jqId([runIdForElem(runId)]));
 			listItemElem.attr('class', listItemElem.attr('class') + ' stopped');
 			listItemElem.attr('status', 'stopped');
-			listItemElem.text(runId + " - " + (listItemElem.attr('mode')) + " - " + (listItemElem.attr('status')));
+			$(this).remove();
+			const listItemElemText = runId + " - " + (listItemElem.attr('mode')) + " - " + (listItemElem.attr('status'));
+			replaceElementText(listItemElem, listItemElemText);
 			$.ajax({
 				type: 'POST',
 				url: '/run',
@@ -110,7 +122,7 @@ define([
 				data: JSON.stringify({ runId: runId }),
 				processData: false
 			}).done(function (testsObj) {
-				updateTestsList(testsObj);
+				updateTestsList(testsObj, false);
 				console.log('Mongoose ran');
 			});
 		});

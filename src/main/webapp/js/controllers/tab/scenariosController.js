@@ -39,6 +39,14 @@ define([
 
 	const clickEventCreatorFactory = function () {
 
+		const noMessage = 'No scenario chosen';
+		const minWidth = noMessage.length;
+		function responsiveWidth(text) {
+			return Math.max(((text.length + 1) * 7), minWidth);
+		}
+		
+		
+		
 		function scenarioFileClickEvent(aName, aText) {
 			var newPath;
 			if (aName === '') {
@@ -50,7 +58,9 @@ define([
 				.done(function (scenarioJson) {
 					setScenarioObject(scenarioJson);
 					updateDetailsTree(scenarioJson);
-					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(newPath);
+					const fileNameElem = $(jqId(['file', 'name', TAB_TYPE.SCENARIOS]));
+					fileNameElem.val(newPath);
+					fileNameElem.width(responsiveWidth(newPath));
 				})
 				.fail(function () {
 					alert('The scenario cannot be loaded')
@@ -59,7 +69,9 @@ define([
 
 		function backClickEvent() {
 			showMainTree();
-			$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
+			const fileNameElem = $(jqId(['file', 'name', TAB_TYPE.SCENARIOS]));
+			fileNameElem.val(noMessage);
+			fileNameElem.width(responsiveWidth(noMessage));
 		}
 
 		return {

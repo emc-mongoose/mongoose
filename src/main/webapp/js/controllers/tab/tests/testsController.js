@@ -38,6 +38,7 @@ define([
 		logsController.render();
 		chartsController.render();
 		makeTabActive(currentTabType);
+		startPoll();
 	}
 
 	const rendererFactory = function () {
@@ -93,16 +94,26 @@ define([
 	}
 
 	function updateTestsList(testsObj) {
-		listController.updateTestsList(testsObj);
+		listController.updateTestsList(testsObj, true);
 	}
 
-	function updateTestsListRequest() {
+	function startPoll() {
 		$.ajax({
 			type: 'GET',
 			url: '/run'
 		}).done(function (testsObj) {
-			updateTestsList(testsObj);
-			console.log('Tests list is got');
+			listController.updateTestsList(testsObj, true);
+		}).always(pollToUpdateTestList)
+	}
+
+	function pollToUpdateTestList() {
+		$.ajax({
+			type: 'GET',
+			url: '/run'
+		}).done(function (testsObj) {
+			listController.updateTestsList(testsObj, false);
+		}).always(function () {
+			setTimeout(pollToUpdateTestList, 5000);
 		});
 	}
 
@@ -113,7 +124,6 @@ define([
 	return {
 		render: render,
 		updateTestsList: updateTestsList,
-		updateTestsListRequest: updateTestsListRequest, 
 		runCharts: runCharts
 	}
 });

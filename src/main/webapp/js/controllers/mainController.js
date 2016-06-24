@@ -51,7 +51,6 @@ define([
 		makeModeActive(currentMode);
 		makeTabActive(currentTabType);
 		renderer.start();
-		testsController.updateTestsListRequest();
 	}
 
 	function version(configObject) {
