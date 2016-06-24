@@ -240,9 +240,10 @@ define([
 			$(buttonJqId(BUTTON_TYPE.OPEN, tabName)).click(function () {
 				openInputFileElem.trigger('click');
 			});
-			openInputFileElem.change(function (data) {
+			openInputFileElem.change(function (event) {
 				fillTheField(tabName, BUTTON_TYPE);
-				openFileHandler.event(data);
+				openFileHandler.event(event);
+				openInputFileElem.val('');
 			})
 		}
 
