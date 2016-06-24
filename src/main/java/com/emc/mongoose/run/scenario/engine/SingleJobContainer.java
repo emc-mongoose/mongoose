@@ -39,6 +39,9 @@ extends JobContainerBase {
 			throw new IllegalStateException(
 				"Failed to get a load builder instance", e.getTargetException()
 			);
+		} catch(final Throwable e) {
+			e.printStackTrace(System.out);
+			throw e;
 		}
 		loadJob = null;
 	}

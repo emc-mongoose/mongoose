@@ -269,7 +269,11 @@ define([
 					dataType: 'json',
 					contentType: constants.JSON_CONTENT_TYPE,
 					data: JSON.stringify(startJson),
-					processData: false
+					processData: false,
+					timeout: 10000,
+					error: function () {
+						alert('Failed to start the test')
+					}
 				}).done(function (testsObj) {
 					testsController.updateTestsList(testsObj);
 					testsController.runCharts();
