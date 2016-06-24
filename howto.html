@@ -1,29 +1,183 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd"> 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns="http://www.w3.org/1999/html" xml:lang="en"
+	lang="en">
 	<head>
 		<meta charset="utf-8">
 		<title>Mongoose How To</title>
 		<link rel="stylesheet" href="style.css">
 	</head>
-	<body>
+	<p>
 		<fieldset>
 			<legend><h2>HOW TO</h2></legend>
 
+			<fieldset>
+				<legend><h3>CONTENTS</h3></legend>
+				<ul>
+					<li><a href="#reporting">Reporting</a></li>
+					<li>
+						<a href="#load-types">Load Types</a>
+						<ol>
+							<li>
+								<a href="#write">Write</a>
+								<ol type="a">
+									<li><a href="#create">Create</a></li>
+									<li>Create the data items with fixed specified size</li>
+									<li>Create the data items with random size in the specified range</li>
+									<li>Create the data items with random size in the specified range and with biased size distribution</li>
+									<li><a href="#update">Update</a></li>
+									<li><a href="#append">Append</a></li>
+									<li><a href="#copy">Copy</a></li>
+								</ol>
+							</li>
+							<li>
+								<a href="#read">Read</a>
+								<ol type="a">
+									<li><a href="#verification">Verification</a></li>
+									<li><a href="#no-verification">Disable Verification</a></li>
+								</ol>
+							</li>
+							<li><a href="#delete">Delete</a></li>
+						</ol>
+					</li>
+					<li>
+						<a href="#limit">Load Job Limit</a>
+						<ol>
+							<li>Limit by Count</li>
+							<li>Limit by Time</li>
+							<li>Limit by Rate (Throttling)</li>
+							<li>Limit by Size</li>
+						</ol>
+					</li>
+					<li>
+						<a href="#run-modes">Run Modes</a>
+						<ol>
+							<li>Standalone Mode</li>
+							<li>
+								Distributed Mode
+								<ol type="a">
+									<li>Load Server</li>
+									<li>Load Client</li>
+								</ol>
+							</li>
+							<li>Storage Mock</li>
+							<li>Web GUI</li>
+						</ol>
+					</li>
+					<li>
+						<a href="#item-types">Item Types</a>
+						<ol>
+							<li>
+								Container
+								<ol type="a">
+									<li>Write the containers</li>
+									<li>Read the containers with Data Items</li>
+									<li>Delete the containers</li>
+								</ol>
+							</li>
+							<li>Data</li>
+						</ol>
+					</li>
+					<li>
+						<a href="#cloud-storage-api">Cloud Storage API</a>
+						<ol>
+							<li>Amazon S3</li>
+							<li>EMC Atmos</li>
+							<li>OpenStack Swift</li>
+							<li>
+								EMC ECS
+								<ol type="a">
+									<li>S3</li>
+									<li>Atmos</li>
+									<li>Swift</li>
+								</ol>
+							</li>
+						</ol>
+					</li>
+					<li>
+						<a href="#filesystem">Filesystem Load</a>
+						<ol>
+							<li>Write to the custom directory</li>
+							<li>Read from the custom directory</li>
+							<li>Overwrite the files circularly</li>
+						</ol>
+					</li>
+					<li>
+						<a href="#content">Custom Content</a>
+						<ol>
+							<li>Text content</li>
+							<li>Zero bytes content</li>
+						</ol>
+					</li>
+					<li>
+						<a href="#circularity">Circular Load</a>
+						<ol>
+							<li>Read</li>
+							<li>Update</li>
+						</ol>
+					</li>
+					<li>
+						<a href="#scenario">Scenario</a>
+						<ol>
+							<li>Configure a Load Job</li>
+							<li>Make a Precondition Load Job (don't persist the metrics)</li>
+							<li>Sequential Load Jobs execution</li>
+							<li>Parallel Load Jobs execution</li>
+							<li>Reuse the Items for another Load Job</li>
+							<li>Inherit the Load Job Container configuration</li>
+							<li>Execute a Shell Command</li>
+							<li>Start a Non-Blocking Shell Command Execution</li>
+							<li>Sleep Between the Jobs</li>
+							<li>Mixed Load</li>
+							<li>Weighted Load</li>
+							<li><strike>Rampup</strike></li>
+							<li>Scenario Validation</li>
+							<li><a href="#foreach">Execute a Job For Each value from the list</a></li>
+						</ol>
+					</li>
+					<li>
+						<a href="#dynamic">Dynamic Configuration Values</a>
+						<ol>
+							<li>Custom HTTP headers</li>
+							<li>Custom HTTP headers with Dynamic Values</li>
+							<li>Filesystem Load: Dynamic Target Path</li>
+						</ol>
+					</li>
+					<li>
+						<a href="#item-naming">Custom Item Naming</a>
+						<ol>
+							<li>Ascending names order</li>
+							<li>Descending names order</li>
+							<li>Names with decimal identifiers</li>
+							<li>Names with prefixes</li>
+						</ol>
+					</li>
+					<li><a href="#ssl">SSL/TLS support</a></li>
+					<li>
+						<a href="#misc">Miscallenous</a>
+						<ol>
+							<li>Docker integration</li>
+							<li>Disable console output coloring</li>
+						</ol>
+					</li>
+				</ul>
+			</fieldset>
+
+			<fieldset id="reporting">
+				<legend><h3>REPORTING</h3></legend>
+					<p>Run report is a set of files Mongoose produces in a directory<code> &lt;MONGOOSE_DIR&gt;/log/&lt;RUN_ID&gt;</code>. Starting with Mongoose 0.8, all the key log files (<code>items.csv</code>, <code>perf.avg.csv</code>, <code>perf.trace.csv</code>, and <code>perf.sum.csv</code>) are produced in pure CSV format. You can use any mature tool that supports CSV format to open and process report components.</p>
+					<p>As an example, suppose we had a Mongoose run that produced 10 data items of random size and we would like to calculate total size of the generated content. You can easily get the result by opening <code>items.csv</code> in any spreadsheet editor and selecting the third column with data item sizes. The total size can be found on a status bar as a Sum value.</p>
+					<p><img src="img/image2015-5-22.png"></p></li>
+			</fieldset>
+
+			<fieldset id="load-types">
+				<legend><h3>LOAD TYPES</h3></legend>
 <ol>
 <li>
-<h3>REPORTING</h3>
-<p>Run report is a set of files Mongoose produces in a directory<code> &lt;MONGOOSE_DIR&gt;/log/&lt;RUN_ID&gt;</code>. Starting with Mongoose 0.8, all the key log files (<code>items.csv</code>, <code>perf.avg.csv</code>, <code>perf.trace.csv</code>, and <code>perf.sum.csv</code>) are produced in pure CSV format. You can use any mature tool that supports CSV format to open and process report components.</p>
-<p>As an example, suppose we had a Mongoose run that produced 10 data items of random size and we would like to calculate total size of the generated content. You can easily get the result by opening <code>items.csv</code> in any spreadsheet editor and selecting the third column with data item sizes. The total size can be found on a status bar as a Sum value.</p>
-<p><img src="image2015-5-22.png"></p></li>
-<li>
-<h3>LOAD TYPES</h3>
-<ol>
-<li>
-<h4>Write</h4>
+<h4 id="write">Write</h4>
 <p>Example scenarios location: scenario/write/*.json</p>
-<ol>
+<ol type="a">
 <li>
-<h5>Create</h5>
+<h5 id="create">Create</h5>
 <p>Mongoose creates the items by default (if load type is not specified). So it's enough just to run the default scenario:</p>
 <p><code><fieldset class="bash">java -jar mongoose-&lt;VERSION&gt;/mongoose.jar</fieldset></code></p></li>
 <li>
@@ -33,149 +187,197 @@
 <li>
 <h5>Create the data items with random size in the specified range and with biased size distribution</h5><code><fieldset class="bash">java -Ditem.data.size=0-100MB,<strong>2.5</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
-<h5>Update</h5>
+<h5 id="update">Update</h5>
 <p>In order to enable the update mode for the Write load type it's neccessary to specify the random byte ranges count.</p>
 <p>Example scenarios location: scenario/partial/update-multiple-random-ranges.json</p>
 <p>The example below performs the data items update from the specified source file with 10 random byte ranges per request.</p>
 <p><code><fieldset class="bash">java -Dload.type=update -Ditem.data.ranges=10 -Ditem.src.file=&lt;PATH_TO_ITEM_LIST_CSV_FILE&gt; ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></p></li>
 <li>
-<h5>Append</h5>
+<h5 id="append">Append</h5>
 <p>In order to enable the append mode for the Write load type it's neccessary to specify the fixed byte range with start offset equal to the size of the data items which should be updated.</p>
 <p>Example scenarios location: scenario/partial/append.json</p>
 <p>The example below performs the data items append from the size of 4KB to the size of 8KB. Note that the source data items should have the size of 4KB.</p>
-<p><code><fieldset class="bash">java -Dload.type=update -Ditem.data.ranges=4096-8192 -Ditem.src.file=&lt;PATH_TO_ITEM_LIST_CSV_FILE&gt; ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></p></li></ol></li>
+<p><code><fieldset class="bash">java -Dload.type=update -Ditem.data.ranges=4096-8192 -Ditem.src.file=&lt;PATH_TO_ITEM_LIST_CSV_FILE&gt; ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></p></li>
+	<li>
+		<h5 id="copy">Copy</h5>
+		<p>Example scenarios location: scenario/copy/*.json</p>
+		<p>The example below performs the items copying from the source container to the target container:<br />
+			<code><fieldset class="bash">java [-Ditem.dst.container=&lt;TARGET_CONTAINER&gt;] -Ditem.src.container=&lt;SOURCE_CONTAINER&gt; [-Ditem.src.file=&lt;PATH_TO_ITEMS_LIST_CSV_FILE&gt;] ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></p>
+		<p>See <a href="design-copy-mode.html" target="_self">Mongoose Copy Mode</a> functional specification for details</p>
+	</li>
+</ol></li>
 <li>
-<h4>Read</h4>
+<h4 id="read">Read</h4>
 <p>In order to use Read load type it's neccessary to set &quot;read&quot; value to the &quot;load.type&quot; configuration parameter.</p>
 <p>Example scenarios location: scenario/read/*.json</p>
-<ol>
+<ol type="a">
 <li>
-<h5>Verification</h5>Example scenarios location: scenario/read/read-verify-updated.json</li>
+<h5 id="verification">Verification</h5>Example scenarios location: scenario/read/read-verify-updated.json</li>
 <li>
-<h5>Disable Verification</h5>Example scenarios location: scenario/read/read-no-verify.json<br />
-<p><code><span style="color: rgb(0,0,128);">java -Dload.type=<strong>read</strong> -Ditem.data.verify=false <code><span style="color: rgb(0,0,128);">-Ditem.dst.container=&lt;CONTAINER_WITH_ITEMS&gt;</span></code> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></p></li></ol></li>
+<h5 id="no-verification">Disable Verification</h5>Example scenarios location: scenario/read/read-no-verify.json<br />
+<p><code><fieldset class="bash">java -Dload.type=<strong>read</strong> -Ditem.data.verify=false -Ditem.dst.container=&lt;CONTAINER_WITH_ITEMS&gt; ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></p></li></ol></li>
 <li>
-<h4>Delete</h4>
+<h4 id="delete">Delete</h4>
 <p>In order to use Read load type it's neccessary to set &quot;delete&quot; value to &quot;load.type&quot; configuration parameter.</p>
 <p>Example scenarios location: scenario/delete/*.json</p>
-<p><code><span style="color: rgb(0,0,128);">java -Dload.type=delete -Ditem.dst.container=&lt;CONTAINER_WITH_ITEMS&gt; ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></p></li></ol></li>
-<li>
-<h3>LOAD JOB LIMIT</h3>
+<p><code><fieldset class="bash">java -Dload.type=delete -Ditem.dst.container=&lt;CONTAINER_WITH_ITEMS&gt; ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></p></li></ol></li>
+</fieldset>
+
+<fieldset id="limit">
+<legend><h3>LOAD JOB LIMIT</h3></legend>
 <p>Example scenarios location: scenario/limit/*.json</p>
 <p>It's possible to limit the load jobs by any combination of 4 possible ways.</p>
 <ol>
 <li>
 <h4>Limit by Count</h4>
 <p>Example scenarios location: scenario/limit/by-count.json</p>
-<p>Load with no more than <em>N</em> items:</p><code><span style="color: rgb(0,0,128);">java -Dload.limit.<strong>count=&lt;N&gt;</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<p>Load with no more than <em>N</em> items:</p>
+<code><fieldset class="bash">java -Dload.limit.<strong>count=&lt;N&gt;</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
-<h4>Limit by Time</h4>Example scenarios location: scenario/limit/by-time.json<br />Perform a load job for no more than 1 hour:<br /><code><span style="color: rgb(0,0,128);">java -Dload.limit.<strong>time=1h</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<h4>Limit by Time</h4>Example scenarios location: scenario/limit/by-time.json<br />Perform a load job for no more than 1 hour:<br /><code><fieldset class="bash">java -Dload.limit.<strong>time=1h</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
 <h4>Limit by Rate (Throttling)</h4>
 <p>Example scenarios location: scenario/limit/by-rate.json</p>
-<p>Perform a load job with the rate of no more than 1234.5 items (and operations) per second.</p><code><span style="color: rgb(0,0,128);">java [-Ditem.data.size=0] -Dload.limit.<strong>rate=1234.5</strong> [-Dload.threads=1000] ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<p>Perform a load job with the rate of no more than 1234.5 items (and operations) per second.</p>
+<code><fieldset class="bash">java [-Ditem.data.size=0] -Dload.limit.<strong>rate=1234.5</strong> [-Dload.threads=1000] ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
-<h4>Limit by Size</h4>Example scenarios location: scenario/limit/by-size.json<br />Load with data items having the summary size of no more than 100GB:<br /><code><span style="color: rgb(0,0,128);">java -Dload.limit.<strong>size=100GB</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li></ol></li>
-<li>
-<h3>RUN MODES</h3>
+<h4>Limit by Size</h4>Example scenarios location: scenario/limit/by-size.json<br />Load with data items having the summary size of no more than 100GB:<br />
+<code><fieldset class="bash">java -Dload.limit.<strong>size=100GB</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li></ol></li>
+</fieldset>
+
+<fieldset id="run-modes">
+<legend><h3>RUN MODES</h3></legend>
 <ol>
 <li>
-<h4>Standalone Mode</h4>Mongoose runs in the standalone mode by default<br /><span style="color: rgb(0,0,128);"><code>java -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f &lt;PATH_TO_SCENARIO_FILE&gt;</code></span></li>
+<h4>Standalone Mode</h4>Mongoose runs in the standalone mode by default<br />
+<fieldset class="bash"><code>java -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f &lt;PATH_TO_SCENARIO_FILE&gt;</code></fieldset></li>
 <li>
 <h4>Distributed Mode</h4>
 <p>Example scenarios location: scenario/distributed/*.json</p>
-<ol>
+<ol type="a">
 <li>
-<h5>Load Server</h5><span style="color: rgb(0,0,128);"><code>java -jar mongoose-&lt;VERSION&gt;/mongoose.jar server</code></span></li>
+<h5>Load Server</h5><fieldset class="bash"><code>java -jar mongoose-&lt;VERSION&gt;/mongoose.jar server</code></fieldset></li>
 <li>
-<h5>Load Client</h5><span style="color: rgb(0,0,128);"><code>java -jar mongoose-&lt;VERSION&gt;/mongoose.jar client -f &lt;PATH_TO_SCENARIO_FILE&gt;<br /></code></span></li></ol></li>
+<h5>Load Client</h5><fieldset class="bash"><code>java -jar mongoose-&lt;VERSION&gt;/mongoose.jar client -f &lt;PATH_TO_SCENARIO_FILE&gt;</code></fieldset></li></ol></li>
 <li>
-<h4>Storage Mock</h4><code><span style="color: rgb(0,0,128);">java -jar mongoose-&lt;VERSION&gt;/mongoose.jar wsmock</span></code></li>
+<h4>Storage Mock</h4><code><fieldset class="bash">java -jar mongoose-&lt;VERSION&gt;/mongoose.jar wsmock</fieldset></code></li>
 <li>
-<h4>Web GUI</h4><span style="color: rgb(0,0,128);"><code>java -jar mongoose-&lt;VERSION&gt;/mongoose.jar webui</code></span></li></ol></li>
-<li>
-<h3>ITEM TYPES</h3>
+<h4>Web GUI</h4><fieldset class="bash"><code>java -jar mongoose-&lt;VERSION&gt;/mongoose.jar webui</code></fieldset></li></ol></li>
+</fieldset>
+
+			<fieldset id="item-types">
+				<legend><h3>ITEM TYPES</h3></legend>
 <ol>
 <li>
 <h4>Container</h4>
 <p>In order to perform a load with container items it's neccessary to set &quot;container&quot; value to the &quot;item.type&quot; configuration parameter.</p>
 <p>Example scenarios location: scenario/container/*.json</p>
-<ol>
+<ol type="a">
 <li>
-<h5>Write the containers</h5>Example scenarios location: scenario/container/write-containers.json<br /><span style="color: rgb(0,0,128);"><code>java -Ditem.type=<strong>container</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</code></span></li>
+<h5>Write the containers</h5>Example scenarios location: scenario/container/write-containers.json<br />
+<fieldset class="bash"><code>java -Ditem.type=<strong>container</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</code></fieldset></li>
 <li>
 <h5>Read the containers with Data Items</h5>
-<p>Example scenarios location: scenario/container/read-containers-with-items.json<br /><span style="color: rgb(0,0,128);"><code>java -Ditem.type=<strong>container</strong> -Dload.type=<strong>read</strong> -Ditem.src.file=&lt;PATH_TO_ITEMS_LIST_CSV_FILE&gt; ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</code></span></p><ac:structured-macro ac:macro-id="6bb4adbd-7dab-4a55-9c2e-c0ba302ee075" ac:name="info" ac:schema-version="1"><ac:rich-text-body>
-<p>Total byte count and bytes per second (BW) metrics are calculated while reading the containers with data items. The size of the container is calculated as a sum of the included data items sizes.</p></ac:rich-text-body></ac:structured-macro></li>
+<p>Example scenarios location: scenario/container/read-containers-with-items.json<br />
+<fieldset class="bash"><code>java -Ditem.type=<strong>container</strong> -Dload.type=<strong>read</strong> -Ditem.src.file=&lt;PATH_TO_ITEMS_LIST_CSV_FILE&gt; ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</code></fieldset></p>
+<p><i>Note that the total byte count and bytes per second (BW) metrics are calculated while reading the containers with data items. The size of the container is calculated as a sum of the included data items sizes.</i></p>
 <li>
-<h5>Delete the containers</h5>Example scenarios location: scenario/container/delete-containers.json<br /><span style="color: rgb(0,0,128);"><code>java -Ditem.type=<strong>container</strong> -Dload.type=<strong>delete</strong> -Ditem.src.file=&lt;PATH_TO_ITEMS_LIST_CSV_FILE&gt; ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</code></span></li></ol></li>
+<h5>Delete the containers</h5>Example scenarios location: scenario/container/delete-containers.json<br />
+<fieldset class="bash"><code>java -Ditem.type=<strong>container</strong> -Dload.type=<strong>delete</strong> -Ditem.src.file=&lt;PATH_TO_ITEMS_LIST_CSV_FILE&gt; ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</code></fieldset></li></ol></li>
 <li>
-<h4>Data</h4><ac:structured-macro ac:macro-id="601adfc0-f5ba-4757-83b1-c1146b333790" ac:name="info" ac:schema-version="1"><ac:rich-text-body>
-<p>The &quot;data&quot; item type is used by default.</p></ac:rich-text-body></ac:structured-macro></li></ol></li>
-<li>
-<h3>CLOUD STORAGE API</h3>
+<h4>Data</h4>
+<p><i>The &quot;data&quot; item type is used by default.</i></p></li></ol></li>
+
+			</fieldset>
+
+			<fieldset id="cloud-storage-api">
+				<legend><h3>CLOUD STORAGE API</h3></legend>
 <ol>
 <li>
 <h4>Amazon S3</h4>
-<p>Example scenarios location: scenario/ecs/write-s3.json</p><ac:structured-macro ac:macro-id="847e81fd-b1a2-4b58-be32-07b59c178569" ac:name="info" ac:schema-version="1"><ac:rich-text-body>
-<p>- S3 API is used by default</p>
-<p>- Specifying the container name in the case of S3 API means specifying the bucket to use.</p></ac:rich-text-body></ac:structured-macro>
-<p><code><span style="color: rgb(0,0,128);">java -Dauth.id=&lt;USER_ID&gt; -Dauth.secret=&lt;SECRET&gt; <code><span style="color: rgb(0,0,128);">[-Ditem.dst.container=&lt;TARGET_BUCKET&gt;] </span></code>-Dstorage.addrs=10.20.30.40 -Dstorage.port=8080 -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></p></li>
+<p>Example scenarios location: scenario/ecs/write-s3.json</p>
+<fieldset><legend>Note:</legend>
+	<ul>
+		<li>S3 API is used by default</li>
+		<li>Specifying the container name in the case of S3 API means specifying the bucket to use.</li></ul></fieldset>
+<p><code><fieldset class="bash">java -Dauth.id=&lt;USER_ID&gt; -Dauth.secret=&lt;SECRET&gt; [-Ditem.dst.container=&lt;TARGET_BUCKET&gt;] -Dstorage.addrs=10.20.30.40 -Dstorage.port=8080 -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></p></li>
 <li>
 <h4>EMC Atmos</h4>
-<p>Example scenarios location: scenario/ecs/write-atmos.json</p><code><span style="color: rgb(0,0,128);">java&nbsp;<code><span style="color: rgb(0,0,128);">-Dauth.id=&lt;USER_ID&gt; <code><span style="color: rgb(0,0,128);"><code><span style="color: rgb(0,0,128);"><code><span style="color: rgb(0,0,128);">[-Dauth.token=&lt;SUBTENANT&gt;]</span></code></span></code></span></code> -Dauth.secret=&lt;SECRET&gt;</span></code> -Dauth.secret=WQmcQh5UYRAWYqJGCVEueihGBZ7h6nI2vHHwYmPg -Dstorage.addrs=10.20.30.40 -Dstorage.port=8080 -Dstorage.http.api=atmos -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<p>Example scenarios location: scenario/ecs/write-atmos.json</p>
+<code><fieldset class="bash">java -Dauth.id=&lt;USER_ID&gt; [-Dauth.token=&lt;SUBTENANT&gt;] -Dauth.secret=&lt;SECRET&gt; -Dauth.secret=WQmcQh5UYRAWYqJGCVEueihGBZ7h6nI2vHHwYmPg -Dstorage.addrs=10.20.30.40 -Dstorage.port=8080 -Dstorage.http.api=atmos -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
 <h4>OpenStack Swift</h4>
 <p>Example scenarios location: scenario/ecs/write-swift.json</p>
-<p><code><span style="color: rgb(0,0,128);">java&nbsp;<code><span style="color: rgb(0,0,128);">-Dauth.id=&lt;USER_ID&gt;<code><span style="color: rgb(0,0,128);"> [-Dauth.token=&lt;TOKEN&gt;]</span></code> -Dauth.secret=&lt;SECRET&gt;</span></code> <code><span style="color: rgb(0,0,128);">[-Ditem.dst.container=&lt;TARGET_CONTAINER&gt;] </span></code>-Dstorage.addrs=10.20.30.40 -Dstorage.port=8080 -Dstorage.http.api=swift -Dstorage.http.namespace=&lt;NS&gt; -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></p><ac:structured-macro ac:macro-id="08c61abc-e805-432d-8e37-a9956607f110" ac:name="note" ac:schema-version="1"><ac:rich-text-body>
-<p>The default value of &quot;storage.http.namespace&quot; configuration parameter (null) doesn't work in the case of Swift API usage.</p></ac:rich-text-body></ac:structured-macro>
-<p><span style="color: rgb(0,0,128);"><br /></span></p></li>
+<p><code><fieldset class="bash">java -Dauth.id=&lt;USER_ID&gt; [-Dauth.token=&lt;TOKEN&gt;] -Dauth.secret=&lt;SECRET&gt; [-Ditem.dst.container=&lt;TARGET_CONTAINER&gt;] -Dstorage.addrs=10.20.30.40 -Dstorage.port=8080 -Dstorage.http.api=swift -Dstorage.http.namespace=&lt;NS&gt; -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></p>
+<fieldset>
+	<legend>Note:</legend>
+	The default value of &quot;storage.http.namespace&quot; configuration parameter (null) doesn't work in the case of Swift API usage.</fieldset>
+</li>
 <li>
 <h4>EMC ECS</h4>Example scenarios location: scenario/ecs/*.json
-<ol>
+<ol type="a">
 <li>
 <h5>S3</h5>
-<p><code><span style="color: rgb(0,0,128);">java -Dauth.id=wuser1@sanity.local -Dauth.secret=&lt;SECRET&gt; <code><span style="color: rgb(0,0,128);">[-Ditem.dst.container=&lt;TARGET_BUCKET&gt;] </span></code>-Dstorage.addrs=10.20.30.40,10.20.30.41,10.20.30.42 -Dstorage.port=<strong>9020</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></p></li>
+<p><code><fieldset class="bash">java -Dauth.id=wuser1@sanity.local -Dauth.secret=&lt;SECRET&gt; [-Ditem.dst.container=&lt;TARGET_BUCKET&gt;] -Dstorage.addrs=10.20.30.40,10.20.30.41,10.20.30.42 -Dstorage.port=<strong>9020</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></p></li>
 <li>
-<h5>Atmos</h5><code><span style="color: rgb(0,0,128);">java -Dauth.id=wuser1@sanity.local <code><span style="color: rgb(0,0,128);"><code><span style="color: rgb(0,0,128);"><code><span style="color: rgb(0,0,128);"><code><span style="color: rgb(0,0,128);"><code><span style="color: rgb(0,0,128);">[-Dauth.token=&lt;SUBTENANT&gt;]</span></code></span></code></span></code> </span></code></span></code>-Dauth.secret=&lt;SECRET&gt; -Dstorage.addrs=<code><span style="color: rgb(0,0,128);">10.20.30.40,10.20.30.41,10.20.30.42</span></code> -Dstorage.port=<strong>9022</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<h5>Atmos</h5>
+<code><fieldset class="bash">java -Dauth.id=wuser1@sanity.local [-Dauth.token=&lt;SUBTENANT&gt;] -Dauth.secret=&lt;SECRET&gt; -Dstorage.addrs=10.20.30.40,10.20.30.41,10.20.30.42 -Dstorage.port=<strong>9022</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
-<h5>Swift</h5><code><span style="color: rgb(0,0,128);">java&nbsp;<code><span style="color: rgb(0,0,128);">-Dauth.id=<code>wuser1@sanity.local<span style="color: rgb(0,0,128);"> [-Dauth.token=&lt;TOKEN&gt;]</span></code> -Dauth.secret=&lt;SECRET&gt;</span></code> <code><span style="color: rgb(0,0,128);">[-Ditem.dst.container=&lt;TARGET_CONTAINER&gt;] </span></code>-Dstorage.addrs=10.20.30.40<code><span style="color: rgb(0,0,128);"><code><span style="color: rgb(0,0,128);">,10.20.30.41,10.20.30.42</span></code></span></code> -Dstorage.port=<strong>9024</strong> -Dstorage.http.api=swift -Dstorage.http.namespace=<strong>s3</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li></ol></li></ol></li>
-<li>
-<h3>FILESYSTEM LOAD</h3>
+<h5>Swift</h5>
+<code><fieldset class="bash">java -Dauth.id=wuser1@sanity.local [-Dauth.token=&lt;TOKEN&gt;] -Dauth.secret=&lt;SECRET&gt; [-Ditem.dst.container=&lt;TARGET_CONTAINER&gt;] -Dstorage.addrs=10.20.30.40,10.20.30.41,10.20.30.42 -Dstorage.port=<strong>9024</strong> -Dstorage.http.api=swift -Dstorage.http.namespace=<strong>s3</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li></ol></li></ol></li>
+			</fieldset>
+
+			<fieldset id="filesystem">
+				<legend><h3>FILESYSTEM LOAD</h3></legend>
 <p>In order to use Filesystem load engine it's neccessary to set &quot;fs&quot; value to the &quot;storage.type&quot; configuration parameter.</p>
 <p>Example scenarios location: scenario/fs/*.json</p>
 <ol>
 <li>
 <h4>Write to the custom directory</h4>
-<p>Example scenarios location: scenario/fs/write-to-custom-dir.json</p><code><span style="color: rgb(0,0,128);">java -Ditem.dst.container=&lt;PATH_TO_TARGET_DIR&gt; -Dstorage.type=<strong>fs</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<p>Example scenarios location: scenario/fs/write-to-custom-dir.json</p>
+<code><fieldset class="bash">java -Ditem.dst.container=&lt;PATH_TO_TARGET_DIR&gt; -Dstorage.type=<strong>fs</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
 <h4>Read from the custom directory</h4>
-<p>Example scenarios location: scenario/fs/read-from-custom-dir.json</p><code><span style="color: rgb(0,0,128);">java -Ditem.dst.container=&lt;PATH_TO_TARGET_DIR&gt; [<code><span style="color: rgb(0,0,128);">&lt;ITEM_SRC_FILE_OR_CONTAINER&gt;</span></code>] -Dload.type=<strong>read</strong> -Dstorage.type=<strong>fs</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<p>Example scenarios location: scenario/fs/read-from-custom-dir.json</p>
+<code><fieldset class="bash">java -Ditem.dst.container=&lt;PATH_TO_TARGET_DIR&gt; [&lt;ITEM_SRC_FILE_OR_CONTAINER&gt;] -Dload.type=<strong>read</strong> -Dstorage.type=<strong>fs</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
 <h4>Overwrite the files circularly</h4>
-<p>Example scenarios location: scenario/fs/overwrite-circularly.json</p><code><span style="color: rgb(0,0,128);">java -Dload.type=update -Ditem.dst.container=&lt;PATH_TO_TARGET_DIR&gt; [&lt;ITEM_SRC_FILE_OR_CONTAINER&gt;] -Dload.<strong>circular=true</strong> -Dstorage.type=<strong>fs</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li></ol></li>
-<li>
-<h3>CUSTOM CONTENT</h3>
+<p>Example scenarios location: scenario/fs/overwrite-circularly.json</p>
+<code><fieldset class="bash">java -Dload.type=update -Ditem.dst.container=&lt;PATH_TO_TARGET_DIR&gt; [&lt;ITEM_SRC_FILE_OR_CONTAINER&gt;] -Dload.<strong>circular=true</strong> -Dstorage.type=<strong>fs</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li></ol></li>
+</fieldset>
+
+			<fieldset id="content">
+				<legend><h3>CUSTOM CONTENT</h3></legend>
 <p>An user may use a custom file as the content source for the data generation and verification. This custom file path should be specified as the &quot;item.data.content.file&quot; configuration parameter. There are two predefined content source files: conf/content/textexample and conf/content/zerobytes.</p>
-<p>Example scenarios location: scenario/content/*.json</p><ac:structured-macro ac:macro-id="2b376903-d8b1-4a32-adee-c482d5f5da65" ac:name="note" ac:schema-version="1"><ac:rich-text-body>
-<p>The same content source should be used for the data items writing and subsequent reading in order to pass data verification</p></ac:rich-text-body></ac:structured-macro>
+<p>Example scenarios location: scenario/content/*.json</p>
+				<fieldset>
+					<legend>Note:</legend>
+<p><i>The same content source should be used for the data items writing and subsequent reading in order to pass data verification</i></p>
+				</fieldset>
 <ol>
 <li>
 <h4>Text content</h4>
-<p><code><span style="color: rgb(0,0,128);">java -Ditem.data.content.file=mongoose-&lt;VERSION&gt;/conf/content/<strong>textexample</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></p></li>
+<p><code><fieldset class="bash">java -Ditem.data.content.file=mongoose-&lt;VERSION&gt;/conf/content/<strong>textexample</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></p></li>
 <li>
-<h4>Zero bytes content</h4><code><span style="color: rgb(0,0,128);">java -Ditem.data.content.file=mongoose-&lt;VERSION&gt;/conf/content/<strong>zerobytes</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code><span style="color: rgb(0,0,128);"><br /></span></li></ol></li>
-<li>
-<h3>CIRCULAR LOAD</h3>
+<h4>Zero bytes content</h4>
+<code><fieldset class="bash">java -Ditem.data.content.file=mongoose-&lt;VERSION&gt;/conf/content/<strong>zerobytes</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li></ol></li>
+</fieldset>
+
+			<fieldset id="circularity">
+				<legend><h3>CIRCULAR LOAD</h3></legend>
 <p>In order to load with the fixed set of the items &quot;infinitely&quot; (each items is being written/read again and again) an user should set the configuration parameter &quot;load.circular&quot; to <em>true</em>.</p>
 <p>Example scenarios location: scenario/circular/*.json</p>
 <ol>
 <li>
-<h4>Read</h4><code><span style="color: rgb(0,0,128);">java -Dload.type=<strong>read</strong> -Ditem.data.verify=false -Ditem.dst.container=&lt;CONTAINER_WITH_ITEMS&gt; [<code><span style="color: rgb(0,0,128);">&lt;ITEM_SRC_FILE_OR_CONTAINER&gt;</span></code>] -Dload.circular=<strong>true</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<h4>Read</h4>
+<code><fieldset class="bash">java -Dload.type=<strong>read</strong> -Ditem.data.verify=false -Ditem.dst.container=&lt;CONTAINER_WITH_ITEMS&gt; [&lt;ITEM_SRC_FILE_OR_CONTAINER&gt;] -Dload.circular=<strong>true</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
-<h4>Update</h4><code><span style="color: rgb(0,0,128);">java -Ditem.data.verify=false -Ditem.dst.container=&lt;CONTAINER_WITH_ITEMS&gt; <code><span style="color: rgb(0,0,128);">[<code><span style="color: rgb(0,0,128);">&lt;ITEM_SRC_FILE_OR_CONTAINER&gt;</span></code>]</span></code> -Ditem.data.ranges=<strong>1</strong> -Dload.circular=<strong>true</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li></ol><code><span style="color: rgb(0,0,128);">&nbsp;</span></code></li>
-<li>
-<h3>SCENARIO</h3>
+<h4>Update</h4>
+<code><fieldset class="bash">java -Ditem.data.verify=false -Ditem.dst.container=&lt;CONTAINER_WITH_ITEMS&gt; [&lt;ITEM_SRC_FILE_OR_CONTAINER&gt;] -Ditem.data.ranges=<strong>1</strong> -Dload.circular=<strong>true</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li></ol></li>
+</fieldset>
+
+			<fieldset id="scenario">
+				<legend><h3>SCENARIO</h3></legend>
 <ol>
 <li>
 <h4>Configure a Load Job</h4>
@@ -291,8 +493,7 @@
 }</pre></fieldset></li>
 <li>
 <h4>Sleep Between the Load Jobs</h4>
-<fieldset class="json"><pre>
-{
+<fieldset class="json"><pre>{
 	"type" : "sequential"
 	"config" : {
 		// shared configuration values inherited by the children jobs
@@ -320,75 +521,116 @@
 <h4>Weighted Load</h4>Please refer to example scenario located at: scenario/weighted/*.json</li>
 <li>
 <h4>Rampup</h4><fieldset class="json"><pre>{
-   "type": "rampup",
-   "config" : {
-      "item" : {
-         "data" : {
-            "size" : [
-               0, "1KB", "1MB", "1GB"
-            ]
-         }
-      },
-      "load" : {
-         "limit" : {
-            "time" : "10m",
-            "count" : 10000000
-         },
-         "threads": [
-            1, 10, 100, 1000
-         ],
-         "type" : [
-            "write", "read", "delete"
-         ]
-      }
-   }
+	"type": "rampup",
+	"config" : {
+	  "item" : {
+		 "data" : {
+			"size" : [
+			   0, "1KB", "1MB", "1GB"
+			]
+		 }
+	  },
+	  "load" : {
+		 "limit" : {
+			"time" : "10m",
+			"count" : 10000000
+		 },
+		 "threads": [
+			1, 10, 100, 1000
+		 ],
+		 "type" : [
+			"write", "read", "delete"
+		 ]
+	  }
+	}
 }</pre></fieldset></li>
 <li>
-<h4>Scenario Validation</h4>There are a JSON schema file in the distribution: <code>s<strong>cenario/scenario-schema.json</strong></code>. An user may automatically validate the scenarios using this schema. This should help to write one's own custom scenario.</li></ol></li>
-<li>
-<h3>DYNAMIC CONFIGURATION VALUES</h3>
+<h4>Scenario Validation</h4>There are a JSON schema file in the distribution: <code>s<strong>cenario/scenario-schema.json</strong></code>. An user may automatically validate the scenarios using this schema. This should help to write one's own custom scenario.</li>
+			<li>
+				<h4 id="foreach">Execute a Job For Each value from the list</h4>
+				<fieldset class="json">
+					<pre>{
+   "type" : "each",
+   "value" : "threads",
+   "in" : [
+      1, 10, 100, 1000, 10000, 100000
+   ],
+   "config" : {
+      "load" : {
+         "threads" : "${threads}"
+      }
+   },
+   "jobs" : [
+      {
+            "type" : "load"
+      }
+   ]
+}
+					</pre>
+				</fieldset>
+			</li>
+		</ol>
+	</li>
+
+				</fieldset>
+
+			<fieldset id="dynamic">
+				<legend><h3>DYNAMIC CONFIGURATION VALUES</h3></legend>
 <p>Example scenarios location: scenario/dynamic/*.json</p>
 <ol>
 <li>
 <h4>Custom HTTP Headers</h4>
-<p>Example scenarios location: scenario/dynamic/custom-http-headers.json</p><code><span style="color: rgb(0,0,128);">java -Dhttp.customHeaders.<strong>myOwnHeaderName=MyOwnHeaderValue</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<p>Example scenarios location: scenario/dynamic/custom-http-headers.json</p>
+<code><fieldset class="bash">java -Dhttp.customHeaders.<strong>myOwnHeaderName=MyOwnHeaderValue</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
 <h4>Custom HTTP Headers with dynamic values</h4>
-<p>Example scenarios location: scenario/dynamic/custom-http-headers-with-dynamic-values.json</p><code><span style="color: rgb(0,0,128);">java -Dhttp.customHeaders.myOwnHeaderName=<strong>MyOwnHeaderValue</strong>\ <strong><span style="color: rgb(0,128,128);">%d[0-1000]</span>\ <span style="color: rgb(128,0,128);">%f{###.##}[-2--1]</span>\ <span style="color: rgb(0,128,0);">%D{yyyy-MM-dd'T'HH:mm:ssZ}[1970/01/01-2016/01/01]</span></strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<p>Example scenarios location: scenario/dynamic/custom-http-headers-with-dynamic-values.json</p>
+<code><fieldset class="bash">java -Dhttp.customHeaders.myOwnHeaderName=<strong>MyOwnHeaderValue\ %d[0-1000]\ %f{###.##}[-2--1]\ %D{yyyy-MM-dd'T'HH:mm:ssZ}[1970/01/01-2016/01/01]</strong> -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
 <h4>Filesystem Load: dynamic target path</h4>
-<p>Example scenarios location: scenario/dynamic/write-to-variable-dir.json</p><code><span style="color: rgb(0,0,128);">java -Ditem.dst.container=&lt;PATH_TO_TARGET_DIR&gt;/</span><strong><span style="color: rgb(0,0,128);">%p{16;2}</span></strong><span style="color: rgb(0,0,128);"> -Dstorage.type=<strong>fs</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li></ol></li>
-<li>
-<h3>CUSTOM ITEM NAMING</h3>
+<p>Example scenarios location: scenario/dynamic/write-to-variable-dir.json</p>
+<code><fieldset class="bash">java -Ditem.dst.container=&lt;PATH_TO_TARGET_DIR&gt;/<strong>%p{16;2}</strong> -Dstorage.type=<strong>fs</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li></ol></li>
+</fieldset>
+
+			<fieldset id="item-naming">
+				<legend><h3>CUSTOM ITEM NAMING</h3></legend>
 <p>Example scenarios location: scenario/naming/*.json</p>
 <ol>
 <li>
-<h4>Ascending names order</h4><code><span style="color: rgb(0,0,128);">java -Ditem.naming.type=<strong>asc</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<h4>Ascending names order</h4>
+<code><fieldset class="bash">java -Ditem.naming.type=<strong>asc</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
-<h4>Descending names order</h4><code><span style="color: rgb(0,0,128);">java -Ditem.naming.type=<strong>desc</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<h4>Descending names order</h4>
+<code><fieldset class="bash">java -Ditem.naming.type=<strong>desc</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
-<h4>Names with decimal identifiers</h4><code><span style="color: rgb(0,0,128);">java -Ditem.naming.radix=<strong>10</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li>
+<h4>Names with decimal identifiers</h4>
+<code><fieldset class="bash">java -Ditem.naming.radix=<strong>10</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li>
 <li>
-<h4>Names with prefixes</h4><code><span style="color: rgb(0,0,128);">java -Ditem.naming.prefix=<strong>item_</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></li></ol>
-<li>
-<h3>COPY MODE</h3>
-<p>Example scenarios location: scenario/copy/*.json</p>
-<p>The example below performs the items copying from the source container to the target container:<br /><code><span style="color: rgb(0,0,128);">java <code><span style="color: rgb(0,0,128);">[-Ditem.dst.container=&lt;TARGET_CONTAINER&gt;] -Ditem.src.container=&lt;SOURCE_CONTAINER&gt;</span></code> [-Ditem.src.file=&lt;<code><span style="color: rgb(0,0,128);">PATH_TO_ITEMS_LIST_CSV_FILE</span></code>&gt;] ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</span></code></p><ac:structured-macro ac:macro-id="af687644-46c7-49c0-af73-08f1db9bc423" ac:name="note" ac:schema-version="1"><ac:rich-text-body>
-<p>See <ac:link><ri:page ri:content-title="Mongoose Copy Mode" /><ac:plain-text-link-body><![CDATA[Copy Mode]]></ac:plain-text-link-body></ac:link> functional specification for details</p></ac:rich-text-body></ac:structured-macro>
-<p><span style="color: rgb(0,0,128);">&nbsp;</span></p></li>
-<li>
-<h3>SSL/TLS SUPPORT</h3><ac:structured-macro ac:macro-id="aaec9467-8004-4765-a4d8-d5cd806a87c9" ac:name="note" ac:schema-version="1"><ac:rich-text-body>
-<p>The feature is available since v2.1.0</p></ac:rich-text-body></ac:structured-macro>
-<p>Example scenarios location: scenario/ssl/*.json<br /><code><span style="color: rgb(0,0,128);">java -jar mongoose-2.1.0/mongoose.jar -f scenario/ssl/write-single-item.json</span></code><br />or<br /><span style="color: rgb(0,0,128);"><code><span style="color: rgb(0,0,128);">java -D<strong style="color: rgb(0,0,128);">network.ssl=true</strong> -Dstorage.port=9021 ... -jar mongoose-2.1.0/mongoose.jar</span></code></span></p></li>
-<li>
-<h3>MISCALLENOUS</h3>
+<h4>Names with prefixes</h4>
+<code><fieldset class="bash">java -Ditem.naming.prefix=<strong>item_</strong> ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></li></ol>
+
+			</fieldset>
+
+			<fieldset id="ssl">
+				<legend><h3>SSL/TLS SUPPORT</h3></legend>
+<p><i>The feature is available since v2.1.0</i></p>
+<p>Example scenarios location: scenario/ssl/*.json<br />
+<code><fieldset class="bash">java -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f scenario/ssl/write-single-item.json</fieldset></code><br />
+or<br />
+<code><fieldset class="bash">java -D<strong>network.ssl=true</strong> -Dstorage.port=9021 ... -jar mongoose-&lt;VERSION&gt;/mongoose.jar</fieldset></code></p></li>
+
+			</fieldset>
+
+			<fieldset id="misc">
+				<legend><h3>MISCALLENOUS</h3></legend>
 <ol>
-<a>
-<h4>Docker Integration</h4>Please refer to <a href="usage/docker.html"/>Mongoose Usage/Docker</a> page for reference</li>
+	<li>
+<h4>Docker Integration</h4>Please refer to <a href="usage-docker.html" target="_self">Mongoose Usage/Docker</a> page for reference</li>
 <li>
 <h4>Disable console output coloring</h4>
 <p>Go to the file conf/logging.json using the text editor, then go to the line ~#45 in the attribute &quot;pattern&quot; value remove the leading &quot;%highlight{&quot; and trailing &quot;}&quot; characters</p></li></ol></li></ol>
 </ol>
+			</fieldset>
 
 		</fieldset>
 	</body>
