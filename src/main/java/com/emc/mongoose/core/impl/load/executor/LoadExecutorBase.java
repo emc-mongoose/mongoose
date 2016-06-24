@@ -149,21 +149,26 @@ implements LoadExecutor<T> {
 	//
 	private final class LogMetricsTask
 	implements Runnable {
+		@SuppressWarnings("ConstantConditions")
 		@Override
 		public final void run() {
 			Thread.currentThread().setName(LoadExecutorBase.this.getName());
-			final PolyLineManager polyLineManager = new PolyLineManager();
-			while(!isInterrupted.get()) {
-				logMetrics(Markers.PERF_AVG);
-//				if (true) { // todo make some webui flag here
-					polyLineManager.updatePolylines(getStatsSnapshot());
-					ChartPackage.addChart(
-							appConfig.getRunId(), LoadExecutorBase.this.getName(), polyLineManager);
-//				}
-				try {
-					TimeUnit.SECONDS.sleep(metricsPeriodSec);
-				} catch(final InterruptedException e) {
-					break;
+			final boolean loadPrecondition = appConfig.getLoadPrecondition();
+			if (!loadPrecondition) {
+				final String runId = appConfig.getRunId();
+				final String loadJobName = LoadExecutorBase.this.getName();
+				final PolyLineManager polyLineManager = new PolyLineManager();
+				while(!isInterrupted.get()) {
+					logMetrics(Markers.PERF_AVG);
+					if (true) { // todo make some webui flag here
+						polyLineManager.updatePolylines(getStatsSnapshot());
+						ChartPackage.addChart(runId, loadJobName, polyLineManager);
+					}
+					try {
+						TimeUnit.SECONDS.sleep(metricsPeriodSec);
+					} catch(final InterruptedException e) {
+						break;
+					}
 				}
 			}
 		}

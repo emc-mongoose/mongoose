@@ -69,6 +69,8 @@ define([
 					const stopIconElem = createStopIcon(runId);
 					listItemElem.append(stopIconElem);
 				}
+				const deleteIconElem = createDeleteIcon(runId);
+				listItemElem.append(deleteIconElem);
 			}
 			replaceElementText(listItemElem, listItemElemText);
 			if(!listItemElem.hasClass(runStatus)){
@@ -124,6 +126,33 @@ define([
 			}).done(function (testsObj) {
 				updateTestsList(testsObj, false);
 				console.log('Mongoose ran');
+			});
+		});
+		return div;
+	}
+
+	function createDeleteIcon(runId) {
+		const div = $('<div/>', {
+			id: plainId([runId, 'delete']),
+			class: 'icon-delete tooltip'
+		});
+		const tooltipSpan = $('<span/>', {
+			class: 'tooltiptext'
+		});
+		tooltipSpan.text('Click to remove the test');
+		div.append(tooltipSpan);
+		div.click(function () {
+			const listItemElem = $(jqId([runIdForElem(runId)]));
+			listItemElem.remove();
+			$.ajax({
+				type: 'DELETE',
+				url: '/run',
+				dataType: 'json',
+				contentType: constants.JSON_CONTENT_TYPE,
+				data: JSON.stringify({ runId: runId }),
+				processData: false
+			}).done(function () {
+				console.log('The test is removed');
 			});
 		});
 		return div;

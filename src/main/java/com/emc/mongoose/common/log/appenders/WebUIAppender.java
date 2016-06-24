@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.emc.mongoose.common.conf.AppConfig.KEY_LOAD_PRECONDITION;
 import static com.emc.mongoose.common.conf.AppConfig.KEY_RUN_ID;
 /**
  Created by kurila on 23.10.14.
@@ -77,8 +78,8 @@ extends AbstractAppender {
 			//
 			if(currRunId != null) {
 				if(!LOG_EVENTS_MAP.containsKey(currRunId)) {
-					final Map<String, CircularArray<ShortenedLogEvent>> markers = new
-							ConcurrentHashMap<>();
+					final Map<String, CircularArray<ShortenedLogEvent>> markers =
+						new ConcurrentHashMap<>();
 					for (final String markerName: markerNames) {
 						addMarkerToMap(markers, markerName);
 					}

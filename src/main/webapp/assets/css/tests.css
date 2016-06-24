@@ -39,7 +39,7 @@
 }
 
 .icon-stop:before {
-    content: "\64";
+    content: "\62";
     font-size: 20px;
 }
 
@@ -48,13 +48,29 @@
     font-size: 20px;
 }
 
-.icon-stop {
+.icon-delete:before {
+    content: "\65";
+    font-size: 20px;
+}
+
+.icon-delete {
     width: 20px;
     height: 20px;
     cursor: pointer;
     position: absolute;
     top: 11px;
     right: 10px;
+    z-index: 1000;
+    opacity: 1;
+}
+
+.icon-stop {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    position: absolute;
+    top: 11px;
+    right: 40px;
     z-index: 1000;
     opacity: 1;
 }
@@ -74,12 +90,12 @@
     visibility: hidden;
     width: 120px;
     background-color: #555;
-    color: #fff;
+    color: black;
     text-align: center;
     border-radius: 6px;
     padding: 5px 0;
     position: absolute;
-    z-index: 1;
+    z-index: 2000;
     bottom: 125%;
     left: 50%;
     margin-left: -60px;
@@ -93,14 +109,15 @@
     top: 100%;
     left: 50%;
     margin-left: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: #555 transparent transparent transparent;
+    border: 5px solid transparent;
+    border-top-color: #555;
+    z-index: 2000;
 }
 
 .tooltip:hover .tooltiptext {
     visibility: visible;
     opacity: 1;
+    z-index: 2000;
 }
 
 .list-group-item.stopped {

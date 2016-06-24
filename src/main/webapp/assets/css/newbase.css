@@ -235,3 +235,7 @@
     word-wrap: normal !important;
     white-space: pre !important;
 }
+
+.scenario-name {
+    margin-left: 10px;
+}

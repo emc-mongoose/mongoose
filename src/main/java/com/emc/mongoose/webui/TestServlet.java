@@ -111,6 +111,20 @@ public class TestServlet
 		}
 	}
 
+	@Override
+	protected void doDelete(final HttpServletRequest request, final HttpServletResponse response)
+	throws ServletException, IOException {
+		try (
+			final BufferedReader reader = request.getReader()
+		) {
+			final String runId = JsonUtil.readValue(reader).get(RUN_ID_KEY);
+			if (TESTS.get(runId).isAlive()) {
+				stopTest(runId);
+			}
+			removeTest(runId);
+		}
+	}
+
 	private Map<String, Map<String, String>> collectRunIdInfo() {
 		final Map<String, Map<String, String>> runIdInfo = new LinkedHashMap<>();
 		for (final Map.Entry<String, String> modeEntry: MODES.entrySet()) {
@@ -187,6 +201,11 @@ public class TestServlet
 
 	private void stopTest(final String runId) {
 		TESTS.get(runId).interrupt();
+	}
+
+	private void removeTest(final String runId) {
+		TESTS.remove(runId);
+		MODES.remove(runId);
 	}
 
 	private static abstract class Starter

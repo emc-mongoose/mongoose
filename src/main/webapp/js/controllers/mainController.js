@@ -142,6 +142,10 @@ define([
 			const configElem = $('#all-buttons');
 			$.each(CONFIG_TABS, function (index, value) {
 				if (value === TAB_TYPE.SCENARIOS) {
+					const scenarioName = $('<h4/>', {
+						id: plainId([value, 'name']),
+						class: 'scenario-name tab-dependent'
+					});
 					const detailsTree = $('<ul/>', {
 						id: plainId([BLOCK.TREE, value, 'details']),
 						class: BLOCK.TREE + ' ' + 'tab-dependent'
@@ -152,6 +156,7 @@ define([
 					});
 					configElem.after(jsonViewElem);
 					configElem.after(detailsTree);
+					configElem.after(scenarioName);
 					jsonViewElem.hide();
 					detailsTree.hide();
 				}
@@ -173,6 +178,7 @@ define([
 				hbUtil.compileAndInsertInsideBefore(jqId(['all', BLOCK.BUTTONS]), buttonsTemplate,
 					{'buttons': BUTTONS, 'tab-type': value});
 			});
+			$(jqId([BUTTON_TYPE.OPEN_INPUT_TEXT, TAB_TYPE.SCENARIOS])).remove();
 			binder.tabButtons(BUTTON_TYPE, CONFIG_TABS);
 		}
 

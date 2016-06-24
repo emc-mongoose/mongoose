@@ -59,7 +59,9 @@ define([
 					setScenarioObject(scenarioJson);
 					updateDetailsTree(scenarioJson);
 					const fileNameElem = $(jqId(['file', 'name', TAB_TYPE.SCENARIOS]));
+					const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
 					fileNameElem.val(newPath);
+					scenarioNameElem.text(newPath);
 					fileNameElem.width(responsiveWidth(newPath));
 				})
 				.fail(function () {
@@ -70,7 +72,9 @@ define([
 		function backClickEvent() {
 			showMainTree();
 			const fileNameElem = $(jqId(['file', 'name', TAB_TYPE.SCENARIOS]));
+			const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
 			fileNameElem.val(noMessage);
+			scenarioNameElem.text('');
 			fileNameElem.width(responsiveWidth(noMessage));
 		}
 
@@ -137,6 +141,8 @@ define([
 	function fileReaderOnLoadAction(scenarioObject, fullFileName) {
 		setScenarioObject(scenarioObject);
 		updateDetailsTree(scenarioObject);
+		const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
+		scenarioNameElem.text(fullFileName);
 		// $(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(fullFileName);
 	}
 
