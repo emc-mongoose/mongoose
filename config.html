@@ -1,0 +1,641 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Mongoose Configuration</title>
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<fieldset>
+			<legend><h2>CONFIGURATION</h2></legend>
+			<p>The configuration parameters from the table below have default values in the directory &lt;MONGOOSE_DIR&gt;/conf/defaults.json</p>
+			<p>
+				<fieldset>
+					<legend>Note</legend>
+					<ul>
+						<li>
+							User can specify Mongoose configuration parameters as JVM system properties via JAVA_TOOL_OPTIONS environment variable. For example:
+							<fieldset class="bash">
+								<code>
+									export JAVA_TOOL_OPTIONS="-Dstorage.addrs=lviprj074.lss.emc.com,lviprj075.lss.emc.com,lviprj076.lss.emc.com,lviprj077.lss.emc.com -Ditem.data.size=1B -Dload.threads=100 -Dload.limit.time=5m"
+								</code>
+							</fieldset>
+						</li>
+						<li>
+							The meaning of "container" is different for different storage types / cloud storage APIs:
+							<ul>
+								<li>S3: the container means the bucket</li>
+								<li>Atmos: has an effect if storage.http.fsAccess=true</li>
+								<li>Swift: the container means the container</li>
+								<li>
+									Filesystem load: the container means the target directory
+									<ul>
+										<li>may contain several directories, for example: "a/bb/ccc"</li>
+										<li>may contain leading slash: "/tmp/123"</li>
+									</ul>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				</fieldset>
+			</p>
+			<p>Complete list of the configuration parameters supported is:
+			
+<table border="1">
+<tbody>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>Type</th>
+<th>Default<br/>value</th>
+<th>Version<br/>introduced</th>
+<th>Version<br/>deprecated</th>
+</tr>
+<tr>
+<td>auth.id</td>
+<td>The authentication identifier</td>
+<td>String</td>
+<td>null</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>auth.secret</td>
+<td>The authentication secret</td>
+<td>String</td>
+<td>null</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>auth.token</td>
+<td>
+<ul>
+<li>S3: no effect</li>
+<li>Atmos: subtenant</li>
+<li>Swift: token</li></ul></td>
+<td>String</td>
+<td>null</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>io.buffer.size.min</td>
+<td>Min I/O buffer size</td>
+<td>Fixed size</td>
+<td>4KB</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>io.buffer.size.max</td>
+<td>Max I/O buffer size</td>
+<td>Fixed size</td>
+<td>1MB</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.type</td>
+<td>
+<p>The type of the item to use, the possible values are: &quot;data&quot;, &quot;container&quot;.</p>
+<ul>
+<li>Filesystem, &quot;container&quot;: load with directories</li>
+<li>Filesystem, &quot;data&quot;: load with files</li></ul></td>
+<td>Enum</td>
+<td>data</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.data.content.file</td>
+<td>The source file for the content generation (has effect only if item.data.content.type=file)</td>
+<td>Path</td>
+<td>null</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.data.content.seed</td>
+<td>The initial value for the random data generation (has effect only if item.data.content.type=seed)</td>
+<td>String</td>
+<td>7a42d9c483244167</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.data.content.ringSize</td>
+<td>The size of the content source ring buffer</td>
+<td>Fixed size</td>
+<td>4MB</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.data.ranges</td>
+<td>The count of the random ranges or the fixed Byte Range to Write or Read (depends on the specified load type)</td>
+<td>
+<p>Integer &gt;= 0 or</p>
+<p>Byte Range</p></td>
+<td>0</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.data.size</td>
+<td>The size of the data items to process. Doesn't have any effect if item.type=container</td>
+<td>Size range with bias</td>
+<td>1MB</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.data.verify</td>
+<td>Specifies whether to verify the content while reading the data items or not. Doesn't have any effect if load.type != read</td>
+<td>Flag</td>
+<td>true</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.dst.container</td>
+<td>The target container. Null (default) value leads to container name generation and pre-creation.</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td></tr>
+<tr>
+<td>item.dst.file</td>
+<td>Specified the target file for the items processed successfully. If null the items are logged into the log/&lt;RUN_ID&gt;/items.csv</td>
+<td>Path</td>
+<td>null</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.src.container</td>
+<td>
+<p>The source container which may be used as items input if not &quot;item.src.file&quot; is specified.</p>
+<p>Also used for the copy mode as the container containing the items to be copied into the destination container.</p></td>
+<td>String or Path</td>
+<td>null</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.src.file</td>
+<td>
+<p>The source file for the items to process. If null the behavior depends on the load type:</p>
+<ul>
+<li>Write: write new items</li>
+<li>Read/Delete: list the specified container (if any) and process the listed items</li></ul></td>
+<td>Path</td>
+<td>null</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.src.batchSize</td>
+<td>Specifies how many items to read from the specified item source (a items list file or a container listing) per time</td>
+<td>Integer &gt; 0</td>
+<td>4096</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.naming.type</td>
+<td>Specifies the new items naming order. Has effect only in the case of Write (if not partial) load<br />
+<ul>
+<li>asc: the new items are named in the ascending order</li>
+<li>desc: the new items are named in the descending order</li>
+<li>random: the new items are named randomly</li></ul></td>
+<td>Enum</td>
+<td>random</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.naming.prefix</td>
+<td>
+<p>The name prefix for the processed items.</p>
+<p>A correct value is neccessary to pass the content verification in the case of Read load.</p></td>
+<td>String</td>
+<td>null</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.naming.radix</td>
+<td>
+<p>The radix for the item ids. May be in the range of 2..36.</p>
+<p>A correct value is neccessary to pass the content verification in the case of Read load.</p></td>
+<td>2 &lt;= Integer &lt;= 36</td>
+<td>36</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.naming.offset</td>
+<td>The start id for the new item ids</td>
+<td>Long Integer &gt;= 0</td>
+<td>0</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.naming.length</td>
+<td>The name length for the new items. Has effect only in the case of Write (if not partial) load</td>
+<td>Integer &gt; 0</td>
+<td>13</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>item.queue.sizeLimit</td>
+<td>The maximum number of the unique items processed in the case of the circular load</td>
+<td>Integer &gt; 0</td>
+<td>1000000</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>load.circular</td>
+<td>Specifies whether to process the set of the items multiple times or not</td>
+<td>Flag</td>
+<td>false</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>load.type</td>
+<td>
+<p>The operation to process the items, may be &quot;write&quot;, &quot;read&quot; or &quot;delete&quot;</p></td>
+<td>Enum</td>
+<td>write</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>load.threads</td>
+<td>
+<p>The concurrency level.</p>
+<ul>
+<li>FS: the number of the I/O worker threads</li>
+<li>HTTP: the number of the concurrent connections (but not the number of I/O worker threads)</li></ul></td>
+<td>Integer &gt; 0</td>
+<td>1</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>load.limit.count</td>
+<td>The maximum number of the items to process for any load job. 0 means infinite</td>
+<td>Long Integer &gt;= 0</td>
+<td>0</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>load.limit.rate</td>
+<td>The maximum number of the items to process per second (throughput limit). 0 means no rate limit.</td>
+<td>Double</td>
+<td>0</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>load.limit.size</td>
+<td>The maximum size of the data items to process. 0 means no size limit.</td>
+<td>Fixed Size</td>
+<td>0</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>load.limit.time</td>
+<td>The maximum time to perform a load job. 0 means no time limit</td>
+<td>Time</td>
+<td>0s</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td class="highlight-red" colspan="1" data-highlight-colour="red"><span style="color: rgb(128,128,128);">load.metricsPeriod</span></td>
+<td class="highlight-red" colspan="1" data-highlight-colour="red"><span style="color: rgb(128,128,128);">The time period for the load job's metrics console output. 0 means to not to output the metrics at all</span></td>
+<td class="highlight-red" colspan="1" data-highlight-colour="red"><span style="color: rgb(128,128,128);">Time</span></td>
+<td class="highlight-red" colspan="1" data-highlight-colour="red"><span style="color: rgb(128,128,128);">10s</span></td>
+<td class="highlight-red" colspan="1" data-highlight-colour="red"><span style="color: rgb(128,128,128);">2.0.0</span></td>
+<td class="highlight-red" colspan="1" data-highlight-colour="red"><span style="color: rgb(128,128,128);">2.3.0</span></td></tr>
+<tr>
+<td><span>load.metrics.period</span></td>
+<td><span>The time period for the load job's metrics console output. 0 means to not to output the metrics at all</span></td>
+<td><span>Time</span></td>
+<td><span>10s</span></td>
+<td>2.3.0</td>
+<td></td></tr>
+<tr>
+<td>load.metrics.precondition</td>
+<td><span>Enabling precondition mode disables the metrics output for a load job to the perf*.csv log files</span></td>
+<td><span>Flag</span></td>
+<td><span>false</span></td>
+<td>2.3.0</td>
+<td></td></tr>
+<tr>
+<td class="highlight-red" colspan="1" data-highlight-colour="red"><span style="color: rgb(128,128,128);">load.precondition</span></td>
+<td class="highlight-red" colspan="1" data-highlight-colour="red">
+<p><span style="color: rgb(128,128,128);">Enabling precondition mode disables the metrics output for a load job to the perf*.csv log files</span></p></td>
+<td class="highlight-red" colspan="1" data-highlight-colour="red"><span style="color: rgb(128,128,128);">Flag</span></td>
+<td class="highlight-red" colspan="1" data-highlight-colour="red"><span style="color: rgb(128,128,128);">false</span></td>
+<td class="highlight-red" colspan="1" data-highlight-colour="red"><span style="color: rgb(128,128,128);">2.0.0</span></td>
+<td class="highlight-red" colspan="1" data-highlight-colour="red"><span style="color: rgb(128,128,128);">2.3.0</span></td></tr>
+<tr>
+<td>load.server.addrs</td>
+<td>Distributed mode: the list of the load server IPs or hostnames</td>
+<td>List of Strings</td>
+<td>127.0.0.1</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>load.server.nodeMapping</td>
+<td>
+<p>Specifies whether to distribute the load servers to the storage nodes or not.</p>
+<p>Default is false what means that each load server will use all the storage nodes specified.</p></td>
+<td>Flag</td>
+<td>false</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>network.serveJMX</td>
+<td>Specifies whether to serve the JMX port (1199) or not</td>
+<td>Flag</td>
+<td>false</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>network.socket.timeoutMilliSec</td>
+<td>The socket timeout</td>
+<td>Integer &gt;= 0</td>
+<td>1000000</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>network.socket.reuseAddr</td>
+<td></td>
+<td>Flag</td>
+<td>true</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>network.socket.keepAlive</td>
+<td></td>
+<td>Flag</td>
+<td>true</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>network.socket.tcpNoDelay</td>
+<td></td>
+<td>Flag</td>
+<td>true</td>
+<td>2.0,0</td>
+<td></td></tr>
+<tr>
+<td>network.socket.linger</td>
+<td></td>
+<td>Integer &gt;= 0</td>
+<td>0</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>network.socket.bindBacklogSize</td>
+<td></td>
+<td>Integer &gt;= 0</td>
+<td>0</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>network.socket.interestOpQueued</td>
+<td></td>
+<td>Flag</td>
+<td>false</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>network.socket.selectInterval</td>
+<td></td>
+<td>Integer &gt;= 0</td>
+<td>100</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>network.ssl</td>
+<td>
+<p>The flag to enable the load through SSL. Currently only HTTPS implementation is available.</p>
+<p>Have no any effect if configured storage type is filesystem.</p></td>
+<td>Flag</td>
+<td>false</td>
+<td>2.1.0</td>
+<td></td></tr>
+<tr>
+<td>run.id</td>
+<td>
+<p>The run id for this launch. Generated automatically if not specified (null).</p>
+<p>Specifies also the log directory path: log/&lt;RUN_ID&gt;/</p></td>
+<td>String</td>
+<td>null</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>run.file</td>
+<td>
+<p>The path to the scenario file to run. Mongoose will await the user input if not specified (null).</p>
+<p>Also the value may be specified with &quot;-f &lt;PATH&gt;&quot; CLI argument.</p></td>
+<td>Path</td>
+<td>null</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>run.mode</td>
+<td>The Mongoose run mode. Possible values are:<br />
+<ul>
+<li>standalone (default)</li>
+<li>client</li>
+<li>server</li>
+<li>wsmock</li>
+<li>webui</li></ul></td>
+<td>Enum</td>
+<td>standalone</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>run.name</td>
+<td>The application name. May be used to override the User-Agent header value in case of HTTP load.</td>
+<td>String</td>
+<td>mongoose</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>run.resume.enabled</td>
+<td>Specifies whether the resume feature enabled or not</td>
+<td>Flag</td>
+<td>false</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>run.version</td>
+<td>The application version. May be used to override the User-Agent header value in case of HTTP load.</td>
+<td>String</td>
+<td>&lt;RELEASE DEPENDENT&gt;</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>storage.type</td>
+<td>
+<p>Specifies the type of the storage to use.</p>
+<ul>
+<li>fs: use filesystem load</li>
+<li>http: load using HTTP protocol and the specified API (S3, Atmos, ...)</li></ul></td>
+<td>Enum</td>
+<td>http</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>storage.addrs</td>
+<td>The list of the storage node IPs or hostnames to use for HTTP load. May include port numbers.</td>
+<td>String</td>
+<td>127.0.0.1</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>storage.http.fsAccess</td>
+<td>Specifies whether filesystem access is enabled or not in the case of S3 or Atmos API</td>
+<td>Flag</td>
+<td>false</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>storage.http.headers.*</td>
+<td>Custom HTTP headers section. An user may place here a key-value pair which will be used as HTTP header.</td>
+<td>Map of Strings</td>
+<td>&lt;N/A&gt;</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>storage.http.namespace</td>
+<td>The HTTP storage namespace. WARNING: the default value (null) will not work in the case of Swift API</td>
+<td>String</td>
+<td>null</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>storage.http.api</td>
+<td>Specifies the HTTP storage API to use: Atmos, S3 or Swift</td>
+<td>String</td>
+<td>S3</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>storage.http.versioning</td>
+<td>Specifies whether the versioning storage feature is used or not</td>
+<td>Flag</td>
+<td>false</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>storage.mock.headCount</td>
+<td>WS mock: the count of the sockets to listen. Each next &quot;head&quot; listens except the 1st one listens the next port (9020, 9021, ...)</td>
+<td>Integer &gt;= 0</td>
+<td>1</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>storage.mock.capacity</td>
+<td>WS mock: the maximum count of the items to be stored in the storage mock which are may be to read back</td>
+<td>Integer &gt;= 0</td>
+<td>1000000</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>storage.mock.container.capacity</td>
+<td>WS mock: the maximum count of the items to be stored in the container which are may be to read back</td>
+<td>Integer &gt;= 0</td>
+<td>1000000</td>
+<td>2.0.0</td>
+<td></td></tr>
+<tr>
+<td>storage.mock.container.countLimit</td>
+<td>WS mock: the maximum count of the containers to be stored in the storage mock</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td></tr></tbody></table></p>
+
+			<p>
+				<fieldset>
+					<legend><h3>SPECIAL TYPES</h3></legend>
+					<ul>
+						<li>
+							<h4>Time</h4>
+							The configuration parameters supporting the time type:
+							<ul>
+								<li>load.limit.time</li>
+								<li>load.metricsPeriod</li>
+							</ul>
+							<table border="1">
+								<tr><th>Value</th><th>Effect</th></tr>
+								<tr><td>0</td><td>Infinite/not set</td></tr>
+								<tr><td>-1</td><td>Invalid value</td></tr>
+								<tr><td>1</td><td>1 second</td></tr>
+								<tr><td>"1s"</td><td>1 second</td></tr>
+								<tr><td>"2m"</td><td>2 minutes</td></tr>
+								<tr><td>"3h"</td><td>3 hours</td></tr>
+								<tr><td>"4d"</td><td>4 days</td></tr>
+								<tr><td>"5w"</td><td>Invalid value</td></tr>
+								<tr><td>"6M"</td><td>Invalid value</td></tr>
+								<tr><td>"7y"</td><td>Invalid value</td></tr>
+							</table>
+						</li>
+						<li>
+							<h4>Size</h4>
+							
+<p>The configuration parameters supporting the time type:</p>
+<ul>
+<li>io.buffer.size.min</li>
+<li>io.buffer.size.max</li>
+<li>item.data.content.ringSize</li>
+<li>item.data.size</li>
+<li>load.limit.size</li></ul>
+<table border="1">
+<tbody>
+<tr>
+<th>Value</th>
+<th>Effect</th></tr>
+<tr>
+<td>-1</td>
+<td>Invalid Value</td></tr>
+<tr>
+<td>0</td>
+<td>0 bytes (Infinity in case of load.limit.size)</td></tr>
+<tr>
+<td>1</td>
+<td>1 bytes</td></tr>
+<tr>
+<td>1024</td>
+<td>1024 bytes or 1KB</td></tr>
+<tr>
+<td>&quot;0B&quot;</td>
+<td>0 bytes (Infinity in case of load.limit.size)</td></tr>
+<tr>
+<td>&quot;1024B&quot;</td>
+<td>1024 bytes or 1KB</td></tr>
+<tr>
+<td>&quot;1KB&quot;</td>
+<td>1024 bytes or 1KB</td></tr>
+<tr>
+<td>&quot;2MB&quot;</td>
+<td>2MB</td></tr>
+<tr>
+<td>&quot;6EB&quot;</td>
+<td>6EB (exobytes)</td></tr>
+<tr>
+<td>&quot;7YB&quot;</td>
+<td>Invalid Value</td></tr></tbody></table>
+							
+						</li>
+					</ul>
+				</fieldset>
+			</p>
+			
+			<p>
+				<fieldset>
+					<legend><h3>INHERITED</h3></legend>
+					
+<p>The parameters below don't have default persistent values. They are inherited from Java.</p>
+<table border="1">
+<tbody>
+<tr>
+<th style="text-align: center;">
+<div class="tablesorter-header-inner">Name</div></th>
+<th style="text-align: center;">
+<div class="tablesorter-header-inner">Description</div></th></tr>
+<tr>
+<td><code>java.rmi.server.hostname</code></td>
+<td>IP address for Mongoose load server to bind to</td></tr></tbody></table>
+
+				</fieldset>
+			</p>
+			
+		</fieldset>
+	</body>
+</html>

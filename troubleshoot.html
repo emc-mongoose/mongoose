@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Mongoose Troubleshooting</title>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<fieldset>
+	<legend><h2>TROUBLESHOOTING</h2></legend>
+	<table border="1">
+		<tr><th>Specific<br/>conditions</th><th>Symptoms</th><th>Workaround</th><th>Fix</th></tr>
+		<tr>
+			<td>High concurrency level</td>
+			<td>Error messages about "too many open files"</td>
+			<td>Check the system open files limit:<br/><fieldset class="bash"><code>ulimit -n 1048576</code></fieldset></td>
+			<td></td>
+		</tr>
+		<tr><td>High concurrency level</td><td>Out of memory errors</td><td>Increase JVM heap size limit and free direct memory amount</td><td></td></tr>
+		<tr><td>Load via HTTP</td><td>403 response code w/ message like</br>"Time too skewed"</td><td>N/A</td><td>Synchronize the time on the storage and the clients</td></tr>
+		<tr>
+			<td>Mongoose server host has several network interfaces configured and Java RMI server implementation bounds Mongoose service to a wrong (private) interface</td>
+			<td>Mongoose client fails to find Mongoose server because the server binds to an IP that cannot be pinged from other hosts</td>
+			<td>
+				You can explicitly specify the network interface to use via native Java's <i>java.rmi.server.hostname</i> configuration parameter.
+				For example:<fieldset class="bash"><code>java -Djava.rmi.server.hostname=10.77.4.xx -jar mongoose.jar server</code></fieldset>
+			</td>
+			<td></td>
+		</tr>
+	</table>
+</fieldset>
+</body>
+</html>

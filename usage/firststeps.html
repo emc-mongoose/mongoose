@@ -27,10 +27,8 @@
 					<ol>
 						<li>Download the latest Mongoose tar file</li>
 						<li>
-							<fieldset>
-								<legend>Copy the tar file to a proper directory and unpack the file</legend>
-								<code>tar xvf mongoose-&lt;VERSION&gt;.tar</code>
-							</fieldset>
+							Copy the tar file to a proper directory and unpack the file:
+							<fieldset class="bash"><code>tar xvf mongoose-&lt;VERSION&gt;.tar</code></fieldset>
 							This command extracts the contents of the distribution into the directory ./mongoose-&lt;VERSION&gt; which will contain several directories and files. One of the files must be mongoose.jar.
 						</li>
 					</ol>
@@ -38,10 +36,8 @@
 						<legend><b>Note</b></legend>
 						<p>In case of the distributed mode Mongoose should be also deployed to the load servers.</p>
 						<p>
-							<fieldset>
-								<legend>The Mongoose load serivces should be started using the following command:</legend>
-								<code>java -jar mongoose-&lt;VERSION&gt;/mongoose.jar server</code>
-							</fieldset>
+							Each of Mongoose load serivces should be started using the following command:
+							<fieldset class="bash"><code>java -jar mongoose-&lt;VERSION&gt;/mongoose.jar server</code></fieldset>
 						</p>
 					</fieldset>
 				</fieldset>
@@ -51,16 +47,12 @@
 					<legend><h3>HELLO WORLD</h3></legend>
 					<p>You can try Mongoose without a real storage. Mongoose distribution contains a web storage mock implementation for the demo/testing purposes.<p>
 					<p>
-						<fieldset>
-							<legend>Start the web storage mock first:</legend>
-							<code>java -jar &lt;MONGOOSE_DIR&gt;/mongoose.jar wsmock</code>
-						</fieldset>
+						Start the web storage mock first:
+						<fieldset class="bash"><code>java -jar &lt;MONGOOSE_DIR&gt;/mongoose.jar wsmock</code></fieldset>
 					</p>
 					<p>
-						<fieldset>
-							<legend>Then open another console and start Mongoose itself:</legend>
-							<code>java -jar &lt;MONGOOSE_DIR&gt;/mongoose.jar</code>
-						</fieldset>
+						Then open another console and start Mongoose itself:
+						<fieldset class="bash"><code>java -jar &lt;MONGOOSE_DIR&gt;/mongoose.jar</code></fieldset>
 					</p>
 					<p>The line starts Mongoose with default scenario and the default configuration. By default Mongoose writes using Amazon S3 API to storage with IP address 127.0.0.1 (local host). Storage mock is already there to store the new objects.</p>
 					<p>Now you can switch between the two consoles to see how Mongoose regularly reports about objects created and the storage mock regularly reports about objects stored.</p>

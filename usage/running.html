@@ -10,7 +10,44 @@
 		<fieldset>
 			<legend><h2>RUNNING</h2></legend>
 			<p>
-				
+				The following line contains a typical command that starts Mongoose run to create 100,000 data items of 8KB size:
+				<fieldset class="bash">
+					<code>java -Dstorage.addrs=10.64.84.&lt;X&gt;,10.64.84.&lt;Y&gt;,10.64.84.&lt;Z&gt; -Dload.limit.count=100000 -Ditem.data.size=8KB -Dauth.id=wuser1@SANITY.LOCAL -Dauth.secret=A5JKVKuSHp5Kme2qcMFlvMqEKbN+QBNF0tRuFleT -jar &lt;MONGOOSE_DIR&gt;/mongoose.jar</code>
+				</fieldset>
+				Where:
+				<ul>
+					<li>storage.addrs - the list of storage node IP addresses</li>
+					<li>load.limit.count - the number of data items to create</li>
+					<li>item.data.size - the size data items to create</li>
+					<li>auth.id - "user" authentication identifier</li>
+					<li>auth.secret - "user" authentication secret key</li>
+				</ul>
+			</p>
+			<p>The command line above may look too long. The configuration parameters that change rarely can be stored in JAVA_TOOL_OPTIONS, which is a predefined environment variable used by Java.</p>
+			<p>
+				Linux example:
+				<fieldset class="bash">
+					<code>export JAVA_TOOL_OPTIONS="-Dstorage.addrs=10.64.84.&lt;X&gt;,10.64.84.&lt;Y&gt;,10.64.84.&lt;Z&gt; -Dload.limit.count=100000 -Ditem.data.size=8KB -Dauth.id=wuser1@SANITY.LOCAL -Dauth.secret=A5JKVKuSHp5Kme2qcMFlvMqEKbN+QBNF0tRuFleT"</code>
+				</fieldset>
+			</p>
+			<p>
+				Windows example:
+				<fieldset class="bash">
+					<code>set JAVA_TOOL_OPTIONS=-Dstorage.addrs=10.64.84.&lt;X&gt;,10.64.84.&lt;Y&gt;,10.64.84.&lt;Z&gt; -Dload.limit.count=100000 -Ditem.data.size=8KB -Dauth.id=wuser1@SANITY.LOCAL -Dauth.secret=A5JKVKuSHp5Kme2qcMFlvMqEKbN+QBNF0tRuFleT</code>
+				</fieldset>
+			</p>
+			<p>
+				<fieldset>
+					<legend><b>Note:</b></legend>
+					<ul>
+						<li>If no configuration properties are set in the command line or by the environment variable, default configuration is used from &lt;MONGOOSE_DIR&gt;/conf directory.</li>
+						<li>If you're running against ECS, use its provision environment to obtain credentials and other information like bucket, subtenant, container, etc.</li>
+						<li>
+							Please keep in mind that high load require a lot of system resources such as open file descriptors and Java heap memory. It may be necessary to specify the resource limits manually:
+							<fieldset class="bash"><code>ulimit -n 1048576</code></fieldset>
+						</li>
+					</ul>
+				</fieldset>
 			</p>
 		</fieldset>
 	</body>

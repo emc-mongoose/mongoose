@@ -9,10 +9,20 @@ a:hover {
 	color: #0204080;
 }
 body {
-    background-image: url('background-brushed-metal.jpg');
-	background-attachment: fixed;
+    background-image: url("background-brushed-metal.jpg");
 	font-size: 10pt;
 	font-family: sans;
+}
+.bash {
+	background-color: black;
+	color: #dddddd;
+}
+.json {
+	color: #000080;
+	background: rgba(255,255,255,0.2);
+}
+fieldset {
+	background: rgba(255,255,255,0.1);
 }
 h1 {
 	color: #909090;
@@ -30,8 +40,16 @@ h3 {
 	margin: 2;
 	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
 }
+table {
+	background: rgba(255,255,255,0.2);
+}
+table, td, th, tbody {
+	border: 1;
+	border-color: gray;
+	border-collapse: collapse;
+}
 ul {
-	margin-top: 2;
-	margin-bottom: 2;
-	padding: 10;
+	margin-top: 0;
+	margin-bottom: 0;
+	padding: 12;
 }
