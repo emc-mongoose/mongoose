@@ -45,13 +45,13 @@ ext {
 
 	lmax_disruptor = [ "com.lmax:disruptor:3.3.0" ]
 
-	log4j_api = [ "org.apache.logging.log4j:log4j-api:2.4.1" ]
-	log4j_core = [ "org.apache.logging.log4j:log4j-core:2.4.1" ]
-	log4j_iostreams = [ "org.apache.logging.log4j:log4j-iostreams:2.4.1" ]
-	log4j_jcl = [ "org.apache.logging.log4j:log4j-jcl:2.4.1" ]
-	log4j_jul = [ "org.apache.logging.log4j:log4j-jul:2.4.1" ]
-	log4j_slf4j_impl = [ "org.apache.logging.log4j:log4j-slf4j-impl:2.4.1" ]
-	log4j_web = [ "org.apache.logging.log4j:log4j-web:2.4.1" ]
+	log4j_api = [ "org.apache.logging.log4j:log4j-api:2.6.1" ]
+	log4j_core = [ "org.apache.logging.log4j:log4j-core:2.6.1" ]
+	log4j_iostreams = [ "org.apache.logging.log4j:log4j-iostreams:2.6.1" ]
+	log4j_jcl = [ "org.apache.logging.log4j:log4j-jcl:2.6.1" ]
+	log4j_jul = [ "org.apache.logging.log4j:log4j-jul:2.6.1" ]
+	log4j_slf4j_impl = [ "org.apache.logging.log4j:log4j-slf4j-impl:2.6.1" ]
+	log4j_web = [ "org.apache.logging.log4j:log4j-web:2.6.1" ]
 
 	metrics_core = [ "io.dropwizard.metrics:metrics-core:3.1.2" ]
 
