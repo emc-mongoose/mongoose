@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Mongoose Usage First Steps</title>
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<fieldset>
+			<legend><h2>FIRST STEPS</h2></legend>
+			<p>
+				<fieldset>
+					<legend><h3>ENVIRONMENT REQUIREMENTS</h3></legend>
+					<ul>
+						<li>JRE 7+</li>
+						<li>OS open files limit is <i>at least a bit higher</i> than specified concurrency level</li>
+						<li>Few gigabytes of free memory. High-load tests may allocate up to 4-6 GB of the memory depending on the scenario.</li>
+						<li><i>(Remote Storage)</i> Connectivity with the endpoint nodes via the ports used</li>
+						<li><i>(Distributed Mode)</i> Connectivity with the load servers via port #1099</li>
+					</ul>
+				</fieldset>
+			</p>
+			<p>
+				<fieldset>
+					<legend><h3>DEPLOYMENT</h3></legend>
+					<ol>
+						<li>Download the latest Mongoose tar file</li>
+						<li>
+							Copy the tar file to a proper directory and unpack the file:
+							<fieldset class="bash"><code>tar xvf mongoose-&lt;VERSION&gt;.tar</code></fieldset>
+							This command extracts the contents of the distribution into the directory ./mongoose-&lt;VERSION&gt; which will contain several directories and files. One of the files must be mongoose.jar.
+						</li>
+					</ol>
+					<fieldset>
+						<legend><b>Note</b></legend>
+						<p>In case of the distributed mode Mongoose should be also deployed to the load servers.</p>
+						<p>
+							Each of Mongoose load serivces should be started using the following command:
+							<fieldset class="bash"><code>java -jar mongoose-&lt;VERSION&gt;/mongoose.jar server</code></fieldset>
+						</p>
+					</fieldset>
+				</fieldset>
+			</p>
+			<p>
+				<fieldset>
+					<legend><h3>HELLO WORLD</h3></legend>
+					<p>You can try Mongoose without a real storage. Mongoose distribution contains a web storage mock implementation for the demo/testing purposes.<p>
+					<p>
+						Start the web storage mock first:
+						<fieldset class="bash"><code>java -jar &lt;MONGOOSE_DIR&gt;/mongoose.jar wsmock</code></fieldset>
+					</p>
+					<p>
+						Then open another console and start Mongoose itself:
+						<fieldset class="bash"><code>java -jar &lt;MONGOOSE_DIR&gt;/mongoose.jar</code></fieldset>
+					</p>
+					<p>The line starts Mongoose with default scenario and the default configuration. By default Mongoose writes using Amazon S3 API to storage with IP address 127.0.0.1 (local host). Storage mock is already there to store the new objects.</p>
+					<p>Now you can switch between the two consoles to see how Mongoose regularly reports about objects created and the storage mock regularly reports about objects stored.</p>
+				</fieldset>
+			</p>
+		</fieldset>
+	</body>
+</html>
