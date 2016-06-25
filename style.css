@@ -1,12 +1,14 @@
 a {
 	text-decoration: none;
-	font-weight: normal;
 	color: #000040;
 }
 a:hover {
 	text-decoration: none;
+	color: #204080;
+}
+.menu-marker {
+	font-family: "Lucida Console", Monaco, monospace;
 	font-weight: bold;
-	color: #0204080;
 }
 body {
     background-image: url("background-brushed-metal.jpg");
