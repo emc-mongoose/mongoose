@@ -27,7 +27,6 @@
 package com.emc.mongoose.common.net.http.conn.pool.experimental;
 
 import java.net.ConnectException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -40,7 +39,6 @@ import org.apache.http.nio.reactor.SessionRequest;
 import org.apache.http.pool.PoolEntry;
 import org.apache.http.util.Args;
 import org.apache.http.util.Asserts;
-import org.eclipse.jetty.util.ConcurrentHashSet;
 public abstract class RouteSpecificPool<T, C, E extends PoolEntry<T, C>> {
 
 	private final T route;
@@ -51,7 +49,7 @@ public abstract class RouteSpecificPool<T, C, E extends PoolEntry<T, C>> {
 	public RouteSpecificPool(final T route) {
 		super();
 		this.route = route;
-		this.leased = new ConcurrentHashSet<E>();
+		this.leased = new HashSet<E>();
 		this.available = new LinkedList<>();
 		this.pending = new ConcurrentHashMap<SessionRequest, BasicFuture<E>>();
 	}
