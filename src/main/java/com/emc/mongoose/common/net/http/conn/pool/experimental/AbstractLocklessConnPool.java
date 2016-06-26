@@ -115,7 +115,7 @@ implements ConnPool<T, E>, ConnPoolControl<T> {
 		this.leasingRequests = new ConcurrentLinkedQueue<>();
 		this.pending = new HashSet<>();
 		this.leased = new HashSet<>();
-		this.available = new LinkedList<>();
+		this.available = new ConcurrentLinkedQueue<>();
 		this.completedRequests = new ConcurrentLinkedQueue<>();
 		this.maxPerRoute = new HashMap<>();
 		this.isShutDown = new AtomicBoolean(false);
