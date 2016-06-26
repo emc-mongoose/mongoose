@@ -13,7 +13,7 @@ import org.junit.runners.Suite;
 	ContentTestSuite.class,
 	CoreTestSuite.class,
 	DistributedTestSuite.class,
-	FileSystemTestSuite.class,
+	//FileSystemTestSuite.class,
 	ItemNamingTestSuite.class,
 	LoadLimitTestSuite.class,
 	LoadTypeTestSuite.class,
