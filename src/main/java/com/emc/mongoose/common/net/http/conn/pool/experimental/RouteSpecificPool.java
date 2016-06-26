@@ -33,13 +33,14 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.http.concurrent.BasicFuture;
 import org.apache.http.nio.reactor.SessionRequest;
 import org.apache.http.pool.PoolEntry;
 import org.apache.http.util.Args;
 import org.apache.http.util.Asserts;
-
+import org.eclipse.jetty.util.ConcurrentHashSet;
 public abstract class RouteSpecificPool<T, C, E extends PoolEntry<T, C>> {
 
 	private final T route;
@@ -50,9 +51,9 @@ public abstract class RouteSpecificPool<T, C, E extends PoolEntry<T, C>> {
 	public RouteSpecificPool(final T route) {
 		super();
 		this.route = route;
-		this.leased = new HashSet<E>();
-		this.available = new LinkedList<E>();
-		this.pending = new HashMap<SessionRequest, BasicFuture<E>>();
+		this.leased = new ConcurrentHashSet<E>();
+		this.available = new LinkedList<>();
+		this.pending = new ConcurrentHashMap<SessionRequest, BasicFuture<E>>();
 	}
 
 	public final T getRoute() {
