@@ -76,6 +76,7 @@ extends JobBase {
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to build a load job");
 		} catch(final Throwable e) {
+			e.printStackTrace(System.out);
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 		}
 	}
