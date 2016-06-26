@@ -9,7 +9,6 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
 import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
-import com.emc.mongoose.common.net.http.conn.pool.experimental.BasicLocklessPoolEntry;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 //
 import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
@@ -85,7 +84,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	private final HttpProcessor httpProcessor;
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
-	private final Map<HttpHost, HttpConnPool<HttpHost, BasicLocklessPoolEntry>> connPoolMap;
+	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
 	private final HttpRequestConfig<T, C> httpReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
@@ -184,17 +183,15 @@ implements HttpContainerLoadExecutor<T, C> {
 		//
 		connPoolMap = new HashMap<>(storageNodeCount);
 		HttpHost nextRoute;
-		HttpConnPool<HttpHost, BasicLocklessPoolEntry> nextConnPool;
+		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
 		for(int i = 0; i < storageNodeCount; i ++) {
 			nextRoute = httpReqConfigCopy.getNodeHost(addrs[i]);
 			nextConnPool = new FixedRouteSequencingConnPool(
 				ioReactor, nextRoute, connFactory,
 				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ?
 					(int) timeOutMs : Integer.MAX_VALUE,
-				batchSize
+				batchSize, threadCount, threadCount
 			);
-			nextConnPool.setDefaultMaxPerRoute(threadCount);
-			nextConnPool.setMaxTotal(threadCount);
 			connPoolMap.put(nextRoute, nextConnPool);
 		}
 		//
@@ -211,7 +208,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		try {
 			super.interruptActually();
 		} finally {
-			for(final HttpConnPool<HttpHost, BasicLocklessPoolEntry> nextConnPool : connPoolMap.values()) {
+			for(final HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool : connPoolMap.values()) {
 				try {
 					nextConnPool.closeExpired();
 					LOG.debug(
@@ -261,15 +258,22 @@ implements HttpContainerLoadExecutor<T, C> {
 	throws RejectedExecutionException {
 		//
 		final HttpIoTask wsIoTask = (HttpIoTask) ioTask;
-		final HttpConnPool<HttpHost, BasicLocklessPoolEntry>
-			connPool = connPoolMap.get(wsIoTask.getTarget());
+		final HttpHost tgtHost = wsIoTask.getTarget();
+		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
+			connPool = connPoolMap.get(tgtHost);
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");
 		}
 		//
 		final Future futureResult;
 		try {
-			futureResult = client.execute(wsIoTask, wsIoTask, connPool, wsIoTask, futureCallback);
+			//futureResult = client.execute(wsIoTask, wsIoTask, connPool, wsIoTask, io);
+			final BasicNIOPoolEntry connPoolEntry = connPool
+				.lease(tgtHost, null, connLeaseFutureCallback)
+				.get();
+			futureResult = client.execute(
+				wsIoTask, wsIoTask, connPoolEntry, connPool, wsIoTask, ioTaskFutureCallback
+			);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "I/O task #{} has been submitted for execution", ioTask.hashCode()
@@ -281,42 +285,66 @@ implements HttpContainerLoadExecutor<T, C> {
 		return futureResult;
 	}
 	//
-	private final FutureCallback<HttpContainerIoTask<T, C>>
-		futureCallback = new FutureCallback<HttpContainerIoTask<T, C>>() {
-			@Override
-			public final void completed(final HttpContainerIoTask<T, C> ioTask) {
-				try {
-					ioTaskCompleted(ioTask);
-				} catch(final RemoteException ignored) {
-				}
-			}
-			//
-			public final void cancelled() {
-				ioTaskCancelled(1);
-			}
-			//
-			public final void failed(final Exception e) {
-				ioTaskFailed(1, e);
-			}
-		};
+	private final FutureCallback<BasicNIOPoolEntry> connLeaseFutureCallback = new FutureCallback<BasicNIOPoolEntry>() {
+		//
+		@Override
+		public final void completed(final BasicNIOPoolEntry result) {
+			incrementBusyThreadCount();
+		}
+		//
+		@Override
+		public final void failed(final Exception ex) {
+		}
+		//
+		@Override
+		public final void cancelled() {
+		}
+	};
 	//
-	@Override
+	private final FutureCallback<HttpContainerIoTask<T, C>> ioTaskFutureCallback = new FutureCallback<HttpContainerIoTask<T, C>>() {
+		//
+		@Override
+		public final void completed(final HttpContainerIoTask<T, C> ioTask) {
+			try {
+				ioTaskCompleted(ioTask);
+			} catch(final RemoteException ignored) {
+			}
+		}
+		//
+		public final void cancelled() {
+			ioTaskCancelled(1);
+		}
+		//
+		public final void failed(final Exception e) {
+			ioTaskFailed(1, e);
+		}
+	};
+	//
+	@Override @SuppressWarnings("unchecked")
 	public final <A extends IoTask<C>> int submitTasks(
 		final List<A> ioTasks, final int from, final int to
 	) throws RemoteException, RejectedExecutionException {
 		int n = 0;
 		if(isPipeliningEnabled) {
 			if(ioTasks.size() > 0) {
-				final List<HttpContainerIoTask<T, C>> wsIOTasks = (List<HttpContainerIoTask<T, C>>) ioTasks;
-				final HttpContainerIoTask<T, C> anyTask = wsIOTasks.get(0);
+				final List<HttpContainerIoTask<T, C>>
+					wsIoTasks = (List<HttpContainerIoTask<T, C>>) ioTasks;
+				final HttpContainerIoTask<T, C> anyTask = wsIoTasks.get(0);
 				final HttpHost tgtHost = anyTask.getTarget();
-				if(
-					null == client.executePipelined(
-						tgtHost, wsIOTasks, wsIOTasks, connPoolMap.get(tgtHost),
-						HttpCoreContext.create(), new BatchFutureCallback(wsIOTasks)
-					)
+				final HttpConnPool<HttpHost, BasicNIOPoolEntry> connPool = connPoolMap.get(tgtHost);
+				try {
+					final BasicNIOPoolEntry connPoolEntry =
+						connPool.lease(tgtHost, null, connLeaseFutureCallback).get();
+					if(
+						null == client.executePipelined(
+							(List)wsIoTasks, (List)wsIoTasks, connPoolEntry, connPool,
+							HttpCoreContext.create(), new BatchFutureCallback(wsIoTasks)
+						)
 					) {
-					return 0;
+						return 0;
+					}
+				} catch(final Exception e) {
+					throw new RejectedExecutionException(e);
 				}
 			}
 		} else {

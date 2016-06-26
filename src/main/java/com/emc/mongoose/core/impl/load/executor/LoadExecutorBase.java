@@ -49,6 +49,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
@@ -95,6 +96,7 @@ implements LoadExecutor<T> {
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
+	private final AtomicInteger currConcurrencyLevel = new AtomicInteger(0);
 	protected T lastItem;
 	protected final Object state = new Object();
 	protected final ItemBuffer<T> itemOutBuff;
@@ -169,6 +171,23 @@ implements LoadExecutor<T> {
 			}
 		}
 	}
+	//
+	private final class FullLoadMonitorTask
+	implements Runnable {
+		@Override
+		public final void run() {
+			// wait for the current concurrency level to be equal to the max concurrency level
+			while(currConcurrencyLevel.get() < totalThreadCount) {
+				LockSupport.parkNanos(1_000_000);
+			}
+			LOG.info(Markers.MSG, "{}: reached full load");
+			// wait for the current concurrency level to be less than max concurrency level
+			while(currConcurrencyLevel.get() == totalThreadCount) {
+				LockSupport.parkNanos(1_000_000);
+			}
+			LOG.info(Markers.MSG, "{}: finished full load");
+		}
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
 		final AppConfig appConfig,
@@ -230,6 +249,7 @@ implements LoadExecutor<T> {
 		}
 		mgmtTasks.add(new StatsRefreshTask());
 		mgmtTasks.add(new ResultsDispatcher());
+		mgmtTasks.add(new FullLoadMonitorTask());
 		//
 		LoadRegistry.register(this);
 	}
@@ -627,6 +647,10 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
+	protected final void incrementBusyThreadCount() {
+		currConcurrencyLevel.incrementAndGet();
+	}
+	//
 	@Override
 	public void ioTaskCompleted(final IoTask<T> ioTask)
 	throws RemoteException {
@@ -654,6 +678,8 @@ implements LoadExecutor<T> {
 		if(nodeBalancer != null) {
 			nodeBalancer.markTaskFinish(nodeAddr);
 		}
+		currConcurrencyLevel.decrementAndGet();
+		//
 		if(IoTask.Status.SUCC == status) {
 			// update the metrics with success
 			if(respLatency > 0 && respLatency > reqDuration) {
@@ -695,6 +721,7 @@ implements LoadExecutor<T> {
 		//
 		final int n = to - from;
 		if(n > 0) {
+			currConcurrencyLevel.addAndGet(-n);
 			if(storageNodeAddrs != null) {
 				final String nodeAddr = ioTasks.get(from).getNodeAddr();
 				nodeBalancer.markTasksFinish(nodeAddr, n);
@@ -762,11 +789,13 @@ implements LoadExecutor<T> {
 	//
 	protected void ioTaskCancelled(final int n) {
 		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
+		currConcurrencyLevel.decrementAndGet();
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
 	}
 	//
 	protected void ioTaskFailed(final int n, final Throwable e) {
+		currConcurrencyLevel.decrementAndGet();
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
 	}

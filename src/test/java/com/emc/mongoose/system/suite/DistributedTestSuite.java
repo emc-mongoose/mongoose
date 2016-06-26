@@ -12,7 +12,7 @@ import com.emc.mongoose.system.feature.distributed.WriteFewBucketsDistributedTes
 import com.emc.mongoose.system.feature.distributed.WriteManyBucketsConcurrentlyDistributedTest;
 import com.emc.mongoose.system.feature.distributed.WriteManyObjectsToFewBucketsDistributedTest;
 import com.emc.mongoose.system.feature.distributed.CircularReadDistributedTest;
-import com.emc.mongoose.system.feature.distributed.CircularUpdateTest;
+import com.emc.mongoose.system.feature.distributed.CircularUpdateDistributedTest;
 import com.emc.mongoose.system.feature.distributed.DeleteLoggingTest;
 import com.emc.mongoose.system.feature.distributed.ReadDirsWithFilesDistributedTest;
 import com.emc.mongoose.system.feature.distributed.ReadLoggingDistributedTest;
@@ -27,7 +27,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	CircularReadDistributedTest.class,
-	CircularUpdateTest.class,
+	CircularUpdateDistributedTest.class,
 	WriteLoggingTest.class,
 	WriteByTimeTest.class,
 	ReadDirsWithFilesDistributedTest.class,

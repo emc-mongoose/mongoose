@@ -51,6 +51,11 @@ implements DirectoryLoadExecutor<T, C> {
 				return (RunnableFuture<V>) task;
 			}
 			//
+			@Override
+			protected final void beforeExecute(final Thread worker, final Runnable task) {
+				incrementBusyThreadCount();
+			}
+			//
 			@Override @SuppressWarnings("unchecked")
 			protected final void afterExecute(final Runnable task, final Throwable throwable) {
 				final DirectoryIoTask<T, C> ioTask = (DirectoryIoTask<T, C>) task;
@@ -104,23 +109,18 @@ implements DirectoryLoadExecutor<T, C> {
 		}
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	protected DirectoryIoTask<T, C> getIoTask(final C item, final String nextNodeAddr) {
 		return new BasicDirectoryIoTask<>(item, (FileIoConfig<T, C>) ioConfig);
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public <A extends IoTask<C>> int submitTasks(final List<A> tasks, final int from, final int to)
 	throws RemoteException, RejectedExecutionException {
-		int n = 0;
 		for(int i = from; i < to; i ++) {
-			if(null != submitTask(tasks.get(i))) {
-				n ++;
-			} else {
-				break;
-			}
+			submitTask(tasks.get(i));
 		}
-		return n;
+		return to - from;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

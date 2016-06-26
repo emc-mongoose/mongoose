@@ -2,8 +2,6 @@ package com.emc.mongoose.common.net.http.conn.pool;
 
 import com.emc.mongoose.common.concurrent.Sequencer;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.net.http.conn.pool.experimental.BasicLocklessConnPool;
-import com.emc.mongoose.common.net.http.conn.pool.experimental.BasicLocklessPoolEntry;
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.BasicFuture;
 import org.apache.http.concurrent.FutureCallback;
@@ -20,13 +18,12 @@ import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
-
 /**
  Created by kurila on 15.10.15.
  */
 public final class FixedRouteSequencingConnPool
-extends BasicLocklessConnPool
-implements HttpConnPool<HttpHost, BasicLocklessPoolEntry> {
+extends BasicNIOConnPool
+implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -36,9 +33,11 @@ implements HttpConnPool<HttpHost, BasicLocklessPoolEntry> {
 	public FixedRouteSequencingConnPool(
 		final ConnectingIOReactor ioReactor, final HttpHost route,
 		final NIOConnFactory<HttpHost, NHttpClientConnection> connFactory,
-		final int connectTimeout, final int batchSize
+		final int connectTimeout, final int batchSize, final int maxPerRoute, final int maxTotal
 	) {
 		super(ioReactor, connFactory, connectTimeout);
+		setDefaultMaxPerRoute(maxPerRoute);
+		setMaxTotal(maxTotal);
 		this.route = route;
 		connPoolSequencer = new Sequencer(
 			"connPoolSequencer<" + route.toHostString() + ">", true, batchSize
@@ -60,14 +59,14 @@ implements HttpConnPool<HttpHost, BasicLocklessPoolEntry> {
 	// Sequenced connection leasing ////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final class ConnLeaseTask
-	extends BasicFuture<BasicLocklessPoolEntry>
-	implements RunnableFuture<BasicLocklessPoolEntry> {
+	extends BasicFuture<BasicNIOPoolEntry>
+	implements RunnableFuture<BasicNIOPoolEntry> {
 		//
 		private final Object state;
-		private final FutureCallback<BasicLocklessPoolEntry> callback;
+		private final FutureCallback<BasicNIOPoolEntry> callback;
 		//
 		public ConnLeaseTask(
-			final Object state, final FutureCallback<BasicLocklessPoolEntry> callback
+			final Object state, final FutureCallback<BasicNIOPoolEntry> callback
 		) {
 			super(null);
 			this.state = state;
@@ -87,9 +86,9 @@ implements HttpConnPool<HttpHost, BasicLocklessPoolEntry> {
 	}
 	//
 	@Override
-	public final Future<BasicLocklessPoolEntry> lease(
+	public final Future<BasicNIOPoolEntry> lease(
 		final HttpHost route, final Object state,
-		final FutureCallback<BasicLocklessPoolEntry> callback
+		final FutureCallback<BasicNIOPoolEntry> callback
 	) {
 		try {
 			return connPoolSequencer.submit(new ConnLeaseTask(state, callback));
@@ -101,13 +100,13 @@ implements HttpConnPool<HttpHost, BasicLocklessPoolEntry> {
 	// Sequenced connection releasing //////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final class ConnReleaseTask
-	extends BasicFuture<BasicLocklessPoolEntry>
-	implements RunnableFuture<BasicLocklessPoolEntry> {
+	extends BasicFuture<BasicNIOPoolEntry>
+	implements RunnableFuture<BasicNIOPoolEntry> {
 		//
-		private final BasicLocklessPoolEntry entry;
+		private final BasicNIOPoolEntry entry;
 		private final boolean reusable;
 		//
-		public ConnReleaseTask(final BasicLocklessPoolEntry entry, final boolean reusable) {
+		public ConnReleaseTask(final BasicNIOPoolEntry entry, final boolean reusable) {
 			super(null);
 			this.entry = entry;
 			this.reusable = reusable;
@@ -126,7 +125,7 @@ implements HttpConnPool<HttpHost, BasicLocklessPoolEntry> {
 	}
 	//
 	@Override
-	public final void release(final BasicLocklessPoolEntry entry, final boolean reusable) {
+	public final void release(final BasicNIOPoolEntry entry, final boolean reusable) {
 		try {
 			connPoolSequencer.submit(new ConnReleaseTask(entry, reusable));
 		} catch(final InterruptedException e) {

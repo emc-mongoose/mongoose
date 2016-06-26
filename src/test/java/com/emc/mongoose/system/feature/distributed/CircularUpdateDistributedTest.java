@@ -38,7 +38,7 @@ import static com.emc.mongoose.system.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIE
 /**
  * Created by gusakk on 19.11.15.
  */
-public class CircularUpdateTest
+public class CircularUpdateDistributedTest
 extends DistributedClientTestBase {
 	//
 	private static final Logger LOG = LogManager.getLogger();
@@ -59,7 +59,7 @@ extends DistributedClientTestBase {
 	public static void setUpClass() {
 		try {
 			System.setProperty(
-				AppConfig.KEY_RUN_ID, CircularUpdateTest.class.getCanonicalName()
+				AppConfig.KEY_RUN_ID, CircularUpdateDistributedTest.class.getCanonicalName()
 			);
 			DistributedClientTestBase.setUpClass();
 			//

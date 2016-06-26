@@ -9,7 +9,6 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
-import com.emc.mongoose.common.net.http.conn.pool.experimental.BasicLocklessPoolEntry;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.common.io.Output;
@@ -63,7 +62,7 @@ implements HttpDataLoadSvc<T> {
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
 		final HttpProcessor httpProcessor, final HttpAsyncRequester client,
 		final ConnectingIOReactor ioReactor,
-		final Map<HttpHost, HttpConnPool<HttpHost, BasicLocklessPoolEntry>> connPoolMap
+		final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap
 	) {
 		super(
 			appConfig, reqConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
