@@ -112,7 +112,7 @@ implements ConnPool<T, E>, ConnPoolControl<T> {
 		this.addressResolver = addressResolver;
 		this.sessionRequestCallback = new InternalSessionRequestCallback();
 		this.routeToPool = new HashMap<>();
-		this.leasingRequests = new LinkedList<>();
+		this.leasingRequests = new ConcurrentLinkedQueue<>();
 		this.pending = new HashSet<>();
 		this.leased = new HashSet<>();
 		this.available = new LinkedList<>();
@@ -266,7 +266,7 @@ implements ConnPool<T, E>, ConnPoolControl<T> {
 
 	private void processPendingRequests() {
 		final Iterator<LeaseRequest<T, C, E>> it = this.leasingRequests.iterator();
-		while (it.hasNext()) {
+		while(it.hasNext()) {
 			final LeaseRequest<T, C, E> request = it.next();
 			final boolean completed = processPendingRequest(request);
 			if(request.isDone() || completed) {
