@@ -489,7 +489,6 @@ implements LoadExecutor<T> {
 			null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 		final IoTask<T> ioTask = getIoTask(item, nextNodeAddr);
 		// don't fill the connection pool as fast as possible, this may cause a failure
-		//
 		try {
 			if(!activeTasksThrottle.requestContinueFor(item) || null == submitTask(ioTask)) {
 				throw new RejectedExecutionException();

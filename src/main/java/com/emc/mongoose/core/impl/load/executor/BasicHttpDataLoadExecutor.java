@@ -9,6 +9,7 @@ import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
 import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
+import com.emc.mongoose.common.net.http.conn.pool.experimental.BasicLocklessPoolEntry;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
@@ -82,7 +83,7 @@ implements HttpDataLoadExecutor<T> {
 	protected final HttpProcessor httpProcessor;
 	protected final HttpAsyncRequester client;
 	protected final ConnectingIOReactor ioReactor;
-	protected final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
+	protected final Map<HttpHost, HttpConnPool<HttpHost, BasicLocklessPoolEntry>> connPoolMap;
 	private final HttpRequestConfig<T, Container<T>> httpReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
@@ -93,7 +94,7 @@ implements HttpDataLoadExecutor<T> {
 		final SizeInBytes sizeConfig, final DataRangesConfig rangesConfig,
 		final HttpProcessor httpProcessor, final HttpAsyncRequester client,
 		final ConnectingIOReactor ioReactor,
-		final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap
+		final Map<HttpHost, HttpConnPool<HttpHost, BasicLocklessPoolEntry>> connPoolMap
 	) {
 		super(
 			appConfig, reqConfig, addrs, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
@@ -198,7 +199,7 @@ implements HttpDataLoadExecutor<T> {
 		//
 		connPoolMap = new HashMap<>(storageNodeCount);
 		HttpHost nextRoute;
-		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
+		HttpConnPool<HttpHost, BasicLocklessPoolEntry> nextConnPool;
 		for(int i = 0; i < storageNodeCount; i ++) {
 			nextRoute = httpReqConfigCopy.getNodeHost(addrs[i]);
 			nextConnPool = new FixedRouteSequencingConnPool(
@@ -225,7 +226,7 @@ implements HttpDataLoadExecutor<T> {
 		try {
 			super.interruptActually();
 		} finally {
-			for(final HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool : connPoolMap.values()) {
+			for(final HttpConnPool<HttpHost, BasicLocklessPoolEntry> nextConnPool : connPoolMap.values()) {
 				try {
 					nextConnPool.closeExpired();
 					LOG.debug(
@@ -275,7 +276,7 @@ implements HttpDataLoadExecutor<T> {
 	throws RejectedExecutionException {
 		//
 		final HttpDataIoTask<T> wsTask = (HttpDataIoTask<T>) ioTask;
-		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
+		final HttpConnPool<HttpHost, BasicLocklessPoolEntry>
 			connPool = connPoolMap.get(wsTask.getTarget());
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");

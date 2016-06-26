@@ -2,6 +2,8 @@ package com.emc.mongoose.common.net.http.conn.pool;
 
 import com.emc.mongoose.common.concurrent.Sequencer;
 import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.net.http.conn.pool.experimental.BasicLocklessConnPool;
+import com.emc.mongoose.common.net.http.conn.pool.experimental.BasicLocklessPoolEntry;
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.BasicFuture;
 import org.apache.http.concurrent.FutureCallback;
@@ -23,8 +25,8 @@ import java.util.concurrent.RunnableFuture;
  Created by kurila on 15.10.15.
  */
 public final class FixedRouteSequencingConnPool
-extends BasicNIOConnPool
-implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
+extends BasicLocklessConnPool
+implements HttpConnPool<HttpHost, BasicLocklessPoolEntry> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -58,13 +60,15 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	// Sequenced connection leasing ////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final class ConnLeaseTask
-	extends BasicFuture<BasicNIOPoolEntry>
-	implements RunnableFuture<BasicNIOPoolEntry> {
+	extends BasicFuture<BasicLocklessPoolEntry>
+	implements RunnableFuture<BasicLocklessPoolEntry> {
 		//
 		private final Object state;
-		private final FutureCallback<BasicNIOPoolEntry> callback;
+		private final FutureCallback<BasicLocklessPoolEntry> callback;
 		//
-		public ConnLeaseTask(final Object state, final FutureCallback<BasicNIOPoolEntry> callback) {
+		public ConnLeaseTask(
+			final Object state, final FutureCallback<BasicLocklessPoolEntry> callback
+		) {
 			super(null);
 			this.state = state;
 			this.callback = callback;
@@ -83,8 +87,9 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	}
 	//
 	@Override
-	public final Future<BasicNIOPoolEntry> lease(
-		final HttpHost route, final Object state, final FutureCallback<BasicNIOPoolEntry> callback
+	public final Future<BasicLocklessPoolEntry> lease(
+		final HttpHost route, final Object state,
+		final FutureCallback<BasicLocklessPoolEntry> callback
 	) {
 		try {
 			return connPoolSequencer.submit(new ConnLeaseTask(state, callback));
@@ -96,13 +101,13 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	// Sequenced connection releasing //////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final class ConnReleaseTask
-	extends BasicFuture<BasicNIOPoolEntry>
-	implements RunnableFuture<BasicNIOPoolEntry> {
+	extends BasicFuture<BasicLocklessPoolEntry>
+	implements RunnableFuture<BasicLocklessPoolEntry> {
 		//
-		private final BasicNIOPoolEntry entry;
+		private final BasicLocklessPoolEntry entry;
 		private final boolean reusable;
 		//
-		public ConnReleaseTask(final BasicNIOPoolEntry entry, final boolean reusable) {
+		public ConnReleaseTask(final BasicLocklessPoolEntry entry, final boolean reusable) {
 			super(null);
 			this.entry = entry;
 			this.reusable = reusable;
@@ -121,7 +126,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	}
 	//
 	@Override
-	public final void release(final BasicNIOPoolEntry entry, final boolean reusable) {
+	public final void release(final BasicLocklessPoolEntry entry, final boolean reusable) {
 		try {
 			connPoolSequencer.submit(new ConnReleaseTask(entry, reusable));
 		} catch(final InterruptedException e) {

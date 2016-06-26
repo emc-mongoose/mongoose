@@ -9,6 +9,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.conn.pool.HttpConnPool;
 import com.emc.mongoose.common.net.http.conn.pool.FixedRouteSequencingConnPool;
+import com.emc.mongoose.common.net.http.conn.pool.experimental.BasicLocklessPoolEntry;
 import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
 //
 import com.emc.mongoose.common.net.http.BasicSslSetupHandler;
@@ -84,7 +85,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	private final HttpProcessor httpProcessor;
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
-	private final Map<HttpHost, HttpConnPool<HttpHost, BasicNIOPoolEntry>> connPoolMap;
+	private final Map<HttpHost, HttpConnPool<HttpHost, BasicLocklessPoolEntry>> connPoolMap;
 	private final HttpRequestConfig<T, C> httpReqConfigCopy;
 	private final boolean isPipeliningEnabled;
 	//
@@ -183,7 +184,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		//
 		connPoolMap = new HashMap<>(storageNodeCount);
 		HttpHost nextRoute;
-		HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool;
+		HttpConnPool<HttpHost, BasicLocklessPoolEntry> nextConnPool;
 		for(int i = 0; i < storageNodeCount; i ++) {
 			nextRoute = httpReqConfigCopy.getNodeHost(addrs[i]);
 			nextConnPool = new FixedRouteSequencingConnPool(
@@ -210,7 +211,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		try {
 			super.interruptActually();
 		} finally {
-			for(final HttpConnPool<HttpHost, BasicNIOPoolEntry> nextConnPool : connPoolMap.values()) {
+			for(final HttpConnPool<HttpHost, BasicLocklessPoolEntry> nextConnPool : connPoolMap.values()) {
 				try {
 					nextConnPool.closeExpired();
 					LOG.debug(
@@ -260,7 +261,7 @@ implements HttpContainerLoadExecutor<T, C> {
 	throws RejectedExecutionException {
 		//
 		final HttpIoTask wsIoTask = (HttpIoTask) ioTask;
-		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
+		final HttpConnPool<HttpHost, BasicLocklessPoolEntry>
 			connPool = connPoolMap.get(wsIoTask.getTarget());
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");
