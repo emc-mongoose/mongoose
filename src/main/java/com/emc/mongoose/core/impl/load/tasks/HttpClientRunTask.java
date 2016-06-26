@@ -39,6 +39,7 @@ implements Runnable {
 		try {
 			ioReactor.execute(ioEventDispatch);
 		} catch(final IOReactorException e) {
+			e.printStackTrace(System.out);
 			LogUtil.exception(
 				LOG, Level.ERROR, e,
 				"Possible max open files limit exceeded, please check the environment configuration"
