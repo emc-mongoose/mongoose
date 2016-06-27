@@ -296,7 +296,7 @@
 <li>
 <h4>Amazon S3</h4>
 <p>Example scenarios location: scenario/ecs/write-s3.json</p>
-<fieldset><legend>Note:</legend>
+<fieldset class="note"><legend><b>Note</b></legend>
 	<ul>
 		<li>S3 API is used by default</li>
 		<li>Specifying the container name in the case of S3 API means specifying the bucket to use.</li></ul></fieldset>
@@ -309,8 +309,8 @@
 <h4>OpenStack Swift</h4>
 <p>Example scenarios location: scenario/ecs/write-swift.json</p>
 <p><code><fieldset class="bash">java -Dauth.id=&lt;USER_ID&gt; [-Dauth.token=&lt;TOKEN&gt;] -Dauth.secret=&lt;SECRET&gt; [-Ditem.dst.container=&lt;TARGET_CONTAINER&gt;] -Dstorage.addrs=10.20.30.40 -Dstorage.port=8080 -Dstorage.http.api=swift -Dstorage.http.namespace=&lt;NS&gt; -jar mongoose-&lt;VERSION&gt;/mongoose.jar -f mongoose-&lt;VERSION&gt;/scenario/default.json</fieldset></code></p>
-<fieldset>
-	<legend>Note:</legend>
+<fieldset class="note">
+	<legend><b>Note</b></legend>
 	The default value of &quot;storage.http.namespace&quot; configuration parameter (null) doesn't work in the case of Swift API usage.</fieldset>
 </li>
 <li>
@@ -350,8 +350,8 @@
 				<legend><h3>CUSTOM CONTENT</h3></legend>
 <p>An user may use a custom file as the content source for the data generation and verification. This custom file path should be specified as the &quot;item.data.content.file&quot; configuration parameter. There are two predefined content source files: conf/content/textexample and conf/content/zerobytes.</p>
 <p>Example scenarios location: scenario/content/*.json</p>
-				<fieldset>
-					<legend>Note:</legend>
+				<fieldset class="note">
+					<legend><b>Note</b></legend>
 <p><i>The same content source should be used for the data items writing and subsequent reading in order to pass data verification</i></p>
 				</fieldset>
 <ol>
@@ -520,7 +520,12 @@
 <li>
 <h4>Weighted Load</h4>Please refer to example scenario located at: scenario/weighted/*.json</li>
 <li>
-<h4>Rampup</h4><fieldset class="json"><pre>{
+<h4>Rampup</h4>
+	<fieldset class="warning">
+		<legend>Warning</legend>
+		The rampup job is deprecated since v2.3.0. Use "<a href="#foreach" target="_self">each</a>" job instead.
+	</fieldset>
+	<fieldset class="json"><pre>{
 	"type": "rampup",
 	"config" : {
 	  "item" : {
