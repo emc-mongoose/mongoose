@@ -132,3 +132,7 @@
     background-color: #3691d1 !important;
     border-color: #388bcd !important;
 }
+
+.chart-link {
+    padding: 10px;
+}

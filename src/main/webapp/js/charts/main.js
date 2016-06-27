@@ -131,7 +131,7 @@ define(['jquery',
 			BOTTOM: 180,
 			LEFT: 100
 		};
-		const WIDTH = 1200 - MARGIN.LEFT - MARGIN.RIGHT;
+		const WIDTH = 1000 - MARGIN.LEFT - MARGIN.RIGHT;
 		const HEIGHT = 600 - MARGIN.TOP - MARGIN.BOTTOM;
 
 		const defaultsFactory = function () {
@@ -170,7 +170,7 @@ define(['jquery',
 			}
 		}();
 
-		const AXIS_X_WIDTH = Math.round(WIDTH / 1.5);
+		const AXIS_X_WIDTH = Math.round(WIDTH / 1.2);
 		const AXIS_Y_WIDTH = HEIGHT;
 		//
 		// function xAccessor(data) {
@@ -289,14 +289,58 @@ define(['jquery',
 		}
 
 		function createSvg(parentId, svgId) {
-			const svgChain = d3.select(jqId([parentId]))
+			const chartsBlockId = jqId([parentId]);
+			var svgChain = d3.select(chartsBlockId)
 				.append('svg')
 				.attr('id', svgId)
 				.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
 				.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM);
-			return svgChain.append('g')
+			svgChain = svgChain.append('g')
 				.attr('transform',
 					'translate(' + (MARGIN.LEFT + 70) + ',' + (MARGIN.TOP + 70) + ')');
+			const svgLinkElem = $('<a/>', {
+				id: svgId + '-svg',
+				class: 'chart-link',
+				href: chartAsSvg(svgId),
+				download: svgId + '.svg'
+			});
+			const pngLinkElem = $('<a/>', {
+				id: svgId + '-png',
+				class: 'chart-link',
+				href: chartAsPng(svgId),
+				download: svgId + '.png'
+			});
+			svgLinkElem.text('svg');
+			pngLinkElem.text('png');
+			$(chartsBlockId).append(svgLinkElem);
+			$(chartsBlockId).append(pngLinkElem);
+			return svgChain;
+		}
+
+		function svgXml(svgId) {
+			const svg = document.getElementById(svgId);
+			const serializer = new XMLSerializer();
+			var source = serializer.serializeToString(svg);
+
+			if (!source.match(/^<svg[^>]+"http\:\/\/www\.w3\.org\/1999\/xlink"/)) {
+				source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+			}
+			return '<?xml version="1.0" standalone="no"?>\r\n' + source;
+		}
+
+		function chartAsSvg(svgId) {
+			return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgXml(svgId));
+		}
+
+		function chartAsPng(svgId) {
+			const image = new Image();
+			image.src = 'data:image/svg+xml;base64,' + window.btoa(unescape(encodeURIComponent(svgXml(svgId))));
+			const canvas = document.createElement('canvas');
+			canvas.width = image.width;
+			canvas.height = image.height;
+			const context = canvas.getContext('2d');
+			context.drawImage(image, 0, 0);
+			return canvas.toDataURL('image/png');
 		}
 
 		function createAxes(svgElement) {
@@ -417,6 +461,9 @@ define(['jquery',
 						createChartBoard(chartBoardName);
 					}
 					updateChartBoard(chartBoardName, chartBoardContent, currentMetric);
+					const svgId = getSvgId(chartBoardName);
+					$(jqId([svgId, 'svg'])).attr('href', chartAsSvg(svgId));
+					$(jqId([svgId, 'png'])).attr('href', chartAsPng(svgId));
 				});
 			}
 		}
