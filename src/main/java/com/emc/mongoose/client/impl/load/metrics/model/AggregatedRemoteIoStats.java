@@ -40,6 +40,7 @@ extends IoStatsBase {
 	//
 	private final Map<String, W> loadSvcMap;
 	private final Map<String, Snapshot> loadStatsSnapshotMap;
+	private final Map<String, Snapshot> medStatsSnapshotMap;
 	private final ExecutorService statsLoader;
 	//
 	private long
@@ -66,6 +67,7 @@ extends IoStatsBase {
 		super(name, serveJmxFlag);
 		this.loadSvcMap = loadSvcMap;
 		this.loadStatsSnapshotMap = new ConcurrentHashMap<>(loadSvcMap.size());
+		this.medStatsSnapshotMap = new ConcurrentHashMap<>(loadSvcMap.size());
 		statsLoader = Executors.newFixedThreadPool(
 			loadSvcMap.size(), new NamingThreadFactory("statsLoader<" + name + ">", true)
 		);
@@ -314,6 +316,7 @@ extends IoStatsBase {
 			}
 		}
 	}
+
 	//
 	@Override
 	public final void start() {

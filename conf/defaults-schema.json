@@ -345,6 +345,9 @@
 						"metrics" : {
 							"type" : "object",
 							"additionalProperties" : false,
+							"intermediate" : {
+								"type" : "boolean",
+							},
 							"properties" : {
 								"period" : {
 									"oneOf" : [

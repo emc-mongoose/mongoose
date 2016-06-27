@@ -68,6 +68,7 @@ implements IoStats {
 		if(jmxReporter != null) {
 			jmxReporter.stop();
 		}
+		metrics.close();
 	}
 	//
 	protected static class BasicSnapshot

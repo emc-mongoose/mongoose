@@ -48,6 +48,9 @@ extends Output<T>, LifeCycle, ItemProducer<T> {
 	IoStats.Snapshot getStatsSnapshot()
 	throws RemoteException;
 	//
+	IoStats.Snapshot getMedStatsSnapshot()
+	throws RemoteException;
+	//
 	void logMetrics(Marker marker)
 	throws RemoteException;
 	//

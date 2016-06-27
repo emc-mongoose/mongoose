@@ -339,6 +339,11 @@ implements AppConfig {
 	}
 	//
 	@Override
+	public boolean getLoadMetricsIntermediate() {
+		return getBoolean(KEY_LOAD_METRICS_INTERMEDIATE);
+	}
+	//
+	@Override
 	public int getLoadMetricsPeriod() {
 		final Object rawValue = getProperty(KEY_LOAD_METRICS_PERIOD);
 		if(rawValue instanceof String) {

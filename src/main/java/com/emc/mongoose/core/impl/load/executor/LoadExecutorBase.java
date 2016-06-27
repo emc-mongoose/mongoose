@@ -83,6 +83,7 @@ implements LoadExecutor<T> {
 	protected final boolean preconditionFlag;
 	protected IoStats ioStats;
 	protected volatile IoStats.Snapshot lastStats = null;
+	protected volatile IoStats medIoStats = null;
 	// STATES section //////////////////////////////////////////////////////////////////////////////
 	private Balancer<String> nodeBalancer = null;
 	private LoadState<T> loadedPrevState = null;
@@ -172,7 +173,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	private final class FullLoadMonitorTask
+	private final class NominalLoadMonitorTask
 	implements Runnable {
 		@Override
 		public final void run() {
@@ -180,12 +181,15 @@ implements LoadExecutor<T> {
 			while(currConcurrencyLevel.get() < totalThreadCount) {
 				LockSupport.parkNanos(1_000_000);
 			}
-			LOG.info(Markers.MSG, "{}: reached full load");
+			LOG.debug(Markers.MSG, "{}: reached the nominal load: {}", getName(), totalThreadCount);
+			medIoStats = new BasicIoStats(getName(), false, metricsPeriodSec);
+			medIoStats.start();
 			// wait for the current concurrency level to be less than max concurrency level
-			while(currConcurrencyLevel.get() == totalThreadCount) {
+			while(!(isShutdown.get() && currConcurrencyLevel.get() < totalThreadCount)) {
 				LockSupport.parkNanos(1_000_000);
 			}
-			LOG.info(Markers.MSG, "{}: finished full load");
+			LOG.debug(Markers.MSG, "{}: nominal load exit", getName());
+			logMetrics(Markers.PERF_MED);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -249,7 +253,9 @@ implements LoadExecutor<T> {
 		}
 		mgmtTasks.add(new StatsRefreshTask());
 		mgmtTasks.add(new ResultsDispatcher());
-		mgmtTasks.add(new FullLoadMonitorTask());
+		if(appConfig.getLoadMetricsIntermediate()) {
+			mgmtTasks.add(new NominalLoadMonitorTask());
+		}
 		//
 		LoadRegistry.register(this);
 	}
@@ -306,19 +312,33 @@ implements LoadExecutor<T> {
 	@Override
 	public void logMetrics(final Marker logMarker) {
 		if(preconditionFlag) {
-			LOG.info(
-				Markers.MSG,
-				Markers.PERF_SUM.equals(logMarker) ?
-					"\"" + getName() + "\" summary: " + lastStats.toSummaryString() :
-					lastStats
-			);
+			if(Markers.PERF_AVG.equals(logMarker)) {
+				LOG.info(Markers.MSG, lastStats == null ? null : lastStats.toString());
+			} else if(Markers.PERF_MED.equals(logMarker)) {
+				LOG.info(
+					Markers.MSG, "\"{}\" intermediate: {}", getName(),
+					medIoStats.getSnapshot().toSummaryString()
+				);
+			} else if(Markers.PERF_SUM.equals(logMarker)) {
+				LOG.info(
+					Markers.MSG, "\"{}\" summary: {}", getName(),
+					lastStats == null ? null : lastStats.toSummaryString()
+				);
+			}
 		} else {
-			LOG.info(
-				logMarker,
-				Markers.PERF_SUM.equals(logMarker) ?
-					"\"" + getName() + "\" summary: " + lastStats.toSummaryString() :
-					lastStats
-			);
+			if(Markers.PERF_AVG.equals(logMarker)) {
+				LOG.info(logMarker, lastStats == null ? null : lastStats.toString());
+			} else if(Markers.PERF_MED.equals(logMarker)) {
+				LOG.info(
+					logMarker, "\"{}\" intermediate: {}", getName(),
+					medIoStats.getSnapshot().toSummaryString()
+				);
+			} else if(Markers.PERF_SUM.equals(logMarker)) {
+				LOG.info(
+					logMarker, "\"{}\" summary: {}", getName(),
+					lastStats == null ? null : lastStats.toSummaryString()
+				);
+			}
 		}
 	}
 	//
@@ -435,6 +455,9 @@ implements LoadExecutor<T> {
 				refreshStats();
 				ioStats.close();
 				logMetrics(Markers.PERF_SUM); // provide summary metrics
+				if(medIoStats != null) {
+					medIoStats.close();
+				}
 				// calculate the efficiency and report
 				final float
 					loadDurMicroSec = lastStats.getElapsedTime(),
@@ -689,6 +712,9 @@ implements LoadExecutor<T> {
 				);
 			}
 			ioStats.markSucc(countBytesDone, reqDuration, respLatency);
+			if(medIoStats != null) {
+				medIoStats.markSucc(countBytesDone, reqDuration, respLatency);
+			}
 			//
 			lastItem = item;
 			// put into the output buffer
@@ -705,6 +731,9 @@ implements LoadExecutor<T> {
 			}
 		} else {
 			ioStats.markFail();
+			if(medIoStats != null) {
+				medIoStats.markFail();
+			}
 		}
 		//
 		counterResults.incrementAndGet();
@@ -760,6 +789,9 @@ implements LoadExecutor<T> {
 						);
 					}
 					ioStats.markSucc(countBytesDone, reqDuration, respLatency);
+					if(medIoStats != null) {
+						medIoStats.markSucc(countBytesDone, reqDuration, respLatency);
+					}
 					//
 					lastItem = item;
 					// pass data item to a consumer
@@ -776,6 +808,9 @@ implements LoadExecutor<T> {
 					}
 				} else {
 					ioStats.markFail();
+					if(medIoStats != null) {
+						medIoStats.markFail();
+					}
 				}
 			}
 			synchronized(ioStats) {
@@ -791,12 +826,18 @@ implements LoadExecutor<T> {
 		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
 		currConcurrencyLevel.decrementAndGet();
 		ioStats.markFail(n);
+		if(medIoStats != null) {
+			medIoStats.markFail(n);
+		}
 		counterResults.addAndGet(n);
 	}
 	//
 	protected void ioTaskFailed(final int n, final Throwable e) {
 		currConcurrencyLevel.decrementAndGet();
 		ioStats.markFail(n);
+		if(medIoStats != null) {
+			medIoStats.markFail();
+		}
 		counterResults.addAndGet(n);
 	}
 	//
@@ -951,6 +992,11 @@ implements LoadExecutor<T> {
 	@Override
 	public IoStats.Snapshot getStatsSnapshot() {
 		return lastStats;
+	}
+	//
+	@Override
+	public IoStats.Snapshot getMedStatsSnapshot() {
+		return medIoStats == null ? null : medIoStats.getSnapshot();
 	}
 	//
 	private boolean isDoneCountLimit() {

@@ -17,6 +17,8 @@ extends Serializable {
 	//
 	IoStats.Snapshot getStatsSnapshot();
 	//
+	IoStats.Snapshot getMedStatsSnapshot();
+	//
 	T getLastDataItem();
 	//
 	boolean isLimitReached(final AppConfig appConfig);
@@ -28,6 +30,8 @@ extends Serializable {
 		Builder<T, U> setAppConfig(final AppConfig appConfig);
 		//
 		Builder<T, U> setStatsSnapshot(final IoStats.Snapshot ioStatsSnapshot);
+		//
+		Builder<T, U> setMedStatsSnapshot(final IoStats.Snapshot medIoStatsSnapshot);
 		//
 		Builder<T, U> setLastDataItem(final T dataItem);
 		//

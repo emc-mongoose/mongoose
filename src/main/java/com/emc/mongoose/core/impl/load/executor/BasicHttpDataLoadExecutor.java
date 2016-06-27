@@ -311,11 +311,13 @@ implements HttpDataLoadExecutor<T> {
 		}
 		//
 		@Override
-		public final void failed(final Exception ex) {
+		public final void failed(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Connection lease failed");
 		}
 		//
 		@Override
 		public final void cancelled() {
+			LOG.debug(Markers.MSG, "Connection lease cancelled");
 		}
 	};
 	//
