@@ -20,12 +20,16 @@ fieldset {
 	background: rgba(255, 255, 255, 0.1);
 }
 .bash {
-	color: #dddddd;
-	background: rgba(0, 0, 0, 0.7);
+	color: #e0e0e0;
+	background: rgba(0, 0, 0, 0.6);
 }
 .json {
 	color: #000080;
 	background: rgba(255, 255, 255, 0.2);
+}
+.log {
+	color: #ffff00;
+	background: rgba(0, 0, 100, 0.6);
 }
 .note {
 	background: rgba(255, 255, 100, 0.1);
@@ -39,16 +43,19 @@ h1 {
 	margin-top: 8;
 	margin-bottom: 8;
 	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
+	font-size: 32px;
 }
 h2 {
 	color: #909090;
 	margin: 4;
 	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
+	font-size: 24px;
 }
 h3 {
 	color: #909090;
 	margin: 2;
 	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
+	font-size: 20px;
 }
 table {
 	background: rgba(255,255,255,0.2);
@@ -58,8 +65,8 @@ table, td, th, tbody {
 	border-color: gray;
 	border-collapse: collapse;
 }
-ul {
+/*ul {
 	margin-top: 0;
 	margin-bottom: 0;
 	padding: 12;
-}
+}*/

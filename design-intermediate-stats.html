@@ -9,16 +9,95 @@
 <fieldset>
 	<legend><h2>INTERMEDIATE STATISTICS</h2></legend>
 	<fieldset>
-		<legend><h3>REQUIREMENTS</h3></legend>
+		<legend><h3>INTRODUCTION</h3></legend>
+		<p>When Mongoose load job starts there's some short delay before the warmup is done and all
+		threads/connections are busy with load tasks. It's expected that the performance rates
+		are lower during this warmup time range. Moreover, at the load job end some
+		threads/connections may remain busy with the load task while other threads/connections
+		are finished already. See the picture below:</p>
+		<p><img src="image001.jpg"/></p>
+		<ul>
+		<li>It is required to measure the performance rates only while all threads/connections are
+		busy with the load tasks. This time range is located between <i>"Accounting Start"</i> and
+		<i>"Accounting Stop"</i> lines on the picture above.</li>
+		<li>It is expected that the <i>intermediate statistics</i> (the statistics measured in the
+		"full throttle" time range) will contain the "best" performance results.</li>
+		</ul>
 	</fieldset>
 	<fieldset>
-		<legend><h3>SPECIFICATION</h3></legend>
-		<h4>Introduction</h4>
-		<img src="image001.jpg"/>
-		<h4>Limitations</h4>
-		<h4>Approach</h4>
-		<h4>Configuration</h4>
-		<h4>Reporting</h4>
+		<legend><h3>LIMITATIONS</h3></legend>
+		<ol>
+			<li>The functionality is available since v2.3.0</li>
+		</ol>
+	</fieldset>
+	<fieldset>
+		<legend><h3>APPROACH</h3></legend>
+		<h4>Standalone Steps</h4>
+		<ol>
+			<li>Wait until the count of busy threads/connections is equal to the configured concurrency level</li>
+			<li>Create separate metrics instance and start the metrics gathering</li>
+			<li>Wait until all the items are submitted and the count of busy threads/connections is less than the configured concurrency level</li>
+			<li>Stop the separate metrics gathering</li>
+			<li>Output the summary for the separate metrics</li>
+		</ol>
+		<h4>Distributed Mode Steps</h4>
+		<ol>
+			<li>Wait until all the load servers are in the "full throttle" state</li>
+			<li>Create separate metrics instance and start the distributed metrics gathering</li>
+			<li>Wait until all any load server exits the "full throttle" state</li>
+			<li>Stop the separate metrics gathering</li>
+			<li>Output the summary for the separate metrics</li>
+		</ol>
+	</fieldset>
+	<fieldset>
+		<legend><h3>CONFIGURATION</h3></legend>
+		New configuration parameter is "<b>load.metrics.period</b>". Boolean values are acceptable.
+		The default is <i>false</i>. When set to <i>true</i> the intermediate statistics calculation
+		occurs and doesn't occurs otherwise.
+	</fieldset>
+	<fieldset>
+		<legend><h3>REPORTING</h3></legend>
+		<h4>Console</h4>
+		<p>
+			The intermediate summary statistics output occurs before the total summary statistics
+			output and uses the similiar pattern:
+			<fieldset class="bash">
+				"&lt;LOAD_JOB_NAME&gt;" intermediate: &lt;SUMMARY_METRICS&gt;
+			</fieldset>
+		</p>
+		<p>
+			Example:
+			<fieldset class="bash" style="color: #00ff00">
+				<code>
+					<pre>
+2016-06-27T18:22:01,292 I LoadExecutorBase     mgmtWorker#4 "0-S3-Read-20x1" intermediate: count=(3 &#8617;
+    23/0); duration[us]=(6998447/36142/3029317/6189727/10641453/17274925); latency[us]=(9738/1946/6 &#8617;
+    644/7944/10485/108909); TP[op/s]=(2.713/1.551); BW[MB/s]=(262.083/250.467)</pre>
+				</code>
+			</fieldset>
+		</p>
+		<h4>Log files</h4>
+		<p>There are a new log file "<b>perf.intermediate.csv</b>" is used to log the intermediate
+		statistics. The layout is the same as for the log file "perf.sum.csv".</p>
+		<p>
+			Also there are debug messages logged into the "<b>messages.csv</b>" log file for the
+			following events:
+			<ul>
+				<li>
+					Intermediate statistics gathering start. The example follows:<br/>
+					<fieldset class="log">
+						<code>2016-06-27T18:20:02,221 | DEBUG | LoadExecutorBase | mgmtWorker#4 | 0-S3-Read-20x1: reached the nominal load: 20</code>
+					</fieldset>
+					Where "20" is the configured concurrency level in this particular case.
+				</li>
+				<li>
+					Intermediate statistics gathering stop. The example follows:<br/>
+					<fieldset class="log">
+						<code>2016-06-27T18:22:01,291 | DEBUG | LoadExecutorBase | mgmtWorker#4 | 0-S3-Read-20x1: nominal load exit</code>
+					</fieldset>
+				</li>
+			</ul>
+		</p>
 	</fieldset>
 </fieldset>
 </body>

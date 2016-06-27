@@ -383,137 +383,137 @@
 <h4>Configure a Load Job</h4>
 <fieldset class="json"><pre>
 {
-	"type" : "load",
-	"config" : {
-		// here are the configuration hierarchy
-	}
+   "type" : "load",
+   "config" : {
+      // here are the configuration hierarchy
+   }
 }
 </pre></fieldset></li>
 <li>
 <h4>Make a Precondition Load Job (don't persist the metrics)</h4>
 <fieldset class="json"><pre>
 {
-	"type" : "precondition",
-	"config" : {
-		// here are the configuration hierarchy
-	}
+   "type" : "precondition",
+   "config" : {
+      // here are the configuration hierarchy
+   }
 }
 </pre></fieldset></li>
 <li>
 <h4>Sequential Load Jobs execution</h4>
 <fieldset class="json"><pre>
 {
-	"type" : "sequential",
-	"jobs" : [
-		{
-			"type" : "<JOB_OR_JOB_CONTAINER>",
-			...
-		}, {
-			"type" : "<JOB_OR_JOB_CONTAINER>",
-			...
-		}
-		...
-	]
+   "type" : "sequential",
+   "jobs" : [
+      {
+         "type" : "<JOB_OR_JOB_CONTAINER>",
+         ...
+      }, {
+         "type" : "<JOB_OR_JOB_CONTAINER>",
+         ...
+      }
+      ...
+   ]
 }</pre></fieldset></li>
 <li>
 <h4>Parallel Load Jobs execution</h4>
 <fieldset class="json"><pre>
 {
-	"type" : "parallel",
-	"jobs" : [
-		{
-			"type" : "<JOB_OR_JOB_CONTAINER>",
-			...
-		}, {
-			"type" : "<JOB_OR_JOB_CONTAINER>",
-			...
-		}
-		...
-	]
+   "type" : "parallel",
+   "jobs" : [
+      {
+         "type" : "<JOB_OR_JOB_CONTAINER>",
+         ...
+      }, {
+         "type" : "<JOB_OR_JOB_CONTAINER>",
+         ...
+      }
+      ...
+   ]
 }</pre></fieldset></li>
 <li>
 <h4>Reuse the Items for another Load Job</h4>
 <fieldset class="json"><pre>
 {
-	"type" : "sequential",
-	"jobs" : [
-		{
-			"type" : "precondition",
-			"config" : {
-				"item" : {
-					"dst" : {
-						"file" : <PATH_TO_ITEMS_LIST_CSV_FILE>
-					}
-				}
-				...
-			}
-		}, {
-			"type" : "<JOB_OR_JOB_CONTAINER>",
-			"config" : {
-				"item" : {
-					"src" : {
-						"file" : <PATH_TO_ITEMS_LIST_CSV_FILE>
-					}
-				}
-				...
-			}
-		}
-	]
+   "type" : "sequential",
+   "jobs" : [
+      {
+         "type" : "precondition",
+         "config" : {
+            "item" : {
+               "dst" : {
+                  "file" : <PATH_TO_ITEMS_LIST_CSV_FILE>
+               }
+            }
+            ...
+         }
+      }, {
+         "type" : "<JOB_OR_JOB_CONTAINER>",
+         "config" : {
+            "item" : {
+               "src" : {
+                  "file" : <PATH_TO_ITEMS_LIST_CSV_FILE>
+               }
+            }
+            ...
+         }
+      }
+   ]
 }</pre></fieldset></li>
 <li>
 <h4>Inherit the Load Job Container configuration</h4>
 <fieldset class="json"><pre>
 {
-	"type" : "sequential",
-	"config" {
-		// the configuration specified here will be inherited by the container elements
-	},
-	"jobs" : [
-		{
-			"type" : "load",
-			...
-		}
-		...
-	]
+   "type" : "sequential",
+   "config" {
+      // the configuration specified here will be inherited by the container elements
+   },
+   "jobs" : [
+      {
+         "type" : "load",
+         ...
+      }
+      ...
+   ]
 }</pre></fieldset></li>
 <li>
 <h4>Execute a Shell Command</h4>
 <fieldset class="json"><pre>
 {
-	"type" : "command",
-	"value" : "killall -9 java",
+   "type" : "command",
+   "value" : "killall -9 java",
 }</pre></fieldset></li>
 <li>
 <h4>Start a Non-Blocking Shell Command Execution</h4>
 <fieldset class="json"><pre>
 {
-	"type" : "command",
-	"value" : "find /",
-	"blocking" : false
+   "type" : "command",
+   "value" : "find /",
+   "blocking" : false
 }</pre></fieldset></li>
 <li>
 <h4>Sleep Between the Load Jobs</h4>
 <fieldset class="json"><pre>{
-	"type" : "sequential"
-	"config" : {
-		// shared configuration values inherited by the children jobs
-	},
-	"jobs" : [
-		{
-			"type" : "load",
-			"config" : {
-				// specific configuration for the 1st load job
-			}
-		}, {
-			"type" : "command",
-			"value" : "sleep 5s"
-		}, {
-			"type" : "load",
-			"config" : {
-				// specific configuration for the 2nd load job
-			}
-		}
-	]
+   "type" : "sequential"
+   "config" : {
+      // shared configuration values inherited by the children jobs
+   },
+   "jobs" : [
+      {
+         "type" : "load",
+         "config" : {
+            // specific configuration for the 1st load job
+         }
+      }, {
+         "type" : "command",
+         "value" : "sleep 5s"
+      }, {
+         "type" : "load",
+         "config" : {
+            // specific configuration for the 2nd load job
+         }
+      }
+   ]
 }</pre></fieldset></li>
 <li>
 <h4>Mixed Load</h4>Please refer to example scenarios located at: scenario/mixed/*.json</li>
@@ -526,28 +526,28 @@
 		The rampup job is deprecated since v2.3.0. Use "<a href="#foreach" target="_self">each</a>" job instead.
 	</fieldset>
 	<fieldset class="json"><pre>{
-	"type": "rampup",
-	"config" : {
-	  "item" : {
-		 "data" : {
-			"size" : [
-			   0, "1KB", "1MB", "1GB"
-			]
-		 }
-	  },
-	  "load" : {
-		 "limit" : {
-			"time" : "10m",
-			"count" : 10000000
-		 },
-		 "threads": [
-			1, 10, 100, 1000
-		 ],
-		 "type" : [
-			"write", "read", "delete"
-		 ]
-	  }
-	}
+   "type": "rampup",
+   "config" : {
+     "item" : {
+       "data" : {
+         "size" : [
+            0, "1KB", "1MB", "1GB"
+         ]
+       }
+     },
+     "load" : {
+       "limit" : {
+         "time" : "10m",
+         "count" : 10000000
+       },
+       "threads": [
+         1, 10, 100, 1000
+       ],
+       "type" : [
+         "write", "read", "delete"
+       ]
+     }
+   }
 }</pre></fieldset></li>
 <li>
 <h4>Scenario Validation</h4>There are a JSON schema file in the distribution: <code>s<strong>cenario/scenario-schema.json</strong></code>. An user may automatically validate the scenarios using this schema. This should help to write one's own custom scenario.</li>
