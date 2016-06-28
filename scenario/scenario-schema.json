@@ -433,6 +433,16 @@
 							"type" : "object",
 							"additionalProperties" : false,
 							"properties" : {
+								"intermediate" : {
+									"oneOf" : [
+										{
+											"type": "boolean"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
+								},
 								"period" : {
 									"oneOf" : [
 										{

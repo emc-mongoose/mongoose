@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 /**
@@ -59,8 +60,8 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	// Sequenced connection leasing ////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final class ConnLeaseTask
-	extends BasicFuture<BasicNIOPoolEntry>
-	implements RunnableFuture<BasicNIOPoolEntry> {
+	extends BasicFuture<Future<BasicNIOPoolEntry>>
+	implements RunnableFuture<Future<BasicNIOPoolEntry>> {
 		//
 		private final Object state;
 		private final FutureCallback<BasicNIOPoolEntry> callback;
@@ -76,7 +77,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		@Override
 		public void run() {
 			try {
-				FixedRouteSequencingConnPool.super.lease(route, state, callback);
+				completed(FixedRouteSequencingConnPool.super.lease(route, state, callback));
 			} catch(final Exception e) {
 				if(!FixedRouteSequencingConnPool.super.isShutdown()) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to lease the connection");
@@ -91,8 +92,8 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		final FutureCallback<BasicNIOPoolEntry> callback
 	) {
 		try {
-			return connPoolSequencer.submit(new ConnLeaseTask(state, callback));
-		} catch(final InterruptedException e) {
+			return connPoolSequencer.submit(new ConnLeaseTask(state, callback)).get();
+		} catch(final ExecutionException | InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 	}

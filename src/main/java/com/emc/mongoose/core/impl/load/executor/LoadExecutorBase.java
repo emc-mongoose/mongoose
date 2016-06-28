@@ -84,6 +84,7 @@ implements LoadExecutor<T> {
 	protected final boolean preconditionFlag;
 	protected IoStats ioStats;
 	protected volatile IoStats.Snapshot lastStats = null;
+	protected volatile IoStats medIoStats = null;
 	// STATES section //////////////////////////////////////////////////////////////////////////////
 	private Balancer<String> nodeBalancer = null;
 	private LoadState<T> loadedPrevState = null;
@@ -126,6 +127,32 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
+	private void refreshStats() {
+		lastStats = ioStats.getSnapshot();
+	}
+	//
+	protected void checkForBadState()
+	throws InterruptedException {
+		if(
+			lastStats.getFailCount() > MAX_FAIL_COUNT &&
+				lastStats.getFailRateLast() > lastStats.getSuccRateLast()
+			) {
+			LOG.fatal(
+				Markers.ERR,
+				"There's a more than {} of failures and the failure rate is higher " +
+					"than success rate for at least last {}[sec]. Exiting in order to " +
+					"avoid the memory exhaustion. Please check your environment.",
+				MAX_FAIL_COUNT, metricsPeriodSec
+			);
+			try {
+				interrupt();
+				throw new InterruptedException();
+			} finally {
+				Thread.currentThread().interrupt();
+			}
+		}
+	}
+	//
 	private final class ResultsDispatcher
 	implements Runnable {
 		@Override
@@ -146,6 +173,87 @@ implements LoadExecutor<T> {
 				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
 			} finally {
 				LOG.debug(Markers.MSG, "{}: results dispatched finished", getName());
+			}
+		}
+	}
+	//
+	protected void postProcessItems()
+	throws InterruptedException {
+		try {
+			//
+			final List<T> items = new ArrayList<>(batchSize);
+			final int n = itemOutBuff.get(items, batchSize);
+			if(n > 0) {
+				if(isCircular) {
+					int m = 0, k;
+					while(m < n) {
+						k = put(items, m, n);
+						if(k > 0) {
+							m += k;
+						} else {
+							break;
+						}
+						LockSupport.parkNanos(1_000);
+					}
+				} else {
+					postProcessUniqueItemsFinally(items);
+				}
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
+			);
+		} catch(final RejectedExecutionException e) {
+			if(LOG.isTraceEnabled(Markers.ERR)) {
+				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the items", consumer);
+			}
+		}
+	}
+	//
+	protected void postProcessUniqueItemsFinally(final List<T> items) {
+		// is this an end of consumer-producer chain?
+		if(consumer == null) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "{}: going to dump out {} items", getName(), items.size());
+			}
+			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
+				try {
+					for(final Item item : items) {
+						LOG.info(Markers.ITEM_LIST, item.toString());
+					}
+				} catch(final Throwable e) {
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "{}: failed to dump out {} items",
+						getName(), items.size()
+					);
+				}
+			}
+		} else { // put to the consumer
+			int n = items.size();
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Going to put {} items to the consumer {}",
+					n, consumer
+				);
+			}
+			try {
+				if(!items.isEmpty()) {
+					for(int m = 0; m < n; m += consumer.put(items, m, n)) {
+						LockSupport.parkNanos(1);
+					}
+				}
+				items.clear();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
+				);
+			}
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG,
+					"{} items were passed to the consumer {} successfully",
+					n, consumer
+				);
 			}
 		}
 	}
@@ -177,21 +285,77 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	private final class FullLoadMonitorTask
+	@Override
+	public void logMetrics(final Marker logMarker) {
+		if(preconditionFlag) {
+			if(Markers.PERF_AVG.equals(logMarker)) {
+				LOG.info(Markers.MSG, lastStats == null ? null : lastStats.toString());
+			} else if(Markers.PERF_MED.equals(logMarker)) {
+				LOG.info(
+					Markers.MSG, "\"{}\" intermediate: {}", getName(),
+					medIoStats.getSnapshot().toSummaryString()
+				);
+			} else if(Markers.PERF_SUM.equals(logMarker)) {
+				LOG.info(
+					Markers.MSG, "\"{}\" summary: {}", getName(),
+					lastStats == null ? null : lastStats.toSummaryString()
+				);
+			}
+		} else {
+			if(Markers.PERF_AVG.equals(logMarker)) {
+				LOG.info(logMarker, lastStats == null ? null : lastStats.toString());
+			} else if(Markers.PERF_MED.equals(logMarker)) {
+				LOG.info(
+					logMarker, "\"{}\" intermediate: {}", getName(),
+					medIoStats.getSnapshot().toSummaryString()
+				);
+			} else if(Markers.PERF_SUM.equals(logMarker)) {
+				LOG.info(
+					logMarker, "\"{}\" summary: {}", getName(),
+					lastStats == null ? null : lastStats.toSummaryString()
+				);
+			}
+		}
+	}
+	//
+	private final class FullThrottleMonitorTask
 	implements Runnable {
 		@Override
 		public final void run() {
-			// wait for the current concurrency level to be equal to the max concurrency level
-			while(currConcurrencyLevel.get() < totalThreadCount) {
-				LockSupport.parkNanos(1_000_000);
-			}
-			LOG.info(Markers.MSG, "{}: reached full load");
-			// wait for the current concurrency level to be less than max concurrency level
-			while(currConcurrencyLevel.get() == totalThreadCount) {
-				LockSupport.parkNanos(1_000_000);
-			}
-			LOG.info(Markers.MSG, "{}: finished full load");
+			medIoStats = createIntermediateStats();
+			waitForFullThrottleEnter();
+			medIoStats.start();
+			waitForFullThrottleExit();
+			logMetrics(Markers.PERF_MED);
 		}
+	}
+	//
+	protected IoStats createIntermediateStats() {
+		return new BasicIoStats(getName(), false, metricsPeriodSec);
+	}
+	// wait for the current concurrency level to be equal to the max concurrency level
+	private void waitForFullThrottleEnter() {
+		while(!isFullThrottleEntered()) {
+			LockSupport.parkNanos(1_000_000);
+		}
+		LOG.debug(Markers.MSG, "{}: reached the nominal load: {}", getName(), totalThreadCount);
+	}
+	// wait for the current concurrency level to be less than max concurrency level
+	private void waitForFullThrottleExit() {
+		while(!isFullThrottleExited()) {
+			LockSupport.parkNanos(1_000_000);
+		}
+		LOG.debug(Markers.MSG, "{}: nominal load exit", getName());
+	}
+	//
+	@Override
+	public boolean isFullThrottleEntered() {
+		return currConcurrencyLevel.get() >= totalThreadCount;
+	}
+	//
+	@Override
+	public boolean isFullThrottleExited() {
+		return isShutdown.get() && currConcurrencyLevel.get() < totalThreadCount;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected LoadExecutorBase(
@@ -254,7 +418,9 @@ implements LoadExecutor<T> {
 		}
 		mgmtTasks.add(new StatsRefreshTask());
 		mgmtTasks.add(new ResultsDispatcher());
-		mgmtTasks.add(new FullLoadMonitorTask());
+		if(appConfig.getLoadMetricsIntermediate()) {
+			mgmtTasks.add(new FullThrottleMonitorTask());
+		}
 		//
 		LoadRegistry.register(this);
 	}
@@ -308,25 +474,6 @@ implements LoadExecutor<T> {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public void logMetrics(final Marker logMarker) {
-		if(preconditionFlag) {
-			LOG.info(
-				Markers.MSG,
-				Markers.PERF_SUM.equals(logMarker) ?
-					"\"" + getName() + "\" summary: " + lastStats.toSummaryString() :
-					lastStats
-			);
-		} else {
-			LOG.info(
-				logMarker,
-				Markers.PERF_SUM.equals(logMarker) ?
-					"\"" + getName() + "\" summary: " + lastStats.toSummaryString() :
-					lastStats
-			);
-		}
-	}
-	//
 	@Override
 	public final void start()
 	throws IllegalStateException {
@@ -440,6 +587,9 @@ implements LoadExecutor<T> {
 				refreshStats();
 				ioStats.close();
 				logMetrics(Markers.PERF_SUM); // provide summary metrics
+				if(medIoStats != null && medIoStats.isStarted()) {
+					medIoStats.close();
+				}
 				// calculate the efficiency and report
 				final float
 					loadDurMicroSec = lastStats.getElapsedTime(),
@@ -694,6 +844,9 @@ implements LoadExecutor<T> {
 				);
 			}
 			ioStats.markSucc(countBytesDone, reqDuration, respLatency);
+			if(medIoStats != null && medIoStats.isStarted()) {
+				medIoStats.markSucc(countBytesDone, reqDuration, respLatency);
+			}
 			//
 			lastItem = item;
 			// put into the output buffer
@@ -710,6 +863,9 @@ implements LoadExecutor<T> {
 			}
 		} else {
 			ioStats.markFail();
+			if(medIoStats != null && medIoStats.isStarted()) {
+				medIoStats.markFail();
+			}
 		}
 		//
 		counterResults.incrementAndGet();
@@ -765,6 +921,9 @@ implements LoadExecutor<T> {
 						);
 					}
 					ioStats.markSucc(countBytesDone, reqDuration, respLatency);
+					if(medIoStats != null && medIoStats.isStarted()) {
+						medIoStats.markSucc(countBytesDone, reqDuration, respLatency);
+					}
 					//
 					lastItem = item;
 					// pass data item to a consumer
@@ -781,6 +940,9 @@ implements LoadExecutor<T> {
 					}
 				} else {
 					ioStats.markFail();
+					if(medIoStats != null && medIoStats.isStarted()) {
+						medIoStats.markFail();
+					}
 				}
 			}
 			synchronized(ioStats) {
@@ -796,120 +958,19 @@ implements LoadExecutor<T> {
 		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
 		currConcurrencyLevel.decrementAndGet();
 		ioStats.markFail(n);
+		if(medIoStats != null && medIoStats.isStarted()) {
+			medIoStats.markFail(n);
+		}
 		counterResults.addAndGet(n);
 	}
 	//
 	protected void ioTaskFailed(final int n, final Throwable e) {
 		currConcurrencyLevel.decrementAndGet();
 		ioStats.markFail(n);
+		if(medIoStats != null && medIoStats.isStarted()) {
+			medIoStats.markFail();
+		}
 		counterResults.addAndGet(n);
-	}
-	//
-	protected void postProcessItems()
-	throws InterruptedException {
-		try {
-			//
-			final List<T> items = new ArrayList<>(batchSize);
-			final int n = itemOutBuff.get(items, batchSize);
-			if(n > 0) {
-				if(isCircular) {
-					int m = 0, k;
-					while(m < n) {
-						k = put(items, m, n);
-						if(k > 0) {
-							m += k;
-						} else {
-							break;
-						}
-						LockSupport.parkNanos(1_000);
-					}
-				} else {
-					postProcessUniqueItemsFinally(items);
-				}
-			}
-		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
-			);
-		} catch(final RejectedExecutionException e) {
-			if(LOG.isTraceEnabled(Markers.ERR)) {
-				LogUtil.exception(LOG, Level.TRACE, e, "\"{}\" rejected the items", consumer);
-			}
-		}
-	}
-	//
-	protected void postProcessUniqueItemsFinally(final List<T> items) {
-		// is this an end of consumer-producer chain?
-		if(consumer == null) {
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "{}: going to dump out {} items", getName(), items.size());
-			}
-			if(LOG.isInfoEnabled(Markers.ITEM_LIST)) {
-				try {
-					for(final Item item : items) {
-						LOG.info(Markers.ITEM_LIST, item.toString());
-					}
-				} catch(final Throwable e) {
-					LogUtil.exception(
-						LOG, Level.ERROR, e, "{}: failed to dump out {} items",
-						getName(), items.size()
-					);
-				}
-			}
-		} else { // put to the consumer
-			int n = items.size();
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-					Markers.MSG, "Going to put {} items to the consumer {}",
-					n, consumer
-				);
-			}
-			try {
-				if(!items.isEmpty()) {
-					for(int m = 0; m < n; m += consumer.put(items, m, n)) {
-						LockSupport.parkNanos(1);
-					}
-				}
-				items.clear();
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.DEBUG, e, "Failed to feed the items to \"{}\"", consumer
-				);
-			}
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-					Markers.MSG,
-					"{} items were passed to the consumer {} successfully",
-					n, consumer
-				);
-			}
-		}
-	}
-	//
-	private void refreshStats() {
-		lastStats = ioStats.getSnapshot();
-	}
-	//
-	protected void checkForBadState()
-	throws InterruptedException {
-		if(
-			lastStats.getFailCount() > MAX_FAIL_COUNT &&
-			lastStats.getFailRateLast() > lastStats.getSuccRateLast()
-		) {
-			LOG.fatal(
-				Markers.ERR,
-				"There's a more than {} of failures and the failure rate is higher " +
-					"than success rate for at least last {}[sec]. Exiting in order to " +
-					"avoid the memory exhaustion. Please check your environment.",
-				MAX_FAIL_COUNT, metricsPeriodSec
-			);
-			try {
-				interrupt();
-				throw new InterruptedException();
-			} finally {
-				Thread.currentThread().interrupt();
-			}
-		}
 	}
 	//
 	@Override
@@ -956,6 +1017,11 @@ implements LoadExecutor<T> {
 	@Override
 	public IoStats.Snapshot getStatsSnapshot() {
 		return lastStats;
+	}
+	//
+	@Override
+	public IoStats.Snapshot getIntermediateStatsSnapshot() {
+		return medIoStats == null ? null : medIoStats.getSnapshot();
 	}
 	//
 	private boolean isDoneCountLimit() {

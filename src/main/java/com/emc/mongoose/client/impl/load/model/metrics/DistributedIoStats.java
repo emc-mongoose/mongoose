@@ -1,8 +1,10 @@
-package com.emc.mongoose.client.impl.load.metrics.model;
+package com.emc.mongoose.client.impl.load.model.metrics;
 //
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 //
+import com.emc.mongoose.client.api.load.tasks.LoadStatsSnapshotTask;
+import com.emc.mongoose.client.impl.load.tasks.BasicLoadStatsSnapshotTask;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -19,28 +21,24 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.rmi.ConnectIOException;
-import java.rmi.NoSuchObjectException;
-import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 14.09.15.
  */
-public class AggregatedRemoteIoStats<T extends Item, W extends LoadSvc<T>>
+public class DistributedIoStats<T extends Item, W extends LoadSvc<T>>
 extends IoStatsBase {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final Map<String, W> loadSvcMap;
-	private final Map<String, Snapshot> loadStatsSnapshotMap;
-	private final ExecutorService statsLoader;
+	protected final Map<String, W> loadSvcMap;
+	protected final ExecutorService statsLoader;
+	private final Map<String, LoadStatsSnapshotTask> loadStatsSnapshotMap;
 	//
 	private long
 		countSucc = 0,
@@ -60,7 +58,7 @@ extends IoStatsBase {
 	private final Lock
 		lock = new ReentrantLock();
 	//
-	public AggregatedRemoteIoStats(
+	public DistributedIoStats(
 		final String name, final boolean serveJmxFlag, final Map<String, W> loadSvcMap
 	) {
 		super(name, serveJmxFlag);
@@ -252,73 +250,13 @@ extends IoStatsBase {
 		);
 	}
 	//
-	private final static int COUNT_LIMIT_RETRIES = 100;
-	//
-	private final class LoadIoStatsSnapshotTask
-	implements Runnable {
-		//
-		private final String loadSvcAddr;
-		//
-		public LoadIoStatsSnapshotTask(final String loadSvcAddr) {
-			this.loadSvcAddr = loadSvcAddr;
-		}
-		//
-		@Override
-		public void run() {
-			Snapshot loadSvcStatsSnapshot;
-			final LoadSvc loadSvc = loadSvcMap.get(loadSvcAddr);
-			final Thread currThread = Thread.currentThread();
-			currThread.setName(currThread.getName() + "@" + loadSvcAddr);
-			int retryCount = 0;
-			while(!currThread.isInterrupted()) {
-				try {
-					loadSvcStatsSnapshot = loadSvc.getStatsSnapshot();
-					retryCount = 0; // reset
-					if(loadSvcStatsSnapshot != null) {
-						if(LOG.isTraceEnabled(Markers.MSG)) {
-							LOG.trace(
-								Markers.MSG, "Got metrics snapshot from {}: {}",
-								loadSvcAddr, loadSvcStatsSnapshot
-							);
-						}
-						loadStatsSnapshotMap.put(loadSvcAddr, loadSvcStatsSnapshot);
-					} else {
-						LOG.warn(
-							Markers.ERR, "Got null metrics snapshot from the load server @ {}",
-							loadSvcAddr
-						);
-					}
-					LockSupport.parkNanos(1_000_000);
-				} catch(final NoSuchObjectException | ConnectIOException e) {
-					if(retryCount < COUNT_LIMIT_RETRIES) {
-						retryCount ++;
-						LogUtil.exception(
-							LOG, Level.DEBUG, e,
-							"Failed to fetch the metrics snapshot from {} {} times",
-							loadSvcAddr, retryCount
-						);
-					} else {
-						LogUtil.exception(
-							LOG, Level.ERROR, e,
-							"Failed to fetch the metrics from {} {} times, stopping the task",
-							loadSvcAddr, retryCount
-						);
-						break;
-					}
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e,
-						"Failed to fetch the metrics snapshot from {}", loadSvcAddr
-					);
-				}
-			}
-		}
-	}
-	//
 	@Override
-	public final void start() {
+	public void start() {
+		LoadStatsSnapshotTask nextLoadStatsSnapshotTask;
 		for(final String addr : loadSvcMap.keySet()) {
-			statsLoader.submit(new LoadIoStatsSnapshotTask(addr));
+			nextLoadStatsSnapshotTask = new BasicLoadStatsSnapshotTask(loadSvcMap.get(addr), addr);
+			loadStatsSnapshotMap.put(addr, nextLoadStatsSnapshotTask);
+			statsLoader.submit(nextLoadStatsSnapshotTask);
 		}
 		statsLoader.shutdown();
 		super.start();
@@ -363,7 +301,7 @@ extends IoStatsBase {
 					//
 					Snapshot loadStatsSnapshot;
 					for(final String addr : loadStatsSnapshotMap.keySet()) {
-						loadStatsSnapshot = loadStatsSnapshotMap.get(addr);
+						loadStatsSnapshot = loadStatsSnapshotMap.get(addr).getLastStatsSnapshot();
 						if(loadStatsSnapshot != null) {
 							applyNextServerSnapshot(loadStatsSnapshot);
 						} else {

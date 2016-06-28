@@ -136,6 +136,7 @@
 				"time" : "0s"
 			},
 			"metrics" : {
+				"intermediate" : false,
 				"period" : "10s",
 				"precondition" : false
 			},
