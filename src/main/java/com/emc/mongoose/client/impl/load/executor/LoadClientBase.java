@@ -286,7 +286,7 @@ implements LoadClient<T, W> {
 	public final boolean isFullThrottleExited() {
 		for(final W nextLoadSvc : remoteLoadMap.values()) {
 			try {
-				if(!nextLoadSvc.isFullThrottleExited()) {
+				if(nextLoadSvc.isFullThrottleExited()) {
 					return true;
 				}
 			} catch(final RemoteException e) {
