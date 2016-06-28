@@ -52,6 +52,10 @@ public final class LogValidator {
 		return new File(Paths.get(getLogDir(), runID, PERF_AVG_FILE_NAME).toString());
 	}
 
+	public static File getPerfMedFile(final String runID){
+		return new File(Paths.get(getLogDir(), runID, PERF_SUM_FILE_NAME).toString());
+	}
+
 	public static File getPerfSumFile(final String runID){
 		return new File(Paths.get(getLogDir(), runID, PERF_SUM_FILE_NAME).toString());
 	}

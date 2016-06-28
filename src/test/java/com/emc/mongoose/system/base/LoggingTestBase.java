@@ -1,6 +1,5 @@
 package com.emc.mongoose.system.base;
 //
-import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.Constants;
 //
@@ -29,7 +28,7 @@ extends ConfiguredTestBase {
 		LOG_FILE_NAME = "logging.json";
 	//
 	protected static Logger LOG;
-	protected static File FILE_LOG_PERF_SUM, FILE_LOG_PERF_AVG,
+	protected static File FILE_LOG_PERF_SUM, FILE_LOG_PERF_MED, FILE_LOG_PERF_AVG,
 		FILE_LOG_DATA_ITEMS, FILE_LOG_PERF_TRACE;
 	//
 	@BeforeClass
@@ -47,6 +46,7 @@ extends ConfiguredTestBase {
 			ConfiguredTestBase.setUpClass();
 			LogValidator.removeLogDirectory(runId);
 			FILE_LOG_PERF_SUM = LogValidator.getPerfSumFile(runId);
+			FILE_LOG_PERF_MED = LogValidator.getPerfMedFile(runId);
 			FILE_LOG_PERF_AVG = LogValidator.getPerfAvgFile(runId);
 			FILE_LOG_DATA_ITEMS = LogValidator.getItemsListFile(runId);
 			FILE_LOG_PERF_TRACE = LogValidator.getPerfTraceFile(runId);

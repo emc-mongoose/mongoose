@@ -38,7 +38,7 @@ extends IoStatsBase {
 	//
 	protected final Map<String, W> loadSvcMap;
 	protected final ExecutorService statsLoader;
-	private final Map<String, LoadStatsSnapshotTask> loadStatsSnapshotMap;
+	protected final Map<String, LoadStatsSnapshotTask> loadStatsSnapshotMap;
 	//
 	private long
 		countSucc = 0,
@@ -252,13 +252,17 @@ extends IoStatsBase {
 	//
 	@Override
 	public void start() {
-		LoadStatsSnapshotTask nextLoadStatsSnapshotTask;
-		for(final String addr : loadSvcMap.keySet()) {
-			nextLoadStatsSnapshotTask = new BasicLoadStatsSnapshotTask(loadSvcMap.get(addr), addr);
-			loadStatsSnapshotMap.put(addr, nextLoadStatsSnapshotTask);
-			statsLoader.submit(nextLoadStatsSnapshotTask);
+		if(!statsLoader.isShutdown()) {
+			LoadStatsSnapshotTask nextLoadStatsSnapshotTask;
+			for(final String addr : loadSvcMap.keySet()) {
+				nextLoadStatsSnapshotTask = new BasicLoadStatsSnapshotTask(
+					loadSvcMap.get(addr), addr
+				);
+				loadStatsSnapshotMap.put(addr, nextLoadStatsSnapshotTask);
+				statsLoader.submit(nextLoadStatsSnapshotTask);
+			}
+			statsLoader.shutdown();
 		}
-		statsLoader.shutdown();
 		super.start();
 	}
 	//
@@ -305,8 +309,8 @@ extends IoStatsBase {
 						if(loadStatsSnapshot != null) {
 							applyNextServerSnapshot(loadStatsSnapshot);
 						} else {
-							LOG.warn(
-								Markers.ERR, "No load stats snapshot is available for {}", addr
+							LOG.debug(
+								Markers.ERR, "No load stats snapshot is available for {} yet", addr
 							);
 						}
 					}

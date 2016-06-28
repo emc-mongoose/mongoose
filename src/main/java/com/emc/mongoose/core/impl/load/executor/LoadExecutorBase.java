@@ -317,30 +317,30 @@ implements LoadExecutor<T> {
 	implements Runnable {
 		@Override
 		public final void run() {
-			medIoStats = createIntermediateStats();
-			waitForFullThrottleEnter();
-			medIoStats.start();
-			waitForFullThrottleExit();
-			logMetrics(Markers.PERF_MED);
+			try {
+				final Thread currentThread = Thread.currentThread();
+				currentThread.setName("fullThrottleMonitor<" + getName() + ">");
+				medIoStats = createIntermediateStats();
+				// wait for the current concurrency level to be equal to the max concurrency level
+				while(!isFullThrottleEntered()) {
+					LockSupport.parkNanos(1_000_000);
+				}
+				LOG.debug(Markers.MSG, "{}: reached the nominal load: {}", getName(), totalThreadCount);
+				medIoStats.start();
+				// wait for the current concurrency level to be less than max concurrency level
+				while(!isFullThrottleExited()) {
+					LockSupport.parkNanos(1_000_000);
+				}
+				LOG.debug(Markers.MSG, "{}: nominal load exit", getName());
+				logMetrics(Markers.PERF_MED);
+			} catch(final Throwable e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Full throttle monitor task failure");
+			}
 		}
 	}
 	//
 	protected IoStats createIntermediateStats() {
 		return new BasicIoStats(getName(), false, metricsPeriodSec);
-	}
-	// wait for the current concurrency level to be equal to the max concurrency level
-	private void waitForFullThrottleEnter() {
-		while(!isFullThrottleEntered()) {
-			LockSupport.parkNanos(1_000_000);
-		}
-		LOG.debug(Markers.MSG, "{}: reached the nominal load: {}", getName(), totalThreadCount);
-	}
-	// wait for the current concurrency level to be less than max concurrency level
-	private void waitForFullThrottleExit() {
-		while(!isFullThrottleExited()) {
-			LockSupport.parkNanos(1_000_000);
-		}
-		LOG.debug(Markers.MSG, "{}: nominal load exit", getName());
 	}
 	//
 	@Override
