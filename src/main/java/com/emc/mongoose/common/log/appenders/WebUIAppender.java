@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.emc.mongoose.common.conf.AppConfig.KEY_LOAD_PRECONDITION;
 import static com.emc.mongoose.common.conf.AppConfig.KEY_RUN_ID;
 /**
  Created by kurila on 23.10.14.
