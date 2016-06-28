@@ -42,11 +42,6 @@ public class TestServlet
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private static final String WSMOCK_MODE_NAME = "WSMock";
-	private static final String STANDALONE_MODE_NAME = "Mongoose";
-	private static final String CLIENT_MODE_NAME = "client";
-	private static final String SERVER_MODE_NAME = "server";
-
 	private static final String APP_CONFIG_KEY = "config";
 	private static final String SCENARIO_KEY = "scenario";
 	private static final ObjectMapper JSON_MAPPER = new ObjectMapper()
@@ -83,11 +78,11 @@ public class TestServlet
 				startTest(runId, new Runnable() {
 					@Override
 					public void run() {
-						logStart(WSMOCK_MODE_NAME);
+						logStart(runMode);
 						try(final StorageMock sm = new Cinderella(config)) {
 							sm.run();
 						} catch(final IOException e) {
-							logFail(WSMOCK_MODE_NAME);
+							logFail(runMode);
 						}
 					}
 				}, runMode);
@@ -97,11 +92,11 @@ public class TestServlet
 					@Override
 					public void run() {
 						try(final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(config)) {
-							logStart(SERVER_MODE_NAME);
+							logStart(runMode);
 							multiSvc.start();
 							multiSvc.await();
 						} catch(final IOException | InterruptedException e) {
-							logFail(SERVER_MODE_NAME);
+							logFail(runMode);
 						}
 					}
 				}, runMode);
@@ -232,11 +227,11 @@ public class TestServlet
 		MODES.remove(runId);
 	}
 
-	private static String logStart(final String object) {
-		return "Starting " + object;
+	private void logStart(final String object) {
+		LOG.info("Starting " + object);
 	}
 
-	private static String logFail(final String object) {
-		return "Failed to start " + object;
+	private void logFail(final String object) {
+		LOG.error("Failed to start " + object);
 	}
 }
