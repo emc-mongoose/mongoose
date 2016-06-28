@@ -17,8 +17,6 @@ extends Serializable {
 	//
 	IoStats.Snapshot getStatsSnapshot();
 	//
-	IoStats.Snapshot getMedStatsSnapshot();
-	//
 	T getLastDataItem();
 	//
 	boolean isLimitReached(final AppConfig appConfig);

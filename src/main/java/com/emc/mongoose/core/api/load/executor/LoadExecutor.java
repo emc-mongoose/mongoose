@@ -48,7 +48,13 @@ extends Output<T>, LifeCycle, ItemProducer<T> {
 	IoStats.Snapshot getStatsSnapshot()
 	throws RemoteException;
 	//
-	IoStats.Snapshot getMedStatsSnapshot()
+	IoStats.Snapshot getIntermediateStatsSnapshot()
+	throws RemoteException;
+	//
+	boolean isFullThrottleEntered()
+	throws RemoteException;
+	//
+	boolean isFullThrottleExited()
 	throws RemoteException;
 	//
 	void logMetrics(Marker marker)

@@ -56,11 +56,6 @@ implements LoadState<T> {
 	}
 	//
 	@Override
-	public IoStats.Snapshot getMedStatsSnapshot() {
-		return medIoStatsSnapshot;
-	}
-	//
-	@Override
 	public T getLastDataItem() {
 		return lastDataItem;
 	}

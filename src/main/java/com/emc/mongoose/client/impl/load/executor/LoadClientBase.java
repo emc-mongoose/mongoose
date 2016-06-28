@@ -1,5 +1,6 @@
 package com.emc.mongoose.client.impl.load.executor;
 // mongoose-common.jar
+import com.emc.mongoose.client.impl.load.model.metrics.DistributedIntermediateIoStats;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
@@ -14,13 +15,14 @@ import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
-import com.emc.mongoose.client.impl.load.metrics.model.AggregatedRemoteIoStats;
+import com.emc.mongoose.client.impl.load.model.metrics.DistributedIoStats;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -256,8 +258,42 @@ implements LoadClient<T, W> {
 	//
 	@Override
 	protected final void initStats(final boolean flagServeJMX) {
-		ioStats = new AggregatedRemoteIoStats<>(getName(), flagServeJMX, remoteLoadMap);
+		ioStats = new DistributedIoStats<>(getName(), flagServeJMX, remoteLoadMap);
 		lastStats = ioStats.getSnapshot();
+	}
+	//
+	@Override
+	protected final IoStats createIntermediateStats() {
+		return new DistributedIntermediateIoStats<>(getName(), false, remoteLoadMap);
+	}
+	//
+	@Override
+	public final boolean isFullThrottleEntered() {
+		for(final W nextLoadSvc : remoteLoadMap.values()) {
+			try {
+				if(!nextLoadSvc.isFullThrottleEntered()) {
+					return false;
+				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Remote call failure");
+				return false;
+			}
+		}
+		return true;
+	}
+	//
+	@Override
+	public final boolean isFullThrottleExited() {
+		for(final W nextLoadSvc : remoteLoadMap.values()) {
+			try {
+				if(!nextLoadSvc.isFullThrottleExited()) {
+					return true;
+				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Remote call failure");
+			}
+		}
+		return false;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////

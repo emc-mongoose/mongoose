@@ -58,7 +58,12 @@ implements IoStats {
 	}
 	//
 	@Override
-	public void markElapsedTime(final long usec) {
+	public final boolean isStarted() {
+		return tsStartMicroSec > -1;
+	}
+	//
+	@Override
+	public final void markElapsedTime(final long usec) {
 		prevElapsedTimeMicroSec = usec;
 	}
 	//
@@ -71,7 +76,7 @@ implements IoStats {
 		metrics.close();
 	}
 	//
-	protected static class BasicSnapshot
+	protected final static class BasicSnapshot
 	implements Snapshot {
 		//
 		private final long countSucc;
@@ -112,52 +117,52 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long getSuccCount() {
+		public final long getSuccCount() {
 			return countSucc;
 		}
 		//
 		@Override
-		public double getSuccRateMean() {
+		public final double getSuccRateMean() {
 			return elapsedTime == 0 ? 0 : M * countSucc / elapsedTime;
 		}
 		//
 		@Override
-		public double getSuccRateLast() {
+		public final double getSuccRateLast() {
 			return succRateLast;
 		}
 		//
 		@Override
-		public long getFailCount() {
+		public final long getFailCount() {
 			return countFail;
 		}
 		//
 		@Override
-		public double getFailRateMean() {
+		public final double getFailRateMean() {
 			return elapsedTime == 0 ? 0 : M * countFail / elapsedTime;
 		}
 		//
 		@Override
-		public double getFailRateLast() {
+		public final double getFailRateLast() {
 			return failRateLast;
 		}
 		//
 		@Override
-		public long getByteCount() {
+		public final long getByteCount() {
 			return countByte;
 		}
 		//
 		@Override
-		public double getByteRateMean() {
+		public final double getByteRateMean() {
 			return elapsedTime == 0 ? 0 : M * countByte / elapsedTime;
 		}
 		//
 		@Override
-		public double getByteRateLast() {
+		public final double getByteRateLast() {
 			return byteRateLast;
 		}
 		//
 		@Override
-		public long getDurationMin() {
+		public final long getDurationMin() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -165,7 +170,7 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long getDurationLoQ() {
+		public final long getDurationLoQ() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -173,7 +178,7 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long getDurationMed() {
+		public final long getDurationMed() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -181,7 +186,7 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long getDurationHiQ() {
+		public final long getDurationHiQ() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -189,7 +194,7 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long getDurationMax() {
+		public final long getDurationMax() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -197,17 +202,17 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long getDurationSum() {
+		public final long getDurationSum() {
 			return sumDur;
 		}
 		//
 		@Override
-		public long[] getDurationValues() {
+		public final long[] getDurationValues() {
 			return durValues;
 		}
 		//
 		@Override
-		public double getDurationAvg() {
+		public final double getDurationAvg() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -215,7 +220,7 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long getLatencyMin() {
+		public final long getLatencyMin() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -223,7 +228,7 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long getLatencyLoQ() {
+		public final long getLatencyLoQ() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -231,7 +236,7 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long getLatencyMed() {
+		public final long getLatencyMed() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -239,14 +244,14 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long getLatencyHiQ() {
+		public final long getLatencyHiQ() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
 			return (long) latSnapshot.getValue(0.75);
 		}//
 		@Override
-		public long getLatencyMax() {
+		public final long getLatencyMax() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -254,17 +259,17 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long[] getLatencyValues() {
+		public final long[] getLatencyValues() {
 			return latValues;
 		}
 		//
 		@Override
-		public long getLatencySum() {
+		public final long getLatencySum() {
 			return sumDur;
 		}
 		//
 		@Override
-		public double getLatencyAvg() {
+		public final double getLatencyAvg() {
 			if(latSnapshot == null) {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
@@ -272,12 +277,12 @@ implements IoStats {
 		}
 		//
 		@Override
-		public long getElapsedTime() {
+		public final long getElapsedTime() {
 			return elapsedTime;
 		}
 		//
 		@Override
-		public String toCountsString() {
+		public final String toCountsString() {
 			return countSucc + "/" +
 				(
 					LogUtil.isConsoleColoringEnabled() ?
@@ -291,14 +296,14 @@ implements IoStats {
 		}
 		//
 		@Override
-		public String toDurString() {
+		public final String toDurString() {
 			return (int) durSnapshot.getMean() + "/" +
 				(int) durSnapshot.getMin() + "/" +
 				(int) durSnapshot.getMax();
 		}
 		//
 		@Override
-		public String toDurSummaryString() {
+		public final String toDurSummaryString() {
 			return (int) durSnapshot.getMean() + "/" +
 				(int) durSnapshot.getMin() + "/" +
 				(int) durSnapshot.getValue(0.25) + "/" +
@@ -308,14 +313,14 @@ implements IoStats {
 		}
 		//
 		@Override
-		public String toLatString() {
+		public final String toLatString() {
 			return (int) latSnapshot.getMean() + "/" +
 				(int) latSnapshot.getMin() + "/" +
 				(int) latSnapshot.getMax();
 		}
 		//
 		@Override
-		public String toLatSummaryString() {
+		public final String toLatSummaryString() {
 			return (int) latSnapshot.getMean() + "/" +
 				(int) latSnapshot.getMin() + "/" +
 				(int) latSnapshot.getValue(0.25) + "/" +
@@ -325,14 +330,14 @@ implements IoStats {
 		}
 		//
 		@Override
-		public String toSuccRatesString() {
+		public final String toSuccRatesString() {
 			return String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_FLOAT_PAIR, getSuccRateMean(), succRateLast
 			);
 		}
 		//
 		@Override
-		public String toByteRatesString() {
+		public final String toByteRatesString() {
 			return String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_FLOAT_PAIR,
 				getByteRateMean() / MIB, byteRateLast / MIB
@@ -340,7 +345,7 @@ implements IoStats {
 		}
 		//
 		@Override
-		public String toString() {
+		public final String toString() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
@@ -356,7 +361,7 @@ implements IoStats {
 		}
 		//
 		@Override
-		public String toSummaryString() {
+		public final String toSummaryString() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
 			}
