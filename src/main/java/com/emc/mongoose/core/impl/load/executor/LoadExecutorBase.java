@@ -53,6 +53,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
+import static com.emc.mongoose.common.conf.Constants.RUN_MODE_SERVER;
 import static com.emc.mongoose.core.api.item.base.Item.SLASH;
 /**
  Created by kurila on 15.10.14.
@@ -154,7 +155,7 @@ implements LoadExecutor<T> {
 		public final void run() {
 			Thread.currentThread().setName(LoadExecutorBase.this.getName());
 			final boolean loadPrecondition = appConfig.getLoadPrecondition();
-			if (!loadPrecondition) {
+			if (!loadPrecondition && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) {
 				final String runId = appConfig.getRunId();
 				final String loadJobName = LoadExecutorBase.this.getName();
 				final PolyLineManager polyLineManager = new PolyLineManager();
