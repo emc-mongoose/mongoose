@@ -10,6 +10,7 @@ import com.emc.mongoose.run.scenario.engine.JsonScenario;
 import com.emc.mongoose.run.scenario.engine.Scenario;
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
+import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import com.fasterxml.jackson.core.JsonParser;
@@ -78,22 +79,13 @@ public class TestServlet
 		final JsonScenario finalScenario = scenario;
 		final String runMode = config.getRunMode();
 		switch (runMode) {
-			case Constants.RUN_MODE_STANDALONE:
-				startTest(runId, new Runnable() {
-					@Override
-					public void run() {
-						logStart(STANDALONE_MODE_NAME);
-						new ScenarioRunner(config, finalScenario).run();
-					}
-				}, runMode);
-				break;
 			case Constants.RUN_MODE_WSMOCK:
 				startTest(runId, new Runnable() {
 					@Override
 					public void run() {
 						logStart(WSMOCK_MODE_NAME);
-						try {
-							new Cinderella(config).run();
+						try(final StorageMock sm = new Cinderella(config)) {
+							sm.run();
 						} catch(final IOException e) {
 							logFail(WSMOCK_MODE_NAME);
 						}
@@ -104,32 +96,28 @@ public class TestServlet
 				startTest(runId, new Runnable() {
 					@Override
 					public void run() {
-						try {
+						try(final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(config)) {
 							logStart(SERVER_MODE_NAME);
-							final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(config);
 							multiSvc.start();
 							multiSvc.await();
-						} catch(final RemoteException | InterruptedException e) {
+						} catch(final IOException | InterruptedException e) {
 							logFail(SERVER_MODE_NAME);
 						}
 					}
 				}, runMode);
 				break;
 			case Constants.RUN_MODE_CLIENT:
-				startTest(runId, new Runnable() {
-					@Override
-					public void run() {
-						logStart(CLIENT_MODE_NAME);
-						new ScenarioRunner(config, finalScenario).run();
-					}
-				}, runMode);
-				break;
+			case Constants.RUN_MODE_STANDALONE:
 			default:
 				startTest(runId, new Runnable() {
 					@Override
 					public void run() {
-						logStart(STANDALONE_MODE_NAME);
-						new ScenarioRunner(config, finalScenario).run();
+						logStart(runMode);
+						try(final ScenarioRunner sr = new ScenarioRunner(config, finalScenario)) {
+							sr.run();
+						} catch(final IOException e) {
+							logFail(runMode);
+						}
 					}
 				}, runMode);
 		}

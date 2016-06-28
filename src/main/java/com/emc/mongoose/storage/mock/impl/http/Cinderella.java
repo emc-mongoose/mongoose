@@ -41,13 +41,6 @@ import java.io.IOException;
 
 import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 
-//
-// mongoose-storage-mock.jar
-//
-//
-//
-//
-
 /**
  * Created by olga on 28.01.15.
  */
