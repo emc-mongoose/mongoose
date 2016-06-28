@@ -264,15 +264,14 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			Thread.currentThread().setName(LoadExecutorBase.this.getName());
-			final boolean loadPrecondition = appConfig.getLoadMetricsPrecondition();
-			if (!loadPrecondition && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) {
+			if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) {
 				final String runId = appConfig.getRunId();
 				final String loadJobName = LoadExecutorBase.this.getName();
 				final PolyLineManager polyLineManager = new PolyLineManager();
 				while(!isInterrupted.get()) {
 					logMetrics(Markers.PERF_AVG);
 					if (true) { // todo make some webui flag here
-						polyLineManager.updatePolylines(getStatsSnapshot());
+						polyLineManager.updatePolylines(lastStats);
 						ChartPackage.addChart(runId, loadJobName, polyLineManager);
 					}
 					try {
