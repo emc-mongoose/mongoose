@@ -131,7 +131,7 @@ define(['jquery',
 			BOTTOM: 180,
 			LEFT: 100
 		};
-		const WIDTH = 1000 - MARGIN.LEFT - MARGIN.RIGHT;
+		const WIDTH = 1200 - MARGIN.LEFT - MARGIN.RIGHT;
 		const HEIGHT = 600 - MARGIN.TOP - MARGIN.BOTTOM;
 
 		const defaultsFactory = function () {
@@ -170,7 +170,7 @@ define(['jquery',
 			}
 		}();
 
-		const AXIS_X_WIDTH = Math.round(WIDTH / 1.2);
+		const AXIS_X_WIDTH = Math.round(WIDTH / 1.5);
 		const AXIS_Y_WIDTH = HEIGHT;
 		//
 		// function xAccessor(data) {

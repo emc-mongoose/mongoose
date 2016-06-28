@@ -133,6 +133,13 @@
     border-color: #388bcd !important;
 }
 
+#charts-block {
+    width: 1200px;
+}
+
 .chart-link {
     padding: 10px;
+    position: relative;
+    bottom: 40px;
+    left: 800px;
 }
