@@ -508,7 +508,7 @@ define(['jquery',
 				.attr('d', function (chart) {
 					return line(chart.values)
 				})
-				.style('fill', 'none')
+				.attr('fill', 'none')
 				.style('stroke', function (chart) {
 					return colorizer(chart.name);
 				})
