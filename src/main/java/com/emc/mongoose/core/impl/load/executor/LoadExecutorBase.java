@@ -31,7 +31,7 @@ import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.LoadRegistry;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIoStats;
 import com.emc.mongoose.core.impl.load.tasks.processors.ChartPackage;
-import com.emc.mongoose.core.impl.load.tasks.processors.PolyLineManager;
+import com.emc.mongoose.core.impl.load.tasks.processors.PolylineManager;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -267,12 +267,12 @@ implements LoadExecutor<T> {
 			if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) {
 				final String runId = appConfig.getRunId();
 				final String loadJobName = LoadExecutorBase.this.getName();
-				final PolyLineManager polyLineManager = new PolyLineManager();
+				final PolylineManager polylineManager = new PolylineManager();
 				while(!isInterrupted.get()) {
 					logMetrics(Markers.PERF_AVG);
 					if (true) { // todo make some webui flag here
-						polyLineManager.updatePolylines(lastStats);
-						ChartPackage.addChart(runId, loadJobName, polyLineManager);
+						polylineManager.updatePolylines(lastStats);
+						ChartPackage.addChart(runId, loadJobName, polylineManager);
 					}
 					try {
 						TimeUnit.SECONDS.sleep(metricsPeriodSec);
@@ -586,6 +586,11 @@ implements LoadExecutor<T> {
 				refreshStats();
 				ioStats.close();
 				logMetrics(Markers.PERF_SUM); // provide summary metrics
+				final String runId = appConfig.getRunId();
+				final String loadJobName = LoadExecutorBase.this.getName();
+				final PolylineManager polylineManager = new PolylineManager();
+				polylineManager.updateSummaryPolylines(totalThreadCount, lastStats);
+				ChartPackage.addChart(runId, loadJobName, polylineManager);
 				if(medIoStats != null && medIoStats.isStarted()) {
 					medIoStats.close();
 				}

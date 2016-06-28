@@ -19,43 +19,53 @@ public final class Metric implements Serializable {
 	                                            final List<Point> minValues,
 	                                            final List<Point> maxValues) {
 		final List<Metric> metrics = new LinkedList<>();
-		metrics.add(new Metric("avg", avgValues));
-		metrics.add(new Metric("min", minValues));
-		metrics.add(new Metric("max", maxValues));
+		if (!avgValues.isEmpty()) {
+			metrics.add(new Metric("avg", avgValues));
+		}
+		if (!minValues.isEmpty()) {
+			metrics.add(new Metric("min", minValues));
+		}
+		if (!maxValues.isEmpty()) {
+			metrics.add(new Metric("max", maxValues));
+		}
 		return metrics;
 	}
 
 	private static List<Metric> speedMetricFormat(final List<Point> avgValues,
 	                                             final List<Point> lastValues) {
 		final List<Metric> metrics = new LinkedList<>();
-		metrics.add(new Metric("avg", avgValues));
-		metrics.add(new Metric("last", lastValues));
+		if (!avgValues.isEmpty()) {
+			metrics.add(new Metric("avg", avgValues));
+		}
+		if (!lastValues.isEmpty()) {
+			metrics.add(new Metric("last", lastValues));
+		}
 		return metrics;
 	}
 
-	static List<Metric> latencyMetrics(final PolyLineManager polyLineManager) {
+	static List<Metric> latencyMetrics(final PolylineManager polylineManager) {
 		return timeMetricFormat(
-				polyLineManager.getLatAvg(),
-				polyLineManager.getLatMin(),
-				polyLineManager.getLatMax());
+				polylineManager.getLatAvg(),
+				polylineManager.getLatMin(),
+				polylineManager.getLatMax());
 	}
 
-	static List<Metric> durationMetrics(final PolyLineManager polyLineManager) {
+	static List<Metric> durationMetrics(final PolylineManager polylineManager) {
 		return timeMetricFormat(
-				polyLineManager.getDurAvg(),
-				polyLineManager.getDurMin(),
-				polyLineManager.getDurMax());
+				polylineManager.getDurAvg(),
+				polylineManager.getDurMin(),
+				polylineManager.getDurMax());
 	}
 
-	static List<Metric> throughputMetrics(final PolyLineManager polyLineManager) {
+	static List<Metric> throughputMetrics(final PolylineManager polylineManager) {
 		return speedMetricFormat(
-				polyLineManager.getTpAvg(),
-				polyLineManager.getTpLast());
+				polylineManager.getTpAvg(),
+				polylineManager.getTpLast());
 	}
 
-	static List<Metric> bandwidthMetrics(final PolyLineManager polyLineManager) {
+	static List<Metric> bandwidthMetrics(final PolylineManager polylineManager) {
 		return speedMetricFormat(
-				polyLineManager.getBwAvg(),
-				polyLineManager.getBwLast());
+				polylineManager.getBwAvg(),
+				polylineManager.getBwLast());
 	}
 }

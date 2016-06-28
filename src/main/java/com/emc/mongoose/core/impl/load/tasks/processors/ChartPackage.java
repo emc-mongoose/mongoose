@@ -15,13 +15,13 @@ public final class ChartPackage  {
 	}
 
 	public static void addChart(final String runId, final String loadJobName,
-	                            final PolyLineManager polyLineManager
+	                            final PolylineManager polylineManager
 	) {
 		final Map<String, List<Metric>> loadJobCharts = new ConcurrentHashMap<>();
-		loadJobCharts.put(IoStats.METRIC_NAME_LAT, Metric.latencyMetrics(polyLineManager));
-		loadJobCharts.put(IoStats.METRIC_NAME_DUR, Metric.durationMetrics(polyLineManager));
-		loadJobCharts.put(IoStats.METRIC_NAME_TP, Metric.throughputMetrics(polyLineManager));
-		loadJobCharts.put(IoStats.METRIC_NAME_BW, Metric.bandwidthMetrics(polyLineManager));
+		loadJobCharts.put(IoStats.METRIC_NAME_LAT, Metric.latencyMetrics(polylineManager));
+		loadJobCharts.put(IoStats.METRIC_NAME_DUR, Metric.durationMetrics(polylineManager));
+		loadJobCharts.put(IoStats.METRIC_NAME_TP, Metric.throughputMetrics(polylineManager));
+		loadJobCharts.put(IoStats.METRIC_NAME_BW, Metric.bandwidthMetrics(polylineManager));
 		if(!CHARTS_MAP.containsKey(runId)) {
 			final Map<String, Map<String, List<Metric>>> runIdCharts = new ConcurrentHashMap<>();
 			runIdCharts.put(loadJobName, loadJobCharts);

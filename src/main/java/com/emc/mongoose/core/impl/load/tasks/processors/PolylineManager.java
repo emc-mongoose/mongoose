@@ -4,12 +4,12 @@ import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 
 import java.util.List;
 
-public final class PolyLineManager {
+public final class PolylineManager {
 
 	private final static int MAX_NUM_OF_POINTS = 1000;
 	private final static double BYTES_PER_MBYTE = 1048576;
 
-	private final PolyLine
+	private final Polyline
 			durMin, durMax, durAvg,
 			latMin, latMax, latAvg,
 			tpAvg, tpLast,
@@ -18,17 +18,17 @@ public final class PolyLineManager {
 	private final long startTime;
 
 
-	public PolyLineManager() {
-		durMin = new PolyLine();
-		durMax = new PolyLine();
-		durAvg = new PolyLine();
-		latMin = new PolyLine();
-		latMax = new PolyLine();
-		latAvg = new PolyLine();
-		tpAvg = new PolyLine();
-		tpLast = new PolyLine();
-		bwAvg = new PolyLine();
-		bwLast = new PolyLine();
+	public PolylineManager() {
+		durMin = new Polyline();
+		durMax = new Polyline();
+		durAvg = new Polyline();
+		latMin = new Polyline();
+		latMax = new Polyline();
+		latAvg = new Polyline();
+		tpAvg = new Polyline();
+		tpLast = new Polyline();
+		bwAvg = new Polyline();
+		bwLast = new Polyline();
 		startTime = System.currentTimeMillis();
 	}
 
@@ -45,13 +45,20 @@ public final class PolyLineManager {
 		addPoint(bwLast, metricsSnapshot.getByteRateLast() / BYTES_PER_MBYTE);
 	}
 
-	private void addPoint(final PolyLine polyLine, final double metricValue) {
-		double now = new Long((System.currentTimeMillis() - startTime) / 1000).doubleValue();
-		if (polyLine.numberOfPoints() < MAX_NUM_OF_POINTS) {
-			polyLine.addPoint(new Point(now, metricValue));
+	public final void updateSummaryPolylines(final int ordinate, final IoStats.Snapshot metricsSnapshot) {
+		durAvg.addPoint(new Point(ordinate, metricsSnapshot.getDurationAvg()));
+		latAvg.addPoint(new Point(ordinate, metricsSnapshot.getLatencyAvg()));
+		tpAvg.addPoint(new Point(ordinate, metricsSnapshot.getSuccRateMean()));
+		bwAvg.addPoint(new Point(ordinate, metricsSnapshot.getByteRateMean() / BYTES_PER_MBYTE));
+	}
+
+	private void addPoint(final Polyline polyline, final double metricValue) {
+		final double now = new Long((System.currentTimeMillis() - startTime) / 1000).doubleValue();
+		if (polyline.numberOfPoints() < MAX_NUM_OF_POINTS) {
+			polyline.addPoint(new Point(now, metricValue));
 		} else {
-			polyLine.simplify(MAX_NUM_OF_POINTS / 2);
-			polyLine.addPoint(new Point(now, metricValue));
+			polyline.simplify(MAX_NUM_OF_POINTS / 2);
+			polyline.addPoint(new Point(now, metricValue));
 		}
 	}
 
