@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -74,28 +75,63 @@ public class TestServlet
 			config.setProperty(AppConfig.KEY_SCENARIO_FROM_WEBUI, true);
 			scenario = getScenario(startProperties, config);
 		}
+		final JsonScenario finalScenario = scenario;
 		final String runMode = config.getRunMode();
 		switch (runMode) {
 			case Constants.RUN_MODE_STANDALONE:
-				runTest(
-					runId, new StandaloneLikeStarter(config, scenario, STANDALONE_MODE_NAME), runMode
-				);
+				startTest(runId, new Runnable() {
+					@Override
+					public void run() {
+						logStart(STANDALONE_MODE_NAME);
+						new ScenarioRunner(config, finalScenario).run();
+					}
+				}, runMode);
 				break;
 			case Constants.RUN_MODE_WSMOCK:
-				runTest(runId, new WsMockStarter(config), runMode);
+				startTest(runId, new Runnable() {
+					@Override
+					public void run() {
+						logStart(WSMOCK_MODE_NAME);
+						try {
+							new Cinderella(config).run();
+						} catch(final IOException e) {
+							logFail(WSMOCK_MODE_NAME);
+						}
+					}
+				}, runMode);
 				break;
 			case Constants.RUN_MODE_SERVER:
-				runTest(runId, new ServerStarter(config), runMode);
+				startTest(runId, new Runnable() {
+					@Override
+					public void run() {
+						try {
+							logStart(SERVER_MODE_NAME);
+							final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(config);
+							multiSvc.start();
+							multiSvc.await();
+						} catch(final RemoteException | InterruptedException e) {
+							logFail(SERVER_MODE_NAME);
+						}
+					}
+				}, runMode);
 				break;
 			case Constants.RUN_MODE_CLIENT:
-				runTest(
-					runId, new StandaloneLikeStarter(config, scenario, CLIENT_MODE_NAME), runMode
-				);
+				startTest(runId, new Runnable() {
+					@Override
+					public void run() {
+						logStart(CLIENT_MODE_NAME);
+						new ScenarioRunner(config, finalScenario).run();
+					}
+				}, runMode);
 				break;
 			default:
-				runTest(
-					runId, new StandaloneLikeStarter(config, scenario, STANDALONE_MODE_NAME), runMode
-				);
+				startTest(runId, new Runnable() {
+					@Override
+					public void run() {
+						logStart(STANDALONE_MODE_NAME);
+						new ScenarioRunner(config, finalScenario).run();
+					}
+				}, runMode);
 		}
 		sendRunIdInfo(response);
 	}
@@ -187,8 +223,8 @@ public class TestServlet
 	}
 
 	@SuppressWarnings("unchecked")
-	private void runTest(final String runId, final Starter starter, final String runMode) {
-		final Thread test = new Thread(starter, runId);
+	private void startTest(final String runId, final Runnable testTask, final String runMode) {
+		final Thread test = new Thread(testTask, runId);
 		test.setName("run<" + runId + ">");
 		test.start();
 		putTest(runId, test, runMode);
@@ -208,103 +244,11 @@ public class TestServlet
 		MODES.remove(runId);
 	}
 
-	private static abstract class Starter
-		implements Runnable {
-
-		private final AppConfig config;
-		private final String startMessage;
-		private final String failMessage;
-
-		Starter(final AppConfig config, final String startMessage, final String failMessage) {
-			this.config = config;
-			this.startMessage = startMessage;
-			this.failMessage = failMessage;
-		}
-
-		Starter(final AppConfig config, final String modeName) {
-			this(config, defaultStartMessage(modeName), defaultFailMessage(modeName));
-		}
-
-		AppConfig getConfig() {
-			return config;
-		}
-
-		void logStart() {
-			LOG.debug(Markers.MSG, startMessage);
-		}
-
-		void logFail(final Exception e) {
-			LogUtil.exception(LOG, Level.FATAL, e, failMessage);
-		}
-
-		abstract void start() throws Exception;
-
-		@Override
-		public void run() {
-			logStart();
-			try {
-				start();
-			} catch (final Exception e) {
-				logFail(e);
-			}
-		}
-
-		private static String defaultStartMessage(final String object) {
-			return "Starting " + object;
-		}
-
-		private static String defaultFailMessage(final String object) {
-			return "Failed to start " + object;
-		}
+	private static String logStart(final String object) {
+		return "Starting " + object;
 	}
 
-	private static class WsMockStarter
-		extends Starter {
-
-		WsMockStarter(final AppConfig config) {
-			super(config, WSMOCK_MODE_NAME);
-		}
-
-		@Override
-		void start() throws Exception {
-			new Cinderella(super.config).run();
-		}
-
+	private static String logFail(final String object) {
+		return "Failed to start " + object;
 	}
-
-	private static class StandaloneLikeStarter
-		extends Starter {
-
-		private Scenario scenario;
-
-		StandaloneLikeStarter(final AppConfig config, final Scenario scenario,
-		                     final String standaloneLikeModeName) {
-			super(config, standaloneLikeModeName);
-			this.scenario = scenario;
-		}
-
-		@Override
-		void start() throws Exception {
-			new ScenarioRunner(super.config, scenario).run();
-		}
-
-	}
-
-	private static class ServerStarter
-		extends Starter {
-
-		ServerStarter(final AppConfig config) {
-			super(config, SERVER_MODE_NAME);
-		}
-
-		@Override
-		void start() throws Exception {
-			LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(super.config);
-			multiSvc.start();
-			// todo why is there no multiSvc.await()?
-		}
-
-	}
-
-
 }
