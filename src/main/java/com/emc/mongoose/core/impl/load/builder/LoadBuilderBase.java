@@ -66,7 +66,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilder<T, U> setAppConfig(final AppConfig appConfig)
 	throws IllegalStateException, RemoteException {
 		this.appConfig = appConfig;
-		ioConfig = getIoConfig(appConfig);
+		setIoConfig(getIoConfig(appConfig));
 		//
 		setThreadCount(appConfig.getLoadThreads());
 		//
@@ -140,17 +140,19 @@ implements LoadBuilder<T, U> {
 	public final LoadBuilder<T, U> setIoConfig(
 		final IoConfig<? extends Item, ? extends Container<? extends Item>> ioConfig
 	) throws ClassCastException, RemoteException {
-		if(this.ioConfig.equals(ioConfig)) {
-			return this;
-		}
-		LOG.debug(Markers.MSG, "Set request builder: {}", ioConfig.toString());
-		try {
-			this.ioConfig.close(); // see jira ticket #437
-		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to close the replacing conf config instance #{}",
-				hashCode()
-			);
+		if(this.ioConfig != null) {
+			if(this.ioConfig.equals(ioConfig)) {
+				return this;
+			}
+			LOG.debug(Markers.MSG, "Set request builder: {}", ioConfig.toString());
+			try {
+				this.ioConfig.close(); // see jira ticket #437
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to close the replacing conf config instance #{}",
+					hashCode()
+				);
+			}
 		}
 		this.ioConfig = ioConfig;
 		return this;

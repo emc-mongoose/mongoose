@@ -14,11 +14,11 @@ import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.api.load.barrier.Throttle;
+import com.emc.mongoose.core.api.load.model.Throttle;
 import com.emc.mongoose.core.api.load.executor.HttpDataLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 //
-import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
+import com.emc.mongoose.core.impl.load.model.WeightThrottle;
 //
 import com.emc.mongoose.server.api.load.executor.HttpDataLoadSvc;
 //

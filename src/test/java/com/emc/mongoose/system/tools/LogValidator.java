@@ -25,8 +25,10 @@ public final class LogValidator {
 
 	public static void removeLogDirectory(final String runID)
 	throws Exception {
-		final Path logDir = Paths.get(getLogDir(), runID);
-		removeDirectory(logDir);
+		if(runID != null) {
+			final Path logDir = Paths.get(getLogDir(), runID);
+			removeDirectory(logDir);
+		}
 	}
 
 	private static void removeDirectory(final Path path)
@@ -42,7 +44,7 @@ public final class LogValidator {
 		}
 	}
 
-	public static File getMessageFile(final String runID){
+	public static File getMessageLogFile(final String runID){
 		return new File(Paths.get(getLogDir(), runID, MESSAGE_FILE_NAME).toString());
 	}
 
@@ -294,8 +296,8 @@ public final class LogValidator {
 		}
 	}
 	//
-	public static void assertCorrectDataItemsCSV(BufferedReader in)
-		throws IOException {
+	public static void assertCorrectItemsCsv(final BufferedReader in)
+	throws IOException {
 		//
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {

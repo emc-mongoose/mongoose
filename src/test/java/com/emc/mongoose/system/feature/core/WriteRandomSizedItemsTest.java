@@ -97,7 +97,7 @@ extends ScenarioTestBase {
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//  Read the message file and search for "Scenario end"
-		final File messageFile = LogValidator.getMessageFile(RUN_ID);
+		final File messageFile = LogValidator.getMessageLogFile(RUN_ID);
 		Assert.assertTrue(
 			"messages.log file doesn't exist",
 			messageFile.exists()
@@ -124,7 +124,7 @@ extends ScenarioTestBase {
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 	throws Exception {
-		Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageLogFile(RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
 
@@ -156,7 +156,7 @@ extends ScenarioTestBase {
 			final BufferedReader
 				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogValidator.assertCorrectDataItemsCSV(in);
+			LogValidator.assertCorrectItemsCsv(in);
 		}
 	}
 

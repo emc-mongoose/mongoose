@@ -8,10 +8,10 @@
 			"type" : "string",
 			"enum" : [
 				"command",
+				"each",
 				"load",
 				"parallel",
 				"precondition",
-				"rampup",
 				"sequential"
 			]
 		},
@@ -27,6 +27,9 @@
 		},
 		"blocking" : {
 			"type" : "boolean"
+		},
+		"in" : {
+			"type" : "array"
 		},
 		"config" : {
 			"type": "object",
@@ -75,6 +78,9 @@
 												}, {
 													"type" : "string",
 													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}, {
+													"type" : "string",
+													"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
 												}
 											]
 										},
@@ -86,6 +92,9 @@
 												}, {
 													"type" : "string",
 													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}, {
+													"type" : "string",
+													"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
 												}
 											]
 										}
@@ -100,11 +109,18 @@
 					"additionalProperties" : false,
 					"properties": {
 						"type": {
-							"type": "string",
-							"enum" : [
-								"container",
-								"data",
-								"token"
+							"oneOf" : [
+								{
+									"type" : "string",
+									"enum" : [
+										"container",
+										"data",
+										"token"
+									]
+								}, {
+									"type" : "string",
+									"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+								}
 							]
 						},
 						"data": {
@@ -122,8 +138,15 @@
 											]
 										},
 										"seed": {
-											"type": "string",
-											"pattern" : "[A-Fa-f0-9]+"
+											"oneOf" : [
+												{
+													"type": "string",
+													"pattern" : "\\w+"
+												}, {
+													"type" : "string",
+													"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+												}
+											]
 										},
 										"ringSize": {
 											"oneOf" : [
@@ -133,6 +156,9 @@
 												}, {
 													"type" : "string",
 													"pattern" : "[\\d\\.]+[KMGTPE]?B?"
+												}, {
+													"type" : "string",
+													"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
 												}
 											]
 										}
@@ -146,6 +172,9 @@
 										}, {
 											"type" : "string",
 											"pattern" : "[\\d]+\\-[\\d]+"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
 										}
 									]
 								},
@@ -158,18 +187,8 @@
 											"type" : "string",
 											"pattern" : "[\\d\\.]+[KMGTPE]?B?"
 										}, {
-											"type" : "array",
-											"items" : {
-												"oneOf" : [
-													{
-														"type": "integer",
-														"minimum" : 0
-													}, {
-														"type" : "string",
-														"pattern" : "[\\d\\.]+[KMGTPE]?B?"
-													}
-												]
-											}
+											"type" : "string",
+											"pattern" : "\\.*(\\$\\{[\\w\\-_]+\\})+\\.*"
 										}
 									]
 								},
@@ -237,11 +256,18 @@
 							"additionalProperties" : false,
 							"properties": {
 								"type": {
-									"type": "string",
-									"enum" : [
-										"asc",
-										"desc",
-										"random"
+									"oneOf" : [
+										{
+											"type": "string",
+											"enum" : [
+												"asc",
+												"desc",
+												"random"
+											]
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
 									]
 								},
 								"prefix": {
@@ -251,17 +277,38 @@
 									]
 								},
 								"radix": {
-									"type": "integer",
-									"minimum" : 2,
-									"maximum" : 36
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 2,
+											"maximum" : 36
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"offset": {
-									"type": "integer",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"length": {
-									"type": "integer",
-									"minimum" : 1
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 1
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								}
 							}
 						},
@@ -270,8 +317,15 @@
 							"additionalProperties" : false,
 							"properties": {
 								"sizeLimit": {
-									"type": "integer",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								}
 							}
 						}
@@ -282,7 +336,14 @@
 					"additionalProperties" : false,
 					"properties": {
 						"circular": {
-							"type": "boolean"
+							"oneOf" : [
+								{
+									"type": "boolean"
+								}, {
+									"type" : "string",
+									"pattern" : "[a-zA-Z]*(\\$\\{[\\w\\-_]+\\})+[a-zA-Z]*"
+								}
+							]
 						},
 						"type": {
 							"oneOf" : [
@@ -295,10 +356,20 @@
 										"delete"
 									]
 								}, {
+									"type" : "string",
+									"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+								}, {
 									"type" : "array",
 									"items" : {
-										"type" : "string",
-										"pattern" : "[CcRrEeAaTtDdUuPpLl]+=?[\\d]?%?"
+										"oneOf" : [
+											{
+												"type" : "string",
+												"pattern" : "[CcRrEeAaTtDdUuPpLl]+=?[\\d]?%?"
+											}, {
+												"type" : "string",
+												"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+											}
+										]
 									}
 								}
 							]
@@ -309,11 +380,8 @@
 									"type" : "integer",
 									"minimum" : 1
 								}, {
-									"type" : "array",
-									"items" : {
-										"type" : "integer",
-										"minimum" : 1
-									}
+									"type" : "string",
+									"pattern" : "\\d*(\\$\\{[\\w\\-_]+\\})+\\d*"
 								}
 							]
 						},
@@ -322,11 +390,25 @@
 							"additionalProperties" : false,
 							"properties": {
 								"count": {
-									"type": "integer"
+									"oneOf" : [
+										{
+											"type": "integer"
+										}, {
+											"type" : "string",
+											"pattern" : "\\d*(\\$\\{[\\w\\-_]+\\})+\\d*"
+										}
+									]
 								},
 								"rate": {
-									"type": "number",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type": "number",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"size": {
 									"oneOf" : [
@@ -336,6 +418,9 @@
 										}, {
 											"type" : "string",
 											"pattern" : "[\\d\\.]+[KMGTPE]?B?\\-?[\\d\\.]?[KMGTPE]?B?"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
 										}
 									]
 								},
@@ -344,19 +429,35 @@
 								}
 							}
 						},
-						"metricsPeriod": {
-							"oneOf" : [
-								{
-									"type" : "integer",
-									"minimum" : 0
-								}, {
-									"type" : "string",
-									"pattern" : "[\\d]+[SsMmHhDd]?"
+						"metrics" : {
+							"type" : "object",
+							"additionalProperties" : false,
+							"properties" : {
+								"period" : {
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : "[\\d]+[SsMmHhDd]?"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
+								},
+								"precondition" : {
+									"oneOf" : [
+										{
+											"type": "boolean"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								}
-							]
-						},
-						"precondition": {
-							"type": "boolean"
+							}
 						},
 						"server": {
 							"type": "object",
@@ -369,7 +470,14 @@
 									}
 								},
 								"nodeMapping": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type": "boolean"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								}
 							}
 						}
@@ -380,44 +488,114 @@
 					"additionalProperties" : false,
 					"properties": {
 						"serveJMX": {
-							"type": "boolean"
+							"oneOf" : [
+								{
+									"type": "boolean"
+								}, {
+									"type" : "string",
+									"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+								}
+							]
 						},
 						"socket": {
 							"type": "object",
 							"additionalProperties" : false,
 							"properties": {
 								"timeoutMilliSec": {
-									"type": "integer",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"reuseAddr": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type": "boolean"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"keepAlive": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type": "boolean"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"tcpNoDelay": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type": "boolean"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"linger": {
-									"type": "integer",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"bindBacklogSize": {
-									"type": "integer",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"interestOpQueued": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type": "boolean"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"selectInterval": {
-									"type": "integer",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								}
 							}
 						},
 						"ssl" : {
-							"type" : "boolean"
+							"oneOf" : [
+								{
+									"type": "boolean"
+								}, {
+									"type" : "string",
+									"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+								}
+							]
 						}
 					}
 				},
@@ -438,13 +616,20 @@
 							]
 						},
 						"mode": {
-							"type": "string",
-							"enum" : [
-								"standalone",
-								"client",
-								"server",
-								"wsmock",
-								"webui"
+							"oneOf" : [
+								{
+									"type" : "string",
+									"enum" : [
+										"standalone",
+										"client",
+										"server",
+										"wsmock",
+										"webui"
+									]
+								}, {
+									"type" : "string",
+									"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+								}
 							]
 						},
 						"name": {
@@ -455,7 +640,14 @@
 							"additionalProperties" : false,
 							"properties": {
 								"enabled": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type": "boolean"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								}
 							}
 						},
@@ -469,10 +661,17 @@
 					"additionalProperties" : false,
 					"properties": {
 						"type": {
-							"type": "string",
-							"enum" : [
-								"fs",
-								"http"
+							"oneOf" : [
+								{
+									"type" : "string",
+									"enum" : [
+										"fs",
+										"http"
+									]
+								}, {
+									"type" : "string",
+									"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+								}
 							]
 						},
 						"addrs": {
@@ -482,19 +681,40 @@
 							}
 						},
 						"port": {
-							"type": "integer",
-							"minimum" : 1
+							"oneOf" : [
+								{
+									"type" : "integer",
+									"minimum" : 1
+								}, {
+									"type" : "string",
+									"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+								}
+							]
 						},
 						"http": {
 							"type": "object",
 							"additionalProperties" : false,
 							"properties": {
 								"api": {
-									"type": "string",
-									"pattern" : "[\\w\\d]+"
+									"oneOf" : [
+										{
+											"type" : "string",
+											"pattern" : "[\\w\\d]+"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"fsAccess": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type": "boolean"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"headers": {
 									"type": "object",
@@ -508,7 +728,14 @@
 									]
 								},
 								"versioning": {
-									"type": "boolean"
+									"oneOf" : [
+										{
+											"type": "boolean"
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								}
 							}
 						},
@@ -517,24 +744,52 @@
 							"additionalProperties" : false,
 							"properties": {
 								"headCount": {
-									"type": "integer",
-									"minimum" : 1
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 1
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"capacity": {
-									"type": "integer",
-									"minimum" : 0
+									"oneOf" : [
+										{
+											"type" : "integer",
+											"minimum" : 0
+										}, {
+											"type" : "string",
+											"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+										}
+									]
 								},
 								"container": {
 									"type": "object",
 									"additionalProperties" : false,
 									"properties": {
 										"capacity": {
-											"type": "integer",
-											"minimum" : 0
+											"oneOf" : [
+												{
+													"type" : "integer",
+													"minimum" : 0
+												}, {
+													"type" : "string",
+													"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+												}
+											]
 										},
 										"countLimit": {
-											"type": "integer",
-											"minimum" : 0
+											"oneOf" : [
+												{
+													"type" : "integer",
+													"minimum" : 0
+												}, {
+													"type" : "string",
+													"pattern" : ".*(\\$\\{[\\w\\-_]+\\})+.*"
+												}
+											]
 										}
 									}
 								}

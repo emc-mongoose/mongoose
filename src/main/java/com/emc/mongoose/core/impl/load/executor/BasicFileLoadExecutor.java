@@ -57,6 +57,11 @@ implements FileLoadExecutor<T> {
 				return (RunnableFuture<V>) task;
 			}
 			//
+			@Override
+			protected final void beforeExecute(final Thread worker, final Runnable task) {
+				incrementBusyThreadCount();
+			}
+			//
 			@Override @SuppressWarnings("unchecked")
 			protected final void afterExecute(final Runnable task, final Throwable throwable) {
 				if(throwable == null) {
@@ -109,7 +114,7 @@ implements FileLoadExecutor<T> {
 		}
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	protected FileIoTask<T> getIoTask(final T item, final String nextNodeAddr) {
 		return new BasicFileIoTask<>(item, (FileIoConfig<T, Directory<T>>) ioConfig);
 	}
@@ -118,18 +123,13 @@ implements FileLoadExecutor<T> {
 	public <A extends IoTask<T>> int submitTasks(
 		final List<A> tasks, final int from, final int to
 	) throws RejectedExecutionException {
-		int n = 0;
 		for(int i = from; i < to; i ++) {
-			if(null != submitTask(tasks.get(i))) {
-				n ++;
-			} else {
-				break;
-			}
+			submitTask(tasks.get(i));
 		}
-		return n;
+		return to - from;
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public <A extends IoTask<T>> Future<A> submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		return (Future<A>) ioTaskExecutor.<FileIoTask<T>>submit((FileIoTask<T>) ioTask);

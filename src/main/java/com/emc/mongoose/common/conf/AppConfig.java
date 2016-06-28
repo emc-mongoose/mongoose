@@ -26,7 +26,6 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_IO_BUFFER_SIZE_MIN = "io.buffer.size.min";
 	String KEY_IO_BUFFER_SIZE_MAX = "io.buffer.size.max";
 	String KEY_ITEM_TYPE = "item.type";
-	String KEY_ITEM_CONTAINER_NAME = "item.container.name";
 	String KEY_ITEM_DATA_CONTENT_FILE = "item.data.content.file";
 	String KEY_ITEM_DATA_CONTENT_SEED = "item.data.content.seed";
 	String KEY_ITEM_DATA_CONTENT_RING_SIZE = "item.data.content.ringSize";
@@ -45,13 +44,12 @@ extends Cloneable, Configuration, Externalizable {
 	String KEY_ITEM_NAMING_LENGTH = "item.naming.length";
 	String KEY_ITEM_QUEUE_SIZE_LIMIT = "item.queue.sizeLimit";
 	String KEY_LOAD_CIRCULAR = "load.circular";
-	String KEY_LOAD_COPY = "load.copy";
 	String KEY_LOAD_LIMIT_COUNT = "load.limit.count";
 	String KEY_LOAD_LIMIT_RATE = "load.limit.rate";
 	String KEY_LOAD_LIMIT_SIZE = "load.limit.size";
 	String KEY_LOAD_LIMIT_TIME = "load.limit.time";
-	String KEY_LOAD_METRICS_PERIOD = "load.metricsPeriod";
-	String KEY_LOAD_PRECONDITION = "load.precondition";
+	String KEY_LOAD_METRICS_PERIOD = "load.metrics.period";
+	String KEY_LOAD_METRICS_PRECONDITION = "load.metrics.precondition";
 	String KEY_LOAD_SERVER_ADDRS = "load.server.addrs";
 	String KEY_LOAD_SERVER_NODE_MAPPING = "load.server.nodeMapping";
 	String KEY_LOAD_THREADS = "load.threads";
@@ -108,8 +106,6 @@ extends Cloneable, Configuration, Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	ItemType getItemType();
 
-	String getItemContainerName();
-
 	String getItemDataContentFile();
 
 	String getItemDataContentSeed();
@@ -160,7 +156,7 @@ extends Cloneable, Configuration, Externalizable {
 	/** Return the period in seconds */
 	int getLoadMetricsPeriod();
 
-	boolean getLoadPrecondition();
+	boolean getLoadMetricsPrecondition();
 
 	String[] getLoadServerAddrs();
 
@@ -239,6 +235,8 @@ extends Cloneable, Configuration, Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void override(final String branch, final Map<String, ?> tree);
+
+	void findAndSubstitute(final String replacePattern, final Object newValue);
 
 	ObjectNode toJsonTree(final ObjectMapper mapper)
 	throws IllegalStateException;

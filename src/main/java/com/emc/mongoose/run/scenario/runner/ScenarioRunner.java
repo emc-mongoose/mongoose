@@ -78,6 +78,12 @@ implements Closeable, Runnable {
 			} catch(final Throwable t) {
 				LogUtil.exception(LOG, Level.ERROR, t, "Scenario execution failure");
 				t.printStackTrace(System.err);
+			} finally {
+				try {
+					scenario.close();
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the scenario");
+				}
 			}
 		}
 	}

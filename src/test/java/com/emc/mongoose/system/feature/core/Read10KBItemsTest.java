@@ -6,7 +6,6 @@ import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.system.base.LoggingTestBase;
 import com.emc.mongoose.system.base.ScenarioTestBase;
 import com.emc.mongoose.system.tools.StdOutUtil;
 import com.emc.mongoose.system.tools.ContentGetter;
@@ -69,10 +68,8 @@ extends ScenarioTestBase {
 		//
 		try {
 			RunIdFileManager.flushAll();
-			//
-			System.setProperty(AppConfig.KEY_RUN_ID, READ_RUN_ID);
-			LoggingTestBase.setUpClass();
-			//
+			LogValidator.removeLogDirectory(READ_RUN_ID);
+			appConfig.setRunId(READ_RUN_ID);
 			appConfig.setProperty(
 				AppConfig.KEY_ITEM_SRC_FILE,
 				LogValidator.getItemsListFile(CREATE_RUN_ID).getPath()
@@ -176,7 +173,7 @@ extends ScenarioTestBase {
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//  Read message file and search "Scenario End"
-		final File messageFile = LogValidator.getMessageFile(READ_RUN_ID);
+		final File messageFile = LogValidator.getMessageLogFile(READ_RUN_ID);
 		Assert.assertTrue(messageFile.exists());
 		//
 		try (final BufferedReader bufferedReader =
@@ -200,7 +197,7 @@ extends ScenarioTestBase {
 	@Test
 	public void shouldCreateAllFilesWithLogsAfterWriteScenario()
 	throws Exception {
-		Path expectedFile = LogValidator.getMessageFile(CREATE_RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageLogFile(CREATE_RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file of create load doesn't exist", Files.exists(expectedFile));
 
@@ -224,7 +221,7 @@ extends ScenarioTestBase {
 	@Test
 	public void shouldCreateAllFilesWithLogsAfterReadScenario()
 	throws Exception {
-		Path expectedFile = LogValidator.getMessageFile(READ_RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageLogFile(READ_RUN_ID).toPath();
 		//  Check that messages.log file is contained
 		Assert.assertTrue("messages.log file of read load doesn't exist", Files.exists(expectedFile));
 
@@ -256,7 +253,7 @@ extends ScenarioTestBase {
 			final BufferedReader
 				in = Files.newBufferedReader(readDataItemFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogValidator.assertCorrectDataItemsCSV(in);
+			LogValidator.assertCorrectItemsCsv(in);
 		}
 	}
 
@@ -369,17 +366,17 @@ extends ScenarioTestBase {
 	throws Exception {
 		//  Get data.items.csv file of create run
 		final File dataItemsFileWrite = LogValidator.getItemsListFile(CREATE_RUN_ID);
-		Assert.assertTrue("data.items.csv file of create load doesn't exist", dataItemsFileWrite.exists());
+		Assert.assertTrue("items.csv file of create load doesn't exist", dataItemsFileWrite.exists());
 		//
 		final byte[] bytesDataItemsFileWrite = Files.readAllBytes(dataItemsFileWrite.toPath());
 		//  Get data.items.csv file of read run
 		final File dataItemsFileRead = LogValidator.getItemsListFile(READ_RUN_ID);
-		Assert.assertTrue("data.items.csv file of read load doesn't exist", dataItemsFileRead.exists());
+		Assert.assertTrue("items.csv file of read load doesn't exist", dataItemsFileRead.exists());
 		//
 		final byte[] bytesDataItemsFileRead = Files.readAllBytes(dataItemsFileRead.toPath());
 		//  Check files are equal
 		Assert.assertTrue(
-			"File data.items.csv of create load and data.items.csv file of read load doesn't equal",
+			"File items.csv of create load and items.csv file of read load doesn't equal",
 			Arrays.equals(bytesDataItemsFileRead, bytesDataItemsFileWrite));
 	}
 }

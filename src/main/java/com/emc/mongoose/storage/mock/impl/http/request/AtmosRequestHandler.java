@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
  Created by andrey on 13.05.15.
  */
 public final class AtmosRequestHandler<T extends HttpDataItemMock>
-extends WSRequestHandlerBase<T> {
+extends HttpStorageMockRequestHandlerBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	/*

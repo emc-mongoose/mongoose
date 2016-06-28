@@ -34,6 +34,11 @@ extends Thread {
 	public void run() {
 		try {
 			super.run();
+		} catch(final OutOfMemoryError e) {
+			LOG.fatal(
+				Markers.ERR, "Not enough free memory. For high load and high performance provide " +
+				"more free memory. Use lower concurrency level and/or data sizes otherwise."
+			);
 		} finally {
 			freeBuffers();
 		}

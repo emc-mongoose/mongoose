@@ -17,7 +17,7 @@ import com.emc.mongoose.core.api.item.container.Container;
 import com.emc.mongoose.core.api.item.data.ContentSource;
 import com.emc.mongoose.core.api.item.data.DataItem;
 import com.emc.mongoose.core.api.load.balancer.Balancer;
-import com.emc.mongoose.core.api.load.barrier.Throttle;
+import com.emc.mongoose.core.api.load.model.Throttle;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 import com.emc.mongoose.core.api.load.model.LoadState;
@@ -25,7 +25,7 @@ import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
 import com.emc.mongoose.core.impl.load.balancer.BasicNodeBalancer;
-import com.emc.mongoose.core.impl.load.barrier.ActiveTasksThrottle;
+import com.emc.mongoose.core.impl.load.model.ActiveTasksThrottle;
 import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.LoadRegistry;
@@ -55,6 +55,7 @@ import java.util.concurrent.locks.LockSupport;
 
 import static com.emc.mongoose.common.conf.Constants.RUN_MODE_SERVER;
 import static com.emc.mongoose.core.api.item.base.Item.SLASH;
+
 /**
  Created by kurila on 15.10.14.
  */
@@ -96,6 +97,7 @@ implements LoadExecutor<T> {
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
+	private final AtomicInteger currConcurrencyLevel = new AtomicInteger(0);
 	protected T lastItem;
 	protected final Object state = new Object();
 	protected final ItemBuffer<T> itemOutBuff;
@@ -154,7 +156,7 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			Thread.currentThread().setName(LoadExecutorBase.this.getName());
-			final boolean loadPrecondition = appConfig.getLoadPrecondition();
+			final boolean loadPrecondition = appConfig.getLoadMetricsPrecondition();
 			if (!loadPrecondition && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) {
 				final String runId = appConfig.getRunId();
 				final String loadJobName = LoadExecutorBase.this.getName();
@@ -172,6 +174,23 @@ implements LoadExecutor<T> {
 					}
 				}
 			}
+		}
+	}
+	//
+	private final class FullLoadMonitorTask
+	implements Runnable {
+		@Override
+		public final void run() {
+			// wait for the current concurrency level to be equal to the max concurrency level
+			while(currConcurrencyLevel.get() < totalThreadCount) {
+				LockSupport.parkNanos(1_000_000);
+			}
+			LOG.info(Markers.MSG, "{}: reached full load");
+			// wait for the current concurrency level to be less than max concurrency level
+			while(currConcurrencyLevel.get() == totalThreadCount) {
+				LockSupport.parkNanos(1_000_000);
+			}
+			LOG.info(Markers.MSG, "{}: finished full load");
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -217,7 +236,7 @@ implements LoadExecutor<T> {
 		loadType = ioConfig.getLoadType();
 		//
 		metricsPeriodSec = appConfig.getLoadMetricsPeriod();
-		preconditionFlag = appConfig.getLoadPrecondition();
+		preconditionFlag = appConfig.getLoadMetricsPrecondition();
 		this.sizeLimit = sizeLimit > 0 ? sizeLimit : Long.MAX_VALUE;
 		// prepare the nodes array
 		storageNodeAddrs = addrs == null ? null : addrs.clone();
@@ -235,6 +254,7 @@ implements LoadExecutor<T> {
 		}
 		mgmtTasks.add(new StatsRefreshTask());
 		mgmtTasks.add(new ResultsDispatcher());
+		mgmtTasks.add(new FullLoadMonitorTask());
 		//
 		LoadRegistry.register(this);
 	}
@@ -494,7 +514,6 @@ implements LoadExecutor<T> {
 			null : storageNodeCount == 1 ? storageNodeAddrs[0] : nodeBalancer.getNext();
 		final IoTask<T> ioTask = getIoTask(item, nextNodeAddr);
 		// don't fill the connection pool as fast as possible, this may cause a failure
-		//
 		try {
 			if(!activeTasksThrottle.requestContinueFor(item) || null == submitTask(ioTask)) {
 				throw new RejectedExecutionException();
@@ -633,6 +652,10 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
+	protected final void incrementBusyThreadCount() {
+		currConcurrencyLevel.incrementAndGet();
+	}
+	//
 	@Override
 	public void ioTaskCompleted(final IoTask<T> ioTask)
 	throws RemoteException {
@@ -660,6 +683,8 @@ implements LoadExecutor<T> {
 		if(nodeBalancer != null) {
 			nodeBalancer.markTaskFinish(nodeAddr);
 		}
+		currConcurrencyLevel.decrementAndGet();
+		//
 		if(IoTask.Status.SUCC == status) {
 			// update the metrics with success
 			if(respLatency > 0 && respLatency > reqDuration) {
@@ -701,6 +726,7 @@ implements LoadExecutor<T> {
 		//
 		final int n = to - from;
 		if(n > 0) {
+			currConcurrencyLevel.addAndGet(-n);
 			if(storageNodeAddrs != null) {
 				final String nodeAddr = ioTasks.get(from).getNodeAddr();
 				nodeBalancer.markTasksFinish(nodeAddr, n);
@@ -768,11 +794,13 @@ implements LoadExecutor<T> {
 	//
 	protected void ioTaskCancelled(final int n) {
 		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
+		currConcurrencyLevel.decrementAndGet();
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
 	}
 	//
 	protected void ioTaskFailed(final int n, final Throwable e) {
+		currConcurrencyLevel.decrementAndGet();
 		ioStats.markFail(n);
 		counterResults.addAndGet(n);
 	}

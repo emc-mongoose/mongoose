@@ -20,7 +20,7 @@ import static com.emc.mongoose.common.conf.AppConfig.FNAME_CONF;
 import static com.emc.mongoose.common.conf.BasicConfig.getWorkingDir;
 
 public final class MainServlet
-		extends HttpServlet {
+extends HttpServlet {
 
 	private static final Logger LOG = LogManager.getLogger();
 	private static final StringBuilder FULL_JSON_BUILDER = new StringBuilder();

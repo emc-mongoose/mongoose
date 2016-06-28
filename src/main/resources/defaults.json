@@ -38,7 +38,7 @@
 			"load.delete.threads" : [ "load.threads "],
 			"load.drivers" : [ "load.server.addrs" ],
 			"load.limit.reqSleepMilliSec" : false,
-			"load.metricsPeriodSec" : [ "load.metricsPeriod" ],
+			"load.metricsPeriodSec" : [ "load.metrics.period" ],
 			"load.read.connections" : [ "load.threads "],
 			"load.read.threads" : [ "load.threads "],
 			"load.read.verifyContent" : [ "item.data.verify" ],
@@ -58,7 +58,7 @@
 			"remote.port.control" : false,
 			"remote.port.monitor" : false,
 			"remote.servers" : [ "load.server.addrs" ],
-			"run.metrics.period.sec" : [ "load.metricsPeriod" ],
+			"run.metrics.period.sec" : [ "load.metrics.period" ],
 			"run.scenario.dir" : false,
 			"run.scenario.lang" : false,
 			"run.scenario.name" : false,
@@ -135,8 +135,10 @@
 				"size" : 0,
 				"time" : "0s"
 			},
-			"metricsPeriod" : "10s",
-			"precondition" : false,
+			"metrics" : {
+				"period" : "10s",
+				"precondition" : false
+			},
 			"server" : {
 				"addrs" : [
 					"127.0.0.1"
@@ -166,7 +168,7 @@
 			"resume" : {
 				"enabled" : false
 			},
-			"version" : "next"
+			"version" : "2.3.0"
 		},
 		"storage" : {
 			"type" : "http",
@@ -179,7 +181,7 @@
 				"fsAccess" : false,
 				"headers" : {
 					"Connection" : "keep-alive",
-					"User-Agent" : "mongoose/next"
+					"User-Agent" : "mongoose/2.3.0"
 				},
 				"namespace" : null,
 				"versioning" : false

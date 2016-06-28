@@ -7,7 +7,6 @@ import com.emc.mongoose.system.feature.core.Read10BItemsTest;
 import com.emc.mongoose.system.feature.core.Read10KBItemsTest;
 import com.emc.mongoose.system.feature.core.Read10MBItemsTest;
 import com.emc.mongoose.system.feature.core.Read200MBItemsTest;
-import com.emc.mongoose.system.feature.loadtype.ReadVerificationTest;
 import com.emc.mongoose.system.feature.core.ReadZeroSizeItemsTest;
 import com.emc.mongoose.system.feature.core.WriteRandomSizedItemsTest;
 import com.emc.mongoose.system.feature.core.WriteUsing100ConnTest;

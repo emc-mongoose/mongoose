@@ -29,7 +29,9 @@
 					"limit" : {
 						"count" : 10000
 					},
-					"metricsPeriod" : 0
+					"metrics" : {
+						"period" : 0
+					}
 				}
 			}
 		},

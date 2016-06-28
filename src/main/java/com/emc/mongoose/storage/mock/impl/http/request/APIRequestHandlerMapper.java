@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.mock.impl.http.request;
 //import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.storage.mock.api.ReqURIMatchingHandler;
+import com.emc.mongoose.storage.mock.api.ReqUriMatchingHandler;
 import com.emc.mongoose.storage.mock.api.HttpStorageMock;
 //
 import com.emc.mongoose.storage.mock.api.HttpDataItemMock;
@@ -22,9 +22,9 @@ implements HttpAsyncRequestHandlerMapper {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
-	private final ReqURIMatchingHandler<T> reqHandlerAtmos;
-	private final ReqURIMatchingHandler<T> reqHandlerS3;
-	private final ReqURIMatchingHandler<T> reqHandlerSwift;
+	private final ReqUriMatchingHandler<T> reqHandlerAtmos;
+	private final ReqUriMatchingHandler<T> reqHandlerS3;
+	private final ReqUriMatchingHandler<T> reqHandlerSwift;
 	//
 	public APIRequestHandlerMapper(
 		final AppConfig appConfig, final HttpStorageMock<T> sharedStorage

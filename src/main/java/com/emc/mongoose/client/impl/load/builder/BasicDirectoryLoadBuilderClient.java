@@ -89,8 +89,8 @@ implements DirectoryLoadBuilderClient<T, C, W, U> {
 		}
 		//
 		return (U) new BasicDirectoryLoadClient<>(
-			appConfig, ioConfigCopy, appConfig.getLoadThreads(), itemInput, countLimit,
-			sizeLimit, rateLimit, remoteLoadMap
+			appConfig, ioConfigCopy, threadCount, itemInput, countLimit, sizeLimit, rateLimit,
+			remoteLoadMap
 		);
 	}
 }

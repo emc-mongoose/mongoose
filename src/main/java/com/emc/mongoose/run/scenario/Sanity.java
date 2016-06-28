@@ -15,7 +15,7 @@ import com.emc.mongoose.core.impl.item.base.LimitedQueueItemBuffer;
 import com.emc.mongoose.core.impl.item.data.BasicHttpData;
 import com.emc.mongoose.core.impl.item.base.CsvFileItemOutput;
 //
-import com.emc.mongoose.core.impl.item.base.ItemListOutput;
+import com.emc.mongoose.core.impl.item.base.ListItemOutput;
 //
 import com.emc.mongoose.core.impl.item.base.ListItemInput;
 import com.emc.mongoose.core.impl.item.data.ContentSourceUtil;
@@ -45,7 +45,7 @@ implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 4, DEFAULT_CONN_PER_NODE = 200;
 	private final static long DEFAULT_DATA_SIZE = SizeInBytes.toFixedSize("10MB");
-	private final static int DEFAULT_DATA_COUNT_MAX = 10000;
+	private final static int DEFAULT_DATA_COUNT_MAX = 2000;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -64,7 +64,7 @@ implements Runnable {
 			// create new items
 			LOG.info(Markers.MSG, "Start writing");
 			final long nWritten = client.create(
-				new ItemListOutput<>(itemBuff), DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE,
+				new ListItemOutput<>(itemBuff), DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE,
 				DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);

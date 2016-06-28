@@ -3,7 +3,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.system.base.WSMockTestBase;
+import com.emc.mongoose.system.base.HttpStorageMockTestBase;
 import com.emc.mongoose.system.tools.StdOutUtil;
 import com.emc.mongoose.system.tools.BufferingOutputStream;
 import com.emc.mongoose.system.tools.LogValidator;
@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  Created by andrey on 23.10.15.
  */
 public class SwiftWriteManyObjectsToFewContainersTest
-extends WSMockTestBase {
+extends HttpStorageMockTestBase {
 	//
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 	private static final int
@@ -41,11 +41,12 @@ extends WSMockTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID_BASE);
+		System.setProperty(AppConfig.KEY_AUTH_TOKEN, "d1ae23fecb9b066bc201115740318e7c");
 		System.setProperty(AppConfig.KEY_ITEM_TYPE, "container");
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, Integer.toString(LIMIT_COUNT_OBJ));
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		System.setProperty(AppConfig.KEY_ITEM_DATA_SIZE, "1KB");
-		WSMockTestBase.setUpClass();
+		HttpStorageMockTestBase.setUpClass();
 		final AppConfig rtConfig = BasicConfig.THREAD_CONTEXT.get();
 		rtConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_API, "swift");
 		rtConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_NAMESPACE, "swift");
@@ -100,7 +101,7 @@ extends WSMockTestBase {
 	@AfterClass
 	public  static void tearDownClass()
 	throws Exception {
-		WSMockTestBase.tearDownClass();
+		HttpStorageMockTestBase.tearDownClass();
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1000000");
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, "1000000");
 	}

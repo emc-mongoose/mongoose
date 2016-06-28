@@ -13,7 +13,7 @@ import java.nio.file.StandardOpenOption;
  An item input implementation serializing the data items to the specified file.
  */
 public class BinFileItemOutput<T extends Item>
-extends ItemBinOutput<T>
+extends BinItemOutput<T>
 implements FileItemOutput<T> {
 	//
 	protected final Path itemsDstPath;
@@ -42,9 +42,9 @@ implements FileItemOutput<T> {
 	}
 	//
 	@Override
-	public BinFileInput<T> getInput()
+	public BinFileItemInput<T> getInput()
 	throws IOException {
-		return new BinFileInput<>(itemsDstPath);
+		return new BinFileItemInput<>(itemsDstPath);
 	}
 	//
 	@Override

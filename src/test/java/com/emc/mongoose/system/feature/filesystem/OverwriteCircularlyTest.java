@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.impl.item.base.ItemListOutput;
+import com.emc.mongoose.core.impl.item.base.ListItemOutput;
 import com.emc.mongoose.core.impl.item.base.ListItemInput;
 import com.emc.mongoose.system.base.FileSystemTestBase;
 import com.emc.mongoose.system.tools.LogValidator;
@@ -51,7 +51,7 @@ extends FileSystemTestBase {
 				.build()
 		) {
 			countWritten = client.create(
-				new ItemListOutput<>(itemBuff), COUNT_TO_WRITE, 100, 4096
+				new ListItemOutput<>(itemBuff), COUNT_TO_WRITE, 100, 4096
 			);
 			countOverwritten = client.write(
 				new ListItemInput<>(itemBuff), null, COUNT_TO_OVERWRITE, 100
