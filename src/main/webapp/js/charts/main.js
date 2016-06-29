@@ -529,6 +529,13 @@ define(['jquery',
 					return scaledYAccessor(value);
 				})
 				.attr('r', 3);
+			svgCanvasElement.selectAll('.axis path, .axis line')
+				.style('fill', 'none')
+				.style('stroke', 'grey')
+				.style('stroke-width', '1')
+				.style('shape-rendering', 'crispEdges');
+			svgCanvasElement.selectAll('.tick line')
+				.style('opacity', '0.2');
 			// chartEnter.append('path')
 			// 	.attr('class', 'line')
 			// 	.attr('d', function (chart) {

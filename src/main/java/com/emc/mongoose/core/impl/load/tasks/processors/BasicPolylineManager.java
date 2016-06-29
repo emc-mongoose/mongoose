@@ -26,6 +26,10 @@ public class BasicPolylineManager {
 		latAvg.addPoint(new Point(ordinate, metricsSnapshot.getLatencyAvg()));
 		tpAvg.addPoint(new Point(ordinate, metricsSnapshot.getSuccRateMean()));
 		bwAvg.addPoint(new Point(ordinate, metricsSnapshot.getByteRateMean() / BYTES_PER_MBYTE));
+		durAvg.addPoint(new Point(ordinate + 1, metricsSnapshot.getDurationAvg() + 1));
+		latAvg.addPoint(new Point(ordinate + 1, metricsSnapshot.getLatencyAvg() + 1));
+		tpAvg.addPoint(new Point(ordinate + 1, metricsSnapshot.getSuccRateMean() + 1));
+		bwAvg.addPoint(new Point(ordinate + 1, (metricsSnapshot.getByteRateMean() / BYTES_PER_MBYTE) + 1));
 	}
 
 	protected final Polyline durAvg() {
