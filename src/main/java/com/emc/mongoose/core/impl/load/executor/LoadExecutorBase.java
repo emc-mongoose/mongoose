@@ -43,8 +43,10 @@ import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -554,6 +556,8 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
+	private static Map<String, BasicPolylineManager> forEachManagers = new HashMap<>();
+	//
 	protected void interruptActually() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			final StringBuilder sb = new StringBuilder("Interrupt came from:");
@@ -588,8 +592,12 @@ implements LoadExecutor<T> {
 				ioStats.close();
 				logMetrics(Markers.PERF_SUM); // provide summary metrics
 				final String runId = appConfig.getRunId();
-				final String loadJobName = LoadExecutorBase.this.getName();
-				final BasicPolylineManager polylineManager = new BasicPolylineManager();
+				String loadJobName = LoadExecutorBase.this.getName();
+				loadJobName = loadJobName.substring(loadJobName.indexOf('-') + 1, loadJobName.lastIndexOf('-'));
+				if (!forEachManagers.containsKey(loadJobName)) {
+					forEachManagers.put(loadJobName, new BasicPolylineManager());
+				}
+				final BasicPolylineManager polylineManager = forEachManagers.get(loadJobName);
 				polylineManager.updatePolylines(totalThreadCount, lastStats);
 				ChartPackage.addChart(runId, loadJobName, polylineManager);
 				if(medIoStats != null && medIoStats.isStarted()) {
