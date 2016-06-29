@@ -497,13 +497,17 @@ define(['jquery',
 		}
 
 		function updateCharts(svgCanvasElement, chartArr, chartBoardName, metricName) {
-			const chart = svgCanvasElement.selectAll('.chart').data(chartArr);
-			const chartEnter = chart.enter().append('g')
+			const chartContainer = svgCanvasElement.selectAll('.chart').data(chartArr);
+			chartContainer.enter().append('g')
 				.attr('class', 'chart')
 				.attr('id', function (chart) {
 					return plainId(['id', chartBoardName, metricName, chart.name, 'line']);
 				});
-			chartEnter.append('path')
+			chartContainer.selectAll('path')
+				.data(function (chart) {
+					return [chart];
+				})
+				.enter().append('path')
 				.attr('class', 'line')
 				.attr('d', function (chart) {
 					return line(chart.values)
@@ -513,13 +517,44 @@ define(['jquery',
 					return colorizer(chart.name);
 				})
 				.style('stroke-width', 1);
-			chart.exit().remove();
-			const chartUpdate = chart.transition();
+			const circles = chartContainer.selectAll('circle')
+				.data(function (chart) {
+					return chart.values;
+				});
+			circles.enter().append('circle')
+				.attr('cx', function (value) {
+					return scaledXAccessor(value);
+				})
+				.attr('cy', function (value) {
+					return scaledYAccessor(value);
+				})
+				.attr('r', 3);
+			// chartEnter.append('path')
+			// 	.attr('class', 'line')
+			// 	.attr('d', function (chart) {
+			// 		return line(chart.values)
+			// 	})
+			// 	.attr('fill', 'none')
+			// 	.style('stroke', function (chart) {
+			// 		return colorizer(chart.name);
+			// 	})
+			// 	.style('stroke-width', 1);
+
+			chartContainer.exit().remove();
+			const chartUpdate = chartContainer.transition();
 			chartUpdate.select('path')
 				.duration(750)
 				.attr('d', function (chart) {
 					return line(chart.values)
 				});
+			circles.transition()
+				.duration(750)
+				.attr('cx', function (value) {
+					return scaledXAccessor(value);
+				})
+				.attr('cy', function (value) {
+					return scaledYAccessor(value);
+				})
 		}
 
 		function updateLegend(svgCanvasElement, chartArr, chartBoardName, metricName) {
