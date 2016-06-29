@@ -517,11 +517,11 @@ define(['jquery',
 					return colorizer(chart.name);
 				})
 				.style('stroke-width', 1);
-			const circles = chartContainer.selectAll('circle')
+			const points = chartContainer.selectAll('circle')
 				.data(function (chart) {
 					return chart.values;
 				});
-			circles.enter().append('circle')
+			points.enter().append('circle')
 				.attr('cx', function (value) {
 					return scaledXAccessor(value);
 				})
@@ -536,17 +536,6 @@ define(['jquery',
 				.style('shape-rendering', 'crispEdges');
 			svgCanvasElement.selectAll('.tick line')
 				.style('opacity', '0.2');
-			// chartEnter.append('path')
-			// 	.attr('class', 'line')
-			// 	.attr('d', function (chart) {
-			// 		return line(chart.values)
-			// 	})
-			// 	.attr('fill', 'none')
-			// 	.style('stroke', function (chart) {
-			// 		return colorizer(chart.name);
-			// 	})
-			// 	.style('stroke-width', 1);
-
 			chartContainer.exit().remove();
 			const chartUpdate = chartContainer.transition();
 			chartUpdate.select('path')
@@ -554,7 +543,7 @@ define(['jquery',
 				.attr('d', function (chart) {
 					return line(chart.values)
 				});
-			circles.transition()
+			points.transition()
 				.duration(750)
 				.attr('cx', function (value) {
 					return scaledXAccessor(value);
