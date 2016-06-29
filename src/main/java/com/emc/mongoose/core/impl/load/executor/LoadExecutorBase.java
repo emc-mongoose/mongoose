@@ -562,11 +562,6 @@ implements LoadExecutor<T> {
 		if(isShutdown.compareAndSet(false, true)) {
 			shutdownActually();
 		}
-		try {
-			ioConfig.close(); // disables connection drop failures
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
-		}
 		//
 		LOG.debug(Markers.MSG, "{}: waiting the output buffer to become empty", getName());
 		for(int i = 0; i < 1000 && !itemOutBuff.isEmpty(); i ++) {
@@ -575,6 +570,12 @@ implements LoadExecutor<T> {
 			} catch(final InterruptedException e) {
 				break;
 			}
+		}
+		//
+		try {
+			ioConfig.close(); // disables connection drop failures
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
 		}
 		//
 		try {
