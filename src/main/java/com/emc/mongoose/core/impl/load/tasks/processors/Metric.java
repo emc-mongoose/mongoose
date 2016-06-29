@@ -5,7 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 @SuppressWarnings({"FieldCanBeLocal", "unused"})
-public final class Metric implements Serializable {
+public final class Metric
+	implements Serializable {
 
 	private final String name;
 	private final List<Point> values;
@@ -15,57 +16,65 @@ public final class Metric implements Serializable {
 		this.values = values;
 	}
 
-	private static List<Metric> timeMetricFormat(final List<Point> avgValues,
-	                                            final List<Point> minValues,
-	                                            final List<Point> maxValues) {
+	private static List<Metric> timeMetricFormat(
+		final List<Point> avgValues, final List<Point> minValues, final List<Point> maxValues
+	) {
 		final List<Metric> metrics = new LinkedList<>();
-		if (!avgValues.isEmpty()) {
-			metrics.add(new Metric("avg", avgValues));
-		}
-		if (!minValues.isEmpty()) {
-			metrics.add(new Metric("min", minValues));
-		}
-		if (!maxValues.isEmpty()) {
-			metrics.add(new Metric("max", maxValues));
-		}
+		metrics.add(new Metric("avg", avgValues));
+		metrics.add(new Metric("min", minValues));
+		metrics.add(new Metric("max", maxValues));
 		return metrics;
 	}
 
-	private static List<Metric> speedMetricFormat(final List<Point> avgValues,
-	                                             final List<Point> lastValues) {
+	private static List<Metric> speedMetricFormat(
+		final List<Point> avgValues, final List<Point> lastValues
+	) {
 		final List<Metric> metrics = new LinkedList<>();
-		if (!avgValues.isEmpty()) {
-			metrics.add(new Metric("avg", avgValues));
-		}
-		if (!lastValues.isEmpty()) {
-			metrics.add(new Metric("last", lastValues));
-		}
+		metrics.add(new Metric("avg", avgValues));
+		metrics.add(new Metric("last", lastValues));
+		return metrics;
+	}
+
+	private static List<Metric> avgMetricFormat(final List<Point> avgValues) {
+		final List<Metric> metrics = new LinkedList<>();
+		metrics.add(new Metric("avg", avgValues));
 		return metrics;
 	}
 
 	static List<Metric> latencyMetrics(final PolylineManager polylineManager) {
-		return timeMetricFormat(
-				polylineManager.getLatAvg(),
-				polylineManager.getLatMin(),
-				polylineManager.getLatMax());
+		return timeMetricFormat(polylineManager.getLatAvgs(), polylineManager.getLatMins(),
+			polylineManager.getLatMaxs()
+		);
+	}
+
+	static List<Metric> latencyMetrics(final BasicPolylineManager polylineManager) {
+		return avgMetricFormat(polylineManager.getLatAvgs());
 	}
 
 	static List<Metric> durationMetrics(final PolylineManager polylineManager) {
-		return timeMetricFormat(
-				polylineManager.getDurAvg(),
-				polylineManager.getDurMin(),
-				polylineManager.getDurMax());
+		return timeMetricFormat(polylineManager.getDurAvgs(), polylineManager.getDurMins(),
+			polylineManager.getDurMaxs()
+		);
+	}
+
+	static List<Metric> durationMetrics(final BasicPolylineManager polylineManager) {
+		return avgMetricFormat(polylineManager.getDurAvgs());
+
 	}
 
 	static List<Metric> throughputMetrics(final PolylineManager polylineManager) {
-		return speedMetricFormat(
-				polylineManager.getTpAvg(),
-				polylineManager.getTpLast());
+		return speedMetricFormat(polylineManager.getTpAvgs(), polylineManager.getTpLasts());
+	}
+
+	static List<Metric> throughputMetrics(final BasicPolylineManager polylineManager) {
+		return avgMetricFormat(polylineManager.getTpAvgs());
 	}
 
 	static List<Metric> bandwidthMetrics(final PolylineManager polylineManager) {
-		return speedMetricFormat(
-				polylineManager.getBwAvg(),
-				polylineManager.getBwLast());
+		return speedMetricFormat(polylineManager.getBwAvgs(), polylineManager.getBwLasts());
+	}
+
+	static List<Metric> bandwidthMetrics(final BasicPolylineManager polylineManager) {
+		return avgMetricFormat(polylineManager.getBwAvgs());
 	}
 }

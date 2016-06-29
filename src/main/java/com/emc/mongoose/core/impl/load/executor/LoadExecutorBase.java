@@ -30,6 +30,7 @@ import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.LoadRegistry;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIoStats;
+import com.emc.mongoose.core.impl.load.tasks.processors.BasicPolylineManager;
 import com.emc.mongoose.core.impl.load.tasks.processors.ChartPackage;
 import com.emc.mongoose.core.impl.load.tasks.processors.PolylineManager;
 import org.apache.logging.log4j.Level;
@@ -588,8 +589,8 @@ implements LoadExecutor<T> {
 				logMetrics(Markers.PERF_SUM); // provide summary metrics
 				final String runId = appConfig.getRunId();
 				final String loadJobName = LoadExecutorBase.this.getName();
-				final PolylineManager polylineManager = new PolylineManager();
-				polylineManager.updateSummaryPolylines(totalThreadCount, lastStats);
+				final BasicPolylineManager polylineManager = new BasicPolylineManager();
+				polylineManager.updatePolylines(totalThreadCount, lastStats);
 				ChartPackage.addChart(runId, loadJobName, polylineManager);
 				if(medIoStats != null && medIoStats.isStarted()) {
 					medIoStats.close();
