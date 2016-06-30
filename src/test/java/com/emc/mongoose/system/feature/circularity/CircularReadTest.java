@@ -159,7 +159,7 @@ extends StandaloneClientTestBase {
 					firstRow = false;
 				} else {
 					long count = 1;
-					id = nextRec.get(2);
+					id = nextRec.get(3);
 					if(items.containsKey(id)) {
 						count = items.get(id);
 						count++;

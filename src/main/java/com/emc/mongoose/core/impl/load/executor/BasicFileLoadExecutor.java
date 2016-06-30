@@ -93,7 +93,7 @@ implements FileLoadExecutor<T> {
 			LOG.info(
 				Markers.PERF_TRACE,
 				strBuilder
-					//.append(loadType).append(',')
+					.append(loadType).append(',')
 					.append(nodeAddr == null ? "" : nodeAddr).append(',')
 					.append(
 						itemPath == null ?

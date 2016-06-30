@@ -31,8 +31,7 @@
 					}
 				}
 			}
-		},
-		{
+		}, {
 			"type" : "load",
 			"config" : {
 				"item" : {
