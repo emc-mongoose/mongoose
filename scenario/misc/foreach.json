@@ -1,5 +1,5 @@
 {
-	"type" : "each",
+	"type" : "foreach",
 	"value" : "size",
 	"in" : [
 		0, "1KB", "1MB"
@@ -22,7 +22,7 @@
 	},
 	"jobs" : [
 		{
-			"type" : "each",
+			"type" : "foreach",
 			"value" : "threads",
 			"in" : [
 				1, 10, 100

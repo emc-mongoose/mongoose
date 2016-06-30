@@ -1,0 +1,166 @@
+{
+	"type" : "sequential",
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : "10KB"
+			},
+			"dst" : {
+				"container" : "pre_10KB_items"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"time" : "5m"
+			},
+			"threads" : 100
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"dst" : {
+						"file" : "pre_10KB_items.csv"
+					}
+				},
+				"load" : {
+					"limit" : {
+						"count" : 1000
+					}
+				}
+
+			}
+		}, {
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"src" : {
+						"file" : "pre_10KB_items.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"type" : "read"
+				}
+			}
+		}, {
+			"type" : "precondition",
+			"config" : {
+				"item" : {
+					"data" : {
+						"ranges" : 1
+					},
+					"src" : {
+						"file" : "pre_10KB_items.csv"
+					}
+				},
+				"load" : {
+					"circular" : true,
+					"type" : "update"
+				}
+			}
+		}, {
+			"type" : "foreach",
+			"value" : "threads",
+			"in" : [
+				1, 2, 5, 10, 20, 40
+			],
+			"config" : {
+				"load" : {
+					"threads" : "${threads}"
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "foreach",
+					"value" : "size",
+					"in" : [
+						"10KB", "100KB", "1MB", "10MB", "100MB", "200MB"
+					],
+					"config" : {
+						"item" : {
+							"data" : {
+								"size" : "${size}"
+							},
+							"dst" : {
+								"container" : "tgt_container"
+							}
+						},
+						"load" : {
+							"metrics" : {
+								"period" : 0
+							}
+						}
+					},
+					"jobs" : [
+						{
+							"type" : "load",
+							"config" : {
+								"item" : {
+									"dst" : {
+										"file" : "step_${size}_${threads}threads.csv"
+									}
+								},
+								"run" : {
+									"id" : "step_${size}_${threads}threads_create"
+								}
+							}
+						}, {
+							"type" : "load",
+							"config" : {
+								"item" : {
+									"src" : {
+										"file" : "step_${size}_${threads}threads.csv"
+									}
+								},
+								"load" : {
+									"circular" : true,
+									"type" : "read"
+								},
+								"run" : {
+									"id" : "step_${size}_${threads}threads_read"
+								}
+							}
+						}, {
+							"type" : "load",
+							"config" : {
+								"item" : {
+									"data" : {
+										"ranges" : 1
+									},
+									"src" : {
+										"file" : "step_${size}_${threads}threads.csv"
+									}
+								},
+								"load" : {
+									"circular" : true,
+									"type" : "update"
+								},
+								"run" : {
+									"id" : "step_${size}_${threads}threads_update"
+								}
+							}
+						}, {
+							"type" : "load",
+							"config" : {
+								"item" : {
+									"src" : {
+										"file" : "step_${size}_${threads}threads.csv"
+									}
+								},
+								"load" : {
+									"type" : "delete"
+								},
+								"run" : {
+									"id" : "step_${size}_${threads}threads_delete"
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

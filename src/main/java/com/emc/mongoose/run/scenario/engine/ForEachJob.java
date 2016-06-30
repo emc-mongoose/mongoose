@@ -18,7 +18,7 @@ import static com.emc.mongoose.common.io.value.PatternDefinedInput.PATTERN_CHAR;
 /**
  Created by andrey on 04.06.16.
  */
-public final class EachJob
+public final class ForEachJob
 extends SequentialJob {
 
 	private final static Logger LOG = LogManager.getLogger();
@@ -27,11 +27,11 @@ extends SequentialJob {
 	private final String replaceMarker;
 	private final List valueSeq;
 
-	public EachJob(final AppConfig appConfig, final Map<String, Object> subTree) {
+	public ForEachJob(final AppConfig appConfig, final Map<String, Object> subTree) {
 		super(appConfig, subTree);
 		this.replaceMarker = (String) subTree.get(KEY_NODE_VALUE);
 		this.valueSeq = (List) subTree.get(KEY_NODE_IN);
-		// calls "appendNewJob", invoke it manually again after "valueSeq" is initialized already
+		// calls "appendNewJob", invoking it manually again after "valueSeq" is initialized already
 		loadSubTree(subTree);
 	}
 

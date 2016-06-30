@@ -345,10 +345,10 @@
 						"metrics" : {
 							"type" : "object",
 							"additionalProperties" : false,
-							"intermediate" : {
-								"type" : "boolean",
-							},
 							"properties" : {
+								"intermediate" : {
+									"type" : "boolean"
+								},
 								"period" : {
 									"oneOf" : [
 										{
