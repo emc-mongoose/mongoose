@@ -13,7 +13,7 @@ a:hover {
 body {
     background-image: url("background-brushed-metal.jpg");
 	font-size: 10pt;
-	font-family: sans;
+	font-family: sans, arial;
 }
 fieldset {
 	/*border: solid 1px rgba(0, 0, 0, 0.5);*/
@@ -40,8 +40,7 @@ fieldset {
 }
 h1 {
 	color: #909090;
-	margin-top: 8;
-	margin-bottom: 8;
+	margin: 8;
 	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
 	font-size: 32px;
 }
