@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class ChartPackage  {
+public final class ChartUtil {
 
 	public static final Map<String, Map<String, Map<String, List<Metric>>>>
 		CHARTS_MAP = new ConcurrentHashMap<>();
