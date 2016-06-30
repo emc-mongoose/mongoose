@@ -12,7 +12,7 @@ a:hover {
 }
 body {
     background-image: url("background-brushed-metal.jpg");
-	font-size: 10pt;
+	font-size: 12px;
 	font-family: sans, arial;
 }
 fieldset {
@@ -40,19 +40,19 @@ fieldset {
 }
 h1 {
 	color: #909090;
-	margin: 8;
+	margin: 8px;
 	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
 	font-size: 32px;
 }
 h2 {
 	color: #909090;
-	margin: 4;
+	margin: 4px;
 	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
 	font-size: 24px;
 }
 h3 {
 	color: #909090;
-	margin: 2;
+	margin: 2px;
 	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
 	font-size: 20px;
 }
@@ -60,7 +60,7 @@ table {
 	background: rgba(255,255,255,0.2);
 }
 table, td, th, tbody {
-	border: 1;
+	border: 1px;
 	border-color: gray;
 	border-collapse: collapse;
 }
