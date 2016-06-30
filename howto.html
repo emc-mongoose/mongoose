@@ -132,6 +132,8 @@
 							<li><strike>Rampup</strike></li>
 							<li>Scenario Validation</li>
 							<li><a href="#foreach">Execute a Job For Each value from the list</a></li>
+							<li><a href="#loopInfinite">Execute the infinite jobs loop</a></li>
+							<li><a href="#loop10times">Execute the jobs 10 times</a></li>
 						</ol>
 					</li>
 					<li>
@@ -570,6 +572,37 @@
             "type" : "load"
       }
    ]
+}
+					</pre>
+				</fieldset>
+			</li>
+
+			<li>
+				<h4 id="loopInfinite">Execute the infinite jobs loop</h4>
+				<fieldset class="json">
+					<pre>{
+   "type" : "loop",
+   "jobs" : [
+      {
+            "type" : "load"
+      }
+   ]
+}
+					</pre>
+				</fieldset>
+			</li>
+
+			<li>
+				<h4 id="loop10times">Execute the jobs 10 times</h4>
+				<fieldset class="json">
+					<pre>{
+    "type" : "loop",
+    "value" : 10,
+    "jobs" : [
+        {
+            "type" : "load"
+        }
+    ]
 }
 					</pre>
 				</fieldset>
