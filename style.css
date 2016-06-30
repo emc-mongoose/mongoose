@@ -56,6 +56,15 @@ h3 {
 	text-shadow: -1px -1px 0px #303030, 1px 1px 1px #f0f0f0;
 	font-size: 20px;
 }
+h4 {
+	font-size: 18px;
+}
+h5 {
+	font-size: 16px;
+}
+h6 {
+	font-size: 14px;
+}
 table {
 	background: rgba(255,255,255,0.2);
 }
