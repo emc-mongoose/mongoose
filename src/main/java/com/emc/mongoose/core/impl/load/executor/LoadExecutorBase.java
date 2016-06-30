@@ -302,7 +302,7 @@ implements LoadExecutor<T> {
 			} else if(Markers.PERF_MED.equals(logMarker)) {
 				LOG.info(
 					logMarker, "\"{}\" intermediate: {}", getName(),
-					medIoStats.getSnapshot().toSummaryString()
+					medIoStats == null ? null : medIoStats.getSnapshot().toSummaryString()
 				);
 			} else if(Markers.PERF_SUM.equals(logMarker)) {
 				LOG.info(
