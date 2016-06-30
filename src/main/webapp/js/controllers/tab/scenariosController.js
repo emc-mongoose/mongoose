@@ -39,6 +39,14 @@ define([
 
 	const clickEventCreatorFactory = function () {
 
+		const noMessage = 'No scenario chosen';
+		const minWidth = noMessage.length;
+		function responsiveWidth(text) {
+			return Math.max(((text.length + 1) * 7), minWidth);
+		}
+		
+		
+		
 		function scenarioFileClickEvent(aName, aText) {
 			var newPath;
 			if (aName === '') {
@@ -50,7 +58,11 @@ define([
 				.done(function (scenarioJson) {
 					setScenarioObject(scenarioJson);
 					updateDetailsTree(scenarioJson);
-					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(aName);
+					const fileNameElem = $(jqId(['file', 'name', TAB_TYPE.SCENARIOS]));
+					const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
+					fileNameElem.val(newPath);
+					scenarioNameElem.text(newPath);
+					fileNameElem.width(responsiveWidth(newPath));
 				})
 				.fail(function () {
 					alert('The scenario cannot be loaded')
@@ -59,7 +71,11 @@ define([
 
 		function backClickEvent() {
 			showMainTree();
-			$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
+			const fileNameElem = $(jqId(['file', 'name', TAB_TYPE.SCENARIOS]));
+			const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
+			fileNameElem.val(noMessage);
+			scenarioNameElem.text('');
+			fileNameElem.width(responsiveWidth(noMessage));
 		}
 
 		return {
@@ -125,6 +141,8 @@ define([
 	function fileReaderOnLoadAction(scenarioObject, fullFileName) {
 		setScenarioObject(scenarioObject);
 		updateDetailsTree(scenarioObject);
+		const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
+		scenarioNameElem.text(fullFileName);
 		// $(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(fullFileName);
 	}
 

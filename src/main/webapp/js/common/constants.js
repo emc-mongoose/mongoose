@@ -39,11 +39,26 @@ define([
 		'bandwidth': 'BW'
 	};
 
+	const sec = 's';
+	const byte = 'B';
+
+	function micro(unit) {
+		return '\u03bc' + unit;
+	}
+
+	function mega(unit) {
+		return 'M' + unit;
+	}
+
+	function metricWithUnit(metric, unit) {
+		return metric + '[' + unit + ']';
+	}
+
 	const CHART_METRICS_UNITS_FORMATTER = {
-		'lat': 'latency[\u03bcs]',
-		'dur': 'duration[\u03bcs]',
-		'TP': 'rate[obj/s]',
-		'BW': 'rate[mb/s]'
+		'lat': metricWithUnit('latency', micro(sec)),
+		'dur': metricWithUnit('duration', micro(sec)),
+		'TP': metricWithUnit('rate', 'obj/' + sec),
+		'BW': metricWithUnit('rate', mega(byte) + '/' + sec)
 	};
 
 	return {

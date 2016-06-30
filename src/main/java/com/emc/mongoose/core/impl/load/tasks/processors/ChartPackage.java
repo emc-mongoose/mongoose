@@ -10,18 +10,24 @@ public final class ChartPackage  {
 
 	public static final Map<String, Map<String, Map<String, List<Metric>>>>
 		CHARTS_MAP = new ConcurrentHashMap<>();
-	static {
-
-	}
 
 	public static void addChart(final String runId, final String loadJobName,
-	                            final PolyLineManager polyLineManager
+	                            final BasicPolylineManager basicManager
 	) {
+
 		final Map<String, List<Metric>> loadJobCharts = new ConcurrentHashMap<>();
-		loadJobCharts.put(IoStats.METRIC_NAME_LAT, Metric.latencyMetrics(polyLineManager));
-		loadJobCharts.put(IoStats.METRIC_NAME_DUR, Metric.durationMetrics(polyLineManager));
-		loadJobCharts.put(IoStats.METRIC_NAME_TP, Metric.throughputMetrics(polyLineManager));
-		loadJobCharts.put(IoStats.METRIC_NAME_BW, Metric.bandwidthMetrics(polyLineManager));
+		if (basicManager instanceof PolylineManager) {
+			final PolylineManager manager = (PolylineManager) basicManager;
+			loadJobCharts.put(IoStats.METRIC_NAME_LAT, Metric.latencyMetrics(manager));
+			loadJobCharts.put(IoStats.METRIC_NAME_DUR, Metric.durationMetrics(manager));
+			loadJobCharts.put(IoStats.METRIC_NAME_TP, Metric.throughputMetrics(manager));
+			loadJobCharts.put(IoStats.METRIC_NAME_BW, Metric.bandwidthMetrics(manager));
+		} else {
+			loadJobCharts.put(IoStats.METRIC_NAME_LAT, Metric.latencyMetrics(basicManager));
+			loadJobCharts.put(IoStats.METRIC_NAME_DUR, Metric.durationMetrics(basicManager));
+			loadJobCharts.put(IoStats.METRIC_NAME_TP, Metric.throughputMetrics(basicManager));
+			loadJobCharts.put(IoStats.METRIC_NAME_BW, Metric.bandwidthMetrics(basicManager));
+		}
 		if(!CHARTS_MAP.containsKey(runId)) {
 			final Map<String, Map<String, List<Metric>>> runIdCharts = new ConcurrentHashMap<>();
 			runIdCharts.put(loadJobName, loadJobCharts);

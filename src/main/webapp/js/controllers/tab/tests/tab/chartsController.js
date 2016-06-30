@@ -25,7 +25,7 @@ define([
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
 
-	var currentTabType = TESTS_CHARTS_TAB_TYPE.LATENCY;
+	var currentTabType = TESTS_CHARTS_TAB_TYPE.DURATION;
 	var resetChartsFlags = {};
 
 	function render() {

@@ -289,14 +289,58 @@ define(['jquery',
 		}
 
 		function createSvg(parentId, svgId) {
-			const svgChain = d3.select(jqId([parentId]))
+			const chartsBlockId = jqId([parentId]);
+			var svgChain = d3.select(chartsBlockId)
 				.append('svg')
 				.attr('id', svgId)
 				.attr('width', WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
 				.attr('height', HEIGHT + MARGIN.TOP + MARGIN.BOTTOM);
-			return svgChain.append('g')
+			svgChain = svgChain.append('g')
 				.attr('transform',
 					'translate(' + (MARGIN.LEFT + 70) + ',' + (MARGIN.TOP + 70) + ')');
+			const svgLinkElem = $('<a/>', {
+				id: svgId + '-svg',
+				class: 'chart-link',
+				href: chartAsSvg(svgId),
+				download: svgId + '.svg'
+			});
+			const pngLinkElem = $('<a/>', {
+				id: svgId + '-png',
+				class: 'chart-link',
+				href: chartAsPng(svgId),
+				download: svgId + '.png'
+			});
+			svgLinkElem.text('svg');
+			pngLinkElem.text('png');
+			$(chartsBlockId).append(svgLinkElem);
+			$(chartsBlockId).append(pngLinkElem);
+			return svgChain;
+		}
+
+		function svgXml(svgId) {
+			const svg = document.getElementById(svgId);
+			const serializer = new XMLSerializer();
+			var source = serializer.serializeToString(svg);
+
+			if (!source.match(/^<svg[^>]+"http\:\/\/www\.w3\.org\/1999\/xlink"/)) {
+				source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+			}
+			return '<?xml version="1.0" standalone="no"?>\r\n' + source;
+		}
+
+		function chartAsSvg(svgId) {
+			return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgXml(svgId));
+		}
+
+		function chartAsPng(svgId) {
+			const image = new Image();
+			image.src = 'data:image/svg+xml;base64,' + window.btoa(unescape(encodeURIComponent(svgXml(svgId))));
+			const canvas = document.createElement('canvas');
+			canvas.width = image.width;
+			canvas.height = image.height;
+			const context = canvas.getContext('2d');
+			context.drawImage(image, 0, 0);
+			return canvas.toDataURL('image/png');
 		}
 
 		function createAxes(svgElement) {
@@ -417,6 +461,9 @@ define(['jquery',
 						createChartBoard(chartBoardName);
 					}
 					updateChartBoard(chartBoardName, chartBoardContent, currentMetric);
+					const svgId = getSvgId(chartBoardName);
+					$(jqId([svgId, 'svg'])).attr('href', chartAsSvg(svgId));
+					$(jqId([svgId, 'png'])).attr('href', chartAsPng(svgId));
 				});
 			}
 		}
@@ -450,28 +497,60 @@ define(['jquery',
 		}
 
 		function updateCharts(svgCanvasElement, chartArr, chartBoardName, metricName) {
-			const chart = svgCanvasElement.selectAll('.chart').data(chartArr);
-			const chartEnter = chart.enter().append('g')
+			const chartContainer = svgCanvasElement.selectAll('.chart').data(chartArr);
+			chartContainer.enter().append('g')
 				.attr('class', 'chart')
 				.attr('id', function (chart) {
 					return plainId(['id', chartBoardName, metricName, chart.name, 'line']);
 				});
-			chartEnter.append('path')
+			chartContainer.selectAll('path')
+				.data(function (chart) {
+					return [chart];
+				})
+				.enter().append('path')
 				.attr('class', 'line')
 				.attr('d', function (chart) {
 					return line(chart.values)
 				})
+				.attr('fill', 'none')
 				.style('stroke', function (chart) {
 					return colorizer(chart.name);
 				})
 				.style('stroke-width', 1);
-			chart.exit().remove();
-			const chartUpdate = chart.transition();
+			const points = chartContainer.selectAll('circle')
+				.data(function (chart) {
+					return chart.values;
+				});
+			points.enter().append('circle')
+				.attr('cx', function (value) {
+					return scaledXAccessor(value);
+				})
+				.attr('cy', function (value) {
+					return scaledYAccessor(value);
+				})
+				.attr('r', 3);
+			svgCanvasElement.selectAll('.axis path, .axis line')
+				.style('fill', 'none')
+				.style('stroke', 'grey')
+				.style('stroke-width', '1')
+				.style('shape-rendering', 'crispEdges');
+			svgCanvasElement.selectAll('.tick line')
+				.style('opacity', '0.2');
+			chartContainer.exit().remove();
+			const chartUpdate = chartContainer.transition();
 			chartUpdate.select('path')
 				.duration(750)
 				.attr('d', function (chart) {
 					return line(chart.values)
 				});
+			points.transition()
+				.duration(750)
+				.attr('cx', function (value) {
+					return scaledXAccessor(value);
+				})
+				.attr('cy', function (value) {
+					return scaledYAccessor(value);
+				})
 		}
 
 		function updateLegend(svgCanvasElement, chartArr, chartBoardName, metricName) {
@@ -487,22 +566,22 @@ define(['jquery',
 					if ($(this).css('opacity') == 1) {
 						d3.select(elemented)
 							.transition()
-							.duration(1000)
+							.duration(100)
 							.style('opacity', 0);
 						// .style('display', 'none');
 						d3.select(this)
 							.transition()
-							.duration(1000)
+							.duration(100)
 							.style('opacity', .2);
 					} else {
 						d3.select(elemented)
 							.style('display', 'block')
 							.transition()
-							.duration(1000)
+							.duration(100)
 							.style('opacity', 1);
 						d3.select(this)
 							.transition()
-							.duration(1000)
+							.duration(100)
 							.style('opacity', 1);
 					}
 				});

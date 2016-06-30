@@ -7,7 +7,7 @@ import java.util.PriorityQueue;
 import static com.emc.mongoose.core.impl.load.tasks.processors.Point.distance;
 import static java.lang.Math.sqrt;
 
-final class PolyLine {
+final class Polyline {
 
 	private volatile Point firstPoint = null, lastPoint = null;
 	private final List<WeightedPoint> points = new ArrayList<>();

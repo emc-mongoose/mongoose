@@ -10,6 +10,7 @@ import com.emc.mongoose.run.scenario.engine.JsonScenario;
 import com.emc.mongoose.run.scenario.engine.Scenario;
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
+import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import com.fasterxml.jackson.core.JsonParser;
@@ -26,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -35,14 +37,10 @@ import static com.emc.mongoose.webui.ServletConstants.RUN_ID_KEY;
 /**
  * Created on 22.04.16.
  */
-public class RunServlet extends HttpServlet {
+public class TestServlet
+	extends HttpServlet {
 
 	private static final Logger LOG = LogManager.getLogger();
-
-	private static final String WSMOCK_MODE_NAME = "WSMock";
-	private static final String STANDALONE_MODE_NAME = "Mongoose";
-	private static final String CLIENT_MODE_NAME = "client";
-	private static final String SERVER_MODE_NAME = "server";
 
 	private static final String APP_CONFIG_KEY = "config";
 	private static final String SCENARIO_KEY = "scenario";
@@ -51,6 +49,12 @@ public class RunServlet extends HttpServlet {
 			.configure(JsonParser.Feature.ALLOW_YAML_COMMENTS, true);
 	private static final Map<String, Thread> TESTS = new HashMap<>();
 	private static final Map<String, String> MODES = new LinkedHashMap<>();
+	private static final String MODE_KEY = "mode";
+	private static final String STATUS_KEY = "status";
+
+	private enum Status {
+		RUNNING, STOPPED
+	}
 
 	@Override
 	protected void doPut(final HttpServletRequest request, final HttpServletResponse response)
@@ -67,35 +71,56 @@ public class RunServlet extends HttpServlet {
 			config.setProperty(AppConfig.KEY_SCENARIO_FROM_WEBUI, true);
 			scenario = getScenario(startProperties, config);
 		}
+		final JsonScenario finalScenario = scenario;
 		final String runMode = config.getRunMode();
 		switch (runMode) {
-			case Constants.RUN_MODE_STANDALONE:
-				runTest(
-					runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME), runMode
-				);
-				break;
 			case Constants.RUN_MODE_WSMOCK:
-				runTest(runId, new HttpStorageMockRunner(config), runMode);
+				startTest(runId, new Runnable() {
+					@Override
+					public void run() {
+						logStart(runMode);
+						try(final StorageMock sm = new Cinderella(config)) {
+							sm.run();
+						} catch(final IOException e) {
+							logFail(runMode);
+						}
+					}
+				}, runMode);
 				break;
 			case Constants.RUN_MODE_SERVER:
-				runTest(runId, new ServerRunner(config), runMode);
+				startTest(runId, new Runnable() {
+					@Override
+					public void run() {
+						try(final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(config)) {
+							logStart(runMode);
+							multiSvc.start();
+							multiSvc.await();
+						} catch(final IOException | InterruptedException e) {
+							logFail(runMode);
+						}
+					}
+				}, runMode);
 				break;
 			case Constants.RUN_MODE_CLIENT:
-				runTest(
-					runId, new StandaloneLikeRunner(config, scenario, CLIENT_MODE_NAME), runMode
-				);
-				break;
+			case Constants.RUN_MODE_STANDALONE:
 			default:
-				runTest(
-					runId, new StandaloneLikeRunner(config, scenario, STANDALONE_MODE_NAME), runMode
-				);
+				startTest(runId, new Runnable() {
+					@Override
+					public void run() {
+						logStart(runMode);
+						try(final ScenarioRunner sr = new ScenarioRunner(config, finalScenario)) {
+							sr.run();
+						} catch(final IOException e) {
+							logFail(runMode);
+						}
+					}
+				}, runMode);
 		}
-		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
+		sendRunIdInfo(response);
 	}
 
 	@Override
-	protected void doDelete(HttpServletRequest request, HttpServletResponse response)
+	protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
 		try (
 				final BufferedReader reader = request.getReader()
@@ -106,10 +131,45 @@ public class RunServlet extends HttpServlet {
 	}
 
 	@Override
+	protected void doDelete(final HttpServletRequest request, final HttpServletResponse response)
+	throws ServletException, IOException {
+		try (
+			final BufferedReader reader = request.getReader()
+		) {
+			final String runId = JsonUtil.readValue(reader).get(RUN_ID_KEY);
+			if (TESTS.get(runId).isAlive()) {
+				stopTest(runId);
+			}
+			removeTest(runId);
+		}
+	}
+
+	private Map<String, Map<String, String>> collectRunIdInfo() {
+		final Map<String, Map<String, String>> runIdInfo = new LinkedHashMap<>();
+		for (final Map.Entry<String, String> modeEntry: MODES.entrySet()) {
+			final String runId = modeEntry.getKey();
+			runIdInfo.put(runId, new HashMap<String, String>());
+			final Map<String, String> runIdMap = runIdInfo.get(runId);
+			runIdMap.put(MODE_KEY, modeEntry.getValue());
+			if (TESTS.get(runId).isAlive()) {
+				runIdMap.put(STATUS_KEY, Status.RUNNING.name());
+			} else {
+				runIdMap.put(STATUS_KEY, Status.STOPPED.name());
+			}
+		}
+		return runIdInfo;
+	}
+
+	private void sendRunIdInfo(final HttpServletResponse response)
+	throws IOException {
+		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
+		response.getWriter().write(JSON_MAPPER.writeValueAsString(collectRunIdInfo()));
+	}
+
+	@Override
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
-		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-		response.getWriter().write(JSON_MAPPER.writeValueAsString(MODES));
+		sendRunIdInfo(response);
 	}
 
 	private Map<String, Map<String, Object>> getStartProperties(final HttpServletRequest request)
@@ -146,8 +206,8 @@ public class RunServlet extends HttpServlet {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void runTest(final String runId, final Runner runner, final String runMode) {
-		final Thread test = new Thread(runner, runId);
+	private void startTest(final String runId, final Runnable testTask, final String runMode) {
+		final Thread test = new Thread(testTask, runId);
 		test.setName("run<" + runId + ">");
 		test.start();
 		putTest(runId, test, runMode);
@@ -162,111 +222,16 @@ public class RunServlet extends HttpServlet {
 		TESTS.get(runId).interrupt();
 	}
 
-	private static abstract class Runner implements Runnable {
-
-		private final AppConfig config;
-		private final String startMessage;
-		private final String failMessage;
-
-		Runner(final AppConfig config, final String startMessage, final String failMessage) {
-			this.config = config;
-			this.startMessage = startMessage;
-			this.failMessage = failMessage;
-		}
-
-		Runner(final AppConfig config, final String modeName) {
-			this(config, defaultStartMessage(modeName), defaultFailMessage(modeName));
-		}
-
-		AppConfig getConfig() {
-			return config;
-		}
-
-		void logStart() {
-			LOG.debug(Markers.MSG, startMessage);
-		}
-
-		void logFail(final Exception e) {
-			LogUtil.exception(LOG, Level.FATAL, e, failMessage);
-		}
-
-		abstract void start() throws Exception;
-
-		@Override
-		public void run() {
-			logStart();
-			try {
-				start();
-			} catch (final Exception e) {
-				logFail(e);
-			}
-		}
-
-		private static String defaultStartMessage(final String object) {
-			return "Starting " + object;
-		}
-
-		private static String defaultFailMessage(final String object) {
-			return "Failed to start " + object;
-		}
+	private void removeTest(final String runId) {
+		TESTS.remove(runId);
+		MODES.remove(runId);
 	}
 
-	private static class HttpStorageMockRunner
-	extends Runner {
-
-		HttpStorageMockRunner(final AppConfig config) {
-			super(config, WSMOCK_MODE_NAME);
-		}
-
-		@Override
-		void start() throws Exception {
-			new Cinderella(super.config).run();
-		}
-
+	private void logStart(final String object) {
+		LOG.info("Starting " + object);
 	}
 
-	private static class StandaloneLikeRunner extends Runner {
-
-		private Scenario scenario;
-
-		StandaloneLikeRunner(final AppConfig config, final Scenario scenario,
-		                     final String standaloneLikeModeName) {
-			super(config, standaloneLikeModeName);
-			this.scenario = scenario;
-		}
-
-		@Override
-		void start() throws Exception {
-			new ScenarioRunner(super.config, scenario).run();
-		}
-
-		@Override
-		public void run() {
-			try {
-				super.run();
-			} finally {
-				try {
-					scenario.close();
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the scenario");
-				}
-			}
-		}
+	private void logFail(final String object) {
+		LOG.error("Failed to start " + object);
 	}
-
-	private static class ServerRunner extends Runner {
-
-		ServerRunner(final AppConfig config) {
-			super(config, SERVER_MODE_NAME);
-		}
-
-		@Override
-		void start() throws Exception {
-			LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(super.config);
-			multiSvc.start();
-		}
-
-	}
-
-
 }
