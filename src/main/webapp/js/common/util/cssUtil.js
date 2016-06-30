@@ -62,10 +62,12 @@ define(['jquery'], function ($) {
 	
 	function processClassElementsById(className, idDetector, trueEvent, falseEvent) {
 		$('.' + className).each(function (index, elemSelectorObj) {
-			if (elemSelectorObj.id.indexOf(idDetector) >= 0) {
-				trueEvent($(elemSelectorObj));
-			} else {
-				falseEvent($(elemSelectorObj));
+			if (elemSelectorObj.id && ((typeof elemSelectorObj.id) === 'string')) {
+				if (elemSelectorObj.id.indexOf(idDetector) >= 0) {
+					trueEvent($(elemSelectorObj));
+				} else {
+					falseEvent($(elemSelectorObj));
+				}
 			}
 		})
 	}

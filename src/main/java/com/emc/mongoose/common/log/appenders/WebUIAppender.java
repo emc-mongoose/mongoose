@@ -77,8 +77,8 @@ extends AbstractAppender {
 			//
 			if(currRunId != null) {
 				if(!LOG_EVENTS_MAP.containsKey(currRunId)) {
-					final Map<String, CircularArray<ShortenedLogEvent>> markers = new
-							ConcurrentHashMap<>();
+					final Map<String, CircularArray<ShortenedLogEvent>> markers =
+						new ConcurrentHashMap<>();
 					for (final String markerName: markerNames) {
 						addMarkerToMap(markers, markerName);
 					}

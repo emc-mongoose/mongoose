@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Level;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -18,6 +19,7 @@ import java.nio.file.Paths;
 /**
  Created by andrey on 28.06.16.
  */
+@Ignore
 public class JiraIssue729RegressionTest
 extends HttpStorageMockTestBase {
 

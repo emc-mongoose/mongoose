@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,7 +26,7 @@ import static com.emc.mongoose.run.scenario.engine.Scenario.DIR_SCENARIO;
  A scenario runner utility class.
  */
 public final class ScenarioRunner
-implements Runnable {
+implements Closeable, Runnable {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
@@ -84,6 +85,14 @@ implements Runnable {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the scenario");
 				}
 			}
+		}
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		if(scenario != null) {
+			scenario.close();
 		}
 	}
 }

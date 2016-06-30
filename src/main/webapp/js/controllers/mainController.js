@@ -51,13 +51,6 @@ define([
 		makeModeActive(currentMode);
 		makeTabActive(currentTabType);
 		renderer.start();
-		$.ajax({
-			type: 'GET',
-			url: '/run',
-		}).done(function (testsObj) {
-			testsController.updateTestsList(testsObj);
-			console.log('Tests list is got');
-		});
 	}
 
 	function version(configObject) {
@@ -72,6 +65,12 @@ define([
 
 	function tabJqId(tabType) {
 		return jqId([tabType, 'tab']);
+	}
+
+	const blinkClassName = 'blink_me';
+
+	function blink() {
+		$('.' + 'blink_me').fadeOut(500).fadeIn(500, blink);
 	}
 
 	function makeTabActive(tabType) {
@@ -89,6 +88,7 @@ define([
 				break;
 			case TAB_TYPE.TESTS:
 				cssUtil.show(jqId(['tests', 'block']));
+				$(tabJqId(tabType)).removeClass(blinkClassName);
 				break;
 		}
 		currentTabType = tabType;
@@ -142,6 +142,10 @@ define([
 			const configElem = $('#all-buttons');
 			$.each(CONFIG_TABS, function (index, value) {
 				if (value === TAB_TYPE.SCENARIOS) {
+					const scenarioName = $('<h4/>', {
+						id: plainId([value, 'name']),
+						class: 'scenario-name tab-dependent'
+					});
 					const detailsTree = $('<ul/>', {
 						id: plainId([BLOCK.TREE, value, 'details']),
 						class: BLOCK.TREE + ' ' + 'tab-dependent'
@@ -152,6 +156,7 @@ define([
 					});
 					configElem.after(jsonViewElem);
 					configElem.after(detailsTree);
+					configElem.after(scenarioName);
 					jsonViewElem.hide();
 					detailsTree.hide();
 				}
@@ -173,6 +178,7 @@ define([
 				hbUtil.compileAndInsertInsideBefore(jqId(['all', BLOCK.BUTTONS]), buttonsTemplate,
 					{'buttons': BUTTONS, 'tab-type': value});
 			});
+			$(jqId([BUTTON_TYPE.OPEN_INPUT_TEXT, TAB_TYPE.SCENARIOS])).remove();
 			binder.tabButtons(BUTTON_TYPE, CONFIG_TABS);
 		}
 
@@ -234,9 +240,10 @@ define([
 			$(buttonJqId(BUTTON_TYPE.OPEN, tabName)).click(function () {
 				openInputFileElem.trigger('click');
 			});
-			openInputFileElem.change(function (data) {
+			openInputFileElem.change(function (event) {
 				fillTheField(tabName, BUTTON_TYPE);
-				openFileHandler.event(data);
+				openFileHandler.event(event);
+				openInputFileElem.val('');
 			})
 		}
 
@@ -262,11 +269,20 @@ define([
 					dataType: 'json',
 					contentType: constants.JSON_CONTENT_TYPE,
 					data: JSON.stringify(startJson),
-					processData: false
+					processData: false,
+					timeout: 10000,
+					error: function () {
+						alert('Failed to start the test')
+					}
 				}).done(function (testsObj) {
 					testsController.updateTestsList(testsObj);
 					testsController.runCharts();
 					console.log('Mongoose ran');
+					const testTabElem = $(tabJqId([TAB_TYPE.TESTS]));
+					if(!testTabElem.hasClass(blinkClassName)){
+						testTabElem.addClass(blinkClassName);
+					}
+					blink();
 				});
 			}
 		}

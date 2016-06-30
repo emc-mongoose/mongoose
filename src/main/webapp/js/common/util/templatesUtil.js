@@ -26,8 +26,8 @@ define(function() {
 
     // the order of elements matters for a template
     const TESTS_CHARTS_TAB_TYPE = {
-        LATENCY: 'latency',
         DURATION: 'duration',
+        LATENCY: 'latency',
         THROUGHPUT: 'throughput',
         BANDWIDTH: 'bandwidth'
     };
