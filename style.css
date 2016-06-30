@@ -60,7 +60,7 @@ table {
 	background: rgba(255,255,255,0.2);
 }
 table, td, th, tbody {
-	border: 1px;
+	border: 1;
 	border-color: gray;
 	border-collapse: collapse;
 }
