@@ -30,9 +30,7 @@ import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.LoadRegistry;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIoStats;
-import com.emc.mongoose.core.impl.load.tasks.processors.BasicPolylineManager;
 import com.emc.mongoose.core.impl.load.tasks.processors.ChartPackage;
-import com.emc.mongoose.core.impl.load.tasks.processors.PolylineManager;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,10 +41,8 @@ import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -267,15 +263,12 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			Thread.currentThread().setName(LoadExecutorBase.this.getName());
-			if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) {
-				final String runId = appConfig.getRunId();
-				final String loadJobName = LoadExecutorBase.this.getName();
-				final PolylineManager polylineManager = new PolylineManager();
+			final String runId = appConfig.getRunId();
+			final String loadJobName = LoadExecutorBase.this.getName();
 				while(!isInterrupted.get()) {
 					logMetrics(Markers.PERF_AVG);
-					if (true) { // todo make some webui flag here
-						polylineManager.updatePolylines(lastStats);
-						ChartPackage.addChart(runId, loadJobName, polylineManager);
+					if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
+						ChartPackage.addCharts(runId, loadJobName, lastStats);
 					}
 					try {
 						TimeUnit.SECONDS.sleep(metricsPeriodSec);
@@ -283,7 +276,6 @@ implements LoadExecutor<T> {
 						break;
 					}
 				}
-			}
 		}
 	}
 	//
@@ -556,8 +548,6 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	private static Map<String, BasicPolylineManager> forEachManagers = new HashMap<>();
-	//
 	protected void interruptActually() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			final StringBuilder sb = new StringBuilder("Interrupt came from:");
@@ -591,15 +581,14 @@ implements LoadExecutor<T> {
 				refreshStats();
 				ioStats.close();
 				logMetrics(Markers.PERF_SUM); // provide summary metrics
-				final String runId = appConfig.getRunId();
-				String loadJobName = LoadExecutorBase.this.getName();
-				loadJobName = loadJobName.substring(loadJobName.indexOf('-') + 1, loadJobName.lastIndexOf('-'));
-				if (!forEachManagers.containsKey(loadJobName)) {
-					forEachManagers.put(loadJobName, new BasicPolylineManager());
+				if (true) { // todo make some webui flag here
+					final String runId = appConfig.getRunId();
+					String loadJobName = LoadExecutorBase.this.getName();
+					loadJobName = loadJobName.substring(loadJobName.indexOf('-') + 1,
+						loadJobName.lastIndexOf('-')
+					);
+					ChartPackage.addCharts(runId, loadJobName, lastStats, totalThreadCount);
 				}
-				final BasicPolylineManager polylineManager = forEachManagers.get(loadJobName);
-				polylineManager.updatePolylines(totalThreadCount, lastStats);
-				ChartPackage.addChart(runId, loadJobName, polylineManager);
 				if(medIoStats != null && medIoStats.isStarted()) {
 					medIoStats.close();
 				}

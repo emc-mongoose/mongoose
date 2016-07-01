@@ -2,7 +2,9 @@ package com.emc.mongoose.core.impl.load.tasks.processors;
 
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  Created on 29.06.16.
@@ -10,6 +12,7 @@ import java.util.List;
 @SuppressWarnings("WeakerAccess")
 public class BasicPolylineManager {
 
+	public static final Map<String, BasicPolylineManager> MANAGERS = new HashMap<>();
 	protected final static double BYTES_PER_MBYTE = 1048576;
 
 	private final Polyline durAvg, latAvg, tpAvg, bwAvg;
