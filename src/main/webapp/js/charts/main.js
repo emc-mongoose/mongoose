@@ -450,6 +450,8 @@ define(['jquery',
 			}
 		}
 
+		const simpleChartPattern = new RegExp('^[0-9]+-.+');
+
 		function processChartBoards(chartBoards, metric, notOverrideChartBoards, notOverrideMetric) {
 			if (!notOverrideChartBoards) {
 				currentChartBoards = chartBoards;
@@ -457,7 +459,21 @@ define(['jquery',
 			if (!notOverrideMetric) {
 				currentMetric = metric;
 			}
+			const simpleCharts = {};
+			const forEachCharts = {};
 			if (currentChartBoards) {
+				$.each(currentChartBoards, function (chartBoardName) {
+					if (simpleChartPattern.test(chartBoardName)) {
+						simpleCharts[chartBoardName] = currentChartBoards[chartBoardName];
+					} else {
+						forEachCharts[chartBoardName] = currentChartBoards[chartBoardName];
+					}
+				});
+				if (Object.keys(simpleCharts).length > 0) {
+					currentChartBoards = simpleCharts;
+				} else {
+					currentChartBoards = forEachCharts;
+				}
 				$.each(currentChartBoards, function (chartBoardName, chartBoardContent) {
 					if (!doesSvgExist(chartBoardName)) {
 						currentTimeUnit = TIME_UNIT.seconds;
@@ -479,10 +495,16 @@ define(['jquery',
 			createScaleSwitches(svgCanvasChain, chartBoardName);
 		}
 
-		function updateAxesLabels(svgElement, metricName) {
+		function updateAxesLabels(svgElement, metricName, altMetricName) {
 			svgElement.select('.x-axis-text')
 				.duration(750)
-				.text(currentTimeUnit.label);
+				.text(function () {
+					if (altMetricName === undefined) {
+						return currentTimeUnit.label;
+					} else {
+						return altMetricName;
+					}
+				}());
 			svgElement.select('.y-axis-text')
 				.duration(750)
 				.text(constants.CHART_METRICS_UNITS_FORMATTER[metricName]);
@@ -643,7 +665,11 @@ define(['jquery',
 			});
 			colorizer.domain(names);
 			updateAxes(svg, chartArr);
-			updateAxesLabels(svg, metric);
+			if (simpleChartPattern.test(chartBoardName)) {
+				updateAxesLabels(svg, metric);
+			} else {
+				updateAxesLabels(svg, metric, 'threads');
+			}
 			const svgCanvas = d3.select(svgSelector + ' g');
 			updateCharts(svgCanvas, chartArr, chartBoardName, metric);
 			updateLegend(svgCanvas, chartArr, chartBoardName, metric);
