@@ -5,6 +5,11 @@ services:
 jdk:
 - oraclejdk8
 script: "./gradlew clean dist systemTest"
+branches:
+  only:
+    - master
+    - feature-dev
+    - /feature-v*
 deploy:
   provider: releases
   api_key:
