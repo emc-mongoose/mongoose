@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.load.tasks.processors;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +55,7 @@ public final class Metric
 
 	private static Map<String, List<Point>> speedValues(
 		final List<Point> avgValues, final List<Point> lastValues) {
-		final Map<String, List<Point>> speedValues = new HashMap<>();
+		final Map<String, List<Point>> speedValues = new LinkedHashMap<>();
 		speedValues.put("avg", avgValues);
 		speedValues.put("last", lastValues);
 		return speedValues;
@@ -62,7 +63,7 @@ public final class Metric
 
 	private static Map<String, List<Point>> timeValues(
 		final List<Point> avgValues, final List<Point> minValues, final List<Point> maxValues) {
-		final Map<String, List<Point>> timeValues = new HashMap<>();
+		final Map<String, List<Point>> timeValues = new LinkedHashMap<>();
 		timeValues.put("avg", avgValues);
 		timeValues.put("min", minValues);
 		timeValues.put("max", maxValues);
@@ -75,8 +76,12 @@ public final class Metric
 		);
 	}
 
-	static List<Metric> latencyMetrics(final BasicPolylineManager polylineManager) {
-		return customMetricFormat(Collections.singletonMap("avg", polylineManager.getLatAvgs()));
+	static List<Metric> latencyMetrics(final Map<String, BasicPolylineManager> managers) {
+		final Map<String, List<Point>> values = new LinkedHashMap<>();
+		for (final String itemDataSize: managers.keySet()) {
+			values.put(itemDataSize, managers.get(itemDataSize).getLatAvgs());
+		}
+		return customMetricFormat(values);
 	}
 
 	static List<Metric> durationMetrics(final MetricPolylineManager polylineManager) {
@@ -85,24 +90,35 @@ public final class Metric
 		);
 	}
 
-	static List<Metric> durationMetrics(final BasicPolylineManager polylineManager) {
-		return customMetricFormat(Collections.singletonMap("avg", polylineManager.getDurAvgs()));
-
+	static List<Metric> durationMetrics(final Map<String, BasicPolylineManager> managers) {
+		final Map<String, List<Point>> values = new LinkedHashMap<>();
+		for (final String itemDataSize: managers.keySet()) {
+			values.put(itemDataSize, managers.get(itemDataSize).getDurAvgs());
+		}
+		return customMetricFormat(values);
 	}
 
 	static List<Metric> throughputMetrics(final MetricPolylineManager polylineManager) {
 		return customMetricFormat(speedValues(polylineManager.getTpAvgs(), polylineManager.getTpLasts()));
 	}
 
-	static List<Metric> throughputMetrics(final BasicPolylineManager polylineManager) {
-		return customMetricFormat(Collections.singletonMap("avg", polylineManager.getTpAvgs()));
+	static List<Metric> throughputMetrics(final Map<String, BasicPolylineManager> managers) {
+		final Map<String, List<Point>> values = new LinkedHashMap<>();
+		for (final String itemDataSize: managers.keySet()) {
+			values.put(itemDataSize, managers.get(itemDataSize).getTpAvgs());
+		}
+		return customMetricFormat(values);
 	}
 
 	static List<Metric> bandwidthMetrics(final MetricPolylineManager polylineManager) {
 		return customMetricFormat(speedValues(polylineManager.getBwAvgs(), polylineManager.getBwLasts()));
 	}
 
-	static List<Metric> bandwidthMetrics(final BasicPolylineManager polylineManager) {
-		return customMetricFormat(Collections.singletonMap("avg", polylineManager.getBwAvgs()));
+	static List<Metric> bandwidthMetrics(final Map<String, BasicPolylineManager> managers) {
+		final Map<String, List<Point>> values = new LinkedHashMap<>();
+		for (final String itemDataSize: managers.keySet()) {
+			values.put(itemDataSize, managers.get(itemDataSize).getBwAvgs());
+		}
+		return customMetricFormat(values);
 	}
 }

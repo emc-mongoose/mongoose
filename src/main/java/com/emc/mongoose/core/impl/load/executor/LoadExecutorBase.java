@@ -588,6 +588,7 @@ implements LoadExecutor<T> {
 					loadJobName = loadJobName.substring(loadJobName.indexOf('-') + 1,
 						loadJobName.lastIndexOf('-')
 					);
+					final String itemDataSize = appConfig.getItemDataSize().toString();
 					ChartUtil.addCharts(runId, loadJobName, lastStats, totalThreadCount);
 				}
 				if(medIoStats != null && medIoStats.isStarted()) {

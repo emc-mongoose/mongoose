@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.load.tasks.processors;
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,7 +11,7 @@ import java.util.Map;
 public final class MetricPolylineManager
 	extends BasicPolylineManager {
 
-	public static final Map<String, MetricPolylineManager> MANAGERS = new HashMap<>();
+	public static final Map<String, MetricPolylineManager> MANAGERS = new LinkedHashMap<>();
 	private final static int MAX_NUM_OF_POINTS = 1000;
 
 	private final Polyline

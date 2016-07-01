@@ -517,8 +517,10 @@ define(['jquery',
 					return colorizer(chart.name);
 				})
 				.style('stroke-width', 1);
+			var chartName;
 			const points = chartContainer.selectAll('circle')
 				.data(function (chart) {
+					chartName = chart.name;
 					return chart.values;
 				});
 			points.enter().append('circle')
@@ -528,7 +530,10 @@ define(['jquery',
 				.attr('cy', function (value) {
 					return scaledYAccessor(value);
 				})
-				.attr('r', 3);
+				.attr('r', 3)
+				.style('fill', function () {
+					return colorizer(chartName);
+				});
 			svgCanvasElement.selectAll('.axis path, .axis line')
 				.style('fill', 'none')
 				.style('stroke', 'grey')
