@@ -209,19 +209,21 @@ define(['jquery',
 		}
 
 		function setLogXScale() {
+			// logScale1.tickFormat(20, '$.2f');
 			xScale = logScale1.range([0, AXIS_X_WIDTH]);
 		}
 
 		function setLogYScale() {
+			// logScale2.tickFormat(20, '$.2f');
 			yScale = logScale2.range([AXIS_Y_WIDTH, 0]);
 		}
 
 		function updateAxisX() {
-			xAxis = axis1.scale(xScale).orient('bottom').innerTickSize(-AXIS_Y_WIDTH).outerTickSize(0).tickPadding(10);
+			xAxis = axis1.scale(xScale).orient('bottom').innerTickSize(-AXIS_Y_WIDTH).outerTickSize(0).tickPadding(10)
 		}
 
 		function updateAxisY() {
-			yAxis = axis2.scale(yScale).orient('left').ticks(5).innerTickSize(-AXIS_X_WIDTH).outerTickSize(0).tickPadding(10);
+			yAxis = axis2.scale(yScale).orient('left').ticks(5).innerTickSize(-AXIS_X_WIDTH).outerTickSize(0).tickPadding(10)
 		}
 
 		function updateLine() {
@@ -229,16 +231,17 @@ define(['jquery',
 		}
 
 		function switchScaling(scale, axis) {
+			const s = d3.scale.log().domain([1, 10000]).range([1000, 0]);
 			switch (scale) {
 				case SCALE.LINEAR:
 					switch (axis) {
 						case 'x':
 							setLinearXScale();
-							updateAxisX();
+							xAxis = axis1.scale(xScale).orient('bottom').innerTickSize(-AXIS_Y_WIDTH).outerTickSize(0).tickPadding(10);
 							break;
 						case 'y':
 							setLinearYScale();
-							updateAxisY();
+							yAxis = axis2.scale(yScale).orient('left').ticks(5).innerTickSize(-AXIS_X_WIDTH).outerTickSize(0).tickPadding(10);
 							break;
 					}
 					break;
@@ -246,11 +249,11 @@ define(['jquery',
 					switch (axis) {
 						case 'x':
 							setLogXScale();
-							updateAxisX();
+							xAxis = axis1.scale(xScale).orient('bottom').ticks(10, d3.format(",d")).innerTickSize(-AXIS_Y_WIDTH).outerTickSize(0).tickPadding(10);
 							break;
 						case 'y':
 							setLogYScale();
-							updateAxisY();
+							yAxis = axis2.scale(yScale).orient('left').ticks(5, d3.format(",d")).innerTickSize(-AXIS_X_WIDTH).outerTickSize(0).tickPadding(10);
 							break;
 					}
 					break;
