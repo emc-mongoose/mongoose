@@ -10,7 +10,7 @@ public interface LogPatterns {
 		),
 		LOG_LEVEL = Pattern.compile("(?<levelLog>[FEWIDT])"),
 		CLASS_NAME = Pattern.compile("[A-Za-z]+[\\w]*"),
-		THREAD_NAME = Pattern.compile("(?<nameThread>\\w[\\w\\s#\\.\\-]+\\w)"),
+		THREAD_NAME = Pattern.compile("(?<nameThread>\\w[\\w\\s#\\.\\-<>]+\\w)"),
 		//
 		NUM_LOAD = Pattern.compile("(?<numLoad>[\\d]+)"),
 		TYPE_API = Pattern.compile("(?<typeApi>[A-Za-z0-9]+)"),
@@ -76,6 +76,22 @@ public interface LogPatterns {
 			CONSOLE_FULL_LOAD_NAME_CLIENT + "[\\w#\\-]*[\\s]+" +
 			CONSOLE_ITEM_COUNTS_AVG.pattern() + ";[\\s]+" +
 			CONSOLE_DURATION_AVG + ";[\\s]+" + CONSOLE_LATENCY_AVG + ";[\\s]+" +
+			CONSOLE_TP + ";[\\s]+" + CONSOLE_BW
+		),
+		//
+		CONSOLE_METRICS_MED = Pattern.compile(
+			DATE_TIME_ISO8601.pattern() + "[\\s]+" +
+			LOG_LEVEL.pattern() + "[\\s]+" + THREAD_NAME.pattern() + "[\\s]+\"" +
+			CONSOLE_FULL_LOAD_NAME.pattern() + "\"[\\s]+intermediate:[\\s]+" +
+			CONSOLE_ITEM_COUNTS_SUM.pattern() + ";[\\s]+" +
+			CONSOLE_DURATION_SUM + ";[\\s]+" + CONSOLE_LATENCY_SUM + ";[\\s]+" +
+			CONSOLE_TP + ";[\\s]+" + CONSOLE_BW
+		),
+		//
+		CONSOLE_METRICS_MED_CLIENT = Pattern.compile(
+			"\"" + CONSOLE_FULL_LOAD_NAME_CLIENT.pattern() + "\"[\\s]+intermediate:[\\s]+" +
+			CONSOLE_ITEM_COUNTS_SUM.pattern() + ";[\\s]+" +
+			CONSOLE_DURATION_SUM + ";[\\s]+" + CONSOLE_LATENCY_SUM + ";[\\s]+" +
 			CONSOLE_TP + ";[\\s]+" + CONSOLE_BW
 		),
 		//

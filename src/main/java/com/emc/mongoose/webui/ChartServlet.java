@@ -1,6 +1,6 @@
 package com.emc.mongoose.webui;
 
-import com.emc.mongoose.core.impl.load.tasks.processors.ChartPackage;
+import com.emc.mongoose.core.impl.load.tasks.processors.ChartUtil;
 import com.emc.mongoose.core.impl.load.tasks.processors.Metric;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -36,7 +36,7 @@ public class ChartServlet extends HttpServlet {
 			throws ServletException, IOException {
 		final String runId = request.getParameter(RUN_ID_KEY);
 		response.setContentType(MimeTypes.Type.APPLICATION_JSON.toString());
-		final Map<String, Map<String, List<Metric>>> charts = ChartPackage.getChart(runId);
+		final Map<String, Map<String, List<Metric>>> charts = ChartUtil.getChart(runId);
 		final String logJsonString = JSON_MAPPER.writeValueAsString(charts);
 		response.getWriter().write(logJsonString);
 	}

@@ -13,7 +13,7 @@
 		"load" : {
 			"limit" : {
 				"count" : 1000000,
-				"time" : "10s"
+				"time" : "50s"
 			},
 			"metrics" : {
 				"period" : 0

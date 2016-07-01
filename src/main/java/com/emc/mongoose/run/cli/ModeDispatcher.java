@@ -8,12 +8,14 @@ import com.emc.mongoose.common.net.ServiceUtil;
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import com.emc.mongoose.run.webserver.WebUiRunner;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
+import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.impl.http.Cinderella;
 import com.emc.mongoose.util.builder.MultiLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Map;
 
@@ -57,11 +59,10 @@ public final class ModeDispatcher {
 			case RUN_MODE_SERVER:
 			case RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
-				try {
-					final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(appConfig);
+				try(final LoadBuilderSvc multiSvc = new MultiLoadBuilderSvc(appConfig)) {
 					multiSvc.start();
 					multiSvc.await();
-				} catch(final RemoteException | InterruptedException e) {
+				} catch(final IOException | InterruptedException e) {
 					LogUtil.exception(
 						rootLogger, Level.ERROR, e, "Failed to run the load builder services"
 					);
@@ -69,13 +70,17 @@ public final class ModeDispatcher {
 				break;
 			case RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				new WebUiRunner().run();
+				try(final WebUiRunner webUiRunner = new WebUiRunner()) {
+					webUiRunner.run();
+				} catch(final IOException e) {
+					LogUtil.exception(rootLogger, Level.ERROR, e, "Failed to run the web UI");
+				}
 				break;
 			case RUN_MODE_WSMOCK:
 			case RUN_MODE_CINDERELLA:
 				rootLogger.debug(Markers.MSG, "Starting cinderella");
-				try {
-					new Cinderella(appConfig).run();
+				try(final StorageMock storageMock = new Cinderella(appConfig)) {
+					storageMock.run();
 				} catch (final Exception e) {
 					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed to init cinderella");
 				}
@@ -83,8 +88,8 @@ public final class ModeDispatcher {
 			case RUN_MODE_CLIENT:
 			case RUN_MODE_STANDALONE:
 			case RUN_MODE_COMPAT_CLIENT:
-				try {
-					new ScenarioRunner(appConfig).run();
+				try(final ScenarioRunner sr = new ScenarioRunner(appConfig)) {
+					sr.run();
 				} catch(final Exception e) {
 					LogUtil.exception(rootLogger, Level.FATAL, e, "Scenario failed");
 					e.printStackTrace(System.out);

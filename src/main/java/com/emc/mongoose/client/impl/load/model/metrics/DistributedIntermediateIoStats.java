@@ -1,5 +1,6 @@
 package com.emc.mongoose.client.impl.load.model.metrics;
 
+import com.emc.mongoose.client.api.load.tasks.LoadStatsSnapshotTask;
 import com.emc.mongoose.client.impl.load.tasks.LoadIntermediateStatsSnapshotTask;
 import com.emc.mongoose.core.api.item.base.Item;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
@@ -20,8 +21,13 @@ extends DistributedIoStats<T, W> {
 
 	@Override
 	public void start() {
+		LoadStatsSnapshotTask nextLoadStatsSnapshotTask;
 		for(final String addr : loadSvcMap.keySet()) {
-			statsLoader.submit(new LoadIntermediateStatsSnapshotTask(loadSvcMap.get(addr), addr));
+			nextLoadStatsSnapshotTask = new LoadIntermediateStatsSnapshotTask(
+				loadSvcMap.get(addr), addr
+			);
+			loadStatsSnapshotMap.put(addr, nextLoadStatsSnapshotTask);
+			statsLoader.submit(nextLoadStatsSnapshotTask);
 		}
 		statsLoader.shutdown();
 		super.start();

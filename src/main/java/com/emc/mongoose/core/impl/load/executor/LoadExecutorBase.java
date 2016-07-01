@@ -30,7 +30,7 @@ import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.LoadRegistry;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIoStats;
-import com.emc.mongoose.core.impl.load.tasks.processors.ChartPackage;
+import com.emc.mongoose.core.impl.load.tasks.processors.ChartUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -268,7 +268,7 @@ implements LoadExecutor<T> {
 				while(!isInterrupted.get()) {
 					logMetrics(Markers.PERF_AVG);
 					if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
-						ChartPackage.addCharts(runId, loadJobName, lastStats);
+						ChartUtil.addCharts(runId, loadJobName, lastStats);
 					}
 					try {
 						TimeUnit.SECONDS.sleep(metricsPeriodSec);
@@ -301,7 +301,7 @@ implements LoadExecutor<T> {
 			} else if(Markers.PERF_MED.equals(logMarker)) {
 				LOG.info(
 					logMarker, "\"{}\" intermediate: {}", getName(),
-					medIoStats.getSnapshot().toSummaryString()
+					medIoStats == null ? null : medIoStats.getSnapshot().toSummaryString()
 				);
 			} else if(Markers.PERF_SUM.equals(logMarker)) {
 				LOG.info(
@@ -316,30 +316,30 @@ implements LoadExecutor<T> {
 	implements Runnable {
 		@Override
 		public final void run() {
-			medIoStats = createIntermediateStats();
-			waitForFullThrottleEnter();
-			medIoStats.start();
-			waitForFullThrottleExit();
-			logMetrics(Markers.PERF_MED);
+			try {
+				final Thread currentThread = Thread.currentThread();
+				currentThread.setName("fullThrottleMonitor<" + getName() + ">");
+				medIoStats = createIntermediateStats();
+				// wait for the current concurrency level to be equal to the max concurrency level
+				while(!isFullThrottleEntered()) {
+					LockSupport.parkNanos(1_000_000);
+				}
+				LOG.debug(Markers.MSG, "{}: reached the nominal load: {}", getName(), totalThreadCount);
+				medIoStats.start();
+				// wait for the current concurrency level to be less than max concurrency level
+				while(!isFullThrottleExited()) {
+					LockSupport.parkNanos(1_000_000);
+				}
+				LOG.debug(Markers.MSG, "{}: nominal load exit", getName());
+				logMetrics(Markers.PERF_MED);
+			} catch(final Throwable e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Full throttle monitor task failure");
+			}
 		}
 	}
 	//
 	protected IoStats createIntermediateStats() {
 		return new BasicIoStats(getName(), false, metricsPeriodSec);
-	}
-	// wait for the current concurrency level to be equal to the max concurrency level
-	private void waitForFullThrottleEnter() {
-		while(!isFullThrottleEntered()) {
-			LockSupport.parkNanos(1_000_000);
-		}
-		LOG.debug(Markers.MSG, "{}: reached the nominal load: {}", getName(), totalThreadCount);
-	}
-	// wait for the current concurrency level to be less than max concurrency level
-	private void waitForFullThrottleExit() {
-		while(!isFullThrottleExited()) {
-			LockSupport.parkNanos(1_000_000);
-		}
-		LOG.debug(Markers.MSG, "{}: nominal load exit", getName());
 	}
 	//
 	@Override
@@ -561,11 +561,6 @@ implements LoadExecutor<T> {
 		if(isShutdown.compareAndSet(false, true)) {
 			shutdownActually();
 		}
-		try {
-			ioConfig.close(); // disables connection drop failures
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
-		}
 		//
 		LOG.debug(Markers.MSG, "{}: waiting the output buffer to become empty", getName());
 		for(int i = 0; i < 1000 && !itemOutBuff.isEmpty(); i ++) {
@@ -574,6 +569,12 @@ implements LoadExecutor<T> {
 			} catch(final InterruptedException e) {
 				break;
 			}
+		}
+		//
+		try {
+			ioConfig.close(); // disables connection drop failures
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to close the request configurator");
 		}
 		//
 		try {
@@ -587,7 +588,7 @@ implements LoadExecutor<T> {
 					loadJobName = loadJobName.substring(loadJobName.indexOf('-') + 1,
 						loadJobName.lastIndexOf('-')
 					);
-					ChartPackage.addCharts(runId, loadJobName, lastStats, totalThreadCount);
+					ChartUtil.addCharts(runId, loadJobName, lastStats, totalThreadCount);
 				}
 				if(medIoStats != null && medIoStats.isStarted()) {
 					medIoStats.close();

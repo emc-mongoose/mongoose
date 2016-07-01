@@ -36,23 +36,23 @@ extends HttpStorageMockTestBase {
 	private final static int LIMIT_COUNT = 1000;
 	private final static String SCENARIO_JSON =
 		"{" +
-			"	\"type\" : \"sequential\",\n" +
-			"	\"config\" : {\n" +
-			"		\"load\" : {\n" +
-			"			\"limit\" : {\n" +
-			"				\"count\" : " + LIMIT_COUNT + "\n" +
-			"			},\n" +
-			"			\"threads\" : 50\n" +
-			"		}\n" +
-			"	},\n" +
-			"	\"jobs\" : [\n" +
-			"		{\n" +
-			"			\"type\" : \"load\"\n" +
-			"		}, {\n" +
-			"			\"type\" : \"load\"\n" +
-			"		}\n" +
-			"	]\n" +
-			"}\n";
+		"	\"type\" : \"sequential\",\n" +
+		"	\"config\" : {\n" +
+		"		\"load\" : {\n" +
+		"			\"limit\" : {\n" +
+		"				\"count\" : " + LIMIT_COUNT + "\n" +
+		"			},\n" +
+		"			\"threads\" : 50\n" +
+		"		}\n" +
+		"	},\n" +
+		"	\"jobs\" : [\n" +
+		"		{\n" +
+		"			\"type\" : \"load\"\n" +
+		"		}, {\n" +
+		"			\"type\" : \"load\"\n" +
+		"		}\n" +
+		"	]\n" +
+		"}\n";
 	private final static Pattern START_MSG_PATTERN = Pattern.compile(
 		LogPatterns.DATE_TIME_ISO8601.pattern() + "\\s+" +
 			LogPatterns.LOG_LEVEL.pattern() + "\\s+" +
