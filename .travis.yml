@@ -9,7 +9,7 @@ branches:
   only:
     - master
     - feature-dev
-    - /feature-v*
+    - /feature-v.+/
 deploy:
   provider: releases
   api_key:
