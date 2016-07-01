@@ -1,14 +1,57 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head>
-	<meta charset="utf-8">
-	<title>Mongoose Development Environment</title>
-	<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<fieldset>
-	<legend><h2>DEVELOPMENT ENVIRONMENT</h2></legend>
-	TODO
-</fieldset>
-</body>
+	<head>
+		<meta charset="utf-8">
+		<title>Mongoose Development Environment</title>
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<fieldset>
+			<legend><h2>DEVELOPMENT ENVIRONMENT</h2></legend>
+			<p>
+				<fieldset>
+					<legend><h3>SOFTWARE</h3></legend>
+					<ul>
+						<li>JDK 7+</li>
+						<li>Git</li>
+						<li>Gradle</li>
+						<li>Text Editor or IDE</li>
+					</ul>
+				</fieldset>
+			</p>
+			<p>
+				<fieldset>
+					<legend><h3>GET THE SOURCES</h3></legend>
+					<p>Go to the directory where you want to have Mongoose Git repository and execute the following command:</p>
+					<p>
+						<fieldset class="bash">
+							<code>git clone https://github.com/akurilov/mongoose.git</code>
+						</fieldset>
+					</p>
+					<p>This will create "mongoose" directory containing the project source code and other supplementary files</p>
+				</fieldset>
+			</p>
+			<p>
+				<fieldset>
+					<legend><h3>GRADLE</h3></legend>
+					<h4>Build</h4>
+					<p>Go to the "mongoose" directory and try the following command:</p>
+					<p><fieldset class="bash"><code>./gradlew clean dist</code></fieldset></p>
+					<p>After gradle reports "build successful", you can find the tgz-file generated in build/dist directory.</p>
+					<h4>Prepare IntelliJ IDEA project</h4>
+					<p><fieldset class="bash"><code>./gradlew clean idea</code></fieldset></p>
+					<h4>Run the unit tests</h4>
+					<p><fieldset class="bash"><code>./gradlew clean unitTest</code></fieldset></p>
+					<h4>Run the system tests</h4>
+					<p><fieldset class="bash"><code>./gradlew clean systemTest</code></fieldset></p>
+					<p>
+						<fieldset class="note">
+							<legend><b>Note</b></legend>
+							System tests execution is a heavy task so it may use a few gigabytes of memory and up to 1 hour
+						</fieldset>
+					</p>
+				</fieldset>
+			</p>
+		</fieldset>
+	</body>
 </html>
