@@ -8,7 +8,7 @@ import com.emc.mongoose.system.feature.distributed.CircularReadDistributedTest;
 import com.emc.mongoose.system.feature.distributed.ReadDirsWithFilesDistributedTest;
 import com.emc.mongoose.system.feature.distributed.ReadLoggingDistributedTest;
 import com.emc.mongoose.system.feature.reporting.DifferentDestinationLogDirsTest;
-import com.emc.mongoose.system.feature.scenario.ForEachJobTest;
+import com.emc.mongoose.system.feature.scenario.ForJobTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -18,7 +18,7 @@ import org.junit.runners.Suite;
 	ReadLoggingDistributedTest.class,
 	ReadDirsWithFilesDistributedTest.class,
 	DifferentDestinationLogDirsTest.class,
-	ForEachJobTest.class
+	ForJobTest.class
 })
 public class DebugSuite {
 }

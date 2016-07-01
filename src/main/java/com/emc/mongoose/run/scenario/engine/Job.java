@@ -18,10 +18,9 @@ extends Closeable, Runnable {
 	String NODE_TYPE_PARALLEL = "parallel";
 	String NODE_TYPE_SEQUENTIAL = "sequential";
 	String NODE_TYPE_LOAD = "load";
-	String NODE_TYPE_LOOP = "loop";
 	String NODE_TYPE_PRECONDITION = "precondition";
 	String NODE_TYPE_COMMAND = "command";
-	String NODE_TYPE_FOR_EACH = "foreach";
+	String NODE_TYPE_FOR = "for";
 
 	AppConfig getConfig();
 }

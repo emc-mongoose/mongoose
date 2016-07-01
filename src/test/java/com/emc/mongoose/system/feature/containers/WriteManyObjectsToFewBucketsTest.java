@@ -55,7 +55,7 @@ extends HttpStorageMockTestBase {
 		logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
 		//
 		new ScenarioRunner(rtConfig).run();
-		TimeUnit.SECONDS.sleep(1);
+		TimeUnit.SECONDS.sleep(10);
 		//
 		RunIdFileManager.flushAll();
 		//
@@ -87,7 +87,7 @@ extends HttpStorageMockTestBase {
 						RunIdFileManager.closeAll(nextRunId);
 					}
 				} while(true);
-				TimeUnit.SECONDS.sleep(1);
+				TimeUnit.SECONDS.sleep(10);
 				STD_OUTPUT_STREAM = stdOutStream;
 			}
 		}

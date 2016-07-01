@@ -1,5 +1,5 @@
 {
-	"type" : "loop",
+	"type" : "for",
 	"value" : 10,
 	"config" : {
 		"load" : {

@@ -1,6 +1,7 @@
 package com.emc.mongoose.system.feature.swift;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.system.base.HttpStorageMockTestBase;
@@ -155,11 +156,12 @@ extends HttpStorageMockTestBase {
 					firstRow = false;
 				} else {
 					Assert.assertTrue(
-						"Not related to read perf trace log found", nextRec.get(0).contains("Read")
+						"Record which is not related to the test found: \"" + nextRec.toString() + "\"",
+						nextRec.get(1).equals(LoadType.READ.toString())
 					);
 					Assert.assertTrue(
 						"Size of the read content is not more than 0: " + nextRec,
-						Long.parseLong(nextRec.get(3)) > 0
+						Long.parseLong(nextRec.get(4)) > 0
 					);
 				}
 			}

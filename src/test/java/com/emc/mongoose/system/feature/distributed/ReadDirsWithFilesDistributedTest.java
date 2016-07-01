@@ -87,7 +87,7 @@ extends DistributedFileSystemTestBase {
 		}
 		//
 		RunIdFileManager.flush(RUN_ID);
-		TimeUnit.SECONDS.sleep(1);
+		TimeUnit.SECONDS.sleep(10);
 		//
 		rtConfig.setRunId(RUN_ID + "_DirsRead");
 		rtConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, "/tmp/" + RUN_ID);

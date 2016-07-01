@@ -238,7 +238,7 @@ extends HttpStorageMockTestBase {
 	@Test
 	public void checkPerfTraceFile()
 	throws Exception {
-		final String expectedLoadType = LoadType.READ.name().toLowerCase();
+		final String expectedLoadType = LoadType.READ.name();
 		final File perfTraceFile = LogValidator.getPerfTraceFile(RUN_ID);
 		try(final BufferedReader in = Files.newBufferedReader(perfTraceFile.toPath(), UTF_8)) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
@@ -247,7 +247,7 @@ extends HttpStorageMockTestBase {
 				if(firstRow) {
 					firstRow = false;
 				} else {
-					Assert.assertTrue(nextRec.get(0).toLowerCase().contains(expectedLoadType));
+					Assert.assertEquals(nextRec.get(1), expectedLoadType);
 				}
 			}
 		}

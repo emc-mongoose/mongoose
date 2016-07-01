@@ -62,7 +62,7 @@
 				}
 			}
 		}, {
-			"type" : "foreach",
+			"type" : "for",
 			"value" : "threads",
 			"in" : [
 				1, 2, 5, 10, 20, 40
@@ -74,7 +74,7 @@
 			},
 			"jobs" : [
 				{
-					"type" : "foreach",
+					"type" : "for",
 					"value" : "size",
 					"in" : [
 						"10KB", "100KB", "1MB", "10MB", "100MB", "200MB"

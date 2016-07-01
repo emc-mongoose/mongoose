@@ -63,7 +63,7 @@ extends DistributedClientTestBase {
 			final BlockingQueue<HttpDataItem> itemsQueue = new ArrayBlockingQueue<>(COUNT_LIMIT);
 			final LimitedQueueItemBuffer<HttpDataItem> itemsIO = new LimitedQueueItemBuffer<>(itemsQueue);
 			countWritten = client.create(itemsIO, COUNT_LIMIT, 10, SizeInBytes.toFixedSize("10KB"));
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(10);
 			Assert.assertEquals(
 				"Writing reported different count than available in the output",
 				countWritten, itemsQueue.size()
@@ -75,7 +75,7 @@ extends DistributedClientTestBase {
 				} else {
 					throw new IllegalStateException("Failed to read");
 				}
-				TimeUnit.SECONDS.sleep(5);
+				TimeUnit.SECONDS.sleep(10);
 				STD_OUT_CONTENT = stdOutStream.toString();
 				LOG.info(Markers.MSG, "Read {} items, captured {} bytes from stdout", countRead, STD_OUT_CONTENT.length());
 			}
@@ -84,6 +84,7 @@ extends DistributedClientTestBase {
 		}
 		//
 		RunIdFileManager.flushAll();
+		TimeUnit.SECONDS.sleep(10);
 	}
 	//
 	@AfterClass

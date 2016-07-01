@@ -1,5 +1,5 @@
 {
-	"type" : "loop",
+	"type" : "for",
 	"config" : {
 		"load" : {
 			"threads" : 100,
@@ -10,7 +10,7 @@
 	},
 	"jobs" : [
 		{
-			"type" : "loop",
+			"type" : "for",
 			"value" : 10,
 			"jobs" : [
 				{

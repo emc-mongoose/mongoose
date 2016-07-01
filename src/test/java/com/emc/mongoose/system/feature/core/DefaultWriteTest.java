@@ -74,7 +74,7 @@ extends ScenarioTestBase {
 			//  Run mongoose default scenario in standalone mode
 			SCENARIO_RUNNER.run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(10);
 			STD_OUTPUT_STREAM = stdOutStream;
 		} catch(final IOException e) {
 			e.printStackTrace();

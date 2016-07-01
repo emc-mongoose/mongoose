@@ -52,7 +52,7 @@ extends HttpStorageMockTestBase {
 		logger.info(Markers.MSG, BasicConfig.THREAD_CONTEXT.get().toString());
 		// create the buckets
 		new ScenarioRunner(rtConfig).run();
-		TimeUnit.SECONDS.sleep(1);
+		TimeUnit.SECONDS.sleep(10);
 		RunIdFileManager.flushAll();
 		//
 		final File containerListFile = LogValidator.getItemsListFile(RUN_ID_BASE);
@@ -87,7 +87,7 @@ extends HttpStorageMockTestBase {
 		rtConfig.setProperty(AppConfig.KEY_LOAD_LIMIT_COUNT, 0);
 		//
 		new ScenarioRunner(rtConfig).run();
-		TimeUnit.SECONDS.sleep(1);
+		TimeUnit.SECONDS.sleep(10);
 		//
 		RunIdFileManager.flushAll();
 	}

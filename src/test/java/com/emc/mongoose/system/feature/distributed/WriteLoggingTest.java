@@ -67,6 +67,7 @@ extends DistributedClientTestBase {
 			}
 			//
 			RunIdFileManager.flushAll();
+			TimeUnit.SECONDS.sleep(10);
 		}
 	}
 	//

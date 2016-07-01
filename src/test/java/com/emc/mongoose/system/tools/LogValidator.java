@@ -342,7 +342,7 @@ public final class LogValidator {
 		//
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
-			Assert.assertEquals("Count of columns is wrong", 9, nextRec.size());
+			Assert.assertEquals("Count of columns is wrong", 10, nextRec.size());
 			if (firstRow) {
 				Assert.assertEquals("Thread", nextRec.get(0));
 				Assert.assertEquals("LoadType", nextRec.get(1));
@@ -360,7 +360,7 @@ public final class LogValidator {
 					"Thread name format is not correct", nextRec.get(0).matches(LogPatterns.THREAD_NAME.pattern())
 				);
 				try {
-					final LoadType lt = LoadType.valueOf(nextRec.get(1).toUpperCase());
+					LoadType.valueOf(nextRec.get(1).toUpperCase());
 				} catch(Exception e) {
 					Assert.fail("Invalid load type: " + nextRec.get(1));
 				}
@@ -371,7 +371,7 @@ public final class LogValidator {
 					);
 				}
 				Assert.assertTrue(
-					"Item value format is not correct",
+					"Item name format is not correct",
 					nextRec.get(3).matches(LogPatterns.ITEM_VALUE.pattern())
 				);
 				Assert.assertTrue(

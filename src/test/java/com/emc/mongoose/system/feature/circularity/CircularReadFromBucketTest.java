@@ -102,7 +102,7 @@ extends StandaloneClientTestBase {
 					} else {
 						throw new IllegalStateException("Failed to read");
 					}
-					TimeUnit.SECONDS.sleep(1);
+					TimeUnit.SECONDS.sleep(10);
 					STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 				}
 			}

@@ -64,11 +64,11 @@ extends StandaloneClientTestBase {
 					CREATED_ACTUALLY_COUNT = client.create(
 						itemOutput, ITEM_COUNT, CONCURRENCY_LEVEL, 0, ITEM_SIZE_MAX, 1
 					);
-					TimeUnit.SECONDS.sleep(1);
+					TimeUnit.SECONDS.sleep(10);
 					READ_ACTUALLY_COUNT = client.read(
 						itemOutput.getInput(), null, ITEM_COUNT, CONCURRENCY_LEVEL, true
 					);
-					TimeUnit.SECONDS.sleep(1);
+					TimeUnit.SECONDS.sleep(10);
 					RunIdFileManager.closeAll(RUN_ID);
 					STD_OUT_CONTENT = stdOutStream.toByteArray();
 				}

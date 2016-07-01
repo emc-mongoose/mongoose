@@ -117,7 +117,7 @@ extends DistributedClientTestBase {
 	public void checkItemsFileExistsAndCanBeReadFully()
 	throws Exception {
 		final Map<String, Long> items = new HashMap<>();
-		TimeUnit.SECONDS.sleep(5);
+		TimeUnit.SECONDS.sleep(10);
 		try(
 			final BufferedReader
 				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)

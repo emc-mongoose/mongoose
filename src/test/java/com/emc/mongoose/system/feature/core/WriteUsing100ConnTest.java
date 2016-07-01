@@ -88,7 +88,7 @@ extends ScenarioTestBase {
 	public  static void tearDownClass() {
 		try {
 			SCENARIO_THREAD.interrupt();
-			TimeUnit.SECONDS.sleep(10);
+			TimeUnit.SECONDS.sleep(5);
 			RunIdFileManager.flushAll();
 			//
 			Path expectedFile = LogValidator.getMessageLogFile(RUN_ID).toPath();
