@@ -36,7 +36,7 @@ extends HttpStorageMockTestBase {
 	private final static String RUN_ID = ForEachJobTest.class.getCanonicalName();
 	private final static String SCENARIO_JSON =
 		"{" +
-		"	\"type\" : \"each\"," +
+		"	\"type\" : \"foreach\"," +
 		"		\"value\" : \"size\"," +
 		"		\"in\" : [" +
 		"			0, \"1KB\", \"1MB\"" +
@@ -57,7 +57,7 @@ extends HttpStorageMockTestBase {
 		"	}," +
 		"		\"jobs\" : [" +
 		"	{" +
-		"		\"type\" : \"each\"," +
+		"		\"type\" : \"foreach\"," +
 		"		\"value\" : \"threads\"," +
 		"		\"in\" : [" +
 		"			1, 10, 100" +

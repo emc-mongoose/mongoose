@@ -8,8 +8,9 @@
 			"type" : "string",
 			"enum" : [
 				"command",
-				"each",
+				"foreach",
 				"load",
+				"loop",
 				"parallel",
 				"precondition",
 				"sequential"

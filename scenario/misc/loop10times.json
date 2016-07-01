@@ -1,0 +1,16 @@
+{
+	"type" : "loop",
+	"value" : 10,
+	"config" : {
+		"load" : {
+			"limit" : {
+				"time" : "5s"
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "load"
+		}
+	]
+}

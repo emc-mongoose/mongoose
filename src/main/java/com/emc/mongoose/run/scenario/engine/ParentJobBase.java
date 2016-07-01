@@ -63,11 +63,14 @@ extends JobBase {
 				case NODE_TYPE_COMMAND:
 					append(new CommandJob(config, subTree));
 					break;
-				case NODE_TYPE_EACH:
-					append(new EachJob(config, subTree));
+				case NODE_TYPE_FOR_EACH:
+					append(new ForEachJob(config, subTree));
 					break;
 				case NODE_TYPE_LOAD:
 					append(new LoadJob(config, subTree, false));
+					break;
+				case NODE_TYPE_LOOP:
+					append(new LoopJob(config, subTree));
 					break;
 				case NODE_TYPE_PARALLEL:
 					append(new ParallelJob(config, subTree));
