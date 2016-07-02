@@ -209,12 +209,10 @@ define(['jquery',
 		}
 
 		function setLogXScale() {
-			// logScale1.tickFormat(20, '$.2f');
 			xScale = logScale1.range([0, AXIS_X_WIDTH]);
 		}
 
 		function setLogYScale() {
-			// logScale2.tickFormat(20, '$.2f');
 			yScale = logScale2.range([AXIS_Y_WIDTH, 0]);
 		}
 
@@ -249,7 +247,7 @@ define(['jquery',
 					switch (axis) {
 						case 'x':
 							setLogXScale();
-							xAxis = axis1.scale(xScale).orient('bottom').ticks(10, d3.format(",d")).innerTickSize(-AXIS_Y_WIDTH).outerTickSize(0).tickPadding(10);
+							xAxis = axis1.scale(xScale).orient('bottom').ticks(5, d3.format(",d")).innerTickSize(-AXIS_Y_WIDTH).outerTickSize(0).tickPadding(10);
 							break;
 						case 'y':
 							setLogYScale();
@@ -545,7 +543,9 @@ define(['jquery',
 			var chartName;
 			const points = chartContainer.selectAll('circle')
 				.data(function (chart) {
-					chartName = chart.name;
+					$.each(chart.values, function(index, value){
+						value['color'] = colorizer(chart.name);
+					});
 					return chart.values;
 				});
 			points.enter().append('circle')
@@ -556,8 +556,8 @@ define(['jquery',
 					return scaledYAccessor(value);
 				})
 				.attr('r', 3)
-				.style('fill', function () {
-					return colorizer(chartName);
+				.style('fill', function (value) {
+					return value.color;
 				});
 			svgCanvasElement.selectAll('.axis path, .axis line')
 				.style('fill', 'none')
