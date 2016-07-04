@@ -715,7 +715,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public void await(final long timeOut, final TimeUnit timeUnit)
+	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
 		//
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
@@ -758,17 +758,9 @@ implements LoadClient<T, W> {
 		);*/
 		awaitExecutor.shutdown();
 		try {
-			LOG.debug(Markers.MSG, "Wait remote await tasks for finish {}[{}]", timeOut, timeUnit);
-			if(awaitExecutor.awaitTermination(timeOut, timeUnit)) {
-				LOG.debug(Markers.MSG, "All await tasks finished");
-			} else {
-				LOG.debug(Markers.MSG, "Await tasks execution timeout");
-			}
+			return awaitExecutor.awaitTermination(timeOut, timeUnit);
 		} finally {
-			LOG.debug(
-				Markers.MSG, "Interrupted await tasks: {}",
-				Arrays.toString(awaitExecutor.shutdownNow().toArray())
-			);
+			awaitExecutor.shutdownNow();
 		}
 	}
 }

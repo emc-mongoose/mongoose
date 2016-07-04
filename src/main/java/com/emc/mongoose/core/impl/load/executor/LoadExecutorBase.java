@@ -1086,18 +1086,18 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public final void await()
+	public final boolean await()
 	throws InterruptedException, RemoteException {
-		await(Long.MAX_VALUE, TimeUnit.DAYS);
+		return await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
-	public void await(final long timeOut, final TimeUnit timeUnit)
+	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
 		long t, timeOutNanoSec = timeUnit.toNanos(timeOut);
 		if(loadedPrevState != null) {
 			if(isLimitReached) {
-				return;
+				return true;
 			}
 			t = TimeUnit.MICROSECONDS.toNanos(
 				loadedPrevState.getStatsSnapshot().getElapsedTime()
@@ -1134,7 +1134,7 @@ implements LoadExecutor<T> {
 			}
 			if(System.nanoTime() - t > timeOutNanoSec) {
 				LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
-				break;
+				return false;
 			}
 			if(isLimitReached) {
 				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
@@ -1142,6 +1142,7 @@ implements LoadExecutor<T> {
 			}
 			LockSupport.parkNanos(1_000_000);
 		}
+		return true;
 	}
 	//
 	@Override
