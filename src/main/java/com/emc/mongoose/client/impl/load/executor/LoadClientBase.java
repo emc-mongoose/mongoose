@@ -662,12 +662,11 @@ implements LoadClient<T, W> {
 			LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 			// CIRCULARITY: shutdown is disabled
 			if(!isCircular) {
-				final long timeOutSec = appConfig.getLoadLimitTime();
 				remotePutExecutor.shutdown();
 				try {
 					if(
 						!remotePutExecutor.awaitTermination(
-							timeOutSec > 0 ? timeOutSec : Long.MAX_VALUE, TimeUnit.SECONDS
+							REMOTE_TASK_TIMEOUT_SEC, TimeUnit.SECONDS
 						)
 					) {
 						LOG.debug(
