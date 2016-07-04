@@ -263,13 +263,8 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			Thread.currentThread().setName(LoadExecutorBase.this.getName());
-			final String runId = appConfig.getRunId();
-			final String loadJobName = LoadExecutorBase.this.getName();
 				while(!isInterrupted.get()) {
 					logMetrics(Markers.PERF_AVG);
-					if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
-						ChartUtil.addCharts(runId, loadJobName, lastStats);
-					}
 					try {
 						TimeUnit.SECONDS.sleep(metricsPeriodSec);
 					} catch(final InterruptedException e) {
@@ -296,8 +291,13 @@ implements LoadExecutor<T> {
 				);
 			}
 		} else {
+			final String runId = appConfig.getRunId();
+			String loadJobName = LoadExecutorBase.this.getName();
 			if(Markers.PERF_AVG.equals(logMarker)) {
 				LOG.info(logMarker, lastStats == null ? null : lastStats.toString());
+				if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
+					ChartUtil.addCharts(runId, loadJobName, lastStats);
+				}
 			} else if(Markers.PERF_MED.equals(logMarker)) {
 				LOG.info(
 					logMarker, "\"{}\" intermediate: {}", getName(),
@@ -308,6 +308,10 @@ implements LoadExecutor<T> {
 					logMarker, "\"{}\" summary: {}", getName(),
 					lastStats == null ? null : lastStats.toSummaryString()
 				);
+				loadJobName = loadJobName.substring(loadJobName.indexOf('-') + 1,
+					loadJobName.lastIndexOf('-')
+				);
+				ChartUtil.addCharts(runId, loadJobName, lastStats, totalThreadCount);
 			}
 		}
 	}
@@ -582,15 +586,6 @@ implements LoadExecutor<T> {
 				refreshStats();
 				ioStats.close();
 				logMetrics(Markers.PERF_SUM); // provide summary metrics
-				if (true) { // todo make some webui flag here
-					final String runId = appConfig.getRunId();
-					String loadJobName = LoadExecutorBase.this.getName();
-					loadJobName = loadJobName.substring(loadJobName.indexOf('-') + 1,
-						loadJobName.lastIndexOf('-')
-					);
-					final String itemDataSize = appConfig.getItemDataSize().toString();
-					ChartUtil.addCharts(runId, loadJobName, lastStats, totalThreadCount);
-				}
 				if(medIoStats != null && medIoStats.isStarted()) {
 					medIoStats.close();
 				}
