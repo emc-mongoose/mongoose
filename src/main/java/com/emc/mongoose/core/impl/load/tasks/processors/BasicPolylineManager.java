@@ -2,7 +2,10 @@ package com.emc.mongoose.core.impl.load.tasks.processors;
 
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  Created on 29.06.16.
@@ -10,6 +13,7 @@ import java.util.List;
 @SuppressWarnings("WeakerAccess")
 public class BasicPolylineManager {
 
+	public static final Map<String, Map<String, BasicPolylineManager>> MANAGERS = new LinkedHashMap<>();
 	protected final static double BYTES_PER_MBYTE = 1048576;
 
 	private final Polyline durAvg, latAvg, tpAvg, bwAvg;
@@ -26,10 +30,6 @@ public class BasicPolylineManager {
 		latAvg.addPoint(new Point(ordinate, metricsSnapshot.getLatencyAvg()));
 		tpAvg.addPoint(new Point(ordinate, metricsSnapshot.getSuccRateMean()));
 		bwAvg.addPoint(new Point(ordinate, metricsSnapshot.getByteRateMean() / BYTES_PER_MBYTE));
-//		durAvg.addPoint(new Point(ordinate + 1, metricsSnapshot.getDurationAvg() + 1));
-//		latAvg.addPoint(new Point(ordinate + 1, metricsSnapshot.getLatencyAvg() + 1));
-//		tpAvg.addPoint(new Point(ordinate + 1, metricsSnapshot.getSuccRateMean() + 1));
-//		bwAvg.addPoint(new Point(ordinate + 1, (metricsSnapshot.getByteRateMean() / BYTES_PER_MBYTE) + 1));
 	}
 
 	protected final Polyline durAvg() {

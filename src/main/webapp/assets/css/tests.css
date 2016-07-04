@@ -43,11 +43,6 @@
     font-size: 20px;
 }
 
-.icon-check:before {
-    content: "\61";
-    font-size: 20px;
-}
-
 .icon-delete:before {
     content: "\65";
     font-size: 20px;
@@ -74,6 +69,50 @@
     z-index: 1000;
     opacity: 1;
 }
+
+.icon-stop-common:before {
+    content: "\62";
+    font-size: 20px;
+    color: black;
+}
+
+.icon-delete-common:before {
+    content: "\65";
+    font-size: 20px;
+    color: black;
+}
+
+.icon-delete-common {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    display: inline-block;
+    position: relative;
+    top: 11px;
+    z-index: 1000;
+    opacity: 1;
+    color: black;
+    margin: 10px;
+}
+
+.icon-stop-common {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    display: inline-block;
+    position: relative;
+    top: 11px;
+    z-index: 1000;
+    opacity: 1;
+    color: black;
+    margin: 10px;
+}
+
+.icon-check:before {
+    content: "\61";
+    font-size: 20px;
+}
+
 
 .icon-check {
     width: 20px;
@@ -120,13 +159,18 @@
     z-index: 2000;
 }
 
+.list-group-item {
+    cursor: pointer;
+    color: black;
+}
+
 .list-group-item.stopped {
     background-color: rgba(8, 18, 32, 0.55) !important;
     border-color: rgba(8, 18, 32, 0.55) !important;
     color: white !important;
 }
 
-.list-group-item.stopped.active {
+.list-group-item.stopped.ui-selected {
     z-index: 2;
     color: #fff;
     background-color: #3691d1 !important;

@@ -89,7 +89,7 @@ define([
 			getCharts(testId);
 		}
 	}
-
+	
 	function getCharts(testId) {
 		$.get('/charts',
 			{
