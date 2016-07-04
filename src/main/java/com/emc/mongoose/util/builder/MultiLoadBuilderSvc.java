@@ -103,25 +103,23 @@ implements LoadBuilderSvc {
 	@Override
 	public final boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
+
+		long ts = System.currentTimeMillis();
+		long timeOutMilliSec = timeUnit.toSeconds(timeOut);
+		timeOutMilliSec = timeOutMilliSec > 0 ? timeOutMilliSec : Long.MAX_VALUE;
+
 		LoadBuilderSvc loadBuilderSvc;
-		long timeOutSeconds = timeUnit.toSeconds(timeOut);
-		timeOutSeconds = timeOutSeconds > 0 ? timeOutSeconds : Long.MAX_VALUE;
-		while(!loadBuilderSvcs.isEmpty()) {
-			if(timeOutSeconds <= 0) {
-				return false;
-			}
-			for(
-				final Iterator<LoadBuilderSvc> it = loadBuilderSvcs.listIterator();
-				it.hasNext();
-			) {
+
+		while(!loadBuilderSvcs.isEmpty() && System.currentTimeMillis() - ts < timeOutMilliSec) {
+			for(final Iterator<LoadBuilderSvc> it = loadBuilderSvcs.listIterator(); it.hasNext();) {
 				loadBuilderSvc = it.next();
 				if(loadBuilderSvc.await(1, TimeUnit.SECONDS)) {
-					loadBuilderSvcs.remove(loadBuilderSvc);
+					it.remove();
 				}
-				timeOutSeconds --;
 			}
 		}
-		return true;
+
+		return loadBuilderSvcs.isEmpty();
 	}
 	//
 	@Override

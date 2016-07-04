@@ -17,7 +17,6 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
-import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
@@ -30,11 +29,13 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -530,14 +531,14 @@ implements LoadClient<T, W> {
 						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)
 					];
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
-					do {
+					while(!remotePutExecutor.isShutdown()) {
 						m += loadSvc.put(items, from + m, to);
 						if(m < n) {
 							LockSupport.parkNanos(1);
 						} else {
 							break;
 						}
-					} while(!remotePutExecutor.isShutdown());
+					}
 					counterSubm.addAndGet(n);
 					break;
 				} catch(final IOException e) {
@@ -716,50 +717,27 @@ implements LoadClient<T, W> {
 	@Override
 	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
-		//
-		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			remoteLoadMap.size() + 1,
-			new NamingThreadFactory(String.format("awaitWorker<%s>", getName()), true)
-		);
-		awaitExecutor.submit(
-			new Runnable() {
-				@Override
-				public void run() {
-					// wait the remaining tasks to be transmitted to load servers
-					LOG.debug(
-						Markers.MSG, "{}: waiting remaining {} tasks to complete", LoadClientBase.this.getName(),
-						remotePutExecutor.getQueue().size() + remotePutExecutor.getActiveCount()
-					);
-					try {
-						if(!remotePutExecutor.awaitTermination(timeOut, timeUnit)) {
-							remotePutExecutor.shutdownNow();
-						}
-					} catch(final InterruptedException e) {
-						LOG.debug(Markers.MSG, "Interrupted");
-					}
+
+		long ts = System.currentTimeMillis();
+		long timeOutMilliSec = timeUnit.toMillis(timeOut);
+		timeOutMilliSec = timeOutMilliSec > 0 ? timeOutMilliSec : Long.MAX_VALUE;
+
+		final Set<String> loadSvcAddrs = remoteLoadMap.keySet();
+		String loadSvcAddr;
+
+		while(!loadSvcAddrs.isEmpty() && System.currentTimeMillis() - ts < timeOutMilliSec) {
+			for(final Iterator<String> it = loadSvcAddrs.iterator(); it.hasNext();) {
+				loadSvcAddr = it.next();
+				if(remoteLoadMap.get(loadSvcAddr).await(1, TimeUnit.SECONDS)) {
+					it.remove();
 				}
 			}
-		);
-		for(final String addr : remoteLoadMap.keySet()) {
-			awaitExecutor.submit(new AwaitLoadJobTask(remoteLoadMap.get(addr), timeOut, timeUnit));
 		}
-		/*awaitExecutor.submit(
-			new Runnable() {
-				@Override
-				public final void run() {
-					try {
-						LoadClientBase.super.await(timeOut, timeUnit);
-					} catch(final InterruptedException | RemoteException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Failed to await");
-					}
-				}
-			}
-		);*/
-		awaitExecutor.shutdown();
-		try {
-			return awaitExecutor.awaitTermination(timeOut, timeUnit);
-		} finally {
-			awaitExecutor.shutdownNow();
+
+		if(!remotePutExecutor.isTerminated()) {
+			remotePutExecutor.shutdownNow();
 		}
+
+		return loadSvcAddrs.isEmpty();
 	}
 }

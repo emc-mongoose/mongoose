@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,13 +61,16 @@ implements AppConfig {
 		setDefaultExpressionEngine(new DefaultExpressionEngine());
 	}
 
+	public static URI getBaseUriForClass(final Class<?> cls)
+	throws URISyntaxException {
+		return cls.getProtectionDomain().getCodeSource().getLocation().toURI();
+	}
+
 	// http://stackoverflow.com/a/29665447
 	public static String getBasePathForClass(final Class<?> cls) {
 		try {
 			String basePath;
-			final File clsFile = new File(
-				cls.getProtectionDomain().getCodeSource().getLocation().toURI().getPath()
-			);
+			final File clsFile = new File(getBaseUriForClass(cls).getPath());
 			if(
 				clsFile.isFile() ||
 				clsFile.getPath().endsWith(".jar") ||
