@@ -2,7 +2,6 @@ package com.emc.mongoose.system.feature.distributed;
 
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
-import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
@@ -11,7 +10,6 @@ import com.emc.mongoose.system.base.StandaloneClientTestBase;
 import com.emc.mongoose.system.tools.BufferingOutputStream;
 import com.emc.mongoose.system.tools.StdOutUtil;
 import com.emc.mongoose.util.client.api.StorageClient;
-import com.sun.org.apache.regexp.internal.RE;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.Assert;
@@ -66,11 +64,11 @@ extends StandaloneClientTestBase {
 					CREATED_ACTUALLY_COUNT = client.create(
 						itemOutput, ITEM_COUNT, CONCURRENCY_LEVEL, 0, ITEM_SIZE_MAX, 1
 					);
-					TimeUnit.SECONDS.sleep(1);
+					TimeUnit.SECONDS.sleep(10);
 					READ_ACTUALLY_COUNT = client.read(
 						itemOutput.getInput(), null, ITEM_COUNT, CONCURRENCY_LEVEL, true
 					);
-					TimeUnit.SECONDS.sleep(1);
+					TimeUnit.SECONDS.sleep(10);
 					RunIdFileManager.closeAll(RUN_ID);
 					STD_OUT_CONTENT = stdOutStream.toByteArray();
 				}

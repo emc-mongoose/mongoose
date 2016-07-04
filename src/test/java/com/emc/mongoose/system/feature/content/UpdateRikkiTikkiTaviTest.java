@@ -86,14 +86,14 @@ extends StandaloneClientTestBase {
 				if(header) {
 					header = false;
 				} else {
-					if(OBJ_SIZE != Integer.parseInt(nextRec.get(3))) {
+					if(OBJ_SIZE != Integer.parseInt(nextRec.get(4))) {
 						Assert.fail(
-							"The size of the read data " + nextRec.get(3) + " is not equal to " +
-								OBJ_SIZE
+							"The size of the read data " + nextRec.get(4) + " is not equal to " +
+							OBJ_SIZE
 						);
 					}
-					if(0 != Integer.parseInt(nextRec.get(4))) {
-						Assert.fail("The status \"" + nextRec.get(4) + "\" is not successful");
+					if(0 != Integer.parseInt(nextRec.get(5))) {
+						Assert.fail("The status \"" + nextRec.get(5) + "\" is not successful");
 					}
 				}
 			}

@@ -6,4 +6,5 @@ public interface Scenario
 extends Job {
 	String DIR_SCENARIO = "scenario";
 	String FNAME_DEFAULT_SCENARIO = "default.json";
+	String FNAME_SCENARIO_SCHEMA = "scenario-schema.json";
 }

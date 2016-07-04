@@ -62,7 +62,7 @@ extends HttpStorageMockTestBase {
 			//  Run mongoose default scenario in standalone mode
 			new ScenarioRunner(rtConfig).run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(10);
 			STD_OUTPUT_STREAM = stdOutStream;
 		}
 		//

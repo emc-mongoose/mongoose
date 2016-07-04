@@ -1,0 +1,25 @@
+{
+	"type" : "for",
+	"config" : {
+		"load" : {
+			"threads" : 100,
+			"limit" : {
+				"count" : 10000
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "for",
+			"value" : 10,
+			"jobs" : [
+				{
+					"type" : "load"
+				}
+			]
+		}, {
+			"type" : "command",
+			"value" : "foo.sh"
+		}
+	]
+}

@@ -785,7 +785,7 @@ implements LoadExecutor<T> {
 			LOG.info(
 				Markers.PERF_TRACE,
 				strBuilder
-					//.append(loadType).append(',')
+					.append(loadType).append(',')
 					.append(nodeAddr == null ? "" : nodeAddr).append(',')
 					.append(
 						itemPath == null ?
@@ -827,7 +827,7 @@ implements LoadExecutor<T> {
 			respDataLatency = ioTask.getDataLatency();
 		final long countBytesDone = ioTask.getCountBytesDone();
 		// perf trace logging
-		if(!preconditionFlag && !(this instanceof MixedLoadExecutor)) {
+		if(!(preconditionFlag || this instanceof MixedLoadExecutor)) {
 			logTrace(
 				nodeAddr, item, status, ioTask.getReqTimeStart(), countBytesDone, reqDuration,
 				respLatency, respDataLatency
@@ -854,16 +854,18 @@ implements LoadExecutor<T> {
 			//
 			lastItem = item;
 			// put into the output buffer
-			try {
-				itemOutBuff.put(item);
-				if(isCircular) {
-					uniqueItems.putIfAbsent(item.getName(), item);
+			if(!(this instanceof MixedLoadExecutor)) {
+				try {
+					itemOutBuff.put(item);
+					if(isCircular) {
+						uniqueItems.putIfAbsent(item.getName(), item);
+					}
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.DEBUG, e, "{}: failed to put the item into the output buffer",
+						getName()
+					);
 				}
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.DEBUG, e,
-					"{}: failed to put the item into the output buffer", getName()
-				);
 			}
 		} else {
 			ioStats.markFail();
@@ -909,7 +911,7 @@ implements LoadExecutor<T> {
 				respDataLatency = ioTask.getDataLatency();
 				countBytesDone = ioTask.getCountBytesDone();
 				// perf trace logging
-				if(!preconditionFlag) {
+				if(!(preconditionFlag || this instanceof MixedLoadExecutor)) {
 					logTrace(
 						nodeAddr, item, status, ioTask.getReqTimeStart(), countBytesDone,
 						reqDuration, respLatency, respDataLatency
@@ -931,16 +933,18 @@ implements LoadExecutor<T> {
 					//
 					lastItem = item;
 					// pass data item to a consumer
-					try {
-						itemOutBuff.put(item);
-						if(isCircular) {
-							uniqueItems.putIfAbsent(item.getName(), item);
+					if(!(this instanceof MixedLoadExecutor)) {
+						try {
+							itemOutBuff.put(item);
+							if(isCircular) {
+								uniqueItems.putIfAbsent(item.getName(), item);
+							}
+						} catch(final IOException e) {
+							LogUtil.exception(
+								LOG, Level.DEBUG, e,
+								"{}: failed to put the item into the output buffer", getName()
+							);
 						}
-					} catch(final IOException e) {
-						LogUtil.exception(
-							LOG, Level.DEBUG, e,
-							"{}: failed to put the item into the output buffer", getName()
-						);
 					}
 				} else {
 					ioStats.markFail();

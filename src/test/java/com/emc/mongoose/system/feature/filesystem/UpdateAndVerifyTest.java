@@ -55,17 +55,17 @@ extends FileSystemTestBase {
 			countWritten = client.create(
 				new ListItemOutput<>(itemBuffWritten), COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10B")
 			);
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(10);
 			countUpdated = client.update(
 				new ListItemInput<>(itemBuffWritten), new ListItemOutput<>(itemBuffUpdated),
 				countWritten, 1, 1
 			);
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(10);
 			countRead = client.read(
 				new ListItemInput<>(itemBuffUpdated), null, countUpdated, 10, true
 			);
-			TimeUnit.SECONDS.sleep(1);
 			RunIdFileManager.flushAll();
+			TimeUnit.SECONDS.sleep(10);
 		}
 	}
 	//
@@ -116,15 +116,15 @@ extends FileSystemTestBase {
 				CSVFormat.RFC4180
 			)
 		) {
-			String v;
+			String status;
 			boolean firstRow = true;
 			for(final CSVRecord csvRec : csvParser) {
-				v = csvRec.get(4);
+				status = csvRec.get(5);
 				if(firstRow) {
 					firstRow = false;
 					continue;
 				}
-				Assert.assertEquals(0, Integer.valueOf(v).intValue());
+				Assert.assertEquals(0, Integer.valueOf(status).intValue());
 			}
 		} catch(final Exception e) {
 			Assert.fail(e.toString());

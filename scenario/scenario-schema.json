@@ -8,7 +8,7 @@
 			"type" : "string",
 			"enum" : [
 				"command",
-				"each",
+				"for",
 				"load",
 				"parallel",
 				"precondition",
@@ -23,7 +23,13 @@
 			}
 		},
 		"value" : {
-			"type" : "string"
+			"oneOf" : [
+				{
+					"type" : "string"
+				}, {
+					"type" : "integer"
+				}
+			]
 		},
 		"blocking" : {
 			"type" : "boolean"

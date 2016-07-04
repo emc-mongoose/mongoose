@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -42,6 +43,8 @@ extends DistributedLoadBuilderTestBase  {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		LogValidator.removeLogDirectory(RUN_ID);
+		LogValidator.removeLogDirectory(RUN_ID + "Write");
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID + "Write");
 		System.setProperty(AppConfig.KEY_ITEM_TYPE, "container");
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
@@ -55,7 +58,7 @@ extends DistributedLoadBuilderTestBase  {
 		//
 		new ScenarioRunner(rtConfig).run();
 		//  Wait for "Scenario end" message
-		TimeUnit.SECONDS.sleep(1);
+		TimeUnit.SECONDS.sleep(10);
 		RunIdFileManager.flushAll();
 		//
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);

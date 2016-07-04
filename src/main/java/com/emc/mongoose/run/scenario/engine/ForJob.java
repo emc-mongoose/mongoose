@@ -18,7 +18,7 @@ import static com.emc.mongoose.common.io.value.PatternDefinedInput.PATTERN_CHAR;
 /**
  Created by andrey on 04.06.16.
  */
-public final class EachJob
+public final class ForJob
 extends SequentialJob {
 
 	private final static Logger LOG = LogManager.getLogger();
@@ -26,17 +26,48 @@ extends SequentialJob {
 
 	private final String replaceMarker;
 	private final List valueSeq;
+	private final long count;
 
-	public EachJob(final AppConfig appConfig, final Map<String, Object> subTree) {
+	public ForJob(final AppConfig appConfig, final Map<String, Object> subTree) {
 		super(appConfig, subTree);
-		this.replaceMarker = (String) subTree.get(KEY_NODE_VALUE);
-		this.valueSeq = (List) subTree.get(KEY_NODE_IN);
-		// calls "appendNewJob", invoke it manually again after "valueSeq" is initialized already
+		final Object value = subTree.get(KEY_NODE_VALUE);
+		if(value != null) {
+			if(value instanceof Long) {
+				count = (Long) value;
+				replaceMarker = null;
+				valueSeq = null;
+			} else if(value instanceof Integer) {
+				count = (Integer) value;
+				replaceMarker = null;
+				valueSeq = null;
+			} else if(value instanceof Short) {
+				count = (Short) value;
+				replaceMarker = null;
+				valueSeq = null;
+			} else if(value instanceof String) {
+				count = 0;
+				this.replaceMarker = (String) subTree.get(KEY_NODE_VALUE);
+				this.valueSeq = (List) subTree.get(KEY_NODE_IN);
+			} else {
+				throw new IllegalArgumentException("Unexpected value: \"" + value + "\"");
+			}
+		} else {
+			count = Long.MAX_VALUE;
+			replaceMarker = null;
+			valueSeq = null;
+		}
+		// calls "appendNewJob", invoking it manually again after "valueSeq" is initialized already
 		loadSubTree(subTree);
 	}
 
 	@Override
 	protected void loadSubTree(final Map<String, Object> subTree) {
+
+		if(count > 0) {
+			super.loadSubTree(subTree);
+			return;
+		}
+
 		if(valueSeq == null) {
 			// skip the early invocation from the base class constructor while "valueSeq" is not
 			// initialized yet
@@ -262,8 +293,21 @@ extends SequentialJob {
 	}
 
 	@Override
+	public final void run() {
+		if(count > 0) {
+			for(long i = 0; i < count; i++) {
+				LOG.info(Markers.MSG, "{}: starting step #{}", toString(), i);
+				super.run();
+			}
+		} else {
+			super.run();
+		}
+	}
+
+	@Override
 	public final String toString() {
-		return "eachJob#" + hashCode();
+		return "forJob" + (count > 0 ? (count == Long.MAX_VALUE ? "Infinite" : count) : "") + "#" +
+			hashCode();
 	}
 
 	@Override
@@ -272,7 +316,9 @@ extends SequentialJob {
 		try {
 			super.close();
 		} finally {
-			valueSeq.clear();
+			if(valueSeq != null) {
+				valueSeq.clear();
+			}
 		}
 	}
 }

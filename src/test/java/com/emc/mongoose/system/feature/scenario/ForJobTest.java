@@ -30,13 +30,13 @@ import static com.emc.mongoose.system.tools.TestConstants.SUMMARY_INDICATOR;
 /**
  Created by andrey on 08.06.16.
  */
-public class ForEachJobTest
+public class ForJobTest
 extends HttpStorageMockTestBase {
 
-	private final static String RUN_ID = ForEachJobTest.class.getCanonicalName();
+	private final static String RUN_ID = ForJobTest.class.getCanonicalName();
 	private final static String SCENARIO_JSON =
 		"{" +
-		"	\"type\" : \"each\"," +
+		"	\"type\" : \"for\"," +
 		"		\"value\" : \"size\"," +
 		"		\"in\" : [" +
 		"			0, \"1KB\", \"1MB\"" +
@@ -57,7 +57,7 @@ extends HttpStorageMockTestBase {
 		"	}," +
 		"		\"jobs\" : [" +
 		"	{" +
-		"		\"type\" : \"each\"," +
+		"		\"type\" : \"for\"," +
 		"		\"value\" : \"threads\"," +
 		"		\"in\" : [" +
 		"			1, 10, 100" +

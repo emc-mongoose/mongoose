@@ -125,9 +125,9 @@ extends ScenarioTestBase {
 					continue;
 				}
 				values = nextLine.split(",");
-				Assert.assertEquals(values.length, 9);
-				if(!UNIQ_TRACES.add(values[2])) {
-					DUP_TRACES.add(values[2]);
+				Assert.assertEquals(values.length, 10);
+				if(!UNIQ_TRACES.add(values[3])) {
+					DUP_TRACES.add(values[3]);
 				}
 			}
 		} catch(final IOException e) {

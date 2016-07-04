@@ -54,10 +54,10 @@ extends FileSystemTestBase {
 			client.create(
 				new ListItemOutput<>(itemBuff), COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("8KB")
 			);
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(5);
 			countRead = client.read(new ListItemInput<>(itemBuff), null, 0, 100, true);
-			TimeUnit.SECONDS.sleep(1);
 			RunIdFileManager.flushAll();
+			TimeUnit.SECONDS.sleep(5);
 		}
 	}
 	//

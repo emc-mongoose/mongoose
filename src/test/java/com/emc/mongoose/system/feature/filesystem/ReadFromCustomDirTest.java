@@ -52,9 +52,9 @@ extends FileSystemTestBase {
 				.build()
 		) {
 			countWritten = client.create(itemBuff, COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("8KB"));
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(10);
 			countRead = client.read(itemBuff, null, countWritten, 10, true);
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(10);
 			RunIdFileManager.flushAll();
 		}
 	}

@@ -35,7 +35,7 @@ extends DistributedClientTestBase {
 	//
 	@BeforeClass
 	public static void setUpClass()
-		throws Exception {
+	throws Exception {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(AppConfig.KEY_ITEM_DATA_CONTENT_FILE, "conf/content/zerobytes");
 		DistributedClientTestBase.setUpClass();
@@ -56,6 +56,7 @@ extends DistributedClientTestBase {
 			);
 			//
 			RunIdFileManager.flushAll();
+			TimeUnit.SECONDS.sleep(10);
 		}
 	}
 	//
