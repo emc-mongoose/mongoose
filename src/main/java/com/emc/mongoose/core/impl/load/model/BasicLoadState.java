@@ -62,18 +62,20 @@ implements LoadState<T> {
 	//
 	@Override
 	public boolean isLimitReached(final AppConfig appConfig) {
-		//  time limitations
-		final TimeUnit loadLimitTimeUnit = TimeUnit.SECONDS;
-		final long loadLimitTimeValue = appConfig.getLoadLimitTime();
-		final long loadTimeMicroSec = loadLimitTimeValue > 0 ?
-			loadLimitTimeUnit.toMicros(loadLimitTimeValue) : Long.MAX_VALUE;
-		final long stateTimeMicroSec = ioStatsSnapshot.getElapsedTime();
-		//  count limitations
-		final long counterResults = ioStatsSnapshot.getSuccCount() + ioStatsSnapshot.getFailCount();
-		final long loadLimitCount = appConfig.getLoadLimitCount();
-		final long maxCount = loadLimitCount > 0 ?
-			appConfig.getLoadLimitCount() : Long.MAX_VALUE;
-		return (counterResults >= maxCount) || (stateTimeMicroSec >= loadTimeMicroSec);
+		//  time limit
+		long timeLimit = appConfig.getLoadLimitTime();
+		timeLimit = timeLimit > 0 ? TimeUnit.SECONDS.toMicros(timeLimit) : Long.MAX_VALUE;
+		final long elapsedTime = ioStatsSnapshot.getElapsedTime();
+		// count limit
+		final long resultsCount = ioStatsSnapshot.getSuccCount() + ioStatsSnapshot.getFailCount();
+		long countLimit = appConfig.getLoadLimitCount();
+		countLimit = countLimit > 0 ? countLimit : Long.MAX_VALUE;
+		// size limit
+		final long bytesDone = ioStatsSnapshot.getByteCount();
+		long sizeLimit = appConfig.getLoadLimitSize();
+		sizeLimit = sizeLimit > 0 ? sizeLimit : Long.MAX_VALUE;
+		//
+		return timeLimit > elapsedTime || countLimit > resultsCount || sizeLimit > bytesDone;
 	}
 	//
 	public static class Builder<T extends Item, U extends LoadState<T>>

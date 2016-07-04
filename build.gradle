@@ -402,7 +402,7 @@ dependencies {
 		library.log4j_api_plus_core,
 		library.httpcore,
 		library.jackson_databind,
-		library.json_schema_validator,
+		//library.json_schema_validator,
 	)
 	scenarioRuntime (
 		library.runtime_logging,

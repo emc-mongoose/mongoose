@@ -217,11 +217,11 @@ define(['jquery',
 		}
 
 		function updateAxisX() {
-			xAxis = axis1.scale(xScale).orient('bottom').innerTickSize(-AXIS_Y_WIDTH).outerTickSize(0).tickPadding(10);
+			xAxis = axis1.scale(xScale).orient('bottom').innerTickSize(-AXIS_Y_WIDTH).outerTickSize(0).tickPadding(10)
 		}
 
 		function updateAxisY() {
-			yAxis = axis2.scale(yScale).orient('left').ticks(5).innerTickSize(-AXIS_X_WIDTH).outerTickSize(0).tickPadding(10);
+			yAxis = axis2.scale(yScale).orient('left').ticks(5).innerTickSize(-AXIS_X_WIDTH).outerTickSize(0).tickPadding(10)
 		}
 
 		function updateLine() {
@@ -229,16 +229,17 @@ define(['jquery',
 		}
 
 		function switchScaling(scale, axis) {
+			const s = d3.scale.log().domain([1, 10000]).range([1000, 0]);
 			switch (scale) {
 				case SCALE.LINEAR:
 					switch (axis) {
 						case 'x':
 							setLinearXScale();
-							updateAxisX();
+							xAxis = axis1.scale(xScale).orient('bottom').innerTickSize(-AXIS_Y_WIDTH).outerTickSize(0).tickPadding(10);
 							break;
 						case 'y':
 							setLinearYScale();
-							updateAxisY();
+							yAxis = axis2.scale(yScale).orient('left').ticks(5).innerTickSize(-AXIS_X_WIDTH).outerTickSize(0).tickPadding(10);
 							break;
 					}
 					break;
@@ -246,11 +247,11 @@ define(['jquery',
 					switch (axis) {
 						case 'x':
 							setLogXScale();
-							updateAxisX();
+							xAxis = axis1.scale(xScale).orient('bottom').ticks(5, d3.format(",d")).innerTickSize(-AXIS_Y_WIDTH).outerTickSize(0).tickPadding(10);
 							break;
 						case 'y':
 							setLogYScale();
-							updateAxisY();
+							yAxis = axis2.scale(yScale).orient('left').ticks(5, d3.format(",d")).innerTickSize(-AXIS_X_WIDTH).outerTickSize(0).tickPadding(10);
 							break;
 					}
 					break;
@@ -447,6 +448,8 @@ define(['jquery',
 			}
 		}
 
+		const simpleChartPattern = new RegExp('^[0-9]+-.+');
+
 		function processChartBoards(chartBoards, metric, notOverrideChartBoards, notOverrideMetric) {
 			if (!notOverrideChartBoards) {
 				currentChartBoards = chartBoards;
@@ -454,7 +457,21 @@ define(['jquery',
 			if (!notOverrideMetric) {
 				currentMetric = metric;
 			}
+			const simpleCharts = {};
+			const forEachCharts = {};
 			if (currentChartBoards) {
+				$.each(currentChartBoards, function (chartBoardName) {
+					if (simpleChartPattern.test(chartBoardName)) {
+						simpleCharts[chartBoardName] = currentChartBoards[chartBoardName];
+					} else {
+						forEachCharts[chartBoardName] = currentChartBoards[chartBoardName];
+					}
+				});
+				if (Object.keys(simpleCharts).length > 0) {
+					currentChartBoards = simpleCharts;
+				} else {
+					currentChartBoards = forEachCharts;
+				}
 				$.each(currentChartBoards, function (chartBoardName, chartBoardContent) {
 					if (!doesSvgExist(chartBoardName)) {
 						currentTimeUnit = TIME_UNIT.seconds;
@@ -476,10 +493,16 @@ define(['jquery',
 			createScaleSwitches(svgCanvasChain, chartBoardName);
 		}
 
-		function updateAxesLabels(svgElement, metricName) {
+		function updateAxesLabels(svgElement, metricName, altMetricName) {
 			svgElement.select('.x-axis-text')
 				.duration(750)
-				.text(currentTimeUnit.label);
+				.text(function () {
+					if (altMetricName === undefined) {
+						return currentTimeUnit.label;
+					} else {
+						return altMetricName;
+					}
+				}());
 			svgElement.select('.y-axis-text')
 				.duration(750)
 				.text(constants.CHART_METRICS_UNITS_FORMATTER[metricName]);
@@ -517,8 +540,12 @@ define(['jquery',
 					return colorizer(chart.name);
 				})
 				.style('stroke-width', 1);
+			var chartName;
 			const points = chartContainer.selectAll('circle')
 				.data(function (chart) {
+					$.each(chart.values, function(index, value){
+						value['color'] = colorizer(chart.name);
+					});
 					return chart.values;
 				});
 			points.enter().append('circle')
@@ -528,7 +555,10 @@ define(['jquery',
 				.attr('cy', function (value) {
 					return scaledYAccessor(value);
 				})
-				.attr('r', 3);
+				.attr('r', 3)
+				.style('fill', function (value) {
+					return value.color;
+				});
 			svgCanvasElement.selectAll('.axis path, .axis line')
 				.style('fill', 'none')
 				.style('stroke', 'grey')
@@ -635,7 +665,11 @@ define(['jquery',
 			});
 			colorizer.domain(names);
 			updateAxes(svg, chartArr);
-			updateAxesLabels(svg, metric);
+			if (simpleChartPattern.test(chartBoardName)) {
+				updateAxesLabels(svg, metric);
+			} else {
+				updateAxesLabels(svg, metric, 'threads');
+			}
 			const svgCanvas = d3.select(svgSelector + ' g');
 			updateCharts(svgCanvas, chartArr, chartBoardName, metric);
 			updateLegend(svgCanvas, chartArr, chartBoardName, metric);

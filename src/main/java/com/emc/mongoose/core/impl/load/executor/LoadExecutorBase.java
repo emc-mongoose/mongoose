@@ -30,9 +30,7 @@ import com.emc.mongoose.core.impl.load.model.BasicItemGenerator;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.model.LoadRegistry;
 import com.emc.mongoose.core.impl.load.model.metrics.BasicIoStats;
-import com.emc.mongoose.core.impl.load.tasks.processors.BasicPolylineManager;
 import com.emc.mongoose.core.impl.load.tasks.processors.ChartUtil;
-import com.emc.mongoose.core.impl.load.tasks.processors.PolylineManager;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,10 +41,8 @@ import java.io.InterruptedIOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -96,7 +92,9 @@ implements LoadExecutor<T> {
 		isShutdown = new AtomicBoolean(false),
 		isInterrupted = new AtomicBoolean(false),
 		isClosed = new AtomicBoolean(false);
-	protected boolean isLimitReached = false;
+	protected volatile boolean
+		isLimitReached = false,
+		isPostProcessDone = false;
 	protected final AtomicLong
 		counterSubm = new AtomicLong(0),
 		countRej = new AtomicLong(0),
@@ -175,7 +173,7 @@ implements LoadExecutor<T> {
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Interrupted");
 			} finally {
-				LOG.debug(Markers.MSG, "{}: results dispatched finished", getName());
+				LOG.debug(Markers.MSG, "{}: results dispatcher finished", getName());
 			}
 		}
 	}
@@ -201,6 +199,8 @@ implements LoadExecutor<T> {
 				} else {
 					postProcessUniqueItemsFinally(items);
 				}
+			} else if(isDone()) {
+				isPostProcessDone = true;
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(
@@ -267,15 +267,12 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			Thread.currentThread().setName(LoadExecutorBase.this.getName());
-			if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) {
-				final String runId = appConfig.getRunId();
-				final String loadJobName = LoadExecutorBase.this.getName();
-				final PolylineManager polylineManager = new PolylineManager();
+			final String runId = appConfig.getRunId();
+			final String loadJobName = LoadExecutorBase.this.getName();
 				while(!isInterrupted.get()) {
 					logMetrics(Markers.PERF_AVG);
-					if (true) { // todo make some webui flag here
-						polylineManager.updatePolylines(lastStats);
-						ChartUtil.addChart(runId, loadJobName, polylineManager);
+					if (!appConfig.getLoadMetricsPrecondition() && !appConfig.getRunMode().equals(RUN_MODE_SERVER)) { // todo make some webui flag here
+						ChartUtil.addCharts(runId, loadJobName, lastStats);
 					}
 					try {
 						TimeUnit.SECONDS.sleep(metricsPeriodSec);
@@ -283,7 +280,6 @@ implements LoadExecutor<T> {
 						break;
 					}
 				}
-			}
 		}
 	}
 	//
@@ -556,8 +552,6 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	private static Map<String, BasicPolylineManager> forEachManagers = new HashMap<>();
-	//
 	protected void interruptActually() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			final StringBuilder sb = new StringBuilder("Interrupt came from:");
@@ -572,15 +566,6 @@ implements LoadExecutor<T> {
 			shutdownActually();
 		}
 		//
-		LOG.debug(Markers.MSG, "{}: waiting the output buffer to become empty", getName());
-		for(int i = 0; i < 1000 && !itemOutBuff.isEmpty(); i ++) {
-			try {
-				Thread.sleep(10);
-			} catch(final InterruptedException e) {
-				break;
-			}
-		}
-		//
 		try {
 			ioConfig.close(); // disables connection drop failures
 		} catch(final IOException e) {
@@ -592,15 +577,15 @@ implements LoadExecutor<T> {
 				refreshStats();
 				ioStats.close();
 				logMetrics(Markers.PERF_SUM); // provide summary metrics
-				final String runId = appConfig.getRunId();
-				String loadJobName = LoadExecutorBase.this.getName();
-				loadJobName = loadJobName.substring(loadJobName.indexOf('-') + 1, loadJobName.lastIndexOf('-'));
-				if (!forEachManagers.containsKey(loadJobName)) {
-					forEachManagers.put(loadJobName, new BasicPolylineManager());
+				if (true) { // todo make some webui flag here
+					final String runId = appConfig.getRunId();
+					String loadJobName = LoadExecutorBase.this.getName();
+					loadJobName = loadJobName.substring(loadJobName.indexOf('-') + 1,
+						loadJobName.lastIndexOf('-')
+					);
+					final String itemDataSize = appConfig.getItemDataSize().toString();
+					ChartUtil.addCharts(runId, loadJobName, lastStats, totalThreadCount);
 				}
-				final BasicPolylineManager polylineManager = forEachManagers.get(loadJobName);
-				polylineManager.updatePolylines(totalThreadCount, lastStats);
-				ChartUtil.addChart(runId, loadJobName, polylineManager);
 				if(medIoStats != null && medIoStats.isStarted()) {
 					medIoStats.close();
 				}
@@ -1042,15 +1027,15 @@ implements LoadExecutor<T> {
 		return medIoStats == null ? null : medIoStats.getSnapshot();
 	}
 	//
-	private boolean isDoneCountLimit() {
-		return counterResults.get() >= countLimit;
+	protected final boolean isDoneCountLimit() {
+		return countLimit > 0 && counterResults.get() >= countLimit;
 	}
 	//
-	private boolean isDoneSizeLimit() {
-		return lastStats.getByteCount() >= sizeLimit;
+	protected final boolean isDoneSizeLimit() {
+		return sizeLimit > 0 && lastStats.getByteCount() >= sizeLimit;
 	}
 	//
-	private boolean isDoneAllSubm() {
+	protected boolean isDoneAllSubm() {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "{}: shut down flag: {}, results: {}, submitted: {}",
@@ -1058,6 +1043,31 @@ implements LoadExecutor<T> {
 			);
 		}
 		return isShutdown.get() && counterResults.get() >= counterSubm.get();
+	}
+	//
+	private boolean isDone() {
+		if(isDoneAllSubm()) {
+			if(!isCircular) {
+				LOG.debug(
+					Markers.MSG, "{}: done due to \"done all submitted\" state",
+					getName()
+				);
+				return true;
+			}
+		}
+		if(isDoneCountLimit()) {
+			LOG.debug(Markers.MSG, "{}: done due to max count done state", getName());
+			return true;
+		}
+		if(isDoneSizeLimit()) {
+			LOG.debug(Markers.MSG, "{}: done due to max size done state", getName());
+			return true;
+		}
+		if(isLimitReached) {
+			LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
+			return true;
+		}
+		return false;
 	}
 	//
 	@Override
@@ -1086,28 +1096,28 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public final void await()
+	public final boolean await()
 	throws InterruptedException, RemoteException {
-		await(Long.MAX_VALUE, TimeUnit.DAYS);
+		return await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
-	public void await(final long timeOut, final TimeUnit timeUnit)
+	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
-		long t, timeOutNanoSec = timeUnit.toNanos(timeOut);
+		long t, timeOutMilliSec = timeUnit.toMillis(timeOut);
 		if(loadedPrevState != null) {
 			if(isLimitReached) {
-				return;
+				return true;
 			}
-			t = TimeUnit.MICROSECONDS.toNanos(
+			t = TimeUnit.MICROSECONDS.toMillis(
 				loadedPrevState.getStatsSnapshot().getElapsedTime()
 			);
-			timeOutNanoSec -= t;
+			timeOutMilliSec -= t;
 		}
 		//
 		LOG.debug(
 			Markers.MSG, "{}: await for the done condition at most for {}[s]",
-			getName(), TimeUnit.NANOSECONDS.toSeconds(timeOutNanoSec)
+			getName(), TimeUnit.NANOSECONDS.toSeconds(timeOutMilliSec)
 		);
 		t = System.nanoTime();
 		while(true) {
@@ -1115,33 +1125,24 @@ implements LoadExecutor<T> {
 				state.wait(100);
 			}
 			if(isInterrupted.get()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to interrupted state", getName());
+				LOG.debug(Markers.MSG, "{}: await exit due to \"interrupted\" state", getName());
 				break;
 			}
 			if(isClosed.get()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to closed state", getName());
+				LOG.debug(Markers.MSG, "{}: await exit due to \"closed\" state", getName());
 				break;
 			}
-			if(isDoneAllSubm()) {
-				if(!isCircular) {
-					LOG.debug(Markers.MSG, "{}: await exit due to \"done all submitted\" state", getName());
-					break;
-				}
-			}
-			if(isDoneCountLimit()) {
-				LOG.debug(Markers.MSG, "{}: await exit due to max count done state", getName());
-				break;
-			}
-			if(System.nanoTime() - t > timeOutNanoSec) {
+			if(System.currentTimeMillis() - t > timeOutMilliSec) {
 				LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
 				break;
 			}
-			if(isLimitReached) {
-				LOG.debug(Markers.MSG, "{}: await exit due to limits reached state", getName());
+			if(isPostProcessDone) {
+				LOG.debug(Markers.MSG, "{}: await exit due to \"done\" state", getName());
 				break;
 			}
 			LockSupport.parkNanos(1_000_000);
 		}
+		return true;
 	}
 	//
 	@Override

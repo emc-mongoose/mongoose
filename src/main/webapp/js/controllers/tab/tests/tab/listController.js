@@ -4,6 +4,7 @@ define([
 	'../../../../common/util/templatesUtil',
 	'../../../../common/util/cssUtil',
 	'../../../../common/util/tabsUtil',
+	'../../../../common/util/selectable',
 	'../../../../common/constants',
 	'./logsController',
 	'./chartsController',
@@ -13,6 +14,7 @@ define([
              templatesUtil,
              cssUtil,
              tabsUtil,
+             selectable,
              constants,
              logsController,
              chartsController,
@@ -48,13 +50,14 @@ define([
 
 	function updateTestsList(testsObj, fullUpdate) {
 		const testsListBlockElem = $(jqId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.LIST]));
+		testsListBlockElem.selectable();
 		$.each(testsObj, function (runId, runIdInfo) {
 			const runMode = runIdInfo.mode;
 			const runStatus = runIdInfo.status.toLowerCase();
 			var listItemElem = $(jqId([runId.replaceAll('\\.', '\\\.')]));
 			const listItemElemText = runId + " - " + runMode + " - " + runStatus;
 			if (!doesItemExist(listItemElem)) {
-				listItemElem = $('<a/>',
+				listItemElem = $('<li/>',
 					{
 						id: runId,
 						class: listItemElemClass,
@@ -68,6 +71,8 @@ define([
 				if (runStatus !== 'stopped') {
 					const stopIconElem = createStopIcon(runId);
 					listItemElem.append(stopIconElem);
+				} else {
+					$(jqId([runIdForElem(runId), 'stop'])).remove();
 				}
 				const deleteIconElem = createDeleteIcon(runId);
 				listItemElem.append(deleteIconElem);
@@ -80,6 +85,10 @@ define([
 		const testsIds = Object.keys(testsObj);
 		if (fullUpdate) {
 			const lastId = testsIds[testsIds.length - 1];
+			if (lastId) {
+				$(".list-group .list-group-item").removeClass('ui-selected');
+				$(jqId([lastId.replaceAll('\\.', '\\\.')])).addClass('ui-selected');
+			}
 			makeItemActive(lastId, testsObj[lastId]);
 		}
 	}
@@ -110,25 +119,56 @@ define([
 		tooltipSpan.text('Click to stop the test');
 		div.append(tooltipSpan);
 		div.click(function () {
-			const listItemElem = $(jqId([runIdForElem(runId)]));
-			listItemElem.attr('class', listItemElem.attr('class') + ' stopped');
-			listItemElem.attr('status', 'stopped');
-			$(this).remove();
-			const listItemElemText = runId + " - " + (listItemElem.attr('mode')) + " - " + (listItemElem.attr('status'));
-			replaceElementText(listItemElem, listItemElemText);
-			$.ajax({
-				type: 'POST',
-				url: '/run',
-				dataType: 'json',
-				contentType: constants.JSON_CONTENT_TYPE,
-				data: JSON.stringify({ runId: runId }),
-				processData: false
-			}).done(function (testsObj) {
-				updateTestsList(testsObj, false);
-				console.log('Mongoose ran');
+			$('.ui-selected').each(function () {
+				const elemId = $(this).attr('id');
+				if (elemId !== undefined) {
+					stopEvent(elemId);
+
+				}
 			});
 		});
 		return div;
+	}
+
+	function createStopCommonIcon() {
+		const div = $('<div/>', {
+			class: 'icon-stop-common tooltip'
+		});
+		const tooltipSpan = $('<span/>', {
+			class: 'tooltiptext'
+		});
+		tooltipSpan.text('Click to stop chosen tests');
+		div.append(tooltipSpan);
+		div.click(function () {
+			$('.ui-selected').each(function () {
+				const elemId = $(this).attr('id');
+				if (elemId !== undefined) {
+					stopEvent(elemId);
+				}
+			});
+			$(this).remove();
+		});
+		return div;
+	}
+	
+	function stopEvent(runId) {
+		const listItemElem = $(jqId([runIdForElem(runId)]));
+		listItemElem.attr('class', listItemElem.attr('class') + ' stopped');
+		listItemElem.attr('status', 'stopped');
+		$(jqId([runIdForElem(runId), 'stop'])).remove();
+		const listItemElemText = runId + " - " + (listItemElem.attr('mode')) + " - " + (listItemElem.attr('status'));
+		replaceElementText(listItemElem, listItemElemText);
+		$.ajax({
+			type: 'POST',
+			url: '/run',
+			dataType: 'json',
+			contentType: constants.JSON_CONTENT_TYPE,
+			data: JSON.stringify({ runId: runId }),
+			processData: false
+		}).done(function (testsObj) {
+			updateTestsList(testsObj, false);
+			console.log('Mongoose ran');
+		});
 	}
 
 	function createDeleteIcon(runId) {
@@ -142,20 +182,50 @@ define([
 		tooltipSpan.text('Click to remove the test');
 		div.append(tooltipSpan);
 		div.click(function () {
-			const listItemElem = $(jqId([runIdForElem(runId)]));
-			listItemElem.remove();
-			$.ajax({
-				type: 'DELETE',
-				url: '/run',
-				dataType: 'json',
-				contentType: constants.JSON_CONTENT_TYPE,
-				data: JSON.stringify({ runId: runId }),
-				processData: false
-			}).done(function () {
-				console.log('The test is removed');
+			$('.ui-selected').each(function () {
+				const elemId = $(this).attr('id');
+				if (elemId !== undefined) {
+					deleteEvent(elemId);
+				}
 			});
 		});
 		return div;
+	}
+
+	function createDeleteCommonIcon() {
+		const div = $('<div/>', {
+			class: 'icon-delete-common tooltip'
+		});
+		const tooltipSpan = $('<span/>', {
+			class: 'tooltiptext'
+		});
+		tooltipSpan.text('Click to remove chosen tests');
+		div.append(tooltipSpan);
+		div.click(function () {
+			$('.ui-selected').each(function () {
+				const elemId = $(this).attr('id');
+				if (elemId !== undefined) {
+					deleteEvent(elemId);
+				}
+			});
+			$(this).remove();
+		});
+		return div;
+	}
+	
+	function deleteEvent(runId) {
+		const listItemElem = $(jqId([runIdForElem(runId)]));
+		listItemElem.remove();
+		$.ajax({
+			type: 'DELETE',
+			url: '/run',
+			dataType: 'json',
+			contentType: constants.JSON_CONTENT_TYPE,
+			data: JSON.stringify({ runId: runId }),
+			processData: false
+		}).done(function () {
+			console.log('The test is removed');
+		});
 	}
 
 	function createOkIcon(runId) {
@@ -166,15 +236,24 @@ define([
 	}
 
 	function makeItemActive(testId, testMode) {
-		tabsUtil.showTabAsActive(listItemElemClass, testId);
-		if (okIcon) {
-			okIcon.remove();
+		const stopSelector = ".icon-stop-common";
+		const deleteSelector = ".icon-delete-common";
+		$(stopSelector).remove();
+		$(deleteSelector).remove();
+		const $selected = $('.ui-selected');
+		if ($selected.length > 1) {
+			const testsList = $('#tests-list');
+			testsList.after(createDeleteCommonIcon());
+			testsList.after(createStopCommonIcon());
 		}
-		okIcon = createOkIcon();
-		const listItemActiveElem = $('.' + listItemElemClass + '.active');
-		listItemActiveElem.append(okIcon);
-		$('.' + listItemElemClass).css('padding-left', '');
-		listItemActiveElem.css('padding-left', '40px');
+		$(".list-group .list-group-item .icon-check").remove();
+		$(".list-group .list-group-item").css('padding-left', '');
+		$(".list-group .list-group-item").css('color', 'black');
+		$.each($(".list-group .ui-selected"), function(index, elem) {
+			$(elem).append(createOkIcon(elem.id));
+			$(elem).css('padding-left', '40px');
+			$(elem).css('color', 'white');
+		});
 		currentTestId = testId;
 		currentTestMode = testMode;
 		logsController.resetLogs();

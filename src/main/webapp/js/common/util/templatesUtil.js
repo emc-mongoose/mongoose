@@ -56,7 +56,8 @@ define(function() {
     };
 
     const TAB_CLASS = {
-        ACTIVE: 'active'
+        ACTIVE: 'active',
+        SELECTED: 'ui-selected'
     };
 
     const BLOCK = {

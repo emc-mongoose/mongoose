@@ -2,13 +2,17 @@ package com.emc.mongoose.core.impl.load.tasks.processors;
 
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("WeakerAccess")
-public final class PolylineManager extends BasicPolylineManager {
+public final class MetricPolylineManager
+	extends BasicPolylineManager {
 
+	public static final Map<String, MetricPolylineManager> MANAGERS = new LinkedHashMap<>();
 	private final static int MAX_NUM_OF_POINTS = 1000;
-
 
 	private final Polyline
 		durMin, durMax,
@@ -18,7 +22,7 @@ public final class PolylineManager extends BasicPolylineManager {
 	private final long startTime;
 
 
-	public PolylineManager() {
+	public MetricPolylineManager() {
 		durMin = new Polyline();
 		durMax = new Polyline();
 		latMin = new Polyline();

@@ -227,7 +227,7 @@ implements MixedFileLoadSvc<F> {
 	}
 	//
 	@Override
-	public void await(final long timeOut, final TimeUnit timeUnit)
+	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			loadSvcMap.size() + 1, new NamingThreadFactory("await<" + getName() + ">", true)
@@ -266,13 +266,10 @@ implements MixedFileLoadSvc<F> {
 			}
 		);
 		awaitExecutor.shutdown();
-		if(awaitExecutor.awaitTermination(timeOut, timeUnit)) {
-			LOG.debug(Markers.MSG, "{}: await completed before the timeout", getName());
-		} else {
-			LOG.debug(Markers.MSG,
-				"{}: await timeout, {} await tasks dropped",
-				getName(), awaitExecutor.shutdownNow().size()
-			);
+		try {
+			return awaitExecutor.awaitTermination(timeOut, timeUnit);
+		} finally {
+			awaitExecutor.shutdownNow();
 		}
 	}
 	//

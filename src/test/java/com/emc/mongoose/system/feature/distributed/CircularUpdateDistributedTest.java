@@ -108,10 +108,10 @@ extends DistributedClientTestBase {
 	@Ignore @Test
 	public void checkUpdatedCount()
 	throws Exception {
-		Assert.assertEquals(COUNT_WRITTEN, COUNT_UPDATED, COUNT_UPDATED / 100);
+		Assert.assertEquals(COUNT_WRITTEN, COUNT_UPDATED, (int) COUNT_UPDATED / 100);
 	}
 	//
-	@Test
+	@Ignore @Test
 	public void checkLayerNumberIndex()
 	throws Exception {
 		try (

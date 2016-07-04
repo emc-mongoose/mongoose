@@ -133,15 +133,16 @@ implements HttpContainerLoadBuilderSvc<T, C, U> {
 	}
 	//
 	@Override
-	public void await()
+	public boolean await()
 	throws RemoteException, InterruptedException {
-		await(Long.MAX_VALUE, TimeUnit.DAYS);
+		return await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
-	public void await(final long timeOut, final TimeUnit timeUnit)
+	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
 		timeUnit.sleep(timeOut);
+		return false;
 	}
 	//
 	@Override
