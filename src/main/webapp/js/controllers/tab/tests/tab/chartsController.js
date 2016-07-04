@@ -26,6 +26,7 @@ define([
 	const jqId = templatesUtil.composeJqId;
 
 	var currentTabType = TESTS_CHARTS_TAB_TYPE.DURATION;
+	var currentChartType;
 	var resetChartsFlags = {};
 
 	function render() {
@@ -68,7 +69,7 @@ define([
 
 	function makeTabActive(tabType) {
 		tabsUtil.showTabAsActive(plainId([TAB_TYPE.TESTS, TESTS_TAB_TYPE.CHARTS, 'tab']), tabType);
-		charts.processCharts(null, CHART_METRICS_FORMATTER[tabType], true);
+		charts.processCharts(null, CHART_METRICS_FORMATTER[tabType], currentChartType, true);
 		switch (tabType) {
 			case TESTS_CHARTS_TAB_TYPE.LATENCY:
 				break;
@@ -96,20 +97,8 @@ define([
 				runId: testId
 			}
 		).done(function (chartsObj) {
-			// The code to check the drawing of several charts (for each load job)
-			// var newLoadJobName = null;
-			// var newLoadJobCharts = null;
-			// if (chartsObj) {
-			// 	$.each(chartsObj, function (loadJobName, loadJobCharts) {
-			// 		newLoadJobName = loadJobName + '2';
-			// 		newLoadJobCharts = loadJobCharts;
-			// 	});
-			// 	if (newLoadJobName) {
-			// 		chartsObj[newLoadJobName] = newLoadJobCharts;
-			// 	}
-			// }
 			if (!resetChartsFlags[testId]) {
-				charts.processCharts(chartsObj, CHART_METRICS_FORMATTER[currentTabType]);
+				charts.processCharts(chartsObj, CHART_METRICS_FORMATTER[currentTabType], currentChartType);
 			}
 		}).always(function () {
 			if (!resetChartsFlags[testId]) {
@@ -128,9 +117,14 @@ define([
 		}
 	}
 
+	function setCurrentChartType(chartType) {
+		currentChartType = chartType;
+	}
+	
 	return {
 		render: render,
 		runCharts: runCharts,
-		resetCharts: resetCharts
+		resetCharts: resetCharts,
+		setChartType: setCurrentChartType
 	}
 });

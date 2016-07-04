@@ -10,6 +10,7 @@ define(['jquery',
 		const plainId = templatesUtil.composeId;
 		const jqId = templatesUtil.composeJqId;
 		const svgBlockId = plainId([templatesUtil.testsTabTypes().CHARTS, 'block']);
+		const CHART_TYPE = templatesUtil.chartTypes();
 
 		var currentChartBoards;
 		var currentMetric;
@@ -450,7 +451,7 @@ define(['jquery',
 
 		const simpleChartPattern = new RegExp('^[0-9]+-.+');
 
-		function processChartBoards(chartBoards, metric, notOverrideChartBoards, notOverrideMetric) {
+		function processChartBoards(chartBoards, metric, chartType, notOverrideChartBoards, notOverrideMetric) {
 			if (!notOverrideChartBoards) {
 				currentChartBoards = chartBoards;
 			}
@@ -467,7 +468,7 @@ define(['jquery',
 						forEachCharts[chartBoardName] = currentChartBoards[chartBoardName];
 					}
 				});
-				if (Object.keys(simpleCharts).length > 0) {
+				if (chartType === CHART_TYPE.CURRENT) {
 					currentChartBoards = simpleCharts;
 				} else {
 					currentChartBoards = forEachCharts;

@@ -27,11 +27,7 @@ define([
 	const TESTS_TAB_TYPE = templatesUtil.testsTabTypes();
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
-
-	const CHART_TYPE = {
-		CURRENT: 'current',
-		TOTAL: 'total'
-	};
+	const CHART_TYPE = templatesUtil.chartTypes();
 
 	var currentTabType = TESTS_TAB_TYPE.LIST;
 	var currentChartType = CHART_TYPE.CURRENT;
@@ -87,6 +83,9 @@ define([
 				id: plainId(['chart', 'type', chartType])
 			});
 			$a.text(chartType);
+			$a.click(function () {
+				makeChartTypeActive(chartType);
+			});
 			const $li = $('<li/>');
 			$li.append($a);
 			return $li;
@@ -125,6 +124,7 @@ define([
 		$chartType.text('Charts: ' + chartType + ' ');
 		$chartType.append(createCaret());
 		currentChartType = chartType;
+		chartsController.setChartType(chartType);
 	}
 
 	function makeTabActive(tabType) {
