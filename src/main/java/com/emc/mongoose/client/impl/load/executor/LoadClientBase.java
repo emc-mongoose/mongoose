@@ -329,15 +329,19 @@ implements LoadClient<T, W> {
 	implements Runnable {
 		//
 		private final LoadSvc loadSvc;
+		private final String loadSvcName;
 		private final String addr;
 		//
-		private InterruptSvcTask(final LoadSvc loadSvc, final String addr) {
+		private InterruptSvcTask(final LoadSvc loadSvc, final String addr)
+		throws RemoteException {
 			this.loadSvc = loadSvc;
+			this.loadSvcName = loadSvc.getName();
 			this.addr = addr;
 		}
 		//
 		@Override
 		public final void run() {
+			Thread.currentThread().setName("interruptSvc<" + loadSvcName + "@" + addr + ">");
 			try {
 				loadSvc.shutdown();
 				// wait until all processed items are received from the load server
@@ -376,7 +380,6 @@ implements LoadClient<T, W> {
 	}
 	//
 	private void interruptLoadSvcs() {
-		//
 		final int loadSvcCount = remoteLoadMap.size();
 		if(loadSvcCount > 0) {
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
@@ -384,7 +387,11 @@ implements LoadClient<T, W> {
 				new NamingThreadFactory(String.format("interrupt<%s>", getName()), true)
 			);
 			for(final String addr : loadSvcAddrs) {
-				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
+				try {
+					interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
+				} catch(final RemoteException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to get the load service name");
+				}
 			}
 			interruptExecutor.shutdown();
 			try {
@@ -725,7 +732,8 @@ implements LoadClient<T, W> {
 		awaitExecutor.submit(
 			new Runnable() {
 				@Override
-				public void run() {
+				public final void run() {
+					Thread.currentThread().setName("awaitTask<" + getName() + ">");
 					// wait the remaining tasks to be transmitted to load servers
 					LOG.debug(
 						Markers.MSG, "{}: waiting remaining {} tasks to complete", LoadClientBase.this.getName(),
