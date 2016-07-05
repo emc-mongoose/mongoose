@@ -708,7 +708,6 @@ define(['jquery',
 				names.push(chart.name);
 			});
 			colorizer.domain(names);
-			updateAxes(svg, chartArr);
 			const isSimpleChart = simpleChartPattern.test(chartBoardName);
 			if (isSimpleChart) {
 				updateAxes(svg, chartArr);
