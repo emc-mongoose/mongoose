@@ -155,7 +155,7 @@ extends DistributedFileSystemTestBase {
 		}
 		Assert.assertEquals(
 			"Expected " + countWritten + " in the output CSV file, but got " + itemsCount,
-			itemsCount, countWritten
+			countWritten, itemsCount
 		);
 	}
 }

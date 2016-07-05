@@ -32,7 +32,7 @@ public final class LogValidator {
 		}
 	}
 
-	private static void removeDirectory(final Path path)
+	public static void removeDirectory(final Path path)
 	throws Exception {
 		final File dir = path.toFile();
 		if (dir.listFiles() != null) {

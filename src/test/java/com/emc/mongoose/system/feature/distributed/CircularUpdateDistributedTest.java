@@ -105,10 +105,10 @@ extends DistributedClientTestBase {
 		}
 	}
 	//
-	@Ignore @Test
+	@Test
 	public void checkUpdatedCount()
 	throws Exception {
-		Assert.assertEquals(COUNT_WRITTEN, COUNT_UPDATED, COUNT_UPDATED / 100);
+		Assert.assertEquals(COUNT_OF_UPDATES * COUNT_WRITTEN, COUNT_UPDATED, COUNT_UPDATED / 10);
 	}
 	//
 	@Test

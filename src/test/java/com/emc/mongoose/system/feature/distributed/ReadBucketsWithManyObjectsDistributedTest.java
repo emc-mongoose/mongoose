@@ -108,7 +108,7 @@ extends DistributedLoadBuilderTestBase {
 		Assert.assertEquals(LIMIT_COUNT_CONTAINER, countContainerCreated);
 	}
 	//
-	@Ignore @Test
+	@Test
 	public final void checkReadTotalByteRateIsNotZero()
 	throws Exception {
 		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID_BASE + "Read");

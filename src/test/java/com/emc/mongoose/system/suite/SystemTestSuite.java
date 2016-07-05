@@ -12,7 +12,7 @@ import org.junit.runners.Suite;
 	CircularLoadTestSuite.class,
 	ContentTestSuite.class,
 	CoreTestSuite.class,
-	/*DistributedTestSuite.class,*/
+	DistributedTestSuite.class,
 	FileSystemTestSuite.class,
 	ItemNamingTestSuite.class,
 	LoadLimitTestSuite.class,
