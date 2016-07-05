@@ -1,21 +1,19 @@
-<div class="tab-dependent buttons" id="buttons-{{tab-type}}">
-    <div class="form-group btn-file">
-        <button type="button" class="btn btn-custom btn-custom-default column-btn-upper"
-                id="{{buttons.[0]}}-{{tab-type}}">
-            Open
-        </button>
-        <!--suppress HtmlFormInputWithoutLabel -->
-        <input id="{{buttons.[1]}}-{{tab-type}}" type="text"
-               value="No {{tab-type}} chosen" disabled>
-        <input id="{{buttons.[2]}}-{{tab-type}}" onchange="" type="file" accept=".json"
-               class="upload"/>
-    </div>
-    <!--<button type="button" class="btn btn-custom btn-custom-default"-->
-            <!--id="{{buttons.[3]}}-{{tab-type}}">-->
-        <!--Save-->
-    <!--</button>-->
-    <a class="btn btn-custom btn-custom-default"
-       id="{{buttons.[4]}}-{{tab-type}}">
-        Save
-    </a>
+<div class="form-group btn btn-file div-btn-outer">
+	<button type="button" class="tab-dependent btn btn-custom btn-custom-default div-btn-inner column-btn-upper"
+	        id="{{buttons.[0]}}-{{tab-type}}">
+		Open <span class="player-icon icon-open"></span>
+	</button>
+	<!--suppress HtmlFormInputWithoutLabel -->
+	<input id="{{buttons.[1]}}-{{tab-type}}" type="text"
+	       value="No {{tab-type}} chosen" disabled class="tab-dependent">
+	<input id="{{buttons.[2]}}-{{tab-type}}" onchange="" type="file" accept=".json"
+	       class="upload"/>
 </div>
+<!--<button type="button" class="btn btn-custom btn-custom-default"-->
+<!--id="{{buttons.[3]}}-{{tab-type}}">-->
+<!--Save-->
+<!--</button>-->
+<a class="btn btn-custom btn-custom-default tab-dependent"
+   id="{{buttons.[4]}}-{{tab-type}}">
+	Save <span class="player-icon icon-save"></span>
+</a>

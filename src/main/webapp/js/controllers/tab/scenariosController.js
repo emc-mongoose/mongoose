@@ -62,6 +62,7 @@ define([
 					const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
 					fileNameElem.val(newPath);
 					scenarioNameElem.text(newPath);
+					scenarioNameElem.show();
 					fileNameElem.width(responsiveWidth(newPath));
 				})
 				.fail(function () {
@@ -75,6 +76,7 @@ define([
 			const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
 			fileNameElem.val(noMessage);
 			scenarioNameElem.text('');
+			scenarioNameElem.hide();
 			fileNameElem.width(responsiveWidth(noMessage));
 		}
 
@@ -89,9 +91,7 @@ define([
 
 	function render(scenariosArray) {
 		const rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
-		// elementAppender.arrayAsTree(scenariosArray, rootTreeUlElem, 'dir', DELIMITER.PATH, localClickEventCreator.scenarioFile);
 		elementAppender.treeOfItem(scenariosArray, rootTreeUlElem, '', DELIMITER.PATH, localClickEventCreator.scenarioFile, true);
-		// elementAppender.treeOfItem(temp, rootTreeUlElem, '', DELIMITER.PATH, localClickEventCreator.scenarioFile, true);
 	}
 
 	function updateDetailsTree(scenarioObject) {
@@ -143,6 +143,7 @@ define([
 		updateDetailsTree(scenarioObject);
 		const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
 		scenarioNameElem.text(fullFileName);
+		scenarioNameElem.show();
 		// $(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(fullFileName);
 	}
 
