@@ -16,13 +16,13 @@ import com.emc.mongoose.system.tools.StdOutUtil;
 import com.emc.mongoose.system.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -105,23 +105,24 @@ extends DistributedClientTestBase {
 		}
 	}
 	//
-	@Ignore @Test
+	@Test
 	public void checkUpdatedCount()
 	throws Exception {
-		Assert.assertEquals(COUNT_WRITTEN, COUNT_UPDATED, (int) COUNT_UPDATED / 100);
+		Assert.assertEquals(COUNT_WRITTEN * COUNT_OF_UPDATES, UPDATE_COUNT, UPDATE_COUNT / 10);
 	}
 	//
-	@Ignore @Test
+	@Test
 	public void checkLayerNumberIndex()
 	throws Exception {
 		try (
 			final BufferedReader
 				in = Files.newBufferedReader(FILE_LOG_DATA_ITEMS.toPath(), StandardCharsets.UTF_8)
 		) {
-			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
-			for (final CSVRecord nextRec : recIter) {
-				Assert.assertEquals(
-					LAYER_NUMBER_INDEX, Integer.parseInt(nextRec.get(3).split("/")[0])
+			final CSVParser csvParser = CSVFormat.RFC4180.parse(in);
+			for(final CSVRecord nextRec : csvParser) {
+				Assert.assertTrue(
+					"Line #" + csvParser.getCurrentLineNumber() + ": unexpected layer number",
+					LAYER_NUMBER_INDEX <= Integer.parseInt(nextRec.get(3).split("/")[0])
 				);
 			}
 		}

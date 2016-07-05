@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Level;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -19,7 +18,6 @@ import java.nio.file.Paths;
 /**
  Created by andrey on 28.06.16.
  */
-@Ignore
 public class JiraIssue729RegressionTest
 extends HttpStorageMockTestBase {
 
@@ -27,7 +25,7 @@ extends HttpStorageMockTestBase {
 	private final static String STORAGE_ADDRS = "127.0.0.1:9020,127.0.0.1:9022,127.0.0.1:9023";
 	private final static int CONCURRENCY_PER_NODE = 100;
 	private final static int ITEM_SIZE = 10240;
-	private final static int LOAD_TIME_LIMIT_SECONDS = 100;
+	private final static int LOAD_TIME_LIMIT_SECONDS = 30;
 	private final static String SCENARIO_JSON =
 		"{" +
 		"	\"type\" : \"sequential\",\n" +
@@ -51,9 +49,9 @@ extends HttpStorageMockTestBase {
 		"			\"type\" : \"command\",\n" +
 		"			\"value\" : \"sleep 10\"\n" +
 		"		}, {\n" +
-		"			\"type\" : \"each\",\n" +
+		"			\"type\" : \"for\",\n" +
 		"			\"value\" : \"i\",\n" +
-		"			\"in\" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ],\n" +
+		"			\"in\" : [ 0, 1, 2, 3 ],\n" +
 		"			\"config\" : {\n" +
 		"				\"item\" : {\n" +
 		"					\"src\" : {\n" +
@@ -138,8 +136,11 @@ extends HttpStorageMockTestBase {
 	@Test
 	public final void checkAllPerfSumFilesExist()
 	throws Exception {
-		for(int i = 0; i < 10; i ++) {
-			Assert.assertTrue(LogValidator.getPerfSumFile(RUN_ID_BASE + "_" + i).exists());
+		for(int i = 0; i < 3; i ++) {
+			Assert.assertTrue(
+				RUN_ID_BASE + "_" + i,
+				LogValidator.getPerfSumFile(RUN_ID_BASE + "_" + i).exists()
+			);
 		}
 	}
 }

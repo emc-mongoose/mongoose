@@ -1119,30 +1119,27 @@ implements LoadExecutor<T> {
 			Markers.MSG, "{}: await for the done condition at most for {}[s]",
 			getName(), TimeUnit.NANOSECONDS.toSeconds(timeOutMilliSec)
 		);
-		t = System.nanoTime();
-		while(true) {
+		t = System.currentTimeMillis();
+		while(System.currentTimeMillis() - t < timeOutMilliSec) {
 			synchronized(state) {
 				state.wait(100);
 			}
 			if(isInterrupted.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"interrupted\" state", getName());
-				break;
+				return true;
 			}
 			if(isClosed.get()) {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"closed\" state", getName());
-				break;
-			}
-			if(System.currentTimeMillis() - t > timeOutMilliSec) {
-				LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
-				break;
+				return true;
 			}
 			if(isPostProcessDone) {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done\" state", getName());
-				break;
+				return true;
 			}
 			LockSupport.parkNanos(1_000_000);
 		}
-		return true;
+		LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
+		return false;
 	}
 	//
 	@Override

@@ -2,6 +2,7 @@ package com.emc.mongoose.system.feature.filesystem;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //
+import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -26,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public final class WriteToCustomDirTest
 extends FileSystemTestBase {
 	//
-	private final static long COUNT_TO_WRITE = 100000;
+	private final static long COUNT_TO_WRITE = 10000;
 	private final static String RUN_ID = WriteToCustomDirTest.class.getCanonicalName();
 	//
 	private static long countWritten;
@@ -47,6 +48,7 @@ extends FileSystemTestBase {
 			countWritten = client.create(null, COUNT_TO_WRITE, 100, 0);
 			RunIdFileManager.flush(RUN_ID);
 		}
+		TimeUnit.SECONDS.sleep(20);
 	}
 	//
 	@AfterClass
@@ -75,7 +77,6 @@ extends FileSystemTestBase {
 	@Test
 	public void checkLoggedItemsCount()
 	throws Exception {
-		//TimeUnit.SECONDS.sleep(10);
 		int itemsCount = 0;
 		try(
 			final BufferedReader in = Files.newBufferedReader(
@@ -88,7 +89,7 @@ extends FileSystemTestBase {
 		}
 		Assert.assertEquals(
 			"Expected " + countWritten + " in the output CSV file, but got " + itemsCount,
-			itemsCount, countWritten
+			countWritten, itemsCount
 		);
 	}
 }

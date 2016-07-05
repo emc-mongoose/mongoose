@@ -443,7 +443,7 @@ implements LoadClient<T, W> {
 					counterSubm.incrementAndGet();
 					break;
 				} catch(final RejectedExecutionException | IOException e) {
-					if(remotePutExecutor.isTerminating()) {
+					if(remotePutExecutor.isTerminated()) {
 						break;
 					} else {
 						try {
@@ -503,33 +503,14 @@ implements LoadClient<T, W> {
 		public final void run() {
 			String loadSvcAddr;
 			W loadSvc;
-			int m = 0;
-			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
+			for(int m = 0; m < n && !remotePutExecutor.isTerminated(); LockSupport.parkNanos(1)) {
 				try {
-					loadSvcAddr = loadSvcAddrs[
-						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)
-					];
+					loadSvcAddr = loadSvcAddrs[(int) (rrc.incrementAndGet() % loadSvcAddrs.length)];
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
-					while(!remotePutExecutor.isTerminating()) {
-						m += loadSvc.put(items, from + m, to);
-						if(m < n) {
-							LockSupport.parkNanos(1);
-						} else {
-							break;
-						}
-					}
-					counterSubm.addAndGet(n);
+					m += loadSvc.put(items, from + m, to);
+					counterSubm.addAndGet(m);
+				} catch(final Exception e) {
 					break;
-				} catch(final IOException e) {
-					if(remotePutExecutor.isTerminating()) {
-						break;
-					} else {
-						try {
-							Thread.sleep(tryCount);
-						} catch(final InterruptedException ee) {
-							break;
-						}
-					}
 				}
 			}
 		}
