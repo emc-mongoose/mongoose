@@ -1187,8 +1187,8 @@ task systemTest(type: Test, dependsOn: dist) {
 	include '**/SystemTestSuite.class'
 	classpath = sourceSets.systemTest.runtimeClasspath
 	forkEvery = 1
-	minHeapSize = "2560m"
-	maxHeapSize = "2560m"
+	minHeapSize = "2g"
+	maxHeapSize = "2g"
 	jvmArgs "-XX:+HeapDumpOnOutOfMemoryError", "-Djava.security.policy=file:" + new File("").getCanonicalPath() +
 		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy",
 		"-Dnetwork.serveJMX=true"
