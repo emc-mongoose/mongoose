@@ -38,6 +38,7 @@ extends DistributedFileSystemTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		LogValidator.removeDirectory(Paths.get("/tmp/" + RUN_ID));
 		LogValidator.removeLogDirectory(RUN_ID);
 		LogValidator.removeLogDirectory(RUN_ID + "_FilesWrite");
 		LogValidator.removeLogDirectory(RUN_ID + "_DirsRead");

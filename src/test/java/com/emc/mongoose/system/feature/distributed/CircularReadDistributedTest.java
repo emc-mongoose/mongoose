@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -113,7 +114,7 @@ extends DistributedClientTestBase {
 		}
 	}
 	//
-	@Test
+	@Test @Ignore
 	public void checkItemsFileExistsAndCanBeReadFully()
 	throws Exception {
 		final Map<String, Long> items = new HashMap<>();
@@ -137,7 +138,7 @@ extends DistributedClientTestBase {
 		}
 	}
 	//
-	@Test
+	@Test @Ignore
 	public void checkPerfTraceFileContainsDuplicates()
 	throws  Exception {
 		final Map<String, Long> items = new HashMap<>();
