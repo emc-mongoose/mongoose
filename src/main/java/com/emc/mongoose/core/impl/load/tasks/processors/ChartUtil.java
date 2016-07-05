@@ -16,7 +16,7 @@ public final class ChartUtil {
 
 	public static void addCharts(final String runId, final String loadJobName,
 		final IoStats.Snapshot metricsSnapshot) {
-		final Map<String, List<Metric>> loadJobCharts = new ConcurrentHashMap<>();
+		final Map<String, List<Metric>> loadJobCharts = new LinkedHashMap<>();
 		final Map<String, MetricPolylineManager> managers = MetricPolylineManager.MANAGERS;
 		if (!managers.containsKey(loadJobName)) {
 			managers.put(loadJobName, new MetricPolylineManager());
@@ -37,7 +37,7 @@ public final class ChartUtil {
 			return;
 		}
 		final String itemDataSize = SizeInBytes.formatFixedSize(metricsSnapshot.getByteCount() / metricsSnapshot.getSuccCount());
-		final Map<String, List<Metric>> loadJobCharts = new ConcurrentHashMap<>();
+		final Map<String, List<Metric>> loadJobCharts = new LinkedHashMap<>();
 		final Map<String, Map<String, BasicPolylineManager>> managers = BasicPolylineManager.MANAGERS;
 		if (!managers.containsKey(loadJobName)) {
 			managers.put(loadJobName, new LinkedHashMap<String, BasicPolylineManager>());
@@ -58,7 +58,7 @@ public final class ChartUtil {
 	private static void putCharts(final String runId, final String loadJobName,
 		final Map<String, List<Metric>> charts) {
 		if(!CHARTS_MAP.containsKey(runId)) {
-			final Map<String, Map<String, List<Metric>>> runIdCharts = new ConcurrentHashMap<>();
+			final Map<String, Map<String, List<Metric>>> runIdCharts = new LinkedHashMap<>();
 			runIdCharts.put(loadJobName, charts);
 			CHARTS_MAP.put(runId, runIdCharts);
 		} else {

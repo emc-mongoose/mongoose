@@ -138,6 +138,7 @@ extends HttpStorageMockTestBase {
 	public static void setUpClass() {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
 		try {
+			LogValidator.removeDirectory(Paths.get(RUN_ID));
 			HttpStorageMockTestBase.setUpClass();
 			Files.createDirectory(Paths.get(RUN_ID));
 		} catch(final Exception e) {

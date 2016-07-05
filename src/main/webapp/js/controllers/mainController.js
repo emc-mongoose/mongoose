@@ -159,12 +159,21 @@ define([
 					configElem.after(scenarioName);
 					jsonViewElem.hide();
 					detailsTree.hide();
+					scenarioName.hide()
 				}
 				configElem.after(
 					$('<ul/>', {
 						id: plainId([BLOCK.TREE, value]),
 						class: BLOCK.TREE + ' ' + 'tab-dependent'
 					}));
+				if (value == TAB_TYPE.DEFAULTS) {
+					const defaultsName = $('<h4/>', {
+						id: plainId([value, 'name']),
+						class: 'defaults-name tab-dependent'
+					});
+					configElem.after(defaultsName);
+					defaultsName.hide();
+				}
 			});
 			binder.mode();
 
@@ -179,6 +188,7 @@ define([
 					{'buttons': BUTTONS, 'tab-type': value});
 			});
 			$(jqId([BUTTON_TYPE.OPEN_INPUT_TEXT, TAB_TYPE.SCENARIOS])).remove();
+			$(jqId([BUTTON_TYPE.OPEN_INPUT_TEXT, TAB_TYPE.DEFAULTS])).remove();
 			binder.tabButtons(BUTTON_TYPE, CONFIG_TABS);
 		}
 

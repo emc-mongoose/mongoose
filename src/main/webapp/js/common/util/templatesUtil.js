@@ -66,6 +66,10 @@ define(function() {
         CONFIG: 'configurations'
     };
 
+    const CHART_TYPE = {
+        CURRENT: 'current',
+        TOTAL: 'total'
+    };
 
     const DELIMITER = {
         ID: '-',
@@ -79,6 +83,10 @@ define(function() {
 
     function tabTypes() {
         return TAB_TYPE;
+    }
+
+    function chartTypes() {
+        return CHART_TYPE;
     }
 
     function testsTabTypes() {
@@ -141,6 +149,7 @@ define(function() {
         testsTabTypes: testsTabTypes,
         testsLogsTabTypes: testsLogsTabTypes,
         testsChartsTabTypes: testsChartsTabTypes,
+        chartTypes: chartTypes,
         commonButtonTypes: commonButtonTypes,
         configTreeElements: configTreeElements,
         tabClasses: tabClasses,

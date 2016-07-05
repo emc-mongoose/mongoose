@@ -97,7 +97,9 @@ define([
 		element.contents().filter(function() {
 			return this.nodeType === Node.TEXT_NODE;
 		}).remove();
-		element.append(document.createTextNode(text));
+		if (element.text().indexOf('stopped') <= 0) {
+			element.append(document.createTextNode(text));
+		}
 	}
 
 	function doesItemExist(itemElem) {
@@ -209,6 +211,7 @@ define([
 				}
 			});
 			$(this).remove();
+			$('.icon-stop-common').remove();
 		});
 		return div;
 	}

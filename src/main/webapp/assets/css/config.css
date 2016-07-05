@@ -1,5 +1,6 @@
 #run-modes, #all-buttons {
 	padding: 10px;
+	min-width: 450px;
 }
 
 #run-modes div {
