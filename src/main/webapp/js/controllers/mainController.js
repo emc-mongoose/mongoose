@@ -89,6 +89,9 @@ define([
 			case TAB_TYPE.TESTS:
 				cssUtil.show(jqId(['tests', 'block']));
 				$(tabJqId(tabType)).removeClass(blinkClassName);
+				setTimeout(function () {
+					$(tabJqId(tabType)).removeClass(blinkClassName);
+				}, 1000);
 				break;
 		}
 		currentTabType = tabType;
