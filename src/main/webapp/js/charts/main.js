@@ -256,6 +256,7 @@ define(['jquery',
 				case SCALE.LINEAR:
 					switch (axis) {
 						case 'x':
+							MIN_THREADS_COUNT = 0;
 							setMinXDefaultAccessorValue();
 							setLinearXScale();
 							updateDefaultAxisX();
@@ -270,6 +271,7 @@ define(['jquery',
 				case SCALE.LOG:
 					switch (axis) {
 						case 'x':
+							MIN_THREADS_COUNT = 1;
 							setMinXLogAccessorValue();
 							setLogXScale();
 							updateLogAxisX();
@@ -690,7 +692,7 @@ define(['jquery',
 				});
 		}
 
-		const MIN_THREADS_COUNT = 0;
+		var MIN_THREADS_COUNT = 0;
 
 		function updateChartBoard(chartBoardName, chartBoardContent, metric) {
 			updateFlag = false;
