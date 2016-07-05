@@ -576,7 +576,6 @@ define(['jquery',
 					return colorizer(chart.name);
 				})
 				.style('stroke-width', 1);
-			var chartName;
 			var points;
 			if (pointsEnable) {
 				points = chartContainer.selectAll('circle')
@@ -691,7 +690,7 @@ define(['jquery',
 				});
 		}
 
-		const MIN_THREADS_COUNT = 1;
+		const MIN_THREADS_COUNT = 0;
 
 		function updateChartBoard(chartBoardName, chartBoardContent, metric) {
 			updateFlag = false;
