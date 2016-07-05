@@ -134,6 +134,7 @@ define([
 		currentChartType = chartType;
 		chartsController.setChartType(chartType);
 		makeTabActive(TESTS_TAB_TYPE.CHARTS);
+		runCharts();
 	}
 
 	function makeTabActive(tabType) {

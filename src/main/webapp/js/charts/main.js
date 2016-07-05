@@ -120,9 +120,6 @@ define(['jquery',
 		function tuneUnits(currentTimeValue) {
 			if (currentTimeValue > currentTimeUnit.limit) {
 				currentTimeUnit = TIME_UNIT[currentTimeUnit.next];
-				// updateAxisX();
-				// updateAxisY();
-				// updateLine();
 			}
 		}
 
@@ -173,10 +170,6 @@ define(['jquery',
 
 		const AXIS_X_WIDTH = Math.round(WIDTH / 1.5);
 		const AXIS_Y_WIDTH = HEIGHT;
-		//
-		// function xAccessor(data) {
-		// 	return data.x <= 0 ? 0.000000001 : data.x;
-		// }
 
 		function xAccessor(data) {
 			const convertedX = TIME_UNIT.toUnits(data.x, currentTimeUnit);

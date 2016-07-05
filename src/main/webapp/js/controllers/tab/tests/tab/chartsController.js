@@ -90,7 +90,9 @@ define([
 			getCharts(testId);
 		}
 	}
-	
+
+	const simpleChartPattern = new RegExp('^[0-9]+-.+');
+
 	function getCharts(testId) {
 		$.get('/charts',
 			{
