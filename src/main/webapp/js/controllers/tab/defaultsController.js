@@ -59,6 +59,9 @@ define([
 
 	function fileReaderOnLoadAction(configObject, fullFileName) {
 		render(configObject);
+		const defaultsNameElem = $(jqId([TAB_TYPE.DEFAULTS, 'name']));
+		defaultsNameElem.show();
+		defaultsNameElem.text(fullFileName);
 		// $(jqId(['file', 'name', TAB_TYPE.DEFAULTS])).val(fullFileName);
 	}
 

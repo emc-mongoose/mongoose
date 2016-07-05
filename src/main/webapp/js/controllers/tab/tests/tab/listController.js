@@ -209,6 +209,7 @@ define([
 				}
 			});
 			$(this).remove();
+			$('.icon-stop-common').remove();
 		});
 		return div;
 	}

@@ -27,8 +27,10 @@ define([
 	const TESTS_TAB_TYPE = templatesUtil.testsTabTypes();
 	const plainId = templatesUtil.composeId;
 	const jqId = templatesUtil.composeJqId;
+	const CHART_TYPE = templatesUtil.chartTypes();
 
 	var currentTabType = TESTS_TAB_TYPE.LIST;
+	var currentChartType = CHART_TYPE.CURRENT;
 
 	function render() {
 		const renderer = rendererFactory();
@@ -38,7 +40,14 @@ define([
 		logsController.render();
 		chartsController.render();
 		makeTabActive(currentTabType);
+		makeChartTypeActive(currentChartType);
 		startPoll();
+	}
+
+	function createCaret() {
+		return $('<span/>', {
+			class: 'caret'
+		});
 	}
 
 	const rendererFactory = function () {
@@ -48,7 +57,39 @@ define([
 		function renderNavbar() {
 			hbUtil.compileAndInsertInsideBefore(testsBlockElemId, navbarTemplate,
 				{tabs: TESTS_TAB_TYPE});
+			const $chartsTab = $(jqId([TESTS_TAB_TYPE.CHARTS, TAB_TYPE.TESTS, 'tab']));
+			$chartsTab.addClass('dropdown');
+			$chartsTab.empty();
+			const $chartsTabA = $('<a/>', {
+				id: plainId(['chart', 'type', 'main']),
+				class: 'dropdown-toggle',
+				'data-toggle': 'dropdown'
+			});
+			$chartsTabA.text(TESTS_TAB_TYPE.CHARTS + ' ');
+			$chartsTabA.append(createCaret());
+			$chartsTab.append($chartsTabA);
+			$chartsTabA.css('cursor', 'pointer');
+			const $chartTypes = $('<ul/>', {
+				class: 'dropdown-menu'
+			});
+			$chartTypes.append(createChartTypeElem(CHART_TYPE.CURRENT));
+			$chartTypes.append(createChartTypeElem(CHART_TYPE.TOTAL));
+			$chartsTab.append($chartTypes);
 			binder.tab();
+
+		}
+
+		function createChartTypeElem(chartType) {
+			const $a = $('<a/>', {
+				id: plainId(['chart', 'type', chartType])
+			});
+			$a.text(chartType);
+			$a.click(function () {
+				makeChartTypeActive(chartType);
+			});
+			const $li = $('<li/>');
+			$li.append($a);
+			return $li;
 		}
 
 		function renderBase() {
@@ -63,8 +104,15 @@ define([
 
 	const clickEventBinderFactory = function () {
 
+		const filteredTypes = {};
+		$.each(TESTS_TAB_TYPE, function(key, value) {
+			if (value !== TESTS_TAB_TYPE.CHARTS) {
+				filteredTypes[key] = value;
+			}
+		});
+
 		function bindTabClickEvents() {
-			tabsUtil.bindTabClickEvents(TESTS_TAB_TYPE, tabJqId, makeTabActive);
+			tabsUtil.bindTabClickEvents(filteredTypes, tabJqId, makeTabActive);
 		}
 
 		return {
@@ -74,6 +122,19 @@ define([
 
 	function tabJqId(tabType) {
 		return jqId([tabType, TAB_TYPE.TESTS, 'tab']);
+	}
+
+	function makeChartTypeActive(chartType) {
+		const TAB_CLASS = templatesUtil.tabClasses();
+		$(jqId(['chart', 'type', currentChartType])).removeClass(TAB_CLASS.ACTIVE);
+		$(jqId(['chart', 'type', chartType])).addClass(TAB_CLASS.ACTIVE);
+		const $chartType = $(jqId(['chart', 'type', 'main']));
+		$chartType.text('Charts: ' + chartType + ' ');
+		$chartType.append(createCaret());
+		currentChartType = chartType;
+		chartsController.setChartType(chartType);
+		makeTabActive(TESTS_TAB_TYPE.CHARTS);
+		runCharts();
 	}
 
 	function makeTabActive(tabType) {
