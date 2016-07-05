@@ -468,12 +468,13 @@ define(['jquery',
 						forEachCharts[chartBoardName] = currentChartBoards[chartBoardName];
 					}
 				});
+				var tempChartBoards;
 				if (chartType === CHART_TYPE.CURRENT) {
-					currentChartBoards = simpleCharts;
+					tempChartBoards = simpleCharts;
 				} else {
-					currentChartBoards = forEachCharts;
+					tempChartBoards = forEachCharts;
 				}
-				$.each(currentChartBoards, function (chartBoardName, chartBoardContent) {
+				$.each(tempChartBoards, function (chartBoardName, chartBoardContent) {
 					if (!doesSvgExist(chartBoardName)) {
 						currentTimeUnit = TIME_UNIT.seconds;
 						createChartBoard(chartBoardName);

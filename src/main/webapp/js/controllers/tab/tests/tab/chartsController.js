@@ -119,8 +119,9 @@ define([
 
 	function setCurrentChartType(chartType) {
 		currentChartType = chartType;
+		makeTabActive(currentTabType);
 	}
-	
+
 	return {
 		render: render,
 		runCharts: runCharts,

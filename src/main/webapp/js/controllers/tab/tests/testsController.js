@@ -76,6 +76,7 @@ define([
 			$chartTypes.append(createChartTypeElem(CHART_TYPE.TOTAL));
 			$chartsTab.append($chartTypes);
 			binder.tab();
+
 		}
 
 		function createChartTypeElem(chartType) {
@@ -103,8 +104,15 @@ define([
 
 	const clickEventBinderFactory = function () {
 
+		const filteredTypes = {};
+		$.each(TESTS_TAB_TYPE, function(key, value) {
+			if (value !== TESTS_TAB_TYPE.CHARTS) {
+				filteredTypes[key] = value;
+			}
+		});
+
 		function bindTabClickEvents() {
-			tabsUtil.bindTabClickEvents(TESTS_TAB_TYPE, tabJqId, makeTabActive);
+			tabsUtil.bindTabClickEvents(filteredTypes, tabJqId, makeTabActive);
 		}
 
 		return {
@@ -125,6 +133,7 @@ define([
 		$chartType.append(createCaret());
 		currentChartType = chartType;
 		chartsController.setChartType(chartType);
+		makeTabActive(TESTS_TAB_TYPE.CHARTS);
 	}
 
 	function makeTabActive(tabType) {
