@@ -251,17 +251,19 @@ define(['jquery',
 			line = lineGenerator.x(scaledXAccessor).y(scaledYAccessor);
 		}
 
-		function switchScaling(scale, axis) {
+		function switchScaling(scale, axis, svgElem) {
 			switch (scale) {
 				case SCALE.LINEAR:
 					switch (axis) {
 						case 'x':
 							MIN_THREADS_COUNT = 0;
+							svgElem.attr('xaxis', SCALE.LINEAR);
 							setMinXDefaultAccessorValue();
 							setLinearXScale();
 							updateDefaultAxisX();
 							break;
 						case 'y':
+							svgElem.attr('yaxis', SCALE.LINEAR);
 							setMinYDefaultAccessorValue();
 							setLinearYScale();
 							updateDefaultAxisY();
@@ -271,12 +273,14 @@ define(['jquery',
 				case SCALE.LOG:
 					switch (axis) {
 						case 'x':
+							svgElem.attr('xaxis', SCALE.LOG);
 							MIN_THREADS_COUNT = 1;
 							setMinXLogAccessorValue();
 							setLogXScale();
 							updateLogAxisX();
 							break;
 						case 'y':
+							svgElem.attr('yaxis', SCALE.LOG);
 							setMinYLogAccessorValue();
 							setLogYScale();
 							updateLogAxisY();
@@ -428,13 +432,14 @@ define(['jquery',
 				.style('stroke-width', 1)
 				.style('fill', '#ECE9E9')
 				.on('click', function (scaleObj) {
+					const svgElem = d3.select(getSvgSelector(chartBoardName));
 					const switchElem = d3.select(jqId(['scale', 'switch', scaleObj.name, chartBoardName]));
 					const switchCircle = switchElem.select('circle');
 					const switchText = switchElem.select('text');
 					if (switchElem.attr('scale') == SCALE.LINEAR) {
 						switchCircle.style('fill', 'black');
 						switchText.text(function (scaleObj) {
-							switchScaling(SCALE.LOG, scaleObj.name);
+							switchScaling(SCALE.LOG, scaleObj.name, svgElem);
 							return SCALE.fullName(SCALE.LOG, scaleObj.name);
 						});
 						switchElem.attr('scale', SCALE.LOG);
@@ -444,7 +449,7 @@ define(['jquery',
 					} else {
 						switchCircle.style('fill', '#ECE9E9');
 						switchText.text(function (scaleObj) {
-							switchScaling(SCALE.LINEAR, scaleObj.name);
+							switchScaling(SCALE.LINEAR, scaleObj.name, svgElem);
 							return SCALE.fullName(SCALE.LINEAR, scaleObj.name)
 						});
 						switchElem.attr('scale', SCALE.LINEAR);
@@ -519,6 +524,9 @@ define(['jquery',
 		function createChartBoard(chartBoardName) {
 			const svgCanvasChain = createSvg(svgBlockId, getSvgId(chartBoardName));
 			svgCanvasChain.attr('name', chartBoardName);
+			const svg = d3.select(getSvgSelector(chartBoardName));
+			svg.attr('xaxis', SCALE.LINEAR);
+			svg.attr('yaxis', SCALE.LINEAR);
 			createLabel(svgCanvasChain, chartBoardName);
 			createAxes(svgCanvasChain);
 			createScaleSwitches(svgCanvasChain, chartBoardName);
@@ -539,7 +547,7 @@ define(['jquery',
 				.text(constants.CHART_METRICS_UNITS_FORMATTER[metricName]);
 		}
 
-		function updateAxes(svgElement, chartArr, minThreadsCount) {
+		function updateAxes(svgElement, chartArr, minThreadsCount, isDomainScaled) {
 			const xDomain = xScale.domain();
 			tuneUnits(xDomain[xDomain.length - 1]);
 			var tempDomain;
@@ -549,7 +557,9 @@ define(['jquery',
 			}
 			xScale.domain(tempDomain);
 			tempDomain = deepExtent(chartArr, yAccessor);
-			tempDomain[0] = minYAccessorValue;
+			if (!isDomainScaled) {
+				tempDomain[0] = minYAccessorValue;
+			}
 			yScale.domain(tempDomain).nice();
 			svgElement.select('.x-axis')
 				.call(xAxis);
@@ -708,12 +718,13 @@ define(['jquery',
 				names.push(chart.name);
 			});
 			colorizer.domain(names);
+			const isDomainScaled = d3.select(getSvgSelector(chartBoardName)).attr('yaxis') === SCALE.LOG;
 			const isSimpleChart = simpleChartPattern.test(chartBoardName);
 			if (isSimpleChart) {
-				updateAxes(svg, chartArr);
+				updateAxes(svg, chartArr, undefined, isDomainScaled);
 				updateAxesLabels(svg, metric);
 			} else {
-				updateAxes(svg, chartArr, MIN_THREADS_COUNT);
+				updateAxes(svg, chartArr, MIN_THREADS_COUNT, isDomainScaled);
 				updateAxesLabels(svg, metric, 'threads');
 			}
 			const svgCanvas = d3.select(svgSelector + ' g');
