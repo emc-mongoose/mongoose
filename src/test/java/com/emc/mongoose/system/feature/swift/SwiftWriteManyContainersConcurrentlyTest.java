@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.BasicConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.system.base.WSMockTestBase;
+import com.emc.mongoose.system.base.HttpStorageMockTestBase;
 import com.emc.mongoose.system.tools.StdOutUtil;
 import com.emc.mongoose.system.tools.BufferingOutputStream;
 import com.emc.mongoose.system.tools.LogValidator;
@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 22.10.15.
  */
 public class SwiftWriteManyContainersConcurrentlyTest
-extends WSMockTestBase {
+extends HttpStorageMockTestBase {
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
 	private static final int LIMIT_COUNT = 1000000;
@@ -45,7 +45,7 @@ extends WSMockTestBase {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(AppConfig.KEY_ITEM_TYPE, "container");
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1");
-		WSMockTestBase.setUpClass();
+		HttpStorageMockTestBase.setUpClass();
 		final AppConfig rtConfig = BasicConfig.THREAD_CONTEXT.get();
 		rtConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_API, "swift");
 		rtConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_NAMESPACE, "swift");
@@ -72,7 +72,7 @@ extends WSMockTestBase {
 	@AfterClass
 	public  static void tearDownClass()
 	throws Exception {
-		WSMockTestBase.tearDownClass();
+		HttpStorageMockTestBase.tearDownClass();
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1000000");
 	}
 
@@ -91,7 +91,7 @@ extends WSMockTestBase {
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 	throws Exception {
-		Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageLogFile(RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
 

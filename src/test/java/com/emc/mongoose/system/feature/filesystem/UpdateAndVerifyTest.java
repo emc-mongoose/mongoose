@@ -3,7 +3,7 @@ import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.impl.item.base.ItemListOutput;
+import com.emc.mongoose.core.impl.item.base.ListItemOutput;
 import com.emc.mongoose.core.impl.item.base.ListItemInput;
 import com.emc.mongoose.system.base.FileSystemTestBase;
 import com.emc.mongoose.system.tools.LogValidator;
@@ -40,7 +40,7 @@ extends FileSystemTestBase {
 	throws Exception {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID);
 		System.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, "/tmp/" + RUN_ID);
-		//System.setProperty(AppConfig.KEY_DATA_CONTENT_FPATH, "conf/content/zerobytes");
+		//System.setProperty(AppConfig.KEY_ITEM_DATA_CONTENT_FILE, "conf/content/zerobytes");
 		FileSystemTestBase.setUpClass();
 		final List<FileItem>
 			itemBuffWritten = new ArrayList<>(COUNT_TO_WRITE),
@@ -53,19 +53,19 @@ extends FileSystemTestBase {
 				.build()
 		) {
 			countWritten = client.create(
-				new ItemListOutput<>(itemBuffWritten), COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10B")
+				new ListItemOutput<>(itemBuffWritten), COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("10B")
 			);
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(10);
 			countUpdated = client.update(
-				new ListItemInput<>(itemBuffWritten), new ItemListOutput<>(itemBuffUpdated),
+				new ListItemInput<>(itemBuffWritten), new ListItemOutput<>(itemBuffUpdated),
 				countWritten, 1, 1
 			);
-			TimeUnit.SECONDS.sleep(1);
+			TimeUnit.SECONDS.sleep(10);
 			countRead = client.read(
 				new ListItemInput<>(itemBuffUpdated), null, countUpdated, 10, true
 			);
-			TimeUnit.SECONDS.sleep(1);
 			RunIdFileManager.flushAll();
+			TimeUnit.SECONDS.sleep(10);
 		}
 	}
 	//
@@ -116,15 +116,15 @@ extends FileSystemTestBase {
 				CSVFormat.RFC4180
 			)
 		) {
-			String v;
+			String status;
 			boolean firstRow = true;
 			for(final CSVRecord csvRec : csvParser) {
-				v = csvRec.get(4);
+				status = csvRec.get(5);
 				if(firstRow) {
 					firstRow = false;
 					continue;
 				}
-				Assert.assertEquals(0, Integer.valueOf(v).intValue());
+				Assert.assertEquals(0, Integer.valueOf(status).intValue());
 			}
 		} catch(final Exception e) {
 			Assert.fail(e.toString());

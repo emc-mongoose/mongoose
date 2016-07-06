@@ -1,8 +1,5 @@
 package com.emc.mongoose.core.impl.load.model.metrics;
 //
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-//
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
@@ -11,8 +8,6 @@ import java.util.concurrent.locks.LockSupport;
  */
 public class BasicIoStats
 extends IoStatsBase {
-	//
-	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final int updateIntervalSec;
 	protected final AtomicLong reqDurationSum = new AtomicLong(0);

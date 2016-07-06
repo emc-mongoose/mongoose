@@ -1,5 +1,6 @@
 package com.emc.mongoose.client.impl.load.executor;
 // mongoose-common.jar
+import com.emc.mongoose.client.impl.load.model.metrics.DistributedIntermediateIoStats;
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.concurrent.ThreadUtil;
 import com.emc.mongoose.common.conf.AppConfig;
@@ -14,13 +15,13 @@ import com.emc.mongoose.core.api.io.conf.IoConfig;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.api.load.model.metrics.IoStats;
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
-import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
-import com.emc.mongoose.client.impl.load.metrics.model.AggregatedRemoteIoStats;
+import com.emc.mongoose.client.impl.load.model.metrics.DistributedIoStats;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -29,10 +30,11 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
-import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -142,64 +144,37 @@ implements LoadClient<T, W> {
 		}
 	}
 	//
-	private final class InterruptOnCountLimitReachedTask
+	private final class InterruptOnLimitReachedTask
 	implements Runnable {
 		@Override
 		public final void run() {
 			final Thread currThread = Thread.currentThread();
 			currThread.setName("interruptOnCountLimitReached<" + getName() + ">");
-			if(countLimit > 0) {
-				try {
-					while(!currThread.isInterrupted()) {
-						if(countLimit <= lastStats.getSuccCount() + lastStats.getFailCount()) {
-							LOG.debug(
-								Markers.MSG, "Interrupting due to count limit ({}) is reached",
-								countLimit
-							);
-							break;
-						} else if(currThread.isInterrupted()) {
-							LOG.debug(Markers.MSG, "Interrupting due to external interruption");
-							break;
-						} else {
-							LockSupport.parkNanos(1_000);
-						}
+			try {
+				while(!currThread.isInterrupted()) {
+					if(isDoneCountLimit()) {
+						LOG.debug(
+							Markers.MSG, "Interrupting due to count limit ({}) is reached",
+							countLimit
+						);
+						break;
+					} else if(isDoneSizeLimit()) {
+						LOG.debug(
+							Markers.MSG, "Interrupting due to size limit ({}) is reached",
+							SizeInBytes.formatFixedSize(sizeLimit)
+						);
+						break;
+					} else if(currThread.isInterrupted()) {
+						LOG.debug(Markers.MSG, "Interrupting due to external interruption");
+						break;
+					} else {
+						LockSupport.parkNanos(1_000);
 					}
-				} finally {
-					isLimitReached = true;
-					remotePutExecutor.shutdownNow();
-					interruptLoadSvcs();
 				}
-			}
-		}
-	}
-	//
-	private final class InterruptOnSizeLimitReachedTask
-	implements Runnable {
-		@Override
-		public final void run() {
-			final Thread currThread = Thread.currentThread();
-			currThread.setName("interruptOnCountLimitReached<" + getName() + ">");
-			if(sizeLimit > 0) {
-				try {
-					while(!currThread.isInterrupted()) {
-						if(sizeLimit <= lastStats.getByteCount()) {
-							LOG.debug(
-								Markers.MSG, "Interrupting due to size limit ({}) is reached",
-								SizeInBytes.formatFixedSize(sizeLimit)
-							);
-							break;
-						} else if(currThread.isInterrupted()) {
-							LOG.debug(Markers.MSG, "Interrupting due to external interruption");
-							break;
-						} else {
-							LockSupport.parkNanos(1_000);
-						}
-					}
-				} finally {
-					isLimitReached = true;
-					remotePutExecutor.shutdownNow();
-					interruptLoadSvcs();
-				}
+			} finally {
+				isLimitReached = true;
+				remotePutExecutor.shutdownNow();
+				interruptLoadSvcs();
 			}
 		}
 	}
@@ -239,12 +214,7 @@ implements LoadClient<T, W> {
 		for(final W nextLoadSvc : remoteLoadMap.values()) {
 			mgmtTasks.add(new LoadItemsBatchTask(nextLoadSvc));
 		}
-		if(this.countLimit > 0 && this.countLimit < Long.MAX_VALUE) {
-			mgmtTasks.add(new InterruptOnCountLimitReachedTask());
-		}
-		if(sizeLimit > 0 && sizeLimit < Long.MAX_VALUE) {
-			mgmtTasks.add(new InterruptOnSizeLimitReachedTask());
-		}
+		mgmtTasks.add(new InterruptOnLimitReachedTask());
 		//
 		final int remotePutThreadCount = Math.max(loadSvcAddrs.length, ThreadUtil.getWorkerCount());
 		remotePutExecutor = new ThreadPoolExecutor(
@@ -256,8 +226,47 @@ implements LoadClient<T, W> {
 	//
 	@Override
 	protected final void initStats(final boolean flagServeJMX) {
-		ioStats = new AggregatedRemoteIoStats<>(getName(), flagServeJMX, remoteLoadMap);
+		ioStats = new DistributedIoStats<>(getName(), flagServeJMX, remoteLoadMap);
 		lastStats = ioStats.getSnapshot();
+	}
+	//
+	@Override
+	protected final IoStats createIntermediateStats() {
+		return new DistributedIntermediateIoStats<>(getName(), false, remoteLoadMap);
+	}
+	//
+	@Override
+	public final boolean isFullThrottleEntered() {
+		for(final W nextLoadSvc : remoteLoadMap.values()) {
+			try {
+				if(!nextLoadSvc.isFullThrottleEntered()) {
+					return false;
+				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Remote call failure");
+				return false;
+			}
+		}
+		return true;
+	}
+	//
+	@Override
+	public final boolean isFullThrottleExited() {
+		for(final W nextLoadSvc : remoteLoadMap.values()) {
+			try {
+				if(nextLoadSvc.isFullThrottleExited()) {
+					return true;
+				}
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Remote call failure");
+			}
+		}
+		return false;
+	}
+	//
+	@Override
+	protected final boolean isDoneAllSubm() {
+		return super.isDoneAllSubm() && remotePutExecutor.isTerminated();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
@@ -293,15 +302,19 @@ implements LoadClient<T, W> {
 	implements Runnable {
 		//
 		private final LoadSvc loadSvc;
+		private final String loadSvcName;
 		private final String addr;
 		//
-		private InterruptSvcTask(final LoadSvc loadSvc, final String addr) {
+		private InterruptSvcTask(final LoadSvc loadSvc, final String addr)
+		throws RemoteException {
 			this.loadSvc = loadSvc;
+			this.loadSvcName = loadSvc.getName();
 			this.addr = addr;
 		}
 		//
 		@Override
 		public final void run() {
+			Thread.currentThread().setName("interruptSvc<" + loadSvcName + "@" + addr + ">");
 			try {
 				loadSvc.shutdown();
 				// wait until all processed items are received from the load server
@@ -340,7 +353,6 @@ implements LoadClient<T, W> {
 	}
 	//
 	private void interruptLoadSvcs() {
-		//
 		final int loadSvcCount = remoteLoadMap.size();
 		if(loadSvcCount > 0) {
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
@@ -348,7 +360,11 @@ implements LoadClient<T, W> {
 				new NamingThreadFactory(String.format("interrupt<%s>", getName()), true)
 			);
 			for(final String addr : loadSvcAddrs) {
-				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
+				try {
+					interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
+				} catch(final RemoteException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to get the load service name");
+				}
 			}
 			interruptExecutor.shutdown();
 			try {
@@ -487,33 +503,14 @@ implements LoadClient<T, W> {
 		public final void run() {
 			String loadSvcAddr;
 			W loadSvc;
-			int m = 0;
-			for(int tryCount = 0; tryCount < Short.MAX_VALUE; tryCount ++) {
+			for(int m = 0; m < n && !remotePutExecutor.isTerminated(); LockSupport.parkNanos(1)) {
 				try {
-					loadSvcAddr = loadSvcAddrs[
-						(int) (rrc.incrementAndGet() % loadSvcAddrs.length)
-					];
+					loadSvcAddr = loadSvcAddrs[(int) (rrc.incrementAndGet() % loadSvcAddrs.length)];
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
-					do {
-						m += loadSvc.put(items, from + m, to);
-						if(m < n) {
-							LockSupport.parkNanos(1);
-						} else {
-							break;
-						}
-					} while(!remotePutExecutor.isShutdown());
-					counterSubm.addAndGet(n);
+					m += loadSvc.put(items, from + m, to);
+					counterSubm.addAndGet(m);
+				} catch(final Exception e) {
 					break;
-				} catch(final IOException e) {
-					if(remotePutExecutor.isTerminated()) {
-						break;
-					} else {
-						try {
-							Thread.sleep(tryCount);
-						} catch(final InterruptedException ee) {
-							break;
-						}
-					}
 				}
 			}
 		}
@@ -626,12 +623,11 @@ implements LoadClient<T, W> {
 			LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 			// CIRCULARITY: shutdown is disabled
 			if(!isCircular) {
-				final long timeOutSec = appConfig.getLoadLimitTime();
 				remotePutExecutor.shutdown();
 				try {
 					if(
 						!remotePutExecutor.awaitTermination(
-							timeOutSec > 0 ? timeOutSec : Long.MAX_VALUE, TimeUnit.SECONDS
+							REMOTE_TASK_TIMEOUT_SEC, TimeUnit.SECONDS
 						)
 					) {
 						LOG.debug(
@@ -679,60 +675,43 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public void await(final long timeOut, final TimeUnit timeUnit)
+	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
-		//
-		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			remoteLoadMap.size() + 1,
-			new NamingThreadFactory(String.format("awaitWorker<%s>", getName()), true)
-		);
-		awaitExecutor.submit(
-			new Runnable() {
-				@Override
-				public void run() {
-					// wait the remaining tasks to be transmitted to load servers
-					LOG.debug(
-						Markers.MSG, "{}: waiting remaining {} tasks to complete", LoadClientBase.this.getName(),
-						remotePutExecutor.getQueue().size() + remotePutExecutor.getActiveCount()
-					);
-					try {
-						if(!remotePutExecutor.awaitTermination(timeOut, timeUnit)) {
-							remotePutExecutor.shutdownNow();
-						}
-					} catch(final InterruptedException e) {
-						LOG.debug(Markers.MSG, "Interrupted");
+
+		long ts = System.currentTimeMillis();
+		long timeOutMilliSec = timeUnit.toMillis(timeOut);
+		timeOutMilliSec = timeOutMilliSec > 0 ? timeOutMilliSec : Long.MAX_VALUE;
+
+		final Set<String> loadSvcAddrs = remoteLoadMap.keySet();
+		String loadSvcAddr;
+
+		while(System.currentTimeMillis() - ts < timeOutMilliSec) {
+
+			for(final Iterator<String> it = loadSvcAddrs.iterator(); it.hasNext();) {
+				loadSvcAddr = it.next();
+				try {
+					if(remoteLoadMap.get(loadSvcAddr).await(1, TimeUnit.SECONDS)) {
+						LOG.debug(Markers.MSG, "Await call for {} done", loadSvcAddr);
+						it.remove();
 					}
+				} catch(final RemoteException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to invoke the remote await");
 				}
 			}
-		);
-		for(final String addr : remoteLoadMap.keySet()) {
-			awaitExecutor.submit(new AwaitLoadJobTask(remoteLoadMap.get(addr), timeOut, timeUnit));
-		}
-		/*awaitExecutor.submit(
-			new Runnable() {
-				@Override
-				public final void run() {
-					try {
-						LoadClientBase.super.await(timeOut, timeUnit);
-					} catch(final InterruptedException | RemoteException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Failed to await");
-					}
-				}
+
+			if(
+				loadSvcAddrs.isEmpty() &&
+				super.await(1, TimeUnit.SECONDS) &&
+				remotePutExecutor.awaitTermination(1, TimeUnit.SECONDS)
+			) {
+				break;
 			}
-		);*/
-		awaitExecutor.shutdown();
-		try {
-			LOG.debug(Markers.MSG, "Wait remote await tasks for finish {}[{}]", timeOut, timeUnit);
-			if(awaitExecutor.awaitTermination(timeOut, timeUnit)) {
-				LOG.debug(Markers.MSG, "All await tasks finished");
-			} else {
-				LOG.debug(Markers.MSG, "Await tasks execution timeout");
-			}
-		} finally {
-			LOG.debug(
-				Markers.MSG, "Interrupted await tasks: {}",
-				Arrays.toString(awaitExecutor.shutdownNow().toArray())
-			);
 		}
+
+		if(!remotePutExecutor.isTerminated()) {
+			remotePutExecutor.shutdownNow();
+		}
+
+		return loadSvcAddrs.isEmpty();
 	}
 }

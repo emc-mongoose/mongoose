@@ -18,6 +18,25 @@ define([
 			});
 	}
 
+	function showTabAsSelected(tabClassName, tabType) {
+		cssUtil.processClassElementsById(tabClassName, tabType,
+			function (elemSelector) {
+				elemSelector.addClass(TAB_CLASS.SELECTED);
+			},
+			function (elemSelector) {
+				elemSelector.removeClass(TAB_CLASS.SELECTED);
+			});
+	}
+
+	function clickTab(tabClassName, tabType) {
+		cssUtil.processClassElementsById(tabClassName, tabType,
+			function (elemSelector) {
+				elemSelector.trigger('click');
+			},
+			function (elemSelector) {
+			});
+	}
+
 	function showActiveTabDependentElements(tabDependentClassName, tabType) {
 		cssUtil.processClassElementsById(tabDependentClassName, tabType,
 			function (elemSelector) {
@@ -43,6 +62,8 @@ define([
 
 	return {
 		showTabAsActive: showTabAsActive,
+		showTabAsSelected: showTabAsSelected,
+		clickTab: clickTab,
 		showActiveTabDependentElements: showActiveTabDependentElements,
 		bindTabClickEvents: bindTabClickEvents
 	}

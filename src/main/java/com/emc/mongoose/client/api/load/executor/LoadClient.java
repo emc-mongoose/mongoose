@@ -12,10 +12,7 @@ import java.util.Map;
  */
 public interface LoadClient<T extends Item, W extends LoadSvc<T>>
 extends LoadExecutor<T> {
-	//
-	int
-		REMOTE_TASK_TIMEOUT_SEC = 10,
-		DEFAULT_SUBM_TASKS_QUEUE_SIZE = 256;
-	//
+	int REMOTE_TASK_TIMEOUT_SEC = 10;
+	int DEFAULT_SUBM_TASKS_QUEUE_SIZE = 256;
 	Map<String, W> getRemoteLoadMap();
 }

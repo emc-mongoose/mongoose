@@ -14,14 +14,14 @@ import org.junit.BeforeClass;
  Created by andrey on 13.08.15.
  */
 public abstract class StandaloneLoadBuilderTestBase
-extends WSMockTestBase {
+extends HttpStorageMockTestBase {
 	//
 	protected static HttpDataLoadBuilder<HttpDataItem, HttpDataLoadExecutor<HttpDataItem>> LOAD_BUILDER;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		WSMockTestBase.setUpClass();
+		HttpStorageMockTestBase.setUpClass();
 		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		appConfig.setProperty(AppConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
 		LOAD_BUILDER = new BasicHttpDataLoadBuilder<>(appConfig);
@@ -31,6 +31,6 @@ extends WSMockTestBase {
 	public static void tearDownClass()
 	throws Exception {
 		LOAD_BUILDER.close();
-		WSMockTestBase.tearDownClass();
+		HttpStorageMockTestBase.tearDownClass();
 	}
 }

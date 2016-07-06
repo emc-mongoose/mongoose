@@ -74,7 +74,7 @@ extends ScenarioTestBase {
 			//  Run mongoose default scenario in standalone mode
 			SCENARIO_RUNNER.run();
 			//  Wait for "Scenario end" message
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(10);
 			STD_OUTPUT_STREAM = stdOutStream;
 		} catch(final IOException e) {
 			e.printStackTrace();
@@ -108,7 +108,7 @@ extends ScenarioTestBase {
 	@Test
 	public void chekAllLogFilesExist()
 	throws Exception {
-		Path expectedFile = LogValidator.getMessageFile(RUN_ID).toPath();
+		Path expectedFile = LogValidator.getMessageLogFile(RUN_ID).toPath();
 		//  Check that messages.log exists
 		Assert.assertTrue("messages.log file doesn't exist", Files.exists(expectedFile));
 
@@ -186,7 +186,7 @@ extends ScenarioTestBase {
 	public void checkForScenarioEndMessage()
 	throws Exception {
 		//  Read the message file and search for "Scenario end"
-		final File messageFile = LogValidator.getMessageFile(RUN_ID);
+		final File messageFile = LogValidator.getMessageLogFile(RUN_ID);
 		Assert.assertTrue(
 			"messages.log file doesn't exist",
 			messageFile.exists()
@@ -341,7 +341,7 @@ extends ScenarioTestBase {
 			final BufferedReader
 				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
 		) {
-			LogValidator.assertCorrectDataItemsCSV(in);
+			LogValidator.assertCorrectItemsCsv(in);
 		}
 	}
 

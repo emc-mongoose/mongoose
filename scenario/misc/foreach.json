@@ -1,0 +1,81 @@
+{
+	"type" : "for",
+	"value" : "size",
+	"in" : [
+		0, "1KB", "1MB"
+	],
+	"config" : {
+		"item" : {
+			"data" : {
+				"size" : "${size}"
+			}
+		},
+		"load" : {
+			"limit" : {
+				"count" : 1000000,
+				"time" : "10s"
+			},
+			"metrics" : {
+				"period" : 0
+			}
+		}
+	},
+	"jobs" : [
+		{
+			"type" : "for",
+			"value" : "threads",
+			"in" : [
+				1, 10, 100
+			],
+			"config" : {
+				"item" : {
+					"dst" : {
+						"container" : "${size}_${threads}threads"
+					}
+				},
+				"load" : {
+					"threads" : "${threads}"
+				}
+			},
+			"jobs" : [
+				{
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"dst" : {
+								"file" : "${size}_${threads}threads.csv"
+							}
+						},
+						"load" : {
+							"type" : "create"
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"src" : {
+								"file" : "${size}_${threads}threads.csv"
+							}
+						},
+						"load" : {
+							"type" : "read"
+						}
+					}
+				}, {
+					"type" : "load",
+					"config" : {
+						"item" : {
+							"src" : {
+								"file" : "${size}_${threads}threads.csv"
+							}
+						},
+						"load" : {
+							"type" : "delete"
+						}
+					}
+				}
+			]
+		}
+	]
+}

@@ -11,7 +11,7 @@ import org.junit.BeforeClass;
  Created by andrey on 13.08.15.
  */
 public abstract class StandaloneClientTestBase
-extends WSMockTestBase {
+extends HttpStorageMockTestBase {
 	//
 	protected static StorageClientBuilder<HttpDataItem, StorageClient<HttpDataItem>>
 		CLIENT_BUILDER;
@@ -19,7 +19,7 @@ extends WSMockTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		WSMockTestBase.setUpClass();
+		HttpStorageMockTestBase.setUpClass();
 		CLIENT_BUILDER = new BasicStorageClientBuilder<HttpDataItem, StorageClient<HttpDataItem>>()
 			.setClientMode(null);
 	}
@@ -27,6 +27,6 @@ extends WSMockTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		WSMockTestBase.tearDownClass();
+		HttpStorageMockTestBase.tearDownClass();
 	}
 }

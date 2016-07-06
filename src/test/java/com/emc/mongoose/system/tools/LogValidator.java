@@ -1,5 +1,6 @@
 package com.emc.mongoose.system.tools;
 
+import com.emc.mongoose.common.conf.enums.LoadType;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.junit.Assert;
@@ -25,11 +26,13 @@ public final class LogValidator {
 
 	public static void removeLogDirectory(final String runID)
 	throws Exception {
-		final Path logDir = Paths.get(getLogDir(), runID);
-		removeDirectory(logDir);
+		if(runID != null) {
+			final Path logDir = Paths.get(getLogDir(), runID);
+			removeDirectory(logDir);
+		}
 	}
 
-	private static void removeDirectory(final Path path)
+	public static void removeDirectory(final Path path)
 	throws Exception {
 		final File dir = path.toFile();
 		if (dir.listFiles() != null) {
@@ -42,12 +45,16 @@ public final class LogValidator {
 		}
 	}
 
-	public static File getMessageFile(final String runID){
+	public static File getMessageLogFile(final String runID){
 		return new File(Paths.get(getLogDir(), runID, MESSAGE_FILE_NAME).toString());
 	}
 
 	public static File getPerfAvgFile(final String runID){
 		return new File(Paths.get(getLogDir(), runID, PERF_AVG_FILE_NAME).toString());
+	}
+
+	public static File getPerfMedFile(final String runID){
+		return new File(Paths.get(getLogDir(), runID, PERF_SUM_FILE_NAME).toString());
 	}
 
 	public static File getPerfSumFile(final String runID){
@@ -294,8 +301,8 @@ public final class LogValidator {
 		}
 	}
 	//
-	public static void assertCorrectDataItemsCSV(BufferedReader in)
-		throws IOException {
+	public static void assertCorrectItemsCsv(final BufferedReader in)
+	throws IOException {
 		//
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
@@ -335,50 +342,56 @@ public final class LogValidator {
 		//
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
-			Assert.assertEquals("Count of columns is wrong", 9, nextRec.size());
+			Assert.assertEquals("Count of columns is wrong", 10, nextRec.size());
 			if (firstRow) {
 				Assert.assertEquals("Thread", nextRec.get(0));
-				Assert.assertEquals("TargetNode", nextRec.get(1));
-				Assert.assertEquals("ItemId", nextRec.get(2));
-				Assert.assertEquals("ItemSize", nextRec.get(3));
-				Assert.assertEquals("StatusCode", nextRec.get(4));
-				Assert.assertEquals("ReqTimeStart[us]", nextRec.get(5));
-				Assert.assertEquals("RespLatency[us]", nextRec.get(6));
-				Assert.assertEquals("DataLatency[us]", nextRec.get(7));
-				Assert.assertEquals("Duration[us]", nextRec.get(8));
+				Assert.assertEquals("LoadType", nextRec.get(1));
+				Assert.assertEquals("TargetNode", nextRec.get(2));
+				Assert.assertEquals("ItemId", nextRec.get(3));
+				Assert.assertEquals("TransferSize", nextRec.get(4));
+				Assert.assertEquals("StatusCode", nextRec.get(5));
+				Assert.assertEquals("ReqTimeStart[us]", nextRec.get(6));
+				Assert.assertEquals("RespLatency[us]", nextRec.get(7));
+				Assert.assertEquals("DataLatency[us]", nextRec.get(8));
+				Assert.assertEquals("Duration[us]", nextRec.get(9));
 				firstRow = false;
 			} else {
 				Assert.assertTrue(
 					"Thread name format is not correct", nextRec.get(0).matches(LogPatterns.THREAD_NAME.pattern())
 				);
-				final String node = nextRec.get(1);
+				try {
+					LoadType.valueOf(nextRec.get(1).toUpperCase());
+				} catch(Exception e) {
+					Assert.fail("Invalid load type: " + nextRec.get(1));
+				}
+				final String node = nextRec.get(2);
 				if(node != null && !node.isEmpty()) {
 					Assert.assertTrue(
-						"Target node is not correct", nextRec.get(1).matches(LogPatterns.TARGET_NODE.pattern())
+						"Target node is not correct", node.matches(LogPatterns.TARGET_NODE.pattern())
 					);
 				}
 				Assert.assertTrue(
-					"Item value format is not correct",
-					nextRec.get(2).matches(LogPatterns.ITEM_VALUE.pattern())
+					"Item name format is not correct",
+					nextRec.get(3).matches(LogPatterns.ITEM_VALUE.pattern())
 				);
 				Assert.assertTrue(
-					"Data size format is not correct", LogValidator.isInteger(nextRec.get(3))
+					"Transfer size format is not correct", LogValidator.isInteger(nextRec.get(4))
 				);
 				Assert.assertTrue(
 					"Status code and mask format is not correct",
-					LogValidator.isInteger(nextRec.get(4))
+					LogValidator.isInteger(nextRec.get(5))
 				);
 				Assert.assertTrue(
-					"Request time start format is not correct", LogValidator.isLong(nextRec.get(5))
+					"Request time start format is not correct", LogValidator.isLong(nextRec.get(6))
 				);
 				Assert.assertTrue(
-					"Response latency format is not correct", LogValidator.isInteger(nextRec.get(6))
+					"Response latency format is not correct", LogValidator.isInteger(nextRec.get(7))
 				);
 				Assert.assertTrue(
-					"Data latency format is not correct", LogValidator.isInteger(nextRec.get(7))
+					"Data latency format is not correct", LogValidator.isInteger(nextRec.get(8))
 				);
 				Assert.assertTrue(
-					"Duration format is not correct", LogValidator.isInteger(nextRec.get(8))
+					"Duration format is not correct", LogValidator.isInteger(nextRec.get(9))
 				);
 			}
 		}

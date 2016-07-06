@@ -171,7 +171,7 @@ implements FileLoadBuilderClient<T, W, U> {
 			);
 		} else {
 			return (U) new BasicFileLoadClient<>(
-				appConfig, ioConfigCopy, appConfig.getLoadThreads(), itemInput, countLimit,
+				appConfig, ioConfigCopy, threadCount, itemInput, countLimit,
 				sizeLimit, rateLimit, remoteLoadMap
 			);
 		}

@@ -17,14 +17,15 @@ implements SSLSetupHandler {
 	//
 	private BasicSslSetupHandler() {}
 	//
+	public final static String[] TLS_PROTOCOLS = {
+		"TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3"
+	};
 	public final static BasicSslSetupHandler INSTANCE = new BasicSslSetupHandler();
 	//
 	@Override
 	public final void initalize(final SSLEngine sslEngine)
 	throws SSLException {
-		sslEngine.setEnabledProtocols(
-			new String[] { "TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3" }
-		);
+		sslEngine.setEnabledProtocols(TLS_PROTOCOLS);
 		final SSLContext sslContext;
 		try {
 			sslContext = SSLContext.getDefault();

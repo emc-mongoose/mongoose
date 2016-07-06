@@ -46,8 +46,8 @@ extends FileSystemTestBase {
 				.build()
 		) {
 			countWritten = client.create(null, COUNT_TO_WRITE, 100, 0);
-			//
 			RunIdFileManager.flushAll();
+			TimeUnit.SECONDS.sleep(10);
 		}
 	}
 	//

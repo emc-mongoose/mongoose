@@ -49,7 +49,8 @@ define([
 		const rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.DEFAULTS]));
 		rootTreeUlElem.empty();
 		var addressObject = {};
-		elementAppender.objectAsTree(configObject, rootTreeUlElem, 'prop', addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
+		// elementAppender.objectAsTree(configObject, rootTreeUlElem, 'prop', addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent, true);
+		elementAppender.treeOfItem(configObject, rootTreeUlElem, '', DELIMITER.PROPERTY, commonClickEventCreator.propertyClickEvent, false, addressObject);
 		const treeFormElem = $(jqId([BLOCK.CONFIG, 'form', TAB_TYPE.DEFAULTS]));
 		treeFormElem.empty();
 		elementAppender.formForTree(addressObject, treeFormElem, DELIMITER.PROPERTY, changedConfigObject, TAB_TYPE.DEFAULTS);
@@ -58,6 +59,9 @@ define([
 
 	function fileReaderOnLoadAction(configObject, fullFileName) {
 		render(configObject);
+		const defaultsNameElem = $(jqId([TAB_TYPE.DEFAULTS, 'name']));
+		defaultsNameElem.show();
+		defaultsNameElem.text(fullFileName);
 		// $(jqId(['file', 'name', TAB_TYPE.DEFAULTS])).val(fullFileName);
 	}
 

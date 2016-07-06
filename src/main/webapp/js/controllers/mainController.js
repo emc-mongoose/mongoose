@@ -1,6 +1,5 @@
 define([
 	'jquery',
-	'./websockets/webSocketController',
 	'./tab/scenariosController',
 	'./tab/defaultsController',
 	'./tab/tests/testsController',
@@ -15,7 +14,6 @@ define([
 	'../common/util/tabsUtil',
 	'../common/constants'
 ], function ($,
-             webSocketController,
              scenariosController,
              defaultsController,
              testsController,
@@ -69,6 +67,12 @@ define([
 		return jqId([tabType, 'tab']);
 	}
 
+	const blinkClassName = 'blink_me';
+
+	function blink() {
+		$('.' + 'blink_me').fadeOut(500).fadeIn(500, blink);
+	}
+
 	function makeTabActive(tabType) {
 		tabsUtil.showTabAsActive('tab', tabType);
 		tabsUtil.showActiveTabDependentElements('tab-dependent', tabType);
@@ -84,6 +88,10 @@ define([
 				break;
 			case TAB_TYPE.TESTS:
 				cssUtil.show(jqId(['tests', 'block']));
+				$(tabJqId(tabType)).removeClass(blinkClassName);
+				setTimeout(function () {
+					$(tabJqId(tabType)).removeClass(blinkClassName);
+				}, 1000);
 				break;
 		}
 		currentTabType = tabType;
@@ -94,7 +102,10 @@ define([
 		$(jqId(['mode', currentMode])).removeClass(TAB_CLASS.ACTIVE);
 		$(jqId(['mode', mode])).addClass(TAB_CLASS.ACTIVE);
 		const modeTabElem = $(jqId(['mode', 'main']));
-		modeTabElem.text('Mode: ' + mode);
+		modeTabElem.text('Mode: ' + mode + ' ');
+		modeTabElem.append($('<span/>', {
+			class: 'caret'
+		}));
 		currentMode = mode;
 		defaultsController.setRunMode(currentMode);
 		$('#run\\.mode').find('input').val(currentMode);
@@ -122,18 +133,22 @@ define([
 
 		function renderNavbar(runVersion) {
 			hbUtil.compileAndInsertInsideBefore('body', navbarTemplate, {
-				version: runVersion,
-				modes: MODE
+				version: runVersion
 			});
-			binder.mode();
 			binder.tab();
 		}
 
 		function renderBase() {
-			hbUtil.compileAndInsertInside('#app', baseTemplate);
+			hbUtil.compileAndInsertInside('#app', baseTemplate, {
+				modes: MODE
+			});
 			const configElem = $('#all-buttons');
 			$.each(CONFIG_TABS, function (index, value) {
 				if (value === TAB_TYPE.SCENARIOS) {
+					const scenarioName = $('<h4/>', {
+						id: plainId([value, 'name']),
+						class: 'scenario-name tab-dependent'
+					});
 					const detailsTree = $('<ul/>', {
 						id: plainId([BLOCK.TREE, value, 'details']),
 						class: BLOCK.TREE + ' ' + 'tab-dependent'
@@ -144,15 +159,27 @@ define([
 					});
 					configElem.after(jsonViewElem);
 					configElem.after(detailsTree);
+					configElem.after(scenarioName);
 					jsonViewElem.hide();
 					detailsTree.hide();
+					scenarioName.hide()
 				}
 				configElem.after(
 					$('<ul/>', {
 						id: plainId([BLOCK.TREE, value]),
 						class: BLOCK.TREE + ' ' + 'tab-dependent'
 					}));
-			})
+				if (value == TAB_TYPE.DEFAULTS) {
+					const defaultsName = $('<h4/>', {
+						id: plainId([value, 'name']),
+						class: 'defaults-name tab-dependent'
+					});
+					configElem.after(defaultsName);
+					defaultsName.hide();
+				}
+			});
+			binder.mode();
+
 		}
 
 		function renderButtons() {
@@ -163,6 +190,8 @@ define([
 				hbUtil.compileAndInsertInsideBefore(jqId(['all', BLOCK.BUTTONS]), buttonsTemplate,
 					{'buttons': BUTTONS, 'tab-type': value});
 			});
+			$(jqId([BUTTON_TYPE.OPEN_INPUT_TEXT, TAB_TYPE.SCENARIOS])).remove();
+			$(jqId([BUTTON_TYPE.OPEN_INPUT_TEXT, TAB_TYPE.DEFAULTS])).remove();
 			binder.tabButtons(BUTTON_TYPE, CONFIG_TABS);
 		}
 
@@ -224,9 +253,10 @@ define([
 			$(buttonJqId(BUTTON_TYPE.OPEN, tabName)).click(function () {
 				openInputFileElem.trigger('click');
 			});
-			openInputFileElem.change(function (data) {
+			openInputFileElem.change(function (event) {
 				fillTheField(tabName, BUTTON_TYPE);
-				openFileHandler.event(data);
+				openFileHandler.event(event);
+				openInputFileElem.val('');
 			})
 		}
 
@@ -252,10 +282,20 @@ define([
 					dataType: 'json',
 					contentType: constants.JSON_CONTENT_TYPE,
 					data: JSON.stringify(startJson),
-					processData: false
+					processData: false,
+					timeout: 10000,
+					error: function () {
+						alert('Failed to start the test')
+					}
 				}).done(function (testsObj) {
 					testsController.updateTestsList(testsObj);
+					testsController.runCharts();
 					console.log('Mongoose ran');
+					const testTabElem = $(tabJqId([TAB_TYPE.TESTS]));
+					if(!testTabElem.hasClass(blinkClassName)){
+						testTabElem.addClass(blinkClassName);
+					}
+					blink();
 				});
 			}
 		}

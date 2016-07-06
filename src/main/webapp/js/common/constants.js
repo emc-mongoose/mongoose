@@ -39,13 +39,35 @@ define([
 		'bandwidth': 'BW'
 	};
 
+	const sec = 's';
+	const byte = 'B';
+
+	function micro(unit) {
+		return '\u03bc' + unit;
+	}
+
+	function mega(unit) {
+		return 'M' + unit;
+	}
+
+	function metricWithUnit(metric, unit) {
+		return metric + '[' + unit + ']';
+	}
+
+	const CHART_METRICS_UNITS_FORMATTER = {
+		'lat': metricWithUnit('latency', micro(sec)),
+		'dur': metricWithUnit('duration', micro(sec)),
+		'TP': metricWithUnit('rate', 'obj/' + sec),
+		'BW': metricWithUnit('rate', mega(byte) + '/' + sec)
+	};
 
 	return {
 		JSON_CONTENT_TYPE: JSON_CONTENT_TYPE,
 		LOG_MARKERS: LOG_MARKERS,
 		LOG_MARKERS_FORMATTER: LOG_MARKERS_FORMATTER,
 		CHART_METRICS: CHART_METRICS,
-		CHART_METRICS_FORMATTER: CHART_METRICS_FORMATTER
+		CHART_METRICS_FORMATTER: CHART_METRICS_FORMATTER,
+		CHART_METRICS_UNITS_FORMATTER: CHART_METRICS_UNITS_FORMATTER
 	}
 
 });

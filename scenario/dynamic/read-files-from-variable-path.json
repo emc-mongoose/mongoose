@@ -22,7 +22,7 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"container" : "read-files-from-variable-path/%p{16;2}",
+						"container" : "read-files-from-variable-path/$p{16;2}",
 						"file" : "read-files-from-variable-path.csv"
 					},
 					"data" : {

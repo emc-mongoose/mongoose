@@ -3,7 +3,6 @@ package com.emc.mongoose.core.impl.load.builder;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.value.PatternDefinedInput;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.item.container.Container;
@@ -33,7 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static com.emc.mongoose.common.io.value.PatternDefinedInput.PATTERN_SYMBOL;
+import static com.emc.mongoose.common.io.value.PatternDefinedInput.PATTERN_CHAR;
 
 /**
  Created by kurila on 26.11.15.
@@ -60,7 +59,7 @@ implements FileLoadBuilder<T, U> {
 		// create parent directories
 		final Container d = ioConfig.getDstContainer();
 		final String p = d == null ? null : d.getName();
-		if(p != null && !p.isEmpty() && p.indexOf(PATTERN_SYMBOL) < 0) {
+		if(p != null && !p.isEmpty() && p.indexOf(PATTERN_CHAR) < 0) {
 			try {
 				Files.createDirectories(Paths.get(p));
 			} catch(final IOException e) {

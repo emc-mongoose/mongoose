@@ -19,11 +19,30 @@ public abstract class ConfiguredTestBase {
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		System.setProperty(KEY_ITEM_DATA_SIZE, "1MB");
-		System.setProperty(KEY_ITEM_TYPE, "data");
-		System.setProperty(KEY_LOAD_CIRCULAR, "false");
-		System.setProperty(KEY_LOAD_LIMIT_COUNT, "0");
-		System.setProperty(KEY_STORAGE_HTTP_API, "s3");
-		System.setProperty(KEY_STORAGE_TYPE, "http");
+		System.clearProperty(KEY_AUTH_ID);
+		System.clearProperty(KEY_AUTH_SECRET);
+		System.clearProperty(KEY_AUTH_TOKEN);
+		System.clearProperty(KEY_ITEM_DATA_CONTENT_FILE);
+		System.clearProperty(KEY_ITEM_DATA_RANGES);
+		System.clearProperty(KEY_ITEM_DATA_SIZE);
+		System.clearProperty(KEY_ITEM_DATA_VERIFY);
+		System.clearProperty(KEY_ITEM_DST_CONTAINER);
+		System.clearProperty(KEY_ITEM_DST_FILE);
+		System.clearProperty(KEY_ITEM_NAMING_LENGTH);
+		System.clearProperty(KEY_ITEM_NAMING_OFFSET);
+		System.clearProperty(KEY_ITEM_NAMING_PREFIX);
+		System.clearProperty(KEY_ITEM_NAMING_RADIX);
+		System.clearProperty(KEY_ITEM_NAMING_TYPE);
+		System.clearProperty(KEY_ITEM_SRC_CONTAINER);
+		System.clearProperty(KEY_ITEM_SRC_FILE);
+		System.clearProperty(KEY_ITEM_TYPE);
+		System.clearProperty(KEY_LOAD_CIRCULAR);
+		System.clearProperty(KEY_LOAD_LIMIT_COUNT);
+		System.clearProperty(KEY_LOAD_LIMIT_RATE);
+		System.clearProperty(KEY_LOAD_LIMIT_SIZE);
+		System.clearProperty(KEY_LOAD_LIMIT_TIME);
+		System.clearProperty(KEY_RUN_ID);
+		System.clearProperty(KEY_STORAGE_HTTP_API);
+		System.clearProperty(KEY_STORAGE_TYPE);
 	}
 }

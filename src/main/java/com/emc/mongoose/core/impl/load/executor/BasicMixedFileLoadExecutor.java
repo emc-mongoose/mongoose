@@ -15,7 +15,7 @@ import com.emc.mongoose.core.api.item.data.FileItem;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 import com.emc.mongoose.core.api.load.executor.MixedLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
-import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
+import com.emc.mongoose.core.impl.load.model.WeightThrottle;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -253,7 +253,7 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 	}
 	//
 	@Override
-	public void await(final long timeOut, final TimeUnit timeUnit)
+	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			loadExecutorMap.size() + 1, new NamingThreadFactory("await<" + getName() + ">", true)
@@ -292,13 +292,10 @@ implements FileLoadExecutor<F>, MixedLoadExecutor<F> {
 			}
 		);
 		awaitExecutor.shutdown();
-		if(awaitExecutor.awaitTermination(timeOut, timeUnit)) {
-			LOG.debug(Markers.MSG, "{}: await completed before the timeout", getName());
-		} else {
-			LOG.debug(Markers.MSG,
-				"{}: await timeout, {} await tasks dropped",
-				getName(), awaitExecutor.shutdownNow().size()
-			);
+		try {
+			return awaitExecutor.awaitTermination(timeOut, timeUnit);
+		} finally {
+			awaitExecutor.shutdownNow();
 		}
 	}
 	//

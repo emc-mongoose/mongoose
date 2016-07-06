@@ -1,7 +1,5 @@
 package com.emc.mongoose.common.log.appenders;
 //
-//
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.appender.AbstractManager;
@@ -14,9 +12,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -193,8 +188,8 @@ extends AbstractManager {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
 				if(layout != null) {
-					byte[] footer = layout.getFooter();
-					if (footer != null) {
+					final byte[] footer = layout.getFooter();
+					if(footer != null) {
 						outStream.write(footer);
 					}
 				}
@@ -209,20 +204,11 @@ extends AbstractManager {
 	}
 	//
 	public static void closeAll(final String runId) {
-		for(final RunIdFileManager manager : INSTANCES) {
-			manager.close(runId);
-		}
-	}
-	//
-	public void close(final String runId) {
-		final OutputStream outStream = outStreamsMap.get(runId);
-		if(outStream != null) {
-			try {
-				outStream.close();
-			} catch(final IOException e) {
-				e.printStackTrace(System.err);
-			} finally {
-				outStreamsMap.remove(runId);
+		final RunIdFileManager[] managers = new RunIdFileManager[INSTANCES.size()];
+		INSTANCES.toArray(managers);
+		for(final RunIdFileManager manager : managers) {
+			if(manager.outStreamsMap.containsKey(runId)) {
+				manager.close();
 			}
 		}
 	}
@@ -238,6 +224,19 @@ extends AbstractManager {
 			}
 		} catch(final ConcurrentModificationException e) {
 			e.printStackTrace(System.err);
+		}
+	}
+	//
+	public static void flush(final String runId) {
+		for(final RunIdFileManager instance : INSTANCES) {
+			final OutputStream outStream = instance.outStreamsMap.get(runId);
+			if(outStream != null) {
+				try {
+					outStream.flush();
+				} catch(final IOException e) {
+					e.printStackTrace(System.err);
+				}
+			}
 		}
 	}
 	//

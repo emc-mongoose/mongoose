@@ -1,24 +1,22 @@
 package com.emc.mongoose.common.net.http.conn.pool;
-//
+
 import com.emc.mongoose.common.concurrent.Sequencer;
 import com.emc.mongoose.common.log.LogUtil;
-//
 import org.apache.http.HttpHost;
 import org.apache.http.concurrent.BasicFuture;
 import org.apache.http.concurrent.FutureCallback;
-//
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.pool.NIOConnFactory;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 /**
@@ -36,9 +34,11 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	public FixedRouteSequencingConnPool(
 		final ConnectingIOReactor ioReactor, final HttpHost route,
 		final NIOConnFactory<HttpHost, NHttpClientConnection> connFactory,
-		final int connectTimeout, final int batchSize
+		final int connectTimeout, final int batchSize, final int maxPerRoute, final int maxTotal
 	) {
 		super(ioReactor, connFactory, connectTimeout);
+		setDefaultMaxPerRoute(maxPerRoute);
+		setMaxTotal(maxTotal);
 		this.route = route;
 		connPoolSequencer = new Sequencer(
 			"connPoolSequencer<" + route.toHostString() + ">", true, batchSize
@@ -60,13 +60,15 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	// Sequenced connection leasing ////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final class ConnLeaseTask
-	extends BasicFuture<BasicNIOPoolEntry>
-	implements RunnableFuture<BasicNIOPoolEntry> {
+	extends BasicFuture<Future<BasicNIOPoolEntry>>
+	implements RunnableFuture<Future<BasicNIOPoolEntry>> {
 		//
 		private final Object state;
 		private final FutureCallback<BasicNIOPoolEntry> callback;
 		//
-		public ConnLeaseTask(final Object state, final FutureCallback<BasicNIOPoolEntry> callback) {
+		public ConnLeaseTask(
+			final Object state, final FutureCallback<BasicNIOPoolEntry> callback
+		) {
 			super(null);
 			this.state = state;
 			this.callback = callback;
@@ -75,7 +77,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		@Override
 		public void run() {
 			try {
-				FixedRouteSequencingConnPool.super.lease(route, state, callback);
+				completed(FixedRouteSequencingConnPool.super.lease(route, state, callback));
 			} catch(final Exception e) {
 				if(!FixedRouteSequencingConnPool.super.isShutdown()) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to lease the connection");
@@ -86,11 +88,12 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	//
 	@Override
 	public final Future<BasicNIOPoolEntry> lease(
-		final HttpHost route, final Object state, final FutureCallback<BasicNIOPoolEntry> callback
+		final HttpHost route, final Object state,
+		final FutureCallback<BasicNIOPoolEntry> callback
 	) {
 		try {
-			return connPoolSequencer.submit(new ConnLeaseTask(state, callback));
-		} catch(final InterruptedException e) {
+			return connPoolSequencer.submit(new ConnLeaseTask(state, callback)).get();
+		} catch(final ExecutionException | InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 	}
