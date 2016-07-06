@@ -1,49 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Mongoose WebUI</title>
-    <link rel="stylesheet" href="style.css">
+	<meta charset="UTF-8">
+	<title>Mongoose WebUI</title>
+	<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <fieldset>
-    <legend><h2>WEB UI</h2></legend>
+	<legend><h2>WEB UI</h2></legend>
 
-    <fieldset>
-        <legend><h3>CONTENTS</h3></legend>
-        <ul>
-            <li><a href="#start">How to start Web UI</a></li>
-            <li><a href="#scenarios">Scenarios</a></li>
-            <li><a href="#defaults">Defaults</a></li>
-            <li><a href="#tests">Tests</a></li>
-        </ul>
-    </fieldset>
-    <fieldset id="start">
-        <legend><h3>HOW TO START WEB UI</h3></legend>
-        <ol>
-            <li>Go to the HW client with Mongoose deployed</li>
-            <li>Start Mongoose in <code>webui</code> mode <code class="bash plain">$ java -jar &lt;path
-                to jar&gt;</code><code class="bash plain">/mongoose</code><code class="bash plain">.jar
-                webui</code>
-            </li>
-            <li>Open a browser on your PC and open Mongoose Web UI page. Web UI address is <code>
-                &lt;HW client IP&gt;:8080</code>. For instance, for Mongoose started locally the
-                address would be <a class="external-link" href="http://localhost:8080/"
-                                    rel="nofollow">http://localhost:8080/</a></li>
-        </ol>
-    </fieldset>
-    <fieldset id="scenarios">
-        <legend><h3>SCENARIOS</h3></legend>
-        <p>About scenarios</p>
-    </fieldset>
-    <fieldset id="defaults">
-        <legend><h3>DEFAULTS</h3></legend>
-        <p>About defaults</p>
-    </fieldset>
-    <fieldset id="tests">
-        <legend><h3>TESTS</h3></legend>
-        <p>About tests</p>
-    </fieldset>
+	<fieldset>
+		<legend><h3>CONTENTS</h3></legend>
+		<ul>
+			<li><a href="#start">How to start Web UI</a></li>
+			<li><a href="#about">About</a></li>
+			<li><a href="#scenarios">Scenarios</a></li>
+			<li><a href="#defaults">Defaults</a></li>
+			<li><a href="#tests">Tests</a></li>
+		</ul>
+	</fieldset>
+	<fieldset id="start">
+		<legend><h3>HOW TO START WEB UI</h3></legend>
+		<ol>
+			<li>
+			<p>
+				Start Mongoose in WebUI mode:
+			<fieldset class="bash"><code>$ java -jar &lt;path_to_jar&gt;/mongoose.jar webui</code>
+			</fieldset>
+				Mongoose starts as HTTP-server locally on the port 8080.
+			</p>
+			</li>
+			<li>Open a browser at address <code>&lt;current_machine_IP&gt;:8080</code>.
+				For instance, <a class="external-link" href="http://localhost:8080/" rel="nofollow">http://localhost:8080/</a>.
+			</li>
+		</ol>
+	</fieldset>
+	<fieldset id="about">
+		<legend><h3>ABOUT</h3></legend>
+		<p>Mongoose WebUI is a single page application. It allows to use Mongoose tool via GUI.
+			Also WebUI extends Mongoose tests' reporting with charts.
+		</p>
+		<p>Below shows the demo of Mongoose run with the default scenario via WebUI. Commentaries are situated at the top of the demo.</p>
+		<p>
+			<img src="assets/gif/default_start_with_captures.gif" width="1200">
+		</p>
+		<p>
+			As shown in the demo WebUI has three tabs on the main page. There are Scenarios, Defaults and Tests.
+			The following briefly describes each of them.
+		</p>
+	</fieldset>
+	<fieldset id="scenarios">
+		<legend><h3>SCENARIOS</h3></legend>
+		<p>
+			On this tab scenarios for Mongoose are shown as a tree.
+			These scenarios are supplied with Mongoose ("out of the box").
+			You can edit them or run as they are.
+		</p>
+		<p>
+			<img src="assets/gif/edit_scenario_with_captures.gif" width="1200">
+		</p>
+		<p>
+			After editing you can save the scenario or open your own.
+		</p>
+		<p>
+			<img src="assets/gif/open_save_with_captures.gif" width="1200">
+		</p>
+		Here is a description of the interface.
+		<p>
+			<img src="assets/img/scenarios.JPG" width="1200"/>
+		</p>
+		<ol>
+			<li>Main tabs</li>
+			<li>Control panel</li>
+			<li>Scenarios' tree</li>
+		</ol>
+		<p>
+			When a scenario has been selected the tree of scenario's properties is open.
+		</p>
+		<p>
+			<img src="assets/img/scenario_detailed.jpg" width="1200"/>
+		</p>
+		<ol>
+			<li>Scenario's full name</li>
+			<li>Scenario's properties tree</li>
+			<li>"Back to scenarios' tree" button</li>
+			<li>Scenario's JSON view</li>
+			<li>Field of a scenario property changing</li>
+		</ol>
+	</fieldset>
+	<fieldset id="defaults">
+		<legend><h3>DEFAULTS</h3></legend>
+		<p>Defaults tab is similar to Scenarios tabs. Defaults means Mongoose's configuration.
+			The configuration is also has a tree view.
+		</p>
+		<p>
+			<img src="assets/img/defaults.jpg" width="1200"/>
+		</p>
+		<ol>
+			<li>Defaults' tree</li>
+			<li>Field of a configuration property changing</li>
+		</ol>
+	</fieldset>
+	<fieldset id="tests">
+		<legend><h3>TESTS</h3></legend>
+		<p>If a test was run, the information about it appears here.
+			You can manage started tests from TESTS tab.
+			You can select a test, stop or remove it.
+		</p>
+		<p>
+			<img src="assets/gif/stop_delete_with_captures.gif" width="1200">
+		</p>
+		<p>
+			Also you can find here logs' tables and charts for current and total metrics.
+			Examples of charts and chart management are shown below.
+		</p>
+		<p>Chart with current metrics</p>
+		<p>
+			<img src="assets/img/current_chart.JPG" width="1200"/>
+		</p>
+		<p>Chart with total metrics</p>
+		<p>
+			<img src="assets/img/total_chart.JPG" width="1200"/>
+		</p>
+		<p>
+			<img src="assets/gif/hide_charts_with_captures.gif" width="1200">
+		</p>
+		<p>
+			<img src="assets/gif/log_scales_with_captures.gif" width="1200">
+		</p>
+		<p>
+			<img src="assets/gif/save_charts_with_captures.gif" width="1200">
+		</p>
+	</fieldset>
 </fieldset>
 </body>
 </html>
