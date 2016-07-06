@@ -46,7 +46,7 @@ extends FileSystemTestBase {
 		final List<FileItem> itemBuff = new ArrayList<>(COUNT_TO_WRITE);
 		try(
 			final StorageClient<FileItem> client = CLIENT_BUILDER
-				.setLimitTime(100, TimeUnit.SECONDS)
+				.setLimitTime(50, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
 				.setStorageType("fs")
 				.build()
