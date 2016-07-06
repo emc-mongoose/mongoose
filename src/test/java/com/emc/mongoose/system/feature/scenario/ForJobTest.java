@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Level;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -195,7 +196,7 @@ extends HttpStorageMockTestBase {
 		);
 	}
 
-	@Test
+	@Test @Ignore
 	public void checkPerfSumFile()
 	throws Exception {
 		TimeUnit.SECONDS.sleep(20);

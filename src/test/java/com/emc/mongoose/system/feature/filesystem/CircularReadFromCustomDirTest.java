@@ -15,6 +15,7 @@ import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 //
 import java.io.BufferedReader;
@@ -81,7 +82,7 @@ extends FileSystemTestBase {
 		Assert.assertTrue(countRead > COUNT_TO_WRITE);
 	}
 	//
-	@Test
+	@Test @Ignore
 	public void checkLoggedItemsCount()
 	throws Exception {
 		int itemsCount = 0;
