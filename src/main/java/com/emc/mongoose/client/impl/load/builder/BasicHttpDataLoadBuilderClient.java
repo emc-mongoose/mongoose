@@ -90,7 +90,11 @@ implements HttpDataLoadBuilderClient<T, W, U> {
 		W nextLoad;
 		for(final String addr : loadSvcMap.keySet()) {
 			nextBuilder = loadSvcMap.get(addr);
-			nextBuilder.setIoConfig(ioConfigCopy); // should upload req conf right before instancing
+			try {
+				nextBuilder.setIoConfig(ioConfigCopy); // should upload req conf right before instancing
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to send the I/O config");
+			}
 			nextLoad = (W) ServiceUtil.getRemoteSvc(
 				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);

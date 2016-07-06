@@ -51,7 +51,7 @@ extends DistributedClientTestBase {
 	}
 	//
 	@Test public void checkRunTimeNotMuchBiggerThanLimit() {
-		Assert.assertTrue(timeActualSec <= TIME_TO_WRITE_SEC + 10);
+		Assert.assertEquals(TIME_TO_WRITE_SEC, timeActualSec, 15);
 	}
 	//
 	@Test public void checkSomethingWasWritten() {

@@ -37,6 +37,7 @@ implements LoadState<T> {
 	private final int loadNumber;
 	private final AppConfig appConfig;
 	private final IoStats.Snapshot ioStatsSnapshot;
+	private final IoStats.Snapshot medIoStatsSnapshot;
 	private final T lastDataItem;
 	//
 	@Override
@@ -61,18 +62,20 @@ implements LoadState<T> {
 	//
 	@Override
 	public boolean isLimitReached(final AppConfig appConfig) {
-		//  time limitations
-		final TimeUnit loadLimitTimeUnit = TimeUnit.SECONDS;
-		final long loadLimitTimeValue = appConfig.getLoadLimitTime();
-		final long loadTimeMicroSec = loadLimitTimeValue > 0 ?
-			loadLimitTimeUnit.toMicros(loadLimitTimeValue) : Long.MAX_VALUE;
-		final long stateTimeMicroSec = ioStatsSnapshot.getElapsedTime();
-		//  count limitations
-		final long counterResults = ioStatsSnapshot.getSuccCount() + ioStatsSnapshot.getFailCount();
-		final long loadLimitCount = appConfig.getLoadLimitCount();
-		final long maxCount = loadLimitCount > 0 ?
-			appConfig.getLoadLimitCount() : Long.MAX_VALUE;
-		return (counterResults >= maxCount) || (stateTimeMicroSec >= loadTimeMicroSec);
+		//  time limit
+		long timeLimit = appConfig.getLoadLimitTime();
+		timeLimit = timeLimit > 0 ? TimeUnit.SECONDS.toMicros(timeLimit) : Long.MAX_VALUE;
+		final long elapsedTime = ioStatsSnapshot.getElapsedTime();
+		// count limit
+		final long resultsCount = ioStatsSnapshot.getSuccCount() + ioStatsSnapshot.getFailCount();
+		long countLimit = appConfig.getLoadLimitCount();
+		countLimit = countLimit > 0 ? countLimit : Long.MAX_VALUE;
+		// size limit
+		final long bytesDone = ioStatsSnapshot.getByteCount();
+		long sizeLimit = appConfig.getLoadLimitSize();
+		sizeLimit = sizeLimit > 0 ? sizeLimit : Long.MAX_VALUE;
+		//
+		return timeLimit > elapsedTime || countLimit > resultsCount || sizeLimit > bytesDone;
 	}
 	//
 	public static class Builder<T extends Item, U extends LoadState<T>>
@@ -81,6 +84,7 @@ implements LoadState<T> {
 		private int loadNumber;
 		private AppConfig appConfig;
 		private IoStats.Snapshot ioStatsSnapshot;
+		private IoStats.Snapshot medIoStatsSnapshot;
 		private T lastDataItem;
 		//
 		@Override
@@ -102,6 +106,12 @@ implements LoadState<T> {
 		}
 		//
 		@Override
+		public Builder<T, U> setMedStatsSnapshot(final IoStats.Snapshot medIoStatsSnapshot) {
+			this.medIoStatsSnapshot = medIoStatsSnapshot;
+			return this;
+		}
+		//
+		@Override
 		public Builder<T, U> setLastDataItem(final T lastDataItem) {
 			this.lastDataItem = lastDataItem;
 			return this;
@@ -119,15 +129,17 @@ implements LoadState<T> {
 		this.loadNumber = builder.loadNumber;
 		this.appConfig = builder.appConfig;
 		this.ioStatsSnapshot = builder.ioStatsSnapshot;
+		this.medIoStatsSnapshot = builder.medIoStatsSnapshot;
 		this.lastDataItem = builder.lastDataItem;
 	}
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	public static void restoreScenarioState(final AppConfig appConfig) {
-		final String fullStateFileName = Paths.get(
-			BasicConfig.getWorkingDir(), Constants.DIR_LOG, appConfig.getRunId()
-		).resolve(Constants.STATES_FILE).toString();
+		final String fullStateFileName = Paths
+			.get(BasicConfig.getWorkingDir(), Constants.DIR_LOG, appConfig.getRunId())
+			.resolve(Constants.STATES_FILE)
+			.toString();
 		//  if load states list is empty or file w/ load states doesn't exist, then init
 		//  map entry value w/ empty list
 		LoadExecutor.RESTORED_STATES_MAP.put(

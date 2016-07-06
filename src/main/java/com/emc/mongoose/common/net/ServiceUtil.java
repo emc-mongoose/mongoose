@@ -42,6 +42,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static com.emc.mongoose.common.conf.BasicConfig.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  Created by kurila on 05.05.14.
  */
@@ -75,7 +79,6 @@ public abstract class ServiceUtil {
 	}*/
 	//
 	private static void rmiRegistryInit() {
-		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
 		REGISTRY_LOCK.lock();
 		try {
 			if(REGISTRY == null) {
@@ -97,13 +100,24 @@ public abstract class ServiceUtil {
 	}
 	//
 	public static void mBeanServerInit() {
-		final AppConfig appConfig = BasicConfig.THREAD_CONTEXT.get();
+		final AppConfig appConfig = THREAD_CONTEXT.get();
 		if(appConfig.getNetworkServeJmx()) {
 			getMBeanServer(1199);
 		}
 	}
 	//
 	public static void init() {
+		//System.setProperty(KEY_RMI_TRANSPORT_TCP_RESPONSE_TIMEOUT, "10000");
+		try {
+			System.setProperty(
+				KEY_RMI_CODEBASE,
+				URLDecoder.decode(
+					getBaseUriForClass(ServiceUtil.class).toString(), UTF_8.displayName()
+				)
+			);
+		} catch(final Exception e) {
+			e.printStackTrace(System.out);
+		}
 		setUpSvcShutdownHook();
 		//setUpSecurityManager();
 		rmiRegistryInit();
@@ -222,6 +236,8 @@ public abstract class ServiceUtil {
 			LogUtil.exception(LOG, Level.WARN, e, "Looks like network failure");
 		} catch(final MalformedURLException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Invalid service URL: {}", url);
+		} catch (final Throwable e) {
+			e.printStackTrace(System.out);
 		}
 		return null;
 	}
@@ -250,6 +266,7 @@ public abstract class ServiceUtil {
 	public final static String
 		KEY_RMI_HOSTNAME = "java.rmi.server.hostname",
 		KEY_RMI_CODEBASE = "java.rmi.server.codebase",
+		KEY_RMI_TRANSPORT_TCP_RESPONSE_TIMEOUT = "sun.rmi.transport.tcp.responseTimeout",
 		KEY_JMX_AUTH = "com.sun.management.jmxremote.authenticate",
 		KEY_JMX_PORT = "com.sun.management.jmxremote.port",
 		KEY_JMX_SSL = "com.sun.management.jmxremote.ssl",
@@ -263,23 +280,11 @@ public abstract class ServiceUtil {
 		if(MBEAN_SERVERS.containsKey(portJmxRmi)) {
 			mBeanServer = MBEAN_SERVERS.get(portJmxRmi);
 		} else {
-			try {
-				System.setProperty(
-					KEY_RMI_CODEBASE,
-					URLDecoder.decode(
-						getSelfPath().toURI().toString(), StandardCharsets.UTF_8.displayName()
-					)
-				);
-			} catch(final UnsupportedEncodingException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Setting system property failure");
-			}
 			LOG.debug(Markers.MSG, "RMI codebase: {}", System.getProperty(KEY_RMI_CODEBASE));
-			//
 			System.setProperty(KEY_JMX_PORT, Integer.toString(portJmxRmi));
 			LOG.debug(Markers.MSG, "RMI JMX port: {}", System.getProperty(KEY_JMX_PORT));
-			//
 			mBeanServer = ManagementFactory.getPlatformMBeanServer();
-			//
+
 			try {
 				LocateRegistry.createRegistry(portJmxRmi);
 				LOG.debug(Markers.MSG, "Created locate registry for port #{}", portJmxRmi);
@@ -288,11 +293,11 @@ public abstract class ServiceUtil {
 					LOG, Level.WARN, e, "Failed to create registry for port #{}", portJmxRmi
 				);
 			}
-			//
+
 			final Map<String, Object> env = new HashMap<>();
 			env.put(KEY_JMX_AUTH, String.valueOf(false));
 			env.put(KEY_JMX_SSL, String.valueOf(false));
-			//
+
 			JMXServiceURL jmxSvcURL = null;
 			try {
 				jmxSvcURL = new JMXServiceURL(
@@ -305,7 +310,7 @@ public abstract class ServiceUtil {
 					LOG, Level.WARN, e, "Failed to create JMX service URL for port #{}", portJmxRmi
 				);
 			}
-			//
+
 			JMXConnectorServer connectorServer = null;
 			if(jmxSvcURL != null) {
 				try {

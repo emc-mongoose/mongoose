@@ -3,7 +3,7 @@
 	"config" : {
 		"item" : {
 			"dst" : {
-				"container" : "copy-file"
+				"container" : "src-dir"
 			},
 			"data" : {
 				"size" : "4KB"
@@ -27,10 +27,10 @@
 			"config" : {
 				"item" : {
 					"dst" : {
-						"container" : "copy-file_"
+						"container" : "dst-dir"
 					},
 					"src" : {
-						"container" : "copy-file"
+						"container" : "src-dir"
 					}
 				}
 			}

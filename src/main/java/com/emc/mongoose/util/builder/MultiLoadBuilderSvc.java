@@ -25,7 +25,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -93,36 +95,31 @@ implements LoadBuilderSvc {
 	}
 	//
 	@Override
-	public final void await()
+	public final boolean await()
 	throws RemoteException, InterruptedException {
-		await(Long.MAX_VALUE, TimeUnit.DAYS);
+		return await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
-	public final void await(final long timeOut, final TimeUnit timeUnit)
+	public final boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
-		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
-			loadBuilderSvcs.size(), new NamingThreadFactory("loadSvcAwaitExecutor", true)
-		);
-		for(final LoadBuilderSvc loadBuilderSvc : loadBuilderSvcs) {
-			awaitExecutor.submit(
-				new Runnable() {
-					@Override
-					public final void run() {
-						try {
-							loadBuilderSvc.await(timeOut, timeUnit);
-						} catch(final InterruptedException | RemoteException ignored) {
-						}
-					}
+
+		long ts = System.currentTimeMillis();
+		long timeOutMilliSec = timeUnit.toSeconds(timeOut);
+		timeOutMilliSec = timeOutMilliSec > 0 ? timeOutMilliSec : Long.MAX_VALUE;
+
+		LoadBuilderSvc loadBuilderSvc;
+
+		while(!loadBuilderSvcs.isEmpty() && System.currentTimeMillis() - ts < timeOutMilliSec) {
+			for(final Iterator<LoadBuilderSvc> it = loadBuilderSvcs.listIterator(); it.hasNext();) {
+				loadBuilderSvc = it.next();
+				if(loadBuilderSvc.await(1, TimeUnit.SECONDS)) {
+					it.remove();
 				}
-			);
+			}
 		}
-		awaitExecutor.shutdown();
-		try {
-			awaitExecutor.awaitTermination(timeOut, timeUnit);
-		} finally {
-			awaitExecutor.shutdownNow();
-		}
+
+		return loadBuilderSvcs.isEmpty();
 	}
 	//
 	@Override

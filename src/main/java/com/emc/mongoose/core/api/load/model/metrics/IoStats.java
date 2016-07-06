@@ -36,6 +36,7 @@ extends Closeable {
 		MSG_FMT_FLOAT_PAIR = "%.3f/%.3f";
 	//
 	void start();
+	boolean isStarted();
 	//
 	void markSucc(final long size, final int duration, final int latency);
 	void markSucc(

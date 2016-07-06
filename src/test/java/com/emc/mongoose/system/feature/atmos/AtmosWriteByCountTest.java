@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 import com.emc.mongoose.core.api.item.data.HttpDataItem;
-import com.emc.mongoose.core.impl.item.base.ItemListOutput;
+import com.emc.mongoose.core.impl.item.base.ListItemOutput;
 import com.emc.mongoose.system.base.StandaloneClientTestBase;
 import com.emc.mongoose.util.client.api.StorageClient;
 import org.junit.Assert;
@@ -42,12 +42,12 @@ extends StandaloneClientTestBase {
 				.setAuth("wuser1@sanity.local", null)
 				.build()
 		) {
-			final Output<HttpDataItem> writeOutput = new ItemListOutput<>(BUFF_WRITE);
+			final Output<HttpDataItem> writeOutput = new ListItemOutput<>(BUFF_WRITE);
 			COUNT_WRITTEN = client.create(
 				writeOutput, COUNT_TO_WRITE, 10, SizeInBytes.toFixedSize("8KB")
 			);
 			//
-			RunIdFileManager.flushAll();
+			RunIdFileManager.flush(AtmosWriteByCountTest.class.getCanonicalName());
 		}
 	}
 	//

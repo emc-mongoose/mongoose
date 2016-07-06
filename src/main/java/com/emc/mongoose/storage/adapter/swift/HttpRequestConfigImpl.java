@@ -334,7 +334,7 @@ extends HttpRequestConfigBase<T, C> {
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to get the path");
 			}
-			return new WSContainerItemInput<>(
+			return new ContainerHttpDataItemInput<>(
 				path, new HttpSwiftContainerHelper<>(this, srcContainer), addr, getItemClass(),
 				maxCount
 			);

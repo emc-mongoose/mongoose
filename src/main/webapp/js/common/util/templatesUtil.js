@@ -26,8 +26,8 @@ define(function() {
 
     // the order of elements matters for a template
     const TESTS_CHARTS_TAB_TYPE = {
-        LATENCY: 'latency',
         DURATION: 'duration',
+        LATENCY: 'latency',
         THROUGHPUT: 'throughput',
         BANDWIDTH: 'bandwidth'
     };
@@ -56,7 +56,8 @@ define(function() {
     };
 
     const TAB_CLASS = {
-        ACTIVE: 'active'
+        ACTIVE: 'active',
+        SELECTED: 'ui-selected'
     };
 
     const BLOCK = {
@@ -65,6 +66,10 @@ define(function() {
         CONFIG: 'configurations'
     };
 
+    const CHART_TYPE = {
+        CURRENT: 'current',
+        TOTAL: 'total'
+    };
 
     const DELIMITER = {
         ID: '-',
@@ -78,6 +83,10 @@ define(function() {
 
     function tabTypes() {
         return TAB_TYPE;
+    }
+
+    function chartTypes() {
+        return CHART_TYPE;
     }
 
     function testsTabTypes() {
@@ -140,6 +149,7 @@ define(function() {
         testsTabTypes: testsTabTypes,
         testsLogsTabTypes: testsLogsTabTypes,
         testsChartsTabTypes: testsChartsTabTypes,
+        chartTypes: chartTypes,
         commonButtonTypes: commonButtonTypes,
         configTreeElements: configTreeElements,
         tabClasses: tabClasses,

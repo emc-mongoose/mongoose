@@ -85,7 +85,7 @@ extends StandaloneClientTestBase {
 				COUNT_WRITTEN = client.create(
 					writeOutput, WRITE_COUNT, 10, SizeInBytes.toFixedSize(DATA_SIZE)
 				);
-				TimeUnit.SECONDS.sleep(1);
+				TimeUnit.SECONDS.sleep(10);
 				RunIdFileManager.flushAll();
 				//
 				try (
@@ -98,7 +98,7 @@ extends StandaloneClientTestBase {
 					} else {
 						throw new IllegalStateException("Failed to read");
 					}
-					TimeUnit.SECONDS.sleep(1);
+					TimeUnit.SECONDS.sleep(10);
 					STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 				}
 			}
@@ -159,7 +159,7 @@ extends StandaloneClientTestBase {
 					firstRow = false;
 				} else {
 					long count = 1;
-					id = nextRec.get(2);
+					id = nextRec.get(3);
 					if(items.containsKey(id)) {
 						count = items.get(id);
 						count++;

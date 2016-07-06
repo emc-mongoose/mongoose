@@ -24,7 +24,7 @@ define([
 	const jqId = templatesUtil.composeJqId;
 
 	var currentTabType = TESTS_LOGS_TAB_TYPE.MESSAGES;
-	var resetLogsFlag = false;
+	var resetLogsFlags = {};
 	var currentLogsTimeStamps = {
 			'msg': 0,
 			'err': 0,
@@ -125,25 +125,29 @@ define([
 		).done(function (logsObj) {
 			updateLogTable(markerName, logsObj);
 		}).always(function () {
-			if (!resetLogsFlag) {
+			if (!resetLogsFlags[testId]) {
 				setTimeout(getLogs, 10000, markerName, testId); // interval in milliseconds; todo check a third arg
+			} else {
+				$("." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body'])).empty();
 			}
 		});
 	}
 
 	function setTabParameters(testId, testMode) {
-		if (LOGS_MODE.indexOf(testMode) > -1) {
+		// if (LOGS_MODE.indexOf(testMode) > -1) {
 			if (testId) {
-				resetLogsFlag = false;
+				resetLogsFlags[testId] = false;
 				$.each(LOG_MARKER, function (key, value) {
 					getLogs(value, testId);
 				})
 			}
-		}
+		// }
 	}
 	
 	function resetLogs() {
-		resetLogsFlag = true;
+		Object.keys(resetLogsFlags).forEach(function (key) {
+			resetLogsFlags[key] = true;
+		});
 		resetLogTimeStamps();
 		$("." + plainId([TESTS_TAB_TYPE.LOGS, 'table', 'body'])).empty();
 	}

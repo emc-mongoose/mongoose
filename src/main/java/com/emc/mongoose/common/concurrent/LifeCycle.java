@@ -15,10 +15,10 @@ extends Closeable {
 	void shutdown()
 	throws RemoteException, IllegalStateException;
 	//
-	void await()
+	boolean await()
 	throws RemoteException, InterruptedException;
 	//
-	void await(final long timeOut, final TimeUnit timeUnit)
+	boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException;
 	//
 	void interrupt()

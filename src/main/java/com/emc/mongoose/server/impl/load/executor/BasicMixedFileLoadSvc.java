@@ -13,10 +13,10 @@ import com.emc.mongoose.core.api.io.conf.FileIoConfig;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.item.container.Directory;
 import com.emc.mongoose.core.api.item.data.FileItem;
-import com.emc.mongoose.core.api.load.barrier.Throttle;
+import com.emc.mongoose.core.api.load.model.Throttle;
 import com.emc.mongoose.core.api.load.executor.FileLoadExecutor;
 import com.emc.mongoose.core.api.load.model.metrics.IoStats;
-import com.emc.mongoose.core.impl.load.barrier.WeightThrottle;
+import com.emc.mongoose.core.impl.load.model.WeightThrottle;
 import com.emc.mongoose.server.api.load.executor.FileLoadSvc;
 import com.emc.mongoose.server.api.load.executor.MixedFileLoadSvc;
 import org.apache.commons.lang.text.StrBuilder;
@@ -227,7 +227,7 @@ implements MixedFileLoadSvc<F> {
 	}
 	//
 	@Override
-	public void await(final long timeOut, final TimeUnit timeUnit)
+	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException, RemoteException {
 		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			loadSvcMap.size() + 1, new NamingThreadFactory("await<" + getName() + ">", true)
@@ -266,13 +266,10 @@ implements MixedFileLoadSvc<F> {
 			}
 		);
 		awaitExecutor.shutdown();
-		if(awaitExecutor.awaitTermination(timeOut, timeUnit)) {
-			LOG.debug(Markers.MSG, "{}: await completed before the timeout", getName());
-		} else {
-			LOG.debug(Markers.MSG,
-				"{}: await timeout, {} await tasks dropped",
-				getName(), awaitExecutor.shutdownNow().size()
-			);
+		try {
+			return awaitExecutor.awaitTermination(timeOut, timeUnit);
+		} finally {
+			awaitExecutor.shutdownNow();
 		}
 	}
 	//

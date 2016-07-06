@@ -92,8 +92,8 @@ implements HttpContainerLoadBuilderClient<T, C, W, U> {
 		}
 		//
 		return (U) new BasicHttpContainerLoadClient<>(
-			appConfig, ioConfigCopy, storageNodeAddrs, appConfig.getLoadThreads(), itemInput,
-			countLimit, sizeLimit, rateLimit, remoteLoadMap
+			appConfig, ioConfigCopy, storageNodeAddrs, threadCount, itemInput, countLimit,
+			sizeLimit, rateLimit, remoteLoadMap
 		);
 	}
 }
