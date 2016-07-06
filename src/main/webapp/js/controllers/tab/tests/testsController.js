@@ -41,6 +41,7 @@ define([
 		chartsController.render();
 		makeTabActive(currentTabType);
 		makeChartTypeActive(currentChartType);
+		makeTabActive(TESTS_TAB_TYPE.LIST);
 		startPoll();
 	}
 
