@@ -2,10 +2,8 @@ package com.emc.mongoose.run.scenario.engine;
 //
 import com.emc.mongoose.common.concurrent.NamingThreadFactory;
 import com.emc.mongoose.common.conf.AppConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -45,7 +43,9 @@ extends ParentJobBase {
 			}
 			LOG.debug(Markers.MSG, "{}: {} child jobs done", toString(), childJobs.size());
 		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "{}: interrupted the child jobs execution");
+			LOG.debug(Markers.MSG, "{}: interrupted the child jobs execution", toString());
+		} finally {
+			parallelJobsExecutor.shutdownNow();
 		}
 	}
 	//

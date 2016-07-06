@@ -2,7 +2,6 @@ package com.emc.mongoose.run.scenario.engine;
 
 import com.emc.mongoose.common.conf.AppConfig;
 
-import java.io.IOException;
 /**
  Created by kurila on 08.04.16.
  */

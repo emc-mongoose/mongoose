@@ -28,8 +28,8 @@ public class SwiftReadContainersWithManyObjects
 extends HttpStorageMockTestBase {
 	//
 	private static final int
-		LIMIT_COUNT_OBJ = 10000,
-		LIMIT_COUNT_CONTAINER = 100;
+		LIMIT_COUNT_OBJ = 100,
+		LIMIT_COUNT_CONTAINER = 10;
 	//
 	private static String RUN_ID_BASE = SwiftReadContainersWithManyObjects.class.getCanonicalName();
 	private static int countContainerCreated = 0;
@@ -42,7 +42,7 @@ extends HttpStorageMockTestBase {
 		System.setProperty(AppConfig.KEY_ITEM_TYPE, "container");
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, Integer.toString(LIMIT_COUNT_OBJ));
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, Integer.toString(LIMIT_COUNT_CONTAINER));
-		System.setProperty(AppConfig.KEY_ITEM_DATA_SIZE, "1");
+		System.setProperty(AppConfig.KEY_ITEM_DATA_SIZE, "1MB");
 		HttpStorageMockTestBase.setUpClass();
 		final AppConfig rtConfig = BasicConfig.THREAD_CONTEXT.get();
 		rtConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_API, "swift");
