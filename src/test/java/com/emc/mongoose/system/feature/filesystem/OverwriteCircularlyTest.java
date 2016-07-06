@@ -56,8 +56,8 @@ extends FileSystemTestBase {
 			countOverwritten = client.write(
 				new ListItemInput<>(itemBuff), null, COUNT_TO_OVERWRITE, 100
 			);
-			TimeUnit.SECONDS.sleep(1);
 			RunIdFileManager.flushAll();
+			TimeUnit.SECONDS.sleep(10);
 		}
 	}
 	//
