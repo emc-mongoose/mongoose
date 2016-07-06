@@ -1,9 +1,10 @@
 package com.emc.mongoose.system.feature.swift;
 import com.emc.mongoose.common.conf.AppConfig;
 import com.emc.mongoose.common.conf.BasicConfig;
+import com.emc.mongoose.common.conf.enums.LoadType;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
-import com.emc.mongoose.system.base.WSMockTestBase;
+import com.emc.mongoose.system.base.HttpStorageMockTestBase;
 import com.emc.mongoose.system.tools.LogValidator;
 import com.emc.mongoose.run.scenario.runner.ScenarioRunner;
 import org.apache.commons.csv.CSVFormat;
@@ -24,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  Created by andrey on 23.10.15.
  */
 public class SwiftReadContainersWithManyObjects
-extends WSMockTestBase {
+extends HttpStorageMockTestBase {
 	//
 	private static final int
 		LIMIT_COUNT_OBJ = 10000,
@@ -37,11 +38,12 @@ extends WSMockTestBase {
 	public static void setUpClass()
 	throws Exception {
 		System.setProperty(AppConfig.KEY_RUN_ID, RUN_ID_BASE);
+		System.setProperty(AppConfig.KEY_AUTH_TOKEN, "d1ae23fecb9b066bc201115740318e7c");
 		System.setProperty(AppConfig.KEY_ITEM_TYPE, "container");
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, Integer.toString(LIMIT_COUNT_OBJ));
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, Integer.toString(LIMIT_COUNT_CONTAINER));
 		System.setProperty(AppConfig.KEY_ITEM_DATA_SIZE, "1");
-		WSMockTestBase.setUpClass();
+		HttpStorageMockTestBase.setUpClass();
 		final AppConfig rtConfig = BasicConfig.THREAD_CONTEXT.get();
 		rtConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_API, "swift");
 		rtConfig.setProperty(AppConfig.KEY_STORAGE_HTTP_NAMESPACE, "swift");
@@ -96,7 +98,7 @@ extends WSMockTestBase {
 	@AfterClass
 	public  static void tearDownClass()
 		throws Exception {
-		WSMockTestBase.tearDownClass();
+		HttpStorageMockTestBase.tearDownClass();
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_CAPACITY, "1000000");
 		System.setProperty(AppConfig.KEY_STORAGE_MOCK_CONTAINER_COUNT_LIMIT, "1000000");
 	}
@@ -154,11 +156,12 @@ extends WSMockTestBase {
 					firstRow = false;
 				} else {
 					Assert.assertTrue(
-						"Not related to read perf trace log found", nextRec.get(0).contains("Read")
+						"Record which is not related to the test found: \"" + nextRec.toString() + "\"",
+						nextRec.get(1).equals(LoadType.READ.toString())
 					);
 					Assert.assertTrue(
 						"Size of the read content is not more than 0: " + nextRec,
-						Long.parseLong(nextRec.get(3)) > 0
+						Long.parseLong(nextRec.get(4)) > 0
 					);
 				}
 			}

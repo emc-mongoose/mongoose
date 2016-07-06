@@ -14,15 +14,12 @@ import java.io.Closeable;
 public interface RequestConfig<T extends DataItem, C extends Container<T>>
 extends IoConfig<T, C>, Closeable {
 	//
-	int REQUEST_NO_PAYLOAD_TIMEOUT_SEC = 100,
-		REQUEST_WITH_PAYLOAD_TIMEOUT_SEC = 100000;
+	int REQUEST_NO_PAYLOAD_TIMEOUT_SEC = 100;
+	int REQUEST_WITH_PAYLOAD_TIMEOUT_SEC = 100000;
 	//
 	String
 		HOST_PORT_SEP = ":",
 		PACKAGE_IMPL_BASE = "com.emc.mongoose.storage.adapter";
-	String[] TLS_PROTOCOLS = {
-		"TLSv1", "TLSv1.1", "TLSv1.2", "SSLv3"
-	};
 	//
 	@Override
 	RequestConfig<T, C> clone()

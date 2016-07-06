@@ -13,10 +13,9 @@ define([
              templatesUtil,
              cssUtil,
              elementAppender,
-             openFileHandler, 
+             openFileHandler,
              eventCreator,
-             filesUtil
-) {
+             filesUtil) {
 	const TAB_TYPE = templatesUtil.tabTypes();
 	const BLOCK = templatesUtil.blocks();
 	const TREE_ELEM = templatesUtil.configTreeElements();
@@ -39,22 +38,46 @@ define([
 	}
 
 	const clickEventCreatorFactory = function () {
+
+		const noMessage = 'No scenario chosen';
+		const minWidth = noMessage.length;
+		function responsiveWidth(text) {
+			return Math.max(((text.length + 1) * 7), minWidth);
+		}
 		
-		function scenarioFileClickEvent(aName) {
-			$.get('/scenario', {path: aName}, null, 'json')
+		
+		
+		function scenarioFileClickEvent(aName, aText) {
+			var newPath;
+			if (aName === '') {
+				newPath = aText;
+			} else {
+				newPath = aName + DELIMITER.PATH + aText;
+			}
+			$.get('/scenario', {path: newPath}, null, 'json')
 				.done(function (scenarioJson) {
 					setScenarioObject(scenarioJson);
 					updateDetailsTree(scenarioJson);
-					$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(aName);
+					const fileNameElem = $(jqId(['file', 'name', TAB_TYPE.SCENARIOS]));
+					const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
+					fileNameElem.val(newPath);
+					scenarioNameElem.text(newPath);
+					scenarioNameElem.show();
+					fileNameElem.width(responsiveWidth(newPath));
 				})
 				.fail(function () {
 					alert('The scenario cannot be loaded')
 				})
 		}
-		
+
 		function backClickEvent() {
 			showMainTree();
-			$(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val('No scenario chosen');
+			const fileNameElem = $(jqId(['file', 'name', TAB_TYPE.SCENARIOS]));
+			const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
+			fileNameElem.val(noMessage);
+			scenarioNameElem.text('');
+			scenarioNameElem.hide();
+			fileNameElem.width(responsiveWidth(noMessage));
 		}
 
 		return {
@@ -68,7 +91,7 @@ define([
 
 	function render(scenariosArray) {
 		const rootTreeUlElem = $(jqId([BLOCK.TREE, TAB_TYPE.SCENARIOS]));
-		elementAppender.arrayAsTree(scenariosArray, rootTreeUlElem, 'dir', DELIMITER.PATH, localClickEventCreator.scenarioFile);
+		elementAppender.treeOfItem(scenariosArray, rootTreeUlElem, '', DELIMITER.PATH, localClickEventCreator.scenarioFile, true);
 	}
 
 	function updateDetailsTree(scenarioObject) {
@@ -76,7 +99,8 @@ define([
 		treeUlElem.empty();
 		treeUlElem.append(createBackIcon());
 		var addressObject = {};
-		elementAppender.objectAsTree(scenarioObject, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
+		// elementAppender.objectAsTree(scenarioObject, treeUlElem, TREE_ELEM.LEAF, addressObject, DELIMITER.PROPERTY, '', commonClickEventCreator.propertyClickEvent);
+		elementAppender.treeOfItem(scenarioObject, treeUlElem, '', DELIMITER.PROPERTY, commonClickEventCreator.propertyClickEvent, false, addressObject);
 		const jsonViewElem = $(jqId(['json', TAB_TYPE.SCENARIOS]));
 		jsonViewElem.text(JSON.stringify(scenarioObject, null, 4));
 		showDetailsTree();
@@ -117,6 +141,9 @@ define([
 	function fileReaderOnLoadAction(scenarioObject, fullFileName) {
 		setScenarioObject(scenarioObject);
 		updateDetailsTree(scenarioObject);
+		const scenarioNameElem = $(jqId([TAB_TYPE.SCENARIOS, 'name']));
+		scenarioNameElem.text(fullFileName);
+		scenarioNameElem.show();
 		// $(jqId(['file', 'name', TAB_TYPE.SCENARIOS])).val(fullFileName);
 	}
 
@@ -136,11 +163,11 @@ define([
 	function getChangedScenario() {
 		return changedScenarioObject;
 	}
-	
+
 	function isChanged() {
 		return !filesUtil.compareObjects(pureScenarioObject, changedScenarioObject);
 	}
-	
+
 	return {
 		render: render,
 		setTabParameters: setTabParameters,

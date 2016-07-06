@@ -47,7 +47,7 @@ extends BasicPatternDefinedInput {
 			int segmentCounter = 0;
 			for (int j = 0; j < patternSymbolsNum; j++) {
 				int i = 0;
-				while (patternBuilder.charAt(i) != PATTERN_SYMBOL) {
+				while (patternBuilder.charAt(i) != PATTERN_CHAR) {
 					segmentsBuilder.append(patternBuilder.charAt(i)); // building of the segment by character
 					i++;
 				}
@@ -70,14 +70,14 @@ extends BasicPatternDefinedInput {
 		int counter = 0;
 		if(!pattern.isEmpty()) {
 			final int lastPatternIndex = pattern.length() - 1;
-			if(pattern.charAt(lastPatternIndex) == PATTERN_SYMBOL) {
+			if(pattern.charAt(lastPatternIndex) == PATTERN_CHAR) {
 				throw new IllegalArgumentException();
 			}
 			final char[] patternChars = pattern.toCharArray();
 			for(int i = 0; i < lastPatternIndex; i++) {
-				if(patternChars[i] == PATTERN_SYMBOL) {
+				if(patternChars[i] == PATTERN_CHAR) {
 					counter++;
-					if(patternChars[i + 1] == PATTERN_SYMBOL) {
+					if(patternChars[i + 1] == PATTERN_CHAR) {
 						throw new IllegalArgumentException();
 					}
 				}
@@ -89,12 +89,12 @@ extends BasicPatternDefinedInput {
 	/**
 	 * In this method is used to fill the 'inputs' field with value inputs
 	 * in accordance with the specified expression parameters
-	 * @param expression - a string which follows PATTERN_SYMBOL
+	 * @param expression - a string which follows PATTERN_CHAR
 	 * @param index of current empty position in inputs' array ('inputs' field)
 	 */
 	private void addExpressionParams(final StringBuilder expression, final int index) {
 		final char type = expression.charAt(0);
-		final String format = initParameter(expression, FORMAT_SYMBOLS);
+		final String format = initParameter(expression, FORMAT_CHARS);
 		final String range = initParameter(expression, RANGE_SYMBOLS);
 		expression.delete(0, 1);
 		getInputs()[index] = valueInputFactory().createInput(type, format, range);

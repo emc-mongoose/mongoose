@@ -179,9 +179,7 @@ extends HttpRequestConfigBase<T, C> {
 	@Override
 	public final HttpRequestConfigImpl<T, C> setUserName(final String userName)
 	throws IllegalStateException {
-		if(userName == null) {
-			throw new IllegalStateException("User name is not specified for Atmos REST API");
-		} else {
+		if(userName != null) {
 			super.setUserName(userName);
 			if(sharedHeaders == null) {
 				sharedHeaders = new HashMap<>();

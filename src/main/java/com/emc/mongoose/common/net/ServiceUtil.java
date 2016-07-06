@@ -222,6 +222,8 @@ public abstract class ServiceUtil {
 			LogUtil.exception(LOG, Level.WARN, e, "Looks like network failure");
 		} catch(final MalformedURLException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Invalid service URL: {}", url);
+		} catch (final Throwable e) {
+			e.printStackTrace(System.out);
 		}
 		return null;
 	}

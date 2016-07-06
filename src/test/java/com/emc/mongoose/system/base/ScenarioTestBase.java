@@ -9,14 +9,14 @@ import org.junit.BeforeClass;
  Created by andrey on 19.05.16.
  */
 public abstract class ScenarioTestBase
-extends WSMockTestBase {
+extends HttpStorageMockTestBase {
 
 	protected static ScenarioRunner SCENARIO_RUNNER;
 
 	@BeforeClass
 	public static void setUpClass() {
 		try {
-			WSMockTestBase.setUpClass();
+			HttpStorageMockTestBase.setUpClass();
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to set up the base test");
 		}
@@ -26,7 +26,7 @@ extends WSMockTestBase {
 	@AfterClass
 	public static void tearDownClass() {
 		try {
-			WSMockTestBase.tearDownClass();
+			HttpStorageMockTestBase.tearDownClass();
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to tear down the base test");
 		}

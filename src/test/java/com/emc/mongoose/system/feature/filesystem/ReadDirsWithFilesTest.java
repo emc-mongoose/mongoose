@@ -81,7 +81,7 @@ extends FileSystemTestBase {
 			nextDirClient.create(null, COUNT_TO_WRITE, 100, 10);
 		}
 		//
-		TimeUnit.SECONDS.sleep(1);
+		TimeUnit.SECONDS.sleep(10);
 		//
 		rtConfig.setRunId(RUN_ID + "_DirsRead");
 		rtConfig.setProperty(AppConfig.KEY_ITEM_DST_CONTAINER, "/tmp/" + RUN_ID);
@@ -100,7 +100,7 @@ extends FileSystemTestBase {
 			);
 		}
 		//
-		TimeUnit.SECONDS.sleep(1);
+		TimeUnit.SECONDS.sleep(10);
 	}
 	//
 	@AfterClass

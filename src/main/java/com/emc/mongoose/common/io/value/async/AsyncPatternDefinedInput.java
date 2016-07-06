@@ -9,13 +9,8 @@ implements PatternDefinedInput {
 	//
 	private final PatternDefinedInput wrappedGenerator;
 	//
-	public
-	AsyncPatternDefinedInput(final String pattern) {
-		this(
-			new RangePatternDefinedInput(
-				pattern, AsyncStringInputFactory.getInstance()
-			)
-		);
+	public AsyncPatternDefinedInput(final String pattern) {
+		this(new RangePatternDefinedInput(pattern, AsyncStringInputFactory.getInstance()));
 	}
 	//
 	private

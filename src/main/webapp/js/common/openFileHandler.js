@@ -15,6 +15,7 @@ define([], function () {
 	};
 	reader.onerror = function (data) {
 		console.error("File couldn't be read. Code" + data.target.error.code);
+		alert("File couldn't be read");
 	};
 
 	function openFileEvent(data) {

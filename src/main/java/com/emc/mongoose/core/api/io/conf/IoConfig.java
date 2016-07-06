@@ -73,6 +73,4 @@ extends Externalizable, Cloneable, Closeable {
 	Class<C> getContainerClass();
 	//
 	Class<T> getItemClass();
-	//
-	String getItemPath();
 }

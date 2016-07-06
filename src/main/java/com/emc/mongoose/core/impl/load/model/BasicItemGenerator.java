@@ -6,10 +6,9 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.item.base.Item;
-import com.emc.mongoose.core.api.load.barrier.Throttle;
+import com.emc.mongoose.core.api.load.model.Throttle;
 import com.emc.mongoose.core.api.load.model.ItemProducer;
 //
-import com.emc.mongoose.core.impl.load.barrier.RateThrottle;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

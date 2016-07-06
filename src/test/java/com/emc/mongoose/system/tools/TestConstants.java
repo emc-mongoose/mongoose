@@ -12,6 +12,7 @@ public interface TestConstants {
 	//
 	String	MESSAGE_FILE_NAME = "messages.log";
 	String PERF_AVG_FILE_NAME = "perf.avg.csv";
+	String PERF_MED_FILE_NAME = "perf.med.csv";
 	String PERF_SUM_FILE_NAME = "perf.sum.csv";
 	String PERF_TRACE_FILE_NAME = "perf.trace.csv";
 	String ITEMS_FILE_NAME = "items.csv";

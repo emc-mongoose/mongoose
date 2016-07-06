@@ -74,13 +74,13 @@ implements PatternDefinedInput {
 	@SuppressWarnings("unchecked") // AsyncStringGeneratorFactory always returns ValueGenerator<String> values for getInputs[]
 	protected void initialize()
 	throws IllegalArgumentException {
-		if(pattern.charAt(0) != PATTERN_SYMBOL) {
+		if(pattern.charAt(0) != PATTERN_CHAR) {
 			throw new IllegalArgumentException();
 		}
 		final StringBuilder patternBuilder = new StringBuilder(pattern);
 		patternBuilder.delete(0, 1);
 		final char type = patternBuilder.charAt(0);
-		final String format = initParameter(patternBuilder, FORMAT_SYMBOLS);
+		final String format = initParameter(patternBuilder, FORMAT_CHARS);
 		setInputs(new Input[] { valueInputFactory.createInput(type, format, null) } );
 	}
 

@@ -60,7 +60,7 @@ define(function() {
 	//  cfg constants
 	var cfgConstants = {
 		runId: "run.id",
-		runMetricsPeriodSec: "load.metricsPeriodSec",
+		runMetricsPeriodSec: "load.metrics.period",
 		runScenarioName: "scenario.name"
 	};
 
