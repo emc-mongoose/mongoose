@@ -47,4 +47,4 @@ java -jar mongoose.jar
 14. Docker Integration
 
 ## Further Reading
-See <http://akurilov.github.io/mongoose> for details
+See <http://emc-mongoose.github.io/mongoose> for details
