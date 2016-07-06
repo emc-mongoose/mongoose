@@ -557,7 +557,7 @@
 				<h4 id="foreach">Execute a Job For Each value from the list</h4>
 				<fieldset class="json">
 					<pre>{
-   "type" : "each",
+   "type" : "for",
    "value" : "threads",
    "in" : [
       1, 10, 100, 1000, 10000, 100000
@@ -581,7 +581,7 @@
 				<h4 id="loopInfinite">Execute the infinite jobs loop</h4>
 				<fieldset class="json">
 					<pre>{
-   "type" : "loop",
+   "type" : "for",
    "jobs" : [
       {
             "type" : "load"
@@ -596,7 +596,7 @@
 				<h4 id="loop10times">Execute the jobs 10 times</h4>
 				<fieldset class="json">
 					<pre>{
-    "type" : "loop",
+    "type" : "for",
     "value" : 10,
     "jobs" : [
         {
