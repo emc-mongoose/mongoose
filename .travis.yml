@@ -4,16 +4,12 @@ services:
 - docker
 jdk:
 - oraclejdk8
-script: "./gradlew clean dist"
-branches:
-  only:
-    - master
-    - feature-dev
-    - /feature-v.+/
+script: "./gradlew clean dist systemTest"
 deploy:
   provider: releases
   api_key:
     secure: ciLar6EGDY+CVwcmdSAI98DiPHG0Sy0nCOrSpGhOuoaZR/AMIN4IIZE3fOzh8U0Y+p/9IlPkSg7QQFkRmfUgw3nXQJ5CjniMQyK1yeQxOBHVyl9p8HHLvSjU7EC4Ec3JmrA/jgZD0uASgLYaBrAHDgIS97/wgSF8TUJbTfq20VEq7PmFpO+YX0fCi0gGz/S9ts/cQ76pIS0ADlQfrZ44Qa4mNRxG22dN7HtmhxSFe9qmDUdehPX+I4Gaf2/MwhrTeMADArQihTR/1CeS9v84gyD3ODOiLCKJClmGtdpBCD7WXEM2GytxNNPDwKmdm2ly88H7T5xW4toNXHh4uTtfsBd/Wf6nmDrM/TreMhTsMQlVaEA17dh3pXkiHTvL0MemldJVmqNUgsN2f/8shAsyQrY5Cr8HTAsW1r05IIS/9a8xiOVy7CNz61WiNB9oH9+xpYfUKqQxzjFPqFcFkTrc1IvGHM/5YqNw7TK826gk3xBAclGxlQ7ZZXyHVrIN8EYfLSVZFsaplTiQyJFLJ0kpnjB+npvLCTXhEcClJNFQVBvAi8joJufCHvnfjRnKR9CHoS5JghfxNBBdRM9yahggTgpgUselOEUAAd6R9Sf9b3ihI5nFEdejc9GB9zCE8cRBpPp69dMagZ7wZnQHXDg4VlEsE7m3tohn8shaIzYJXfc=
+  file_glob: true
   file:
   - "./build/dist/mongoose-*.tgz"
   on:
