@@ -153,7 +153,7 @@ extends HttpStorageMockTestBase {
 			} catch(final CloneNotSupportedException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to build the scenario");
 			}
-			TimeUnit.SECONDS.sleep(5);
+			TimeUnit.SECONDS.sleep(10);
 			STD_OUTPUT = stdOutStream.toString();
 		} catch(final Exception e) {
 			e.printStackTrace(System.out);
@@ -198,7 +198,7 @@ extends HttpStorageMockTestBase {
 	@Test
 	public void checkPerfSumFile()
 	throws Exception {
-		TimeUnit.SECONDS.sleep(10);
+		TimeUnit.SECONDS.sleep(20);
 		//  Get perf.sum.csv file
 		final File perfSumFile = LogValidator.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("perf.sum.csv file doesn't exist", perfSumFile.exists());
