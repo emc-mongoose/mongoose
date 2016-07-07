@@ -28,4 +28,5 @@ after_success:
 - docker build -f docker/Dockerfile -t $REPO:$COMMIT .
 - docker tag $REPO:$COMMIT $REPO:$TAG
 - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+- docker tag $REPO:$COMMIT $REPO:$TRAVIS_BRANCH
 - docker push $REPO
