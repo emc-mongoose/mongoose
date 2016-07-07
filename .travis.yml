@@ -22,7 +22,7 @@ env:
   - secure: JT3awhA8DPSKDmBv0ByCX1ri23rPDl5gKQr0XlR683L3pxjafyto3hHop0UDkztweQuFrXka+NnI3VJhEnfmccoK91v7C17SlfamqHGvp562AIXOBrSVKUgDdq8nDtPMvIcVj1SW/hyKlkLrTmPJYBjwpGN6moS67kN09S6p9RIDG3FqNSzmHmzqyGfFM41mY3gAXQLibjE5RLYiA+E4MMxww+O2ngln1eVRs0p025xPqFlW4n3z3DevhEmAv4jJ72lyNnDfb4SCm1Y41EIMrGE9wdspcSI3VNuB3lFpKobr5ynPH6kYZLgefJS5wcvqu1SgM6i45OyXCIOvpq94nf/PssvrSwk3aGNGTZLhdQ8brhSzbLS1tKJ2Ts4nCUAiq+OQx/jyOG7+xJTSQpZWG9QH8dHsNZnHmGFo48nrZifvMzjAln1jAhPdu97A2aV2atvUoPR+8HogvrDpdRjKRCkjicimQk0a2y4Ij30KwUfPD4ubpRTteTYUW2C4RVznCWzZrhPFQ2XYDxpPHgwG71UUwzGvEW83DEFSKOI7ohaBj2pksnJ429QHlGlb8HiQrbEP3tfutIVXY6teGYpZnZ2dDlgREzxdDHuzU8m/w19YUQUiyUrHdLEc5vSUOBclG59afeIHSgdXKtHLffv+7dvT1SZlYcmukTMeuvwLnKk=
 after_success:
 - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-- export REPO=emc-mongoose/mongoose
+- export REPO=akurilov/mongoose
 - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH;
   fi`
 - docker build -f docker/Dockerfile -t $REPO:$COMMIT .
