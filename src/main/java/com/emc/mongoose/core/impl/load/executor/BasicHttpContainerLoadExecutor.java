@@ -18,7 +18,6 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.io.task.HttpContainerIoTask;
-import com.emc.mongoose.core.api.io.task.HttpIoTask;
 import com.emc.mongoose.core.api.load.executor.HttpContainerLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.task.BasicHttpContainerTask;
@@ -254,42 +253,49 @@ implements HttpContainerLoadExecutor<T, C> {
 	}
 	//
 	@Override
-	public final <A extends IoTask<C>> Future<A> submitTask(final A ioTask)
+	public final <A extends IoTask<C>> Future submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		//
-		final HttpIoTask wsIoTask = (HttpIoTask) ioTask;
+		final HttpContainerIoTask<T, C> wsIoTask = (HttpContainerIoTask<T, C>) ioTask;
 		final HttpHost tgtHost = wsIoTask.getTarget();
 		final HttpConnPool<HttpHost, BasicNIOPoolEntry>
 			connPool = connPoolMap.get(tgtHost);
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");
 		}
-		//
-		final Future futureResult;
 		try {
-			//futureResult = client.execute(wsIoTask, wsIoTask, connPool, wsIoTask, io);
-			final BasicNIOPoolEntry connPoolEntry = connPool
-				.lease(tgtHost, null, connLeaseFutureCallback)
-				.get();
-			futureResult = client.execute(
+			return connPool.lease(tgtHost, null, new ConnLeaseFutureCallback(connPool, wsIoTask));
+		} catch(final Exception e) {
+			throw new RejectedExecutionException(e);
+		}
+	}
+	//
+	private final class ConnLeaseFutureCallback
+		implements FutureCallback<BasicNIOPoolEntry> {
+		//
+		private final HttpConnPool<HttpHost, BasicNIOPoolEntry> connPool;
+		private final HttpContainerIoTask<T, C> wsIoTask;
+		//
+		public ConnLeaseFutureCallback(
+			final HttpConnPool<HttpHost, BasicNIOPoolEntry> connPool,
+			final HttpContainerIoTask<T, C> wsIoTask
+		) {
+			this.connPool = connPool;
+			this.wsIoTask = wsIoTask;
+		}
+		//
+		@Override
+		public final void completed(final BasicNIOPoolEntry connPoolEntry) {
+			incrementBusyThreadCount();
+			client.execute(
 				wsIoTask, wsIoTask, connPoolEntry, connPool, wsIoTask, ioTaskFutureCallback
 			);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					Markers.MSG, "I/O task #{} has been submitted for execution", ioTask.hashCode()
+					Markers.MSG, "I/O task #{} has been submitted for execution",
+					wsIoTask.hashCode()
 				);
 			}
-		} catch(final Exception e) {
-			throw new RejectedExecutionException(e);
-		}
-		return futureResult;
-	}
-	//
-	private final FutureCallback<BasicNIOPoolEntry> connLeaseFutureCallback = new FutureCallback<BasicNIOPoolEntry>() {
-		//
-		@Override
-		public final void completed(final BasicNIOPoolEntry result) {
-			incrementBusyThreadCount();
 		}
 		//
 		@Override
@@ -301,7 +307,7 @@ implements HttpContainerLoadExecutor<T, C> {
 		public final void cancelled() {
 			LOG.debug(Markers.MSG, "Connection lease cancelled");
 		}
-	};
+	}
 	//
 	private final FutureCallback<HttpContainerIoTask<T, C>> ioTaskFutureCallback = new FutureCallback<HttpContainerIoTask<T, C>>() {
 		//
@@ -334,17 +340,12 @@ implements HttpContainerLoadExecutor<T, C> {
 				final HttpContainerIoTask<T, C> anyTask = wsIoTasks.get(0);
 				final HttpHost tgtHost = anyTask.getTarget();
 				final HttpConnPool<HttpHost, BasicNIOPoolEntry> connPool = connPoolMap.get(tgtHost);
+				final FutureCallback<BasicNIOPoolEntry> connFuture = new BatchConnLeaseFutureCallback(
+					connPool, wsIoTasks
+				);
 				try {
-					final BasicNIOPoolEntry connPoolEntry =
-						connPool.lease(tgtHost, null, connLeaseFutureCallback).get();
-					if(
-						null == client.executePipelined(
-							(List)wsIoTasks, (List)wsIoTasks, connPoolEntry, connPool,
-							HttpCoreContext.create(), new BatchFutureCallback(wsIoTasks)
-						)
-					) {
-						return 0;
-					}
+					return null == connPool.lease(tgtHost, null, connFuture) ?
+						0 : to - from;
 				} catch(final Exception e) {
 					throw new RejectedExecutionException(e);
 				}
@@ -359,6 +360,45 @@ implements HttpContainerLoadExecutor<T, C> {
 			}
 		}
 		return n;
+	}
+	//
+	private final class BatchConnLeaseFutureCallback
+	implements FutureCallback<BasicNIOPoolEntry> {
+		//
+		private final HttpConnPool<HttpHost, BasicNIOPoolEntry> connPool;
+		private final List<HttpContainerIoTask<T, C>> wsIoTasks;
+		//
+		public BatchConnLeaseFutureCallback(
+			final HttpConnPool<HttpHost, BasicNIOPoolEntry> connPool,
+			final List<HttpContainerIoTask<T, C>> wsIoTasks
+		) {
+			this.connPool = connPool;
+			this.wsIoTasks = wsIoTasks;
+		}
+		//
+		@Override @SuppressWarnings("unchecked")
+		public final void completed(final BasicNIOPoolEntry connPoolEntry) {
+			incrementBusyThreadCount();
+			client.executePipelined(
+				(List) wsIoTasks, (List) wsIoTasks, connPoolEntry, connPool,
+				HttpCoreContext.create(), new BatchFutureCallback(wsIoTasks)
+			);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "{} I/O tasks has been submitted for execution", wsIoTasks.size()
+				);
+			}
+		}
+		//
+		@Override
+		public final void failed(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Connection lease failed");
+		}
+		//
+		@Override
+		public final void cancelled() {
+			LOG.debug(Markers.MSG, "Connection lease cancelled");
+		}
 	}
 	//
 	private final class BatchFutureCallback

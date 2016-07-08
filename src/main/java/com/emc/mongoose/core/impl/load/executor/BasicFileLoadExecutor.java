@@ -130,9 +130,9 @@ implements FileLoadExecutor<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public <A extends IoTask<T>> Future<A> submitTask(final A ioTask)
+	public <A extends IoTask<T>> Future submitTask(final A ioTask)
 	throws RejectedExecutionException {
-		return (Future<A>) ioTaskExecutor.<FileIoTask<T>>submit((FileIoTask<T>) ioTask);
+		return ioTaskExecutor.<FileIoTask<T>>submit((FileIoTask<T>) ioTask);
 	}
 	//
 	@Override
