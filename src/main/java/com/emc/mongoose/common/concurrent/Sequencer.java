@@ -59,7 +59,7 @@ extends Thread {
 					}
 					buff.clear();
 				} else {
-					LockSupport.parkNanos(1);
+					Thread.yield();
 				}
 			}
 		} finally {
