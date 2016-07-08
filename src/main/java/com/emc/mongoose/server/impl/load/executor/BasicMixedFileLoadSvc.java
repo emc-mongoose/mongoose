@@ -80,7 +80,7 @@ implements MixedFileLoadSvc<F> {
 				sizeLimit, rateLimit, sizeConfig, rangesConfig
 			) {
 				@Override
-				public final <A extends IoTask<F>> Future submitTask(final A ioTask)
+				public final <A extends IoTask<F>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
 					try {
 						if(throttle.requestContinueFor(nextLoadType)) {

@@ -86,7 +86,7 @@ implements MixedHttpDataLoadSvc<T> {
 				httpProcessor, client, ioReactor, connPoolMap
 			) {
 				@Override
-				public final <A extends IoTask<T>> Future submitTask(final A ioTask)
+				public final <A extends IoTask<T>> Future<A> submitTask(final A ioTask)
 				throws RejectedExecutionException {
 					try {
 						if(throttle.requestContinueFor(nextLoadType)) {
