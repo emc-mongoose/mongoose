@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import java.rmi.ConnectIOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 28.06.16.
@@ -63,7 +62,7 @@ implements LoadStatsSnapshotTask {
 						loadSvcAddr
 					);
 				}
-				LockSupport.parkNanos(1_000_000);
+				Thread.yield();
 			} catch(final NoSuchObjectException | ConnectIOException e) {
 				if(retryCount < COUNT_LIMIT_RETRIES) {
 					retryCount ++;

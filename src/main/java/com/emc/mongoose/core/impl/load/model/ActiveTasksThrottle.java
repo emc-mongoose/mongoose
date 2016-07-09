@@ -9,7 +9,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 04.04.16.
  */
-public class ActiveTasksThrottle<T extends Item>
+public final class ActiveTasksThrottle<T extends Item>
 implements Throttle<T> {
 	//
 	private final int activeTaskCountLimit;
