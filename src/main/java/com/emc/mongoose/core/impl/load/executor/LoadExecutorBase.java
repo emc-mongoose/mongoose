@@ -1131,7 +1131,6 @@ implements LoadExecutor<T> {
 				LOG.debug(Markers.MSG, "{}: await exit due to \"done\" state", getName());
 				return true;
 			}
-			LockSupport.parkNanos(1_000_000);
 		}
 		LOG.debug(Markers.MSG, "{}: await exit due to timeout", getName());
 		return false;
