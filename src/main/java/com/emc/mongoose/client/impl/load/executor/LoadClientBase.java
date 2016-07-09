@@ -43,7 +43,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 20.10.14.
  */
@@ -106,7 +105,7 @@ implements LoadClient<T, W> {
 								}
 								for(int m = 0; m < n && !currThread.isInterrupted();) {
 									m += itemOutBuff.put(frame, m, n);
-									LockSupport.parkNanos(1);
+									Thread.yield();
 								}
 								if(LOG.isTraceEnabled(Markers.MSG)) {
 									LOG.trace(
@@ -124,7 +123,7 @@ implements LoadClient<T, W> {
 								}
 							}
 						}
-						LockSupport.parkNanos(1_000);
+						Thread.yield();
 					} catch(final IOException e) {
 						if(retryCount < COUNT_LIMIT_RETRY) {
 							retryCount ++;
@@ -168,7 +167,7 @@ implements LoadClient<T, W> {
 						LOG.debug(Markers.MSG, "Interrupting due to external interruption");
 						break;
 					} else {
-						LockSupport.parkNanos(1_000);
+						Thread.yield();
 					}
 				}
 			} finally {
@@ -481,7 +480,7 @@ implements LoadClient<T, W> {
 				if(LOG.isTraceEnabled(Markers.ERR)) {
 					LogUtil.exception(LOG, Level.TRACE, e, "Failed to submit remote put task");
 				}
-				LockSupport.parkNanos(1);
+				Thread.yield();
 			}
 		}
 	}
@@ -503,7 +502,7 @@ implements LoadClient<T, W> {
 		public final void run() {
 			String loadSvcAddr;
 			W loadSvc;
-			for(int m = 0; m < n && !remotePutExecutor.isTerminated(); LockSupport.parkNanos(1)) {
+			for(int m = 0; m < n && !remotePutExecutor.isTerminated(); Thread.yield()) {
 				try {
 					loadSvcAddr = loadSvcAddrs[(int) (rrc.incrementAndGet() % loadSvcAddrs.length)];
 					loadSvc = remoteLoadMap.get(loadSvcAddr);
@@ -541,7 +540,7 @@ implements LoadClient<T, W> {
 								LOG, Level.TRACE, e, "Failed to submit remote batch put task"
 							);
 						}
-						LockSupport.parkNanos(1_000);
+						Thread.yield();
 					}
 				}
 			}

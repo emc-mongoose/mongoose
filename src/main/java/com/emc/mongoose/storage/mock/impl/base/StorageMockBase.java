@@ -53,8 +53,6 @@ implements StorageMock<T> {
 	protected final ContentSource contentSrc;
 	protected final int storageCapacity, containerCapacity;
 	//
-	private final Sequencer sequencer;
-	//
 	private volatile boolean isCapacityExhausted = false;
 	//
 	protected StorageMockBase(
@@ -70,7 +68,6 @@ implements StorageMock<T> {
 		ioStats = new BasicStorageIOStats(this, metricsPeriodSec, jmxServeFlag);
 		this.storageCapacity = storageCapacity;
 		this.containerCapacity = containerCapacity;
-		this.sequencer = new Sequencer("storageMockSequencer", true, batchSize);
 		createContainer(ObjectContainerMock.DEFAULT_NAME);
 	}
 	//
@@ -85,7 +82,7 @@ implements StorageMock<T> {
 	@Override
 	public final void createContainer(final String name) {
 		try {
-			sequencer.submit(new PutContainerTask(name));
+			Sequencer.INSTANCE.submit(new PutContainerTask(name));
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Container creation was interrupted");
 		}
@@ -117,7 +114,7 @@ implements StorageMock<T> {
 	public final ObjectContainerMock<T> getContainer(final String name) {
 		ObjectContainerMock<T> c = null;
 		try {
-			c = sequencer.submit(new GetContainerTask(name)).get();
+			c = Sequencer.INSTANCE.submit(new GetContainerTask(name)).get();
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Container getting was interrupted");
 		} catch(final ExecutionException e) {
@@ -146,7 +143,7 @@ implements StorageMock<T> {
 	@Override
 	public final void deleteContainer(final String name) {
 		try {
-			sequencer.submit(new DeleteContainerTask(name));
+			Sequencer.INSTANCE.submit(new DeleteContainerTask(name));
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Container deleting was interrupted");
 		}
@@ -181,7 +178,7 @@ implements StorageMock<T> {
 			throw new StorageMockCapacityLimitReachedException();
 		}
 		try {
-			sequencer.submit(new PutObjectTask(container, newDataObject(oid, offset, size)));
+			Sequencer.INSTANCE.submit(new PutObjectTask(container, newDataObject(oid, offset, size)));
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the create task");
 		}
@@ -267,7 +264,7 @@ implements StorageMock<T> {
 		final String container, final String oid, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
-			final T obj = sequencer.submit(new GetObjectTask(container, oid)).get();
+			final T obj = Sequencer.INSTANCE.submit(new GetObjectTask(container, oid)).get();
 			if(obj == null) {
 				throw new ObjectMockNotFoundException();
 			}
@@ -284,7 +281,7 @@ implements StorageMock<T> {
 		final String container, final String oid, final long offset, final long size
 	) throws ContainerMockException, ObjectMockNotFoundException {
 		try {
-			final T obj = sequencer.submit(new GetObjectTask(container, oid)).get();
+			final T obj = Sequencer.INSTANCE.submit(new GetObjectTask(container, oid)).get();
 			if(obj == null) {
 				throw new ObjectMockNotFoundException();
 			}
@@ -303,7 +300,7 @@ implements StorageMock<T> {
 		// TODO partial read using offset and size args
 		T obj = null;
 		try {
-			obj = sequencer.submit(new GetObjectTask(container, oid)).get();
+			obj = Sequencer.INSTANCE.submit(new GetObjectTask(container, oid)).get();
 		} catch(final ExecutionException e) {
 			throw new ContainerMockException(e);
 		} catch(final InterruptedException e) {
@@ -341,7 +338,7 @@ implements StorageMock<T> {
 		final String container, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException {
 		try {
-			sequencer.submit(new DeleteObjectTask(container, id));
+			Sequencer.INSTANCE.submit(new DeleteObjectTask(container, id));
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the read task");
 		}
@@ -353,7 +350,7 @@ implements StorageMock<T> {
 	) throws ContainerMockException {
 		T lastObj = null;
 		try {
-			lastObj = sequencer
+			lastObj = Sequencer.INSTANCE
 				.submit(new ListObjectTask(container, afterOid, buffDst, limit))
 				.get();
 		} catch(final ExecutionException e) {
@@ -423,7 +420,7 @@ implements StorageMock<T> {
 		ioStats.start();
 		startListening();
 		storageCapacityMonitorThread.start();
-		sequencer.start();
+		Sequencer.INSTANCE.start();
 	}
 	//
 	@Override
@@ -443,7 +440,7 @@ implements StorageMock<T> {
 	@Override
 	public final void putIntoDefaultContainer(final List<T> dataItems) {
 		try {
-			sequencer.submit(new PutObjectsBatchTask(ObjectContainerMock.DEFAULT_NAME, dataItems));
+			Sequencer.INSTANCE.submit(new PutObjectsBatchTask(ObjectContainerMock.DEFAULT_NAME, dataItems));
 		} catch(final InterruptedException e) {
 			LogUtil.exception(
 				LOG, Level.WARN, e,
@@ -456,7 +453,6 @@ implements StorageMock<T> {
 	@Override
 	public void close()
 	throws IOException {
-		sequencer.interrupt();
 		storageCapacityMonitorThread.interrupt();
 		ioStats.close();
 		try {

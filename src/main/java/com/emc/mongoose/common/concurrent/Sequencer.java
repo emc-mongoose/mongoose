@@ -17,17 +17,23 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by andrey on 04.08.15.
  */
-public class Sequencer
+public final class Sequencer
 extends Thread {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static int DEFAULT_TASK_QUEUE_SIZE = 0x1000;
+	public final static Sequencer INSTANCE = new Sequencer(
+		"sequencer", true, DEFAULT_TASK_QUEUE_SIZE
+	);
+	static {
+		INSTANCE.start();
+	}
 	//
 	private final BlockingQueue<Runnable> queue;
 	private final int batchSize;
 	private final Collection<Runnable> buff;
 	//
-	public Sequencer(final String name, boolean daemonFlag, final int batchSize) {
+	protected Sequencer(final String name, boolean daemonFlag, final int batchSize) {
 		super(name);
 		setDaemon(daemonFlag);
 		queue = new ArrayBlockingQueue<>(DEFAULT_TASK_QUEUE_SIZE, false);
@@ -59,7 +65,7 @@ extends Thread {
 					}
 					buff.clear();
 				} else {
-					LockSupport.parkNanos(1);
+					Thread.yield();
 				}
 			}
 		} finally {
