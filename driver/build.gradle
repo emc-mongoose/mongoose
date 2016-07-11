@@ -1,0 +1,6 @@
+version = '3.0-SNAPSHOT'
+descriprion = 'mongoose - driver'
+
+dependencies {
+	compile project(':common')
+}

@@ -1,7 +1,7 @@
 version = '3.0-SNAPSHOT'
 description = 'Mongoose - high-load storage performance testing automation tool'
 
-subproject {
+subprojects {
 	apply plugin: 'java'
 
 	tasks.withType(JavaCompile) {

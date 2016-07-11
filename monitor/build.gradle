@@ -1,0 +1,6 @@
+version = '3.0-SNAPSHOT'
+descriprion = 'mongoose - monitor'
+
+dependencies {
+	compile project(':common')
+}
