@@ -1,0 +1,30 @@
+version = '3.0-SNAPSHOT'
+description = 'Mongoose - high-load storage performance testing automation tool'
+
+subproject {
+	apply plugin: 'java'
+
+	tasks.withType(JavaCompile) {
+		sourceCompatibility = JavaVersion.VERSION_1_8
+		targetCompatibility = JavaVersion.VERSION_1_8
+	}
+
+	task 'create-dirs' << {
+		sourceSets*.java.srcDirs*.each { it.mkdirs() }
+		sourceSets*.resources.srcDirs*.each { it.mkdirs() }
+	}
+
+	repositories {
+		mavenCentral()
+	}
+
+	dependencies {
+		compile 'org.apache.logging.log4j:log4j-core:2.6.1'
+
+		testCompile 'junit:junit:4.12'
+	}
+}
+
+task wrapper(type: Wrapper) {
+	gradleVersion = "2.14"
+}

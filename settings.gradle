@@ -1,0 +1,3 @@
+rootProject.name = 'mongoose'
+
+include 'driver', 'monitor', 'generator'
