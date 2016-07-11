@@ -69,10 +69,10 @@ public class GeneratorConfig {
 			public static final String KEY_RANGES = "ranges";
 			public static final String KEY_SIZE = "size";
 			public static final String KEY_VERIFY = "verify";
-			private Content content;
-			private int ranges;
-			private String size;
-			private boolean verify;
+			private final Content content;
+			private final int ranges;
+			private final String size;
+			private final boolean verify;
 
 			public Data(
 				final Content content, final int ranges, final String size, final boolean verify
@@ -104,9 +104,9 @@ public class GeneratorConfig {
 				public static final String KEY_FILE = "file";
 				public static final String KEY_SEED = "seed";
 				public static final String KEY_RING_SIZE = "ringSize";
-				private String file;
-				private String seed;
-				private String ringSize;
+				private final String file;
+				private final String seed;
+				private final String ringSize;
 
 				public Content(final String file, final String seed, final String ringSize) {
 					this.file = file;
@@ -132,8 +132,8 @@ public class GeneratorConfig {
 
 			public static final String KEY_CONTAINER = "container";
 			public static final String KEY_FILE = "file";
-			private String container;
-			private String file;
+			private final String container;
+			private final String file;
 
 			public Destination(final String container, final String file) {
 				this.container = container;
@@ -154,9 +154,9 @@ public class GeneratorConfig {
 			public static final String KEY_CONTAINER = "container";
 			public static final String KEY_FILE = "file";
 			public static final String KEY_BATCH_SIZE = "batchSize";
-			private String container;
-			private String file;
-			private int batchSize;
+			private final String container;
+			private final String file;
+			private final int batchSize;
 
 			public Source(final String file, final String container, final int batchSize) {
 				this.file = file;
@@ -185,7 +185,7 @@ public class GeneratorConfig {
 			public static final String KEY_OFFSET = "offset";
 			public static final String KEY_LENGTH = "length";
 			private final String type;
-			private String prefix;
+			private final String prefix;
 			private final int radix;
 			private final int offset;
 			private final int length;

@@ -1,5 +1,6 @@
 package com.emc.mongoose.config;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -64,7 +65,7 @@ public class DriverConfig {
 			this.type = type;
 			this.auth = auth;
 			this.http = http;
-			this.addresses = addresses;
+			this.addresses = Collections.unmodifiableList(addresses);
 		}
 
 		public int getPort() {
@@ -93,9 +94,9 @@ public class DriverConfig {
 			public static final String KEY_SECRET = "secret";
 			public static final String KEY_TOKEN = "token";
 
-			private String id;
-			private String secret;
-			private String token;
+			private final String id;
+			private final String secret;
+			private final String token;
 
 			public Auth(final String id, final String secret, final String token) {
 				this.id = id;
@@ -128,9 +129,9 @@ public class DriverConfig {
 			
 			private final String api;
 			private final boolean fsAccess;
-			private String namespace;
+			private final String namespace;
 			private final boolean versioning;
-			private Map<String, String> headers;
+			private final Map<String, String> headers;
 
 			public Http(
 				final String api, final boolean fsAccess, final String namespace,
@@ -140,7 +141,7 @@ public class DriverConfig {
 				this.fsAccess = fsAccess;
 				this.namespace = namespace;
 				this.versioning = versioning;
-				this.headers = headers;
+				this.headers = Collections.unmodifiableMap(headers);
 			}
 
 			public String getApi() {

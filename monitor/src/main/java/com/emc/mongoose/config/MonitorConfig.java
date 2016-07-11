@@ -56,10 +56,10 @@ public class MonitorConfig {
 			public static final String KEY_RATE = "rate";
 			public static final String KEY_SIZE = "size";
 			public static final String KEY_TIME = "time";
-			private int count;
-			private int rate;
-			private int size;
-			private String time;
+			private final int count;
+			private final int rate;
+			private final int size;
+			private final String time;
 
 			public Limit(final int count, final int rate, final int size, final String time) {
 				this.count = count;
