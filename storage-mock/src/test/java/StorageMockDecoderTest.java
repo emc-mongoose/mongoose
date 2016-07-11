@@ -13,6 +13,10 @@ import static org.junit.Assert.assertNotNull;
  */
 public class StorageMockDecoderTest {
 
+	private static String parameterErrorMessage(final String content) {
+		return "Wrong " + content + " parameter";
+	}
+
 	@Test
 	public void shouldCreateConfig() throws Exception{
 		final StorageMockDecoder storageMockDecoder = new StorageMockDecoder();
@@ -20,7 +24,11 @@ public class StorageMockDecoderTest {
 		assertNotNull("The configuration file was read wrong", defaults);
 		final StorageMockConfig storageMockConfig =
 			storageMockDecoder.decode(defaults);
-		assertEquals("Decoding was failed", storageMockConfig.getHeadCount(), 1);
+		assertEquals(parameterErrorMessage("headCount"), storageMockConfig.getHeadCount(), 1);
+		assertEquals(parameterErrorMessage("capacity"), storageMockConfig.getCapacity(), 1_000_000);
+		final StorageMockConfig.Container container = storageMockConfig.container();
+		assertEquals(parameterErrorMessage("container.capacity"), container.getCapacity(), 1_000_000);
+		assertEquals(parameterErrorMessage("container.countLimit"), container.getCountLimit(), 1_000_000);
 	}
 
 }

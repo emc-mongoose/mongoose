@@ -69,11 +69,11 @@ public class CommonConfig {
 				this.selectInterval = selectInterval;
 			}
 
-			public int getTimeoutMilliSec() {
+			public int getTimeoutInMilliseconds() {
 				return timeoutMilliSec;
 			}
 
-			public boolean getReuseAddr() {
+			public boolean getReusableAddress() {
 				return reuseAddr;
 			}
 
