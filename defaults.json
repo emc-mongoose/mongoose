@@ -1,0 +1,17 @@
+{
+	"name" : "mongoose",
+	"version" : "3.0-SNAPSHOT",
+
+	"network" : {
+		"socket" : {
+			"timeoutMilliSec" : 1000000,
+			"reuseAddr" : true,
+			"keepAlive" : true,
+			"tcpNoDelay" : true,
+			"linger" : 0,
+			"bindBacklogSize" : 0,
+			"interestOpQueued" : false,
+			"selectInterval" : 100
+		}
+	}
+}
