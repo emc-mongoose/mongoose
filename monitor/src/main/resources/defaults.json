@@ -1,0 +1,20 @@
+{
+	"job" : {
+		"circular" : false,
+		"limit" : {
+			"count" : 0,
+			"rate" : 0,
+			"size" : 0,
+			"time" : "0s"
+		}
+	},
+	"metrics" : {
+		"intermediate" : false,
+		"period" : "10s",
+		"precondition" : false
+	},
+	"run" : {
+		"file" : null,
+		"id" : null
+	}
+}
