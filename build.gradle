@@ -1,8 +1,20 @@
-version = '3.0-SNAPSHOT'
+import groovy.json.JsonSlurper
+
 description = 'Mongoose - high-load storage performance testing automation tool'
+
+def loadProjectVersionFrom(String sourceFileName) {
+	def inputFile = new File(sourceFileName)
+	def json = new JsonSlurper().parseText(inputFile.text)
+	json.version
+}
+def configFilePath = 'defaults.json'
+
+version = loadProjectVersionFrom configFilePath
 
 subprojects {
 	apply plugin: 'java'
+
+	version = super.version
 
 	tasks.withType(JavaCompile) {
 		sourceCompatibility = JavaVersion.VERSION_1_8
