@@ -1,12 +1,9 @@
 package com.emc.mongoose.log;
-// mongoose-common.jar
-import com.emc.mongoose.common.conf.BasicConfig;
-//
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
-//
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -18,13 +15,10 @@ import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry;
 import org.apache.logging.log4j.core.util.datetime.DatePrinter;
 import org.apache.logging.log4j.core.util.datetime.FastDateFormat;
 import org.apache.logging.log4j.io.IoBuilder;
-//
+
 import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.DriverManager;
 import java.util.Calendar;
 import java.util.Locale;
@@ -36,7 +30,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.emc.mongoose.config.Constants.KEY_RUN_ID;
-import static com.emc.mongoose.config.Constants.DIR_CONFIG;
 /**
  Created by kurila on 06.05.14.
  */
@@ -168,22 +161,16 @@ implements ShutdownCallbackRegistry {
 				if(runId == null || runId.length() == 0) {
 					System.setProperty(KEY_RUN_ID, newRunId());
 				}
-				// determine the logger configuration file path
-				Path logConfPath = Paths.get(
-					BasicConfig.getWorkingDir(), DIR_CONF, FNAME_LOG_CONF
-				);
-				//
 				try {
-					if(Files.exists(logConfPath)) {
-						LOG_CTX = Configurator.initialize(MONGOOSE, logConfPath.toUri().toString());
-					} else if(System.getProperty("log4j.configurationFile") == null) {
+					final String log4jConfigurationFile = System.getProperty("log4j.configurationFile");
+					if(log4jConfigurationFile == null) {
 						final ClassLoader classloader = LogUtil.class.getClassLoader();
 						final URL bundleLogConfURL = classloader.getResource(FNAME_LOG_CONF);
 						if(bundleLogConfURL != null) {
 							LOG_CTX = Configurator.initialize(MONGOOSE, classloader, bundleLogConfURL.toURI());
 						}
 					} else {
-						LOG_CTX = Configurator.initialize(MONGOOSE, System.getProperty("log4j.configurationFile"));
+						LOG_CTX = Configurator.initialize(MONGOOSE, log4jConfigurationFile);
 					}
 					//
 					if(LOG_CTX == null) {

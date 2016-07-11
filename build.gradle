@@ -1,15 +1,27 @@
-version = '3.0-SNAPSHOT'
-description = 'Mongoose - high-load storage performance testing automation tool'
+import groovy.json.JsonSlurper
+
+description = "Mongoose - high-load storage performance testing automation tool"
+
+def loadProjectVersionFrom(String sourceFileName) {
+	def inputFile = new File(sourceFileName)
+	def json = new JsonSlurper().parseText(inputFile.text)
+	json.version
+}
+def configFilePath = "config${File.separator}defaults.json"
+
+version = loadProjectVersionFrom configFilePath
 
 subprojects {
-	apply plugin: 'java'
+	apply plugin: "java"
+
+	version = super.version
 
 	tasks.withType(JavaCompile) {
 		sourceCompatibility = JavaVersion.VERSION_1_8
 		targetCompatibility = JavaVersion.VERSION_1_8
 	}
 
-	task 'create-dirs' << {
+	task "create-dirs" << {
 		sourceSets*.java.srcDirs*.each { it.mkdirs() }
 		sourceSets*.resources.srcDirs*.each { it.mkdirs() }
 	}
@@ -19,16 +31,20 @@ subprojects {
 	}
 
 	dependencies {
-		compile 'org.apache.logging.log4j:log4j-core:2.6.1'
-		compile 'org.apache.logging.log4j:log4j-iostreams:2.6.1'
 
-		compile 'javax.json:javax.json-api:1.0'
-		compile 'org.glassfish:javax.json:1.0.4'
+		compile "commons-lang:commons-lang:2.6"
+		compile "org.apache.commons:commons-collections4:4.1"
 
-		testCompile 'junit:junit:4.12'
+		compile "org.apache.logging.log4j:log4j-core:2.6.1"
+		compile "org.apache.logging.log4j:log4j-iostreams:2.6.1"
+
+		compile "javax.json:javax.json-api:1.0"
+		compile "org.glassfish:javax.json:1.0.4"
+
+		testCompile "junit:junit:4.12"
 	}
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '2.14'
+	gradleVersion = "2.14"
 }

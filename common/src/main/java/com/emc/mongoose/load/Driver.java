@@ -1,4 +1,4 @@
-package com.emc.mongoose;
+package com.emc.mongoose.load;
 
 import com.emc.mongoose.concurrent.LifeCycle;
 import com.emc.mongoose.io.IoTask;
@@ -11,7 +11,7 @@ import java.util.concurrent.RejectedExecutionException;
 /**
  Created on 11.07.16.
  */
-public interface LoadDriver<I extends Item, O extends IoTask<I>>
+public interface Driver<I extends Item, O extends IoTask<I>>
 extends LifeCycle {
 
 	boolean isFullThrottleEntered();
