@@ -1,5 +1,5 @@
 version = '3.0-SNAPSHOT'
-descriprion = 'mongoose - generator'
+description = 'mongoose - generator'
 
 dependencies {
 	compile project(':common')
