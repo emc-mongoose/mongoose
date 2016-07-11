@@ -95,7 +95,7 @@ public class GeneratorConfig {
 				return size;
 			}
 
-			public boolean isVerify() {
+			public boolean getVerify() {
 				return verify;
 			}
 

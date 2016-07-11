@@ -1,5 +1,5 @@
-import com.emc.mongoose.config.GeneratorConfig;
-import com.emc.mongoose.config.GeneratorDecoder;
+import com.emc.mongoose.config.MonitorConfig;
+import com.emc.mongoose.config.MonitorDecoder;
 import com.emc.mongoose.config.reader.ConfigReader;
 import org.junit.Test;
 
@@ -11,16 +11,16 @@ import static org.junit.Assert.assertNotNull;
 /**
  Created on 11.07.16.
  */
-public class GeneratorDecoderTest {
+public class MonitorDecoderTest {
 
 	@Test
 	public void shouldCreateConfig() throws Exception{
-		final GeneratorDecoder generatorDecoder = new GeneratorDecoder();
+		final MonitorDecoder monitorDecoder = new MonitorDecoder();
 		final JsonObject defaults = ConfigReader.readJson("defaults.json");
 		assertNotNull("The configuration file was read wrong", defaults);
-		final GeneratorConfig generatorConfig =
-			generatorDecoder.decode(defaults);
-		assertEquals("Decoding was failed", generatorConfig.item().getType(), "data");
+		final MonitorConfig monitorConfig =
+			monitorDecoder.decode(defaults);
+		assertEquals("Decoding was failed", monitorConfig.job().getCircular(), false);
 	}
 
 }

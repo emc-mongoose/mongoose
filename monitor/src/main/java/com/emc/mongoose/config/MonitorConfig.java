@@ -6,217 +6,134 @@ package com.emc.mongoose.config;
 public class MonitorConfig {
 
 	public static final String KEY_JOB = "job";
+	public static final String KEY_METRICS = "metrics";
+	public static final String KEY_RUN = "run";
 	private final Job job;
+	private final Metrics metrics;
+	private final Run run;
 
-	public MonitorConfig(final Job job) {
+	public MonitorConfig(final Job job, final Metrics metrics, final Run run) {
 		this.job = job;
+		this.metrics = metrics;
+		this.run = run;
 	}
 
 	public Job job() {
 		return job;
 	}
 
+	public Metrics metrics() {
+		return metrics;
+	}
+
+	public Run run() {
+		return run;
+	}
+
 	public static class Job {
 
-		public static final String KEY_TYPE = "type";
-		public static final String KEY_DATA = "data";
-		public static final String KEY_DESTINATION = "dst";
-		public static final String KEY_SOURCE = "src";
-		public static final String KEY_NAMING = "naming";
-		private final String type;
-		private final Data data;
-		private final Destination dst;
-		private final Source src;
-		private final Naming naming;
+		public static final String KEY_CIRCULAR = "circular";
+		public static final String KEY_LIMIT = "limit";
+		private final boolean circular;
+		private final Limit limit;
 
-		public Job(
-			final String type, final Data data, final Destination dst, final Source src,
-			final Naming naming
-		) {
-			this.type = type;
-			this.data = data;
-			this.dst = dst;
-			this.src = src;
-			this.naming = naming;
+		public Job(final boolean circular, final Limit limit) {
+			this.circular = circular;
+			this.limit = limit;
 		}
 
-		public String getType() {
-			return type;
+		public boolean getCircular() {
+			return circular;
 		}
 
-		public Data data() {
-			return data;
+		public Limit limit() {
+			return limit;
 		}
 
-		public Destination destination() {
-			return dst;
-		}
+		public static class Limit {
 
-		public Source source() {
-			return src;
-		}
-
-		public Naming naming() {
-			return naming;
-		}
-
-		public static class Data {
-
-			public static final String KEY_CONTENT = "content";
-			public static final String KEY_RANGES = "ranges";
+			public static final String KEY_COUNT = "count";
+			public static final String KEY_RATE = "rate";
 			public static final String KEY_SIZE = "size";
-			public static final String KEY_VERIFY = "verify";
-			private Content content;
-			private int ranges;
-			private String size;
-			private boolean verify;
+			public static final String KEY_TIME = "time";
+			private int count;
+			private int rate;
+			private int size;
+			private String time;
 
-			public Data(
-				final Content content, final int ranges, final String size, final boolean verify
-			) {
-				this.content = content;
-				this.ranges = ranges;
+			public Limit(final int count, final int rate, final int size, final String time) {
+				this.count = count;
+				this.rate = rate;
 				this.size = size;
-				this.verify = verify;
+				this.time = time;
 			}
 
-			public Content content() {
-				return content;
+			public int getCount() {
+				return count;
 			}
 
-			public int getRanges() {
-				return ranges;
+			public int getRate() {
+				return rate;
 			}
 
-			public String getSize() {
+			public int getSize() {
 				return size;
 			}
 
-			public boolean isVerify() {
-				return verify;
-			}
-
-			public static class Content {
-
-				public static final String KEY_FILE = "file";
-				public static final String KEY_SEED = "seed";
-				public static final String KEY_RING_SIZE = "ringSize";
-				private String file;
-				private String seed;
-				private String ringSize;
-
-				public Content(final String file, final String seed, final String ringSize) {
-					this.file = file;
-					this.seed = seed;
-					this.ringSize = ringSize;
-				}
-
-				public String getFile() {
-					return file;
-				}
-
-				public String getSeed() {
-					return seed;
-				}
-
-				public String getRingSize() {
-					return ringSize;
-				}
+			public String getTime() {
+				return time;
 			}
 		}
+	}
 
-		public static class Destination {
+	public static class Metrics {
 
-			public static final String KEY_CONTAINER = "container";
-			public static final String KEY_FILE = "file";
-			private String container;
-			private String file;
+		public static final String KEY_INTERMEDIATE = "intermediate";
+		public static final String KEY_PERIOD = "period";
+		public static final String KEY_PRECONDITION= "precondition";
+		private final boolean intermediate;
+		private final String period;
+		private final boolean precondition;
 
-			public Destination(final String container, final String file) {
-				this.container = container;
-				this.file = file;
-			}
-
-			public String getContainer() {
-				return container;
-			}
-
-			public String getFile() {
-				return file;
-			}
+		public Metrics(
+			final boolean intermediate, final String period, final boolean precondition
+		) {
+			this.intermediate = intermediate;
+			this.period = period;
+			this.precondition = precondition;
 		}
 
-		public static class Source {
-
-			public static final String KEY_CONTAINER = "container";
-			public static final String KEY_FILE = "file";
-			public static final String KEY_BATCH_SIZE = "batchSize";
-			private String container;
-			private String file;
-			private int batchSize;
-
-			public Source(final String file, final String container, final int batchSize) {
-				this.file = file;
-				this.container = container;
-				this.batchSize = batchSize;
-			}
-
-			public String getContainer() {
-				return container;
-			}
-
-			public String getFile() {
-				return file;
-			}
-
-			public int getBatchSize() {
-				return batchSize;
-			}
+		public boolean getIntermediate() {
+			return intermediate;
 		}
 
-		public static class Naming {
+		public String getPeriod() {
+			return period;
+		}
 
-			public static final String KEY_TYPE = "type";
-			public static final String KEY_PREFIX = "prefix";
-			public static final String KEY_RADIX = "radix";
-			public static final String KEY_OFFSET = "offset";
-			public static final String KEY_LENGTH = "length";
-			private final String type;
-			private String prefix;
-			private final int radix;
-			private final int offset;
-			private final int length;
+		public boolean getPrecondition() {
+			return precondition;
+		}
+	}
 
-			public Naming(
-				final String type, final String prefix, final int radix, final int offset,
-				final int length
-			) {
-				this.type = type;
-				this.radix = radix;
-				this.offset = offset;
-				this.length = length;
-				this.prefix = prefix;
-			}
+	public static class Run {
 
-			public String getType() {
-				return type;
-			}
+		public static final String KEY_FILE = "file";
+		public static final String KEY_ID = "id";
+		private final String file;
+		private final String id;
 
-			public String getPrefix() {
-				return prefix;
-			}
+		public Run(final String file, final String id) {
+			this.file = file;
+			this.id = id;
+		}
 
-			public int getRadix() {
-				return radix;
-			}
+		public String getFile() {
+			return file;
+		}
 
-			public int getOffset() {
-				return offset;
-			}
-
-			public int getLength() {
-				return length;
-			}
+		public String getId() {
+			return id;
 		}
 	}
 

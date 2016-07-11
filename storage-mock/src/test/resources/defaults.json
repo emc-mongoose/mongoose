@@ -1,0 +1,8 @@
+{
+	"headCount" : 1,
+	"capacity" : 1000000,
+	"container" : {
+		"capacity" : 1000000,
+		"countLimit" : 1000000
+	}
+}
