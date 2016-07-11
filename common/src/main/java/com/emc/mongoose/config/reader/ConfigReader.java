@@ -1,4 +1,4 @@
-package com.emc.mongoose.config;
+package com.emc.mongoose.config.reader;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -10,7 +10,7 @@ import java.io.InputStreamReader;
  */
 public class ConfigReader {
 
-	static JsonObject readJson(final String jsonFilePath) {
+	public static JsonObject readJson(final String jsonFilePath) {
 		final ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 		final InputStream fileAsInputStream = classloader.getResourceAsStream(jsonFilePath);
 		return Json.createReader(new InputStreamReader(fileAsInputStream)).readObject();

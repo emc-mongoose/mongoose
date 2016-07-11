@@ -1,9 +1,9 @@
-package com.emc.mongoose.config;
+package com.emc.mongoose.config.decoder;
 
 /**
  Created on 11.07.16.
  */
-class DecodeException extends Exception {
+public class DecodeException extends Exception {
 
 	private final String encodedString;
 
