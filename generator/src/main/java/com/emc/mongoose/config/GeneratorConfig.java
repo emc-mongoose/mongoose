@@ -7,8 +7,8 @@ import java.util.Map;
  Created on 11.07.16.
  */
 public class GeneratorConfig {
-	public static final String KEY_ITEM = "item";
 
+	public static final String KEY_ITEM = "item";
 	private final Item item;
 
 	public GeneratorConfig(final Item item) {
@@ -26,7 +26,6 @@ public class GeneratorConfig {
 		public static final String KEY_DESTINATION = "dst";
 		public static final String KEY_SOURCE = "src";
 		public static final String KEY_NAMING = "naming";
-
 		private final String type;
 		private final Data data;
 		private final Destination dst;
@@ -66,16 +65,19 @@ public class GeneratorConfig {
 
 		public static class Data {
 
+			public static final String KEY_CONTENT = "content";
 			public static final String KEY_RANGES = "ranges";
 			public static final String KEY_SIZE = "size";
 			public static final String KEY_VERIFY = "verify";
-
 			private Content content;
 			private int ranges;
 			private String size;
 			private boolean verify;
 
-			public Data(final int ranges, final String size, final boolean verify) {
+			public Data(
+				final Content content, final int ranges, final String size, final boolean verify
+			) {
+				this.content = content;
 				this.ranges = ranges;
 				this.size = size;
 				this.verify = verify;
@@ -102,7 +104,6 @@ public class GeneratorConfig {
 				public static final String KEY_FILE = "file";
 				public static final String KEY_SEED = "seed";
 				public static final String KEY_RING_SIZE = "ringSize";
-
 				private String file;
 				private String seed;
 				private String ringSize;
@@ -112,115 +113,112 @@ public class GeneratorConfig {
 					this.seed = seed;
 					this.ringSize = ringSize;
 				}
+
+				public String getFile() {
+					return file;
+				}
+
+				public String getSeed() {
+					return seed;
+				}
+
+				public String getRingSize() {
+					return ringSize;
+				}
+			}
+		}
+
+		public static class Destination {
+
+			public static final String KEY_CONTAINER = "container";
+			public static final String KEY_FILE = "file";
+			private String container;
+			private String file;
+
+			public Destination(final String container, final String file) {
+				this.container = container;
+				this.file = file;
+			}
+
+			public String getContainer() {
+				return container;
+			}
+
+			public String getFile() {
+				return file;
 			}
 		}
 
 		public static class Source {
 
-			public static final String KEY_ID = "id";
-			public static final String KEY_SECRET = "secret";
-			public static final String KEY_TOKEN = "token";
+			public static final String KEY_CONTAINER = "container";
+			public static final String KEY_FILE = "file";
+			public static final String KEY_BATCH_SIZE = "batchSize";
+			private String container;
+			private String file;
+			private int batchSize;
 
-			private String id;
-			private String secret;
-			private String token;
-
-			public Source(final String id, final String secret, final String token) {
-				this.id = id;
-				this.secret = secret;
-				this.token = token;
+			public Source(final String file, final String container, final int batchSize) {
+				this.file = file;
+				this.container = container;
+				this.batchSize = batchSize;
 			}
 
-			public Source() {}
-
-			public String getId() {
-				return id;
+			public String getContainer() {
+				return container;
 			}
 
-			public String getSecret() {
-				return secret;
+			public String getFile() {
+				return file;
 			}
 
-			public String getToken() {
-				return token;
-			}
-		}
-		public static class Destination {
-
-			public static final String KEY_ID = "id";
-			public static final String KEY_SECRET = "secret";
-			public static final String KEY_TOKEN = "token";
-
-			private String id;
-			private String secret;
-			private String token;
-
-			public Destination(final String id, final String secret, final String token) {
-				this.id = id;
-				this.secret = secret;
-				this.token = token;
-			}
-
-			public Destination() {}
-
-			public String getId() {
-				return id;
-			}
-
-			public String getSecret() {
-				return secret;
-			}
-
-			public String getToken() {
-				return token;
+			public int getBatchSize() {
+				return batchSize;
 			}
 		}
 
 		public static class Naming {
 
-			public static final String KEY_API = "api";
-			public static final String KEY_FS_ACCESS = "fsAccess";
-			public static final String KEY_HEADERS = "headers";
-			public static final String KEY_HEADER_CONNECTION = "Connection";
-			public static final String KEY_HEADER_USER_AGENT= "User-Agent";
-			public static final String KEY_NAMESPACE = "namespace";
-			public static final String KEY_VERSIONING = "versioning";
-
-			private final String api;
-			private final boolean fsAccess;
-			private String namespace;
-			private final boolean versioning;
-			private Map<String, String> headers;
+			public static final String KEY_TYPE = "type";
+			public static final String KEY_PREFIX = "prefix";
+			public static final String KEY_RADIX = "radix";
+			public static final String KEY_OFFSET = "offset";
+			public static final String KEY_LENGTH = "length";
+			private final String type;
+			private String prefix;
+			private final int radix;
+			private final int offset;
+			private final int length;
 
 			public Naming(
-				final String api, final boolean fsAccess, final String namespace,
-				final boolean versioning, final Map<String, String> headers
+				final String type, final String prefix, final int radix, final int offset,
+				final int length
 			) {
-				this.api = api;
-				this.fsAccess = fsAccess;
-				this.namespace = namespace;
-				this.versioning = versioning;
-				this.headers = headers;
+				this.type = type;
+				this.radix = radix;
+				this.offset = offset;
+				this.length = length;
+				this.prefix = prefix;
 			}
 
-			public String getApi() {
-				return api;
+			public String getType() {
+				return type;
 			}
 
-			public boolean getFsAccess() {
-				return fsAccess;
+			public String getPrefix() {
+				return prefix;
 			}
 
-			public String getNamespace() {
-				return namespace;
+			public int getRadix() {
+				return radix;
 			}
 
-			public boolean getVersioning() {
-				return versioning;
+			public int getOffset() {
+				return offset;
 			}
 
-			public Map<String, String> getHeaders() {
-				return headers;
+			public int getLength() {
+				return length;
 			}
 		}
 	}

@@ -8,7 +8,7 @@ import static org.junit.Assert.assertEquals;
 /**
  Created on 11.07.16.
  */
-public class DriverConfigTest {
+public class DriverDecoderTest {
 
 	@Test
 	public void shouldCreateConfig() throws Exception{
