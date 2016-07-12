@@ -27,7 +27,6 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final Sequencer connPoolSequencer;
 	private final HttpHost route;
 	//
 	public FixedRouteSequencingConnPool(
@@ -39,10 +38,6 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		setDefaultMaxPerRoute(maxPerRoute);
 		setMaxTotal(maxTotal);
 		this.route = route;
-		connPoolSequencer = new Sequencer(
-			"connPoolSequencer<" + route.toHostString() + ">", true, batchSize
-		);
-		connPoolSequencer.start();
 	}
 	//
 	public void shutdown(final long waitMs)
@@ -51,8 +46,6 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 			super.shutdown(waitMs);
 		} catch(final CancelledKeyException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Some tasks may be cancelled");
-		} finally {
-			connPoolSequencer.interrupt();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -88,7 +81,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		final HttpHost route, final Object state, final FutureCallback<BasicNIOPoolEntry> callback
 	) {
 		try {
-			return connPoolSequencer.submit(new ConnLeaseTask(state, callback));
+			return Sequencer.INSTANCE.submit(new ConnLeaseTask(state, callback));
 		} catch(final InterruptedException e) {
 			throw new RuntimeException(e);
 		}
@@ -124,7 +117,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	@Override
 	public final void release(final BasicNIOPoolEntry entry, final boolean reusable) {
 		try {
-			connPoolSequencer.submit(new ConnReleaseTask(entry, reusable));
+			Sequencer.INSTANCE.submit(new ConnReleaseTask(entry, reusable));
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to enqueue connection release task");
 		}
