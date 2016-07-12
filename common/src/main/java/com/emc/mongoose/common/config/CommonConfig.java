@@ -2,6 +2,8 @@ package com.emc.mongoose.common.config;
 
 import com.emc.mongoose.common.config.decoder.DecodeException;
 import com.emc.mongoose.common.config.reader.ConfigReader;
+import com.emc.mongoose.common.log.LogUtil;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,7 +23,7 @@ public class CommonConfig {
 		try {
 			CONFIG = DECODER.decode(ConfigReader.readJson("defaults.json"));
 		} catch(final DecodeException e) {
-			LOG.error("Failed to load the configuration");
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to load the configuration");
 		}
 	}
 

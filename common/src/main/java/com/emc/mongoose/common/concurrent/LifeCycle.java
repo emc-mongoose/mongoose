@@ -15,7 +15,7 @@ public interface LifeCycle {
 	boolean await()
 	throws InterruptedException;
 
-	boolean await(final long timeOut, final TimeUnit timeUnit)
+	boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException;
 
 	void interrupt()

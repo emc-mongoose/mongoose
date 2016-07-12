@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.mock.http;
 
 import com.emc.mongoose.common.config.CommonConfig;
-import com.emc.mongoose.common.config.CommonDecoder;
 import com.emc.mongoose.common.config.decoder.DecodeException;
 import com.emc.mongoose.common.config.reader.ConfigReader;
 import com.emc.mongoose.common.log.LogUtil;
@@ -44,9 +43,8 @@ public class Nagaina implements StorageMock {
 
 	@SuppressWarnings("ConstantConditions")
 	public Nagaina() {
-		final CommonDecoder commonDecoder = new CommonDecoder();
 		final StorageMockDecoder storageMockDecoder = new StorageMockDecoder();
-		CommonConfig commonConfig = CommonConfig.getConfig();;
+		final CommonConfig commonConfig = CommonConfig.getConfig();
 		StorageMockConfig storageMockConfig = null;
 		try {
 			storageMockConfig = storageMockDecoder.decode(ConfigReader.readJson("defaults.json"));
@@ -72,7 +70,7 @@ public class Nagaina implements StorageMock {
 	public void start()
 	throws IllegalStateException {
 		final int portsNumber = dispatchGroup.length;
-		for (int i = 0; i <  portsNumber; i++) {
+		for (int i = 0; i < portsNumber; i++) {
 			try {
 				dispatchGroup[i] =
 					new NioEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
@@ -96,9 +94,9 @@ public class Nagaina implements StorageMock {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to start the head at port #{}", port + i
 				);
+				throw new IllegalStateException();
 			}
 		}
-
 		if(portsNumber > 1) {
 			LOG.info(Markers.MSG, "Listening the ports {} .. {}",
 				port, port + portsNumber - 1);
