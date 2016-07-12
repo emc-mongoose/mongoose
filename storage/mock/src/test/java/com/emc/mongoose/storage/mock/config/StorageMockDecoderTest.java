@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.mock.config;
 
+import com.emc.mongoose.common.config.decoder.Decoder;
 import com.emc.mongoose.common.config.reader.ConfigReader;
 import org.junit.Test;
 
@@ -18,17 +19,15 @@ public class StorageMockDecoderTest {
 	}
 
 	@Test
-	public void shouldCreateConfig() throws Exception{
-		final StorageMockDecoder storageMockDecoder = new StorageMockDecoder();
-		final JsonObject defaults = ConfigReader.readJson("defaults.json");
-		assertNotNull("The configuration file was read wrong", defaults);
-		final StorageMockConfig storageMockConfig =
-			storageMockDecoder.decode(defaults);
+	public void shouldCreateConfig() throws Exception {
+		final Decoder<StorageMockConfig> storageMockDecoder = new StorageMockDecoder();
+		final StorageMockConfig storageMockConfig = ConfigReader.loadConfig(storageMockDecoder);
+		assertNotNull(storageMockConfig);
 		assertEquals(parameterErrorMessage("headCount"), storageMockConfig.getHeadCount(), 1);
 		assertEquals(parameterErrorMessage("capacity"), storageMockConfig.getCapacity(), 1_000_000);
 		final StorageMockConfig.ContainerConfig containerConfig = storageMockConfig.container();
-		assertEquals(parameterErrorMessage("containerConfig.capacity"), containerConfig.getCapacity(), 1_000_000);
-		assertEquals(parameterErrorMessage("containerConfig.count"), containerConfig.getCountLimit(), 1_000_000);
+		assertEquals(parameterErrorMessage("container.capacity"), containerConfig.getCapacity(), 1_000_000);
+		assertEquals(parameterErrorMessage("container.count"), containerConfig.getCountLimit(), 1_000_000);
 	}
 
 }

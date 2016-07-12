@@ -1,5 +1,6 @@
 package com.emc.mongoose.monitor.config;
 
+import com.emc.mongoose.common.config.decoder.Decoder;
 import com.emc.mongoose.common.config.reader.ConfigReader;
 import org.junit.Test;
 
@@ -20,11 +21,9 @@ public class MonitorDecoderTest {
 
 	@Test
 	public void shouldCreateConfig() throws Exception{
-		final MonitorDecoder monitorDecoder = new MonitorDecoder();
-		final JsonObject defaults = ConfigReader.readJson("defaults.json");
-		assertNotNull("The configuration file was read wrong", defaults);
-		final MonitorConfig monitorConfig =
-			monitorDecoder.decode(defaults);
+		final Decoder<MonitorConfig> monitorDecoder = new MonitorDecoder();
+		final MonitorConfig monitorConfig = ConfigReader.loadConfig(monitorDecoder);
+		assertNotNull(monitorConfig);
 		final MonitorConfig.JobConfig jobConfig = monitorConfig.getJobConfig();
 		assertEquals(parameterErrorMessage("job.circular"), jobConfig.getCircular(), false);
 		final MonitorConfig.JobConfig.LimitConfig limitConfig = jobConfig.getLimitConfig();

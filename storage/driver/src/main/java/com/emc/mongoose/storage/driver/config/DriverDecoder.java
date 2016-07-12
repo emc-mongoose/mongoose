@@ -14,7 +14,7 @@ public class DriverDecoder implements Decoder<DriverConfig> {
 	public DriverConfig decode(final JsonObject driverJson)
 	throws DecodeException {
 		final DriverConfig.LoadConfig loadConfig = new DriverConfig.LoadConfig(
-			driverJson.getJsonObject(DriverConfig.KEY_LOAD).getInt(
+			getJsonObject(driverJson, DriverConfig.KEY_LOAD).getInt(
 				DriverConfig.LoadConfig.KEY_CONCURRENCY));
 		return new DriverConfig(loadConfig);
 	}

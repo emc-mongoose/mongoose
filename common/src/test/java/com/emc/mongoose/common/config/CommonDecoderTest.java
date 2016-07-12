@@ -1,5 +1,6 @@
 package com.emc.mongoose.common.config;
 
+import com.emc.mongoose.common.config.decoder.Decoder;
 import com.emc.mongoose.common.config.reader.ConfigReader;
 import org.junit.Test;
 
@@ -21,29 +22,27 @@ public class CommonDecoderTest {
 
 	@Test
 	public void shouldCreateConfig() throws Exception{
-		final CommonDecoder commonDecoder = new CommonDecoder();
-		final JsonObject defaults = ConfigReader.readJson("defaults.json");
-		assertNotNull("The configuration file was read wrong", defaults);
-		final CommonConfig commonConfig =
-			commonDecoder.decode(defaults);
+		final Decoder<CommonConfig> commonDecoder = new CommonDecoder();
+		final CommonConfig commonConfig = ConfigReader.loadConfig(commonDecoder);
+		assertNotNull(commonConfig);
 		final CommonConfig.NetworkConfig.SocketConfig socketConfig = commonConfig.getNetworkConfig().getSocketConfig();
 		assertEquals(parameterErrorMessage("name"),
 			commonConfig.getName(), "mongoose");
-		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.timeoutMilliSec"),
+		assertEquals(parameterErrorMessage("network.socketConfig.timeoutMilliSec"),
 			socketConfig.getTimeoutInMilliseconds(), 1_000_000);
-		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.reuseAddr"),
+		assertEquals(parameterErrorMessage("network.socketConfig.reuseAddr"),
 			socketConfig.getReusableAddress(), true);
-		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.keepAlive"),
+		assertEquals(parameterErrorMessage("network.socketConfig.keepAlive"),
 			socketConfig.getKeepAlive(), true);
-		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.tcpNoDelay"),
+		assertEquals(parameterErrorMessage("network.socketConfig.tcpNoDelay"),
 			socketConfig.getTcpNoDelay(), true);
-		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.linger"),
+		assertEquals(parameterErrorMessage("network.socketConfig.linger"),
 			socketConfig.getLinger(), 0);
-		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.bindBacklogSize"),
+		assertEquals(parameterErrorMessage("network.socketConfig.bindBacklogSize"),
 			socketConfig.getBindBackLogSize(), 0);
-		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.interestOpQueued"),
+		assertEquals(parameterErrorMessage("network.socketConfig.interestOpQueued"),
 			socketConfig.getInterestOpQueued(), false);
-		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.selectInterval"),
+		assertEquals(parameterErrorMessage("network.socketConfig.selectInterval"),
 			socketConfig.getSelectInterval(), 100);
 		final CommonConfig.StorageConfig storage = commonConfig.getStorageConfig();
 		assertEquals(parameterErrorMessage("storage.addrs"),
@@ -68,19 +67,19 @@ public class CommonDecoderTest {
 		assertEquals(parameterErrorMessage("getItemConfig.type"), itemConfig.getType(), "data");
 		final CommonConfig.ItemConfig.DataConfig dataConfig = itemConfig.getDataConfig();
 		final CommonConfig.ItemConfig.DataConfig.ContentConfig contentConfig = dataConfig.getContentConfig();
-		assertNull(parameterErrorMessage("getItemConfig.data.content.file"), contentConfig.getFile());
-		assertEquals(parameterErrorMessage("getItemConfig.data.content.seed"), contentConfig.getSeed(), "7a42d9c483244167");
-		assertEquals(parameterErrorMessage("getItemConfig.data.content.ringSize"), contentConfig.getRingSize(), "4MB");
-		assertEquals(parameterErrorMessage("getItemConfig.data.ranges"), dataConfig.getRanges(), 0);
-		assertEquals(parameterErrorMessage("getItemConfig.data.size"), dataConfig.getSize(), "1MB");
-		assertEquals(parameterErrorMessage("getItemConfig.data.verify"), dataConfig.getVerify(), true);
+		assertNull(parameterErrorMessage("item.data.content.file"), contentConfig.getFile());
+		assertEquals(parameterErrorMessage("item.data.content.seed"), contentConfig.getSeed(), "7a42d9c483244167");
+		assertEquals(parameterErrorMessage("item.data.content.ringSize"), contentConfig.getRingSize(), "4MB");
+		assertEquals(parameterErrorMessage("item.data.ranges"), dataConfig.getRanges(), 0);
+		assertEquals(parameterErrorMessage("item.data.size"), dataConfig.getSize(), "1MB");
+		assertEquals(parameterErrorMessage("item.data.verify"), dataConfig.getVerify(), true);
 		final CommonConfig.ItemConfig.DestinationConfig destinationConfig = itemConfig.getDestinationConfig();
-		assertNull(parameterErrorMessage("getItemConfig.dst.container"), destinationConfig.getContainer());
-		assertNull(parameterErrorMessage("getItemConfig.dst.file"), destinationConfig.getFile());
+		assertNull(parameterErrorMessage("item.dst.container"), destinationConfig.getContainer());
+		assertNull(parameterErrorMessage("item.dst.file"), destinationConfig.getFile());
 		final CommonConfig.ItemConfig.SourceConfig sourceConfig = itemConfig.getSourceConfig();
-		assertNull(parameterErrorMessage("getItemConfig.src.container"), sourceConfig.getContainer());
-		assertNull(parameterErrorMessage("getItemConfig.src.file"), sourceConfig.getFile());
-		assertEquals(parameterErrorMessage("getItemConfig.src.batchSize"), sourceConfig.getBatchSize(), 4096);
+		assertNull(parameterErrorMessage("item.src.container"), sourceConfig.getContainer());
+		assertNull(parameterErrorMessage("item.src.file"), sourceConfig.getFile());
+		assertEquals(parameterErrorMessage("item.src.batchSize"), sourceConfig.getBatchSize(), 4096);
 		final CommonConfig.ItemConfig.NamingConfig namingConfig = itemConfig.getNamingConfig();
 		assertEquals(parameterErrorMessage("naming.type"), namingConfig.getType(), "random");
 		assertNull(parameterErrorMessage("naming.prefix"), namingConfig.getPrefix());

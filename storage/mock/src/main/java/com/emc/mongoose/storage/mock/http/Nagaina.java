@@ -1,7 +1,9 @@
 package com.emc.mongoose.storage.mock.http;
 
 import com.emc.mongoose.common.config.CommonConfig;
+import com.emc.mongoose.common.config.CommonDecoder;
 import com.emc.mongoose.common.config.decoder.DecodeException;
+import com.emc.mongoose.common.config.decoder.Decoder;
 import com.emc.mongoose.common.config.reader.ConfigReader;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -26,6 +28,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,25 +39,17 @@ public class Nagaina implements StorageMock {
 	private final static Logger LOG = LogManager.getLogger();
 
 	private final int port;
-	private final EventLoopGroup[] dispatchGroup;
-	private final EventLoopGroup[] workGroup;
+	private final EventLoopGroup[] dispatchGroups;
+	private final EventLoopGroup[] workGroups;
 	private final Channel[] channels;
 	private final RequestHandlerBase s3RequestHandler, swiftRequestHandler, atmosRequestHandler;
 
 	@SuppressWarnings("ConstantConditions")
-	public Nagaina() {
-		final StorageMockDecoder storageMockDecoder = new StorageMockDecoder();
-		final CommonConfig commonConfig = CommonConfig.getConfig();
-		StorageMockConfig storageMockConfig = null;
-		try {
-			storageMockConfig = storageMockDecoder.decode(ConfigReader.readJson("defaults.json"));
-		} catch(final DecodeException e) {
-			LOG.error("Failed to load the configuration");
-		}
+	public Nagaina(final CommonConfig commonConfig, final StorageMockConfig storageMockConfig) {
 		port = commonConfig.getStorageConfig().getPort();
 		final int headCount = storageMockConfig.getHeadCount();
-		dispatchGroup = new NioEventLoopGroup[headCount];
-		workGroup = new NioEventLoopGroup[headCount];
+		dispatchGroups = new NioEventLoopGroup[headCount];
+		workGroups = new NioEventLoopGroup[headCount];
 		channels = new Channel[headCount];
 		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
 		s3RequestHandler = new S3RequestHandler();
@@ -62,21 +57,17 @@ public class Nagaina implements StorageMock {
 		atmosRequestHandler = new AtmosRequestHandler();
 	}
 
-	public static void main(String[] args) {
-
-	}
-
 	@Override
 	public void start()
 	throws IllegalStateException {
-		final int portsNumber = dispatchGroup.length;
+		final int portsNumber = dispatchGroups.length;
 		for (int i = 0; i < portsNumber; i++) {
 			try {
-				dispatchGroup[i] =
+				dispatchGroups[i] =
 					new NioEventLoopGroup(0, new DefaultThreadFactory("dispatcher-" + i));
-				workGroup[i] = new NioEventLoopGroup();
+				workGroups[i] = new NioEventLoopGroup();
 				final ServerBootstrap serverBootstrap = new ServerBootstrap();
-				serverBootstrap.group(dispatchGroup[i], workGroup[i])
+				serverBootstrap.group(dispatchGroups[i], workGroups[i])
 					.channel(NioServerSocketChannel.class)
 					.childHandler(new ChannelInitializer<SocketChannel>() {
 						@Override
@@ -108,6 +99,27 @@ public class Nagaina implements StorageMock {
 	@Override
 	public void shutdown()
 	throws IllegalStateException {
+		for(int i = 0; i < dispatchGroups.length; i++) {
+			shutdownEventLoopGroup(dispatchGroups[i]);
+			shutdownEventLoopGroup(workGroups[i]);
+		}
+	}
+
+	private void shutdownEventLoopGroup(final EventLoopGroup group) {
+		if(group != null) {
+			try {
+				group.shutdownGracefully();
+				LOG.debug(
+					Markers.MSG, "EventLoopGroup \"{}\" shutdown successfully",
+					group
+				);
+			} catch(final Exception e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Closing EventLoopGroup \"{}\" failure",
+					group
+				);
+			}
+		}
 	}
 
 	@Override

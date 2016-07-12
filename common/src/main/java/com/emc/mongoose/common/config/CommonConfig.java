@@ -16,21 +16,6 @@ import java.util.Map;
  */
 public class CommonConfig {
 
-	private final static Logger LOG = LogManager.getLogger();
-	private static final CommonDecoder DECODER = new CommonDecoder();
-	private static CommonConfig CONFIG;
-	static {
-		try {
-			CONFIG = DECODER.decode(ConfigReader.readJson("defaults.json"));
-		} catch(final DecodeException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to load the configuration");
-		}
-	}
-
-	public static CommonConfig getConfig() {
-		return CONFIG;
-	}
-
 	public static final String KEY_NAME = "name";
 	public static final String KEY_NETWORK = "network";
 	public static final String KEY_STORAGE = "storage";
