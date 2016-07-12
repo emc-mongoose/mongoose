@@ -11,29 +11,29 @@ public class DriverConfig {
 	public static final String KEY_LOAD = "load";
 	public static final String KEY_STORAGE = "storage";
 
-	private final Load load;
-	private final Storage storage;
+	private final LoadConfig loadConfig;
+	private final StorageConfig storageConfig;
 
-	public DriverConfig(final Load load, final Storage storage) {
-		this.load = load;
-		this.storage = storage;
+	public DriverConfig(final LoadConfig loadConfig, final StorageConfig storageConfig) {
+		this.loadConfig = loadConfig;
+		this.storageConfig = storageConfig;
 	}
 
-	public Load load() {
-		return load;
+	public LoadConfig getLoadConfig() {
+		return loadConfig;
 	}
 
-	public Storage storage() {
-		return storage;
+	public StorageConfig getStorageConfig() {
+		return storageConfig;
 	}
 
-	public static class Load {
+	public static class LoadConfig {
 		
 		public static final String KEY_CONCURRENCY = "concurrency";
 
 		private final int concurrency;
 
-		public Load(final int concurrency) {
+		public LoadConfig(final int concurrency) {
 			this.concurrency = concurrency;
 		}
 
@@ -42,7 +42,7 @@ public class DriverConfig {
 		}
 	}
 
-	public static class Storage {
+	public static class StorageConfig {
 		
 		public static final String KEY_ADDRESSES = "addrs";
 		public static final String KEY_AUTH = "auth";
@@ -52,19 +52,19 @@ public class DriverConfig {
 		
 		private final int port;
 		private final String type;
-		private final Auth auth;
-		private final Http http;
-		private final List<String> addresses;
+		private final AuthConfig authConfig;
+		private final HttpConfig httpConfig;
+		private final List<String> addrs;
 
-		public Storage(
-			final int port, final String type, final Auth auth, final Http http,
-			final List<String> addresses
+		public StorageConfig(
+			final int port, final String type, final AuthConfig authConfig,
+			final HttpConfig httpConfig, final List<String> addrs
 		) {
 			this.port = port;
 			this.type = type;
-			this.auth = auth;
-			this.http = http;
-			this.addresses = addresses;
+			this.authConfig = authConfig;
+			this.httpConfig = httpConfig;
+			this.addrs = addrs;
 		}
 
 		public int getPort() {
@@ -75,19 +75,19 @@ public class DriverConfig {
 			return type;
 		}
 
-		public Auth auth() {
-			return auth;
+		public AuthConfig getAuthConfig() {
+			return authConfig;
 		}
 
-		public Http http() {
-			return http;
+		public HttpConfig getHttpConfig() {
+			return httpConfig;
 		}
 
-		public List<String> getAddresses() {
-			return addresses;
+		public List<String> getAddrs() {
+			return addrs;
 		}
 
-		public static class Auth {
+		public static class AuthConfig {
 			
 			public static final String KEY_ID = "id";
 			public static final String KEY_SECRET = "secret";
@@ -97,7 +97,7 @@ public class DriverConfig {
 			private String secret;
 			private String token;
 
-			public Auth(final String id, final String secret, final String token) {
+			public AuthConfig(final String id, final String secret, final String token) {
 				this.id = id;
 				this.secret = secret;
 				this.token = token;
@@ -116,7 +116,7 @@ public class DriverConfig {
 			}
 		}
 
-		public static class Http {
+		public static class HttpConfig {
 			
 			public static final String KEY_API = "api";
 			public static final String KEY_FS_ACCESS = "fsAccess";
@@ -132,7 +132,7 @@ public class DriverConfig {
 			private final boolean versioning;
 			private Map<String, String> headers;
 
-			public Http(
+			public HttpConfig(
 				final String api, final boolean fsAccess, final String namespace,
 				final boolean versioning, final Map<String, String> headers
 			) {

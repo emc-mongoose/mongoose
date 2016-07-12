@@ -1,6 +1,5 @@
 package com.emc.mongoose.config;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -9,17 +8,17 @@ import java.util.Map;
 public class GeneratorConfig {
 	public static final String KEY_ITEM = "item";
 
-	private final Item item;
+	private final ItemConfig itemConfig;
 
-	public GeneratorConfig(final Item item) {
-		this.item = item;
+	public GeneratorConfig(final ItemConfig itemConfig) {
+		this.itemConfig = itemConfig;
 	}
 
-	public Item item() {
-		return item;
+	public ItemConfig getItemConfig() {
+		return itemConfig;
 	}
 
-	public static class Item {
+	public static class ItemConfig {
 
 		public static final String KEY_TYPE = "type";
 		public static final String KEY_DATA = "data";
@@ -28,61 +27,61 @@ public class GeneratorConfig {
 		public static final String KEY_NAMING = "naming";
 
 		private final String type;
-		private final Data data;
-		private final Destination dst;
-		private final Source src;
-		private final Naming naming;
+		private final DataConfig dataConfig;
+		private final DstConfig dstConfig;
+		private final SrcConfig srcConfig;
+		private final NamingConfig namingConfig;
 
-		public Item(
-			final String type, final Data data, final Destination dst, final Source src,
-			final Naming naming
+		public ItemConfig(
+			final String type, final DataConfig dataConfig, final DstConfig dstConfig,
+			final SrcConfig srcConfig, final NamingConfig namingConfig
 		) {
 			this.type = type;
-			this.data = data;
-			this.dst = dst;
-			this.src = src;
-			this.naming = naming;
+			this.dataConfig = dataConfig;
+			this.dstConfig = dstConfig;
+			this.srcConfig = srcConfig;
+			this.namingConfig = namingConfig;
 		}
 
 		public String getType() {
 			return type;
 		}
 
-		public Data data() {
-			return data;
+		public DataConfig getDataConfig() {
+			return dataConfig;
 		}
 
-		public Destination destination() {
-			return dst;
+		public DstConfig getDstConfig() {
+			return dstConfig;
 		}
 
-		public Source source() {
-			return src;
+		public SrcConfig getSrcConfig() {
+			return srcConfig;
 		}
 
-		public Naming naming() {
-			return naming;
+		public NamingConfig getNamingConfig() {
+			return namingConfig;
 		}
 
-		public static class Data {
+		public static class DataConfig {
 
 			public static final String KEY_RANGES = "ranges";
 			public static final String KEY_SIZE = "size";
 			public static final String KEY_VERIFY = "verify";
 
-			private Content content;
+			private ContentConfig contentConfig;
 			private int ranges;
 			private String size;
 			private boolean verify;
 
-			public Data(final int ranges, final String size, final boolean verify) {
+			public DataConfig(final int ranges, final String size, final boolean verify) {
 				this.ranges = ranges;
 				this.size = size;
 				this.verify = verify;
 			}
 
-			public Content content() {
-				return content;
+			public ContentConfig getContentConfig() {
+				return contentConfig;
 			}
 
 			public int getRanges() {
@@ -93,11 +92,11 @@ public class GeneratorConfig {
 				return size;
 			}
 
-			public boolean isVerify() {
+			public boolean getVerify() {
 				return verify;
 			}
 
-			public static class Content {
+			public static class ContentConfig {
 
 				public static final String KEY_FILE = "file";
 				public static final String KEY_SEED = "seed";
@@ -107,7 +106,7 @@ public class GeneratorConfig {
 				private String seed;
 				private String ringSize;
 
-				public Content(final String file, final String seed, final String ringSize) {
+				public ContentConfig(final String file, final String seed, final String ringSize) {
 					this.file = file;
 					this.seed = seed;
 					this.ringSize = ringSize;
@@ -115,7 +114,7 @@ public class GeneratorConfig {
 			}
 		}
 
-		public static class Source {
+		public static class SrcConfig {
 
 			public static final String KEY_ID = "id";
 			public static final String KEY_SECRET = "secret";
@@ -125,13 +124,13 @@ public class GeneratorConfig {
 			private String secret;
 			private String token;
 
-			public Source(final String id, final String secret, final String token) {
+			public SrcConfig(final String id, final String secret, final String token) {
 				this.id = id;
 				this.secret = secret;
 				this.token = token;
 			}
 
-			public Source() {}
+			public SrcConfig() {}
 
 			public String getId() {
 				return id;
@@ -145,7 +144,7 @@ public class GeneratorConfig {
 				return token;
 			}
 		}
-		public static class Destination {
+		public static class DstConfig {
 
 			public static final String KEY_ID = "id";
 			public static final String KEY_SECRET = "secret";
@@ -155,13 +154,13 @@ public class GeneratorConfig {
 			private String secret;
 			private String token;
 
-			public Destination(final String id, final String secret, final String token) {
+			public DstConfig(final String id, final String secret, final String token) {
 				this.id = id;
 				this.secret = secret;
 				this.token = token;
 			}
 
-			public Destination() {}
+			public DstConfig() {}
 
 			public String getId() {
 				return id;
@@ -176,7 +175,7 @@ public class GeneratorConfig {
 			}
 		}
 
-		public static class Naming {
+		public static class NamingConfig {
 
 			public static final String KEY_API = "api";
 			public static final String KEY_FS_ACCESS = "fsAccess";
@@ -192,7 +191,7 @@ public class GeneratorConfig {
 			private final boolean versioning;
 			private Map<String, String> headers;
 
-			public Naming(
+			public NamingConfig(
 				final String api, final boolean fsAccess, final String namespace,
 				final boolean versioning, final Map<String, String> headers
 			) {

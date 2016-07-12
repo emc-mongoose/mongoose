@@ -15,6 +15,6 @@ public class DriverConfigTest {
 		final DriverDecoder driverDecoder = new DriverDecoder();
 		final DriverConfig driverConfig =
 			driverDecoder.decode(ConfigReader.readJson("defaults.json"));
-		assertEquals(driverConfig.load().getConcurrency(), 1);
+		assertEquals(driverConfig.getLoadConfig().getConcurrency(), 1);
 	}
 }
