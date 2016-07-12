@@ -85,13 +85,15 @@ implements Driver<I, O> {
 	}
 
 	@Override
-	public void start()
-	throws IllegalStateException {
+	protected void doStart() {
 	}
 
 	@Override
-	public void shutdown()
-	throws IllegalStateException {
+	protected void doShutdown() {
+	}
+
+	@Override
+	protected void doInterrupt() {
 	}
 
 	@Override
@@ -104,9 +106,5 @@ implements Driver<I, O> {
 	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException {
 		return false;
-	}
-
-	@Override
-	public void interrupt() {
 	}
 }

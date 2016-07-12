@@ -3,6 +3,7 @@ package com.emc.mongoose.monitor;
 import com.emc.mongoose.common.concurrent.LifeCycleBase;
 import com.emc.mongoose.common.io.IoTask;
 import com.emc.mongoose.common.item.Item;
+import com.emc.mongoose.common.load.Generator;
 import com.emc.mongoose.common.load.Monitor;
 
 import java.util.List;
@@ -14,6 +15,12 @@ import java.util.concurrent.TimeUnit;
 public class MonitorMock<I extends Item, O extends IoTask<I>>
 extends LifeCycleBase
 implements Monitor<I, O> {
+
+	private final List<Generator<I, O>> generators;
+
+	public MonitorMock(final List<Generator<I, O>> generators) {
+		this.generators = generators;
+	}
 	
 	@Override
 	public void ioTaskCompleted(final O ioTask) {
@@ -22,6 +29,27 @@ implements Monitor<I, O> {
 	@Override
 	public int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
 		return 0;
+	}
+
+	@Override
+	protected void doStart() {
+		for(final Generator<I, O> nextGenerator : generators) {
+			nextGenerator.start();
+		}
+	}
+
+	@Override
+	protected void doShutdown() {
+		for(final Generator<I, O> nextGenerator : generators) {
+			nextGenerator.shutdown();
+		}
+	}
+
+	@Override
+	protected void doInterrupt() {
+		for(final Generator<I, O> nextGenerator : generators) {
+			nextGenerator.interrupt();
+		}
 	}
 
 	@Override
