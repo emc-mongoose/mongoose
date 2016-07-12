@@ -1,5 +1,6 @@
 package com.emc.mongoose.generator;
 
+import com.emc.mongoose.common.concurrent.LifeCycleBase;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.IoTask;
 import com.emc.mongoose.common.item.Item;
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 11.07.16.
  */
 public class GeneratorMock<I extends Item, O extends IoTask<I>>
+extends LifeCycleBase
 implements Generator<I, O> {
 
 	private final List<Driver<I, O>> drivers;
