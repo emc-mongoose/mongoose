@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver;
 
+import com.emc.mongoose.common.concurrent.LifeCycleBase;
 import com.emc.mongoose.common.io.IoTask;
 import com.emc.mongoose.common.item.Item;
 import com.emc.mongoose.common.load.Driver;
@@ -15,6 +16,7 @@ import java.util.concurrent.TimeUnit;
  This mock just passes the submitted tasks to the load monitor em
  */
 public class DriverMock<I extends Item, O extends IoTask<I>>
+extends LifeCycleBase
 implements Driver<I, O> {
 
 	private final Monitor<I, O> monitor;
@@ -83,13 +85,15 @@ implements Driver<I, O> {
 	}
 
 	@Override
-	public void start()
-	throws IllegalStateException {
+	protected void doStart() {
 	}
 
 	@Override
-	public void shutdown()
-	throws IllegalStateException {
+	protected void doShutdown() {
+	}
+
+	@Override
+	protected void doInterrupt() {
 	}
 
 	@Override
@@ -102,9 +106,5 @@ implements Driver<I, O> {
 	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException {
 		return false;
-	}
-
-	@Override
-	public void interrupt() {
 	}
 }
