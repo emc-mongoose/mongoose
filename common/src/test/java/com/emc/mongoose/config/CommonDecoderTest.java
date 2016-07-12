@@ -24,25 +24,25 @@ public class CommonDecoderTest {
 		assertNotNull("The configuration file was read wrong", defaults);
 		final CommonConfig commonConfig =
 			commonDecoder.decode(defaults);
-		final CommonConfig.Network.Socket socket = commonConfig.network().socket();
+		final CommonConfig.NetworkConfig.SocketConfig socketConfig = commonConfig.getNetworkConfig().getSocketConfig();
 		assertEquals(parameterErrorMessage("name"),
 			commonConfig.getName(), "mongoose");
-		assertEquals(parameterErrorMessage("network.socket.timeoutMilliSec"),
-			socket.getTimeoutInMilliseconds(), 1_000_000);
-		assertEquals(parameterErrorMessage("network.socket.reuseAddr"),
-			socket.getReusableAddress(), true);
-		assertEquals(parameterErrorMessage("network.socket.keepAlive"),
-			socket.getKeepAlive(), true);
-		assertEquals(parameterErrorMessage("network.socket.tcpNoDelay"),
-			socket.getTcpNoDelay(), true);
-		assertEquals(parameterErrorMessage("network.socket.linger"),
-			socket.getLinger(), 0);
-		assertEquals(parameterErrorMessage("network.socket.bindBacklogSize"),
-			socket.getBindBackLogSize(), 0);
-		assertEquals(parameterErrorMessage("network.socket.interestOpQueued"),
-			socket.getInterestOpQueued(), false);
-		assertEquals(parameterErrorMessage("network.socket.selectInterval"),
-			socket.getSelectInterval(), 100);
+		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.timeoutMilliSec"),
+			socketConfig.getTimeoutInMilliseconds(), 1_000_000);
+		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.reuseAddr"),
+			socketConfig.getReusableAddress(), true);
+		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.keepAlive"),
+			socketConfig.getKeepAlive(), true);
+		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.tcpNoDelay"),
+			socketConfig.getTcpNoDelay(), true);
+		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.linger"),
+			socketConfig.getLinger(), 0);
+		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.bindBacklogSize"),
+			socketConfig.getBindBackLogSize(), 0);
+		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.interestOpQueued"),
+			socketConfig.getInterestOpQueued(), false);
+		assertEquals(parameterErrorMessage("getNetworkConfig.socketConfig.selectInterval"),
+			socketConfig.getSelectInterval(), 100);
 	}
 
 }

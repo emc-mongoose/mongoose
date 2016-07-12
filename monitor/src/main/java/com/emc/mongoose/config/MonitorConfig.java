@@ -8,49 +8,49 @@ public class MonitorConfig {
 	public static final String KEY_JOB = "job";
 	public static final String KEY_METRICS = "metrics";
 	public static final String KEY_RUN = "run";
-	private final Job job;
-	private final Metrics metrics;
-	private final Run run;
+	private final JobConfig jobConfig;
+	private final MetricsConfig metricsConfig;
+	private final RunConfig runConfig;
 
-	public MonitorConfig(final Job job, final Metrics metrics, final Run run) {
-		this.job = job;
-		this.metrics = metrics;
-		this.run = run;
+	public MonitorConfig(final JobConfig jobConfig, final MetricsConfig metricsConfig, final RunConfig runConfig) {
+		this.jobConfig = jobConfig;
+		this.metricsConfig = metricsConfig;
+		this.runConfig = runConfig;
 	}
 
-	public Job job() {
-		return job;
+	public JobConfig getJobConfig() {
+		return jobConfig;
 	}
 
-	public Metrics metrics() {
-		return metrics;
+	public MetricsConfig getMetricsConfig() {
+		return metricsConfig;
 	}
 
-	public Run run() {
-		return run;
+	public RunConfig getRunConfig() {
+		return runConfig;
 	}
 
-	public static class Job {
+	public static class JobConfig {
 
 		public static final String KEY_CIRCULAR = "circular";
 		public static final String KEY_LIMIT = "limit";
 		private final boolean circular;
-		private final Limit limit;
+		private final LimitConfig limitConfig;
 
-		public Job(final boolean circular, final Limit limit) {
+		public JobConfig(final boolean circular, final LimitConfig limitConfig) {
 			this.circular = circular;
-			this.limit = limit;
+			this.limitConfig = limitConfig;
 		}
 
 		public boolean getCircular() {
 			return circular;
 		}
 
-		public Limit limit() {
-			return limit;
+		public LimitConfig getLimitConfig() {
+			return limitConfig;
 		}
 
-		public static class Limit {
+		public static class LimitConfig {
 
 			public static final String KEY_COUNT = "count";
 			public static final String KEY_RATE = "rate";
@@ -61,7 +61,7 @@ public class MonitorConfig {
 			private final int size;
 			private final String time;
 
-			public Limit(final int count, final int rate, final int size, final String time) {
+			public LimitConfig(final int count, final int rate, final int size, final String time) {
 				this.count = count;
 				this.rate = rate;
 				this.size = size;
@@ -86,7 +86,7 @@ public class MonitorConfig {
 		}
 	}
 
-	public static class Metrics {
+	public static class MetricsConfig {
 
 		public static final String KEY_INTERMEDIATE = "intermediate";
 		public static final String KEY_PERIOD = "period";
@@ -95,7 +95,7 @@ public class MonitorConfig {
 		private final String period;
 		private final boolean precondition;
 
-		public Metrics(
+		public MetricsConfig(
 			final boolean intermediate, final String period, final boolean precondition
 		) {
 			this.intermediate = intermediate;
@@ -116,14 +116,14 @@ public class MonitorConfig {
 		}
 	}
 
-	public static class Run {
+	public static class RunConfig {
 
 		public static final String KEY_FILE = "file";
 		public static final String KEY_ID = "id";
 		private final String file;
 		private final String id;
 
-		public Run(final String file, final String id) {
+		public RunConfig(final String file, final String id) {
 			this.file = file;
 			this.id = id;
 		}

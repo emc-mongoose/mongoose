@@ -10,14 +10,14 @@ public class StorageMockConfig {
 	public static final String KEY_CONTAINER = "container";
 	private final int headCount;
 	private final int capacity;
-	private final Container container;
+	private final ContainerConfig containerConfig;
 
 	public StorageMockConfig(
-		final int headCount, final int capacity, final Container container
+		final int headCount, final int capacity, final ContainerConfig containerConfig
 	) {
 		this.headCount = headCount;
 		this.capacity = capacity;
-		this.container = container;
+		this.containerConfig = containerConfig;
 	}
 
 	public int getHeadCount() {
@@ -28,18 +28,18 @@ public class StorageMockConfig {
 		return capacity;
 	}
 
-	public Container container() {
-		return container;
+	public ContainerConfig container() {
+		return containerConfig;
 	}
 
-	public static class Container {
+	public static class ContainerConfig {
 
 		public static final String KEY_CAPACITY = "capacity";
 		public static final String KEY_COUNT_LIMIT = "countLimit";
 		private final int capacity;
 		private final int countLimit;
 
-		public Container(final int capacity, final int countLimit) {
+		public ContainerConfig(final int capacity, final int countLimit) {
 			this.capacity = capacity;
 			this.countLimit = countLimit;
 		}

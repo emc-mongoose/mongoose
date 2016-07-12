@@ -14,45 +14,50 @@ public class GeneratorDecoder implements Decoder<GeneratorConfig> {
 	public GeneratorConfig decode(final JsonObject generatorJson)
 	throws DecodeException {
 		final JsonObject itemJson = generatorJson.getJsonObject(GeneratorConfig.KEY_ITEM);
-		final String type = itemJson.getString(GeneratorConfig.Item.KEY_TYPE);
-		final JsonObject dataJson = itemJson.getJsonObject(GeneratorConfig.Item.KEY_DATA);
+		final String type = itemJson.getString(GeneratorConfig.ItemConfig.KEY_TYPE);
+		final JsonObject dataJson = itemJson.getJsonObject(GeneratorConfig.ItemConfig.KEY_DATA);
 		final JsonObject contentJson =
-			dataJson.getJsonObject(GeneratorConfig.Item.Data.KEY_CONTENT);
-		final GeneratorConfig.Item.Data.Content content =
-			new GeneratorConfig.Item.Data.Content(
-				contentJson.getString(GeneratorConfig.Item.Data.Content.KEY_FILE, null),
-				contentJson.getString(GeneratorConfig.Item.Data.Content.KEY_SEED),
-				contentJson.getString(GeneratorConfig.Item.Data.Content.KEY_RING_SIZE)
+			dataJson.getJsonObject(GeneratorConfig.ItemConfig.DataConfig.KEY_CONTENT);
+		final GeneratorConfig.ItemConfig.DataConfig.ContentConfig contentConfig =
+			new GeneratorConfig.ItemConfig.DataConfig.ContentConfig(
+				contentJson.getString(GeneratorConfig.ItemConfig.DataConfig.ContentConfig.KEY_FILE, null),
+				contentJson.getString(GeneratorConfig.ItemConfig.DataConfig.ContentConfig.KEY_SEED),
+				contentJson.getString(GeneratorConfig.ItemConfig.DataConfig.ContentConfig.KEY_RING_SIZE)
 			);
-		final GeneratorConfig.Item.Data data = new GeneratorConfig.Item.Data(content,
-			dataJson.getInt(GeneratorConfig.Item.Data.KEY_RANGES),
-			dataJson.getString(GeneratorConfig.Item.Data.KEY_SIZE),
-			dataJson.getBoolean(GeneratorConfig.Item.Data.KEY_VERIFY)
+		final GeneratorConfig.ItemConfig.DataConfig
+			dataConfig = new GeneratorConfig.ItemConfig.DataConfig(
+			contentConfig,
+			dataJson.getInt(GeneratorConfig.ItemConfig.DataConfig.KEY_RANGES),
+			dataJson.getString(GeneratorConfig.ItemConfig.DataConfig.KEY_SIZE),
+			dataJson.getBoolean(GeneratorConfig.ItemConfig.DataConfig.KEY_VERIFY)
 		);
 		final JsonObject destinationJson =
-			itemJson.getJsonObject(GeneratorConfig.Item.KEY_DESTINATION);
-		final GeneratorConfig.Item.Destination destination = new GeneratorConfig.Item.Destination(
-			destinationJson.getString(GeneratorConfig.Item.Destination.KEY_CONTAINER, null),
-			destinationJson.getString(GeneratorConfig.Item.Destination.KEY_FILE, null)
+			itemJson.getJsonObject(GeneratorConfig.ItemConfig.KEY_DESTINATION);
+		final GeneratorConfig.ItemConfig.DestinationConfig
+			destinationConfig = new GeneratorConfig.ItemConfig.DestinationConfig(
+			destinationJson.getString(GeneratorConfig.ItemConfig.DestinationConfig.KEY_CONTAINER, null),
+			destinationJson.getString(GeneratorConfig.ItemConfig.DestinationConfig.KEY_FILE, null)
 		);
 		final JsonObject sourceJson =
-			itemJson.getJsonObject(GeneratorConfig.Item.KEY_SOURCE);
-		final GeneratorConfig.Item.Source source = new GeneratorConfig.Item.Source(
-			sourceJson.getString(GeneratorConfig.Item.Source.KEY_CONTAINER, null),
-			sourceJson.getString(GeneratorConfig.Item.Source.KEY_FILE, null),
-			sourceJson.getInt(GeneratorConfig.Item.Source.KEY_BATCH_SIZE)
+			itemJson.getJsonObject(GeneratorConfig.ItemConfig.KEY_SOURCE);
+		final GeneratorConfig.ItemConfig.SourceConfig
+			sourceConfig = new GeneratorConfig.ItemConfig.SourceConfig(
+			sourceJson.getString(GeneratorConfig.ItemConfig.SourceConfig.KEY_CONTAINER, null),
+			sourceJson.getString(GeneratorConfig.ItemConfig.SourceConfig.KEY_FILE, null),
+			sourceJson.getInt(GeneratorConfig.ItemConfig.SourceConfig.KEY_BATCH_SIZE)
 		);
 		final JsonObject namingJson =
-			itemJson.getJsonObject(GeneratorConfig.Item.KEY_NAMING);
-		final GeneratorConfig.Item.Naming naming = new GeneratorConfig.Item.Naming(
-			namingJson.getString(GeneratorConfig.Item.Naming.KEY_TYPE),
-			namingJson.getString(GeneratorConfig.Item.Naming.KEY_PREFIX, null),
-			namingJson.getInt(GeneratorConfig.Item.Naming.KEY_RADIX),
-			namingJson.getInt(GeneratorConfig.Item.Naming.KEY_OFFSET),
-			namingJson.getInt(GeneratorConfig.Item.Naming.KEY_LENGTH)
+			itemJson.getJsonObject(GeneratorConfig.ItemConfig.KEY_NAMING);
+		final GeneratorConfig.ItemConfig.NamingConfig
+			namingConfig = new GeneratorConfig.ItemConfig.NamingConfig(
+			namingJson.getString(GeneratorConfig.ItemConfig.NamingConfig.KEY_TYPE),
+			namingJson.getString(GeneratorConfig.ItemConfig.NamingConfig.KEY_PREFIX, null),
+			namingJson.getInt(GeneratorConfig.ItemConfig.NamingConfig.KEY_RADIX),
+			namingJson.getInt(GeneratorConfig.ItemConfig.NamingConfig.KEY_OFFSET),
+			namingJson.getInt(GeneratorConfig.ItemConfig.NamingConfig.KEY_LENGTH)
 		);
-		return new GeneratorConfig(new GeneratorConfig.Item(
-			type, data, destination, source, naming
+		return new GeneratorConfig(new GeneratorConfig.ItemConfig(
+			type, dataConfig, destinationConfig, sourceConfig, namingConfig
 		));
 	}
 

@@ -34,9 +34,9 @@ public class DriverDecoder implements Decoder<DriverConfig> {
 		final DriverConfig.StorageConfig.AuthConfig
 			authConfig = new DriverConfig.StorageConfig.AuthConfig(
 			authJson.getString(DriverConfig.StorageConfig.AuthConfig.KEY_ID, null),
-			authJson.getString(DriverConfig.StorageConfig.AuthConfig.KEY_ID, null),
-			authJson.getString(DriverConfig.StorageConfig.AuthConfig.KEY_ID, null)
-			storageJson.getJsonObject(DriverConfig.Storage.KEY_AUTH);
+			authJson.getString(DriverConfig.StorageConfig.AuthConfig.KEY_SECRET, null),
+			authJson.getString(DriverConfig.StorageConfig.AuthConfig.KEY_TOKEN, null)
+		);
 		final JsonObject httpJson = storageJson.getJsonObject(DriverConfig.StorageConfig.KEY_HTTP);
 		final Map<String, String> headers = new HashMap<>();
 		httpJson.getJsonObject(DriverConfig.StorageConfig.HttpConfig.KEY_HEADERS)

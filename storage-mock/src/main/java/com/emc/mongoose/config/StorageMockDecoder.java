@@ -17,9 +17,9 @@ public class StorageMockDecoder implements Decoder<StorageMockConfig> {
 		return new StorageMockConfig(
 			storageMockJson.getInt(StorageMockConfig.KEY_HEAD_COUNT),
 			storageMockJson.getInt(StorageMockConfig.KEY_CAPACITY),
-			new StorageMockConfig.Container(
-				containerJson.getInt(StorageMockConfig.Container.KEY_CAPACITY),
-				containerJson.getInt(StorageMockConfig.Container.KEY_COUNT_LIMIT)
+			new StorageMockConfig.ContainerConfig(
+				containerJson.getInt(StorageMockConfig.ContainerConfig.KEY_CAPACITY),
+				containerJson.getInt(StorageMockConfig.ContainerConfig.KEY_COUNT_LIMIT)
 			)
 		);
 	}

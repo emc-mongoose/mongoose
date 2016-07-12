@@ -1,3 +1,5 @@
+package com.emc.mongoose;
+
 import com.emc.mongoose.config.DriverConfig;
 import com.emc.mongoose.config.DriverDecoder;
 import com.emc.mongoose.config.reader.ConfigReader;
@@ -27,22 +29,22 @@ public class DriverDecoderTest {
 		final DriverConfig driverConfig =
 			driverDecoder.decode(defaults);
 		assertEquals(parameterErrorMessage("load.concurrency"),
-			driverConfig.load().getConcurrency(), 1);
-		final DriverConfig.Storage storage = driverConfig.storage();
+			driverConfig.getLoadConfig().getConcurrency(), 1);
+		final DriverConfig.StorageConfig storage = driverConfig.getStorageConfig();
 		assertEquals(parameterErrorMessage("storage.addrs"),
 			storage.getAddresses().get(0), "127.0.0.1");
-		final DriverConfig.Storage.Auth auth = storage.auth();
+		final DriverConfig.StorageConfig.AuthConfig auth = storage.getAuthConfig();
 		assertNull(parameterErrorMessage("storage.auth.id"), auth.getId());
 		assertNull(parameterErrorMessage("storage.auth.secret"), auth.getSecret());
 		assertNull(parameterErrorMessage("storage.auth.token"), auth.getToken());
-		final DriverConfig.Storage.Http http = storage.http();
+		final DriverConfig.StorageConfig.HttpConfig http = storage.getHttpConfig();
 		assertEquals(parameterErrorMessage("storage.http.api"), http.getApi(), "S3");
 		assertEquals(parameterErrorMessage("storage.http.fsAccess"), http.getFsAccess(), false);
 		final Map<String, String> headers = http.getHeaders();
 		assertEquals(parameterErrorMessage("storage.http.headers[\"Connection\"]"), headers.get(
-			DriverConfig.Storage.Http.KEY_HEADER_CONNECTION), "keep-alive");
+			DriverConfig.StorageConfig.HttpConfig.KEY_HEADER_CONNECTION), "keep-alive");
 		assertEquals(parameterErrorMessage("storage.http.headers[\"User-Agent\"]"), headers.get(
-			DriverConfig.Storage.Http.KEY_HEADER_USER_AGENT), "mongoose/3.0.0");
+			DriverConfig.StorageConfig.HttpConfig.KEY_HEADER_USER_AGENT), "mongoose/3.0.0");
 		assertNull("storage.http.namespace", http.getNamespace());
 		assertEquals("storage.http.versioning", http.getVersioning(), false);
 		assertEquals("storage.port", storage.getPort(), 9020);

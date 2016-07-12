@@ -97,10 +97,10 @@ if [ "$cygwin" = "false" -a "$darwin" = "false" -a "$nonstop" = "false" ] ; then
         fi
         ulimit -n $MAX_FD
         if [ $? -ne 0 ] ; then
-            warn "Could not set maximum file descriptor limit: $MAX_FD"
+            warn "Could not set maximum file descriptor limitConfig: $MAX_FD"
         fi
     else
-        warn "Could not query maximum file descriptor limit: $MAX_FD_LIMIT"
+        warn "Could not query maximum file descriptor limitConfig: $MAX_FD_LIMIT"
     fi
 fi
 
@@ -127,7 +127,7 @@ if $cygwin ; then
     if [ "$GRADLE_CYGPATTERN" != "" ] ; then
         OURCYGPATTERN="$OURCYGPATTERN|($GRADLE_CYGPATTERN)"
     fi
-    # Now convert the arguments - kludge to limit ourselves to /bin/sh
+    # Now convert the arguments - kludge to limitConfig ourselves to /bin/sh
     i=0
     for arg in "$@" ; do
         CHECK=`echo "$arg"|egrep -c "$OURCYGPATTERN" -`

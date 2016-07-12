@@ -1,3 +1,5 @@
+package com.emc.mongoose;
+
 import com.emc.mongoose.config.StorageMockConfig;
 import com.emc.mongoose.config.StorageMockDecoder;
 import com.emc.mongoose.config.reader.ConfigReader;
@@ -26,9 +28,9 @@ public class StorageMockDecoderTest {
 			storageMockDecoder.decode(defaults);
 		assertEquals(parameterErrorMessage("headCount"), storageMockConfig.getHeadCount(), 1);
 		assertEquals(parameterErrorMessage("capacity"), storageMockConfig.getCapacity(), 1_000_000);
-		final StorageMockConfig.Container container = storageMockConfig.container();
-		assertEquals(parameterErrorMessage("container.capacity"), container.getCapacity(), 1_000_000);
-		assertEquals(parameterErrorMessage("container.countLimit"), container.getCountLimit(), 1_000_000);
+		final StorageMockConfig.ContainerConfig containerConfig = storageMockConfig.container();
+		assertEquals(parameterErrorMessage("containerConfig.capacity"), containerConfig.getCapacity(), 1_000_000);
+		assertEquals(parameterErrorMessage("containerConfig.count"), containerConfig.getCountLimit(), 1_000_000);
 	}
 
 }

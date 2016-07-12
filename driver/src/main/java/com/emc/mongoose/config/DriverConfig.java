@@ -84,7 +84,7 @@ public class DriverConfig {
 			return httpConfig;
 		}
 
-		public List<String> getAddrs() {
+		public List<String> getAddresses() {
 			return addrs;
 		}
 

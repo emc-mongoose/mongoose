@@ -8,35 +8,35 @@ public class CommonConfig {
 	public static final String KEY_NAME = "name";
 	public static final String KEY_NETWORK = "network";
 	private final String name;
-	private final Network network;
+	private final NetworkConfig networkConfig;
 
-	public CommonConfig(final String name, final Network network) {
+	public CommonConfig(final String name, final NetworkConfig networkConfig) {
 		this.name = name;
-		this.network = network;
+		this.networkConfig = networkConfig;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public Network network() {
-		return network;
+	public NetworkConfig getNetworkConfig() {
+		return networkConfig;
 	}
 
-	public static class Network {
+	public static class NetworkConfig {
 
 		public static final String KEY_SOCKET = "socket";
-		private final Socket socket;
+		private final SocketConfig socketConfig;
 
-		public Network(final Socket socket) {
-			this.socket = socket;
+		public NetworkConfig(final SocketConfig socketConfig) {
+			this.socketConfig = socketConfig;
 		}
 
-		public Socket socket() {
-			return socket;
+		public SocketConfig getSocketConfig() {
+			return socketConfig;
 		}
 
-		public static class Socket {
+		public static class SocketConfig {
 			public static final String KEY_TIMEOUT_IN_MILLISECONDS = "timeoutMilliSec";
 			public static final String KEY_REUSABLE_ADDRESS = "reuseAddr";
 			public static final String KEY_KEEP_ALIVE = "keepAlive";
@@ -54,7 +54,7 @@ public class CommonConfig {
 			private final boolean interestOpQueued;
 			private final int selectInterval;
 
-			public Socket(
+			public SocketConfig(
 				final int timeoutMilliSec, final boolean reuseAddr, final boolean keepAlive,
 				final boolean tcpNoDelay, final int linger, final int bindBackLogSize,
 				final boolean interestOpQueued, final int selectInterval
