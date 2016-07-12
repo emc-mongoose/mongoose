@@ -18,7 +18,6 @@ import com.emc.mongoose.core.api.item.data.HttpDataItem;
 import com.emc.mongoose.core.api.io.conf.HttpRequestConfig;
 import com.emc.mongoose.core.api.io.task.IoTask;
 import com.emc.mongoose.core.api.io.task.HttpContainerIoTask;
-import com.emc.mongoose.core.api.io.task.HttpIoTask;
 import com.emc.mongoose.core.api.load.executor.HttpContainerLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.task.BasicHttpContainerTask;
