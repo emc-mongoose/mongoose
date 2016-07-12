@@ -36,11 +36,6 @@ implements Driver<I, O> {
 		return false;
 	}
 
-	@Override
-	public void close()
-	throws IOException {
-	}
-
 	private final static class SubmitFutureMock<I extends Item, O extends IoTask<I>>
 	implements Future<O> {
 
@@ -112,5 +107,10 @@ implements Driver<I, O> {
 	public boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException {
 		return false;
+	}
+
+	@Override
+	public void close()
+	throws IOException {
 	}
 }
