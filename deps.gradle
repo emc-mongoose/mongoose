@@ -18,8 +18,8 @@ ext {
 	commons_lang = [ "commons-lang:commons-lang:2.6" ]
 	commons_logging = [ "commons-logging:commons-logging:1.2" ]
 
-	httpcore = [ "org.apache.httpcomponents:httpcore-nio:4.4.5" ]
-	httpcore_nio = [ "org.apache.httpcomponents:httpcore-nio:4.4.5" ]
+	httpcore = [ "org.apache.httpcomponents:httpcore-nio:4.4.4" ]
+	httpcore_nio = [ "org.apache.httpcomponents:httpcore-nio:4.4.4" ]
 
 	jackson_annotations = [ "com.fasterxml.jackson.core:jackson-annotations:2.4.1" ]
 	jackson_core = [ "com.fasterxml.jackson.core:jackson-core:2.4.1" ]
@@ -45,13 +45,13 @@ ext {
 
 	lmax_disruptor = [ "com.lmax:disruptor:3.3.0" ]
 
-	log4j_api = [ "org.apache.logging.log4j:log4j-api:2.6.1" ]
-	log4j_core = [ "org.apache.logging.log4j:log4j-core:2.6.1" ]
-	log4j_iostreams = [ "org.apache.logging.log4j:log4j-iostreams:2.6.1" ]
-	log4j_jcl = [ "org.apache.logging.log4j:log4j-jcl:2.6.1" ]
-	log4j_jul = [ "org.apache.logging.log4j:log4j-jul:2.6.1" ]
-	log4j_slf4j_impl = [ "org.apache.logging.log4j:log4j-slf4j-impl:2.6.1" ]
-	log4j_web = [ "org.apache.logging.log4j:log4j-web:2.6.1" ]
+	log4j_api = [ "org.apache.logging.log4j:log4j-api:2.4.1" ]
+	log4j_core = [ "org.apache.logging.log4j:log4j-core:2.4.1" ]
+	log4j_iostreams = [ "org.apache.logging.log4j:log4j-iostreams:2.4.1" ]
+	log4j_jcl = [ "org.apache.logging.log4j:log4j-jcl:2.4.1" ]
+	log4j_jul = [ "org.apache.logging.log4j:log4j-jul:2.4.1" ]
+	log4j_slf4j_impl = [ "org.apache.logging.log4j:log4j-slf4j-impl:2.4.1" ]
+	log4j_web = [ "org.apache.logging.log4j:log4j-web:2.4.1" ]
 
 	metrics_core = [ "io.dropwizard.metrics:metrics-core:3.1.2" ]
 
