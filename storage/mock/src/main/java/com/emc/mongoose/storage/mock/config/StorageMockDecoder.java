@@ -13,7 +13,7 @@ public class StorageMockDecoder implements Decoder<StorageMockConfig> {
 	@Override
 	public StorageMockConfig decode(final JsonObject storageMockJson)
 	throws DecodeException {
-		final JsonObject containerJson = storageMockJson.getJsonObject(StorageMockConfig.KEY_CONTAINER);
+		final JsonObject containerJson = getJsonObject(storageMockJson, StorageMockConfig.KEY_CONTAINER);
 		return new StorageMockConfig(
 			storageMockJson.getInt(StorageMockConfig.KEY_HEAD_COUNT),
 			storageMockJson.getInt(StorageMockConfig.KEY_CAPACITY),

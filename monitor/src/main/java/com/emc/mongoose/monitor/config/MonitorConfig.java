@@ -33,13 +33,20 @@ public class MonitorConfig {
 	public static class JobConfig {
 
 		public static final String KEY_CIRCULAR = "circular";
+		public static final String KEY_TYPE = "type";
 		public static final String KEY_LIMIT = "limit";
 		private final boolean circular;
+		private final String type;
 		private final LimitConfig limitConfig;
 
-		public JobConfig(final boolean circular, final LimitConfig limitConfig) {
+		public JobConfig(final boolean circular, final String type, final LimitConfig limitConfig) {
 			this.circular = circular;
+			this.type = type;
 			this.limitConfig = limitConfig;
+		}
+
+		public String getType() {
+			return type;
 		}
 
 		public boolean getCircular() {

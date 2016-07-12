@@ -26,6 +26,21 @@ implements Generator<I, O> {
 	}
 
 	@Override
+	protected void doStart()
+	throws Exception {
+	}
+
+	@Override
+	protected void doShutdown()
+	throws Exception {
+	}
+
+	@Override
+	protected void doInterrupt()
+	throws Exception {
+	}
+
+	@Override
 	public void start()
 	throws IllegalStateException {
 	}

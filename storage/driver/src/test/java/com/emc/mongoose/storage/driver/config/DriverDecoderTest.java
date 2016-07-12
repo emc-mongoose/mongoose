@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver.config;
 
+import com.emc.mongoose.common.config.decoder.Decoder;
 import com.emc.mongoose.common.config.reader.ConfigReader;
 import org.junit.Test;
 
@@ -19,11 +20,9 @@ public class DriverDecoderTest {
 
 	@Test
 	public void shouldCreateConfig() throws Exception{
-		final DriverDecoder driverDecoder = new DriverDecoder();
-		final JsonObject defaults = ConfigReader.readJson("defaults.json");
-		assertNotNull("The configuration file was read wrong", defaults);
-		final DriverConfig driverConfig =
-			driverDecoder.decode(defaults);
+		final Decoder<DriverConfig> driverDecoder = new DriverDecoder();
+		final DriverConfig driverConfig = ConfigReader.loadConfig(driverDecoder);
+		assertNotNull(driverConfig);
 		assertEquals(parameterErrorMessage("load.concurrency"),
 			driverConfig.getLoadConfig().getConcurrency(), 1);
 	}

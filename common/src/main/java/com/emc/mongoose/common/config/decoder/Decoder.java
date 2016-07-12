@@ -13,6 +13,16 @@ public interface Decoder<T> {
 
 	T decode(final JsonObject json) throws DecodeException;
 
+	default JsonObject getJsonObject(final JsonObject jsonObject, final String key)
+	throws DecodeException {
+		try {
+			return jsonObject.getJsonObject(key);
+		} catch(final NullPointerException e) {
+			throw new DecodeException("", "There is no value for key '" + key + "'");
+		}
+	}
+
+
 	default String getString(final JsonObject jsonObject, final String key)
 	throws DecodeException {
 		if (jsonObject.isNull(key)) {
