@@ -1,7 +1,7 @@
 package com.emc.mongoose.driver.config;
 
-import com.emc.mongoose.config.decoder.DecodeException;
-import com.emc.mongoose.config.decoder.Decoder;
+import com.emc.mongoose.common.config.decoder.DecodeException;
+import com.emc.mongoose.common.config.decoder.Decoder;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -28,14 +28,14 @@ public class DriverDecoder implements Decoder<DriverConfig> {
 			storageJson.getJsonArray(DriverConfig.StorageConfig.KEY_ADDRESSES);
 		final List<String> addresses =
 			addressesJsonArr.getValuesAs(JsonString.class).stream().map(
-				JsonString:: getString).collect(Collectors.toList());
+				JsonString::getString).collect(Collectors.toList());
 		final JsonObject authJson =
 			storageJson.getJsonObject(DriverConfig.StorageConfig.KEY_AUTH);
 		final DriverConfig.StorageConfig.AuthConfig
 			authConfig = new DriverConfig.StorageConfig.AuthConfig(
-			authJson.getString(DriverConfig.StorageConfig.AuthConfig.KEY_ID, null),
-			authJson.getString(DriverConfig.StorageConfig.AuthConfig.KEY_SECRET, null),
-			authJson.getString(DriverConfig.StorageConfig.AuthConfig.KEY_TOKEN, null)
+			getString(authJson, DriverConfig.StorageConfig.AuthConfig.KEY_ID, null),
+			getString(authJson,DriverConfig.StorageConfig.AuthConfig.KEY_SECRET, null),
+			getString(authJson,DriverConfig.StorageConfig.AuthConfig.KEY_TOKEN, null)
 		);
 		final JsonObject httpJson = storageJson.getJsonObject(DriverConfig.StorageConfig.KEY_HTTP);
 		final Map<String, String> headers = new HashMap<>();
@@ -43,17 +43,19 @@ public class DriverDecoder implements Decoder<DriverConfig> {
 			.forEach((name, value) -> headers.put(name, ((JsonString) value).getString()));
 		final DriverConfig.StorageConfig.HttpConfig
 			httpConfig = new DriverConfig.StorageConfig.HttpConfig(
-			httpJson.getString(DriverConfig.StorageConfig.HttpConfig.KEY_API),
+			getString(httpJson, DriverConfig.StorageConfig.HttpConfig.KEY_API),
 			httpJson.getBoolean(DriverConfig.StorageConfig.HttpConfig.KEY_FS_ACCESS),
-			httpJson.getString(DriverConfig.StorageConfig.HttpConfig.KEY_NAMESPACE, null),
+			getString(httpJson, DriverConfig.StorageConfig.HttpConfig.KEY_NAMESPACE, null),
 			httpJson.getBoolean(DriverConfig.StorageConfig.HttpConfig.KEY_VERSIONING), headers
 		);
 		final DriverConfig.StorageConfig storageConfig = new DriverConfig.StorageConfig(
 			storageJson.getInt(DriverConfig.StorageConfig.KEY_PORT),
-			storageJson.getString(DriverConfig.StorageConfig.KEY_TYPE), authConfig, httpConfig, addresses
+			getString(storageJson, DriverConfig.StorageConfig.KEY_TYPE), authConfig, httpConfig, addresses
 		);
 		return new DriverConfig(loadConfig, storageConfig);
 	}
+
+
 
 	@Override
 	public void init() {

@@ -21,19 +21,19 @@ public class MonitorDecoder implements Decoder<MonitorConfig> {
 			limitJson.getInt(MonitorConfig.JobConfig.LimitConfig.KEY_COUNT),
 			limitJson.getInt(MonitorConfig.JobConfig.LimitConfig.KEY_RATE),
 			limitJson.getInt(MonitorConfig.JobConfig.LimitConfig.KEY_SIZE),
-			limitJson.getString(MonitorConfig.JobConfig.LimitConfig.KEY_TIME)
+			getString(limitJson, MonitorConfig.JobConfig.LimitConfig.KEY_TIME)
 		);
 		final MonitorConfig.JobConfig jobConfig = new MonitorConfig.JobConfig(circular, limitConfig);
 		final JsonObject metricsJson = monitorJson.getJsonObject(MonitorConfig.KEY_METRICS);
 		final MonitorConfig.MetricsConfig metricsConfig = new MonitorConfig.MetricsConfig(
 			metricsJson.getBoolean(MonitorConfig.MetricsConfig.KEY_INTERMEDIATE),
-			metricsJson.getString(MonitorConfig.MetricsConfig.KEY_PERIOD),
+			getString(metricsJson, MonitorConfig.MetricsConfig.KEY_PERIOD),
 			metricsJson.getBoolean(MonitorConfig.MetricsConfig.KEY_PRECONDITION)
 		);
 		final JsonObject runJson = monitorJson.getJsonObject(MonitorConfig.KEY_RUN);
 		final MonitorConfig.RunConfig runConfig = new MonitorConfig.RunConfig(
-			runJson.getString(MonitorConfig.RunConfig.KEY_FILE, null),
-			runJson.getString(MonitorConfig.RunConfig.KEY_ID, null)
+			getString(runJson, MonitorConfig.RunConfig.KEY_FILE, null),
+			getString(runJson, MonitorConfig.RunConfig.KEY_ID, null)
 		);
 		return new MonitorConfig(jobConfig, metricsConfig, runConfig);
 	}

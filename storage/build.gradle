@@ -1,5 +1,4 @@
-version = '3.0-SNAPSHOT'
-description = 'mongoose - storage mock'
+description = 'mongoose - storage'
 
 dependencies {
 	compile project(':common')

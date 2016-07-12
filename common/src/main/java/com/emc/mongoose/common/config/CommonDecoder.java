@@ -27,7 +27,7 @@ public class CommonDecoder implements Decoder<CommonConfig> {
 			socketJson.getInt(CommonConfig.NetworkConfig.SocketConfig.KEY_SELECT_INTERVAL)
 		);
 		return new CommonConfig(
-			commonJson.getString(CommonConfig.KEY_NAME),
+			getString(commonJson, CommonConfig.KEY_NAME),
 			new CommonConfig.NetworkConfig(socketConfig)
 		);
 	}
