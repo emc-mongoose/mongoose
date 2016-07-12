@@ -6,6 +6,7 @@ import com.emc.mongoose.common.item.Item;
 import com.emc.mongoose.common.load.Driver;
 import com.emc.mongoose.common.load.Monitor;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -33,6 +34,11 @@ implements Driver<I, O> {
 	@Override
 	public boolean isFullThrottleExited() {
 		return false;
+	}
+
+	@Override
+	public void close()
+	throws IOException {
 	}
 
 	private final static class SubmitFutureMock<I extends Item, O extends IoTask<I>>
