@@ -13,7 +13,7 @@ import java.nio.channels.WritableByteChannel;
  Created by kurila on 11.07.16.
  */
 public interface DataItem
-	extends Item, ReadableByteChannel, WritableByteChannel {
+extends Item, ReadableByteChannel, WritableByteChannel {
 	//
 	void reset();
 	//

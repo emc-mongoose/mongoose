@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.io.IoTask;
 import com.emc.mongoose.common.item.Item;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -12,7 +13,7 @@ import java.util.concurrent.RejectedExecutionException;
  Created on 11.07.16.
  */
 public interface Driver<I extends Item, O extends IoTask<I>>
-extends LifeCycle {
+extends Closeable, LifeCycle {
 
 	boolean isFullThrottleEntered();
 

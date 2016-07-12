@@ -6,7 +6,8 @@
 			"rate" : 0,
 			"size" : 0,
 			"time" : "0s"
-		}
+		},
+		"type" : "create"
 	},
 	"metrics" : {
 		"intermediate" : false,
