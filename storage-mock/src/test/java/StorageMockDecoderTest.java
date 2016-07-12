@@ -1,6 +1,6 @@
-import com.emc.mongoose.config.StorageMockConfig;
-import com.emc.mongoose.config.StorageMockDecoder;
-import com.emc.mongoose.config.reader.ConfigReader;
+import com.emc.mongoose.storage.mock.config.StorageMockConfig;
+import com.emc.mongoose.storage.mock.config.StorageMockDecoder;
+import com.emc.mongoose.common.config.reader.ConfigReader;
 import org.junit.Test;
 
 import javax.json.JsonObject;

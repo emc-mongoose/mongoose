@@ -1,6 +1,6 @@
-import com.emc.mongoose.config.DriverConfig;
-import com.emc.mongoose.config.DriverDecoder;
-import com.emc.mongoose.config.reader.ConfigReader;
+import com.emc.mongoose.storage.driver.config.DriverConfig;
+import com.emc.mongoose.storage.driver.config.DriverDecoder;
+import com.emc.mongoose.common.config.reader.ConfigReader;
 import org.junit.Test;
 
 import javax.json.JsonObject;

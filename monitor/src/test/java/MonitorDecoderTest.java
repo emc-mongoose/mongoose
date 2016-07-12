@@ -1,6 +1,6 @@
-import com.emc.mongoose.config.MonitorConfig;
-import com.emc.mongoose.config.MonitorDecoder;
-import com.emc.mongoose.config.reader.ConfigReader;
+import com.emc.mongoose.monitor.config.MonitorConfig;
+import com.emc.mongoose.monitor.config.MonitorDecoder;
+import com.emc.mongoose.common.config.reader.ConfigReader;
 import org.junit.Test;
 
 import javax.json.JsonObject;

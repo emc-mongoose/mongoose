@@ -1,6 +1,6 @@
-import com.emc.mongoose.config.GeneratorConfig;
-import com.emc.mongoose.config.GeneratorDecoder;
-import com.emc.mongoose.config.reader.ConfigReader;
+import com.emc.mongoose.generator.config.GeneratorConfig;
+import com.emc.mongoose.generator.config.GeneratorDecoder;
+import com.emc.mongoose.common.config.reader.ConfigReader;
 import org.junit.Test;
 
 import javax.json.JsonObject;
