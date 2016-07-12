@@ -22,40 +22,8 @@ public class DriverDecoder implements Decoder<DriverConfig> {
 		final DriverConfig.LoadConfig loadConfig = new DriverConfig.LoadConfig(
 			driverJson.getJsonObject(DriverConfig.KEY_LOAD).getInt(
 				DriverConfig.LoadConfig.KEY_CONCURRENCY));
-		final JsonObject storageJson =
-			driverJson.getJsonObject(DriverConfig.KEY_STORAGE);
-		final JsonArray addressesJsonArr =
-			storageJson.getJsonArray(DriverConfig.StorageConfig.KEY_ADDRESSES);
-		final List<String> addresses =
-			addressesJsonArr.getValuesAs(JsonString.class).stream().map(
-				JsonString::getString).collect(Collectors.toList());
-		final JsonObject authJson =
-			storageJson.getJsonObject(DriverConfig.StorageConfig.KEY_AUTH);
-		final DriverConfig.StorageConfig.AuthConfig
-			authConfig = new DriverConfig.StorageConfig.AuthConfig(
-			getString(authJson, DriverConfig.StorageConfig.AuthConfig.KEY_ID, null),
-			getString(authJson,DriverConfig.StorageConfig.AuthConfig.KEY_SECRET, null),
-			getString(authJson,DriverConfig.StorageConfig.AuthConfig.KEY_TOKEN, null)
-		);
-		final JsonObject httpJson = storageJson.getJsonObject(DriverConfig.StorageConfig.KEY_HTTP);
-		final Map<String, String> headers = new HashMap<>();
-		httpJson.getJsonObject(DriverConfig.StorageConfig.HttpConfig.KEY_HEADERS)
-			.forEach((name, value) -> headers.put(name, ((JsonString) value).getString()));
-		final DriverConfig.StorageConfig.HttpConfig
-			httpConfig = new DriverConfig.StorageConfig.HttpConfig(
-			getString(httpJson, DriverConfig.StorageConfig.HttpConfig.KEY_API),
-			httpJson.getBoolean(DriverConfig.StorageConfig.HttpConfig.KEY_FS_ACCESS),
-			getString(httpJson, DriverConfig.StorageConfig.HttpConfig.KEY_NAMESPACE, null),
-			httpJson.getBoolean(DriverConfig.StorageConfig.HttpConfig.KEY_VERSIONING), headers
-		);
-		final DriverConfig.StorageConfig storageConfig = new DriverConfig.StorageConfig(
-			storageJson.getInt(DriverConfig.StorageConfig.KEY_PORT),
-			getString(storageJson, DriverConfig.StorageConfig.KEY_TYPE), authConfig, httpConfig, addresses
-		);
-		return new DriverConfig(loadConfig, storageConfig);
+		return new DriverConfig(loadConfig);
 	}
-
-
 
 	@Override
 	public void init() {

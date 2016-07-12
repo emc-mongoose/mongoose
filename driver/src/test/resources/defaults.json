@@ -1,27 +1,5 @@
 {
 	"load" : {
 		"concurrency" : 1
-	},
-	"storage" : {
-		"addrs" : [
-			"127.0.0.1"
-		],
-		"auth" : {
-			"id" : null,
-			"secret" : null,
-			"token" : null
-		},
-		"http" : {
-			"api" : "S3",
-			"fsAccess" : false,
-			"headers" : {
-				"Connection" : "keep-alive",
-				"User-Agent" : "mongoose/3.0.0"
-			},
-			"namespace" : null,
-			"versioning" : false
-		},
-		"port" : 9020,
-		"type" : "http"
 	}
 }

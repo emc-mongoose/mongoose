@@ -40,6 +40,13 @@ subprojects {
 		compile "javax.json:javax.json-api:1.0"
 		compile "org.glassfish:javax.json:1.0.4"
 
+		compile 'io.netty:netty-common:4.1.2.Final'
+		compile 'io.netty:netty-buffer:4.1.2.Final'
+		compile 'io.netty:netty-transport:4.1.2.Final'
+		compile 'io.netty:netty-handler:4.1.2.Final'
+		compile 'io.netty:netty-codec-http:4.1.2.Final'
+
+
 		testCompile "junit:junit:4.12"
 	}
 }

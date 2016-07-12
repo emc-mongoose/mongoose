@@ -18,5 +18,6 @@ public interface LifeCycle {
 	boolean await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException;
 
-	void interrupt();
+	void interrupt()
+	throws IllegalStateException;
 }
