@@ -657,7 +657,7 @@ implements LoadClient<T, W> {
 	}
 	//
 	@Override
-	public <A extends IoTask<T>> Future<A> submitTask(final A request)
+	public <A extends IoTask<T>> Future submitTask(final A request)
 	throws RemoteException {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) (remotePutExecutor.getTaskCount() % loadSvcAddrs.length)])
