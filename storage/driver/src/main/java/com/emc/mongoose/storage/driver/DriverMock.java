@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.driver;
 
+import com.emc.mongoose.common.concurrent.LifeCycleBase;
 import com.emc.mongoose.common.io.IoTask;
 import com.emc.mongoose.common.item.Item;
 import com.emc.mongoose.common.load.Driver;
@@ -15,6 +16,7 @@ import java.util.concurrent.TimeUnit;
  This mock just passes the submitted tasks to the load monitor em
  */
 public class DriverMock<I extends Item, O extends IoTask<I>>
+extends LifeCycleBase
 implements Driver<I, O> {
 
 	private final Monitor<I, O> monitor;
