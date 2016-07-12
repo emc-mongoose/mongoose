@@ -60,7 +60,7 @@ extends Output<T>, LifeCycle, ItemProducer<T> {
 	void logMetrics(Marker marker)
 	throws RemoteException;
 	//
-	<A extends IoTask<T>> Future<A> submitTask(final A request)
+	<A extends IoTask<T>> Future submitTask(final A request)
 	throws RemoteException, RejectedExecutionException;
 	//
 	<A extends IoTask<T>> int submitTasks(final List<A> requests, final int from, final int to)

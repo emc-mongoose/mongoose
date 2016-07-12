@@ -169,7 +169,7 @@
 			"resume" : {
 				"enabled" : false
 			},
-			"version" : "2.3.1"
+			"version" : "2.3.2"
 		},
 		"storage" : {
 			"type" : "http",
@@ -182,7 +182,7 @@
 				"fsAccess" : false,
 				"headers" : {
 					"Connection" : "keep-alive",
-					"User-Agent" : "mongoose/2.3.1"
+					"User-Agent" : "mongoose/2.3.2"
 				},
 				"namespace" : null,
 				"versioning" : false

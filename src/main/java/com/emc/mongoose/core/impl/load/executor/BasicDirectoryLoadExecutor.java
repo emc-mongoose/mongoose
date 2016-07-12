@@ -124,7 +124,7 @@ implements DirectoryLoadExecutor<T, C> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final <A extends IoTask<C>> Future<A> submitTask(final A ioTask)
+	public final <A extends IoTask<C>> Future submitTask(final A ioTask)
 	throws RejectedExecutionException {
 		return (Future<A>) ioTaskExecutor
 			.<DirectoryIoTask<T, C>>submit((DirectoryIoTask<T, C>) ioTask);

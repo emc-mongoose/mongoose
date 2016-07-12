@@ -16,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 /**
@@ -53,15 +52,13 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	// Sequenced connection leasing ////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final class ConnLeaseTask
-	extends BasicFuture<Future<BasicNIOPoolEntry>>
-	implements RunnableFuture<Future<BasicNIOPoolEntry>> {
+	extends BasicFuture<BasicNIOPoolEntry>
+	implements RunnableFuture<BasicNIOPoolEntry> {
 		//
 		private final Object state;
 		private final FutureCallback<BasicNIOPoolEntry> callback;
 		//
-		public ConnLeaseTask(
-			final Object state, final FutureCallback<BasicNIOPoolEntry> callback
-		) {
+		public ConnLeaseTask(final Object state, final FutureCallback<BasicNIOPoolEntry> callback) {
 			super(null);
 			this.state = state;
 			this.callback = callback;
@@ -70,7 +67,7 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 		@Override
 		public void run() {
 			try {
-				completed(FixedRouteSequencingConnPool.super.lease(route, state, callback));
+				FixedRouteSequencingConnPool.super.lease(route, state, callback);
 			} catch(final Exception e) {
 				if(!FixedRouteSequencingConnPool.super.isShutdown()) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to lease the connection");
@@ -81,12 +78,11 @@ implements HttpConnPool<HttpHost, BasicNIOPoolEntry> {
 	//
 	@Override
 	public final Future<BasicNIOPoolEntry> lease(
-		final HttpHost route, final Object state,
-		final FutureCallback<BasicNIOPoolEntry> callback
+		final HttpHost route, final Object state, final FutureCallback<BasicNIOPoolEntry> callback
 	) {
 		try {
-			return Sequencer.INSTANCE.submit(new ConnLeaseTask(state, callback)).get();
-		} catch(final ExecutionException | InterruptedException e) {
+			return Sequencer.INSTANCE.submit(new ConnLeaseTask(state, callback));
+		} catch(final InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 	}
