@@ -31,12 +31,12 @@ public class DriverDecoder implements Decoder<DriverConfig> {
 				JsonString:: getString).collect(Collectors.toList());
 		final JsonObject authJson =
 			storageJson.getJsonObject(DriverConfig.StorageConfig.KEY_AUTH);
-		DriverConfig.StorageConfig.AuthConfig
+		final DriverConfig.StorageConfig.AuthConfig
 			authConfig = new DriverConfig.StorageConfig.AuthConfig(
 			authJson.getString(DriverConfig.StorageConfig.AuthConfig.KEY_ID, null),
 			authJson.getString(DriverConfig.StorageConfig.AuthConfig.KEY_ID, null),
 			authJson.getString(DriverConfig.StorageConfig.AuthConfig.KEY_ID, null)
-		);
+			storageJson.getJsonObject(DriverConfig.Storage.KEY_AUTH);
 		final JsonObject httpJson = storageJson.getJsonObject(DriverConfig.StorageConfig.KEY_HTTP);
 		final Map<String, String> headers = new HashMap<>();
 		httpJson.getJsonObject(DriverConfig.StorageConfig.HttpConfig.KEY_HEADERS)
