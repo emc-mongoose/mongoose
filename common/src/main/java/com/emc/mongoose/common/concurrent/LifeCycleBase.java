@@ -8,10 +8,10 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class LifeCycleBase
 implements LifeCycle {
 
-	private final AtomicReference<State> state = new AtomicReference<>(State.INIT);
+	protected final AtomicReference<State> state = new AtomicReference<>(State.INITIALIZED);
 
-	private enum State {
-		INIT, STARTED, SHUTDOWN, INTERRUPTED
+	protected enum State {
+		INITIALIZED, STARTED, SHUTDOWN, INTERRUPTED
 	}
 
 	protected abstract void doStart();
@@ -21,8 +21,18 @@ implements LifeCycle {
 	protected abstract void doInterrupt();
 
 	@Override
+	public final boolean isInitialized() {
+		return state.get().equals(State.INITIALIZED);
+	}
+
+	@Override
 	public final void start()
 	throws IllegalStateException {
+	}
+
+	@Override
+	public final boolean isStarted() {
+		return state.get().equals(State.STARTED);
 	}
 
 	@Override
@@ -31,7 +41,17 @@ implements LifeCycle {
 	}
 
 	@Override
+	public final boolean isShutdown() {
+		return state.get().equals(State.SHUTDOWN);
+	}
+
+	@Override
 	public final void interrupt()
 	throws IllegalStateException {
+	}
+
+	@Override
+	public final boolean isInterrupted() {
+		return state.get().equals(State.INTERRUPTED);
 	}
 }

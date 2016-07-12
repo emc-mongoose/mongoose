@@ -33,6 +33,10 @@ implements Generator<I, O> {
 	private final List<Driver<I, O>> drivers;
 	private final Input<I> itemInput;
 	private final Thread worker;
+	//private final int batchSize;
+	//private final boolean isShuffling;
+
+	private long producedItemsCount = 0;
 
 	private final class GeneratorTask
 	implements Runnable {
@@ -46,7 +50,7 @@ implements Generator<I, O> {
 			int n = 0, m = 0;
 			/*try {
 				List<I> buff;
-				while(countLimit > producedItemsCount && !isInterrupted) {
+				while(!state.get().equals(State.INTERRUPTED)) {
 					try {
 						buff = new ArrayList<>(batchSize);
 						n = (int) Math.min(itemInput.get(buff, batchSize), countLimit - producedItemsCount);
