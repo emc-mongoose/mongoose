@@ -70,12 +70,14 @@ implements Monitor<I, O> {
 			() -> {
 				final Thread currentThread = Thread.currentThread();
 				long lastTimeCount = 0;
+				long lastTimeCountDelta;
 				try {
 					while(!currentThread.isInterrupted()) {
-						lastTimeCount = taskCounter.get() - lastTimeCount;
+						lastTimeCountDelta = taskCounter.get() - lastTimeCount;
+						lastTimeCount = taskCounter.get();
 						System.out.println(
-							"count = " + taskCounter.get() + ", rate = " +
-							(double) lastTimeCount / 10 + " [op/s]"
+							"count = " + lastTimeCount + ", rate = " +
+							(double) lastTimeCountDelta / 10 + " [op/s]"
 						);
 						TimeUnit.SECONDS.sleep(10);
 					}

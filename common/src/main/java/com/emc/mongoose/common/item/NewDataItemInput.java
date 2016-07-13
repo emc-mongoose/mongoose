@@ -36,13 +36,26 @@ implements Input<D> {
 		return dataSize;
 	}
 	//
+	private final static ThreadLocal<Object[]> ARG_BUFF = new ThreadLocal<Object[]>() {
+		@Override
+		protected final Object[] initialValue() {
+			return new Object[5];
+		}
+	};
+	//
 	@Override
 	public final D get()
 	throws IOException {
+		final Object[] argBuff = ARG_BUFF.get();
+		argBuff[0] = pathInput.get();
+		argBuff[1] = idInput.get();
+		argBuff[2] = idInput.getLastValue();
+		argBuff[3] = dataSize.get();
+		argBuff[4] = contentSrc;
 		try {
-			return itemConstructor.newInstance(
-				pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get(), contentSrc
-			);
+			return itemConstructor.newInstance(argBuff);
+			//	pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get(), contentSrc
+			//);
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {
 			throw new IOException(e);
 		}
@@ -51,13 +64,19 @@ implements Input<D> {
 	@Override
 	public int get(final List<D> buffer, final int maxCount)
 	throws IOException {
+		final Object[] argBuff = ARG_BUFF.get();
 		try {
 			for(int i = 0; i < maxCount; i ++) {
+				argBuff[0] = pathInput.get();
+				argBuff[1] = idInput.get();
+				argBuff[2] = idInput.getLastValue();
+				argBuff[3] = dataSize.get();
+				argBuff[4] = contentSrc;
 				buffer.add(
-					itemConstructor.newInstance(
-						pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get(),
-						contentSrc
-					)
+					itemConstructor.newInstance(argBuff)
+					//	pathInput.get(), idInput.get(), idInput.getLastValue(), dataSize.get(),
+					//	contentSrc
+					//)
 				);
 			}
 		} catch(final InstantiationException|IllegalAccessException|InvocationTargetException e) {

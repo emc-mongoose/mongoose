@@ -35,7 +35,6 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 11.07.16.
@@ -88,7 +87,7 @@ implements Generator<I, O> {
 						if(n > 0 && rateThrottle.requestContinueFor(null, n)) {
 							for(m = 0; m < n && !isInterrupted(); ) {
 								m += itemOutput.put(buff, m, n);
-								LockSupport.parkNanos(1);
+								Thread.yield();
 							}
 							producedItemsCount += n;
 						} else {
