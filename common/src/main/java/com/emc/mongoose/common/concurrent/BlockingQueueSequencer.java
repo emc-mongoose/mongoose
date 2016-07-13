@@ -15,36 +15,41 @@ import java.util.concurrent.RunnableFuture;
 /**
  Created by andrey on 04.08.15.
  */
-public final class Sequencer
-extends Thread {
-	//
+public final class BlockingQueueSequencer
+extends Thread
+implements TaskSequencer {
+
 	private final static Logger LOG = LogManager.getLogger();
 	public final static int DEFAULT_TASK_QUEUE_SIZE = 0x1000;
-	public final static Sequencer INSTANCE = new Sequencer(
-		"sequencer", true, DEFAULT_TASK_QUEUE_SIZE
+	public final static BlockingQueueSequencer INSTANCE = new BlockingQueueSequencer(
+		"blockingQueueSequencer", true, DEFAULT_TASK_QUEUE_SIZE
 	);
 	static {
 		INSTANCE.start();
 	}
-	//
+
 	private final BlockingQueue<Runnable> queue;
 	private final int batchSize;
 	private final Collection<Runnable> buff;
-	//
-	protected Sequencer(final String name, boolean daemonFlag, final int batchSize) {
+
+	protected BlockingQueueSequencer(final String name, boolean daemonFlag, final int batchSize) {
 		super(name);
 		setDaemon(daemonFlag);
 		queue = new ArrayBlockingQueue<>(DEFAULT_TASK_QUEUE_SIZE, false);
 		this.batchSize = batchSize;
 		buff = new ArrayList<>(batchSize);
 	}
-	//
-	public final <V> Future<V> submit(final RunnableFuture<V> task)
-	throws InterruptedException {
-		queue.put(task);
-		return task;
+
+	@Override
+	public final <V> Future<V> submit(final RunnableFuture<V> task) {
+		try {
+			queue.put(task);
+			return task;
+		} catch(final InterruptedException e) {
+			return null;
+		}
 	}
-	//
+
 	@Override
 	public final void run() {
 		int n;
