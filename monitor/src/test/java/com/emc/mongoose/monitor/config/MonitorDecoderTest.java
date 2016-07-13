@@ -21,8 +21,7 @@ public class MonitorDecoderTest {
 
 	@Test
 	public void shouldCreateConfig() throws Exception{
-		final Decoder<MonitorConfig> monitorDecoder = new MonitorDecoder();
-		final MonitorConfig monitorConfig = ConfigReader.loadConfig(monitorDecoder);
+		final MonitorConfig monitorConfig = ConfigReader.loadConfig(new MonitorDecoder());
 		assertNotNull(monitorConfig);
 		final MonitorConfig.JobConfig jobConfig = monitorConfig.getJobConfig();
 		assertEquals(parameterErrorMessage("job.circular"), jobConfig.getCircular(), false);

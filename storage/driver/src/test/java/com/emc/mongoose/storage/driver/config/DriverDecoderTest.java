@@ -20,8 +20,7 @@ public class DriverDecoderTest {
 
 	@Test
 	public void shouldCreateConfig() throws Exception{
-		final Decoder<DriverConfig> driverDecoder = new DriverDecoder();
-		final DriverConfig driverConfig = ConfigReader.loadConfig(driverDecoder);
+		final DriverConfig driverConfig = ConfigReader.loadConfig(new DriverDecoder());
 		assertNotNull(driverConfig);
 		assertEquals(parameterErrorMessage("load.concurrency"),
 			driverConfig.getLoadConfig().getConcurrency(), 1);

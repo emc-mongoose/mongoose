@@ -22,8 +22,7 @@ public class CommonDecoderTest {
 
 	@Test
 	public void shouldCreateConfig() throws Exception{
-		final Decoder<CommonConfig> commonDecoder = new CommonDecoder();
-		final CommonConfig commonConfig = ConfigReader.loadConfig(commonDecoder);
+		final CommonConfig commonConfig = ConfigReader.loadConfig(new CommonDecoder());
 		assertNotNull(commonConfig);
 		final CommonConfig.NetworkConfig.SocketConfig socketConfig = commonConfig.getNetworkConfig().getSocketConfig();
 		assertEquals(parameterErrorMessage("name"),
@@ -64,7 +63,7 @@ public class CommonDecoderTest {
 		assertEquals("storage.port", storage.getPort(), 9020);
 		assertEquals("storage.type", storage.getType(), "http");
 		final CommonConfig.ItemConfig itemConfig = commonConfig.getItemConfig();
-		assertEquals(parameterErrorMessage("getItemConfig.type"), itemConfig.getType(), "data");
+		assertEquals(parameterErrorMessage("item.type"), itemConfig.getType(), "data");
 		final CommonConfig.ItemConfig.DataConfig dataConfig = itemConfig.getDataConfig();
 		final CommonConfig.ItemConfig.DataConfig.ContentConfig contentConfig = dataConfig.getContentConfig();
 		assertNull(parameterErrorMessage("item.data.content.file"), contentConfig.getFile());

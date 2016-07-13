@@ -6,8 +6,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 23.09.15.
  */
-public interface LifeCycle
-extends Initializable {
+public interface LifeCycle {
 
 	void start()
 	throws IllegalStateException;

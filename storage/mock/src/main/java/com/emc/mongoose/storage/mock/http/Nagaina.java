@@ -1,15 +1,10 @@
 package com.emc.mongoose.storage.mock.http;
 
 import com.emc.mongoose.common.config.CommonConfig;
-import com.emc.mongoose.common.config.CommonDecoder;
-import com.emc.mongoose.common.config.decoder.DecodeException;
-import com.emc.mongoose.common.config.decoder.Decoder;
-import com.emc.mongoose.common.config.reader.ConfigReader;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.storage.mock.StorageMock;
 import com.emc.mongoose.storage.mock.config.StorageMockConfig;
-import com.emc.mongoose.storage.mock.config.StorageMockDecoder;
 import com.emc.mongoose.storage.mock.http.request.AtmosRequestHandler;
 import com.emc.mongoose.storage.mock.http.request.RequestHandlerBase;
 import com.emc.mongoose.storage.mock.http.request.S3RequestHandler;
@@ -28,7 +23,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -97,12 +91,22 @@ public class Nagaina implements StorageMock {
 	}
 
 	@Override
+	public boolean isStarted() {
+		return false;
+	}
+
+	@Override
 	public void shutdown()
 	throws IllegalStateException {
 		for(int i = 0; i < dispatchGroups.length; i++) {
 			shutdownEventLoopGroup(dispatchGroups[i]);
 			shutdownEventLoopGroup(workGroups[i]);
 		}
+	}
+
+	@Override
+	public boolean isShutdown() {
+		return false;
 	}
 
 	private void shutdownEventLoopGroup(final EventLoopGroup group) {
@@ -137,5 +141,10 @@ public class Nagaina implements StorageMock {
 	@Override
 	public void interrupt()
 	throws IllegalStateException {
+	}
+
+	@Override
+	public boolean isInterrupted() {
+		return false;
 	}
 }
