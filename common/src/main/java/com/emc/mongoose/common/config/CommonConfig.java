@@ -1,13 +1,7 @@
 package com.emc.mongoose.common.config;
 
-import com.emc.mongoose.common.config.decoder.DecodeException;
-import com.emc.mongoose.common.config.reader.ConfigReader;
-import com.emc.mongoose.common.log.LogUtil;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.common.util.SizeInBytes;
 
-import javax.json.JsonObject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -18,118 +12,575 @@ import java.util.Map;
 public class CommonConfig {
 
 	public static final String KEY_NAME = "name";
-	public static final String KEY_NETWORK = "network";
-	public static final String KEY_STORAGE = "storage";
+	public static final String KEY_VERSION = "version";
+	public static final String KEY_IO = "io";
+	public static final String KEY_SOCKET = "socket";
 	public static final String KEY_ITEM = "item";
+	public static final String KEY_LOAD = "load";
+	public static final String KEY_RUN = "run";
+	public static final String KEY_STORAGE = "storage";
+	private String name;
+	private String version;
+	private IoConfig ioConfig;
+	private SocketConfig socketConfig;
+	private StorageConfig storageConfig;
+	private LoadConfig loadConfig;
+	private RunConfig runConfig;
+	private ItemConfig itemConfig;
 
-	private final String name;
-	private final NetworkConfig networkConfig;
-	private final StorageConfig storageConfig;
-	private final ItemConfig itemConfig;
+	private CommonConfig() {}
 
-
-	public CommonConfig(final String name, final NetworkConfig networkConfig,
-		final StorageConfig storageConfig, final ItemConfig itemConfig) {
-		this.name = name;
-		this.networkConfig = networkConfig;
-		this.storageConfig = storageConfig;
-		this.itemConfig = itemConfig;
-	}
-
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
-	public NetworkConfig getNetworkConfig() {
-		return networkConfig;
+	public final String getVersion() {
+		return version;
 	}
 
-	public StorageConfig getStorageConfig() {
+	public final IoConfig getIoConfig() {
+		return ioConfig;
+	}
+
+	public final SocketConfig getSocketConfig() {
+		return socketConfig;
+	}
+
+	public final StorageConfig getStorageConfig() {
 		return storageConfig;
 	}
 
-	public ItemConfig getItemConfig() {
+	public final LoadConfig getLoadConfig() {
+		return loadConfig;
+	}
+
+	public final RunConfig getRunConfig() {
+		return runConfig;
+	}
+
+	public final ItemConfig getItemConfig() {
 		return itemConfig;
 	}
 
+	public static final CommonConfigBuilder newBuilder() {
+		return new CommonConfig().new CommonConfigBuilder();
+	}
 
-	public static class NetworkConfig {
+	public final class CommonConfigBuilder {
 
-		public static final String KEY_SOCKET = "socket";
-		private final SocketConfig socketConfig;
+		private CommonConfigBuilder() {}
 
-		public NetworkConfig(final SocketConfig socketConfig) {
-			this.socketConfig = socketConfig;
+		public final CommonConfigBuilder setName(final String name) {
+			CommonConfig.this.name = name;
+			return this;
 		}
 
-		public SocketConfig getSocketConfig() {
-			return socketConfig;
+		public final CommonConfigBuilder setVersion(final String version) {
+			CommonConfig.this.version = version;
+			return this;
 		}
 
-		public static class SocketConfig {
-			public static final String KEY_TIMEOUT_IN_MILLISECONDS = "timeoutMilliSec";
-			public static final String KEY_REUSABLE_ADDRESS = "reuseAddr";
-			public static final String KEY_KEEP_ALIVE = "keepAlive";
-			public static final String KEY_TCP_NO_DELAY = "tcpNoDelay";
-			public static final String KEY_LINGER = "linger";
-			public static final String KEY_BIND_BACK_LOG_SIZE = "bindBacklogSize";
-			public static final String KEY_INTEREST_OP_QUEUED = "interestOpQueued";
-			public static final String KEY_SELECT_INTERVAL = "selectInterval";
-			private final int timeoutMilliSec;
-			private final boolean reuseAddr;
-			private final boolean keepAlive;
-			private final boolean tcpNoDelay;
-			private final int linger;
-			private final int bindBackLogSize;
-			private final boolean interestOpQueued;
-			private final int selectInterval;
+		public final CommonConfigBuilder setIoConfig(final IoConfig ioConfig) {
+			CommonConfig.this.ioConfig = ioConfig;
+			return this;
+		}
 
-			public SocketConfig(
-				final int timeoutMilliSec, final boolean reuseAddr, final boolean keepAlive,
-				final boolean tcpNoDelay, final int linger, final int bindBackLogSize,
-				final boolean interestOpQueued, final int selectInterval
+		public final CommonConfigBuilder setSocketConfig(final SocketConfig socketConfig) {
+			CommonConfig.this.socketConfig = socketConfig;
+			return this;
+		}
+
+		public final CommonConfigBuilder setItemConfig(final ItemConfig itemConfig) {
+			CommonConfig.this.itemConfig = itemConfig;
+			return this;
+		}
+
+		public final CommonConfigBuilder setLoadConfig(final LoadConfig loadConfig) {
+			CommonConfig.this.loadConfig = loadConfig;
+			return this;
+		}
+
+		public final CommonConfigBuilder setRunConfig(final RunConfig runConfig) {
+			CommonConfig.this.runConfig = runConfig;
+			return this;
+		}
+
+		public final CommonConfigBuilder setStorageConfig(final StorageConfig storageConfig) {
+			CommonConfig.this.storageConfig = storageConfig;
+			return this;
+		}
+
+		public final CommonConfig build() {
+			return CommonConfig.this;
+		}
+
+	}
+
+	public static class IoConfig {
+
+		public static final String KEY_BUFFER = "buffer";
+
+		private final BufferConfig bufferConfig;
+
+		public IoConfig(final BufferConfig bufferConfig) {
+			this.bufferConfig = bufferConfig;
+		}
+
+		public static class BufferConfig {
+			public static final String KEY_SIZE = "size";
+
+			private final SizeInBytes size;
+
+			public BufferConfig(final String size) {
+				this.size = new SizeInBytes(size);
+			}
+
+			public final SizeInBytes getSize() {
+				return size;
+			}
+		}
+
+		public final BufferConfig getBufferConfig() {
+			return bufferConfig;
+		}
+	}
+
+	public static class SocketConfig {
+
+		public static final String KEY_TIMEOUT_IN_MILLISECONDS = "timeoutMilliSec";
+		public static final String KEY_REUSABLE_ADDRESS = "reuseAddr";
+		public static final String KEY_KEEP_ALIVE = "keepAlive";
+		public static final String KEY_TCP_NO_DELAY = "tcpNoDelay";
+		public static final String KEY_LINGER = "linger";
+		public static final String KEY_BIND_BACKLOG_SIZE = "bindBacklogSize";
+		public static final String KEY_INTEREST_OP_QUEUED = "interestOpQueued";
+		public static final String KEY_SELECT_INTERVAL = "selectInterval";
+		private int timeoutMilliSec;
+		private boolean reuseAddr;
+		private boolean keepAlive;
+		private boolean tcpNoDelay;
+		private int linger;
+		private int bindBackLogSize;
+		private boolean interestOpQueued;
+		private int selectInterval;
+
+		private SocketConfig() {}
+
+		public static SocketConfigBuilder newBuilder() {
+			return new SocketConfig().new SocketConfigBuilder();
+		}
+
+		public class SocketConfigBuilder {
+
+			private SocketConfigBuilder() {}
+
+			public final SocketConfigBuilder setTimeoutInMilliseconds(final int timeoutMilliSec) {
+				SocketConfig.this.timeoutMilliSec = timeoutMilliSec;
+				return this;
+			}
+
+			public final SocketConfigBuilder setReusableAddress(final boolean reuseAddr) {
+				SocketConfig.this.reuseAddr = reuseAddr;
+				return this;
+			}
+
+			public final SocketConfigBuilder setKeepAlive(final boolean keepAlive) {
+				SocketConfig.this.keepAlive = keepAlive;
+				return this;
+			}
+
+			public final SocketConfigBuilder setTcpNoDelay(final boolean tcpNoDelay) {
+				SocketConfig.this.tcpNoDelay = tcpNoDelay;
+				return this;
+			}
+
+			public final SocketConfigBuilder setLinger(final int linger) {
+				SocketConfig.this.linger = linger;
+				return this;
+			}
+
+			public final SocketConfigBuilder setBindBacklogSize(final int bindBacklogSize) {
+				SocketConfig.this.bindBackLogSize = bindBacklogSize;
+				return this;
+			}
+
+			public final SocketConfigBuilder setInterestOpQueued(final boolean interestOpQueued) {
+				SocketConfig.this.interestOpQueued = interestOpQueued;
+				return this;
+			}
+
+			public final SocketConfigBuilder setSelectInterval(final int selectInterval) {
+				SocketConfig.this.selectInterval = selectInterval;
+				return this;
+			}
+
+			public final SocketConfig build() {
+				return SocketConfig.this;
+			}
+
+		}
+
+		public final int getTimeoutInMilliseconds() {
+			return timeoutMilliSec;
+		}
+
+		public final boolean getReusableAddress() {
+			return reuseAddr;
+		}
+
+		public final boolean getKeepAlive() {
+			return keepAlive;
+		}
+
+		public final boolean getTcpNoDelay() {
+			return tcpNoDelay;
+		}
+
+		public final int getLinger() {
+			return linger;
+		}
+
+		public final int getBindBackLogSize() {
+			return bindBackLogSize;
+		}
+
+		public final boolean getInterestOpQueued() {
+			return interestOpQueued;
+		}
+
+		public final int getSelectInterval() {
+			return selectInterval;
+		}
+	}
+
+	public static class ItemConfig {
+
+		public static final String KEY_TYPE = "type";
+		public static final String KEY_DATA = "data";
+		public static final String KEY_INPUT = "input";
+		public static final String KEY_OUTPUT = "output";
+		public static final String KEY_NAMING = "naming";
+		private final String type;
+		private final DataConfig dataConfig;
+		private final InputConfig input;
+		private final OutputConfig output;
+		private final NamingConfig namingConfig;
+
+		public ItemConfig(
+			final String type, final DataConfig dataConfig, final InputConfig inputConfig,
+			final OutputConfig outputConfig, final NamingConfig namingConfig
+		) {
+			this.type = type;
+			this.dataConfig = dataConfig;
+			this.input = inputConfig;
+			this.output = outputConfig;
+			this.namingConfig = namingConfig;
+		}
+
+		public final String getType() {
+			return type;
+		}
+
+		public final DataConfig getDataConfig() {
+			return dataConfig;
+		}
+
+		public final InputConfig getInputConfig() {
+			return input;
+		}
+
+		public final OutputConfig getOutputConfig() {
+			return output;
+		}
+
+		public final NamingConfig getNamingConfig() {
+			return namingConfig;
+		}
+
+		public static class DataConfig {
+
+			public static final String KEY_CONTENT = "content";
+			public static final String KEY_RANGES = "ranges";
+			public static final String KEY_SIZE = "size";
+			public static final String KEY_VERIFY = "verify";
+			private final ContentConfig contentConfig;
+			private final int ranges;
+			private final SizeInBytes size;
+			private final boolean verify;
+
+			public DataConfig(
+				final ContentConfig contentConfig, final int ranges, final String size,
+				final boolean verify
 			) {
-				this.timeoutMilliSec = timeoutMilliSec;
-				this.reuseAddr = reuseAddr;
-				this.keepAlive = keepAlive;
-				this.tcpNoDelay = tcpNoDelay;
-				this.linger = linger;
-				this.bindBackLogSize = bindBackLogSize;
-				this.interestOpQueued = interestOpQueued;
-				this.selectInterval = selectInterval;
+				this.contentConfig = contentConfig;
+				this.ranges = ranges;
+				this.size = new SizeInBytes(size);
+				this.verify = verify;
 			}
 
-			public int getTimeoutInMilliseconds() {
-				return timeoutMilliSec;
+			public ContentConfig getContentConfig() {
+				return contentConfig;
 			}
 
-			public boolean getReusableAddress() {
-				return reuseAddr;
+			public final int getRanges() {
+				return ranges;
 			}
 
-			public boolean getKeepAlive() {
-				return keepAlive;
+			public final SizeInBytes getSize() {
+				return size;
 			}
 
-			public boolean getTcpNoDelay() {
-				return tcpNoDelay;
+			public final boolean getVerify() {
+				return verify;
 			}
 
-			public int getLinger() {
-				return linger;
+			public static class ContentConfig {
+
+				public static final String KEY_FILE = "file";
+				public static final String KEY_SEED = "seed";
+				public static final String KEY_RING_SIZE = "ringSize";
+				private final String file;
+				private final String seed;
+				private final SizeInBytes ringSize;
+
+				public ContentConfig(final String file, final String seed, final String ringSize) {
+					this.file = file;
+					this.seed = seed;
+					this.ringSize = new SizeInBytes(ringSize);
+				}
+
+				public final String getFile() {
+					return file;
+				}
+
+				public final String getSeed() {
+					return seed;
+				}
+
+				public final SizeInBytes getRingSize() {
+					return ringSize;
+				}
+			}
+		}
+
+		public static class InputConfig {
+
+			public static final String KEY_CONTAINER = "container";
+			public static final String KEY_FILE = "file";
+			private final String container;
+			private final String file;
+
+			public InputConfig(final String file, final String container) {
+				this.file = file;
+				this.container = container;
 			}
 
-			public int getBindBackLogSize() {
-				return bindBackLogSize;
+			public final String getContainer() {
+				return container;
 			}
 
-			public boolean getInterestOpQueued() {
-				return interestOpQueued;
+			public final String getFile() {
+				return file;
 			}
 
-			public int getSelectInterval() {
-				return selectInterval;
+		}
+
+		public static class OutputConfig {
+
+			public static final String KEY_CONTAINER = "container";
+			public static final String KEY_FILE = "file";
+			private final String container;
+			private final String file;
+
+			public OutputConfig(final String container, final String file) {
+				this.container = container;
+				this.file = file;
 			}
+
+			public String getContainer() {
+				return container;
+			}
+
+			public String getFile() {
+				return file;
+			}
+		}
+
+
+
+		public static class NamingConfig {
+
+			public static final String KEY_TYPE = "type";
+			public static final String KEY_PREFIX = "prefix";
+			public static final String KEY_RADIX = "radix";
+			public static final String KEY_OFFSET = "offset";
+			public static final String KEY_LENGTH = "length";
+			private final String type;
+			private final String prefix;
+			private final int radix;
+			private final int offset;
+			private final int length;
+
+			public NamingConfig(
+				final String type, final String prefix, final int radix, final int offset,
+				final int length
+			) {
+				this.type = type;
+				this.radix = radix;
+				this.offset = offset;
+				this.length = length;
+				this.prefix = prefix;
+			}
+
+			public final String getType() {
+				return type;
+			}
+
+			public final String getPrefix() {
+				return prefix;
+			}
+
+			public final int getRadix() {
+				return radix;
+			}
+
+			public final int getOffset() {
+				return offset;
+			}
+
+			public final int getLength() {
+				return length;
+			}
+		}
+	}
+
+	public static class LoadConfig {
+
+		public static final String KEY_CIRCULAR = "circular";
+		public static final String KEY_TYPE = "type";
+		public static final String KEY_CONCURRENCY = "concurrency";
+		public static final String KEY_LIMIT = "limit";
+		public static final String KEY_METRICS = "metrics";
+		private final boolean circular;
+		private final String type;
+		private final int concurrency;
+		private final LimitConfig limitConfig;
+		private final MetricsConfig metricsConfig;
+
+		public LoadConfig(final boolean circular, final String type,
+			final int concurrency, final LimitConfig limitConfig,
+			final MetricsConfig metricsConfig) {
+			this.circular = circular;
+			this.type = type;
+			this.concurrency = concurrency;
+			this.limitConfig = limitConfig;
+			this.metricsConfig = metricsConfig;
+		}
+
+		public final String getType() {
+			return type;
+		}
+
+		public final boolean getCircular() {
+			return circular;
+		}
+
+		public int getConcurrency() {
+			return concurrency;
+		}
+
+		public final LimitConfig getLimitConfig() {
+			return limitConfig;
+		}
+
+		public final MetricsConfig getMetricsConfig() {
+			return metricsConfig;
+		}
+
+		public static class LimitConfig {
+
+			public static final String KEY_COUNT = "count";
+			public static final String KEY_RATE = "rate";
+			public static final String KEY_SIZE = "size";
+			public static final String KEY_TIME = "time";
+			private final int count;
+			private final int rate;
+			private final int size;
+			private final String time;
+
+			public LimitConfig(final int count, final int rate, final int size, final String time) {
+				this.count = count;
+				this.rate = rate;
+				this.size = size;
+				this.time = time;
+			}
+
+			public final int getCount() {
+				return count;
+			}
+
+			public final int getRate() {
+				return rate;
+			}
+
+			public final int getSize() {
+				return size;
+			}
+
+			public final String getTime() {
+				return time;
+			}
+		}
+
+		public static class MetricsConfig {
+
+			public static final String KEY_INTERMEDIATE = "intermediate";
+			public static final String KEY_PERIOD = "period";
+			public static final String KEY_PRECONDITION= "precondition";
+			private final boolean intermediate;
+			private final String period;
+			private final boolean precondition;
+
+			public MetricsConfig(
+				final boolean intermediate, final String period, final boolean precondition
+			) {
+				this.intermediate = intermediate;
+				this.period = period;
+				this.precondition = precondition;
+			}
+
+			public final boolean getIntermediate() {
+				return intermediate;
+			}
+
+			public final String getPeriod() {
+				return period;
+			}
+
+			public final boolean getPrecondition() {
+				return precondition;
+			}
+		}
+	}
+
+	public static class RunConfig {
+
+		public static final String KEY_FILE = "file";
+		public static final String KEY_ID = "id";
+		private final String file;
+		private final String id;
+
+		public RunConfig(final String file, final String id) {
+			this.file = file;
+			this.id = id;
+		}
+
+		public final String getFile() {
+			return file;
+		}
+
+		public final String getId() {
+			return id;
 		}
 	}
 
@@ -139,43 +590,66 @@ public class CommonConfig {
 		public static final String KEY_AUTH = "auth";
 		public static final String KEY_HTTP = "http";
 		public static final String KEY_PORT = "port";
+		public static final String KEY_SSL = "ssl";
 		public static final String KEY_TYPE = "type";
+		public static final String KEY_MOCK = "mock";
+		private List<String> addrs;
+		private AuthConfig authConfig;
+		private HttpConfig httpConfig;
+		private int port;
+		private boolean ssl;
+		private String type;
+		private MockConfig mockConfig;
 
-		private final int port;
-		private final String type;
-		private final AuthConfig authConfig;
-		private final HttpConfig httpConfig;
-		private final List<String> addrs;
+		private StorageConfig() {}
 
-		public StorageConfig(
-			final int port, final String type, final AuthConfig authConfig,
-			final HttpConfig httpConfig, final List<String> addrs
-		) {
-			this.port = port;
-			this.type = type;
-			this.authConfig = authConfig;
-			this.httpConfig = httpConfig;
-			this.addrs = Collections.unmodifiableList(addrs);
+		public static final StorageConfigBuilder newBuilder() {
+			return new StorageConfig().new StorageConfigBuilder();
 		}
 
-		public int getPort() {
-			return port;
-		}
+		public final class StorageConfigBuilder {
 
-		public String getType() {
-			return type;
-		}
+			private StorageConfigBuilder() {}
 
-		public AuthConfig getAuthConfig() {
-			return authConfig;
-		}
+			public final StorageConfigBuilder setAddresses(final List<String> addrs) {
+				StorageConfig.this.addrs = addrs;
+				return this;
+			}
 
-		public HttpConfig getHttpConfig() {
-			return httpConfig;
-		}
+			public final StorageConfigBuilder setAuthConfig(final AuthConfig authConfig) {
+				StorageConfig.this.authConfig = authConfig;
+				return this;
+			}
 
-		public List<String> getAddresses() {
-			return addrs;
+			public final StorageConfigBuilder setHttpConfig(final HttpConfig httpConfig) {
+				StorageConfig.this.httpConfig = httpConfig;
+				return this;
+			}
+
+			public final StorageConfigBuilder setPort(final int port) {
+				StorageConfig.this.port = port;
+				return this;
+			}
+
+			public final StorageConfigBuilder setSsl(final boolean ssl) {
+				StorageConfig.this.ssl = ssl;
+				return this;
+			}
+
+			public final StorageConfigBuilder setType(final String type) {
+				StorageConfig.this.type = type;
+				return this;
+			}
+
+			public final StorageConfigBuilder setMockConfig(final MockConfig mockConfig) {
+				StorageConfig.this.mockConfig = mockConfig;
+				return this;
+			}
+
+			public final StorageConfig build() {
+				return StorageConfig.this;
+			}
+
 		}
 
 		public static class AuthConfig {
@@ -183,7 +657,6 @@ public class CommonConfig {
 			public static final String KEY_ID = "id";
 			public static final String KEY_SECRET = "secret";
 			public static final String KEY_TOKEN = "token";
-
 			private final String id;
 			private final String secret;
 			private final String token;
@@ -213,10 +686,9 @@ public class CommonConfig {
 			public static final String KEY_FS_ACCESS = "fsAccess";
 			public static final String KEY_HEADERS = "headers";
 			public static final String KEY_HEADER_CONNECTION = "Connection";
-			public static final String KEY_HEADER_USER_AGENT= "User-Agent";
+			public static final String KEY_HEADER_USER_AGENT = "User-Agent";
 			public static final String KEY_NAMESPACE = "namespace";
 			public static final String KEY_VERSIONING = "versioning";
-
 			private final String api;
 			private final boolean fsAccess;
 			private final String namespace;
@@ -254,210 +726,59 @@ public class CommonConfig {
 				return headers;
 			}
 		}
-	}
 
-	public static class ItemConfig {
+		public static class MockConfig {
 
-		public static final String KEY_TYPE = "type";
-		public static final String KEY_DATA = "data";
-		public static final String KEY_DESTINATION = "dst";
-		public static final String KEY_SOURCE = "src";
-		public static final String KEY_NAMING = "naming";
-		private final String type;
-		private final DataConfig dataConfig;
-		private final DestinationConfig dst;
-		private final SourceConfig src;
-		private final NamingConfig namingConfig;
-
-		public ItemConfig(
-			final String type, final DataConfig dataConfig, final DestinationConfig dstConfig,
-			final SourceConfig srcConfig, final NamingConfig namingConfig
-		) {
-			this.type = type;
-			this.dataConfig = dataConfig;
-			this.dst = dstConfig;
-			this.src = srcConfig;
-			this.namingConfig = namingConfig;
-		}
-
-		public String getType() {
-			return type;
-		}
-
-		public DataConfig getDataConfig() {
-			return dataConfig;
-		}
-
-		public DestinationConfig getDestinationConfig() {
-			return dst;
-		}
-
-		public SourceConfig getSourceConfig() {
-			return src;
-		}
-
-		public NamingConfig getNamingConfig() {
-			return namingConfig;
-		}
-
-		public static class DataConfig {
-
-			public static final String KEY_CONTENT = "content";
-			public static final String KEY_RANGES = "ranges";
-			public static final String KEY_SIZE = "size";
-			public static final String KEY_VERIFY = "verify";
-			private final ContentConfig contentConfig;
-			private final int ranges;
-			private final String size;
-			private final boolean verify;
-
-			public DataConfig(
-				final ContentConfig contentConfig, final int ranges, final String size, final boolean verify
-			) {
-				this.contentConfig = contentConfig;
-				this.ranges = ranges;
-				this.size = size;
-				this.verify = verify;
-			}
-
-			public ContentConfig getContentConfig() {
-				return contentConfig;
-			}
-
-			public int getRanges() {
-				return ranges;
-			}
-
-			public String getSize() {
-				return size;
-			}
-
-			public boolean getVerify() {
-				return verify;
-			}
-
-			public static class ContentConfig {
-
-				public static final String KEY_FILE = "file";
-				public static final String KEY_SEED = "seed";
-				public static final String KEY_RING_SIZE = "ringSize";
-				private final String file;
-				private final String seed;
-				private final String ringSize;
-
-				public ContentConfig(final String file, final String seed, final String ringSize) {
-					this.file = file;
-					this.seed = seed;
-					this.ringSize = ringSize;
-				}
-
-				public String getFile() {
-					return file;
-				}
-
-				public String getSeed() {
-					return seed;
-				}
-
-				public String getRingSize() {
-					return ringSize;
-				}
-			}
-		}
-
-		public static class DestinationConfig {
-
+			public static final String KEY_HEAD_COUNT = "headCount";
+			public static final String KEY_CAPACITY = "capacity";
 			public static final String KEY_CONTAINER = "container";
-			public static final String KEY_FILE = "file";
-			private final String container;
-			private final String file;
+			private final int headCount;
+			private final int capacity;
+			private final ContainerConfig containerConfig;
 
-			public DestinationConfig(final String container, final String file) {
-				this.container = container;
-				this.file = file;
-			}
-
-			public String getContainer() {
-				return container;
-			}
-
-			public String getFile() {
-				return file;
-			}
-		}
-
-		public static class SourceConfig {
-
-			public static final String KEY_CONTAINER = "container";
-			public static final String KEY_FILE = "file";
-			public static final String KEY_BATCH_SIZE = "batchSize";
-			private final String container;
-			private final String file;
-			private final int batchSize;
-
-			public SourceConfig(final String file, final String container, final int batchSize) {
-				this.file = file;
-				this.container = container;
-				this.batchSize = batchSize;
-			}
-
-			public String getContainer() {
-				return container;
-			}
-
-			public String getFile() {
-				return file;
-			}
-
-			public int getBatchSize() {
-				return batchSize;
-			}
-		}
-
-		public static class NamingConfig {
-
-			public static final String KEY_TYPE = "type";
-			public static final String KEY_PREFIX = "prefix";
-			public static final String KEY_RADIX = "radix";
-			public static final String KEY_OFFSET = "offset";
-			public static final String KEY_LENGTH = "length";
-			private final String type;
-			private final String prefix;
-			private final int radix;
-			private final int offset;
-			private final int length;
-
-			public NamingConfig(
-				final String type, final String prefix, final int radix, final int offset,
-				final int length
+			public MockConfig(
+				final int headCount, final int capacity, final ContainerConfig containerConfig
 			) {
-				this.type = type;
-				this.radix = radix;
-				this.offset = offset;
-				this.length = length;
-				this.prefix = prefix;
+				this.headCount = headCount;
+				this.capacity = capacity;
+				this.containerConfig = containerConfig;
 			}
 
-			public String getType() {
-				return type;
+			public int getHeadCount() {
+				return headCount;
 			}
 
-			public String getPrefix() {
-				return prefix;
+			public int getCapacity() {
+				return capacity;
 			}
 
-			public int getRadix() {
-				return radix;
+			public ContainerConfig container() {
+				return containerConfig;
 			}
 
-			public int getOffset() {
-				return offset;
+			public static class ContainerConfig {
+
+				public static final String KEY_CAPACITY = "capacity";
+				public static final String KEY_COUNT_LIMIT = "countLimit";
+				private final int capacity;
+				private final int countLimit;
+
+				public ContainerConfig(final int capacity, final int countLimit) {
+					this.capacity = capacity;
+					this.countLimit = countLimit;
+				}
+
+				public int getCapacity() {
+					return capacity;
+				}
+
+				public int getCountLimit() {
+					return countLimit;
+				}
 			}
 
-			public int getLength() {
-				return length;
-			}
 		}
+
 	}
 
 }

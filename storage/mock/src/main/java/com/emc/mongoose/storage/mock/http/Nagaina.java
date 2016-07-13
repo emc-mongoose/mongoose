@@ -4,7 +4,6 @@ import com.emc.mongoose.common.config.CommonConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.storage.mock.StorageMock;
-import com.emc.mongoose.storage.mock.config.StorageMockConfig;
 import com.emc.mongoose.storage.mock.http.request.AtmosRequestHandler;
 import com.emc.mongoose.storage.mock.http.request.RequestHandlerBase;
 import com.emc.mongoose.storage.mock.http.request.S3RequestHandler;
@@ -32,20 +31,20 @@ public class Nagaina implements StorageMock {
 
 	private final static Logger LOG = LogManager.getLogger();
 
-	private final int port;
-	private final EventLoopGroup[] dispatchGroups;
-	private final EventLoopGroup[] workGroups;
-	private final Channel[] channels;
+	private final int port = 0;
+	private final EventLoopGroup[] dispatchGroups = null;
+	private final EventLoopGroup[] workGroups = null;
+	private final Channel[] channels = null;
 	private final RequestHandlerBase s3RequestHandler, swiftRequestHandler, atmosRequestHandler;
 
 	@SuppressWarnings("ConstantConditions")
-	public Nagaina(final CommonConfig commonConfig, final StorageMockConfig storageMockConfig) {
-		port = commonConfig.getStorageConfig().getPort();
-		final int headCount = storageMockConfig.getHeadCount();
-		dispatchGroups = new NioEventLoopGroup[headCount];
-		workGroups = new NioEventLoopGroup[headCount];
-		channels = new Channel[headCount];
-		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
+	public Nagaina(final CommonConfig commonConfig) {
+//		port = commonConfig.getStorageConfig().getPort();
+//		final int headCount = mockConfig.getHeadCount();
+//		dispatchGroups = new NioEventLoopGroup[headCount];
+//		workGroups = new NioEventLoopGroup[headCount];
+//		channels = new Channel[headCount];
+//		LOG.info(Markers.MSG, "Starting with {} head(s)", headCount);
 		s3RequestHandler = new S3RequestHandler();
 		swiftRequestHandler = new SwiftRequestHandler();
 		atmosRequestHandler = new AtmosRequestHandler();

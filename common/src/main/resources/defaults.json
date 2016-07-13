@@ -93,7 +93,7 @@
 				"capacity" : 1000000,
 				"countLimit" : 1000000
 			}
-		},
+		}
 	},
 	"aliasing" : {
 		"api.name" : [ "storage.http.api" ],
