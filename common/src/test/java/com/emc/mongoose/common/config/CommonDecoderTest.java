@@ -1,11 +1,15 @@
 package com.emc.mongoose.common.config;
 
 import com.emc.mongoose.common.config.reader.ConfigReader;
+import com.emc.mongoose.common.util.SizeInBytes;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -20,74 +24,20 @@ public class CommonDecoderTest {
 		return "Wrong " + content + " parameter";
 	}
 
+	@SuppressWarnings("ConstantConditions")
 	@Test
-	public void shouldCreateConfig() throws Exception{
+	public void shouldCreateConfig() throws Exception {
 		final CommonConfig commonConfig = ConfigReader.loadConfig(new CommonDecoder());
-		assertNotNull("The configuration was loaded incorrectly");
-
-
-
-//		final CommonConfig.NetworkConfig.SocketConfig socketConfig = commonConfig.getNetworkConfig().getSocketConfig();
-//		assertEquals(parameterErrorMessage("name"),
-//			commonConfig.getName(), "mongoose");
-//		assertEquals(parameterErrorMessage("network.socketConfig.timeoutMilliSec"),
-//			socketConfig.getTimeoutInMilliseconds(), 1_000_000);
-//		assertEquals(parameterErrorMessage("network.socketConfig.reuseAddr"),
-//			socketConfig.getReusableAddress(), true);
-//		assertEquals(parameterErrorMessage("network.socketConfig.keepAlive"),
-//			socketConfig.getKeepAlive(), true);
-//		assertEquals(parameterErrorMessage("network.socketConfig.tcpNoDelay"),
-//			socketConfig.getTcpNoDelay(), true);
-//		assertEquals(parameterErrorMessage("network.socketConfig.linger"),
-//			socketConfig.getLinger(), 0);
-//		assertEquals(parameterErrorMessage("network.socketConfig.bindBacklogSize"),
-//			socketConfig.getBindBackLogSize(), 0);
-//		assertEquals(parameterErrorMessage("network.socketConfig.interestOpQueued"),
-//			socketConfig.getInterestOpQueued(), false);
-//		assertEquals(parameterErrorMessage("network.socketConfig.selectInterval"),
-//			socketConfig.getSelectInterval(), 100);
-//		final CommonConfig.StorageConfig storage = commonConfig.getStorageConfig();
-//		assertEquals(parameterErrorMessage("storage.addrs"),
-//			storage.getAddresses().get(0), "127.0.0.1");
-//		final CommonConfig.StorageConfig.AuthConfig auth = storage.getAuthConfig();
-//		assertNull(parameterErrorMessage("storage.auth.id"), auth.getId());
-//		assertNull(parameterErrorMessage("storage.auth.secret"), auth.getSecret());
-//		assertNull(parameterErrorMessage("storage.auth.token"), auth.getToken());
-//		final CommonConfig.StorageConfig.HttpConfig http = storage.getHttpConfig();
-//		assertEquals(parameterErrorMessage("storage.http.api"), http.getApi(), "S3");
-//		assertEquals(parameterErrorMessage("storage.http.fsAccess"), http.getFsAccess(), false);
-//		final Map<String, String> headers = http.getHeaders();
-//		assertEquals(parameterErrorMessage("storage.http.headers[\"Connection\"]"), headers.get(
-//			CommonConfig.StorageConfig.HttpConfig.KEY_HEADER_CONNECTION), "keep-alive");
-//		assertEquals(parameterErrorMessage("storage.http.headers[\"User-Agent\"]"), headers.get(
-//			CommonConfig.StorageConfig.HttpConfig.KEY_HEADER_USER_AGENT), "mongoose/3.0.0");
-//		assertNull("storage.http.namespace", http.getNamespace());
-//		assertEquals("storage.http.versioning", http.getVersioning(), false);
-//		assertEquals("storage.port", storage.getPort(), 9020);
-//		assertEquals("storage.type", storage.getType(), "http");
-//		final CommonConfig.ItemConfig itemConfig = commonConfig.getItemConfig();
-//		assertEquals(parameterErrorMessage("item.type"), itemConfig.getType(), "data");
-//		final CommonConfig.ItemConfig.DataConfig dataConfig = itemConfig.getDataConfig();
-//		final CommonConfig.ItemConfig.DataConfig.ContentConfig contentConfig = dataConfig.getContentConfig();
-//		assertNull(parameterErrorMessage("item.data.content.file"), contentConfig.getFile());
-//		assertEquals(parameterErrorMessage("item.data.content.seed"), contentConfig.getSeed(), "7a42d9c483244167");
-//		assertEquals(parameterErrorMessage("item.data.content.ringSize"), contentConfig.getRingSize(), "4MB");
-//		assertEquals(parameterErrorMessage("item.data.ranges"), dataConfig.getRanges(), 0);
-//		assertEquals(parameterErrorMessage("item.data.size"), dataConfig.getSize(), "1MB");
-//		assertEquals(parameterErrorMessage("item.data.verify"), dataConfig.getVerify(), true);
-//		final CommonConfig.ItemConfig.OutputConfig outputConfig = itemConfig.getOutputConfig();
-//		assertNull(parameterErrorMessage("item.dst.container"), outputConfig.getContainer());
-//		assertNull(parameterErrorMessage("item.dst.file"), outputConfig.getFile());
-//		final CommonConfig.ItemConfig.InputConfig inputConfig = itemConfig.getInputConfig();
-//		assertNull(parameterErrorMessage("item.src.container"), inputConfig.getContainer());
-//		assertNull(parameterErrorMessage("item.src.file"), inputConfig.getFile());
-//		assertEquals(parameterErrorMessage("item.src.batchSize"), inputConfig.getBatchSize(), 4096);
-//		final CommonConfig.ItemConfig.NamingConfig namingConfig = itemConfig.getNamingConfig();
-//		assertEquals(parameterErrorMessage("naming.type"), namingConfig.getType(), "random");
-//		assertNull(parameterErrorMessage("naming.prefix"), namingConfig.getPrefix());
-//		assertEquals(parameterErrorMessage("naming.radix"), namingConfig.getRadix(), 36);
-//		assertEquals(parameterErrorMessage("naming.offset"), namingConfig.getOffset(), 0);
-//		assertEquals(parameterErrorMessage("naming.length"), namingConfig.getLength(), 13);
+		assertThat(commonConfig, is(notNullValue()));
+		assertThat(commonConfig.getName(), is(equalTo("mongoose")));
+		assertThat(commonConfig.getVersion(), is(equalTo("3.0.0-SNAPSHOT")));
+		final CommonConfig.IoConfig ioConfig = commonConfig.getIoConfig();
+		assertThat(ioConfig, is(notNullValue()));
+		final CommonConfig.IoConfig.BufferConfig bufferConfig = ioConfig.getBufferConfig();
+		assertThat(bufferConfig, is(notNullValue()));
+		assertThat(bufferConfig.getSize(), is(equalTo(new SizeInBytes("4KB-1MB"))));
+		final CommonConfig.SocketConfig socketConfig = commonConfig.getSocketConfig();
+		assertThat(socketConfig, is(notNullValue()));
 	}
 
 }

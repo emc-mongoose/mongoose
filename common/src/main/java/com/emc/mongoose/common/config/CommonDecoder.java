@@ -115,8 +115,8 @@ public class CommonDecoder
 		);
 		final JsonObject runConfigJson = getJsonObject(commonJson, CommonConfig.KEY_RUN);
 		final CommonConfig.RunConfig runConfig = new CommonConfig.RunConfig(
-			getString(runConfigJson, CommonConfig.RunConfig.KEY_ID),
-			getString(runConfigJson, CommonConfig.RunConfig.KEY_FILE)
+			getString(runConfigJson, CommonConfig.RunConfig.KEY_ID, null),
+			getString(runConfigJson, CommonConfig.RunConfig.KEY_FILE, null)
 		);
 		final JsonObject storageConfigJson = getJsonObject(commonJson, CommonConfig.KEY_STORAGE);
 		final JsonArray addressesJsonArr =
