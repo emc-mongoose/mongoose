@@ -18,7 +18,7 @@ public class ConfigMatcher<T> extends TypeSafeMatcher<T> {
 		this.path = path;
 	}
 
-	private static boolean areEqual(Object actual, Object expected) {
+	private static <T> boolean areEqual(T actual, T expected) {
 		if (actual == null) {
 			return expected == null;
 		}
