@@ -652,6 +652,34 @@ public class CommonConfig {
 
 		}
 
+		public List<String> getAddresses() {
+			return addrs;
+		}
+
+		public AuthConfig getAuthConfig() {
+			return authConfig;
+		}
+
+		public HttpConfig getHttpConfig() {
+			return httpConfig;
+		}
+
+		public int getPort() {
+			return port;
+		}
+
+		public boolean isSsl() {
+			return ssl;
+		}
+
+		public String getType() {
+			return type;
+		}
+
+		public MockConfig getMockConfig() {
+			return mockConfig;
+		}
+
 		public static class AuthConfig {
 
 			public static final String KEY_ID = "id";
@@ -752,7 +780,7 @@ public class CommonConfig {
 				return capacity;
 			}
 
-			public ContainerConfig container() {
+			public ContainerConfig getContainerConfig() {
 				return containerConfig;
 			}
 

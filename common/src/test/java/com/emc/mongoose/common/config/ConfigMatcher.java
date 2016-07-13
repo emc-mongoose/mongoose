@@ -1,22 +1,47 @@
 package com.emc.mongoose.common.config;
 
 import org.hamcrest.Description;
-import org.hamcrest.core.IsEqual;
+import org.hamcrest.Factory;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 
 /**
  Created on 13.07.16.
  */
-public class ConfigMatcher<T> extends IsEqual<T> {
+public class ConfigMatcher<T> extends TypeSafeMatcher<T> {
 
+	private final T expectedValue;
 	private final String path;
 
 	public ConfigMatcher(final T equalArg, final String path) {
-		super(equalArg);
+		this.expectedValue = equalArg;
 		this.path = path;
 	}
 
+	private static boolean areEqual(Object actual, Object expected) {
+		if (actual == null) {
+			return expected == null;
+		}
+		return actual.equals(expected);
+	}
+
 	@Override
-	public void describeMismatch(final Object item, final Description description) {
-//		description.appendText("")
+	public boolean matchesSafely(final T actualValue) {
+		return areEqual(actualValue, expectedValue);
+	}
+
+	@Override
+	public void describeMismatchSafely(final T item, final Description description) {
+		description.appendText("parameter was - ").appendValue(item);
+	}
+
+	@Factory
+	public static <T> Matcher<T> equalTo(final T operand, final String path) {
+		return new ConfigMatcher<>(operand, path);
+	}
+
+	@Override
+	public void describeTo(final Description description) {
+		description.appendText("parameter '").appendText(path).appendText("' was - ").appendValue(expectedValue);
 	}
 }
