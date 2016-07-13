@@ -11,4 +11,7 @@ import java.io.Closeable;
  */
 public interface Generator<I extends Item, O extends IoTask<I>>
 extends Closeable, LifeCycle {
+
+	void registerMonitor(final Monitor<I, O> monitor)
+	throws IllegalStateException;
 }

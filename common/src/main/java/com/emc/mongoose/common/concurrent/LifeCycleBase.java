@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class LifeCycleBase
 implements LifeCycle {
 
-	private AtomicReference<State> state = new AtomicReference<>(State.INITIAL);
+	private AtomicReference<State> stateRef = new AtomicReference<>(State.INITIAL);
 
 	private enum State {
 		INITIAL, STARTED, SHUTDOWN, INTERRUPTED
@@ -23,30 +23,51 @@ implements LifeCycle {
 	@Override
 	public final void start()
 	throws IllegalStateException {
+		if(stateRef.compareAndSet(State.INITIAL, State.STARTED)) {
+			doStart();
+		} else {
+			throw new IllegalStateException("start failed: state is " + stateRef.get());
+		}
 	}
 
 	@Override
 	public final boolean isStarted() {
-		return state.get().equals(State.STARTED);
+		return stateRef.get().equals(State.STARTED);
 	}
 
 	@Override
 	public final void shutdown()
 	throws IllegalStateException {
+		if(stateRef.compareAndSet(State.INITIAL, State.SHUTDOWN)) {
+			doShutdown();
+		} else if(stateRef.compareAndSet(State.STARTED, State.SHUTDOWN)) {
+			doShutdown();
+		} else {
+			throw new IllegalStateException("shutdown failed: state is " + stateRef.get());
+		}
 	}
 
 	@Override
 	public final boolean isShutdown() {
-		return state.get().equals(State.SHUTDOWN);
+		return stateRef.get().equals(State.SHUTDOWN);
 	}
 
 	@Override
 	public final void interrupt()
 	throws IllegalStateException {
+		try {
+			shutdown();
+		} catch(final IllegalStateException ignored) {
+		}
+		if(stateRef.compareAndSet(State.SHUTDOWN, State.INTERRUPTED)) {
+			doInterrupt();
+		} else {
+			throw new IllegalStateException("interrupt failed: state is " + stateRef.get());
+		}
 	}
 
 	@Override
 	public final boolean isInterrupted() {
-		return state.get().equals(State.INTERRUPTED);
+		return stateRef.get().equals(State.INTERRUPTED);
 	}
 }

@@ -8,9 +8,8 @@ import com.emc.mongoose.common.load.Monitor;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  Created by kurila on 11.07.16.
@@ -20,10 +19,19 @@ public class DriverMock<I extends Item, O extends IoTask<I>>
 extends LifeCycleBase
 implements Driver<I, O> {
 
-	private final Monitor<I, O> monitor;
+	private final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
 
-	public DriverMock(final Monitor<I, O> monitor) {
-		this.monitor = monitor;
+	public DriverMock() {
+	}
+
+	@Override
+	public final void registerMonitor(final Monitor<I, O> monitor)
+	throws IllegalStateException {
+		if(monitorRef.compareAndSet(null, monitor)) {
+			monitor.registerDriver(this);
+		} else {
+			throw new IllegalStateException("Driver is already used by another monitor");
+		}
 	}
 
 	@Override
@@ -36,52 +44,21 @@ implements Driver<I, O> {
 		return false;
 	}
 
-	private final static class SubmitFutureMock<I extends Item, O extends IoTask<I>>
-	implements Future<O> {
-
-		private final O ioTask;
-
-		public SubmitFutureMock(final O ioTask) {
-			this.ioTask = ioTask;
-		}
-
-		@Override
-		public final boolean cancel(final boolean mayInterruptIfRunning) {
-			return false;
-		}
-
-		@Override
-		public final boolean isCancelled() {
-			return false;
-		}
-
-		@Override
-		public final boolean isDone() {
-			return true;
-		}
-
-		@Override
-		public final O get() {
-			return ioTask;
-		}
-
-		@Override
-		public final O get(final long timeout, final TimeUnit unit) {
-			return ioTask;
-		}
-	}
-	//
 	@Override
-	public Future<O> submit(final O task)
-	throws RejectedExecutionException {
-		monitor.ioTaskCompleted(task);
-		return new SubmitFutureMock<>(task);
+	public boolean submit(final O task) {
+		final Monitor<I, O> monitor = monitorRef.get();
+		if(monitor != null) {
+			monitor.ioTaskCompleted(task);
+		}
+		return true;
 	}
 
 	@Override
-	public int submit(final List<O> tasks, final int from, final int to)
-	throws RejectedExecutionException {
-		monitor.ioTaskCompletedBatch(tasks, from, to);
+	public int submit(final List<O> tasks, final int from, final int to) {
+		final Monitor<I, O> monitor = monitorRef.get();
+		if(monitor != null) {
+			monitor.ioTaskCompletedBatch(tasks, from, to);
+		}
 		return to - from;
 	}
 
@@ -112,5 +89,12 @@ implements Driver<I, O> {
 	@Override
 	public void close()
 	throws IOException {
+		if(!isInterrupted()) {
+			interrupt();
+		}
+		final Monitor<I, O> monitor = monitorRef.get();
+		if(monitor != null) {
+			monitor.driverFinished(this);
+		}
 	}
 }

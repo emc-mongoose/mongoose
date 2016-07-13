@@ -15,14 +15,14 @@ import java.util.concurrent.RunnableFuture;
 /**
  Created by andrey on 04.08.15.
  */
-public final class BlockingQueueSequencer
+public final class BlockingQueueTaskSequencer
 extends Thread
 implements TaskSequencer {
 
 	private final static Logger LOG = LogManager.getLogger();
 	public final static int DEFAULT_TASK_QUEUE_SIZE = 0x1000;
-	public final static BlockingQueueSequencer INSTANCE = new BlockingQueueSequencer(
-		"blockingQueueSequencer", true, DEFAULT_TASK_QUEUE_SIZE
+	public final static BlockingQueueTaskSequencer INSTANCE = new BlockingQueueTaskSequencer(
+		"blockingQueueTaskSequencer", true, DEFAULT_TASK_QUEUE_SIZE
 	);
 	static {
 		INSTANCE.start();
@@ -32,7 +32,7 @@ implements TaskSequencer {
 	private final int batchSize;
 	private final Collection<Runnable> buff;
 
-	protected BlockingQueueSequencer(final String name, boolean daemonFlag, final int batchSize) {
+	protected BlockingQueueTaskSequencer(final String name, boolean daemonFlag, final int batchSize) {
 		super(name);
 		setDaemon(daemonFlag);
 		queue = new ArrayBlockingQueue<>(DEFAULT_TASK_QUEUE_SIZE, false);

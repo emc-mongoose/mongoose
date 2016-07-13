@@ -6,7 +6,6 @@ import com.emc.mongoose.common.item.Item;
 
 import java.io.Closeable;
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 
 /**
@@ -19,9 +18,10 @@ extends Closeable, LifeCycle {
 
 	boolean isFullThrottleExited();
 
-	Future<O> submit(final O task)
-	throws RejectedExecutionException;
+	boolean submit(final O task);
 
-	int submit(final List<O> tasks, final int from, final int to)
-	throws RejectedExecutionException;
+	int submit(final List<O> tasks, final int from, final int to);
+
+	void registerMonitor(final Monitor<I, O> monitor)
+	throws IllegalStateException;
 }
