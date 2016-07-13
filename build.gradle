@@ -7,7 +7,7 @@ def loadProjectVersionFrom(String sourceFileName) {
 	def json = new JsonSlurper().parseText(inputFile.text)
 	json.version
 }
-def configFilePath = "config${File.separator}defaults.json"
+def configFilePath = "./common${File.separator}src${File.separator}main${File.separator}resources${File.separator}defaults.json"
 
 version = loadProjectVersionFrom configFilePath
 

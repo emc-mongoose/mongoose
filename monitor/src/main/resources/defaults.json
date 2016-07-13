@@ -1,13 +1,13 @@
 {
 	"job" : {
 		"circular" : false,
+		"type" : "create",
 		"limit" : {
 			"count" : 0,
 			"rate" : 0,
 			"size" : 0,
 			"time" : "0s"
-		},
-		"type" : "create"
+		}
 	},
 	"metrics" : {
 		"intermediate" : false,

@@ -20,8 +20,7 @@ public class StorageMockDecoderTest {
 
 	@Test
 	public void shouldCreateConfig() throws Exception {
-		final Decoder<StorageMockConfig> storageMockDecoder = new StorageMockDecoder();
-		final StorageMockConfig storageMockConfig = ConfigReader.loadConfig(storageMockDecoder);
+		final StorageMockConfig storageMockConfig = ConfigReader.loadConfig(new StorageMockDecoder());
 		assertNotNull(storageMockConfig);
 		assertEquals(parameterErrorMessage("headCount"), storageMockConfig.getHeadCount(), 1);
 		assertEquals(parameterErrorMessage("capacity"), storageMockConfig.getCapacity(), 1_000_000);

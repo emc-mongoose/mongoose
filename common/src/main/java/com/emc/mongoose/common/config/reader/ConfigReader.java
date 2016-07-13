@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,29 +20,30 @@ import java.io.InputStreamReader;
 public class ConfigReader{
 
 	private final static Logger LOG = LogManager.getLogger();
-	private ClassLoader classLoader;
 
-	private ConfigReader(final Class aClass) {
-		classLoader = aClass.getClassLoader();
-	}
 
-	private JsonObject readJson(final String jsonFilePath) {
+	private static JsonObject readJson(final ClassLoader classLoader, final String jsonFilePath) {
 		try(final InputStream fileAsInputStream = classLoader.getResourceAsStream(jsonFilePath)) {
-			try(
-				final JsonReader jsonReader = Json.createReader(
-					new InputStreamReader(fileAsInputStream))
-			) {
-				return jsonReader.readObject();
-			}
+			return readJsonAsStream(fileAsInputStream);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to open the configuration file");
 		}
 		return null;
 	}
 
+	private static JsonObject readJsonAsStream(final InputStream jsonInputStream) {
+		try(
+			final JsonReader jsonReader = Json.createReader(
+				new InputStreamReader(jsonInputStream))
+		) {
+			return jsonReader.readObject();
+		}
+	}
+
 	public static <T> T loadConfig(final Decoder<T> decoder) {
 		try {
-			return decoder.decode(new ConfigReader(decoder.getClass()).readJson("defaults.json"));
+			final JsonObject jsonConfig = readJson(decoder.getClass().getClassLoader(), "defaults.json");
+			return decoder.decode(jsonConfig);
 		} catch(final DecodeException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to read the configuration file");
 		}

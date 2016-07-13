@@ -1,4 +1,5 @@
 {
+	"version": "3.0.0-SNAPSHOT",
 	"name" : "mongoose",
 	"network" : {
 		"socket" : {
@@ -33,5 +34,34 @@
 		},
 		"port" : 9020,
 		"type" : "http"
+	},
+	"item" : {
+		"type" : "data",
+		"data" : {
+			"content" : {
+				"file" : null,
+				"seed" : "7a42d9c483244167",
+				"ringSize" : "4MB"
+			},
+			"ranges" : 0,
+			"size" : "1MB",
+			"verify" : true
+		},
+		"dst" : {
+			"container" : null,
+			"file" : null
+		},
+		"src" : {
+			"container" : null,
+			"file" : null,
+			"batchSize" : 4096
+		},
+		"naming" : {
+			"type" : "random",
+			"prefix" : null,
+			"radix" : 36,
+			"offset" : 0,
+			"length" : 13
+		}
 	}
 }
