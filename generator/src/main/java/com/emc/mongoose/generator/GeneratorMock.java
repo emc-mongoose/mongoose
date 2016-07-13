@@ -3,16 +3,27 @@ package com.emc.mongoose.generator;
 import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.concurrent.LifeCycleBase;
 import com.emc.mongoose.common.concurrent.Throttle;
+import com.emc.mongoose.common.config.ItemNamingType;
 import com.emc.mongoose.common.config.LoadType;
+import com.emc.mongoose.common.data.ContentSourceBase;
+import com.emc.mongoose.common.data.SeedContentSource;
 import com.emc.mongoose.common.io.BasicIoTask;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.IoTask;
 import com.emc.mongoose.common.io.Output;
+import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
+import com.emc.mongoose.common.item.BasicDataItem;
+import com.emc.mongoose.common.item.BasicItem;
+import com.emc.mongoose.common.item.BasicItemNameInput;
+import com.emc.mongoose.common.item.DataItem;
 import com.emc.mongoose.common.item.Item;
+import com.emc.mongoose.common.item.NewDataItemInput;
 import com.emc.mongoose.common.load.Driver;
 import com.emc.mongoose.common.load.Generator;
+import com.emc.mongoose.common.load.Monitor;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.util.SizeInBytes;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +37,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -38,15 +50,16 @@ implements Generator<I, O> {
 	private final static Logger LOG = LogManager.getLogger();
 
 	private final List<Driver<I, O>> drivers;
+	private final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
 	private final LoadType ioType; // job.type
 	private final Input<I> itemInput;
 	private final Output<I> itemOutput;
 	private final Thread worker;
-	//private final int batchSize;
-	//private final int maxItemQueueSize;
-	//private final boolean isShuffling;
-	//private final boolean isCircular;
-	//private final Throttle<I> rateThrottle;
+	private final int batchSize = 0x1000;
+	private final int maxItemQueueSize = 0x100000;
+	private final boolean isShuffling = false;
+	private final boolean isCircular = false;
+	private final Throttle<I> rateThrottle = new RateThrottle<>(0);
 
 	private long producedItemsCount = 0;
 
@@ -64,7 +77,7 @@ implements Generator<I, O> {
 			int n = 0, m = 0;
 			try {
 				List<I> buff;
-				/*while(!isInterrupted()) {
+				while(!isInterrupted()) {
 					try {
 						buff = new ArrayList<>(batchSize);
 						n = itemInput.get(buff, batchSize);
@@ -102,7 +115,7 @@ implements Generator<I, O> {
 								"batch size = {}, batch offset = {}", producedItemsCount, n, m
 						);
 					}
-				}*/
+				}
 			} finally {
 				LOG.debug(
 					Markers.MSG, "{}: produced {} items from \"{}\" for the \"{}\"",
@@ -170,14 +183,38 @@ implements Generator<I, O> {
 	}
 
 	public GeneratorMock(
-		final List<Driver<I, O>> drivers, final Input<I> itemInput, final LoadType ioType
-	) {
+		final List<Driver<I, O>> drivers, final Class<I> itemClass, final LoadType ioType
+	) throws IllegalStateException {
 		this.drivers = drivers;
-		this.itemInput = itemInput;
+		try {
+			this.itemInput = new NewDataItemInput<>(
+				(Class) itemClass,
+				new RangePatternDefinedInput(Item.SLASH),
+				new BasicItemNameInput(ItemNamingType.RANDOM, null, 13, 36, 0),
+				new SeedContentSource(
+					Long.valueOf("7a42d9c483244167", 16), SizeInBytes.toFixedSize("4MB")
+				),
+				new SizeInBytes("1MB")
+			);
+		} catch(final NoSuchMethodException e) {
+			throw new IllegalStateException(e);
+		}
 		this.ioType = ioType;
 		this.itemOutput = new IoTaskSubmitOutput();
 		worker = new Thread(new GeneratorTask(), "generator");
 		worker.setDaemon(true);
+	}
+
+	@Override
+	public final void registerMonitor(final Monitor<I, O> monitor)
+	throws IllegalStateException {
+		if(monitorRef.compareAndSet(null, monitor)) {
+			for(final Driver<I, O> driver : drivers) {
+				driver.registerMonitor(monitor);
+			}
+		} else {
+			throw new IllegalStateException("Generator is already used by another monitor");
+		}
 	}
 
 	private final AtomicLong rrc = new AtomicLong(0);
@@ -219,6 +256,9 @@ implements Generator<I, O> {
 	@Override
 	public void close()
 	throws IOException {
+		if(!isInterrupted()) {
+			interrupt();
+		}
 		if(itemInput != null) {
 			itemInput.close();
 		}

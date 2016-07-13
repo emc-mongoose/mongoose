@@ -2,6 +2,8 @@ description = 'mongoose - monitor'
 
 dependencies {
 	compile project(':common')
+	compile project(':generator')
+	compile project(':storage:driver')
 }
 
 jar {

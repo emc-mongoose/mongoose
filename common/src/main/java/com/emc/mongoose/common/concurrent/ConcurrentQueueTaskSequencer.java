@@ -15,13 +15,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 13.07.16.
  */
-public class ConcurrentTaskSequencer
+public class ConcurrentQueueTaskSequencer
 extends Thread
 implements TaskSequencer {
 
 	private final static Logger LOG = LogManager.getLogger();
-	public final static ConcurrentTaskSequencer INSTANCE = new ConcurrentTaskSequencer(
-		"concurrentQueueSequencer", true
+	public final static ConcurrentQueueTaskSequencer INSTANCE = new ConcurrentQueueTaskSequencer(
+		"concurrentQueueTaskSequencer", true
 	);
 	static {
 		INSTANCE.start();
@@ -30,7 +30,7 @@ implements TaskSequencer {
 	private final Queue<Runnable> queue;
 	private final AtomicInteger queueSize = new AtomicInteger(0);
 
-	protected ConcurrentTaskSequencer(final String name, boolean daemonFlag) {
+	protected ConcurrentQueueTaskSequencer(final String name, boolean daemonFlag) {
 		super(name);
 		setDaemon(daemonFlag);
 		queue = new ConcurrentLinkedQueue<>();
