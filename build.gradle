@@ -7,8 +7,18 @@ def loadProjectVersionFrom(String sourceFileName) {
 	def json = new JsonSlurper().parseText(inputFile.text)
 	json.version
 }
-def configFilePath = "./common${File.separator}src${File.separator}main${File.separator}resources${File.separator}defaults.json"
 
+def collectFilePath(String... pathChunks) {
+	def pathBuilder = new StringBuilder()
+	def separator = File.separator
+	pathChunks.each {
+		pathBuilder.append(separator)
+		pathBuilder.append(it)
+	}
+	pathBuilder.toString()
+}
+
+def configFilePath = "." + collectFilePath('common', 'src', 'main', 'resources', 'defaults.json');
 version = loadProjectVersionFrom configFilePath
 
 subprojects {
