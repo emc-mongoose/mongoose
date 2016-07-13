@@ -1,6 +1,7 @@
 package com.emc.mongoose.monitor;
 
 import com.emc.mongoose.common.config.LoadType;
+import com.emc.mongoose.common.io.BasicDataIoTask;
 import com.emc.mongoose.common.io.DataIoTask;
 import com.emc.mongoose.common.item.BasicDataItem;
 import com.emc.mongoose.common.item.DataItem;
@@ -18,16 +19,13 @@ import java.util.Arrays;
 public class Main {
 
 	public static <I extends DataItem, O extends DataIoTask<I>> void main(final String[] args) {
-		System.setProperty(
-			"log4j.configurationFactory",
-			"org.apache.logging.log4j.core.config.json.JsonConfigurationFactory"
-		);
 		try(
 			final Driver<I, O> driver = new DriverMock<>()
 		) {
 			try(
-				final Generator<I, O> generator = new GeneratorMock<>(
-					Arrays.asList(driver), (Class<I>) BasicDataItem.class, LoadType.CREATE
+				final Generator<I, O> generator = new GeneratorMock<I, O>(
+					Arrays.asList(driver), LoadType.CREATE, (Class<I>) BasicDataItem.class,
+					(Class) BasicDataIoTask.class
 				)
 			) {
 				try(

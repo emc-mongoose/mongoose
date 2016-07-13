@@ -5,17 +5,12 @@ import com.emc.mongoose.common.concurrent.LifeCycleBase;
 import com.emc.mongoose.common.concurrent.Throttle;
 import com.emc.mongoose.common.config.ItemNamingType;
 import com.emc.mongoose.common.config.LoadType;
-import com.emc.mongoose.common.data.ContentSourceBase;
 import com.emc.mongoose.common.data.SeedContentSource;
-import com.emc.mongoose.common.io.BasicIoTask;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.IoTask;
 import com.emc.mongoose.common.io.Output;
 import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
-import com.emc.mongoose.common.item.BasicDataItem;
-import com.emc.mongoose.common.item.BasicItem;
 import com.emc.mongoose.common.item.BasicItemNameInput;
-import com.emc.mongoose.common.item.DataItem;
 import com.emc.mongoose.common.item.Item;
 import com.emc.mongoose.common.item.NewDataItemInput;
 import com.emc.mongoose.common.load.Driver;
@@ -30,6 +25,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,6 +57,7 @@ implements Generator<I, O> {
 	private final boolean isShuffling = false;
 	private final boolean isCircular = false;
 	private final Throttle<I> rateThrottle = new RateThrottle<>(0);
+	private final Constructor<O> ioTaskConstructor;
 
 	private long producedItemsCount = 0;
 
@@ -138,9 +136,13 @@ implements Generator<I, O> {
 		@Override
 		public void put(final I item)
 		throws IOException {
-			final O nextIoTask = (O) new BasicIoTask<>(ioType, item);
-			final Driver<I, O> nextDriver = getNextDriver();
-			nextDriver.submit(nextIoTask);
+			try {
+				final O nextIoTask = ioTaskConstructor.newInstance(ioType, item);
+				final Driver<I, O> nextDriver = getNextDriver();
+				nextDriver.submit(nextIoTask);
+			} catch(final InstantiationException | IllegalAccessException | InvocationTargetException e) {
+				throw new IOException(e);
+			}
 		}
 
 		@Override
@@ -148,8 +150,12 @@ implements Generator<I, O> {
 		throws IOException {
 			if(to > from) {
 				final List<O> ioTasks = new ArrayList<>(to - from);
-				for(int i = from; i < to; i ++) {
-					ioTasks.add((O) new BasicIoTask<>(ioType, buffer.get(i)));
+				try {
+					for(int i = from; i < to; i ++) {
+						ioTasks.add(ioTaskConstructor.newInstance(ioType, buffer.get(i)));
+					}
+				} catch(final InstantiationException | IllegalAccessException | InvocationTargetException e) {
+					throw new IOException(e);
 				}
 				final Driver<I, O> nextDriver = getNextDriver();
 				nextDriver.submit(ioTasks, 0, ioTasks.size());
@@ -162,8 +168,12 @@ implements Generator<I, O> {
 		throws IOException {
 			final int n = buffer.size();
 			final List<O> ioTasks = new ArrayList<>(n);
-			for(final I nextItem : buffer) {
-				ioTasks.add((O) new BasicIoTask<>(ioType, nextItem));
+			try {
+				for(final I nextItem : buffer) {
+					ioTasks.add(ioTaskConstructor.newInstance(ioType, nextItem));
+				}
+			} catch(final InstantiationException | IllegalAccessException | InvocationTargetException e) {
+				throw new IOException(e);
 			}
 			final Driver<I, O> nextDriver = getNextDriver();
 			nextDriver.submit(ioTasks, 0, n);
@@ -183,7 +193,8 @@ implements Generator<I, O> {
 	}
 
 	public GeneratorMock(
-		final List<Driver<I, O>> drivers, final Class<I> itemClass, final LoadType ioType
+		final List<Driver<I, O>> drivers, final LoadType ioType, final Class<I> itemClass,
+		final Class<O> ioTaskClass
 	) throws IllegalStateException {
 		this.drivers = drivers;
 		try {
@@ -198,11 +209,9 @@ implements Generator<I, O> {
 			);
 		} catch(final NoSuchMethodException e) {
 			throw new IllegalStateException(e);
-		} catch(final Throwable e) {
-			e.printStackTrace(System.out);
-			throw e;
 		}
 		this.ioType = ioType;
+		this.ioTaskConstructor = (Constructor<O>) ioTaskClass.getConstructors()[0];
 		this.itemOutput = new IoTaskSubmitOutput();
 		worker = new Thread(new GeneratorTask(), "generator");
 		worker.setDaemon(true);

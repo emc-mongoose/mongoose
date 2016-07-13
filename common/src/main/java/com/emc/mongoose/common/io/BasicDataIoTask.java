@@ -50,4 +50,14 @@ implements DataIoTask<T> {
 	public int getDataLatency() {
 		return respDataTimeStart > reqTimeDone ? (int) (respDataTimeStart - reqTimeDone) : -1;
 	}
+
+	@Override
+	public String toString() {
+		super.toString();
+		final StringBuilder strb = STRB.get();
+		return strb
+			.append(',').append(countBytesDone)
+			.append(',').append(getDataLatency())
+			.toString();
+	}
 }
