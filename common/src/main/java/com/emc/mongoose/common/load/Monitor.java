@@ -19,6 +19,4 @@ extends Closeable, LifeCycle {
 
 	void registerDriver(final Driver<I, O> driver)
 	throws IllegalStateException;
-
-	void driverFinished(final Driver<I, O> driver);
 }

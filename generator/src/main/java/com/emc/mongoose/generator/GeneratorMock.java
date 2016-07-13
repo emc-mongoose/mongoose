@@ -198,6 +198,9 @@ implements Generator<I, O> {
 			);
 		} catch(final NoSuchMethodException e) {
 			throw new IllegalStateException(e);
+		} catch(final Throwable e) {
+			e.printStackTrace(System.out);
+			throw e;
 		}
 		this.ioType = ioType;
 		this.itemOutput = new IoTaskSubmitOutput();

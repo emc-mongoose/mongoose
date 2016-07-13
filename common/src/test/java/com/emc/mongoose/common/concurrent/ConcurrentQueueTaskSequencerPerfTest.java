@@ -84,7 +84,7 @@ public class ConcurrentQueueTaskSequencerPerfTest {
 	@Test
 	public void testPerformance()
 	throws InterruptedException {
-		final int totalTaskCount = 10_000_000;
+		final int totalTaskCount = 1_000_000;
 		final List<Thread> threads = new ArrayList<>();
 		final int threadTaskCount = totalTaskCount / threadCount;
 		for(int i = 0; i < threadCount; i ++) {

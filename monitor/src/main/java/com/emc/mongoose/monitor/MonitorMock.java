@@ -6,6 +6,9 @@ import com.emc.mongoose.common.item.Item;
 import com.emc.mongoose.common.load.Driver;
 import com.emc.mongoose.common.load.Generator;
 import com.emc.mongoose.common.load.Monitor;
+import com.emc.mongoose.common.log.Markers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,6 +23,8 @@ public class MonitorMock<I extends Item, O extends IoTask<I>>
 extends LifeCycleBase
 implements Monitor<I, O> {
 
+	private final static Logger LOG = LogManager.getLogger();
+
 	private final List<Generator<I, O>> generators;
 	private final ConcurrentMap<String, Driver<I, O>> drivers = new ConcurrentHashMap<>();
 
@@ -32,24 +37,27 @@ implements Monitor<I, O> {
 	
 	@Override
 	public void ioTaskCompleted(final O ioTask) {
+		System.out.println(ioTask);
 	}
 
 	@Override
 	public int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
-		return 0;
+		for(int i = from; i < to; i ++) {
+			System.out.println(ioTasks.get(i));
+		}
+		return to - from;
 	}
 
 	@Override
 	public final void registerDriver(final Driver<I, O> driver)
 	throws IllegalStateException {
-		if(null != drivers.putIfAbsent(driver.toString(), driver)) {
+		if(null == drivers.putIfAbsent(driver.toString(), driver)) {
+			LOG.info(
+				Markers.MSG, "Monitor {}: driver {} registered", toString(), driver.toString()
+			);
+		} else {
 			throw new IllegalStateException("Driver already registered");
 		}
-	}
-
-	@Override
-	public void driverFinished(final Driver<I, O> driver) {
-
 	}
 
 	@Override
@@ -76,12 +84,24 @@ implements Monitor<I, O> {
 	@Override
 	public boolean await()
 	throws InterruptedException {
-		return false;
+		return await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 
 	@Override
 	public boolean await(final long timeout, final TimeUnit timeUnit)
 	throws InterruptedException {
+		boolean allDriversFinished = true;
+		Driver<I, O> nextDriver;
+		do {
+			for(final String driverName : drivers.keySet()) {
+				nextDriver = drivers.get(driverName);
+				if(!nextDriver.isInterrupted()) {
+					allDriversFinished = false;
+					break;
+				}
+				Thread.yield();
+			}
+		} while(!allDriversFinished);
 		return false;
 	}
 
