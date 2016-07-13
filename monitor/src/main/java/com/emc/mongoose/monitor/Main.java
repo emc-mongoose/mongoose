@@ -10,7 +10,6 @@ import com.emc.mongoose.common.load.Monitor;
 import com.emc.mongoose.generator.GeneratorMock;
 import com.emc.mongoose.storage.driver.DriverMock;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -18,8 +17,11 @@ import java.util.Arrays;
  */
 public class Main {
 
-	public static <I extends DataItem, O extends DataIoTask<I>> void main(final String[] args)
-	throws IOException, InterruptedException {
+	public static <I extends DataItem, O extends DataIoTask<I>> void main(final String[] args) {
+		System.setProperty(
+			"log4j.configurationFactory",
+			"org.apache.logging.log4j.core.config.json.JsonConfigurationFactory"
+		);
 		try(
 			final Driver<I, O> driver = new DriverMock<>()
 		) {
@@ -35,6 +37,8 @@ public class Main {
 					monitor.await();
 				}
 			}
+		} catch(final Throwable e) {
+			e.printStackTrace(System.out);
 		}
 	}
 }

@@ -92,9 +92,5 @@ implements Driver<I, O> {
 		if(!isInterrupted()) {
 			interrupt();
 		}
-		final Monitor<I, O> monitor = monitorRef.get();
-		if(monitor != null) {
-			monitor.driverFinished(this);
-		}
 	}
 }
