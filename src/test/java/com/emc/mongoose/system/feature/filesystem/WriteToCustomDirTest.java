@@ -2,7 +2,6 @@ package com.emc.mongoose.system.feature.filesystem;
 //
 import com.emc.mongoose.common.conf.AppConfig;
 //
-import com.emc.mongoose.common.conf.SizeInBytes;
 import com.emc.mongoose.common.log.appenders.RunIdFileManager;
 //
 import com.emc.mongoose.core.api.item.data.FileItem;
@@ -48,7 +47,7 @@ extends FileSystemTestBase {
 			countWritten = client.create(null, COUNT_TO_WRITE, 100, 0);
 			RunIdFileManager.flush(RUN_ID);
 		}
-		TimeUnit.SECONDS.sleep(20);
+		TimeUnit.SECONDS.sleep(30);
 	}
 	//
 	@AfterClass
