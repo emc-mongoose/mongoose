@@ -9,10 +9,15 @@ import com.emc.mongoose.common.data.SeedContentSource;
 import com.emc.mongoose.common.io.Input;
 import com.emc.mongoose.common.io.IoTask;
 import com.emc.mongoose.common.io.Output;
+import com.emc.mongoose.common.io.factory.IoTaskFactory;
 import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
+import com.emc.mongoose.common.item.BasicDataItem;
 import com.emc.mongoose.common.item.BasicItemNameInput;
+import com.emc.mongoose.common.item.DataItem;
 import com.emc.mongoose.common.item.Item;
 import com.emc.mongoose.common.item.NewDataItemInput;
+import com.emc.mongoose.common.item.factory.BasicDataItemFactory;
+import com.emc.mongoose.common.item.factory.ItemFactory;
 import com.emc.mongoose.common.load.Driver;
 import com.emc.mongoose.common.load.Generator;
 import com.emc.mongoose.common.load.Monitor;
@@ -35,6 +40,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 11.07.16.
@@ -56,7 +62,7 @@ implements Generator<I, O> {
 	private final boolean isShuffling = false;
 	private final boolean isCircular = false;
 	private final Throttle<I> rateThrottle = new RateThrottle<>(0);
-	private final Constructor<O> ioTaskConstructor;
+	private final IoTaskFactory<I, O> ioTaskFactory;
 
 	private long producedItemsCount = 0;
 
@@ -135,13 +141,9 @@ implements Generator<I, O> {
 		@Override
 		public void put(final I item)
 		throws IOException {
-			try {
-				final O nextIoTask = ioTaskConstructor.newInstance(ioType, item);
-				final Driver<I, O> nextDriver = getNextDriver();
-				nextDriver.submit(nextIoTask);
-			} catch(final InstantiationException | IllegalAccessException | InvocationTargetException e) {
-				throw new IOException(e);
-			}
+			final O nextIoTask = ioTaskFactory.getInstance(ioType, item);
+			final Driver<I, O> nextDriver = getNextDriver();
+			nextDriver.submit(nextIoTask);
 		}
 
 		@Override
@@ -149,12 +151,8 @@ implements Generator<I, O> {
 		throws IOException {
 			if(to > from) {
 				final List<O> ioTasks = new ArrayList<>(to - from);
-				try {
-					for(int i = from; i < to; i ++) {
-						ioTasks.add(ioTaskConstructor.newInstance(ioType, buffer.get(i)));
-					}
-				} catch(final InstantiationException | IllegalAccessException | InvocationTargetException e) {
-					throw new IOException(e);
+				for(int i = from; i < to; i ++) {
+					ioTasks.add(ioTaskFactory.getInstance(ioType, buffer.get(i)));
 				}
 				final Driver<I, O> nextDriver = getNextDriver();
 				nextDriver.submit(ioTasks, 0, ioTasks.size());
@@ -167,12 +165,8 @@ implements Generator<I, O> {
 		throws IOException {
 			final int n = buffer.size();
 			final List<O> ioTasks = new ArrayList<>(n);
-			try {
-				for(final I nextItem : buffer) {
-					ioTasks.add(ioTaskConstructor.newInstance(ioType, nextItem));
-				}
-			} catch(final InstantiationException | IllegalAccessException | InvocationTargetException e) {
-				throw new IOException(e);
+			for(final I nextItem : buffer) {
+				ioTasks.add(ioTaskFactory.getInstance(ioType, nextItem));
 			}
 			final Driver<I, O> nextDriver = getNextDriver();
 			nextDriver.submit(ioTasks, 0, n);
@@ -192,13 +186,13 @@ implements Generator<I, O> {
 	}
 
 	public GeneratorMock(
-		final List<Driver<I, O>> drivers, final LoadType ioType, final Class<I> itemClass,
-		final Class<O> ioTaskClass
-	) throws IllegalStateException {
+		final List<Driver<I, O>> drivers, final LoadType ioType,
+		final ItemFactory<I> itemFactory, final IoTaskFactory<I, O> ioTaskFactory
+	) throws IllegalStateException, IllegalArgumentException {
 		this.drivers = drivers;
-		try {
+		if(itemFactory instanceof BasicDataItemFactory) {
 			this.itemInput = new NewDataItemInput<>(
-				(Class) itemClass,
+				(ItemFactory) itemFactory,
 				new RangePatternDefinedInput(Item.SLASH),
 				new BasicItemNameInput(ItemNamingType.RANDOM, null, 13, 36, 0),
 				new SeedContentSource(
@@ -206,11 +200,12 @@ implements Generator<I, O> {
 				),
 				new SizeInBytes("1MB")
 			);
-		} catch(final NoSuchMethodException e) {
-			throw new IllegalStateException(e);
+		} else {
+			// TODO
+			this.itemInput = null;
 		}
 		this.ioType = ioType;
-		this.ioTaskConstructor = (Constructor<O>) ioTaskClass.getConstructors()[0];
+		this.ioTaskFactory = ioTaskFactory;
 		this.itemOutput = new IoTaskSubmitOutput();
 		worker = new Thread(new GeneratorTask(), "generator");
 		worker.setDaemon(true);

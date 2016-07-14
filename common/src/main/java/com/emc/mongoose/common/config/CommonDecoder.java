@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  Created on 11.07.16.
  */
 public class CommonDecoder
-	implements Decoder<CommonConfig> {
+implements Decoder<CommonConfig> {
 
 	@Override
 	public CommonConfig decode(final JsonObject commonConfigJson)

@@ -1,10 +1,13 @@
 package com.emc.mongoose.monitor;
 
 import com.emc.mongoose.common.config.LoadType;
-import com.emc.mongoose.common.io.BasicDataIoTask;
 import com.emc.mongoose.common.io.DataIoTask;
+import com.emc.mongoose.common.io.factory.BasicDataIoTaskFactory;
+import com.emc.mongoose.common.io.factory.IoTaskFactory;
 import com.emc.mongoose.common.item.BasicDataItem;
 import com.emc.mongoose.common.item.DataItem;
+import com.emc.mongoose.common.item.factory.BasicDataItemFactory;
+import com.emc.mongoose.common.item.factory.ItemFactory;
 import com.emc.mongoose.common.load.Driver;
 import com.emc.mongoose.common.load.Generator;
 import com.emc.mongoose.common.load.Monitor;
@@ -36,8 +39,9 @@ public class Main {
 			drivers.add(new DriverMock<>());
 			generators.add(
 				new GeneratorMock<>(
-					drivers, LoadType.CREATE, (Class<I>) BasicDataItem.class,
-					(Class) BasicDataIoTask.class
+					drivers, LoadType.CREATE,
+					(ItemFactory) new BasicDataItemFactory(),
+					(IoTaskFactory) new BasicDataIoTaskFactory<BasicDataItem>()
 				)
 			);
 		}

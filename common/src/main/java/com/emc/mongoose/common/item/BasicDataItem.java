@@ -46,26 +46,26 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(
-		final Long offset, final Long size, final ContentSource contentSrc
+		final long offset, final long size, final ContentSource contentSrc
 	) {
 		this(SLASH, Long.toString(offset, Character.MAX_RADIX), offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
-		final String name, final Long offset, final Long size, final ContentSource contentSrc
+		final String name, final long offset, final long size, final ContentSource contentSrc
 	) {
 		this(SLASH, name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
-		final String path, final String name, final Long offset, final Long size,
+		final String path, final String name, final long offset, final long size,
 		final ContentSource contentSrc
 	) {
 		this(path, name, offset, size, 0, contentSrc);
 	}
 	//
 	public BasicDataItem(
-		final Long offset, final Long size, final Integer layerNum, final ContentSource contentSrc
+		final long offset, final long size, final int layerNum, final ContentSource contentSrc
 	) {
 		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
 		setOffset(offset);
@@ -73,7 +73,7 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(
-		final String name, final Long offset, final Long size, final Integer layerNum,
+		final String name, final long offset, final long size, final int layerNum,
 		final ContentSource contentSrc
 	) {
 		super(SLASH, name);
@@ -83,8 +83,8 @@ implements DataItem {
 	}
 	//
 	public BasicDataItem(
-		final String path, final String name, final Long offset, final Long size,
-		final Integer layerNum, final ContentSource contentSrc
+		final String path, final String name, final long offset, final long size,
+		final int layerNum, final ContentSource contentSrc
 	) {
 		super(path, name);
 		setRingBuffer(contentSrc.getLayer(layerNum).asReadOnlyBuffer());
