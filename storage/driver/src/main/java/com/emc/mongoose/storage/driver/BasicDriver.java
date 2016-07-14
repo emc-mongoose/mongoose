@@ -15,13 +15,13 @@ import java.util.concurrent.atomic.AtomicReference;
  Created by kurila on 11.07.16.
  This mock just passes the submitted tasks to the load monitor em
  */
-public class DriverMock<I extends Item, O extends IoTask<I>>
+public class BasicDriver<I extends Item, O extends IoTask<I>>
 extends LifeCycleBase
 implements Driver<I, O> {
 
 	private final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
 
-	public DriverMock() {
+	public BasicDriver() {
 	}
 
 	@Override

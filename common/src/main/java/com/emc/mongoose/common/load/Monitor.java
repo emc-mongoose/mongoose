@@ -3,6 +3,7 @@ package com.emc.mongoose.common.load;
 import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.io.IoTask;
 import com.emc.mongoose.common.item.Item;
+import com.emc.mongoose.common.load.metrics.IoStats;
 
 import java.io.Closeable;
 import java.util.List;
@@ -19,4 +20,6 @@ extends Closeable, LifeCycle {
 
 	void registerDriver(final Driver<I, O> driver)
 	throws IllegalStateException;
+
+	IoStats.Snapshot getIoStatsSnapshot();
 }

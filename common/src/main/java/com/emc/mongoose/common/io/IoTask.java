@@ -33,6 +33,8 @@ public interface IoTask<I extends Item> {
 
 	I getItem();
 
+	String getNodeAddr();
+
 	Status getStatus();
 
 	long getReqTimeStart();

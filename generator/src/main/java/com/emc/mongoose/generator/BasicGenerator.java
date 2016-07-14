@@ -45,7 +45,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  Created by kurila on 11.07.16.
  */
-public class GeneratorMock<I extends Item, O extends IoTask<I>>
+public class BasicGenerator<I extends Item, O extends IoTask<I>>
 extends LifeCycleBase
 implements Generator<I, O> {
 
@@ -185,7 +185,7 @@ implements Generator<I, O> {
 		}
 	}
 
-	public GeneratorMock(
+	public BasicGenerator(
 		final List<Driver<I, O>> drivers, final LoadType ioType,
 		final ItemFactory<I> itemFactory, final IoTaskFactory<I, O> ioTaskFactory
 	) throws IllegalStateException, IllegalArgumentException {

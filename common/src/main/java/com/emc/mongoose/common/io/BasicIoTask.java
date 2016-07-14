@@ -14,6 +14,7 @@ implements IoTask<I> {
 	protected final LoadType ioType;
 	protected final I item;
 	//
+	protected volatile String nodeAddr = null;
 	protected volatile IoTask.Status status = IoTask.Status.FAIL_UNKNOWN;
 	protected volatile long reqTimeStart = 0;
 	protected volatile long reqTimeDone = 0;
@@ -33,6 +34,11 @@ implements IoTask<I> {
 	@Override
 	public final LoadType getLoadType() {
 		return ioType;
+	}
+	//
+	@Override
+	public final String getNodeAddr() {
+		return nodeAddr;
 	}
 	//
 	@Override
