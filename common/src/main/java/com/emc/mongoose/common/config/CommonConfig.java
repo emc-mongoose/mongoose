@@ -1,6 +1,8 @@
 package com.emc.mongoose.common.config;
 
+import com.emc.mongoose.common.util.DataRangesConfig;
 import com.emc.mongoose.common.util.SizeInBytes;
+import com.emc.mongoose.common.util.TimeUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -62,7 +64,7 @@ public class CommonConfig {
 		return itemConfig;
 	}
 
-	public static final CommonConfigBuilder newBuilder() {
+	public static CommonConfigBuilder newBuilder() {
 		return new CommonConfig().new CommonConfigBuilder();
 	}
 
@@ -304,16 +306,26 @@ public class CommonConfig {
 			public static final String KEY_SIZE = "size";
 			public static final String KEY_VERIFY = "verify";
 			private final ContentConfig contentConfig;
-			private final int ranges;
+			private final DataRangesConfig ranges;
 			private final SizeInBytes size;
 			private final boolean verify;
+
+			public DataConfig(
+				final ContentConfig contentConfig, final String ranges, final String size,
+				final boolean verify
+			) throws DataRangesConfig.InvalidRangeException {
+				this.contentConfig = contentConfig;
+				this.ranges = new DataRangesConfig(ranges);
+				this.size = new SizeInBytes(size);
+				this.verify = verify;
+			}
 
 			public DataConfig(
 				final ContentConfig contentConfig, final int ranges, final String size,
 				final boolean verify
 			) {
 				this.contentConfig = contentConfig;
-				this.ranges = ranges;
+				this.ranges = new DataRangesConfig(ranges);
 				this.size = new SizeInBytes(size);
 				this.verify = verify;
 			}
@@ -322,7 +334,7 @@ public class CommonConfig {
 				return contentConfig;
 			}
 
-			public final int getRanges() {
+			public final DataRangesConfig getRanges() {
 				return ranges;
 			}
 
@@ -418,11 +430,11 @@ public class CommonConfig {
 			private final String type;
 			private final String prefix;
 			private final int radix;
-			private final int offset;
+			private final long offset;
 			private final int length;
 
 			public NamingConfig(
-				final String type, final String prefix, final int radix, final int offset,
+				final String type, final String prefix, final int radix, final long offset,
 				final int length
 			) {
 				this.type = type;
@@ -444,7 +456,7 @@ public class CommonConfig {
 				return radix;
 			}
 
-			public final int getOffset() {
+			public final long getOffset() {
 				return offset;
 			}
 
@@ -503,23 +515,23 @@ public class CommonConfig {
 			public static final String KEY_RATE = "rate";
 			public static final String KEY_SIZE = "size";
 			public static final String KEY_TIME = "time";
-			private final int count;
-			private final int rate;
+			private final long count;
+			private final double rate;
 			private final int size;
-			private final String time;
+			private final long time;
 
-			public LimitConfig(final int count, final int rate, final int size, final String time) {
+			public LimitConfig(final long count, final double rate, final int size, final String time) {
 				this.count = count;
 				this.rate = rate;
 				this.size = size;
-				this.time = time;
+				this.time = TimeUtil.getTimeUnit(time).toSeconds(TimeUtil.getTimeValue(time));
 			}
 
-			public final int getCount() {
+			public final long getCount() {
 				return count;
 			}
 
-			public final int getRate() {
+			public final double getRate() {
 				return rate;
 			}
 
@@ -527,7 +539,7 @@ public class CommonConfig {
 				return size;
 			}
 
-			public final String getTime() {
+			public final long getTime() {
 				return time;
 			}
 		}
@@ -538,14 +550,14 @@ public class CommonConfig {
 			public static final String KEY_PERIOD = "period";
 			public static final String KEY_PRECONDITION= "precondition";
 			private final boolean intermediate;
-			private final String period;
+			private final int period;
 			private final boolean precondition;
 
 			public MetricsConfig(
 				final boolean intermediate, final String period, final boolean precondition
 			) {
 				this.intermediate = intermediate;
-				this.period = period;
+				this.period = (int) TimeUtil.getTimeUnit(period).toSeconds(TimeUtil.getTimeValue(period));
 				this.precondition = precondition;
 			}
 
@@ -553,7 +565,7 @@ public class CommonConfig {
 				return intermediate;
 			}
 
-			public final String getPeriod() {
+			public final int getPeriod() {
 				return period;
 			}
 
@@ -603,7 +615,7 @@ public class CommonConfig {
 
 		private StorageConfig() {}
 
-		public static final StorageConfigBuilder newBuilder() {
+		public static StorageConfigBuilder newBuilder() {
 			return new StorageConfig().new StorageConfigBuilder();
 		}
 

@@ -4,8 +4,10 @@ import com.emc.mongoose.common.config.decoder.DecodeException;
 import com.emc.mongoose.common.config.decoder.Decoder;
 
 import javax.json.JsonArray;
+import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonString;
+import javax.json.JsonValue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,14 +20,14 @@ public class CommonDecoder
 	implements Decoder<CommonConfig> {
 
 	@Override
-	public CommonConfig decode(final JsonObject commonJson)
+	public CommonConfig decode(final JsonObject commonConfigJson)
 	throws DecodeException {
 		final CommonConfig.IoConfig ioConfig = new CommonConfig.IoConfig(
 			new CommonConfig.IoConfig.BufferConfig(getString(
-				getJsonObject(getJsonObject(commonJson, CommonConfig.KEY_IO),
+				getJsonObject(getJsonObject(commonConfigJson, CommonConfig.KEY_IO),
 					CommonConfig.IoConfig.KEY_BUFFER
 				), CommonConfig.IoConfig.BufferConfig.KEY_SIZE)));
-		final JsonObject socketConfigJson = getJsonObject(commonJson, CommonConfig.KEY_SOCKET);
+		final JsonObject socketConfigJson = getJsonObject(commonConfigJson, CommonConfig.KEY_SOCKET);
 		final CommonConfig.SocketConfig.SocketConfigBuilder socketConfigBuilder =
 			CommonConfig.SocketConfig.newBuilder();
 		socketConfigBuilder.setTimeoutInMilliseconds(
@@ -46,56 +48,72 @@ public class CommonDecoder
 			socketConfigJson.getInt(CommonConfig.SocketConfig.KEY_SELECT_INTERVAL));
 		final CommonConfig.SocketConfig socketConfig = socketConfigBuilder.build();
 
-		final JsonObject itemJson = getJsonObject(commonJson, CommonConfig.KEY_ITEM);
-		final String type = getString(itemJson, CommonConfig.ItemConfig.KEY_TYPE);
-		final JsonObject dataJson = getJsonObject(itemJson, CommonConfig.ItemConfig.KEY_DATA);
-		final JsonObject contentJson =
-			getJsonObject(dataJson, CommonConfig.ItemConfig.DataConfig.KEY_CONTENT);
+		final JsonObject itemConfigJson = getJsonObject(commonConfigJson, CommonConfig.KEY_ITEM);
+		final String type = getString(itemConfigJson, CommonConfig.ItemConfig.KEY_TYPE);
+		final JsonObject dataConfigJson = getJsonObject(itemConfigJson, CommonConfig.ItemConfig.KEY_DATA);
+		final JsonObject contentConfigJson =
+			getJsonObject(dataConfigJson, CommonConfig.ItemConfig.DataConfig.KEY_CONTENT);
 		final CommonConfig.ItemConfig.DataConfig.ContentConfig contentConfig =
 			new CommonConfig.ItemConfig.DataConfig.ContentConfig(getString(
-				contentJson, CommonConfig.ItemConfig.DataConfig.ContentConfig.KEY_FILE, null),
-				getString(contentJson, CommonConfig.ItemConfig.DataConfig.ContentConfig.KEY_SEED),
-				getString(contentJson,
+				contentConfigJson, CommonConfig.ItemConfig.DataConfig.ContentConfig.KEY_FILE, null),
+				getString(contentConfigJson, CommonConfig.ItemConfig.DataConfig.ContentConfig.KEY_SEED),
+				getString(contentConfigJson,
 					CommonConfig.ItemConfig.DataConfig.ContentConfig.KEY_RING_SIZE
 				)
 			);
-		final CommonConfig.ItemConfig.DataConfig dataConfig =
-			new CommonConfig.ItemConfig.DataConfig(contentConfig,
-				dataJson.getInt(CommonConfig.ItemConfig.DataConfig.KEY_RANGES, 0),
-				getString(dataJson, CommonConfig.ItemConfig.DataConfig.KEY_SIZE),
-				dataJson.getBoolean(CommonConfig.ItemConfig.DataConfig.KEY_VERIFY)
-			);
-		final JsonObject inputJson = getJsonObject(itemJson, CommonConfig.ItemConfig.KEY_INPUT);
+		final String size =
+			getString(dataConfigJson, CommonConfig.ItemConfig.DataConfig.KEY_SIZE);
+		final boolean verify =
+			dataConfigJson.getBoolean(CommonConfig.ItemConfig.DataConfig.KEY_VERIFY);
+		final JsonValue rawRanges =
+			dataConfigJson.get(CommonConfig.ItemConfig.DataConfig.KEY_RANGES);
+		CommonConfig.ItemConfig.DataConfig dataConfig = null;
+		switch(rawRanges.getValueType()) {
+			case NUMBER:
+				dataConfig = new CommonConfig.ItemConfig.DataConfig(contentConfig,
+					((JsonNumber) rawRanges).intValue(),
+					size, verify
+				);
+				break;
+			case STRING:
+				dataConfig = new CommonConfig.ItemConfig.DataConfig(contentConfig,
+					((JsonString) rawRanges).getString(),
+					size, verify
+				);
+				break;
+		}
+		final JsonObject inputConfigJson = getJsonObject(itemConfigJson, CommonConfig.ItemConfig.KEY_INPUT);
 		final CommonConfig.ItemConfig.InputConfig inputConfig =
 			new CommonConfig.ItemConfig.InputConfig(
-				getString(inputJson, CommonConfig.ItemConfig.InputConfig.KEY_CONTAINER, null),
-				getString(inputJson, CommonConfig.ItemConfig.InputConfig.KEY_FILE, null)
+				getString(inputConfigJson, CommonConfig.ItemConfig.InputConfig.KEY_CONTAINER, null),
+				getString(inputConfigJson, CommonConfig.ItemConfig.InputConfig.KEY_FILE, null)
 			);
-		final JsonObject outputJson =
-			getJsonObject(itemJson, CommonConfig.ItemConfig.KEY_OUTPUT);
+		final JsonObject outputConfigJson =
+			getJsonObject(itemConfigJson, CommonConfig.ItemConfig.KEY_OUTPUT);
 		final CommonConfig.ItemConfig.OutputConfig outputConfig =
 			new CommonConfig.ItemConfig.OutputConfig(getString(
-				outputJson, CommonConfig.ItemConfig.OutputConfig.KEY_CONTAINER, null),
-				getString(outputJson, CommonConfig.ItemConfig.OutputConfig.KEY_FILE, null)
+				outputConfigJson, CommonConfig.ItemConfig.OutputConfig.KEY_CONTAINER, null),
+				getString(outputConfigJson, CommonConfig.ItemConfig.OutputConfig.KEY_FILE, null)
 			);
-		final JsonObject namingJson = getJsonObject(itemJson, CommonConfig.ItemConfig.KEY_NAMING);
+		final JsonObject namingConfigJson = getJsonObject(itemConfigJson, CommonConfig.ItemConfig.KEY_NAMING);
 		final CommonConfig.ItemConfig.NamingConfig namingConfig =
 			new CommonConfig.ItemConfig.NamingConfig(
-				getString(namingJson, CommonConfig.ItemConfig.NamingConfig.KEY_TYPE),
-				getString(namingJson, CommonConfig.ItemConfig.NamingConfig.KEY_PREFIX, null),
-				namingJson.getInt(CommonConfig.ItemConfig.NamingConfig.KEY_RADIX),
-				namingJson.getInt(CommonConfig.ItemConfig.NamingConfig.KEY_OFFSET),
-				namingJson.getInt(CommonConfig.ItemConfig.NamingConfig.KEY_LENGTH)
+				getString(namingConfigJson, CommonConfig.ItemConfig.NamingConfig.KEY_TYPE),
+				getString(namingConfigJson, CommonConfig.ItemConfig.NamingConfig.KEY_PREFIX, null),
+				namingConfigJson.getInt(CommonConfig.ItemConfig.NamingConfig.KEY_RADIX),
+				namingConfigJson.getJsonNumber(CommonConfig.ItemConfig.NamingConfig.KEY_OFFSET).longValue(),
+				namingConfigJson.getInt(CommonConfig.ItemConfig.NamingConfig.KEY_LENGTH)
 			);
 		final CommonConfig.ItemConfig itemConfig =
 			new CommonConfig.ItemConfig(type, dataConfig, inputConfig, outputConfig, namingConfig);
-		final JsonObject loadConfigJson = getJsonObject(commonJson, CommonConfig.KEY_LOAD);
+		final JsonObject loadConfigJson = getJsonObject(commonConfigJson, CommonConfig.KEY_LOAD);
 		final JsonObject limitConfigJson =
 			getJsonObject(loadConfigJson, CommonConfig.LoadConfig.KEY_LIMIT);
+
 		final CommonConfig.LoadConfig.LimitConfig limitConfig =
 			new CommonConfig.LoadConfig.LimitConfig(
-				limitConfigJson.getInt(CommonConfig.LoadConfig.LimitConfig.KEY_COUNT),
-				limitConfigJson.getInt(CommonConfig.LoadConfig.LimitConfig.KEY_RATE),
+				limitConfigJson.getJsonNumber(CommonConfig.LoadConfig.LimitConfig.KEY_COUNT).longValue(),
+				limitConfigJson.getJsonNumber(CommonConfig.LoadConfig.LimitConfig.KEY_RATE).doubleValue(),
 				limitConfigJson.getInt(CommonConfig.LoadConfig.LimitConfig.KEY_SIZE),
 				getString(limitConfigJson, CommonConfig.LoadConfig.LimitConfig.KEY_TIME)
 			);
@@ -113,12 +131,12 @@ public class CommonDecoder
 			loadConfigJson.getInt(CommonConfig.LoadConfig.KEY_CONCURRENCY), limitConfig,
 			metricsConfig
 		);
-		final JsonObject runConfigJson = getJsonObject(commonJson, CommonConfig.KEY_RUN);
+		final JsonObject runConfigJson = getJsonObject(commonConfigJson, CommonConfig.KEY_RUN);
 		final CommonConfig.RunConfig runConfig = new CommonConfig.RunConfig(
 			getString(runConfigJson, CommonConfig.RunConfig.KEY_ID, null),
 			getString(runConfigJson, CommonConfig.RunConfig.KEY_FILE, null)
 		);
-		final JsonObject storageConfigJson = getJsonObject(commonJson, CommonConfig.KEY_STORAGE);
+		final JsonObject storageConfigJson = getJsonObject(commonConfigJson, CommonConfig.KEY_STORAGE);
 		final JsonArray addressesJsonArr =
 			storageConfigJson.getJsonArray(CommonConfig.StorageConfig.KEY_ADDRESSES);
 		final List<String> addresses = addressesJsonArr.getValuesAs(JsonString.class).stream().map(
@@ -130,16 +148,16 @@ public class CommonDecoder
 				getString(authJson, CommonConfig.StorageConfig.AuthConfig.KEY_SECRET, null),
 				getString(authJson, CommonConfig.StorageConfig.AuthConfig.KEY_TOKEN, null)
 			);
-		final JsonObject httpJson = getJsonObject(storageConfigJson, CommonConfig.StorageConfig.KEY_HTTP);
+		final JsonObject httpConfigJson = getJsonObject(storageConfigJson, CommonConfig.StorageConfig.KEY_HTTP);
 		final Map<String, String> headers = new HashMap<>();
-		getJsonObject(httpJson, CommonConfig.StorageConfig.HttpConfig.KEY_HEADERS).forEach(
+		getJsonObject(httpConfigJson, CommonConfig.StorageConfig.HttpConfig.KEY_HEADERS).forEach(
 			(headerName, headerValue) -> headers.put(headerName, ((JsonString) headerValue).getString()));
 		final CommonConfig.StorageConfig.HttpConfig httpConfig =
 			new CommonConfig.StorageConfig.HttpConfig(
-				getString(httpJson, CommonConfig.StorageConfig.HttpConfig.KEY_API),
-				httpJson.getBoolean(CommonConfig.StorageConfig.HttpConfig.KEY_FS_ACCESS),
-				getString(httpJson, CommonConfig.StorageConfig.HttpConfig.KEY_NAMESPACE, null),
-				httpJson.getBoolean(CommonConfig.StorageConfig.HttpConfig.KEY_VERSIONING), headers
+				getString(httpConfigJson, CommonConfig.StorageConfig.HttpConfig.KEY_API),
+				httpConfigJson.getBoolean(CommonConfig.StorageConfig.HttpConfig.KEY_FS_ACCESS),
+				getString(httpConfigJson, CommonConfig.StorageConfig.HttpConfig.KEY_NAMESPACE, null),
+				httpConfigJson.getBoolean(CommonConfig.StorageConfig.HttpConfig.KEY_VERSIONING), headers
 			);
 		final JsonObject mockConfigJson =
 			getJsonObject(storageConfigJson, CommonConfig.StorageConfig.KEY_MOCK);
@@ -167,8 +185,8 @@ public class CommonDecoder
 		storageConfigBuilder.setMockConfig(mockConfig);
 		final CommonConfig.StorageConfig storageConfig = storageConfigBuilder.build();
 		final CommonConfig.CommonConfigBuilder commonConfigBuilder = CommonConfig.newBuilder();
-		commonConfigBuilder.setName(getString(commonJson, CommonConfig.KEY_NAME));
-		commonConfigBuilder.setVersion(getString(commonJson, CommonConfig.KEY_VERSION));
+		commonConfigBuilder.setName(getString(commonConfigJson, CommonConfig.KEY_NAME));
+		commonConfigBuilder.setVersion(getString(commonConfigJson, CommonConfig.KEY_VERSION));
 		commonConfigBuilder.setIoConfig(ioConfig);
 		commonConfigBuilder.setSocketConfig(socketConfig);
 		commonConfigBuilder.setItemConfig(itemConfig);
