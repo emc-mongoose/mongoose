@@ -10,7 +10,7 @@ extends Input<String> {
 	/**
 	 * Special characters
 	 */
-	char PATTERN_CHAR = '$';
+	char PATTERN_CHAR = '%';
 	char[] FORMAT_CHARS = {'{', '}'};
 
 	String getPattern();
