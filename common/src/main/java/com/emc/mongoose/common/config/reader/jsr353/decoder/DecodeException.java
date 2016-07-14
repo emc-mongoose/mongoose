@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.config.decoder;
+package com.emc.mongoose.common.config.reader.jsr353.decoder;
 
 /**
  Created on 11.07.16.

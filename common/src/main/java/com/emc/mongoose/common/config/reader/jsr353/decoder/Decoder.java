@@ -1,6 +1,6 @@
-package com.emc.mongoose.common.config.decoder;
+package com.emc.mongoose.common.config.reader.jsr353.decoder;
 
-import javax.json.JsonObject;
+//import javax.json.JsonObject;
 
 /**
  Created on 11.07.16.
@@ -11,7 +11,7 @@ public interface Decoder<T> {
 
 	void destroy();
 
-	T decode(final JsonObject json) throws DecodeException;
+	/*T decode(final JsonObject json) throws DecodeException;
 
 	default JsonObject getJsonObject(final JsonObject jsonObject, final String key)
 	throws DecodeException {
@@ -34,6 +34,6 @@ public interface Decoder<T> {
 
 	default String getString(final JsonObject jsonObject, final String key, final String defaultValue) {
 		return jsonObject.getString(key, defaultValue);
-	}
+	}*/
 	
 }

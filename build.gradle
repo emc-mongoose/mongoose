@@ -58,9 +58,6 @@ subprojects {
 			"com.fasterxml.jackson.core:jackson-core:${jacksonVersion}",
 			"com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}",
 
-			"javax.json:javax.json-api:1.0",
-			"org.glassfish:javax.json:1.0.4",
-
 			"io.netty:netty-common:${nettyVersion}",
 			"io.netty:netty-buffer:${nettyVersion}",
 			"io.netty:netty-transport:${nettyVersion}",

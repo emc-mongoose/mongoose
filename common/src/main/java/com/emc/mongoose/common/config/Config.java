@@ -3,15 +3,52 @@ package com.emc.mongoose.common.config;
 import com.emc.mongoose.common.util.DataRangesConfig;
 import com.emc.mongoose.common.util.SizeInBytes;
 import com.emc.mongoose.common.util.TimeUtil;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  Created on 11.07.16.
  */
-public class CommonConfig {
+public final class Config {
+
+	public final static class TimeStrToLongDeserializer
+	extends JsonDeserializer<Long> {
+
+		@Override
+		public final Long deserialize(final JsonParser p, final DeserializationContext ctx)
+		throws IOException, JsonProcessingException {
+			final String rawValue = p.getValueAsString();
+			final TimeUnit timeUnit = TimeUtil.getTimeUnit(rawValue);
+			if(timeUnit == null) {
+				return TimeUtil.getTimeValue(rawValue);
+			} else {
+				return timeUnit.toSeconds(TimeUtil.getTimeValue(rawValue));
+			}
+		}
+	}
+
+	public final static class SizeInBytesDeserializer
+	extends JsonDeserializer<SizeInBytes> {
+
+		@Override
+		public final SizeInBytes deserialize(final JsonParser p, final DeserializationContext ctxt)
+		throws IOException, JsonProcessingException {
+			return new SizeInBytes(p.getValueAsString());
+		}
+	}
 
 	public static final String KEY_NAME = "name";
 	public static final String KEY_VERSION = "version";
@@ -21,16 +58,19 @@ public class CommonConfig {
 	public static final String KEY_LOAD = "load";
 	public static final String KEY_RUN = "run";
 	public static final String KEY_STORAGE = "storage";
-	private String name;
-	private String version;
-	private IoConfig ioConfig;
-	private SocketConfig socketConfig;
-	private StorageConfig storageConfig;
-	private LoadConfig loadConfig;
-	private RunConfig runConfig;
-	private ItemConfig itemConfig;
+	public static final String KEY_ALIASING = "aliasing";
 
-	private CommonConfig() {}
+	@JsonProperty(KEY_NAME) private String name;
+	@JsonProperty(KEY_VERSION) private String version;
+	@JsonProperty(KEY_IO) private IoConfig ioConfig;
+	@JsonProperty(KEY_SOCKET) private SocketConfig socketConfig;
+	@JsonProperty(KEY_STORAGE) private StorageConfig storageConfig;
+	@JsonProperty(KEY_LOAD) private LoadConfig loadConfig;
+	@JsonProperty(KEY_RUN) private RunConfig runConfig;
+	@JsonProperty(KEY_ITEM) private ItemConfig itemConfig;
+	@JsonProperty(KEY_ALIASING) private Map<String, Object> aliasingConfig;
+
+	private Config() {}
 
 	public final String getName() {
 		return name;
@@ -64,74 +104,87 @@ public class CommonConfig {
 		return itemConfig;
 	}
 
-	public static CommonConfigBuilder newBuilder() {
-		return new CommonConfig().new CommonConfigBuilder();
+	public final Map<String, Object> getAliasingConfig() {
+		return aliasingConfig;
 	}
 
-	public final class CommonConfigBuilder {
+	public static ConfigBuilder newBuilder() {
+		return new Config().new ConfigBuilder();
+	}
 
-		private CommonConfigBuilder() {}
+	public final class ConfigBuilder {
 
-		public final CommonConfigBuilder setName(final String name) {
-			CommonConfig.this.name = name;
+		private ConfigBuilder() {}
+
+		public final ConfigBuilder setName(final String name) {
+			Config.this.name = name;
 			return this;
 		}
 
-		public final CommonConfigBuilder setVersion(final String version) {
-			CommonConfig.this.version = version;
+		public final ConfigBuilder setVersion(final String version) {
+			Config.this.version = version;
 			return this;
 		}
 
-		public final CommonConfigBuilder setIoConfig(final IoConfig ioConfig) {
-			CommonConfig.this.ioConfig = ioConfig;
+		public final ConfigBuilder setIoConfig(final IoConfig ioConfig) {
+			Config.this.ioConfig = ioConfig;
 			return this;
 		}
 
-		public final CommonConfigBuilder setSocketConfig(final SocketConfig socketConfig) {
-			CommonConfig.this.socketConfig = socketConfig;
+		public final ConfigBuilder setSocketConfig(final SocketConfig socketConfig) {
+			Config.this.socketConfig = socketConfig;
 			return this;
 		}
 
-		public final CommonConfigBuilder setItemConfig(final ItemConfig itemConfig) {
-			CommonConfig.this.itemConfig = itemConfig;
+		public final ConfigBuilder setItemConfig(final ItemConfig itemConfig) {
+			Config.this.itemConfig = itemConfig;
 			return this;
 		}
 
-		public final CommonConfigBuilder setLoadConfig(final LoadConfig loadConfig) {
-			CommonConfig.this.loadConfig = loadConfig;
+		public final ConfigBuilder setLoadConfig(final LoadConfig loadConfig) {
+			Config.this.loadConfig = loadConfig;
 			return this;
 		}
 
-		public final CommonConfigBuilder setRunConfig(final RunConfig runConfig) {
-			CommonConfig.this.runConfig = runConfig;
+		public final ConfigBuilder setRunConfig(final RunConfig runConfig) {
+			Config.this.runConfig = runConfig;
 			return this;
 		}
 
-		public final CommonConfigBuilder setStorageConfig(final StorageConfig storageConfig) {
-			CommonConfig.this.storageConfig = storageConfig;
+		public final ConfigBuilder setStorageConfig(final StorageConfig storageConfig) {
+			Config.this.storageConfig = storageConfig;
 			return this;
 		}
 
-		public final CommonConfig build() {
-			return CommonConfig.this;
+		public final Config build() {
+			return Config.this;
 		}
 
 	}
 
-	public static class IoConfig {
+	public final static class IoConfig {
 
 		public static final String KEY_BUFFER = "buffer";
 
-		private final BufferConfig bufferConfig;
+		@JsonProperty(KEY_BUFFER)
+		private BufferConfig bufferConfig;
+
+		public IoConfig() {
+		}
 
 		public IoConfig(final BufferConfig bufferConfig) {
 			this.bufferConfig = bufferConfig;
 		}
 
 		public static class BufferConfig {
+
 			public static final String KEY_SIZE = "size";
 
-			private final SizeInBytes size;
+			@JsonProperty(KEY_SIZE) @JsonDeserialize(using = SizeInBytesDeserializer.class)
+			private SizeInBytes size;
+
+			public BufferConfig() {
+			}
 
 			public BufferConfig(final String size) {
 				this.size = new SizeInBytes(size);
@@ -147,24 +200,25 @@ public class CommonConfig {
 		}
 	}
 
-	public static class SocketConfig {
+	public final static class SocketConfig {
 
-		public static final String KEY_TIMEOUT_IN_MILLISECONDS = "timeoutMilliSec";
-		public static final String KEY_REUSABLE_ADDRESS = "reuseAddr";
+		public static final String KEY_TIMEOUT_MILLISEC = "timeoutMilliSec";
+		public static final String KEY_REUSE_ADDR = "reuseAddr";
 		public static final String KEY_KEEP_ALIVE = "keepAlive";
 		public static final String KEY_TCP_NO_DELAY = "tcpNoDelay";
 		public static final String KEY_LINGER = "linger";
 		public static final String KEY_BIND_BACKLOG_SIZE = "bindBacklogSize";
 		public static final String KEY_INTEREST_OP_QUEUED = "interestOpQueued";
 		public static final String KEY_SELECT_INTERVAL = "selectInterval";
-		private int timeoutMilliSec;
-		private boolean reuseAddr;
-		private boolean keepAlive;
-		private boolean tcpNoDelay;
-		private int linger;
-		private int bindBackLogSize;
-		private boolean interestOpQueued;
-		private int selectInterval;
+
+		@JsonProperty(KEY_TIMEOUT_MILLISEC) private int timeoutMilliSec;
+		@JsonProperty(KEY_REUSE_ADDR) private boolean reuseAddr;
+		@JsonProperty(KEY_KEEP_ALIVE) private boolean keepAlive;
+		@JsonProperty(KEY_TCP_NO_DELAY) private boolean tcpNoDelay;
+		@JsonProperty(KEY_LINGER) private int linger;
+		@JsonProperty(KEY_BIND_BACKLOG_SIZE) private int bindBackLogSize;
+		@JsonProperty(KEY_INTEREST_OP_QUEUED) private boolean interestOpQueued;
+		@JsonProperty(KEY_SELECT_INTERVAL) private int selectInterval;
 
 		private SocketConfig() {}
 
@@ -255,18 +309,22 @@ public class CommonConfig {
 		}
 	}
 
-	public static class ItemConfig {
+	public final static class ItemConfig {
 
 		public static final String KEY_TYPE = "type";
 		public static final String KEY_DATA = "data";
 		public static final String KEY_INPUT = "input";
 		public static final String KEY_OUTPUT = "output";
 		public static final String KEY_NAMING = "naming";
-		private final String type;
-		private final DataConfig dataConfig;
-		private final InputConfig input;
-		private final OutputConfig output;
-		private final NamingConfig namingConfig;
+
+		@JsonProperty(KEY_TYPE) private String type;
+		@JsonProperty(KEY_DATA) private DataConfig dataConfig;
+		@JsonProperty(KEY_INPUT) private InputConfig input;
+		@JsonProperty(KEY_OUTPUT) private OutputConfig output;
+		@JsonProperty(KEY_NAMING) private NamingConfig namingConfig;
+
+		public ItemConfig() {
+		}
 
 		public ItemConfig(
 			final String type, final DataConfig dataConfig, final InputConfig inputConfig,
@@ -299,16 +357,23 @@ public class CommonConfig {
 			return namingConfig;
 		}
 
-		public static class DataConfig {
+		public final static class DataConfig {
 
 			public static final String KEY_CONTENT = "content";
 			public static final String KEY_RANGES = "ranges";
 			public static final String KEY_SIZE = "size";
 			public static final String KEY_VERIFY = "verify";
-			private final ContentConfig contentConfig;
-			private final DataRangesConfig ranges;
-			private final SizeInBytes size;
-			private final boolean verify;
+			
+			@JsonProperty(KEY_CONTENT) private ContentConfig contentConfig;
+			@JsonProperty(KEY_RANGES) private DataRangesConfig ranges;
+
+			@JsonProperty(KEY_SIZE) @JsonDeserialize(using = SizeInBytesDeserializer.class)
+			private SizeInBytes size;
+
+			@JsonProperty(KEY_VERIFY) private boolean verify;
+
+			public DataConfig() {
+			}
 
 			public DataConfig(
 				final ContentConfig contentConfig, final String ranges, final String size,
@@ -346,14 +411,20 @@ public class CommonConfig {
 				return verify;
 			}
 
-			public static class ContentConfig {
+			public final static class ContentConfig {
 
 				public static final String KEY_FILE = "file";
 				public static final String KEY_SEED = "seed";
 				public static final String KEY_RING_SIZE = "ringSize";
-				private final String file;
-				private final String seed;
-				private final SizeInBytes ringSize;
+				
+				@JsonProperty(KEY_FILE) private String file;
+				@JsonProperty(KEY_SEED) private String seed;
+
+				@JsonProperty(KEY_RING_SIZE) @JsonDeserialize(using = SizeInBytesDeserializer.class)
+				private SizeInBytes ringSize;
+
+				public ContentConfig() {
+				}
 
 				public ContentConfig(final String file, final String seed, final String ringSize) {
 					this.file = file;
@@ -375,12 +446,16 @@ public class CommonConfig {
 			}
 		}
 
-		public static class InputConfig {
+		public final static class InputConfig {
 
 			public static final String KEY_CONTAINER = "container";
 			public static final String KEY_FILE = "file";
-			private final String container;
-			private final String file;
+
+			@JsonProperty(KEY_CONTAINER) private String container;
+			@JsonProperty(KEY_FILE) private String file;
+
+			public InputConfig() {
+			}
 
 			public InputConfig(final String file, final String container) {
 				this.file = file;
@@ -397,13 +472,17 @@ public class CommonConfig {
 
 		}
 
-		public static class OutputConfig {
+		public final static class OutputConfig {
 
 			public static final String KEY_CONTAINER = "container";
 			public static final String KEY_FILE = "file";
-			private final String container;
-			private final String file;
 
+			@JsonProperty(KEY_CONTAINER) private String container;
+			@JsonProperty(KEY_FILE) private String file;
+
+			public OutputConfig() {
+			}
+			
 			public OutputConfig(final String container, final String file) {
 				this.container = container;
 				this.file = file;
@@ -417,21 +496,23 @@ public class CommonConfig {
 				return file;
 			}
 		}
-
-
-
-		public static class NamingConfig {
+		
+		public final static class NamingConfig {
 
 			public static final String KEY_TYPE = "type";
 			public static final String KEY_PREFIX = "prefix";
 			public static final String KEY_RADIX = "radix";
 			public static final String KEY_OFFSET = "offset";
 			public static final String KEY_LENGTH = "length";
-			private final String type;
-			private final String prefix;
-			private final int radix;
-			private final long offset;
-			private final int length;
+			
+			@JsonProperty(KEY_TYPE) private String type;
+			@JsonProperty(KEY_PREFIX) private String prefix;
+			@JsonProperty(KEY_RADIX) private int radix;
+			@JsonProperty(KEY_OFFSET) private long offset;
+			@JsonProperty(KEY_LENGTH) private int length;
+
+			public NamingConfig() {
+			}
 
 			public NamingConfig(
 				final String type, final String prefix, final int radix, final long offset,
@@ -466,22 +547,27 @@ public class CommonConfig {
 		}
 	}
 
-	public static class LoadConfig {
+	public final static class LoadConfig {
 
 		public static final String KEY_CIRCULAR = "circular";
 		public static final String KEY_TYPE = "type";
 		public static final String KEY_CONCURRENCY = "concurrency";
 		public static final String KEY_LIMIT = "limit";
 		public static final String KEY_METRICS = "metrics";
-		private final boolean circular;
-		private final String type;
-		private final int concurrency;
-		private final LimitConfig limitConfig;
-		private final MetricsConfig metricsConfig;
+		
+		@JsonProperty(KEY_CIRCULAR) private boolean circular;
+		@JsonProperty(KEY_TYPE) private String type;
+		@JsonProperty(KEY_CONCURRENCY) private int concurrency;
+		@JsonProperty(KEY_LIMIT) private LimitConfig limitConfig;
+		@JsonProperty(KEY_METRICS) private MetricsConfig metricsConfig;
 
-		public LoadConfig(final boolean circular, final String type,
-			final int concurrency, final LimitConfig limitConfig,
-			final MetricsConfig metricsConfig) {
+		public LoadConfig() {
+		}
+
+		public LoadConfig(
+			final boolean circular, final String type, final int concurrency,
+			final LimitConfig limitConfig, final MetricsConfig metricsConfig
+		) {
 			this.circular = circular;
 			this.type = type;
 			this.concurrency = concurrency;
@@ -509,18 +595,26 @@ public class CommonConfig {
 			return metricsConfig;
 		}
 
-		public static class LimitConfig {
+		public final static class LimitConfig {
 
 			public static final String KEY_COUNT = "count";
 			public static final String KEY_RATE = "rate";
 			public static final String KEY_SIZE = "size";
 			public static final String KEY_TIME = "time";
-			private final long count;
-			private final double rate;
-			private final int size;
-			private final long time;
 
-			public LimitConfig(final long count, final double rate, final int size, final String time) {
+			@JsonProperty(KEY_COUNT) private long count;
+			@JsonProperty(KEY_RATE) private double rate;
+			@JsonProperty(KEY_SIZE) private int size;
+
+			@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_TIME)
+			private long time;
+
+			public LimitConfig() {
+			}
+
+			public LimitConfig(
+				final long count, final double rate, final int size, final String time
+			) {
 				this.count = count;
 				this.rate = rate;
 				this.size = size;
@@ -544,20 +638,27 @@ public class CommonConfig {
 			}
 		}
 
-		public static class MetricsConfig {
+		public final static class MetricsConfig {
 
 			public static final String KEY_INTERMEDIATE = "intermediate";
 			public static final String KEY_PERIOD = "period";
 			public static final String KEY_PRECONDITION= "precondition";
-			private final boolean intermediate;
-			private final int period;
-			private final boolean precondition;
+			
+			@JsonProperty(KEY_INTERMEDIATE) private boolean intermediate;
+
+			@JsonDeserialize(using = TimeStrToLongDeserializer.class) @JsonProperty(KEY_PERIOD)
+			private long period;
+
+			@JsonProperty(KEY_PRECONDITION) private boolean precondition;
+
+			public MetricsConfig() {
+			}
 
 			public MetricsConfig(
 				final boolean intermediate, final String period, final boolean precondition
 			) {
 				this.intermediate = intermediate;
-				this.period = (int) TimeUtil.getTimeUnit(period).toSeconds(TimeUtil.getTimeValue(period));
+				this.period = TimeUtil.getTimeUnit(period).toSeconds(TimeUtil.getTimeValue(period));
 				this.precondition = precondition;
 			}
 
@@ -565,7 +666,7 @@ public class CommonConfig {
 				return intermediate;
 			}
 
-			public final int getPeriod() {
+			public final long getPeriod() {
 				return period;
 			}
 
@@ -575,12 +676,16 @@ public class CommonConfig {
 		}
 	}
 
-	public static class RunConfig {
+	public final static class RunConfig {
 
 		public static final String KEY_FILE = "file";
 		public static final String KEY_ID = "id";
-		private final String file;
-		private final String id;
+		
+		@JsonProperty(KEY_FILE) private String file;
+		@JsonProperty(KEY_ID) private String id;
+
+		public RunConfig() {
+		}
 
 		public RunConfig(final String file, final String id) {
 			this.file = file;
@@ -596,22 +701,23 @@ public class CommonConfig {
 		}
 	}
 
-	public static class StorageConfig {
+	public final static class StorageConfig {
 
-		public static final String KEY_ADDRESSES = "addrs";
+		public static final String KEY_ADDRS = "addrs";
 		public static final String KEY_AUTH = "auth";
 		public static final String KEY_HTTP = "http";
 		public static final String KEY_PORT = "port";
 		public static final String KEY_SSL = "ssl";
 		public static final String KEY_TYPE = "type";
 		public static final String KEY_MOCK = "mock";
-		private List<String> addrs;
-		private AuthConfig authConfig;
-		private HttpConfig httpConfig;
-		private int port;
-		private boolean ssl;
-		private String type;
-		private MockConfig mockConfig;
+
+		@JsonProperty(KEY_ADDRS) private List<String> addrs;
+		@JsonProperty(KEY_AUTH) private AuthConfig authConfig;
+		@JsonProperty(KEY_HTTP) private HttpConfig httpConfig;
+		@JsonProperty(KEY_PORT) private int port;
+		@JsonProperty(KEY_SSL) private boolean ssl;
+		@JsonProperty(KEY_TYPE) private String type;
+		@JsonProperty(KEY_MOCK) private MockConfig mockConfig;
 
 		private StorageConfig() {}
 
@@ -692,14 +798,18 @@ public class CommonConfig {
 			return mockConfig;
 		}
 
-		public static class AuthConfig {
+		public final static class AuthConfig {
 
 			public static final String KEY_ID = "id";
 			public static final String KEY_SECRET = "secret";
 			public static final String KEY_TOKEN = "token";
-			private final String id;
-			private final String secret;
-			private final String token;
+			
+			@JsonProperty(KEY_ID) private String id;
+			@JsonProperty(KEY_SECRET) private String secret;
+			@JsonProperty(KEY_TOKEN) private String token;
+
+			public AuthConfig() {
+			}
 
 			public AuthConfig(final String id, final String secret, final String token) {
 				this.id = id;
@@ -720,7 +830,7 @@ public class CommonConfig {
 			}
 		}
 
-		public static class HttpConfig {
+		public final static class HttpConfig {
 
 			public static final String KEY_API = "api";
 			public static final String KEY_FS_ACCESS = "fsAccess";
@@ -729,11 +839,15 @@ public class CommonConfig {
 			public static final String KEY_HEADER_USER_AGENT = "User-Agent";
 			public static final String KEY_NAMESPACE = "namespace";
 			public static final String KEY_VERSIONING = "versioning";
-			private final String api;
-			private final boolean fsAccess;
-			private final String namespace;
-			private final boolean versioning;
-			private final Map<String, String> headers;
+			
+			@JsonProperty(KEY_API) private String api;
+			@JsonProperty(KEY_FS_ACCESS) private boolean fsAccess;
+			@JsonProperty(KEY_NAMESPACE) private String namespace;
+			@JsonProperty(KEY_VERSIONING) private boolean versioning;
+			@JsonProperty(KEY_HEADERS) private Map<String, String> headers;
+
+			public HttpConfig() {
+			}
 
 			public HttpConfig(
 				final String api, final boolean fsAccess, final String namespace,
@@ -767,14 +881,18 @@ public class CommonConfig {
 			}
 		}
 
-		public static class MockConfig {
+		public final static class MockConfig {
 
 			public static final String KEY_HEAD_COUNT = "headCount";
 			public static final String KEY_CAPACITY = "capacity";
 			public static final String KEY_CONTAINER = "container";
-			private final int headCount;
-			private final int capacity;
-			private final ContainerConfig containerConfig;
+			
+			@JsonProperty(KEY_HEAD_COUNT) private int headCount;
+			@JsonProperty(KEY_CAPACITY) private int capacity;
+			@JsonProperty(KEY_CONTAINER) private ContainerConfig containerConfig;
+
+			public MockConfig() {
+			}
 
 			public MockConfig(
 				final int headCount, final int capacity, final ContainerConfig containerConfig
@@ -796,12 +914,16 @@ public class CommonConfig {
 				return containerConfig;
 			}
 
-			public static class ContainerConfig {
+			public final static class ContainerConfig {
 
 				public static final String KEY_CAPACITY = "capacity";
 				public static final String KEY_COUNT_LIMIT = "countLimit";
-				private final int capacity;
-				private final int countLimit;
+				
+				@JsonProperty(KEY_CAPACITY) private int capacity;
+				@JsonProperty(KEY_COUNT_LIMIT) private int countLimit;
+
+				public ContainerConfig() {
+				}
 
 				public ContainerConfig(final int capacity, final int countLimit) {
 					this.capacity = capacity;
@@ -820,5 +942,4 @@ public class CommonConfig {
 		}
 
 	}
-
 }

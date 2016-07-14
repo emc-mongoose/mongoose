@@ -1,9 +1,8 @@
 package com.emc.mongoose.storage.mock.http;
 
-import com.emc.mongoose.common.config.CommonConfig;
+import com.emc.mongoose.common.config.Config;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.util.TimeUtil;
 import com.emc.mongoose.storage.mock.StorageMock;
 import com.emc.mongoose.storage.mock.http.request.AtmosRequestHandler;
 import com.emc.mongoose.storage.mock.http.request.RequestHandlerBase;
@@ -24,7 +23,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,8 +41,8 @@ public class Nagaina implements StorageMock {
 	private final RequestHandlerBase s3RequestHandler, swiftRequestHandler, atmosRequestHandler;
 
 	@SuppressWarnings("ConstantConditions")
-	public Nagaina(final CommonConfig commonConfig) {
-		final CommonConfig.StorageConfig storageConfig = commonConfig.getStorageConfig();
+	public Nagaina(final Config config) {
+		final Config.StorageConfig storageConfig = config.getStorageConfig();
 		port = storageConfig.getPort();
 		final int headCount = storageConfig.getMockConfig().getHeadCount();
 		dispatchGroups = new NioEventLoopGroup[headCount];

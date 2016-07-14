@@ -1,18 +1,20 @@
 package com.emc.mongoose.storage.mock;
 
-import com.emc.mongoose.common.config.CommonConfig;
-import com.emc.mongoose.common.config.CommonDecoder;
-import com.emc.mongoose.common.config.reader.ConfigReader;
+import com.emc.mongoose.common.config.Config;
+import com.emc.mongoose.common.config.reader.jackson.JacksonConfigLoader;
 import com.emc.mongoose.storage.mock.http.Nagaina;
+
+import java.io.IOException;
 
 /**
  Created on 12.07.16.
  */
 public class Main {
 
-	public static void main(final String[] args) {
-		final CommonConfig commonConfig = ConfigReader.loadConfig(new CommonDecoder());
-		final Nagaina nagaina = new Nagaina(commonConfig);
+	public static void main(final String... args)
+	throws IOException {
+		final Config config = JacksonConfigLoader.loadDefaultConfig();
+		final Nagaina nagaina = new Nagaina(config);
 		nagaina.start();
 		System.out.println("Nagaina started");
 		try {
