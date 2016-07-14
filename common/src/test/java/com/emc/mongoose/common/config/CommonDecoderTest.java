@@ -2,6 +2,7 @@ package com.emc.mongoose.common.config;
 
 import com.emc.mongoose.common.config.reader.ConfigReader;
 import com.emc.mongoose.common.util.SizeInBytes;
+import com.emc.mongoose.common.util.TimeUtil;
 import org.junit.Test;
 
 import java.util.Map;
@@ -49,23 +50,23 @@ public class CommonDecoderTest {
 		assertThat(contentConfig.getFile(), nullValue("item.data.content.file"));
 		assertThat(contentConfig.getSeed(), equalTo("7a42d9c483244167", "item.data.content.seed"));
 		assertThat(contentConfig.getRingSize(), equalTo(new SizeInBytes("4MB"), "item.data.content.ringSize"));
-		assertThat(dataConfig.getRanges(), equalTo(0, "item.data.ranges"));
+		assertThat(dataConfig.getRanges().getRandomCount(), equalTo(0, "item.data.ranges"));
 		assertThat(dataConfig.getSize(), equalTo(new SizeInBytes("1MB"), "item.data.size"));
 		assertThat(dataConfig.getVerify(), equalTo(true, "item.data.verify"));
 		final CommonConfig.ItemConfig.InputConfig inputConfig = itemConfig.getInputConfig();
 		assertThat(inputConfig, notNullValue());
-		assertThat(inputConfig.getContainer(), nullValue("item.input.getContainerConfig"));
+		assertThat(inputConfig.getContainer(), nullValue("item.input.container"));
 		assertThat(inputConfig.getFile(), nullValue("item.input.file"));
 		final CommonConfig.ItemConfig.OutputConfig outputConfig= itemConfig.getOutputConfig();
 		assertThat(outputConfig, notNullValue());
-		assertThat(outputConfig.getContainer(), nullValue("item.output.getContainerConfig"));
+		assertThat(outputConfig.getContainer(), nullValue("item.output.container"));
 		assertThat(outputConfig.getFile(), nullValue("item.output.file"));
 		final CommonConfig.ItemConfig.NamingConfig namingConfig = itemConfig.getNamingConfig();
 		assertThat(namingConfig, notNullValue());
 		assertThat(namingConfig.getType(), equalTo("random", "item.naming.type"));
 		assertThat(namingConfig.getPrefix(), nullValue("item.naming.prefix"));
 		assertThat(namingConfig.getRadix(), equalTo(36, "item.naming.radix"));
-		assertThat(namingConfig.getOffset(), equalTo(0, "item.naming.offset"));
+		assertThat(namingConfig.getOffset(), equalTo(0L, "item.naming.offset"));
 		assertThat(namingConfig.getLength(), equalTo(13, "item.naming.length"));
 		final CommonConfig.LoadConfig loadConfig = commonConfig.getLoadConfig();
 		assertThat(loadConfig, notNullValue());
@@ -74,14 +75,16 @@ public class CommonDecoderTest {
 		assertThat(loadConfig.getConcurrency(), equalTo(1, "load.concurrency"));
 		final CommonConfig.LoadConfig.LimitConfig limitConfig = loadConfig.getLimitConfig();
 		assertThat(limitConfig, notNullValue());
-		assertThat(limitConfig.getCount(), equalTo(0, "load.limit.count"));
-		assertThat(limitConfig.getRate(), equalTo(0, "load.limit.rate"));
+		assertThat(limitConfig.getCount(), equalTo(0L, "load.limit.count"));
+		assertThat(limitConfig.getRate(), equalTo(0.0, "load.limit.rate"));
 		assertThat(limitConfig.getSize(), equalTo(0, "load.limit.size"));
-		assertThat(limitConfig.getTime(), equalTo("0s", "load.limit.time"));
+		final String timeTestValue = "0s";
+		assertThat(limitConfig.getTime(), equalTo(TimeUtil.getTimeUnit(timeTestValue).toSeconds(TimeUtil.getTimeValue(timeTestValue)), "load.limit.time"));
 		final CommonConfig.LoadConfig.MetricsConfig metricsConfig = loadConfig.getMetricsConfig();
 		assertThat(metricsConfig, notNullValue());
 		assertThat(metricsConfig.getIntermediate(), equalTo(false, "load.metrics.intermediate"));
-		assertThat(metricsConfig.getPeriod(), equalTo("10s", "load.metrics.period"));
+		final String periodTestValue = "10s";
+		assertThat(metricsConfig.getPeriod(), equalTo((int) TimeUtil.getTimeUnit(periodTestValue).toSeconds(TimeUtil.getTimeValue(periodTestValue)), "load.metrics.period"));
 		assertThat(metricsConfig.getPrecondition(), equalTo(false, "load.metrics.precondition"));
 		final CommonConfig.RunConfig runConfig = commonConfig.getRunConfig();
 		assertThat(runConfig, notNullValue());
@@ -117,7 +120,7 @@ public class CommonDecoderTest {
 		final CommonConfig.StorageConfig.MockConfig mockConfig = storageConfig.getMockConfig();
 		assertThat(mockConfig, notNullValue());
 		assertThat(mockConfig.getHeadCount(), equalTo(1, "storage.mock.headCount"));
-		assertThat(mockConfig.getCapacity(), equalTo(1_000_000, "storage.mock.headCount"));
+		assertThat(mockConfig.getCapacity(), equalTo(1_000_000, "storage.mock.capacity"));
 		final CommonConfig.StorageConfig.MockConfig.ContainerConfig containerConfig =
 			mockConfig.getContainerConfig();
 		assertThat(containerConfig, notNullValue());
