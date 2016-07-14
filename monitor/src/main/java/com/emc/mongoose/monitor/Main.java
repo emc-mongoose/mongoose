@@ -8,6 +8,7 @@ import com.emc.mongoose.common.item.DataItem;
 import com.emc.mongoose.common.load.Driver;
 import com.emc.mongoose.common.load.Generator;
 import com.emc.mongoose.common.load.Monitor;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.generator.GeneratorMock;
 import com.emc.mongoose.storage.driver.DriverMock;
 
@@ -20,7 +21,11 @@ import java.util.List;
  */
 public class Main {
 
-	public static <I extends DataItem, O extends DataIoTask<I>> void main(final String[] args)
+	static {
+		LogUtil.init();
+	}
+
+	public static <I extends DataItem, O extends DataIoTask<I>> void main(final String... args)
 	throws IOException {
 
 		final int generatorCount = Runtime.getRuntime().availableProcessors();

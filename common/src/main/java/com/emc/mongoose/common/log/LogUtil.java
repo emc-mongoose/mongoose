@@ -73,6 +73,9 @@ implements ShutdownCallbackRegistry {
 		KEY_SHUTDOWN_CALLBACK_REGISTRY = "log4j.shutdownCallbackRegistry",
 		VALUE_SHUTDOWN_CALLBACK_REGISTRY = LogUtil.class.getCanonicalName(),
 		//
+		KEY_CONFIG_FACTORY = "log4j.configurationFactory",
+		VALUE_CONFIG_FACTORY = "org.apache.logging.log4j.core.config.json.JsonConfigurationFactory",
+		//
 		FNAME_LOG_CONF = "logging.json",
 		//
 		MONGOOSE = "mongoose";
@@ -150,12 +153,10 @@ implements ShutdownCallbackRegistry {
 				System.setProperty(KEY_LOG4J_CTX_SELECTOR, VALUE_LOG4J_CTX_ASYNC_SELECTOR);
 				// connect JUL to Log4J2
 				System.setProperty(KEY_JUL_MANAGER, VALUE_JUL_MANAGER);
-				//
 				System.setProperty(KEY_WAIT_STRATEGY, VALUE_WAIT_STRATEGY);
-				//
 				System.setProperty(KEY_CLOCK, VALUE_CLOCK);
-				//
 				System.setProperty(KEY_SHUTDOWN_CALLBACK_REGISTRY, VALUE_SHUTDOWN_CALLBACK_REGISTRY);
+				System.setProperty(KEY_CONFIG_FACTORY, VALUE_CONFIG_FACTORY);
 				// set "run.id" property with timestamp value if not set before
 				final String runId = System.getProperty(KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
