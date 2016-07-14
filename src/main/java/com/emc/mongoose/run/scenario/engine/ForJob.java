@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.emc.mongoose.common.io.value.PatternDefinedInput.FORMAT_CHARS;
-import static com.emc.mongoose.common.io.value.PatternDefinedInput.PATTERN_CHAR;
 /**
  Created by andrey on 04.06.16.
  */
@@ -23,8 +22,9 @@ extends SequentialJob {
 
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String KEY_NODE_IN = "in";
+	public final static char REPLACE_MARKER_CHAR = '$';
 
-	private final String replaceMarker;
+	private final String replaceMarkerName;
 	private final List valueSeq;
 	private final long count;
 
@@ -34,26 +34,26 @@ extends SequentialJob {
 		if(value != null) {
 			if(value instanceof Long) {
 				count = (Long) value;
-				replaceMarker = null;
+				replaceMarkerName = null;
 				valueSeq = null;
 			} else if(value instanceof Integer) {
 				count = (Integer) value;
-				replaceMarker = null;
+				replaceMarkerName = null;
 				valueSeq = null;
 			} else if(value instanceof Short) {
 				count = (Short) value;
-				replaceMarker = null;
+				replaceMarkerName = null;
 				valueSeq = null;
 			} else if(value instanceof String) {
 				count = 0;
-				this.replaceMarker = (String) subTree.get(KEY_NODE_VALUE);
+				this.replaceMarkerName = (String) subTree.get(KEY_NODE_VALUE);
 				this.valueSeq = (List) subTree.get(KEY_NODE_IN);
 			} else {
 				throw new IllegalArgumentException("Unexpected value: \"" + value + "\"");
 			}
 		} else {
 			count = Long.MAX_VALUE;
-			replaceMarker = null;
+			replaceMarkerName = null;
 			valueSeq = null;
 		}
 		// calls "appendNewJob", invoking it manually again after "valueSeq" is initialized already
@@ -84,8 +84,8 @@ extends SequentialJob {
 		}
 
 		final Object jobTreeList = subTree.get(KEY_NODE_JOBS);
-		final String replacePattern = Character.toString(PATTERN_CHAR) + FORMAT_CHARS[0] +
-			replaceMarker + FORMAT_CHARS[1];
+		final String replacePattern = new String(new char[] {REPLACE_MARKER_CHAR}) +
+			FORMAT_CHARS[0] + replaceMarkerName + FORMAT_CHARS[1];
 		try {
 			if(jobTreeList != null) {
 				if(jobTreeList instanceof List) {
@@ -101,7 +101,7 @@ extends SequentialJob {
 									public final void run() {
 										LOG.info(
 											Markers.MSG, "Use next value for \"{}\": {}",
-											replaceMarker, nextValue
+											replaceMarkerName, nextValue
 										);
 									}
 								}

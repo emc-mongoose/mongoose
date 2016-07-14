@@ -27,13 +27,13 @@ public class AsyncPatternDefinedInputExceptionTest {
 	@Parameters
 	public static Iterable<Object[]> data() {
 		return Arrays.asList(new Object[][]{
-				{"$$d"},
-				{"$d[1-5]$"},
-				{"nghgh$"},
-				{"$$$$$$"},
-				{"$ "},
-				{"$D{gfg}"},
-				{"$f{fdl;}"},
+				{"%%d"},
+				{"%d[1-5]%"},
+				{"nghgh%"},
+				{"%%%%%%"},
+				{"% "},
+				{"%D{gfg}"},
+				{"%f{fdl;}"},
 		});
 	}
 	@Parameter(value = 0)
