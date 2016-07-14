@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  Created by kurila on 12.07.16.
@@ -34,17 +35,17 @@ implements Monitor<I, O> {
 			generator.registerMonitor(this);
 		}
 	}
-	
+
+	private final AtomicLong taskCounter = new AtomicLong(0);
+
 	@Override
 	public void ioTaskCompleted(final O ioTask) {
-		System.out.println(ioTask);
+		taskCounter.incrementAndGet();
 	}
 
 	@Override
 	public int ioTaskCompletedBatch(final List<O> ioTasks, final int from, final int to) {
-		for(int i = from; i < to; i ++) {
-			System.out.println(ioTasks.get(i));
-		}
+		taskCounter.addAndGet(to - from);
 		return to - from;
 	}
 
@@ -65,6 +66,27 @@ implements Monitor<I, O> {
 		for(final Generator<I, O> nextGenerator : generators) {
 			nextGenerator.start();
 		}
+		final Thread t = new Thread(
+			() -> {
+				final Thread currentThread = Thread.currentThread();
+				long lastTimeCount = 0;
+				long lastTimeCountDelta;
+				try {
+					while(!currentThread.isInterrupted()) {
+						lastTimeCountDelta = taskCounter.get() - lastTimeCount;
+						lastTimeCount = taskCounter.get();
+						System.out.println(
+							"count = " + lastTimeCount + ", rate = " +
+							(double) lastTimeCountDelta / 10 + " [op/s]"
+						);
+						TimeUnit.SECONDS.sleep(10);
+					}
+				} catch(final InterruptedException ignored) {
+				}
+			}
+		);
+		t.setDaemon(true);
+		t.start();
 	}
 
 	@Override
