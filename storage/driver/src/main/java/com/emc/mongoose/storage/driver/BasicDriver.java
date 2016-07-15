@@ -1,10 +1,15 @@
 package com.emc.mongoose.storage.driver;
 
 import com.emc.mongoose.common.concurrent.LifeCycleBase;
-import com.emc.mongoose.common.io.IoTask;
-import com.emc.mongoose.common.item.Item;
-import com.emc.mongoose.common.load.Driver;
-import com.emc.mongoose.common.load.Monitor;
+import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.model.api.io.task.IoTask;
+import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.load.Driver;
+import com.emc.mongoose.model.api.load.Monitor;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.List;
@@ -18,6 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class BasicDriver<I extends Item, O extends IoTask<I>>
 extends LifeCycleBase
 implements Driver<I, O> {
+
+	private final static Logger LOG = LogManager.getLogger();
 
 	private final AtomicReference<Monitor<I, O>> monitorRef = new AtomicReference<>(null);
 
@@ -90,7 +97,11 @@ implements Driver<I, O> {
 	public void close()
 	throws IOException {
 		if(!isInterrupted()) {
-			interrupt();
+			try {
+				interrupt();
+			} catch(final UserShootItsFootException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt");
+			}
 		}
 	}
 }

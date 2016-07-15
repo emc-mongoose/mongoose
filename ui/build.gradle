@@ -1,0 +1,6 @@
+description = 'mongoose-ui'
+
+dependencies {
+	compile project(':common')
+	compile project(':model')
+}

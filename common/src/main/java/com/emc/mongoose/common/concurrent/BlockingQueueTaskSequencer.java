@@ -1,11 +1,5 @@
 package com.emc.mongoose.common.concurrent;
 
-import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.log.Markers;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -19,7 +13,6 @@ public final class BlockingQueueTaskSequencer
 extends Thread
 implements TaskSequencer {
 
-	private final static Logger LOG = LogManager.getLogger();
 	public final static int DEFAULT_TASK_QUEUE_SIZE = 0x1000;
 	public final static BlockingQueueTaskSequencer INSTANCE = new BlockingQueueTaskSequencer(
 		"blockingQueueTaskSequencer", true, DEFAULT_TASK_QUEUE_SIZE
@@ -61,7 +54,7 @@ implements TaskSequencer {
 						try {
 							nextTask.run();
 						} catch(final Exception e) {
-							LogUtil.exception(LOG, Level.WARN, e, "Task \"{}\" failed", nextTask);
+							e.printStackTrace(System.err);
 						}
 					}
 					buff.clear();
@@ -70,7 +63,6 @@ implements TaskSequencer {
 				}
 			}
 		} finally {
-			LOG.debug(Markers.MSG, "{}: finished", getName());
 			queue.clear();
 		}
 	}

@@ -1,37 +1,33 @@
 package com.emc.mongoose.generator;
 
-import com.emc.mongoose.common.concurrent.LifeCycle;
 import com.emc.mongoose.common.concurrent.LifeCycleBase;
 import com.emc.mongoose.common.concurrent.Throttle;
-import com.emc.mongoose.common.config.ItemNamingType;
-import com.emc.mongoose.common.config.LoadType;
-import com.emc.mongoose.common.data.SeedContentSource;
-import com.emc.mongoose.common.io.Input;
-import com.emc.mongoose.common.io.IoTask;
-import com.emc.mongoose.common.io.Output;
-import com.emc.mongoose.common.io.factory.IoTaskFactory;
-import com.emc.mongoose.common.io.value.RangePatternDefinedInput;
-import com.emc.mongoose.common.item.BasicDataItem;
-import com.emc.mongoose.common.item.BasicItemNameInput;
-import com.emc.mongoose.common.item.DataItem;
-import com.emc.mongoose.common.item.Item;
-import com.emc.mongoose.common.item.NewDataItemInput;
-import com.emc.mongoose.common.item.factory.BasicDataItemFactory;
-import com.emc.mongoose.common.item.factory.ItemFactory;
-import com.emc.mongoose.common.load.Driver;
-import com.emc.mongoose.common.load.Generator;
-import com.emc.mongoose.common.load.Monitor;
-import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.common.util.SizeInBytes;
+import com.emc.mongoose.model.util.ItemNamingType;
+import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.Markers;
+import com.emc.mongoose.model.util.SizeInBytes;
+import com.emc.mongoose.model.api.io.Input;
+import com.emc.mongoose.model.api.io.Output;
+import com.emc.mongoose.model.api.io.task.IoTask;
+import com.emc.mongoose.model.api.io.task.IoTaskFactory;
+import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.item.ItemFactory;
+import com.emc.mongoose.model.api.load.Driver;
+import com.emc.mongoose.model.api.load.Generator;
+import com.emc.mongoose.model.api.load.Monitor;
+import com.emc.mongoose.model.impl.data.SeedContentSource;
+import com.emc.mongoose.model.impl.io.RangePatternDefinedInput;
+import com.emc.mongoose.model.impl.item.BasicDataItemFactory;
+import com.emc.mongoose.model.impl.item.BasicItemNameInput;
+import com.emc.mongoose.model.impl.item.NewDataItemInput;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +36,6 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  Created by kurila on 11.07.16.
@@ -188,7 +183,7 @@ implements Generator<I, O> {
 	public BasicGenerator(
 		final List<Driver<I, O>> drivers, final LoadType ioType,
 		final ItemFactory<I> itemFactory, final IoTaskFactory<I, O> ioTaskFactory
-	) throws IllegalStateException, IllegalArgumentException {
+	) throws UserShootItsFootException {
 		this.drivers = drivers;
 		if(itemFactory instanceof BasicDataItemFactory) {
 			this.itemInput = new NewDataItemInput<>(
@@ -229,8 +224,17 @@ implements Generator<I, O> {
 	}
 
 	@Override
-	protected void doStart() {
-		drivers.forEach(LifeCycle::start);
+	protected void doStart()
+	throws UserShootItsFootException {
+		for(final Driver<I, O> nextDriver : drivers) {
+			try {
+				nextDriver.start();
+			} catch(final UserShootItsFootException e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to start the driver \"{}\"", nextDriver.toString()
+				);
+			}
+		}
 		worker.start();
 	}
 
@@ -242,7 +246,16 @@ implements Generator<I, O> {
 	@Override
 	protected void doInterrupt() {
 		worker.interrupt();
-		drivers.forEach(LifeCycle::shutdown);
+		for(final Driver<I, O> nextDriver : drivers) {
+			try {
+				nextDriver.interrupt();
+			} catch(final UserShootItsFootException e) {
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to interrupt the driver \"{}\"",
+					nextDriver.toString()
+				);
+			}
+		}
 	}
 
 	@Override
@@ -263,7 +276,11 @@ implements Generator<I, O> {
 	public void close()
 	throws IOException {
 		if(!isInterrupted()) {
-			interrupt();
+			try {
+				interrupt();
+			} catch(final UserShootItsFootException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt");
+			}
 		}
 		if(itemInput != null) {
 			itemInput.close();

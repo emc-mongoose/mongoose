@@ -1,0 +1,5 @@
+description = 'mongoose-model'
+
+dependencies {
+    compile project(':common')
+}

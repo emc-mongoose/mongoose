@@ -47,14 +47,17 @@ subprojects {
 	dependencies {
 
 		compile(
+
 			"commons-lang:commons-lang:2.6",
 			"org.apache.commons:commons-collections4:4.1",
+			"io.dropwizard.metrics:metrics-core:3.1.2",
 
 			"org.apache.logging.log4j:log4j-core:${log4jVersion}",
 			"org.apache.logging.log4j:log4j-iostreams:${log4jVersion}",
 			"org.apache.logging.log4j:log4j-jul:${log4jVersion}",
 
 			"com.lmax:disruptor:3.3.4",
+
 			"com.fasterxml.jackson.core:jackson-core:${jacksonVersion}",
 			"com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}",
 
@@ -64,7 +67,9 @@ subprojects {
 			"io.netty:netty-handler:${nettyVersion}",
 			"io.netty:netty-codec-http:${nettyVersion}",
 
-			"org.eclipse.jetty:jetty-util:9.4.0.M0"
+			"org.eclipse.jetty:jetty-util:9.4.0.M0",
+
+			"it.unimi.dsi:fastutil:7.0.12"
 		)
 
 		testCompile "junit:junit:4.12"

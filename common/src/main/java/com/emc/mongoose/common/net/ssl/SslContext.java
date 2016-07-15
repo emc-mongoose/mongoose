@@ -1,9 +1,7 @@
 package com.emc.mongoose.common.net.ssl;
 
-import com.emc.mongoose.common.log.LogUtil;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
+import com.emc.mongoose.common.exception.Fireball;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -18,32 +16,25 @@ public final class SslContext {
 
 	private SslContext() {}
 
-	private final static Logger LOG = LogManager.getLogger();
-
-	private static SSLContext getInstance() {
-		SSLContext sslContext = null;
+	private static SSLContext getInstance()
+	throws OmgDoesNotPerformException {
 		try {
-			sslContext = SSLContext.getInstance("TLS");
-		} catch(final NoSuchAlgorithmException e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to get the SSL context instance"
+			final SSLContext sslContext = SSLContext.getInstance("TLS");
+			sslContext.init(null, new TrustManager[] {X509TrustAllManager.INSTANCE},
+				new SecureRandom()
 			);
+			return sslContext;
+		} catch(final NoSuchAlgorithmException | KeyManagementException e) {
+			throw new OmgDoesNotPerformException(e);
 		}
-		if(sslContext != null) {
-			try {
-				sslContext.init(
-					null, new TrustManager[] { X509TrustAllManager.INSTANCE },
-					new SecureRandom()
-				);
-			} catch(final KeyManagementException e) {
-				LogUtil.exception(
-					LOG, Level.ERROR, e, "Failed to init the SSL context"
-				);
-			}
-		}
-		//
-		return sslContext;
 	}
 
-	public static volatile SSLContext INSTANCE = getInstance();
+	public static volatile SSLContext INSTANCE;
+	static {
+		try {
+			INSTANCE = getInstance();
+		} catch(final Fireball e) {
+			e.printStackTrace(System.err);
+		}
+	}
 }

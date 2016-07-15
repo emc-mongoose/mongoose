@@ -1,5 +1,7 @@
-description = 'mongoose - storage mock'
+description = 'mongoose-storage-mock'
 
 dependencies {
 	compile project(':common')
+	compile project(':model')
+	compile project(':ui')
 }

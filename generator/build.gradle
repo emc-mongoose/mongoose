@@ -2,4 +2,6 @@ description = 'mongoose - generator'
 
 dependencies {
 	compile project(':common')
+	compile project(':model')
+	compile project(':ui')
 }

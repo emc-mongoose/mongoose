@@ -1,7 +1,9 @@
-description = 'mongoose - monitor'
+description = 'mongoose-monitor'
 
 dependencies {
 	compile project(':common')
+	compile project(':model')
+	compile project(':ui')
 	compile project(':generator')
 	compile project(':storage:driver')
 }

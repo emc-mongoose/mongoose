@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.mock.http;
 
-import com.emc.mongoose.common.config.Config;
-import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.ui.log.Markers;
 import com.emc.mongoose.storage.mock.StorageMock;
 import com.emc.mongoose.storage.mock.http.request.AtmosRequestHandler;
 import com.emc.mongoose.storage.mock.http.request.RequestHandlerBase;

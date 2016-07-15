@@ -1,16 +1,19 @@
 package com.emc.mongoose.monitor;
 
 import com.emc.mongoose.common.concurrent.LifeCycleBase;
-import com.emc.mongoose.common.config.Config;
-import com.emc.mongoose.common.config.LoadType;
-import com.emc.mongoose.common.io.DataIoTask;
-import com.emc.mongoose.common.io.IoTask;
-import com.emc.mongoose.common.item.Item;
-import com.emc.mongoose.common.load.Driver;
-import com.emc.mongoose.common.load.Generator;
-import com.emc.mongoose.common.load.Monitor;
-import com.emc.mongoose.common.load.metrics.IoStats;
-import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.ui.config.Config;
+import com.emc.mongoose.model.util.LoadType;
+import com.emc.mongoose.common.exception.UserShootItsFootException;
+import com.emc.mongoose.ui.log.LogUtil;
+import com.emc.mongoose.model.api.io.task.DataIoTask;
+import com.emc.mongoose.model.api.io.task.IoTask;
+import com.emc.mongoose.model.api.item.Item;
+import com.emc.mongoose.model.api.load.Driver;
+import com.emc.mongoose.model.api.load.Generator;
+import com.emc.mongoose.model.api.load.Monitor;
+import com.emc.mongoose.model.api.metrics.IoStats;
+import com.emc.mongoose.ui.log.Markers;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,7 +25,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.emc.mongoose.common.item.Item.SLASH;
+import static com.emc.mongoose.model.api.item.Item.SLASH;
+
 /**
  Created by kurila on 12.07.16.
  */
@@ -211,7 +215,8 @@ implements Monitor<I, O> {
 	}
 
 	@Override
-	protected void doStart() {
+	protected void doStart()
+	throws UserShootItsFootException {
 		for(final Generator<I, O> nextGenerator : generators) {
 			nextGenerator.start();
 		}
@@ -221,14 +226,16 @@ implements Monitor<I, O> {
 	}
 
 	@Override
-	protected void doShutdown() {
+	protected void doShutdown()
+	throws UserShootItsFootException {
 		for(final Generator<I, O> nextGenerator : generators) {
 			nextGenerator.shutdown();
 		}
 	}
 
 	@Override
-	protected void doInterrupt() {
+	protected void doInterrupt()
+	throws UserShootItsFootException {
 		for(final Generator<I, O> nextGenerator : generators) {
 			nextGenerator.interrupt();
 		}
@@ -263,7 +270,11 @@ implements Monitor<I, O> {
 	public void close()
 	throws IOException {
 		if(!isInterrupted()) {
-			interrupt();
+			try {
+				interrupt();
+			} catch(final UserShootItsFootException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to interrupt");
+			}
 		}
 		generators.clear();
 		drivers.clear();

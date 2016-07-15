@@ -1,10 +1,7 @@
 package com.emc.mongoose.common.net;
 
-import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.log.Markers;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.emc.mongoose.common.exception.OmgDoesNotPerformException;
+import com.emc.mongoose.common.exception.OmgLookAtMyConsoleException;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -17,50 +14,57 @@ import java.util.Enumeration;
  */
 public abstract class NetUtil {
 
-	private final static Logger LOG = LogManager.getLogger();
+	private NetUtil() {
+	}
 
-	public static String getHostAddr() {
+	/**
+	 Tries to resolve 1st enabled external network interface IP address.
+	 Tries to fall back to loopback interface if no valid external interface found.
+	 @return IP address
+	 @throws OmgLookAtMyConsoleException if failed to resolve an interface address
+	 @throws OmgDoesNotPerformException
+	 */
+	public static String getHostAddr()
+	throws OmgDoesNotPerformException, OmgLookAtMyConsoleException {
 		InetAddress addr = null;
-		//
+		final Enumeration<NetworkInterface> netIfaces;
 		try {
-			final Enumeration<NetworkInterface> netIfaces = NetworkInterface.getNetworkInterfaces();
-			NetworkInterface nextNetIface;
-			while(netIfaces.hasMoreElements()) {
-				nextNetIface = netIfaces.nextElement();
+			 netIfaces = NetworkInterface.getNetworkInterfaces();
+		} catch(final SocketException e) {
+			throw new OmgLookAtMyConsoleException(e);
+		}
+		NetworkInterface nextNetIface;
+		while(netIfaces.hasMoreElements()) {
+			nextNetIface = netIfaces.nextElement();
+			try {
 				if(!nextNetIface.isLoopback() && nextNetIface.isUp()) {
 					final Enumeration<InetAddress> addrs = nextNetIface.getInetAddresses();
 					while(addrs.hasMoreElements()) {
 						addr = addrs.nextElement();
 						if(Inet4Address.class.isInstance(addr)) {
-							LOG.debug(
-								Markers.MSG, "Resolved external interface \"{}\" address: {}",
-								nextNetIface.getDisplayName(), addr.getHostAddress()
-							);
+							// resolved the external interface address
 							break;
 						}
 					}
-				} else {
-					LOG.debug(
-						Markers.MSG, "Interface \"{}\" is loopback or is not up, skipping",
-						nextNetIface.getDisplayName()
-					);
 				}
+			} catch(final SocketException e) {
+				throw new OmgLookAtMyConsoleException(e);
 			}
-		} catch(final SocketException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to get an external interface address");
 		}
-		//
+
 		if(addr == null) {
-			LOG.warn(
-				Markers.ERR, "No valid external interface have been found, falling back to loopback"
-			);
 			addr = InetAddress.getLoopbackAddress();
 		}
-		//
+
+		if(addr == null) {
+			throw new OmgDoesNotPerformException("");
+		}
+
 		return addr.getHostAddress();
 	}
-	//
-	public static long getHostAddrCode() {
+
+	public static long getHostAddrCode()
+	throws OmgDoesNotPerformException, OmgLookAtMyConsoleException {
 		return getHostAddr().hashCode();
 	}
 }

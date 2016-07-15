@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.concurrent;
 
-import com.emc.mongoose.common.io.value.async.Initializable;
+import com.emc.mongoose.common.exception.UserShootItsFootException;
 
 import java.util.concurrent.TimeUnit;
 /**
@@ -9,17 +9,17 @@ import java.util.concurrent.TimeUnit;
 public interface LifeCycle {
 
 	void start()
-	throws IllegalStateException;
+	throws UserShootItsFootException;
 
 	boolean isStarted();
 
 	void shutdown()
-	throws IllegalStateException;
+	throws UserShootItsFootException;
 
 	boolean isShutdown();
 
 	void interrupt()
-	throws IllegalStateException;
+	throws UserShootItsFootException;
 
 	boolean isInterrupted();
 
