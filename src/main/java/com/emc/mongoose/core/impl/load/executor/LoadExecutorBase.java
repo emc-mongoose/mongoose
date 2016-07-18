@@ -267,14 +267,16 @@ implements LoadExecutor<T> {
 		@Override
 		public final void run() {
 			Thread.currentThread().setName(LoadExecutorBase.this.getName());
-				while(!isInterrupted.get()) {
-					logMetrics(Markers.PERF_AVG);
-					try {
-						TimeUnit.SECONDS.sleep(metricsPeriodSec);
-					} catch(final InterruptedException e) {
-						break;
-					}
+			while(!isInterrupted.get()) {
+				logMetrics(Markers.PERF_AVG);
+				try {
+					TimeUnit.SECONDS.sleep(metricsPeriodSec);
+				} catch(final InterruptedException e) {
+					LOG.debug(Markers.MSG, "the task was interrupted");
+					break;
 				}
+			}
+			LOG.debug(Markers.MSG, "the task exits");
 		}
 	}
 	//
