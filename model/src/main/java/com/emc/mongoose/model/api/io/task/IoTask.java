@@ -37,6 +37,8 @@ public interface IoTask<I extends Item> {
 
 	Status getStatus();
 
+	void setStatus(final Status status);
+
 	long getReqTimeStart();
 
 	int getDuration();

@@ -1,6 +1,7 @@
 package com.emc.mongoose.monitor;
 
 import com.emc.mongoose.common.concurrent.LifeCycleBase;
+import com.emc.mongoose.model.impl.metrics.BasicIoStats;
 import com.emc.mongoose.ui.config.Config;
 import com.emc.mongoose.model.util.LoadType;
 import com.emc.mongoose.common.exception.UserShootItsFootException;
@@ -23,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static com.emc.mongoose.model.api.item.Item.SLASH;
 
@@ -39,9 +39,11 @@ implements Monitor<I, O> {
 	private final static ScheduledThreadPoolExecutor
 		LOG_METRICS_SERVICE = new ScheduledThreadPoolExecutor(1);
 
+	private final String name;
 	private final List<Generator<I, O>> generators;
 	private final ConcurrentMap<String, Driver<I, O>> drivers = new ConcurrentHashMap<>();
 	private final Config.LoadConfig.MetricsConfig metricsConfig;
+	private final IoStats ioStats, medIoStats;
 
 	private final static class LogMetricsTask
 	implements Runnable {
@@ -54,23 +56,27 @@ implements Monitor<I, O> {
 
 		@Override
 		public void run() {
+			Thread.currentThread().setName(monitor.getName());
 			LOG.info(Markers.PERF_AVG, monitor.getIoStatsSnapshot().toString());
 		}
 	}
 	private final LogMetricsTask logMetricsTask;
 
 	public BasicMonitor(
-		final List<Generator<I, O>> generators, final Config.LoadConfig.MetricsConfig metricsConfig
+		final String name, final List<Generator<I, O>> generators,
+		final Config.LoadConfig.MetricsConfig metricsConfig
 	) {
+		this.name = name;
 		this.generators = generators;
 		for(final Generator<I, O> generator : generators) {
 			generator.registerMonitor(this);
 		}
 		this.metricsConfig = metricsConfig;
+		final int metricsPeriosSec = (int) metricsConfig.getPeriod();
+		this.ioStats = new BasicIoStats(name, metricsPeriosSec);
+		this.medIoStats = new BasicIoStats(name, metricsPeriosSec);
 		this.logMetricsTask = new LogMetricsTask(this);
 	}
-
-	private final AtomicLong taskCounter = new AtomicLong(0);
 
 	@Override
 	public void ioTaskCompleted(final O ioTask) {
@@ -92,15 +98,31 @@ implements Monitor<I, O> {
 			respDataLatency = 0;
 			countBytesDone = 0;
 		}
-		// perf trace logging
+		/* perf trace logging
 		if(!metricsConfig.getPrecondition()) {
 			logTrace(
 				ioTask.getLoadType(), nodeAddr, item, status, ioTask.getReqTimeStart(), reqDuration,
 				respLatency, countBytesDone, respDataLatency
 			);
+		}*/
+		if(IoTask.Status.SUCC == status) {
+			// update the metrics with success
+			if(respLatency > 0 && respLatency > reqDuration) {
+				LOG.warn(
+					Markers.ERR, "{}: latency {} is more than duration: {}", this, respLatency,
+					reqDuration
+				);
+			}
+			ioStats.markSucc(countBytesDone, reqDuration, respLatency);
+			if(medIoStats != null && medIoStats.isStarted()) {
+				medIoStats.markSucc(countBytesDone, reqDuration, respLatency);
+			}
+		} else {
+			ioStats.markFail();
+			if(medIoStats != null && medIoStats.isStarted()) {
+				medIoStats.markFail();
+			}
 		}
-		// TODO statistics accounting
-		taskCounter.incrementAndGet();
 	}
 
 	@Override
@@ -141,17 +163,34 @@ implements Monitor<I, O> {
 					respDataLatency = dataIoTask.getDataLatency();
 					countBytesDone = dataIoTask.getCountBytesDone();
 				}
-				// perf trace logging
+
+				/* perf trace logging
 				if(!preconditionFlag) {
 					logTrace(
 						ioType, nodeAddr, item, status, ioTask.getReqTimeStart(),
 						reqDuration, respLatency, countBytesDone, respDataLatency
 					);
+				}*/
+
+				if(IoTask.Status.SUCC == status) {
+					// update the metrics with success
+					if(respLatency > 0 && respLatency > reqDuration) {
+						LOG.warn(
+							Markers.ERR, "{}: latency {} is more than duration: {}", this, respLatency,
+							reqDuration
+						);
+					}
+					ioStats.markSucc(countBytesDone, reqDuration, respLatency);
+					if(medIoStats != null && medIoStats.isStarted()) {
+						medIoStats.markSucc(countBytesDone, reqDuration, respLatency);
+					}
+				} else {
+					ioStats.markFail();
+					if(medIoStats != null && medIoStats.isStarted()) {
+						medIoStats.markFail();
+					}
 				}
 			}
-
-			// TODO batch statistics accounting
-			taskCounter.addAndGet(n);
 		}
 
 		return n;
@@ -211,7 +250,12 @@ implements Monitor<I, O> {
 
 	@Override
 	public final IoStats.Snapshot getIoStatsSnapshot() {
-		return null;
+		return ioStats.getSnapshot();
+	}
+
+	@Override
+	public final String getName() {
+		return name;
 	}
 
 	@Override

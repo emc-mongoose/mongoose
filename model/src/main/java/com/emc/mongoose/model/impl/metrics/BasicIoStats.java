@@ -2,9 +2,9 @@ package com.emc.mongoose.model.impl.metrics;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.UniformReservoir;
 import com.codahale.metrics.UniformSnapshot;
 import com.emc.mongoose.model.api.metrics.IoStats;
+import com.emc.mongoose.model.util.SizeInBytes;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 15.09.15.
  */
-public abstract class BasicIoStats
+public class BasicIoStats
 implements IoStats {
 
 	protected final String name;
@@ -21,11 +21,14 @@ implements IoStats {
 	protected final Histogram reqDuration, respLatency;
 	protected final CustomMeter throughPutSucc, throughPutFail, reqBytes;
 	protected volatile long tsStartMicroSec = -1, prevElapsedTimeMicroSec = 0;
+	protected LongAdder reqDurationSum, respLatencySum;
 	//
-	protected BasicIoStats(final String name, final int updateIntervalSec) {
+	public BasicIoStats(final String name, final int updateIntervalSec) {
 		this.name = name;
-		respLatency = new Histogram(new UniformReservoir());
-		reqDuration = new Histogram(new UniformReservoir());
+		respLatency = new Histogram(new UnsafeButFasterUniformReservoir());
+		respLatencySum = new LongAdder();
+		reqDuration = new Histogram(new UnsafeButFasterUniformReservoir());
+		reqDurationSum = new LongAdder();
 		throughPutSucc = new CustomMeter(clock, updateIntervalSec);
 		throughPutFail = new CustomMeter(clock, updateIntervalSec);
 		reqBytes = new CustomMeter(clock, updateIntervalSec);
@@ -299,21 +302,6 @@ implements IoStats {
 		}
 		//
 		@Override
-		public final String toSuccRatesString() {
-			return String.format(
-				Locale.ROOT, MSG_FMT_FLOAT_PAIR, getSuccRateMean(), succRateLast
-			);
-		}
-		//
-		@Override
-		public final String toByteRatesString() {
-			return String.format(
-				Locale.ROOT, MSG_FMT_FLOAT_PAIR,
-				getByteRateMean() / MIB, byteRateLast / MIB
-			);
-		}
-		//
-		@Override
 		public final String toString() {
 			if(durSnapshot == null) {
 				durSnapshot = new UniformSnapshot(durValues);
@@ -323,9 +311,10 @@ implements IoStats {
 			}
 			return String.format(
 				Locale.ROOT, MSG_FMT_METRICS,
-				getSuccCount(), getFailCount(), toSuccRatesString(),
-				getByteCount(), toByteRatesString(),
-				toDurString(), toLatString()
+				getSuccCount(), getFailCount(),
+				(long) (getDurationSum() / M), (long) (getElapsedTime() / M),
+				getSuccRateMean(), getSuccRateLast(), SizeInBytes.formatFixedSize(getByteCount()),
+				getByteRateMean(), getByteRateLast(), toDurString(), toLatString()
 			);
 		}
 		//
@@ -338,9 +327,61 @@ implements IoStats {
 				latSnapshot = new UniformSnapshot(latValues);
 			}
 			return String.format(
-				Locale.ROOT, MSG_FMT_METRICS, getSuccCount(), getFailCount(), toSuccRatesString(),
-				getByteCount(), toByteRatesString(), toDurSummaryString(), toLatSummaryString()
+				Locale.ROOT, MSG_FMT_METRICS, getSuccCount(), getFailCount(),
+				(long) (getDurationSum() / M), (long) (getElapsedTime() / M), getSuccRateMean(),
+				getSuccRateLast(), SizeInBytes.formatFixedSize(getByteCount()), getByteRateMean(),
+				getByteRateLast(), toDurSummaryString(), toLatSummaryString()
 			);
 		}
+	}
+	//
+	@Override
+	public void markSucc(final long size, final int duration, final int latency) {
+		throughPutSucc.mark();
+		reqBytes.mark(size);
+		reqDuration.update(duration);
+		reqDurationSum.add(duration);
+		respLatencySum.add(latency);
+		respLatency.update(latency);
+	}
+	//
+	@Override
+	public void markSucc(
+		final long count, final long bytes, final long durationValues[], final long latencyValues[]
+	) {
+		throughPutSucc.mark(count);
+		reqBytes.mark(bytes);
+		for(final long duration : durationValues) {
+			reqDuration.update(duration);
+			reqDurationSum.add(duration);
+		}
+		for(final long latency : latencyValues) {
+			respLatency.update(latency);
+			respLatencySum.add(latency);
+		}
+	}
+	//
+	@Override
+	public void markFail() {
+		throughPutFail.mark();
+	}
+	//
+	@Override
+	public void markFail(final long count) {
+		throughPutFail.mark(count);
+	}
+	//
+	@Override
+	public Snapshot getSnapshot() {
+		final long currElapsedTime = tsStartMicroSec > 0 ?
+			TimeUnit.NANOSECONDS.toMicros(System.nanoTime()) - tsStartMicroSec : 0;
+		final com.codahale.metrics.Snapshot reqDurSnapshot = reqDuration.getSnapshot();
+		final com.codahale.metrics.Snapshot respLatSnapshot = respLatency.getSnapshot();
+		return new BasicSnapshot(
+			throughPutSucc.getCount(), throughPutSucc.getLastRate(), throughPutFail.getCount(),
+			throughPutFail.getLastRate(), reqBytes.getCount(), reqBytes.getLastRate(),
+			prevElapsedTimeMicroSec + currElapsedTime, reqDurationSum.sum(), respLatencySum.sum(),
+			reqDurSnapshot, respLatSnapshot
+		);
 	}
 }

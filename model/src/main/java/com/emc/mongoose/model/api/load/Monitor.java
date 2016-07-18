@@ -22,4 +22,6 @@ extends Closeable, LifeCycle {
 	throws IllegalStateException;
 
 	IoStats.Snapshot getIoStatsSnapshot();
+
+	String getName();
 }

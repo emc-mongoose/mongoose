@@ -52,7 +52,7 @@ public class Main {
 
 		try(
 			final Monitor<I, O> monitor = new BasicMonitor<>(
-				generators, config.getLoadConfig().getMetricsConfig()
+				"test", generators, config.getLoadConfig().getMetricsConfig()
 			)
 		) {
 			monitor.start();

@@ -48,6 +48,11 @@ implements IoTask<I> {
 	}
 	//
 	@Override
+	public final void setStatus(final Status status) {
+		this.status = status;
+	}
+	//
+	@Override
 	public final long getReqTimeStart() {
 		return reqTimeStart;
 	}

@@ -18,7 +18,7 @@ def collectFilePath(String... pathChunks) {
 	pathBuilder.toString()
 }
 
-def configFilePath = "." + collectFilePath('common', 'src', 'main', 'resources', 'defaults.json');
+def configFilePath = "." + collectFilePath('ui', 'src', 'main', 'resources', 'defaults.json');
 version = loadProjectVersionFrom configFilePath
 
 subprojects {

@@ -62,6 +62,9 @@ implements Driver<I, O> {
 
 	@Override
 	public int submit(final List<O> tasks, final int from, final int to) {
+		for(int i = from; i < to; i ++) {
+			tasks.get(i).setStatus(IoTask.Status.SUCC);
+		}
 		final Monitor<I, O> monitor = monitorRef.get();
 		if(monitor != null) {
 			monitor.ioTaskCompletedBatch(tasks, from, to);

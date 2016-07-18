@@ -52,9 +52,9 @@ implements DataIoTask<T> {
 		return respDataTimeStart > reqTimeDone ? (int) (respDataTimeStart - reqTimeDone) : -1;
 	}
 
-	@Override
+	@Override @SuppressWarnings("ResultOfMethodCallIgnored")
 	public String toString() {
-		super.toString();
+		super.toString(); // invoked to fill the string builder
 		final StringBuilder strb = STRB.get();
 		return strb
 			.append(',').append(countBytesDone)

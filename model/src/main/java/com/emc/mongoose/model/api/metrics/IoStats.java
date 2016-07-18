@@ -10,8 +10,16 @@ extends Closeable {
 
 	int MIB = 0x100000;
 	double M = 1e6;
-	String MSG_FMT_METRICS = "count=%d; failed=%d; rate[op/s]=(%s); size=%s; rate[MB/s]=(%s); duration[us]=(%s); latency[us]=(%s)";
-	String MSG_FMT_FLOAT_PAIR = "%.3f/%.3f";
+	// count, time, TP, size, BW, duration, latency
+	String MSG_FMT_COUNT = "count=(%d/%d); ";
+	String MSG_FMT_TIME = "time[s]=(%d/%d); ";
+	String MSG_FMT_TP= "TP[op/s]=(%.3f/%.3f); ";
+	String MSG_FMT_SIZE = "size=(%s); ";
+	String MSG_FMT_BW = "BW[MB/s]=(%.3f/%.3f); ";
+	String MSG_FMT_DUR = "duration[us]=(%s); ";
+	String MSG_FMT_LAT = "latency[us]=(%s)";
+	String MSG_FMT_METRICS = MSG_FMT_COUNT + MSG_FMT_TIME + MSG_FMT_TP + MSG_FMT_SIZE + MSG_FMT_BW +
+		MSG_FMT_DUR + MSG_FMT_LAT;
 
 	void start();
 	boolean isStarted();
@@ -67,8 +75,6 @@ extends Closeable {
 		String toDurSummaryString();
 		String toLatString();
 		String toLatSummaryString();
-		String toSuccRatesString();
-		String toByteRatesString();
 		String toSummaryString();
 	}
 }
