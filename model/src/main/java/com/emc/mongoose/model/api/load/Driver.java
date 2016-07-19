@@ -17,9 +17,11 @@ extends Closeable, LifeCycle {
 
 	boolean isFullThrottleExited();
 
-	boolean submit(final O task);
+	void submit(final O task)
+	throws InterruptedException;
 
-	int submit(final List<O> tasks, final int from, final int to);
+	int submit(final List<O> tasks, final int from, final int to)
+	throws InterruptedException;
 
 	void registerMonitor(final Monitor<I, O> monitor)
 	throws IllegalStateException;

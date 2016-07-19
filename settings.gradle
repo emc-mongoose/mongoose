@@ -1,5 +1,6 @@
 rootProject.name = 'mongoose'
 
 include 'common', 'model', 'ui'
-include 'storage:driver', 'generator', 'monitor'
+include 'generator', 'monitor'
+include 'storage:driver-base', 'storage:driver-fs'
 include 'storage:mock'

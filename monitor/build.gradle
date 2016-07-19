@@ -5,7 +5,7 @@ dependencies {
 	compile project(':model')
 	compile project(':ui')
 	compile project(':generator')
-	compile project(':storage:driver')
+	compile project(':storage:driver-base')
 }
 
 jar {

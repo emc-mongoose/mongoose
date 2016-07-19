@@ -1,7 +1,8 @@
-description = 'mongoose-driver'
+description = 'mongoose-storage-driver-fs'
 
 dependencies {
 	compile project(':common')
 	compile project(':model')
 	compile project(':ui')
+	compile project(':storage:driver-base')
 }
